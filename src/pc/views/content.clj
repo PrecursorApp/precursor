@@ -15,7 +15,7 @@
       ;;[:script (browser-connected-repl-js)]
       )]])
 
-(def app*
+(defn app* []
   (layout
    [:input.history {:style "display:none;"}]
    [:div#player-container]
@@ -35,4 +35,4 @@
          "goog.require(\"frontend.core\");"])))))
 
 (defn app []
-  (h/html app*))
+  (h/html (app*)))
