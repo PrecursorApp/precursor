@@ -1,67 +1,14 @@
 (ns frontend.state)
 
 (defn initial-state []
-  {:error-message nil
-   ;; A/B test instructions:
-   ;; 1. Don't define a test with null as one of the options
-   ;; 2. If you change a test's options, you must also change the test's name
-   ;; 3. Record your tests here: https://docs.google.com/a/circleci.com/spreadsheet/ccc?key=0AiVfWAkOq5p2dE1MNEU3Vkw0Rk9RQkJNVXIzWTAzUHc&usp=sharing
-   :ab-test-definitions {:a_is_a [true false]
-                         :split_form [true false]}
-   :ab-tests {}
+  {:camera {:x  0
+            :y  0
+            :zf 1}
+   :error-message nil
    :changelog nil
    :environment "development"
-   :settings {:projects {}            ; hash of project-id to settings
-              :organizations  {:circleci  {:plan {}}}
-              :add-projects {:repo-filter-string ""
-                             :selected-org {:login nil
-                                            :type :org}}}
-   :user-options-shown false
-   :selected-home-technology-tab nil
-   :builds-per-page 30
-   :navigation-point nil
-   :navigation-data nil
-   :navigation-settings {}
+   :settings {}
    :current-user nil
-   :crumbs nil
-   :current-repos []
-   :render-context nil
-   :projects nil
-   :recent-builds nil
-   :project-settings-subpage nil
-   :project-settings-project-name nil
-   :org-settings-subpage nil
-   :org-settings-org-name nil
-   :dashboard-data {:branch nil
-                    :repo nil
-                    :org nil}
-   :current-project-data {:project nil
-                          :plan nil
-                          :settings {}
-                          :tokens nil
-                          :checkout-keys nil
-                          :envvars nil}
-   :current-build-data {:build nil
-                        :usage-queue-data {:builds nil
-                                           :show-usage-queue false}
-                        :artifact-data {:artifacts nil
-                                        :show-artifacts false}
-                        :config-data {:show-config false}
-                        :current-container-id 0
-                        :container-data {:current-container-id 0
-                                         :containers nil}
-                        :invite-data {:dismiss-invite-form nil
-                                      ;; map of login to github user. These could go
-                                      ;; in current-project-data, but it would make the
-                                      ;; invites implementation more complex. Much easier
-                                      ;; for each build to have its own copy of github-users, especially
-                                      ;; since it's used so infrequently and goes stale fast.
-                                      :github-users nil}}
-   :current-org-data {:plan nil
-                      :projects nil
-                      :users nil
-                      :invoices nil
-                      :name nil}
    :instrumentation []
    ;; This isn't passed to the components, it can be accessed though om/get-shared :_app-state-do-not-use
    :inputs nil})
