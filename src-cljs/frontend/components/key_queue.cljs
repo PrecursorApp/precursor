@@ -1,5 +1,8 @@
 (ns frontend.components.key-queue
-  "The key function is KeyboardHandler, which takes a KEYMAP, a map
+  "Cribbed from https://gist.github.com/tomconnors/8460406 .  We
+  should probably rewrite.
+
+  The key function is keyboard-handler, which takes a KEYMAP, a map
   from key combinations as descibed in event->key and match-keys to
   functions of no arguments.  This component sets up a loop which
   checks for key combinations in KEYMAP, calling the associated
@@ -7,28 +10,38 @@
   strings, with consecutive key events separated by a space.  Keys in
   key combinations need to be pressed within one second, or the loop
   forgets about them."
-  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
-            [frontend.async :refer [put!]]
+  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer put! close!]]
             [om.core :as om :include-macros true]
+            [om.dom :as dom :include-macros true]
             [clojure.string :refer [join split]]
             [dommy.core :as dommy]
-            [sablono.core :as html :include-macros true]
-            [frontend.utils :as utils :include-macros true])
+            [frontend.utils :as utils])
   (:require-macros [cljs.core.async.macros :as async]))
 
 (def code->key
   "map from a character code (read from events with event.which)
   to a string representation of it.
   Only need to add 'special' things here."
-  {13 "enter"
-   27 "esc"
-   37 "left"
-   38 "up"
-   39 "right"
-   40 "down"
-   46 "del"
+  {8   "backspace"
+   13  "enter"
+   16  "shift"
+   17  "ctrl"
+   18  "alt"
+   27  "esc"
+   37  "left"
+   38  "up"
+   39  "right"
+   40  "down"
+   46  "del"
+   91  "meta"
+   32  "space"
    186 ";"
-   191 "slash"})
+   191 "/"
+   219 "["
+   221 "]"
+   187 "="
+   189 "-"
+   190 "."})
  
 (defn event-modifiers
   "Given a keydown event, return the modifier keys that were being held."
@@ -67,7 +80,7 @@
 (defn start-key-queue [key-ch]
   (dommy/listen! js/document :keydown
                  #(when-let [k (event->key %)]
-                    (log-keystroke k)
+                    ;;(log-keystroke k)
                     (async/put! key-ch k))))
 
 (def global-key-ch
@@ -94,38 +107,62 @@
   stuff) return a handler fn associated with a key combo in the keys
   list or nil."
   [keymap keys]
-  (->> keymap (keep (fn [[c f]] (if (combos-match? c keys) f))) first))
+  (->> keymap
+       (keep (fn [[m c]]
+               (when (combos-match? c keys) m)))
+       first))
 
-(defn KeyboardHandler [app owner {:keys [keymap error-ch]}]
+(defn keyboard-handler [payload owner opts]
   (reify
-    om/IDisplayName (display-name [_] "Keyboard Handler")
-    om/IDidMount
-    (did-mount [_]
-      (let [ch (chan)]
-        (om/set-state! owner :ch ch)
-        (async/tap key-mult ch)
-        (async/go-loop [waiting-keys []
-                        t-chan nil]
-                       (let [t-chan        (or t-chan (async/chan))
-                             [e read-chan] (async/alts! [ch t-chan])]
-                         (if (= read-chan ch)
-                           (let [all-keys (conj waiting-keys e)]
-                             (if-let [key-fn (match-keys @keymap all-keys)]
-                               (do (try (key-fn e)
-                                        ;; Catch any errors to avoid breaking key loop
-                                        (catch js/Object error
-                                          (utils/merror error "Error calling" key-fn "with key event" e)
-                                          (put! error-ch [:keyboard-handler-error error])))
-                                   (recur [] nil))
-                               ;; No match yet, but remember in case user is entering
-                               ;; a multi-key combination.
-                               (recur all-keys (async/timeout 1000))))
-                           ;; Read channel was timeout.  Forget stored keys
-                           (recur [] nil))))))
+    om/IDisplayName
+    (display-name [_]
+      (or (:react-name opts) "KeyboardHandler"))
+    om/IWillMount
+    (will-mount [_]
+      (let [{:keys [cast!]}   opts
+            key-press-ch      (chan)
+            key-map           (om/value (get-in payload [:key-map]))
+            key-map-update-ch (chan)
+            unmount-ch        (chan)
+            my-name           (om/value (get-in payload [:name]))]
+        (om/set-state! owner :key-map-update-ch key-map-update-ch)
+        (om/set-state! owner :key-press-ch key-press-ch)
+        (om/set-state! owner :unmount-ch unmount-ch)
+        (async/tap key-mult key-press-ch)
+        (async/go
+         (loop [waiting-keys []
+                t-chan       nil
+                key-map      key-map]
+           (async/alt!
+            key-press-ch ([e]
+                            (let [all-keys (conj waiting-keys e)]
+                              (if-let [combo-message (match-keys key-map all-keys)]
+                                (do (try (apply cast! combo-message)
+                                         ;; Catch any errors to avoid breaking key loop
+                                         (catch js/Object error
+                                           (utils/log-pr "Error putting" combo-message
+                                                         "with key event" e ":")
+                                           (put! (om/get-shared owner [:comms :error]) [:keyboard-handler-error error])))
+                                    (recur [] nil key-map))
+                                ;; No match yet, but remember in case user is entering
+                                ;; a multi-key combination.
+                                (recur all-keys (async/timeout 1000) key-map))))
+            key-map-update-ch ([new-key-map]
+                                 (recur waiting-keys t-chan new-key-map))
+            ;; Read channel was timeout.  Forget stored keys
+            (or t-chan (async/timeout 1000))       (recur [] nil key-map)
+            (async/chan)  (recur [] nil key-map)
+            unmount-ch (print "Unmounted; destroying key-queue loop for " my-name))))))
     om/IWillUnmount
     (will-unmount [_]
-      (let [ch (om/get-state owner :ch)]
-        (async/untap key-mult ch)))
+      (async/untap key-mult (om/get-state owner :key-press-ch))
+      (put! (om/get-state owner :unmount-ch) [:stop]))
     om/IRender
     (render [_]
-      (html/html [:span.hidden]))))
+      (let [new-key-map     (om/value (get-in payload [:data :key-map]))
+            current-key-map (om/get-state owner :key-map)]
+        (when (and new-key-map (not= current-key-map new-key-map))
+          (if-let [updated-ch (om/get-state owner :key-map-update-ch)]
+            (put! updated-ch new-key-map)
+            (print "No update-ch to notify new keybindings for " (get-in payload [:data :name])))))
+      (dom/span #js {:className "hidden"}))))
