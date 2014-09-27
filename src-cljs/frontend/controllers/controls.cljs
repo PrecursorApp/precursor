@@ -1,7 +1,6 @@
 (ns frontend.controllers.controls
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [cljs.reader :as reader]
-            [frontend.api :as api]
             [frontend.async :refer [put!]]
             [frontend.components.forms :refer [release-button!]]
             [frontend.routes :as routes]

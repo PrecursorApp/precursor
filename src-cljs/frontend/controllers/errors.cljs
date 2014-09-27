@@ -2,7 +2,6 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as str]
             [frontend.async :refer [put!]]
-            [frontend.api :as api]
             [frontend.state :as state]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
