@@ -32,8 +32,12 @@
                  [com.google.javascript/closure-compiler "v20140625"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
                  [cljs-ajax "0.2.6"]
-                 [om "0.6.4"]
-                 [com.facebook/react "0.10.0"] ;; include for externs
+
+                 ;; Use yaks/om for the pattern tag (it's in React,
+                 ;; but not Om yet)
+                 ;;[om "0.6.4"]
+
+                 [com.facebook/react "0.11.2"] ;; include for externs
                  [prismatic/dommy "0.1.2"]
                  [sablono "0.2.16"]
                  [secretary "1.2.0"]
@@ -63,13 +67,15 @@
              "-Dfile.encoding=UTF-8"]
 
   :cljsbuild {:builds [{:id "dev"
-                        :source-paths ["src-cljs"]
+                        :source-paths ["src-cljs"
+                                       "yaks/om/src"]
                         :compiler {:output-to "resources/public/cljs/out/frontend-dev.js"
                                    :output-dir "resources/public/cljs/out"
                                    :optimizations :none
                                    :source-map "resources/public/cljs/out/sourcemap-dev.js"}}
                        {:id "whitespace"
-                        :source-paths ["src-cljs"]
+                        :source-paths ["src-cljs"
+                                       "yaks/om/src"]
                         :compiler {:output-to "resources/public/cljs/whitespace/frontend.js"
                                    :output-dir "resources/public/cljs/whitespace"
                                    :optimizations :whitespace
@@ -77,7 +83,7 @@
                                    }}
 
                        {:id "test"
-                        :source-paths ["src-cljs" "test-cljs"]
+                        :source-paths ["src-cljs" "test-cljs" "yaks/om/src"]
                         :compiler {:pretty-print true
                                    :output-to "resources/public/cljs/test/frontend-dev.js"
                                    :output-dir "resources/public/cljs/test"
@@ -90,7 +96,7 @@
                                              "src-cljs/js/intercom-jquery-externs.js"]
                                    :source-map "resources/public/cljs/test/sourcemap-dev.js"}}
                        {:id "production"
-                        :source-paths ["src-cljs"]
+                        :source-paths ["src-cljs" "yaks/om/src"]
                         :compiler {:pretty-print false
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
