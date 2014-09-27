@@ -1,6 +1,7 @@
 (ns pc.datomic
   (:require [clojure.tools.logging :refer (infof)]
-            [datomic.api :refer [db q] :as d]))
+            [datomic.api :refer [db q] :as d])
+  (:import java.util.UUID))
 
 (def default-uri "datomic:free://localhost:4334/pc")
 
@@ -40,6 +41,9 @@
   "Runs a query that returns [[eid][eid]], and returns the first entity, touched"
   [query & query-args]
   (first (apply touch-all query query-args)))
+
+(defn uuid []
+  (UUID/randomUUID))
 
 (defn init []
   (infof "Creating default database if it doesn't exist: %s"
