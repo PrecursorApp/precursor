@@ -40,7 +40,6 @@
   [target message args previous-state current-state]
   (utils/mlog "No post-control for: " message))
 
-
 (defmethod control-event :state-restored
   [target message path state]
   (let [str-data (.getItem js/sessionStorage "circle-state")]
@@ -70,3 +69,7 @@
 (defmethod control-event :camera-nudged-right
   [target message _ state]
   (update-in state [:camera :x] dec))
+
+(defmethod control-event :key-state-changed
+  [target message [{:keys [key-name-kw depressed?]}] state]
+  (assoc-in state [:keyboard key-name-kw] depressed?))

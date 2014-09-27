@@ -7,9 +7,11 @@
             [dommy.core :as dommy]
             [goog.dom]
             [goog.dom.DomHelper]
+            [frontend.camera :as camera-helper]
             [frontend.components.app :as app]
             [frontend.controllers.controls :as controls-con]
             [frontend.controllers.navigation :as nav-con]
+            [frontend.components.key-queue :as keyq]
             [frontend.routes :as routes]
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
@@ -28,6 +30,36 @@
   (:use-macros [dommy.macros :only [node sel sel1]]))
 
 (enable-console-print!)
+
+(defn handle-mouse-move [cast! event]
+  (cast! :mouse-moved (camera-helper/screen-event-coords event) true))
+
+(defn handle-mouse-down [cast! event]
+  (cast! :mouse-depressed (camera-helper/screen-event-coords event) false))
+
+(defn handle-mouse-up [cast! event]
+  (cast! :mouse-released (camera-helper/screen-event-coords event) false))
+
+(defn disable-mouse-wheel [event]
+  (.stopPropagation event))
+
+(defn track-key-state [cast! direction suppressed-key-combos event]
+  (let [meta?      (when (.-metaKey event) "meta")
+        shift?     (when (.-shiftKey event) "shift")
+        ctrl?      (when (.-ctrlKey event) "ctrl")
+        alt?       (when (.-altKey event) "alt")
+        char       (or (get keyq/code->key (.-which event))
+                       (js/String.fromCharCode (.-which event)))
+        tokens     [shift? meta? ctrl? alt? char]
+        key-string (string/join "+" (filter identity tokens))]
+    (when (get suppressed-key-combos key-string)
+      (.preventDefault event))
+    (when-not (.-repeat event)
+      (when-let [human-name (get keyq/code->key (.-which event))]
+        (let [key-name (keyword (str human-name "?"))]
+          (cast! :key-state-changed [{:key-name-kw key-name
+                                      :code        (.-which event)
+                                      :depressed?  (= direction :down)}]))))))
 
 ;; Overcome some of the browser limitations around DnD
 (def mouse-move-ch
@@ -82,7 +114,7 @@
 
 (defn controls-handler
   [value state container]
-  (when (log-channels?)
+  (when true
     (mlog "Controls Verbose: " value))
   (swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
@@ -135,12 +167,13 @@
     mya))
 
 
-(defn install-om [state container comms]
+(defn install-om [state container comms cast!]
   (om/root
      app/app
      state
      {:target container
       :shared {:comms comms
+               :cast! cast!
                :timer-atom (setup-timer-atom)
                :_app-state-do-not-use state}}))
 
@@ -151,16 +184,31 @@
   (sel1 top-level-node "#om-app"))
 
 (defn main [state top-level-node history-imp]
-  (let [comms       (:comms @state)
-        container   (find-app-container top-level-node)
-        uri-path    (.getPath utils/parsed-uri)
-        history-path "/"
-        controls-tap (chan)
-        nav-tap (chan)
-        api-tap (chan)
-        errors-tap (chan)]
+  (let [comms                    (:comms @state)
+        cast!                    (fn [message data & [transient?]]
+                                   (print "Should cast " message)
+                                   (put! (:controls comms) [message data transient?]))
+        container                (find-app-container top-level-node)
+        uri-path                 (.getPath utils/parsed-uri)
+        history-path             "/"
+        controls-tap             (chan)
+        nav-tap                  (chan)
+        api-tap                  (chan)
+        errors-tap               (chan)
+        handle-key-down          (partial track-key-state cast! :down suppressed-key-combos)
+        handle-key-up            (partial track-key-state cast! :up   suppressed-key-combos)
+        handle-mouse-move!       #(handle-mouse-move cast! %)
+        handle-canvas-mouse-down #(handle-mouse-down cast! %)
+        handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
+        handle-close!            #(cast! :application-shutdown [@histories])]
+    (js/document.addEventListener "keydown" handle-key-down false)
+    (js/document.addEventListener "keyup" handle-key-up false)
+    (js/document.addEventListener "mousemove" handle-mouse-move! false)
+    (js/window.addEventListener "beforeunload" handle-close!)
+    (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
+
     (routes/define-routes! state)
-    (install-om state container comms)
+    (install-om state container comms cast!)
 
     (async/tap (:controls-mult comms) controls-tap)
     (async/tap (:nav-mult comms) nav-tap)
