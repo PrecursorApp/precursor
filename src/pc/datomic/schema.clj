@@ -1,5 +1,5 @@
 (ns pc.datomic.schema
-  (:require [pc.datomic :as c-d]
+  (:require [pc.datomic :as pcd]
             [datomic.api :refer [db q] :as d]))
 
 (defn attribute [ident type & {:as opts}]
@@ -39,7 +39,7 @@
    ])
 
 (defn ensure-schema
-  ([] (ensure-schema (c-d/conn)))
+  ([] (ensure-schema (pcd/conn)))
   ([conn]
      @(d/transact conn schema)))
 
