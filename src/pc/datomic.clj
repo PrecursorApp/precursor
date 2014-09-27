@@ -51,6 +51,12 @@
         transaction (d/transact conn (mapv (fn [tempid] {:db/id tempid :dummy :dummy/dummy}) tempids))]
     (mapv (fn [tempid] (d/resolve-tempid (:db-after @transaction) (:tempids @transaction) tempid)) tempids)))
 
+;; should we convert a to its name (it's currently using its eid)?
+;; Would require a reference to the db
+(defn datom->transaction [datom]
+  (let [{:keys [a e v tx added]} datom]
+    [(if added :db/add :db/retract) e a v]))
+
 (defn init []
   (infof "Creating default database if it doesn't exist: %s"
          (d/create-database default-uri))
