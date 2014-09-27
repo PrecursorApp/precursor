@@ -12,3 +12,4 @@ pom.xml.asc
 /resources/components
 /resources/assets/css/app.css
 /pc.log
+/pc*.log.gz
