@@ -3,6 +3,7 @@
             [compojure.handler :refer (site)]
             [compojure.route]
             [pc.less :as less]
+            [pc.views.content :as content]
             [stefon.core :as stefon]
             [org.httpkit.server :as httpkit]))
 
@@ -13,6 +14,7 @@
 (defroutes routes
   (compojure.route/resources "/" {:root "public"
                                   :mime-types {:svg "image/svg"}})
+  (GET "/" [] (content/app))
   (ANY "*" [] {:status 404 :body nil}))
 
 (defn port []
