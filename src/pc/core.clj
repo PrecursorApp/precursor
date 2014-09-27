@@ -1,8 +1,8 @@
-(ns frontend.core
+(ns pc.core
   (:require [compojure.core :refer (defroutes GET ANY)]
             [compojure.handler :refer (site)]
             [compojure.route]
-            [frontend.less :as less]
+            [pc.less :as less]
             [stefon.core :as stefon]
             [org.httpkit.server :as httpkit]))
 

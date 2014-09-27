@@ -1,4 +1,4 @@
-(defproject frontend "0.1.0-SNAPSHOT"
+(defproject pc "0.1.0-SNAPSHOT"
   :description "CircleCI's frontend app"
   :url "https://circleci.com"
   :license {:name "Eclipse Public License"
@@ -35,7 +35,7 @@
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]]
 
-  :main frontend.core
+  :main pc.core
 
   :jvm-opts ["-Djava.net.preferIPv4Stack=true"
              "-server"
