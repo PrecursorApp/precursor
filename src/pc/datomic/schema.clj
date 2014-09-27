@@ -20,6 +20,11 @@
               :db.type/string
               :db/doc "Layer name")
 
+   (attribute :layer/guid
+              :db.type/guid
+              :db/index true
+              :db/doc "Guid set on the frontend when it creates the layer")
+
    (attribute :layer/type
               :db.type/ref
               :db/doc "Layer type")
@@ -31,11 +36,12 @@
               :db.type/bytes
               :db/doc "Fill, should be an array of ints, has to be converted to and from bytes")
 
-   ;; I think that this is how you define relationships between entities
+   ;; Use the layer's guid so that the frontend can track children
    ;; Wonder what happens if we make a layer a child of one of its children...
    (attribute :layer/child
-              :db.type/ref
-              :db/cardinality :db.cardinality/many)
+              :db.type/guid
+              :db/cardinality :db.cardinality/many
+              :db/doc "Layer's children")
    ])
 
 (defn ensure-schema
