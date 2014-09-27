@@ -20,10 +20,10 @@
               :db.type/string
               :db/doc "Layer name")
 
-   (attribute :layer/guid
-              :db.type/guid
+   (attribute :layer/uuid
+              :db.type/uuid
               :db/index true
-              :db/doc "Guid set on the frontend when it creates the layer")
+              :db/doc "Uuid set on the frontend when it creates the layer")
 
    (attribute :layer/type
               :db.type/ref
@@ -36,10 +36,10 @@
               :db.type/bytes
               :db/doc "Fill, should be an array of ints, has to be converted to and from bytes")
 
-   ;; Use the layer's guid so that the frontend can track children
+   ;; Use the layer's uuid so that the frontend can track children
    ;; Wonder what happens if we make a layer a child of one of its children...
    (attribute :layer/child
-              :db.type/guid
+              :db.type/uuid
               :db/cardinality :db.cardinality/many
               :db/doc "Layer's children")
    ])
