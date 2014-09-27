@@ -3,6 +3,7 @@
             [frontend.async :refer [put!]]
             [frontend.components.inspector :as inspector]
             [frontend.components.key-queue :as keyq]
+            [frontend.components.canvas :as canvas]
             [frontend.components.common :as common]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
@@ -42,4 +43,6 @@
 
 
 (defn app [app owner]
-  (reify om/IRender (render [_] (om/build app* (dissoc app :inputs)))))
+  (om/component
+   (html [:div#app
+          (om/build canvas/svg-canvas app)])))
