@@ -21,6 +21,7 @@
                  [org.slf4j/slf4j-log4j12 "1.6.2"]
                  [cider/cider-nrepl "0.7.0-SNAPSHOT"]
                  [clj-http "1.0.0"]
+                 [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop]]
 
                  [ring/ring "1.2.2"]
                  [http-kit "2.1.18"]
@@ -51,7 +52,8 @@
             [com.cemerick/austin "0.1.4"]]
 
   :exclusions [[org.clojure/clojure]
-               [org.clojure/clojurescript]]
+               [org.clojure/clojurescript]
+               [org.slf4j/log4j-over-slf4j]]
 
   :main pc.init
 
