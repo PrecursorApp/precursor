@@ -1,5 +1,6 @@
 (ns pc.init
-  (:require pc.less
+  (:require pc.datomic
+            pc.less
             pc.logging
             pc.nrepl
             pc.server))
@@ -7,6 +8,7 @@
 (def init-fns [#'pc.logging/init
                #'pc.nrepl/init
                #'pc.less/init
+               #'pc.datomic/init
                #'pc.server/init])
 
 (defn pretty-now []
