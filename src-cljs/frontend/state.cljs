@@ -1,9 +1,10 @@
 (ns frontend.state)
 
 (defn initial-state []
-  {:camera {:x  0
-            :y  0
-            :zf 1}
+  {:camera {:x          0
+            :y          0
+            :zf         1
+            :show-grid? true}
    :error-message nil
    :changelog nil
    :environment "development"
