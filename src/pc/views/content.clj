@@ -1,5 +1,6 @@
 (ns pc.views.content
-  (:require [hiccup.core :as h]))
+  (:require [hiccup.core :as h]
+            [pc.stefon]))
 
 (defn layout [& content]
   [:html
@@ -21,7 +22,7 @@
    [:div#app-container]
    [:div.debugger-container]
    [:div#app]
-   [:link.css-styles {:rel "stylesheet", :href "/css/app.css"}]
+   [:link.css-styles {:rel "stylesheet", :href (pc.stefon/asset-path "css/app.css")}]
    (if (= (System/getenv "PRODUCTION") "true")
      [:script {:type "text/javascript" :src "/js/bin/main.js"}]
      (if false

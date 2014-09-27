@@ -4,12 +4,9 @@
             [compojure.route]
             [pc.less :as less]
             [pc.views.content :as content]
+            [pc.stefon]
             [stefon.core :as stefon]
             [org.httpkit.server :as httpkit]))
-
-(def stefon-options
-  {:asset-roots ["resources/assets"]
-   :mode :development})
 
 (defroutes routes
   (compojure.route/resources "/" {:root "public"
@@ -23,7 +20,7 @@
     8080))
 
 (defn start []
-  (def server (httpkit/run-server (stefon/asset-pipeline (site #'routes) stefon-options) {:port (port)})))
+  (def server (httpkit/run-server (stefon/asset-pipeline (site #'routes) pc.stefon/stefon-options) {:port (port)})))
 
 (defn stop []
   (server))
