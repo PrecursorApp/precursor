@@ -57,7 +57,14 @@
 
    (attribute :dummy
               :db.type/ref)
-   (enum :dummy/dummy)])
+   (enum :dummy/dummy)
+
+   (attribute :document/id
+              :db.type/long
+              :db/index true
+              :db/doc "Document entity id")
+
+   ])
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))
