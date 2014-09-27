@@ -1,5 +1,6 @@
 (ns pc.init
   (:require pc.datomic
+            pc.datomic.schema
             pc.less
             pc.logging
             pc.nrepl
@@ -9,6 +10,7 @@
                #'pc.nrepl/init
                #'pc.less/init
                #'pc.datomic/init
+               #'pc.datomic.schema/init
                #'pc.server/init])
 
 (defn pretty-now []
