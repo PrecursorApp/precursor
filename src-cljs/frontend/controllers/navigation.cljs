@@ -1,17 +1,14 @@
 (ns frontend.controllers.navigation
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as str]
-            [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.api :as api]
             [frontend.changelog :as changelog]
-            [frontend.components.documentation :as docs]
             [frontend.favicon]
             [frontend.pusher :as pusher]
             [frontend.state :as state]
             [frontend.stefon :as stefon]
             [frontend.utils.ajax :as ajax]
-            [frontend.utils.docs :as doc-utils]
             [frontend.utils.state :as state-utils]
             [frontend.utils.vcs-url :as vcs-url]
             [frontend.utils :as utils :refer [mlog merror]]
@@ -77,9 +74,7 @@
 (defn post-default [navigation-point args]
   (set-page-title! (or (:_title args)
                        (str/capitalize (name navigation-point))))
-  (scroll! args)
-  (when (:_analytics-page args)
-    (analytics/track-page (:_analytics-page args))))
+  (scroll! args))
 
 (defmethod post-navigated-to! :default
   [history-imp navigation-point args previous-state current-state]
@@ -142,7 +137,6 @@
                        :project-plan
                        api-ch
                        :context {:project-name (str (:org args) "/" (:repo args))})))))
-  (analytics/track-dashboard)
   (set-page-title!))
 
 (defmethod post-navigated-to! :build-state
@@ -201,8 +195,7 @@
             :success (put! api-ch [:build (:status api-result) (assoc api-result :context {:project-name project-name :build-num build-num})])
             :failed (put! nav-ch [:error {:status (:status-code api-result) :inner? false}])
             (put! err-ch [:api-error api-result]))
-          (when (= :success (:status api-result))
-            (analytics/track-build (:resp api-result)))
+          (when (= :success (:status api-result)))
           (when (and (not (get-in current-state state/project-path))
                      (:repo args) (:read-settings scopes))
             (ajax/ajax :get
@@ -239,8 +232,7 @@
           (when-let [first-org (first (:resp api-result))]
             (put! (get-in current-state [:comms :controls]) [:selected-add-projects-org {:login (:login first-org) :type :org}]))))
     (ajax/ajax :get "/api/v1/user/collaborator-accounts" :collaborators api-ch))
-  (set-page-title! "Add projects")
-  (analytics/track-signup))
+  (set-page-title! "Add projects"))
 
 
 (defmethod navigated-to :project-settings
@@ -267,8 +259,7 @@
 
 (defmethod post-navigated-to! :landing
   [history-imp navigation-point _ previous-state current-state]
-  (set-page-title! "Continuous Integration and Deployment")
-  (analytics/track-homepage))
+  (set-page-title! "Continuous Integration and Deployment"))
 
 (defmethod post-navigated-to! :project-settings
   [history-imp navigation-point {:keys [project-name subpage]} previous-state current-state]
@@ -365,7 +356,6 @@
                             api-ch
                             :context {:org-name org}))
       nil))
-  (analytics/track-org-settings org)
   (set-page-title! (str "Org settings - " org)))
 
 (defmethod navigated-to :logout
@@ -426,27 +416,6 @@
     (ajax/ajax :get "/api/v1/user/token" :tokens api-ch)
     (set-page-title! "Account")))
 
-(defmethod navigated-to :documentation
-  [history-imp navigation-point args state]
-  (let [new-state (navigated-default navigation-point args state)]
-    (if-not (get-in new-state state/docs-data-path)
-      (assoc-in new-state state/docs-data-path (doc-utils/find-all-docs))
-      new-state)))
-
-(defmethod post-navigated-to! :documentation
-  [history-imp navigation-point {:keys [subpage] :as args} previous-state current-state]
-  (post-default navigation-point args)
-  (let [doc (get-in current-state (conj state/docs-data-path subpage))]
-    (when (and subpage
-               (empty? (:children doc))
-               (not (:markdown doc)))
-      (let [api-ch (get-in current-state [:comms :api])
-            url (-> "/docs/%s.md"
-                    (gstring/format (name subpage))
-                    stefon/asset-path)]
-        (ajax/ajax :get url :doc-markdown api-ch :context {:subpage subpage} :format :raw)))))
-
 (defmethod post-navigated-to! :language-landing
   [history-imp navigation-point {:keys [language] :as args} previous-state current-state]
-  (post-default navigation-point args)
-  (analytics/track-page "View Language Landing" {:language language}))
+  (post-default navigation-point args))

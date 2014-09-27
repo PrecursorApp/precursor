@@ -7,9 +7,6 @@
             [dommy.core :as dommy]
             [goog.dom]
             [goog.dom.DomHelper]
-            [frontend.ab :as ab]
-            [frontend.analytics :as analytics]
-            [frontend.analytics.mixpanel :as mixpanel]
             [frontend.components.app :as app]
             [frontend.controllers.controls :as controls-con]
             [frontend.controllers.navigation :as nav-con]
@@ -64,17 +61,9 @@
   ws-ch
   (chan))
 
-(defn get-ab-tests [ab-test-definitions]
-  (let [overrides (some-> js/window
-                          (aget "renderContext")
-                          (aget "abOverrides")
-                          (utils/js->clj-kw))]
-    (ab/setup! ab-test-definitions :overrides overrides)))
-
 (defn app-state []
   (let [initial-state (state/initial-state)]
     (atom (assoc initial-state
-              :ab-tests (get-ab-tests (:ab-test-definitions initial-state))
               :current-user (-> js/window
                                 (aget "renderContext")
                                 (aget "current_user")
@@ -114,8 +103,7 @@
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state]
        (swap! state (partial controls-con/control-event container (first value) (second value)))
-       (controls-con/post-control-event! container (first value) (second value) previous-state @state)))
-   (analytics/track-message (first value))))
+       (controls-con/post-control-event! container (first value) (second value) previous-state @state)))))
 
 (defn nav-handler
   [value state history]
@@ -240,7 +228,6 @@
 
 (defn ^:export setup! []
   (apply-app-id-hack)
-  (mixpanel/set-existing-user)
   (let [state (app-state)
         top-level-node (find-top-level-node)
         history-imp (history/new-history-imp top-level-node)]
@@ -251,12 +238,9 @@
     (if-let [error-status (get-in @state [:render-context :status])]
       ;; error codes from the server get passed as :status in the render-context
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
-      (do (analytics/track-path (str "/" (.getToken history-imp)))
-          (sec/dispatch! (str "/" (.getToken history-imp)))))
+      (sec/dispatch! (str "/" (.getToken history-imp))))
     (when-let [user (:current-user @state)]
-      (subscribe-to-user-channel user (get-in @state [:comms :ws]))
-      (analytics/init-user (:login user)))
-    (analytics/track-invited-by (:invited-by utils/initial-query-map))
+      (subscribe-to-user-channel user (get-in @state [:comms :ws])))
     (when (env/development?)
       (try
         (setup-browser-repl (get-in @state [:render-context :browser_connected_repl_url]))
@@ -265,14 +249,6 @@
 
 (defn ^:export toggle-admin []
   (swap! debug-state update-in [:current-user :admin] not))
-
-(defn ^:export set-ab-test
-  "Debug function for setting ab-tests, call from the js console as frontend.core.set_ab_test('new_test', false)"
-  [test-name value]
-  (let [test-path [:ab-tests (keyword (name test-name))]]
-    (println "starting value for" test-name "was" (get-in @debug-state test-path))
-    (swap! debug-state assoc-in test-path value)
-    (println "value for" test-name "is now" (get-in @debug-state test-path))))
 
 (defn reinstall-om! []
   (install-om debug-state (find-app-container (find-top-level-node)) (:comms @debug-state)))

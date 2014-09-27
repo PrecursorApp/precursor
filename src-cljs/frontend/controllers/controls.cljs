@@ -1,8 +1,6 @@
 (ns frontend.controllers.controls
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [cljs.reader :as reader]
-            [frontend.analytics :as analytics]
-            [frontend.analytics.mixpanel :as mixpanel]
             [frontend.api :as api]
             [frontend.async :refer [put!]]
             [frontend.components.forms :refer [release-button!]]
@@ -106,10 +104,7 @@
   (update-in state state/slim-aside-path not))
 
 (defmethod post-control-event! :slim-aside-toggled
-  [target message {:keys [project-id]} previous-state current-state]
-  (if (get-in current-state state/slim-aside-path)
-    (analytics/track-expand-nav)
-    (analytics/track-collapse-nav)))
+  [target message {:keys [project-id]} previous-state current-state])
 
 (defmethod control-event :show-admin-panel-toggled
   [target message _ state]
@@ -344,8 +339,7 @@
      (let [api-result (<! (ajax/managed-ajax :post (gstring/format "/api/v1/project/%s/%s/%s/retry" org-name repo-name build-num)
                                              :params (when clear-cache? {:no-cache true})))]
        (put! api-ch [:retry-build (:status api-result) api-result])
-       (when (= :success (:status api-result))
-         (analytics/track-trigger-build (:resp api-result) :clear-cache? clear-cache?))))))
+       (when (= :success (:status api-result)))))))
 
 
 (defmethod post-control-event! :ssh-build-clicked
@@ -356,8 +350,7 @@
     (go
      (let [api-result (<! (ajax/managed-ajax :post (gstring/format "/api/v1/project/%s/%s/%s/ssh" org-name repo-name build-num)))]
        (put! api-ch [:retry-build (:status api-result) api-result])
-       (when (= :success (:status api-result))
-         (analytics/track-trigger-build (:resp api-result) :ssh? true))))))
+       (when (= :success (:status api-result)))))))
 
 
 (defmethod post-control-event! :followed-repo
@@ -367,8 +360,7 @@
                (gstring/format "/api/v1/project/%s/follow" (vcs-url/project-name (:vcs_url repo)))
                :follow-repo
                api-ch
-               :context repo))
-  (analytics/track-follow-repo))
+               :context repo)))
 
 
 (defmethod post-control-event! :followed-project
@@ -378,8 +370,7 @@
                (gstring/format "/api/v1/project/%s/follow" (vcs-url/project-name vcs-url))
                :follow-project
                api-ch
-               :context {:project-id project-id}))
-  (analytics/track-follow-project))
+               :context {:project-id project-id})))
 
 
 (defmethod post-control-event! :unfollowed-repo
@@ -389,8 +380,7 @@
                (gstring/format "/api/v1/project/%s/unfollow" (vcs-url/project-name (:vcs_url repo)))
                :unfollow-repo
                api-ch
-               :context repo))
-  (analytics/track-unfollow-repo))
+               :context repo)))
 
 
 (defmethod post-control-event! :unfollowed-project
@@ -400,8 +390,7 @@
                (gstring/format "/api/v1/project/%s/unfollow" (vcs-url/project-name vcs-url))
                :unfollow-project
                api-ch
-               :context {:project-id project-id}))
-  (analytics/track-unfollow-project))
+               :context {:project-id project-id})))
 
 
 ;; XXX: clean this up
@@ -675,18 +664,7 @@
              :invite-github-users
              (get-in current-state [:comms :api])
              :context {:project-name project-name}
-             :params invitees)
-  ;; TODO: move all of the tracking stuff into frontend.analytics and let it
-  ;;      keep track of which service to send things to
-  (mixpanel/track "Sent invitations" {:first_green_build true
-                                      :project project-name
-                                      :users (map :login invitees)})
-  (doseq [u invitees]
-    (mixpanel/track "Sent invitation" {:first_green_build true
-                                       :project project-name
-                                       :login (:login u)
-                                       :id (:id u)
-                                       :email (:email u)})))
+             :params invitees))
 
 (defmethod post-control-event! :report-build-clicked
   [target message {:keys [build-url]} previous-state current-state]
@@ -723,8 +701,7 @@
                               (gstring/format "/api/v1/organization/%s/extend-trial" org-name)
                               :params {:org-name org-name}))]
           (put! api-ch [:org-plan (:status api-result) (assoc api-result :context {:org-name org-name})])
-          (release-button! uuid (:status api-result))))
-    (analytics/track-extend-trial)))
+          (release-button! uuid (:status api-result))))))
 
 
 (defmethod post-control-event! :new-plan-clicked
@@ -793,8 +770,7 @@
                            (gstring/format "/api/v1/organization/%s/%s" org-name "plan")
                            :params {:containers containers}))]
        (put! api-ch [:update-plan (:status api-result) (assoc api-result :context {:org-name org-name})])
-       (release-button! uuid (:status api-result))))
-    (analytics/track-save-containers)))
+       (release-button! uuid (:status api-result))))))
 
 (defmethod post-control-event! :save-piggyback-orgs-clicked
   [target message {:keys [selected-piggyback-orgs org-name]} previous-state current-state]
@@ -806,8 +782,7 @@
                            (gstring/format "/api/v1/organization/%s/%s" org-name "plan")
                            :params {:piggieback-orgs selected-piggyback-orgs}))]
        (put! api-ch [:update-plan (:status api-result) (assoc api-result :context {:org-name org-name})])
-       (release-button! uuid (:status api-result))))
-    (analytics/track-save-orgs)))
+       (release-button! uuid (:status api-result))))))
 
 (defmethod post-control-event! :transfer-plan-clicked
   [target message {:keys [to org-name]} previous-state current-state]
@@ -963,16 +938,11 @@
   (assoc-in state state/selected-home-technology-tab-path tab))
 
 (defmethod post-control-event! :home-technology-tab-selected
-  [target message {:keys [tab]} previous-state current-state]
-  (mixpanel/track "Test Stack" {:tab (name tab)}))
+  [target message {:keys [tab]} previous-state current-state])
 
 (defmethod post-control-event! :track-external-link-clicked
   [target message {:keys [path event properties]} previous-state current-state]
-  (let [redirect #(js/window.location.replace path)]
-    (go (alt!
-         (mixpanel/managed-track event properties) ([v] (do (utils/mlog "tracked" v "... redirecting")
-                                                            (redirect)))
-         (async/timeout 1000) (redirect)))))
+  (let [redirect #(js/window.location.replace path)]))
 
 (defmethod control-event :language-testimonial-tab-selected
   [target message {:keys [index]} state]

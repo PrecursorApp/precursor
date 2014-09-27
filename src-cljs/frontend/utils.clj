@@ -1,6 +1,5 @@
 (ns frontend.utils
-  (:require [sablono.core :as html]
-            [frontend.analytics.rollbar :as rollbar]))
+  (:require [sablono.core :as html]))
 
 (defmacro inspect
   "prints the expression '<name> is <value>', and returns the value"
@@ -32,7 +31,6 @@
   `(try ~@action
         (catch :default e#
           (merror e#)
-          (rollbar/push e#)
           (when (:rethrow-errors? initial-query-map)
             (js* "debugger;")
             (throw e#)))))

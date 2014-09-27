@@ -1,7 +1,6 @@
 (ns frontend.history
   (:require [clojure.string :as string]
             [dommy.core :as dommy]
-            [frontend.analytics :as analytics]
             [frontend.utils :as utils :include-macros true]
             [goog.events :as events]
             [goog.history.Html5History :as html5-history]
@@ -39,8 +38,7 @@
 (defn setup-dispatcher! [history-imp]
   (events/listen history-imp goog.history.EventType.NAVIGATE
                  #(do (set-current-token! history-imp)
-                      (sec/dispatch! (str "/" (.-token %)))
-                      (analytics/track-path (str "/" (.-token %))))))
+                      (sec/dispatch! (str "/" (.-token %))))))
 
 (defn bootstrap-dispatcher!
   "We need lots of control over when we start listening to navigation events because
