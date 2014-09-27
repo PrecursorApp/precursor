@@ -12,14 +12,12 @@
             [frontend.controllers.navigation :as nav-con]
             [frontend.routes :as routes]
             [frontend.controllers.api :as api-con]
-            [frontend.controllers.ws :as ws-con]
             [frontend.controllers.errors :as errors-con]
             [frontend.env :as env]
             [frontend.instrumentation :refer [wrap-api-instrumentation]]
             [frontend.state :as state]
             [goog.events]
             [om.core :as om :include-macros true]
-            [frontend.pusher :as pusher]
             [frontend.history :as history]
             [frontend.browser-settings :as browser-settings]
             [frontend.utils :as utils :refer [mlog merror third]]
@@ -57,30 +55,17 @@
 (def navigation-ch
   (chan))
 
-(def ^{:doc "websocket channel"}
-  ws-ch
-  (chan))
-
 (defn app-state []
   (let [initial-state (state/initial-state)]
     (atom (assoc initial-state
-              :current-user (-> js/window
-                                (aget "renderContext")
-                                (aget "current_user")
-                                utils/js->clj-kw)
-              :render-context (-> js/window
-                                  (aget "renderContext")
-                                  utils/js->clj-kw)
               :comms {:controls  controls-ch
                       :api       api-ch
                       :errors    errors-ch
                       :nav       navigation-ch
-                      :ws        ws-ch
                       :controls-mult (async/mult controls-ch)
                       :api-mult (async/mult api-ch)
                       :errors-mult (async/mult errors-ch)
                       :nav-mult (async/mult navigation-ch)
-                      :ws-mult (async/mult ws-ch)
                       :mouse-move {:ch mouse-move-ch
                                    :mult (async/mult mouse-move-ch)}
                       :mouse-down {:ch mouse-down-ch
@@ -131,16 +116,6 @@
          (datetime/update-server-offset date-header))
        (api-con/post-api-event! container message status api-data previous-state @state)))))
 
-(defn ws-handler
-  [value state pusher]
-  (when (log-channels?)
-    (mlog "websocket Verbose: " (pr-str (first value)) (second value) (utils/third value)))
-  (swallow-errors
-   (binding [frontend.async/*uuid* (:uuid (meta value))]
-     (let [previous-state @state]
-       (swap! state (partial ws-con/ws-event pusher (first value) (second value)))
-       (ws-con/post-ws-event! pusher (first value) (second value) previous-state @state)))))
-
 (defn errors-handler
   [value state container]
   (when (log-channels?)
@@ -180,11 +155,9 @@
         container   (find-app-container top-level-node)
         uri-path    (.getPath utils/parsed-uri)
         history-path "/"
-        pusher-imp (pusher/new-pusher-instance)
         controls-tap (chan)
         nav-tap (chan)
         api-tap (chan)
-        ws-tap (chan)
         errors-tap (chan)]
     (routes/define-routes! state)
     (install-om state container comms)
@@ -192,7 +165,6 @@
     (async/tap (:controls-mult comms) controls-tap)
     (async/tap (:nav-mult comms) nav-tap)
     (async/tap (:api-mult comms) api-tap)
-    (async/tap (:ws-mult comms) ws-tap)
     (async/tap (:errors-mult comms) errors-tap)
 
     (go (while true
@@ -200,15 +172,10 @@
            controls-tap ([v] (controls-handler v state container))
            nav-tap ([v] (nav-handler v state history-imp))
            api-tap ([v] (api-handler v state container))
-           ws-tap ([v] (ws-handler v state pusher-imp))
            errors-tap ([v] (errors-handler v state container))
            ;; Capture the current history for playback in the absence
            ;; of a server to store it
            (async/timeout 10000) (do (print "TODO: print out history: ")))))))
-
-(defn subscribe-to-user-channel [user ws-ch]
-  (put! ws-ch [:subscribe {:channel-name (pusher/user-channel user)
-                           :messages [:refresh]}]))
 
 (defn setup-browser-repl [repl-url]
   (when repl-url
@@ -239,16 +206,11 @@
       ;; error codes from the server get passed as :status in the render-context
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
       (sec/dispatch! (str "/" (.getToken history-imp))))
-    (when-let [user (:current-user @state)]
-      (subscribe-to-user-channel user (get-in @state [:comms :ws])))
     (when (env/development?)
       (try
         (setup-browser-repl (get-in @state [:render-context :browser_connected_repl_url]))
         (catch js/error e
           (merror e))))))
-
-(defn ^:export toggle-admin []
-  (swap! debug-state update-in [:current-user :admin] not))
 
 (defn reinstall-om! []
   (install-om debug-state (find-app-container (find-top-level-node)) (:comms @debug-state)))

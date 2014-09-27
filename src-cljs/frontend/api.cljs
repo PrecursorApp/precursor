@@ -1,7 +1,5 @@
 (ns frontend.api
-  (:require [frontend.models.user :as user-model]
-            [frontend.models.build :as build-model]
-            [frontend.utils :as utils :include-macros true]
+  (:require [frontend.utils :as utils :include-macros true]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.vcs-url :as vcs-url]
             [goog.string :as gstring]
