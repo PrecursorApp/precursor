@@ -1,0 +1,57 @@
+.displayFlex {
+  display: -webkit-box; // Old Syntax
+  display:         box; // Old Syntax
+  display: -webkit-flex;
+  display:         flex;
+}
+.flex(@grow: 0, @shrink: 1, @basis: auto) {
+  -webkit-box-flex: @grow; // Old Syntax
+          box-flex: @grow; // Old Syntax
+  -webkit-flex: @grow @shrink @basis;
+          flex: @grow @shrink @basis;
+}
+.justify-content(@arg) {
+  -webkit-box-pack: ~`"@{arg}".replace("flex-", "").replace("space-between", "justify")`; // Old Syntax
+          box-pack: ~`"@{arg}".replace("flex-", "").replace("space-between", "justify")`; // Old Syntax
+  -webkit-justify-content: @arg;
+          justify-content: @arg;
+}
+.flex-direction(@arg) {
+  .reverse(@arg) when (@arg = row-reverse), (@arg = column-reverse) {
+    -webkit-box-direction: reverse;
+            box-direction: reverse;
+  }
+  .reverse(@arg);
+  -webkit-box-orient: ~`"@{arg}".replace("column", "vertical").replace("row", "horizontal").replace("-reverse", "")`; // Old Syntax
+          box-orient: ~`"@{arg}".replace("column", "vertical").replace("row", "horizontal").replace("-reverse", "")`; // Old Syntax
+  -webkit-flex-direction: @arg;
+          flex-direction: @arg;
+}
+.align-items(@arg) {
+  -webkit-box-align: ~`"@{arg}".replace("flex-", "")`; // Old Syntax
+          box-align: ~`"@{arg}".replace("flex-", "")`; // Old Syntax
+  -webkit-align-items: @arg;
+          align-items: @arg;
+}
+.flexy(...) {
+  .displayFlex();
+  .infer (@arguments) when (@arguments = row), (@arguments = row-reverse), (@arguments = column), (@arguments = column-reverse) {
+    .flex-direction(@arguments);
+  }
+  .infer(@arguments);
+}
+.flexy(@align) {
+  .displayFlex();
+  .align-items(@align);
+}
+.flexy(@align, @justify) {
+  .displayFlex();
+  .align-items(@align);
+  .justify-content(@justify);
+}
+.flexy(@align, @justify, @direction) {
+  .displayFlex();
+  .align-items(@align);
+  .justify-content(@justify);
+  .flex-direction(@direction);
+}

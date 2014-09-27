@@ -1,0 +1,3 @@
+- @category = "continuous_deployment"
+- @children = ['introduction_to_continuous_deployment', 'continuous_deployment_with_heroku', 'deploy_google_app_engine']
+- @title = "Continuous Deployment"

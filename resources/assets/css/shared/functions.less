@@ -1,0 +1,281 @@
+
+// old mixins
+// scheduled for demolition
+
+.border-radius(@radius: 5px) {
+   webkit-border-radius: @radius;
+   moz-border-radius: @radius;
+   border-radius: @radius;
+}
+
+.box-shadow(@arguments) {
+    -webkit-box-shadow: @arguments;
+    -moz-box-shadow: @arguments;
+    box-shadow: @arguments;
+}
+
+.text-shadow(@size1, @size2, @size3, @color){
+    -webkit-text-shadow: @size1 @size2 @size3 @color;
+    text-shadow:-@size1 @size2 @size3 @color;
+}
+
+.buttonDark(@buttonColor: #004b64) {
+  text-align: center;
+  margin-left: -4px;
+  border-radius: 4px;
+  background-size: 100%;
+  background-repeat: repeat-x;
+  background-color: @buttonColor;
+  background-image: linear-gradient(to bottom,
+                      fadeout(@white, 95%) 0%,
+                      fadeout(@black, 92%) 100%);
+  border: 1px solid darken(@buttonColor,8%);
+  box-shadow: 0 1px 1px fadeout(@black, 79%);
+  transition: all .3s linear;
+  display: inline-block;
+  padding: 0 1em;
+  white-space: nowrap;
+  line-height: 3em;
+  text-decoration: none;
+  color: darken(@white, 13%);
+  text-shadow: 0 -1px 1px darken(saturate(@buttonColor,8%),13%);
+  .box-sizing(border-box);
+  &:hover {
+    background-size: 300%;
+    background-color: darken(saturate(@buttonColor,3%),3%);
+    border-color: darken(saturate(@buttonColor,3%),3%);
+    box-shadow: 0 0 fadeout(@black, 100%);
+    transition: all .1s ease-in-out;
+    color: @white;
+    text-shadow: 0 0 rgba(0,0,0,0);
+  }
+  &:active {
+    background-size: 300%;
+    background-color: darken(saturate(@buttonColor,5%),8%);
+    border-color: darken(saturate(@buttonColor,3%),3%);
+    box-shadow: 0 2px 3px rgba(0,0,0,.34) inset;
+    transition: all .2s ease-in-out;
+    color: darken(@white, 5%);
+    text-shadow: 0 0 rgba(0,0,0,0);
+  }
+}
+
+// Misc.
+// odds and ends
+
+.tableDrawerBtn {
+  line-height: 3em;
+  color: @grayLight;
+  width: 8.5em;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-left: auto;
+  > i {
+    padding: 1em;
+    padding-left: 6.5em;
+    transition: .2s padding ease-in-out;
+  }
+  > span {
+    display: inline-block;
+    margin-left: -3px;
+    opacity: 0;
+    transition: .2s opacity ease-in-out;
+  }
+  &:hover {
+    color: @redLight;
+    > i {
+      padding-left: 2em;
+      padding-right: .25em;
+      transition-duration: .1s;
+    }
+    > span {
+      opacity: 1;
+      transition-duration: .3s;
+    }
+  }
+}
+.roundedOff {
+  border-radius: 100em; // big enough to ensure btn rounds completely
+}
+.stretchOutBkg {
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.icon_style(@color) {
+  i {
+    &.ico {
+      path {
+        fill: @color;
+      }
+    }
+  }
+}
+.icon_style(@color, @size) {
+  i {
+    &.ico {
+      svg {
+        width: @size;
+        height: @size;
+      }
+      path {
+        fill: @color;
+      }
+    }
+  }
+}
+.user-select(@arg) {
+  -webkit-user-select: @arg;
+     -moz-user-select: @arg;
+      -ms-user-select: @arg;
+          user-select: @arg;
+}
+
+// Outline
+// same effect as "border" w/o increasing object size
+
+.outlineEmboss(@color) {
+  border: none;
+  @topHighlightColor: lighten(@color,     5);
+  @outlineColor:       darken(@color, 11.75);
+  box-shadow:  0    1px @outlineColor inset,
+               0   -1px @outlineColor inset,
+               1px  0   @outlineColor inset,
+              -1px  0   @outlineColor inset,
+               0    2px @topHighlightColor inset;
+}
+.outlineFlat(@color: @grayBoxBorder) {
+  border: none;
+  box-shadow:  0    1px @color,
+               0   -1px @color,
+               1px  0   @color,
+              -1px  0   @color;
+}
+.outlineInside(@color) {
+  border: none;
+  box-shadow:  0    1px @color inset,
+               0   -1px @color inset,
+               1px  0   @color inset,
+              -1px  0   @color inset;
+}
+.outlinePress(@color) {
+  border: none;
+  @topShadowColor: darken(@color, 5);
+  box-shadow:  0    1px @color,
+               0   -1px @color,
+               1px  0   @color,
+              -1px  0   @color,
+               0    2px @topShadowColor inset;
+}
+.shadow_noboss () {
+  box-shadow: 0 1px transparent inset, 0 2px 1px transparent;
+}
+.shadow_emboss (@color) {
+  box-shadow: 0 1px lighten(@color, 5) inset, 0 2px 1px fade(@black, 21);
+}
+.shadow_deboss (@color) {
+  box-shadow: 0 -1px lighten(@color, 3) inset, 0 2px 1px fade(@black, 21) inset;
+}
+.underline_deboss () {
+  box-shadow: 0 1px fade(@white, 8), 0 -1px fade(@black, 55) inset;
+}
+
+// Gradients
+// all three accept infinite number of colors and stops
+
+.vertGradient(...) {
+  @joined: ~`"@{arguments}".slice(1,-1)`;
+  background-image: linear-gradient(to bottom, @joined);
+}
+.horiGradient(...) {
+  @joined: ~`"@{arguments}".slice(1,-1)`;
+  background-image: linear-gradient(to right, @joined);
+}
+.radiGradient(...) {
+  @joined: ~`"@{arguments}".slice(1,-1)`;
+  background-image: radial-gradient(ellipse at center, @joined);
+}
+
+.fontFace(@font, @weight, @style: normal){
+  @font-face{
+    font-family: @font;
+    src:url('../../webfonts/@{font}@{weight}.eot');
+    src:url('../../webfonts/@{font}@{weight}.eot?#iefix') format('embedded-opentype'),
+        url('../../webfonts/@{font}@{weight}.woff') format('woff'),
+        url('../../webfonts/@{font}@{weight}.ttf') format('truetype'),
+        url('../../webfonts/@{font}@{weight}.svg#icon') format('svg');
+    font-weight: @weight;
+    font-style: @style;
+  }
+}
+
+.tableLight {
+  @padding: 5px;
+  border-collapse: separate;
+  color: lighten(@grayLight,13%);
+  overflow: hidden;
+  border: 1px solid darken(@grayLightest, 5.7);
+  border-radius: 4px;
+  width: 100%;
+  th {
+    .box-sizing(border-box);
+    padding: 0 @padding;
+    font-weight: normal;
+    line-height: 2em;
+    font-size: 12px;
+    text-align: left;
+    white-space: nowrap;
+    &:first-child {
+      padding-left: 1em;
+    }
+    &.condense {
+      width: 70px;
+      text-align: center;
+    }
+  }
+  tr {
+    border-top: 1px solid @grayBorder;
+    &:hover td {
+      background-color: lighten(@grayBorder,8%);
+      box-shadow: 0 1px lighten(@grayBorder,3%) inset;
+      transition-duration: .1s;
+    }
+    &:active td {
+      background-color: lighten(@grayBorder,5%);
+      box-shadow: 0 1px 1px lighten(@grayBorder,1%) inset;
+      transition-duration: .1s;
+    }
+    &:first-child {
+      border: none;
+    }
+  }
+  td {
+    vertical-align: middle;
+    border-top: 1px solid lighten(@grayBorder,5%);
+    box-shadow: 0 1px @white inset;
+    text-align: left;
+    padding: 0;
+    transition-duration: .2s;
+    transition-property: background-color, box-shadow;
+    position: relative;
+    .box-sizing(border-box);
+    &:first-child a {
+      padding-left: 1em;
+    }
+  }
+  a {
+    display: block;
+    line-height: 1em;
+    min-height: 1em;
+    padding: @padding;
+  }
+}
+
+@import "mixins/transforms.less";
+@import "mixins/skins.less";
+@import "mixins/buttons.less";
+@import "mixins/animations.less";
+@import "mixins/flex.less";
+@import "mixins/forms.less";
+@import "mixins/tip.less";

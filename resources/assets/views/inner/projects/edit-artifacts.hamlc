@@ -1,0 +1,10 @@
+%h2 Build artifacts for
+  %span{data-bind: "text: project_name"}
+
+.doc
+  %p
+    Circle supports saving files from any build.
+    See
+    %a{ target: "_blank", href: "/docs/build-artifacts" }<
+      our build artifact documentation
+    to set it up.

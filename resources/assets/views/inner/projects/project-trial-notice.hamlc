@@ -1,0 +1,5 @@
+%div{data-bind: "with: $root.project"}
+  / ko if: show_trial_notice
+  .alert{data-bind: "css: {'alert-error': billing.trial_over()}"}
+    %span{data-bind: "html: trial_notice_text"}
+  / /ko

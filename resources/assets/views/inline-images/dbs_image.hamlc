@@ -1,0 +1,2 @@
+%img{alt: "Postgres, MySQL, MongoDB, Redis, Riak, Sqlite, Couchdb, Memcached, Casandra, Elastic Search, Apache Solr, Lucene, Sphinx, ThriftDB,  neo4j",
+     src: assetPath("/img/outer/home/tech-databases.png")}

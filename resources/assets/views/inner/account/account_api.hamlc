@@ -1,0 +1,35 @@
+#settings-api
+  .api-item
+    %h2 API Tokens
+
+    %p Create and revoke API tokens to access this account's details using our API.
+      Apps using these tokens can act as you, and have full read- and write-permissions!
+
+    %form
+      %input#api-token{data-bind: "value: tokenLabel",
+                       type: "text",
+                       name: "label",
+                       required:""}
+      %label{placeholder: "Token name"}
+      %input.btn{type: "submit",
+                 value: "Create",
+                 data-bind: "click: create_token",
+                 data-loading-text: "Creating...",
+                 data-success-text: "Created",
+                 data-failed-text: "Failed"}
+
+  .api-item{data-bind: "if: tokens().length"}
+    %table.table
+      %thead
+        %th Label
+        %th Token
+        %th Created
+        %th
+      %tbody{data-bind: "foreach: tokens"}
+        %td{data-bind: "text: label"}
+        %td
+          %span.code{data-bind: "text: token"}
+        %td{data-bind: "text: time"}
+        %td
+          %span{data-bind: "click: $root.current_user().delete_token"}
+            %a.revoke-token{href: '#', title: 'Revoke this token'} <i class="fa fa-times-circle"></i> revoke

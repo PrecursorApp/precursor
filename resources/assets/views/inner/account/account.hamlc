@@ -1,0 +1,25 @@
+#account-settings
+  .account-top
+    %ul.nav.nav-tabs
+      %li#notifications
+        %a{href: '/account/notifications'}
+          Notifications
+
+      %li#api
+        %a{href: '/account/api'}
+          API Tokens
+
+      %li#heroku
+        %a{href: '/account/heroku'}
+          Heroku Key
+
+      %li#plans{ data-bind:"ifnot: from_heroku" }
+        %a{href: '/account/plans'}
+          Plan Pricing
+  .row
+    != HAML['flashes']({})
+  .settings-item{data-bind: "with: current_user"}
+    .settings-item-inner
+      / ko if: VM.template_subpage
+      #subpage{data-bind: "haml: {template: VM.template_subpage, args: VM.template_args}"}
+      / /ko

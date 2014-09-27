@@ -1,0 +1,118 @@
+.breadcrumbs {
+  margin-left: 1em;
+  a {
+    &:not(:first-child) {
+      &:before {
+        content: '/';
+        color: @grayLight;
+        margin-right: 3px; // from trial and error
+      }
+    }
+    &:not(:hover) {
+      color: @grayLight;
+    }
+    &[disabled] {
+      pointer-events: none;
+    }
+    &:last-child{
+      pointer-events: none;
+    }
+  }
+}
+#follow-project-button {
+  .button_outline(@green, (@tile / 2));
+}
+.head-admin {
+  @color: fade(@white, 50);
+  background: @grayDarker;
+  color: @color;
+  &:not(.open) {
+    margin-top: -@tile;
+  }
+  &.expanded {
+    .admin-tools {
+      .metrics {
+        cursor: n-resize;
+      }
+    }
+  }
+  a {
+    color: @color;
+    &:hover {
+      color: @white;
+    }
+  }
+  [role="button"] {
+    cursor: pointer;
+  }
+  .admin-tools {
+    height: @tile;
+    line-height: 200%;
+    &.expanded {
+      height: auto;
+    }
+    .metrics {
+      .flexy(center);
+      .user-select(none);
+      padding: 0 1em;
+      cursor: s-resize;
+      font-size: @baseFontSize * 1.5;
+      color: @white;
+      strong {
+        font-size: @fontSizeSmall;
+        color: @color;
+        text-transform: uppercase;
+        margin: 0 1em 0 3px;
+      }
+    }
+  }
+  .environment {
+    .flexy(center, center);
+    position: fixed;
+    color: @white;
+    bottom: 0;
+    right: 120px;
+    width: @tile * 1.5;
+    height: 3em;
+    border-radius: 4px 4px 0 0;
+    z-index: 9001; // see intercom hack in shame.less
+    &.env-production  { background: @redLight;  }
+    &.env-staging     { background: @orange;    }
+    &.env-development { background: @blueLight; }
+    &.env-test        { background: @green;     }
+  }
+  .options {
+    margin-left: 1em;
+    a {
+      &:not(:first-child) {
+        &:before {
+          content: '/';
+          color: @color;
+          margin-right: 3px;
+        }
+      }
+    }
+  }
+  .admin-stats {
+    margin: 0 1em 1em;
+    table {
+      width: 100%;
+    }
+    th {
+      text-align: left;
+      &.number {
+        text-align: right;
+      }
+    }
+    td.number {
+      text-align: right;
+    }
+    tbody {
+      tr {
+        &:hover {
+          background: fadeout(@color, 34);
+        }
+      }
+    }
+  }
+}

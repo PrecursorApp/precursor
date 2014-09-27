@@ -1,0 +1,122 @@
+
+// Skin Assets
+// small visual details, used collectively to make large visual skins
+
+.skinAsset_cleanBox(@color: @whiten) {
+  background: @color;
+  border-radius: 4px;
+  padding: 2em;
+  .outlineEmboss(@color);
+}
+.skinAsset_shadowY(@color: @whiten) {
+  @middle: darken(@color,   9.5);
+  @border: darken(@color, 11.75);
+  position: relative;
+  &:before,
+  &:after {
+    content: "";
+    position: absolute;
+    height: 1px;
+    bottom: 0px;
+    width: 50%;
+  }
+  &:after {
+    right: -1px;
+    box-shadow: -1px 1px @middle,
+                -2px 2px @middle,
+                -3px 3px @middle,
+                -4px 4px @border;
+  }
+  &:before {
+    left: -1px;
+    box-shadow: 1px 1px @middle,
+                2px 2px @middle,
+                3px 3px @middle,
+                4px 4px @border;
+  }
+}
+
+.skinAsset_tMain {
+  font-family: @sansFontFamily;
+  font-size: @baseFontSize;
+  border-collapse: separate;
+  background: @appBackgroundColor;
+  overflow: hidden;
+  border: 1px solid darken(@grayBorder,1%);
+  border-radius: 4px;
+  width: 100%;
+  margin: 0;
+}
+.skinAsset_tHead {
+  padding: 0 0 0 .5em;
+  line-height: 2em;
+  text-align: left;
+  white-space: nowrap;
+  font-size: @fontSizeSmall;
+  font-weight: normal;
+  color: @grayLight;
+  &:first-child {
+    padding-left: 1em;
+  }
+}
+.skinAsset_tRow {
+  border-top: 1px solid @grayBorder;
+  &:hover td {
+    background-color: lighten(@grayBorder,8%);
+    box-shadow: 0 1px lighten(@grayBorder,3%) inset;
+    transition-duration: .1s;
+  }
+  &:active td {
+    background-color: lighten(@grayBorder,5%);
+    box-shadow: 0 1px 1px lighten(@grayBorder,1%) inset;
+    transition-duration: .1s;
+  }
+  &:first-child {
+    border: none;
+  }
+}
+.skinAsset_tData {
+  vertical-align: top;
+  border-top: 1px solid lighten(@grayBorder,5%);
+  box-shadow: 0 1px @white inset;
+  text-align: left;
+  padding: 0;
+  transition-duration: .2s;
+  transition-property: background-color, box-shadow;
+  position: relative;
+  .box-sizing(border-box);
+  line-height: 1.5em;
+  padding: .5em 0 .5em .5em;
+  &:first-child {
+    padding-left: 1em;
+  }
+  &:last-child {
+    text-align: right;
+    padding-right: 1em;
+    a {
+      color: @redLight;
+      &:hover {
+        color: @redLighter;
+      }
+    }
+  }
+  button {
+    font-size: 1em;
+    font-weight: 300;
+    line-height: 1.5em;
+  }
+}
+
+// Complete Skins
+// modular visual elements assembled from various skin assets
+
+.skin_cleanBoxShadow(@color: @whiten) {
+  .skinAsset_cleanBox(@color);
+  .skinAsset_shadowY(@color);
+}
+.skin_table {
+  .skinAsset_tMain();
+  th { .skinAsset_tHead(); }
+  tr { .skinAsset_tRow();  }
+  td { .skinAsset_tData(); }
+}

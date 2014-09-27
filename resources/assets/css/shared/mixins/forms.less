@@ -1,0 +1,83 @@
+.smart_label(@height, @radius, @margin: 1em, @border: 1px) {
+  @borders: (@border * 2);
+  .box-sizing(border-box);
+  outline: none;
+  height: ~"calc(@{height} + @{borders})"; // Our version of LESS can't calculate this without CSS '
+  width: 100%;
+  margin: 0 0 @margin;
+  padding: @margin;
+  border: @border solid @grayLighter;
+  background: @appBackgroundColor;
+  border-radius: @radius;
+  resize: none;
+  box-shadow: none !important; // BS RESET = "!important"
+  &[required] {
+    &.disabled {
+      pointer-events: none;
+      background: @grayLightest;
+      + label[placeholder]:before {
+        background-image: linear-gradient(to bottom, @whiten, @grayLightest);
+      }
+    }
+    &:focus {
+      border-color: @blueLighter !important; // BS RESET = "!important"
+      + label {
+        &[placeholder] {
+          &:before {
+            color: @blueLighter;
+          }
+        }
+      }
+    }
+    &:focus,
+    &:valid {
+      + label {
+        &[placeholder] {
+          &:before {
+            transition-duration: .2s;
+            -webkit-transform: translate(0, (@margin * -1.5)) scale(0.9, 0.9);
+                    transform: translate(0, (@margin * -1.5)) scale(0.9, 0.9);
+          }
+        }
+      }
+    }
+    &:invalid {
+      + label {
+        &[placeholder] {
+          &[alt] {
+            &:before {
+              content: attr(alt);
+            }
+          }
+          &[itemprop] {
+            &:before {
+              content: attr(itemprop) " " attr(placeholder);
+            }
+          }
+        }
+      }
+    }
+    + label {
+      &[placeholder] {
+        display: block;
+        pointer-events: none;
+        line-height: @margin;
+        margin-top: ~"calc(-@{height} - @{borders})";
+        margin-bottom: ~"calc((@{height} - @{margin}) + @{borders})";
+        &:before {
+          content: attr(placeholder);
+          display: inline-block;
+          margin: 0 ~"calc(@{margin} + @{borders})";
+          padding: 0 2px;
+          color: @grayLight;
+          white-space: nowrap;
+          transition: .3s ease-in-out;
+          background-image: linear-gradient(to bottom, @appBackgroundColor, @appBackgroundColor);
+          background-size: 100% 5px;
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+      }
+    }
+  }
+}

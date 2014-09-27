@@ -1,0 +1,34 @@
+.row-fluid
+  .span8
+    %legend Invoices
+    %dl.dl-horizontal
+      %dt
+        Account balance
+        %i.fa.fa-question-circle{title: "Account balance",
+                              data-content: "<p>This is the credit you have with Circle. If your credit is positive, then we will use it before charging your credit card.</p><p>Contact us if you'd like us to send you a refund for the balance.</p><p>This amount may take a few hours to refresh.</p>",
+                              data-bind: "popover: {animation: false, trigger: 'hover', html: true}"}
+
+      %dd
+        %span{data-bind: "accountBalance: account_balance"}
+    %table.table-striped.table.table-bordered
+      %theader
+        %tr
+          %th Invoice date
+          %th Time period covered
+          %th Total
+          %th
+            Actions
+            %i.fa.fa-question-circle{title: 'Resend an invoice to the billing email above.',
+                                  data-bind: 'tooltip: {animation: false}'}
+      %tbody{data-bind: "foreach: invoices"}
+        %tr
+          %td{data-bind: "text: invoice_date()"}
+          %td{data-bind: "text: time_period()"}
+          %td{data-bind: "text: total()"}
+          %td
+            %span
+              %button.btn.btn-mini.btn-primary{data-bind: 'click: resend',
+                                               data-loading-text: 'Sending...',
+                                               data-success-text: 'Sent',
+                                               data-failed-text: 'Failed'}
+                Resend

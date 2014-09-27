@@ -1,0 +1,29 @@
+.rotate (@arg) {
+  @deg: ~`"@{arg}".replace("deg", "")`;
+  -webkit-transform: rotate(~"@{deg}deg");
+          transform: rotate(~"@{deg}deg");
+}
+.rotate3d (@x, @y, @z, @deg) {
+  -webkit-transform: rotate3d(@x, @y, @z, @deg);
+          transform: rotate3d(@x, @y, @z, @deg);
+}
+.scale (@x, @y: 0) {
+  -webkit-transform: scale(@x, @y);
+          transform: scale(@x, @y);
+}
+.scale3d (@x, @y: 0, @z: 0) {
+  -webkit-transform: scale3d(@x, @y, @z);
+          transform: scale3d(@x, @y, @z);
+}
+.translate (@x, @y: 0) {
+  -webkit-transform: translate(@x, @y);
+          transform: translate(@x, @y);
+}
+.translate3d (@x, @y: 0, @z: 0) {
+  -webkit-transform: translate3d(@x, @y, @z);
+          transform: translate3d(@x, @y, @z);
+}
+.transform-origin(...) {
+  -webkit-transform-origin: @arguments;
+          transform-origin: @arguments;
+}

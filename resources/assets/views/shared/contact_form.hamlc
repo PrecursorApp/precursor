@@ -1,0 +1,24 @@
+%form.contact-us{data-bind: "with: new CI.outer.ContactUsForm($element)"}
+
+  %label{for: "name"} Full name
+  %input{name: "name",
+         placeholder: "Your Name",
+         type: "text",
+         data-bind: "value: name"}
+
+  %label{for: "email"} Email address
+  %input{name: "email",
+         placeholder: "Your email address",
+         type: "email",
+         data-bind: "value: email"}
+
+  %label{for: "message"} Message
+  %textarea{name: "message",
+            placeholder: "Tell us what you're thinking",
+            data-bind: "value: message"}
+
+  .notice{data-bind: "with: notice"}
+    %div{data-bind: "text: message, attr: {class: type}"}
+
+
+  %button.btn-primary{data-bind: "click: submitAjaxForm"} Send

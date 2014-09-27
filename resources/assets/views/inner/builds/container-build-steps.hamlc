@@ -1,0 +1,65 @@
+%div
+  -# The sliding is handled by scrolling #container_parent left and right
+  %div#container_parent{data-bind: "foreach: containers
+                                    , on_window_event: {event: 'resize', callback: realign_container_viewport}
+                                    , event: {scroll: handle_browser_scroll}"}
+    -# The style: binding sets the "left" property of the container to index * 100%
+    -# The attr: binding sets a known id attribute for each container
+    -# The css: binding sets the current_container class on the selected
+      container. CSS takes care of twiddling the position property between
+      absolute and relative
+    %div.container-view{data-bind: "foreach: actions
+                                    , attr: {id: container_id}
+                                    , style: position_style
+                                    , css: {current_container: $data === $parent.current_container()}"}
+
+      .build-output
+        %div{data-bind: "if: $root.build().different_type($data)"}
+          .type-divider
+            %span{data-bind: "text: type"}
+        .action_header{data-bind: "css: action_header_style"}
+          .ah_wrapper
+            .header{data-bind: "css: action_header_button_style, click: toggle_minimize"}
+              .button{data-bind: "css: action_header_button_style"}
+                %span{data-bind: "if: has_content"}
+                  %i.fa.fa-chevron-down
+              .command{data-bind: "css: action_header_style"}
+                %span.command-text
+                  %span{data-bind: "if: $data.bash_command() == $data.name()"}
+                    \$
+                  %span{data-bind: "text: name, attr: {title: bash_command}"}
+                  %span{data-bind: "if: parallel()"}
+                    != surround '(', ')', ->
+                      %span{data-bind: "text: index"}<>
+                %span.time
+                  %span{data-bind: "text: duration, attr: {title: start_to_end_string}"}<>
+                  %span{data-bind: "if: timedout"}&nbsp;(timed out)
+                %span.action-source
+                  %span.action-source-inner{data-bind: "text: sourceText, attr: {title: sourceTitle}"}
+
+
+            .detail-wrapper{data-bind: "if: has_content"}
+              .detail{data-bind: "css: action_log_style, visible: !minimize()"}
+                / ko if: retrieving_output
+                .loading-spinner
+                  != HAML.spinner({})
+                / /ko
+
+                %div#action-log-messages{data-bind: "ifnot: retrieving_output"}
+                  %i.fa.fa-arrow-circle-o-down.pull-right.click-to-scroll{data-bind: "scrollOnClick: {selector: '.detail-wrapper', position: 'bottom'}"}
+
+                  != HAML.messages()
+
+                  %span{data-bind: "if: bash_command"}
+                    %span.pull-right.exit-code{data-bind: "if: exit_code() != null" }
+                      Exit code:
+                      %span{data-bind: "text: exit_code"}
+
+                    %pre.bash-command{data-bind: "text: bash_command", title: "The full bash command used to run this setup"}
+                  Output:
+
+                  %pre.output.solarized{style: "white-space: normal;"}
+                    %span{data-bind: "foreach: final_out"}
+                      -# These are escaped in the action_log class
+                      %span.pre{data-bind: "html: $data"}
+                    %span.pre{data-bind: "html: trailing_out"}

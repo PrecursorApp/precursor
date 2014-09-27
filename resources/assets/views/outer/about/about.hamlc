@@ -1,0 +1,45 @@
+.page.about
+  .banner
+    .container
+      %h1 About us
+      %h3 CircleCI was founded in 2011 with the mission of giving every developer state of the art automated testing and continuous integration tools.
+
+  .container.content
+    %h2 Meet the CircleCI Team
+
+    - for member of @team
+      - user = @team[member]
+      .member.row{ class: "#{if member%2 != 0 then 'right' else 'left'}" }
+        - if user.img_path
+          %img{alt: user.name,
+               height: "150",
+               src: assetPath("#{user.img_path}"),
+               width: "150",
+               class: "#{if member%2 != 0 then 'pull-right' else 'pull-left'}"}
+        - else
+          != HAML.about_placeholder({size: 150})
+        .span9
+          %h3= user.name
+          %h4= user.role
+          %ul.clearfix
+            %li
+              %a.fa.fa-envelope{href: "mailto:#{user.email}"}
+            %li
+              %a.fa.fa-github{href: "https://github.com/#{user.github}"}
+            %li
+              %a.fa.fa-twitter{href: "https://twitter.com/#{user.twitter}"}
+          - if user.bio
+            - for p in user.bio
+              %p
+                = p
+          - else
+            != HAML.about_lorem({name: user.name})
+
+    #jobs-cta
+      %p
+        We're looking for amazing people to join us on this journey.
+        Want to join the team?
+      %a.btn.btn-primary.btn-large{href: "/jobs"}
+        CircleCI is hiring!
+
+!= HAML.contact()

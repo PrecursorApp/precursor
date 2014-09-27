@@ -1,0 +1,45 @@
+.row-fluid
+  .span8
+    %legend Transfer plan to a different organization
+
+    .alert.alert-warning
+      %strong Warning!
+      %p
+        If you're not an admin on the
+        %span{data-bind: "if: transfer_org_name"}
+          %strong{data-bind: "text: transfer_org_name"}
+          organization,
+        %span{data-bind: "ifnot: transfer_org_name"}
+          organization you transfer to,
+        then you won't be able to transfer the plan back or edit the plan.
+      %p
+        The transferred plan will be extended to include the
+        %span{data-bind: "text: org_name"}
+        organization, so your builds will continue to run.
+        Only admins of the
+        %span{data-bind: "if: transfer_org_name"}
+          %strong{data-bind: "text: transfer_org_name"}
+          org
+        %span{data-bind: "ifnot: transfer_org_name"}
+          the organization you transfer to
+        will be able to edit the plan.
+
+
+    %div{data-bind: "if: loadingOrganizations"}
+      Loading organization list...
+
+    .row-fluid
+      .span12
+        %div{data-bind: "ifnot: loadingOrganizations"}
+          %form
+            .controls{data-bind: "foreach: transferable_orgs"}
+              .control
+                %label.radio{data-bind: "attr: {name: $data}"}
+                  %input{type: "radio", data-bind: "value: $data, checked: $parent.transfer_org_name"}
+                    %span{data-bind: "text: $data"}
+
+            .form-actions.span6
+              %button.btn.btn-large.btn-danger{data-bind: "click: transferPlan, enable: transfer_org_name(), text: transfer_plan_button_text()",
+                                               type: "submit",
+                                               data-loading-text: "Tranferring...",
+                                               data-success-text: "Transferred"}

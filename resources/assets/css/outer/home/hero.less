@@ -1,0 +1,124 @@
+#hero {
+  @subheadColor: #747474;
+  padding-bottom: 30px;
+
+  h1 {
+    // font-family: 'Source Sans Pro',sans-serif; // A/B Testing (app.css.less)
+    font-size: 82px;
+    font-weight: 600;
+    line-height: 92px;
+    text-align: center;
+    em {
+      color: @circleBlueLight;
+    }
+  }
+
+  h3 {
+    text-align: center;
+    font-size: 22px;
+    color: @subheadColor;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 200;
+    line-height: 26px;
+  }
+
+  .how {
+    margin-top: 5em;
+    .span4 {
+      text-align: center;
+    }
+    @animation_duration : 800ms;
+    @animation_delay : 800ms;
+    @cascade_delay : 50ms;
+    .stories-procedure {
+      .step {
+        .direction,
+        .pin {
+          animation: flash @animation_duration ; 
+          -webkit-animation: flash @animation_duration; 
+        }
+        .track {
+          animation: flash-track @animation_duration; 
+          -webkit-animation: flash-track @animation_duration; 
+        }
+      }
+      .step:nth-of-type(1) {
+        .direction,
+        .pin,
+        .track {
+          animation-delay: @animation_delay + (@cascade_delay * 1); 
+          -webkit-animation-delay: @animation_delay + (@cascade_delay * 1); 
+        }
+      }
+      .step:nth-of-type(2) {
+        .direction,
+        .pin,
+        .track {
+          animation-delay: @animation_delay + (@cascade_delay * 2); 
+          -webkit-animation-delay: @animation_delay + (@cascade_delay * 2); 
+        }
+      }
+      .step:nth-of-type(3) {
+        .direction,
+        .pin,
+        .track {
+          animation: none; 
+          -webkit-animation: none; 
+        }
+      }
+      .step:nth-of-type(4) {
+        .direction,
+        .pin,
+        .track {
+          animation-delay: @animation_delay + (@cascade_delay * 3); 
+          -webkit-animation-delay: @animation_delay + (@cascade_delay * 3); 
+        }
+      }
+      .step:nth-of-type(5) {
+        .direction,
+        .pin,
+        .track {
+          animation-delay: @animation_delay + (@cascade_delay * 4);
+          -webkit-animation-delay: @animation_delay + (@cascade_delay * 4);
+        }
+      }
+    }
+    @keyframes flash {
+      0% { stroke-width: 0; }
+      50% { stroke-width: 10; }
+      100% { stroke-width: 0; }
+    }
+    @-webkit-keyframes flash {
+      0% { stroke-width: 0; }
+      50% { stroke-width: 10; }
+      100% { stroke-width: 0; }
+    }
+    @keyframes flash-track {
+      0% { stroke-width: 2; }
+      50% { stroke-width: 10; }
+      100% { stroke-width: 2; }
+    }
+    @-webkit-keyframes flash-track {
+      0% { stroke-width: 2; }
+      50% { stroke-width: 10; }
+      100% { stroke-width: 2; }
+    }
+  }
+
+  .hero-unit-cta {
+    margin-top: 5em;
+    padding-top: 40px;
+    border-top: dotted 1px @circleFont;
+
+    .ctabox {
+      text-align: center;
+      p {
+        color: @circleBlueLight;
+      }
+      .btn {
+        margin: 10px 0;
+      }
+    }
+  }
+}

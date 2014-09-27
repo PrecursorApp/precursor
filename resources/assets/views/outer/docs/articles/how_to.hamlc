@@ -1,0 +1,3 @@
+- @category = "how_to"
+- @children = ['installing_custom_software', 'background_process', 'code_coverage', 'docker', 'external_resources', 'dont_run', 'skip_a_build', 'nightly_builds', 'test_with_solr', 'android', 'browser_testing_with_sauce_labs', 'continuous_deployment_with_heroku', 'deploy_google_app_engine']
+- @title = "How-To"

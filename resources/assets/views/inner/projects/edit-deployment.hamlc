@@ -1,0 +1,10 @@
+%h2 Other deployments for
+  %span{data-bind: "text: project_name"}
+
+.doc
+  %p
+    Circle supports deploying to any server, using custom commands.
+    See
+    %a{href: "https://circleci.com/docs/configuration#deployment", target: "_blank"}<
+      our deployment documentation
+    to set it up.

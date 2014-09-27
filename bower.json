@@ -1,0 +1,27 @@
+{
+  "name": "circle",
+  "version": "0.0.0",
+  "dependencies": {
+    "bootstrap": "git://github.com/dannykingme/bootstrap.git#bb557105b70736b87a7cb748b64619375b8ab0a6",
+    "moment": "2.1.0",
+    "knockout": "2.2.0",
+    "jquery.cookie": "1.2.0",
+    "jquery": "1.8.3",
+    "jquery-waypoints": "2.0.3",
+    "modernizr": "2.6.1",
+    "sammy": "0.7.2",
+    "jquery-placeholder": "2.0.7",
+    "font-awesome": "3.0.2",
+    "uri.js": "1.10.2",
+    "retina.js": "~1.0.1",
+    "underscore": "1.5.1",
+    "css-element-queries": "git://github.com/marcj/css-element-queries.git#6bf1d4a38791b1306b68afe7aca1adf5d7e0b675",
+    "react": "0.9.0",
+    "viewport-units-buggyfill": "0.3.1",
+    "marked": "0.3.2"
+  },
+  "devDependencies": {
+    "jquery-mockjax": "1.5.3"
+  },
+  "_comment": "apparently jquery 1.9 breaks knockout 2.2.2 - beware when upgrading"
+}

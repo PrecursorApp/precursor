@@ -1,0 +1,2 @@
+.row-fluid.plans{data-bind: "with: billing"}
+  != HAML.plan_containers()

@@ -1,0 +1,56 @@
+- @describe_flag = (name, title, blurb) =>
+  / ko if: #{JSON.stringify name} in feature_flags()
+  %li
+    %h4
+      != title
+    %p
+      != blurb()
+    %form
+      %ul
+        %li
+          %input.radio{type: "checkbox", data-bind: "checked: feature_flag(#{JSON.stringify name})"} On
+        %li
+          %input.radio{type: "checkbox", data-bind: "checked: feature_flag(#{JSON.stringify name}, true)"} Off
+  / /ko
+
+.project-settings-block
+  %h2
+    Experimental Settings
+  %p
+    We've got a few settings you can play with, to enable things we're working
+    on. We'd love to
+    != succeed '.', () ->
+      %a{data-bind: "click: $root.raiseIntercomDialog"} know what you think about them
+
+    These <em>are</em> works-in-progress, though, and there may be some
+    sharp edges. Be careful!
+  %ul
+    != @describe_flag "build_GH1157_container_oriented_ui", |
+      "Container-Oriented Build Page", ->                   |
+      We're looking at optimizing our build page for builds with large
+      numbers of containers. With this option set, the build actions
+      are separated into tabbed subpages corresponding to each container.
+
+      Note that this will only apply to builds run while this setting is
+      enabled -- it won't change old build pages.
+
+      %div
+        %img{width: 600, src: assetPath('(asset-path "img/container-oriented.png")')}
+
+    != @describe_flag "junit", "JUnit Support", ->
+      We've been experimenting with better ways to display and manage
+      test result data, especially for large test suites. This adds flags
+      to some of our inferred commands, and collects data supplied by JUnit and
+      JUnit-compatabile test runners. It only works for a handful of test
+      runners for now, and the data is only available through our API, though!
+
+    != @describe_flag "set-github-status", "GitHub Status Updates", ->
+      By default, we update the status of every pushed commit with
+      GitHub's status API. If you'd like to turn this off (if, for example,
+      this is conflicting with another service), you can do so below.
+
+    != @describe_flag "oss", "Free and Open Source", ->
+      Be part of our F/OSS beta! Organizations now have a free container
+      reserved for F/OSS projects; enabling this will allow this project's
+      builds to use it and let others see your builds, both through the
+      web UI and the API.

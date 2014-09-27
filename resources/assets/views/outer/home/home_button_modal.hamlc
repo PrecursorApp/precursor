@@ -1,0 +1,5 @@
+%button.btn.btn-primary.bold-btn{"title" => "Sign up with Github", "data-toggle" => "modal", "data-target" => "#githubModal", "data-bind" => "track_link: {event: 'Fire GH Modal', properties: {'source': 'hero'}}", "href" => "#"}
+ %i.fa.fa-github-alt
+ Sign up with
+ %strong.white Github
+ 

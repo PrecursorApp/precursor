@@ -1,0 +1,2 @@
+%img{alt:"RabbitMQ, beanstalkd, resque",
+     src: assetPath("/img/outer/home/tech-queues.png")}

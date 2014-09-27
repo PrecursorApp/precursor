@@ -1,0 +1,14 @@
+#inviteForm.invite-form.modal.hide.fade{"aria-hidden" => "true", "aria-labelledby" => "inviteFormLabel", :role => "dialog", :tabindex => "-1"}
+  .modal-header
+    %button.close{"aria-hidden" => "true", "data-dismiss" => "modal", :type => "button"} &times;
+    %h3#inviteFormLabel Invite Your Colleagues
+  .modal-body
+    %p
+      %strong
+        To invite your friends, and colleagues to Circle, just send them this link:
+    %p
+      %input{type: "text", value: "https://circleci.com/?join=dont-test-alone"}
+    %p
+      We use GitHub permissions for every user, so if your teammates have access to your project on GitHub, they will automatically have access to the same project on Circle.
+  .modal-footer
+    %button.btn.btn-primary{"aria-hidden" => "true", "data-dismiss" => "modal"} Got it

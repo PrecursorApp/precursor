@@ -1,0 +1,65 @@
+%table.recent-builds-table
+
+  %thead
+    %tr
+      %th Build
+      %th Revision
+      <!-- ko if: VM.current_page().show_branch -->
+        %th Branch
+      <!-- /ko -->
+      %th Author
+      %th Log
+      <!-- ko if: VM.current_page().show_queued -->
+        %th Queued
+      <!-- /ko -->
+      %th.condense Started at
+      %th.condense Length
+      %th.condense Status
+      - if @actions
+        %th.condense Actions
+
+  %tbody{data-bind: "foreach: {data: #{@builds}}"}
+    %tr{data-bind: "css: {dont_build: dont_build}"}
+      %td
+        %a{data-bind: "attr: {href: url, title: description(#{@mention_project})}, text: description(#{@mention_project})"}
+      %td
+        %a{data-bind: "attr: {href: url, title: github_revision}, text: github_revision"}
+      <!-- ko if: VM.current_page().show_branch -->
+        %td
+          %a{data-bind: "attr: {href: url, title: branch_in_words}, text: trimmed_branch_in_words"}
+      <!-- /ko -->
+      %td.recent-author
+        %a{data-bind: "attr: {href: url, title: author}, text: author"}
+      %td.recent-log
+        %a{data-bind: "attr: {href: url, title: body}, text: subject"}
+      <!-- ko if: VM.current_page().show_queued -->
+        %td.recent-time
+          %a{data-bind: "attr: {href: url}, duration: queued_time"}
+      <!-- /ko -->
+      <!-- ko ifnot: status() == 'not_run' -->
+        %td.recent-time
+          %a{data-bind: "attr: {href: url, title: start_time_stamp}, text: pretty_start_time"}
+        %td.recent-time
+          %a{data-bind: "attr: {href: url, title: duration}, text: duration"}
+      <!-- /ko -->
+      <!-- ko if: status() == 'not_run' -->
+        %td{colspan: 2}
+      <!-- /ko -->
+      %td.recent-status-badge
+        -# content gets inserted into this anchor via CSS in dashboard.less with its 'title' attribute
+        %a{data-bind: "attr: { href: url, title: status_words }, css: style"}
+
+      - if @actions
+        %td.build_actions{data-bind: "if: can_cancel"}
+          %a{data-bind: "click: cancel_build", role: "button"}
+            Cancel
+
+<!-- ko if: VM.current_page().can_paginate -->
+.recent-builds-pager{data-bind: "with: current_page()"}
+  %a{data-bind: "click: load_newer_page, css: newer_page_button_style"}
+    %i.fa.fa-long-arrow-left
+    %span Previous page
+  %a{data-bind: "click: load_older_page, css: older_page_button_style"}
+    %span Next page
+    %i.fa.fa-long-arrow-right
+<!-- /ko -->

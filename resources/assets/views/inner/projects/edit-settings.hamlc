@@ -1,0 +1,25 @@
+.project-settings-block
+  %h2 How to configure
+    %span{data-bind: "text: project_name"}
+  %ul.overview-options
+    %li.overview-item
+      %h4 Option 1
+      %p Do nothing! Circle infers many settings automatically. Works great for Ruby, Python, NodeJS, Java and Clojure. However, if it needs tweaks or doesn't work, see below.
+    %li.overview-item
+      %h4 Option 2
+      %p Override inferred settings and add new test commands <a href="#setup">through the web UI</a>. This works great for prototyping changes.
+    %li.overview-item
+      %h4 Option 3
+      %p Override all settings via a <a href="/docs/configuration">circle.yml file</a> in your repo. Very powerful.
+
+  -#%p
+    %button.btn.btn-primary.btn-large.span6#reset{ data-loading-text: "Resetting" }
+      Delete your commands and revert to inferred
+
+  -#%p
+    %button.btn.btn-primary.btn-large#trigger{ data-loading-text: "triggering" }
+      Trigger a build
+
+  %p{data-bind: "if: false"}
+    %button.btn.btn-primary.btn-large#trigger_inferred{ data-loading-text: "triggering"} }
+      Trigger an inferred build

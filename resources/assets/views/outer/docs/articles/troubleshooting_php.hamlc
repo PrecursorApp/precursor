@@ -1,0 +1,5 @@
+- @children = ['php_memcached_compile_error', 'composer_api_rate_limit']
+- @title = "Troubleshooting PHP"
+- @short_title = "PHP"
+
+!= HAML['article_list'](@)

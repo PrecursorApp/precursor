@@ -1,0 +1,58 @@
+#integrations.docker
+
+  .section-container
+
+    %section.integrations-hero-wrapper
+
+      %article.integrations-hero-title
+
+        %h1 CircleCI is Supporting Docker!
+        /%h3  better control on test environment... bringing your production environment into test env (i.e. circle)
+
+      %article.integrations-hero-units
+
+        .integrations-hero-unit
+
+          != HAML.circle_logo({})
+
+          /%h3 
+          %p CircleCI makes modern continous integration and deployment easy.
+
+        .integrations-hero-unit
+
+          != HAML.docker_logo({})
+
+          /%h3 
+          %p Docker makes it easy to build, run, and ship applications anywhere.  
+
+      %h3.message Together they make it easy to test and ship your entire cloud in one place. 
+  .section-container
+    %section.integrations-hero-wrapper
+      .docker-features
+        %h4 Here are some ideas we're working on, but we would love to hear your thoughts too!
+        .feature-container
+          .feature
+            %h3 Continous Delivery for your Docker Images
+            %p CircleCI will automate the building of your docker images, test that they work, and Continuously Deliver them to the Docker registry.
+          .feature
+            %h3 Dev-production parity
+            %p Run your application's testing and Continuous Integration directly on your own Docker image. Never have a test fail because the test environment is different from your development environment.
+          .feature
+            %h3 Specify your own image on CircleCI
+            %p CircleCI will run your tests against a default image, tuned to be maximally compatible with all of our customers. Optionally, you can run your tests against your own image, tuned for your application.
+  .section-container
+    %section.integrations-hero-wrapper
+      %p.center-text Let us know how you would like to use CircleCI with Docker to move to top of the beta queue!
+      .docker-cta
+        %h3 Sign Up For Beta
+        %form{data-bind: "with: new CI.outer.MarketoForms($element, 1036)"}
+          %input{type: "text", data-bind: "value: Email", required: "false", name: "Email"}
+          %label{placeholder: "Email", alt: "Email (required)"}
+          %textarea{data-bind: "value: DockerUse", required: "false", name: "docker_use__c"}
+          %label{placeholder: "How do you want to use it?", alt: "How do you want to use it?"}
+          .notice{data-bind: "with: notice"}
+            %span{data-bind: "text: message, attr: {class: type}"}
+          .submit
+            %input{type: "submit", data-bind: "click: submitDockerForm", value: "Submit"}
+
+  

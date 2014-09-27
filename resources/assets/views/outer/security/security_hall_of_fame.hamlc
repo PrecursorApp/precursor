@@ -1,0 +1,72 @@
+.page.security
+  .banner
+    .container
+      %h1 Security Researcher Hall of Fame
+
+  .container.content
+    %section
+      %p
+        We would like to thank the following people for responsibly disclosing security issues to us.
+
+    %ul
+      %li
+        %a{:href => "https://twitter.com/exploitprotocol"}
+          Aditya Agrawal
+        (2014-04-07)
+
+      %li
+        %a{:href => "http://kevinmccarthy.org/"}
+          Kevin McCarthy
+        (2014-04-07)
+
+      %li
+        %a{:href => "https://twitter.com/gazly"}
+          J.m.Gazzaly
+        (2014-03-27)
+
+      %li
+        %a{:href => "https://twitter.com/ashishbdhaduk"}
+          Ashishkumar B. Dhaduk
+        (2014-03-26)
+
+      %li
+        %a{:href => "http://www.facebook.com/mtk911"}
+          Muhammad Talha Khan
+        (2014-03-26)
+
+      %li
+        %a{:href => "https://www.randomstorm.com/"}
+          Scott Glossop
+        (2014-03-26)
+
+      %li
+        %a{:href => "https://twitter.com/pranavvenkats"}
+          S.Venkatesh
+        (2014-03-26)
+
+      %li
+        %a{:href => "https://twitter.com/NiteshShilpkar"}
+          Nitesh Kumar Shilpkar
+        (2014-03-25)
+
+      %li
+        %a{:href => "https://twitter.com/OsandaMalith"}
+          Osanda Malith Jayathissa
+        (2014-03-21)
+
+      %li
+        %a{:href => "https://www.facebook.com/junior.ns1de"}
+          Rodolfo Godalle, Jr.
+        (2014-03-15)
+
+      %li
+        %a{:href => "https://twitter.com/Silent_Screamr"}
+          Jayvardhan Singh
+        (2014-02-03)
+
+    %p
+      To be included on this list, <a
+      href="/security#disclosure">responsibly disclose</a> a security
+      report to use, and provide adequate time to fix the issue. We'll
+      link to your professional website, and send you a CircleCI
+      t-shirt.

@@ -1,0 +1,4 @@
+.btn-group.select-project-parallelization{data-bind: "foreach: parallelism_options"}
+  %span
+    %button.btn.disabled{data-bind: "css: { disabled: $data > $root.project().paid_parallelism(), 'btn-info': $data == $root.project().parallel() }"}
+      %span{data-bind: "text: $data"}

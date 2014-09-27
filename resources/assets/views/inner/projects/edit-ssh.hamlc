@@ -1,0 +1,27 @@
+.sshkeys-page
+  %h2 SSH keys for
+    %span{data-bind: "text: project_name"}
+  .sshkeys-inner
+    %p Add keys to the build VMs that you need to deploy to your machines. If the hostname field is blank, the key will be used for all hosts.
+    %form
+      %input#hostname{type: "text", required: ""}
+      %label{placeholder: "Hostname"}
+      %input#publicKey{type: "text", required: ""}
+      %label{placeholder: "Public Key"}
+      %textarea#privateKey{required: ""}
+      %label{placeholder: "Private Key"}
+      %input#submit.btn{type: "submit", data-bind: "click: save_ssh_key", value: "Submit", data-loading-text: "Saving..", data-success-text: "Saved", data-failed-text: "Failed"}
+    %table{data-bind: "if: ssh_keys().length"}
+      %thead
+        %tr
+          %th Hostname
+          %th Fingerprint
+          %th
+      %tbody{data-bind: "foreach: ssh_keys"}
+        %tr
+          %td{data-bind: "text: hostname"}
+          %td{data-bind: "text: fingerprint"}
+          %td
+            %a{data-bind: "click: $root.project().delete_ssh_key", title: "Remove this Key?"}
+              %i.fa.fa-times-circle
+              %span Remove

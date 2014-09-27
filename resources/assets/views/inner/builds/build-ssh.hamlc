@@ -1,0 +1,17 @@
+%section.build-ssh
+  .build-ssh-title
+    %strong SSH Info
+    %i.fa.fa-question-circle{data-bind: "popover: {placement: 'right', title: 'SSH', content: 'You can SSH into this build. Use the same SSH public key that you use for GitHub. SSH boxes will stay up for 30 minutes. This build takes up one of your concurrent builds, so cancel it when you are done.'}", role: "button"}
+  .build-ssh-list
+    %dl.dl-horizontal{data-bind: "foreach: node"}
+      %dt
+        %span{data-bind: "if: $parent.node().length > 1"}
+          %span{data-bind: "text: $index"}
+      %dd{data-bind: "css: { connected: $data.ssh_enabled }"
+        %span.hi-daniel{data-bind: "text: $parent.ssh_connection_string($data)"}
+        %span.loading-spinner{data-bind: "ifnot: $data.ssh_enabled"}
+          != HAML.spinner({})
+  .build-ssh-doc
+    Debugging Selenium browser tests?
+    != succeed ".", ->
+      %a{href: "/docs/browser-debugging#interact-with-the-browser-over-vnc"} Read our doc on interacting with the browser over VNC

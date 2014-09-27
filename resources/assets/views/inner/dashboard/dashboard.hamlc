@@ -1,0 +1,32 @@
+-# hold off on visual change, work in progress
+-# .dashboard-messages
+
+!= HAML.flashes({})
+
+#dashboard
+
+  %section
+
+    / ko ifnot: dashboard_ready
+    .loading-spinner
+      != HAML.spinner({})
+    / /ko
+
+    <!-- ko if: dashboard_ready -->
+
+      / ko if: show_add_projects()
+      %h2 You don't have any projects in CircleCI!
+      %p Why don't you add a repository or two on the <a href="/add-projects">Manage Projects page</a>?
+      / /ko
+
+      -# to be moved into dashboard messages above
+      / ko if: show_build_table()
+      != HAML.project_trial_notice()
+      != HAML.project_enable_notice()
+      / /ko
+
+      / ko if: show_build_table()
+      != HAML.recent_builds_table({builds: "builds", mention_project: true})
+      / /ko
+
+    <!-- /ko -->

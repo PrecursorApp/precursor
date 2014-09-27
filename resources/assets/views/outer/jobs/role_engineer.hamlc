@@ -1,0 +1,28 @@
+#engineer
+  %h3
+    %span Engineering roles
+
+  %p We're looking for great engineers: whether you've 10 years of experience shipping products, or are new to the industry with talent to burn and a fire in your belly, we need you to have amazing coding chops.
+
+  %h5 We'd love to see
+  %ul
+    %li People who have used functional languages in anger (Clojure, Haskell, Scheme, Lisp, Clojure, Scala, OCaml, etc).
+    %li If you've built or scaled large distributed systems.
+    %li People who love trying new, cutting-edge things.
+    %li If you've worked on significant projects that weren't in Java, JavaScript, Ruby or PHP.
+
+
+  %h5 With some of these skills
+  %ul
+    %li Good (possibly informal) knowledge of algorithmic design and CS theory (CS degree not required).
+    %li Clojure experts.
+    %li Experience designing elegant APIs.
+    %li Broad knowledge of our customers' important languages; Python, Node, JS, Ruby, Java, and PHP.
+    %li An understanding of scalable cloud and web services.
+    %li Dev-ops experience, including machine configuration and deployment on AWS.
+    %li Low-level Linux hacking knowledge (including file-systems, kernels, databases, LXC/Docker, etc).
+    %li Experience building fat JS apps, stateful HTML5 apps, and data visualizations.
+    %li Good product and user experience sensibilities.
+
+  %a{href: "/jobs?role=engineering#apply", role: "button"}
+    %span Apply for Engineering roles

@@ -1,0 +1,216 @@
+- @title = "Manual build setup"
+- @lastUpdated = "April 29, 2013"
+
+%p
+  CircleCI is designed to set up most tests automatically because we infer your settings from your code.
+  However, if you have an unusual setup or work in a framework that has no idiomatic way to set up your project, you'll need to set it up manually.
+  Fortunately, this is a pretty straightforward procedure.
+  If you follow this guide, you should be running your tests in 20 minutes or less.
+
+%h2#standard Standard projects not inferred
+
+%p
+  Before we get into the details of a manual setup, here is a quick fix to a common problem first-timers can experience.
+  If you have a standard project and received a "no test" status, it is probably because the project is in a subdirectory.
+  This is easy to fix: add a file named <code>circle.yml</code> on the project repo pointing to build directory and
+  CircleCI will run your tests from that subdirectory.  For example, to set the build directory to <code>api</code>
+  sub-directory, you can use the following <code>circle.yml</code>
+
+%pre
+  %code<>
+    :preserves
+      general:
+        build_dir: api
+
+%h2#yml The circle.yml file
+%p
+  From here, we'll assume that you're manually setting up your tests.
+
+%p
+  The first thing to do is to add an empty
+  %code circle.yml
+  file to the root directory of your repository.
+  We recommend adding this on a branch the first time so you don't piss off your colleagues.
+
+%p
+  We have provided a
+  %a{ href: "/docs/configuration"}
+    full reference for the
+    %code circle.yml
+    file
+  but you won't need that for now
+  &mdash;
+  we'll guide you through a simple setup and you can check out the comprehensive docs later.
+
+
+%h2#overview Anatomy of testing a web app
+
+%p
+  For testing purposes, most web applications require five to six standard phases that are run sequentially:
+%ul
+  %li Configure the test machine
+  %li Check out your code
+  %li Set up your test dependencies
+  %li Set up your test databases
+  %li Run your tests
+  %li (Optionally) deploy your code
+
+%p
+  (Note that some of these phases may not apply if you are testing a project that is not a web app.)
+
+%p
+  Each phase consists of a list of bash commands.
+  Normally, these commands are inferred by CircleCI, but if you are reading this, you will likely be manually adding some commands to the
+  %code circle.yml
+  file.
+  You can modify which&mdash;and in what order&mdash;commands are run by adding
+  %code override
+  ,
+  %code pre
+  , and/or
+  %code post
+  when needed.
+  Take a look at the aforementioned
+  %a{ href: "/docs/configuration"}<
+    reference guide
+  should you want to learn more details.
+
+%p
+  Failing commands (those with a non-zero exit code) will cause the whole build to fail, and you'll receive a notification.
+
+
+%h2#machine Configuring your test machine
+
+%p
+  For the most part, there is nothing that you have to add to configure the test machine.
+  We have already installed the most common libraries, languages, browsers, and databases that you'll need.
+  See
+  %a{ href: "/docs/environment" } the CircleCI environment
+  for a comprehensive list of what we have installed.
+  If you need anything else installed, please
+  != HAML.contact_us({succeed: ""})
+  and CircleCI support should be able to accommodate you.
+  Be aware that for security reasons, we don't provide root access.
+
+
+
+%p
+  The
+  %a{href: "/docs/configuration#machine"}<
+    machine section
+  of the
+  %code circle.yml
+  file
+  is the place where you can tweak common settings, such as timezone, language version used, and
+  %code /etc/hosts
+  contents.
+
+
+%h2#checkout Checking out code
+
+%p
+  CircleCI will check out your code from your GitHub repository.
+  Currently, we don't check out submodules.
+  If your project requires that, add the appropriate commands.
+
+%pre
+  %code.no-highlight<>
+    :preserve
+      checkout:
+        post:
+          \- git submodule sync
+          \- git submodule update --init
+
+%p
+  If you have any files in your repositories that need to be moved, now is a good time.
+  Here is an example of how to do that.
+
+%pre
+  %code.no-highlight<>
+    :preserve
+      checkout:
+        post:
+          \- cp ./ci-server/config.yml ./app-server/config.yml
+
+%h2#dependencies Setting up your dependencies
+
+%p
+  In all likelihood, you'll have a list of libraries and dependencies that your app requires.
+  CircleCI automatically detects Ruby's Gemfile, Python's requirements.txt, Clojure's project.clj, and Node's package.json, and then runs the appropriate commands to install the dependencies.
+  CircleCI also supports PHP's Composer.
+  When needed, you can modify which dependencies-related commands are run using
+  %code override
+  ,
+  %code pre
+  , and/or
+  %code post
+  here.
+
+
+%pre
+  %code.no-highlight<>
+    :preserve
+      dependencies:
+        post:
+          \- python ./install-packages
+
+%h2#databases Setting up your test databases
+
+%p
+  We have already installed
+  %a{ href: "/docs/environment#databases"} most databases that you'll need
+  on our virtual machine.
+
+%p
+  At this point, you'll want to create your database, load it with your schema, and (possibly) preload it with data.
+  If you use MySQL or Postgres, you can use the
+  %code circle_test
+  database and the
+  %code ubuntu
+  user rather than creating the database yourself.
+  No password is required for any database.
+
+%p
+  %pre
+    %code.no-highlight<>
+      :preserve
+        database:
+          override:
+            - mysql -u ubuntu circle_test < my-database-setup.sql
+
+%h2#tests Running your tests
+%p
+  Now that everything is prepared, add your test commands to the
+  %code circle.yml
+  file so that you can run your tests.
+
+%pre
+  %code.no-highlight<>
+    :preserve
+      test:
+        override:
+          \- php ./test-suite/run.php --unit-tests
+
+%p
+  Depending on the structure of your tests, you may need to start your application server first.
+
+%pre
+  %code.no-highlight<>
+    :preserve
+      test:
+        override:
+          \- php ./app/run-server.php --daemon
+          \- php ./test-suite/run.php --unit-tests
+
+%p
+  You should be good to go. Happy testing!
+
+
+%h2#next Next steps
+
+%p
+  If your tests fail and you need to fix something, CircleCI has a
+  %a{href: "/docs/troubleshooting"} list of common problems and their solutions
+  that can help you debug many issues.
+  You might also like to know that we allow you to SSH in during your builds.
+  This lets you check out how CircleCI works and facilitates nimble and efficient debugging.

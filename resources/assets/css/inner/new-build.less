@@ -1,0 +1,237 @@
+#container_parent {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  margin-left: 8.5%;
+  margin-right: 8.5%;
+}
+
+// Used by om frontend to hide scrollers it needs for find in firefox
+#container_scroll_parent {
+  // hides scrollbar on container_parent
+  overflow: hidden;
+  // TODO: move this into the main #container_parent when om is fully shipped
+  #container_parent {
+    overflow-y: hidden;
+    overflow-x: scroll;
+    // hides scrollbar
+    margin-bottom: -25px;
+    padding-bottom: 25px;
+  }
+}
+
+.containers {
+  &.fixed {
+    position: fixed;
+    top: 0px;
+    width: 100%;
+    z-index: 10;
+  }
+}
+
+#topbar {
+/* I really want the topbar fixed on the build page, but it interferes with
+ * other pages
+  position: fixed;
+  width: 100%;
+  z-index: 1;
+*/
+}
+
+
+/* This .class { ... }
+ *      .class:not(.other_class) { position:absolute }
+ *      .class.other_class { position:relative }
+ * trick for setting the panel position attributes is inspired by
+ * http://tympanus.net/codrops/2013/09/05/sliding-horizontal-layout/
+ */
+.container-view {
+  width: 100%;
+  top: 0px;
+}
+
+// TODO: remove the :not(.current_container) when om is fully deployed
+.container-view:not(.current_container) {
+  position: absolute;
+}
+
+// TODO: remove om is fully deployed
+.container-view.current_container {
+  position: relative;
+}
+
+// Creates the selectors that will keep the proper container in view
+// Generates #container_parent.selected_2 { #container_2 { position: relative; }}
+.selectedX (@index) when (@index > -1) {
+  #container_parent.selected_@{index} {
+    #container_@{index} {
+      position: relative;
+    }
+  }
+  .selectedX(@index - 1);
+}
+.selectedX (-1) {}
+
+@max_containers: 100;
+.selectedX (@max_containers);
+
+/* Set up a :after pseudo-element to reflect the build status */
+.container-list {
+  .flexy();
+  margin: 0;
+  list-style: none;
+  margin: 0 8.5%;
+}
+.container-selector {
+  .flex(1, 1);
+  .flexy(column);
+  .align-items(center);
+  position: relative;
+  color: @grayLight;
+  padding: 1ex 0;
+  border: 1px solid @grayBoxBorder;
+  border-left-width: 0;
+  &:hover {
+    &.waiting {
+      color: @blueLight;
+      border: 1px solid @blueLight;
+    }
+    &.running {
+      color: @blueLight;
+      border: 1px solid @blueLight;
+    }
+    &.success {
+      color: @green;
+      border: 1px solid @green;
+    }
+    &.failed,
+    &.canceled {
+      color: @redLight;
+      border: 1px solid @redLight;
+      background: none;
+      svg {
+        path {
+          stroke: @redLight;
+        }
+      }
+    }
+    color: @grayDark;
+    border: 1px solid @grayDark;
+  }
+  &.waiting {
+    svg {
+      path {
+        stroke: @blueLight;
+        stroke-linecap: round;
+        stroke-width: 20;
+      }
+    }
+  }
+  &.running {
+    svg {
+      path {
+        stroke: @blueLight;
+      }
+    }
+  }
+  &.success {
+    svg {
+      path {
+        stroke: @green;
+      }
+    }
+  }
+  &.failed,
+  &.canceled {
+    color: @white;
+    background: @redLight;
+    border-color: @redLight;
+    + .failed,
+    + .canceled {
+      box-shadow: -1px 0 @red;
+    }
+    svg {
+      path {
+        stroke: @white;
+      }
+    }
+  }
+  &.active {
+    &:before,
+    &:after {
+      content: " ";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      height: 0;
+      width: 0;
+      border: solid transparent;
+      pointer-events: none;
+    }
+    &:before {
+      border-top-color: @grayLighter;
+      border-width: (@baseFontSize / 2) + 1;
+      margin-left: (-@baseFontSize / 2) - 1;
+    }
+    &:after {
+      border-top-color: @appBackgroundColor;
+      border-width: (@baseFontSize / 2);
+      margin-left: (-@baseFontSize / 2);
+    }
+    &.waiting {
+      &:hover {
+        &:before {
+          border-top-color: @blueLight;
+        }
+      }
+    }
+    &.running {
+      &:hover {
+        &:before {
+          border-top-color: @blueLight;
+        }
+      }
+    }
+    &.success {
+      &:hover {
+        &:before {
+          border-top-color: @green;
+        }
+      }
+    }
+    &.failed,
+    &.canceled {
+      &:before,
+      &:after {
+        border-top-color: @redLight;
+      }
+      &:hover {
+        &:after {
+          border-top-color: @appBackgroundColor;
+        }
+      }
+    }
+  }
+  &:first-child {
+    border-left-width: 1px;
+    border-radius: 4px 0 0 4px;
+  }
+  &:not(:first-child) {
+    &:hover {
+      margin-left: -1px;
+    }
+  }
+  &:last-child {
+    border-radius: 0 4px 4px 0;
+  }
+  svg {
+    path {
+      stroke: @grayDark;
+      stroke-width: 8;
+      &:nth-child(2) {
+        stroke-linecap: round;
+        stroke-width: 20;
+      }
+    }
+  }
+}

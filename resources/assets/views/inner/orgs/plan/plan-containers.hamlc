@@ -1,0 +1,70 @@
+#edit-plan
+  %legend
+    Our pricing is flexible and scales with you. Add as many containers as you want for
+    != succeed "/month", ->
+      %span{data-bind: "money: chosenPlan().container_cost"}
+    each.
+  .main-content
+    .left-section
+      %div.plan
+        %h2 Your Current Plan
+        %p
+          %strong $
+            %span{data-bind: "text: oldTotal"}<>
+          \/ month
+        %ul
+          %li Includes 
+            %span{data-bind: "text: current_containers"}
+            containers 
+          %li
+            Additional containers for
+            != succeed "/each", ->
+              %span{data-bind: "money: chosenPlan().container_cost"}
+      
+          %li
+            %strong No other limits
+
+    .right-section
+
+      %h3
+        New total: $
+        %span{data-bind: "text: total"}<>
+
+      %h4
+        Old total: $
+        %span{data-bind: "text: oldTotal"}<>
+        %span.grandfather{data-bind: "if: special_price_p"}
+          (grandfathered
+          %i.fa.fa-question-circle{title: "We've changed plan prices since you signed up, so you're grandfathered in at the old price!",
+                                data-bind: "tooltip: {animation: false}"}
+          %span<>
+            )
+      %form
+        /%select{data-bind: "value: containers, options: chosenPlan().container_options, optionsText: containers_option_text"}
+        .container-picker
+          %p You can add or remove containers below; more containers means faster builds and lower queue times. 
+          .container-slider
+            %span{data-bind: "text: chosenPlan().free_containers"}
+            %input#rangevalue{data-bind: "value: containers, attr: {max: max_containers, min: chosenPlan().free_containers}",
+                              type: "range",}
+            %span{data-bind: "text: max_containers"}
+          .container-input
+            %input{data-bind: "value: containers, valueUpdate: 'afterkeydown'",
+                              type: "text"}
+
+        %fieldset
+          %button.btn.btn-primary.btn-large.center{data-bind: "click: saveContainers",
+                                            type: "submit",
+                                            data-loading-text: "Saving...",
+                                            data-success-text: "Saved"}
+            Update plan
+          / ko if: total() > oldTotal()
+          %span.help-block
+            We'll charge your card today, for the prorated difference between your new and old plans.
+          / /ko
+
+          / ko if: total() < oldTotal()
+          %span.help-block
+            We'll credit your account, for the prorated difference between your new and old plans.
+          / /ko
+  != HAML.pricing_faq()

@@ -1,0 +1,25 @@
+#hero
+  .container
+    %h1
+      Ship better code, faster
+    / ko if: VM.ab().top_copy_2()
+    %h3 CircleCI is Continuous Integration and Delivery for modern web development.
+    / /ko
+    / ko ifnot: VM.ab().top_copy_2()
+    %h3 CircleCI gives web developers powerful Continuous Integration and Deployment with easy setup and maintenance.
+    / /ko
+    .row-fluid.how
+      .span4
+        %img{height: "150", src: '(data-uri "img/outer/home/octocat.png" 150 150)', width: "150"}
+        %h4 Push your new code to GitHub
+
+      .span4
+        %img{height: "150", src: '(data-uri "img/outer/home/test-output.png" 150 150)', width: "150"}
+        %h4 Your tests run on the CircleCI platform
+
+      .span4
+        %img{height: "150", src: '(data-uri "img/outer/home/deploy.png" 150 150)', width: "150"}
+        %h4 Deploy green builds to your servers
+    .row-fluid
+      .hero-unit-cta
+        != HAML.home_cta({first: true, source: "hero"})

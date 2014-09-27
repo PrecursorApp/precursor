@@ -1,0 +1,44 @@
+%section.customers
+  .container
+    .row.span12
+    .center
+      .were-number-one
+        %h2
+          CircleCI is the #1 hosted continuous deployment provider.
+          But don't take our word for it, read what our awesome customers have to say.
+
+    != HAML.customers_trust()
+
+  .container
+    .row
+      .well.customer.span4
+        %p
+          CircleCI has significantly improved our testing infrastructure. Tests finish faster. We add new projects rapidly and continuous integration happens from the get-go.
+          %strong I'm a huge fan.
+        != HAML.john_collison_image()
+        %h4 John Collison
+        %p
+          Founder at Stripe
+      .well.customer.span4
+        %p
+          CircleCI lets us be more agile and ship product faster. 
+          %strong We can focus on delivering value to our customers, 
+          not maintaining Continuous Integration and Delivery infrastructure.
+        %img{src: assetPath('(asset-path "img/outer/stories/john.jpg")')}
+        %h4 John Duff
+        %p
+          Director of Engineering at Shopify
+      .well.customer.span4
+        %p
+          CircleCI was super simple to set up and we started reaping the benefits immediately. It lets us ship code quickly and confidently.
+          %strong CircleCI's customer support is outstanding.
+          We get quick, thorough answers to all our questions.
+        != HAML.aaron_suggs_image()
+        %h4 Aaron Suggs
+        %p
+          Operations Engineer at Kickstarter
+  %a.customer-story-link.center-text{href: "stories/shopify"} Read how Shopify grew with Circle
+
+
+
+  

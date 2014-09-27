@@ -1,0 +1,127 @@
+.recent-time {
+  white-space: nowrap;
+  font-family: @codeFontFamily;
+  font-size: @codeFontSize;
+  a {
+    text-align: center;
+  }
+}
+.recent-author {
+  white-space: nowrap;
+}
+.recent-log {
+  word-break: break-all;
+}
+.recent-builds-table {
+  width: 100%;
+  tbody {
+    tr {
+      border-bottom-style: dotted;
+      cursor: pointer;
+      &:hover {
+        a {
+          color: @blueLight;
+        }
+      }
+    }
+  }
+  tr {
+    border-bottom: 1px solid @grayBoxBorder;
+  }
+  th {
+    font-weight: normal;
+    color: @blacken;
+    white-space: nowrap;
+    text-align: left;
+    padding: 2em .5em 2em;
+    height: (@baseFontSize - 1);      //
+    line-height: (@baseFontSize - 1); // minus 1px to compensate for border height
+    &:first-child {
+      padding-left: @baseFontSize;
+    }
+    &.condense {
+      .box-sizing(border-box);
+      width: 70px;
+      text-align: center;
+    }
+  }
+  td {
+    padding: 0;
+    &:first-child {
+      a {
+        padding-left: @baseFontSize;
+      }
+    }
+  }
+  a {
+    .box-sizing(content-box);
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    color: @gray;
+    padding: (@baseFontSize / 2);
+  }
+}
+.recent-builds-pager {
+  .displayFlex();
+  .justify-content(space-between);
+  margin: 1em;
+  a.disabled {
+    color: @gray;
+    cursor: default;
+    pointer-events: none;
+  }
+}
+.recent-status-badge {
+  a {
+    position: relative;
+    vertical-align: middle;
+    max-width: ~"calc(100% - @{baseFontSize})";
+    &:before {
+      @half_height: (@baseLineHeight / 2);
+      display: block;
+      position: absolute;
+      content: attr(title);
+      left: (@fontSizeSmall / 2);
+      top: ~"calc(50% - @{half_height})";
+      width: (@tile - @fontSizeSmall);
+      text-align: center;
+      background: @grayLight;
+      border-radius: @half_height;
+      color: @white;
+      font-weight: bold;
+      font-size: @fontSizeSmall;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+    &.pass:before {background: @green}
+    &.fail:before {background: @redLight}
+    &.busy:before {background: @blueLight}
+    &.stop:before {background: @orange}
+  }
+  span {
+    display: block;
+    color: @white;
+    font-weight: bold;
+    text-transform: capitalize;
+    text-shadow: none;
+    text-align: center;
+    white-space: nowrap;
+    border-radius: 25px;
+    box-sizing: border-box;
+    line-height: 1.75em;
+    width: 100%;
+  }
+  + .build_actions {
+    vertical-align: middle;
+    a {
+      .subtleButton(@redLight);
+      margin: 0 1ex;
+      float: none;
+      text-align: center;
+      line-height: ~"calc(1.75em - 2px)";
+      min-height: ~"calc(1.75em - 2px)";
+      padding: 0 1ex;
+    }
+  }
+}

@@ -1,0 +1,74 @@
+#build-log-container
+  %div{data-bind: "ifnot: build_has_been_loaded"}
+    != HAML['flashes']({})
+    .loading-spinner
+      != HAML.spinner({})
+
+  %div{data-bind: "if: build_has_been_loaded"}
+
+    %div{data-bind: "with: build"}
+
+      != HAML.build_head({})
+
+      != HAML.flashes({})
+
+      .row-fluid
+        .offset1.span10
+          %div{data-bind: "if: messages().length"}
+            != HAML['messages']()
+          %div{data-bind: "ifnot: messages().length"}
+            != HAML['report_error']({build: true})
+
+          %div{data-bind: "if: $root.project() && $root.project().show_build_page_trial_notice"}
+            != HAML.project_trial_notice()
+
+          %div{data-bind: "if: $root.project() && $root.project().show_enable_project_notice"}
+            != HAML.project_enable_notice()
+
+          .row-fluid{data-bind: "if: $root.show_follow_project_button"}
+            .offset1.span10
+              .alert.alert-success
+                %button.btn.btn-primary{data-bind: "click: VM.project().follow",
+                                        data-loading-text: "Following..."}
+                  Follow
+                  %span{data-bind: "text: VM.project().project_name()"}
+                to add
+                %span{data-bind: "text: VM.project().project_name()"}
+                to your sidebar and get build notifications.
+          / ko if: display_first_green_build_invitations
+          != HAML.build_invite()
+          / /ko
+
+          != HAML.config_diagnostics()
+
+      / ko if: feature_enabled("build_GH1157_container_oriented_ui") && containers().length > 1
+      %div.containers.pagination.pagination-centered
+        %ul.container-list{data-bind: "foreach: containers"}
+          %li{data-bind: "css: { active: $data === $parent.current_container() }"}
+            %a.container-selector{href:"#", data-bind: "click: $parent.select_container
+                                                       , css: status_style"}
+              / ko text: name
+              / /ko
+              %i.fa.fa-times{data-bind: "visible: status_style().failed"}
+              %i.fa.fa-check{data-bind: "visible: status_style().success"}
+              %i.fa.fa-exclamation{data-bind: "visible: status_style().canceled"}
+              %i.fa.fa-clock-o{data-bind: "visible: status_style().running || status_style().waiting"}
+      -# This is necessary to break this up from the top of the action list.
+      -# The Om frontend has an 'infrastructure' seperator there; there's a bug in
+      -# this version that prevents that from appearing.
+      %br
+      / /ko
+
+      / ko if: feature_enabled("build_GH1157_container_oriented_ui")
+      != HAML.container_build_steps({})
+      / /ko
+
+      / ko ifnot: feature_enabled("build_GH1157_container_oriented_ui")
+      != HAML.build_steps({})
+      / /ko
+
+      %div{data-bind: "if: steps().length > 1"}
+        != HAML.messages()
+
+      %div.autoscroll-trigger{data-bind: "waypoint: {offset: 'bottom-in-view'}
+                                          , waypoint_callback: enable_autoscroll"}

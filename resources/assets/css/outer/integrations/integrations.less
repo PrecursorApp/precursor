@@ -1,0 +1,75 @@
+#integrations {
+  .displayFlex();
+  .flex-direction(column);
+  .justify-content(center);
+  h1,
+  h3 {
+    text-align: center;
+  }
+
+
+  .section-container {
+    .displayFlex();
+    .justify-content(center);
+    box-shadow: 0 1px @grayBorder;
+    svg {
+      width: 60%;
+      height: 60%;
+    }
+    section {
+      width: 66%;
+    }
+  }
+  .integrations-hero-wrapper {
+    margin: 6vh 0;
+    .message {
+      margin-top: 50px;
+      color: @circleBlue;
+      font-style: italic;
+    }
+  }
+  .integrations-hero-title {
+    margin-bottom: 8vh;
+  }
+  .integrations-hero-units {
+    .displayFlex();
+    .justify-content(center);
+  }
+  .integrations-hero-unit {
+    .flex(1, 1, 34%);
+    max-width: 34%;
+    margin: 0 3%;
+    text-align: center;
+  }
+  .docker-features {
+    h4 {
+      text-align: center;
+    }
+    .feature-container {
+      .displayFlex();
+      .justify-content(center);
+      .feature {
+        width: 28%;
+        margin: 2%;
+        text-align: center;
+      }
+    }
+  }
+  .docker-cta {
+    h3 {
+      margin-bottom: 0;
+    }
+    .ctabox {
+      padding-top: 40px;
+      text-align: center;
+      p {
+        color: @circleBlueLight;
+      }
+      .btn {
+        margin: 10px 0;
+        padding: 12px 20px;
+        font-size: 20px;
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+%form
+  %input{type: "text", data-bind: "value: settings_branch, typeahead: {source: pretty_branch_names}", required: "", name: "branch"}
+  %label{placeholder: "Test settings on..."}
+  %input{type: "submit", data-bind: "#{@button_binding}", data-loading-text: "Starting...", value: "Save & Go!"}

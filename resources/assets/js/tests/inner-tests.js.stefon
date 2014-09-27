@@ -1,0 +1,10 @@
+[
+  "../../vendor/jasmine-1.3.1.js"
+  "../../vendor/ConsoleReporter.js"
+  "../../../components/jquery-mockjax/jquery.mockjax.js"
+  "prepare-test-runner.coffee"
+  "inner-tests.coffee"
+  "action-log-tests.coffee"
+  "container-tests.coffee"
+  "process-test-results.coffee"
+]

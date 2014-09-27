@@ -1,0 +1,12 @@
+%div{data-bind: "with: $root.project()"}
+  %div{data-bind: "if: show_enable_project_notice"}
+    .row-fluid
+      .offset1.span10
+        .alert.alert-error
+          Project
+          %span{data-bind: "text: project_name"}
+          isn't configured with a deploy key or a github user, so we may not
+          be able to test all pushes.
+          %button.btn.btn-primary{data-bind: "click: VM.project().enable",
+                                  data-loading-text: "Adding..."}
+            Add SSH key

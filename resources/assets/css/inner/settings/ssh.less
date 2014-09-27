@@ -1,0 +1,55 @@
+#settings-ssh {
+  div:empty {
+    display: none;
+  }
+  form {
+    display: block;
+    margin: 0;
+    .btn-primary {
+      .buttonDark(@buttonColor: @blueDark);
+    }
+    .btn-danger {
+      .buttonDark(@buttonColor: @redLight);
+    }
+    .btn {
+      border-radius: 5em;
+      font-size: 1em;
+      line-height: 1.5em;
+      padding: 1em 1.5em;
+      min-width: 150px;
+      margin: 0 auto;
+      display: block;
+      font-weight: 300;
+      outline: none;
+    }
+  }
+  .with-ssh, .no-ssh {
+    margin: 1.5em 0 1em 0;
+  }
+  .no-ssh {
+    textarea {
+      cursor: default;
+      color: @grayDark;
+      &:active, &:focus {
+        border-color: inherit;
+      }
+    }
+  }
+  textarea {
+    .box-sizing(border-box);
+    resize: none;
+    background: none;
+    box-shadow: none;
+    cursor: default;
+    padding: 1em;
+    color: @blue;
+    white-space: nowrap;
+    width: auto;
+    overflow: hidden;
+    height: auto;
+    text-align: center;
+    border-radius: 5em;
+    display: block;
+    margin: 1em auto;
+  }
+}

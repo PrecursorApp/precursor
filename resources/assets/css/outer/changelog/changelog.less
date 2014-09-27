@@ -1,0 +1,58 @@
+.page.changelog {
+  // Styles specific to changelog page on outer
+  @avatar: 4em;
+  @spacing: ((1 / 2) * @avatar);
+  h3 {
+    margin-top: 0;
+  }
+  strong {
+    text-transform: capitalize;
+  }
+  .entry {
+    .displayFlex();
+    padding-bottom: @spacing;
+    box-shadow: 0 1px @grayBoxBorder;
+    margin-bottom: @spacing;
+    &:first-child {
+      margin-top: @spacing;
+      padding-top: @spacing;
+      box-shadow: 0 1px @grayBoxBorder inset, 0 1px @grayBoxBorder;
+    }
+  }
+  .entry-info {
+    font-size: @fontSizeSmall;
+    color: @grayLight;
+    a {
+      &:not(:hover) {
+        color: inherit;
+      }
+    }
+  }
+  .changeTypeColor(@color) {
+    strong {
+      color: @color;
+    }
+  }
+  .bugfix {
+    .changeTypeColor(@orange);
+  }
+  .feature {
+    .changeTypeColor(@green);
+  }
+  .performance {
+    .changeTypeColor(@blue);
+  }
+  .entry-main {
+    .flex(1, 1);
+    margin-right: @spacing;
+  }
+  .entry-avatar {
+    .displayFlex();
+    .align-items(center);
+    .flex(0, 0, @avatar);
+    img {
+      max-height: @avatar;
+      border-radius: ((1 / 2) * @avatar);
+    }
+  }
+}

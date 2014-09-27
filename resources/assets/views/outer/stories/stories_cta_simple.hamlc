@@ -1,0 +1,17 @@
+.stories-cta
+  %h3 Request a Free Demo
+  %a{href: CI.github.authUrl(), data-bind: "track_link: {event: 'Auth GitHub', properties: {'source': 'shopify story'}}, tooltip: {title: 'Sign up via Github', placement: 'left'}"}
+    %span Or try Circle for free!
+  %form{data-bind: "with: new CI.outer.MarketoForms($element, 1022)"}
+    %input{type: "text", data-bind: "value: FirstName", required: "true", name: "FirstName"}
+    %label{placeholder: "First Name", alt: "First Name"}
+    %input{type: "text", data-bind: "value: LastName", required: "true", name: "LastName"}
+    %label{placeholder: "Last Name", alt: "Last Name"}
+    %input{type: "text", data-bind: "value: Company", required: "true", name: "Company"}
+    %label{placeholder: "Company", alt: "Company"}
+    %input{type: "text", data-bind: "value: Email", required: "false", name: "Email"}
+    %label{placeholder: "Email", alt: "Email (required)"}
+    .notice{data-bind: "with: notice"}
+      %span{data-bind: "text: message, attr: {class: type}"}
+    .submit
+      %input{type: "submit", data-bind: "click: submitShopifyStoryForm", value: "Submit Request"}

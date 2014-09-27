@@ -1,0 +1,31 @@
+.row.features
+  %h2 Features
+  %table.table
+    %thead
+      %tr
+        %th.span4
+        %th.span2 Solo
+        %th.span2 Startup
+        %th.span2 Small Business
+        %th.span2 Enterprise
+    %tbody
+      - for feature in CI.content.pricing_features
+        %tr
+          %td.span4
+            %span{data-bind: "popover: {html: true,
+                              trigger: 'hover',
+                              delay: 0,
+                              animation: false,
+                              placement: 'bottom',
+                              template: '<div class=\"popover billing-popover\"><div class=\"popover-inner\"><h3 class=\"popover-title\"></h3><div class=\"popover-content\"></div></div></div>',
+                              placement: 'right'}",
+                  data-content: feature.detail,
+                  title: feature.headline}
+              %strong= feature.headline
+              %i.fa.fa-info-circle
+
+          - for plan in ['Solo', 'Startup', 'Small Business', 'Enterprise']
+            %td.span2
+              - if !feature.enterprise or plan is 'Enterprise' 
+                %i.fa.fa-check
+

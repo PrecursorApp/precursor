@@ -1,0 +1,20 @@
+- @tags = ["browser", "chromedriver", "chrome", "selenium"]
+- @title = "ChromeDriver raises an 'Element is not clickable' exception"
+- @lastUpdated = "Aug 7, 2013"
+
+%p
+  This can be caused by the small delay between ChromeDriver determining the
+  location of an element to click and actually clicking on the element. If the
+  element is moving (for instance because another element has loaded and caused
+  the page to reflow) it is no longer at the coordinates that ChomeDriver
+  captured and it tries to click in the wrong place, causing this error.
+
+%p
+  This behaviour is due to the ChromeDriver implementation (there is an
+  %a{href: 'https://code.google.com/p/chromedriver/issues/detail?id=22'} issue
+  tracking a fix in ChromeDriver itself).
+
+%p
+  You can use
+  %a{href: 'http://docs.seleniumhq.org/docs/04_webdriver_advanced.jsp#explicit-and-implicit-waits-reference'} explicit waits
+  along with a custom expected condition to wait until an element has stopped moving before clicking.

@@ -1,0 +1,137 @@
+.page.jobs
+  .jobs-head
+    %h1
+      Build amazing products
+    %h1
+      with a great team
+
+  .jobs-body
+
+    .jobs-types
+      %a{href: "#engineer"}
+        %i.fa.fa-code
+        %h3 Engineering
+      %a{href: "#designer"}
+        %i.fa.fa-pencil
+        %h3 Design
+      %a{href: "#business"}
+        %i.fa.fa-bar-chart-o
+        %h3 Business
+
+    .jobs-intro
+      %h2 Who We Are
+      %p
+        CircleCI is a rapidly growing company with a great mission, a deeply technical team, and a focus on productivity for our customers and ourselves.
+        We've a flat organization, a great culture, and a delightful product that's loved by thousands of developers.
+        With significant revenue and funding, we're just getting started with taking developer tools to the next level.
+
+    .jobs-values
+      %h2 Why you'll love working at CircleCI
+      %p
+        %strong
+          Our culture is customer-driven.
+        Our customers and our founders are engineers, and most of our employees are too.
+        We are inspired by companies like
+        %a{href: "http://blog.alexmaccaw.com/stripes-culture"} Stripe,
+        %a{href: "http://gigaom.com/2012/03/26/tales-from-the-trenches-github/"} GitHub,
+        %a{href: "http://www.avc.com/a_vc/2012/02/the-management-team-guest-post-from-joel-spolsky.html"} Fog Creek,
+        %span and
+        %a{href: "http://www.valvesoftware.com/company/Valve_Handbook_LowRes.pdf"} Valve.
+
+      %p
+        %strong We have a flat organization.
+        There are no managers, no org-chart and no hierarchy, and we plan to keep it that way for as long as possible.
+        Everyone gets access to all company information and can be involved in decision-making.
+        By keeping communication open and transparent, we believe everybody is able to make good decisions about the best thing to work on.
+
+      %p
+        %strong We have a very strong focus on productivity, and on shipping product.
+        This means you'll have a lot of days where you finish the day with the happy glow of having achieved something.
+        We ship often, and shape our work lives around enabling that.
+
+      %p
+        %strong We spend a lot of time talking to customers.
+        We make it really easy for customers to reach out to us, and we reach out to them to ask for their feedback too.
+        This means you'll probably spend significant time listening to and fixing their problems.
+        We refer to that as "support", but really think of it as "customer development".
+
+      %p
+        %strong We use cool technology.
+        Our backend is written in Clojure.
+        Everything from managing LXC containers to package management to serving our REST API is all done in Clojure.
+        This allows us to be really productive, handle concurrency with ease, and leads to beautiful manageable code.
+        Clojure isn't just a fancy new language, it's the most productive, powerful and elegant language we've ever used.
+        So much so, that we're in the process of switching our frontend over to ClojureScript.
+
+      %p
+        %strong At a small growing company, your work has a disproportionate effect.
+        As well as improving our customers' lives, you'll also set a precedent for everyone who works for us in the future.
+        You get to affect both the product and the company culture.
+        Your opinions matter and are listened to, and that's why we hire you.
+
+      %p
+        %strong There's lots to learn.
+        We try to hire really, really high caliber people, which means you'll be able to learn a lot, and we hope to learn a lot from you too.
+        We look for the very experienced, or the very talented.
+        If you work at CircleCI, you know that you won't be on the team with slouches or slackers, or folks who will hold you back.
+        (Curiously, we disproportionately hire folks with find it hard to believe they're as amazing as they are, and suffer from significant imposter syndrome. Go figure. If this matches you, we encourage you to apply anyway).
+
+
+    .jobs-where
+      %h2 Where We Work
+      %p
+        %strong Local
+        %span &#8212;
+        Our team is dedicated to creating the most productive environment possible.
+        That means we ensure everyone is able to enjoy their own personal level of comfort and privacy.
+        We work in San Francisco's beautiful Financial District, where you'll have a <a href="http://blog.circleci.com/silence-is-for-the-weak">private office</a>, catered lunch and lovely colleagues.
+
+      %p
+        %strong Remote
+        %span &#8212; We have an asynchronous culture that is well suited to remote-working.
+        We use HipChat, Hangouts and email heavily, and roughly half of our engineers work remotely.
+        We'll bring you on-site every 10 weeks or so to work closely with your colleagues, and can do this to fit your remote life.
+
+    .jobs-what
+      %h2 What we're looking for
+      %p
+        Obviously, this is a very developer-focused company, so the most important thing is to understand how developers work and think.
+        Here's how we think about the type of people we like to work with:
+
+    .jobs-listings
+      != HAML.role_general()
+      != HAML.role_engineer()
+      != HAML.role_designer()
+      != HAML.role_business()
+
+    .jobs-how
+      %h2#apply How to apply
+      %p
+        Send an email to
+        != succeed ",", ->
+          %a{:href => "mailto:jobs@circleci.com"} jobs@circleci.com
+        including a resume.
+
+      %p
+        We're mostly interested in seeing evidence that you're great at what you do.
+        (Don't worry if you're not convinced about your abilities, just work to convince us.)
+        This might include great projects you've worked on, a portfolio, wonderful references, open source you've contributed to, products you've built or scaled, your grades at MIT, that you got hired by Google, or anything that hints that you might be a particularly amazing individual.
+        We're also interested in reading about technologies you've worked with in the past, and what you did with them.
+
+      %p
+        The kind of people we want to work with tend to pitch us as to why they should work at CircleCI.
+        This is both why you're interested, and why you think you'd be a good part of the team.
+        If all goes well we're going to spend a lot of time together, so it's worth it for both of us to discuss this in advance.
+
+      %p
+        Naturally, this goes both ways.
+        We're happy to answer any questions you have about CircleCI, where we're going, why it's an amazing place to work, and what we're doing to keep it that way.
+
+      %p
+        Interested?
+        %a{:href => "mailto:jobs@circleci.com"} Email us now!
+
+
+    %center
+      %strong
+        No recruiters, thank you.

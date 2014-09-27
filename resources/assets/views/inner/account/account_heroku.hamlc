@@ -1,0 +1,12 @@
+#settings-heroku
+  .heroku-item
+    %h2 Heroku API key
+    %p Add your <a href="https://dashboard.heroku.com/account">Heroku API Key</a> to set up deployment with Heroku.<br>You'll also need to set yourself as the Heroku deploy user from your project's settings page.
+    %form
+      -# for some reason, ko bindings break if we use a comment instead of a div
+      %div{data-bind: "if: heroku_api_key"}
+        %input.disabled{data-bind: "value: heroku_api_key", type: "text", required: ""}
+        %label{placeholder: "Current Heroku key"}
+      %input{data-bind: "value: herokuApiKeyInput", type: "text", required:""}
+      %label{placeholder: "Add new key"}
+      %input{type: "submit", value: "Save Heroku key", data-bind: "click: save_heroku_key", data-loading-text: "Saving...", data-success-text: "Saved"}

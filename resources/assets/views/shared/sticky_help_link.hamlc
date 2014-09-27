@@ -1,0 +1,8 @@
+#sticky-help-link{data-bind: "css: { isOpen: sticky_help_is_open }"}
+  .dark-background{data-bind: "click: function() { sticky_help_is_open(!sticky_help_is_open())}"}
+    Need Help? Contact us!
+
+  .light-background
+    != HAML.contact_form({})
+    Or, check out our
+    %a{href: "https://www.hipchat.com/gjwkHcrD5", target: "_blank"} live support!

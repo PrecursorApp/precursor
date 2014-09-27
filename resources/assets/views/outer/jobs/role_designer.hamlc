@@ -1,0 +1,37 @@
+#designer
+  %h3
+    %span Design roles
+
+  %p
+    Our customers love great experiences, and so do we. We're looking for amazing designers who can provide them.
+
+  %h5
+    We're looking for
+  %ul
+    %li An inspiring ability to create graceful solutions when confronted by complex design challenges.
+    %li An obsessive devotion to user-experience problem solving and a sharp understanding of its inherit imperfections.
+    %li An exceedingly confident resolve, built from an exceedingly diverse repertoire of skillsets.
+    %li An intimate love affair with learning and an equally essential appetite for ground-breakingly new ideas.
+    %li An exceptional talent for communicating efficiently in a developer-centric, fast-paced environment.
+    %li An understanding of how to engage with developers, both inside and outside the context of a team.
+    %li Taste.
+
+  %h5 We'd love to see
+  %ul
+    %li Any cool stuff you may have on dribbble, Behance, etc.
+    %li What kind of high-level or back-end programming knowledge you may have.
+    %li How you manage and traverse large, complex technology stacks.
+    %li You send — along with your coverletter — an image of a puppy, in formal wear, doing yoga.
+    %li If you've ever built or helped build any type of developer-oriented tools in the past.
+
+  %h5 With the ability to
+  %ul
+    %li Write beautiful HTML and CSS.
+    %li Navigate JS/Coffee comfortably and fix things when they break.
+    %li Build your own mockups, prototypes, and production-ready concepts.
+    %li Ship, believing done is better than perfect and iteration is better than perfection.
+    %li Uphold and improve upon existing brand standards and guidelines.
+    %li Most importantly, relate to our customers; primarily developers.
+
+  %a{href: "/jobs?role=design#apply", role: "button"}
+    %span Apply for Design roles

@@ -1,0 +1,31 @@
+%div{data-bind: "if: flash"}
+  #flash{data-bind: "html: flash"}
+
+#navbar
+  .container
+    .row
+      .span8
+        .row
+          %a#logo.span2{href: "/"}
+            %img{height: "40", src: assetPath("/img/logo-new.svg"), width: "130"}
+          %nav.span6{role: "navigation"}
+            %ul.nav.nav-pills
+              %li
+                %a{href: "/about"} About
+              %li{data-bind: "ifnot: from_heroku" }
+                %a{href: "/pricing"} Pricing
+              %li
+                %a{href: "/docs"} Documentation
+              %li
+                %a{href: "/jobs"} Jobs
+              %li
+                %a{href: "http://blog.circleci.com"} Blog
+      / ko if: VM.logged_in
+      .span4.controls
+        %a#login.login-link{href: "/"} Return to App
+      / /ko
+      / ko ifnot: VM.logged_in
+      .span4.controls
+        != HAML.header_button()
+      / /ko
+

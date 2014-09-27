@@ -1,0 +1,92 @@
+.jobs.page {
+  @em: 18px;
+  @pagesize: 940px;
+  font-size: @em;
+  line-height: ((4 / 3) * @em);
+  color: @gray;
+  h1, h2, h3, h4, h5, h6 {
+    color: @grayDark;
+    font-weight: normal;
+    margin: 1em 0 @em;
+    line-height: 1em;
+  }
+  h2 {
+    font-size: 36px;
+    padding-top: 30px;
+  }
+  h3 {
+    font-size: 24px;
+    padding-top: 20px;
+  }
+  h5 {
+    font-size: @em;
+  }
+  p {
+    margin: 0 0 @em;
+  }
+  a {
+    transition: 400ms ease-in-out;
+    &:hover {
+      transition: 200ms ease-in-out;
+    }
+  }
+  li {
+    line-height: inherit; // BS RESET
+  }
+  .jobs-head {
+    .flexy(center, center, column);
+    color: @white;
+    height: 75vh;
+    background: linear-gradient(to bottom, @blueDarker 66%, @blueDarkest 100%), @blueDarker;
+    h1 {
+      font-size: 60px;
+      margin-top: 0;
+      color: inherit;
+    }
+  }
+  .jobs-body {
+    max-width: @pagesize;
+    margin: 0 auto (@pagesize / 4);
+  }
+  .jobs-types {
+    .flexy(stretch);
+    .outlineFlat();
+    border-radius: 4px;
+    height: (@pagesize / 4);
+    margin: 5vh 0;
+    a {
+      .flexy(center, center, column);
+      width: (100% / 3); // three different job types
+      &:not(:first-child) {
+        box-shadow: -1px 0 @grayBoxBorder;
+      }
+      &:not(:hover) {
+        color: inherit;
+      }
+    }
+    i {
+      font-size: 2em;
+    }
+    h3 {
+      color: inherit;
+      margin-top: @em;
+    }
+  }
+  .jobs-listings {
+    h3 {
+      margin: 1em 0 0;
+      padding-bottom: .3em;
+      margin-bottom: .5em;
+      box-shadow: 0 1px @grayBoxBorder;
+    }
+    ul {
+      margin: 0 0 0 @em;
+    }
+    [role="button"] {
+      .circleButton(@grayLightest, @green);
+      display: inline-block;
+      min-width: 10em;
+      margin: 2em auto 1em;
+    }
+  }
+}

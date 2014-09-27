@@ -1,0 +1,29 @@
+.get-started
+  .container
+    .row
+      .span6.offset3
+        .box
+          %h2 Get Started
+          %hr
+          %p.center
+            %strong Set up your continuous integration in 20 seconds.
+          %ol
+            %li Choose a GitHub repository.
+            %li Watch your tests run faster than ever.
+            %li Get your team into the flow.
+
+          .center
+            .main-cta
+              .ctabox
+                %a.btn.btn-jumbo.btn-action-orange{data-bind: "attr: {href: CI.github.authUrl()}, track_link: {event: 'Auth GitHub', properties: {'source': 'get_started_section'}}"}
+                  RUN YOUR TESTS
+
+          %p.center
+            %i
+              CircleCI keeps your code safe.
+              %a{href:"/privacy", title:"Privacy and Security"} Learn how.
+          %p.center
+            Plans start at <i>$19 per month</i><br />
+            All plans include a
+            %strong
+              %i Free 14 Day Trial.

@@ -1,0 +1,3 @@
+- @category = "parallelism"
+- @children = ['how_parallelism_works', 'parallel_manual_setup']
+- @title = "Parallelism"

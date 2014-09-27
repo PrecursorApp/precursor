@@ -1,0 +1,29 @@
+%section.build-artifacts{data-bind: "css: {active: artifacts_visible}"}
+  .build-artifacts-title
+    %strong Build Artifacts
+    %a{data-bind: "click: toggle_artifacts", role: "button"}
+      %span view
+      %i.fa.fa-caret-down
+  <!-- ko if: artifacts_visible -->
+    / ko ifnot: artifacts
+    .loading-spinner
+      != HAML.spinner({})
+    / /ko
+    / ko if: artifacts
+    %ol.build-artifacts-list
+      / ko foreach: artifacts
+      %li
+        / ko ifnot: VM.current_user().admin
+        %a{target: "_blank", data-bind: "attr: {href: url}"}
+          %span{data-bind: "text: pretty_path"}
+          != surround '(', ')', ->
+            %span{data-bind: "text: node_index"}<>
+        / /ko
+        / ko if: VM.current_user().admin
+        %span{data-bind: "text: pretty_path"}
+        != surround '(', ')', ->
+          %span{data-bind: "text: node_index"}<>
+        / /ko
+      / /ko
+    / /ko
+  <!-- /ko -->

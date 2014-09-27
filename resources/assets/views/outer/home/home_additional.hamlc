@@ -1,0 +1,38 @@
+%section.additional
+  .row-fluid
+    .span4
+      %h3 Contact us
+      %p
+        Send us
+        %a{href: "mailto:sayhi@circleci.com"} an email
+      %p
+        Talk to us in our
+        %a{href: "https://www.hipchat.com/gjwkHcrD5"} live support channel
+      %p
+        Call us at 800 585-7075
+
+    .span4.try-it
+      %h3 Try it right now
+      %p
+        Sign up using GitHub, and add your team's repo.
+        You're 30 seconds from running your tests on Circle.
+
+      != HAML.home_button({text: "Sign up now"})
+      %p
+        or
+        %a{href: "/pricing"} See Pricing
+
+    .span4
+      %h3 Learn more
+      %p
+        Check out
+        %a{href: "/docs"} our extensive docs
+      %p
+        Read our
+        %a{href: "/privacy"} privacy
+        and
+        %a{href: "/security"} security
+        policies
+      %p
+        Find out
+        %a{href: "/about"} who's behind Circle

@@ -1,0 +1,32 @@
+.row-fluid.card
+  %legend.span8 Card on file
+.row-fluid
+  .span6.offset1
+    %table.table.table-condensed{data-bind: "with: cardInfo"}
+      %thead
+        %th Name
+        %th Card type
+        %th Card Number
+        %th Expiry
+      %tbody
+        %td{data-bind: "text: name"}
+        %td{data-bind: "text: type"}
+        %td
+          xxxx-xxxx-xxxx-
+          %span{data-bind: "text: last4"}<>
+        %td
+          %span{data-bind: "leadingZero: exp_month"}<>
+          \/
+          %span{data-bind: "text: exp_year"}<>
+
+.row-fluid
+  .offset1.span7
+    %form.form-horizontal
+      .control-group
+        .control
+          %button.btn.btn-primary.submit-button#charge-button{type: "submit",
+                                                              data-bind: "click: updateCard",
+                                                              data-loading-text: "Updating",
+                                                              data-failed-text: "Failed",
+                                                              data-success-text: "Success"}
+            Change credit card

@@ -1,0 +1,4 @@
+- @children = ['time_day', 'time_seconds']
+- @title = "Time and Date Problems"
+
+!= HAML['article_list'](@)

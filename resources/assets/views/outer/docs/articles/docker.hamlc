@@ -1,0 +1,348 @@
+- @children = []
+- @title = 'Continous Integration and Delivery with Docker'
+- @lastUpdated = "August 4, 2014"
+
+%p
+  CircleCI currently offers beta support for running Docker within build containers.
+  Docker is an extremely flexible tool that supports many different use cases. This
+  article attempts to address several of the most popular uses for Docker on CircleCI,
+  but it is not an exhaustive list. Please
+  != HAML['contact_us']()
+  if you have questions
+  about uses of Docker that are not covered here.
+
+%p
+  Note that this article assumes some knowledge of Docker. If you are just getting started
+  with Docker, then take a look at the
+  %a{href: "http://docs.docker.com/userguide/"}
+    Docker docs
+  first.
+
+%h3#basics Basic usage
+
+%p
+  To use Docker on CircleCI, simply add Docker as a required service in your
+  %code circle.yml
+  file like this:
+
+%pre
+  %code.bash<>
+    :preserves
+      machine:
+        services:
+          - docker
+%p
+  You will then be able to use the
+  %code docker
+  command throughout your
+  %code circle.yml
+  file. Note that you don't need to use
+  %code sudo
+  to use the command on CircleCI.
+
+%h3#registries Deployment to a Docker registry
+
+%p
+  One key use of Docker on CircleCI is to use Docker to build base images to deploy to a
+  registry like
+  %a{href: "https://hub.docker.com/"}
+    Docker Hub.
+  You can do this with the usual
+  %code docker build
+  and
+  %code docker push
+  commands to build and deploy your image.
+
+%p
+  Here is an example of a
+  %code circle.yml
+  file that builds the standard ElasticSearch Docker image and deploys it to
+  Docker Hub:
+
+%pre
+  %code.bash<>
+    :preserves
+      machine:
+        services:
+          - docker
+
+      dependencies:
+        override:
+          - docker info
+          - docker build -t circleci/elasticsearch .
+
+      test:
+        override:
+          - docker run -d -p 9200:9200 circleci/elasticsearch; sleep 10
+          - curl --retry 10 --retry-delay 5 -v http://localhost:9200
+
+      deployment:
+        hub: 
+          branch: master
+          commands:
+            - sed "s/&lt;EMAIL&gt;/$DOCKER_EMAIL/;s/&lt;AUTH&gt;/$DOCKER_AUTH/" \\
+                &lt; .dockercfg.template &gt; ~/.dockercfg
+            - docker push circleci/elasticsearch
+
+%p
+  Note that a
+  %code .dockercfg
+  file must be dropped in place in order to skip interactive login to
+  the registry. You should use
+  %a{href: '/docs/environment-variables'}
+    environment variables
+  as in the example above to store sensitive information.
+
+%p
+  For a complete example of building and deploying a Docker image to a 
+  registry, see the
+  %a{href: "https://github.com/circleci/docker-elasticsearch"}
+    circleci/docker-elasticsearch
+  example project on GitHub.
+
+%h3#app-deployment Application deployment
+
+%p
+  Another very important use case for Docker containers is "Dockerizing"
+  applications for deployment purposes. There are countless languages
+  and technologies that can be deployed this way to a number of hosts that
+  support Docker containers, but just a couple of examples are provided below
+  for AWS Elastic Beanstalk and Google Compute Engine with Kubernetes.
+
+%h4#elastic-beanstalk AWS Elastic Beanstalk
+
+%p
+  The example below demonstrates building and
+  testing a Dockerized Rails app and deploying the built image to 
+  %a{href: "http://aws.amazon.com/elasticbeanstalk/" }
+    AWS Elastic Beanstalk
+  (in fact, you can't even really tell that it's a Rails app because all of the
+  specifics of the app are handled by the Dockerfile). At a high level, this example
+  does the following:
+
+%ol
+  %li Builds a Docker image for the application based on the steps in its Dockerfile
+    and tags it with the current git commit SHA
+  %li Creates a new container based on that image with the
+    %code docker run
+    command and starts the app inside it
+  %li Runs a (very simple) test against the container
+  %li Deploys the freshly built image to Docker Hub
+  %li Creates a new AWS Elastic Beanstalk "application version" based on the new image
+    by referencing the tag
+  %li Updates the Elastic Beanstalk environment to use the new version
+
+%pre
+  %code.bash<>
+    :preserve
+      # circle.yml
+      machine:
+        python:
+          version: 2.7.3
+        services:
+          - docker
+
+      dependencies:
+        pre:
+          - pip install awscli
+          - docker build -t circleci/hello:$CIRCLE_SHA1 .
+
+      test:
+        post:
+          - docker run -d -p 3000:3000 -e "SECRET_KEY_BASE=abcd1234" \\
+                circleci/hello:$CIRCLE_SHA1; sleep 10
+          - curl --retry 10 --retry-delay 5 -v http://localhost:3000
+
+      deployment:
+        elasticbeanstalk:
+          branch: master
+          commands:
+            - sed "s/&lt;EMAIL&gt;/$DOCKER_EMAIL/;s/&lt;AUTH&gt;/$DOCKER_AUTH/" \\
+                  &lt; .dockercfg.template &gt; ~/.dockercfg
+            - bash -x deploy.sh $CIRCLE_SHA1
+
+%pre
+  %code.bash<>
+    :preserve
+      # deploy.sh
+      #! /bin/bash
+
+      SHA1=$1
+
+      # Deploy image to Docker Hub
+      docker push circleci/hello:$SHA1
+
+      # Create new Elastic Beanstalk version
+      EB_BUCKET=hello-bucket
+      DOCKERRUN_FILE=$SHA1-Dockerrun.aws.json
+      sed "s/&lt;TAG&gt;/$SHA1/" < Dockerrun.aws.json.template > $DOCKERRUN_FILE
+      aws s3 cp $DOCKERRUN_FILE s3://$EB_BUCKET/$DOCKERRUN_FILE
+      aws elasticbeanstalk create-application-version --application-name hello \\
+        --version-label $SHA1 --source-bundle S3Bucket=$EB_BUCKET,S3Key=$DOCKERRUN_FILE
+
+      # Update Elastic Beanstalk environment to new version
+      aws elasticbeanstalk update-environment --environment-name hello-env \\
+          --version-label $SHA1
+
+%p
+  Note that Elastic Beanstalk
+  also allows you to deploy a Dockerfile and associated source code instead of a built image,
+  but pre-building the image on CircleCI and running some form of verification on it allows
+  your deployments to be more deterministic because you remove the build environment as a
+  variable that differs between test and production.
+
+%p
+  To see the complete source code for the application from this example,
+  see
+  %a{href: "https://github.com/circleci/docker-hello"}
+    circleci/docker-hello
+  on GitHub.
+
+%h4#kubernetes Google Compute Engine and Kubernetes
+
+%p This example shows how to build and deploy a Dockerized application
+  to
+  %a{href: "https://cloud.google.com/products/compute-engine/"}
+    Google Compute Engine
+  using the
+  %a{href: "https://github.com/GoogleCloudPlatform/kubernetes"}
+    Kubernetes
+  container cluster manager. This example uses the same Rails application
+  as the Elastic Beanstalk example above. At a high level, it consists of
+  the following steps:
+
+%ol
+  %li Builds a Docker image for the application based on the steps in its Dockerfile
+    and tags it with the current git commit SHA
+  %li Creates a new container based on that image with the
+    %code docker run
+    command and starts the app inside it
+  %li Runs a (very simple) test against the container
+  %li Deploys the freshly built image to a private Docker registry hosted on Google
+    Compute Engine (See
+    %a{href: "https://registry.hub.docker.com/u/google/docker-registry/"}
+      google/docker-registry
+    for more information on setting this up)
+  %li Updates the Kubernetes replicationController for the Rails app
+    to point to the new image based on its SHA
+  %li Triggers a rolling update of the pods managed by the Kubernetes controller
+    to ensure that the latest image is running on all of them
+
+%pre
+  %code.bash<>
+    :preserve
+      # circle.yml
+      machine:
+        services:
+          - docker
+          
+      dependencies:
+        cache_directories:
+          - ~/kubernetes
+        pre:
+          - ./ensure-kubernetes-installed.sh
+          - docker build -t $EXTERNAL_REGISTRY_ENDPOINT/hello:$CIRCLE_SHA1 .
+      
+      test:
+        post:
+          - docker run -d -p 3000:3000 -e "SECRET_KEY_BASE=abcd1234" \\
+              $EXTERNAL_REGISTRY_ENDPOINT/hello:$CIRCLE_SHA1; sleep 10
+          - curl --retry 10 --retry-delay 5 -v http://localhost:3000
+      
+      deployment:
+        prod:
+          branch: master
+          commands:
+            - ./deploy.sh
+
+%pre
+  %code.bash<>
+    :preserve
+      # deploy.sh
+      #!/bin/bash
+      
+      # Exit on any error
+      set -e
+      
+      KUBE_CMD=${KUBERNETES_ROOT:-~/kubernetes}/cluster/kubecfg.sh
+      
+      # Create credential files
+      envsubst < .kubernetes_auth.template > ~/.kubernetes_auth
+      envsubst < .dockercfg.template > ~/.dockercfg
+      
+      # Deploy image to private GCS-backed registry
+      docker push $EXTERNAL_REGISTRY_ENDPOINT/hello:$CIRCLE_SHA1
+      
+      # Update Kubernetes replicationController
+      envsubst < kubernetes/rails-controller.json.template > rails-controller.json
+      $KUBE_CMD -c rails-controller.json \\
+        update replicationControllers/railscontroller
+      
+      # Roll over Kubernetes pods
+      $KUBE_CMD rollingupdate railscontroller
+
+%p
+  This example assumes that you have already launched a Kubernetes cluster
+  using something like the
+  %code cluster/kube-up.sh
+  script in the Kubernetes
+  source. See the README in 
+  %a{href: "https://github.com/GoogleCloudPlatform/kubernetes"}
+    GoogleCloudPlatform/kubernetes
+  for more detailed instructions on setting up a Kubernetes cluster manager.
+
+%p
+  It is also assumed in this example that a private Docker registry is hosted
+  on Google Compute Engine, which is available to Kubernetes minions
+  %a{href: "https://github.com/GoogleCloudPlatform/kubernetes/issues/499"}
+    without authentication
+  by using an internally accessible registry endpoint (i.e.
+  a port that is protected by the firewall but internally accessible).
+  The registry can be made available
+  to CircleCI via a public-facing proxy server protected with SSL and HTTP
+  basic auth. (Note that
+  %a{href: "https://github.com/docker/docker/pull/5817"}
+    this currently requires trusted SSL certificate
+  ).
+  
+%p
+  To see the complete example project using Google Compute Engine and Kubernetes,
+  see
+  %a{href: "https://github.com/circleci/docker-hello-google"}
+    circleci/docker-hello-google
+  for the project source.    
+      
+%h3#testing Running tests in a container
+
+%p
+  Another use case for Docker on CircleCI is running tests inside of or against
+  a Docker container. All of the usual Docker commands are available within
+  your test environment on CircleCI, so if you want to run all of your tests
+  within a Docker container, then you can simply run the container with the
+  commands necessary to execute your tests, like this:
+
+%pre
+  %code.bash<>
+    :preserve
+      test:
+        override:
+          - docker run myimage bundle exec rake test
+
+%p
+  You can also start a container running in detached mode with an exposed
+  port serving your app as in the other examples above. You can then run
+  browser tests or other black box tests against the container (in place of
+  the simple
+  %code curl
+  command in the examples).
+
+  Currently, you will not enjoy all the benefits of CircleCI's automatic
+  test parallelization when running tests within a Docker container. So
+  if you have a lot of unit tests that take a long time to execute, then
+  you may want to run them outside of the container and only do certain
+  integration tests against the built Docker image.
+
+  Please don't hesitate to
+  != HAML['contact_us']()
+  if you have any questions at all about how to best utilize Docker on
+  CircleCI.

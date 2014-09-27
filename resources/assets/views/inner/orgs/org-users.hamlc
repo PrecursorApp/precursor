@@ -1,0 +1,30 @@
+.row-fluid.users
+  %h2
+    CircleCI users in the
+    %span{data-bind: "text: name"}
+    organization
+  .span10
+    %h4{data-bind: "ifnot: user_objs().length"}
+      No users found.
+    .row-fluid{data-bind: "foreach: {data: user_objs, as: 'user'}"}
+      -# handle wrapping divs to next line when they're different heights
+      / ko if: ($index() % 2 == 0)
+      %span.row-fluid
+      / /ko
+      .span6.well{data-bind: "css: {success: user.projects.length, fail: !user.projects.length}"}
+        .row-fluid
+          .span2
+            %img.gravatar{data-bind: "attr: {src: gravatar_url(45, true)}"}
+          .span10
+            %h4
+              %span{data-bind: "if: projects.length"}
+                %span{data-bind: "text: login"}
+                %span is following:
+              %span{data-bind: "ifnot: projects.length"}
+                %span{data-bind: "text: login"}
+                %span isn't following any
+                %span{data-bind: "text: $parent.name"}
+                %span projects
+            %div{data-bind: "foreach: {data: projects, as: 'project'}"}
+              .row-fluid
+                %a{data-bind: "text: repo_name, attr: {href: project_path}"}

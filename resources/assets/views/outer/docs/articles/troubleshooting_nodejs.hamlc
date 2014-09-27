@@ -1,0 +1,5 @@
+- @children = ['git_npm_install']
+- @title = "Troubleshooting Node.js"
+- @short_title = "Node.js"
+
+!= HAML['article_list'](@)

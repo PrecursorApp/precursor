@@ -1,0 +1,59 @@
+.container-fluid.org-page
+  / ko ifnot: VM.org_has_been_loaded
+  .loading-spinner
+    != HAML.spinner({})
+  / /ko
+  / ko if: VM.org_has_been_loaded
+  .row-fluid
+    .span3
+      %ul.nav.nav-list.well
+        %li.nav-header
+          Organization settings
+        %li.divider
+
+        / ko with: org
+        %li.nav-header
+          Overview
+        %li{data-bind: "css: {active: subpage() == 'projects'}"}
+          %a{href: "#projects"}
+            Projects
+        %li{data-bind: "css: {active: subpage() == 'users'}"}
+          %a{href: "#users"}
+            Users
+        %li.nav-header
+          Plan
+        / ko ifnot: can_edit_plan
+        %li{data-bind: "css: {active: subpage() == 'plan'}"}
+          %a{href: "#plan"}
+            Choose plan
+        / /ko
+        / ko if: can_edit_plan
+        %li{data-bind: "css: {active: subpage() == 'containers'}"}
+          %a{href: "#containers"}
+            Add containers
+        %li{data-bind: "css: {active: subpage() == 'organizations'}"}
+          %a{href: "#organizations"}
+            Organizations
+        %li{data-bind: "css: {active: subpage() == 'billing'}"}
+          %a{href: "#billing"}
+            Billing info
+
+        %li{data-bind: "css: {active: subpage() == 'cancel'}"}
+          %a{href: "#cancel"}
+            Cancel
+
+        / /ko
+        / /ko
+
+
+    .span9
+      != HAML['flashes']({})
+
+      #subpage
+        %div{data-bind: "if: VM.org_has_been_loaded"}
+          %div{data-bind: "with: org"}
+            %div{data-bind: "if: unauthorized"}
+              != HAML.org_non_admin_plan()
+            %div{data-bind: "ifnot: unauthorized"}
+              %div{data-bind: "haml: {template: 'org_' + subpage(), args: {}}"}
+  / /ko

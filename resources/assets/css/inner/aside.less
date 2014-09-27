@@ -1,0 +1,507 @@
+@aside_menu_width: (@tile * 3);
+@aside_nav_width: (@tile * 3);;
+@aside_nav_slim_width: @tile;
+
+@em: @baseFontSize;
+@cascade_delay: 30ms;
+@aside_items: 7;
+@aside_slim_speed: 200ms;
+@activity_scroll: 3px;
+@activity_color: fade(@white, 55);
+@activity_ico: (@em - 2);
+@activity_line: (@em * 1.5);
+@activity_toggle: round((@em + (@em / 4) + (1px * 2) + @em + (@em / 2)) * -1);
+
+
+
+.inner {
+  &.aside-slim {
+    .aside-left-nav { width: @aside_nav_slim_width; }
+    .app-main { margin-left: @aside_nav_slim_width + @aside_menu_width; }
+    .aside-item {
+      .tip(right);
+      > i,
+      img {
+        margin-right: ((@tile - @baseFontSize) / 2);
+        transition-duration: (@aside_slim_speed * 1.5);
+      }
+      span {
+        opacity: 0;
+        visibility: hidden;
+        transition: visibility 0ms @aside_slim_speed, opacity @aside_slim_speed 0ms;
+        pointer-events: none;
+      }
+    }
+  }
+  .app-main {
+    .flexy(column);
+    margin-left: @aside_nav_width + @aside_menu_width;
+    transition: margin @aside_slim_speed;
+    transition-timing-function: cubic-bezier(0.5, -.25, 0.5, 1.25);
+  }
+}
+.aside-left-nav {
+  width: @aside_nav_width;
+  background: @blueDarkest;
+  color: fade(@white, 66);
+}
+
+.app-aside-left {
+  .flexy();
+  position: fixed;
+  left: 0;
+  top: 0;
+  a {
+    outline: none;
+    &:not(:hover) {
+      color: inherit;
+    }
+  }
+  .tooltip {                    //
+    font-size: @baseFontSize;   //
+    .tooltip-inner {            //
+      border-radius: (@em * 2); //
+      padding: (@em / 2) @em;   // BS RESET
+    }                           //
+    .tooltip-arrow {            //
+      display: none;            //
+    }                           //
+  }                             //
+}
+.aside-left-nav,
+.aside-left-menu {
+  .flex(0, 0);
+  .flexy(column);
+  height: 100vh;
+  transition: width @aside_slim_speed;
+  transition-timing-function: cubic-bezier(0.5, -.25, 0.5, 1.25);
+  overflow: hidden;
+}
+.aside-left-menu {
+  width: @aside_menu_width;
+  box-shadow: 1px 0 @grayBoxBorder;
+  position: relative;
+  header {
+    .box-sizing(border-box);
+    .flex(0, 0);
+    .flexy(center, space-between);
+    height: @tile;
+    box-shadow: 0 -1px @grayBoxBorder inset;
+    padding: @em;
+    position: relative;
+    select {
+      .box-sizing(content-box);
+      color: @blacken;
+      -webkit-appearance: none; // gets rid of ugly shadow in safari
+      border: none;
+      outline: none;
+      margin: 0 (-@tile / 2) 0 0;
+      padding: @em 0 @em @em;
+      height: @em;
+      line-height: @em;
+      &:hover {
+        color: @blueLight;
+        + .select-arrow {
+          color: @blueLight;
+        }
+      }
+    }
+    .select-arrow {
+      .flexy();
+      color: @blacken;
+      text-align: center;
+      position: absolute;
+      width: @em;
+      height: @em;
+      top: 28px;
+      right: 28px;
+      pointer-events: none;
+      i {
+        width: @em;
+        line-height: round(@em * .9);
+      }
+    }
+  }
+  .aside-activity {
+    color: @grayLight;
+    position: relative;
+    .wrapper {
+      &:hover {
+        &::-webkit-scrollbar-thumb {
+          background: @grayLighter;
+        }
+      }
+    }
+    .status {
+      .icon_style(transparent, @activity_ico);
+      i {
+        &.ico {
+          .busy-light {stroke: @blueLight;}
+          .pass-light {stroke: @green;}
+          .fail-light {stroke: @redLight;}
+          .hold-light {stroke: @gray;}
+          .stop-light {stroke: @orange;}
+          .none-light {stroke: @white;}
+          [class$="-light"] {stroke-width: 10;}
+        }
+      }
+    }
+    .project {
+      a {
+        &:not(:hover) {
+          color: @grayDark;
+        }
+      }
+    }
+    .branch {
+      a {
+        &:before,
+        &:after {
+          border-color: @grayLighter;
+        }
+      }
+    }
+  }
+}
+.aside-item {
+  .flex(0, 0, @tile);
+  .flexy(center);
+  .shadow_noboss();
+  background: transparent;
+  white-space: nowrap;
+  transition: (@aside_slim_speed / 2) ease-in-out;
+  &:not(:hover) {
+    + .aside-activity {
+      .toggle-all-branches {
+        &:not(:hover) {
+          // margin-top: @activity_toggle;                    //
+          // opacity: 0;                                      // hold off on hiding toggle until multiple accordions in nav
+          // transition: margin 200ms 0ms, opacity 200ms 0ms; //
+        }
+      }
+    }
+  }
+  &:hover,
+  &:focus {
+    .shadow_emboss(@blueDarker);
+    color: @white;
+    background: @blueDarker;
+    transition-duration: 0;
+  }
+  &:active,
+  &.open {
+    .shadow_deboss(@blueDarkest);
+    color: @white;
+    background: fade(@black, 8);
+    transition-duration: 0;
+  }
+  &:last-of-type {
+    margin-top: auto; // may want to make this more specific later
+  }
+  &.logo {
+    .justify-content(center);
+    .underline_deboss();
+    .logomark {
+      .flexy(center, center);
+      .icon_style(@white, (@em * 2));
+      width: @tile;
+      height: @tile;
+    }
+  }
+  &:nth-child(2)  > i {transition-delay: @cascade_delay *  1;}
+  &:nth-child(3)  > i {transition-delay: @cascade_delay *  2;}
+  &:nth-child(4)  > i {transition-delay: @cascade_delay *  3;}
+  &:nth-child(5)  > i {transition-delay: @cascade_delay *  4;}
+  &:nth-child(6)  > i {transition-delay: @cascade_delay *  5;}
+  &:nth-child(7)  > i {transition-delay: @cascade_delay *  6;}
+  &:nth-child(8)  > i {transition-delay: @cascade_delay *  7;}
+  &:nth-child(9)  > i {transition-delay: @cascade_delay *  8;}
+  &:nth-child(10) > i {transition-delay: @cascade_delay *  9;}
+  &:nth-child(11) > i {transition-delay: @cascade_delay * 10;}
+  > i {
+    min-width: @baseFontSize;
+    margin: 0 @baseFontSize 0 ((@tile - @baseFontSize) / 2);
+    transition: margin @aside_slim_speed;
+  }
+  img {
+    @s: (@tile / 2);
+    min-width:  @s;
+    height: @s;
+    margin: 0 @baseFontSize 0 ((@tile - @s) / 2);
+    border-radius: (@s / 2);
+    transition: margin (@aside_slim_speed * 2);
+    pointer-events: none;
+  }
+  span {
+    opacity: 1;
+    visibility: visible;
+    transition: visibility 0ms (@aside_slim_speed / 2), opacity (@aside_slim_speed * 2) 0ms;
+  }
+}
+.aside-activity {
+  .flexy(column);
+  font-size: @em;
+  background: fade(@black, 0);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 400ms, background 400ms, visibility 0ms 1000ms, height 200ms ease-in-out;
+  height: 0%;
+  &.open {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 400ms 100ms, background 200ms, visibility 0ms 0ms, height 200ms ease-in-out;
+    height: 100vh;
+    .wrapper {
+      overflow-y: auto;
+      height: 100vh; // needed to fix safari bug preventing accordion from opening up
+    }
+  }
+  .wrapper {
+    height: 100%;
+    overflow: hidden;
+    &::-webkit-scrollbar {
+      width: @activity_scroll;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: transparent;
+      border-radius: @activity_scroll;
+    }
+    &:hover {
+      &::-webkit-scrollbar-thumb {
+        background: @blueDark;
+      }
+    }
+  }
+  ul {
+    margin: 0;
+    list-style: none;
+    &:not(.open) {
+      li {
+        a {
+          &.latest {
+            .flexy(center, center);
+          }
+        }
+      }
+    }
+  }
+  li {
+    .flexy();
+    .box-sizing(border-box);
+    width: (@aside_nav_width - @activity_scroll);
+    line-height: @em; // BS RESET
+    &:hover {
+      .statuses {
+        a {
+          &:not(:last-child) {
+            transition-delay: 1000ms; // delay meant to give user time to hover over to branch name
+          }
+        }
+        &:hover {
+          a {
+            &:not(:last-child) {
+              opacity: 1;
+              margin: 0;
+              transition: margin 100ms 100ms, opacity 100ms 100ms;
+            }
+            &:hover {
+              &:nth-child(-n + 5) {
+                path {
+                  opacity: 1;
+                }
+              }
+            }
+            &:nth-last-of-type(1) path {opacity: .89}
+            &:nth-last-of-type(2) path {opacity: .55}
+            &:nth-last-of-type(3) path {opacity: .34}
+            &:nth-last-of-type(4) path {opacity: .21}
+            &:nth-last-of-type(5) path {opacity: .13}
+          }
+        }
+      }
+    }
+    &:last-child {
+      .branch {
+        a {
+          &:before {
+            border-radius: 0 0 0 3px;
+          }
+          &:after {
+            border: none;
+          }
+        }
+      }
+    }
+  }
+  .project {
+    .flexy(center);
+    width: 100%;
+    a {
+      height: @activity_line;
+      line-height: @activity_line;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      &:not(:hover) {
+        color: fadein(@activity_color, 34);
+      }
+      &.toggle {
+        .box-sizing(border-box);
+        .flex(0, 0, auto);
+        .icon_style(@grayDark, 100%);
+        width: @em * 2;
+        height: @em *2;
+        padding: 5px; // got this from trial and error
+        .ico {
+          width: 100%;
+          height: 100%;
+        }
+        .ico-repo {
+          fill: @activity_color;
+        }
+      }
+      &.title {
+        .flex(1, 1, auto);
+      }
+      &.latest {
+        .flex(0, 0, auto);
+        display: none;
+        width: @activity_line;
+        height: @activity_line;
+        line-height: @activity_line;
+        padding-right: round(@em - ((@activity_line - @activity_ico) / 2) - @activity_scroll);
+      }
+    }
+  }
+  .branch,
+  .statuses {
+    a {
+      height: @activity_line;
+      line-height: @activity_line;
+    }
+  }
+  .branch {
+    .flexy(center);
+    a {
+      width: 100%;
+      padding-left: (@activity_line + (@em / 2));
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      position: relative;
+      &:before,
+      &:after {
+        content: "";
+        width: (@activity_line / 2);
+        height: (@activity_line / 2);
+        position: absolute;
+        left: (@activity_line / 2);
+        border-left: 1px solid @blueDarker;
+      }
+      &:before {
+        top: 0;
+        border-bottom: 1px solid @blueDarker;
+      }
+      &:after {
+        top: (@activity_line / 2);
+        border-top: 1px solid @blueDarker;
+      }
+    }
+  }
+  .statuses {
+    .flex(1, 0, auto);
+    .flexy(center, flex-end);
+    a {
+      .flexy(center, center);
+      width: @activity_line;
+      &:first-child {
+        .flex(1, 0, auto);
+        .justify-content(flex-end);
+        i {
+          &.ico {
+            padding-right: round((@activity_line - @activity_ico) / 2);
+          }
+        }
+      }
+      &:not(:last-child) {
+        opacity: 0;
+        margin-left: -@activity_line;
+        transition: margin 400ms, opacity 400ms; // close slower than opening, less jarring
+      }
+      &:last-child {
+        padding-right: round(@em - ((@activity_line - @activity_ico) / 2) - @activity_scroll);
+      }
+    }
+  }
+}
+.aside-user {
+  position: absolute;
+  top: 0;
+  left: -@tile;
+  width: @tile;
+  height: 100%;
+  background: @appBackgroundColor;
+  z-index: @zindexTooltip;
+  color: @appBackgroundColor;
+  box-shadow: 1px 0 @grayBoxBorder;
+  transition: (@aside_slim_speed / 2);
+  transition-timing-function: cubic-bezier(0.5, -.25, 0.5, 1.25);
+  overflow: hidden;
+  &.open {
+    left: 0;
+    width: 100%;
+    color: @gray;
+    h5 {
+      color: @black;
+    }
+    .aside-item {
+      padding: 0 (@em * 2);
+    }
+  }
+  header {
+    .justify-content(center);
+  }
+  h5 {
+    font-weight: normal;
+    color: @appBackgroundColor;
+    white-space: nowrap;
+    transition: (@aside_slim_speed / 2);
+    transition-timing-function: cubic-bezier(0.5, -.25, 0.5, 1.25);
+  }
+  .close-menu {
+    .flexy(center);
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: @em;
+    height: @tile;
+    padding: 0 @em;
+    &:hover {
+      path {
+        stroke: @black;
+      }
+    }
+    path {
+      stroke: @grayLight;
+      stroke-width: 5;
+    }
+  }
+}
+.aside-user-options {
+  .flexy(column);
+  .aside-item {
+    transition: @aside_slim_speed ease-in-out;
+    padding: 0;
+    &:hover,
+    &:focus {
+      color: @grayDarker;
+      box-shadow: none;
+      background: @grayLightest;
+    }
+    &:active {
+      .shadow_deboss(@white);
+      color: inherit;
+      background: @grayLightest;
+    }
+  }
+}

@@ -1,0 +1,24 @@
+.head-user
+  .breadcrumbs
+    <!-- ko if: VM.current_page().crumbs.length -->
+      %a{href: "/", title: "home"}
+        %i.fa.fa-home
+    <!-- /ko -->
+    <!-- ko foreach: {data: VM.current_page().crumbs, as: 'crumb'} -->
+      <!-- ko if: active -->
+        %a{data-bind: "text: name(), attr: {title: name()}", disabled: ""}
+      <!-- /ko -->
+      <!-- ko ifnot: active -->
+        %a{data-bind: "text: name(), attr: {href: path(), title: name()}"}
+      <!-- /ko -->
+    <!-- /ko -->
+  <!-- ko if: VM.show_follow_project_button -->
+    %button#follow-project-button{href: "#", data-bind: "click: VM.project().follow"}
+      %span follow the
+      %span{data-bind: "text: VM.project().project_name"}
+      %span project
+  <!-- /ko -->
+  <!-- ko if: VM.current_page().settings_link -->
+    %a.settings{data-bind: "attr: {href: VM.current_page().settings_link, tooltip: VM.current_page().settings_text}"}
+      != HAML.ico(n:'settings-light')
+  <!-- /ko -->

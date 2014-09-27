@@ -1,0 +1,124 @@
+// Misc.
+
+@imgPath: "../../img";
+
+// Colors
+
+@black:                #000000;
+@blacken:              #080808;
+@grayDarkest:          #131313;
+@grayDarker:           #212121;
+@grayDark:             #343434;
+@gray:                 #555555;
+@grayLight:            #898989;
+@grayLighter:          #cccccc;
+@grayLightest:         #eeeeee;
+@whiten:               #fbfbfb;
+@white:                #ffffff;
+
+@blue:                                                              #007196; // #007196
+@blueDarkest:           darken(           spin(@blue,  -1.00), 19.7)       ; // #002632
+@blueDarker:            darken(                @blue,  14.80)              ; // #00384b
+@blueDark:              darken(                @blue,   9.80)              ; // #004b64
+@blueLight:            lighten(                @blue,   9.75)              ; // #0096c8
+@blueLighter:          lighten(           spin(@blue,   0.60), 19.7)       ; // #00bafa
+@blueLightest:         lighten(desaturate(spin(@blue, -15.00), 17.0), 58.9); // #c8fafa
+
+@green:                                                 #229922; // #229922
+@greenDarkest:          darken(  saturate(@green, 15.5),  27.3); // #052b05
+@greenDarker:           darken(  saturate(@green,  9.2),  17.3); // #0d550d
+@greenDark:             darken(  saturate(@green,  5.0),   9.8); // #157415
+@greenLight:           lighten(desaturate(@green,  8.0),  12.0); // #37c137
+@greenLighter:         lighten(  saturate(@green,  4.0),  24.5); // #59df59
+@greenLightest:        lighten(  saturate(@green, 19.0),  51.5); // #c8fac8
+
+@red:                                                   #992222; // #992222
+@redDarkest:            darken(  saturate(@red,     15), 27.30); // #2b0505
+@redDarker:             darken(  saturate(@red,      9), 17.34); // #550d0d
+@redDark:               darken(  saturate(@red,      5),  9.80); // #741515
+@redLight:             lighten(desaturate(@red,      8), 12.00); // #c13737
+@redLighter:           lighten(  saturate(@red,      4), 24.60); // #df5959
+@redLightest:          lighten(  saturate(@red,     19), 51.50); // #fac8c8
+
+@orange:                       #e95900;
+
+@lightYellow:                  #fff3cf;
+
+//language landing colors
+@rubyColor:							#7C0B02;
+@pythonColor:						#3773a3;
+@nodeColor:							#58594e;
+
+
+// Text
+
+@successText:              @green;
+@errorText:                @redLight;
+
+@sansFontFamily:           "ProximaNova", sans-serif;
+@serifFontFamily:          Georgia, serif;
+@monoFontFamily:           Monaco, "Courier New", monospace;
+
+@baseFontSize:             14px;
+@baseFontFamily:           @sansFontFamily;
+@baseLineHeight:           20px;
+@altFontFamily:            @serifFontFamily;
+
+@fontSizeLarge:            round((@baseFontSize * 1.25), 0); // 18px
+@fontSizeSmall:            round((@baseFontSize * 0.85), 0); // 12px
+@fontSizeMini:             round((@baseFontSize * 0.75), 0); // 11px
+
+@codeFontFamily:           @monoFontFamily;
+@codeFontSize:             @fontSizeSmall;
+@codeCharacterWidth:       round((3 / 5) * @codeFontSize); // Monaco's character width is 60% of size (height)
+
+// Spacing
+
+@standardBlockSize: 250px;
+@minimumContentWidth: 960px;
+@spinnerSize: (@baseFontSize * 3);
+@innerContentPadding: @baseFontSize;
+@tile: 70px;
+
+// Links
+
+@linkColor:                @blue;
+@linkColorHover:           @blueLight;
+
+// UI Colors
+
+@grayBoxBorder:       lighten(@grayLighter, 6.75);
+@grayBorder:          lighten(@gray, 55.50); //#e3e3e3
+
+@appBackgroundColor:  @white; // #f8f8f8
+
+// 3D Lighting (soft to hard)
+
+@lightSoft:  fadein(fadeout(@white, 100), 5);
+@shadowSoft: fadein(fadeout(@black, 100), 8);
+
+// Header
+
+@navbarHeight: 50px;
+
+// Footer
+
+@footerItemSize: 1em;
+
+// Layout Grid
+
+@columns:                           12;
+@column-width:                      60;
+@gutter-width:                      20;
+
+@buildErrorBackground: @redLight;
+@buildErrorBorder:     darken(spin(@buildErrorBackground, -10), 3%);
+@circleBlue:           #084963;
+@circleBlueDark:       #04394e;
+@circleBlueLight:      #9ec5d4;
+@circleFont:           #646464;
+@circleAccent:         #d34913;
+@circleAccentText:     #fed8c9;
+
+// smaller than the smallest bootstrap zindex
+@zindexStickyFooter:   @zindexDropdown - 10;

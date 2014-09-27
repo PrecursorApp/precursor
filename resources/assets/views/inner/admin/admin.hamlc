@@ -1,0 +1,34 @@
+!= HAML['flashes']({})
+
+.container-fluid
+  .row-fluid
+    .span3
+      %ul
+        %li#projects
+          %a{href: "/admin/projects"}
+            Enabled Projects
+
+        %li#users
+          %a{href: "/admin/users"}
+            Users
+
+        %li#recent-builds
+          %a{href: "/admin/recent-builds"}
+            Recent builds
+
+        %li#build-state
+          %a{href: "/admin/build-state"}
+            Build State
+
+        %li
+          %button.btn.btn-primary{data-bind: "click: adminRefreshIntercomData"}
+            Refresh all Intercom data
+
+    .span9
+      #subpage
+        %p Switch user
+        %form.form-inline{data-bind: "", action: "/admin/switch-user", method: "post"}
+          %input.input-medium{type: "text", name: "login"}
+          %input{type: "hidden", name: "CSRFToken", value: CSRFToken }
+          %button.btn.btn-primary{type: "submit", value: "Switch user"}
+            Switch user

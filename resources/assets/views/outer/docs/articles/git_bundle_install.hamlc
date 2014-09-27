@@ -1,0 +1,40 @@
+- @title = "Git errors during a bundle install"
+- @lastUpdated = "Feb 3, 2013"
+
+%p
+  When your tests run, during the
+  %code bundle install
+  step, you might see something like this:
+
+%pre
+  %code.no-highlight<>
+    :preserve
+      Fetching git@github.com:rails/rails
+      Git error: command `git clone 'git@github.com:rails/rails' "/home/ubuntu/circle-2/vendor/bundle/ruby/1.9.1/cache/bundler/git/rails-47ba0391b239cf6d20fc732cd925192bcf3430fc" --bare --no-hardlinks` in directory /home/ubuntu/circle-1 has failed.
+      Permission denied (publickey).
+      fatal: The remote end hung up unexpectedly
+
+%p
+  This happens because you have a git repository listed as a dependency in your Gemfile:
+
+%pre
+  %code.ruby<>
+    :preserve
+      gem "rails", :git => "git://github.com/rails/rails.git"
+
+%p
+  If the repository is public, just change the dependency to use a
+  %code http
+  url:
+
+%pre
+  %code.ruby<>
+    :preserve
+      gem "rails", :git => "http://github.com/rails/rails"
+
+%p
+  If the repository is private, you will need to enable user keys
+  from your project's
+  %strong
+    Project Settings > Checkout SSH keys
+  page.

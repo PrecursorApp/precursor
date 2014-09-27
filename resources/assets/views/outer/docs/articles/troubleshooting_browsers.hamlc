@@ -1,0 +1,4 @@
+- @children = ["browser_debugging", "chromedriver_moving_elements"]
+- @title = "Browsers"
+
+!= HAML['article_list'](@)

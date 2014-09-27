@@ -1,0 +1,69 @@
+!= HAML.invite_form({})
+<!-- ko with: current_user -->
+%nav.aside-left-nav{data-bind: "css: {slim: VM.browser_settings.settings().aside_is_slim}"}
+  %a.aside-item.logo{href: "/", data-bind: "tooltip: {title: 'Home', placement: 'right', trigger: 'hover'}"}
+    .logomark
+      != HAML.ico(n:'logo')
+  %a.aside-item{href: "/account", data-bind: "tooltip: {title: 'Settings', placement: 'right', trigger: 'hover'}"}
+    %i.fa.fa-cog
+    %span Settings
+  %a.aside-item{href: "/docs", data-bind: "tooltip: {title: 'Documentation', placement: 'right', trigger: 'hover'}"}
+    %i.fa.fa-copy
+    %span Documentation
+  %a.aside-item{href: "#", data-bind: "tooltip: {title: 'Report Bug', placement: 'right', trigger: 'hover'}, click: $root.raiseIntercomDialog"}
+    %i.fa.fa-bug
+    %span Report Bug
+  %a.aside-item{href: "https://www.hipchat.com/gjwkHcrD5", target: "_blank", data-bind: "tooltip: {title: 'Live Support', placement: 'right', trigger: 'hover'}"}
+    %i.fa.fa-comments
+    %span Live Support
+  %a.aside-item#add-projects{href: "/add-projects", data-bind: "tooltip: {title: 'Add Projects', placement: 'right', trigger: 'hover'}"}
+    %i.fa.fa-plus-circle
+    %span Add Projects
+  %a.aside-item{href: "#", data-bind: "tooltip: {title: 'Invite Teammate', placement: 'right', trigger: 'hover'}", data-toggle: "modal", data-target: "#inviteForm"}
+    %i.fa.fa-envelope-o
+    %span Invite Teammate
+  %a.aside-item{href: "#", data-bind: "click: toggle_aside_expanded, tooltip: {title: 'Expand', placement: 'right', trigger: 'hover'}"}
+    / ko if: VM.browser_settings.settings().aside_is_slim
+    %i.fa.fa-long-arrow-right
+    / /ko
+    / ko ifnot: VM.browser_settings.settings().aside_is_slim
+    %i.fa.fa-long-arrow-left
+    / /ko
+    %span Collapse
+  .aside-slideup
+    %a.aside-item{href: "/account", data-bind: "tooltip: {title: 'User Account', placement: 'right', trigger: 'hover'}"}
+      %img{data-bind: "attr: {src: gravatar_url(50, true)}"}
+      %span{data-bind: "text: login"}
+    %a.aside-item{href: "/logout", data-bind: "tooltip: {title: 'Logout', placement: 'right', trigger: 'hover'}"}
+      %i.fa.fa-sign-out
+      %span Logout
+%nav.aside-left-nav.context
+  .aside-activity.open
+    .wrapper
+      %header
+        %select{name: "toggle-all-branches", data-bind: "options: ['Your Branch Activity', 'All Branch Activity'], value: activity_setting"}
+        .select-arrow
+          %i.fa.fa-caret-down
+      <!-- ko foreach: {data: $root.followed_projects(), as: 'p'} -->
+        %ul{data-bind: "css: {open: !branches_collapsed()}"}
+          %li
+            .project{role: "button"}
+              %a.toggle{data-bind: "attr: {title: 'show/hide'}, click: toggle_branches_collapsed"}
+                != HAML.ico(n:'repo')
+              %a.title{data-bind: "attr: {href: project_path, title: project_display_name}, text: project_display_name"}
+              / ko with: p.recent_branch_builds(p.default_branch())[0]
+              %a.latest{data-bind: "attr: {href: p.build_path(build_num), title: tooltip_title}, haml: {template: 'ico', args: {n: status_icon_aside}}"}
+              / /ko
+          <!-- ko foreach: {data: p.branch_names_to_show(), as: 'b'} -->
+            %li{data-bind: "css: p.branch_status(b)"}
+              .branch{role: "button"}
+                %a{data-bind: "attr: {href: p.branch_path(b), title: b}, text: p.format_branch_name(b, 23)"}
+              .status{role: "button"}
+                <!-- ko foreach: {data: p.recent_branch_builds(b).reverse(), as: 'recent'} -->
+                  %a{data-bind: "attr: {href: p.build_path(build_num), title: tooltip_title}, haml: {template: 'ico', args: {n: status_icon_aside}}"}
+                <!-- /ko -->
+          <!-- /ko -->
+      <!-- /ko -->
+<!-- /ko -->
+
+

@@ -1,0 +1,3 @@
+- @category = "privacy_security"
+- @children = ['github_privacy', 'look_at_code']
+- @title = "Privacy and Security"

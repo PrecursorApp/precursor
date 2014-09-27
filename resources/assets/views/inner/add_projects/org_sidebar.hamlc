@@ -1,0 +1,28 @@
+%ul.side-list
+  %li.add-orgs Your Organizations
+
+  / ko foreach: organizations
+
+  %li.side-item
+    %a{data-bind: "click: $root.current_user().setActiveOrganization"}
+      %img{height: 25, data-bind: "attr: {src: avatar_url}"}
+      .orgname{data-bind: "text: login, click: $root.current_user().setActiveOrganization"}
+
+  / /ko
+
+  %li.add-you Your Projects
+  %li.side-item{data-bind: "with: collaborator(login), css: {active: $root.current_user().activeOrganization() == login}"}
+    %a{data-bind: "click: $root.current_user().setActiveOrganization"}
+      %img{height: 25, data-bind: "attr: {src: avatar_url}"}
+      .orgname{data-bind: "text: login, click: $root.current_user().setActiveOrganization"}
+
+  %li.add-collabs
+    %span{data-bind: "tooltip: { title: 'For all repos &amp; forks'}", data-placement: "right"} Your Collaborators
+
+  / ko foreach: collaboratorsWithout(login)
+  %li.side-item
+    %a{data-bind: "click: $root.current_user().setActiveOrganization"}
+      %img{height: 25, data-bind: "attr: {src: avatar_url}"}
+      .orgname{data-bind: "text: login, click: $root.current_user().setActiveOrganization"}
+
+  / /ko

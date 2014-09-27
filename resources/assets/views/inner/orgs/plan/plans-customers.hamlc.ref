@@ -1,0 +1,19 @@
+%div.company-container.row
+  %h4
+    %span Powering World Class Software
+  .company
+    %img{src: '(data-uri "img/logos/stripe.png")',
+         title: "Stripe"}
+  .company
+    %img{src: '(data-uri "img/logos/salesforce.png")',
+         title: "Salesforce"}
+  .company
+    %img{src: '(data-uri "img/logos/kickstarter.png")',
+         title: "Kickstarter"}
+  .company
+    %img{src: '(data-uri "img/logos/cisco.png")',
+         title: "Cisco"}
+  .company
+    %img{src: '(data-uri "img/logos/shopify.png")',
+         title: "Shopify"}
+  %span.stretch

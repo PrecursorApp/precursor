@@ -1,0 +1,4 @@
+.row-fluid.plans{data-bind: "with: billing"}
+  != HAML.plan_update_card()
+  != HAML.plan_invoice_data()
+  != HAML.plan_invoices()

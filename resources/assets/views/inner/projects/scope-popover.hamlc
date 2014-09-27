@@ -1,0 +1,5 @@
+%p A token's scope limits what can be done with it.
+%h5 Status
+%p Allows read-only access to the build status (passing, failing, etc) of any branch of the project. Its intended use is <a href="/docs/status-badges" target: "_blank">sharing status badges</a> and <a href="/docs/polling-project-status" target="_blank">status polling tools</a> for private projects.
+%h5 All
+%p Allows full read-write access to this project in CircleCI. It is intended for full-fledged API clients which only need to access a single project.

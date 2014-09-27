@@ -1,0 +1,10 @@
+.page.error
+  .banner
+    .container
+      %h1=@error
+      %h3=@title
+
+
+  .container
+    %p
+      !=@message

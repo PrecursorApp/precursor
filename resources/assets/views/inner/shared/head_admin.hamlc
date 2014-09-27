@@ -1,0 +1,47 @@
+.head-admin{data-bind: "css: {open: VM.browser_settings.settings().show_admin_panel, expanded: expanded}"}
+  .admin-tools
+    / ko with: $parent
+    .environment{data-bind: "if: showEnvironment, click: toggle_show_admin_panel, css: environmentColor", role: "button"}
+      %strong{data-bind: "text: environment"}
+    / /ko
+    .options
+      %a{href: "/admin"} admin
+      %a{href: "/admin/users"} users
+      %a{href: "/admin/recent-builds"} recent
+      %a{href: "/admin/projects"} projects
+      - if window.renderContext.user_session_settings? and window.renderContext.user_session_settings.use_local_assets
+        %a{data-bind: "click: function() { window.location.search = '?use-local-assets=false'}"} local assets off
+      - else
+        %a{data-bind: "click: function() { window.location.search = '?use-local-assets=true'}"} local assets on
+      %a{data-bind: "click: function() { window.location.search = '?use-om=true'}"} use om
+      %a{data-bind: "click: clearResponses"} clear stats
+    .metrics{data-bind: "click: toggleExpanded"}
+      %span{data-bind: "text: '&nbsp;' + response_data().length"}
+      %strong requests
+      %span{data-bind: "text: '&nbsp;' + _.reduce(response_data(), function(t,x) {return t + x.client_latency}, 0) + 'ms'"}
+      %strong client
+      %span{data-bind: "text: '&nbsp;' + _.reduce(response_data(), function(t,x) {return t + x.circle_latency}, 0) + 'ms'"}
+      %strong server
+      %span{data-bind: "text: '&nbsp;' + _.reduce(response_data(), function(t,x) {return t + x.query_latency}, 0) + 'ms /'"}
+      %span{data-bind: "text: '&nbsp;' + _.reduce(response_data(), function(t,x) {return t + x.query_count}, 0) + ' queries'"}
+      %strong mongo
+  <!-- ko if: expanded -->
+    <!-- ko if: VM.browser_settings.settings().show_admin_panel -->
+      .admin-stats
+        %table
+          %thead
+            %tr
+              %th url
+              %th client latency
+              %th server latency
+              %th mongo queries
+              %th total query latency
+          %tbody{data-bind: "foreach: response_data"}
+            %tr
+              %td{data-bind: "text: url"}
+              %td{data-bind: "text: client_latency"}
+              %td{data-bind: "text: circle_latency"}
+              %td{data-bind: "text: query_count"}
+              %td{data-bind: "text: query_latency"}
+    <!-- /ko -->
+  <!-- /ko -->

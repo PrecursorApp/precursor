@@ -1,0 +1,33 @@
+#settings-notification
+  .notification-item
+    %form
+      %legend
+        Email notifications
+      %label.radio
+        %input{type: "radio", name: "email_pref", value: "all", data-bind: "checked: basic_email_prefs, click: save_basic_email_pref"}
+          %span Send me a personalized email for every build in all of my projects.
+
+      %label.radio
+        %input{type: "radio", name: "email_pref", value: "smart", data-bind: "checked: basic_email_prefs, click: save_basic_email_pref"}
+          %span Send me a personalized email every time a build on a branch I've pushed to fails; also once they're fixed.
+
+      %label.radio
+        %input{type: "radio", name: "email_pref", value: "none", data-bind: "checked: basic_email_prefs, click: save_basic_email_pref"}
+          %span Don't send me emails.
+
+  .notification-item
+    %form#email_address.form-horizontal
+      %legend
+        Email Addresses
+        %i.fa.fa-info-circle{data-bind: "tooltip: {title: \"Addresses added to your GitHub account will be reflected here\", placement: 'right', trigger: 'hover'}"}
+      %div{data-bind: "foreach: all_emails"}
+        %label.radio
+          %input{type: "radio", name: "selected_email", data-bind: "value: $data, checked: $root.current_user().selected_email, click: $root.current_user().save_email_address"}
+          %span{data-bind: "text: $data"}
+
+
+  .notification-item
+    %form
+      %legend
+        Project preferences
+      %p Projects can be individually configured, from a project's 'Settings' page. Instant message settings are per-project; edit a project to set them.

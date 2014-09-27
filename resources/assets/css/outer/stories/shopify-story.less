@@ -1,0 +1,287 @@
+@stories_font_size: 18px;
+.stories {
+  font-size: @stories_font_size;
+  line-height: 24px;
+  color: @gray;
+  h1,
+  h2,
+  h3 {
+    color: @grayDark;
+    font-weight: normal;
+    line-height: 1em;
+    margin: 1em 0 @stories_font_size;
+  }
+  h3 {
+    font-size: 24px;
+  }
+  h6 {
+    font-size: @baseFontSize;
+  }
+  p {
+    margin-bottom: @stories_font_size;
+  }
+  blockquote {
+    @em: (@stories_font_size * 2);
+    @small: round((3 / 4) * @stories_font_size);
+    border: none; // BS RESET
+    margin: @em auto;
+    padding: 0; // BS RESET
+    p {
+      font-size: @em;
+      line-height: 48px;
+      padding-left: @em;
+      border-left: 2px solid @grayLighter;
+      margin: 0;
+      position: relative;
+      &:before {
+        content: '\201C';
+        position: absolute;
+        left: (@em / 2);
+      }
+      &:after {
+        content: '\201D';
+      }
+    }
+    cite {
+      .flexy(center, flex-end);
+      margin-top: @small;
+    }
+    img {
+      @img: (@small * 3);
+      .outlineFlat(fade(@black, 13));
+      width: @img;
+      height: @img;
+      border-radius: (@img / 2);
+    }
+    ul {
+      font-size: @small;
+      line-height: round(((1 / 4) * @small) + @small);
+      list-style: none;
+      margin: 0 0 0 @small;
+    }
+    li {
+      font-size: inherit;
+      line-height: inherit;
+    }
+  }
+  .tooltip {
+    .tooltip-inner {
+      font-size: @baseFontSize; // BS RESET
+      padding: .5em 1em; // BS RESET
+    }
+  }
+}
+.stories-head {
+  .flexy(center, center, column);
+  background-color: @blueDarker;
+  background-image: linear-gradient(to bottom, @blueDarker 66%, @blueDarkest 100%);
+  height: 75vh;
+  color: @white;
+  blockquote {
+    max-width: 940px;
+  }
+}
+.shopify-logo {
+  max-width: (70px * 3);
+  max-height: 70px;
+}
+.stories-body {
+  max-width: 940px;
+  margin: 0 auto;
+}
+.stories-stats {
+  width: 100%;
+  ul {
+    .flexy();
+    list-style: none;
+    margin: 5vh 0;
+  }
+  li {
+    .flex(1, 1, auto);
+    .flexy(center, center, column);
+    span {
+      display: block;
+      &:first-child {
+        text-transform: uppercase;
+      }
+      &:last-child {
+        font-size: 60px;
+        line-height: 1em;
+      }
+    }
+  }
+}
+.stories-buckets {
+  @columns: 3;
+  .flexy(stretch, space-between);
+  margin: 3em 0;
+  article {
+    width: (round(100% / @columns) - 1);
+    text-align: center;
+  }
+  i {
+    font-size: 2em;
+  }
+}
+.stories-procedure {
+  @color: @gray;
+  .slot {
+    fill: @color;
+  }
+  .step {
+    &:hover {
+      .track,
+      .direction,
+      .pin {
+        stroke-width: 10;
+        transition: stroke-width 200ms;
+        transition-timing-function: cubic-bezier(0.5, -1, 0.5, 2);
+      }
+      p {
+        color: @color;
+        padding: 0 (@stories_font_size * 2) 0 0;
+        transition: padding 200ms, color 200ms;
+        &.right {
+          padding: 0 0 0 (@stories_font_size * 2);
+        }
+      }
+    }
+  }
+  .touch {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 50; // increases hover area
+    cursor: pointer;
+  }
+  .track {
+    fill: none;
+    stroke: @color;
+    stroke-width: 2;
+    transition: stroke-width 400ms;
+    stroke-linecap: round;
+  }
+  .direction {
+    fill: @color;
+    stroke: @color;
+    stroke-width: 0;
+    transition: stroke-width 400ms;
+  }
+  .pin {
+    stroke-width: 0;
+    transition: stroke-width 400ms;
+  }
+  .passing {
+    .track,
+    .direction {
+      stroke: @green;
+    }
+    .direction,
+    .pin {
+      fill: @green;
+      stroke: @green;
+    }
+  }
+  .failing {
+    .track,
+    .direction {
+      stroke: @redLight;
+    }
+    .direction,
+    .pin {
+      fill: @redLight;
+      stroke: @redLight;
+    }
+  }
+  .mask {
+    fill: @white;
+  }
+  p {
+    .flexy(center);
+    margin: 0;
+    padding: 0 @stories_font_size 0 @stories_font_size;
+    color: fade(@color, 0);
+    text-align: center;
+    pointer-events: none;
+    transition: padding 300ms, color 300ms;
+  }
+}
+.stories-cta {
+  width: 350px;
+  margin: 13em auto;
+  h3 {
+    margin-bottom: 0;
+  }
+  a {
+    font-size: @baseFontSize;
+  }
+  form {
+    margin-top: 1em;
+    [type="text"] {
+      background: @white;
+    }
+  }
+  .submit {
+    .flexy(center, flex-end);
+    [type="submit"] {
+      .circleButton(@grayLightest, @green);
+      margin-top: 1em;
+      box-shadow: none;
+    }
+  }
+}
+// AB TEST FOR STORIES_AB_SPLIT
+.stories {
+  .cta-contianer {
+    margin: 30px 0 80px 0;
+    .flexy(center, center, row);
+    > div {
+      width: 250px;
+    }
+    .submit {
+    .flexy(center, flex-end);
+    [type="submit"] {
+      .circleButton(@grayLightest, @green);
+      margin-top: 1em;
+    }
+  }
+    .seperator {
+      .flexy(center, center, column);
+      .line {
+        .flexy(center, center, column);
+        width: 2px;
+        height: 150px;
+        background: @black;
+        div {
+          padding: 10px;
+          background: white;
+          font-size: 26px;
+        }
+      }
+    }
+    form {
+      .adaptive-inline {
+        .displayFlex;
+        div:nth-of-type(1) {
+          input {
+            border-radius: 1.5em 0 0 1.5em;
+          }
+        }
+        div:nth-of-type(2) {
+          input {
+            border-radius:  0 1.5em 1.5em 0;
+          }
+        }
+      }
+    }
+    button {
+      .center;
+      padding: 5px 10px;
+      float: none;
+      background: @circleBlue;
+      &:hover {
+        background: @circleBlueDark;
+      }
+      color: @white;
+    }
+  }
+}

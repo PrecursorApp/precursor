@@ -1,0 +1,160 @@
+
+// Dynamic text color
+// determines appropriate text color based on button background
+
+.dynamicTextColor (@bkg) when (lightness(@bkg) < 50%) {
+  color: @grayLightest;
+  text-shadow: 0 -1px 1px darken(saturate(@bkg, 8), 21),
+               0  1px 1px lighten(@bkg, 8);
+}
+.dynamicTextColor (@bkg) when (lightness(@bkg) >= 50%) {
+  color: @grayDark;
+  text-shadow: 0 1px 1px lighten(@bkg, 8);
+}
+
+// Circle Button
+// button with circular sides (no corners)
+
+.circleButton(@color: @grayLightest) {
+  .circleButton(@color, @color);
+}
+.circleButton(@colorOfBackground, @colorOfHover) {
+  text-align: center;
+  outline: none;
+  padding: .75em 2em;
+  line-height: 1.5em;
+  background-color: @colorOfBackground;
+  transition: all .3s ease-in-out;
+  .vertGradient(@lightSoft 0%, @shadowSoft 100%);
+  .dynamicTextColor(@colorOfBackground);
+  .outlineEmboss(@colorOfBackground);
+  .stretchOutBkg();
+  .roundedOff();
+  &:hover, &:active {
+    .dynamicTextColor(@colorOfHover);
+    background-size: 300%;
+  }
+  &:hover {
+    @hoverDark: darken(saturate(@colorOfHover, 3), 3);
+    background-color: @hoverDark;
+    text-shadow: none;
+    transition-duration: .1s;
+    box-shadow: none;
+  }
+  &:active {
+    @activeDark: darken(saturate(@colorOfHover, 5), 8);
+    background-color: @activeDark;
+    text-shadow: 0 2px darken(@activeDark, 5);
+    transition-duration: .2s;
+    .outlinePress(@activeDark);
+  }
+}
+
+.bold-btn {
+  .white {
+    color: #fff;
+  }
+}
+
+// Subtle Button
+// circular button, clear w/ outline
+
+.subtleBtnTextColor(@bkg) when (lightness(@bkg) < 89%) {
+  color: @whiten;
+}
+.subtleBtnTextColor(@bkg) when (lightness(@bkg) >= 89%) {
+  color: @grayDark;
+}
+.subtleButton(@color: @grayLight) {
+  .subtleButton(@color, @color, 3em);
+}
+.subtleButton(@color, @hover) {
+  .subtleButton(@color, @hover, 3em);
+}
+.subtleButton(@color, @hover, @height) {
+  @line:  ((1 / 3) * @height);
+  @space: ((1 / 2) * @line);
+  float: right;
+  line-height: @line;
+  padding: @space 1em;
+  margin: ~"calc(@{space} - 1px)" @space;
+  background: none;
+  border-radius: 2em;
+  outline: none;
+  border: 1px solid @color;
+  color: @color;
+  transition: .2s;
+  &:hover {
+    background: @hover;
+    border-color: @hover;
+    .subtleBtnTextColor(@hover);
+    transition: .1s;
+  }
+  &:active {
+    @active: darken(@hover, 5);
+    background: @hover;
+    border-color: @hover;
+    .subtleBtnTextColor(@hover);
+    box-shadow: 0 1px @active inset;
+  }
+}
+.subtleButtonColor(@color) {
+  .subtleButtonColor(@color, @color);
+}
+.subtleButtonColor(@color, @hover) {
+  border-color: @color;
+  color: @color;
+  &:hover {
+    .subtleBtnTextColor(@hover);
+    background: @hover;
+    border-color: @hover;
+  }
+  &:active {
+    @active: darken(@hover, 5);
+    .subtleBtnTextColor(@hover);
+    background: @hover;
+    border-color: @hover;
+    box-shadow: 0 2px @active inset;
+  }
+}
+
+// A Row of Buttons
+// a row of buttons that rounds only at each end
+
+.aRowOfButtons(@radius) {
+  border-radius: 0;
+  margin: 0 0 0 -1px;
+  &:first-child {
+    border-top-left-radius: @radius;
+    border-bottom-left-radius: @radius;
+  }
+  &:last-child {
+    border-top-right-radius: @radius;
+    border-bottom-right-radius: @radius;
+  }
+}
+
+.button_outline(@base_color, @base_size: (@baseFontSize * 3)) {
+  @line_height: @baseFontSize;
+  @border: 1px;
+  .text_color (@base_color) when (lightness(@base_color) <  50%) {color: @white;}
+  .text_color (@base_color) when (lightness(@base_color) >= 50%) {color: @grayDark;}
+  .text_color(@base_color);
+  background: transparent;
+  color: @base_color;
+  border: @border solid @base_color;
+  border-radius: @base_size / 2;
+  margin: 0;
+  padding: (((@base_size - @line_height) / 2) - @border) @line_height;
+  line-height: @line_height;
+  transition: color 200ms, background 200ms;
+  &:hover,
+  &:focus {
+    .text_color(@base_color);
+    background: @base_color;
+    transition: color 100ms, background 100ms;
+  }
+  &:active {
+    background: darken(@base_color, 5);
+  }
+}

@@ -1,0 +1,113 @@
+.outer {
+  &#app {
+    .main-body {
+      padding: 0;
+    }
+  }
+  h1,
+  h2,
+  h3 {
+    line-height: 40px;
+  }
+  h4,
+  h5,
+  h6 {
+    line-height: 20px;
+  }
+  h1 {
+    font-size: 44px;
+    small{
+      font-size: 24.5px;
+    }
+  }
+  h2 {
+    font-size: 30px;
+    line-height: 29px;
+    margin: 30px 0;
+    small{
+      font-size: 17.5px;
+    }
+  }
+  h3 {
+    line-height: 26px;
+    font-size: 20px;
+    small{
+      font-size: 14px;
+    }
+  }
+  h4 {
+    font-size: 17.5px;
+    small{
+      font-size: 14px;
+    }
+  }
+  h5 {
+    font-size: 14px;
+  }
+  h6 {
+    font-size: 11.9px;
+  }
+  .content {
+    padding-top: 20px;
+    padding-bottom: 50px;
+
+    h2 > a, h3 > a, h4 > a, h5 > a, h6 > a {
+      color: inherit;
+    }
+
+  }
+  form {
+    margin: 20px 0 0 0;
+  }
+  // high specificity, hence all the hacks
+  .btn,
+  button {
+    &:not(.close) {
+      @btnBorder: @grayLighter;
+      border-color: @btnBorder;
+      border-bottom-color: darken(@btnBorder, 10%);
+      border: none;
+      text-shadow: none;
+      background: @circleBlue;
+      color: #6a93a3;
+      &:hover, &:focus {
+        background: lighten(@circleBlue, 5%);
+        color: white;
+      }
+    }
+    &:not(.btn-large) {
+      font-size: 14px;
+      border-radius: 3px;
+      line-height: 30px;
+      min-height: 30px;
+    }
+    &.btn-primary {
+      background: @circleAccent;
+      color: @circleAccentText;
+      &:hover,
+      &:focus {
+        background: lighten(@circleAccent, 5%);
+      }
+      i {
+        margin-right: 7px;
+        font-size: 1.1em;
+      }
+    }
+  }
+  @import "shared/banner.less";
+  @import "shared/additional.less";
+  @import "home/home.less";
+  @import "about/about.less";
+  @import "blog/blog.less";
+  @import "changelog/changelog.less";
+  @import "contact/contact.less";
+  @import "docs/docs.less";
+  @import "error/error.less";
+  @import "jobs/jobs.less";
+  @import "enterprise/enterprise.less";
+  @import "privacy/privacy.less";
+  @import "privacy/changelog.less";
+  @import "stories/stories.less";
+  @import "languages/languages.less";
+    @import "integrations/integrations.less";
+}

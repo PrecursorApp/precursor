@@ -1,0 +1,30 @@
+#IntercomTab {
+  visibility: hidden;
+  position: fixed;
+  bottom: 0;
+  right: 20px;
+  z-index: 2147483647;
+  background: transparent url(../../../img/old-intercom-widget.png) no-repeat 0 0;
+  color: #fff;
+  cursor: pointer;
+  height: 20px;
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 10px 19px 11px 46px;
+  border: 1px solid #000;
+  border-bottom: 0;
+  -webkit-border-radius: 6px 6px 0 0;
+  border-radius: 6px 6px 0 0;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.5);
+}
+
+#IntercomTab.unread{
+  background-position:0 -41px;
+}
+
+#IntercomTab.cmodal_open,
+#IntercomTab.cmodal_opening {
+  display:none;
+}

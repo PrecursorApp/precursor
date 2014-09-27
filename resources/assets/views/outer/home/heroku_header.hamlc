@@ -1,0 +1,16 @@
+.main-cta
+  .container
+    .span12
+      .ctabox.heroku-cta-box
+        %p.center
+          Welcome Heroku User.
+        %p.center
+          Sign up with your Github credentials to get started
+        %p.center
+          %span
+            %a#join.btn.btn-action.btn-jumbo.kissAuthGithub{ data-toggle: "modal", data-target: "#githubModal", title: 'RUN YOUR TESTS' }
+              RUN YOUR TESTS
+          %span
+        %p.center
+          %span
+            You are seconds away from awesome

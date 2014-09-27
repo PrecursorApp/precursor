@@ -1,0 +1,39 @@
+.row-fluid
+  .span8
+    %legend Extra organizations
+
+    %p
+      Your plan covers all repositories (including forks) in the
+      %strong{data-bind: "text: org_name"}
+      organization by default.
+
+    %p
+      You can let any GitHub organization you belong to, including personal accounts, piggyback on your plan. Projects in your piggyback organizations will be able to run builds on your plan.
+    %p
+      %span.label.label-info Note:
+      Members of the piggyback organizations will be able to see that you're paying for them, the name of your plan, and the number of containers you've paid for. They won't be able to edit the plan unless they are also admins on the
+      %span{data-bind: "text: current_org_name"}
+      org.
+
+
+    %div{data-bind: "if: loadingOrganizations"}
+      Loading organization list...
+
+
+
+    .row-fluid
+      .span12
+        %div{data-bind: "ifnot: loadingOrganizations"}
+          %form
+            .controls{data-bind: "foreach: all_orgs"}
+              .control
+                %label.checkbox
+                  %input{type: "checkbox", data-bind: "value: $data, checked: $parent.piggieback_orgs"}
+                    %span{data-bind: "text: $data"}
+
+            .form-actions.span7
+              %button.btn.btn-large.btn-primary{data-bind: "click: saveOrganizations",
+                                                type: "submit",
+                                                data-loading-text: "Saving...",
+                                                data-success-text: "Saved"}
+                Also pay for these organizations

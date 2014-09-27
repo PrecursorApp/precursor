@@ -1,0 +1,17 @@
+- @title = "CircleCI uses the wrong Ruby version"
+- @lastUpdated = "Feb 3, 2013"
+
+%p
+  We infer your Ruby version from your .rvmrc file, .ruby-version file, or Gemfile.
+  You can also specify it in your
+  %a{href: "/docs/configuration#ruby-version"} circle.yml
+  file.
+  If you don't do any of the above, we'll use Ruby
+  = CI.Versions.default_ruby
+  or
+  = succeed ',', ->
+    = CI.Versions.old_ruby
+  whichever we think is best.
+  You can
+  %a{href: "/docs/configuration#ruby-version"} control the version
+  if we got it wrong.

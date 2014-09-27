@@ -1,0 +1,61 @@
+&.blog {
+
+  header h2 {
+    margin: auto;
+    margin-top: 15px;
+
+    &:first-child {
+      margin-left: 240px;
+    }
+
+    a {
+      text-decoration: none;
+
+      &:hover {
+        color: lighten(@linkColor, 20%);
+      }
+    }
+
+    i {
+      top: 0;
+      position: relative;
+      font-size: 20px;
+    }
+  }
+
+  article, .history li {
+    border-bottom: 1px solid #eee;
+  }
+
+  .history {
+    margin: 0;
+
+    li {
+      padding: 10px 0;
+      list-style-type: none;
+    }
+  }
+
+  article {
+    margin-top: 30px;
+    padding-bottom: 30px;
+
+    &:last-of-type {
+      border: none;
+    }
+
+    h2 {
+      margin: 0;
+    }
+
+    .meta {
+      margin: 5px 0 30px 0;
+    }
+
+    p {
+      margin-bottom: 20px;
+      line-height: 22px;
+    }
+  }
+
+}

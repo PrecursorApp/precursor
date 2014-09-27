@@ -1,0 +1,14 @@
+.ctabox{class: @first and "line"}
+  - if @first
+    %div
+      %p
+        Plans start at $19 per month. All plans include a free 14 day trial.
+
+  != HAML.home_button({source: "hero"})
+
+  - if @first
+    %div
+      %p
+        %i
+          CircleCI keeps your code safe.
+          %a{href: "/security", title: "Security"} Learn how.

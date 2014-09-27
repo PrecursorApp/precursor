@@ -1,0 +1,17 @@
+.org-cancel{data-bind: "with: billing"}
+  .row-fluid
+    %legend Cancel
+  .row-fluid
+    %h3{data-bind: "attr: {alt: cancelFormErrorText}"} Please tell us why you're canceling. This helps us make Circle better!
+    %form
+      <!-- ko foreach: CI.inner.Billing.cancelReasons -->
+        %label.cancel-reason
+          %input{type: "checkbox", data-bind: "value: value, checked: $parent.cancel_reasons"}
+          %span{data-bind: "text: text"}
+      <!-- /ko -->
+      %textarea{data-bind: "value: cancel_notes, valueUpdate: 'keyup'", required: ""}
+      %label{data-bind: "attr: {alt: cancelTextareaAltText}", placeholder: "Thanks for the feedback!"}
+      .hint{data-bind: "css: {show: show_cancel_errors}"}
+        %i.fa.fa-exclamation-circle
+        %span{data-bind: "text: cancelFormErrorText"}
+      %button{data-bind: "click: ajaxCancelPlan", data-spinner: "true"} Cancel Plan

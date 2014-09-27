@@ -1,0 +1,176 @@
+.docs {
+
+  .content h1 {
+    font-size: 30px;
+    line-height: 29px;
+  }
+
+  .article_list {
+      margin-left: 3px;
+      li {
+        list-style-type: none;
+      }
+    }
+
+
+  article {
+
+    h2 > a, h3 > a, h4 > a, h5 > a, h6 > a {
+      color: black;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    .meta {
+      padding-bottom: 20px;
+      border-bottom: 1px solid @grayLighter;
+    }
+
+    .meta strong, .meta {
+      color: @gray;
+    }
+
+    ul {
+      margin: 30px 0 30px 30px;
+      list-style-type: bullet;
+
+      li {
+        position: relative;
+        margin: 10px 0;
+
+        &:before {
+          position: absolute;
+          top: 0;
+          left: -30px;
+          color: white;
+          background: @circleBlueLight;
+          height: 20px;
+          width: 20px;
+          text-align: center;
+          font-size: 12px;
+          .border-radius(20px);
+        }
+      }
+
+    }
+
+    .article_list {
+      list-style-type: none;
+    }
+
+    pre {
+      margin: 30px 0;
+    }
+
+    p {
+      margin-bottom: 20px;
+    }
+    
+    iframe {
+      margin-bottom: 20px;
+    }
+
+  }
+
+  #searchDocs {
+    ul {
+      margin: 0;
+    }
+
+    input {
+      width: 86%;
+    }
+
+    li.active {
+      background-color: #33659c;
+      strong { color: white; }
+      color: white;
+    }
+
+    li > a {
+      color: #333;
+      background-color: white;
+    }
+
+    button {
+      height: 38px;
+      width: 38px;
+      font-size: 18px;
+      margin-left: 5px;
+
+      i.fa.fa-search {
+        position: relative;
+        font-size: 105%;
+      }
+    }
+
+    button, input {
+      float: left;
+    }
+  }
+
+  .span8 {
+    h1 {
+      margin-top: 10px;
+    }
+  }
+
+  .articles {
+    margin-top: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid @grayLighter;
+
+    &:last-of-type, &.span4 {
+      border: none;
+    }
+
+    &.span4 {
+      margin: 20px 0 0 0;
+      background: lighten(@grayLighter, 4%);
+      box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      padding: 10px 20px 20px 20px;
+      .border-radius(3px);
+
+      &:first-of-type {
+        margin-right: 15px;
+      }
+
+      li a {
+        padding: 2px 7px;
+      }
+    }
+
+    &:first-of-type:not(.span4) {
+      margin-top: 0;
+    }
+
+    li {
+      list-style-type: none;
+      a {
+        display: block;
+        padding: 5px 7px;
+        text-decoration: none;
+
+        &:hover, .active {
+          .border-radius(3px);
+          background: lighten(@linkColor, 55%);
+        }
+      }
+    }
+
+    h4 {
+      text-transform: uppercase;
+      font-size: 14px;
+      a {
+        padding: 0px 0px;
+        color: @circleFont;
+      }
+    }
+  }
+  .artifacts-image{
+    border: 2px solid #FC7F08;
+  }
+}

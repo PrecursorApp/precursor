@@ -1,0 +1,7 @@
+/ ko if: VM.logged_in
+!= HAML.inner_header()
+/ /ko
+
+/ ko ifnot: VM.logged_in
+!= HAML.outer_header()
+/ /ko

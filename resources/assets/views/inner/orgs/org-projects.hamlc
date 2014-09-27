@@ -1,0 +1,35 @@
+.row-fluid.followed-projects
+  %h2 Followed projects
+  %h4{data-bind: "ifnot: projects_with_followers().length"}
+    No followed projects found.
+  .span8{data-bind: "foreach: {data: projects_with_followers, as: 'project'}"}
+    .row-fluid
+      .span12.well.success{data-bind: "equalizeWidth: '.follower-container'"}
+        .row-fluid
+          .span12
+            %h4
+              %a{data-bind: "attr: {href: project_path}, text: repo_name"}
+              %a.edit-icon{data-bind: "attr: {href: edit_link}"}
+                %i.fa.fa-gear
+              %a.github-icon-link{data-bind: "attr: {href: vcs_url}"}
+                %i.fa.fa-github
+        .row-fluid.followers-container
+          .span12{data-bind: "foreach: {data: followers, as: 'follower'}"}
+            %span.follower-container{style: "display: inline-block"}
+              %img.gravatar{data-bind: "attr: {src: gravatar_url(30, true)}"}
+              %span{data-bind: "text: login"}
+
+
+.row-fluid
+  %h2 Untested repos
+  %h4{data-bind: "ifnot: projects_without_followers().length"}
+    No untested repos found.
+  .span8{data-bind: "foreach: {data: projects_without_followers, as: 'project'}"}
+    .row-fluid
+      .span12.well.fail
+        %h4
+          %a{data-bind: "attr: {href: project_path}, text: repo_name"}
+          %a.github-icon-link{data-bind: "attr: {href: vcs_url}"}
+            %i.fa.fa-github
+          %a.pull-right.btn.btn-small.btn-primary{data-bind: "click: $parent.followProjectHandler(project)"}
+            Follow

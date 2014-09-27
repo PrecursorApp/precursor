@@ -1,0 +1,11 @@
+- @title = "Permissions and access during deployment"
+- @lastUpdated = "Jun 4, 2013"
+
+%p
+  We designed our UI so that it is easy for you to upload the SSH keys we need
+  to securely deploy your projects to your production servers.
+
+%p
+  You enter the security information (public key and private key) for deployment
+  on your project's <b>Project Settings > SSH keys</b> page.
+  If you leave the <b>Hostname</b> field blank, the key will be used for all hosts.
