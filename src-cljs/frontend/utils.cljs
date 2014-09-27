@@ -56,6 +56,12 @@
   (when logging-enabled?
     (.apply (.-error js/console) js/console (clj->js messages))))
 
+(defn log-pr [& args]
+  (apply print (map #(if (= (type %) (type ""))
+                     %
+                     (subs (pr-str %) 0 1000))
+                  args)))
+
 (defn uuid
   "returns a type 4 random UUID: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
   []
