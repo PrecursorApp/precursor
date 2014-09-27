@@ -226,3 +226,5 @@
 (defn update-ui! []
   (reinstall-om!)
   (refresh-css!))
+
+(setup!)
