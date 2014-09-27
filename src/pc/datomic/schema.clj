@@ -54,7 +54,10 @@
 
    (attribute :document/name
               :db.type/string)
-   ])
+
+   (attribute :dummy
+              :db.type/ref)
+   (enum :dummy/dummy)])
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))
