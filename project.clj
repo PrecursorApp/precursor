@@ -49,7 +49,7 @@
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]]
 
-  :main pc.core
+  :main pc.init
 
   :jvm-opts ["-Djava.net.preferIPv4Stack=true"
              "-server"

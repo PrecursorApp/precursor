@@ -1,4 +1,4 @@
-(ns pc.core
+(ns pc.server
   (:require [compojure.core :refer (defroutes GET ANY)]
             [compojure.handler :refer (site)]
             [compojure.route]
@@ -15,10 +15,20 @@
                                   :mime-types {:svg "image/svg"}})
   (ANY "*" [] {:status 404 :body nil}))
 
-(defn -main
-  "Starts the server that will serve the assets when visiting circle with ?use-local-assets=true"
-  []
-  (println "Starting less compiler.")
-  (less/init)
-  (println "starting server on port 8080")
-  (httpkit/run-server (stefon/asset-pipeline (site #'routes) stefon-options) {:port 8080}))
+(defn port []
+  (if (System/getenv "HTTP_PORT")
+    (Integer/parseInt (System/getenv "HTTP_PORT"))
+    8080))
+
+(defn start []
+  (def server (httpkit/run-server (stefon/asset-pipeline (site #'routes) stefon-options) {:port (port)})))
+
+(defn stop []
+  (server))
+
+(defn restart []
+  (stop)
+  (start))
+
+(defn init []
+  (start))
