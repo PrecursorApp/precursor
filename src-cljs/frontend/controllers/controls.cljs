@@ -54,3 +54,19 @@
   [target message channel-id previous-state current-state]
   (.setItem js/sessionStorage "circle-state"
             (pr-str (dissoc current-state :comms))))
+
+(defmethod control-event :camera-nudged-up
+  [target message _ state]
+  (update-in state [:camera :y] inc))
+
+(defmethod control-event :camera-nudged-down
+  [target message _ state]
+  (update-in state [:camera :y] dec))
+
+(defmethod control-event :camera-nudged-left
+  [target message _ state]
+  (update-in state [:camera :x] inc))
+
+(defmethod control-event :camera-nudged-right
+  [target message _ state]
+  (update-in state [:camera :x] dec))

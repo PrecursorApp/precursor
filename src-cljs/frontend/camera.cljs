@@ -1,8 +1,7 @@
 (ns frontend.camera)
 
 (defn camera [state]
-  {:x 0
-   :y 0})
+  (:camera state))
 
 (defn grid-width [state]
   10)
