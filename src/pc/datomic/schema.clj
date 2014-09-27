@@ -42,6 +42,18 @@
               :db.type/uuid
               :db/cardinality :db.cardinality/many
               :db/doc "Layer's children")
+
+   ;; No logins at the moment, so we'll use this to identify users
+   (attribute :session/uuid
+              :db.type/uuid
+              :db/index true)
+
+   (attribute :document/uuid
+              :db.type/uuid
+              :db/index true)
+
+   (attribute :document/name
+              :db.type/string)
    ])
 
 (defn ensure-schema
