@@ -1,5 +1,6 @@
 (ns pc.datomic
-  (:require [clojure.tools.logging :refer (infof)]
+  (:require [clojure.core.async :as async]
+            [clojure.tools.logging :refer (infof)]
             [datomic.api :refer [db q] :as d])
   (:import java.util.UUID))
 
@@ -57,8 +58,18 @@
   (let [{:keys [a e v tx added]} datom]
     [(if added :db/add :db/retract) e a v]))
 
+(defonce tx-report-ch (async/chan (async/sliding-buffer 1024)))
+
+(defn setup-tx-report-ch [conn]
+  (let [queue (d/tx-report-queue conn)]
+    (future (while true
+              (let [transaction (.take queue)]
+                (async/put! tx-report-ch transaction))))))
+
 (defn init []
   (infof "Creating default database if it doesn't exist: %s"
          (d/create-database default-uri))
   (infof "Ensuring connection to default database")
-  (infof "Connected to: %s" (conn)))
+  (infof "Connected to: %s" (conn))
+  (infof "forwarding report-queue to tx-report-ch")
+  (setup-tx-report-ch (conn)))

@@ -9,16 +9,12 @@
             [org.httpkit.server :as httpkit]
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
+            [pc.http.sente :as sente]
             [pc.models.layer :as layer]
             [pc.less :as less]
             [pc.views.content :as content]
             [pc.stefon]
-            [stefon.core :as stefon]
-            [taoensso.sente :as sente])
-  (:import java.util.UUID))
-
-;; TODO: find a way to restart sente
-(defonce sente-state (atom {}))
+            [stefon.core :as stefon]))
 
 (defn log-request [req resp ms]
   (when-not (re-find #"^/cljs" (:uri req))
@@ -70,64 +66,10 @@
 
 (defn restart []
   (stop)
-  (start @sente-state))
+  (start @sente/sente-state))
 
-(defn user-id-fn [ring-req]
-  (UUID/randomUUID))
-
-;; hash-map of document-id to set of connected user-ids
-;; Used to keep track of which transactions to send to which user
-;; sente's channel handling stuff is not much fun to work with :(
-(defonce document-subs (atom {}))
-
-(defn ws-handler-dispatch-fn [req]
-  (-> req :event first))
-
-(defmulti ws-handler ws-handler-dispatch-fn)
-
-(defmethod ws-handler :default [req]
-  (def req req)
-  (log/infof "%s for %s" (:event req) (:client-uuid req)))
-
-(defn clean-document-subs [uuid]
-  (swap! document-subs (fn [ds]
-                         ;; Could be optimized...
-                         (reduce (fn [acc [document-id user-ids]]
-                                   (if-not (contains? user-ids uuid)
-                                     acc
-                                     (let [new-user-ids (disj user-ids uuid)]
-                                       (if (empty? new-user-ids)
-                                         (dissoc acc document-id)
-                                         (assoc acc document-id new-user-ids)))))
-                                 ds ds))))
-
-(defmethod ws-handler :chsk/uidport-close [{:keys [client-uuid] :as req}]
-  (log/infof "closing connection for %s" client-uuid)
-  (clean-document-subs client-uuid))
-
-(defn subscribe-to-doc [document-id uuid]
-  (swap! document-subs update-in [document-id] (fnil conj #{}) uuid))
-
-(defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data] :as req}]
-  (let [document-id (-> ?data :document-id)]
-    (log/infof "subscribing %s to %s" client-uuid document-id)
-    (subscribe-to-doc document-id client-uuid)))
-
-(defn setup-ws-handlers [sente-state]
-  (let [tap (async/chan (async/sliding-buffer 100))
-        mult (async/mult (:ch-recv sente-state))]
-    (async/tap mult tap)
-    (async/go-loop []
-                   (when-let [req (async/<! tap)]
-                     (ws-handler req)
-                     (recur)))))
-
-(defn sente-init []
-  (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
-                ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket! {:user-id-fn #'user-id-fn})]
-    (reset! sente-state fns)
-    (setup-ws-handlers fns)))
 
 (defn init []
-  (sente-init)
-  (start @sente-state))
+  (let [sente-state (sente/init)]
+    (start sente-state))
+  (datomic/init))
