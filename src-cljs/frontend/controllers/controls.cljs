@@ -77,3 +77,7 @@
 (defmethod control-event :show-grid-toggled
   [target message {:keys [project-id]} state]
   (update-in state state/show-grid-path not))
+
+(defmethod control-event :night-mode-toggled
+  [target message {:keys [project-id]} state]
+  (update-in state state/night-mode-path not))

@@ -150,4 +150,6 @@
 
 (def user-options-shown-path [:user-options-shown])
 
-(def show-grid-path [:show-grid?])
+(def show-grid-path (conj browser-settings-path :show-grid?))
+
+(def night-mode-path (conj browser-settings-path :night-mode?))

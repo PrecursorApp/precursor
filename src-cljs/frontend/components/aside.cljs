@@ -11,7 +11,8 @@
     om/IRender
     (render [_]
       (let [controls-ch (om/get-shared owner [:comms :controls])
-            show-grid? (get-in app state/show-grid-path)]
+            show-grid? (get-in app state/show-grid-path)
+            night-mode? (get-in app state/night-mode-path)]
        (html
          [:div.aside-menu
           [:button
@@ -36,9 +37,11 @@
             (if show-grid?
               (common/icon :check)
               (common/icon :times))]
-           [:button
+           [:button {:on-click #(put! controls-ch [:night-mode-toggled])}
             [:span "Night Mode"]
-            (common/icon :times)]
+            (if night-mode?
+              (common/icon :check)
+              (common/icon :times))]
            [:button
             [:span "Settings"]
             (common/icon :times)]]]])))))
