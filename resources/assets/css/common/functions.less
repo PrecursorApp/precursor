@@ -33,3 +33,9 @@
     }
   }
 }
+.outline(@color: @gray_lighter) {
+  box-shadow+:  0    1px @color;
+  box-shadow+:  0   -1px @color;
+  box-shadow+:  1px  0   @color;
+  box-shadow+: -1px  0   @color;
+}
