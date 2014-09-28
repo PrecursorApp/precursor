@@ -14,10 +14,10 @@
             [pc.views.content :as content]
             [pc.stefon]
             [stefon.core :as stefon]
-            [taoensso.sente :as sente]))
+            [taoensso.sente :as sente])
 
-;; TODO: find a way to restart senta
-(defonce senta-state (atom {}))
+;; TODO: find a way to restart sente
+(defonce sente-state (atom {}))
 
 (defn log-request [req resp ms]
   (when-not (re-find #"^/cljs" (:uri req))
@@ -34,7 +34,7 @@
           (log/error e)))
       resp)))
 
-(defn app [senta-state]
+(defn app [sente-state]
   (routes
    (POST "/api/entity-ids" request
          (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
@@ -48,8 +48,8 @@
    (GET "/" [] (content/app))
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
-   (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn senta-state) req))
-   (POST "/chsk" req ((:ajax-post-fn senta-state) req))
+   (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
+   (POST "/chsk" req ((:ajax-post-fn sente-state) req))
    (ANY "*" [] {:status 404 :body nil})))
 
 (defn port []
@@ -57,8 +57,8 @@
     (Integer/parseInt (System/getenv "HTTP_PORT"))
     8080))
 
-(defn start [senta-state]
-  (def server (httpkit/run-server (-> (app senta-state)
+(defn start [sente-state]
+  (def server (httpkit/run-server (-> (app sente-state)
                                       (logging-middleware)
                                       (site)
                                       (stefon/asset-pipeline pc.stefon/stefon-options))
@@ -69,7 +69,7 @@
 
 (defn restart []
   (stop)
-  (start @senta-state))
+  (start @sente-state))
 
 (defn user-id-fn [ring-req]
   (println "calling user-id-fn")
@@ -81,20 +81,21 @@
   (log/info (:event req)))
 
 (defn setup-ws-handlers [senta-state]
+(defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))
-        mult (async/mult (:ch-recv senta-state))]
+        mult (async/mult (:ch-recv sente-state))]
     (async/tap mult tap)
     (async/go-loop []
                    (when-let [req (async/<! tap)]
                      (ws-handler req)
                      (recur)))))
 
-(defn senta-init []
+(defn sente-init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket! {:user-id-fn #'user-id-fn})]
-    (reset! senta-state fns)
+    (reset! sente-state fns)
     (setup-ws-handlers fns)))
 
 (defn init []
-  (senta-init)
-  (start @senta-state))
+  (sente-init)
+  (start @sente-state))
