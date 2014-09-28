@@ -21,7 +21,7 @@
 (defn user-id-fn [req]
   (let [uid (get-in req [:session :uid])]
     ;; have to stringify this for sente for comparisons to work
-    uid))
+    (str uid)))
 
 (defn wrap-user-id [handler]
   (fn [req]
@@ -46,7 +46,7 @@
 (defn client-uuid->uuid
   "Get the client's user-id from the client-uuid"
   [client-uuid]
-  (UUID/fromString (str/replace client-uuid #"-[^-]+$" "")))
+  (str/replace client-uuid #"-[^-]+$" ""))
 
 (defmulti ws-handler ws-handler-dispatch-fn)
 
@@ -85,7 +85,7 @@
   (let [document-id (-> ?data :document/id)
         datoms (->> ?data :datoms (remove (comp nil? :v)))]
     (log/infof "transacting %s on %s for %s" datoms document-id client-uuid)
-    (datomic/transact! datoms document-id (client-uuid->uuid client-uuid))))
+    (datomic/transact! datoms document-id (UUID/fromString (client-uuid->uuid client-uuid)))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
