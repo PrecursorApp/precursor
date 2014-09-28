@@ -56,7 +56,10 @@
                                                 (.preventDefault event)
                                                 (.stopPropagation event)
                                                 (let [dx     (- (aget event "deltaX"))
-                                                      dy     (- (aget event "deltaY"))]
+                                                      dy     (if (aget event "nativeEvent" "webkitDirectionInvertedFromDevice")
+                                                               ;; Detect inverted scroll (natural scroll)
+                                                               (aget event "deltaY")
+                                                               (- (aget event "deltaY")))]
                                                   (om/transact! payload (fn [state]
                                                                           (let [camera (cameras/camera state)
                                                                                 mode   (cameras/camera-mouse-mode state)]
