@@ -155,8 +155,11 @@
   [target message [x y] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) [% [x y]])]
     (cond
-     (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
-     :else (cast! :drawing-started))))
+     (get-in current-state [:keyboard :meta?])         (cast! :menu-opened)
+     (= (get-in current-state [:current-tool]) :text)  (cast! :text-layer-created)
+     (= (get-in current-state [:current-tool]) :shape) (cast! :drawing-started)
+     (= (get-in current-state [:current-tool]) :line)  (cast! :drawing-started)
+     :else                                             nil)))
 
 (defmethod post-control-event! :mouse-released
   [target message [x y] previous-state current-state]
@@ -181,6 +184,10 @@
 
 (defmethod control-event :menu-closed
   [target message _ state]
-  (print "menu opened")
   (-> state
       (assoc-in [:menu :open?] false)))
+
+(defmethod control-event :tool-selected
+  [target message [tool] state]
+  (-> state
+      (assoc-in [:current-tool] tool)))

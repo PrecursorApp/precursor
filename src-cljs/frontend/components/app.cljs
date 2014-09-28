@@ -46,7 +46,8 @@
 
 (defn app [app owner]
   (om/component
-    (let [show-grid? (get-in app state/show-grid-path)
+    (let [{:keys [cast!]} (om/get-shared owner)
+          show-grid? (get-in app state/show-grid-path)
           night-mode? (get-in app state/night-mode-path)]
       (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
                                                     (when night-mode? ["night-mode"])))}
@@ -57,23 +58,27 @@
                (when (get-in app [:menu :open?])
                  [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
                                             :left (- (get-in app [:menu :x]) 128)}}
-                [:button
-                 [:object
-                  (common/icon :tool-text)
-                  [:span "Text"]]]
-                [:button
-                 [:object
-                  (common/icon :cursor)
-                  [:span "Select"]]]
-                [:button
-                 [:object
-                  (common/icon :tool-square)
-                  [:span "Shape"]]]
-                [:button
-                 [:object
-                  (common/icon :tool-line)
-                  [:span "Line"]]]
-                [:div.radial-menu-nub]])
+                  [:button
+                   {:on-mouse-up #(cast! :tool-selected [:text])}
+                   [:object
+                    (common/icon :tool-text)
+                    [:span "Text"]]]
+                  [:button
+                   {:on-mouse-up #(cast! :tool-selected [:select])}
+                   [:object
+                    (common/icon :cursor)
+                    [:span "Select"]]]
+                  [:button
+                   {:on-mouse-up #(cast! :tool-selected [:shape])}
+                   [:object
+                    (common/icon :tool-square)
+                    [:span "Shape"]]]
+                  [:button
+                   {:on-mouse-up #(cast! :tool-selected [:line])}
+                   [:object
+                    (common/icon :tool-line)
+                    [:span "Line"]]]
+                  [:div.radial-menu-nub]])
                [:div.right-click-menu
                 [:button "Cut"]
                 [:button "Copy"]
