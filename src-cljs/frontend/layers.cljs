@@ -52,9 +52,9 @@
    :layer/start-y      y
    :layer/end-x        x
    :layer/end-y        y
-   :layer/fill         "blue"
-   :layer/stroke-width 2
-   :layer/stroke-color "green"
-   :layer/name         "Testing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+   :layer/fill         "white"
+   :layer/stroke-width 1
+   :layer/stroke-color "black"
+   :layer/name         "placeholder"
    :layer/opacity      1
    :entity/type        :layer})
