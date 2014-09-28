@@ -15,10 +15,22 @@ text {
 }
 a {
   background: transparent;
+  &:active,
+  &:hover {
+    outline: 0;
+  }
 }
-a:active,
-a:hover {
-  outline: 0;
+button {
+  background: none;
+  padding: .5em 1em;
+  border: none;
+  &:active,
+  &:hover {
+    outline: 0;
+  }
+  &:focus {
+    outline: 0;
+  }
 }
 h1 {
   font-size: 2em;

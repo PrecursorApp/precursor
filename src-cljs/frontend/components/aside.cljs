@@ -8,4 +8,9 @@
     om/IRender
     (render [_]
       (html
-        [:a "test"]))))
+        [:div.aside-menu
+         [:button "test"]
+         [:button "test"]
+         [:button "test"]
+         [:button "test"]
+         [:button "test"]]))))

@@ -6,10 +6,21 @@
 }
 .app-aside {
   width: @tile;
+  border-right: 1px solid @gray_light;
   transition: 300ms;
   &:hover {
     width: (@tile * 4);
     transition-duration: 200ms;
     transition-timing-function: @bezier_bounce;
+  }
+}
+.aside-menu {
+  .flexy(column);
+  button {
+    border-bottom: 1px solid @gray_lighter;
+    text-align: left;
+    &:hover {
+      background: @gray_lighter;
+    }
   }
 }
