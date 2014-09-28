@@ -11,17 +11,17 @@
       (html
         [:div.aside-menu
          [:button
-          (common/icon :precursor-logo)
+          (common/icon :logomark-precursor)
           [:span "Precursor"]]
          [:button
-          (common/icon :precursor-logo)
+          (common/icon :logomark-precursor)
           [:span "test"]]
          [:button
-          (common/icon :precursor-logo)
+          (common/icon :logomark-precursor)
           [:span "test"]]
          [:button
-          (common/icon :precursor-logo)
+          (common/icon :logomark-precursor)
           [:span "test"]]
          [:button
-          (common/icon :precursor-logo)
+          (common/icon :logomark-precursor)
           [:span "test"]]]))))

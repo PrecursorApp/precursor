@@ -55,10 +55,10 @@
              messages)]))])
 
 (def icon-paths
-  {:precursor-logo-stroke "M35.7,45.3V95 M60.5,84.4C82,78.6,94.8,56.5,89,34.9C83.2,13.4,61.1,0.6,39.5,6.4S5.2,34.3,11,55.9"})
+  {:logomark-precursor-stroke "M35.7,45.3V95 M60.5,84.4C82,78.6,94.8,56.5,89,34.9C83.2,13.4,61.1,0.6,39.5,6.4S5.2,34.3,11,55.9"})
 
 (def icon-templates
-  {:precursor-logo {:paths [:precursor-logo-stroke]}
+  {:logomark-precursor {:paths [:logomark-precursor-stroke]}
    :logo {:paths [:turn :circle]}
    :pass {:paths [:turn :check]}
    :fail {:paths [:turn :times]}
