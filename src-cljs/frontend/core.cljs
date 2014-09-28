@@ -260,6 +260,14 @@
 (defn fetch-entity-ids [api-ch eid-count]
   (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
 
+(defn setup-entity-id-fetcher [state]
+  (let [api-ch (-> state deref :comms :api)]
+    (fetch-entity-ids api-ch 10)
+    (add-watch state :entity-id-fetcher (fn [key ref old new]
+                                          (when (> 5 (-> new :entity-ids count))
+                                            (println "fetching more entity ids")
+                                            (fetch-entity-ids api-ch 20))))))
+
 (defn ^:export setup! []
   (apply-app-id-hack)
   (let [state (app-state)
@@ -270,7 +278,7 @@
     (browser-settings/setup! state)
     (main state top-level-node history-imp)
     (sente/init state)
-    (fetch-entity-ids (get-in @state [:comms :api]) 10)
+    (setup-entity-id-fetcher state)
     (if-let [error-status (get-in @state [:render-context :status])]
       ;; error codes from the server get passed as :status in the render-context
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
