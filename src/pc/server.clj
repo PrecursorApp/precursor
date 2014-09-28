@@ -13,6 +13,8 @@
 (defroutes routes
   (POST "/api/entity-ids" request
         (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
+  (POST "/api/transact" request
+        (datomic/transact! (-> request :body slurp edn/read-string :datoms)))
   (GET "/" [] (content/app))
   (compojure.route/resources "/" {:root "public"
                                   :mime-types {:svg "image/svg"}})
