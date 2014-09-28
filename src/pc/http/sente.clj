@@ -3,25 +3,38 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [pc.http.datomic2 :as datomic]
             [taoensso.sente :as sente])
   (:import java.util.UUID))
 
 ;; TODO: find a way to restart sente
 (defonce sente-state (atom {}))
 
-(defn user-id-fn
+(defn uuid
   "Have to remove - so that we can parse it out of the client-uuid"
-  [ring-req]
-  (str/replace (UUID/randomUUID) "-" ""))
+  []
+  (UUID/randomUUID))
+
+(defn user-id-fn [req]
+  (let [uid (get-in req [:session :uid])]
+    ;; have to stringify this for sente for comparisons to work
+    uid))
+
+(defn wrap-user-id [handler]
+  (fn [req]
+    (handler
+     (if-not (get-in req [:session :uid])
+       (assoc-in req [:session :uid] (uuid))
+       req))))
 
 ;; hash-map of document-id to set of connected user-ids
 ;; Used to keep track of which transactions to send to which user
 ;; sente's channel handling stuff is not much fun to work with :(
 (defonce document-subs (atom {}))
 
-;; XXX: fix this once we annotate transactions with document ids
 (defn notify-transaction [data]
-  (doseq [uid (get @document-subs (:document-id data))]
+  (doseq [uid (get @document-subs (:document/id data))]
+    (log/infof "notifying %s about new transactions for %s" uid (:document/id data))
     ((:send-fn @sente-state) uid [:datomic/transaction data])))
 
 (defn ws-handler-dispatch-fn [req]
@@ -30,7 +43,7 @@
 (defn client-uuid->uuid
   "Get the client's user-id from the client-uuid"
   [client-uuid]
-  (str/replace client-uuid #"-.*$" ""))
+  (UUID/fromString (str/replace client-uuid #"-[^-]+$" "")))
 
 (defmulti ws-handler ws-handler-dispatch-fn)
 
@@ -61,6 +74,12 @@
   (let [document-id (-> ?data :document-id)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid))))
+
+(defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
+  (let [document-id (-> ?data :document/id)
+        datoms (->> ?data :datoms (remove (comp nil? :v)))]
+    (log/infof "transacting %s on %s for %s" datoms document-id client-uuid)
+    (datomic/transact! datoms document-id (client-uuid->uuid client-uuid))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log

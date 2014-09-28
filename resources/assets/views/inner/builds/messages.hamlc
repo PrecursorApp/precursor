@@ -1,5 +1,0 @@
-.row-fluid{data-bind: "if: messages().length"}
-  .offset1.span10#build-messages{data-bind: "foreach: messages"}
-    .alert.alert-info
-      %strong Warning:
-      %span{data-bind: "html: message"}

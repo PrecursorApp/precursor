@@ -1,9 +1,0 @@
-- @language or= "python"
-- @versions = CI.Versions["#{@language}_versions"]
-- @latest_version = @versions[@versions.length - 1]
-
-%pre
-  %code.no-highlight<>
-    machine:
-      = "#{@language}:"
-      = "  version: #{@latest_version}"

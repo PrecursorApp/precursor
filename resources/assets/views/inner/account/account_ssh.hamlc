@@ -1,7 +1,0 @@
-%p
-  You can set up user keys from your project's
-  != succeed ",", ->
-    %strong Project Settings > Checkout SSH keys page
-  or
-  != succeed ".", ->
-    %a{href: "/docs/github-security-ssh-keys"} read more about them

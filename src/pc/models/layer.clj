@@ -18,7 +18,8 @@
 
 (defn find-by-document [db document]
   (pcd/touch-all '{:find [?t] :in [$ ?document-id]
-                   :where [[?t :document/id ?document-id]]}
+                   :where [[?t :document/id ?document-id]
+                           [?t :layer/name]]}
                  db (:db/id document)))
 
 

@@ -1,17 +1,9 @@
-(ns pc.http.datomic
+;; Hack to get around circular dependency
+(ns pc.http.datomic2
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :as log]
-            [pc.http.sente :as sente]
             [pc.datomic :as pcd]
             [datomic.api :refer [db q] :as d]))
-
-(defn entity-id-request [eid-count]
-  (cond (not (number? eid-count))
-        {:status 400 :body (pr-str {:error "count is required and should be a number"})}
-        (< 100 eid-count)
-        {:status 400 :body (pr-str {:error "You can only ask for 100 entity ids"})}
-        :else
-        {:status 200 :body (pr-str {:entity-ids (pcd/generate-eids (pcd/conn) eid-count)})}))
 
 (defn public?
   "Only let the frontend access entities with the entity-ids we create for the frontend"
@@ -47,31 +39,3 @@
                                :tx-data
                                (filter (partial public? db))
                                (map (partial datom-read-api db))))}}))
-
-(defn get-annotations [transaction]
-  (let [txid (-> transaction :tx-data first :tx)]
-    (->> txid (d/entity (:db-after transaction)) (#(select-keys % [:document/id :session/uuid])))))
-
-(defn notify-subscribers [transaction]
-  (def myt transaction)
-  (let [annotations (get-annotations transaction)]
-    (when (:document/id annotations)
-      (when-let [public-datoms (->> transaction
-                                    :tx-data
-                                    (filter (partial public? (:db-after transaction)))
-                                    (map (partial datom-read-api (:db-after transaction)))
-                                    seq)]
-        (sente/notify-transaction (merge {:tx-data public-datoms}
-                                         annotations))))))
-
-(defn init []
-  (let [conn (pcd/conn)
-        tap (async/chan (async/sliding-buffer 1024))]
-    (async/tap (async/mult pcd/tx-report-ch) tap)
-    (async/go-loop []
-                   (when-let [transaction (async/<! tap)]
-                     (try
-                       (notify-subscribers transaction)
-                       (catch Exception e
-                         (log/error e)))
-                     (recur)))))

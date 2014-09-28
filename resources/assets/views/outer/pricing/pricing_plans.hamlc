@@ -1,7 +1,0 @@
-.row-fluid.pricing-plans
-  .span12
-    .row-fluid
-      != HAML.pricing_cloud({number_containers: 1, plan_price: "$19",  plan_name: "Solo"})
-      != HAML.pricing_cloud({number_containers: 2, plan_price: "$69",  plan_name: "Startup", plan_recommended : true})
-      != HAML.pricing_cloud({number_containers: 6, plan_price: "$269", plan_name: "Small Business"})
-      != HAML.pricing_enterprise()

@@ -1,8 +1,0 @@
-<svg id="switchOff" xmlns="http://www.w3.org/2000/svg" width="200px" height="110px" viewBox="0 0 200 110">
-  <g id="bkg">
-    <circle id="right"  fill="#ccc" cx="144" cy="50" r="50"/>
-    <rect   id="center" fill="#ccc" x="55" width="89" height="100"/>
-    <circle id="left"   fill="#ccc" cx="55" cy="50" r="50"/>
-  </g>
-  <circle id="handle" fill="#fff" cx="55" cy="50" r="47.5" />
-</svg>

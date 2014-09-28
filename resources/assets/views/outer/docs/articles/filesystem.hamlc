@@ -1,4 +1,0 @@
-- @children = ['missing_dir', 'missing_file']
-- @title = "Filesystem layout problems"
-
-!= HAML['article_list'](@)

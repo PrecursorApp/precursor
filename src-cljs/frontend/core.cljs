@@ -4,6 +4,7 @@
             [weasel.repl :as ws-repl]
             [clojure.browser.repl :as repl]
             [clojure.string :as string]
+            [datascript :as d]
             [dommy.core :as dommy]
             [goog.dom]
             [goog.dom.DomHelper]
@@ -90,9 +91,15 @@
 (def navigation-ch
   (chan))
 
+;; hack to pull document-id out of the url
+(def document-id utils/parsed-uri)
+
 (defn app-state []
-  (let [initial-state (state/initial-state (ds/make-initial-db))]
+  (let [initial-state (state/initial-state)
+        document-id (js/parseInt (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))]
     (atom (assoc initial-state
+            :document/id document-id
+            :db  (ds/make-initial-db document-id)
             :comms {:controls      controls-ch
                     :api           api-ch
                     :errors        errors-ch
@@ -190,7 +197,6 @@
 (defn main [state top-level-node history-imp]
   (let [comms                    (:comms @state)
         cast!                    (fn [message data & [transient?]]
-                                   (print "Should cast " message)
                                    (put! (:controls comms) [message data transient?]))
         histories                (atom [])
         container                (find-app-container top-level-node)
@@ -207,8 +213,14 @@
         handle-mouse-move!       #(handle-mouse-move cast! %)
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
-        handle-close!            #(cast! :application-shutdown [@histories])
-        ]
+        handle-close!            #(cast! :application-shutdown [@histories])]
+
+    (d/listen! (:db @state)
+               (fn [tx-report]
+                 (cast! :db-updated [] true)
+                 (sente/send-msg (:sente @state) [:frontend/transaction {:datoms (->> tx-report :tx-data (mapv ds/datom-read-api))
+                                                                         :document/id (:document/id @state)}])))
+
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
     (js/document.addEventListener "mousemove" handle-mouse-move! false)
@@ -253,6 +265,14 @@
 (defn fetch-entity-ids [api-ch eid-count]
   (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
 
+(defn setup-entity-id-fetcher [state]
+  (let [api-ch (-> state deref :comms :api)]
+    (fetch-entity-ids api-ch 10)
+    (add-watch state :entity-id-fetcher (fn [key ref old new]
+                                          (when (> 5 (-> new :entity-ids count))
+                                            (println "fetching more entity ids")
+                                            (fetch-entity-ids api-ch 20))))))
+
 (defn ^:export setup! []
   (apply-app-id-hack)
   (let [state (app-state)
@@ -263,7 +283,7 @@
     (browser-settings/setup! state)
     (main state top-level-node history-imp)
     (sente/init state)
-    (fetch-entity-ids (get-in @state [:comms :api]) 10)
+    (setup-entity-id-fetcher state)
     (if-let [error-status (get-in @state [:render-context :status])]
       ;; error codes from the server get passed as :status in the render-context
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])

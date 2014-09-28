@@ -1,5 +1,0 @@
-- @children = ['cabal_test_timeout']
-- @title = "Troubleshooting Haskell"
-- @short_title = "Haskell"
-
-!= HAML['article_list'](@)
