@@ -54,13 +54,13 @@
        :hovered-tool-line nil})
     om/IRender
     (render [_]
-      (let [{:keys [cast!]} (om/get-shared owner)
-            show-grid? (get-in app state/show-grid-path)
-            night-mode? (get-in app state/night-mode-path)
-            hovered-tool? (:hovered-tool (om/get-state owner))
+      (let [{:keys [cast!]}      (om/get-shared owner)
+            show-grid?           (get-in app state/show-grid-path)
+            night-mode?          (get-in app state/night-mode-path)
+            hovered-tool?        (:hovered-tool (om/get-state owner))
             hovered-tool-select? (:hovered-tool-select (om/get-state owner))
-            hovered-tool-shape? (:hovered-tool-shape (om/get-state owner))
-            hovered-tool-line? (:hovered-tool-line (om/get-state owner))]
+            hovered-tool-shape?  (:hovered-tool-shape (om/get-state owner))
+            hovered-tool-line?   (:hovered-tool-line (om/get-state owner))]
         (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
                                                       (when night-mode? ["night-mode"])))}
                [:aside.app-aside {:class (when night-mode? ["night-mode"])}
@@ -77,21 +77,21 @@
                      [:object
                       (common/icon :tool-text)
                       [:span "Text"]]]
-                    [:button {:on-mouse-up #(cast! :tool-selected-select [:select])
+                    [:button {:on-mouse-up #(cast! :tool-selected [:select])
                               :on-mouse-enter #(om/set-state! owner :hovered-tool-select true)
                               :on-mouse-leave #(om/set-state! owner :hovered-tool-select false)
                               :class (when hovered-tool-select? "hover")}
                      [:object
                       (common/icon :cursor)
                       [:span "Select"]]]
-                    [:button {:on-mouse-up #(cast! :tool-selected-shape [:shape])
+                    [:button {:on-mouse-up #(cast! :tool-selected [:shape])
                               :on-mouse-enter #(om/set-state! owner :hovered-tool-shape true)
                               :on-mouse-leave #(om/set-state! owner :hovered-tool-shape false)
                               :class (when hovered-tool-shape? "hover")}
                      [:object
                       (common/icon :tool-square)
                       [:span "Shape"]]]
-                    [:button {:on-mouse-up #(cast! :tool-selected-line [:line])
+                    [:button {:on-mouse-up #(cast! :tool-selected [:line])
                               :on-mouse-enter #(om/set-state! owner :hovered-tool-line true)
                               :on-mouse-leave #(om/set-state! owner :hovered-tool-line false)
                               :class (when hovered-tool-line? "hover")}
