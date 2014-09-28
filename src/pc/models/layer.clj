@@ -23,13 +23,19 @@
 
 
 (comment
-  (d/transact (pcd/conn)
-              [{:db/id (d/tempid :db.part/user)
-                :layer/name "Test Layer 1"
-                :layer/fill "red"}
-               {:db/id (d/tempid :db.part/user)
-                :layer/name "Test Layer 2"
-                :layer/fill "blue"}
-               {:db/id (d/tempid :db.part/user)
-                :layer/name "Test Layer 3"
-                :layer/fill "green"}]))
+  (let [[doc-id & layer-ids] (pcd/generate-eids (pcd/conn) 4)]
+    (d/transact (pcd/conn)
+                [{:db/id doc-id
+                  :document/name "Test Document 1"}
+                 {:db/id (first layer-ids)
+                  :document/id doc-id
+                  :layer/name "Test Layer 1"
+                  :layer/fill "red"}
+                 {:db/id (second layer-ids)
+                  :document/id doc-id
+                  :layer/name "Test Layer 2"
+                  :layer/fill "blue"}
+                 {:db/id (last layer-ids)
+                  :document/id doc-id
+                  :layer/name "Test Layer 3"
+                  :layer/fill "green"}])))

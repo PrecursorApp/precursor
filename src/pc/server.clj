@@ -3,7 +3,9 @@
             [compojure.handler :refer (site)]
             [compojure.route]
             [clojure.tools.reader.edn :as edn]
+            [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
+            [pc.models.layer :as layer]
             [pc.less :as less]
             [pc.views.content :as content]
             [pc.stefon]
@@ -15,6 +17,11 @@
         (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
   (POST "/api/transact" request
         (datomic/transact! (-> request :body slurp edn/read-string :datoms)))
+  (GET "/api/document/:id" [id]
+       ;; TODO: should probably verify document exists
+       ;; TODO: take tx-date as a param
+       {:status 200
+        :body (pr-str {:layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong id)})})})
   (GET "/" [] (content/app))
   (compojure.route/resources "/" {:root "public"
                                   :mime-types {:svg "image/svg"}})
