@@ -19,11 +19,8 @@
            (common/icon :logomark-precursor)
            [:span "Precursor"]]
           [:button
-           (common/icon :logomark-precursor)
-           [:span "About"]]
-          [:button
-           (common/icon :logomark-precursor)
-           [:span "Collaborators"]]
+           (common/icon :user)
+           [:span "Login"]]
           [:button
            (common/icon :download)
            [:span "Download"]]
