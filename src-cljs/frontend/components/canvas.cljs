@@ -7,15 +7,15 @@
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]]))
 
-(defmulti svg-element (fn [state layer] (:layer/type layer)))
+(defmulti svg-element (fn [state cast! layer] (:layer/type layer)))
 
 (defmethod svg-element :default
-  [state layer]
+  [state cast! layer]
   (print "No svg element for " layer))
 
 (defmethod svg-element :rect
-  [state layer]
-  (dom/rect (clj->js (svg/layer->svg-rect (cameras/camera state) layer true))))
+  [state cast! layer]
+  (dom/rect (clj->js (svg/layer->svg-rect (cameras/camera state) layer true cast!))))
 
 (defn state->cursor [state]
   "crosshair")
@@ -82,7 +82,7 @@
                                                  :width  "100%"
                                                  :height "100%"
                                                  :fill   "url(#grid)"}))]
-                               (mapv (partial svg-element payload) layers)
+                               (mapv (partial svg-element payload cast!) layers)
                                [(dom/text #js {:x (get-in payload [:mouse :x])
                                                :y (get-in payload [:mouse :y])
                                                :fill "green"}
@@ -100,7 +100,8 @@
                                                                          (get-in sel [:layer/end-y]))})]
                                     (dom/rect
                                      (clj->js (assoc (svg/layer->svg-rect (:camera payload) sel
-                                                                          true)
+                                                                          true
+                                                                          cast!)
                                                 :fill "gray"
                                                 :fillOpacity "0.25"
                                                 :strokeDasharray "5,5")))))

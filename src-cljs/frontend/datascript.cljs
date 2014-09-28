@@ -84,10 +84,11 @@
                         :layer/start-y      -10
                         :layer/end-x        10
                         :layer/end-y        10
+                        :layer/border-radius 1
                         :layer/fill         "red"
-                        :layer/stroke-width 2
+                        :layer/stroke-width 1
                         :layer/stroke-color "blue"
-                        :layer/name         "Radiohead"
+                        :layer/name         "Layer 1"
                         :entity/type        :layer}])
     (comment
       (print (d/q '[:find ?eid ?n ?sx ?sy ?ex ?ey
