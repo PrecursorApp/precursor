@@ -20,8 +20,8 @@
           (common/icon :logomark-precursor)
           [:span "Collaborators"]]
          [:button
-          (common/icon :logomark-precursor)
+          (common/icon :download)
           [:span "Download"]]
          [:button
-          (common/icon :logomark-precursor)
+          (common/icon :settings)
           [:span "Settings"]]]))))
