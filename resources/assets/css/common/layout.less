@@ -21,9 +21,13 @@
   button {
     .flexy(center);
     height: @tile;
+    background: fade(@gray_lightest, 0);
     border-bottom: 1px solid @gray_lighter;
+    transition: 300ms;
     &:hover {
+      cursor: pointer;
       background: @gray_lightest;
+      transition-duration: 200ms;
     }
     &:last-of-type {
       margin-top: auto;
