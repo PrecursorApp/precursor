@@ -1,8 +1,0 @@
-[
-  ;; all of the resources we need to build the app
-  ;; EXCEPT FOR the compiled app code
-
-  "common.js.stefon"
-
-  "../../components/react/react-with-addons.js"
-]
