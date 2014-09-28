@@ -1,5 +1,6 @@
 (ns frontend.components.app
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [clojure.string :as str]
             [frontend.async :refer [put!]]
             [frontend.components.aside :as aside]
             [frontend.components.inspector :as inspector]
@@ -82,4 +83,8 @@
                 [:hr]
                 [:button "Lock"]
                 [:button "Group"]
-                [:button "Arrange"]]]]))))
+                [:button "Arrange"]
+                [:div.right-click-align
+                 [:button "test"]
+                 [:button "test"]
+                 [:button "test"]]]]]))))
