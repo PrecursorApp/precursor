@@ -100,11 +100,12 @@
                                                                          (get-in sel [:layer/end-y]))})]
                                     (dom/rect
                                      (clj->js (assoc (svg/layer->svg-rect (:camera payload) sel
-                                                                          true
+                                                                          false
                                                                           cast!)
                                                 :fill "gray"
                                                 :fillOpacity "0.25"
-                                                :strokeDasharray "5,5")))))
+                                                :strokeDasharray "5,5"
+                                                :strokeWidth 1)))))
                                 (dom/text #js {:x 15
                                                :y 15} (pr-str (dissoc payload :layers)))]
                                [(when (cameras/guidelines-enabled? payload)
