@@ -26,6 +26,7 @@
   button {
     .flexy(center);
     .button_icon_cascade(5);
+    .icon_stroke(@font_color);
     height: @tile;
     border-bottom: 1px solid @gray_lighter;
     transition: 300ms;
@@ -43,9 +44,6 @@
       transition: 300ms;
     }
   }
-  .logomark-precursor-stroke {
-    stroke: @font_color;
-  }
 }
 .radial-menu {
   .flexy();
@@ -59,6 +57,7 @@
   border-radius: (@radial_menu_size / 2);
   button {
     .flexy(center, center);
+    .icon_stroke(@gray);
     position: absolute;
     height: (@radial_menu_size / 2);
     width: (@radial_menu_size / 2);
@@ -99,18 +98,9 @@
     }
     &:hover {
       .scale3d(1.1);
+      .icon_stroke(@gray_darker);
       color: @gray_darker;
       background: @gray_lighter;
-      i {
-        path {
-          stroke: @gray_darker;
-        }
-      }
-    }
-    i {
-      path {
-        stroke: @gray;
-      }
     }
     object {
       .flexy(column);

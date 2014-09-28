@@ -1,3 +1,12 @@
+.icon_stroke(...) {
+  .icon_stroke_color(@a) when (iscolor(@a)) {
+    i {
+      [class*="stroke"] {
+        stroke: @arguments;
+      }
+    }
+  }.icon_stroke_color(@arguments);
+}
 i {
   &[class|="icon"] {
     svg {
