@@ -98,19 +98,6 @@
                         :layer/name         "Layer 1"
                         :document/id        document-id
                         :entity/type        :layer}
-                       {:db/id              -100
-                        :layer/type         :layer.type/line
-                        :layer/start-x      -10
-                        :layer/start-y      -10
-                        :layer/end-x        100
-                        :layer/end-y        100
-                        :layer/stroke-width 1
-                        :layer/border-radius 1
-                        :layer/fill         "red"
-                        :layer/stroke-color "blue"
-                        :layer/name         "Layer 1"
-                        :document/id        document-id
-                        :entity/type        :layer}
                        {:db/id              -1
                         :layer/type         :layer.type/text
                         :layer/start-x      100
@@ -122,7 +109,7 @@
                         :layer/stroke-color "blue"
                         :layer/name         "Text Layer 2"
                         :document/id        document-id
-                        :layer/text         "Cmd-click to open the Radial menu"
+                        :layer/text         "Cmd-click to open the Radial menu, share the url to collaborate"
                         :layer/font-family  "Helvetica Neue"
                         :layer/font-size    25
                         :entity/type        :layer}

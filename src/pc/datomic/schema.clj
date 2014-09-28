@@ -31,6 +31,7 @@
    ;; TODO: more layer types
    (enum :layer.type/rect)
    (enum :layer.type/group)
+   (enum :layer.type/text)
 
    (attribute :layer/start-x
               :db.type/long)
@@ -70,6 +71,15 @@
               :db.type/long)
 
    (attribute :layer/current-sy
+              :db.type/long)
+
+   (attribute :layer/font-family
+              :db.type/string)
+
+   (attribute :layer/text
+              :db.type/string)
+
+   (attribute :layer/font-size
               :db.type/long)
 
    ;; Use the layer's uuid so that the frontend can track children
