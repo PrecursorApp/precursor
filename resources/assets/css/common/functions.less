@@ -12,3 +12,7 @@
 .user-select(...) {
   .prefixer(user-select, @arguments, webkit moz);
 }
+.to_em(@a) when (ispixel(@a)) {
+  @concat: (unit(@a) / unit(@font_size));
+  @to_em: ~"@{concat}em";
+}
