@@ -13,7 +13,7 @@
   [state cast! layer]
   (print "No svg element for " layer))
 
-(defmethod svg-element :rect
+(defmethod svg-element :layer.type/rect
   [state cast! layer]
   (dom/rect (clj->js (svg/layer->svg-rect (cameras/camera state) layer true cast!))))
 

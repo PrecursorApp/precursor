@@ -75,11 +75,14 @@
     (for [[eid & _] (apply d/q query query-args)]
       (touch+ (d/entity the-db eid)))))
 
-(defn make-initial-db []
+(defn datom-read-api [datom]
+  (select-keys datom [:e :a :v :tx :added]))
+
+(defn make-initial-db [document-id]
   (let [schema {:aka {:db/cardinality :db.cardinality/many}}
         conn   (d/create-conn schema)]
     (d/transact! conn [{:db/id              -1
-                        :layer/type         :rect
+                        :layer/type         :layer.type/rect
                         :layer/start-x      -10
                         :layer/start-y      -10
                         :layer/end-x        10
@@ -89,11 +92,12 @@
                         :layer/stroke-width 1
                         :layer/stroke-color "blue"
                         :layer/name         "Layer 1"
+                        :document/id        document-id
                         :entity/type        :layer}])
     (comment
       (print (d/q '[:find ?eid ?n ?sx ?sy ?ex ?ey
                     :where
-                    [?eid :layer/type :rect]
+                    [?eid :layer/type :layer.type/rect]
                     [?eid :layer/name ?n]
                     [?eid :layer/start-x ?sx]
                     [?eid :layer/start-y ?sy]

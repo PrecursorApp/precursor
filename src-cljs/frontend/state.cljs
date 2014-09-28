@@ -1,17 +1,18 @@
 (ns frontend.state)
 
-(defn initial-state [db]
+(defn initial-state []
   {:camera          {:x          0
                      :y          0
                      :zf         1
                      :show-grid? true}
-   :db              db
    :error-message   nil
    :changelog       nil
    :environment     "development"
    :settings        {}
    :current-user    nil
    :instrumentation []
+   :entity-ids      #{}
+   :document/id     17592186046465
    ;; This isn't passed to the components, it can be accessed though om/get-shared :_app-state-do-not-use
    :inputs          nil})
 

@@ -3,6 +3,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [pc.http.datomic2 :as datomic]
             [taoensso.sente :as sente])
   (:import java.util.UUID))
 
@@ -17,7 +18,7 @@
 (defn user-id-fn [req]
   (let [uid (get-in req [:session :uid])]
     ;; have to stringify this for sente for comparisons to work
-    (str uid)))
+    uid))
 
 (defn wrap-user-id [handler]
   (fn [req]
@@ -31,7 +32,6 @@
 ;; sente's channel handling stuff is not much fun to work with :(
 (defonce document-subs (atom {}))
 
-;; XXX: fix this once we annotate transactions with document ids
 (defn notify-transaction [data]
   (doseq [uid (get @document-subs (:document/id data))]
     (log/infof "notifying %s about new transactions for %s" uid (:document/id data))
@@ -43,7 +43,7 @@
 (defn client-uuid->uuid
   "Get the client's user-id from the client-uuid"
   [client-uuid]
-  (str/replace client-uuid #"-[^-]+$" ""))
+  (UUID/fromString (str/replace client-uuid #"-[^-]+$" "")))
 
 (defmulti ws-handler ws-handler-dispatch-fn)
 
@@ -76,9 +76,10 @@
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid))))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
-  (let [document-id (-> ?data :document-id)]
-    (log/infof "subscribing %s to %s" client-uuid document-id)
-    (subscribe-to-doc document-id (client-uuid->uuid client-uuid))))
+  (let [document-id (-> ?data :document/id)
+        datoms (->> ?data :datoms (remove (comp nil? :v)))]
+    (log/infof "transacting %s on %s for %s" datoms document-id client-uuid)
+    (datomic/transact! datoms document-id (client-uuid->uuid client-uuid))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
