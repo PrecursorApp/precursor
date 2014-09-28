@@ -85,7 +85,6 @@
   (mlog "No post-api for: " [message status]))
 
 
-(defmethod api-event [:projects :success]
+(defmethod api-event [:entity-ids :success]
   [target message status args state]
-  (mlog "projects success")
-  (assoc-in state [:projects] (:resp args)))
+  (update-in state [:entity-ids] (fnil into #{}) (get-in args [:resp :entity-ids])))
