@@ -91,10 +91,15 @@
 (def navigation-ch
   (chan))
 
+;; hack to pull document-id out of the url
+(def document-id utils/parsed-uri)
+
 (defn app-state []
-  (let [initial-state (state/initial-state)]
+  (let [initial-state (state/initial-state)
+        document-id (js/parseInt (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))]
     (atom (assoc initial-state
-            :db  (ds/make-initial-db (:document/id initial-state))
+            :document/id document-id
+            :db  (ds/make-initial-db document-id)
             :comms {:controls      controls-ch
                     :api           api-ch
                     :errors        errors-ch
