@@ -24,6 +24,30 @@
           [:button
            (common/icon :download)
            [:span "Download"]]
+          [:button.collaborators
+           (common/icon :users)
+           [:span "Collaborators"]]
+          [:div.aside-collaborators
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "John Smith"]]]
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "John Smith"]]]
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "John Smith"]]]
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "John Smith"]]]
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "John Smith"]]]]
           [:div.aside-settings
            [:button
             (common/icon :settings)
