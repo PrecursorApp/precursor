@@ -55,7 +55,8 @@
              [:main.app-main
                (om/build canvas/svg-canvas app)
                (when (get-in app [:menu :open?])
-                 [:div.radial-menu {:style {:top (- (get-in app [:mouse :y]) 128) :left (- (get-in app [:mouse :x]) 128)}}
+                 [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
+                                            :left (- (get-in app [:menu :x]) 128)}}
                 [:button
                  [:object
                   (common/icon :tool-text)

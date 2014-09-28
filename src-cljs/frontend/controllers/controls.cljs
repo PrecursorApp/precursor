@@ -174,7 +174,10 @@
   [target message _ state]
   (print "menu opened")
   (-> state
-      (assoc-in [:menu :open?] true)))
+      (update-in [:menu] assoc
+                 :open? true
+                 :x (get-in state [:mouse :x])
+                 :y (get-in state [:mouse :y]))))
 
 (defmethod control-event :menu-closed
   [target message _ state]
