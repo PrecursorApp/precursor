@@ -5,4 +5,4 @@
 
 (defn init [app-state]
   (let [{:keys [chsk ch-recv send-fn state] :as sente-state} (sente/make-channel-socket! "/chsk" {:type :auto})]
-    (swap! app-state assoc :senta sente-state)))
+    (swap! app-state assoc :sente sente-state)))
