@@ -96,7 +96,12 @@
   (let [{:keys [x y]} (get-in state [:mouse])
         [rx ry]       (cameras/screen->point (:camera state) x y)
         entity-id     (-> state :entity-ids first)
-        layer         (layers/make-layer entity-id (:document/id state) rx ry)]
+        layer         (assoc (layers/make-layer entity-id (:document/id state) rx ry)
+                        :layer/type (condp = (:current-tool state)
+                                      :shape :layer.type/rect
+                                      :text :layer.type/text
+                                      :line :layer.type/line
+                                      :layer.type/rect))]
     (let [r (-> state
                 (assoc-in [:drawing :in-progress?] true)
                 (assoc-in [:drawing :layer] layer)

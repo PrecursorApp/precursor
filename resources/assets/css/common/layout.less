@@ -23,7 +23,8 @@
     }
   }
   #svg-canvas {
-    > rect {
+    > rect,
+    > line {
       &:not(#background-grid) {
         stroke: @gray_light;
       }
@@ -81,7 +82,8 @@
   .flex(1);
 }
 #svg-canvas {
-  > rect {
+  > rect,
+  > line {
     &:not(#background-grid) {
       fill: none;
       stroke: @gray_dark;

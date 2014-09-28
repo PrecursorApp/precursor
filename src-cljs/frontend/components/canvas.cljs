@@ -29,13 +29,14 @@
   (let [l (cameras/camera-translated-rect (:camera state) layer (- (:layer/end-x layer) (:layer/start-x layer))
                                           (- (:layer/end-y layer) (:layer/start-y layer)))]
     (dom/line (clj->js (merge
-                        (dissoc l :x :y :width :height :stroke-width)
+                        (dissoc l :x :y :width :height :stroke-width :fill)
                         {:x1          (:layer/start-x l)
                          :y1          (:layer/start-y l)
                          :x2          (:layer/end-x l)
                          :y2          (:layer/end-y l)
                          :strokeWidth (:layer/stroke-width l)
-                         :stroke      (:layer/fill l)}))
+                         ;;:stroke      (:layer/fill l)
+                         }))
               (:layer/text layer))))
 
 (defn state->cursor [state]
