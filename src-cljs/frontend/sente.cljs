@@ -28,5 +28,5 @@
 (defn init [app-state]
   (let [{:keys [chsk ch-recv send-fn state] :as sente-state} (sente/make-channel-socket! "/chsk" {:type :auto})]
     (swap! app-state assoc :sente sente-state)
-    (subscribe-to-document sente-state 123456789)
+    (subscribe-to-document sente-state 17592186046465)
     (do-something sente-state)))

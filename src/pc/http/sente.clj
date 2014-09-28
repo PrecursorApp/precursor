@@ -9,10 +9,22 @@
 ;; TODO: find a way to restart sente
 (defonce sente-state (atom {}))
 
-(defn user-id-fn
+(defn uuid
   "Have to remove - so that we can parse it out of the client-uuid"
-  [ring-req]
-  (str/replace (UUID/randomUUID) "-" ""))
+  []
+  (UUID/randomUUID))
+
+(defn user-id-fn [req]
+  (let [uid (get-in req [:session :uid])]
+    ;; have to stringify this for sente for comparisons to work
+    (str uid)))
+
+(defn wrap-user-id [handler]
+  (fn [req]
+    (handler
+     (if-not (get-in req [:session :uid])
+       (assoc-in req [:session :uid] (uuid))
+       req))))
 
 ;; hash-map of document-id to set of connected user-ids
 ;; Used to keep track of which transactions to send to which user
@@ -21,7 +33,8 @@
 
 ;; XXX: fix this once we annotate transactions with document ids
 (defn notify-transaction [data]
-  (doseq [uid (get @document-subs (:document-id data))]
+  (doseq [uid (get @document-subs (:document/id data))]
+    (log/infof "notifying %s about new transactions for %s" uid (:document/id data))
     ((:send-fn @sente-state) uid [:datomic/transaction data])))
 
 (defn ws-handler-dispatch-fn [req]
@@ -30,7 +43,7 @@
 (defn client-uuid->uuid
   "Get the client's user-id from the client-uuid"
   [client-uuid]
-  (str/replace client-uuid #"-.*$" ""))
+  (str/replace client-uuid #"-[^-]+$" ""))
 
 (defmulti ws-handler ws-handler-dispatch-fn)
 
