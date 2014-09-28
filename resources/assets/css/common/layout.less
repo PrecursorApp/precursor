@@ -6,11 +6,11 @@
 }
 .app-aside {
   .flexy();
-  width: @tile;
+  width: @aside_width_sm;
   border-right: 1px solid @gray_light;
   transition: 300ms;
   &:hover {
-    width: (@tile * 4);
+    width: @aside_width_lg;
     transition-duration: 200ms;
     transition-timing-function: @bezier_bounce;
   }
@@ -21,6 +21,7 @@
   button {
     .flexy(center);
     height: @tile;
+    white-space: nowrap;
     background: fade(@gray_lightest, 0);
     border-bottom: 1px solid @gray_lighter;
     transition: 300ms;
@@ -31,6 +32,10 @@
     }
     &:last-of-type {
       margin-top: auto;
+    }
+    i {
+      .flex(0 0 auto);
+      margin: 0 ((@aside_width_sm - @icon_width) / 2);
     }
   }
 }
