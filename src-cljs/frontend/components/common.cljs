@@ -74,15 +74,6 @@
    :repo {:paths [:repo]}
    :spinner {:paths [:turn :circle]}})
 
-; (defn icon [icon-name]
-;   (let [template (get icon-templates icon-name)]
-;     [:i {:class (str "icon-" (name icon-name))}
-;       [:svg {:viewBox "0 0 100 100"
-;              :dangerouslySetInnerHTML
-;              #js {"__html" (apply str
-;                                   (for [path (:paths template)]
-;                                     (str "<path class='" (name path) "' fill='none' d='" (get icon-paths path) "'></path>")))}}]]))
-
 (defn icon [icon-name]
   (let [template (get icon-templates icon-name)]
     [:i {:class (str "icon-" (name icon-name))}
