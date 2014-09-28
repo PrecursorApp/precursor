@@ -15,6 +15,7 @@
             [pc.stefon]
             [stefon.core :as stefon]
             [taoensso.sente :as sente])
+  (:import java.util.UUID))
 
 ;; TODO: find a way to restart sente
 (defonce sente-state (atom {}))
@@ -72,15 +73,45 @@
   (start @sente-state))
 
 (defn user-id-fn [ring-req]
-  (println "calling user-id-fn")
-  (println (get-in ring-req [:params :test]))
-  (get-in ring-req [:params :test]))
+  (UUID/randomUUID))
 
-(defn ws-handler [req]
+;; hash-map of document-id to set of connected user-ids
+;; Used to keep track of which transactions to send to which user
+;; sente's channel handling stuff is not much fun to work with :(
+(defonce document-subs (atom {}))
+
+(defn ws-handler-dispatch-fn [req]
+  (-> req :event first))
+
+(defmulti ws-handler ws-handler-dispatch-fn)
+
+(defmethod ws-handler :default [req]
   (def req req)
-  (log/info (:event req)))
+  (log/infof "%s for %s" (:event req) (:client-uuid req)))
 
-(defn setup-ws-handlers [senta-state]
+(defn clean-document-subs [uuid]
+  (swap! document-subs (fn [ds]
+                         ;; Could be optimized...
+                         (reduce (fn [acc [document-id user-ids]]
+                                   (if-not (contains? user-ids uuid)
+                                     acc
+                                     (let [new-user-ids (disj user-ids uuid)]
+                                       (if (empty? new-user-ids)
+                                         (dissoc acc document-id)
+                                         (assoc acc document-id new-user-ids)))))
+                                 ds ds))))
+
+(defmethod ws-handler :chsk/uidport-close [{:keys [client-uuid] :as req}]
+  (clean-document-subs client-uuid))
+
+(defn subscribe-to-doc [document-id uuid]
+  (swap! document-subs update-in [document-id] (fnil conj #{}) uuid))
+
+(defmethod ws-handler :subscribe [{:keys [client-uuid ?data] :as req}]
+  (let [document-id (-> ?data :document-id)]
+    (log/infof "subscribing %s to %s" client-uuid document-id)
+    (subscribe-to-doc document-id client-uuid)))
+
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))
         mult (async/mult (:ch-recv sente-state))]
