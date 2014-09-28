@@ -1,6 +1,7 @@
 (ns pc.http.sente
   (:require [clojure.core.async :as async]
             [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.tools.logging :as log]
             [taoensso.sente :as sente])
   (:import java.util.UUID))
@@ -8,8 +9,10 @@
 ;; TODO: find a way to restart sente
 (defonce sente-state (atom {}))
 
-(defn user-id-fn [ring-req]
-  (UUID/randomUUID))
+(defn user-id-fn
+  "Have to remove - so that we can parse it out of the client-uuid"
+  [ring-req]
+  (str/replace (UUID/randomUUID) "-" ""))
 
 ;; hash-map of document-id to set of connected user-ids
 ;; Used to keep track of which transactions to send to which user
@@ -23,6 +26,11 @@
 
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
+
+(defn client-uuid->uuid
+  "Get the client's user-id from the client-uuid"
+  [client-uuid]
+  (str/replace client-uuid #"-.*$" ""))
 
 (defmulti ws-handler ws-handler-dispatch-fn)
 
@@ -44,7 +52,7 @@
 
 (defmethod ws-handler :chsk/uidport-close [{:keys [client-uuid] :as req}]
   (log/infof "closing connection for %s" client-uuid)
-  (clean-document-subs client-uuid))
+  (clean-document-subs (client-uuid->uuid client-uuid)))
 
 (defn subscribe-to-doc [document-id uuid]
   (swap! document-subs update-in [document-id] (fnil conj #{}) uuid))
@@ -52,7 +60,7 @@
 (defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document-id)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
-    (subscribe-to-doc document-id client-uuid)))
+    (subscribe-to-doc document-id (client-uuid->uuid client-uuid))))
 
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))
