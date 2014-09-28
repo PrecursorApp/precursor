@@ -6,4 +6,10 @@
 }
 .app-aside {
   width: @tile;
+  transition: 300ms;
+  &:hover {
+    width: (@tile * 4);
+    transition-duration: 200ms;
+    transition-timing-function: @bezier_bounce;
+  }
 }
