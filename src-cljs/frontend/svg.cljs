@@ -13,7 +13,8 @@
                                                   (get-in layer [:offset :y]))
                   layer)]
     (merge
-     {:x             (:layer/start-x layer)
+     {:className     (when shape? "layer")
+      :x             (:layer/start-x layer)
       :y             (:layer/start-y layer)
       :width         (- (or (:layer/current-x layer)
                             (:layer/end-x layer)) (:layer/start-x layer))
