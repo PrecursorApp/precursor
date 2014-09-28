@@ -78,6 +78,10 @@
 (defn datom-read-api [datom]
   (select-keys datom [:e :a :v :tx :added]))
 
+(defn datom->transaction [datom]
+  (let [{:keys [a e v tx added]} datom]
+    [(if added :db/add :db/retract) e a v]))
+
 (defn make-initial-db [document-id]
   (let [schema {:aka {:db/cardinality :db.cardinality/many}}
         conn   (d/create-conn schema)]
