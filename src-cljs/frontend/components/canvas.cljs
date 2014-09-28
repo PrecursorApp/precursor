@@ -6,7 +6,7 @@
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]]))
 
-(defmulti svg-element (fn [state layer] (:type layer)))
+(defmulti svg-element (fn [state layer] (:layer/type layer)))
 
 (defmethod svg-element :default
   [state layer]

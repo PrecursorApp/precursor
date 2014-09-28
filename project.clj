@@ -6,6 +6,8 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [inflections "0.8.2"]
 
+                 [datascript "0.4.1"]
+
                  [org.clojars.dwwoelfel/stefon "0.5.0-3198d1b33637d6bd79c7415b01cff843891ebfd4"]
                  [compojure "1.1.8"]
                  [cheshire "5.2.0"]
@@ -90,7 +92,8 @@
                                    :output-to "resources/public/cljs/test/frontend-dev.js"
                                    :output-dir "resources/public/cljs/test"
                                    :optimizations :advanced
-                                   :externs ["test-js/externs.js"
+                                   :externs ["datascript/externs.js"
+                                             "test-js/externs.js"
                                              "src-cljs/js/react-externs.js"
                                              "src-cljs/js/pusher-externs.js"
                                              "src-cljs/js/ci-externs.js"
@@ -103,7 +106,8 @@
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
                                    :optimizations :advanced
-                                   :externs ["react/externs/react.js"
+                                   :externs ["datascript/externs.js"
+                                             "react/externs/react.js"
                                              "src-cljs/js/pusher-externs.js"
                                              "src-cljs/js/ci-externs.js"
                                              "src-cljs/js/analytics-externs.js"

@@ -12,6 +12,7 @@
             [frontend.controllers.controls :as controls-con]
             [frontend.controllers.navigation :as nav-con]
             [frontend.components.key-queue :as keyq]
+            [frontend.datascript :as ds]
             [frontend.routes :as routes]
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
@@ -88,7 +89,7 @@
   (chan))
 
 (defn app-state []
-  (let [initial-state (state/initial-state)]
+  (let [initial-state (state/initial-state (ds/make-initial-db))]
     (atom (assoc initial-state
               :comms {:controls  controls-ch
                       :api       api-ch

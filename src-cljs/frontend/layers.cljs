@@ -5,27 +5,27 @@
 
 (defn normalized-abs-coords [coords]
   (cond-> coords
-          (> (:start-x coords) (or (:current-x coords)
-                                   (:end-x coords)))
+          (> (:layer/start-x coords) (or (:current-x coords)
+                                   (:layer/end-x coords)))
           (assoc
-              :start-x (or (:current-x coords)
-                           (:end-x coords))
-              :current-x (:start-x coords)
-              :end-x (:start-x coords))
+              :layer/start-x (or (:current-x coords)
+                           (:layer/end-x coords))
+              :current-x (:layer/start-x coords)
+              :layer/end-x (:layer/start-x coords))
 
-          (> (:start-y coords) (or (:current-y coords)
-                                   (:end-y coords)))
+          (> (:layer/start-y coords) (or (:current-y coords)
+                                   (:layer/end-y coords)))
           (assoc
-              :start-y (or (:current-y coords)
-                           (:end-y coords))
-              :current-y (:start-y coords)
-              :end-y (:start-y coords))))
+              :layer/start-y (or (:current-y coords)
+                           (:layer/end-y coords))
+              :current-y (:layer/start-y coords)
+              :layer/end-y (:layer/start-y coords))))
 
 (defn rect-width [rect]
-  (- (:end-x rect) (:start-x rect)))
+  (- (:layer/end-x rect) (:layer/start-x rect)))
 
 (defn rect-height [rect]
-  (- (:end-y rect) (:start-y rect)))
+  (- (:layer/end-y rect) (:layer/start-y rect)))
 
 (defmulti abs-bounding-box :type)
 
@@ -35,13 +35,13 @@
         h        (rect-height rect)
         scaled-w (* (get-in rect [:transforms :scale :x] 1) w)
         scaled-h (* (get-in rect [:transforms :scale :y] 1) h)
-        cx       (+ (:start-x rect) (/ w 2))
-        cy       (+ (:start-y rect) (/ h 2))
+        cx       (+ (:layer/start-x rect) (/ w 2))
+        cy       (+ (:layer/start-y rect) (/ h 2))
         sx       (- cx (/ scaled-w 2))
         sy       (- cy (/ scaled-h 2))
         ex       (+ cx (/ scaled-w 2))
         ey       (+ cy (/ scaled-h 2))]
-    {:start-x sx
-     :start-y sy
-     :end-x   ex
-     :end-y   ey}))
+    {:layer/start-x sx
+     :layer/start-y sy
+     :layer/end-x   ex
+     :layer/end-y   ey}))

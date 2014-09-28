@@ -40,12 +40,12 @@
         off-y    (or off-y 0)
         scaled-w (* (get-in rect [:transforms :scale :x] 1) w)
         scaled-h (* (get-in rect [:transforms :scale :y] 1) h)
-        cx       (+ (:start-x rect) (/ w 2))
-        cy       (+ (:start-y rect) (/ h 2))
+        cx       (+ (:layer/start-x rect) (/ w 2))
+        cy       (+ (:layer/start-y rect) (/ h 2))
         sx       (- cx (/ scaled-w 2))
         sy       (- cy (/ scaled-h 2))]
     (assoc rect
-      :start-x (+ (:x camera) (* (:zf camera) sx))
-      :end-x   (+ (:x camera) (* (:zf camera) (+ sx scaled-w)))
-      :start-y (+ (:y camera) (* (:zf camera) sy))
-      :end-y   (+ (:y camera) (* (:zf camera) (+ sy scaled-h))))))
+      :layer/start-x (+ (:x camera) (* (:zf camera) sx))
+      :layer/end-x   (+ (:x camera) (* (:zf camera) (+ sx scaled-w)))
+      :layer/start-y (+ (:y camera) (* (:zf camera) sy))
+      :layer/end-y   (+ (:y camera) (* (:zf camera) (+ sy scaled-h))))))

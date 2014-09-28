@@ -13,26 +13,26 @@
                                                   (get-in layer [:offset :y]))
                   layer)]
     (merge
-     {:x           (:start-x layer)
-      :y           (:start-y layer)
-      :width       (- (or (:current-x layer)
-                          (:end-x layer)) (:start-x layer))
-      :height      (- (or (:current-y layer)
-                          (:end-y layer)) (:start-y layer))
-      :fill        (:fill layer "none")
-      :key         (:id layer)
+     {:x           (:layer/start-x layer)
+      :y           (:layer/start-y layer)
+      :width       (- (or (:layer/current-x layer)
+                          (:layer/end-x layer)) (:layer/start-x layer))
+      :height      (- (or (:layer/current-y layer)
+                          (:layer/end-y layer)) (:layer/start-y layer))
+      :fill        (:layer/fill layer "none")
+      :key         (:layer/id layer)
       :stroke      (cond
-                    (:selected? layer) "pink"
-                    (:hovered? layer) "green"
-                    :else (:stroke layer "black"))
+                    (:layer/selected? layer) "pink"
+                    (:layer/hovered? layer) "green"
+                    :else (:layer/stroke layer "black"))
       :strokeWidth (cond
-                    (:selected? layer) 4
-                    (:hovered? layer) 4
-                    :else (:stroke-width layer 1))
+                    (:layer/selected? layer) 4
+                    (:layer/hovered? layer) 4
+                    :else (:layer/stroke-width layer 1))
       :strokeOpacity (cond
-                      (:selected? layer) 0.2
+                      (:layer/selected? layer) 0.2
                       :else 1)
       :transform   (let [{:keys [n ox oy]} (get-in layer [:transforms :rotate])]
                      (when (and n (integer? ox) (integer? oy))
-                       (str "rotate(" n "," (+ (:start-x layer) ox) ", " (+ (:start-y layer) oy) ")")))
-      :style       {:opacity (:opacity layer)}})))
+                       (str "rotate(" n "," (+ (:layer/start-x layer) ox) ", " (+ (:layer/start-y layer) oy) ")")))
+      :style       {:opacity (:layer/opacity layer)}})))

@@ -1,27 +1,19 @@
 (ns frontend.state)
 
-(defn initial-state []
-  {:camera {:x          0
-            :y          0
-            :zf         1
-            :show-grid? true}
-   :layers [{:type :rect
-             :start-x -10
-             :start-y -10
-             :end-x 10
-             :end-y 10
-             :fill "red"
-             :stroke-width 20
-             :stroke-color "blue"
-             :name "Title"}]
-   :error-message nil
-   :changelog nil
-   :environment "development"
-   :settings {}
-   :current-user nil
+(defn initial-state [db]
+  {:camera          {:x          0
+                     :y          0
+                     :zf         1
+                     :show-grid? true}
+   :db              db
+   :error-message   nil
+   :changelog       nil
+   :environment     "development"
+   :settings        {}
+   :current-user    nil
    :instrumentation []
    ;; This isn't passed to the components, it can be accessed though om/get-shared :_app-state-do-not-use
-   :inputs nil})
+   :inputs          nil})
 
 (def user-path [:current-user])
 
