@@ -45,53 +45,73 @@
 
 
 (defn app [app owner]
-  (om/component
-    (let [{:keys [cast!]} (om/get-shared owner)
-          show-grid? (get-in app state/show-grid-path)
-          night-mode? (get-in app state/night-mode-path)]
-      (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
-                                                    (when night-mode? ["night-mode"])))}
-             [:aside.app-aside {:class (when night-mode? ["night-mode"])}
-               (om/build aside/menu app)]
-             [:main.app-main
-               (om/build canvas/svg-canvas app)
-               (when (get-in app [:menu :open?])
-                 [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
-                                            :left (- (get-in app [:menu :x]) 128)}}
-                  [:button
-                   {:on-mouse-up #(cast! :tool-selected [:text])}
-                   [:object
-                    (common/icon :tool-text)
-                    [:span "Text"]]]
-                  [:button
-                   {:on-mouse-up #(cast! :tool-selected [:select])}
-                   [:object
-                    (common/icon :cursor)
-                    [:span "Select"]]]
-                  [:button
-                   {:on-mouse-up #(cast! :tool-selected [:shape])}
-                   [:object
-                    (common/icon :tool-square)
-                    [:span "Shape"]]]
-                  [:button
-                   {:on-mouse-up #(cast! :tool-selected [:line])}
-                   [:object
-                    (common/icon :tool-line)
-                    [:span "Line"]]]
-                  [:div.radial-menu-nub]])
-               [:div.right-click-menu
-                [:button "Cut"]
-                [:button "Copy"]
-                [:button "Paste"]
-                [:hr]
-                [:button "Align"]
-                [:button "Transform"]
-                [:button "Distribute"]
-                [:hr]
-                [:button "Lock"]
-                [:button "Group"]
-                [:button "Arrange"]
-                [:div.right-click-align
-                 [:button "test"]
-                 [:button "test"]
-                 [:button "test"]]]]]))))
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:hovered-tool nil
+       :hovered-tool-select nil
+       :hovered-tool-shape nil
+       :hovered-tool-line nil})
+    om/IRender
+    (render [_]
+      (let [{:keys [cast!]} (om/get-shared owner)
+            show-grid? (get-in app state/show-grid-path)
+            night-mode? (get-in app state/night-mode-path)
+            hovered-tool? (:hovered-tool (om/get-state owner))
+            hovered-tool-select? (:hovered-tool-select (om/get-state owner))
+            hovered-tool-shape? (:hovered-tool-shape (om/get-state owner))
+            hovered-tool-line? (:hovered-tool-line (om/get-state owner))]
+        (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
+                                                      (when night-mode? ["night-mode"])))}
+               [:aside.app-aside {:class (when night-mode? ["night-mode"])}
+                 (om/build aside/menu app)]
+               [:main.app-main
+                 (om/build canvas/svg-canvas app)
+                 (when (get-in app [:menu :open?])
+                   [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
+                                              :left (- (get-in app [:menu :x]) 128)}}
+                    [:button {:on-mouse-up #(cast! :tool-selected [:text])
+                              :on-mouse-enter #(om/set-state! owner :hovered-tool true)
+                              :on-mouse-leave #(om/set-state! owner :hovered-tool false)
+                              :class (when hovered-tool? "hover")}
+                     [:object
+                      (common/icon :tool-text)
+                      [:span "Text"]]]
+                    [:button {:on-mouse-up #(cast! :tool-selected-select [:select])
+                              :on-mouse-enter #(om/set-state! owner :hovered-tool-select true)
+                              :on-mouse-leave #(om/set-state! owner :hovered-tool-select false)
+                              :class (when hovered-tool-select? "hover")}
+                     [:object
+                      (common/icon :cursor)
+                      [:span "Select"]]]
+                    [:button {:on-mouse-up #(cast! :tool-selected-shape [:shape])
+                              :on-mouse-enter #(om/set-state! owner :hovered-tool-shape true)
+                              :on-mouse-leave #(om/set-state! owner :hovered-tool-shape false)
+                              :class (when hovered-tool-shape? "hover")}
+                     [:object
+                      (common/icon :tool-square)
+                      [:span "Shape"]]]
+                    [:button {:on-mouse-up #(cast! :tool-selected-line [:line])
+                              :on-mouse-enter #(om/set-state! owner :hovered-tool-line true)
+                              :on-mouse-leave #(om/set-state! owner :hovered-tool-line false)
+                              :class (when hovered-tool-line? "hover")}
+                     [:object
+                      (common/icon :tool-line)
+                      [:span "Line"]]]
+                    [:div.radial-menu-nub]])
+                 [:div.right-click-menu
+                  [:button "Cut"]
+                  [:button "Copy"]
+                  [:button "Paste"]
+                  [:hr]
+                  [:button "Align"]
+                  [:button "Transform"]
+                  [:button "Distribute"]
+                  [:hr]
+                  [:button "Lock"]
+                  [:button "Group"]
+                  [:button "Arrange"]
+                  [:div.right-click-align
+                   [:button "test"]
+                   [:button "test"]
+                   [:button "test"]]]]])))))

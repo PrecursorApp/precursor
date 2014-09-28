@@ -208,8 +208,8 @@
   .outline();
   // .rotate(-45);
   position: fixed;
-  top: 50%;
-  left: 50%;
+  // top: 50%;
+  // left: 50%;
   width: @radial_menu_size;
   height: @radial_menu_size;
   border-radius: (@radial_menu_size / 2);
@@ -254,7 +254,8 @@
       box-shadow: -1px 0 @gray_lighter;
       border-radius: 0 0 (@radial_menu_size / 2) 0;
     }
-    &:hover {
+    &:hover,
+    &.hover {
       .scale3d(1.1);
       .icon_stroke(@gray_darker);
       color: @gray_darker;
