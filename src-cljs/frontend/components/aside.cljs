@@ -15,13 +15,13 @@
           [:span "Precursor"]]
          [:button
           (common/icon :logomark-precursor)
-          [:span "test"]]
+          [:span "About"]]
          [:button
           (common/icon :logomark-precursor)
-          [:span "test"]]
+          [:span "Collaborators"]]
          [:button
           (common/icon :logomark-precursor)
-          [:span "test"]]
+          [:span "Download"]]
          [:button
           (common/icon :logomark-precursor)
-          [:span "test"]]]))))
+          [:span "Settings"]]]))))
