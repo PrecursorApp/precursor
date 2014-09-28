@@ -90,8 +90,8 @@
        (for [path (:paths template)]
         [:path {:class (name path) :d (get icon-paths path)}])]]))
 
-; (def spinner
-;   (icon :spinner))
+(def spinner
+  (icon :logomark-precursor))
 
 (defn updating-duration
   "Takes a :start time string and :stop time string. Updates the component every second
