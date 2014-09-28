@@ -31,23 +31,23 @@
            [:button
             [:object
              (common/icon :bullet)
-             [:span "John Smith"]]]
+             [:span "Anonymous"]]]
            [:button
             [:object
              (common/icon :bullet)
-             [:span "John Smith"]]]
+             [:span "Anonymous"]]]
            [:button
             [:object
              (common/icon :bullet)
-             [:span "John Smith"]]]
+             [:span "Anonymous"]]]
            [:button
             [:object
              (common/icon :bullet)
-             [:span "John Smith"]]]
+             [:span "Anonymous"]]]
            [:button
             [:object
              (common/icon :bullet)
-             [:span "John Smith"]]]]
+             [:span "Anonymous"]]]]
           [:div.aside-settings
            [:button
             (common/icon :settings)
