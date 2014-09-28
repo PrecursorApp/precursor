@@ -47,3 +47,84 @@
     stroke: @font_color;
   }
 }
+.radial-menu {
+  .flexy();
+  .outline();
+  // .rotate(-45);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: @radial_menu_size;
+  height: @radial_menu_size;
+  border-radius: (@radial_menu_size / 2);
+  button {
+    .flexy(center, center);
+    position: absolute;
+    height: (@radial_menu_size / 2);
+    width: (@radial_menu_size / 2);
+    color: @gray;
+    background: @app_background;
+    transition: 200ms;
+    &:nth-of-type(1) {
+      .transform-origin(bottom right);
+      top: 0;
+      left: 0;
+      padding: (@radial_menu_size / 8) 0 0 (@radial_menu_size / 8);
+      box-shadow: -1px 0 @gray_lighter inset;
+      border-radius: (@radial_menu_size / 2) 0 0 0;
+    }
+    &:nth-of-type(2) {
+      .transform-origin(bottom left);
+      top: 0;
+      left: (@radial_menu_size / 2);
+      padding: (@radial_menu_size / 8) (@radial_menu_size / 8) 0 0;
+      box-shadow: 0 -1px @gray_lighter inset;
+      border-radius: 0 (@radial_menu_size / 2) 0 0;
+    }
+    &:nth-of-type(3) {
+      .transform-origin(top right);
+      top: (@radial_menu_size / 2);
+      left: 0;
+      padding: 0 0 (@radial_menu_size / 8) (@radial_menu_size / 8);
+      box-shadow: 0 -1px @gray_lighter;
+      border-radius: 0 0 0 (@radial_menu_size / 2);
+    }
+    &:nth-of-type(4) {
+      .transform-origin(top left);
+      top: (@radial_menu_size / 2);
+      left: (@radial_menu_size / 2);
+      padding: 0 (@radial_menu_size / 8) (@radial_menu_size / 8) 0;
+      box-shadow: -1px 0 @gray_lighter;
+      border-radius: 0 0 (@radial_menu_size / 2) 0;
+    }
+    &:hover {
+      .scale3d(1.1);
+      color: @gray_darker;
+      background: @gray_lighter;
+      i {
+        path {
+          stroke: @gray_darker;
+        }
+      }
+    }
+    i {
+      path {
+        stroke: @gray;
+      }
+    }
+    object {
+      .flexy(column);
+      // .rotate(45);
+    }
+  }
+}
+.radial-menu-nub {
+  @size: (@font_size / 2);
+  width: @size;
+  height: @size;
+  border-radius: @size;
+  background: @gray_lighter;
+  position: absolute;
+  top: ((@radial_menu_size - @size) / 2);
+  left: ((@radial_menu_size - @size) / 2);
+}
