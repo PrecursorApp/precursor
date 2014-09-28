@@ -89,14 +89,16 @@
 (defn managed-ajax [method url & {:keys [params keywords? headers format response-format]
                                   :or {keywords? true
                                        response-format :json
-                                       format :json}}]
+                                       format :edn}}]
   (let [channel (chan)
         format (get {:xml (xml-request-response)
                      :json (merge (clj-ajax/json-request-format)
-                                  (json-response-format {:keywords? keywords? :url url :method method}))}
+                                  (json-response-format {:keywords? keywords? :url url :method method}))
+                     :edn (clj-ajax/edn-format)}
                     format)
         accept-header (get {:xml "application/xml"
-                            :json "application/json"}
+                            :json "application/json"
+                            :edn "application/edn"}
                            response-format)]
     (clj-ajax/ajax-request url method
                            (clj-ajax/transform-opts
