@@ -90,7 +90,20 @@
                                [(when-let [sel (cond
                                                 (settings/selection-in-progress? payload) (settings/selection payload)
                                                 (settings/drawing-in-progress? payload) (settings/drawing payload)
-                                                :else nil)])
+                                                :else nil)]
+                                  (let [sel (merge sel
+                                                   {:layer/start-x   (get-in sel [:layer/start-x])
+                                                    :layer/start-y   (get-in sel [:layer/start-y])
+                                                    :layer/current-x (or (get-in sel [:layer/current-x])
+                                                                         (get-in sel [:layer/end-x]))
+                                                    :layer/current-y (or (get-in sel [:layer/current-y])
+                                                                         (get-in sel [:layer/end-y]))})]
+                                    (dom/rect
+                                     (clj->js (assoc (svg/layer->svg-rect (:camera payload) sel
+                                                                          true)
+                                                :fill "gray"
+                                                :fillOpacity "0.25"
+                                                :strokeDasharray "5,5")))))
                                 (dom/text #js {:x 15
                                                :y 15} (pr-str (dissoc payload :layers)))]
                                [(when (cameras/guidelines-enabled? payload)

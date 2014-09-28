@@ -104,8 +104,9 @@
 (defmethod control-event :mouse-released
   [target message [x y] state]
   (-> state
-      (update-in [:drawing :layer] dissoc :layer/current-x :layer/current-y :in-progress?)
-      (update-in [:drawing :layer] assoc :layer/end-x x :layer/end-y y)))
+      (update-in [:drawing :layer] dissoc :layer/current-x :layer/current-y)
+      (update-in [:drawing :layer] assoc :layer/end-x x :layer/end-y y)
+      (update-in [:drawing] assoc :in-progress? false)))
 
 (defmethod post-control-event! :mouse-depressed
   [target message [x y] previous-state current-state])
