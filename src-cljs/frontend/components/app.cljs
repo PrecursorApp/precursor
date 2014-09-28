@@ -56,18 +56,18 @@
                [:div.radial-menu
                 [:button
                  [:object
-                  (common/icon :logomark-precursor)
+                  (common/icon :tool-text)
                   [:span "Text"]]]
                 [:button
                  [:object
-                  (common/icon :logomark-precursor)
+                  (common/icon :cursor)
                   [:span "Select"]]]
                 [:button
                  [:object
-                  (common/icon :logomark-precursor)
+                  (common/icon :tool-square)
                   [:span "Shape"]]]
                 [:button
                  [:object
-                  (common/icon :logomark-precursor)
+                  (common/icon :tool-line)
                   [:span "Line"]]]
                 [:div.radial-menu-nub]]]]))))
