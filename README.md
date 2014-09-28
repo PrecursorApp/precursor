@@ -38,3 +38,14 @@ lein cljsbuild auto dev
 ```
 
 Then go to http://localhost:8080
+
+### Browser REPL
+
+nrepl in to the nrepl server and run:
+
+```
+(require 'pc.util)
+(pc.util/connect-browser-weasel)
+```
+
+Then reload the app.
