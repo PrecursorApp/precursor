@@ -13,3 +13,5 @@ pom.xml.asc
 /resources/assets/css/app.css
 /pc.log
 /pc*.log.gz
+/out/*
+/.repl/*

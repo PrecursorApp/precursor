@@ -73,3 +73,11 @@
 (defmethod control-event :key-state-changed
   [target message [{:keys [key-name-kw depressed?]}] state]
   (assoc-in state [:keyboard key-name-kw] depressed?))
+
+(defmethod control-event :show-grid-toggled
+  [target message {:keys [project-id]} state]
+  (update-in state state/show-grid-path not))
+
+(defmethod control-event :night-mode-toggled
+  [target message {:keys [project-id]} state]
+  (update-in state state/night-mode-path not))

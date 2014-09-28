@@ -1,0 +1,275 @@
+#app {
+  .flexy();
+  overflow: hidden;
+}
+.app-main {
+  .flex(1);
+  &:not(.show-grid) {
+    #grid,
+    #small-grid {
+      path {
+        opacity: 0;
+      }
+    }
+  }
+  &.night-mode {
+    color: @gray_lighter;
+    background: @gray_darker;
+    #grid,
+    #small-grid {
+      path {
+        stroke: @gray_dark;
+      }
+    }
+    .radial-menu {
+      .outline(@gray_dark);
+      button {
+        .icon_stroke(@gray_lighter);
+        color: @gray_light;
+        background: @gray_darker;
+        &:nth-of-type(1) { box-shadow: -1px 0 @gray_dark inset; }
+        &:nth-of-type(2) { box-shadow: 0 -1px @gray_dark inset; }
+        &:nth-of-type(3) { box-shadow: 0 -1px @gray_dark; }
+        &:nth-of-type(4) { box-shadow: -1px 0 @gray_dark; }
+        &:hover {
+          .icon_stroke(@gray_lightest);
+          color: @gray_lighter;
+          background: @gray_dark;
+        }
+      }
+    }
+    .radial-menu-nub {
+      background: @gray_dark;
+    }
+  }
+}
+#grid,
+#small-grid {
+  path {
+    stroke: @gray_lighter;
+    transition: 300ms;
+  }
+}
+.app-aside {
+  .flexy();
+  width: @aside_width_sm;
+  border-right: 1px solid @gray_light;
+  transition: 300ms;
+  &:hover {
+    width: @aside_width_lg;
+    transition-duration: 200ms;
+    transition-timing-function: @bezier_bounce;
+    i {
+      margin-right: @icon_width;
+      transition-duration: 200ms;
+      transition-timing-function: @bezier_bounce;
+    }
+    .aside-collaborators {
+      object {
+        .translate3d(0, 0, 0);
+        opacity: 1;
+      }
+    }
+  }
+  &.night-mode {
+    background: @gray_darker;
+    border-color: @gray_dark;
+    .aside-menu {
+      button {
+        .icon_stroke(@gray_lighter);
+        color: @gray_light;
+        border-color: @gray_dark;
+        &:hover {
+          .icon_stroke(@gray_lightest);
+          color: @gray_lighter;
+          background: @gray_dark;
+        }
+      }
+    }
+  }
+}
+.aside-menu {
+  .flex(1);
+  .flexy(column);
+  button {
+    .flex(0 0 auto);
+    .flexy(center);
+    .button_fade_cascade(5);
+    .icon_stroke(@font_color);
+    height: @tile;
+    border-bottom: 1px solid @gray_lightest;
+    transition: 300ms;
+    &:hover {
+      cursor: pointer;
+      background: @gray_lightest;
+      transition-duration: 200ms;
+    }
+    i {
+      .flex(0 0 auto);
+      margin: 0 ((@aside_width_sm - @icon_width) / 2);
+      transition: 300ms;
+    }
+  }
+  .collaborators {
+    border: none;
+    .user-select(none);
+    pointer-events: none;
+  }
+}
+.aside-collaborators {
+  .flexy(column);
+  button {
+    .button_icon_cascade(5);
+    height: (@tile / 2);
+    border: none;
+    &:nth-of-type(1) { .icon_stroke(red); }
+    &:nth-of-type(2) { .icon_stroke(green); }
+    &:nth-of-type(3) { .icon_stroke(blue); }
+    &:nth-of-type(4) { .icon_stroke(purple); }
+    &:nth-of-type(5) { .icon_stroke(orange); }
+  }
+  object {
+    .flex(0 0 auto);
+    .flexy(center);
+    .translate3d(0, 1em, 0);
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    overflow: hidden;
+    transition+: all 300ms 0ms @bezier_transform;
+    transition+: opacity 200ms 100ms @bezier_fadein;
+    i {
+      margin-right: @icon_width;
+    }
+  }
+}
+.aside-settings {
+  .flexy(column);
+  margin-top: auto;
+  opacity: 1;
+  transition: 300ms @bezier_fadein;
+  &:hover {
+    > button {
+      .user-select(none);
+      opacity: 0;
+      cursor: default;
+      transition-duration: 200ms;
+    }
+    .settings-menu {
+      max-height: @tile * 3;
+      transition-duration: 200ms;
+    }
+  }
+}
+.settings-menu {
+  .flexy(column);
+  max-height: 0;
+  transition: 300ms @bezier_transform;
+  button {
+    padding-left: ((@aside_width_sm - @icon_width) / 2);
+    i {
+      margin-left: auto;
+      margin-right: ((@aside_width_sm - @icon_width) / 2);
+    }
+  }
+}
+.radial-menu {
+  .flexy();
+  .outline();
+  // .rotate(-45);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: @radial_menu_size;
+  height: @radial_menu_size;
+  border-radius: (@radial_menu_size / 2);
+  button {
+    .flexy(center, center);
+    .icon_stroke(@gray);
+    position: absolute;
+    height: (@radial_menu_size / 2);
+    width: (@radial_menu_size / 2);
+    color: @gray;
+    background: @app_background;
+    transition: 200ms;
+    &:nth-of-type(1) {
+      .transform-origin(bottom right);
+      top: 0;
+      left: 0;
+      padding: (@radial_menu_size / 8) 0 0 (@radial_menu_size / 8);
+      box-shadow: -1px 0 @gray_lighter inset;
+      border-radius: (@radial_menu_size / 2) 0 0 0;
+    }
+    &:nth-of-type(2) {
+      .transform-origin(bottom left);
+      top: 0;
+      left: (@radial_menu_size / 2);
+      padding: (@radial_menu_size / 8) (@radial_menu_size / 8) 0 0;
+      box-shadow: 0 -1px @gray_lighter inset;
+      border-radius: 0 (@radial_menu_size / 2) 0 0;
+    }
+    &:nth-of-type(3) {
+      .transform-origin(top right);
+      top: (@radial_menu_size / 2);
+      left: 0;
+      padding: 0 0 (@radial_menu_size / 8) (@radial_menu_size / 8);
+      box-shadow: 0 -1px @gray_lighter;
+      border-radius: 0 0 0 (@radial_menu_size / 2);
+    }
+    &:nth-of-type(4) {
+      .transform-origin(top left);
+      top: (@radial_menu_size / 2);
+      left: (@radial_menu_size / 2);
+      padding: 0 (@radial_menu_size / 8) (@radial_menu_size / 8) 0;
+      box-shadow: -1px 0 @gray_lighter;
+      border-radius: 0 0 (@radial_menu_size / 2) 0;
+    }
+    &:hover {
+      .scale3d(1.1);
+      .icon_stroke(@gray_darker);
+      color: @gray_darker;
+      background: @gray_lighter;
+    }
+    object {
+      .flexy(column);
+      // .rotate(45);
+    }
+  }
+}
+.radial-menu-nub {
+  @size: (@font_size / 2);
+  width: @size;
+  height: @size;
+  border-radius: @size;
+  background: @gray_lighter;
+  position: absolute;
+  top: ((@radial_menu_size - @size) / 2);
+  left: ((@radial_menu_size - @size) / 2);
+}
+.right-click-menu {
+  .flexy(column);
+  .outline();
+  position: fixed;
+  top: 25%;
+  left: 25%;
+  width: (@radial_menu_size * (2 / 3));
+  background: @app_background;
+  button {
+    .flexy();
+    height: (@tile / 2);
+    padding: 0 1em;
+    color: @gray;
+    background: fade(@white, 0);
+    transition: 200ms;
+    &:hover {
+      color: @gray_darker;
+      background: @gray_lighter;
+    }
+  }
+  hr {
+    width: 100%;
+    border: 0;
+    box-shadow: 0 1px @gray_lighter inset;
+    height: 1px;
+  }
+}

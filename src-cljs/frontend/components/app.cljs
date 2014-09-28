@@ -1,6 +1,7 @@
 (ns frontend.components.app
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [frontend.async :refer [put!]]
+            [frontend.components.aside :as aside]
             [frontend.components.inspector :as inspector]
             [frontend.components.key-queue :as keyq]
             [frontend.components.canvas :as canvas]
@@ -44,7 +45,41 @@
 
 (defn app [app owner]
   (om/component
-   (html [:div#app
-          [:aside.app-aside]
-          [:main.app-main
-            (om/build canvas/svg-canvas app)]])))
+    (let [show-grid? (get-in app state/show-grid-path)
+          night-mode? (get-in app state/night-mode-path)]
+      (html [:div#app
+             [:aside.app-aside {:class (when night-mode? ["night-mode"])}
+               (om/build aside/menu app)]
+             [:main.app-main {:class (concat (when show-grid? ["show-grid"])
+                                             (when night-mode? ["night-mode"]))}
+               (om/build canvas/svg-canvas app)
+               [:div.radial-menu
+                [:button
+                 [:object
+                  (common/icon :tool-text)
+                  [:span "Text"]]]
+                [:button
+                 [:object
+                  (common/icon :cursor)
+                  [:span "Select"]]]
+                [:button
+                 [:object
+                  (common/icon :tool-square)
+                  [:span "Shape"]]]
+                [:button
+                 [:object
+                  (common/icon :tool-line)
+                  [:span "Line"]]]
+                [:div.radial-menu-nub]]
+               [:div.right-click-menu
+                [:button "Cut"]
+                [:button "Copy"]
+                [:button "Paste"]
+                [:hr]
+                [:button "Align"]
+                [:button "Transform"]
+                [:button "Distribute"]
+                [:hr]
+                [:button "Lock"]
+                [:button "Group"]
+                [:button "Arrange"]]]]))))
