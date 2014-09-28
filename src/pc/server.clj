@@ -14,10 +14,11 @@
             [pc.views.content :as content]
             [pc.stefon]
             [stefon.core :as stefon]
-            [taoensso.sente :as sente]))
+            [taoensso.sente :as sente])
+  (:import java.util.UUID))
 
-;; TODO: find a way to restart senta
-(defonce senta-state (atom {}))
+;; TODO: find a way to restart sente
+(defonce sente-state (atom {}))
 
 (defn log-request [req resp ms]
   (when-not (re-find #"^/cljs" (:uri req))
@@ -34,7 +35,7 @@
           (log/error e)))
       resp)))
 
-(defn app [senta-state]
+(defn app [sente-state]
   (routes
    (POST "/api/entity-ids" request
          (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
@@ -48,8 +49,8 @@
    (GET "/" [] (content/app))
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
-   (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn senta-state) req))
-   (POST "/chsk" req ((:ajax-post-fn senta-state) req))
+   (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
+   (POST "/chsk" req ((:ajax-post-fn sente-state) req))
    (ANY "*" [] {:status 404 :body nil})))
 
 (defn port []
@@ -57,8 +58,8 @@
     (Integer/parseInt (System/getenv "HTTP_PORT"))
     8080))
 
-(defn start [senta-state]
-  (def server (httpkit/run-server (-> (app senta-state)
+(defn start [sente-state]
+  (def server (httpkit/run-server (-> (app sente-state)
                                       (logging-middleware)
                                       (site)
                                       (stefon/asset-pipeline pc.stefon/stefon-options))
@@ -69,32 +70,64 @@
 
 (defn restart []
   (stop)
-  (start @senta-state))
+  (start @sente-state))
 
 (defn user-id-fn [ring-req]
-  (println "calling user-id-fn")
-  (println (get-in ring-req [:params :test]))
-  (get-in ring-req [:params :test]))
+  (UUID/randomUUID))
 
-(defn ws-handler [req]
+;; hash-map of document-id to set of connected user-ids
+;; Used to keep track of which transactions to send to which user
+;; sente's channel handling stuff is not much fun to work with :(
+(defonce document-subs (atom {}))
+
+(defn ws-handler-dispatch-fn [req]
+  (-> req :event first))
+
+(defmulti ws-handler ws-handler-dispatch-fn)
+
+(defmethod ws-handler :default [req]
   (def req req)
-  (log/info (:event req)))
+  (log/infof "%s for %s" (:event req) (:client-uuid req)))
 
-(defn setup-ws-handlers [senta-state]
+(defn clean-document-subs [uuid]
+  (swap! document-subs (fn [ds]
+                         ;; Could be optimized...
+                         (reduce (fn [acc [document-id user-ids]]
+                                   (if-not (contains? user-ids uuid)
+                                     acc
+                                     (let [new-user-ids (disj user-ids uuid)]
+                                       (if (empty? new-user-ids)
+                                         (dissoc acc document-id)
+                                         (assoc acc document-id new-user-ids)))))
+                                 ds ds))))
+
+(defmethod ws-handler :chsk/uidport-close [{:keys [client-uuid] :as req}]
+  (log/infof "closing connection for %s" client-uuid)
+  (clean-document-subs client-uuid))
+
+(defn subscribe-to-doc [document-id uuid]
+  (swap! document-subs update-in [document-id] (fnil conj #{}) uuid))
+
+(defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data] :as req}]
+  (let [document-id (-> ?data :document-id)]
+    (log/infof "subscribing %s to %s" client-uuid document-id)
+    (subscribe-to-doc document-id client-uuid)))
+
+(defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))
-        mult (async/mult (:ch-recv senta-state))]
+        mult (async/mult (:ch-recv sente-state))]
     (async/tap mult tap)
     (async/go-loop []
                    (when-let [req (async/<! tap)]
                      (ws-handler req)
                      (recur)))))
 
-(defn senta-init []
+(defn sente-init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket! {:user-id-fn #'user-id-fn})]
-    (reset! senta-state fns)
+    (reset! sente-state fns)
     (setup-ws-handlers fns)))
 
 (defn init []
-  (senta-init)
-  (start @senta-state))
+  (sente-init)
+  (start @sente-state))
