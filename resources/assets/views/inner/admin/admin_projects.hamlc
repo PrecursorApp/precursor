@@ -1,2 +1,0 @@
-.sidebar
-  != HAML['followed_sidebar']({})

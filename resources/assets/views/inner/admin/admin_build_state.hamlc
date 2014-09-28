@@ -1,2 +1,0 @@
-%pre
-  %p.out{data-bind: "text: JSON.stringify($root.build_state(), undefined, 2)"}

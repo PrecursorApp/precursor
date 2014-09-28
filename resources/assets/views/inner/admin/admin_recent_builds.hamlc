@@ -1,2 +1,0 @@
-.row.admin-recent-builds
-  != HAML.recent_builds_table({builds: "builds", mention_project: true})

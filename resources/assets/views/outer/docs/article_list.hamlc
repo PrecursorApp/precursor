@@ -1,5 +1,0 @@
-%ul.article_list
-  - if @slug? # ignoring first pass
-    - for child in @article.children
-      %li
-        %a{ href: "#{child.url}" } = child.title_with_child_count

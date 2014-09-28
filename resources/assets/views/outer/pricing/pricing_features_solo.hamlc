@@ -1,6 +1,0 @@
-%tr
-%td.span4
-  %span{data-bind: "popover: $parent.popover_options({title: headline, content: detail, placement: 'right'})"}
-    %strong{data-bind: "text: headline"}
-    %i.fa.fa-info-circle
-

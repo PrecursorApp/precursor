@@ -1,2 +1,0 @@
-= surround '&ldquo;', '&rdquo;', ->
-  = @msg

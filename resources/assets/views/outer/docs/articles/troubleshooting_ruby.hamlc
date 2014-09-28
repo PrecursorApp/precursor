@@ -1,5 +1,0 @@
-- @children = ['bundler_latest', 'rspec_wrong_exit_code', 'ruby_debugger_problems', 'capybara_timeout', 'git_bundle_install', 'ruby_exception_during_schema_load', 'wrong_ruby_commands', 'wrong_ruby_version']
-- @title = "Troubleshooting Ruby"
-- @short_title = "Ruby"
-
-!= HAML['article_list'](@)
