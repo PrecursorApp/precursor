@@ -45,3 +45,16 @@
      :layer/start-y sy
      :layer/end-x   ex
      :layer/end-y   ey}))
+
+(defn make-layer [x y]
+  {:layer/type         :rect
+   :layer/start-x      x
+   :layer/start-y      y
+   :layer/end-x        x
+   :layer/end-y        y
+   :layer/fill         "blue"
+   :layer/stroke-width 2
+   :layer/stroke-color "green"
+   :layer/name         "Testing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+   :layer/opacity      1
+   :entity/type        :layer})

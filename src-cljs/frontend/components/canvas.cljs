@@ -1,5 +1,6 @@
 (ns frontend.components.canvas
   (:require [frontend.camera :as cameras]
+            [frontend.datascript :as ds]
             [frontend.settings :as settings]
             [frontend.svg :as svg]
             [om.core :as om :include-macros true]
@@ -17,31 +18,33 @@
   (dom/rect (clj->js (svg/layer->svg-rect (cameras/camera state) layer true))))
 
 (defn state->cursor [state]
-  "default")
+  "crosshair")
 
 (defn svg-canvas [payload owner opts]
   (reify
     om/IRender
     (render [_]
-      (let [{:keys [cast!]} (om/get-shared owner)]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)
+            db                       (om/get-shared owner :db)
+            layers                   (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
         (apply dom/svg (concat [#js {:width "100%"
                                      :height "100%"
                                      :id "svg-canvas"
                                      :xmlns "http://www.w3.org/2000/svg"
                                      :style #js {:top    0
                                                  :left   0
-                                                 :cursor (state->cursor payload)
-                                                 }
+                                                 :cursor (state->cursor payload)}
                                      :onMouseDown (fn [event]
                                                     (.preventDefault event)
                                                     (.stopPropagation event)
                                                     ;;(.addEventListener js/document "mousemove" handle-mouse-move false)
-                                                    ((:handle-mouse-down opts) event))
+                                                    (js/console.log event)
+                                                    ((:handle-mouse-down handlers) event))
                                      :onMouseUp (fn [event]
                                                   (.preventDefault event)
                                                   (.stopPropagation event)
                                                   ;;(.removeEventListener js/document "mousemove" handle-mouse-move false)
-                                                  ((:handle-mouse-up opts) event))
+                                                  ((:handle-mouse-up handlers) event))
                                      :onWheel (fn [event]
                                                 (.preventDefault event)
                                                 (.stopPropagation event)
@@ -79,7 +82,7 @@
                                                  :width  "100%"
                                                  :height "100%"
                                                  :fill   "url(#grid)"}))]
-                               (mapv (partial svg-element payload) (:layers payload))
+                               (mapv (partial svg-element payload) layers)
                                [(dom/text #js {:x (get-in payload [:mouse :x])
                                                :y (get-in payload [:mouse :y])
                                                :fill "green"}

@@ -93,20 +93,20 @@
 (defn app-state []
   (let [initial-state (state/initial-state (ds/make-initial-db))]
     (atom (assoc initial-state
-              :comms {:controls  controls-ch
-                      :api       api-ch
-                      :errors    errors-ch
-                      :nav       navigation-ch
-                      :controls-mult (async/mult controls-ch)
-                      :api-mult (async/mult api-ch)
-                      :errors-mult (async/mult errors-ch)
-                      :nav-mult (async/mult navigation-ch)
-                      :mouse-move {:ch mouse-move-ch
-                                   :mult (async/mult mouse-move-ch)}
-                      :mouse-down {:ch mouse-down-ch
-                                   :mult (async/mult mouse-down-ch)}
-                      :mouse-up {:ch mouse-up-ch
-                                 :mult (async/mult mouse-up-ch)}}))))
+            :comms {:controls      controls-ch
+                    :api           api-ch
+                    :errors        errors-ch
+                    :nav           navigation-ch
+                    :controls-mult (async/mult controls-ch)
+                    :api-mult      (async/mult api-ch)
+                    :errors-mult   (async/mult errors-ch)
+                    :nav-mult      (async/mult navigation-ch)
+                    :mouse-move    {:ch mouse-move-ch
+                                    :mult (async/mult mouse-move-ch)}
+                    :mouse-down    {:ch mouse-down-ch
+                                    :mult (async/mult mouse-down-ch)}
+                    :mouse-up      {:ch mouse-up-ch
+                                    :mult (async/mult mouse-up-ch)}}))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"
@@ -119,11 +119,10 @@
   [value state container]
   (when true
     (mlog "Controls Verbose: " value))
-  (swallow-errors
-   (binding [frontend.async/*uuid* (:uuid (meta value))]
-     (let [previous-state @state]
-       (swap! state (partial controls-con/control-event container (first value) (second value)))
-       (controls-con/post-control-event! container (first value) (second value) previous-state @state)))))
+  (binding [frontend.async/*uuid* (:uuid (meta value))]
+    (let [previous-state @state]
+      (swap! state (partial controls-con/control-event container (first value) (second value)))
+      (controls-con/post-control-event! container (first value) (second value) previous-state @state))))
 
 (defn nav-handler
   [value state history]
@@ -170,15 +169,17 @@
     mya))
 
 
-(defn install-om [state container comms cast!]
+(defn install-om [state container comms cast! handlers]
   (om/root
      app/app
      state
      {:target container
-      :shared {:comms comms
-               :cast! cast!
-               :timer-atom (setup-timer-atom)
-               :_app-state-do-not-use state}}))
+      :shared {:comms                 comms
+               :db                    (:db @state)
+               :cast!                 cast!
+               :timer-atom            (setup-timer-atom)
+               :_app-state-do-not-use state
+               :handlers              handlers}}))
 
 (defn find-top-level-node []
   (sel1 :body))
@@ -215,7 +216,8 @@
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
 
     (routes/define-routes! state)
-    (install-om state container comms cast!)
+    (install-om state container comms cast! {:handle-mouse-down handle-canvas-mouse-down
+                                             :handle-mouse-up   handle-canvas-mouse-up})
 
     (async/tap (:controls-mult comms) controls-tap)
     (async/tap (:nav-mult comms) nav-tap)
