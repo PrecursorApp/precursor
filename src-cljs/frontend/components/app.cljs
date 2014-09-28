@@ -45,4 +45,6 @@
 (defn app [app owner]
   (om/component
    (html [:div#app
-          (om/build canvas/svg-canvas app)])))
+          [:aside.app-aside]
+          [:main.app-main
+            (om/build canvas/svg-canvas app)]])))

@@ -1,5 +1,6 @@
 (ns pc.views.content
-  (:require [hiccup.core :as h]))
+  (:require [hiccup.core :as h]
+            [pc.stefon]))
 
 (defn layout [& content]
   [:html
@@ -14,14 +15,14 @@
       ;;[:script (browser-connected-repl-js)]
       )]])
 
-(def app*
+(defn app* []
   (layout
    [:input.history {:style "display:none;"}]
    [:div#player-container]
    [:div#app-container]
    [:div.debugger-container]
    [:div#app]
-   [:link.css-styles {:rel "stylesheet", :href "/css/app.css"}]
+   [:link.css-styles {:rel "stylesheet", :href (pc.stefon/asset-path "css/app.css")}]
    (if (= (System/getenv "PRODUCTION") "true")
      [:script {:type "text/javascript" :src "/js/bin/main.js"}]
      (if false
@@ -34,4 +35,4 @@
          "goog.require(\"frontend.core\");"])))))
 
 (defn app []
-  (h/html app*))
+  (h/html (app*)))
