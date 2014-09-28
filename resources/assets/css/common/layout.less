@@ -33,6 +33,13 @@
         }
       }
     }
+    #svg-canvas {
+      > rect {
+        &:not(#background-grid) {
+          stroke: @gray_light;
+        }
+      }
+    }
     .radial-menu {
       .outline(@gray_dark);
       button {
@@ -72,6 +79,15 @@
 }
 .app-main {
   .flex(1);
+}
+#svg-canvas {
+  > rect {
+    &:not(#background-grid) {
+      fill: none;
+      stroke: @gray_dark;
+      stroke-width: 2;
+    }
+  }
 }
 #grid,
 #small-grid {
