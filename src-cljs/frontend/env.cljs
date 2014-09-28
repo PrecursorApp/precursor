@@ -6,7 +6,7 @@
   (or env-var (let [render-context (aget js/window "renderContext")]
                 (if render-context
                   (-> render-context (aget "env") keyword)
-                  :production))))
+                  :development))))
 
 (defn production? []
   (= (env) :production))
