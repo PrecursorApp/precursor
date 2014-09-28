@@ -18,6 +18,21 @@
         stroke: @gray_dark;
       }
     }
+    .app-aside {
+      border-color: @gray_dark;
+      .aside-menu {
+        button {
+          .icon_stroke(@gray_lighter);
+          color: @gray_light;
+          border-color: @gray_dark;
+          &:hover {
+            .icon_stroke(@gray_lightest);
+            color: @gray_lighter;
+            background: @gray_dark;
+          }
+        }
+      }
+    }
     .radial-menu {
       .outline(@gray_dark);
       button {
@@ -51,21 +66,6 @@
       }
       hr {
         box-shadow: 0 1px @gray_dark inset;
-      }
-    }
-    .app-aside {
-      border-color: @gray_dark;
-      .aside-menu {
-        button {
-          .icon_stroke(@gray_lighter);
-          color: @gray_light;
-          border-color: @gray_dark;
-          &:hover {
-            .icon_stroke(@gray_lightest);
-            color: @gray_lighter;
-            background: @gray_dark;
-          }
-        }
       }
     }
   }
