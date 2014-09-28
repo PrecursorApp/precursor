@@ -1,15 +1,20 @@
 (ns frontend.components.canvas
   (:require [frontend.camera :as cameras]
             [frontend.settings :as settings]
+            [frontend.svg :as svg]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]]))
 
-(defmulti svg-element (fn [state shape] (:type shape)))
+(defmulti svg-element (fn [state layer] (:type layer)))
 
 (defmethod svg-element :default
-  [state shape]
-  (print "No svg element for " shape))
+  [state layer]
+  (print "No svg element for " layer))
+
+(defmethod svg-element :rect
+  [state layer]
+  (dom/rect (clj->js (svg/layer->svg-rect (cameras/camera state) layer true))))
 
 (defn state->cursor [state]
   "default")
@@ -74,6 +79,7 @@
                                                  :width  "100%"
                                                  :height "100%"
                                                  :fill   "url(#grid)"}))]
+                               (mapv (partial svg-element payload) (:layers payload))
                                [(dom/text #js {:x (get-in payload [:mouse :x])
                                                :y (get-in payload [:mouse :y])
                                                :fill "green"}
@@ -83,7 +89,7 @@
                                                 (settings/drawing-in-progress? payload) (settings/drawing payload)
                                                 :else nil)])
                                 (dom/text #js {:x 15
-                                               :y 15} (pr-str (dissoc payload :shapes)))]
+                                               :y 15} (pr-str (dissoc payload :layers)))]
                                [(when (cameras/guidelines-enabled? payload)
                                   ;; TODO: Render guidelines
                                   )]))))))

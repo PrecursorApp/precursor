@@ -188,6 +188,7 @@
         cast!                    (fn [message data & [transient?]]
                                    (print "Should cast " message)
                                    (put! (:controls comms) [message data transient?]))
+        histories                (atom [])
         container                (find-app-container top-level-node)
         uri-path                 (.getPath utils/parsed-uri)
         history-path             "/"
@@ -195,12 +196,15 @@
         nav-tap                  (chan)
         api-tap                  (chan)
         errors-tap               (chan)
+        suppressed-key-combos    #{"meta+A" "meta+D" "meta+Z" "shift+meta+Z" "backspace"
+                                   "shift+meta+D" "up" "down" "left" "right" "meta+G"}
         handle-key-down          (partial track-key-state cast! :down suppressed-key-combos)
         handle-key-up            (partial track-key-state cast! :up   suppressed-key-combos)
         handle-mouse-move!       #(handle-mouse-move cast! %)
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
-        handle-close!            #(cast! :application-shutdown [@histories])]
+        handle-close!            #(cast! :application-shutdown [@histories])
+        ]
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
     (js/document.addEventListener "mousemove" handle-mouse-move! false)
@@ -260,7 +264,7 @@
         (catch js/error e
           (merror e))))))
 
-(defn reinstall-om! []
+#_(defn reinstall-om! []
   (install-om debug-state (find-app-container (find-top-level-node)) (:comms @debug-state)))
 
 (defn refresh-css! []
@@ -271,7 +275,7 @@
         (dommy/append! (sel1 :head) [:link {:rel "stylesheet" :href "/assets/css/app.css"}])
         (dommy/remove! old-link)))
 
-(defn update-ui! []
+#_(defn update-ui! []
   (reinstall-om!)
   (refresh-css!))
 
