@@ -6,6 +6,7 @@
             [compojure.core :refer (defroutes routes GET POST ANY)]
             [compojure.handler :refer (site)]
             [compojure.route]
+            [datomic.api :refer [db q] :as d]
             [org.httpkit.server :as httpkit]
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
@@ -16,6 +17,7 @@
             [pc.stefon]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
+            [ring.util.response :refer (redirect)]
             [stefon.core :as stefon]))
 
 (defn log-request [req resp ms]
@@ -45,7 +47,12 @@
         ;; TODO: take tx-date as a param
         {:status 200
          :body (pr-str {:layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong id)})})})
-   (GET "/" [] (content/app))
+   (GET "/document/:document-id" [document-id]
+        (content/app))
+   (GET "/" []
+        (let [[document-id] (pcd/generate-eids (pcd/conn) 1)]
+          @(d/transact (pcd/conn) [{:db/id document-id :document/name "Untitled"}])
+          (redirect (str "/document/" document-id))))
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
