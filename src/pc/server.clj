@@ -102,12 +102,13 @@
                                  ds ds))))
 
 (defmethod ws-handler :chsk/uidport-close [{:keys [client-uuid] :as req}]
+  (log/infof "closing connection for %s" client-uuid)
   (clean-document-subs client-uuid))
 
 (defn subscribe-to-doc [document-id uuid]
   (swap! document-subs update-in [document-id] (fnil conj #{}) uuid))
 
-(defmethod ws-handler :subscribe [{:keys [client-uuid ?data] :as req}]
+(defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document-id)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
     (subscribe-to-doc document-id client-uuid)))
