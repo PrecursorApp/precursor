@@ -13,7 +13,7 @@
   [state cast! layer]
   (print "No svg element for " layer))
 
-(defmethod svg-element :rect
+(defmethod svg-element :layer.type/rect
   [state cast! layer]
   (dom/rect (clj->js (svg/layer->svg-rect (cameras/camera state) layer true cast!))))
 
@@ -56,7 +56,10 @@
                                                 (.preventDefault event)
                                                 (.stopPropagation event)
                                                 (let [dx     (- (aget event "deltaX"))
-                                                      dy     (- (aget event "deltaY"))]
+                                                      dy     (if (aget event "nativeEvent" "webkitDirectionInvertedFromDevice")
+                                                               ;; Detect inverted scroll (natural scroll)
+                                                               (aget event "deltaY")
+                                                               (- (aget event "deltaY")))]
                                                   (om/transact! payload (fn [state]
                                                                           (let [camera (cameras/camera state)
                                                                                 mode   (cameras/camera-mouse-mode state)]

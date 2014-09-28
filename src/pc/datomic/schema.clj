@@ -53,6 +53,25 @@
    (attribute :layer/stroke-color
               :db.type/string)
 
+   (attribute :layer/opacity
+              :db.type/long)
+
+   (attribute :entity/type
+              :db.type/ref)
+   (enum :layer)
+
+   (attribute :layer/start-sx
+              :db.type/long)
+
+   (attribute :layer/start-sy
+              :db.type/long)
+
+   (attribute :layer/current-sx
+              :db.type/long)
+
+   (attribute :layer/current-sy
+              :db.type/long)
+
    ;; Use the layer's uuid so that the frontend can track children
    ;; Wonder what happens if we make a layer a child of one of its children...
    (attribute :layer/child

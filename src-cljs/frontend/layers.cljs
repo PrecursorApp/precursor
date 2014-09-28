@@ -27,9 +27,9 @@
 (defn rect-height [rect]
   (- (:layer/end-y rect) (:layer/start-y rect)))
 
-(defmulti abs-bounding-box :type)
+(defmulti abs-bounding-box :layer.type)
 
-(defmethod abs-bounding-box :rect
+(defmethod abs-bounding-box :layer.type/rect
   [rect]
   (let [w        (rect-width rect)
         h        (rect-height rect)
@@ -46,8 +46,10 @@
      :layer/end-x   ex
      :layer/end-y   ey}))
 
-(defn make-layer [x y]
-  {:layer/type         :rect
+(defn make-layer [entity-id document-id x y]
+  {:db/id              entity-id
+   :document/id        document-id
+   :layer/type         :layer.type/rect
    :layer/start-x      x
    :layer/start-y      y
    :layer/end-x        x

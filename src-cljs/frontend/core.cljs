@@ -92,8 +92,9 @@
   (chan))
 
 (defn app-state []
-  (let [initial-state (state/initial-state (ds/make-initial-db))]
+  (let [initial-state (state/initial-state)]
     (atom (assoc initial-state
+            :db  (ds/make-initial-db (:document/id initial-state))
             :comms {:controls      controls-ch
                     :api           api-ch
                     :errors        errors-ch
@@ -211,10 +212,9 @@
 
     (d/listen! (:db @state)
                (fn [tx-report]
-                 (print "TX: " tx-report)
-                 (print "Send the tx to the server, unless the tx came from the server - not sure how to differentiate")
-                 ;; Trigger a re-render
-                 (cast! :db-updated [] true)))
+                 (cast! :db-updated [] true)
+                 (sente/send-msg (:sente @state) [:frontend/transaction {:datoms (->> tx-report :tx-data (mapv ds/datom-read-api))
+                                                                         :document/id (:document/id @state)}])))
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)

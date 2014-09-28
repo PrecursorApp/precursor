@@ -94,7 +94,8 @@
 (defmethod control-event :mouse-depressed
   [target message [x y] state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
-        layer   (layers/make-layer rx ry)]
+        entity-id (-> state :entity-ids first)
+        layer   (layers/make-layer entity-id (:document/id state) rx ry)]
     (let [r (-> state
                 (assoc-in [:drawing :in-progress?] true)
                 (assoc-in [:drawing :layer] layer)
@@ -107,7 +108,8 @@
                 (assoc-in [:mouse :x] x)
                 (assoc-in [:mouse :y] y)
                 (assoc-in [:mouse :rx] rx)
-                (assoc-in [:mouse :ry] ry))]
+                (assoc-in [:mouse :ry] ry)
+                (update-in [:entity-ids] disj entity-id))]
             r)))
 
 (defmethod control-event :mouse-moved
