@@ -33,6 +33,14 @@
     }
   }
 }
+.button_fade_cascade(@c) when (@c > 0) {
+  .button_fade_cascade((@c - 1));
+  &:nth-of-type(@{c}) {
+    object {
+      transition-delay: (@cascade * 5) + (@cascade * @c);
+    }
+  }
+}
 .outline(@color: @gray_lighter) {
   box-shadow+:  0    1px @color;
   box-shadow+:  0   -1px @color;
