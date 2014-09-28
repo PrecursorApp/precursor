@@ -109,7 +109,7 @@
                         :layer/stroke-color "blue"
                         :layer/name         "Text Layer 2"
                         :document/id        document-id
-                        :layer/text         "Cmd-click to open the Radial menu"
+                        :layer/text         "Cmd-click to open the Radial menu, share the url to collaborate"
                         :layer/font-family  "Helvetica Neue"
                         :layer/font-size    25
                         :entity/type        :layer}
