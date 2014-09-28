@@ -4,6 +4,7 @@
             [weasel.repl :as ws-repl]
             [clojure.browser.repl :as repl]
             [clojure.string :as string]
+            [datascript :as d]
             [dommy.core :as dommy]
             [goog.dom]
             [goog.dom.DomHelper]
@@ -207,8 +208,13 @@
         handle-mouse-move!       #(handle-mouse-move cast! %)
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
-        handle-close!            #(cast! :application-shutdown [@histories])
-        ]
+        handle-close!            #(cast! :application-shutdown [@histories])]
+
+    (d/listen! (:db @state)
+               (fn [tx-report]
+                 (print "TX: " tx-report)
+                 (print "Send the tx to the server, unless the tx came from the server - not sure how to differentiate")))
+
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
     (js/document.addEventListener "mousemove" handle-mouse-move! false)
