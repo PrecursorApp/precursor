@@ -109,6 +109,7 @@
                                    :optimizations :advanced
                                    :externs ["datascript/externs.js"
                                              "react/externs/react.js"
+                                             "src-cljs/js/react-externs.js"
                                              "src-cljs/js/pusher-externs.js"
                                              "src-cljs/js/ci-externs.js"
                                              "src-cljs/js/analytics-externs.js"
