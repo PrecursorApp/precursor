@@ -49,4 +49,22 @@
           [:aside.app-aside
             (om/build aside/menu app)]
           [:main.app-main
-            (om/build canvas/svg-canvas app)]])))
+            (om/build canvas/svg-canvas app)
+            [:div.radial-menu
+             [:button
+              [:object
+               (common/icon :logomark-precursor)
+               [:span "Text"]]]
+             [:button
+              [:object
+               (common/icon :logomark-precursor)
+               [:span "Select"]]]
+             [:button
+              [:object
+               (common/icon :logomark-precursor)
+               [:span "Shape"]]]
+             [:button
+              [:object
+               (common/icon :logomark-precursor)
+               [:span "Line"]]]
+             [:div.radial-menu-nub]]]])))
