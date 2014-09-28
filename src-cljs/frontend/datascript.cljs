@@ -93,6 +93,21 @@
                         :layer/stroke-color "blue"
                         :layer/name         "Layer 1"
                         :document/id        document-id
+                        :entity/type        :layer}
+                       {:db/id              -1
+                        :layer/type         :layer.type/text
+                        :layer/start-x      100
+                        :layer/start-y      100
+                        :layer/end-x        100
+                        :layer/end-y        100
+                        :layer/fill         "white"
+                        :layer/stroke-width 0
+                        :layer/stroke-color "blue"
+                        :layer/name         "Text Layer 2"
+                        :document/id        document-id
+                        :layer/text         "Rdio is a CPU hog"
+                        :layer/font-family  "Helvetica Neue"
+                        :layer/font-size    25
                         :entity/type        :layer}])
     (comment
       (print (d/q '[:find ?eid ?n ?sx ?sy ?ex ?ey

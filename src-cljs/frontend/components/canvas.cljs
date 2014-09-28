@@ -17,6 +17,13 @@
   [state cast! layer]
   (dom/rect (clj->js (svg/layer->svg-rect (cameras/camera state) layer true cast!))))
 
+(defmethod svg-element :layer.type/text
+  [state cast! layer]
+  (dom/text (clj->js (merge (svg/layer->svg-rect (cameras/camera state) layer true cast!)
+                            {:fontFamily (:layer/font-family layer)
+                             :fontSize   (* (:layer/font-size layer)
+                                            (:zf (:camera state)))})) (:layer/text layer)))
+
 (defn state->cursor [state]
   "crosshair")
 

@@ -36,7 +36,6 @@
    (.. event -pageY)])
 
 (defn screen->point [camera x y]
-  (print camera)
   [(/ (- x (:x camera) (:offset-x camera))
       (:zf camera))
    (/ (- y (:y camera) (:offset-y camera))
