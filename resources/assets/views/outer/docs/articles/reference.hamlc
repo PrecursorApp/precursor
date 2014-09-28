@@ -1,3 +1,0 @@
-- @category = "reference"
-- @children = ['configuration', 'config_sample', 'environment', 'environment_variables', 'permissions_and_access_during_deployment', 'status_badges', 'polling_project_status', 'api', 'build_artifacts', 'ec2ip_and_security_group']
-- @title = "Reference"

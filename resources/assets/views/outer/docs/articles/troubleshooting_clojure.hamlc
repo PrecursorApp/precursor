@@ -1,5 +1,0 @@
-- @children = ['clojure_12']
-- @title = "Troubleshooting Clojure"
-- @short_title = "Clojure"
-
-!= HAML['article_list'](@)

@@ -1,9 +1,0 @@
-- for category in @categories
-  %ul.articles
-    %li
-      %h4
-        %a{href: "#{category.url}"}
-          = category.title
-    - for c in category.children
-      %li
-        %a{ href: "#{c.url}" } = c.short_title_with_child_count

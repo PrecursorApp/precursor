@@ -1,5 +1,0 @@
-%h1= @article.title
-- if @article.lastUpdated
-  %p.meta
-    %strong Last Updated
-    = @article.lastUpdated

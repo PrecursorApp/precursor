@@ -1,9 +1,0 @@
-%aside.app-aside-left
-  != HAML.aside_left({})
-
-%main.app-main{tabindex: 1}
-  .main-head
-    != HAML.inner_header({})
-  .main-body{data-bind: "haml: {template: main_template, args: template_args}"}
-  %footer.main-foot
-    != HAML.footer({})

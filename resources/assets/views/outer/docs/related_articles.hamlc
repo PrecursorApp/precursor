@@ -1,5 +1,0 @@
-.article_list
-  %h4
-    Related Articles
-  %hr
-!= HAML['article_list'](@)

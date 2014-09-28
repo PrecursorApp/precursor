@@ -1,4 +1,0 @@
-- @children = ['cant_follow', 'github_permissions', 'github_security_ssh_keys', 'requires_admin', 'what_happens']
-- @title = "Github integration"
-
-!= HAML['article_list'](@)
