@@ -225,3 +225,7 @@
      (get-in current-state [:menu :open?]) (cast! :menu-closed)
      was-drawing? (d/transact! db [layer])
      :else nil)))
+
+(defmethod control-event :db-updated
+  [target message _ state]
+  (assoc state :random-number (Math/random)))
