@@ -75,6 +75,11 @@
     (log/infof "subscribing %s to %s" client-uuid document-id)
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid))))
 
+(defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
+  (let [document-id (-> ?data :document-id)]
+    (log/infof "subscribing %s to %s" client-uuid document-id)
+    (subscribe-to-doc document-id (client-uuid->uuid client-uuid))))
+
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
   nil)
