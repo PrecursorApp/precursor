@@ -1,9 +1,6 @@
 #app {
   .flexy();
   overflow: hidden;
-}
-.app-main {
-  .flex(1);
   &:not(.show-grid) {
     #grid,
     #small-grid {
@@ -41,7 +38,40 @@
     .radial-menu-nub {
       background: @gray_dark;
     }
+    .right-click-menu {
+      .outline(@gray_dark);
+      background: @gray_darker;
+      button {
+        color: @gray_light;
+        background: @gray_darker;
+        &:hover {
+          color: @gray_lighter;
+          background: @gray_dark;
+        }
+      }
+      hr {
+        box-shadow: 0 1px @gray_dark inset;
+      }
+    }
+    .app-aside {
+      border-color: @gray_dark;
+      .aside-menu {
+        button {
+          .icon_stroke(@gray_lighter);
+          color: @gray_light;
+          border-color: @gray_dark;
+          &:hover {
+            .icon_stroke(@gray_lightest);
+            color: @gray_lighter;
+            background: @gray_dark;
+          }
+        }
+      }
+    }
   }
+}
+.app-main {
+  .flex(1);
 }
 #grid,
 #small-grid {
@@ -68,22 +98,6 @@
       object {
         .translate3d(0, 0, 0);
         opacity: 1;
-      }
-    }
-  }
-  &.night-mode {
-    background: @gray_darker;
-    border-color: @gray_dark;
-    .aside-menu {
-      button {
-        .icon_stroke(@gray_lighter);
-        color: @gray_light;
-        border-color: @gray_dark;
-        &:hover {
-          .icon_stroke(@gray_lightest);
-          color: @gray_lighter;
-          background: @gray_dark;
-        }
       }
     }
   }

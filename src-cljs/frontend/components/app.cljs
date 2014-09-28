@@ -47,11 +47,11 @@
   (om/component
     (let [show-grid? (get-in app state/show-grid-path)
           night-mode? (get-in app state/night-mode-path)]
-      (html [:div#app
+      (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
+                                                    (when night-mode? ["night-mode"])))}
              [:aside.app-aside {:class (when night-mode? ["night-mode"])}
                (om/build aside/menu app)]
-             [:main.app-main {:class (concat (when show-grid? ["show-grid"])
-                                             (when night-mode? ["night-mode"]))}
+             [:main.app-main
                (om/build canvas/svg-canvas app)
                [:div.radial-menu
                 [:button
