@@ -3,7 +3,7 @@
             [datomic.api :refer [db q] :as d])
   (:import java.util.UUID))
 
-(def default-uri "datomic:free://localhost:4334/pc")
+(def default-uri "datomic:free://localhost:4334/pc2")
 
 (defn conn [& {:keys [uri]}]
   (d/connect (or uri default-uri)))
