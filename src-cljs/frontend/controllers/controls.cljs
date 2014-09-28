@@ -58,6 +58,11 @@
   (.setItem js/sessionStorage "circle-state"
             (pr-str (dissoc current-state :comms))))
 
+(defmethod control-event :canvas-mounted
+  [target message [x y] state]
+  (-> state
+      (update-in [:camera] assoc :offset-x x :offset-y y)))
+
 (defmethod control-event :camera-nudged-up
   [target message _ state]
   (update-in state [:camera :y] inc))
