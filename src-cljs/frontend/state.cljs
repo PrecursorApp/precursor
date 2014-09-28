@@ -5,6 +5,7 @@
                      :y          0
                      :zf         1
                      :show-grid? true}
+   :current-tool    :shape
    :error-message   nil
    :changelog       nil
    :environment     "development"
