@@ -27,7 +27,7 @@
    (if (= (System/getenv "PRODUCTION") "true")
      (list
       [:script {:type "text/javascript" :src "/js/vendor/react-0.10.0.js"}]
-      [:script {:type "text/javascript" :src "/cljs/production/frontend.js"}])
+      [:script {:type "text/javascript" :src (str "/cljs/production/frontend.js?rand=" (Math/random))}])
      (if false
        [:script {:type "text/javascript" :src "/js/bin-debug/main.js"}]
        (list
