@@ -1,7 +1,9 @@
 (ns pc.http.datomic
-  (:require [pc.datomic :as pcd]
+  (:require [clojure.core.async :as async]
+            [clojure.tools.logging :as log]
+            [pc.http.sente :as sente]
+            [pc.datomic :as pcd]
             [datomic.api :refer [db q] :as d]))
-
 
 (defn entity-id-request [eid-count]
   (cond (not (number? eid-count))
@@ -42,3 +44,24 @@
                                :tx-data
                                (filter (partial public? db))
                                (map datom-read-api)))}}))
+
+(defn notify-subscribers [transaction]
+  ;; XXX: more to do here for this to be useful
+  (when-let [public-datoms (->> transaction
+                                :tx-data
+                                (filter (partial public? (:db-after transaction)))
+                                (map datom-read-api)
+                                seq)]
+    (sente/notify-transaction (assoc transaction :tx-data public-datoms))))
+
+(defn init []
+  (let [conn (pcd/conn)
+        tap (async/chan (async/sliding-buffer 1024))]
+    (async/tap (async/mult pcd/tx-report-ch) tap)
+    (async/go-loop []
+                   (when-let [transaction (async/<! tap)]
+                     (try
+                       (notify-subscribers transaction)
+                       (catch Exception e
+                         (log/error e)))
+                     (recur)))))
