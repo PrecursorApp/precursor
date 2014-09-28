@@ -23,6 +23,7 @@
             [frontend.history :as history]
             [frontend.browser-settings :as browser-settings]
             [frontend.utils :as utils :refer [mlog merror third]]
+            [frontend.utils.ajax :as ajax]
             [frontend.datetime :as datetime]
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
@@ -245,6 +246,9 @@
   []
   (goog.dom.setProperties (sel1 "#app") #js {:id "om-app"}))
 
+(defn fetch-entity-ids [api-ch eid-count]
+  (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
+
 (defn ^:export setup! []
   (apply-app-id-hack)
   (let [state (app-state)
@@ -254,6 +258,7 @@
     (def debug-state state)
     (browser-settings/setup! state)
     (main state top-level-node history-imp)
+    (fetch-entity-ids (get-in @state [:comms :api]) 10)
     (if-let [error-status (get-in @state [:render-context :status])]
       ;; error codes from the server get passed as :status in the render-context
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
