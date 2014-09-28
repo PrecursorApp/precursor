@@ -120,6 +120,7 @@
   .flexy(column);
   button {
     .button_icon_cascade(5);
+    height: (@tile / 2);
     border: none;
     &:nth-of-type(1) { .icon_stroke(red); }
     &:nth-of-type(2) { .icon_stroke(green); }
@@ -244,4 +245,31 @@
   position: absolute;
   top: ((@radial_menu_size - @size) / 2);
   left: ((@radial_menu_size - @size) / 2);
+}
+.right-click-menu {
+  .flexy(column);
+  .outline();
+  position: fixed;
+  top: 25%;
+  left: 25%;
+  width: (@radial_menu_size * (2 / 3));
+  background: @app_background;
+  button {
+    .flexy();
+    height: (@tile / 2);
+    padding: 0 1em;
+    color: @gray;
+    background: fade(@white, 0);
+    transition: 200ms;
+    &:hover {
+      color: @gray_darker;
+      background: @gray_lighter;
+    }
+  }
+  hr {
+    width: 100%;
+    border: 0;
+    box-shadow: 0 1px @gray_lighter inset;
+    height: 1px;
+  }
 }
