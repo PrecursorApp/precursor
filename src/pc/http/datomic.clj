@@ -27,7 +27,7 @@
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
-  [datoms document-id]
+  [datoms document-id session-uuid]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
         (< 100 (count datoms))
@@ -42,26 +42,29 @@
                           (->> datoms
                                (filter (partial public? db))
                                (map pcd/datom->transaction)
-                               (concat [{:db/id txid :document/id document-id}])
+                               (concat [{:db/id txid :document/id document-id :session/uuid session-uuid}])
                                (d/transact conn)
                                deref
                                :tx-data
                                (filter (partial public? db))
                                (map datom-read-api)))}}))
 
-(defn get-document-id [transaction]
+(defn get-annotations [transaction]
   (let [txid (-> transaction :tx-data first :tx)]
-    (->> txid (d/entity (:db-after transaction)) :document/id)))
+    (->> txid (d/entity (:db-after transaction)) (#(select-keys % [:document/id :session/uuid])))))
 
 (defn notify-subscribers [transaction]
   ;; XXX: more to do here for this to be useful
-  (when-let [document-id (get-document-id transaction)]
-    (when-let [public-datoms (->> transaction
-                                  :tx-data
-                                  (filter (partial public? (:db-after transaction)))
-                                  (map datom-read-api)
-                                  seq)]
-      (sente/notify-transaction {:tx-data public-datoms :document-id document-id}))))
+  (def myt transaction)
+  (let [annotations (get-annotations transaction)]
+    (when (:document/id annotations)
+      (when-let [public-datoms (->> transaction
+                                    :tx-data
+                                    (filter (partial public? (:db-after transaction)))
+                                    (map datom-read-api)
+                                    seq)]
+        (sente/notify-transaction (merge {:tx-data public-datoms}
+                                         annotations))))))
 
 (defn init []
   (let [conn (pcd/conn)

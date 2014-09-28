@@ -14,6 +14,8 @@
             [pc.less :as less]
             [pc.views.content :as content]
             [pc.stefon]
+            [ring.middleware.session :refer (wrap-session)]
+            [ring.middleware.session.cookie :refer (cookie-store)]
             [stefon.core :as stefon]))
 
 (defn log-request [req resp ms]
@@ -37,7 +39,7 @@
          (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
    (POST "/api/transact" request
          (let [body (-> request :body slurp edn/read-string)]
-           (datomic/transact! (:datoms body) (:document-id body))))
+           (datomic/transact! (:datoms body) (:document-id body) (get-in request [:session :uid]))))
    (GET "/api/document/:id" [id]
         ;; TODO: should probably verify document exists
         ;; TODO: take tx-date as a param
@@ -57,6 +59,8 @@
 
 (defn start [sente-state]
   (def server (httpkit/run-server (-> (app sente-state)
+                                      (sente/wrap-user-id)
+                                      (wrap-session {:store (cookie-store)})
                                       (logging-middleware)
                                       (site)
                                       (stefon/asset-pipeline pc.stefon/stefon-options))
