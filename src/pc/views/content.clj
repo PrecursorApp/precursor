@@ -23,6 +23,7 @@
    [:div.debugger-container]
    [:div#app]
    [:link.css-styles {:rel "stylesheet", :href (pc.stefon/asset-path "css/app.css")}]
+   [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
    (if (= (System/getenv "PRODUCTION") "true")
      [:script {:type "text/javascript" :src "/js/bin/main.js"}]
      (if false
