@@ -119,7 +119,10 @@
     (async/tap mult tap)
     (async/go-loop []
                    (when-let [req (async/<! tap)]
-                     (ws-handler req)
+                     (try
+                       (ws-handler req)
+                       (catch Exception e
+                         (log/error e)))
                      (recur)))))
 
 (defn sente-init []
