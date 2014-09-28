@@ -35,6 +35,13 @@
   [(.. event -pageX)
    (.. event -pageY)])
 
+(defn screen->point [camera x y]
+  (print camera)
+  [(/ (- x (:x camera))
+      (:zf camera))
+   (/ (- y (:y camera))
+      (:zf camera))])
+
 (defn camera-translated-rect [camera rect w h & [off-x off-y]]
   (let [off-x    (or off-x 0)
         off-y    (or off-y 0)
