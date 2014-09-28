@@ -1,0 +1,67 @@
+.flex(@a: 0; ...) {
+  .prefixer(box-flex; extract(@a, 1); webkit); // Old Syntax
+  .prefixer(flex; @arguments; webkit);
+}
+
+.justify-content(...) {
+  .infer_replace(@a) when (@a = flex-start), (@a = flex-end), (@a = space-between) {
+    .prefixer(box-pack; replace(replace(@a, "flex-", " "), "space-between", " justify"); webkit);
+  }.infer_replace(@arguments);
+  .infer_replace(@a) when (default()) {
+    .prefixer(box-pack; @arguments; webkit);
+  }.infer_replace(@arguments);
+  .prefixer(justify-content; @arguments; webkit);
+}
+
+.flex-direction(...) {
+  .infer_reverse(@a) when (@a = row-reverse), (@a = column-reverse) {
+    .prefixer(box-direction; reverse; webkit); // Old Syntax
+  }.infer_reverse(@arguments);
+  .prefixer(box-orient; replace(replace(replace(@arguments, "-reverse", " "), "column", " vertical"), "row", " horizontal"); webkit); // Old Syntax
+  .prefixer(flex-direction; @arguments; webkit);
+}
+
+.align-items(...) {
+  .infer_replace(@a) when (@a = flex-start), (@a = flex-end) {
+    .prefixer(box-align; replace(@a, "flex-", " "); webkit); // Old Syntax
+  }.infer_replace(@arguments);
+  .infer_replace(@a) when (default()) {
+    .prefixer(box-align; @a; webkit); // Old Syntax
+  }.infer_replace(@arguments);
+  .prefixer(align-items; @arguments; webkit);
+}
+
+.flexy(...) {
+
+  display: -webkit-box;
+  display: box;
+  display: -webkit-flex;
+  display: flex;
+
+  .infer_single(@a) when (length(@a) = 1) {
+    .infer_direction(@a) when (@a = row), (@a = row-reverse), (@a = column), (@a = column-reverse) {
+      .flex-direction(@a);
+    }.infer_direction(@a);
+    .infer_direction(@a) when (default()) {
+      .align-items(@a);
+    }.infer_direction(@a);
+  }.infer_single(@arguments);
+
+  .infer_double(@a) when (length(@a) = 2) {
+    .infer_column(@a) when (extract(@a, 1) = column), (extract(@a, 1) = column-reverse) {
+      .flex-direction(extract(@a, 1));
+      .justify-content(extract(@a, 2))
+    }.infer_column(@a);
+    .infer_column(@a) when (default()) {
+      .align-items(extract(@a, 1));
+      .justify-content(extract(@a, 2));
+    }.infer_column(@a);
+  }.infer_double(@arguments);
+
+  .infer_triple(@a) when (length(@a) = 3) {
+    .align-items(extract(@a, 1));
+    .justify-content(extract(@a, 2));
+    .flex-direction(extract(@a, 3))
+  }.infer_triple(@arguments);
+
+}
