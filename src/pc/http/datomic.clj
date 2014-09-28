@@ -18,8 +18,9 @@
   [db datom]
   (->> datom :e (d/entity db) :dummy (= :dummy/dummy)))
 
-(defn datom-read-api [datom]
-  (let [{:keys [e a v tx added] :as d} datom]
+(defn datom-read-api [db datom]
+  (let [{:keys [e a v tx added] :as d} datom
+        a (:db/ident (d/entity db a))]
     {:e e :a a :v v :tx tx :added added}))
 
 ;; TODO: annotate transaction with session and document information
@@ -47,7 +48,7 @@
                                deref
                                :tx-data
                                (filter (partial public? db))
-                               (map datom-read-api)))}}))
+                               (map (partial datom-read-api db))))}}))
 
 (defn get-annotations [transaction]
   (let [txid (-> transaction :tx-data first :tx)]
@@ -61,7 +62,7 @@
       (when-let [public-datoms (->> transaction
                                     :tx-data
                                     (filter (partial public? (:db-after transaction)))
-                                    (map datom-read-api)
+                                    (map (partial datom-read-api (:db-after transaction)))
                                     seq)]
         (sente/notify-transaction (merge {:tx-data public-datoms}
                                          annotations))))))
