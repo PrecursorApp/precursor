@@ -17,7 +17,7 @@
             [frontend.controllers.errors :as errors-con]
             [frontend.env :as env]
             [frontend.instrumentation :refer [wrap-api-instrumentation]]
-            [frontend.sensa :as sensa]
+            [frontend.senta :as senta]
             [frontend.state :as state]
             [goog.events]
             [om.core :as om :include-macros true]
@@ -259,7 +259,7 @@
     (def debug-state state)
     (browser-settings/setup! state)
     (main state top-level-node history-imp)
-    (sensa/init state)
+    (senta/init state)
     (fetch-entity-ids (get-in @state [:comms :api]) 10)
     (if-let [error-status (get-in @state [:render-context :status])]
       ;; error codes from the server get passed as :status in the render-context
