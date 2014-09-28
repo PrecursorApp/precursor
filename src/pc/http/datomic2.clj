@@ -2,7 +2,6 @@
 (ns pc.http.datomic2
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :as log]
-            [pc.http.sente :as sente]
             [pc.datomic :as pcd]
             [datomic.api :refer [db q] :as d]))
 
