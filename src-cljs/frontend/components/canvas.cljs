@@ -24,8 +24,24 @@
                              :fontSize   (* (:layer/font-size layer)
                                             (:zf (:camera state)))})) (:layer/text layer)))
 
+(defmethod svg-element :layer.type/line
+  [state cast! layer]
+  (let [l (cameras/camera-translated-rect (:camera state) layer (- (:layer/end-x layer) (:layer/start-x layer))
+                                          (- (:layer/end-y layer) (:layer/start-y layer)))]
+    (dom/line (clj->js (merge
+                        (dissoc l :x :y :width :height :stroke-width)
+                        {:x1          (:layer/start-x l)
+                         :y1          (:layer/start-y l)
+                         :x2          (:layer/end-x l)
+                         :y2          (:layer/end-y l)
+                         :strokeWidth (:layer/stroke-width l)
+                         :stroke      (:layer/fill l)}))
+              (:layer/text layer))))
+
 (defn state->cursor [state]
-  "crosshair")
+  (cond
+   (= (:current-tool state) :text) "text"
+   :else                           "crosshair"))
 
 (defn svg-canvas [payload owner opts]
   (reify
@@ -114,7 +130,10 @@
                                                     :layer/current-x (or (get-in sel [:layer/current-sx])
                                                                          (get-in sel [:layer/end-sx]))
                                                     :layer/current-y (or (get-in sel [:layer/current-sy])
-                                                                         (get-in sel [:layer/end-sy]))})]
+                                                                         (get-in sel [:layer/end-sy]))})
+                                        el-type (cond
+                                                 (= (:current-tool payload) :line) dom/line
+                                                 :else dom/dom)]
                                     (dom/rect
                                      (clj->js (assoc (svg/layer->svg-rect (:camera payload) sel
                                                                           false

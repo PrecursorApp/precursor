@@ -153,10 +153,12 @@
 
 (defmethod post-control-event! :mouse-depressed
   [target message [x y] previous-state current-state]
-  (let [cast! #(put! (get-in current-state [:comms :controls]) [% [x y]])]
+  (let [cast! (fn [msg & [payload]]
+                (put! (get-in current-state [:comms :controls]) [msg payload]))]
     (cond
      (get-in current-state [:keyboard :meta?])         (cast! :menu-opened)
-     (= (get-in current-state [:current-tool]) :text)  (cast! :text-layer-created)
+     (= (get-in current-state [:current-tool]) :text)  (let [text (js/prompt "Layer text:")]
+                                                         (cast! :text-layer-created [text]))
      (= (get-in current-state [:current-tool]) :shape) (cast! :drawing-started)
      (= (get-in current-state [:current-tool]) :line)  (cast! :drawing-started)
      :else                                             nil)))
@@ -191,3 +193,39 @@
   [target message [tool] state]
   (-> state
       (assoc-in [:current-tool] tool)))
+
+(defmethod control-event :text-layer-created
+  [target message [text] state]
+  (let [{:keys [rx ry]} (:mouse state)
+        entity-id       (-> state :entity-ids first)
+        layer           (assoc (layers/make-layer entity-id (:document/id state) rx ry)
+                          :layer/type :layer.type/text
+                          :layer/font-family "Roboto"
+                          :layer/font-size 24
+                          :layer/stroke-width 0
+                          
+                          :layer/text text)]
+    (-> state
+        (assoc-in [:drawing :layer] layer)
+        (update-in [:entity-ids] disj entity-id))))
+
+(defmethod post-control-event! :text-layer-created
+  [target message [x y] previous-state current-state]
+  (let [db    (:db current-state)
+        layer (get-in current-state [:drawing :layer])]
+    (d/transact! db [layer])))
+
+(defmethod post-control-event! :mouse-released
+  [target message [x y] previous-state current-state]
+  (let [cast! #(put! (get-in current-state [:comms :controls]) [%])
+        db           (:db current-state)
+        was-drawing? (get-in previous-state [:drawing :in-progress?])
+        layer        (get-in current-state [:drawing :layer])]
+    (cond
+     (get-in current-state [:menu :open?]) (cast! :menu-closed)
+     was-drawing? (d/transact! db [layer])
+     :else nil)))
+
+(defmethod control-event :db-updated
+  [target message _ state]
+  (assoc state :random-number (Math/random)))
