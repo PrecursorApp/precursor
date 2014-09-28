@@ -1,6 +1,7 @@
 (ns frontend.components.app
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [frontend.async :refer [put!]]
+            [frontend.components.aside :as aside]
             [frontend.components.inspector :as inspector]
             [frontend.components.key-queue :as keyq]
             [frontend.components.canvas :as canvas]
@@ -45,6 +46,7 @@
 (defn app [app owner]
   (om/component
    (html [:div#app
-          [:aside.app-aside]
+          [:aside.app-aside
+            (om/build aside/menu app)]
           [:main.app-main
             (om/build canvas/svg-canvas app)]])))
