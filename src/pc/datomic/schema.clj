@@ -32,9 +32,26 @@
    (enum :layer.type/rect)
    (enum :layer.type/group)
 
+   (attribute :layer/start-x
+              :db.type/long)
+
+   (attribute :layer/start-y
+              :db.type/long)
+
+   (attribute :layer/end-x
+              :db.type/long)
+
+   (attribute :layer/end-y
+              :db.type/long)
+
    (attribute :layer/fill
-              :db.type/bytes
-              :db/doc "Fill, should be an array of ints, has to be converted to and from bytes")
+              :db.type/string)
+
+   (attribute :layer/stroke-width
+              :db.type/long)
+
+   (attribute :layer/stroke-color
+              :db.type/string)
 
    ;; Use the layer's uuid so that the frontend can track children
    ;; Wonder what happens if we make a layer a child of one of its children...
