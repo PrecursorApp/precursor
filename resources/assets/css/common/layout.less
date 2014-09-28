@@ -1,8 +1,23 @@
 #app {
   .flexy();
+  overflow: hidden;
 }
 .app-main {
   .flex(1);
+  &:not(.show-grid) {
+    #grid,
+    #small-grid {
+      path {
+        opacity: 0;
+      }
+    }
+  }
+}
+#grid,
+#small-grid {
+  path {
+    transition: 300ms;
+  }
 }
 .app-aside {
   .flexy();
@@ -24,6 +39,7 @@
   .flex(1);
   .flexy(column);
   button {
+    .flex(0 0 auto);
     .flexy(center);
     .button_icon_cascade(5);
     .icon_stroke(@font_color);
@@ -35,13 +51,40 @@
       background: @gray_lightest;
       transition-duration: 200ms;
     }
-    &:last-of-type {
-      margin-top: auto;
-    }
     i {
       .flex(0 0 auto);
       margin: 0 ((@aside_width_sm - @icon_width) / 2);
       transition: 300ms;
+    }
+  }
+}
+.aside-settings {
+  .flexy(column);
+  margin-top: auto;
+  opacity: 1;
+  transition: 300ms @bezier_fadein;
+  &:hover {
+    > button {
+      .user-select(none);
+      opacity: 0;
+      cursor: default;
+      transition-duration: 200ms;
+    }
+    .settings-menu {
+      max-height: @tile * 3;
+      transition-duration: 200ms;
+    }
+  }
+}
+.settings-menu {
+  .flexy(column);
+  max-height: 0;
+  transition: 300ms @bezier_transform;
+  button {
+    padding-left: ((@aside_width_sm - @icon_width) / 2);
+    i {
+      margin-left: auto;
+      margin-right: ((@aside_width_sm - @icon_width) / 2);
     }
   }
 }
