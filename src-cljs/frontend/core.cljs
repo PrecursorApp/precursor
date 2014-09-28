@@ -191,7 +191,6 @@
 (defn main [state top-level-node history-imp]
   (let [comms                    (:comms @state)
         cast!                    (fn [message data & [transient?]]
-                                   (print "Should cast " message)
                                    (put! (:controls comms) [message data transient?]))
         histories                (atom [])
         container                (find-app-container top-level-node)
@@ -213,7 +212,9 @@
     (d/listen! (:db @state)
                (fn [tx-report]
                  (print "TX: " tx-report)
-                 (print "Send the tx to the server, unless the tx came from the server - not sure how to differentiate")))
+                 (print "Send the tx to the server, unless the tx came from the server - not sure how to differentiate")
+                 ;; Trigger a re-render
+                 (cast! :db-updated [] true)))
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
