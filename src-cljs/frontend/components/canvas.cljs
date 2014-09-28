@@ -99,12 +99,12 @@
                                                 (settings/drawing-in-progress? payload) (settings/drawing payload)
                                                 :else nil)]
                                   (let [sel (merge sel
-                                                   {:layer/start-x   (get-in sel [:layer/start-x])
-                                                    :layer/start-y   (get-in sel [:layer/start-y])
-                                                    :layer/current-x (or (get-in sel [:layer/current-x])
-                                                                         (get-in sel [:layer/end-x]))
-                                                    :layer/current-y (or (get-in sel [:layer/current-y])
-                                                                         (get-in sel [:layer/end-y]))})]
+                                                   {:layer/start-x   (get-in sel [:layer/start-sx])
+                                                    :layer/start-y   (get-in sel [:layer/start-sy])
+                                                    :layer/current-x (or (get-in sel [:layer/current-sx])
+                                                                         (get-in sel [:layer/end-sx]))
+                                                    :layer/current-y (or (get-in sel [:layer/current-sy])
+                                                                         (get-in sel [:layer/end-sy]))})]
                                     (dom/rect
                                      (clj->js (assoc (svg/layer->svg-rect (:camera payload) sel
                                                                           false

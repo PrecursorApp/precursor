@@ -95,33 +95,42 @@
   [target message [x y] state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         layer   (layers/make-layer rx ry)]
-    (-> state
-        (assoc-in [:drawing :in-progress?] true)
-        (assoc-in [:drawing :layer] layer)
-        (assoc-in [:mouse :down] true)
-        (assoc-in [:mouse :x] x)
-        (assoc-in [:mouse :y] y)
-        (assoc-in [:mouse :rx] rx)
-        (assoc-in [:mouse :ry] ry))))
+    (let [r (-> state
+                (assoc-in [:drawing :in-progress?] true)
+                (assoc-in [:drawing :layer] layer)
+                (update-in [:drawing :layer] assoc
+                           :layer/start-sx (- x (get-in state [:camera :offset-x]))
+                           :layer/start-sy (- y (get-in state [:camera :offset-y]))
+                           :layer/current-sx (- x (get-in state [:camera :offset-x]))
+                           :layer/current-sy (- y (get-in state [:camera :offset-y])))
+                (assoc-in [:mouse :down] true)
+                (assoc-in [:mouse :x] x)
+                (assoc-in [:mouse :y] y)
+                (assoc-in [:mouse :rx] rx)
+                (assoc-in [:mouse :ry] ry))]
+            r)))
 
 (defmethod control-event :mouse-moved
   [target message [x y] state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)]
-    (if (get-in state [:drawing :in-progress?])
-      (-> state
-          (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)
-          (update-in [:drawing :layer] assoc
-                     :layer/current-x rx
-                     :layer/current-y ry))
-      (-> state
-        (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)))))
+    (let [r (if (get-in state [:drawing :in-progress?])
+              (-> state
+                  (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)
+                  (update-in [:drawing :layer] assoc
+                             :layer/current-x rx
+                             :layer/current-y ry
+                             :layer/current-sx (- x (get-in state [:camera :offset-x]))
+                             :layer/current-sy (- y (get-in state [:camera :offset-y]))))
+              (-> state
+                  (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)))]
+      r)))
 
 (defmethod control-event :mouse-released
   [target message [x y] state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)]
     (-> state
         (update-in [:drawing :layer] dissoc :layer/current-x :layer/current-y)
-        (update-in [:drawing :layer] assoc :layer/end-x x :layer/end-y y)
+        (update-in [:drawing :layer] assoc :layer/end-x rx :layer/end-y ry)
         (update-in [:drawing] assoc :in-progress? false)
         (assoc-in [:mouse :down] false)
         (assoc-in [:mouse :x] x)
@@ -133,6 +142,8 @@
                    :layer/end-y ry
                    :layer/current-x nil
                    :layer/current-y nil
+                   :layer/start-sx nil
+                   :layer/start-sy nil
                    :layer/current-sx nil
                    :layer/current-sy nil)
         (assoc-in [:camera :moving?] false))))
