@@ -3,7 +3,10 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [datomic.api :refer [db q] :as d]
             [pc.http.datomic2 :as datomic]
+            [pc.models.layer :as layer]
+            [pc.datomic :as pcd]
             [taoensso.sente :as sente])
   (:import java.util.UUID))
 
@@ -48,7 +51,6 @@
 (defmulti ws-handler ws-handler-dispatch-fn)
 
 (defmethod ws-handler :default [req]
-  (def req req)
   (log/infof "%s for %s" (:event req) (:client-uuid req)))
 
 (defn clean-document-subs [uuid]
@@ -70,10 +72,14 @@
 (defn subscribe-to-doc [document-id uuid]
   (swap! document-subs update-in [document-id] (fnil conj #{}) uuid))
 
-(defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data] :as req}]
-  (let [document-id (-> ?data :document-id)]
+(defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (let [document-id (-> ?data :document-id)
+        db (pcd/default-db)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
-    (subscribe-to-doc document-id (client-uuid->uuid client-uuid))))
+    (subscribe-to-doc document-id (client-uuid->uuid client-uuid))
+    (let [resp {:layers (layer/find-by-document db {:db/id document-id})
+                :document (pcd/touch+ (d/entity db document-id))}]
+      (?reply-fn resp))))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document/id)
