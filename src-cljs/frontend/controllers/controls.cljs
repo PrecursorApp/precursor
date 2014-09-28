@@ -168,3 +168,9 @@
      was-drawing? (d/transact! db [layer])
      (get-in current-state [:menu :opened?]) (cast! :menu-closed-should-be-something-else)
      :else nil)))
+
+(defmethod control-event :menu-opened
+  [target message _ state]
+  (print "menu opened")
+  (-> state
+      (assoc-in [:menu :open?] true)))

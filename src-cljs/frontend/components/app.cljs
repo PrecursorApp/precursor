@@ -54,7 +54,8 @@
                (om/build aside/menu app)]
              [:main.app-main
                (om/build canvas/svg-canvas app)
-               [:div.radial-menu
+               (when (get-in app [:menu :open?])
+                 [:div.radial-menu {:style {:top (- (get-in app [:mouse :y]) 128) :left (- (get-in app [:mouse :x]) 128)}}
                 [:button
                  [:object
                   (common/icon :tool-text)
@@ -71,7 +72,7 @@
                  [:object
                   (common/icon :tool-line)
                   [:span "Line"]]]
-                [:div.radial-menu-nub]]
+                [:div.radial-menu-nub]])
                [:div.right-click-menu
                 [:button "Cut"]
                 [:button "Copy"]
