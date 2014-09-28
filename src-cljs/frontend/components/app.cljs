@@ -70,4 +70,16 @@
                  [:object
                   (common/icon :tool-line)
                   [:span "Line"]]]
-                [:div.radial-menu-nub]]]]))))
+                [:div.radial-menu-nub]]
+               [:div.right-click-menu
+                [:button "Cut"]
+                [:button "Copy"]
+                [:button "Paste"]
+                [:hr]
+                [:button "Align"]
+                [:button "Transform"]
+                [:button "Distribute"]
+                [:hr]
+                [:button "Lock"]
+                [:button "Group"]
+                [:button "Arrange"]]]]))))
