@@ -5,20 +5,20 @@
 
 (defn normalized-abs-coords [coords]
   (cond-> coords
-          (> (:layer/start-x coords) (or (:current-x coords)
+          (> (:layer/start-x coords) (or (:layer/current-x coords)
                                    (:layer/end-x coords)))
           (assoc
-              :layer/start-x (or (:current-x coords)
+              :layer/start-x (or (:layer/current-x coords)
                            (:layer/end-x coords))
-              :current-x (:layer/start-x coords)
+              :layer/current-x (:layer/start-x coords)
               :layer/end-x (:layer/start-x coords))
 
-          (> (:layer/start-y coords) (or (:current-y coords)
+          (> (:layer/start-y coords) (or (:layer/current-y coords)
                                    (:layer/end-y coords)))
           (assoc
-              :layer/start-y (or (:current-y coords)
+              :layer/start-y (or (:layer/current-y coords)
                            (:layer/end-y coords))
-              :current-y (:layer/start-y coords)
+              :layer/current-y (:layer/start-y coords)
               :layer/end-y (:layer/start-y coords))))
 
 (defn rect-width [rect]
