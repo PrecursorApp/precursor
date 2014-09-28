@@ -20,9 +20,9 @@
 (defonce document-subs (atom {}))
 
 ;; XXX: fix this once we annotate transactions with document ids
-(defn notify-transaction [transaction]
-  (doseq [uid (apply set/union (vals @document-subs))]
-    ((:send-fn @sente-state) uid [:datomic/transaction (select-keys transaction [:tx-data])])))
+(defn notify-transaction [data]
+  (doseq [uid (get @document-subs (:document-id data))]
+    ((:send-fn @sente-state) uid [:datomic/transaction data])))
 
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
@@ -61,6 +61,10 @@
   (let [document-id (-> ?data :document-id)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid))))
+
+(defmethod ws-handler :chsk/ws-ping [req]
+  ;; don't log
+  nil)
 
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))

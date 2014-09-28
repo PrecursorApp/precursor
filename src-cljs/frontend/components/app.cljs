@@ -1,5 +1,6 @@
 (ns frontend.components.app
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [clojure.string :as str]
             [frontend.async :refer [put!]]
             [frontend.components.aside :as aside]
             [frontend.components.inspector :as inspector]
@@ -47,11 +48,11 @@
   (om/component
     (let [show-grid? (get-in app state/show-grid-path)
           night-mode? (get-in app state/night-mode-path)]
-      (html [:div#app
+      (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
+                                                    (when night-mode? ["night-mode"])))}
              [:aside.app-aside {:class (when night-mode? ["night-mode"])}
                (om/build aside/menu app)]
-             [:main.app-main {:class (concat (when show-grid? ["show-grid"])
-                                             (when night-mode? ["night-mode"]))}
+             [:main.app-main
                (om/build canvas/svg-canvas app)
                [:div.radial-menu
                 [:button
@@ -82,4 +83,8 @@
                 [:hr]
                 [:button "Lock"]
                 [:button "Group"]
-                [:button "Arrange"]]]]))))
+                [:button "Arrange"]
+                [:div.right-click-align
+                 [:button "test"]
+                 [:button "test"]
+                 [:button "test"]]]]]))))

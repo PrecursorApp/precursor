@@ -27,32 +27,41 @@
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
-  [datoms]
+  [datoms document-id]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
         (< 100 (count datoms))
         {:status 400 :body (pr-str {:error "You can only transact 100 datoms at once"})}
+        (not (number? document-id))
+        {:status 400 :body (pr-str {:error "document-id is required and should be an entity id"})}
         :else
         {:status 200
          :body {:datoms (let [db (pcd/default-db)
-                              conn (pcd/conn)]
+                              conn (pcd/conn)
+                              txid (d/tempid :db.part/tx)]
                           (->> datoms
                                (filter (partial public? db))
                                (map pcd/datom->transaction)
+                               (concat [{:db/id txid :document/id document-id}])
                                (d/transact conn)
                                deref
                                :tx-data
                                (filter (partial public? db))
                                (map datom-read-api)))}}))
 
+(defn get-document-id [transaction]
+  (let [txid (-> transaction :tx-data first :tx)]
+    (->> txid (d/entity (:db-after transaction)) :document/id)))
+
 (defn notify-subscribers [transaction]
   ;; XXX: more to do here for this to be useful
-  (when-let [public-datoms (->> transaction
-                                :tx-data
-                                (filter (partial public? (:db-after transaction)))
-                                (map datom-read-api)
-                                seq)]
-    (sente/notify-transaction (assoc transaction :tx-data public-datoms))))
+  (when-let [document-id (get-document-id transaction)]
+    (when-let [public-datoms (->> transaction
+                                  :tx-data
+                                  (filter (partial public? (:db-after transaction)))
+                                  (map datom-read-api)
+                                  seq)]
+      (sente/notify-transaction {:tx-data public-datoms :document-id document-id}))))
 
 (defn init []
   (let [conn (pcd/conn)
