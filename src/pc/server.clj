@@ -1,7 +1,9 @@
 (ns pc.server
-  (:require [compojure.core :refer (defroutes GET ANY)]
+  (:require [compojure.core :refer (defroutes GET POST ANY)]
             [compojure.handler :refer (site)]
             [compojure.route]
+            [clojure.tools.reader.edn :as edn]
+            [pc.http.datomic :as datomic]
             [pc.less :as less]
             [pc.views.content :as content]
             [pc.stefon]
@@ -9,9 +11,11 @@
             [org.httpkit.server :as httpkit]))
 
 (defroutes routes
+  (POST "/api/entity-ids" request
+        (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
+  (GET "/" [] (content/app))
   (compojure.route/resources "/" {:root "public"
                                   :mime-types {:svg "image/svg"}})
-  (GET "/" [] (content/app))
   (ANY "*" [] {:status 404 :body nil}))
 
 (defn port []
@@ -20,7 +24,10 @@
     8080))
 
 (defn start []
-  (def server (httpkit/run-server (stefon/asset-pipeline (site #'routes) pc.stefon/stefon-options) {:port (port)})))
+  (def server (httpkit/run-server (-> (site #'routes)
+                                      (stefon/asset-pipeline pc.stefon/stefon-options)
+                                      )
+                                  {:port (port)})))
 
 (defn stop []
   (server))
