@@ -3,6 +3,9 @@
             [cljs.reader :as reader]
             [frontend.async :refer [put!]]
             [frontend.components.forms :refer [release-button!]]
+            [datascript :as d]
+            [frontend.datascript :as ds]
+            [frontend.layers :as layers]
             [frontend.routes :as routes]
             [frontend.state :as state]
             [frontend.stripe :as stripe]
@@ -81,3 +84,40 @@
 (defmethod control-event :night-mode-toggled
   [target message {:keys [project-id]} state]
   (update-in state state/night-mode-path not))
+
+(defmethod control-event :mouse-depressed
+  [target message [x y] state]
+  (let [layer (layers/make-layer x y)]
+    (-> state
+        (assoc-in [:drawing :in-progress?] true)
+        (assoc-in [:drawing :layer] layer))))
+
+(defmethod control-event :mouse-moved
+  [target message [x y] state]
+  (if (get-in state [:drawing :in-progress?])
+    (-> state
+        (update-in [:drawing :layer] assoc
+                   :layer/current-x x
+                   :layer/current-y y))
+    state))
+
+(defmethod control-event :mouse-released
+  [target message [x y] state]
+  (-> state
+      (update-in [:drawing :layer] dissoc :layer/current-x :layer/current-y :in-progress?)
+      (update-in [:drawing :layer] assoc :layer/end-x x :layer/end-y y)))
+
+(defmethod post-control-event! :mouse-depressed
+  [target message [x y] previous-state current-state])
+
+(defmethod post-control-event! :mouse-moved
+  [target message [x y] previous-state current-state])
+
+(defmethod post-control-event! :mouse-released
+  [target message [x y] previous-state current-state]
+  (let [db (:db current-state)
+        was-drawing? (get-in previous-state [:drawing :in-progress?])
+        layer (get-in current-state [:drawing :layer])]
+    (when was-drawing?
+      (d/transact! db [layer])
+      (print "New db: " db))))
