@@ -91,11 +91,12 @@
   [target message {:keys [project-id]} state]
   (update-in state state/night-mode-path not))
 
-(defmethod control-event :mouse-depressed
-  [target message [x y] state]
-  (let [[rx ry] (cameras/screen->point (:camera state) x y)
-        entity-id (-> state :entity-ids first)
-        layer   (layers/make-layer entity-id (:document/id state) rx ry)]
+(defmethod control-event :drawing-started
+  [target message _ state]
+  (let [{:keys [x y]} (get-in state [:mouse])
+        [rx ry]       (cameras/screen->point (:camera state) x y)
+        entity-id     (-> state :entity-ids first)
+        layer         (layers/make-layer entity-id (:document/id state) rx ry)]
     (let [r (-> state
                 (assoc-in [:drawing :in-progress?] true)
                 (assoc-in [:drawing :layer] layer)
@@ -151,12 +152,19 @@
         (assoc-in [:camera :moving?] false))))
 
 (defmethod post-control-event! :mouse-depressed
-  [target message [x y] previous-state current-state])
+  [target message [x y] previous-state current-state]
+  (let [cast! #(put! (get-in current-state [:comms :controls]) [%])]
+    (cond
+     (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
+     :else (cast! :drawing-started))))
 
 (defmethod post-control-event! :mouse-released
   [target message [x y] previous-state current-state]
-  (let [db           (:db current-state)
+  (let [[cast! #(put! (get-in current-state [:comms :controls]) [%])]
+        db           (:db current-state)
         was-drawing? (get-in previous-state [:drawing :in-progress?])
         layer        (get-in current-state [:drawing :layer])]
-    (when was-drawing?
-      (d/transact! db [layer]))))
+    (cond
+     was-drawing? (d/transact! db [layer])
+     (get-in current-state [:menu :opened?]) (cast! :menu-closed-should-be-something-else)
+     :else nil)))
