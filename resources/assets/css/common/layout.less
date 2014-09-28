@@ -5,6 +5,7 @@
   .flex(1);
 }
 .app-aside {
+  .flexy();
   width: @tile;
   border-right: 1px solid @gray_light;
   transition: 300ms;
@@ -15,12 +16,17 @@
   }
 }
 .aside-menu {
+  .flex(1);
   .flexy(column);
   button {
+    .flexy(center);
+    height: @tile;
     border-bottom: 1px solid @gray_lighter;
-    text-align: left;
     &:hover {
-      background: @gray_lighter;
+      background: @gray_lightest;
+    }
+    &:last-of-type {
+      margin-top: auto;
     }
   }
 }
