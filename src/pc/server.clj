@@ -1,5 +1,6 @@
 (ns pc.server
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.core.async :as async]
+            [clojure.tools.logging :as log]
             [clojure.tools.reader.edn :as edn]
             [clj-time.core :as time]
             [compojure.core :refer (defroutes routes GET POST ANY)]
@@ -15,8 +16,8 @@
             [stefon.core :as stefon]
             [taoensso.sente :as sente]))
 
-;; TODO: find a way to restart sensa
-(defonce sensa-fns (atom {}))
+;; TODO: find a way to restart senta
+(defonce senta-state (atom {}))
 
 (defn log-request [req resp ms]
   (when-not (re-find #"^/cljs" (:uri req))
@@ -33,7 +34,7 @@
           (log/error e)))
       resp)))
 
-(defn app [sensa-fns]
+(defn app [senta-state]
   (routes
    (POST "/api/entity-ids" request
          (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
@@ -47,8 +48,8 @@
    (GET "/" [] (content/app))
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
-   (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sensa-fns) req))
-   (POST "/chsk" req ((:ajax-post-fn sensa-fns) req))
+   (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn senta-state) req))
+   (POST "/chsk" req ((:ajax-post-fn senta-state) req))
    (ANY "*" [] {:status 404 :body nil})))
 
 (defn port []
@@ -56,8 +57,8 @@
     (Integer/parseInt (System/getenv "HTTP_PORT"))
     8080))
 
-(defn start [sensa-fns]
-  (def server (httpkit/run-server (-> (app sensa-fns)
+(defn start [senta-state]
+  (def server (httpkit/run-server (-> (app senta-state)
                                       (logging-middleware)
                                       (site)
                                       (stefon/asset-pipeline pc.stefon/stefon-options))
@@ -68,13 +69,32 @@
 
 (defn restart []
   (stop)
-  (start @sensa-fns))
+  (start @senta-state))
 
-(defn sensa-init []
+(defn user-id-fn [ring-req]
+  (println "calling user-id-fn")
+  (println (get-in ring-req [:params :test]))
+  (get-in ring-req [:params :test]))
+
+(defn ws-handler [req]
+  (def req req)
+  (log/info (:event req)))
+
+(defn setup-ws-handlers [senta-state]
+  (let [tap (async/chan (async/sliding-buffer 100))
+        mult (async/mult (:ch-recv senta-state))]
+    (async/tap mult tap)
+    (async/go-loop []
+                   (when-let [req (async/<! tap)]
+                     (ws-handler req)
+                     (recur)))))
+
+(defn senta-init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
-                ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket! {})]
-    (reset! sensa-fns fns)))
+                ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket! {:user-id-fn #'user-id-fn})]
+    (reset! senta-state fns)
+    (setup-ws-handlers fns)))
 
 (defn init []
-  (sensa-init)
-  (start @sensa-fns))
+  (senta-init)
+  (start @senta-state))
