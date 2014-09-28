@@ -13,6 +13,11 @@
     width: @aside_width_lg;
     transition-duration: 200ms;
     transition-timing-function: @bezier_bounce;
+    i {
+      margin-right: @icon_width;
+      transition-duration: 200ms;
+      transition-timing-function: @bezier_bounce;
+    }
   }
 }
 .aside-menu {
@@ -20,9 +25,8 @@
   .flexy(column);
   button {
     .flexy(center);
+    .button_icon_cascade(5);
     height: @tile;
-    white-space: nowrap;
-    background: fade(@gray_lightest, 0);
     border-bottom: 1px solid @gray_lighter;
     transition: 300ms;
     &:hover {
@@ -36,6 +40,7 @@
     i {
       .flex(0 0 auto);
       margin: 0 ((@aside_width_sm - @icon_width) / 2);
+      transition: 300ms;
     }
   }
   .logomark-precursor-stroke {

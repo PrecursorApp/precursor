@@ -16,3 +16,11 @@
   @concat: (unit(@a) / unit(@font_size));
   @to_em: ~"@{concat}em";
 }
+.button_icon_cascade(@c) when (@c > 0) {
+  .button_icon_cascade((@c - 1));
+  &:nth-of-type(@{c}) {
+    i {
+      transition-delay: (@cascade * @c);
+    }
+  }
+}
