@@ -153,24 +153,31 @@
 
 (defmethod post-control-event! :mouse-depressed
   [target message [x y] previous-state current-state]
-  (let [cast! #(put! (get-in current-state [:comms :controls]) [%])]
+  (let [cast! #(put! (get-in current-state [:comms :controls]) [% [x y]])]
     (cond
      (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
      :else (cast! :drawing-started))))
 
 (defmethod post-control-event! :mouse-released
   [target message [x y] previous-state current-state]
-  (let [[cast! #(put! (get-in current-state [:comms :controls]) [%])]
+  (let [cast! #(put! (get-in current-state [:comms :controls]) [%])
         db           (:db current-state)
         was-drawing? (get-in previous-state [:drawing :in-progress?])
         layer        (get-in current-state [:drawing :layer])]
     (cond
+     (get-in current-state [:menu :open?]) (cast! :menu-closed)
      was-drawing? (d/transact! db [layer])
-     (get-in current-state [:menu :opened?]) (cast! :menu-closed-should-be-something-else)
      :else nil)))
+
 
 (defmethod control-event :menu-opened
   [target message _ state]
   (print "menu opened")
   (-> state
       (assoc-in [:menu :open?] true)))
+
+(defmethod control-event :menu-closed
+  [target message _ state]
+  (print "menu opened")
+  (-> state
+      (assoc-in [:menu :open?] false)))

@@ -226,6 +226,7 @@
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
     (js/document.addEventListener "mousemove" handle-mouse-move! false)
+    (js/window.addEventListener "mouseup"   handle-canvas-mouse-up false)
     (js/window.addEventListener "beforeunload" handle-close!)
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
 
