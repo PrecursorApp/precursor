@@ -3,6 +3,6 @@
   (:require [cljs.core.async :as async :refer (<! >! put! chan)]
             [taoensso.sente  :as sente :refer (cb-success?)]))
 
-(defn init [state]
+(defn init [app-state]
   (let [{:keys [chsk ch-recv send-fn state] :as senta-state} (sente/make-channel-socket! "/chsk" {:type :auto})]
-    (swap! state assoc :senta senta-state)))
+    (swap! app-state assoc :senta senta-state)))
