@@ -70,28 +70,32 @@
                  (when (get-in app [:menu :open?])
                    [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
                                               :left (- (get-in app [:menu :x]) 128)}}
-                    [:button {:on-mouse-up #(cast! :tool-selected [:text])
+                    [:button {:on-mouse-up #(do (cast! :tool-selected [:text])
+                                                (om/set-state! owner :hovered-tool false))
                               :on-mouse-enter #(om/set-state! owner :hovered-tool true)
                               :on-mouse-leave #(om/set-state! owner :hovered-tool false)
                               :class (when hovered-tool? "hover")}
                      [:object
                       (common/icon :tool-text)
                       [:span "Text"]]]
-                    [:button {:on-mouse-up #(cast! :tool-selected [:select])
+                    [:button {:on-mouse-up  #(do (cast! :tool-selected [:select])
+                                                 (om/set-state! owner :hovered-tool-select false))
                               :on-mouse-enter #(om/set-state! owner :hovered-tool-select true)
                               :on-mouse-leave #(om/set-state! owner :hovered-tool-select false)
                               :class (when hovered-tool-select? "hover")}
                      [:object
                       (common/icon :cursor)
                       [:span "Select"]]]
-                    [:button {:on-mouse-up #(cast! :tool-selected [:shape])
+                    [:button {:on-mouse-up #(do (cast! :tool-selected [:shape])
+                                                (om/set-state! owner :hovered-tool-shape false))
                               :on-mouse-enter #(om/set-state! owner :hovered-tool-shape true)
                               :on-mouse-leave #(om/set-state! owner :hovered-tool-shape false)
                               :class (when hovered-tool-shape? "hover")}
                      [:object
                       (common/icon :tool-square)
                       [:span "Shape"]]]
-                    [:button {:on-mouse-up #(cast! :tool-selected [:line])
+                    [:button {:on-mouse-up #(do (cast! :tool-selected [:line])
+                                                (om/set-state! owner :hovered-tool-line false))
                               :on-mouse-enter #(om/set-state! owner :hovered-tool-line true)
                               :on-mouse-leave #(om/set-state! owner :hovered-tool-line false)
                               :class (when hovered-tool-line? "hover")}
