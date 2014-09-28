@@ -89,40 +89,19 @@
                         :layer/stroke-color "blue"
                         :layer/name         "Radiohead"
                         :entity/type        :layer}])
-    (d/transact! conn [{:layer/type         :rect
-                        :layer/start-x      -10
-                        :layer/start-y      -10
-                        :layer/end-x        10
-                        :layer/end-y        10
-                        :layer/fill         "red"
-                        :layer/stroke-width 2
-                        :layer/stroke-color "blue"
-                        :layer/name         "Lana del rey"
-                        :layer/opacity      0.5
-                        :entity/type        :layer}
-                       {:layer/type         :rect
-                        :layer/start-x      -10
-                        :layer/start-y      -10
-                        :layer/end-x        10
-                        :layer/end-y        10
-                        :layer/fill         "red"
-                        :layer/stroke-width 2
-                        :layer/stroke-color "blue"
-                        :layer/name         "Jim morrison!"
-                        :layer/opacity      1
-                        :entity/type        :layer}])
-    (print (d/q '[:find ?eid ?n ?sx ?sy ?ex ?ey
-                  :where
-                  [?eid :layer/type :rect]
-                  [?eid :layer/name ?n]
-                  [?eid :layer/start-x ?sx]
-                  [?eid :layer/start-y ?sy]
-                  [?eid :layer/end-x ?ex]
-                  [?eid :layer/end-y ?ey]]
-                @conn))
-    (print (d/q '[:find ?eid ?a ?v
-                  :where
-                  [?eid :entity/type :layer]
-                  [?eid ?a ?v]]
-                @conn))
-    (print (touch-all '[:find ?t :where [?t :layer/name]] @conn))))
+    (comment
+      (print (d/q '[:find ?eid ?n ?sx ?sy ?ex ?ey
+                    :where
+                    [?eid :layer/type :rect]
+                    [?eid :layer/name ?n]
+                    [?eid :layer/start-x ?sx]
+                    [?eid :layer/start-y ?sy]
+                    [?eid :layer/end-x ?ex]
+                    [?eid :layer/end-y ?ey]]
+                  @conn))
+      (print (d/q '[:find ?eid ?a ?v
+                    :where
+                    [?eid :entity/type :layer]
+                    [?eid ?a ?v]]
+                  @conn)))
+    conn))
