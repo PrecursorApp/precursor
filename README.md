@@ -7,7 +7,9 @@ Most layers (at 692): http://livemocker.clojurecup.com/document/17592186069659
 Most lewd: http://livemocker.clojurecup.com/document/17592186068833
 
 http://livemocker.clojurecup.com/document/666
+
 http://livemocker.clojurecup.com/document/789
+
 http://livemocker.clojurecup.com/document/404
 
 ## Usage
