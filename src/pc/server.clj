@@ -14,11 +14,9 @@
             [pc.models.layer :as layer]
             [pc.less :as less]
             [pc.views.content :as content]
-            [pc.stefon]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
-            [ring.util.response :refer (redirect)]
-            [stefon.core :as stefon]))
+            [ring.util.response :refer (redirect)]))
 
 (defn log-request [req resp ms]
   (when-not (re-find #"^/cljs" (:uri req))
@@ -69,8 +67,7 @@
                                       (sente/wrap-user-id)
                                       (wrap-session {:store (cookie-store)})
                                       (logging-middleware)
-                                      (site)
-                                      (stefon/asset-pipeline pc.stefon/stefon-options))
+                                      (site))
                                   {:port (port)})))
 
 (defn stop []

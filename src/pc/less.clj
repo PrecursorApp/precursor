@@ -18,7 +18,7 @@
 
 (def less-dir "resources/assets/css")
 (def less-file "resources/assets/css/app.css.less")
-(def output-file "resources/assets/css/app.css")
+(def output-file "resources/public/css/app.css")
 
 (def lessc-path "node_modules/.bin/lessc")
 (def lessc-options "-x")

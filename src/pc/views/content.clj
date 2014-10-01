@@ -1,6 +1,5 @@
 (ns pc.views.content
-  (:require [hiccup.core :as h]
-            [pc.stefon]))
+  (:require [hiccup.core :as h]))
 
 (defn layout [& content]
   [:html
@@ -22,7 +21,7 @@
    [:div#app-container]
    [:div.debugger-container]
    [:div#app]
-   [:link.css-styles {:rel "stylesheet", :href (pc.stefon/asset-path "css/app.css")}]
+   [:link.css-styles {:rel "stylesheet", :href (str "/css/app.css?rand=" (Math/random))}]
    [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
    (if (= (System/getenv "PRODUCTION") "true")
      (list

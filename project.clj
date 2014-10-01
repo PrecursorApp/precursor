@@ -8,7 +8,6 @@
 
                  [datascript "0.4.1"]
 
-                 [org.clojars.dwwoelfel/stefon "0.5.0-3198d1b33637d6bd79c7415b01cff843891ebfd4"]
                  [compojure "1.1.8"]
                  [cheshire "5.2.0"]
                  [clj-time "0.6.0"]
