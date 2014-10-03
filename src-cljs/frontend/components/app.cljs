@@ -63,7 +63,7 @@
             hovered-tool-line?   (:hovered-tool-line (om/get-state owner))]
         (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
                                                       (when night-mode? ["night-mode"])))}
-               [:aside.app-aside {:class (when night-mode? ["night-mode"])}
+               [:aside.app-aside
                  (om/build aside/menu app)]
                [:main.app-main
                  (om/build canvas/svg-canvas app)
