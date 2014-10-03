@@ -15,7 +15,7 @@
             night-mode? (get-in app state/night-mode-path)]
        (html
          [:div.aside-menu
-          [:button
+          [:a {:href "/"}
            (common/icon :logomark-precursor)
            [:span "Precursor"]]
           ;; hide extra buttons until there's features to back them up
