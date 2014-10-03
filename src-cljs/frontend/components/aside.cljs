@@ -18,36 +18,37 @@
           [:button
            (common/icon :logomark-precursor)
            [:span "Precursor"]]
-          [:button
-           (common/icon :user)
-           [:span "Login"]]
-          [:button
-           (common/icon :download)
-           [:span "Download"]]
-          [:button.collaborators
-           (common/icon :users)
-           [:span "Collaborators"]]
-          [:div.aside-collaborators
-           [:button
-            [:object
-             (common/icon :bullet)
-             [:span "Anonymous"]]]
-           [:button
-            [:object
-             (common/icon :bullet)
-             [:span "Anonymous"]]]
-           [:button
-            [:object
-             (common/icon :bullet)
-             [:span "Anonymous"]]]
-           [:button
-            [:object
-             (common/icon :bullet)
-             [:span "Anonymous"]]]
-           [:button
-            [:object
-             (common/icon :bullet)
-             [:span "Anonymous"]]]]
+          ;; hide extra buttons until there's features to back them up
+          ;; [:button
+          ;;  (common/icon :user)
+          ;;  [:span "Login"]]
+          ;; [:button
+          ;;  (common/icon :download)
+          ;;  [:span "Download"]]
+          ;; [:button.collaborators
+          ;;  (common/icon :users)
+          ;;  [:span "Collaborators"]]
+          ;; [:div.aside-collaborators
+          ;;  [:button
+          ;;   [:object
+          ;;    (common/icon :bullet)
+          ;;    [:span "Anonymous"]]]
+          ;;  [:button
+          ;;   [:object
+          ;;    (common/icon :bullet)
+          ;;    [:span "Anonymous"]]]
+          ;;  [:button
+          ;;   [:object
+          ;;    (common/icon :bullet)
+          ;;    [:span "Anonymous"]]]
+          ;;  [:button
+          ;;   [:object
+          ;;    (common/icon :bullet)
+          ;;    [:span "Anonymous"]]]
+          ;;  [:button
+          ;;   [:object
+          ;;    (common/icon :bullet)
+          ;;    [:span "Anonymous"]]]]
           [:div.aside-settings
            [:button
             (common/icon :settings)
