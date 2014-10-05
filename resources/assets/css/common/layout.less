@@ -11,6 +11,7 @@
     border-color: @gray_dark;
   }
   .aside-menu {
+    a,
     button {
       .icon_stroke(@gray_lighter);
       color: @gray_light;
@@ -28,6 +29,9 @@
       &:not(#background-grid) {
         stroke: @gray_light;
       }
+    }
+    text {
+      fill: @gray_light;
     }
   }
   .radial-menu {
@@ -90,6 +94,9 @@
       stroke-width: 2;
     }
   }
+  text {
+    fill: @font_color;
+  }
 }
 #grid,
 #small-grid {
@@ -123,12 +130,14 @@
 .aside-menu {
   .flex(1);
   .flexy(column);
+  a,
   button {
     .flex(0 0 auto);
     .flexy(center);
     .button_fade_cascade(5);
     .icon_stroke(@font_color);
     height: @tile;
+    color: inherit;
     border-bottom: 1px solid @gray_lightest;
     transition: 300ms;
     &:hover {
@@ -140,6 +149,9 @@
       .flex(0 0 auto);
       margin: 0 ((@aside_width_sm - @icon_width) / 2);
       transition: 300ms;
+    }
+    span {
+      overflow: hidden;
     }
   }
   .collaborators {

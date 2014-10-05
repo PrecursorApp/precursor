@@ -6,7 +6,7 @@
 (def browser-settings-key "circle-browser-settings")
 
 (defn restore-browser-settings! [localstorage-imp state-atom]
-  (swap! state-atom assoc-in state/browser-settings-path (localstorage/read localstorage-imp browser-settings-key)))
+  (swap! state-atom update-in state/browser-settings-path merge (localstorage/read localstorage-imp browser-settings-key)))
 
 (defn browser-settings-watcher [localstorage-imp key ref old-data new-data]
   (when (not (identical? (get-in old-data state/browser-settings-path)

@@ -9,7 +9,8 @@
    :error-message   nil
    :changelog       nil
    :environment     "development"
-   :settings        {}
+   :settings        {:browser-settings {:show-grid?  true
+                                        :night-mode? true}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
