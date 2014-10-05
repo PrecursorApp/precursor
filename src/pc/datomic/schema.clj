@@ -32,6 +32,7 @@
    (enum :layer.type/rect)
    (enum :layer.type/group)
    (enum :layer.type/text)
+   (enum :layer.type/line)
 
    (attribute :layer/start-x
               :db.type/long)
