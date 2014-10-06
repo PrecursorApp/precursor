@@ -35,44 +35,44 @@
    (enum :layer.type/line)
 
    (attribute :layer/start-x
-              :db.type/long)
+              :db.type/float)
 
    (attribute :layer/start-y
-              :db.type/long)
+              :db.type/float)
 
    (attribute :layer/end-x
-              :db.type/long)
+              :db.type/float)
 
    (attribute :layer/end-y
-              :db.type/long)
+              :db.type/float)
 
    (attribute :layer/fill
               :db.type/string)
 
    (attribute :layer/stroke-width
-              :db.type/long)
+              :db.type/float)
 
    (attribute :layer/stroke-color
               :db.type/string)
 
    (attribute :layer/opacity
-              :db.type/long)
+              :db.type/float)
 
    (attribute :entity/type
               :db.type/ref)
    (enum :layer)
 
    (attribute :layer/start-sx
-              :db.type/long)
+              :db.type/float)
 
    (attribute :layer/start-sy
-              :db.type/long)
+              :db.type/float)
 
    (attribute :layer/current-sx
-              :db.type/long)
+              :db.type/float)
 
    (attribute :layer/current-sy
-              :db.type/long)
+              :db.type/float)
 
    (attribute :layer/font-family
               :db.type/string)
