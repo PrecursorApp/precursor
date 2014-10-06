@@ -1,5 +1,6 @@
 (ns pc.init
   (:require pc.datomic
+            pc.datomic.migrations
             pc.datomic.schema
             pc.less
             pc.logging
@@ -10,6 +11,7 @@
                #'pc.nrepl/init
                #'pc.less/init
                #'pc.datomic/init
+               #'pc.datomic.migrations/init
                #'pc.datomic.schema/init
                #'pc.server/init])
 
