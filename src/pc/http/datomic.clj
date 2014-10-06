@@ -29,6 +29,17 @@
             v)]
     {:e e :a a :v v :tx tx :added added}))
 
+(defn get-float-attrs [db]
+  (set (map last (d/q '{:find [?t ?i]
+                        :where [[?t :db/valueType :db.type/float]
+                                [?t :db/ident ?i]]}
+                      db))))
+
+(defn coerce [float-attrs [type e a v :as transaction]]
+  (if (contains? float-attrs a)
+    [type e a (float v)]
+    transaction))
+
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
@@ -43,10 +54,12 @@
         {:status 200
          :body {:datoms (let [db (pcd/default-db)
                               conn (pcd/conn)
-                              txid (d/tempid :db.part/tx)]
+                              txid (d/tempid :db.part/tx)
+                              float-attrs (get-float-attrs db)]
                           (->> datoms
                                (filter (partial public? db))
                                (map pcd/datom->transaction)
+                               (map (partial coerce float-attrs))
                                (concat [{:db/id txid :document/id document-id :session/uuid session-uuid}])
                                (d/transact conn)
                                deref
