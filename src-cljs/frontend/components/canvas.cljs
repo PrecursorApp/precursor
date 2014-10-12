@@ -35,7 +35,7 @@
                              (:zf (:camera state)))})
       (maybe-add-selected layer selected-eids)
       (clj->js)
-      (dom/text)))
+      (dom/text (:layer/text layer))))
 
 (defmethod svg-element :layer.type/line
   [state selected-eids cast! layer]
