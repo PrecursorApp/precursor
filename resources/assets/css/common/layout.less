@@ -29,6 +29,9 @@
       &:not(#background-grid) {
         stroke: @gray_light;
       }
+      &.selected {
+        stroke: @select_blue;
+      }
     }
     text {
       fill: @gray_light;
@@ -92,6 +95,9 @@
       fill: none;
       stroke: @gray_dark;
       stroke-width: 2;
+      &.selected {
+        stroke: @select_blue;
+      }
     }
   }
   text {
