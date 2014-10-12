@@ -2,6 +2,7 @@
   (:require [datascript :as d]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
+            [frontend.models.layer :as layer-model]
             [frontend.settings :as settings]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
@@ -63,14 +64,6 @@
     :select "default"
     "crosshair"))
 
-(defn selected-eids
-  "If the layer is a group, returns the children, else the passed in eid"
-  [db selected-eid]
-  (let [layer (d/entity db selected-eid)]
-    (if (= :layer.type/group (:layer/type layer))
-      (conj (:layer/child layer) selected-eid)
-      #{selected-eid})))
-
 (defn svg-canvas [payload owner opts]
   (reify
     om/IDidMount
@@ -86,7 +79,7 @@
             db                       (om/get-shared owner :db)
             layers                   (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)
             selected-eid             (get-in payload [:selected-eid])
-            selected-eids            (if selected-eid (selected-eids @db selected-eid) #{})]
+            selected-eids            (if selected-eid (layer-model/selected-eids @db selected-eid) #{})]
         (apply dom/svg (concat [#js {:width "100%"
                                      :height "100%"
                                      :id "svg-canvas"

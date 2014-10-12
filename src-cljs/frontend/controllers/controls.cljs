@@ -8,6 +8,7 @@
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
             [frontend.layers :as layers]
+            [frontend.models.layer :as layer-model]
             [frontend.routes :as routes]
             [frontend.state :as state]
             [frontend.stripe :as stripe]
@@ -83,6 +84,12 @@
 (defmethod control-event :key-state-changed
   [target message [{:keys [key-name-kw depressed?]}] state]
   (assoc-in state [:keyboard key-name-kw] depressed?))
+
+(defmethod post-control-event! :key-state-changed
+  [target message [{:keys [key-name-kw depressed?]}] state]
+  ;; TODO: better way to handle this
+  (when (= key-name-kw :backspace?)
+    (put! (get-in state [:comms :controls]) [:deleted-selected])))
 
 (defmethod control-event :show-grid-toggled
   [target message {:keys [project-id]} state]
@@ -202,6 +209,19 @@
      (get-in current-state [:menu :open?]) (cast! :menu-closed)
      was-drawing? (d/transact! db [layer])
      :else nil)))
+
+(defmethod control-event :deleted-selected
+  [target message _ state]
+  (dissoc state :selected-eid))
+
+(defmethod post-control-event! :deleted-selected
+  [target message _ previous-state current-state]
+  (when-let [selected-eid (:selected-eid previous-state)]
+    (let [db (:db current-state)
+          document-id (:document/id current-state)
+          selected-eids (layer-model/selected-eids @db selected-eid)]
+      (d/transact! db (for [eid selected-eids]
+                        [:db.fn/retractEntity eid])))))
 
 
 (defmethod control-event :menu-opened
