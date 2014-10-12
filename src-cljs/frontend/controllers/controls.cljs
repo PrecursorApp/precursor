@@ -117,6 +117,7 @@
                 (assoc-in [:mouse :y] y)
                 (assoc-in [:mouse :rx] rx)
                 (assoc-in [:mouse :ry] ry)
+                (assoc-in [:selected-eid] entity-id)
                 (update-in [:entity-ids] disj entity-id))]
             r)))
 
@@ -231,7 +232,6 @@
                           :layer/font-family "Roboto"
                           :layer/font-size 24
                           :layer/stroke-width 0
-                          
                           :layer/text text)]
     (-> state
         (assoc-in [:drawing :layer] layer)

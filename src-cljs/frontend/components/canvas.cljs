@@ -1,46 +1,60 @@
 (ns frontend.components.canvas
-  (:require [frontend.camera :as cameras]
+  (:require [datascript :as d]
+            [frontend.camera :as cameras]
             [frontend.datascript :as ds]
             [frontend.settings :as settings]
             [frontend.svg :as svg]
+            [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]]))
 
-(defmulti svg-element (fn [state cast! layer] (:layer/type layer)))
+(defmulti svg-element (fn [state selected-eids cast! layer] (:layer/type layer)))
 
 (defmethod svg-element :default
-  [state cast! layer]
+  [state selected-eids cast! layer]
   (print "No svg element for " layer))
 
+(defn maybe-add-selected [svg-layer layer selected-eids]
+  (if (contains? selected-eids (:db/id layer))
+    (update-in svg-layer [:className] #(str % " selected"))
+    svg-layer))
+
 (defmethod svg-element :layer.type/rect
-  [state cast! layer]
-  (dom/rect (clj->js (svg/layer->svg-rect (cameras/camera state) layer true cast!))))
+  [state selected-eids cast! layer]
+  (-> (svg/layer->svg-rect (cameras/camera state) layer true cast!)
+      (maybe-add-selected layer selected-eids)
+      (clj->js)
+      (dom/rect)))
 
 (defmethod svg-element :layer.type/text
-  [state cast! layer]
-  (dom/text (clj->js (merge (svg/layer->svg-rect (cameras/camera state) layer true cast!)
-                            {:fontFamily (:layer/font-family layer)
-                             :fontSize   (* (:layer/font-size layer)
-                                            (:zf (:camera state)))})) (:layer/text layer)))
+  [state selected-eids cast! layer]
+  (-> (svg/layer->svg-rect (cameras/camera state) layer true cast!)
+      (merge {:fontFamily (:layer/font-family layer)
+              :fontSize   (* (:layer/font-size layer)
+                             (:zf (:camera state)))})
+      (maybe-add-selected layer selected-eids)
+      (clj->js)
+      (dom/text)))
 
 (defmethod svg-element :layer.type/line
-  [state cast! layer]
+  [state selected-eids cast! layer]
   (let [l (cameras/camera-translated-rect (:camera state) layer (- (:layer/end-x layer) (:layer/start-x layer))
                                           (- (:layer/end-y layer) (:layer/start-y layer)))]
     (dom/line (clj->js (merge
                         (dissoc l :x :y :width :height :stroke-width :fill)
+                        (when (contains? selected-eids (:db/id layer))
+                          {:className "selected"})
                         {:x1          (:layer/start-x l)
                          :y1          (:layer/start-y l)
                          :x2          (:layer/end-x l)
                          :y2          (:layer/end-y l)
-                         :strokeWidth (:layer/stroke-width l)
                          ;;:stroke      (:layer/fill l)
-                         }))
+                         :strokeWidth (:layer/stroke-width l)}))
               (:layer/text layer))))
 
 (defmethod svg-element :layer.type/group
-  [state cast! layer]
+  [state selected-eids cast! layer]
   (print "Nothing to do for groups, yet."))
 
 (defn state->cursor [state]
@@ -48,6 +62,14 @@
     :text "text"
     :select "default"
     "crosshair"))
+
+(defn selected-eids
+  "If the layer is a group, returns the children, else the passed in eid"
+  [db selected-eid]
+  (let [layer (d/entity db selected-eid)]
+    (if (= :layer.type/group (:layer/type layer))
+      (conj (:layer/child layer) selected-eid)
+      #{selected-eid})))
 
 (defn svg-canvas [payload owner opts]
   (reify
@@ -62,7 +84,9 @@
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             db                       (om/get-shared owner :db)
-            layers                   (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
+            layers                   (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)
+            selected-eid             (get-in payload [:selected-eid])
+            selected-eids            (if selected-eid (selected-eids @db selected-eid) #{})]
         (apply dom/svg (concat [#js {:width "100%"
                                      :height "100%"
                                      :id "svg-canvas"
@@ -121,7 +145,7 @@
                                                  :width  "100%"
                                                  :height "100%"
                                                  :fill   "url(#grid)"}))]
-                               (mapv (partial svg-element payload cast!) layers)
+                               (mapv (partial svg-element payload selected-eids cast!) layers)
                                [(dom/text #js {:x (get-in payload [:mouse :x])
                                                :y (get-in payload [:mouse :y])
                                                :fill "green"}
