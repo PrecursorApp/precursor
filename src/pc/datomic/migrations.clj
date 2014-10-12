@@ -92,12 +92,26 @@
                            :db/ident ident})))))
 
 
+(defn layer-child-uuid->long
+  "Converts the child type from uuids to long"
+  [conn]
+  ;; don't try to migrate on a fresh db
+  (when (pcd/touch-one '{:find [?t]
+                         :where [[?t :db/ident :layer/child]
+                                 [?t :db/valueType :db.type/uuid]]}
+                       (db conn))
+    ;; rename the uuid attr to a new name
+    @(d/transact conn [{:db/id :layer/child
+                        :db/ident :layer/child-deprecated}])))
+
+
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
   (array-map
    0 #'add-migrations-entity
-   1 #'layer-longs->floats))
+   1 #'layer-longs->floats
+   2 #'layer-child-uuid->long))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"

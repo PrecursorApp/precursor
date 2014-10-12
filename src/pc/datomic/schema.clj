@@ -83,10 +83,9 @@
    (attribute :layer/font-size
               :db.type/long)
 
-   ;; Use the layer's uuid so that the frontend can track children
    ;; Wonder what happens if we make a layer a child of one of its children...
    (attribute :layer/child
-              :db.type/uuid
+              :db.type/long
               :db/cardinality :db.cardinality/many
               :db/doc "Layer's children")
 
