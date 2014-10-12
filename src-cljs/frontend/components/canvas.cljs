@@ -39,6 +39,10 @@
                          }))
               (:layer/text layer))))
 
+(defmethod svg-element :layer.type/group
+  [state cast! layer]
+  (print "Nothing to do for groups, yet."))
+
 (defn state->cursor [state]
   (case (:current-tool state)
     :text "text"
@@ -121,7 +125,7 @@
                                [(dom/text #js {:x (get-in payload [:mouse :x])
                                                :y (get-in payload [:mouse :y])
                                                :fill "green"}
-                                          (pr-str (:mouse payload)))]
+                                          (pr-str (select-keys payload [:mouse :current-tool])))]
                                [(when-let [sel (cond
                                                 (settings/selection-in-progress? payload) (settings/selection payload)
                                                 (settings/drawing-in-progress? payload) (settings/drawing payload)

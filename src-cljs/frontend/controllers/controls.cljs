@@ -1,6 +1,7 @@
 (ns frontend.controllers.controls
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [cljs.reader :as reader]
+            [clojure.set :as set]
             [frontend.async :refer [put!]]
             [frontend.components.forms :refer [release-button!]]
             [datascript :as d]
@@ -101,6 +102,7 @@
                                       :shape :layer.type/rect
                                       :text :layer.type/text
                                       :line :layer.type/line
+                                      :select :layer.type/group
                                       :layer.type/rect))]
     (let [r (-> state
                 (assoc-in [:drawing :in-progress?] true)
@@ -133,9 +135,25 @@
                   (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)))]
       r)))
 
+(defn eids-in-bounding-box [db {:keys [start-x end-x start-y end-y] :as box}]
+  (let [has-start-x (set (map :e (d/index-range db :layer/start-x start-x end-x)))
+        has-end-x (set (map :e (d/index-range db :layer/end-x start-x end-x)))
+        has-start-y (set (map :e (d/index-range db :layer/start-y start-y end-y)))
+        has-end-y (set (map :e (d/index-range db :layer/end-y start-y end-y)))]
+    (set/union (set/intersection has-start-x has-start-y)
+               (set/intersection has-start-x has-end-y)
+               (set/intersection has-end-x has-start-y)
+               (set/intersection has-end-x has-end-y))))
+
 (defmethod control-event :mouse-released
   [target message [x y] state]
-  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)
+        bounding-eids (when (-> state :drawing :layer :layer/type (= :layer.type/group))
+                        (eids-in-bounding-box (-> state :db deref)
+                                              {:start-x (get-in state [:drawing :layer :layer/start-x])
+                                               :end-x rx
+                                               :start-y (get-in state [:drawing :layer :layer/start-y])
+                                               :end-y ry}))]
     (-> state
         (update-in [:drawing :layer] dissoc :layer/current-x :layer/current-y)
         (update-in [:drawing :layer] assoc :layer/end-x rx :layer/end-y ry)
@@ -145,15 +163,19 @@
         (assoc-in [:mouse :y] y)
         (assoc-in [:mouse :rx] rx)
         (assoc-in [:mouse :ry] ry)
-        (update-in [:drawing :layer] assoc
-                   :layer/end-x rx
-                   :layer/end-y ry
-                   :layer/current-x nil
-                   :layer/current-y nil
-                   :layer/start-sx nil
-                   :layer/start-sy nil
-                   :layer/current-sx nil
-                   :layer/current-sy nil)
+        ;; TODO: get rid of nils (datomic doesn't like them)
+        (update-in [:drawing :layer]
+                   merge
+                   {:layer/end-x rx
+                    :layer/end-y ry
+                    :layer/current-x nil
+                    :layer/current-y nil
+                    :layer/start-sx nil
+                    :layer/start-sy nil
+                    :layer/current-sx nil
+                    :layer/current-sy nil}
+                   (when (seq bounding-eids)
+                     {:layer/child bounding-eids}))
         (assoc-in [:camera :moving?] false))))
 
 (defmethod post-control-event! :mouse-depressed
@@ -166,6 +188,7 @@
                                                          (cast! :text-layer-created [text]))
      (= (get-in current-state [:current-tool]) :shape) (cast! :drawing-started)
      (= (get-in current-state [:current-tool]) :line)  (cast! :drawing-started)
+     (= (get-in current-state [:current-tool]) :select)  (cast! :drawing-started)
      :else                                             nil)))
 
 (defmethod post-control-event! :mouse-released

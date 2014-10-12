@@ -83,7 +83,8 @@
     [(if added :db/add :db/retract) e a v]))
 
 (defn make-initial-db [document-id]
-  (let [schema {:aka {:db/cardinality :db.cardinality/many}}
+  (let [schema {:aka {:db/cardinality :db.cardinality/many}
+                :layer/child {:db/cardinality :db.cardinality/many}}
         conn   (d/create-conn schema)]
     (d/transact! conn [{:db/id              -1
                         :layer/type         :layer.type/rect
