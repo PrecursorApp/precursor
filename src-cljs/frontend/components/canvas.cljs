@@ -40,9 +40,10 @@
               (:layer/text layer))))
 
 (defn state->cursor [state]
-  (cond
-   (= (:current-tool state) :text) "text"
-   :else                           "crosshair"))
+  (case (:current-tool state)
+    :text "text"
+    :select "default"
+    "crosshair"))
 
 (defn svg-canvas [payload owner opts]
   (reify
