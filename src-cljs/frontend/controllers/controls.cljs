@@ -144,14 +144,18 @@
       r)))
 
 (defn eids-in-bounding-box [db {:keys [start-x end-x start-y end-y] :as box}]
-  (let [has-start-x (set (map :e (d/index-range db :layer/start-x start-x end-x)))
-        has-end-x (set (map :e (d/index-range db :layer/end-x start-x end-x)))
-        has-start-y (set (map :e (d/index-range db :layer/start-y start-y end-y)))
-        has-end-y (set (map :e (d/index-range db :layer/end-y start-y end-y)))]
-    (set/union (set/intersection has-start-x has-start-y)
-               (set/intersection has-start-x has-end-y)
-               (set/intersection has-end-x has-start-y)
-               (set/intersection has-end-x has-end-y))))
+  (let [x0 (min start-x end-x)
+        x1 (max start-x end-x)
+        y0 (min start-y end-y)
+        y1 (max start-y end-y)
+        has-x0 (set (map :e (d/index-range db :layer/start-x x0 x1)))
+        has-x1 (set (map :e (d/index-range db :layer/end-x x0 x1)))
+        has-y0 (set (map :e (d/index-range db :layer/start-y y0 y1)))
+        has-y1 (set (map :e (d/index-range db :layer/end-y y0 y1)))]
+    (set/union (set/intersection has-x0 has-y0)
+               (set/intersection has-x0 has-y1)
+               (set/intersection has-x1 has-y0)
+               (set/intersection has-x1 has-y1))))
 
 (defmethod control-event :mouse-released
   [target message [x y] state]
