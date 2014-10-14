@@ -77,7 +77,7 @@
     (when (:document/id annotations)
       (when-let [public-datoms (->> transaction
                                     :tx-data
-                                    (filter (partial public? (:db-after transaction)))
+                                    (filter (partial public? (:db-before transaction)))
                                     (map (partial datom-read-api (:db-after transaction)))
                                     seq)]
         (sente/notify-transaction (merge {:tx-data public-datoms}

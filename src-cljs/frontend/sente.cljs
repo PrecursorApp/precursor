@@ -17,23 +17,23 @@
                      (apply (:send-fn sente-state) message rest))))))
 
 (defn subscribe-to-document [sente-state app-state document-id]
-  (send-msg sente-state [:frontend/subscribe {:document-id document-id}] 2000 (fn [{:keys [document layers]}]
-                                                                                (d/transact (:db @app-state)
-                                                                                            ;; hack to prevent loops
-                                                                                            (conj layers {:server/update true})))))
+  (send-msg sente-state [:frontend/subscribe {:document-id document-id}] 2000
+            (fn [{:keys [document layers]}]
+              (d/transact (:db @app-state)
+                          ;; hack to prevent loops
+                          (conj layers {:db/id -1 :server/update true})))))
 
 (defmulti handle-message (fn [app-state message data]
                            (println "handle-message")
                            message))
 
 (defmethod handle-message :default [app-state message data]
-  (println "es message" (pr-str message) (pr-str data)))
+  (println "ws message" (pr-str message) (pr-str data)))
 
 (defmethod handle-message :datomic/transaction [app-state message data]
   (let [datoms (:tx-data data)]
     (d/transact (:db app-state)
-                (conj (map ds/datom->transaction datoms)
-                      {:server/update true}))))
+                (map ds/datom->transaction datoms))))
 
 (defn do-something [app-state sente-state]
   (let [tap (async/chan (async/sliding-buffer 10))
