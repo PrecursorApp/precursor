@@ -63,7 +63,4 @@
             [:span "Night Mode"]
             (if night-mode?
               (common/icon :check)
-              (common/icon :times))]
-           [:button
-            [:span "Settings"]
-            (common/icon :times)]]]])))))
+              (common/icon :times))]]]])))))
