@@ -32,7 +32,7 @@
            (for [subscriber (disj (:subscribers app) (:client-uuid app))]
              [:button
               [:object
-               (common/icon :bullet)
+               (common/icon :user)
                [:span "Anonymous (" (apply str (take 5 subscriber)) ")"]]])]
           [:div.aside-settings
            [:button

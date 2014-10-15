@@ -143,12 +143,6 @@
       transition-duration: 200ms;
       transition-timing-function: @bezier_bounce;
     }
-    .aside-collaborators {
-      object {
-        .translate3d(0, 0, 0);
-        opacity: 1;
-      }
-    }
   }
 }
 .aside-menu {
@@ -191,25 +185,20 @@
     .button_icon_cascade(5);
     height: (@tile / 2);
     border: none;
-    &:nth-of-type(1) { .icon_stroke(red); }
-    &:nth-of-type(2) { .icon_stroke(green); }
-    &:nth-of-type(3) { .icon_stroke(blue); }
-    &:nth-of-type(4) { .icon_stroke(purple); }
-    &:nth-of-type(5) { .icon_stroke(orange); }
+    // &:nth-of-type(1) { .icon_stroke(red); }
+    // &:nth-of-type(2) { .icon_stroke(green); }
+    // &:nth-of-type(3) { .icon_stroke(blue); }
+    // &:nth-of-type(4) { .icon_stroke(purple); }
+    // &:nth-of-type(5) { .icon_stroke(orange); }
   }
   object {
     .flex(0 0 auto);
     .flexy(center);
-    .translate3d(0, 1em, 0);
     width: 100%;
     height: 100%;
-    opacity: 0;
     overflow: hidden;
     transition+: all 300ms 0ms @bezier_transform;
     transition+: opacity 200ms 100ms @bezier_fadein;
-    i {
-      margin-right: @icon_width;
-    }
   }
 }
 .aside-settings {
