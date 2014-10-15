@@ -30,7 +30,7 @@
           ;;  [:span "Collaborators"]]
           [:div.aside-collaborators
            (for [subscriber (disj (:subscribers app) (:client-uuid app))]
-             [:button
+             [:button {:title "An anonymous user is viewing this document. Spooky."}
               [:object
                (common/icon :user)
                [:span "Anonymous (" (apply str (take 5 subscriber)) ")"]]])]
