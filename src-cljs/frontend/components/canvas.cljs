@@ -157,16 +157,29 @@
                                         el-type (cond
                                                  (= (:current-tool payload) :line) dom/line
                                                  :else dom/dom)]
-                                    (dom/rect
-                                     (clj->js (assoc (svg/layer->svg-rect (:camera payload) sel
-                                                                          false
-                                                                          cast!)
-                                                :fill "gray"
-                                                :fillOpacity "0.25"
-                                                :strokeDasharray "5,5"
-                                                :strokeWidth 1)))))
+                                    (if (= :line (:current-tool payload))
+                                      (let [l (cameras/camera-translated-rect (:camera payload) sel (- (:layer/current-x sel) (:layer/start-x sel))
+                                                                              (- (:layer/current-y sel) (:layer/start-y sel)))]
+                                        (dom/line (clj->js (merge
+                                                            (dissoc l :x :y :width :height :stroke-width :fill)
+                                                            {:x1          (:layer/start-x l)
+                                                             :y1          (:layer/start-y l)
+                                                             :x2          (:layer/current-x l)
+                                                             :y2          (:layer/current-y l)
+                                                             :fill "gray"
+                                                             :fillOpacity "0.25"
+                                                             :strokeDasharray "5,5"
+                                                             :strokeWidth 1}))))
+                                      (dom/rect
+                                       (clj->js (assoc (svg/layer->svg-rect (:camera payload) sel
+                                                                            false
+                                                                            cast!)
+                                                  :fill "gray"
+                                                  :fillOpacity "0.25"
+                                                  :strokeDasharray "5,5"
+                                                  :strokeWidth 1))))))
                                 #_(dom/text #js {:x 15
-                                               :y 15} (pr-str (dissoc payload :layers)))]
+                                                 :y 15} (pr-str (dissoc payload :layers)))]
                                [(when (cameras/guidelines-enabled? payload)
                                   ;; TODO: Render guidelines
                                   )]))))))
