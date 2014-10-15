@@ -141,7 +141,7 @@
                                (mapv (partial svg-element payload selected-eids cast!) layers)
                                [(dom/text #js {:x (get-in payload [:mouse :x])
                                                :y (get-in payload [:mouse :y])
-                                               :fill "green"}
+                                               :className "mouse-stats"}
                                           (pr-str (select-keys payload [:mouse :current-tool])))]
                                [(when-let [sel (cond
                                                 (settings/selection-in-progress? payload) (settings/selection payload)
