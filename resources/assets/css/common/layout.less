@@ -148,15 +148,17 @@
 .aside-menu {
   .flex(1);
   .flexy(column);
+  a {
+    border-bottom: 1px solid @gray_lightest;
+  }
   a,
   button {
     .flex(0 0 auto);
     .flexy(center);
-    .button_fade_cascade(5);
+    .button_icon_cascade(10);
     .icon_stroke(@font_color);
     height: @tile;
     color: inherit;
-    border-bottom: 1px solid @gray_lightest;
     transition: 300ms;
     &:hover {
       cursor: pointer;
@@ -171,34 +173,6 @@
     span {
       overflow: hidden;
     }
-  }
-  .collaborators {
-    border: none;
-    .user-select(none);
-    pointer-events: none;
-  }
-}
-.aside-collaborators {
-  .flexy(column);
-  margin: 1em 0;
-  button {
-    .button_icon_cascade(5);
-    height: (@tile / 2);
-    border: none;
-    // &:nth-of-type(1) { .icon_stroke(red); }
-    // &:nth-of-type(2) { .icon_stroke(green); }
-    // &:nth-of-type(3) { .icon_stroke(blue); }
-    // &:nth-of-type(4) { .icon_stroke(purple); }
-    // &:nth-of-type(5) { .icon_stroke(orange); }
-  }
-  object {
-    .flex(0 0 auto);
-    .flexy(center);
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    transition+: all 300ms 0ms @bezier_transform;
-    transition+: opacity 200ms 100ms @bezier_fadein;
   }
 }
 .aside-settings {

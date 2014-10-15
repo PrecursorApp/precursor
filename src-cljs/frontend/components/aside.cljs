@@ -28,16 +28,14 @@
           ;; [:button.collaborators
           ;;  (common/icon :users)
           ;;  [:span "Collaborators"]]
-          [:div.aside-collaborators
-           [:button {:title "You're viewing this document. Try inviting others."}
-            [:object
+          [:button {:title "You're viewing this document. Try inviting others."}
+           [:object
+            (common/icon :user)
+            [:span "You"]]]
+          (for [subscriber (disj (:subscribers app) (:client-uuid app))]
+            [:button {:title "An anonymous user is viewing this document. Spooky."}
              (common/icon :user)
-             [:span "You"]]]
-           (for [subscriber (disj (:subscribers app) (:client-uuid app))]
-             [:button {:title "An anonymous user is viewing this document. Spooky."}
-              [:object
-               (common/icon :user)
-               [:span "Anonymous (" (apply str (take 5 subscriber)) ")"]]])]
+             [:span "Anonymous (" (apply str (take 5 subscriber)) ")"]])
           [:div.aside-settings
            [:button
             (common/icon :settings)
