@@ -5,12 +5,12 @@
                      :y          0
                      :zf         1
                      :show-grid? true}
-   :current-tool    :shape
    :error-message   nil
    :changelog       nil
    :environment     "development"
    :settings        {:browser-settings {:show-grid?  true
-                                        :night-mode? true}}
+                                        :night-mode? true
+                                        :current-tool :shape}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
@@ -149,3 +149,5 @@
 (def show-grid-path (conj browser-settings-path :show-grid?))
 
 (def night-mode-path (conj browser-settings-path :night-mode?))
+
+(def current-tool-path (conj browser-settings-path :current-tool))

@@ -4,6 +4,7 @@
             [frontend.datascript :as ds]
             [frontend.models.layer :as layer-model]
             [frontend.settings :as settings]
+            [frontend.state :as state]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true]
@@ -59,7 +60,7 @@
   (print "Nothing to do for groups, yet."))
 
 (defn state->cursor [state]
-  (case (:current-tool state)
+  (case (get-in state state/current-tool-path)
     :text "text"
     :select "default"
     "crosshair"))
@@ -142,7 +143,7 @@
                                [(dom/text #js {:x (get-in payload [:mouse :x])
                                                :y (get-in payload [:mouse :y])
                                                :className "mouse-stats"}
-                                          (pr-str (select-keys payload [:mouse :current-tool])))]
+                                          (pr-str (:mouse payload)))]
                                [(when-let [sel (cond
                                                 (settings/selection-in-progress? payload) (settings/selection payload)
                                                 (settings/drawing-in-progress? payload) (settings/drawing payload)
@@ -155,9 +156,9 @@
                                                     :layer/current-y (or (get-in sel [:layer/current-sy])
                                                                          (get-in sel [:layer/end-sy]))})
                                         el-type (cond
-                                                 (= (:current-tool payload) :line) dom/line
+                                                 (= (get-in payload state/current-tool-path) :line) dom/line
                                                  :else dom/dom)]
-                                    (if (= :line (:current-tool payload))
+                                    (if (= :line (get-in payload state/current-tool-path))
                                       (let [l (cameras/camera-translated-rect (:camera payload) sel (- (:layer/current-x sel) (:layer/start-x sel))
                                                                               (- (:layer/current-y sel) (:layer/start-y sel)))]
                                         (dom/line (clj->js (merge
