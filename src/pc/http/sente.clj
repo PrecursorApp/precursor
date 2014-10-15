@@ -67,7 +67,15 @@
 
 (defmethod ws-handler :chsk/uidport-close [{:keys [client-uuid] :as req}]
   (log/infof "closing connection for %s" client-uuid)
-  (clean-document-subs (client-uuid->uuid client-uuid)))
+  (let [uuid (client-uuid->uuid client-uuid)]
+    (doseq [uid (reduce (fn [acc [doc-id client-ids]]
+                          (if (contains? client-ids uuid)
+                            (set/union acc client-ids)
+                            acc))
+                        #{} @document-subs)]
+      (log/infof "notifying %s about %s leaving" uid uuid)
+      ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-uuid uuid}]))
+    (clean-document-subs uuid)))
 
 (defn subscribe-to-doc [document-id uuid]
   (swap! document-subs update-in [document-id] (fnil conj #{}) uuid))
@@ -76,10 +84,19 @@
   (let [document-id (-> ?data :document-id)
         db (pcd/default-db)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
+    (doseq [uid (get @document-subs document-id)]
+      ((:send-fn @sente-state) uid [:frontend/subscriber-joined {:client-uuid (client-uuid->uuid client-uuid)}]))
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid))
     (let [resp {:layers (layer/find-by-document db {:db/id document-id})
-                :document (pcd/touch+ (d/entity db document-id))}]
+                :document (pcd/touch+ (d/entity db document-id))
+                :client-uuid (client-uuid->uuid client-uuid)}]
       (?reply-fn resp))))
+
+(defmethod ws-handler :frontend/fetch-subscribers [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (let [document-id (-> ?data :document-id)]
+    (log/infof "fetching subscribers for %s on %s" client-uuid document-id)
+    (subscribe-to-doc document-id (client-uuid->uuid client-uuid))
+    (?reply-fn {:subscribers (set (get @document-subs document-id))})))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document/id)

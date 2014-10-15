@@ -16,7 +16,8 @@
    :entity-ids      #{}
    :document/id     17592186046465
    ;; This isn't passed to the components, it can be accessed though om/get-shared :_app-state-do-not-use
-   :inputs          nil})
+   :inputs          nil
+   :subscribers     #{}})
 
 (def user-path [:current-user])
 
