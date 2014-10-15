@@ -39,6 +39,9 @@
         fill: @select_blue;
       }
     }
+    .mouse-stats {
+      fill: fade(@white, 13);
+    }
   }
   .radial-menu {
     .outline(@gray_dark);
@@ -109,6 +112,10 @@
       fill: @select_blue;
     }
   }
+  .mouse-stats {
+    fill: fade(@black, 21);
+    transition-duration: 200ms;
+  }
 }
 #grid,
 #small-grid {
@@ -126,6 +133,11 @@
     width: @aside_width_lg;
     transition-duration: 200ms;
     transition-timing-function: @bezier_bounce;
+    + .app-main {
+      .mouse-stats {
+        opacity: 0;
+      }
+    }
     i {
       margin-right: @icon_width;
       transition-duration: 200ms;
@@ -174,6 +186,7 @@
 }
 .aside-collaborators {
   .flexy(column);
+  margin: 1em 0;
   button {
     .button_icon_cascade(5);
     height: (@tile / 2);

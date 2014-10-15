@@ -28,27 +28,27 @@
           ;; [:button.collaborators
           ;;  (common/icon :users)
           ;;  [:span "Collaborators"]]
-          ;; [:div.aside-collaborators
-          ;;  [:button
-          ;;   [:object
-          ;;    (common/icon :bullet)
-          ;;    [:span "Anonymous"]]]
-          ;;  [:button
-          ;;   [:object
-          ;;    (common/icon :bullet)
-          ;;    [:span "Anonymous"]]]
-          ;;  [:button
-          ;;   [:object
-          ;;    (common/icon :bullet)
-          ;;    [:span "Anonymous"]]]
-          ;;  [:button
-          ;;   [:object
-          ;;    (common/icon :bullet)
-          ;;    [:span "Anonymous"]]]
-          ;;  [:button
-          ;;   [:object
-          ;;    (common/icon :bullet)
-          ;;    [:span "Anonymous"]]]]
+          [:div.aside-collaborators
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "Anonymous"]]]
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "Anonymous"]]]
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "Anonymous"]]]
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "Anonymous"]]]
+           [:button
+            [:object
+             (common/icon :bullet)
+             [:span "Anonymous"]]]]
           [:div.aside-settings
            [:button
             (common/icon :settings)
@@ -63,7 +63,4 @@
             [:span "Night Mode"]
             (if night-mode?
               (common/icon :check)
-              (common/icon :times))]
-           [:button
-            [:span "Settings"]
-            (common/icon :times)]]]])))))
+              (common/icon :times))]]]])))))
