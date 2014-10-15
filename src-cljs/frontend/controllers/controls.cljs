@@ -105,7 +105,7 @@
         [rx ry]       (cameras/screen->point (:camera state) x y)
         entity-id     (-> state :entity-ids first)
         layer         (assoc (layers/make-layer entity-id (:document/id state) rx ry)
-                        :layer/type (condp = (:current-tool state)
+                        :layer/type (condp = (get-in state state/current-tool-path)
                                       :shape :layer.type/rect
                                       :text :layer.type/text
                                       :line :layer.type/line
@@ -196,11 +196,11 @@
                 (put! (get-in current-state [:comms :controls]) [msg payload]))]
     (cond
      (get-in current-state [:keyboard :meta?])         (cast! :menu-opened)
-     (= (get-in current-state [:current-tool]) :text)  (let [text (js/prompt "Layer text:")]
+     (= (get-in current-state state/current-tool-path) :text)  (let [text (js/prompt "Layer text:")]
                                                          (cast! :text-layer-created [text]))
-     (= (get-in current-state [:current-tool]) :shape) (cast! :drawing-started)
-     (= (get-in current-state [:current-tool]) :line)  (cast! :drawing-started)
-     (= (get-in current-state [:current-tool]) :select)  (cast! :drawing-started)
+     (= (get-in current-state state/current-tool-path) :shape) (cast! :drawing-started)
+     (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started)
+     (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started)
      :else                                             nil)))
 
 (defmethod post-control-event! :mouse-released
@@ -245,7 +245,7 @@
 (defmethod control-event :tool-selected
   [target message [tool] state]
   (-> state
-      (assoc-in [:current-tool] tool)))
+      (assoc-in state/current-tool-path tool)))
 
 (defmethod control-event :text-layer-created
   [target message [text] state]
