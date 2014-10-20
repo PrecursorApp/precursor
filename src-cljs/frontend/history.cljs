@@ -93,7 +93,7 @@
                       (when (and (seq location)
                                  (= (.. js/window -location -hostname)
                                     (.-hostname target))
-                                 (not (or (new-window-click? %) (= (.-target target) "_blank"))))
+                                 (not (or (new-window-click? %) (seq (.-target target)))))
                         (.stopPropagation %)
                         (.preventDefault %)
                         (if (and (route-fragment location)
