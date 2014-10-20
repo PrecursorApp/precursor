@@ -231,8 +231,9 @@
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
 
     (routes/define-routes! state)
-    (install-om state container comms cast! {:handle-mouse-down handle-canvas-mouse-down
-                                             :handle-mouse-up   handle-canvas-mouse-up})
+    (install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down
+                                             :handle-mouse-up    handle-canvas-mouse-up
+                                             :handle-mouse-move! handle-mouse-move!})
 
     (async/tap (:controls-mult comms) controls-tap)
     (async/tap (:nav-mult comms) nav-tap)
@@ -278,6 +279,7 @@
 
 (defn ^:export setup! []
   (apply-app-id-hack)
+  (js/React.initializeTouchEvents true)
   (let [state (app-state)
         top-level-node (find-top-level-node)
         history-imp (history/new-history-imp top-level-node)]

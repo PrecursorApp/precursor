@@ -1,5 +1,6 @@
 (ns frontend.components.canvas
   (:require [datascript :as d]
+            [cljs.core.async :refer [put!]]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
             [frontend.models.layer :as layer-model]
@@ -88,6 +89,25 @@
                                      :style #js {:top    0
                                                  :left   0
                                                  :cursor (state->cursor payload)}
+                                     :onTouchStart (fn [event]
+                                                     (let [touches (.-touches event)]
+                                                       (when (= (.-length touches) 1)
+                                                         (.preventDefault event)
+                                                         (.stopPropagation event)
+                                                         (js/console.log event)
+                                                         ((:handle-mouse-down handlers) (aget touches "0")))))
+                                     :onTouchEnd (fn [event]
+                                                   (.preventDefault event)
+                                                   (.stopPropagation event)
+                                                   (js/console.log event)
+                                                   ((:handle-mouse-up handlers) event))
+                                     :onTouchMove (fn [event]
+                                                     (let [touches (.-touches event)]
+                                                       (when (= (.-length touches) 1)
+                                                         (.preventDefault event)
+                                                         (.stopPropagation event)
+                                                         (js/console.log event)
+                                                         ((:handle-mouse-move! handlers) (aget touches "0")))))
                                      :onMouseDown (fn [event]
                                                     (.preventDefault event)
                                                     (.stopPropagation event)
