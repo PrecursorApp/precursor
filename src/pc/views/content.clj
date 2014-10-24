@@ -5,6 +5,7 @@
   [:html
    [:head
     [:title "Precursor - Mockups from the future"]]
+    [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
    [:body
     ;;[:link.css-styles {:rel "stylesheet", :href "/css/bootstrap.min.css"}]
     ;;[:link.css-styles {:rel "stylesheet", :href "/css/styles.css"}]
