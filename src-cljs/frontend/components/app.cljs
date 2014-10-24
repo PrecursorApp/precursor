@@ -51,7 +51,8 @@
       {:hovered-tool nil
        :hovered-tool-select nil
        :hovered-tool-shape nil
-       :hovered-tool-line nil})
+       :hovered-tool-line nil
+       :aside-hover nil})
     om/IRender
     (render [_]
       (let [{:keys [cast!]}      (om/get-shared owner)
@@ -60,10 +61,13 @@
             hovered-tool?        (:hovered-tool (om/get-state owner))
             hovered-tool-select? (:hovered-tool-select (om/get-state owner))
             hovered-tool-shape?  (:hovered-tool-shape (om/get-state owner))
-            hovered-tool-line?   (:hovered-tool-line (om/get-state owner))]
+            hovered-tool-line?   (:hovered-tool-line (om/get-state owner))
+            hovered-aside?       (:hovered-aside (om/get-state owner))]
         (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
                                                       (when night-mode? ["night-mode"])))}
-               [:aside.app-aside
+               [:aside.app-aside {:class (when hovered-aside? "hover")
+                                  :on-mouse-enter #(om/set-state! owner :hovered-aside true)
+                                  :on-mouse-leave #(om/set-state! owner :hovered-aside false)}
                  (om/build aside/menu app)]
                [:main.app-main
                  (om/build canvas/svg-canvas app)
