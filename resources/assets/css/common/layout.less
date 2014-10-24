@@ -16,10 +16,12 @@
       .icon_stroke(@gray_lighter);
       color: @gray_light;
       border-color: @gray_dark;
-      &:hover {
-        .icon_stroke(@gray_lightest);
-        color: @gray_lighter;
-        background: @gray_dark;
+      &:not([disabled]) {
+        &:hover {
+          .icon_stroke(@gray_lightest);
+          color: @gray_lighter;
+          background: @gray_dark;
+        }
       }
     }
   }
@@ -159,12 +161,14 @@
     .button_icon_cascade(10);
     .icon_stroke(@font_color);
     height: @tile;
-    color: inherit;
-    transition: 300ms;
-    &:hover {
-      cursor: pointer;
-      background: @gray_lightest;
-      transition-duration: 200ms;
+    color: @gray_dark;
+    transition: 200ms;
+    &:not([disabled]) {
+      &:hover {
+        cursor: pointer;
+        background: @gray_lightest;
+        transition-duration: 100ms;
+      }
     }
     i {
       .flex(0 0 auto);
@@ -173,6 +177,13 @@
     }
     span {
       overflow: hidden;
+    }
+  }
+  .aside-settings {
+    > button {
+      &:hover {
+        background: none;
+      }
     }
   }
 }
@@ -186,7 +197,7 @@
       .user-select(none);
       opacity: 0;
       cursor: default;
-      transition-duration: 200ms;
+      transition-duration: 0ms;
     }
     .settings-menu {
       max-height: @tile * 3;
