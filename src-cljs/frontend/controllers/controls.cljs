@@ -197,7 +197,8 @@
                 (put! (get-in current-state [:comms :controls]) [msg payload]))]
     (cond
      (= button 2) (cast! :menu-opened)
-     (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
+     ;; turning off Cmd+click for opening the menu
+     ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
      (= (get-in current-state state/current-tool-path) :text)  (let [text (js/prompt "Layer text:")]
                                                          (cast! :text-layer-created [text [x y]]))
      (= (get-in current-state state/current-tool-path) :shape) (cast! :drawing-started [x y])

@@ -71,7 +71,9 @@
                                   :on-touch-start #(om/set-state! owner :hovered-aside true)}
                  (om/build aside/menu app)]
                [:main.app-main {:on-touch-start #(om/set-state! owner :hovered-aside false)
-                                :onContextMenu (fn [e] (.preventDefault e))}
+                                :onContextMenu (fn [e]
+                                                 (.preventDefault e)
+                                                 (.stopPropagation e))}
                  (om/build canvas/svg-canvas app)
                  (when (get-in app [:menu :open?])
                    [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
