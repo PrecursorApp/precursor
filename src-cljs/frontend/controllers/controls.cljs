@@ -269,17 +269,6 @@
         layer (get-in current-state [:drawing :layer])]
     (d/transact! db [layer])))
 
-(defmethod post-control-event! :mouse-released
-  [target message [x y] previous-state current-state]
-  (let [cast! #(put! (get-in current-state [:comms :controls]) [%])
-        db           (:db current-state)
-        was-drawing? (get-in previous-state [:drawing :in-progress?])
-        layer        (get-in current-state [:drawing :layer])]
-    (cond
-     (get-in current-state [:menu :open?]) (cast! :menu-closed)
-     was-drawing? (d/transact! db [layer])
-     :else nil)))
-
 (defmethod control-event :db-updated
   [target message _ state]
   (assoc state :random-number (Math/random)))
