@@ -100,8 +100,8 @@
   (update-in state state/night-mode-path not))
 
 (defmethod control-event :drawing-started
-  [target message _ state]
-  (let [{:keys [x y]} (get-in state [:mouse])
+  [target message [x y] state]
+  (let [;{:keys [x y]} (get-in state [:mouse])
         [rx ry]       (cameras/screen->point (:camera state) x y)
         entity-id     (-> state :entity-ids first)
         layer         (assoc (layers/make-layer entity-id (:document/id state) rx ry)
@@ -159,7 +159,8 @@
 
 (defmethod control-event :mouse-released
   [target message [x y] state]
-  (let [[rx ry] (cameras/screen->point (:camera state) x y)
+  (let [{:keys [x y]} (get-in state [:mouse])
+        [rx ry] (cameras/screen->point (:camera state) x y)
         bounding-eids (when (-> state :drawing :layer :layer/type (= :layer.type/group))
                         (eids-in-bounding-box (-> state :db deref)
                                               {:start-x (get-in state [:drawing :layer :layer/start-x])
@@ -197,10 +198,10 @@
     (cond
      (get-in current-state [:keyboard :meta?])         (cast! :menu-opened)
      (= (get-in current-state state/current-tool-path) :text)  (let [text (js/prompt "Layer text:")]
-                                                         (cast! :text-layer-created [text]))
-     (= (get-in current-state state/current-tool-path) :shape) (cast! :drawing-started)
-     (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started)
-     (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started)
+                                                         (cast! :text-layer-created [text [x y]]))
+     (= (get-in current-state state/current-tool-path) :shape) (cast! :drawing-started [x y])
+     (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
+     (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
      :else                                             nil)))
 
 (defmethod post-control-event! :mouse-released
@@ -248,8 +249,9 @@
       (assoc-in state/current-tool-path tool)))
 
 (defmethod control-event :text-layer-created
-  [target message [text] state]
+  [target message [text [x y]] state]
   (let [{:keys [rx ry]} (:mouse state)
+        [rx ry]         (cameras/screen->point (:camera state) x y)
         entity-id       (-> state :entity-ids first)
         layer           (assoc (layers/make-layer entity-id (:document/id state) rx ry)
                           :layer/type :layer.type/text
@@ -266,17 +268,6 @@
   (let [db    (:db current-state)
         layer (get-in current-state [:drawing :layer])]
     (d/transact! db [layer])))
-
-(defmethod post-control-event! :mouse-released
-  [target message [x y] previous-state current-state]
-  (let [cast! #(put! (get-in current-state [:comms :controls]) [%])
-        db           (:db current-state)
-        was-drawing? (get-in previous-state [:drawing :in-progress?])
-        layer        (get-in current-state [:drawing :layer])]
-    (cond
-     (get-in current-state [:menu :open?]) (cast! :menu-closed)
-     was-drawing? (d/transact! db [layer])
-     :else nil)))
 
 (defmethod control-event :db-updated
   [target message _ state]

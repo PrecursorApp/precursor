@@ -1,7 +1,9 @@
 (ns frontend.components.canvas
   (:require [datascript :as d]
+            [cljs.core.async :refer [put!]]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
+            [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
             [frontend.settings :as settings]
             [frontend.state :as state]
@@ -88,6 +90,25 @@
                                      :style #js {:top    0
                                                  :left   0
                                                  :cursor (state->cursor payload)}
+                                     :onTouchStart (fn [event]
+                                                     (let [touches (.-touches event)]
+                                                       (when (= (.-length touches) 1)
+                                                         (.preventDefault event)
+                                                         (.stopPropagation event)
+                                                         (js/console.log event)
+                                                         ((:handle-mouse-down handlers) (aget touches "0")))))
+                                     :onTouchEnd (fn [event]
+                                                   (.preventDefault event)
+                                                   (.stopPropagation event)
+                                                   (js/console.log event)
+                                                   ((:handle-mouse-up handlers) event))
+                                     :onTouchMove (fn [event]
+                                                    (let [touches (.-touches event)]
+                                                      (when (= (.-length touches) 1)
+                                                        (.preventDefault event)
+                                                        (.stopPropagation event)
+                                                        (js/console.log event)
+                                                        ((:handle-mouse-move! handlers) (aget touches "0")))))
                                      :onMouseDown (fn [event]
                                                     (.preventDefault event)
                                                     (.stopPropagation event)
@@ -157,28 +178,34 @@
                                                                          (get-in sel [:layer/end-sy]))})
                                         el-type (cond
                                                  (= (get-in payload state/current-tool-path) :line) dom/line
-                                                 :else dom/dom)]
+                                                 :else dom/dom)
+                                        x-direction (if (neg? (- (:layer/start-x sel) (:layer/current-x sel))) -1 1)
+                                        y-direction (if (neg? (- (:layer/start-y sel) (:layer/current-y sel))) -1 1)
+                                        rect (svg/layer->svg-rect (:camera payload) sel false cast!)]
                                     (if (= :line (get-in payload state/current-tool-path))
-                                      (let [l (cameras/camera-translated-rect (:camera payload) sel (- (:layer/current-x sel) (:layer/start-x sel))
-                                                                              (- (:layer/current-y sel) (:layer/start-y sel)))]
-                                        (dom/line (clj->js (merge
-                                                            (dissoc l :x :y :width :height :stroke-width :fill)
-                                                            {:x1          (:layer/start-x l)
-                                                             :y1          (:layer/start-y l)
-                                                             :x2          (:layer/current-x l)
-                                                             :y2          (:layer/current-y l)
+                                      (dom/line (clj->js (merge
+                                                          (dissoc rect :x :y :width :height :stroke-width :fill)
+                                                          ;; TODO: figure out how this actually works, right now it's just
+                                                          ;;       the result of changing signs until it worked!
+                                                          (let [x1 (if (neg? x-direction)
+                                                                     (+ (:x rect) (:width rect))
+                                                                     (:x rect))
+                                                                y1 (if (neg? y-direction)
+                                                                     (+ (:y rect) (:height rect))
+                                                                     (:y rect))]
+                                                            {:x1 x1
+                                                             :y1 y1
+                                                             :x2 (+ (* x-direction (:width rect)) x1)
+                                                             :y2 (+ (* y-direction (:height rect)) y1)
                                                              :fill "gray"
                                                              :fillOpacity "0.25"
                                                              :strokeDasharray "5,5"
                                                              :strokeWidth 1}))))
-                                      (dom/rect
-                                       (clj->js (assoc (svg/layer->svg-rect (:camera payload) sel
-                                                                            false
-                                                                            cast!)
-                                                  :fill "gray"
-                                                  :fillOpacity "0.25"
-                                                  :strokeDasharray "5,5"
-                                                  :strokeWidth 1))))))
+                                      (dom/rect (clj->js (assoc rect
+                                                           :fill "gray"
+                                                           :fillOpacity "0.25"
+                                                           :strokeDasharray "5,5"
+                                                           :strokeWidth 1))))))
                                 #_(dom/text #js {:x 15
                                                  :y 15} (pr-str (dissoc payload :layers)))]
                                [(when (cameras/guidelines-enabled? payload)
