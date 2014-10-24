@@ -36,13 +36,13 @@
 (enable-console-print!)
 
 (defn handle-mouse-move [cast! event]
-  (cast! :mouse-moved (camera-helper/screen-event-coords event) true))
+  (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (.-button event)) true))
 
 (defn handle-mouse-down [cast! event]
-  (cast! :mouse-depressed (camera-helper/screen-event-coords event) false))
+  (cast! :mouse-depressed (conj (camera-helper/screen-event-coords event) (.-button event)) false))
 
 (defn handle-mouse-up [cast! event]
-  (cast! :mouse-released (camera-helper/screen-event-coords event) false))
+  (cast! :mouse-released (conj (camera-helper/screen-event-coords event) (.-button event)) false))
 
 (defn disable-mouse-wheel [event]
   (.stopPropagation event))

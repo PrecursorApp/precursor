@@ -192,11 +192,12 @@
         (assoc-in [:camera :moving?] false))))
 
 (defmethod post-control-event! :mouse-depressed
-  [target message [x y] previous-state current-state]
+  [target message [x y button] previous-state current-state]
   (let [cast! (fn [msg & [payload]]
                 (put! (get-in current-state [:comms :controls]) [msg payload]))]
     (cond
-     (get-in current-state [:keyboard :meta?])         (cast! :menu-opened)
+     (= button 2) (cast! :menu-opened)
+     (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
      (= (get-in current-state state/current-tool-path) :text)  (let [text (js/prompt "Layer text:")]
                                                          (cast! :text-layer-created [text [x y]]))
      (= (get-in current-state state/current-tool-path) :shape) (cast! :drawing-started [x y])

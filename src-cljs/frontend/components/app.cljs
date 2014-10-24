@@ -70,11 +70,13 @@
                                   :on-mouse-leave #(om/set-state! owner :hovered-aside false)
                                   :on-touch-start #(om/set-state! owner :hovered-aside true)}
                  (om/build aside/menu app)]
-               [:main.app-main {:on-touch-start #(om/set-state! owner :hovered-aside false)}
+               [:main.app-main {:on-touch-start #(om/set-state! owner :hovered-aside false)
+                                :onContextMenu (fn [e] (.preventDefault e))}
                  (om/build canvas/svg-canvas app)
                  (when (get-in app [:menu :open?])
                    [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
-                                              :left (- (get-in app [:menu :x]) 128)}}
+                                              :left (- (get-in app [:menu :x]) 128)}
+                                      :on-mouse-leave #(cast! :menu-closed)}
                     [:button {:on-mouse-up #(do (cast! :tool-selected [:text])
                                                 (om/set-state! owner :hovered-tool false))
                               :on-mouse-enter #(om/set-state! owner :hovered-tool true)
