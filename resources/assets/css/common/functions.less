@@ -62,6 +62,9 @@
 .translate3d(@x; @y: @x; @z: 1;) {
   .prefixer(transform, translate3d(@x, @y, @z), webkit);
 }
+.translateZ(...) {
+  .prefixer(transform, translateZ(@arguments), webkit);
+}
 .transform-origin(...) {
   .prefixer(transform-origin, @arguments, webkit);
 }
