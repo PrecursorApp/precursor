@@ -67,9 +67,10 @@
                                                       (when night-mode? ["night-mode"])))}
                [:aside.app-aside {:class (when hovered-aside? "hover")
                                   :on-mouse-enter #(om/set-state! owner :hovered-aside true)
-                                  :on-mouse-leave #(om/set-state! owner :hovered-aside false)}
+                                  :on-mouse-leave #(om/set-state! owner :hovered-aside false)
+                                  :on-touch-start #(om/set-state! owner :hovered-aside true)}
                  (om/build aside/menu app)]
-               [:main.app-main
+               [:main.app-main {:on-touch-start #(om/set-state! owner :hovered-aside false)}
                  (om/build canvas/svg-canvas app)
                  (when (get-in app [:menu :open?])
                    [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)

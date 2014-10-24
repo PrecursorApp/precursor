@@ -94,7 +94,8 @@
                                                      (let [touches (.-touches event)]
                                                        (when (= (.-length touches) 1)
                                                          (.preventDefault event)
-                                                         (.stopPropagation event)
+                                                         ;; This was keeping app-main's touch event from working
+                                                         ;; (.stopPropagation event)
                                                          (js/console.log event)
                                                          ((:handle-mouse-down handlers) (aget touches "0")))))
                                      :onTouchEnd (fn [event]
