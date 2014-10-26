@@ -33,6 +33,7 @@
    (enum :layer.type/group)
    (enum :layer.type/text)
    (enum :layer.type/line)
+   (enum :layer.type/path)
 
    (attribute :layer/start-x
               :db.type/float)
@@ -82,6 +83,9 @@
 
    (attribute :layer/font-size
               :db.type/long)
+
+   (attribute :layer/path
+              :db.type/string)
 
    ;; Wonder what happens if we make a layer a child of one of its children...
    (attribute :layer/child
