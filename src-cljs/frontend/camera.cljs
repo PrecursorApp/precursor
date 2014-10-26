@@ -41,6 +41,10 @@
    (/ (- y (:y camera) (:offset-y camera))
       (:zf camera))])
 
+(defn ->svg-transform [camera]
+  (str "translate(" (:x camera) " " (:y camera) ") "
+       "scale(" (:zf camera) ")"))
+
 (defn camera-translated-rect [camera rect w h & [off-x off-y]]
   (let [off-x    (or off-x 0)
         off-y    (or off-y 0)

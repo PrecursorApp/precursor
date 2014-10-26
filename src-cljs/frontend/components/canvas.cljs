@@ -63,7 +63,8 @@
   (dom/path #js {:d (:layer/path layer)
                  :stroke (:layer/stroke layer "black")
                  :fill "none"
-                 :strokeWidth (:layer/stroke-width layer)}))
+                 :strokeWidth (:layer/stroke-width layer)
+                 :transform (cameras/->svg-transform (:camera state))}))
 
 (defmethod svg-element :layer.type/group
   [state selected-eids cast! layer]
@@ -218,7 +219,8 @@
                                                           :fillOpacity "0.25"
                                                           :strokeDasharray "5,5"
                                                           :strokeWidth 1
-                                                          :d (svg/points->path (get-in payload [:drawing :points]))}))
+                                                          :d (svg/points->path (get-in payload [:drawing :points]))
+                                                          :transform (cameras/->svg-transform (:camera payload))}))
 
 
                                       (dom/rect (clj->js (assoc rect
