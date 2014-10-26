@@ -64,7 +64,8 @@
                  :stroke (:layer/stroke layer "black")
                  :fill "none"
                  :strokeWidth (:layer/stroke-width layer)
-                 :transform (cameras/->svg-transform (:camera state))}))
+                 :transform (cameras/->svg-transform (:camera state))
+                 :className (when (contains? selected-eids (:db/id layer)) "selected")}))
 
 (defmethod svg-element :layer.type/group
   [state selected-eids cast! layer]
