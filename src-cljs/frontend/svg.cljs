@@ -1,6 +1,10 @@
 (ns frontend.svg
-  (:require [frontend.camera :as cameras]
+  (:require [clojure.string :as str]
+            [frontend.camera :as cameras]
             [frontend.layers :as layers]))
+
+(defn points->path [points]
+  (str "M" (str/join "L" (map (fn [p] (str (:rx p) " " (:ry p))) points))))
 
 (defn layer->svg-rect [camera layer shape? cast!]
   (let [layer (layers/normalized-abs-coords layer)

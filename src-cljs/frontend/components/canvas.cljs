@@ -57,6 +57,14 @@
                          :strokeWidth (:layer/stroke-width l)}))
               (:layer/text layer))))
 
+;; TODO: camera-corrected paths
+(defmethod svg-element :layer.type/path
+  [state selected-eids cast! layer]
+  (dom/path #js {:d (:layer/path layer)
+                 :stroke (:layer/stroke layer "black")
+                 :fill "none"
+                 :strokeWidth (:layer/stroke-width layer)}))
+
 (defmethod svg-element :layer.type/group
   [state selected-eids cast! layer]
   (print "Nothing to do for groups, yet."))
@@ -183,7 +191,8 @@
                                         x-direction (if (neg? (- (:layer/start-x sel) (:layer/current-x sel))) -1 1)
                                         y-direction (if (neg? (- (:layer/start-y sel) (:layer/current-y sel))) -1 1)
                                         rect (svg/layer->svg-rect (:camera payload) sel false cast!)]
-                                    (if (= :line (get-in payload state/current-tool-path))
+                                    (case (get-in payload state/current-tool-path)
+                                      :line
                                       (dom/line (clj->js (merge
                                                           (dissoc rect :x :y :width :height :stroke-width :fill)
                                                           ;; TODO: figure out how this actually works, right now it's just
@@ -202,6 +211,16 @@
                                                              :fillOpacity "0.25"
                                                              :strokeDasharray "5,5"
                                                              :strokeWidth 1}))))
+
+                                      :pen
+                                      (dom/path (clj->js {:fill "none"
+                                                          :stroke "gray"
+                                                          :fillOpacity "0.25"
+                                                          :strokeDasharray "5,5"
+                                                          :strokeWidth 1
+                                                          :d (svg/points->path (get-in payload [:drawing :points]))}))
+
+
                                       (dom/rect (clj->js (assoc rect
                                                            :fill "gray"
                                                            :fillOpacity "0.25"
