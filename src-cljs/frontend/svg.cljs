@@ -2,9 +2,9 @@
   (:require [frontend.camera :as cameras]
             [frontend.layers :as layers]))
 
-(defn layer->svg-rect [camera layer shape? cast!]
+(defn layer->svg-rect [camera layer rect? cast!]
   (let [layer (layers/normalized-abs-coords layer)
-        layer (if shape?
+        layer (if rect?
                   (cameras/camera-translated-rect camera
                                                   layer
                                                   (layers/rect-width layer)
@@ -13,7 +13,7 @@
                                                   (get-in layer [:offset :y]))
                   layer)]
     (merge
-     {:className     (when shape? "layer")
+     {:className     (when rect? "layer")
       :x             (:layer/start-x layer)
       :y             (:layer/start-y layer)
       :width         (- (or (:layer/current-x layer)

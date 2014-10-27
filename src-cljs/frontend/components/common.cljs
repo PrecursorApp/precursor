@@ -59,10 +59,12 @@
    :download-stroke "M5,95 h90 M5,85v10 M95,85v10 M50,5v70 M50,75l30-30 M20,45l30,30"
    :check-stroke "M35,80 L5,50 M95,20L35,80"
    :times-stroke "M82.5,82.5l-65-65 M82.5,17.5l-65,65"
-   :cursor-stroke "M23.3,80.4V5 l53.3,53.3c0,0-21.5,0-21.5,0s12.4,29.8,12.4,29.8L50.9,95c0,0-12.4-29.8-12.4-29.8S23.3,80.4,23.3,80.4z"
+   :tool-select-stroke "M23.3,80.4V5 l53.3,53.3c0,0-21.5,0-21.5,0s12.4,29.8,12.4,29.8L50.9,95c0,0-12.4-29.8-12.4-29.8S23.3,80.4,23.3,80.4z"
    :tool-square-stroke "M87.5,87.5h-75v-75h75V87.5z M20,5H5v15h15V5z M95,5H80v15h15V5z M20,80H5v15h15V80z M95,80H80v15h15V80z"
    :tool-line-stroke "M95,20H80V5h15V20z M20,80H5v15h15V80z M87.5,12.5l-75,75"
    :tool-text-stroke "M65.9,92.4H34.1H50 V7.6 M95,21.4c0,0-7.9-13.8-7.9-13.8c0,0-74.1,0-74.1,0L5,21.4"
+   :tool-pen-stroke "M89.5,10.5c3.9,3.9,6.3,7.8,5.3,8.8L24.3,89.8L5,95l5.2-19.3L80.7,5.2C81.7,4.2,85.6,6.6,89.5,10.5z M22.5,88.1L11.9,77.5 M81.3,8.1 c0.9,1.7,2.6,3.8,4.7,5.9c2.1,2.1,4.2,3.8,5.9,4.7"
+   :tool-circle-stroke "M57.5,5h-15v15h15V5z M95,42.5H80v15h15V42.5z M20,42.5H5v15h15V42.5z M57.5,80h-15v15h15V80z M87.5,50c0,20.7-16.8,37.5-37.5,37.5 S12.5,70.7,12.5,50S29.3,12.5,50,12.5S87.5,29.3,87.5,50z"
    :user-stroke "M50,5 c11.8,0,21.3,9.5,21.3,21.3S61.8,47.6,50,47.6s-21.3-9.5-21.3-21.3S38.2,5,50,5z M24.8,45.9C17,52.4,12,64.1,12,71.9 C12,86.4,29,95,50,95c21,0,38-8.6,38-23.1c0-7.8-4.9-19.5-12.7-26"
    :users-stroke "M41.9,13.3 c10.5,0,19,8.5,19,19s-8.5,19-19,19s-19-8.5-19-19S31.4,13.3,41.9,13.3z M68.4,41.5C76.9,39.6,83.2,32,83.2,23c0-10.5-8.5-19-19-19 C60.5,4,57,5.1,54.1,6.9 M19.4,49.7C12.4,55.5,8,66,8,72.9c0,12.9,15.1,20.6,33.8,20.6c18.7,0,33.8-7.7,33.8-20.6 c0-6.9-4.4-17.4-11.4-23.2 M85.9,80C93.3,76.4,98,70.9,98,63.7c0-6.9-4.4-17.4-11.4-23.2"
    :dot-stroke "M49.5,50a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0"
@@ -74,10 +76,12 @@
    :settings {:paths [:dot-stroke :cog-stroke]}
    :check {:paths [:check-stroke]}
    :times {:paths [:times-stroke]}
-   :cursor {:paths [:cursor-stroke]}
-   :tool-square {:paths [:tool-square-stroke]}
+   :tool-select {:paths [:tool-select-stroke]}
+   :tool-rect {:paths [:tool-square-stroke]}
    :tool-line {:paths [:tool-line-stroke]}
    :tool-text {:paths [:tool-text-stroke]}
+   :tool-pen {:paths [:tool-pen-stroke]}
+   :tool-circle {:paths [:tool-circle-stroke]}
    :user {:paths [:user-stroke]}
    :users {:paths [:users-stroke]}
    :bullet {:paths [:dot-stroke]}
