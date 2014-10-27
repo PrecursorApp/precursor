@@ -109,11 +109,13 @@
                                                          ;; This was keeping app-main's touch event from working
                                                          ;; (.stopPropagation event)
                                                          (js/console.log event)
+                                                         (om/set-state! owner :touch-timer (js/setTimeout #(cast! :menu-opened) 500))
                                                          ((:handle-mouse-down handlers) (aget touches "0")))))
                                      :onTouchEnd (fn [event]
                                                    (.preventDefault event)
-                                                   (.stopPropagation event)
+                                                   ; (.stopPropagation event)
                                                    (js/console.log event)
+                                                   (js/clearInterval (om/get-state owner :touch-timer))
                                                    ((:handle-mouse-up handlers) event))
                                      :onTouchMove (fn [event]
                                                     (let [touches (.-touches event)]
@@ -121,6 +123,7 @@
                                                         (.preventDefault event)
                                                         (.stopPropagation event)
                                                         (js/console.log event)
+                                                        (js/clearInterval (om/get-state owner :touch-timer))
                                                         ((:handle-mouse-move! handlers) (aget touches "0")))))
                                      :onMouseDown (fn [event]
                                                     (.preventDefault event)

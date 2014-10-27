@@ -233,13 +233,13 @@
      :else                                             nil)))
 
 (defmethod post-control-event! :mouse-released
-  [target message [x y] previous-state current-state]
+  [target message [x y button type] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) [%])
         db           (:db current-state)
         was-drawing? (get-in previous-state [:drawing :in-progress?])
         layer        (get-in current-state [:drawing :layer])]
     (cond
-     (get-in current-state [:menu :open?]) (cast! :menu-closed)
+     (and (not= type "touchend") (get-in current-state [:menu :open?])) (cast! :menu-closed)
      was-drawing? (d/transact! db [layer])
      :else nil)))
 
@@ -274,7 +274,8 @@
 (defmethod control-event :tool-selected
   [target message [tool] state]
   (-> state
-      (assoc-in state/current-tool-path tool)))
+      (assoc-in state/current-tool-path tool)
+      (assoc-in [:menu :open?] false)))
 
 (defmethod control-event :text-layer-created
   [target message [text [x y]] state]

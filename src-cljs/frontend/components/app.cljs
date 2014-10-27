@@ -87,7 +87,8 @@
                     [:svg {:width "384" :height "384"}
                      (for [[tool template] tools-templates]
                        [:path.radial-button {:d (:path template)
-                                             :on-mouse-up #(do (cast! :tool-selected [tool]))}])]
+                                             :on-mouse-up #(do (cast! :tool-selected [tool]))
+                                             :on-touch-end #(do (cast! :tool-selected [tool]))}])]
                     (for [[tool template] tools-templates]
                       [:div.radial-tool-type
                        (common/icon (:type template))
