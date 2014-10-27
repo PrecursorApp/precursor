@@ -60,12 +60,14 @@
 ;; TODO: camera-corrected paths
 (defmethod svg-element :layer.type/path
   [state selected-eids cast! layer]
-  (dom/path #js {:d (:layer/path layer)
-                 :stroke (:layer/stroke layer "black")
-                 :fill "none"
-                 :strokeWidth (:layer/stroke-width layer)
-                 :transform (cameras/->svg-transform (:camera state))
-                 :className (when (contains? selected-eids (:db/id layer)) "selected")}))
+  (dom/path
+    #js {:d
+         (:layer/path layer)
+         :stroke (:layer/stroke layer "black")
+         :fill "none"
+         :strokeWidth (:layer/stroke-width layer)
+         :transform (cameras/->svg-transform (:camera state))
+         :className (when (contains? selected-eids (:db/id layer)) "selected")}))
 
 (defmethod svg-element :layer.type/group
   [state selected-eids cast! layer]

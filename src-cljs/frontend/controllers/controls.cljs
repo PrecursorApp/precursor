@@ -107,7 +107,7 @@
         entity-id     (-> state :entity-ids first)
         layer         (assoc (layers/make-layer entity-id (:document/id state) rx ry)
                         :layer/type (condp = (get-in state state/current-tool-path)
-                                      :shape  :layer.type/rect
+                                      :rect   :layer.type/rect
                                       :text   :layer.type/text
                                       :line   :layer.type/line
                                       :select :layer.type/group
@@ -209,7 +209,7 @@
      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :text)  (let [text (js/prompt "Layer text:")]
                                                          (cast! :text-layer-created [text [x y]]))
-     (= (get-in current-state state/current-tool-path) :shape) (cast! :drawing-started [x y])
+     (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
      :else                                             nil)))

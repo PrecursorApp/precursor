@@ -15,6 +15,20 @@
             [ankha.core :as ankha])
   (:require-macros [frontend.utils :refer [html]]))
 
+(def tools-templates
+  {:circle {:type :tool-circle
+            :path "M302.9,128C292,109.1,276.2,92.8,256,81.1S213.8,64,192,64l0,128 L302.9,128z"}
+   :rect   {:type :tool-rect
+            :path "M302.9,256c10.9-18.8,17.1-40.7,17.1-64s-6.2-45.2-17.1-64L192,192 L302.9,256z"}
+   :line   {:type :tool-line
+            :path "M192,320c21.8,0,43.8-5.5,64-17.2s36-28,46.9-46.8L192,192L192,320z"}
+   :pen    {:type :tool-pen
+            :path "M81.1,256c10.9,18.8,26.7,35.2,46.9,46.8s42.2,17.2,64,17.2l0-128 L81.1,256z"}
+   :text   {:type :tool-text
+            :path "M81.1,128C70.2,146.8,64,168.7,64,192s6.2,45.2,17.1,64L192,192 L81.1,128z"}
+   :select {:type :tool-select
+            :path "M192,64c-21.8,0-43.8,5.5-64,17.2s-36,28-46.9,46.8L192,192L192,64z"}})
+
 (def keymap
   (atom nil))
 
@@ -48,20 +62,12 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:hovered-tool nil
-       :hovered-tool-select nil
-       :hovered-tool-shape nil
-       :hovered-tool-line nil
-       :aside-hover nil})
+      {:aside-hover nil})
     om/IRender
     (render [_]
       (let [{:keys [cast!]}      (om/get-shared owner)
             show-grid?           (get-in app state/show-grid-path)
             night-mode?          (get-in app state/night-mode-path)
-            hovered-tool?        (:hovered-tool (om/get-state owner))
-            hovered-tool-select? (:hovered-tool-select (om/get-state owner))
-            hovered-tool-shape?  (:hovered-tool-shape (om/get-state owner))
-            hovered-tool-line?   (:hovered-tool-line (om/get-state owner))
             hovered-aside?       (:hovered-aside (om/get-state owner))]
         (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
                                                       (when night-mode? ["night-mode"])))}
@@ -76,41 +82,16 @@
                                                  (.stopPropagation e))}
                  (om/build canvas/svg-canvas app)
                  (when (get-in app [:menu :open?])
-                   [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
-                                              :left (- (get-in app [:menu :x]) 128)}
-                                      :on-mouse-leave #(cast! :menu-closed)}
-                    [:button {:on-mouse-up #(do (cast! :tool-selected [:text])
-                                                (om/set-state! owner :hovered-tool false))
-                              :on-mouse-enter #(om/set-state! owner :hovered-tool true)
-                              :on-mouse-leave #(om/set-state! owner :hovered-tool false)
-                              :class (when hovered-tool? "hover")}
-                     [:object
-                      (common/icon :tool-text)
-                      [:span "Text"]]]
-                    [:button {:on-mouse-up  #(do (cast! :tool-selected [:select])
-                                                 (om/set-state! owner :hovered-tool-select false))
-                              :on-mouse-enter #(om/set-state! owner :hovered-tool-select true)
-                              :on-mouse-leave #(om/set-state! owner :hovered-tool-select false)
-                              :class (when hovered-tool-select? "hover")}
-                     [:object
-                      (common/icon :cursor)
-                      [:span "Select"]]]
-                    [:button {:on-mouse-up #(do (cast! :tool-selected [:shape])
-                                                (om/set-state! owner :hovered-tool-shape false))
-                              :on-mouse-enter #(om/set-state! owner :hovered-tool-shape true)
-                              :on-mouse-leave #(om/set-state! owner :hovered-tool-shape false)
-                              :class (when hovered-tool-shape? "hover")}
-                     [:object
-                      (common/icon :tool-square)
-                      [:span "Shape"]]]
-                    [:button {:on-mouse-up #(do (cast! :tool-selected [:line])
-                                                (om/set-state! owner :hovered-tool-line false))
-                              :on-mouse-enter #(om/set-state! owner :hovered-tool-line true)
-                              :on-mouse-leave #(om/set-state! owner :hovered-tool-line false)
-                              :class (when hovered-tool-line? "hover")}
-                     [:object
-                      (common/icon :tool-line)
-                      [:span "Line"]]]
+                   [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 192)
+                                              :left (- (get-in app [:menu :x]) 192)}}
+                    [:svg {:width "384" :height "384"}
+                     (for [[tool template] tools-templates]
+                       [:path.radial-button {:d (:path template)
+                                             :on-mouse-up #(do (cast! :tool-selected [tool]))}])]
+                    (for [[tool template] tools-templates]
+                      [:div.radial-tool-type
+                       (common/icon (:type template))
+                       [:span (name tool)]])
                     [:div.radial-menu-nub]])
                  [:div.right-click-menu
                   [:button "Cut"]

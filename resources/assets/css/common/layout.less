@@ -47,19 +47,21 @@
     }
   }
   .radial-menu {
-    .outline(@gray_dark);
-    button {
-      .icon_stroke(@gray_lighter);
-      color: @gray_light;
-      background: @gray_darker;
-      &:nth-of-type(1) { box-shadow: -1px 0 @gray_dark inset; }
-      &:nth-of-type(2) { box-shadow: 0 -1px @gray_dark inset; }
-      &:nth-of-type(3) { box-shadow: 0 -1px @gray_dark; }
-      &:nth-of-type(4) { box-shadow: -1px 0 @gray_dark; }
-      &:hover {
-        .icon_stroke(@gray_lightest);
-        color: @gray_lighter;
-        background: @gray_dark;
+    .radial-button {
+      fill: @gray_dark;
+      stroke: @gray_dark;
+      &:not(:hover) {
+        fill: @gray_darker;
+        i {
+          path {
+            stroke: @gray_light;
+          }
+        }
+      }
+    }
+    i {
+      path {
+        stroke: @gray_lighter;
       }
     }
   }
@@ -220,68 +222,49 @@
   }
 }
 .radial-menu {
-  .flexy();
-  .translateZ(0);
-  .outline();
-  // .rotate(-45);
   position: fixed;
-  // top: 50%;
-  // left: 50%;
-  width: @radial_menu_size;
-  height: @radial_menu_size;
-  border-radius: (@radial_menu_size / 2);
-  button {
-    .flexy(center, center);
-    .icon_stroke(@gray);
-    position: absolute;
-    height: (@radial_menu_size / 2);
-    width: (@radial_menu_size / 2);
-    color: @gray;
-    background: @app_background;
-    transition: 200ms;
-    &:nth-of-type(1) {
-      .transform-origin(bottom right);
-      top: 0;
-      left: 0;
-      padding: (@radial_menu_size / 8) 0 0 (@radial_menu_size / 8);
-      box-shadow: -1px 0 @gray_lighter inset;
-      border-radius: (@radial_menu_size / 2) 0 0 0;
+  width: (@radial_menu_size * 1.5);
+  height: (@radial_menu_size * 1.5);
+  .radial-button {
+    .scale3d(1.1);
+    fill: @gray_lighter;
+    stroke: @gray_lighter;
+    &:not(:hover) {
+      .scale3d(1);
+      fill: @app_background;
+      i {
+        path {
+          stroke: @gray;
+        }
+      }
     }
-    &:nth-of-type(2) {
-      .transform-origin(bottom left);
-      top: 0;
-      left: (@radial_menu_size / 2);
-      padding: (@radial_menu_size / 8) (@radial_menu_size / 8) 0 0;
-      box-shadow: 0 -1px @gray_lighter inset;
-      border-radius: 0 (@radial_menu_size / 2) 0 0;
+    &:nth-child(1) { .transform-origin(bottom left); }
+    &:nth-child(2) { .transform-origin(left); }
+    &:nth-child(3) { .transform-origin(top left); }
+    &:nth-child(4) { .transform-origin(top right); }
+    &:nth-child(5) { .transform-origin(right); }
+    &:nth-child(6) { .transform-origin(bottom right); }
+  }
+  i {
+    path {
+      stroke: @gray_darker;
     }
-    &:nth-of-type(3) {
-      .transform-origin(top right);
-      top: (@radial_menu_size / 2);
-      left: 0;
-      padding: 0 0 (@radial_menu_size / 8) (@radial_menu_size / 8);
-      box-shadow: 0 -1px @gray_lighter;
-      border-radius: 0 0 0 (@radial_menu_size / 2);
-    }
-    &:nth-of-type(4) {
-      .transform-origin(top left);
-      top: (@radial_menu_size / 2);
-      left: (@radial_menu_size / 2);
-      padding: 0 (@radial_menu_size / 8) (@radial_menu_size / 8) 0;
-      box-shadow: -1px 0 @gray_lighter;
-      border-radius: 0 0 (@radial_menu_size / 2) 0;
-    }
-    &:hover,
-    &.hover {
-      .scale3d(1.1);
-      .icon_stroke(@gray_darker);
-      color: @gray_darker;
-      background: @gray_lighter;
-    }
-    object {
-      .flexy(column);
-      // .rotate(45);
-    }
+  }
+}
+.radial-tool-type {
+  .flexy(center, center, column);
+  .user-select(none);
+  pointer-events: none;
+  position: absolute;
+  text-transform: capitalize;
+  &:nth-of-type(1) { top: 100px; left: 215px; }
+  &:nth-of-type(2) { top: 170px; left: 260px; }
+  &:nth-of-type(3) { top: 240px; left: 215px; }
+  &:nth-of-type(4) { top: 240px; left: 140px; }
+  &:nth-of-type(5) { top: 170px; left: 100px; }
+  &:nth-of-type(6) { top: 100px; left: 135px; }
+  i {
+    margin-bottom: .25em;
   }
 }
 .radial-menu-nub {
@@ -291,8 +274,9 @@
   border-radius: @size;
   background: @gray_lighter;
   position: absolute;
-  top: ((@radial_menu_size - @size) / 2);
-  left: ((@radial_menu_size - @size) / 2);
+  top: (((@radial_menu_size * 1.5) - @size) / 2);
+  left: (((@radial_menu_size * 1.5) - @size) / 2);
+  cursor: default;
 }
 .right-click-menu {
   display: none !important; // hold off for now

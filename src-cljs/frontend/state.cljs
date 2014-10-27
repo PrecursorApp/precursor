@@ -10,7 +10,7 @@
    :environment     "development"
    :settings        {:browser-settings {:show-grid?  true
                                         :night-mode? true
-                                        :current-tool :shape}}
+                                        :current-tool :rect}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
