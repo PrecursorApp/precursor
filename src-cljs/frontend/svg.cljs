@@ -1,7 +1,8 @@
 (ns frontend.svg
   (:require [clojure.string :as str]
             [frontend.camera :as cameras]
-            [frontend.layers :as layers]))
+            [frontend.layers :as layers]
+            [frontend.utils :as utils :include-macros true]))
 
 (defn points->path [points]
   (str "M" (str/join " " (map (fn [p] (str (:rx p) " " (:ry p))) points))))
@@ -34,8 +35,8 @@
                       (:layer/selected? layer) 4
                       (:layer/hovered? layer) 4
                       :else (:layer/stroke-width layer 1))
-      :rx            (:layer/border-radius layer)
-      :ry            (:layer/border-radius layer)
+      :rx            (:layer/rx layer)
+      :ry            (:layer/ry layer)
       :strokeOpacity (cond
                       (:layer/selected? layer) 0.2
                       :else 1)

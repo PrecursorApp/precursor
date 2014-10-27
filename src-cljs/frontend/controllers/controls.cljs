@@ -108,6 +108,7 @@
         layer         (assoc (layers/make-layer entity-id (:document/id state) rx ry)
                         :layer/type (condp = (get-in state state/current-tool-path)
                                       :rect   :layer.type/rect
+                                      :circle :layer.type/rect
                                       :text   :layer.type/text
                                       :line   :layer.type/line
                                       :select :layer.type/group
@@ -141,7 +142,16 @@
                              :layer/current-x rx
                              :layer/current-y ry
                              :layer/current-sx (- x (get-in state [:camera :offset-x]))
-                             :layer/current-sy (- y (get-in state [:camera :offset-y]))))
+                             :layer/current-sy (- y (get-in state [:camera :offset-y])))
+                  (update-in [:drawing :layer]
+                             (fn [layer]
+                               (merge
+                                layer
+                                (when (= :circle (get-in state state/current-tool-path))
+                                  {:layer/rx (Math/abs (- (:layer/start-x layer)
+                                                          (:layer/current-x layer)))
+                                   :layer/ry (Math/abs (- (:layer/start-y layer)
+                                                          (:layer/current-y layer)))})))))
               (-> state
                   (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)))]
       r)))
@@ -183,19 +193,26 @@
         (assoc-in [:mouse :ry] ry)
         ;; TODO: get rid of nils (datomic doesn't like them)
         (update-in [:drawing :layer]
-                   merge
-                   {:layer/end-x rx
-                    :layer/end-y ry
-                    :layer/current-x nil
-                    :layer/current-y nil
-                    :layer/start-sx nil
-                    :layer/start-sy nil
-                    :layer/current-sx nil
-                    :layer/current-sy nil}
-                   (when (= layer-type :layer.type/path)
-                     {:layer/path (svg/points->path (get-in state [:drawing :points]))})
-                   (when (seq bounding-eids)
-                     {:layer/child bounding-eids}))
+                   (fn [layer]
+                     (merge
+                      layer
+                      {:layer/end-x rx
+                       :layer/end-y ry
+                       :layer/current-x nil
+                       :layer/current-y nil
+                       :layer/start-sx nil
+                       :layer/start-sy nil
+                       :layer/current-sx nil
+                       :layer/current-sy nil}
+                      (when (= :circle (get-in state state/current-tool-path))
+                        {:layer/rx (Math/abs (- (:layer/start-x layer)
+                                                (:layer/end-x layer)))
+                         :layer/ry (Math/abs (- (:layer/start-y layer)
+                                                (:layer/end-y layer)))})
+                      (when (= layer-type :layer.type/path)
+                        {:layer/path (svg/points->path (get-in state [:drawing :points]))})
+                      (when (seq bounding-eids)
+                        {:layer/child bounding-eids}))))
         (assoc-in [:camera :moving?] false))))
 
 (defmethod post-control-event! :mouse-depressed
@@ -210,6 +227,7 @@
      (= (get-in current-state state/current-tool-path) :text)  (let [text (js/prompt "Layer text:")]
                                                          (cast! :text-layer-created [text [x y]]))
      (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
+     (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
      :else                                             nil)))

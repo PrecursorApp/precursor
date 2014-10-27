@@ -47,6 +47,14 @@
    (attribute :layer/end-y
               :db.type/float)
 
+   (attribute :layer/rx
+              :db.type/float
+              :db/doc "Border radius")
+
+   (attribute :layer/ry
+              :db.type/float
+              :db/doc "Border radius")
+
    (attribute :layer/fill
               :db.type/string)
 
