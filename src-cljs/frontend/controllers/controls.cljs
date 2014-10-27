@@ -12,6 +12,7 @@
             [frontend.routes :as routes]
             [frontend.state :as state]
             [frontend.stripe :as stripe]
+            [frontend.svg :as svg]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
@@ -106,10 +107,11 @@
         entity-id     (-> state :entity-ids first)
         layer         (assoc (layers/make-layer entity-id (:document/id state) rx ry)
                         :layer/type (condp = (get-in state state/current-tool-path)
-                                      :rect :layer.type/rect
-                                      :text :layer.type/text
-                                      :line :layer.type/line
+                                      :rect   :layer.type/rect
+                                      :text   :layer.type/text
+                                      :line   :layer.type/line
                                       :select :layer.type/group
+                                      :pen    :layer.type/path
                                       :layer.type/rect))]
     (let [r (-> state
                 (assoc-in [:drawing :in-progress?] true)
@@ -134,6 +136,7 @@
     (let [r (if (get-in state [:drawing :in-progress?])
               (-> state
                   (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)
+                  (update-in [:drawing :points] (fnil conj []) {:x x :y x :rx rx :ry ry})
                   (update-in [:drawing :layer] assoc
                              :layer/current-x rx
                              :layer/current-y ry
@@ -161,7 +164,8 @@
   [target message [x y] state]
   (let [{:keys [x y]} (get-in state [:mouse])
         [rx ry] (cameras/screen->point (:camera state) x y)
-        bounding-eids (when (-> state :drawing :layer :layer/type (= :layer.type/group))
+        layer-type (get-in state [:drawing :layer :layer/type])
+        bounding-eids (when (= layer-type :layer.type/group)
                         (eids-in-bounding-box (-> state :db deref)
                                               {:start-x (get-in state [:drawing :layer :layer/start-x])
                                                :end-x rx
@@ -171,6 +175,7 @@
         (update-in [:drawing :layer] dissoc :layer/current-x :layer/current-y)
         (update-in [:drawing :layer] assoc :layer/end-x rx :layer/end-y ry)
         (update-in [:drawing] assoc :in-progress? false)
+        (assoc-in [:drawing :points] [])
         (assoc-in [:mouse :down] false)
         (assoc-in [:mouse :x] x)
         (assoc-in [:mouse :y] y)
@@ -187,6 +192,8 @@
                     :layer/start-sy nil
                     :layer/current-sx nil
                     :layer/current-sy nil}
+                   (when (= layer-type :layer.type/path)
+                     {:layer/path (svg/points->path (get-in state [:drawing :points]))})
                    (when (seq bounding-eids)
                      {:layer/child bounding-eids}))
         (assoc-in [:camera :moving?] false))))
@@ -199,6 +206,7 @@
      (= button 2) (cast! :menu-opened)
      ;; turning off Cmd+click for opening the menu
      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
+     (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :text)  (let [text (js/prompt "Layer text:")]
                                                          (cast! :text-layer-created [text [x y]]))
      (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])

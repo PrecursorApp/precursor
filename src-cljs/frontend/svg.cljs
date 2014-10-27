@@ -1,10 +1,14 @@
 (ns frontend.svg
-  (:require [frontend.camera :as cameras]
+  (:require [clojure.string :as str]
+            [frontend.camera :as cameras]
             [frontend.layers :as layers]))
 
-(defn layer->svg-rect [camera layer rect? cast!]
+(defn points->path [points]
+  (str "M" (str/join " " (map (fn [p] (str (:rx p) " " (:ry p))) points))))
+
+(defn layer->svg-rect [camera layer shape? cast!]
   (let [layer (layers/normalized-abs-coords layer)
-        layer (if rect?
+        layer (if shape?
                   (cameras/camera-translated-rect camera
                                                   layer
                                                   (layers/rect-width layer)
@@ -13,7 +17,7 @@
                                                   (get-in layer [:offset :y]))
                   layer)]
     (merge
-     {:className     (when rect? "layer")
+     {:className     (when shape? "layer")
       :x             (:layer/start-x layer)
       :y             (:layer/start-y layer)
       :width         (- (or (:layer/current-x layer)
