@@ -30,13 +30,14 @@
        (assoc-in req [:session :uid] (uuid))
        req))))
 
-;; hash-map of document-id to set of connected user-ids
+;; hash-map of document-id to connected users
 ;; Used to keep track of which transactions to send to which user
 ;; sente's channel handling stuff is not much fun to work with :(
+;; e.g {:12345 {:uuid-1 {show-mouse?: true} :uuid-1 {:show-mouse? false}}}
 (defonce document-subs (atom {}))
 
 (defn notify-transaction [data]
-  (doseq [uid (get @document-subs (:document/id data))]
+  (doseq [[uid _] (get @document-subs (:document/id data))]
     (log/infof "notifying %s about new transactions for %s" uid (:document/id data))
     ((:send-fn @sente-state) uid [:datomic/transaction data])))
 
@@ -59,7 +60,7 @@
                          (reduce (fn [acc [document-id user-ids]]
                                    (if-not (contains? user-ids uuid)
                                      acc
-                                     (let [new-user-ids (disj user-ids uuid)]
+                                     (let [new-user-ids (dissoc user-ids uuid)]
                                        (if (empty? new-user-ids)
                                          (dissoc acc document-id)
                                          (assoc acc document-id new-user-ids)))))
@@ -68,9 +69,9 @@
 (defmethod ws-handler :chsk/uidport-close [{:keys [client-uuid] :as req}]
   (log/infof "closing connection for %s" client-uuid)
   (let [uuid (client-uuid->uuid client-uuid)]
-    (doseq [uid (reduce (fn [acc [doc-id client-ids]]
-                          (if (contains? client-ids uuid)
-                            (set/union acc client-ids)
+    (doseq [uid (reduce (fn [acc [doc-id clients]]
+                          (if (contains? clients uuid)
+                            (set/union acc (keys clients))
                             acc))
                         #{} @document-subs)]
       (log/infof "notifying %s about %s leaving" uid uuid)
@@ -78,14 +79,15 @@
     (clean-document-subs uuid)))
 
 (defn subscribe-to-doc [document-id uuid]
-  (swap! document-subs update-in [document-id] (fnil conj #{}) uuid))
+  (swap! document-subs update-in [document-id] (fnil assoc {}) uuid {}))
 
 (defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
   (let [document-id (-> ?data :document-id)
-        db (pcd/default-db)]
+        db (pcd/default-db)
+        cid (client-uuid->uuid client-uuid)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
-    (doseq [uid (get @document-subs document-id)]
-      ((:send-fn @sente-state) uid [:frontend/subscriber-joined {:client-uuid (client-uuid->uuid client-uuid)}]))
+    (doseq [[uid _] (dissoc (get @document-subs document-id) cid)]
+      ((:send-fn @sente-state) uid [:frontend/subscriber-joined {:client-uuid cid}]))
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid))
     (let [resp {:layers (layer/find-by-document db {:db/id document-id})
                 :document (pcd/touch+ (d/entity db document-id))
@@ -96,13 +98,39 @@
   (let [document-id (-> ?data :document-id)]
     (log/infof "fetching subscribers for %s on %s" client-uuid document-id)
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid))
-    (?reply-fn {:subscribers (set (get @document-subs document-id))})))
+    (?reply-fn {:subscribers (get @document-subs document-id)})))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document/id)
         datoms (->> ?data :datoms (remove (comp nil? :v)))]
     (log/infof "transacting %s on %s for %s" datoms document-id client-uuid)
     (datomic/transact! datoms document-id (UUID/fromString (client-uuid->uuid client-uuid)))))
+
+(defmethod ws-handler :frontend/mouse-position  [{:keys [client-uuid ?data] :as req}]
+  (let [document-id (-> ?data :document/id)
+        mouse-position (-> ?data :mouse-position)
+        cid (client-uuid->uuid client-uuid)]
+    (log/infof "sending mouse-move on %s for %s" document-id cid)
+    (log/info (get @document-subs document-id))
+    (doseq [[uid _] (dissoc (get @document-subs document-id) cid)]
+      ((:send-fn @sente-state) uid [:frontend/mouse-move {:client-uuid cid
+                                                          :mouse-position mouse-position}]))))
+
+;; TODO: maybe need a compare-and-set! here
+(defmethod ws-handler :frontend/share-mouse [{:keys [client-uuid ?data] :as req}]
+  (let [document-id (-> ?data :document/id)
+        show-mouse? (-> ?data :show-mouse?)
+        mouse-owner-uuid (-> ?data :mouse-owner-uuid)
+        cid (client-uuid->uuid client-uuid)]
+    (log/infof "toggling share-mouse to %s from %s for %s" show-mouse? mouse-owner-uuid cid)
+    (swap! document-subs (fn [subs]
+                           (if (get-in subs [document-id mouse-owner-uuid])
+                             (assoc-in subs [document-id mouse-owner-uuid :show-mouse?] show-mouse?)
+                             subs)))
+    (doseq [[uid _] (get @document-subs document-id)]
+      ((:send-fn @sente-state) uid [:frontend/share-mouse {:client-uuid cid
+                                                           :show-mouse? show-mouse?
+                                                           :mouse-owner-uuid mouse-owner-uuid}]))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log

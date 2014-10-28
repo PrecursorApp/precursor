@@ -12,7 +12,8 @@
     (render [_]
       (let [controls-ch (om/get-shared owner [:comms :controls])
             show-grid? (get-in app state/show-grid-path)
-            night-mode? (get-in app state/night-mode-path)]
+            night-mode? (get-in app state/night-mode-path)
+            client-id (:client-uuid app)]
        (html
          [:div.aside-menu
           [:a {:href "/" :target "_self"}
@@ -28,16 +29,20 @@
           ;; [:button.collaborators
           ;;  (common/icon :users)
           ;;  [:span "Collaborators"]]
-          [:button {:title "You're viewing this document. Try inviting others."
-                    :disabled "true"}
-           [:object
-            (common/icon :user)
-            [:span "You"]]]
-          (for [subscriber (disj (:subscribers app) (:client-uuid app))]
-            [:button {:title "An anonymous user is viewing this document. Spooky."
-                      :disabled "true"}
-             (common/icon :user)
-             [:span "Anonymous (" (apply str (take 5 subscriber)) ")"]])
+          (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+            [:button {:title "You're viewing this document. Try inviting others."
+                      :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}
+             [:object
+              (common/icon :user (when show-mouse? {:path-props
+                                                    {:style
+                                                     {:stroke (apply str "#" (take 6 client-id))}}}))
+              [:span "You"]]])
+          (for [[id {:keys [show-mouse?]}] (dissoc (:subscribers app) client-id)
+                :let [id-str (apply str (take 6 id))]]
+            [:button {:title "An anonymous user is viewing this document. Click to show their mouse."
+                      :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
+             (common/icon :user (when show-mouse? {:path-props {:style {:stroke (str "#" id-str)}}}))
+             [:span id-str]])
           [:div.aside-settings
            [:button {:disabled "true"}
             (common/icon :settings)

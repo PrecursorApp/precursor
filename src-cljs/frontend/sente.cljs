@@ -28,10 +28,13 @@
 (defn fetch-subscribers [sente-state app-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 2000
             (fn [{:keys [subscribers]}]
-              (swap! app-state update-in [:subscribers] set/union subscribers))))
+              (swap! app-state update-in [:subscribers] (fn [s]
+                                                          (merge-with merge
+                                                                      subscribers
+                                                                      s))))))
 
 (defmulti handle-message (fn [app-state message data]
-                           (println "handle-message")
+                           (utils/mlog "handle-message" message data)
                            message))
 
 (defmethod handle-message :default [app-state message data]
@@ -44,10 +47,18 @@
 
 
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
-  (swap! app-state update-in [:subscribers] conj (:client-uuid data)))
+  (swap! app-state update-in [:subscribers] (fn [s] (merge-with merge
+                                                                {(:client-uuid data) {}}
+                                                                s))))
 
 (defmethod handle-message :frontend/subscriber-left [app-state message data]
-  (swap! app-state update-in [:subscribers] disj (:client-uuid data)))
+  (swap! app-state update-in [:subscribers] dissoc (:client-uuid data)))
+
+(defmethod handle-message :frontend/mouse-move [app-state message data]
+  (swap! app-state assoc-in [:subscribers (:client-uuid data) :mouse-position] (:mouse-position data)))
+
+(defmethod handle-message :frontend/share-mouse [app-state message data]
+  (swap! app-state assoc-in [:subscribers (:mouse-owner-uuid data) :show-mouse?] (:show-mouse? data)))
 
 (defn do-something [app-state sente-state]
   (let [tap (async/chan (async/sliding-buffer 10))
