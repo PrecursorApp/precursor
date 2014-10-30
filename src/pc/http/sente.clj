@@ -106,12 +106,10 @@
     (log/infof "transacting %s on %s for %s" datoms document-id client-uuid)
     (datomic/transact! datoms document-id (UUID/fromString (client-uuid->uuid client-uuid)))))
 
-(defmethod ws-handler :frontend/mouse-position  [{:keys [client-uuid ?data] :as req}]
+(defmethod ws-handler :frontend/mouse-position [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document/id)
         mouse-position (-> ?data :mouse-position)
         cid (client-uuid->uuid client-uuid)]
-    (log/infof "sending mouse-move on %s for %s" document-id cid)
-    (log/info (get @document-subs document-id))
     (doseq [[uid _] (dissoc (get @document-subs document-id) cid)]
       ((:send-fn @sente-state) uid [:frontend/mouse-move {:client-uuid cid
                                                           :mouse-position mouse-position}]))))
