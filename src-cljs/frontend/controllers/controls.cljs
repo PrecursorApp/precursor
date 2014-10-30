@@ -10,6 +10,7 @@
             [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
             [frontend.routes :as routes]
+            [frontend.sente :as sente]
             [frontend.state :as state]
             [frontend.stripe :as stripe]
             [frontend.svg :as svg]
@@ -155,6 +156,20 @@
               (-> state
                   (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)))]
       r)))
+
+(defmethod post-control-event! :mouse-moved
+  [target message [x y] current-state previous-state]
+  (when (get-in current-state [:subscribers (:client-uuid current-state) :show-mouse?])
+    (sente/send-msg (:sente current-state)
+                    [:frontend/mouse-position {:mouse-position (cameras/screen->point (:camera current-state) x y)
+                                               :document/id (:document/id current-state)}])))
+
+(defmethod post-control-event! :show-mouse-toggled
+  [target message {:keys [client-uuid show-mouse?]} current-state previous-state]
+  (sente/send-msg (:sente current-state)
+                  [:frontend/share-mouse {:document/id (:document/id current-state)
+                                          :show-mouse? show-mouse?
+                                          :mouse-owner-uuid client-uuid}]))
 
 (defn eids-in-bounding-box [db {:keys [start-x end-x start-y end-y] :as box}]
   (let [x0 (min start-x end-x)

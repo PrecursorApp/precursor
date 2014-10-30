@@ -177,6 +177,12 @@
                                                  :height "100%"
                                                  :fill   "url(#grid)"}))]
                                (mapv (partial svg-element payload selected-eids cast!) layers)
+                               (for [[id {:keys [mouse-position show-mouse?]}] (dissoc (:subscribers payload) (:client-uuid payload))
+                                     :when show-mouse?]
+                                 (dom/circle #js {:cx (first mouse-position)
+                                                  :cy (last mouse-position)
+                                                  :r 5
+                                                  :fill (apply str "#" (take 6 id))}))
                                [(dom/text #js {:x (get-in payload [:mouse :x])
                                                :y (get-in payload [:mouse :y])
                                                :className "mouse-stats"}
