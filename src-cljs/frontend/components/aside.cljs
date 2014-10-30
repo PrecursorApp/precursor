@@ -30,7 +30,7 @@
           ;;  (common/icon :users)
           ;;  [:span "Collaborators"]]
           (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-            [:button {:title "You're viewing this document. Try inviting others."
+            [:button {:title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
                       :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}
              [:object
               (common/icon :user (when show-mouse? {:path-props
@@ -39,7 +39,7 @@
               [:span "You"]]])
           (for [[id {:keys [show-mouse?]}] (dissoc (:subscribers app) client-id)
                 :let [id-str (apply str (take 6 id))]]
-            [:button {:title "An anonymous user is viewing this document. Click to show their mouse."
+            [:button {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
                       :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
              (common/icon :user (when show-mouse? {:path-props {:style {:stroke (str "#" id-str)}}}))
              [:span id-str]])
