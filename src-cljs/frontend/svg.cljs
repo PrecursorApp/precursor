@@ -7,17 +7,10 @@
 (defn points->path [points]
   (str "M" (str/join " " (map (fn [p] (str (:rx p) " " (:ry p))) points))))
 
-(defn layer->svg-rect [camera layer shape? cast!]
-  (let [layer (layers/normalized-abs-coords layer)
-        layer (if shape?
-                  (cameras/camera-translated-rect camera
-                                                  layer
-                                                  (layers/rect-width layer)
-                                                  (layers/rect-height layer)
-                                                  (get-in layer [:offset :x])
-                                                  (get-in layer [:offset :y]))
-                  layer)]
+(defn layer->svg-rect [camera layer]
+  (let [layer (layers/normalized-abs-coords layer)]
     (merge
+     layer
      {:className     (when shape? "layer")
       :x             (:layer/start-x layer)
       :y             (:layer/start-y layer)
@@ -40,8 +33,5 @@
       :strokeOpacity (cond
                       (:layer/selected? layer) 0.2
                       :else 1)
-      :transform     (let [{:keys [n ox oy]} (get-in layer [:transforms :rotate])]
-                       (when (and n (integer? ox) (integer? oy))
-                         (str "rotate(" n "," (+ (:layer/start-x layer) ox) ", " (+ (:layer/start-y layer) oy) ")")))
-      :style         {:opacity (:layer/opacity layer)}
-      :onClick       #(cast! :layer-selected [(:db/id layer)])})))
+      :transform     (cameras/->svg-transform camera)
+      :style         {:opacity (:layer/opacity layer)}})))

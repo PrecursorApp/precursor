@@ -14,10 +14,13 @@
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
-(defmulti svg-element (fn [state selected-eids cast! layer] (:layer/type layer)))
+;; layers are always denominated in absolute coordinates
+;; transforms are applied to handle panning and zooming
+
+(defmulti svg-element (fn [state selected-eids layer] (:layer/type layer)))
 
 (defmethod svg-element :default
-  [camera selected-eids cast! layer]
+  [camera selected-eids layer]
   (print "No svg element for " layer))
 
 (defn maybe-add-selected [svg-layer layer selected-eids]
@@ -26,15 +29,15 @@
     svg-layer))
 
 (defmethod svg-element :layer.type/rect
-  [camera selected-eids cast! layer]
-  (-> (svg/layer->svg-rect camera layer true cast!)
+  [camera selected-eids layer]
+  (-> (svg/layer->svg-rect camera layer)
       (maybe-add-selected layer selected-eids)
       (clj->js)
       (dom/rect)))
 
 (defmethod svg-element :layer.type/text
-  [camera selected-eids cast! layer]
-  (-> (svg/layer->svg-rect camera layer true cast!)
+  [camera selected-eids layer]
+  (-> (svg/layer->svg-rect camera layer)
       (merge {:fontFamily (:layer/font-family layer)
               :fontSize   (* (:layer/font-size layer)
                              (:zf camera))})
@@ -43,34 +46,31 @@
       (dom/text (:layer/text layer))))
 
 (defmethod svg-element :layer.type/line
-  [camera selected-eids cast! layer]
-  (let [l (cameras/camera-translated-rect camera layer (- (:layer/end-x layer) (:layer/start-x layer))
-                                          (- (:layer/end-y layer) (:layer/start-y layer)))]
-    (dom/line (clj->js (merge
-                        (dissoc l :x :y :width :height :stroke-width :fill)
-                        (when (contains? selected-eids (:db/id layer))
-                          {:className "selected"})
-                        {:x1          (:layer/start-x l)
-                         :y1          (:layer/start-y l)
-                         :x2          (:layer/end-x l)
-                         :y2          (:layer/end-y l)
-                         ;;:stroke      (:layer/fill l)
-                         :strokeWidth (:layer/stroke-width l)}))
-              (:layer/text layer))))
+  [camera selected-eids layer]
+  (dom/line (clj->js (merge
+                      layer
+                      (when (contains? selected-eids (:db/id layer))
+                        {:className "selected"})
+                      {:x1          (:layer/start-x layer)
+                       :y1          (:layer/start-y layer)
+                       :x2          (:layer/end-x layer)
+                       :y2          (:layer/end-y layer)
+                       :strokeWidth (:layer/stroke-width layer)
+                       :transform (cameras/->svg-transform camera)}))))
 
 (defmethod svg-element :layer.type/path
-  [camera selected-eids cast! layer]
+  [camera selected-eids layer]
   (dom/path
-    #js {:d
-         (:layer/path layer)
-         :stroke (:layer/stroke layer "black")
-         :fill "none"
-         :strokeWidth (:layer/stroke-width layer)
-         :transform (cameras/->svg-transform camera)
-         :className (when (contains? selected-eids (:db/id layer)) "selected")}))
+   (clj->js (merge layer
+                   {:d (:layer/path layer)
+                    :stroke (:layer/stroke layer "black")
+                    :fill "none"
+                    :strokeWidth (:layer/stroke-width layer)
+                    :transform (cameras/->svg-transform camera)
+                    :className (when (contains? selected-eids (:db/id layer)) "selected")}))))
 
 (defmethod svg-element :layer.type/group
-  [state selected-eids cast! layer]
+  [state selected-eids layer]
   (print "Nothing to do for groups, yet."))
 
 (defn state->cursor [state]
@@ -98,9 +98,8 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             selected-eids (if selected-eid (layer-model/selected-eids @db selected-eid) #{})
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
-        (js/console.log "rendered!")
         (apply dom/g #js {:className "layers"}
-               (mapv (partial svg-element camera selected-eids cast!) layers))))))
+               (mapv (partial svg-element camera selected-eids) layers))))))
 
 (defn cursor [[id subscriber] owner]
   (reify
@@ -223,48 +222,11 @@
                                  :else nil)]
                    (dom/g #js {:className "layers"}
                           (let [sel (merge sel
-                                           {:layer/start-x   (get-in sel [:layer/start-sx])
-                                            :layer/start-y   (get-in sel [:layer/start-sy])
-                                            :layer/current-x (or (get-in sel [:layer/current-sx])
-                                                                 (get-in sel [:layer/end-sx]))
-                                            :layer/current-y (or (get-in sel [:layer/current-sy])
-                                                                 (get-in sel [:layer/end-sy]))})
-                                x-direction (if (neg? (- (:layer/start-x sel) (:layer/current-x sel))) -1 1)
-                                y-direction (if (neg? (- (:layer/start-y sel) (:layer/current-y sel))) -1 1)
-                                rect (svg/layer->svg-rect (:camera payload) sel false cast!)]
-                            (case (get-in payload state/current-tool-path)
-                              :line
-                              (dom/line (clj->js (merge
-                                                  (dissoc rect :x :y :width :height :stroke-width :fill)
-                                                  ;; TODO: figure out how this actually works, right now it's just
-                                                  ;;       the result of changing signs until it worked!
-                                                  (let [x1 (if (neg? x-direction)
-                                                             (+ (:x rect) (:width rect))
-                                                             (:x rect))
-                                                        y1 (if (neg? y-direction)
-                                                             (+ (:y rect) (:height rect))
-                                                             (:y rect))]
-                                                    {:x1 x1
-                                                     :y1 y1
-                                                     :x2 (+ (* x-direction (:width rect)) x1)
-                                                     :y2 (+ (* y-direction (:height rect)) y1)
-                                                     :fill "gray"
-                                                     :fillOpacity "0.25"
-                                                     :strokeDasharray "5,5"
-                                                     :strokeWidth 1}))))
-
-                              :pen
-                              (dom/path (clj->js {:fill "none"
-                                                  :stroke "gray"
-                                                  :fillOpacity "0.25"
-                                                  :strokeDasharray "5,5"
-                                                  :strokeWidth 1
-                                                  :d (svg/points->path (get-in payload [:drawing :points]))
-                                                  :transform (cameras/->svg-transform (:camera payload))}))
-
-
-                              (dom/rect (clj->js (assoc rect
-                                                   :fill "gray"
-                                                   :fillOpacity "0.25"
-                                                   :strokeDasharray "5,5"
-                                                   :strokeWidth 1))))))))))))
+                                           {:layer/end-x (:layer/current-x sel)
+                                            :layer/end-y (:layer/current-y sel)
+                                            :strokeDasharray "5,5"
+                                            :fill "gray"
+                                            :fillOpacity "0.25"}
+                                           (when (= :layer.type/group (:layer/type sel))
+                                             {:layer/type :layer.type/rect}))]
+                            (svg-element (:camera payload) #{} sel)))))))))
