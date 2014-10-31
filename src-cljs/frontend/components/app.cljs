@@ -43,19 +43,14 @@
         (let [controls-ch (om/get-shared owner [:comms :controls])
               persist-state! #(put! controls-ch [:state-persisted])
               restore-state! #(put! controls-ch [:state-restored])
-              show-inspector? (get-in app state/show-inspector-path)
               logged-in? (get-in app state/user-path)]
           (reset! keymap {["ctrl+s"] persist-state!
                           ["ctrl+r"] restore-state!})
           (html
            [:div#app
-            (om/build keyq/KeyboardHandler app
+            (om/build keyq/keyboard-handler app
                       {:opts {:keymap keymap
-                              :error-ch (get-in app [:comms :errors])}})
-            (when show-inspector?
-              ;; TODO inspector still needs lots of work. It's slow and it defaults to
-              ;;     expanding all datastructures.
-              (om/build inspector/inspector app))]))))))
+                              :error-ch (get-in app [:comms :errors])}})]))))))
 
 
 (defn app [app owner]

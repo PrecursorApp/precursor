@@ -217,9 +217,7 @@
 
     (d/listen! (:db @state)
                (fn [tx-report]
-                 (cast! :db-updated [] true)
                  (when (not-any? #(= (:a %) :server/update) (-> tx-report :tx-data)) ;; hack to prevent loops
-
                    (sente/send-msg (:sente @state) [:frontend/transaction {:datoms (->> tx-report :tx-data (mapv ds/datom-read-api))
                                                                            :document/id (:document/id @state)}]))))
 

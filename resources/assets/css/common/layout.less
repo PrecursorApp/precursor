@@ -26,14 +26,16 @@
     }
   }
   #svg-canvas {
-    > rect,
-    > line,
-    > path {
-      &:not(#background-grid) {
-        stroke: @gray_light;
-      }
-      &.selected {
-        stroke: @select_blue;
+    .layers {
+      rect,
+      line,
+      path {
+        &:not(#background-grid) {
+          stroke: @gray_light;
+        }
+        &.selected {
+          stroke: @select_blue;
+        }
       }
     }
     text {
@@ -101,15 +103,17 @@
   .flex(1);
 }
 #svg-canvas {
-  > rect,
-  > line,
-  > path {
-    &:not(#background-grid) {
-      fill: none;
-      stroke: @gray_dark;
-      stroke-width: 2;
-      &.selected {
-        stroke: @select_blue;
+  .layers {
+    rect,
+    line,
+    path {
+      &:not(#background-grid) {
+        fill: none;
+        stroke: @gray_dark;
+        stroke-width: 2;
+        &.selected {
+          stroke: @select_blue;
+        }
       }
     }
   }

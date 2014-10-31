@@ -32,7 +32,6 @@
         (catch :default e#
           (merror e#)
           (when (:rethrow-errors? initial-query-map)
-            (js* "debugger;")
             (throw e#)))))
 
 (defmacro defrender

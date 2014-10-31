@@ -58,7 +58,6 @@
 
 (defn navigated-default [navigation-point args state]
   (-> state
-      state-utils/clear-page-state
       (assoc :navigation-point navigation-point
              :navigation-data args)))
 

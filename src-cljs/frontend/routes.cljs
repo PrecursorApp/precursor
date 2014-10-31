@@ -3,10 +3,9 @@
             [clojure.string :as str]
             [frontend.async :refer [put!]]
             [goog.events :as events]
-            [frontend.utils.docs :as doc-utils]
-            [frontend.utils :as utils :include-macros true]
-            [secretary.core :as sec :include-macros true :refer [defroute]])
-  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
+            [frontend.utils :as utils :include-macros true])
+  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
+                   [secretary.core :refer [defroute]]))
 
 (defn define-spec-routes! [nav-ch]
   (defroute trailing-slash #"(.+)/$" [path]
