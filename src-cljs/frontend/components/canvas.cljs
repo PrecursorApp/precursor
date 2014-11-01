@@ -123,6 +123,16 @@
       (apply dom/g nil
              (om/build-all cursor (dissoc subscribers client-uuid) {:opts {:client-uuid client-uuid}})))))
 
+(defn subscriber-layers [{:keys [layers camera]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (if-not (seq layers)
+        (dom/g nil nil)
+        (apply dom/g nil (mapv (fn [l] (svg-element camera #{} (merge (utils/inspect l) {:strokeDasharray "5,5"
+                                                                            :fillOpacity "0.25"})))
+                               layers))))))
+
 (defn svg-canvas [payload owner opts]
   (reify
     om/IDidMount
@@ -222,6 +232,16 @@
                                 :y (get-in payload [:mouse :y])
                                 :className "mouse-stats"}
                            (pr-str (:mouse payload)))
+                 (om/build subscriber-layers {:layers (reduce (fn [acc [id subscriber]]
+                                                                (if-let [layer (:layer subscriber)]
+                                                                  (conj acc (assoc layer
+                                                                              :layer/end-x (:layer/current-x layer)
+                                                                              :layer/end-y (:layer/current-y layer)
+                                                                              :stroke (apply str "#" (take 6 id))
+                                                                              :layer/stroke (apply str "#" (take 6 id))))
+                                                                  acc))
+                                                              [] (:subscribers payload))
+                                              :camera (:camers payload)})
                  (when-let [sel (cond
                                  (settings/selection-in-progress? payload) (settings/selection payload)
                                  (settings/drawing-in-progress? payload) (settings/drawing payload)
