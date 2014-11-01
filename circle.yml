@@ -5,7 +5,7 @@ dependencies:
 
 test:
   override:
-    - lein compile :all
+    - echo what could go wrong
 
 deployment:
   prod:
