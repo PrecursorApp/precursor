@@ -11,4 +11,4 @@ deployment:
   prod:
     branch: master
     commands:
-      - scp cljs/production/frontend.js precursor@prcrsr.com:/usr/home/precursor/resources/public/js/vendor/frontend-production.js
+      - scp resources/public/cljs/production/frontend.js precursor@prcrsr.com:/usr/home/precursor/livemocker/resources/public/js/vendor/frontend-production.js
