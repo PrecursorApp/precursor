@@ -2,6 +2,7 @@
   (:require [datascript :as d]
             [cljs.core.async :refer [put!]]
             [frontend.camera :as cameras]
+            [frontend.components.common :as common]
             [frontend.datascript :as ds]
             [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
@@ -105,10 +106,15 @@
   (reify
     om/IRender
     (render [_]
-      (dom/circle #js {:cx (first (:mouse-position subscriber))
-                       :cy (last (:mouse-position subscriber))
-                       :r (if (:show-mouse? subscriber) 5 0)
-                       :fill (apply str "#" (take 6 id))}))))
+      (if (and (:tool subscriber)
+               (:show-mouse? subscriber))
+        (html (common/svg-icon (keyword (str "tool-" (name (:tool subscriber))))
+                               {:svg-props {:height 16 :width 16
+                                            :class "mouse-tool"
+                                            :x (first (:mouse-position subscriber))
+                                            :y (last (:mouse-position subscriber))}
+                                :path-props {:stroke (apply str "#" (take 6 id))}}))
+        (dom/circle #js {:cx 0 :cy 0 :r 0})))))
 
 (defn cursors [{:keys [subscribers client-uuid]} owner]
   (reify

@@ -11,7 +11,7 @@
   (let [layer (layers/normalized-abs-coords layer)]
     (merge
      layer
-     {:className     (when shape? "layer")
+     {:className     "layer"
       :x             (:layer/start-x layer)
       :y             (:layer/start-y layer)
       :width         (- (or (:layer/current-x layer)

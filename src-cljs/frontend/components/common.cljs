@@ -100,12 +100,16 @@
    :repo {:paths [:repo]}
    :spinner {:paths [:turn :circle]}})
 
-(defn icon [icon-name & [{:keys [path-props]}]]
+(defn svg-icon [icon-name & [{:keys [path-props svg-props]}]]
   (let [template (get icon-templates icon-name)]
-    [:i {:class (str "icon-" (name icon-name))}
-      [:svg {:viewBox "0 0 100 100"}
-       (for [path (:paths template)]
-         [:path (merge {:class (name path) :d (get icon-paths path)} path-props)])]]))
+    [:svg (merge {:viewBox "0 0 100 100"} svg-props)
+     (for [path (:paths template)]
+       [:path (merge {:class (name path) :d (get icon-paths path)} path-props)])]))
+
+(defn icon [icon-name & [{:keys [path-props svg-props]}]]
+  [:i {:class (str "icon-" (name icon-name))}
+   (svg-icon icon-name {:path-props path-props
+                        :svg-props svg-props})])
 
 (def spinner
   (icon :logomark-precursor))
