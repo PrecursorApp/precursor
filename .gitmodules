@@ -1,0 +1,3 @@
+[submodule "yaks/om"]
+	path = yaks/om
+	url = git@github.com:dwwoelfel/om.git
