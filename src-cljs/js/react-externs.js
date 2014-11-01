@@ -7,3 +7,4 @@
  * @protected
  */
 React.DOM.defs = function(props, children) {};
+React.DOM.foreignObject = function(props, children) {};
