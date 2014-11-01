@@ -129,8 +129,9 @@
     (render [_]
       (if-not (seq layers)
         (dom/g nil nil)
-        (apply dom/g nil (mapv (fn [l] (svg-element camera #{} (merge (utils/inspect l) {:strokeDasharray "5,5"
-                                                                            :fillOpacity "0.25"})))
+        (apply dom/g nil (mapv (fn [l] (svg-element camera #{} (merge l {:strokeDasharray "5,5"
+                                                                         :layer/fill "none"
+                                                                         :fillOpacity "0.25"})))
                                layers))))))
 
 (defn svg-canvas [payload owner opts]
