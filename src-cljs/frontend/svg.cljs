@@ -1,13 +1,12 @@
 (ns frontend.svg
   (:require [clojure.string :as str]
-            [frontend.camera :as cameras]
             [frontend.layers :as layers]
             [frontend.utils :as utils :include-macros true]))
 
 (defn points->path [points]
   (str "M" (str/join " " (map (fn [p] (str (:rx p) " " (:ry p))) points))))
 
-(defn layer->svg-rect [camera layer]
+(defn layer->svg-rect [layer]
   (let [layer (layers/normalized-abs-coords layer)]
     (merge
      layer
@@ -33,5 +32,4 @@
       :strokeOpacity (cond
                       (:layer/selected? layer) 0.2
                       :else 1)
-      :transform     (cameras/->svg-transform camera)
       :style         {:opacity (:layer/opacity layer)}})))

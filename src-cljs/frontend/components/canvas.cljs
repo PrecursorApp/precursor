@@ -18,10 +18,10 @@
 ;; layers are always denominated in absolute coordinates
 ;; transforms are applied to handle panning and zooming
 
-(defmulti svg-element (fn [state selected-eids layer] (:layer/type layer)))
+(defmulti svg-element (fn [selected-eids layer] (:layer/type layer)))
 
 (defmethod svg-element :default
-  [camera selected-eids layer]
+  [selected-eids layer]
   (print "No svg element for " layer))
 
 (defn maybe-add-selected [svg-layer layer selected-eids]
@@ -30,24 +30,23 @@
     svg-layer))
 
 (defmethod svg-element :layer.type/rect
-  [camera selected-eids layer]
-  (-> (svg/layer->svg-rect camera layer)
+  [selected-eids layer]
+  (-> (svg/layer->svg-rect layer)
       (maybe-add-selected layer selected-eids)
       (clj->js)
       (dom/rect)))
 
 (defmethod svg-element :layer.type/text
-  [camera selected-eids layer]
-  (-> (svg/layer->svg-rect camera layer)
+  [selected-eids layer]
+  (-> (svg/layer->svg-rect layer)
       (merge {:fontFamily (:layer/font-family layer)
-              :fontSize   (* (:layer/font-size layer)
-                             (:zf camera))})
+              :fontSize   (:layer/font-size layer)})
       (maybe-add-selected layer selected-eids)
       (clj->js)
       (dom/text (:layer/text layer))))
 
 (defmethod svg-element :layer.type/line
-  [camera selected-eids layer]
+  [selected-eids layer]
   (dom/line (clj->js (merge
                       layer
                       (when (contains? selected-eids (:db/id layer))
@@ -56,18 +55,16 @@
                        :y1          (:layer/start-y layer)
                        :x2          (:layer/end-x layer)
                        :y2          (:layer/end-y layer)
-                       :strokeWidth (:layer/stroke-width layer)
-                       :transform (cameras/->svg-transform camera)}))))
+                       :strokeWidth (:layer/stroke-width layer)}))))
 
 (defmethod svg-element :layer.type/path
-  [camera selected-eids layer]
+  [selected-eids layer]
   (dom/path
    (clj->js (merge layer
                    {:d (:layer/path layer)
                     :stroke (:layer/stroke layer "black")
                     :fill "none"
                     :strokeWidth (:layer/stroke-width layer)
-                    :transform (cameras/->svg-transform camera)
                     :className (when (contains? selected-eids (:db/id layer)) "selected")}))))
 
 (defmethod svg-element :layer.type/group
@@ -80,7 +77,7 @@
     :select "default"
     "crosshair"))
 
-(defn svg-layers [{:keys [selected-eid camera]} owner]
+(defn svg-layers [{:keys [selected-eid]} owner]
   (reify
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -100,7 +97,7 @@
             selected-eids (if selected-eid (layer-model/selected-eids @db selected-eid) #{})
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
         (apply dom/g #js {:className "layers"}
-               (mapv (partial svg-element camera selected-eids) layers))))))
+               (mapv (partial svg-element selected-eids) layers))))))
 
 (defn cursor [[id subscriber] owner]
   (reify
@@ -123,15 +120,15 @@
       (apply dom/g nil
              (om/build-all cursor (dissoc subscribers client-uuid) {:opts {:client-uuid client-uuid}})))))
 
-(defn subscriber-layers [{:keys [layers camera]} owner]
+(defn subscriber-layers [{:keys [layers]} owner]
   (reify
     om/IRender
     (render [_]
       (if-not (seq layers)
         (dom/g nil nil)
-        (apply dom/g nil (mapv (fn [l] (svg-element camera #{} (merge l {:strokeDasharray "5,5"
-                                                                         :layer/fill "none"
-                                                                         :fillOpacity "0.25"})))
+        (apply dom/g nil (mapv (fn [l] (svg-element #{} (merge l {:strokeDasharray "5,5"
+                                                                  :layer/fill "none"
+                                                                  :fillOpacity "0.25"})))
                                layers))))))
 
 (defn svg-canvas [payload owner opts]
@@ -227,33 +224,35 @@
                                   :width  "100%"
                                   :height "100%"
                                   :fill   "url(#grid)"}))
-                 (om/build cursors (select-keys payload [:subscribers :client-uuid]))
-                 (om/build svg-layers (select-keys payload [:camera :selected-eid]))
-                 (dom/text #js {:x (get-in payload [:mouse :x])
-                                :y (get-in payload [:mouse :y])
-                                :className "mouse-stats"}
-                           (pr-str (:mouse payload)))
-                 (om/build subscriber-layers {:layers (reduce (fn [acc [id subscriber]]
-                                                                (if-let [layer (:layer subscriber)]
-                                                                  (conj acc (assoc layer
-                                                                              :layer/end-x (:layer/current-x layer)
-                                                                              :layer/end-y (:layer/current-y layer)
-                                                                              :stroke (apply str "#" (take 6 id))
-                                                                              :layer/stroke (apply str "#" (take 6 id))))
-                                                                  acc))
-                                                              [] (:subscribers payload))
-                                              :camera (:camers payload)})
-                 (when-let [sel (cond
-                                 (settings/selection-in-progress? payload) (settings/selection payload)
-                                 (settings/drawing-in-progress? payload) (settings/drawing payload)
-                                 :else nil)]
-                   (dom/g #js {:className "layers"}
-                          (let [sel (merge sel
-                                           {:layer/end-x (:layer/current-x sel)
-                                            :layer/end-y (:layer/current-y sel)
-                                            :strokeDasharray "5,5"
-                                            :fill "gray"
-                                            :fillOpacity "0.25"}
-                                           (when (= :layer.type/group (:layer/type sel))
-                                             {:layer/type :layer.type/rect}))]
-                            (svg-element (:camera payload) #{} sel)))))))))
+
+                 (dom/g
+                  #js {:transform (cameras/->svg-transform (:camera payload))}
+                  (om/build cursors (select-keys payload [:subscribers :client-uuid]))
+                  (om/build svg-layers (select-keys payload [:selected-eid]))
+                  (dom/text #js {:x (get-in payload [:mouse :x])
+                                 :y (get-in payload [:mouse :y])
+                                 :className "mouse-stats"}
+                            (pr-str (:mouse payload)))
+                  (om/build subscriber-layers {:layers (reduce (fn [acc [id subscriber]]
+                                                                 (if-let [layer (:layer subscriber)]
+                                                                   (conj acc (assoc layer
+                                                                               :layer/end-x (:layer/current-x layer)
+                                                                               :layer/end-y (:layer/current-y layer)
+                                                                               :stroke (apply str "#" (take 6 id))
+                                                                               :layer/stroke (apply str "#" (take 6 id))))
+                                                                   acc))
+                                                               [] (:subscribers payload))})
+                  (when-let [sel (cond
+                                  (settings/selection-in-progress? payload) (settings/selection payload)
+                                  (settings/drawing-in-progress? payload) (settings/drawing payload)
+                                  :else nil)]
+                    (dom/g #js {:className "layers"}
+                           (let [sel (merge sel
+                                            {:layer/end-x (:layer/current-x sel)
+                                             :layer/end-y (:layer/current-y sel)
+                                             :strokeDasharray "5,5"
+                                             :fill "gray"
+                                             :fillOpacity "0.25"}
+                                            (when (= :layer.type/group (:layer/type sel))
+                                              {:layer/type :layer.type/rect}))]
+                             (svg-element #{} sel))))))))))
