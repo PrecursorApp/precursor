@@ -167,7 +167,10 @@
   (when (get-in current-state [:subscribers (:client-uuid current-state) :show-mouse?])
     (sente/send-msg (:sente current-state)
                     [:frontend/mouse-position {:mouse-position (cameras/screen->point (:camera current-state) x y)
-                                               :document/id (:document/id current-state)}])))
+                                               :tool (get-in current-state state/current-tool-path)
+                                               :document/id (:document/id current-state)
+                                               :layer (when (get-in current-state [:drawing :in-progress?])
+                                                        (get-in current-state [:drawing :layer]))}])))
 
 (defmethod post-control-event! :show-mouse-toggled
   [target message {:keys [client-uuid show-mouse?]} current-state previous-state]
@@ -254,13 +257,14 @@
 
 (defmethod post-control-event! :mouse-released
   [target message [x y button type] previous-state current-state]
-  (let [cast! #(put! (get-in current-state [:comms :controls]) [%])
+  (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         was-drawing? (get-in previous-state [:drawing :in-progress?])
         layer        (get-in current-state [:drawing :layer])]
     (cond
-     (and (not= type "touchend") (get-in current-state [:menu :open?])) (cast! :menu-closed)
-     was-drawing? (d/transact! db [layer])
+     (and (not= type "touchend") (get-in current-state [:menu :open?])) (cast! [:menu-closed])
+     was-drawing? (do (d/transact! db [layer])
+                      (cast! [:mouse-moved [x y]]))
      :else nil)))
 
 (defmethod control-event :deleted-selected

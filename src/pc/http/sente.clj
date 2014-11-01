@@ -109,9 +109,13 @@
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document/id)
         mouse-position (-> ?data :mouse-position)
+        tool (-> ?data :tool)
+        layer (-> ?data :layer)
         cid (client-uuid->uuid client-uuid)]
     (doseq [[uid _] (dissoc (get @document-subs document-id) cid)]
       ((:send-fn @sente-state) uid [:frontend/mouse-move {:client-uuid cid
+                                                          :tool tool
+                                                          :layer layer
                                                           :mouse-position mouse-position}]))))
 
 ;; TODO: maybe need a compare-and-set! here
