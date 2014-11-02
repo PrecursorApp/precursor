@@ -219,8 +219,10 @@
     (d/listen! (:db @state)
                (fn [tx-report]
                  (when (not-any? #(= (:a %) :server/update) (-> tx-report :tx-data)) ;; hack to prevent loops
-                   (sente/send-msg (:sente @state) [:frontend/transaction {:datoms (->> tx-report :tx-data (mapv ds/datom-read-api))
-                                                                           :document/id (:document/id @state)}]))))
+                   (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
+                     (doseq [datom-group (partition-all 500 datoms)]
+                       (sente/send-msg (:sente @state) [:frontend/transaction {:datoms datom-group
+                                                                               :document/id (:document/id @state)}]))))))
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
