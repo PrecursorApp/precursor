@@ -33,3 +33,18 @@
                       (:layer/selected? layer) 0.2
                       :else 1)
       :style         {:opacity (:layer/opacity layer)}})))
+
+(defn layer->svg-text [layer]
+  (merge
+   layer
+   {:className "layer"
+    :x (:layer/start-x layer)
+    :y (:layer/start-y layer)
+    :fill (:layer/fill layer "none")
+    :key (:layer/id layer)
+    :stroke (:layer/stroke layer "black")
+    ;; TODO: defaults for each layer when we create them
+    :strokeWidth 0;(:layer/stroke-width layer 0)
+    :style {:opacity (:layer/opacity layer)}
+    :fontFamily (:layer/font-family layer "Roboto")
+    :fontSize   (:layer/font-size layer 24)}))

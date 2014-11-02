@@ -10,6 +10,7 @@
             [frontend.state :as state]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
+            [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]])
@@ -38,9 +39,7 @@
 
 (defmethod svg-element :layer.type/text
   [selected-eids layer]
-  (-> (svg/layer->svg-rect layer)
-      (merge {:fontFamily (:layer/font-family layer)
-              :fontSize   (:layer/font-size layer)})
+  (-> (svg/layer->svg-text layer)
       (maybe-add-selected layer selected-eids)
       (clj->js)
       (dom/text (:layer/text layer))))
@@ -119,6 +118,48 @@
     (render [_]
       (apply dom/g nil
              (om/build-all cursor (dissoc subscribers client-uuid) {:opts {:client-uuid client-uuid}})))))
+
+(defn text-input [layer owner]
+  (reify
+    om/IDidMount
+    (did-mount [_]
+      (.focus (om/get-node owner "input")))
+    om/IDidUpdate
+    (did-update [_ _ _]
+      (.focus (om/get-node owner "input"))
+      (om/set-state! owner :input-min-width (.-width (goog.style/getSize (om/get-node owner "input-width-tester")))))
+    om/IInitState
+    (init-state [_]
+      {:input-min-width 0})
+    om/IRender
+    (render [_]
+      (let [{:keys [cast!]} (om/get-shared owner)
+            text-style {:font-size (:layer/font-size layer 24)
+                        :font-family (:layer/font-family layer "Roboto")}]
+        (dom/foreignObject #js {:width "100%"
+                                :height "100%"
+                                :x (:layer/current-x layer)
+                                ;; TODO: defaults for each layer when we create them
+                                :y (- (:layer/current-y layer) (:layer/font-size layer 24))}
+                           (dom/form #js {:className "svg-text-form"
+                                          :onSubmit (fn [e]
+                                                      (cast! :text-layer-finished)
+                                                      false)}
+                                     ;; TODO: experiment with a contentEditable div
+                                     (dom/input #js {:type "text"
+                                                     :value (or (:layer/text layer) "")
+                                                     ;; TODO: defaults for each layer when we create them
+                                                     :style (clj->js (merge text-style
+                                                                            {:width (+ 150 (om/get-state owner :input-min-width))}))
+                                                     :ref "input"
+                                                     :onChange #(cast! :text-layer-edited {:value (.. % -target -value)})})
+                                     (dom/div #js {:style (clj->js (merge {:visibility "hidden"
+                                                                           :position "fixed"
+                                                                           :top "-100px"
+                                                                           :display "inline-block"}
+                                                                          text-style))
+                                                   :ref "input-width-tester"}
+                                              (:layer/text layer))))))))
 
 (defn subscriber-layers [{:keys [layers]} owner]
   (reify
@@ -242,17 +283,23 @@
                                                                                :layer/stroke (apply str "#" (take 6 id))))
                                                                    acc))
                                                                [] (:subscribers payload))})
+                  (when (and (settings/drawing-in-progress? payload)
+                             (= :layer.type/text (get-in payload [:drawing :layer :layer/type])))
+                    (om/build text-input (get-in payload [:drawing :layer])))
+
                   (when-let [sel (cond
+                                  (= :layer.type/text (get-in payload [:drawing :layer :layer/type])) nil
                                   (settings/selection-in-progress? payload) (settings/selection payload)
                                   (settings/drawing-in-progress? payload) (settings/drawing payload)
                                   :else nil)]
                     (dom/g #js {:className "layers"}
                            (let [sel (merge sel
                                             {:layer/end-x (:layer/current-x sel)
-                                             :layer/end-y (:layer/current-y sel)
-                                             :strokeDasharray "5,5"
-                                             :fill "gray"
-                                             :fillOpacity "0.25"}
+                                             :layer/end-y (:layer/current-y sel)}
+                                            (when (not= :layer.type/text (:layer/type sel))
+                                              {:strokeDasharray "5,5"
+                                               :fill "gray"
+                                               :fillOpacity "0.25"})
                                             (when (= :layer.type/group (:layer/type sel))
                                               {:layer/type :layer.type/rect}))]
                              (svg-element #{} sel))))))))))

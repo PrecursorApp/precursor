@@ -56,14 +56,15 @@
                        (js/String.fromCharCode (.-which event)))
         tokens     [shift? meta? ctrl? alt? char]
         key-string (string/join "+" (filter identity tokens))]
-    (when (get suppressed-key-combos key-string)
-      (.preventDefault event))
-    (when-not (.-repeat event)
-      (when-let [human-name (get keyq/code->key (.-which event))]
-        (let [key-name (keyword (str human-name "?"))]
-          (cast! :key-state-changed [{:key-name-kw key-name
-                                      :code        (.-which event)
-                                      :depressed?  (= direction :down)}]))))))
+    (when (not= (.. event -target -tagName) "INPUT")
+      (when (get suppressed-key-combos key-string)
+        (.preventDefault event))
+      (when-not (.-repeat event)
+        (when-let [human-name (get keyq/code->key (.-which event))]
+          (let [key-name (keyword (str human-name "?"))]
+            (cast! :key-state-changed [{:key-name-kw key-name
+                                        :code        (.-which event)
+                                        :depressed?  (= direction :down)}])))))))
 
 ;; Overcome some of the browser limitations around DnD
 (def mouse-move-ch
@@ -231,7 +232,9 @@
     (routes/define-routes! state)
     (install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down
                                              :handle-mouse-up    handle-canvas-mouse-up
-                                             :handle-mouse-move! handle-mouse-move!})
+                                             :handle-mouse-move! handle-mouse-move!
+                                             :handle-key-down    handle-key-down
+                                             :handle-key-up      handle-key-up})
 
     (async/tap (:controls-mult comms) controls-tap)
     (async/tap (:nav-mult comms) nav-tap)

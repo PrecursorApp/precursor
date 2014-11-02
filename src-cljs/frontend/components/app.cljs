@@ -60,7 +60,7 @@
       {:aside-hover nil})
     om/IRender
     (render [_]
-      (let [{:keys [cast!]}      (om/get-shared owner)
+      (let [{:keys [cast! handlers]}      (om/get-shared owner)
             show-grid?           (get-in app state/show-grid-path)
             night-mode?          (get-in app state/night-mode-path)
             hovered-aside?       (:hovered-aside (om/get-state owner))]

@@ -134,6 +134,11 @@
                 (update-in [:entity-ids] disj entity-id))]
             r)))
 
+(defmethod control-event :text-layer-edited
+  [target message {:keys [value]} state]
+  (-> state
+      (assoc-in [:drawing :layer :layer/text] value)))
+
 (defmethod control-event :mouse-moved
   [target message [x y] state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)]
@@ -151,6 +156,9 @@
                                (fn [layer]
                                  (merge
                                   layer
+                                  (when (= :text (get-in state state/current-tool-path))
+                                    {:layer/start-x rx
+                                     :layer/start-y ry})
                                   (when (= :pen (get-in state state/current-tool-path))
                                     {:layer/path (svg/points->path points)})
                                   (when (= :circle (get-in state state/current-tool-path))
@@ -193,8 +201,7 @@
                (set/intersection has-x1 has-y0)
                (set/intersection has-x1 has-y1))))
 
-(defmethod control-event :mouse-released
-  [target message [x y] state]
+(defn finalize-layer [state]
   (let [{:keys [x y]} (get-in state [:mouse])
         [rx ry] (cameras/screen->point (:camera state) x y)
         layer-type (get-in state [:drawing :layer :layer/type])
@@ -217,26 +224,33 @@
         ;; TODO: get rid of nils (datomic doesn't like them)
         (update-in [:drawing :layer]
                    (fn [layer]
-                     (merge
-                      layer
-                      {:layer/end-x rx
-                       :layer/end-y ry
-                       :layer/current-x nil
-                       :layer/current-y nil
-                       :layer/start-sx nil
-                       :layer/start-sy nil
-                       :layer/current-sx nil
-                       :layer/current-sy nil}
-                      (when (= :circle (get-in state state/current-tool-path))
-                        {:layer/rx (Math/abs (- (:layer/start-x layer)
-                                                (:layer/end-x layer)))
-                         :layer/ry (Math/abs (- (:layer/start-y layer)
-                                                (:layer/end-y layer)))})
-                      (when (= layer-type :layer.type/path)
-                        {:layer/path (svg/points->path (get-in state [:drawing :points]))})
-                      (when (seq bounding-eids)
-                        {:layer/child bounding-eids}))))
+                     (-> layer
+                         (dissoc
+                          :layer/current-x
+                          :layer/current-y
+                          :layer/start-sx
+                          :layer/start-sy
+                          :layer/current-sx
+                          :layer/current-sy)
+                         (merge
+                          {:layer/end-x rx
+                           :layer/end-y ry}
+                          (when (= :circle (get-in state state/current-tool-path))
+                            {:layer/rx (Math/abs (- (:layer/start-x layer)
+                                                    (:layer/end-x layer)))
+                             :layer/ry (Math/abs (- (:layer/start-y layer)
+                                                    (:layer/end-y layer)))})
+                          (when (= layer-type :layer.type/path)
+                            {:layer/path (svg/points->path (get-in state [:drawing :points]))})
+                          (when (seq bounding-eids)
+                            {:layer/child bounding-eids})))))
         (assoc-in [:camera :moving?] false))))
+
+(defmethod control-event :mouse-released
+  [target message [x y] state]
+  (if (= :layer.type/text (get-in state [:drawing :layer :layer/type]))
+    state
+    (finalize-layer state)))
 
 (defmethod post-control-event! :mouse-depressed
   [target message [x y button] previous-state current-state]
@@ -247,8 +261,7 @@
      ;; turning off Cmd+click for opening the menu
      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :text)  (let [text (js/prompt "Layer text:")]
-                                                         (cast! :text-layer-created [text [x y]]))
+     (= (get-in current-state state/current-tool-path) :text) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
@@ -263,9 +276,22 @@
         layer        (get-in current-state [:drawing :layer])]
     (cond
      (and (not= type "touchend") (get-in current-state [:menu :open?])) (cast! [:menu-closed])
+     (= :layer.type/text (:layer/type layer)) nil
      was-drawing? (do (d/transact! db [layer])
                       (cast! [:mouse-moved [x y]]))
      :else nil)))
+
+(defmethod control-event :text-layer-finished
+  [target message [x y] state]
+  (finalize-layer state))
+
+(defmethod post-control-event! :text-layer-finished
+  [target message [x y] previous-state current-state]
+  (let [cast! #(put! (get-in current-state [:comms :controls]) %)
+        db           (:db current-state)
+        layer        (get-in current-state [:drawing :layer])]
+    (d/transact! db [layer])
+    (cast! [:mouse-moved [x y]])))
 
 (defmethod control-event :deleted-selected
   [target message _ state]
