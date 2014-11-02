@@ -170,15 +170,25 @@
                   (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)))]
       r)))
 
-(defmethod post-control-event! :mouse-moved
-  [target message [x y] current-state previous-state]
+;; TODO: this shouldn't assume it's sending a mouse position
+(defn maybe-notify-subscribers! [current-state x y]
   (when (get-in current-state [:subscribers (:client-uuid current-state) :show-mouse?])
     (sente/send-msg (:sente current-state)
-                    [:frontend/mouse-position {:mouse-position (cameras/screen->point (:camera current-state) x y)
-                                               :tool (get-in current-state state/current-tool-path)
-                                               :document/id (:document/id current-state)
-                                               :layer (when (get-in current-state [:drawing :in-progress?])
-                                                        (get-in current-state [:drawing :layer]))}])))
+                    [:frontend/mouse-position (merge
+                                               {:tool (get-in current-state state/current-tool-path)
+                                                :document/id (:document/id current-state)
+                                                :layer (when (get-in current-state [:drawing :in-progress?])
+                                                         (get-in current-state [:drawing :layer]))}
+                                               (when (and x y)
+                                                 {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
+
+(defmethod post-control-event! :text-layer-edited
+  [target message _ current-state previous-state]
+  (maybe-notify-subscribers! current-state nil nil))
+
+(defmethod post-control-event! :mouse-moved
+  [target message [x y] current-state previous-state]
+  (maybe-notify-subscribers! current-state x y))
 
 (defmethod post-control-event! :show-mouse-toggled
   [target message {:keys [client-uuid show-mouse?]} current-state previous-state]

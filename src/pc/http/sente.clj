@@ -37,7 +37,8 @@
 (defonce document-subs (atom {}))
 
 (defn notify-transaction [data]
-  (doseq [[uid _] (get @document-subs (:document/id data))]
+  ;; TODO: store client-uuid as a proper uuid everywhere
+  (doseq [[uid _] (dissoc (get @document-subs (:document/id data)) (str (:session/uuid data)))]
     (log/infof "notifying %s about new transactions for %s" uid (:document/id data))
     ((:send-fn @sente-state) uid [:datomic/transaction data])))
 
@@ -113,10 +114,12 @@
         layer (-> ?data :layer)
         cid (client-uuid->uuid client-uuid)]
     (doseq [[uid _] (dissoc (get @document-subs document-id) cid)]
-      ((:send-fn @sente-state) uid [:frontend/mouse-move {:client-uuid cid
-                                                          :tool tool
-                                                          :layer layer
-                                                          :mouse-position mouse-position}]))))
+      ((:send-fn @sente-state) uid [:frontend/mouse-move (merge
+                                                          {:client-uuid cid
+                                                           :tool tool
+                                                           :layer layer}
+                                                          (when mouse-position
+                                                            {:mouse-position mouse-position}))]))))
 
 ;; TODO: maybe need a compare-and-set! here
 (defmethod ws-handler :frontend/share-mouse [{:keys [client-uuid ?data] :as req}]
