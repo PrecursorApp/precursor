@@ -156,6 +156,7 @@
                                      (dom/div #js {:style (clj->js (merge {:visibility "hidden"
                                                                            :position "fixed"
                                                                            :top "-100px"
+                                                                           :left "0"
                                                                            :display "inline-block"}
                                                                           text-style))
                                                    :ref "input-width-tester"}
