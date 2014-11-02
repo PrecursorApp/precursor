@@ -21,6 +21,10 @@
   (send-msg sente-state [:frontend/subscribe {:document-id document-id}] 2000
             (fn [{:keys [document layers client-uuid]}]
               (swap! app-state assoc :client-uuid client-uuid)
+              ;; TODO: if this is a good idea, then make it the default
+              (put! (get-in @app-state [:comms :controls])
+                    [:show-mouse-toggled {:client-uuid client-uuid
+                                          :show-mouse? true}])
               (d/transact (:db @app-state)
                           ;; hack to prevent loops
                           (conj layers {:db/id -1 :server/update true})))))
