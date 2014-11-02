@@ -261,7 +261,10 @@
      ;; turning off Cmd+click for opening the menu
      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :text) (cast! :drawing-started [x y])
+     (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
+                                                                ;; if you click while writing text, you probably wanted to place it there
+                                                                (cast! :text-layer-finished [x y])
+                                                                (cast! :drawing-started [x y]))
      (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
