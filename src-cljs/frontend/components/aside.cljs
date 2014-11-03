@@ -24,18 +24,23 @@
     om/IWillUnmount
     (will-unmount [_]
       (d/unlisten! (om/get-shared (om/get-shared owner :db)) (om/get-state owner :listener-key)))
+    om/IDidUpdate
+    (did-update [_ _ _]
+      ;; maybe scroll chat
+      )
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)]
         (html
          [:div.chat-container
-          (for [chat (sort-by :server/timestamp chats)
-                :let [id (apply str (take 6 (str (:session/uuid chat))))]]
-            (html [:div
-                   [:span {:style {:color (str "#" id)}} id]
-                   " "
-                   [:span (:chat/body chat)]]))
+          [:div.chat-messages
+           (for [chat (sort-by :server/timestamp chats)
+                 :let [id (apply str (take 6 (str (:session/uuid chat))))]]
+             (html [:div
+                    [:span {:style {:color (str "#" id)}} id]
+                    " "
+                    [:span (:chat/body chat)]]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)}
            [:input {:type "text"
@@ -80,7 +85,7 @@
              (common/icon :user (when show-mouse? {:path-props {:style {:stroke (str "#" id-str)}}}))
              [:span id-str]])
           ;; XXX better name here
-          [:div.aside-settings
+          [:div.aside-chat
            (om/build chat-aside {:db (:db app)
                                  :chat-body (get-in app [:chat :body])})]
           [:div.aside-settings

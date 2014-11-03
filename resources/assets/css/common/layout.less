@@ -206,6 +206,19 @@
       }
     }
   }
+  .aside-chat {
+    flex-grow: 1;
+    align-self: center;
+    .flexy(column);
+  }
+  .chat-container {
+    margin-top: auto;
+    .flexy(column);
+  }
+  .chat-messages {
+    margin-top: auto;
+    overflow-y: scroll;
+  }
 }
 .aside-settings {
   .flexy(column);
@@ -217,7 +230,9 @@
       .user-select(none);
       opacity: 0;
       cursor: default;
-      transition-duration: 0ms;
+      // this is still pretty buggy, opens and closes at weird times
+      transition-duration: 200ms;
+      height: 0;
     }
     .settings-menu {
       max-height: @tile * 3;
