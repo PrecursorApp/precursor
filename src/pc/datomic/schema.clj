@@ -122,6 +122,14 @@
               :db/index true
               :db/doc "Document entity id")
 
+   (attribute :chat/body
+              :db.type/string)
+
+   (attribute :server/timestamp
+              :db.type/instant)
+
+   (attribute :client/timestamp
+              :db.type/instant)
    ])
 
 (defn ensure-schema

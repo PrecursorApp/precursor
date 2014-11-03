@@ -3,7 +3,9 @@
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [pc.datomic :as pcd]
-            [datomic.api :refer [db q] :as d]))
+            [datomic.api :refer [db q] :as d])
+  (:import java.util.UUID))
+
 
 (defn public?
   "Only let the frontend access entities with the entity-ids we create for the frontend"
@@ -27,9 +29,25 @@
                                 [?t :db/ident ?i]]}
                       db))))
 
-(defn coerce [float-attrs [type e a v :as transaction]]
+(defn get-uuid-attrs [db]
+  (set (map last (d/q '{:find [?t ?i]
+                        :where [[?t :db/valueType :db.type/uuid]
+                                [?t :db/ident ?i]]}
+                      db))))
+
+(defn coerce-floats [float-attrs [type e a v :as transaction]]
   (if (contains? float-attrs a)
     [type e a (float v)]
+    transaction))
+
+(defn coerce-uuids [uuid-attrs [type e a v :as transaction]]
+  (if (and (contains? uuid-attrs a) (string? v))
+    [type e a (UUID/fromString v)]
+    transaction))
+
+(defn coerce-server-timestamp [server-timestamp [type e a v :as transaction]]
+  (if (and (= :db/add type) (= :server/timestamp a))
+    [type e a server-timestamp]
     transaction))
 
 (defn transact!
@@ -47,11 +65,15 @@
          :body {:datoms (let [db (pcd/default-db)
                               conn (pcd/conn)
                               txid (d/tempid :db.part/tx)
-                              float-attrs (get-float-attrs db)]
+                              float-attrs (get-float-attrs db)
+                              uuid-attrs (get-uuid-attrs db)
+                              server-timestamp (java.util.Date.)]
                           (->> datoms
                                (filter (partial public? db))
                                (map pcd/datom->transaction)
-                               (map (partial coerce float-attrs))
+                               (map (partial coerce-floats float-attrs))
+                               (map (partial coerce-uuids uuid-attrs))
+                               (map (partial coerce-server-timestamp server-timestamp))
                                (concat [{:db/id txid :document/id document-id :session/uuid session-uuid}])
                                (d/transact conn)
                                deref

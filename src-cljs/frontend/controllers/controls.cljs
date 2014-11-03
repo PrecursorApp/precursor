@@ -364,3 +364,29 @@
 (defmethod control-event :db-updated
   [target message _ state]
   (assoc state :random-number (Math/random)))
+
+(defmethod control-event :chat-body-changed
+  [target message {:keys [value]} state]
+  (let [entity-id (or (get-in state [:chat :entity-id])
+                      (-> state :entity-ids first))]
+    (-> state
+        (assoc-in [:chat :body] value)
+        (assoc-in [:chat :entity-id] entity-id)
+        (update-in [:entity-ids] disj entity-id))))
+
+(defmethod control-event :chat-submitted
+  [target message _ state]
+  (-> state
+      (assoc-in [:chat :body] nil)
+      (assoc-in [:chat :entity-id] nil)))
+
+(defmethod post-control-event! :chat-submitted
+  [target message _ previous-state current-state]
+  (let [db (:db current-state)]
+    (d/transact db [{:chat/body (get-in previous-state [:chat :body])
+                     :db/id (get-in previous-state [:chat :entity-id])
+                     :session/uuid (:client-uuid previous-state)
+                     :document/id (:document/id previous-state)
+                     :client/timestamp (js/Date.)
+                     ;; server will overwrite this
+                     :server/timestamp (js/Date.)}])))

@@ -6,6 +6,7 @@
             [datomic.api :refer [db q] :as d]
             [pc.http.datomic2 :as datomic]
             [pc.models.layer :as layer]
+            [pc.models.chat :as chat]
             [pc.datomic :as pcd]
             [taoensso.sente :as sente])
   (:import java.util.UUID))
@@ -91,6 +92,7 @@
       ((:send-fn @sente-state) uid [:frontend/subscriber-joined {:client-uuid cid}]))
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid))
     (let [resp {:layers (layer/find-by-document db {:db/id document-id})
+                :chats (chat/find-by-document db {:db/id document-id})
                 :document (pcd/touch+ (d/entity db document-id))
                 :client-uuid (client-uuid->uuid client-uuid)}]
       (?reply-fn resp))))

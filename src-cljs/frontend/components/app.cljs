@@ -66,7 +66,7 @@
             hovered-aside?       (:hovered-aside (om/get-state owner))]
         (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
                                                       (when night-mode? ["night-mode"])))}
-               [:aside.app-aside {:class (when hovered-aside? "hover")
+               [:aside.app-aside {:class "hover";(when hovered-aside? "hover")
                                   :on-mouse-enter #(om/set-state! owner :hovered-aside true)
                                   :on-mouse-leave #(om/set-state! owner :hovered-aside false)
                                   :on-touch-start #(om/set-state! owner :hovered-aside true)}

@@ -19,7 +19,7 @@
 
 (defn subscribe-to-document [sente-state app-state document-id]
   (send-msg sente-state [:frontend/subscribe {:document-id document-id}] 2000
-            (fn [{:keys [document layers client-uuid]}]
+            (fn [{:keys [document layers chats client-uuid]}]
               (swap! app-state assoc :client-uuid client-uuid)
               ;; TODO: if this is a good idea, then make it the default
               (put! (get-in @app-state [:comms :controls])
@@ -27,7 +27,7 @@
                                           :show-mouse? true}])
               (d/transact (:db @app-state)
                           ;; hack to prevent loops
-                          (conj layers {:db/id -1 :server/update true})))))
+                          (concat layers chats [{:db/id -1 :server/update true}])))))
 
 (defn fetch-subscribers [sente-state app-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 2000
