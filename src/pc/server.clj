@@ -51,6 +51,16 @@
         (let [[document-id] (pcd/generate-eids (pcd/conn) 1)]
           @(d/transact (pcd/conn) [{:db/id document-id :document/name "Untitled"}])
           (redirect (str "/document/" document-id))))
+   ;; Group newcomers into buckets with bucket-count users in each bucket.
+   ;; TODO: exclude documents that didn't start out as buckets.
+   (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]
+        (let [bucket-count (Integer/parseInt bucket-count)]
+          (if-let [eid (ffirst (sort-by (comp - count last)
+                                        (filter (fn [[doc-id subs]]
+                                                  (< (count subs) bucket-count))
+                                                @sente/document-subs)))]
+            (redirect (str "/document/" eid))
+            (redirect "/"))))
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
