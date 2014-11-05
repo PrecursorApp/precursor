@@ -161,6 +161,11 @@
         opacity: 0;
       }
     }
+    .aside-chat {
+      input {
+        padding: 0 1em;
+      }
+    }
     .chat-messages {
       margin-left: 0;
       opacity: 1;
@@ -215,7 +220,6 @@
   .flex(1);
   .flexy(column);
   overflow: hidden;
-
   form {
     .flex(0 0 auto);
     .flexy();
@@ -226,9 +230,10 @@
     height: @tile;
     border: none;
     border-top: 1px solid #555;
-    padding: 0 1em;
+    padding: 0 1em 0 @tile;
     outline: 0;
     background: none;
+    transition: 200ms @bezier_transform;
   }
 }
 .chat-container {
@@ -242,7 +247,7 @@
   opacity: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  transition: 500ms;
+  transition: 500ms @bezier_transform;
   &::-webkit-scrollbar {
     width: 0;
   }
