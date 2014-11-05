@@ -8,6 +8,7 @@
             [compojure.route]
             [datomic.api :refer [db q] :as d]
             [org.httpkit.server :as httpkit]
+            [pc.admin.db :as db-admin]
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
             [pc.http.sente :as sente]
@@ -51,6 +52,53 @@
         (let [[document-id] (pcd/generate-eids (pcd/conn) 1)]
           @(d/transact (pcd/conn) [{:db/id document-id :document/name "Untitled"}])
           (redirect (str "/document/" document-id))))
+   ;; Group newcomers into buckets with bucket-count users in each bucket.
+   ;; TODO: exclude documents that didn't start out as buckets.
+   (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]
+        (let [bucket-count (Integer/parseInt bucket-count)]
+          (if-let [eid (ffirst (sort-by (comp - count last)
+                                        (filter (fn [[doc-id subs]]
+                                                  (< (count subs) bucket-count))
+                                                @sente/document-subs)))]
+            (redirect (str "/document/" eid))
+            (redirect "/"))))
+   (GET "/interesting" []
+        {:status 200
+         :body (str
+                "<html></body>"
+                (clojure.string/join
+                 " "
+                 (or (seq (for [doc-id (db-admin/interesting-doc-ids {:layer-threshold 10})]
+                            (format "<p><a href=\"/document/%s\">%s</a></p>" doc-id doc-id)))
+                     ["Nothing interesting today :("]))
+                "</body></html")})
+
+   (GET ["/interesting/:layer-count" :layer-count #"[0-9]+"] [layer-count]
+        {:status 200
+         :body (str
+                "<html></body>"
+                (clojure.string/join
+                 " "
+                 (or (seq (for [doc-id (db-admin/interesting-doc-ids {:layer-threshold (Integer/parseInt layer-count)})]
+                            (format "<p><a href=\"/document/%s\">%s</a></p>" doc-id doc-id)))
+                     ["Nothing interesting today :("]))
+                "</body></html")})
+
+   (GET "/occupied" []
+        ;; TODO: fix whatever is causing this :(
+        (swap! sente/document-subs (fn [ds]
+                                     (reduce (fn [acc1 [k s]]
+                                               (assoc acc1 k (dissoc s "dummy-ajax-post-fn")))
+                                             {} ds)))
+        {:status 200
+         :body (str
+                "<html></body>"
+                (clojure.string/join
+                 " "
+                 (or (seq (for [[doc-id subs] (sort-by first @sente/document-subs)]
+                            (format "<p><a href=\"/document/%s\">%s</a> with %s users</p>" doc-id doc-id (count subs))))
+                     ["Nothing occupied right now :("]))
+                "</body></html")})
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))

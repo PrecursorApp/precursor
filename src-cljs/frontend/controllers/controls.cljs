@@ -327,7 +327,8 @@
       (update-in [:menu] assoc
                  :open? true
                  :x (get-in state [:mouse :x])
-                 :y (get-in state [:mouse :y]))))
+                 :y (get-in state [:mouse :y]))
+      (assoc-in [:drawing :in-progress?] false)))
 
 (defmethod control-event :menu-closed
   [target message _ state]
