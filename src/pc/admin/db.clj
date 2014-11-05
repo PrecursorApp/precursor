@@ -15,6 +15,7 @@
         latest-tx (.tx (last index-range))
         doc-ids (map first (d/q '{:find [?d] :in [$ ?earliest-tx ?latest-tx]
                                   :where [[?t :document/id ?d ?tx]
+                                          [?t :layer/name]
                                           [(< ?earliest-tx ?tx)]
                                           [(> ?latest-tx ?tx)]]}
                                 db (dec earliest-tx) (inc latest-tx)))]
