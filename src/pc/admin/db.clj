@@ -11,14 +11,15 @@
                                  limit 100}}]
   (let [db (pcd/default-db)
         index-range (d/index-range db :db/txInstant (to-date start-time) (to-date end-time))
-        earliest-tx (.tx (first index-range))
-        latest-tx (.tx (last index-range))
-        doc-ids (map first (d/q '{:find [?d] :in [$ ?earliest-tx ?latest-tx]
-                                  :where [[?t :document/id ?d ?tx]
-                                          [?t :layer/name]
-                                          [(< ?earliest-tx ?tx)]
-                                          [(> ?latest-tx ?tx)]]}
-                                db (dec earliest-tx) (inc latest-tx)))]
+        earliest-tx (some-> index-range first .tx)
+        latest-tx (some-> index-range last .tx)
+        doc-ids (when (and earliest-tx latest-tx)
+                  (map first (d/q '{:find [?d] :in [$ ?earliest-tx ?latest-tx]
+                                    :where [[?t :document/id ?d ?tx]
+                                            [?t :layer/name]
+                                            [(<= ?earliest-tx ?tx)]
+                                            [(>= ?latest-tx ?tx)]]}
+                                  db earliest-tx latest-tx)))]
     (take limit (filter (fn [doc-id]
                           (< layer-threshold (or (ffirst (d/q '{:find [(count ?t)] :in [$ ?d]
                                                                 :where [[?t :document/id ?d]
