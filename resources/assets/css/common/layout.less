@@ -161,6 +161,15 @@
         opacity: 0;
       }
     }
+    .aside-chat {
+      input {
+        padding: 0 1em;
+      }
+    }
+    .chat-messages {
+      margin-left: 0;
+      opacity: 1;
+    }
     i {
       margin-right: @icon_width;
       transition-duration: 100ms;
@@ -207,6 +216,45 @@
     }
   }
 }
+.aside-chat {
+  .flex(1);
+  .flexy(column);
+  overflow: hidden;
+  form {
+    .flex(0 0 auto);
+    .flexy();
+    margin: 0;
+  }
+  input {
+    width: 100%;
+    height: @tile;
+    border: none;
+    border-top: 1px solid #555;
+    padding: 0 1em 0 @tile;
+    outline: 0;
+    background: none;
+    transition: 200ms @bezier_transform;
+  }
+}
+.chat-container {
+  .flexy(column);
+  margin-top: auto;
+}
+.chat-messages {
+  width: @aside_width_lg;
+  margin-left: @tile;
+  padding: 1em;
+  opacity: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: 500ms @bezier_transform;
+  &::-webkit-scrollbar {
+    width: 0;
+  }
+  span {
+    word-break: break-word;
+  }
+}
 .aside-settings {
   .flexy(column);
   margin-top: auto;
@@ -217,7 +265,9 @@
       .user-select(none);
       opacity: 0;
       cursor: default;
-      transition-duration: 0ms;
+      // this is still pretty buggy, opens and closes at weird times
+      transition-duration: 200ms;
+      height: 0;
     }
     .settings-menu {
       max-height: @tile * 3;
