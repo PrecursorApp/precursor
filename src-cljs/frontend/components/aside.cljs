@@ -39,12 +39,12 @@
                  :let [id (apply str (take 6 (str (:session/uuid chat))))]]
              (html [:div
                     [:span {:style {:color (str "#" id)}} id]
-                    " "
-                    [:span (:chat/body chat)]]))]
+                    (str " " (:chat/body chat))]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)}
            [:input {:type "text"
                     :value (or chat-body "")
+                    :placeholder "Write something..."
                     :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]])))))
 
 (defn menu [app owner]
@@ -88,18 +88,19 @@
           [:div.aside-chat
            (om/build chat-aside {:db (:db app)
                                  :chat-body (get-in app [:chat :body])})]
-          [:div.aside-settings
-           [:button {:disabled "true"}
-            (common/icon :settings)
-            [:span "Settings"]]
-          [:div.settings-menu
-           [:button {:on-click #(put! controls-ch [:show-grid-toggled])}
-            [:span "Show Grid"]
-            (if show-grid?
-              (common/icon :check)
-              (common/icon :times))]
-           [:button {:on-click #(put! controls-ch [:night-mode-toggled])}
-            [:span "Night Mode"]
-            (if night-mode?
-              (common/icon :check)
-              (common/icon :times))]]]])))))
+          ; [:div.aside-settings
+          ;  [:button {:disabled "true"}
+          ;   (common/icon :settings)
+          ;   [:span "Settings"]]
+          ; [:div.settings-menu
+          ;  [:button {:on-click #(put! controls-ch [:show-grid-toggled])}
+          ;   [:span "Show Grid"]
+          ;   (if show-grid?
+          ;     (common/icon :check)
+          ;     (common/icon :times))]
+          ;  [:button {:on-click #(put! controls-ch [:night-mode-toggled])}
+          ;   [:span "Night Mode"]
+          ;   (if night-mode?
+          ;     (common/icon :check)
+          ;     (common/icon :times))]]]
+          ])))))
