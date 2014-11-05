@@ -5,20 +5,14 @@
             [pc.datomic :as pcd]))
 
 (defn interesting-doc-ids [{:keys [start-time end-time layer-threshold limit]
-                              :or {start-time (time/minus (time/now) (time/days 1))
-                                   end-time (time/now)
-                                   layer-threshold 10
-                                   limit 100}}]
+                            :or {start-time (time/minus (time/now) (time/days 1))
+                                 end-time (time/now)
+                                 layer-threshold 10
+                                 limit 100}}]
   (let [db (pcd/default-db)
-        earliest-tx (ffirst (d/q '{:find [(min ?tx)] :in [$ ?time]
-                                   :where [[?tx :db/txInstant ?when]
-                                           [(> ?when ?time)]]}
-                                 db (to-date start-time)))
-        latest-tx (or (ffirst (d/q '{:find [(max ?tx)] :in [$ ?time]
-                                     :where [[?tx :db/txInstant ?when]
-                                             [(< ?when ?time)]]}
-                                   db (to-date end-time)))
-                      (d/t->tx (d/next-t db)))
+        index-range (d/index-range db :db/txInstant (to-date start-time) (to-date end-time))
+        earliest-tx (.tx (first index-range))
+        latest-tx (.tx (last index-range))
         doc-ids (map first (d/q '{:find [?d] :in [$ ?earliest-tx ?latest-tx]
                                   :where [[?t :document/id ?d ?tx]
                                           [(< ?earliest-tx ?tx)]
