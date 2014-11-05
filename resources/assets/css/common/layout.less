@@ -168,7 +168,11 @@
     .aside-chat {
       input {
         padding: 0 1em;
+        height: @tile;
       }
+    }
+    .unseen-eids {
+      height: 0;
     }
     .chat-messages {
       margin-left: 0;
@@ -231,13 +235,22 @@
   }
   input {
     width: 100%;
-    height: @tile;
+    height: 0;
     border: none;
     border-top: 1px solid #555;
     padding: 0 1em 0 @tile;
     outline: 0;
     background: none;
     transition: 200ms @bezier_transform;
+  }
+  .unseen-eids {
+    .flex(0 0 auto);
+    .flexy(center);
+    height: @tile;
+    transition: 200ms @bezier_transform;
+    .count {
+      margin: auto;
+    }
   }
 }
 .chat-container {

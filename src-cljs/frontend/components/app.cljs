@@ -55,23 +55,20 @@
 
 (defn app [app owner]
   (reify
-    om/IInitState
-    (init-state [_]
-      {:aside-hover nil})
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]}      (om/get-shared owner)
             show-grid?           (get-in app state/show-grid-path)
             night-mode?          (get-in app state/night-mode-path)
-            hovered-aside?       (:hovered-aside (om/get-state owner))]
+            aside-opened?        (get-in app state/aside-menu-opened-path)]
         (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
                                                       (when night-mode? ["night-mode"])))}
-               [:aside.app-aside {:class (when hovered-aside? "hover")
-                                  :on-mouse-enter #(om/set-state! owner :hovered-aside true)
-                                  :on-mouse-leave #(om/set-state! owner :hovered-aside false)
-                                  :on-touch-start #(om/set-state! owner :hovered-aside true)}
+               [:aside.app-aside {:class (when aside-opened? "hover")
+                                  :on-mouse-enter #(cast! :aside-menu-opened)
+                                  :on-mouse-leave #(cast! :aside-menu-closed)
+                                  :on-touch-start #(cast! :aside-menu-opened)}
                 (om/build aside/menu app)]
-               [:main.app-main {:on-touch-start #(om/set-state! owner :hovered-aside false)
+               [:main.app-main {:on-touch-start #(cast! :aside-menu-closed)
                                 :onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}

@@ -391,3 +391,13 @@
                      :client/timestamp (js/Date.)
                      ;; server will overwrite this
                      :server/timestamp (js/Date.)}])))
+
+(defmethod control-event :aside-menu-opened
+  [target message _ state]
+  (-> state
+      (assoc-in state/aside-menu-opened-path true)
+      (assoc-in [:drawing :in-progress?] false)))
+
+(defmethod control-event :aside-menu-closed
+  [target message _ state]
+  (assoc-in state state/aside-menu-opened-path false))

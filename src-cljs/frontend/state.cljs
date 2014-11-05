@@ -21,6 +21,7 @@
 
 (def user-path [:current-user])
 
+(def aside-menu-opened-path [:aside-menu-opened])
 
 (def settings-path [:settings])
 
