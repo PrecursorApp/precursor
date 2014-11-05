@@ -83,6 +83,22 @@
                             (format "<p><a href=\"/document/%s\">%s</a></p>" doc-id doc-id)))
                      ["Nothing interesting today :("]))
                 "</body></html")})
+
+   (GET "/occupied" []
+        ;; TODO: fix whatever is causing this :(
+        (swap! sente/document-subs (fn [ds]
+                                     (reduce (fn [acc1 [k s]]
+                                               (assoc acc1 k (dissoc s "dummy-ajax-post-fn")))
+                                             {} ds)))
+        {:status 200
+         :body (str
+                "<html></body>"
+                (clojure.string/join
+                 " "
+                 (or (seq (for [[doc-id subs] (sort-by first @sente/document-subs)]
+                            (format "<p><a href=\"/document/%s\">%s</a> with %s users</p>" doc-id doc-id (count subs))))
+                     ["Nothing occupied right now :("]))
+                "</body></html")})
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
