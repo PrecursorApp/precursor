@@ -271,10 +271,6 @@
                   #js {:transform (cameras/->svg-transform (:camera payload))}
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
                   (om/build svg-layers (select-keys payload [:selected-eid]))
-                  (dom/text #js {:x (get-in payload [:mouse :x])
-                                 :y (get-in payload [:mouse :y])
-                                 :className "mouse-stats"}
-                            (pr-str (:mouse payload)))
                   (om/build subscriber-layers {:layers (reduce (fn [acc [id subscriber]]
                                                                  (if-let [layer (:layer subscriber)]
                                                                    (conj acc (assoc layer

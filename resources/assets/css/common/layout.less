@@ -44,9 +44,6 @@
         fill: @select_blue;
       }
     }
-    .mouse-stats {
-      fill: fade(@white, 13);
-    }
   }
   .radial-menu {
     .radial-button {
@@ -123,10 +120,6 @@
       fill: @select_blue;
     }
   }
-  .mouse-stats {
-    fill: fade(@black, 21);
-    transition-duration: 200ms;
-  }
   .mouse-tool {
     fill: none;
     stroke-width: 6;
@@ -147,6 +140,17 @@
     transition: 300ms;
   }
 }
+.mouse-stats {
+  position: fixed;
+  top: 100%;
+  margin-top: -2em;
+  width: 100%;
+  text-align: right;
+  right: 0.5em;
+  color: fade(@white, 25);
+  transition-duration: 200ms;
+}
+
 .app-aside {
   .flexy();
   width: @aside_width_sm;
