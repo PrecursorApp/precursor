@@ -72,6 +72,17 @@
                             (format "<p><a href=\"/document/%s\">%s</a></p>" doc-id doc-id)))
                      ["Nothing interesting today :("]))
                 "</body></html")})
+
+   (GET ["/interesting/:layer-count" :layer-count #"[0-9]+"] [layer-count]
+        {:status 200
+         :body (str
+                "<html></body>"
+                (clojure.string/join
+                 " "
+                 (or (seq (for [doc-id (db-admin/interesting-doc-ids {:layer-threshold (Integer/parseInt layer-count)})]
+                            (format "<p><a href=\"/document/%s\">%s</a></p>" doc-id doc-id)))
+                     ["Nothing interesting today :("]))
+                "</body></html")})
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
