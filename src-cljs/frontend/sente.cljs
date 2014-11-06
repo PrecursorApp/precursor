@@ -51,9 +51,7 @@
 
 
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
-  (swap! app-state update-in [:subscribers] (fn [s] (merge-with merge
-                                                                {(:client-uuid data) {}}
-                                                                s))))
+  (swap! app-state update-in [:subscribers (:client-uuid data)] merge (dissoc data :client-uuid)))
 
 (defmethod handle-message :frontend/subscriber-left [app-state message data]
   (swap! app-state update-in [:subscribers] dissoc (:client-uuid data)))

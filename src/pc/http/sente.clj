@@ -111,9 +111,9 @@
         cid (client-uuid->uuid client-uuid)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid))
-    (doseq [[uid _] (dissoc (get @document-subs document-id) cid)]
+    (doseq [[uid _] (get @document-subs document-id)]
       ((:send-fn @sente-state) uid [:frontend/subscriber-joined (merge {:client-uuid cid}
-                                                                       (get @document-subs document-id cid))]))
+                                                                       (get-in @document-subs [document-id cid]))]))
     (let [resp {:layers (layer/find-by-document db {:db/id document-id})
                 :chats (chat/find-by-document db {:db/id document-id})
                 :document (pcd/touch+ (d/entity db document-id))
