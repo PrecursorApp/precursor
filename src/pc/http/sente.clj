@@ -68,7 +68,7 @@
                                          (assoc acc document-id new-user-ids)))))
                                  ds ds))))
 
-(defmethod ws-handler :chsk/uidport-close [{:keys [client-uuid] :as req}]
+(defn close-connection [client-uuid]
   (log/infof "closing connection for %s" client-uuid)
   (let [uuid (client-uuid->uuid client-uuid)]
     (doseq [uid (reduce (fn [acc [doc-id clients]]
@@ -79,6 +79,12 @@
       (log/infof "notifying %s about %s leaving" uid uuid)
       ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-uuid uuid}]))
     (clean-document-subs uuid)))
+
+(defmethod ws-handler :chsk/uidport-close [{:keys [client-uuid] :as req}]
+  (close-connection client-uuid))
+
+(defmethod ws-handler :frontend/close-connection [{:keys [client-uuid] :as req}]
+  (close-connection client-uuid))
 
 (def colors
   #{"#1abc9c"

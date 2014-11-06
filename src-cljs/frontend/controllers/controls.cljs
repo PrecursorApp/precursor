@@ -398,3 +398,7 @@
 (defmethod control-event :aside-menu-closed
   [target message _ state]
   (assoc-in state state/aside-menu-opened-path false))
+
+(defmethod post-control-event! :application-shutdown
+  [target message _ previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/close-connection]))
