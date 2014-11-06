@@ -101,6 +101,10 @@
   [target message {:keys [project-id]} state]
   (update-in state state/night-mode-path not))
 
+(defn update-mouse [state x y]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+    (update-in state [:mouse] assoc :x x :y y :rx rx :ry ry)))
+
 (defmethod control-event :drawing-started
   [target message [x y] state]
   (let [;{:keys [x y]} (get-in state [:mouse])
@@ -123,10 +127,7 @@
                            :layer/current-x snap-x
                            :layer/current-y snap-y)
                 (assoc-in [:mouse :down] true)
-                (assoc-in [:mouse :x] x)
-                (assoc-in [:mouse :y] y)
-                (assoc-in [:mouse :rx] rx)
-                (assoc-in [:mouse :ry] ry)
+                (update-mouse x y)
                 (assoc-in [:selected-eid] entity-id)
                 (update-in [:entity-ids] disj entity-id))]
             r)))
@@ -143,7 +144,7 @@
     (let [r (if (get-in state [:drawing :in-progress?])
               (let [points ((fnil conj []) (get-in state [:drawing :points]) {:x x :y x :rx rx :ry ry})]
                 (-> state
-                    (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)
+                    (update-mouse x y)
                     (assoc-in [:drawing :points] points)
                     (update-in [:drawing :layer] assoc
                                :layer/current-x snap-x
@@ -162,8 +163,7 @@
                                                             (:layer/current-x layer)))
                                      :layer/ry (Math/abs (- (:layer/start-y layer)
                                                             (:layer/current-y layer)))}))))))
-              (-> state
-                  (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)))]
+              (update-mouse state x y))]
       r)))
 
 ;; TODO: this shouldn't assume it's sending a mouse position
@@ -224,10 +224,7 @@
         (update-in [:drawing] assoc :in-progress? false)
         (assoc-in [:drawing :points] [])
         (assoc-in [:mouse :down] false)
-        (assoc-in [:mouse :x] x)
-        (assoc-in [:mouse :y] y)
-        (assoc-in [:mouse :rx] rx)
-        (assoc-in [:mouse :ry] ry)
+        (update-mouse x y)
         ;; TODO: get rid of nils (datomic doesn't like them)
         (update-in [:drawing :layer]
                    (fn [layer]
@@ -254,6 +251,10 @@
   (if (= :layer.type/text (get-in state [:drawing :layer :layer/type]))
     state
     (finalize-layer state)))
+
+(defmethod control-event :mouse-depressed
+  [target message [x y button] state]
+  (update-mouse state x y))
 
 (defmethod post-control-event! :mouse-depressed
   [target message [x y button] previous-state current-state]
