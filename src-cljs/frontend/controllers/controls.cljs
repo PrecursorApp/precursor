@@ -377,10 +377,13 @@
 
 (defmethod post-control-event! :chat-submitted
   [target message _ previous-state current-state]
-  (let [db (:db current-state)]
+  (let [db (:db current-state)
+        client-uuid (:client-uuid previous-state)
+        color (get-in previous-state [:subscribers client-uuid :color])]
     (d/transact db [{:chat/body (get-in previous-state [:chat :body])
+                     :chat/color color
                      :db/id (get-in previous-state [:chat :entity-id])
-                     :session/uuid (:client-uuid previous-state)
+                     :session/uuid client-uuid
                      :document/id (:document/id previous-state)
                      :client/timestamp (js/Date.)
                      ;; server will overwrite this

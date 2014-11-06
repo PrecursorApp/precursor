@@ -125,6 +125,9 @@
    (attribute :chat/body
               :db.type/string)
 
+   (attribute :chat/color
+              :db.type/string)
+
    (attribute :server/timestamp
               :db.type/instant)
 

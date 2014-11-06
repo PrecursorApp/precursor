@@ -44,7 +44,7 @@
            (for [chat (sort-by :server/timestamp chats)
                  :let [id (apply str (take 6 (str (:session/uuid chat))))]]
              (html [:div
-                    [:span {:style {:color (str "#" id)}}
+                    [:span {:style {:color (or (:chat/color chat) (str "#" id))}}
                      (if (= (str (:session/uuid chat))
                             client-uuid)
                        "You"
@@ -92,13 +92,13 @@
              [:object
               (common/icon :user (when show-mouse? {:path-props
                                                     {:style
-                                                     {:stroke (apply str "#" (take 6 client-id))}}}))
+                                                     {:stroke (get-in app [:subscribers client-id :color])}}}))
               [:span "You"]]])
-          (for [[id {:keys [show-mouse?]}] (dissoc (:subscribers app) client-id)
+          (for [[id {:keys [show-mouse? color]}] (dissoc (:subscribers app) client-id)
                 :let [id-str (apply str (take 6 id))]]
             [:button {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
                       :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
-             (common/icon :user (when show-mouse? {:path-props {:style {:stroke (str "#" id-str)}}}))
+             (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
              [:span id-str]])
           ;; XXX better name here
           [:div.aside-chat

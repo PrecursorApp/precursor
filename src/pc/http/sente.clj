@@ -80,8 +80,30 @@
       ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-uuid uuid}]))
     (clean-document-subs uuid)))
 
+(def colors
+  #{"#1abc9c"
+    "#2ecc71"
+    "#3498db"
+    "#9b59b6"
+    "#16a085"
+    "#27ae60"
+    "#2980b9"
+    "#8e44ad"
+    "#f1c40f"
+    "#e67e22"
+    "#e74c3c"
+    "#ecf0f1"
+    "#f39c12"
+    "#d35400"
+    "#c0392b"
+    "#bdc3c7"})
+
 (defn subscribe-to-doc [document-id uuid]
-  (swap! document-subs update-in [document-id] (fnil assoc {}) uuid {}))
+  (swap! document-subs update-in [document-id]
+         (fn [subs]
+           (let [available-colors (or (seq (apply disj colors (map :color (vals subs))))
+                                      (seq colors))]
+             (update-in subs [uuid] assoc :color (rand-nth available-colors))))))
 
 (defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
   (let [document-id (-> ?data :document-id)
