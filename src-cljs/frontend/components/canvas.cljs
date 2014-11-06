@@ -98,17 +98,28 @@
         (apply dom/g #js {:className "layers"}
                (mapv (partial svg-element selected-eids) layers))))))
 
+(defn subscriber-cursor-icon [tool]
+  (case (name tool)
+    "pen" :crosshair
+    "line" :crosshair
+    "rect" :crosshair
+    "circle" :crosshair
+
+    "text" :ibeam
+
+    "select" :tool-select))
+
 (defn cursor [[id subscriber] owner]
   (reify
     om/IRender
     (render [_]
       (if (and (:tool subscriber)
                (:show-mouse? subscriber))
-        (html (common/svg-icon (keyword (str "tool-" (name (:tool subscriber))))
+        (html (common/svg-icon (utils/inspect (subscriber-cursor-icon (:tool subscriber)))
                                {:svg-props {:height 16 :width 16
                                             :class "mouse-tool"
-                                            :x (first (:mouse-position subscriber))
-                                            :y (last (:mouse-position subscriber))}
+                                            :x (- (first (:mouse-position subscriber)) 8)
+                                            :y (- (last (:mouse-position subscriber)) 8)}
                                 :path-props {:stroke (:color subscriber)}}))
         (dom/circle #js {:cx 0 :cy 0 :r 0})))))
 
