@@ -105,8 +105,9 @@
   [target message [x y] state]
   (let [;{:keys [x y]} (get-in state [:mouse])
         [rx ry]       (cameras/screen->point (:camera state) x y)
+        [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
         entity-id     (-> state :entity-ids first)
-        layer         (assoc (layers/make-layer entity-id (:document/id state) rx ry)
+        layer         (assoc (layers/make-layer entity-id (:document/id state) snap-x snap-y)
                         :layer/type (condp = (get-in state state/current-tool-path)
                                       :rect   :layer.type/rect
                                       :circle :layer.type/rect
@@ -119,12 +120,8 @@
                 (assoc-in [:drawing :in-progress?] true)
                 (assoc-in [:drawing :layer] layer)
                 (update-in [:drawing :layer] assoc
-                           :layer/start-sx (- x (get-in state [:camera :offset-x]))
-                           :layer/start-sy (- y (get-in state [:camera :offset-y]))
-                           :layer/current-sx (- x (get-in state [:camera :offset-x]))
-                           :layer/current-sy (- y (get-in state [:camera :offset-y]))
-                           :layer/current-x rx
-                           :layer/current-y ry)
+                           :layer/current-x snap-x
+                           :layer/current-y snap-y)
                 (assoc-in [:mouse :down] true)
                 (assoc-in [:mouse :x] x)
                 (assoc-in [:mouse :y] y)
@@ -141,24 +138,23 @@
 
 (defmethod control-event :mouse-moved
   [target message [x y] state]
-  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)
+        [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)]
     (let [r (if (get-in state [:drawing :in-progress?])
               (let [points ((fnil conj []) (get-in state [:drawing :points]) {:x x :y x :rx rx :ry ry})]
                 (-> state
                     (update-in [:mouse] assoc :x x :y y :rx rx :ry ry)
                     (assoc-in [:drawing :points] points)
                     (update-in [:drawing :layer] assoc
-                               :layer/current-x rx
-                               :layer/current-y ry
-                               :layer/current-sx (- x (get-in state [:camera :offset-x]))
-                               :layer/current-sy (- y (get-in state [:camera :offset-y])))
+                               :layer/current-x snap-x
+                               :layer/current-y snap-y)
                     (update-in [:drawing :layer]
                                (fn [layer]
                                  (merge
                                   layer
                                   (when (= :text (get-in state state/current-tool-path))
-                                    {:layer/start-x rx
-                                     :layer/start-y ry})
+                                    {:layer/start-x snap-x
+                                     :layer/start-y snap-y})
                                   (when (= :pen (get-in state state/current-tool-path))
                                     {:layer/path (svg/points->path points)})
                                   (when (= :circle (get-in state state/current-tool-path))
@@ -214,16 +210,17 @@
 (defn finalize-layer [state]
   (let [{:keys [x y]} (get-in state [:mouse])
         [rx ry] (cameras/screen->point (:camera state) x y)
+        [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
         layer-type (get-in state [:drawing :layer :layer/type])
         bounding-eids (when (= layer-type :layer.type/group)
                         (eids-in-bounding-box (-> state :db deref)
                                               {:start-x (get-in state [:drawing :layer :layer/start-x])
-                                               :end-x rx
+                                               :end-x snap-x
                                                :start-y (get-in state [:drawing :layer :layer/start-y])
-                                               :end-y ry}))]
+                                               :end-y snap-y}))]
     (-> state
         (update-in [:drawing :layer] dissoc :layer/current-x :layer/current-y)
-        (update-in [:drawing :layer] assoc :layer/end-x rx :layer/end-y ry)
+        (update-in [:drawing :layer] assoc :layer/end-x snap-x :layer/end-y snap-y)
         (update-in [:drawing] assoc :in-progress? false)
         (assoc-in [:drawing :points] [])
         (assoc-in [:mouse :down] false)
@@ -237,14 +234,10 @@
                      (-> layer
                          (dissoc
                           :layer/current-x
-                          :layer/current-y
-                          :layer/start-sx
-                          :layer/start-sy
-                          :layer/current-sx
-                          :layer/current-sy)
+                          :layer/current-y)
                          (merge
-                          {:layer/end-x rx
-                           :layer/end-y ry}
+                          {:layer/end-x snap-x
+                           :layer/end-y snap-y}
                           (when (= :circle (get-in state state/current-tool-path))
                             {:layer/rx (Math/abs (- (:layer/start-x layer)
                                                     (:layer/end-x layer)))
