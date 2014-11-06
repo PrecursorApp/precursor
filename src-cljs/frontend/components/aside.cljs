@@ -58,9 +58,10 @@
                     :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]
           (let [unseen-eids (seq (om/get-state owner :unseen-eids))]
             [:div.unseen-eids
-             [:div.count
-              (str (when (and (not aside-menu-opened) unseen-eids)
-                     (count unseen-eids)))]])])))))
+             (common/icon :chat)
+             (when (and (not aside-menu-opened) unseen-eids)
+               [:div.count
+                (str (count unseen-eids))])])])))))
 
 (defn menu [app owner]
   (reify

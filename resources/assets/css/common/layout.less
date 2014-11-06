@@ -141,6 +141,8 @@
   }
 }
 .mouse-stats {
+  .user-select(none);
+  pointer-events: none;
   position: fixed;
   top: 100%;
   margin-top: -2em;
@@ -173,6 +175,7 @@
     }
     .unseen-eids {
       height: 0;
+      opacity: 0;
     }
     .chat-messages {
       margin-left: 0;
@@ -245,11 +248,29 @@
   }
   .unseen-eids {
     .flex(0 0 auto);
-    .flexy(center);
+    .flexy(center, center);
+    position: relative;
     height: @tile;
+    overflow: hidden;
     transition: 200ms @bezier_transform;
     .count {
-      margin: auto;
+      .flexy(center, center);
+      position: absolute;
+      top: 1em;
+      right: 1em;
+      font-size: .75em;
+      height: 1.5em;
+      width: 1.5em;
+      line-height: 1.5em;
+      background: red;
+      border-radius: 1em;
+      font-weight: bold;
+      padding-bottom: 2%;
+    }
+    i {
+      path {
+        stroke: @white;
+      }
     }
   }
 }
@@ -264,7 +285,7 @@
   opacity: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  transition: 500ms @bezier_transform;
+  transition: 200ms @bezier_transform;
   &::-webkit-scrollbar {
     width: 0;
   }
