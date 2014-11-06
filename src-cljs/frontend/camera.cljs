@@ -3,11 +3,11 @@
 (defn camera [state]
   (:camera state))
 
-(defn grid-width [state]
-  (* (get-in state [:camera :zf]) 10))
+(defn grid-width [camera]
+  (* (:zf camera) 10))
 
-(defn grid-height [state]
-  (* (get-in state [:camera :zf]) 10))
+(defn grid-height [camera]
+  (* (:zf camera) 10))
 
 (defn show-bboxes? [state]
   false)
@@ -34,6 +34,12 @@
 (defn screen-event-coords [event]
   [(.. event -pageX)
    (.. event -pageY)])
+
+(defn snap-to-grid [camera x y]
+  (let [h (/ (grid-height camera) 1)
+        w (/ (grid-width camera) 1)]
+    [(* h (js/Math.round (/ x h)))
+     (* w (js/Math.round (/ y h)))]))
 
 (defn screen->point [camera x y]
   [(/ (- x (:x camera) (:offset-x camera))

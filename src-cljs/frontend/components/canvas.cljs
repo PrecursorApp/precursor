@@ -184,7 +184,8 @@
         (cast! :canvas-mounted [x y])))
     om/IRender
     (render [_]
-      (let [{:keys [cast! handlers]} (om/get-shared owner)]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)
+            camera (:camera payload)]
         (dom/svg #js {:width "100%"
                       :height "100%"
                       :id "svg-canvas"
@@ -242,22 +243,22 @@
                                                                (cameras/move-camera state dx dy)))))))}
                  (dom/defs nil
                    (dom/pattern #js {:id           "small-grid"
-                                     :width        (str (cameras/grid-width payload))
-                                     :height       (str (cameras/grid-height payload))
+                                     :width        (str (cameras/grid-width camera))
+                                     :height       (str (cameras/grid-height camera))
                                      :patternUnits "userSpaceOnUse"}
-                                (dom/path #js {:d           (str "M " (cameras/grid-width payload) " 0 L 0 0 0 " (cameras/grid-width payload))
+                                (dom/path #js {:d           (str "M " (cameras/grid-width camera) " 0 L 0 0 0 " (cameras/grid-width camera))
                                                :fill        "none"
                                                :stroke      "gray"
                                                :strokeWidth "0.5"}))
                    (dom/pattern #js {:id               "grid"
-                                     :width            (str (* 10 (cameras/grid-width payload)))
-                                     :height           (str (* 10 (cameras/grid-height payload)))
+                                     :width            (str (* 10 (cameras/grid-width camera)))
+                                     :height           (str (* 10 (cameras/grid-height camera)))
                                      :patternUnits     "userSpaceOnUse"
-                                     :patternTransform (str "translate(" (:x (cameras/camera payload)) "," (:y (cameras/camera payload)) ")")}
-                                (dom/rect #js {:width  (str (* 10 (cameras/grid-width payload)))
-                                               :height (str (* 10 (cameras/grid-height payload)))
+                                     :patternTransform (str "translate(" (:x camera) "," (:y camera) ")")}
+                                (dom/rect #js {:width  (str (* 10 (cameras/grid-width camera)))
+                                               :height (str (* 10 (cameras/grid-height camera)))
                                                :fill   "url(#small-grid)"})
-                                (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width payload))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width payload))))
+                                (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
                                                :fill        "none"
                                                :stroke      "gray"
                                                :strokeWidth "1"})))
@@ -268,7 +269,7 @@
                                   :fill   "url(#grid)"}))
 
                  (dom/g
-                  #js {:transform (cameras/->svg-transform (:camera payload))}
+                  #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
                   (om/build svg-layers (select-keys payload [:selected-eid]))
                   (om/build subscriber-layers {:layers (reduce (fn [acc [id subscriber]]
