@@ -109,7 +109,7 @@
                                             :class "mouse-tool"
                                             :x (first (:mouse-position subscriber))
                                             :y (last (:mouse-position subscriber))}
-                                :path-props {:stroke (apply str "#" (take 6 id))}}))
+                                :path-props {:stroke (:color subscriber)}}))
         (dom/circle #js {:cx 0 :cy 0 :r 0})))))
 
 (defn cursors [{:keys [subscribers client-uuid]} owner]
