@@ -115,7 +115,7 @@
     (render [_]
       (if (and (:tool subscriber)
                (:show-mouse? subscriber))
-        (html (common/svg-icon (utils/inspect (subscriber-cursor-icon (:tool subscriber)))
+        (html (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
                                {:svg-props {:height 16 :width 16
                                             :class "mouse-tool"
                                             :x (- (first (:mouse-position subscriber)) 8)
