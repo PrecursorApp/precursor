@@ -76,7 +76,7 @@
     :select "default"
     "crosshair"))
 
-(defn svg-layers [{:keys [selected-eid select-tool?]} owner]
+(defn svg-layers [{:keys [editing-eid selected-eid tool]} owner]
   (reify
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -97,9 +97,17 @@
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
         (apply dom/g #js {:className "layers"}
                (mapv (fn [layer]
-                       (dom/g #js {:className (when select-tool? "selectable")}
-                              (svg-element selected-eids layer)
-                              (when select-tool?
+                       (dom/g #js {:className (when (= :select tool) "selectable")}
+                              (svg-element selected-eids (assoc layer
+                                                           :onMouseDown (when (and (= :text tool)
+                                                                                   (= :layer.type/text (:layer/type layer)))
+                                                                          #(do
+                                                                             (.stopPropagation %)
+                                                                             (cast! :text-layer-re-edited layer)))
+                                                           :onMouseUp (when (and (= :text tool)
+                                                                                   (= :layer.type/text (:layer/type layer)))
+                                                                        #(.stopPropagation %))))
+                              (when (= :select tool)
                                 (svg-element selected-eids
                                              (assoc layer
                                                :onMouseDown
@@ -108,7 +116,8 @@
                                                   (cast! :layer-selected {:db/id (:db/id layer)}))
                                                :onMouseUp #(.stopPropagation %)
                                                :className "selectable")))))
-                     (remove #(= :layer.type/group (:layer/type %)) layers)))))))
+                     (remove #(or (= :layer.type/group (:layer/type %))
+                                  (= editing-eid (:db/id %))) layers)))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
@@ -146,7 +155,8 @@
   (reify
     om/IDidMount
     (did-mount [_]
-      (.focus (om/get-node owner "input")))
+      (.focus (om/get-node owner "input"))
+      (om/set-state! owner :input-min-width (.-width (goog.style/getSize (om/get-node owner "input-width-tester")))))
     om/IDidUpdate
     (did-update [_ _ _]
       (.focus (om/get-node owner "input"))
@@ -294,7 +304,10 @@
                  (dom/g
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
-                  (om/build svg-layers (assoc (select-keys payload [:selected-eid]) :select-tool? (= :select (get-in payload state/current-tool-path))))
+                  (om/build svg-layers (assoc (select-keys payload [:selected-eid])
+                                         :editing-eid (when (settings/drawing-in-progress? payload)
+                                                        (:db/id (settings/drawing payload)))
+                                         :tool (get-in payload state/current-tool-path)))
                   (om/build subscriber-layers {:layers (reduce (fn [acc [id subscriber]]
                                                                  (if-let [layer (:layer subscriber)]
                                                                    (conj acc (assoc layer
