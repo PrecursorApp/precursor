@@ -71,9 +71,6 @@
             client-id (:client-uuid app)]
        (html
          [:div.aside-menu
-          [:a {:href "/" :target "_self"}
-           (common/icon :logomark-precursor)
-           [:span "Precursor"]]
           (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
             [:button {:title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
                       :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}

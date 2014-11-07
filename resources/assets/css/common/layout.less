@@ -72,7 +72,7 @@
 .app-aside {
   .flexy();
   position: relative;
-  width: @aside_width_sm;
+  width: 0;
   box-shadow: 1px 0 @gray_dark;
   transition: 200ms;
   &.hover {
@@ -82,6 +82,13 @@
     + .app-main {
       .mouse-stats {
         opacity: 0;
+      }
+    }
+    .aside-menu {
+      i {
+        margin-right: @icon_width;
+        transition-duration: 100ms;
+        transition-timing-function: @bezier_bounce;
       }
     }
     .aside-chat {
@@ -98,21 +105,24 @@
       margin-left: 0;
       opacity: 1;
     }
-    i {
-      margin-right: @icon_width;
-      transition-duration: 100ms;
-      transition-timing-function: @bezier_bounce;
-    }
   }
 }
 .aside-toggles {
+  .flexy(column);
+  position: absolute;
+  top: 0;
+  left: 100%;
+  width: @tile;
+  // background: red;
+  a,
   button {
-    position: absolute;
-    top: 0;
-    left: 100%;
-    width: @tile;
+    .flexy(center, center);
     height: @tile;
-    background: red;
+    i {
+      svg {
+        font-size: 1.5em;
+      }
+    }
   }
 }
 .aside-menu {
@@ -132,8 +142,10 @@
     transition: 100ms;
     &:not([disabled]) {
       &:hover {
+        .icon_stroke(@gray_lightest);
         cursor: pointer;
-        background: @gray_lightest;
+        color: @gray_lighter;
+        background: @gray_dark;
         transition-duration: 100ms;
       }
     }

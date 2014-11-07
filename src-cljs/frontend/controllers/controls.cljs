@@ -402,6 +402,12 @@
   [target message _ state]
   (assoc-in state state/aside-menu-opened-path false))
 
+(defmethod control-event :aside-menu-toggled
+  [target message _ state]
+  (-> state
+      (update-in state/aside-menu-opened-path not)
+      (assoc-in [:drawing :in-progress?] false)))
+
 (defmethod post-control-event! :application-shutdown
   [target message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))

@@ -60,15 +60,14 @@
       (let [{:keys [cast! handlers]}      (om/get-shared owner)
             aside-opened?        (get-in app state/aside-menu-opened-path)]
         (html [:div#app
-               [:aside.app-aside {:class (when aside-opened? "hover")
-                                  :on-mouse-enter #(cast! :aside-menu-opened)
-                                  :on-mouse-leave #(cast! :aside-menu-closed)
-                                  :on-touch-start #(cast! :aside-menu-opened)}
+               [:aside.app-aside {:class (when aside-opened? "hover")}
                 [:div.aside-toggles
-                 [:button (common/icon :logomark-precursor)]]
+                 [:button {:on-click #(cast! :aside-menu-toggled)}
+                  (common/icon :menu)]
+                 [:a {:href "/" :target "_self"}
+                  (common/icon :newdoc)]]
                 (om/build aside/menu app)]
-               [:main.app-main {:on-touch-start #(cast! :aside-menu-closed)
-                                :onContextMenu (fn [e]
+               [:main.app-main {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)

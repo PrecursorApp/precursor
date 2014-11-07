@@ -10,7 +10,8 @@
    :environment     "development"
    :settings        {:browser-settings {:show-grid?  true
                                         :night-mode? true
-                                        :current-tool :rect}}
+                                        :current-tool :rect
+                                        :aside-menu-opened true}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
@@ -20,8 +21,6 @@
    :inputs          nil})
 
 (def user-path [:current-user])
-
-(def aside-menu-opened-path [:aside-menu-opened])
 
 (def settings-path [:settings])
 
@@ -60,3 +59,5 @@
 (def night-mode-path (conj browser-settings-path :night-mode?))
 
 (def current-tool-path (conj browser-settings-path :current-tool))
+
+(def aside-menu-opened-path (conj browser-settings-path :aside-menu-opened))
