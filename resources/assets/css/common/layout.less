@@ -1,90 +1,7 @@
-.night-mode {
-  color: @gray_lighter;
-  background: @gray_darker;
-  #grid,
-  #small-grid {
-    path {
-      stroke: @gray_dark;
-    }
-  }
-  .app-aside {
-    box-shadow: 1px 0 @gray_dark;
-  }
-  .aside-menu {
-    a,
-    button {
-      .icon_stroke(@gray_lighter);
-      color: @gray_light;
-      border-color: @gray_dark;
-      &:not([disabled]) {
-        &:hover {
-          .icon_stroke(@gray_lightest);
-          color: @gray_lighter;
-          background: @gray_dark;
-        }
-      }
-    }
-  }
-  #svg-canvas {
-    .layers {
-      rect,
-      line,
-      path {
-        &:not(#background-grid) {
-          stroke: @gray_light;
-        }
-        &.selected {
-          stroke: @select_blue;
-        }
-      }
-    }
-    text {
-      fill: @gray_light;
-      &.selected {
-        fill: @select_blue;
-      }
-    }
-  }
-  .radial-menu {
-    .radial-button {
-      fill: @gray_dark;
-      stroke: @gray_dark;
-      &:not(:hover) {
-        fill: @gray_darker;
-        i {
-          path {
-            stroke: @gray_light;
-          }
-        }
-      }
-    }
-    i {
-      path {
-        stroke: @gray_lighter;
-      }
-    }
-  }
-  .radial-menu-nub {
-    background: @gray_dark;
-  }
-  .right-click-menu {
-    .outline(@gray_dark);
-    background: @gray_darker;
-    button {
-      color: @gray_light;
-      background: @gray_darker;
-      &:hover {
-        color: @gray_lighter;
-        background: @gray_dark;
-      }
-    }
-    hr {
-      box-shadow: 0 1px @gray_dark inset;
-    }
-  }
-}
 #app {
   .flexy();
+  color: @gray_lighter;
+  background: @gray_darker;
   height: 100vh;
   overflow: hidden;
   &:not(.show-grid) {
@@ -106,7 +23,7 @@
     path {
       &:not(#background-grid) {
         fill: none;
-        stroke: @gray_dark;
+        stroke: @gray_light;
         stroke-width: 2;
         &:hover {
           stroke: lighten(@select_blue, 5%);
@@ -119,7 +36,7 @@
     }
   }
   text {
-    fill: @font_color;
+    fill: @gray_light;
     &:hover {
       fill: lighten(@select_blue, 5%);
     }
@@ -143,7 +60,7 @@
 #grid,
 #small-grid {
   path {
-    stroke: @gray_lighter;
+    stroke: @gray_dark;
     transition: 300ms;
   }
 }
@@ -164,7 +81,7 @@
   .flexy();
   position: relative;
   width: @aside_width_sm;
-  box-shadow: 1px 0 @gray_light;
+  box-shadow: 1px 0 @gray_dark;
   transition: 200ms;
   &.hover {
     width: @aside_width_lg;
@@ -210,16 +127,16 @@
   .flex(1);
   .flexy(column);
   a {
-    border-bottom: 1px solid @gray_lightest;
+    border-bottom: 1px solid @gray_dark;
   }
   a,
   button {
     .flex(0 0 auto);
     .flexy(center);
     .button_icon_cascade(10);
-    .icon_stroke(@font_color);
+    .icon_stroke(@gray_lighter);
     height: @tile;
-    color: @gray_dark;
+    color: @gray_light;
     transition: 100ms;
     &:not([disabled]) {
       &:hover {
@@ -354,14 +271,14 @@
   height: (@radial_menu_size * 1.5);
   .radial-button {
     .scale3d(1.1);
-    fill: @gray_lighter;
-    stroke: @gray_lighter;
+    fill: @gray_dark;
+    stroke: @gray_dark;
     &:not(:hover) {
       .scale3d(1);
-      fill: @app_background;
+      fill: @gray_darker;
       i {
         path {
-          stroke: @gray;
+          stroke: @gray_light;
         }
       }
     }
@@ -374,7 +291,7 @@
   }
   i {
     path {
-      stroke: @gray_darker;
+      stroke: @gray_lighter;
     }
   }
 }
@@ -399,7 +316,7 @@
   width: @size;
   height: @size;
   border-radius: @size;
-  background: @gray_lighter;
+  background: @gray_dark;
   position: absolute;
   top: (((@radial_menu_size * 1.5) - @size) / 2);
   left: (((@radial_menu_size * 1.5) - @size) / 2);
@@ -408,29 +325,29 @@
 .right-click-menu {
   display: none !important; // hold off for now
   .flexy(column);
-  .outline();
+  .outline(@gray_dark);
   position: fixed;
   top: 25%;
   left: 25%;
   width: (@radial_menu_size * (2 / 3));
-  background: @app_background;
+  background: @gray_darker;
   overflow: hidden;
   button {
     .flexy();
     height: (@tile / 2);
     padding: 0 1em;
-    color: @gray;
-    background: fade(@white, 0);
+    color: @gray_light;
+    background: @gray_darker;
     transition: 200ms;
     &:hover {
-      color: @gray_darker;
-      background: @gray_lighter;
+      color: @gray_lighter;
+      background: @gray_dark;
     }
   }
   hr {
     width: 100%;
     border: 0;
-    box-shadow: 0 1px @gray_lighter inset;
+    box-shadow: 0 1px @gray_dark inset;
     height: 1px;
   }
 }
