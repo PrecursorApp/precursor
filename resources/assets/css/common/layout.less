@@ -162,6 +162,7 @@
 
 .app-aside {
   .flexy();
+  position: relative;
   width: @aside_width_sm;
   box-shadow: 1px 0 @gray_light;
   transition: 200ms;
@@ -193,6 +194,16 @@
       transition-duration: 100ms;
       transition-timing-function: @bezier_bounce;
     }
+  }
+}
+.aside-toggles {
+  button {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    width: @tile;
+    height: @tile;
+    background: red;
   }
 }
 .aside-menu {

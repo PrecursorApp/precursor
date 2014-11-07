@@ -67,6 +67,8 @@
                                   :on-mouse-enter #(cast! :aside-menu-opened)
                                   :on-mouse-leave #(cast! :aside-menu-closed)
                                   :on-touch-start #(cast! :aside-menu-opened)}
+                [:div.aside-toggles
+                 [:button (common/icon :logomark-precursor)]]
                 (om/build aside/menu app)]
                [:main.app-main {:on-touch-start #(cast! :aside-menu-closed)
                                 :onContextMenu (fn [e]
