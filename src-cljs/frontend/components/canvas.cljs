@@ -108,7 +108,7 @@
                                                   (cast! :layer-selected {:db/id (:db/id layer)}))
                                                :onMouseUp #(.stopPropagation %)
                                                :className "selectable")))))
-                     layers))))))
+                     (remove #(= :layer.type/group (:layer/type %)) layers)))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
