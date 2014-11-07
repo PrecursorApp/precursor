@@ -74,16 +74,6 @@
           [:a {:href "/" :target "_self"}
            (common/icon :logomark-precursor)
            [:span "Precursor"]]
-          ;; hide extra buttons until there's features to back them up
-          ;; [:button
-          ;;  (common/icon :user)
-          ;;  [:span "Login"]]
-          ;; [:button
-          ;;  (common/icon :download)
-          ;;  [:span "Download"]]
-          ;; [:button.collaborators
-          ;;  (common/icon :users)
-          ;;  [:span "Collaborators"]]
           (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
             [:button {:title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
                       :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}
@@ -103,20 +93,4 @@
            (om/build chat-aside {:db (:db app)
                                  :client-uuid (:client-uuid app)
                                  :chat-body (get-in app [:chat :body])
-                                 :aside-menu-opened (get-in app state/aside-menu-opened-path)})]
-          ; [:div.aside-settings
-          ;  [:button {:disabled "true"}
-          ;   (common/icon :settings)
-          ;   [:span "Settings"]]
-          ; [:div.settings-menu
-          ;  [:button {:on-click #(put! controls-ch [:show-grid-toggled])}
-          ;   [:span "Show Grid"]
-          ;   (if show-grid?
-          ;     (common/icon :check)
-          ;     (common/icon :times))]
-          ;  [:button {:on-click #(put! controls-ch [:night-mode-toggled])}
-          ;   [:span "Night Mode"]
-          ;   (if night-mode?
-          ;     (common/icon :check)
-          ;     (common/icon :times))]]]
-          ])))))
+                                 :aside-menu-opened (get-in app state/aside-menu-opened-path)})]])))))
