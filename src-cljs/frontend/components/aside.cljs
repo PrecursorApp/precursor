@@ -68,7 +68,6 @@
     om/IRender
     (render [_]
       (let [controls-ch (om/get-shared owner [:comms :controls])
-            show-grid? (get-in app state/show-grid-path)
             client-id (:client-uuid app)]
        (html
          [:div.aside-menu

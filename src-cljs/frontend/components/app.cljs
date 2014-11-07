@@ -58,9 +58,8 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]}      (om/get-shared owner)
-            show-grid?           (get-in app state/show-grid-path)
             aside-opened?        (get-in app state/aside-menu-opened-path)]
-        (html [:div#app {:class (str/join " " (when show-grid? ["show-grid"]))}
+        (html [:div#app
                [:aside.app-aside {:class (when aside-opened? "hover")
                                   :on-mouse-enter #(cast! :aside-menu-opened)
                                   :on-mouse-leave #(cast! :aside-menu-closed)
