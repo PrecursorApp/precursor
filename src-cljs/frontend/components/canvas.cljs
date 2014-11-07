@@ -64,7 +64,7 @@
                     :stroke (:layer/stroke layer "black")
                     :fill "none"
                     :strokeWidth (:layer/stroke-width layer)
-                    :className (when (contains? selected-eids (:db/id layer)) "selected")}))))
+                    :className (str (:className layer) (when (contains? selected-eids (:db/id layer)) " selected"))}))))
 
 (defmethod svg-element :layer.type/group
   [state selected-eids layer]
@@ -76,7 +76,7 @@
     :select "default"
     "crosshair"))
 
-(defn svg-layers [{:keys [selected-eid]} owner]
+(defn svg-layers [{:keys [selected-eid select-tool?]} owner]
   (reify
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -96,9 +96,19 @@
             selected-eids (if selected-eid (layer-model/selected-eids @db selected-eid) #{})
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
         (apply dom/g #js {:className "layers"}
-               (mapv (fn [layer] (svg-element selected-eids (assoc layer :onMouseDown #(do
-                                                                                         (.stopPropagation %)
-                                                                                         (cast! :layer-selected {:db/id (:db/id layer)}))))) layers))))))
+               (mapv (fn [layer]
+                       (dom/g #js {:className (when select-tool? "selectable")}
+                              (svg-element selected-eids layer)
+                              (when select-tool?
+                                (svg-element selected-eids
+                                             (assoc layer
+                                               :onMouseDown
+                                               #(do
+                                                  (.stopPropagation %)
+                                                  (cast! :layer-selected {:db/id (:db/id layer)}))
+                                               :onMouseUp #(.stopPropagation %)
+                                               :className "selectable")))))
+                     layers))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
@@ -284,7 +294,7 @@
                  (dom/g
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
-                  (om/build svg-layers (select-keys payload [:selected-eid]))
+                  (om/build svg-layers (assoc (select-keys payload [:selected-eid]) :select-tool? (utils/inspect (= :select (get-in payload state/current-tool-path)))))
                   (om/build subscriber-layers {:layers (reduce (fn [acc [id subscriber]]
                                                                  (if-let [layer (:layer subscriber)]
                                                                    (conj acc (assoc layer
