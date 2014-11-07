@@ -294,7 +294,7 @@
                  (dom/g
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
-                  (om/build svg-layers (assoc (select-keys payload [:selected-eid]) :select-tool? (utils/inspect (= :select (get-in payload state/current-tool-path)))))
+                  (om/build svg-layers (assoc (select-keys payload [:selected-eid]) :select-tool? (= :select (get-in payload state/current-tool-path))))
                   (om/build subscriber-layers {:layers (reduce (fn [acc [id subscriber]]
                                                                  (if-let [layer (:layer subscriber)]
                                                                    (conj acc (assoc layer
