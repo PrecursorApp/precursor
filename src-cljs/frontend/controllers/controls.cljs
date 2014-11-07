@@ -313,6 +313,9 @@
       (d/transact! db (for [eid selected-eids]
                         [:db.fn/retractEntity eid])))))
 
+(defmethod control-event :layer-selected
+  [target message layer state]
+  (assoc state :selected-eid (:db/id layer)))
 
 (defmethod control-event :menu-opened
   [target message _ state]

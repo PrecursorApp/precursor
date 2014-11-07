@@ -108,14 +108,21 @@
         fill: none;
         stroke: @gray_dark;
         stroke-width: 2;
+        &:hover {
+          stroke: lighten(@select_blue, 5%);
+        }
         &.selected {
           stroke: @select_blue;
         }
+
       }
     }
   }
   text {
     fill: @font_color;
+    &:hover {
+      fill: lighten(@select_blue, 5%);
+    }
     &.selected {
       fill: @select_blue;
     }

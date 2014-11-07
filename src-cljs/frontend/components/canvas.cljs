@@ -96,7 +96,9 @@
             selected-eids (if selected-eid (layer-model/selected-eids @db selected-eid) #{})
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
         (apply dom/g #js {:className "layers"}
-               (mapv (partial svg-element selected-eids) layers))))))
+               (mapv (fn [layer] (svg-element selected-eids (assoc layer :onMouseDown #(do
+                                                                                         (.stopPropagation %)
+                                                                                         (cast! :layer-selected {:db/id (:db/id layer)}))))) layers))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
