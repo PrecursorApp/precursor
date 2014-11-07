@@ -368,6 +368,10 @@
       (assoc-in [:drawing :in-progress?] true)
       (assoc-in state/current-tool-path :text)))
 
+(defmethod post-control-event! :text-layer-re-edited
+  [target message layer previous-state current-state]
+  (maybe-notify-subscribers! current-state nil nil))
+
 (defmethod control-event :db-updated
   [target message _ state]
   (assoc state :random-number (Math/random)))

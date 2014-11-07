@@ -76,7 +76,7 @@
     :select "default"
     "crosshair"))
 
-(defn svg-layers [{:keys [editing-eid selected-eid tool]} owner]
+(defn svg-layers [{:keys [editing-eids selected-eid tool]} owner]
   (reify
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -117,7 +117,7 @@
                                                :onMouseUp #(.stopPropagation %)
                                                :className "selectable")))))
                      (remove #(or (= :layer.type/group (:layer/type %))
-                                  (= editing-eid (:db/id %))) layers)))))))
+                                  (contains? editing-eids (:db/id %))) layers)))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
@@ -218,7 +218,16 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
-            camera (:camera payload)]
+            camera (:camera payload)
+            subs-layers (reduce (fn [acc [id subscriber]]
+                                  (if-let [layer (:layer subscriber)]
+                                    (conj acc (assoc layer
+                                                :layer/end-x (:layer/current-x layer)
+                                                :layer/end-y (:layer/current-y layer)
+                                                :stroke (apply str "#" (take 6 id))
+                                                :layer/stroke (apply str "#" (take 6 id))))
+                                    acc))
+                                [] (:subscribers payload))]
         (dom/svg #js {:width "100%"
                       :height "100%"
                       :id "svg-canvas"
@@ -305,18 +314,11 @@
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
                   (om/build svg-layers (assoc (select-keys payload [:selected-eid])
-                                         :editing-eid (when (settings/drawing-in-progress? payload)
-                                                        (:db/id (settings/drawing payload)))
+                                         :editing-eids (set (concat (when (settings/drawing-in-progress? payload)
+                                                                      [(:db/id (settings/drawing payload))])
+                                                                    (remove nil? (map :db/id subs-layers))))
                                          :tool (get-in payload state/current-tool-path)))
-                  (om/build subscriber-layers {:layers (reduce (fn [acc [id subscriber]]
-                                                                 (if-let [layer (:layer subscriber)]
-                                                                   (conj acc (assoc layer
-                                                                               :layer/end-x (:layer/current-x layer)
-                                                                               :layer/end-y (:layer/current-y layer)
-                                                                               :stroke (apply str "#" (take 6 id))
-                                                                               :layer/stroke (apply str "#" (take 6 id))))
-                                                                   acc))
-                                                               [] (:subscribers payload))})
+                  (om/build subscriber-layers {:layers subs-layers})
                   (when (and (settings/drawing-in-progress? payload)
                              (= :layer.type/text (get-in payload [:drawing :layer :layer/type])))
                     (om/build text-input (get-in payload [:drawing :layer])))
