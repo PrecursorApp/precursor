@@ -56,13 +56,18 @@
                        id)]
                     (str " " (:chat/body chat))]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
-                                  false)}
-           [:textarea {
-                    :type "text"
-                    :value (or chat-body "")
-                    :placeholder "Send a message..."
-                    :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})
-                    }]]])))))
+                                  false)
+                  :on-key-press #(when (and (= "Enter" (.-key %))
+                                            (not (.-shiftKey %))
+                                            (not (.-ctrlKey %))
+                                            (not (.-metaKey %))
+                                            (not (.-altKey %)))
+                                   (cast! :chat-submitted)
+                                   false)}
+           [:textarea {:type "text"
+                       :value (or chat-body "")
+                       :placeholder "Send a message..."
+                       :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]])))))
 
 (defn menu [app owner]
   (reify
