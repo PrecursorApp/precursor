@@ -77,7 +77,10 @@
             client-id (:client-uuid app)
             aside-opened? (get-in app state/aside-menu-opened-path)]
        (html
-         [:aside.app-aside {:class (when-not aside-opened? "closed")}
+         [:aside.app-aside {:class (when-not aside-opened? "closed")
+                            :style {:width (if aside-opened?
+                                             (get-in app state/aside-width-path)
+                                             0)}}
           [:section.aside-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
              [:button {:title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."

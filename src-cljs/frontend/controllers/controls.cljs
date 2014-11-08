@@ -62,11 +62,6 @@
   (.setItem js/sessionStorage "circle-state"
             (pr-str (dissoc current-state :comms))))
 
-(defmethod control-event :canvas-mounted
-  [target message [x y] state]
-  (-> state
-      (update-in [:camera] assoc :offset-x x :offset-y y)))
-
 (defmethod control-event :camera-nudged-up
   [target message _ state]
   (update-in state [:camera :y] inc))
@@ -417,9 +412,13 @@
 
 (defmethod control-event :aside-menu-toggled
   [target message _ state]
-  (-> state
-      (update-in state/aside-menu-opened-path not)
-      (assoc-in [:drawing :in-progress?] false)))
+  (let [aside-open? (not (get-in state state/aside-menu-opened-path))]
+    (-> state
+        (assoc-in state/aside-menu-opened-path aside-open?)
+        (assoc-in [:drawing :in-progress?] false)
+        (assoc-in [:camera :offset-x] (if aside-open?
+                                        (get-in state state/aside-width-path)
+                                        0)))))
 
 (defmethod post-control-event! :application-shutdown
   [target message _ previous-state current-state]

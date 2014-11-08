@@ -208,18 +208,6 @@
 
 (defn svg-canvas [payload owner opts]
   (reify
-    om/IDidMount
-    (did-mount [_]
-      (let [{:keys [cast!]} (om/get-shared owner)
-            offset (goog.style/getPageOffset (om/get-node owner))]
-        (cast! :canvas-mounted [(.-x offset) (.-y offset)])))
-    om/IDidUpdate
-    (did-update [_ prev-props prev-state]
-      (when (not= (get-in prev-state state/aside-menu-opened-path)
-                  (get-in payload state/aside-menu-opened-path))
-        (let [{:keys [cast!]} (om/get-shared owner)
-              offset (goog.style/getPageOffset (om/get-node owner))]
-          (cast! :canvas-mounted [(.-x offset) (.-y offset)]))))
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
