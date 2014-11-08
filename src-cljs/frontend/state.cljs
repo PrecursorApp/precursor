@@ -4,24 +4,26 @@
   {:camera          {:x          0
                      :y          0
                      :zf         1
+                     :offset-x   0
+                     :offset-y   0
                      :show-grid? true}
    :error-message   nil
    :changelog       nil
    :environment     "development"
    :settings        {:browser-settings {:show-grid?  true
                                         :night-mode? true
-                                        :current-tool :rect}}
+                                        :current-tool :rect
+                                        :aside-menu-opened true}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
    :document/id     17592186046465
    :subscribers     {}
    ;; This isn't passed to the components, it can be accessed though om/get-shared :_app-state-do-not-use
+   :aside-width     256
    :inputs          nil})
 
 (def user-path [:current-user])
-
-(def aside-menu-opened-path [:aside-menu-opened])
 
 (def settings-path [:settings])
 
@@ -60,3 +62,6 @@
 (def night-mode-path (conj browser-settings-path :night-mode?))
 
 (def current-tool-path (conj browser-settings-path :current-tool))
+
+(def aside-menu-opened-path (conj browser-settings-path :aside-menu-opened))
+(def aside-width-path [:aside-width])

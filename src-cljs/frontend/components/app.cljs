@@ -1,6 +1,8 @@
 (ns frontend.components.app
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [clojure.set :as set]
             [clojure.string :as str]
+            [datascript :as d]
             [frontend.async :refer [put!]]
             [frontend.components.aside :as aside]
             [frontend.components.inspector :as inspector]
@@ -13,7 +15,8 @@
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [ankha.core :as ankha])
-  (:require-macros [frontend.utils :refer [html]]))
+  (:require-macros [frontend.utils :refer [html]])
+  (:import [goog.ui IdGenerator]))
 
 (def tools-templates
   {:circle {:type :tool-circle
@@ -55,24 +58,43 @@
 
 (defn app [app owner]
   (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! handlers]}      (om/get-shared owner)
-            show-grid?           (get-in app state/show-grid-path)
-            night-mode?          (get-in app state/night-mode-path)
-            aside-opened?        (get-in app state/aside-menu-opened-path)]
-        (html [:div#app {:class (str/join " " (concat (when show-grid? ["show-grid"])
-                                                      (when night-mode? ["night-mode"])))}
-               [:aside.app-aside {:class (when aside-opened? "hover")
-                                  :on-mouse-enter #(cast! :aside-menu-opened)
-                                  :on-mouse-leave #(cast! :aside-menu-closed)
-                                  :on-touch-start #(cast! :aside-menu-opened)}
-                (om/build aside/menu app)]
-               [:main.app-main {:on-touch-start #(cast! :aside-menu-closed)
-                                :onContextMenu (fn [e]
+    om/IInitState
+    (init-state [_] {:unseen-eids #{:dummy}
+                     :listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when-let [chat-datoms (seq (filter #(= :chat/body (:a %)) (:tx-data tx-report)))]
+                     (om/update-state! owner :unseen-eids (fn [eids] (set/union eids (set (map :e chat-datoms)))))))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared (om/get-shared owner :db)) (om/get-state owner :listener-key)))
+    om/IDidUpdate
+    (did-update [_ _ _]
+      (when (and (get-in app state/aside-menu-opened-path)
+                 (seq (om/get-state owner :unseen-eids)))
+        (om/set-state! owner :unseen-eids #{})))
+    om/IRenderState
+    (render-state [_ {:keys [unseen-eids]}]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)
+            aside-opened? (get-in app state/aside-menu-opened-path)]
+        (html [:div#app
+               (om/build aside/menu app)
+               [:main.app-main {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
+                [:div.main-actions
+                 [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
+                                  :class (when-not aside-opened? "closed")}
+                  (common/icon :menu)]
+                 (when (and (not aside-opened?) (seq unseen-eids))
+                   [:div.unseen-eids (str (count unseen-eids))])
+                 [:a.action-newdoc {:href "/" :target "_self"}
+                  (common/icon :newdoc)]]
                 (when (:mouse app)
                   [:div.mouse-stats
                    (pr-str (:mouse app))])
@@ -88,20 +110,4 @@
                      [:div.radial-tool-type
                       (common/icon (:type template))
                       [:span (name tool)]])
-                   [:div.radial-menu-nub]])
-                [:div.right-click-menu
-                 [:button "Cut"]
-                 [:button "Copy"]
-                 [:button "Paste"]
-                 [:hr]
-                 [:button "Align"]
-                 [:button "Transform"]
-                 [:button "Distribute"]
-                 [:hr]
-                 [:button "Lock"]
-                 [:button "Group"]
-                 [:button "Arrange"]
-                 [:div.right-click-align
-                  [:button "test"]
-                  [:button "test"]
-                  [:button "test"]]]]])))))
+                   [:div.radial-menu-nub]])]])))))

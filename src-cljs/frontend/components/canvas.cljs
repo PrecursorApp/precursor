@@ -208,13 +208,6 @@
 
 (defn svg-canvas [payload owner opts]
   (reify
-    om/IDidMount
-    (did-mount [_]
-      (let [{:keys [cast!]} (om/get-shared owner)
-            node (om/get-node owner)
-            [x y] [(.-offsetLeft node)
-                   (.-offsetTop node)]]
-        (cast! :canvas-mounted [x y])))
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)

@@ -1,103 +1,13 @@
-.night-mode {
-  color: @gray_lighter;
-  background: @gray_darker;
-  #grid,
-  #small-grid {
-    path {
-      stroke: @gray_dark;
-    }
-  }
-  .app-aside {
-    box-shadow: 1px 0 @gray_dark;
-  }
-  .aside-menu {
-    a,
-    button {
-      .icon_stroke(@gray_lighter);
-      color: @gray_light;
-      border-color: @gray_dark;
-      &:not([disabled]) {
-        &:hover {
-          .icon_stroke(@gray_lightest);
-          color: @gray_lighter;
-          background: @gray_dark;
-        }
-      }
-    }
-  }
-  #svg-canvas {
-    .layers {
-      rect,
-      line,
-      path {
-        &:not(#background-grid) {
-          stroke: @gray_light;
-        }
-        &.selected {
-          stroke: @select_blue;
-        }
-      }
-    }
-    text {
-      fill: @gray_light;
-      &.selected {
-        fill: @select_blue;
-      }
-    }
-  }
-  .radial-menu {
-    .radial-button {
-      fill: @gray_dark;
-      stroke: @gray_dark;
-      &:not(:hover) {
-        fill: @gray_darker;
-        i {
-          path {
-            stroke: @gray_light;
-          }
-        }
-      }
-    }
-    i {
-      path {
-        stroke: @gray_lighter;
-      }
-    }
-  }
-  .radial-menu-nub {
-    background: @gray_dark;
-  }
-  .right-click-menu {
-    .outline(@gray_dark);
-    background: @gray_darker;
-    button {
-      color: @gray_light;
-      background: @gray_darker;
-      &:hover {
-        color: @gray_lighter;
-        background: @gray_dark;
-      }
-    }
-    hr {
-      box-shadow: 0 1px @gray_dark inset;
-    }
-  }
-}
 #app {
   .flexy();
+  color: @gray_lighter;
+  background: @gray_darker;
   height: 100vh;
   overflow: hidden;
-  &:not(.show-grid) {
-    #grid,
-    #small-grid {
-      path {
-        opacity: 0;
-      }
-    }
-  }
 }
 .app-main {
   .flex(1);
+  position: relative;
 }
 #svg-canvas {
   .layers {
@@ -106,7 +16,7 @@
     path {
       &:not(#background-grid) {
         fill: none;
-        stroke: @gray_dark;
+        stroke: @gray_light;
         stroke-width: 2;
         &.selected {
           stroke: @select_blue;
@@ -131,7 +41,7 @@
     }
   }
   text {
-    fill: @font_color;
+    fill: @gray_light;
     &:hover {
       fill: lighten(@select_blue, 5%);
     }
@@ -155,7 +65,7 @@
 #grid,
 #small-grid {
   path {
-    stroke: @gray_lighter;
+    stroke: @gray_dark;
     transition: 300ms;
   }
 }
@@ -171,71 +81,107 @@
   color: fade(@white, 25);
   transition-duration: 200ms;
 }
-
-.app-aside {
-  .flexy();
-  width: @aside_width_sm;
-  box-shadow: 1px 0 @gray_light;
-  transition: 200ms;
-  &.hover {
-    width: @aside_width_lg;
-    transition-duration: 200ms;
-    transition-timing-function: @bezier_bounce;
-    + .app-main {
-      .mouse-stats {
-        opacity: 0;
-      }
-    }
-    .aside-chat {
-      input {
-        padding: 0 1em;
-        height: @tile;
-      }
-    }
-    .unseen-eids {
-      height: 0;
-      opacity: 0;
-    }
-    .chat-messages {
-      margin-left: 0;
-      opacity: 1;
+.main-actions {
+  .flexy(column);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: @tile;
+  a {
+    .flexy(center, center);
+    height: @tile;
+    cursor: pointer;
+    &:not(:hover) {
+      .icon_stroke(@gray_light);
     }
     i {
-      margin-right: @icon_width;
-      transition-duration: 100ms;
-      transition-timing-function: @bezier_bounce;
+      svg {
+        font-size: 1.5em;
+      }
     }
   }
 }
-.aside-menu {
-  .flex(1);
-  .flexy(column);
-  a {
-    border-bottom: 1px solid @gray_lightest;
+.action-menu {
+  &:hover {
+    + .unseen-eids {
+      background: lighten(#c0392b, 10);
+      color: @white;
+      border: 2px solid lighten(#c0392b, 10);
+      padding: ~"calc(.25em + 2px)";
+      margin: -4px 0 0 -4px;
+    }
   }
-  a,
-  button {
-    .flex(0 0 auto);
-    .flexy(center);
-    .button_icon_cascade(10);
-    .icon_stroke(@font_color);
-    height: @tile;
-    color: @gray_dark;
-    transition: 100ms;
-    &:not([disabled]) {
-      &:hover {
-        cursor: pointer;
-        background: @gray_lightest;
-        transition-duration: 100ms;
+  path {
+    .transform(rotate(0deg); translate(0, 0));
+    .transform-origin(center);
+    transition: @aside_speed;
+    transition-timing-function: @bezier_bounce;
+  }
+  &:not(.closed) {
+    .menu-stroke-top {
+      .transform(rotate(45deg); translate(.75em, .75em));
+    }
+    .menu-stroke-middle {
+      opacity: 0;
+    }
+    .menu-stroke-bottom {
+      .transform(rotate(-45deg); translate(.75em, -.75em));
+    }
+  }
+}
+.unseen-eids {
+  .box-sizing(content-box);
+  .transform-origin(center);
+  .animation(in-bounce (@aside_speed * 2));
+  .user-select(none);
+  position: absolute;
+  font-size: .75em;
+  font-weight: bold;
+  line-height: .75em;
+  text-align: center;
+  top: 1.25em;
+  left: 3em;
+  height: .75em;
+  min-width: .75em;
+  margin: -2px 0 0 -2px; // offsets the size of border
+  padding: .25em;
+  color: lighten(#c0392b, 10);
+  background: @gray_darker;
+  border: 2px solid lighten(#c0392b, 10);
+  border-radius: 2em;
+  box-shadow: 0 2px @gray_darker, -2px 0 @gray_darker;
+  pointer-events: none;
+  transition: @aside_speed;
+  i {
+    svg {
+      width: 1.25em;
+      height: 1.25em;
+    }
+    path {
+      stroke: @white;
+    }
+  }
+}
+.app-aside {
+  .flexy(column);
+  width: @aside_width_lg;
+  box-shadow: 1px 0 @gray_dark;
+  overflow: hidden;
+  transition: @aside_speed;
+  transition-timing-function: @bezier_bounce;
+  &.closed {
+    width: 0;
+    transition-timing-function: @bezier_transform;
+    .icon-user {
+      margin: 0 (((@aside_width_sm - @icon_width) / 2) / 2);
+      transition-delay: @aside_speed_slow;
+    }
+    .aside-chat {
+      textarea {
+        padding-left: 0;
+        opacity: 0;
+        transition-delay: @aside_speed_slow;
       }
-    }
-    i {
-      .flex(0 0 auto);
-      margin: 0 ((@aside_width_sm - @icon_width) / 2);
-      transition: 300ms;
-    }
-    span {
-      overflow: hidden;
     }
   }
   .aside-settings {
@@ -245,108 +191,76 @@
       }
     }
   }
+  section {
+    .flex(1 1 auto);
+    .flexy(column);
+    width: @aside_width_lg;
+    min-height: @aside_width_lg;
+  }
+}
+.aside-people {
+  overflow-y: auto;
+  &::-webkit-scrollbar {
+    width: 0; // we should calculate to get this effect in the dom
+  }
+  button {
+    .flex(0 0 @tile);
+    .flexy(center);
+    .button_icon_cascade(32);
+    .icon_stroke(@gray_lighter);
+    min-height: (@tile / 2);
+    color: @gray_light;
+    &:hover,
+    &:active {
+      .icon_stroke(@gray_lightest);
+      cursor: pointer;
+      color: @gray_lighter;
+      background: @gray_dark;
+    }
+  }
+  .icon-user {
+    .flex(0 0 auto);
+    margin: 0 ((@aside_width_sm - @icon_width) / 2);
+    transition+: margin @aside_speed @bezier_transform 0ms;
+  }
 }
 .aside-chat {
-  .flex(1);
-  .flexy(column);
-  overflow: hidden;
+  .justify-content(flex-end);
   form {
     .flex(0 0 auto);
     .flexy();
     margin: 0;
+    box-shadow: 0 1px @gray_dark inset;
   }
-  input {
-    width: 100%;
-    height: 0;
-    border: none;
-    border-top: 1px solid #555;
-    padding: 0 1em 0 @tile;
-    outline: 0;
-    background: none;
-    transition: 200ms @bezier_transform;
-  }
-  .unseen-eids {
-    .flex(0 0 auto);
-    .flexy(center, center);
-    position: relative;
+  textarea {
+    .flex(1);
+    .placeholder_style(color; @gray_dark);
     height: @tile;
-    overflow: hidden;
-    transition: 200ms @bezier_transform;
-    .count {
-      .flexy(center, center);
-      position: absolute;
-      top: 1em;
-      right: 1em;
-      font-size: .75em;
-      height: 1.5em;
-      min-width: 1.5em;
-      line-height: 1.5em;
-      background: #F73936;
-      border: 1px solid @gray_darker;
-      border-radius: 1em;
-      font-weight: bold;
-      padding-bottom: 2%;
-    }
-    i {
-      svg {
-        width: 1.25em;
-        height: 1.25em;
-      }
-      path {
-        stroke: @white;
-      }
+    max-height: (@tile * 2);
+    background: none;
+    padding: 1.25em 1.25em 0;
+    border: none;
+    outline: 0;
+    resize: none;
+    transition+: padding @aside_speed @bezier_transform 0ms;
+    transition+: height  @aside_speed @bezier_transform 0ms;
+    transition+: opacity @aside_speed @bezier_fadein    0ms;
+    &:focus {
+      .placeholder_style(color; fade(@gray_dark, 0));
     }
   }
-}
-.chat-container {
-  .flexy(column);
-  margin-top: auto;
 }
 .chat-messages {
-  width: @aside_width_lg;
-  margin-left: @tile;
-  padding: 1em;
-  opacity: 0;
+  padding: 1em 0;
   overflow-y: auto;
-  overflow-x: hidden;
-  transition: 200ms @bezier_transform;
   &::-webkit-scrollbar {
-    width: 0;
+    width: 0; // we should calculate to get this effect in the dom
   }
   span {
     word-break: break-word;
   }
-}
-.aside-settings {
-  .flexy(column);
-  margin-top: auto;
-  opacity: 1;
-  transition: 300ms @bezier_fadein;
-  &:hover {
-    > button {
-      .user-select(none);
-      opacity: 0;
-      cursor: default;
-      // this is still pretty buggy, opens and closes at weird times
-      transition-duration: 200ms;
-      height: 0;
-    }
-    .settings-menu {
-      max-height: @tile * 3;
-      transition-duration: 200ms;
-    }
-  }
-}
-.settings-menu {
-  .flexy(column);
-  max-height: 0;
-  transition: 300ms @bezier_transform;
-  button {
-    padding-left: ((@aside_width_sm - @icon_width) / 2);
-    i {
-      margin-left: auto;
-      margin-right: ((@aside_width_sm - @icon_width) / 2);
-    }
+  .message {
+    padding: 0 1em;
   }
 }
 .radial-menu {
@@ -355,14 +269,14 @@
   height: (@radial_menu_size * 1.5);
   .radial-button {
     .scale3d(1.1);
-    fill: @gray_lighter;
-    stroke: @gray_lighter;
+    fill: @gray_dark;
+    stroke: @gray_dark;
     &:not(:hover) {
       .scale3d(1);
-      fill: @app_background;
+      fill: @gray_darker;
       i {
         path {
-          stroke: @gray;
+          stroke: @gray_light;
         }
       }
     }
@@ -375,7 +289,7 @@
   }
   i {
     path {
-      stroke: @gray_darker;
+      stroke: @gray_lighter;
     }
   }
 }
@@ -400,7 +314,7 @@
   width: @size;
   height: @size;
   border-radius: @size;
-  background: @gray_lighter;
+  background: @gray_dark;
   position: absolute;
   top: (((@radial_menu_size * 1.5) - @size) / 2);
   left: (((@radial_menu_size * 1.5) - @size) / 2);
@@ -409,29 +323,29 @@
 .right-click-menu {
   display: none !important; // hold off for now
   .flexy(column);
-  .outline();
+  .outline(@gray_dark);
   position: fixed;
   top: 25%;
   left: 25%;
   width: (@radial_menu_size * (2 / 3));
-  background: @app_background;
+  background: @gray_darker;
   overflow: hidden;
   button {
     .flexy();
     height: (@tile / 2);
     padding: 0 1em;
-    color: @gray;
-    background: fade(@white, 0);
+    color: @gray_light;
+    background: @gray_darker;
     transition: 200ms;
     &:hover {
-      color: @gray_darker;
-      background: @gray_lighter;
+      color: @gray_lighter;
+      background: @gray_dark;
     }
   }
   hr {
     width: 100%;
     border: 0;
-    box-shadow: 0 1px @gray_lighter inset;
+    box-shadow: 0 1px @gray_dark inset;
     height: 1px;
   }
 }
