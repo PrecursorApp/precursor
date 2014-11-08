@@ -74,7 +74,6 @@
       (d/unlisten! (om/get-shared (om/get-shared owner :db)) (om/get-state owner :listener-key)))
     om/IDidUpdate
     (did-update [_ _ _]
-      ;; maybe scroll chat
       (when (and (get-in app state/aside-menu-opened-path)
                  (seq (om/get-state owner :unseen-eids)))
         (om/set-state! owner :unseen-eids #{})))
