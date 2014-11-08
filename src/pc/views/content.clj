@@ -1,5 +1,6 @@
 (ns pc.views.content
-  (:require [hiccup.core :as h]))
+  (:require [hiccup.core :as h]
+            [pc.profile :refer (prod-assets?)]))
 
 (defn layout [& content]
   [:html
@@ -20,7 +21,7 @@
    [:div#app-container]
    [:div.debugger-container]
    [:div#app]
-   (if (= (System/getenv "PRODUCTION") "true")
+   (if (prod?)
      [:script {:type "text/javascript" :src (str "/js/vendor/frontend-production.js?rand=" (Math/random))}]
      (if false
        [:script {:type "text/javascript" :src "/js/bin-debug/main.js"}]

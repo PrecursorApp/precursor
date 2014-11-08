@@ -1,5 +1,6 @@
 (ns pc.server
-  (:require [clojure.core.async :as async]
+  (:require [cemerick.url :as url]
+            [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [clojure.tools.reader.edn :as edn]
             [clj-time.core :as time]
@@ -13,26 +14,13 @@
             [pc.http.datomic :as datomic]
             [pc.http.sente :as sente]
             [pc.models.layer :as layer]
+            [pc.profile :as profile]
             [pc.less :as less]
             [pc.views.content :as content]
+            [pc.utils :refer (inspect)]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
             [ring.util.response :refer (redirect)]))
-
-(defn log-request [req resp ms]
-  (when-not (re-find #"^/cljs" (:uri req))
-    (log/infof "%s: %s %s for %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) ms)))
-
-(defn logging-middleware [handler]
-  (fn [req]
-    (let [start (time/now)
-          resp (handler req)
-          stop (time/now)]
-      (try
-        (log-request req resp (time/in-millis (time/interval start stop)))
-        (catch Exception e
-          (log/error e)))
-      resp)))
 
 (defn app [sente-state]
   (routes
@@ -105,15 +93,43 @@
    (POST "/chsk" req ((:ajax-post-fn sente-state) req))
    (ANY "*" [] {:status 404 :body nil})))
 
-(defn port []
-  (if (System/getenv "HTTP_PORT")
-    (Integer/parseInt (System/getenv "HTTP_PORT"))
-    8080))
+(defn log-request [req resp ms]
+  (when-not (re-find #"^/cljs" (:uri req))
+    (log/infof "%s: %s %s for %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) ms)))
+
+(defn logging-middleware [handler]
+  (fn [req]
+    (let [start (time/now)
+          resp (handler req)
+          stop (time/now)]
+      (try
+        (log-request req resp (time/in-millis (time/interval start stop)))
+        (catch Exception e
+          (log/error e)))
+      resp)))
+
+(defn ssl? [req]
+  (or (= :https (:scheme req))
+      (= "https" (get-in req [:headers "x-forwarded-proto"]))))
+
+(defn ssl-middleware [handler]
+  (fn [req]
+    (if (or (not (profile/force-ssl?))
+            (ssl? req))
+      (handler req)
+      {:status 301
+       :headers {"Location" (str (url/map->URL {:host (profile/hostname)
+                                                :protocol "https"
+                                                :port (profile/https-port)
+                                                :path (:uri req)
+                                                :query (:query-string req)}))}
+       :body ""})))
 
 (defn start [sente-state]
   (def server (httpkit/run-server (-> (app sente-state)
                                       (sente/wrap-user-id)
                                       (wrap-session {:store (cookie-store)})
+                                      (ssl-middleware)
                                       (logging-middleware)
                                       (site))
                                   {:port (port)})))
