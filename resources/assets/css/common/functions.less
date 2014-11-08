@@ -30,6 +30,13 @@
   @concat: (unit(@a) / unit(@font_size));
   @to_em: ~"@{concat}em";
 }
+.random_cascade(@c) when (@c > 0) {
+  .random_cascade((@c - 1));
+  @random: `Math.random()`;
+  &:nth-of-type(@{c}) {
+    transition-delay: round(@cascade * (@random * 10));
+  }
+}
 .button_icon_cascade(@c) when (@c > 0) {
   .button_icon_cascade((@c - 1));
   &:nth-of-type(@{c}) {
