@@ -88,11 +88,11 @@
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
                 [:div.main-actions
-                 (when (and (not aside-opened?) (seq unseen-eids))
-                   [:div.unseen-eids (str (count unseen-eids))])
                  [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
                                   :class (when-not aside-opened? "closed")}
                   (common/icon :menu)]
+                 (when (and (not aside-opened?) (seq unseen-eids))
+                   [:div.unseen-eids (str (count unseen-eids))])
                  [:a.action-newdoc {:href "/" :target "_self"}
                   (common/icon :newdoc)]]
                 (when (:mouse app)

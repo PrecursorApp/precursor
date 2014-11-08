@@ -102,6 +102,15 @@
   }
 }
 .action-menu {
+  &:hover {
+    + .unseen-eids {
+      background: lighten(#c0392b, 10);
+      color: @white;
+      border: 2px solid lighten(#c0392b, 10);
+      padding: ~"calc(.25em + 2px)";
+      margin: -4px 0 0 -4px;
+    }
+  }
   path {
     .transform(rotate(0deg); translate(0, 0));
     .transform-origin(center);
@@ -122,21 +131,27 @@
 }
 .unseen-eids {
   .box-sizing(content-box);
-  .flexy(center, center);
+  .transform-origin(center);
+  .animation(in-bounce (@aside_speed * 2));
   .user-select(none);
   position: absolute;
-  top: 1em;
-  right: 1em;
   font-size: .75em;
-  height: 1.5em;
-  min-width: 1.5em;
-  line-height: 1.5em;
-  background: #F73936;
-  background: #c0392b;
-  border: 2px solid @gray_darker;
-  border-radius: 1em;
   font-weight: bold;
+  line-height: .75em;
+  text-align: center;
+  top: 1.25em;
+  left: 3em;
+  height: .75em;
+  min-width: .75em;
+  margin: -2px 0 0 -2px; // offsets the size of border
+  padding: .25em;
+  color: lighten(#c0392b, 10);
+  background: @gray_darker;
+  border: 2px solid lighten(#c0392b, 10);
+  border-radius: 2em;
+  box-shadow: 0 2px @gray_darker, -2px 0 @gray_darker;
   pointer-events: none;
+  transition: @aside_speed;
   i {
     svg {
       width: 1.25em;

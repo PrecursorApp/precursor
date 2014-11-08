@@ -79,3 +79,38 @@
               transform+_: @argument;
   }
 }
+.animation(...) {
+  -webkit-animation: @arguments;
+          animation: @arguments;
+}
+.animation-bezier(@x1, @y1, @x2, @y2) {
+  -webkit-animation-timing-function: cubic-bezier(@x1, @y1, @x2, @y2);
+          animation-timing-function: cubic-bezier(@x1, @y1, @x2, @y2);
+}
+
+@-webkit-keyframes in-bounce {
+  0%, 100%, 20%, 40%, 60%, 80% {
+    -webkit-transition-timing-function: cubic-bezier(0.215,.61,.355,1);
+  }
+  0% {
+    opacity: 0;
+    -webkit-transform: scale3d(.3,.3,.3);
+  }
+  20% {
+    -webkit-transform: scale3d(1.13,1.13,1.13);
+  }
+  40% {
+    opacity: 1;
+    -webkit-transform: scale3d(.87,.87,.87);
+  }
+  60% {
+    -webkit-transform: scale3d(1.05,1.05,1.05);
+  }
+  80% {
+    -webkit-transform: scale3d(.95,.95,.95);
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: scale3d(1,1,1);
+  }
+}
