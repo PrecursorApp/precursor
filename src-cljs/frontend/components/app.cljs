@@ -97,7 +97,7 @@
                   (common/icon :newdoc)]]
                 (when (:mouse app)
                   [:div.mouse-stats
-                   (pr-str (:mouse app))])
+                   (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))])
                 (when (get-in app [:menu :open?])
                   [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 192)
                                              :left (- (get-in app [:menu :x]) 192)}}
