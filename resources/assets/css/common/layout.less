@@ -103,14 +103,12 @@
 }
 .action-menu {
   path {
-    .transform(rotate(0); translate(0, 0));
+    .transform(rotate(0deg); translate(0, 0));
+    .transform-origin(center);
     transition: @aside_speed;
     transition-timing-function: @bezier_bounce;
   }
   &:not(.closed) {
-    path {
-      .transform-origin(center);
-    }
     .menu-stroke-top {
       .transform(rotate(45deg); translate(.75em, .75em));
     }
@@ -165,7 +163,6 @@
     }
     .aside-chat {
       textarea {
-        height: 0;
         padding-left: 0;
         opacity: 0;
         transition-delay: @aside_speed_slow;
@@ -182,16 +179,18 @@
   section {
     .flex(1 1 auto);
     .flexy(column);
-    min-width: @aside_width_lg;
+    width: @aside_width_lg;
+    min-height: @aside_width_lg;
   }
 }
 .aside-people {
+  overflow-y: auto;
   button {
-    .flex(0 0 auto);
+    .flex(0 0 @tile);
     .flexy(center);
     .button_icon_cascade(32);
     .icon_stroke(@gray_lighter);
-    height: @tile;
+    min-height: (@tile / 2);
     color: @gray_light;
     &:hover,
     &:active {
@@ -220,7 +219,6 @@
     .placeholder_style(color; @gray_dark);
     height: @tile;
     max-height: (@tile * 2);
-    min-width: @aside_width_lg;
     background: none;
     padding: 1.25em 1.25em 0;
     border: none;
@@ -229,16 +227,14 @@
     transition+: padding @aside_speed @bezier_transform 0ms;
     transition+: height  @aside_speed @bezier_transform 0ms;
     transition+: opacity @aside_speed @bezier_fadein    0ms;
-    &::-webkit-scrollbar {
-      width: 0;
+    &:focus {
+      .placeholder_style(color; fade(@gray_dark, 0));
     }
   }
 }
 .chat-messages {
   padding: 1em 0;
-  &::-webkit-scrollbar {
-    width: 0;
-  }
+  overflow-y: auto;
   span {
     word-break: break-word;
   }

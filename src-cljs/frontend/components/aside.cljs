@@ -39,7 +39,7 @@
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
-            dummy-chat {:chat/body "Right-click to open the radial menu, share the url to collaborate."
+            dummy-chat {:chat/body "Welcome to Precursor! Right-click on the canvas to access tools and share your url to collaborate."
                         :chat/color "#00b233"
                         :session/uuid "Danny"
                         :server/timestamp (om/get-state owner :mount-time)}]
@@ -57,12 +57,10 @@
                     (str " " (:chat/body chat))]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)}
-           [:textarea {
-                    :type "text"
-                    :value (or chat-body "")
-                    :placeholder "Send a message..."
-                    :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})
-                    }]]])))))
+           [:textarea {:type "text"
+                       :value (or chat-body "")
+                       :placeholder "Send a message..."
+                       :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]])))))
 
 (defn menu [app owner]
   (reify
