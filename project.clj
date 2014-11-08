@@ -26,7 +26,7 @@
 
                  [ring/ring "1.2.2"]
                  [http-kit "2.1.18"]
-                 [com.taoensso/sente "1.1.0"]
+                 [com.taoensso/sente "1.2.0"]
                  [fs "0.11.1"]
 
                  [ankha "0.1.2"]

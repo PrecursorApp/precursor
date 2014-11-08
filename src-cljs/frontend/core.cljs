@@ -296,7 +296,7 @@
       ;; error codes from the server get passed as :status in the render-context
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
       (sec/dispatch! (str "/" (.getToken history-imp))))
-    (when (env/development?)
+    (when (and (env/development?) (= js/window.location.protocol "http:"))
       (try
         (setup-browser-repl (get-in @state [:render-context :browser_connected_repl_url]))
         (catch js/error e
