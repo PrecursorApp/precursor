@@ -132,7 +132,7 @@
                                       (ssl-middleware)
                                       (logging-middleware)
                                       (site))
-                                  {:port (port)})))
+                                  {:port (profile/http-port)})))
 
 (defn stop []
   (server))
