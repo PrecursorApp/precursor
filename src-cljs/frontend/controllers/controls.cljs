@@ -248,8 +248,10 @@
     (finalize-layer state)))
 
 (defmethod control-event :mouse-depressed
-  [target message [x y button] state]
-  (update-mouse state x y))
+  [target message [x y button type] state]
+  (-> state
+      (update-mouse x y)
+      (assoc-in [:mouse :type] (if (= type "mousedown") :mouse :touch))))
 
 (defmethod post-control-event! :mouse-depressed
   [target message [x y button] previous-state current-state]

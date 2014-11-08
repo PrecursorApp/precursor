@@ -95,7 +95,7 @@
                    [:div.unseen-eids (str (count unseen-eids))])
                  [:a.action-newdoc {:href "/" :target "_self"}
                   (common/icon :newdoc)]]
-                (when (:mouse app)
+                (when (and (:mouse app) (not= :touch (:type (:mouse app))))
                   [:div.mouse-stats
                    (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))])
                 (when (get-in app [:menu :open?])
