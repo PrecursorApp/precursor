@@ -109,7 +109,7 @@
          (fn [subs]
            (let [available-colors (or (seq (apply disj colors (map :color (vals subs))))
                                       (seq colors))]
-             (update-in subs [uuid] assoc :color (rand-nth available-colors))))))
+             (update-in subs [uuid :color] (fn [c] (or c (rand-nth available-colors))))))))
 
 (defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
   (let [document-id (-> ?data :document-id)

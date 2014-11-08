@@ -18,13 +18,25 @@
         fill: none;
         stroke: @gray_light;
         stroke-width: 2;
-        &:hover {
-          stroke: lighten(@select_blue, 5%);
-        }
         &.selected {
           stroke: @select_blue;
         }
-
+        &.selectable {
+          stroke-width: 20;
+          stroke-opacity: 0;
+        }
+      }
+    }
+    g.selectable:hover {
+      rect,
+      line,
+      path {
+        &:not(#background-grid) {
+          stroke: lighten(@select_blue, 5%);
+          &.selected {
+            stroke: @select_blue;
+          }
+        }
       }
     }
   }

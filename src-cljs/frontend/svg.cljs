@@ -10,7 +10,7 @@
   (let [layer (layers/normalized-abs-coords layer)]
     (merge
      layer
-     {:className     "layer"
+     {:className     (str "layer " (:className layer))
       :x             (:layer/start-x layer)
       :y             (:layer/start-y layer)
       :width         (- (or (:layer/current-x layer)
@@ -37,7 +37,7 @@
 (defn layer->svg-text [layer]
   (merge
    layer
-   {:className "layer"
+   {:className (str (:className layer) " layer")
     :x (:layer/start-x layer)
     :y (:layer/start-y layer)
     :fill (:layer/fill layer "none")

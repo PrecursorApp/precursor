@@ -16,7 +16,8 @@
     om/IInitState
     (init-state [_]
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
-       :unseen-eids #{}})
+       :unseen-eids #{0}
+       :mount-time (js/Date.)})
     om/IDidMount
     (did-mount [_]
       (d/listen! (om/get-shared owner :db)
@@ -37,11 +38,15 @@
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
-            chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)]
+            chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
+            dummy-chat {:chat/body "Right-click to open the radial menu, share the url to collaborate."
+                        :chat/color "#00b233"
+                        :session/uuid "Danny"
+                        :server/timestamp (om/get-state owner :mount-time)}]
         (html
          [:section.aside-chat
           [:div.chat-messages
-           (for [chat (sort-by :server/timestamp chats)
+           (for [chat (sort-by :server/timestamp (concat chats [dummy-chat]))
                  :let [id (apply str (take 6 (str (:session/uuid chat))))]]
              (html [:div.message
                     [:span {:style {:color (or (:chat/color chat) (str "#" id))}}
