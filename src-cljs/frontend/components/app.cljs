@@ -60,17 +60,20 @@
       (let [{:keys [cast! handlers]}      (om/get-shared owner)
             aside-opened?        (get-in app state/aside-menu-opened-path)]
         (html [:div#app
-               [:aside.app-aside {:class (when aside-opened? "hover")}
-                [:div.aside-toggles
-                 [:button {:on-click #(cast! :aside-menu-toggled)}
-                  (common/icon :menu)]
-                 [:a {:href "/" :target "_self"}
-                  (common/icon :newdoc)]]
-                (om/build aside/menu app)]
+               (om/build aside/menu app)
                [:main.app-main {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
+                [:div.main-actions
+                 (let [unseen-eids (seq (om/get-state owner :unseen-eids))]
+                   (when (and (not aside-menu-opened) unseen-eids)
+                     [:div.unseen-eids (str (count unseen-eids))]))
+                 [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
+                      :class (when-not aside-opened? "closed")}
+                  (common/icon :menu)]
+                 [:a.action-newdoc {:href "/" :target "_self"}
+                  (common/icon :newdoc)]]
                 (when (:mouse app)
                   [:div.mouse-stats
                    (pr-str (:mouse app))])
@@ -86,20 +89,4 @@
                      [:div.radial-tool-type
                       (common/icon (:type template))
                       [:span (name tool)]])
-                   [:div.radial-menu-nub]])
-                [:div.right-click-menu
-                 [:button "Cut"]
-                 [:button "Copy"]
-                 [:button "Paste"]
-                 [:hr]
-                 [:button "Align"]
-                 [:button "Transform"]
-                 [:button "Distribute"]
-                 [:hr]
-                 [:button "Lock"]
-                 [:button "Group"]
-                 [:button "Arrange"]
-                 [:div.right-click-align
-                  [:button "test"]
-                  [:button "test"]
-                  [:button "test"]]]]])))))
+                   [:div.radial-menu-nub]])]])))))

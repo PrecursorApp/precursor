@@ -15,6 +15,11 @@
   }.prefix(@property; @value; @rest);
   @{property}: @value;
 }
+.placeholder_style(@property; @value) {
+  &::-webkit-input-placeholder {@{property}: @value;}
+  &:-moz-placeholder           {@{property}: @value;}
+  &::-moz-placeholder          {@{property}: @value;}
+}
 .box-sizing(...) {
   .prefixer(box-sizing, @arguments, webkit moz);
 }
@@ -74,4 +79,3 @@
               transform+_: @argument;
   }
 }
-

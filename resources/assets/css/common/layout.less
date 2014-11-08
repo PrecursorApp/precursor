@@ -7,6 +7,7 @@
 }
 .app-main {
   .flex(1);
+  position: relative;
 }
 #svg-canvas {
   .layers {
@@ -68,56 +69,19 @@
   color: fade(@white, 25);
   transition-duration: 200ms;
 }
-
-.app-aside {
-  .flexy();
-  position: relative;
-  width: 0;
-  box-shadow: 1px 0 @gray_dark;
-  transition: 200ms;
-  &.hover {
-    width: @aside_width_lg;
-    transition-duration: 200ms;
-    transition-timing-function: @bezier_bounce;
-    + .app-main {
-      .mouse-stats {
-        opacity: 0;
-      }
-    }
-    .aside-menu {
-      i {
-        margin-right: @icon_width;
-        transition-duration: 100ms;
-        transition-timing-function: @bezier_bounce;
-      }
-    }
-    .aside-chat {
-      input {
-        padding: 0 1em;
-        height: @tile;
-      }
-    }
-    .unseen-eids {
-      height: 0;
-      opacity: 0;
-    }
-    .chat-messages {
-      margin-left: 0;
-      opacity: 1;
-    }
-  }
-}
-.aside-toggles {
+.main-actions {
   .flexy(column);
   position: absolute;
   top: 0;
-  left: 100%;
+  left: 0;
   width: @tile;
-  // background: red;
-  a,
-  button {
+  a {
     .flexy(center, center);
     height: @tile;
+    cursor: pointer;
+    &:not(:hover) {
+      .icon_stroke(@gray_light);
+    }
     i {
       svg {
         font-size: 1.5em;
@@ -125,37 +89,75 @@
     }
   }
 }
-.aside-menu {
-  .flex(1);
-  .flexy(column);
-  a {
-    border-bottom: 1px solid @gray_dark;
+.action-menu {
+  path {
+    .transform(rotate(0); translate(0, 0));
+    transition: @aside_speed;
+    transition-timing-function: @bezier_bounce;
   }
-  a,
-  button {
-    .flex(0 0 auto);
-    .flexy(center);
-    .button_icon_cascade(10);
-    .icon_stroke(@gray_lighter);
-    height: @tile;
-    color: @gray_light;
-    transition: 100ms;
-    &:not([disabled]) {
-      &:hover {
-        .icon_stroke(@gray_lightest);
-        cursor: pointer;
-        color: @gray_lighter;
-        background: @gray_dark;
-        transition-duration: 100ms;
+  &:not(.closed) {
+    path {
+      .transform-origin(center);
+    }
+    .menu-stroke-top {
+      .transform(rotate(45deg); translate(.75em, .75em));
+    }
+    .menu-stroke-middle {
+      opacity: 0;
+    }
+    .menu-stroke-bottom {
+      .transform(rotate(-45deg); translate(.75em, -.75em));
+    }
+  }
+}
+.unseen-eids {
+  .box-sizing(content-box);
+  .flexy(center, center);
+  .user-select(none);
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  font-size: .75em;
+  height: 1.5em;
+  min-width: 1.5em;
+  line-height: 1.5em;
+  background: #F73936;
+  background: #c0392b;
+  border: 2px solid @gray_darker;
+  border-radius: 1em;
+  font-weight: bold;
+  pointer-events: none;
+  i {
+    svg {
+      width: 1.25em;
+      height: 1.25em;
+    }
+    path {
+      stroke: @white;
+    }
+  }
+}
+.app-aside {
+  .flexy(column);
+  width: @aside_width_lg;
+  box-shadow: 1px 0 @gray_dark;
+  overflow: hidden;
+  transition: @aside_speed;
+  transition-timing-function: @bezier_bounce;
+  &.closed {
+    width: 0;
+    transition-timing-function: @bezier_transform;
+    .icon-user {
+      margin: 0 (((@aside_width_sm - @icon_width) / 2) / 2);
+      transition-delay: @aside_speed_slow;
+    }
+    .aside-chat {
+      textarea {
+        height: 0;
+        padding-left: 0;
+        opacity: 0;
+        transition-delay: @aside_speed_slow;
       }
-    }
-    i {
-      .flex(0 0 auto);
-      margin: 0 ((@aside_width_sm - @icon_width) / 2);
-      transition: 300ms;
-    }
-    span {
-      overflow: hidden;
     }
   }
   .aside-settings {
@@ -165,108 +167,71 @@
       }
     }
   }
+  section {
+    .flex(1 1 auto);
+    .flexy(column);
+    min-width: @aside_width_lg;
+  }
+}
+.aside-people {
+  button {
+    .flex(0 0 auto);
+    .flexy(center);
+    .button_icon_cascade(32);
+    .icon_stroke(@gray_lighter);
+    height: @tile;
+    color: @gray_light;
+    &:hover,
+    &:active {
+      .icon_stroke(@gray_lightest);
+      cursor: pointer;
+      color: @gray_lighter;
+      background: @gray_dark;
+    }
+  }
+  .icon-user {
+    .flex(0 0 auto);
+    margin: 0 ((@aside_width_sm - @icon_width) / 2);
+    transition+: margin @aside_speed @bezier_transform 0ms;
+  }
 }
 .aside-chat {
-  .flex(1);
-  .flexy(column);
-  overflow: hidden;
+  .justify-content(flex-end);
   form {
     .flex(0 0 auto);
     .flexy();
     margin: 0;
+    box-shadow: 0 1px @gray_dark inset;
   }
-  input {
-    width: 100%;
-    height: 0;
-    border: none;
-    border-top: 1px solid #555;
-    padding: 0 1em 0 @tile;
-    outline: 0;
-    background: none;
-    transition: 200ms @bezier_transform;
-  }
-  .unseen-eids {
-    .flex(0 0 auto);
-    .flexy(center, center);
-    position: relative;
+  textarea {
+    .flex(1);
+    .placeholder_style(color; @gray_dark);
     height: @tile;
-    overflow: hidden;
-    transition: 200ms @bezier_transform;
-    .count {
-      .flexy(center, center);
-      position: absolute;
-      top: 1em;
-      right: 1em;
-      font-size: .75em;
-      height: 1.5em;
-      min-width: 1.5em;
-      line-height: 1.5em;
-      background: #F73936;
-      border: 1px solid @gray_darker;
-      border-radius: 1em;
-      font-weight: bold;
-      padding-bottom: 2%;
-    }
-    i {
-      svg {
-        width: 1.25em;
-        height: 1.25em;
-      }
-      path {
-        stroke: @white;
-      }
+    max-height: (@tile * 2);
+    min-width: @aside_width_lg;
+    background: none;
+    padding: 1.25em 1.25em 0;
+    border: none;
+    outline: 0;
+    resize: none;
+    transition+: padding @aside_speed @bezier_transform 0ms;
+    transition+: height  @aside_speed @bezier_transform 0ms;
+    transition+: opacity @aside_speed @bezier_fadein    0ms;
+    &::-webkit-scrollbar {
+      width: 0;
     }
   }
-}
-.chat-container {
-  .flexy(column);
-  margin-top: auto;
 }
 .chat-messages {
-  width: @aside_width_lg;
-  margin-left: @tile;
-  padding: 1em;
-  opacity: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  transition: 200ms @bezier_transform;
+  padding: 1em 0;
   &::-webkit-scrollbar {
     width: 0;
   }
   span {
     word-break: break-word;
   }
-}
-.aside-settings {
-  .flexy(column);
-  margin-top: auto;
-  opacity: 1;
-  transition: 300ms @bezier_fadein;
-  &:hover {
-    > button {
-      .user-select(none);
-      opacity: 0;
-      cursor: default;
-      // this is still pretty buggy, opens and closes at weird times
-      transition-duration: 200ms;
-      height: 0;
-    }
-    .settings-menu {
-      max-height: @tile * 3;
-      transition-duration: 200ms;
-    }
-  }
-}
-.settings-menu {
-  .flexy(column);
-  max-height: 0;
-  transition: 300ms @bezier_transform;
-  button {
-    padding-left: ((@aside_width_sm - @icon_width) / 2);
-    i {
-      margin-left: auto;
-      margin-right: ((@aside_width_sm - @icon_width) / 2);
-    }
+  .message {
+    padding: 0 1em;
   }
 }
 .radial-menu {

@@ -39,11 +39,11 @@
       (let [{:keys [cast!]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)]
         (html
-         [:div.chat-container
+         [:section.aside-chat
           [:div.chat-messages
            (for [chat (sort-by :server/timestamp chats)
                  :let [id (apply str (take 6 (str (:session/uuid chat))))]]
-             (html [:div
+             (html [:div.message
                     [:span {:style {:color (or (:chat/color chat) (str "#" id))}}
                      (if (= (str (:session/uuid chat))
                             client-uuid)
@@ -52,42 +52,38 @@
                     (str " " (:chat/body chat))]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)}
-           [:input {:type "text"
+           [:textarea {
+                    :type "text"
                     :value (or chat-body "")
-                    :placeholder "Write something..."
-                    :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]
-          (let [unseen-eids (seq (om/get-state owner :unseen-eids))]
-            [:div.unseen-eids
-             (common/icon :chat)
-             (when (and (not aside-menu-opened) unseen-eids)
-               [:div.count
-                (str (count unseen-eids))])])])))))
+                    :placeholder "Send a message..."
+                    :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})
+                    }]]])))))
 
 (defn menu [app owner]
   (reify
     om/IRender
     (render [_]
       (let [controls-ch (om/get-shared owner [:comms :controls])
-            client-id (:client-uuid app)]
+            client-id (:client-uuid app)
+            aside-opened? (get-in app state/aside-menu-opened-path)]
        (html
-         [:div.aside-menu
-          (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-            [:button {:title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
-                      :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}
-             [:object
+         [:aside.app-aside {:class (when-not aside-opened? "closed")}
+          [:section.aside-people
+           (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+             [:button {:title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
+                       :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}
               (common/icon :user (when show-mouse? {:path-props
-                                                    {:style
-                                                     {:stroke (get-in app [:subscribers client-id :color])}}}))
-              [:span "You"]]])
-          (for [[id {:keys [show-mouse? color]}] (dissoc (:subscribers app) client-id)
-                :let [id-str (apply str (take 6 id))]]
-            [:button {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
-                      :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
-             (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
-             [:span id-str]])
+                                                     {:style
+                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))
+              [:span "You"]])
+           (for [[id {:keys [show-mouse? color]}] (dissoc (:subscribers app) client-id)
+                 :let [id-str (apply str (take 6 id))]]
+             [:button {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
+                       :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
+              (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
+              [:span id-str]])]
           ;; XXX better name here
-          [:div.aside-chat
-           (om/build chat-aside {:db (:db app)
-                                 :client-uuid (:client-uuid app)
-                                 :chat-body (get-in app [:chat :body])
-                                 :aside-menu-opened (get-in app state/aside-menu-opened-path)})]])))))
+          (om/build chat-aside {:db (:db app)
+                                :client-uuid (:client-uuid app)
+                                :chat-body (get-in app [:chat :body])
+                                :aside-menu-opened (get-in app state/aside-menu-opened-path)})])))))
