@@ -21,7 +21,7 @@
    [:div#app-container]
    [:div.debugger-container]
    [:div#app]
-   (if (prod?)
+   (if (prod-assets?)
      [:script {:type "text/javascript" :src (str "/js/vendor/frontend-production.js?rand=" (Math/random))}]
      (if false
        [:script {:type "text/javascript" :src "/js/bin-debug/main.js"}]

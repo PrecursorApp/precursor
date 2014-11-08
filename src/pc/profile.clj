@@ -4,6 +4,9 @@
 (defn prod? []
   (= "true" (System/getenv "PRODUCTION")))
 
+(defn prod-assets? []
+  (prod?))
+
 (defn http-port []
   (if (System/getenv "HTTP_PORT")
     (Integer/parseInt (System/getenv "HTTP_PORT"))
