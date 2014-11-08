@@ -16,7 +16,6 @@
     om/IInitState
     (init-state [_]
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
-       :unseen-eids #{0}
        :mount-time (js/Date.)})
     om/IDidMount
     (did-mount [_]
@@ -25,7 +24,6 @@
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
                    (when-let [chat-datoms (seq (filter #(= :chat/body (:a %)) (:tx-data tx-report)))]
-                     (om/update-state! owner :unseen-eids (fn [eids] (set/union eids (set (map :e chat-datoms)))))
                      (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
@@ -33,8 +31,7 @@
     om/IDidUpdate
     (did-update [_ _ _]
       ;; maybe scroll chat
-      (when (and aside-menu-opened (seq (om/get-state owner :unseen-eids)))
-        (om/set-state! owner :unseen-eids #{})))
+      )
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
