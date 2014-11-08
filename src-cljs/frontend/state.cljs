@@ -4,6 +4,8 @@
   {:camera          {:x          0
                      :y          0
                      :zf         1
+                     :offset-x   0
+                     :offset-y   0
                      :show-grid? true}
    :error-message   nil
    :changelog       nil
@@ -18,6 +20,7 @@
    :document/id     17592186046465
    :subscribers     {}
    ;; This isn't passed to the components, it can be accessed though om/get-shared :_app-state-do-not-use
+   :aside-width     256
    :inputs          nil})
 
 (def user-path [:current-user])
@@ -61,3 +64,4 @@
 (def current-tool-path (conj browser-settings-path :current-tool))
 
 (def aside-menu-opened-path (conj browser-settings-path :aside-menu-opened))
+(def aside-width-path [:aside-width])

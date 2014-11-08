@@ -56,7 +56,7 @@
                        (js/String.fromCharCode (.-which event)))
         tokens     [shift? meta? ctrl? alt? char]
         key-string (string/join "+" (filter identity tokens))]
-    (when (not= (.. event -target -tagName) "INPUT")
+    (when-not (contains? #{"INPUT" "TEXTAREA"} (.. event -target -tagName))
       (when (get suppressed-key-combos key-string)
         (.preventDefault event))
       (when-not (.-repeat event)
@@ -289,6 +289,10 @@
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (browser-settings/setup! state)
+    ;; TODO: find a better place to put this
+    (swap! state (fn [s] (assoc-in s [:camera :offset-x] (if (get-in s state/aside-menu-opened-path)
+                                                           (get-in s state/aside-width-path)
+                                                           0))))
     (main state top-level-node history-imp)
     (sente/init state)
     (setup-entity-id-fetcher state)
