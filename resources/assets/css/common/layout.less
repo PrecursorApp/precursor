@@ -185,6 +185,9 @@
 }
 .aside-people {
   overflow-y: auto;
+  &::-webkit-scrollbar {
+    width: 0; // we should calculate to get this effect in the dom
+  }
   button {
     .flex(0 0 @tile);
     .flexy(center);
@@ -235,6 +238,9 @@
 .chat-messages {
   padding: 1em 0;
   overflow-y: auto;
+  &::-webkit-scrollbar {
+    width: 0; // we should calculate to get this effect in the dom
+  }
   span {
     word-break: break-word;
   }
