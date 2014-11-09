@@ -80,6 +80,9 @@
   right: 0.5em;
   color: fade(@white, 25);
   transition-duration: 200ms;
+  .mq_640({
+    opacity: 0;
+  });
 }
 .main-actions {
   .flexy(column);
@@ -170,7 +173,7 @@
 }
 .app-aside {
   .flexy(column);
-  width: @aside_width_lg;
+  width: @aside_width;
   box-shadow: 1px 0 @gray_dark;
   overflow: hidden;
   transition: @aside_speed;
@@ -179,7 +182,7 @@
     width: 0;
     transition-timing-function: @bezier_transform;
     .icon-user {
-      margin: 0 (((@aside_width_sm - @icon_width) / 2) / 2);
+      margin: 0 (((@tile - @icon_width) / 2) / 2);
       transition-delay: @aside_speed_slow;
     }
     .aside-chat {
@@ -200,8 +203,8 @@
   section {
     .flex(1 1 auto);
     .flexy(column);
-    width: @aside_width_lg;
-    min-height: @aside_width_lg;
+    width: @aside_width;
+    min-height: @aside_width;
   }
 }
 .aside-people {
@@ -226,7 +229,7 @@
   }
   .icon-user {
     .flex(0 0 auto);
-    margin: 0 ((@aside_width_sm - @icon_width) / 2);
+    margin: 0 ((@tile - @icon_width) / 2);
     transition+: margin @aside_speed @bezier_transform 0ms;
   }
 }
@@ -431,4 +434,23 @@
     color: @white;
     background: @font_color;
   }
+input.logout {
+  position: fixed;
+  top: 1em;
+  right: 1em;
+  background: none;
+  border: none;
+  &:focus {
+    background: none;
+    border: none;
+  }
+  color: @gray_light;
+  cursor: pointer;
+}
+
+a.login {
+  position: fixed;
+  top: 1em;
+  right: 1em;
+  color: @gray_light;
 }

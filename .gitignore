@@ -16,3 +16,4 @@ pom.xml.asc
 /out/*
 /.repl/*
 /resources/public/css/app.css
+/production.sh

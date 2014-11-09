@@ -1,38 +1,38 @@
 (ns pc.server
-  (:require [clojure.core.async :as async]
+  (:require [cemerick.url :as url]
+            [cheshire.core :as json]
+            [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [clojure.tools.reader.edn :as edn]
             [clj-time.core :as time]
+            [clj-time.format :as time-format]
             [compojure.core :refer (defroutes routes GET POST ANY)]
             [compojure.handler :refer (site)]
             [compojure.route]
+            [crypto.equality :as crypto]
             [datomic.api :refer [db q] :as d]
             [org.httpkit.server :as httpkit]
             [pc.admin.db :as db-admin]
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
             [pc.http.sente :as sente]
+            [pc.auth :as auth]
+            [pc.auth.google :refer (google-client-id)]
+            [pc.models.cust :as cust]
             [pc.models.layer :as layer]
+            [pc.profile :as profile]
             [pc.less :as less]
             [pc.views.content :as content]
+            [pc.utils :refer (inspect)]
+            [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
-            [ring.util.response :refer (redirect)]))
+            [ring.util.response :refer (redirect)]
+            [slingshot.slingshot :refer (try+ throw+)]))
 
-(defn log-request [req resp ms]
-  (when-not (re-find #"^/cljs" (:uri req))
-    (log/infof "%s: %s %s for %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) ms)))
-
-(defn logging-middleware [handler]
-  (fn [req]
-    (let [start (time/now)
-          resp (handler req)
-          stop (time/now)]
-      (try
-        (log-request req resp (time/in-millis (time/interval start stop)))
-        (catch Exception e
-          (log/error e)))
-      resp)))
+(defn ssl? [req]
+  (or (= :https (:scheme req))
+      (= "https" (get-in req [:headers "x-forwarded-proto"]))))
 
 (defn app [sente-state]
   (routes
@@ -46,8 +46,11 @@
         ;; TODO: take tx-date as a param
         {:status 200
          :body (pr-str {:layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong id)})})})
-   (GET "/document/:document-id" [document-id]
-        (content/app))
+   (GET "/document/:document-id" [document-id :as req]
+        (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                             :google-client-id (google-client-id)}
+                            (when-let [cust (-> req :auth :cust)]
+                              {:cust {:email (:cust/email cust)}}))))
    (GET "/" []
         (let [[document-id] (pcd/generate-eids (pcd/conn) 1)]
           @(d/transact (pcd/conn) [{:db/id document-id :document/name "Untitled"}])
@@ -103,20 +106,107 @@
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
    (POST "/chsk" req ((:ajax-post-fn sente-state) req))
-   (ANY "*" [] {:status 404 :body nil})))
+   (GET "/auth/google" {{code :code state :state} :params :as req}
+        (let [parsed-state (-> state url/url-decode json/decode pc.utils/inspect)]
+          (if (not (crypto/eq? (get parsed-state "csrf-token")
+                               ring.middleware.anti-forgery/*anti-forgery-token*))
+            {:status 400
+             :body "There was a problem logging you in."}
 
-(defn port []
-  (if (System/getenv "HTTP_PORT")
-    (Integer/parseInt (System/getenv "HTTP_PORT"))
-    8080))
+            (let [cust (auth/cust-from-google-oauth-code code)]
+              {:status 302
+               :body ""
+               :session (assoc (:session req)
+                          :http-session-key (:cust/http-session-key cust))
+               :headers {"Location" (str (url/map->URL {:host (profile/hostname)
+                                                        :protocol (if (ssl? req) "https" "http")
+                                                        :port (if (ssl? req)
+                                                                (profile/https-port)
+                                                                (profile/http-port))
+                                                        :path (or (get parsed-state "redirect-path") "/")
+                                                        :query (get parsed-state "redirect-query")}))}}))))
+   (POST "/logout" {{redirect-to :redirect-to} :params :as req}
+         (when-let [cust (-> req :auth :cust)]
+           (cust/retract-session-key! cust))
+         {:status 302
+          :body ""
+          :headers {"Location" (str (url/map->URL {:host (profile/hostname)
+                                                   :protocol (if (ssl? req) "https" "http")
+                                                   :port (if (ssl? req)
+                                                           (profile/https-port)
+                                                           (profile/http-port))
+                                                   :path redirect-to}))}
+          :session nil})
+   (ANY "*" [] {:status 404 :body "Page not found."})))
+
+(defn log-request [req resp ms]
+  (when-not (re-find #"^/cljs" (:uri req))
+    (let [cust (-> req :auth :cust)
+          cust-str (when cust (str (:db/id cust) " (" (:cust/email cust) ")"))]
+      (log/infof "%s: %s %s for %s %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) cust-str ms))))
+
+(defn logging-middleware [handler]
+  (fn [req]
+    (let [start (time/now)
+          resp (handler req)
+          stop (time/now)]
+      (try
+        (log-request req resp (time/in-millis (time/interval start stop)))
+        (catch Exception e
+          (log/error e)))
+      resp)))
+
+(defn ssl-middleware [handler]
+  (fn [req]
+    (if (or (not (profile/force-ssl?))
+            (ssl? req))
+      (handler req)
+      {:status 301
+       :headers {"Location" (str (url/map->URL {:host (profile/hostname)
+                                                :protocol "https"
+                                                :port (profile/https-port)
+                                                :path (:uri req)
+                                                :query (:query-string req)}))}
+       :body ""})))
+
+(defn exception-middleware [handler]
+  (fn [req]
+    (try+
+      (handler req)
+      (catch :status t
+        (log/error t)
+        {:status (:status t)
+         :body (:public-message t)})
+      (catch Object e
+        (log/error e)
+        {:status 500
+         :body "Sorry, something completely unexpected happened!"}))))
+
+(defn auth-middleware [handler]
+  (fn [req]
+    (if-let [cust (some->> req :session :http-session-key (cust/find-by-http-session-key (pcd/default-db)))]
+      (handler (assoc req :auth {:cust cust}))
+      (handler req))))
+
+(defn handler [sente-state]
+  (->
+   (app sente-state)
+   (sente/wrap-user-id)
+   (auth-middleware)
+   (wrap-anti-forgery)
+   (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
+                  :cookie-attrs {:http-only true
+                                 :expires (time-format/unparse (:rfc822 time-format/formatters) (time/from-now (time/years 1))) ;; expire one year after the server starts up
+                                 :max-age (* 60 60 24 365)
+                                 :secure (profile/force-ssl?)}})
+   (ssl-middleware)
+   (exception-middleware)
+   (logging-middleware)
+   (site)))
 
 (defn start [sente-state]
-  (def server (httpkit/run-server (-> (app sente-state)
-                                      (sente/wrap-user-id)
-                                      (wrap-session {:store (cookie-store)})
-                                      (logging-middleware)
-                                      (site))
-                                  {:port (port)})))
+  (def server (httpkit/run-server (handler sente-state)
+                                  {:port (profile/http-port)})))
 
 (defn stop []
   (server))

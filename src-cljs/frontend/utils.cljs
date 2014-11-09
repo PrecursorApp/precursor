@@ -17,7 +17,8 @@
   (:import [goog.format EmailAddress]))
 
 (defn csrf-token []
-  (aget js/window "CSRFToken"))
+  (or (aget js/window "CSRFToken") ;; remove when backend deploys
+      (aget js/window "Precursor" "CSRFToken")))
 
 (def parsed-uri
   (goog.Uri. (-> (.-location js/window) (.-href))))
@@ -109,24 +110,6 @@
              path
              (str "/" path)))))
 
-(defn display-branch [branch]
-  (-> branch name js/decodeURIComponent))
-
-(defn encode-branch [branch]
-  (-> branch name js/encodeURIComponent))
-
-;; Stores unique keys to uuids for the functions
-(def debounce-state (atom {}))
-
-(defn debounce
-  "Takes a unique key and a function, will only execute the last function
-   in a sliding 20ms interval (slightly longer than 16ms, time for rAF, seems to work best)"
-  [unique-key f & {:keys [timeout]
-                   :or {timeout 100}}]
-  (js/clearTimeout (get @debounce-state unique-key))
-  (let [timeout-id (js/setTimeout f timeout)]
-    (swap! debounce-state assoc unique-key timeout-id)))
-
 (defn edit-input
   "Meant to be used in a react event handler, usually for the :on-change event on input.
   Path is the vector of keys you would pass to assoc-in to change the value in state,
@@ -142,51 +125,6 @@
   event is the Synthetic React event."
   [controls-ch path event]
   (put! controls-ch [:toggled-input {:path path}]))
-
-;; TODO: get rid of bootstrap modals
-(defn open-modal
-  "Open bootstrap modal with given selector"
-  [selector]
-  (mwarn "Please remove the modal on" selector)
-  (let [jq (aget js/window "$")
-        $node (jq selector)
-        $modal (aget $node "modal")]
-    (.call $modal $node #js {:open true})))
-
-;; TODO: get rid of bootstrap popovers
-(defn popover
-  "Sets up a popover given selector and options. Once this is called, the popover
-   should work as expected"
-  [selector options]
-  (mwarn "Please remove the popover on" selector)
-  (let [jq (aget js/window "$")
-        $node (jq selector)
-        $popover (aget $node "popover")]
-    (.call $popover $node (clj->js options))))
-
-;; TODO: get rid of bootstrap tooltips
-(defn tooltip
-  "Sets up a tooltip given selector and options. Once this is called, the tooltip
-   should work as expected"
-  [selector & [options]]
-  (mwarn "Please remove the tooltip on" selector)
-  (let [jq (aget js/window "$")
-        $node (jq selector)
-        $tooltip (aget $node "tooltip")]
-    (if options
-      (.call $tooltip $node (clj->js options))
-      (.call $tooltip $node))))
-
-;; TODO: get rid of bootstrap typeahead
-(defn typeahead
-  "Sets up typahead given selector and options. Once this is called, typeahead
-   should work as expected"
-  [selector & [options]]
-  (mwarn "Please remove typeahead on" selector)
-  (let [jq (aget js/window "$")
-        $node (jq selector)
-        $typeahead (aget $node "typeahead")]
-    (.call $typeahead $node (clj->js options))))
 
 (defn rAF
   "Calls passed in function inside a requestAnimationFrame, falls back to timeouts for

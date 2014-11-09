@@ -4,6 +4,7 @@
             [clojure.string :as str]
             [datascript :as d]
             [frontend.async :refer [put!]]
+            [frontend.auth :as auth]
             [frontend.components.aside :as aside]
             [frontend.components.inspector :as inspector]
             [frontend.components.key-queue :as keyq]
@@ -55,6 +56,18 @@
                       {:opts {:keymap keymap
                               :error-ch (get-in app [:comms :errors])}})]))))))
 
+(defn auth-link [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       (if (:cust app)
+         [:form {:method "post" :action "/logout"}
+          [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
+          [:input.logout {:type "submit" :value "Logout"}]]
+         [:a.login {:href (auth/auth-url)}
+          "Sign up"])))))
+
 
 (defn app [app owner]
   (reify
@@ -102,9 +115,10 @@
                                     :target "_self"
                                     :title "New Document"}
                   (common/icon :newdoc)]]
-                (when (:mouse app)
+                (when (and (:mouse app) (not= :touch (:type (:mouse app))))
                   [:div.mouse-stats
-                   (pr-str (:mouse app))])
+                   (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))])
+                (om/build auth-link app)
                 (when (get-in app [:menu :open?])
                   [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 192)
                                              :left (- (get-in app [:menu :x]) 192)}}
