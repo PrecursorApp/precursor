@@ -93,7 +93,8 @@
     om/IRenderState
     (render-state [_ {:keys [unseen-eids]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
-            aside-opened? (get-in app state/aside-menu-opened-path)]
+            aside-opened? (get-in app state/aside-menu-opened-path)
+            overlay-info-open? (get-in app state/overlay-info-opened-path)]
         (html [:div#app
                (om/build aside/menu app)
                [:main.app-main {:onContextMenu (fn [e]
@@ -102,11 +103,17 @@
                 (om/build canvas/svg-canvas app)
                 [:div.main-actions
                  [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
-                                  :class (when-not aside-opened? "closed")}
+                                  :class (when-not aside-opened? "closed")
+                                  :title "Open Menu"}
                   (common/icon :menu)]
                  (when (and (not aside-opened?) (seq unseen-eids))
                    [:div.unseen-eids (str (count unseen-eids))])
-                 [:a.action-newdoc {:href "/" :target "_self"}
+                 [:a.action-info {:on-click #(cast! :overlay-info-toggled)
+                                  :title "What's this?"}
+                  (common/icon :info)]
+                 [:a.action-newdoc {:href "/"
+                                    :target "_self"
+                                    :title "New Document"}
                   (common/icon :newdoc)]]
                 (when (and (:mouse app) (not= :touch (:type (:mouse app))))
                   [:div.mouse-stats
@@ -124,4 +131,22 @@
                      [:div.radial-tool-type
                       (common/icon (:type template))
                       [:span (name tool)]])
-                   [:div.radial-menu-nub]])]])))))
+                   [:div.radial-menu-nub]])]
+               [:div.app-overlay
+                [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)
+                                       :class (when-not overlay-info-open? "hidden")}
+                 [:div.info-background]
+                 [:button.info-close
+                  (common/icon :times)]
+                 [:article {:on-click #(.stopPropagation :overlay-info-toggled)}
+                  [:h1 "What's this?"]
+                  [:p "Precursor is a collaborative idea tool.
+                      Think of it as a notebook with infinite pages – use it to create rapid sketches, prototypes, notes, and everything in between.
+                      Collaborate by sharing your URL, and you'll instantly have multiple people working in the same document.
+                      It's still a work in progress, so if you have feedback or a great idea for us sketch it up and ping "
+                      [:a {:on-click #(cast! :chat-link-clicked)
+                           :role "button"}
+                       "@prcrsr"]
+                      " in the chat."]
+                  [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
+                   "Okay, sounds good."]]]]])))))
