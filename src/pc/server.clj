@@ -132,7 +132,7 @@
    (app sente-state)
    (sente/wrap-user-id)
    (wrap-anti-forgery)
-   (wrap-session {:store (cookie-store)
+   (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
                   :cookie-attrs {:http-only true
                                  :expires (time-format/unparse (:rfc822 time-format/formatters) (time/from-now (time/years 1))) ;; expire one year after the server starts up
                                  :max-age (* 60 60 24 365)
