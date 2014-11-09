@@ -1,6 +1,7 @@
 (ns pc.views.content
   (:require [cheshire.core :as json]
             [hiccup.core :as h]
+            [pc.views.scripts :as scripts]
             [pc.profile :refer (prod-assets?)]))
 
 (defn layout [view-data & content]
@@ -11,7 +12,9 @@
     [:link.css-styles {:rel "stylesheet", :href (str "/css/app.css?rand=" (Math/random))}]
     [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
     [:script {:type "text/javascript"}
-     (format "window.Precursor = JSON.parse('%s')" (json/encode view-data))]]
+     (format "window.Precursor = JSON.parse('%s')" (json/encode view-data))]
+    (when (prod-assets?)
+      scripts/google-analytics)]
    [:body
     [:div.alerts-container]
     content]])
