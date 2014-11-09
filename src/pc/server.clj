@@ -37,7 +37,7 @@
         {:status 200
          :body (pr-str {:layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong id)})})})
    (GET "/document/:document-id" [document-id]
-        (content/app (inspect ring.middleware.anti-forgery/*anti-forgery-token*)))
+        (content/app ring.middleware.anti-forgery/*anti-forgery-token*))
    (GET "/" []
         (let [[document-id] (pcd/generate-eids (pcd/conn) 1)]
           @(d/transact (pcd/conn) [{:db/id document-id :document/name "Untitled"}])
