@@ -13,7 +13,8 @@
    :settings        {:browser-settings {:show-grid?  true
                                         :night-mode? true
                                         :current-tool :rect
-                                        :aside-menu-opened true}}
+                                        :aside-menu-opened true
+                                        :chat-mobile-opened true}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
@@ -64,4 +65,5 @@
 (def current-tool-path (conj browser-settings-path :current-tool))
 
 (def aside-menu-opened-path (conj browser-settings-path :aside-menu-opened))
+(def chat-mobile-opened-path (conj browser-settings-path :chat-mobile-toggled))
 (def aside-width-path [:aside-width])

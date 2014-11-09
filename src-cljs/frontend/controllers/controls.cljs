@@ -425,3 +425,9 @@
 (defmethod post-control-event! :application-shutdown
   [target message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
+
+(defmethod control-event :chat-mobile-toggled
+  [target message _ state]
+  (let [chat-mobile-open? (not (get-in state state/chat-mobile-opened-path))]
+    (-> state
+        (assoc-in state/chat-mobile-opened-path chat-mobile-open?))))
