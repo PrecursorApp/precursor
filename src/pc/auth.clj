@@ -4,7 +4,7 @@
             [pc.datomic :as pcd])
   (:import java.util.UUID))
 
-(defn cust-from-google-oauth-code [code]
+(defn cust-from-google-oauth-code [code session-uuid]
   {:post [(string? (:google-account/sub %))]} ;; should never break, but just in case...
   (let [user-info (google-auth/user-info-from-code code)]
     (if-let [cust (cust/find-by-google-sub (pcd/default-db) (:sub user-info))]
@@ -17,7 +17,7 @@
                        :cust/verified-email (:email_verified user-info)
                        :cust/http-session-key (UUID/randomUUID)
                        :google-account/sub (:sub user-info)
-                       :cust/uuid (UUID/randomUUID)})
+                       :cust/uuid (or session-uuid (UUID/randomUUID))})
         (catch Exception e
           (if (pcd/unique-conflict? e)
             (cust/find-by-google-sub (pcd/default-db) (:sub user-info))

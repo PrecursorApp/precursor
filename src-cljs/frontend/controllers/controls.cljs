@@ -422,6 +422,11 @@
                                         (get-in state state/aside-width-path)
                                         0)))))
 
+(defmethod control-event :overlay-info-toggled
+  [target message _ state]
+  (-> state
+      (update-in state/overlay-info-opened-path not)))
+
 (defmethod post-control-event! :application-shutdown
   [target message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
@@ -431,3 +436,15 @@
   (let [chat-mobile-open? (not (get-in state state/chat-mobile-opened-path))]
     (-> state
         (assoc-in state/chat-mobile-opened-path chat-mobile-open?))))
+
+(defmethod control-event :chat-link-clicked
+  [target message _ state]
+   (-> state
+     (assoc-in state/overlay-info-opened-path false)
+     (assoc-in state/aside-menu-opened-path true)
+     (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
+     (assoc-in [:chat :body] "@prcrsr ")))
+
+(defmethod post-control-event! :chat-link-clicked
+  [target message _ previous-state current-state]
+  (.focus (sel1 target "#chat-box")))

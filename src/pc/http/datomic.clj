@@ -1,9 +1,12 @@
 (ns pc.http.datomic
-  (:require [clojure.core.async :as async]
+  (:require [cheshire.core :as json]
+            [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [clj-time.core :as time]
+            [org.httpkit.client :as http]
             [pc.http.sente :as sente]
             [pc.datomic :as pcd]
+            [pc.profile :as profile]
             [datomic.api :refer [db q] :as d])
   (:import java.util.UUID))
 
@@ -93,6 +96,16 @@
   (let [txid (-> transaction :tx-data first :tx)]
     (->> txid (d/entity (:db-after transaction)) (#(select-keys % [:document/id :session/uuid])))))
 
+(defn handle-precursor-pings [document-id datoms]
+  (when-let [ping-datoms (seq (filter #(and (= :chat/body (:a %))
+                                            (re-find #"@prcrsr" (:v %)))
+                                      datoms))]
+    (doseq [datom ping-datoms
+            :let [message (format "<https://prcrsr.com/document/%s|%s>: %s"
+                                  document-id document-id (:v datom))]]
+      (http/post "https://hooks.slack.com/services/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"
+                 {:form-params {"payload" (json/encode {:text message})}}))))
+
 (defn notify-subscribers [transaction]
   (def myt transaction)
   (let [annotations (get-annotations transaction)]
@@ -103,7 +116,9 @@
                                     (map (partial datom-read-api (:db-after transaction)))
                                     seq)]
         (sente/notify-transaction (merge {:tx-data public-datoms}
-                                         annotations))))))
+                                         annotations))
+        (when (profile/prod?)
+          (handle-precursor-pings (:document/id annotations) public-datoms))))))
 
 (defn init []
   (let [conn (pcd/conn)

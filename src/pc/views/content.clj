@@ -1,8 +1,10 @@
 (ns pc.views.content
-  (:require [hiccup.core :as h]
+  (:require [cheshire.core :as json]
+            [hiccup.core :as h]
+            [pc.views.scripts :as scripts]
             [pc.profile :refer (prod-assets?)]))
 
-(defn layout [csrf-token & content]
+(defn layout [view-data & content]
   [:html
    [:head
     [:title "Precursor - Mockups from the future"]
@@ -10,14 +12,16 @@
     [:link.css-styles {:rel "stylesheet", :href (str "/css/app.css?rand=" (Math/random))}]
     [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
     [:script {:type "text/javascript"}
-     (format "window.CSRFToken = '%s'" csrf-token)]]
+     (format "window.Precursor = JSON.parse('%s')" (json/encode view-data))]
+    (when (prod-assets?)
+      scripts/google-analytics)]
    [:body
     [:div.alerts-container]
     content]])
 
-(defn app* [csrf-token]
+(defn app* [view-data]
   (layout
-   csrf-token
+   view-data
    [:input.history {:style "display:none;"}]
    [:div#player-container]
    [:div#app-container]
@@ -34,5 +38,5 @@
         [:script {:type "text/javascript"}
          "goog.require(\"frontend.core\");"])))))
 
-(defn app [csrf-token]
-  (h/html (app* csrf-token)))
+(defn app [view-data]
+  (h/html (app* view-data)))

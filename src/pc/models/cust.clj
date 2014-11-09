@@ -15,12 +15,20 @@
                                      ;; probably a uuid type
                                      :cust/http-sesion-key String}))
 
+;; TODO: maybe these should return an entity instead of touching?
 (defn find-by-google-sub [db google-sub]
   (pcd/touch-one '{:find [?e] :in [$ ?sub]
                    :where [[?e :google-account/sub ?sub]]}
                  db google-sub))
 
-;; TODO: maybe these should return an entity instead of touching?
+(defn find-by-http-session-key [db http-session-key]
+  (pcd/touch-one '{:find [?e] :in [$ ?key]
+                   :where [[?e :cust/http-session-key ?key]]}
+                 db http-session-key))
+
+(defn retract-session-key! [cust]
+  @(d/transact (pcd/conn) [[:db/retract (:db/id cust) :cust/http-session-key (:cust/http-session-key cust)]]))
+
 (defn create! [cust-attrs]
   (let [temp-id (d/tempid :db.part/user)
         {:keys [tempids db-after]} @(d/transact (pcd/conn)

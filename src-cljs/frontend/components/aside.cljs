@@ -61,7 +61,8 @@
                                             (not (.-altKey %)))
                                    (cast! :chat-submitted)
                                    false)}
-           [:textarea {:type "text"
+           [:textarea {:id "chat-box"
+                       :type "text"
                        :value (or chat-body "")
                        :placeholder "Send a message..."
                        :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]])))))
