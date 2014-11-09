@@ -28,7 +28,8 @@
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
             [ring.util.response :refer (redirect)]
-            [slingshot.slingshot :refer (try+ throw+)]))
+            [slingshot.slingshot :refer (try+ throw+)])
+  (:import java.util.UUID))
 
 (defn ssl? [req]
   (or (= :https (:scheme req))
@@ -107,13 +108,13 @@
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
    (POST "/chsk" req ((:ajax-post-fn sente-state) req))
    (GET "/auth/google" {{code :code state :state} :params :as req}
-        (let [parsed-state (-> state url/url-decode json/decode pc.utils/inspect)]
+        (let [parsed-state (-> state url/url-decode json/decode)]
           (if (not (crypto/eq? (get parsed-state "csrf-token")
                                ring.middleware.anti-forgery/*anti-forgery-token*))
             {:status 400
              :body "There was a problem logging you in."}
 
-            (let [cust (auth/cust-from-google-oauth-code code)]
+            (let [cust (auth/cust-from-google-oauth-code code (some-> req :session :uid))]
               {:status 302
                :body ""
                :session (assoc (:session req)
