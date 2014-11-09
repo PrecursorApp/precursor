@@ -424,9 +424,8 @@
 
 (defmethod control-event :overlay-info-toggled
   [target message _ state]
-  (let [overlay-info-open? (not (get-in state state/overlay-info-opened-path))]
-    (-> state
-        (assoc-in state/overlay-info-opened-path overlay-info-open?))))
+  (-> state
+      (update-in state/overlay-info-opened-path not)))
 
 (defmethod post-control-event! :application-shutdown
   [target message _ previous-state current-state]
