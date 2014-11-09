@@ -433,9 +433,8 @@
 
 (defmethod control-event :chat-mobile-toggled
   [target message _ state]
-  (let [chat-mobile-open? (not (get-in state state/chat-mobile-opened-path))]
-    (-> state
-        (assoc-in state/chat-mobile-opened-path chat-mobile-open?))))
+  (-> state
+      (update-in state/chat-mobile-opened-path not)))
 
 (defmethod control-event :chat-link-clicked
   [target message _ state]
