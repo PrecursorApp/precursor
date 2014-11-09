@@ -17,6 +17,8 @@
             [pc.http.datomic :as datomic]
             [pc.http.sente :as sente]
             [pc.auth :as auth]
+            [pc.auth.google :refer (google-client-id)]
+            [pc.models.cust :as cust]
             [pc.models.layer :as layer]
             [pc.profile :as profile]
             [pc.less :as less]
@@ -44,8 +46,11 @@
         ;; TODO: take tx-date as a param
         {:status 200
          :body (pr-str {:layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong id)})})})
-   (GET "/document/:document-id" [document-id]
-        (content/app ring.middleware.anti-forgery/*anti-forgery-token*))
+   (GET "/document/:document-id" [document-id :as req]
+        (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                             :google-client-id (google-client-id)}
+                            (when-let [cust (-> req :auth :cust)]
+                              {:cust {:email (:cust/email cust)}}))))
    (GET "/" []
         (let [[document-id] (pcd/generate-eids (pcd/conn) 1)]
           @(d/transact (pcd/conn) [{:db/id document-id :document/name "Untitled"}])
@@ -101,9 +106,9 @@
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
    (POST "/chsk" req ((:ajax-post-fn sente-state) req))
-   (GET "/auth/google" {{code :code session_state :session_state} :params :as req}
-        (let [state (-> session_state url/url-decode json/decode)]
-          (if (not (crypto/eq? (get state "csrf-token")
+   (GET "/auth/google" {{code :code state :state} :params :as req}
+        (let [parsed-state (-> state url/url-decode json/decode pc.utils/inspect)]
+          (if (not (crypto/eq? (get parsed-state "csrf-token")
                                ring.middleware.anti-forgery/*anti-forgery-token*))
             {:status 400
              :body "There was a problem logging you in."}
@@ -118,13 +123,27 @@
                                                         :port (if (ssl? req)
                                                                 (profile/https-port)
                                                                 (profile/http-port))
-                                                        :path (or (get state "redirect-path") "/")
-                                                        :query (get state "redirect-query")}))}}))))
+                                                        :path (or (get parsed-state "redirect-path") "/")
+                                                        :query (get parsed-state "redirect-query")}))}}))))
+   (POST "/logout" {{redirect-to :redirect-to} :params :as req}
+         (when-let [cust (-> req :auth :cust)]
+           (cust/retract-session-key! cust))
+         {:status 302
+          :body ""
+          :headers {"Location" (str (url/map->URL {:host (profile/hostname)
+                                                   :protocol (if (ssl? req) "https" "http")
+                                                   :port (if (ssl? req)
+                                                           (profile/https-port)
+                                                           (profile/http-port))
+                                                   :path redirect-to}))}
+          :session nil})
    (ANY "*" [] {:status 404 :body "Page not found."})))
 
 (defn log-request [req resp ms]
   (when-not (re-find #"^/cljs" (:uri req))
-    (log/infof "%s: %s %s for %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) ms)))
+    (let [cust (-> req :auth :cust)
+          cust-str (when cust (str (:db/id cust) " (" (:cust/email cust) ")"))]
+      (log/infof "%s: %s %s for %s %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) cust-str ms))))
 
 (defn logging-middleware [handler]
   (fn [req]
@@ -163,10 +182,17 @@
         {:status 500
          :body "Sorry, something completely unexpected happened!"}))))
 
+(defn auth-middleware [handler]
+  (fn [req]
+    (if-let [cust (some->> req :session :http-session-key (cust/find-by-http-session-key (pcd/default-db)))]
+      (handler (assoc req :auth {:cust cust}))
+      (handler req))))
+
 (defn handler [sente-state]
   (->
    (app sente-state)
    (sente/wrap-user-id)
+   (auth-middleware)
    (wrap-anti-forgery)
    (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
                   :cookie-attrs {:http-only true

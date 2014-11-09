@@ -97,10 +97,12 @@
 
 (defn app-state []
   (let [initial-state (state/initial-state)
-        document-id (js/parseInt (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))]
+        document-id (js/parseInt (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
+        cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
     (atom (assoc initial-state
             :document/id document-id
             :db  (ds/make-initial-db document-id)
+            :cust cust
             :comms {:controls      controls-ch
                     :api           api-ch
                     :errors        errors-ch
