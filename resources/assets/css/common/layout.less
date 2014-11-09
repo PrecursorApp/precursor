@@ -178,6 +178,11 @@
   overflow: hidden;
   transition: @aside_speed;
   transition-timing-function: @bezier_bounce;
+  .mq_640({
+    .flex-direction(row);
+    position: relative;
+    padding-top: @tile;
+  });
   &.closed {
     width: 0;
     transition-timing-function: @bezier_transform;
@@ -193,18 +198,42 @@
       }
     }
   }
-  .aside-settings {
-    > button {
-      &:hover {
-        background: none;
+  &.show-chat-on-mobile {
+    .mq_640({
+      .aside-people {
+        margin-left: -100%;
       }
-    }
+    });
   }
   section {
     .flex(1 1 auto);
     .flexy(column);
     width: @aside_width;
     min-height: @aside_width;
+    .mq_640({
+      .flex(0 0 100%);
+      transition: 200ms;
+    });
+  }
+}
+.aside-switcher {
+  display: none;
+  position: absolute;
+  color: @white;
+  top: 0;
+  left: 0;
+  width: @aside_width;
+  .mq_640({
+    .flexy();
+  });
+}
+.aside-switcher-option {
+  .flex(0 0 50%);
+  .flexy(center, center);
+  height: @tile;
+  &:not(.toggled) {
+    color: @gray;
+    background: fade(@black, 13);
   }
 }
 .aside-people {
@@ -262,6 +291,9 @@
 .chat-messages {
   padding: 1em 0;
   overflow-y: auto;
+  .mq_640({
+    width: @aside_width;
+  });
   &::-webkit-scrollbar {
     width: 0; // we should calculate to get this effect in the dom
   }
