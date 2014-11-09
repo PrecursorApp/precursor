@@ -130,7 +130,9 @@
                       Think of it as a notebook with infinite pages – use it to create rapid sketches, prototypes, notes, and everything in between.
                       Collaborate by sharing your URL, and you'll instantly have multiple people working in the same document.
                       It's still a work in progress, so if you have feedback or a great idea for us sketch it up and ping "
-                      [:a {:role "button"} "@precursor"]
+                      [:a {:on-click #(cast! :chat-link-clicked)
+                           :role "button"}
+                       "@prcrsr"]
                       " in the chat."]
                   [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
                    "Okay, sounds good."]]]]])))))
