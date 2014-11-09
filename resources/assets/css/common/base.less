@@ -54,17 +54,19 @@ img {
   line-height: @font_height;
 }
 a {
-  // color: @gray_darkest;
-  // color: inherit;
+  color: @link_color;
   text-decoration: none;
   &:hover {
-    // color: @gray_lightest;
-    color: @font_color_hover;
+    color: inherit;
+  }
+  &[role="button"] {
+    cursor: pointer;
   }
 }
 p {
   a {
     &:hover {
+      border-bottom: 1px dotted @link_color;
     }
   }
 }
