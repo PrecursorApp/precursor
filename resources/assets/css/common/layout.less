@@ -366,3 +366,53 @@
     background: @app_background;
   }
 }
+.app-overlay {
+  .flexy(stretch, center, column);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  figure {
+    .flex(1);
+  }
+}
+.overlay-info {
+  .flexy(center, center);
+  color: @gray_dark;
+  background: @white;
+  article {
+    max-width: (@tile * 10);
+  }
+}
+.info-close {
+  .flexy(center, center);
+  .icon_stroke(@gray);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: @tile;
+  height: @tile;
+  i {
+    font-size: 1.8em;
+    transition: 100ms @bezier_transform;
+  }
+  &:hover {
+    .icon_stroke(@gray_dark);
+    i {
+      font-size: 2em;
+    }
+  }
+}
+.info-okay {
+  min-height: 3.5em;
+  min-width: 10.5em;
+  line-height: 1em;
+  padding: 1em 2em;
+  border: 1px solid @font_color;
+  transition: 100ms @bezier_fadein;
+  &:hover {
+    color: @white;
+    background: @font_color;
+  }
+}

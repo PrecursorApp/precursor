@@ -110,4 +110,17 @@
                      [:div.radial-tool-type
                       (common/icon (:type template))
                       [:span (name tool)]])
-                   [:div.radial-menu-nub]])]])))))
+                   [:div.radial-menu-nub]])]
+               [:div.app-overlay
+                [:figure.overlay-info
+                 [:button.info-close
+                  (common/icon :times)]
+                 [:article
+                  [:h1 "What's this?"]
+                  [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                      Nulla non magna tincidunt, malesuada felis in, feugiat tellus "
+                      [:a {:href "#"} "feugiat tellus"]
+                      ". Ut interdum scelerisque purus, et condimentum libero vehicula in.
+                      Fusce sapien libero, iaculis fermentum erat et.
+                      Praesent lacinia accumsan eros sed euismod."]
+                  [:button.info-okay "Okay, sounds good."]]]]])))))
