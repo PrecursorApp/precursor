@@ -84,7 +84,6 @@
   [target message status args previous-state current-state]
   (mlog "No post-api for: " [message status]))
 
-
 (defmethod api-event [:entity-ids :success]
   [target message status args state]
   (update-in state [:entity-ids] (fnil into #{}) (get-in args [:resp :entity-ids])))

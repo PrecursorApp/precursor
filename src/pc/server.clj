@@ -4,6 +4,7 @@
             [clojure.tools.logging :as log]
             [clojure.tools.reader.edn :as edn]
             [clj-time.core :as time]
+            [clj-time.format :as time-format]
             [compojure.core :refer (defroutes routes GET POST ANY)]
             [compojure.handler :refer (site)]
             [compojure.route]
@@ -18,6 +19,7 @@
             [pc.less :as less]
             [pc.views.content :as content]
             [pc.utils :refer (inspect)]
+            [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
             [ring.util.response :refer (redirect)]))
@@ -35,7 +37,7 @@
         {:status 200
          :body (pr-str {:layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong id)})})})
    (GET "/document/:document-id" [document-id]
-        (content/app))
+        (content/app (inspect ring.middleware.anti-forgery/*anti-forgery-token*)))
    (GET "/" []
         (let [[document-id] (pcd/generate-eids (pcd/conn) 1)]
           @(d/transact (pcd/conn) [{:db/id document-id :document/name "Untitled"}])
@@ -125,13 +127,22 @@
                                                 :query (:query-string req)}))}
        :body ""})))
 
+(defn handler [sente-state]
+  (->
+   (app sente-state)
+   (sente/wrap-user-id)
+   (wrap-anti-forgery)
+   (wrap-session {:store (cookie-store)
+                  :cookie-attrs {:http-only true
+                                 :expires (time-format/unparse (:rfc822 time-format/formatters) (time/from-now (time/years 1))) ;; expire one year after the server starts up
+                                 :max-age (* 60 60 24 365)
+                                 :secure (profile/force-ssl?)}})
+   (ssl-middleware)
+   (logging-middleware)
+   (site)))
+
 (defn start [sente-state]
-  (def server (httpkit/run-server (-> (app sente-state)
-                                      (sente/wrap-user-id)
-                                      (wrap-session {:store (cookie-store)})
-                                      (ssl-middleware)
-                                      (logging-middleware)
-                                      (site))
+  (def server (httpkit/run-server (handler sente-state)
                                   {:port (profile/http-port)})))
 
 (defn stop []

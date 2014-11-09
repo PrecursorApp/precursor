@@ -2,20 +2,22 @@
   (:require [hiccup.core :as h]
             [pc.profile :refer (prod-assets?)]))
 
-(defn layout [& content]
+(defn layout [csrf-token & content]
   [:html
    [:head
     [:title "Precursor - Mockups from the future"]
     [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
     [:link.css-styles {:rel "stylesheet", :href (str "/css/app.css?rand=" (Math/random))}]
     [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
-    ]
+    [:script {:type "text/javascript"}
+     (format "window.CSRFToken = '%s'" csrf-token)]]
    [:body
     [:div.alerts-container]
     content]])
 
-(defn app* []
+(defn app* [csrf-token]
   (layout
+   csrf-token
    [:input.history {:style "display:none;"}]
    [:div#player-container]
    [:div#app-container]
@@ -32,5 +34,5 @@
         [:script {:type "text/javascript"}
          "goog.require(\"frontend.core\");"])))))
 
-(defn app []
-  (h/html (app*)))
+(defn app [csrf-token]
+  (h/html (app* csrf-token)))

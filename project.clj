@@ -25,6 +25,7 @@
                  [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop]]
 
                  [ring/ring "1.2.2"]
+                 [ring/ring-anti-forgery "1.0.0"]
                  [http-kit "2.1.18"]
                  [com.taoensso/sente "1.2.0"]
                  [fs "0.11.1"]

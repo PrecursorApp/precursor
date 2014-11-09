@@ -71,6 +71,10 @@
                                                (put! channel [message :failed (normalize-error-response % {:url url :context context})]))}
                       :edn {:format (clj-ajax/edn-format)
                             :params params
+                            :headers (merge {:Accept "application/edn"}
+                                            (when (re-find #"^/" url)
+                                              {:X-CSRF-Token (utils/csrf-token)})
+                                            headers)
                             :handler #(binding [frontend.async/*uuid* uuid]
                                         (put! channel [message :success {:resp % :context context}]))
                             :error-handler #(binding [frontend.async/*uuid* uuid]
@@ -81,7 +85,7 @@
                             :handler #(binding [frontend.async/*uuid* uuid]
                                         (put! channel [message :success {:resp (utils/inspect %) :context context}]))
                             :error-handler #(binding [frontend.async/*uuid* uuid]
-                                       (put! channel [message :failed {:resp % :url url :context context :status :failed}]))})]
+                                              (put! channel [message :failed {:resp % :url url :context context :status :failed}]))})]
     (clj-ajax/ajax-request url method
                            (clj-ajax/transform-opts format-opts))))
 
