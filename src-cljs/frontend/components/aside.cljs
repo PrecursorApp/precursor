@@ -71,14 +71,23 @@
   (reify
     om/IRender
     (render [_]
-      (let [controls-ch (om/get-shared owner [:comms :controls])
+      (let [{:keys [cast!]} (om/get-shared owner)
+            controls-ch (om/get-shared owner [:comms :controls])
             client-id (:client-uuid app)
-            aside-opened? (get-in app state/aside-menu-opened-path)]
+            aside-opened? (get-in app state/aside-menu-opened-path)
+            chat-mobile-open? (get-in app state/chat-mobile-opened-path)]
        (html
-         [:aside.app-aside {:class (when-not aside-opened? "closed")
+         [:aside.app-aside {:class (concat
+                                     (when-not aside-opened? ["closed"])
+                                     (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))
                             :style {:width (if aside-opened?
                                              (get-in app state/aside-width-path)
                                              0)}}
+          [:button.aside-switcher {:on-click #(cast! :chat-mobile-toggled)
+                                   ; :class (if chat-mobile-open? "chat-mobile" "people-mobile")
+                                   }
+            [:span.aside-switcher-option {:class (when-not chat-mobile-open? "toggled")} "People"]
+            [:span.aside-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
           [:section.aside-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
              [:button {:title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."

@@ -431,6 +431,11 @@
   [target message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
 
+(defmethod control-event :chat-mobile-toggled
+  [target message _ state]
+  (-> state
+      (update-in state/chat-mobile-opened-path not)))
+
 (defmethod control-event :chat-link-clicked
   [target message _ state]
    (-> state
