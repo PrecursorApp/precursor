@@ -127,6 +127,19 @@
                                                 :query (:query-string req)}))}
        :body ""})))
 
+(defn exception-middleware [handler]
+  (fn [req]
+    (try+
+      (handler req)
+      (catch :status t
+        (log/error t)
+        {:status (:status t)
+         :body (:public-message t)})
+      (catch Object e
+        (log/error e)
+        {:status 500
+         :body "Sorry, something completely unexpected happened!"}))))
+
 (defn handler [sente-state]
   (->
    (app sente-state)
@@ -138,6 +151,7 @@
                                  :max-age (* 60 60 24 365)
                                  :secure (profile/force-ssl?)}})
    (ssl-middleware)
+   (exception-middleware)
    (logging-middleware)
    (site)))
 
