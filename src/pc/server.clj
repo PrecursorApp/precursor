@@ -1,5 +1,6 @@
 (ns pc.server
   (:require [cemerick.url :as url]
+            [cheshire.core :as json]
             [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [clojure.tools.reader.edn :as edn]
@@ -8,12 +9,14 @@
             [compojure.core :refer (defroutes routes GET POST ANY)]
             [compojure.handler :refer (site)]
             [compojure.route]
+            [crypto.equality :as crypto]
             [datomic.api :refer [db q] :as d]
             [org.httpkit.server :as httpkit]
             [pc.admin.db :as db-admin]
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
             [pc.http.sente :as sente]
+            [pc.auth :as auth]
             [pc.models.layer :as layer]
             [pc.profile :as profile]
             [pc.less :as less]
@@ -22,7 +25,12 @@
             [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
-            [ring.util.response :refer (redirect)]))
+            [ring.util.response :refer (redirect)]
+            [slingshot.slingshot :refer (try+ throw+)]))
+
+(defn ssl? [req]
+  (or (= :https (:scheme req))
+      (= "https" (get-in req [:headers "x-forwarded-proto"]))))
 
 (defn app [sente-state]
   (routes
@@ -93,7 +101,26 @@
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
    (POST "/chsk" req ((:ajax-post-fn sente-state) req))
-   (ANY "*" [] {:status 404 :body nil})))
+   (GET "/auth/google" {{code :code session_state :session_state} :params :as req}
+        (let [state (-> session_state url/url-decode json/decode)]
+          (if (not (crypto/eq? (get state "csrf-token")
+                               ring.middleware.anti-forgery/*anti-forgery-token*))
+            {:status 400
+             :body "There was a problem logging you in."}
+
+            (let [cust (auth/cust-from-google-oauth-code code)]
+              {:status 302
+               :body ""
+               :session (assoc (:session req)
+                          :http-session-key (:cust/http-session-key cust))
+               :headers {"Location" (str (url/map->URL {:host (profile/hostname)
+                                                        :protocol (if (ssl? req) "https" "http")
+                                                        :port (if (ssl? req)
+                                                                (profile/https-port)
+                                                                (profile/http-port))
+                                                        :path (or (get state "redirect-path") "/")
+                                                        :query (get state "redirect-query")}))}}))))
+   (ANY "*" [] {:status 404 :body "Page not found."})))
 
 (defn log-request [req resp ms]
   (when-not (re-find #"^/cljs" (:uri req))
@@ -109,10 +136,6 @@
         (catch Exception e
           (log/error e)))
       resp)))
-
-(defn ssl? [req]
-  (or (= :https (:scheme req))
-      (= "https" (get-in req [:headers "x-forwarded-proto"]))))
 
 (defn ssl-middleware [handler]
   (fn [req]

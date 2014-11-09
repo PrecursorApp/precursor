@@ -28,6 +28,9 @@
                  [ring/ring-anti-forgery "1.0.0"]
                  [http-kit "2.1.18"]
                  [com.taoensso/sente "1.2.0"]
+
+                 [crypto-equality "1.0.0"]
+
                  [fs "0.11.1"]
 
                  [ankha "0.1.2"]
