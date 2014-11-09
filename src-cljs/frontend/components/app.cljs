@@ -1,5 +1,6 @@
 (ns frontend.components.app
-  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+  (:require [cemerick.url :as url]
+            [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.set :as set]
             [clojure.string :as str]
             [datascript :as d]
@@ -64,6 +65,10 @@
        (if (:cust app)
          [:form {:method "post" :action "/logout"}
           [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
+          [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
+                                                                 (.-href)
+                                                                 (url/url)
+                                                                 :path)}]
           [:input.logout {:type "submit" :value "Logout"}]]
          [:a.login {:href (auth/auth-url)}
           "Sign up"])))))
