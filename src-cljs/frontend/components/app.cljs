@@ -126,11 +126,11 @@
                   (common/icon :times)]
                  [:article {:on-click #(.stopPropagation :overlay-info-toggled)}
                   [:h1 "What's this?"]
-                  [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                      Nulla non magna tincidunt, malesuada felis in, feugiat tellus "
-                      [:a {:href "#"} "feugiat tellus"]
-                      ". Ut interdum scelerisque purus, et condimentum libero vehicula in.
-                      Fusce sapien libero, iaculis fermentum erat et.
-                      Praesent lacinia accumsan eros sed euismod."]
+                  [:p "Precursor is a collaborative idea tool.
+                      Think of it as a notebook with infinite pages – use it to create rapid sketches, prototypes, notes, and everything in between.
+                      Collaborate by sharing your URL, and you'll instantly have multiple people working in the same document.
+                      It's still a work in progress, so if you have feedback or a great idea for us sketch it up and ping "
+                      [:a {:role "button"} "@precursor"]
+                      " in the chat."]
                   [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
                    "Okay, sounds good."]]]]])))))
