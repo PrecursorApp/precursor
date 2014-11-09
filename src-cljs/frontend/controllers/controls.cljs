@@ -420,6 +420,12 @@
                                         (get-in state state/aside-width-path)
                                         0)))))
 
+(defmethod control-event :overlay-info-toggled
+  [target message _ state]
+  (let [overlay-info-open? (not (get-in state state/overlay-info-opened-path))]
+    (-> state
+        (assoc-in state/overlay-info-opened-path overlay-info-open?))))
+
 (defmethod post-control-event! :application-shutdown
   [target message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))

@@ -64,4 +64,5 @@
 (def current-tool-path (conj browser-settings-path :current-tool))
 
 (def aside-menu-opened-path (conj browser-settings-path :aside-menu-opened))
+(def overlay-info-opened-path [:aside-menu-opened])
 (def aside-width-path [:aside-width])

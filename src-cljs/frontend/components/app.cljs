@@ -80,7 +80,8 @@
     om/IRenderState
     (render-state [_ {:keys [unseen-eids]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
-            aside-opened? (get-in app state/aside-menu-opened-path)]
+            aside-opened? (get-in app state/aside-menu-opened-path)
+            overlay-info-open? (get-in app state/overlay-info-opened-path)]
         (html [:div#app
                (om/build aside/menu app)
                [:main.app-main {:onContextMenu (fn [e]
@@ -89,11 +90,17 @@
                 (om/build canvas/svg-canvas app)
                 [:div.main-actions
                  [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
-                                  :class (when-not aside-opened? "closed")}
+                                  :class (when-not aside-opened? "closed")
+                                  :title "Open Menu"}
                   (common/icon :menu)]
                  (when (and (not aside-opened?) (seq unseen-eids))
                    [:div.unseen-eids (str (count unseen-eids))])
-                 [:a.action-newdoc {:href "/" :target "_self"}
+                 [:a.action-info {:on-click #(cast! :overlay-info-toggled)
+                                  :title "What's this?"}
+                  (common/icon :info)]
+                 [:a.action-newdoc {:href "/"
+                                    :target "_self"
+                                    :title "New Document"}
                   (common/icon :newdoc)]]
                 (when (:mouse app)
                   [:div.mouse-stats
@@ -112,10 +119,12 @@
                       [:span (name tool)]])
                    [:div.radial-menu-nub]])]
                [:div.app-overlay
-                [:figure.overlay-info
+                [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)
+                                       :class (when-not overlay-info-open? "hidden")}
+                 [:div.info-background]
                  [:button.info-close
                   (common/icon :times)]
-                 [:article
+                 [:article {:on-click #(.stopPropagation :overlay-info-toggled)}
                   [:h1 "What's this?"]
                   [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                       Nulla non magna tincidunt, malesuada felis in, feugiat tellus "
@@ -123,4 +132,5 @@
                       ". Ut interdum scelerisque purus, et condimentum libero vehicula in.
                       Fusce sapien libero, iaculis fermentum erat et.
                       Praesent lacinia accumsan eros sed euismod."]
-                  [:button.info-okay "Okay, sounds good."]]]]])))))
+                  [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
+                   "Okay, sounds good."]]]]])))))
