@@ -133,7 +133,28 @@
 
    (attribute :client/timestamp
               :db.type/instant)
-   ])
+
+   (attribute :cust/email
+              :db.type/string
+              :db/index true
+              :db/doc "User email")
+
+   (attribute :cust/verified-email
+              :db.type/boolean)
+
+   (attribute :google-account/sub
+              :db.type/string
+              :db/unique :db.unique/value
+              :db/doc "Account id unique across Google: https://developers.google.com/accounts/docs/OAuth2Login")
+
+   (attribute :cust/uuid
+              :db.type/uuid
+              :db/index true)
+
+   (attribute :cust/http-session-key
+              :db.type/uuid
+              :db/index true
+              :db/doc "Session key stored in the cookie that is used to find the user")])
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))
