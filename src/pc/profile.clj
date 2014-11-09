@@ -26,7 +26,7 @@
     "localhost"))
 
 ;; TODO: move to secrets
-(def dev-session-key "iqhtXNfmVCEp69Gtz")
+(def dev-session-key "9WOdevDR9bsnpFXJ")
 (defn http-session-key []
   (or (System/getenv "HTTP_SESSION_KEY")
       dev-session-key))
