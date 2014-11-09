@@ -6,7 +6,8 @@
 (def google-client-id (aget js/window "Precursor" "google-client-id"))
 
 (defn google-redirect-uri []
-  (str (.getScheme utils/parsed-uri) "://" (.getDomain utils/parsed-uri) ":" (.getPort utils/parsed-uri) "/auth/google"))
+  (let [port (.getPort utils/parsed-uri)]
+    (str (.getScheme utils/parsed-uri) "://" (.getDomain utils/parsed-uri) (when port (str ":" port)) "/auth/google")))
 
 (defn auth-url [& {:keys [redirect-path scopes]
                    :or {scopes ["openid" "email"]}}]
