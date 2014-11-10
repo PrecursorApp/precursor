@@ -279,10 +279,16 @@
         was-drawing? (get-in previous-state [:drawing :in-progress?])
         layer        (get-in current-state [:drawing :layer])]
     (cond
-     (and (not= type "touchend") (get-in current-state [:menu :open?])) (cast! [:menu-closed])
+     (and (not= type "touchend")
+          (not= button 2)
+          (get-in current-state [:menu :open?]))
+     (cast! [:menu-closed])
+
      (= :layer.type/text (:layer/type layer)) nil
+
      was-drawing? (do (d/transact! db [layer])
                       (cast! [:mouse-moved [x y]]))
+
      :else nil)))
 
 (defmethod control-event :text-layer-finished
