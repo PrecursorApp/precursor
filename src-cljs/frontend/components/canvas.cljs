@@ -48,8 +48,9 @@
   [selected-eids layer]
   (dom/line (clj->js (merge
                       layer
-                      (when (contains? selected-eids (:db/id layer))
-                        {:className "selected"})
+                      (if (contains? selected-eids (:db/id layer))
+                        {:className (str (:className layer) " selected shape-layer")}
+                        {:className (str (:className layer) " shape-layer")})
                       {:x1          (:layer/start-x layer)
                        :y1          (:layer/start-y layer)
                        :x2          (:layer/end-x layer)
@@ -64,7 +65,9 @@
                     :stroke (:layer/stroke layer "black")
                     :fill "none"
                     :strokeWidth (:layer/stroke-width layer)
-                    :className (str (:className layer) (when (contains? selected-eids (:db/id layer)) " selected"))}))))
+                    :className (str (:className layer)
+                                    " shape-layer "
+                                    (when (contains? selected-eids (:db/id layer)) " selected"))}))))
 
 (defmethod svg-element :layer.type/group
   [state selected-eids layer]
@@ -97,7 +100,16 @@
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
         (apply dom/g #js {:className "layers"}
                (mapv (fn [layer]
-                       (dom/g #js {:className (when (= :select tool) "selectable")}
+                       (dom/g #js {:className (when (= :select tool) "selectable-group")}
+                              (when (= :select tool)
+                                (svg-element selected-eids
+                                             (assoc layer
+                                               :onMouseDown
+                                               #(do
+                                                  (.stopPropagation %)
+                                                  (cast! :layer-selected {:db/id (:db/id layer)}))
+                                               :onMouseUp #(.stopPropagation %)
+                                               :className "selectable-layer")))
                               (svg-element selected-eids (assoc layer
                                                            :onMouseDown (when (and (= :text tool)
                                                                                    (= :layer.type/text (:layer/type layer)))
@@ -108,16 +120,7 @@
                                                                                    (= :layer.type/text (:layer/type layer)))
                                                                         #(.stopPropagation %))
                                                            :className (when (= :text tool)
-                                                                        "editable")))
-                              (when (= :select tool)
-                                (svg-element selected-eids
-                                             (assoc layer
-                                               :onMouseDown
-                                               #(do
-                                                  (.stopPropagation %)
-                                                  (cast! :layer-selected {:db/id (:db/id layer)}))
-                                               :onMouseUp #(.stopPropagation %)
-                                               :className "selectable")))))
+                                                                        "editable")))))
                      (remove #(or (= :layer.type/group (:layer/type %))
                                   (contains? editing-eids (:db/id %))) layers)))))))
 
@@ -143,7 +146,7 @@
                                             :class "mouse-tool"
                                             :x (- (first (:mouse-position subscriber)) 8)
                                             :y (- (last (:mouse-position subscriber)) 8)}
-                                :path-props {:stroke (:color subscriber)}}))
+                                :path-props {:style {:stroke (:color subscriber)}}}))
         (dom/circle #js {:cx 0 :cy 0 :r 0})))))
 
 (defn cursors [{:keys [subscribers client-uuid]} owner]
@@ -220,7 +223,7 @@
                                     (conj acc (assoc layer
                                                 :layer/end-x (:layer/current-x layer)
                                                 :layer/end-y (:layer/current-y layer)
-                                                :stroke (apply str "#" (take 6 id))
+                                                :style {:stroke (:color subscriber)}
                                                 :layer/stroke (apply str "#" (take 6 id))))
                                     acc))
                                 [] (:subscribers payload))]
@@ -329,9 +332,9 @@
                                             {:layer/end-x (:layer/current-x sel)
                                              :layer/end-y (:layer/current-y sel)}
                                             (when (not= :layer.type/text (:layer/type sel))
-                                              {:strokeDasharray "5,5"
-                                               :fill "gray"
-                                               :fillOpacity "0.25"})
+                                              {:className "layer-in-progress"})
                                             (when (= :layer.type/group (:layer/type sel))
-                                              {:layer/type :layer.type/rect}))]
+                                              {:layer/type :layer.type/rect
+                                               :className "layer-in-progress selection"
+                                               :strokeDasharray "2,3"}))]
                              (svg-element #{} sel))))))))))

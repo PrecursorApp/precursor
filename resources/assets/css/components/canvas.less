@@ -2,59 +2,62 @@
   .flex(1);
   position: relative;
 }
-#svg-canvas {
-  .layers {
-    rect,
-    line,
-    path {
-      &:not(#background-grid) {
-        fill: none;
-        stroke: @gray_light;
-        stroke-width: 2;
-        &.selected {
-          stroke: @selection_color;
-        }
-        &.selectable {
-          stroke-width: 20;
-          stroke-opacity: 0;
-        }
-      }
-    }
-    g.selectable:hover {
-      rect,
-      line,
-      path {
-        &:not(#background-grid) {
-          stroke: lighten(@selection_color, 5%);
-          &.selected {
-            stroke: @selection_color;
-          }
-        }
-      }
-    }
-  }
-  text {
-    fill: @gray_light;
-    &.editable:hover {
-      fill: lighten(@selection_color, 5%);
-    }
-    &.selected {
-      fill: @selection_color;
-    }
-    &.selectable {
-      fill: transparent;
-    }
-  }
-  .mouse-tool {
-    fill: none;
-    stroke-width: 6;
-  }
-}
 #grid,
 #small-grid {
   path {
     stroke: @gray_dark;
   }
+}
+.shape-layer {
+  fill: none;
+  stroke: @gray_light;
+  stroke-width: 2;
+  transition: stroke-width @speed;
+  &.layer-in-progress {
+    stroke: @blue;
+    &.selection {
+      stroke: @white;
+      stroke-width: 1;
+    }
+  }
+  &.selected {
+    stroke: @selection_color;
+  }
+  + .shape-layer {
+    pointer-events: none;
+  }
+}
+.text-layer {
+  fill: @gray_light;
+  &.editable {
+    &:hover {
+      fill: lighten(@selection_color, 13);
+    }
+  }
+  &.selected {
+    fill: @selection_color;
+  }
+  + .text-layer {
+    pointer-events: none;
+  }
+}
+.selectable-group {
+  &:hover {
+    .shape-layer {
+      stroke: lighten(@selection_color, 13);
+      transition-duration: @speed_fast;
+      + .shape-layer {
+        stroke-width: 4;
+      }
+      &.selected {
+        stroke: @selection_color;
+      }
+    }
+  }
+}
+.selectable-layer {
+  stroke-width: 20;
+  stroke-opacity: 0;
 }
 .mouse-stats {
   .user-select(none);

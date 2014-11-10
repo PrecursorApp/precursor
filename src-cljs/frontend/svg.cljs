@@ -10,7 +10,7 @@
   (let [layer (layers/normalized-abs-coords layer)]
     (merge
      layer
-     {:className     (str "layer " (:className layer))
+     {:className     (str "shape-layer " (:className layer))
       :x             (:layer/start-x layer)
       :y             (:layer/start-y layer)
       :width         (- (or (:layer/current-x layer)
@@ -31,13 +31,12 @@
       :ry            (:layer/ry layer)
       :strokeOpacity (cond
                       (:layer/selected? layer) 0.2
-                      :else 1)
-      :style         {:opacity (:layer/opacity layer)}})))
+                      :else 1)})))
 
 (defn layer->svg-text [layer]
   (merge
    layer
-   {:className (str (:className layer) " layer")
+   {:className (str (:className layer) " text-layer")
     :x (:layer/start-x layer)
     :y (:layer/start-y layer)
     :fill (:layer/fill layer "none")
@@ -45,6 +44,5 @@
     :stroke (:layer/stroke layer "black")
     ;; TODO: defaults for each layer when we create them
     :strokeWidth 0;(:layer/stroke-width layer 0)
-    :style {:opacity (:layer/opacity layer)}
     :fontFamily (:layer/font-family layer "Roboto")
     :fontSize   (:layer/font-size layer 24)}))
