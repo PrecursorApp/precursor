@@ -149,7 +149,7 @@
                  [:article {:on-click #(.stopPropagation :overlay-info-toggled)}
                   [:h1 "What's this?"]
                   [:p "Precursor is a collaborative idea tool.
-                      Think of it as a notebook with infinite pages – use it to create rapid sketches, prototypes, notes, and everything in between.
+                      Think of it as a notebook with infinite pages – use it to create sketches, rapid prototypes, notes, and everything in between.
                       Collaborate by sharing your URL, and you'll instantly have multiple people working in the same document.
                       It's still a work in progress, so if you have feedback or a great idea for us sketch it up and ping "
                       [:a {:on-click #(cast! :chat-link-clicked)
