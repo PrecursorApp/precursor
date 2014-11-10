@@ -106,7 +106,9 @@
                                                                              (cast! :text-layer-re-edited layer)))
                                                            :onMouseUp (when (and (= :text tool)
                                                                                    (= :layer.type/text (:layer/type layer)))
-                                                                        #(.stopPropagation %))))
+                                                                        #(.stopPropagation %))
+                                                           :className (when (= :text tool)
+                                                                        "editable")))
                               (when (= :select tool)
                                 (svg-element selected-eids
                                              (assoc layer
