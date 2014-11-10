@@ -70,10 +70,10 @@
                                                                  (url/url)
                                                                  :path)}]
           [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
-                             :title "Sign Out"}
+                             :title "Logout"}
            (common/icon :logout)]]
          [:a.action-login {:href (auth/auth-url)
-                           :title "Login or Sign Up"}
+                           :title "Sign Up"}
           (common/icon :login)])))))
 
 
