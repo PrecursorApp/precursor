@@ -12,7 +12,7 @@
         stroke: @gray_light;
         stroke-width: 2;
         &.selected {
-          stroke: @select_blue;
+          stroke: @selection_color;
         }
         &.selectable {
           stroke-width: 20;
@@ -25,9 +25,9 @@
       line,
       path {
         &:not(#background-grid) {
-          stroke: lighten(@select_blue, 5%);
+          stroke: lighten(@selection_color, 5%);
           &.selected {
-            stroke: @select_blue;
+            stroke: @selection_color;
           }
         }
       }
@@ -36,10 +36,10 @@
   text {
     fill: @gray_light;
     &.editable:hover {
-      fill: lighten(@select_blue, 5%);
+      fill: lighten(@selection_color, 5%);
     }
     &.selected {
-      fill: @select_blue;
+      fill: @selection_color;
     }
     &.selectable {
       fill: transparent;
@@ -226,6 +226,6 @@
     border: none;
     background: none;
     outline: none;
-    box-shadow: 0 -1px @select_blue inset;
+    box-shadow: 0 -1px @selection_color inset;
   }
 }
