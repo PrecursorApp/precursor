@@ -442,6 +442,7 @@
      (assoc-in state/overlay-info-opened-path false)
      (assoc-in state/aside-menu-opened-path true)
      (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
+     (assoc-in state/chat-mobile-opened-path true)
      (assoc-in [:chat :body] "@prcrsr ")))
 
 (defmethod post-control-event! :chat-link-clicked
