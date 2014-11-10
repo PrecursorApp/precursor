@@ -424,7 +424,8 @@
         (assoc-in [:camera :offset-x] (if aside-open?
                                         (get-in state state/aside-width-path)
                                         0))
-        (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time))))
+        (assoc-in (state/last-read-chat-time-path (:document/id state)) (or last-chat-time
+                                                                            (js/Date. 0))))))
 
 (defmethod control-event :overlay-info-toggled
   [target message _ state]
