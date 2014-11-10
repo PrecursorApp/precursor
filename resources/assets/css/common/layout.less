@@ -70,14 +70,16 @@
 }
 .mouse-stats {
   .user-select(none);
-  pointer-events: none;
   position: fixed;
-  top: 100%;
-  margin-top: -2em;
-  width: 100%;
+  color: @gray;
+  font-family: @font_mono;
+  font-size: 0.750em;
   text-align: right;
+  top: 100%;
+  width: 100%;
   right: 0.5em;
-  color: fade(@white, 25);
+  margin-top: -2em;
+  pointer-events: none;
   transition: @aside_speed @bezier_fadein;
   .mq_640({
     opacity: 0;
