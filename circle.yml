@@ -1,5 +1,5 @@
 dependencies:
-  pre:
+  post:
     - git submodule update --init
     - lein cljsbuild once production
     - lein run -m pc.less/compile!
