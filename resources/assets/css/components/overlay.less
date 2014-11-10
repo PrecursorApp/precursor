@@ -24,7 +24,7 @@
     position: relative;
     max-width: (@tile * 10);
     padding: 1em;
-    transition: @aside_speed_slow @bezier_transform;
+    transition: @speed_slow @bezier_transform;
   }
 }
 .info-background {
@@ -34,7 +34,7 @@
   width: 100%;
   height: 100%;
   background: @white;
-  transition: @aside_speed @bezier_fadein;
+  transition: @speed @bezier_fadein;
 }
 .info-close {
   .flexy(center, center);
@@ -44,10 +44,10 @@
   right: 0;
   width: @tile;
   height: @tile;
-  transition: @aside_speed @bezier_fadein;
+  transition: @speed @bezier_fadein;
   i {
     font-size: 2em;
-    transition: @aside_speed_fast @bezier_transform;
+    transition: @speed_fast @bezier_transform;
   }
   &:hover {
     .icon_stroke(@black);
@@ -59,7 +59,7 @@
   line-height: 1em;
   padding: 1em 2em;
   border: 1px solid @font_color;
-  transition: @aside_speed_fast @bezier_fadein;
+  transition: @speed_fast @bezier_fadein;
   .mq_640({
     width: 100%;
   });

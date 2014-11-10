@@ -68,7 +68,7 @@
   right: 0.5em;
   margin-top: -2em;
   pointer-events: none;
-  transition: @aside_speed @bezier_fadein;
+  transition: @speed @bezier_fadein;
   .mq_640({
     opacity: 0;
   });
@@ -109,13 +109,13 @@
     .random_cascade(3);
     .transform(rotate(0deg); translate(0, 0));
     .transform-origin(center);
-    transition: -webkit-transform @aside_speed_slow;
-    transition: transform @aside_speed_slow;
+    transition: -webkit-transform @speed_slow;
+    transition: transform @speed_slow;
     transition-timing-function: @bezier_bounce;
   }
   &:not(.closed) {
     path {
-      transition: @aside_speed;
+      transition: @speed;
       transition-timing-function: @bezier_transform;
     }
     .menu-stroke-top {
@@ -136,7 +136,7 @@
 .unseen-eids {
   .box-sizing(content-box);
   .transform-origin(center);
-  .animation(in-bounce (@aside_speed * 2));
+  .animation(in-bounce (@speed * 2));
   .user-select(none);
   position: absolute;
   font-size: .75em;
@@ -155,7 +155,7 @@
   border-radius: 2em;
   box-shadow: 0 2px @gray_darker, -2px 0 @gray_darker;
   pointer-events: none;
-  transition: @aside_speed;
+  transition: @speed;
   i {
     svg {
       width: 1.25em;
@@ -176,11 +176,11 @@
   fill: @gray_dark;
   stroke: @gray_dark;
   cursor: pointer;
-  transition: @aside_speed_fast @bezier_transform;
+  transition: @speed_fast @bezier_transform;
   &:not(:hover) {
     .scale3d(1);
     fill: @gray_darker;
-    transition-duration: @aside_speed;
+    transition-duration: @speed;
   }
   &:active {
     fill: @gray_darker;

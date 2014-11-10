@@ -3,7 +3,7 @@
   width: @aside_width;
   box-shadow: 1px 0 @gray_dark;
   overflow: hidden;
-  transition: @aside_speed;
+  transition: @speed;
   transition-timing-function: @bezier_bounce;
   .mq_640({
     .flex-direction(row);
@@ -15,13 +15,13 @@
     transition-timing-function: @bezier_transform;
     .icon-user {
       margin: 0 .5em;
-      transition-delay: @aside_speed_slow;
+      transition-delay: @speed_slow;
     }
     .aside-chat {
       textarea {
         padding-left: 0;
         opacity: 0;
-        transition-delay: @aside_speed_slow;
+        transition-delay: @speed_slow;
       }
     }
   }
@@ -39,7 +39,7 @@
     min-height: @aside_width;
     .mq_640({
       .flex(0 0 100%);
-      transition: @aside_speed;
+      transition: @speed;
     });
   }
 }
@@ -87,7 +87,7 @@
   .icon-user {
     .flex(0 0 auto);
     margin: 0 1em;
-    transition: margin @aside_speed @bezier_transform 0ms;
+    transition: margin @speed @bezier_transform 0ms;
   }
 }
 .aside-chat {
@@ -108,8 +108,8 @@
     border: none;
     outline: 0;
     resize: none;
-    transition+: padding @aside_speed @bezier_transform 0ms;
-    transition+: opacity @aside_speed @bezier_fadein    0ms;
+    transition+: padding @speed @bezier_transform 0ms;
+    transition+: opacity @speed @bezier_fadein    0ms;
     &:focus {
       .placeholder_style(color; fade(@gray_dark, 0));
     }
