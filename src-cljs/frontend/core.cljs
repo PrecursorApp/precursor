@@ -220,7 +220,7 @@
 
     (d/listen! (:db @state)
                (fn [tx-report]
-                 (when (not-any? #(= (:a %) :server/update) (-> tx-report :tx-data)) ;; hack to prevent loops
+                 (when-not (-> tx-report :tx-meta :server-update)
                    (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
                      (doseq [datom-group (partition-all 500 datoms)]
                        (sente/send-msg (:sente @state) [:frontend/transaction {:datoms datom-group

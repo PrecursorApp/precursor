@@ -20,14 +20,15 @@
   (UUID/randomUUID))
 
 (defn user-id-fn [req]
-  (let [uid (get-in req [:session :uid])]
+  (when-let [uid (or (get-in req [:auth :cust :cust/uuid])
+                     (get-in req [:session :uid]))]
     ;; have to stringify this for sente for comparisons to work
     (str uid)))
 
 (defn wrap-user-id [handler]
   (fn [req]
     (handler
-     (if-not (get-in req [:session :uid])
+     (if-not (user-id-fn req)
        (assoc-in req [:session :uid] (uuid))
        req))))
 
