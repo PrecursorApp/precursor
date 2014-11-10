@@ -1,0 +1,133 @@
+.app-aside {
+  .flexy(column);
+  width: @aside_width;
+  box-shadow: 1px 0 @gray_dark;
+  overflow: hidden;
+  transition: @aside_speed;
+  transition-timing-function: @bezier_bounce;
+  .mq_640({
+    .flex-direction(row);
+    position: relative;
+    padding-top: @tile;
+  });
+  &.closed {
+    width: 0;
+    transition-timing-function: @bezier_transform;
+    .icon-user {
+      margin: 0 .5em;
+      transition-delay: @aside_speed_slow;
+    }
+    .aside-chat {
+      textarea {
+        padding-left: 0;
+        opacity: 0;
+        transition-delay: @aside_speed_slow;
+      }
+    }
+  }
+  &.show-chat-on-mobile {
+    .mq_640({
+      .aside-people {
+        margin-left: -100%;
+      }
+    });
+  }
+  section {
+    .flex(1 1 auto);
+    .flexy(column);
+    width: @aside_width;
+    min-height: @aside_width;
+    .mq_640({
+      .flex(0 0 100%);
+      transition: @aside_speed;
+    });
+  }
+}
+.aside-switcher {
+  display: none;
+  position: absolute;
+  color: @white;
+  top: 0;
+  left: 0;
+  width: @aside_width;
+  .mq_640({
+    .flexy();
+  });
+}
+.aside-switcher-option {
+  .flex(0 0 50%);
+  .flexy(center, center);
+  height: @tile;
+  &:not(.toggled) {
+    color: @gray;
+    background: fade(@black, 13);
+  }
+}
+.aside-people {
+  overflow-y: auto;
+  &::-webkit-scrollbar {
+    width: 0; // we should calculate to get this effect in the dom
+  }
+  button {
+    .flex(0 0 @tile);
+    .flexy(center);
+    .button_icon_cascade(32);
+    .icon_stroke(@gray_lighter);
+    min-height: (@tile / 2);
+    color: @gray_light;
+    font-weight: 300;
+    &:hover,
+    &:active {
+      .icon_stroke(@gray_lightest);
+      cursor: pointer;
+      color: @gray_lighter;
+      background: @gray_dark;
+    }
+  }
+  .icon-user {
+    .flex(0 0 auto);
+    margin: 0 1em;
+    transition: margin @aside_speed @bezier_transform 0ms;
+  }
+}
+.aside-chat {
+  .justify-content(flex-end);
+  form {
+    .flex(0 0 auto);
+    .flexy();
+    margin: 0;
+    box-shadow: 0 1px @gray_dark inset;
+  }
+  textarea {
+    .flex(1);
+    .placeholder_style(color; @gray_dark);
+    height: @tile;
+    max-height: (@tile * 2);
+    background: none;
+    padding: 1.25em 1.25em 0;
+    border: none;
+    outline: 0;
+    resize: none;
+    transition+: padding @aside_speed @bezier_transform 0ms;
+    transition+: opacity @aside_speed @bezier_fadein    0ms;
+    &:focus {
+      .placeholder_style(color; fade(@gray_dark, 0));
+    }
+  }
+}
+.chat-messages {
+  padding: 1em 0;
+  overflow-y: auto;
+  .mq_640({
+    width: @aside_width;
+  });
+  &::-webkit-scrollbar {
+    width: 0; // we should calculate to get this effect in the dom
+  }
+  span {
+    word-break: break-word;
+  }
+  .message {
+    padding: 0 1em;
+  }
+}
