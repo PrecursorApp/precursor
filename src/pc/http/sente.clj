@@ -31,7 +31,9 @@
   ;; TODO: store client-uuid as a proper uuid everywhere
   (doseq [[uid _] (dissoc (get @document-subs (:document/id data)) (str (:session/uuid data)))]
     (log/infof "notifying %s about new transactions for %s" uid (:document/id data))
-    ((:send-fn @sente-state) uid [:datomic/transaction data])))
+    ((:send-fn @sente-state) uid [:datomic/transaction data]))
+  (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
+    ((:send-fn @sente-state) (str (:session/uuid data)) [:datomic/transaction (assoc data :tx-data server-timestamps)])))
 
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
