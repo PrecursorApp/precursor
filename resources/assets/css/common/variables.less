@@ -16,9 +16,13 @@
 @font_size: 16px;
 @font_height: 24px;
 @font_color: @gray_dark;
+@font_weight: 400;
+@font_sans: "Roboto";
+@font_mono: "Monaco";
+@font_family: @font_sans;
+
 @link_color: #299ADE;
 @link_color_hover: lighten(@link_color, 13);
-@font-weight: 400;
 
 @icon_width: @font_size;
 
@@ -26,6 +30,7 @@
 
 @aside_width: (@tile * 4);
 @aside_speed: 250ms;
+@aside_speed_fast: (@aside_speed * 0.4);
 @aside_speed_slow: (@aside_speed * 1.5);
 
 @bezier_fadein: cubic-bezier(0.445, 0.05, 0.55, 0.95);
