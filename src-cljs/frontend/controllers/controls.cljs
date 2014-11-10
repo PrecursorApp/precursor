@@ -408,25 +408,23 @@
                      ;; server will overwrite this
                      :server/timestamp (js/Date.)}])))
 
-(defmethod control-event :aside-menu-opened
-  [target message _ state]
-  (-> state
-      (assoc-in state/aside-menu-opened-path true)
-      (assoc-in [:drawing :in-progress?] false)))
-
-(defmethod control-event :aside-menu-closed
-  [target message _ state]
-  (assoc-in state state/aside-menu-opened-path false))
-
 (defmethod control-event :aside-menu-toggled
   [target message _ state]
-  (let [aside-open? (not (get-in state state/aside-menu-opened-path))]
+  (let [aside-open? (not (get-in state state/aside-menu-opened-path))
+        db @(:db state)
+        last-chat-time (->> (d/q '[:find ?t
+                                   :where [?t :chat/body]]
+                                 db)
+                            (map #(:server/timestamp (d/entity db (first %))))
+                            sort
+                            last)]
     (-> state
         (assoc-in state/aside-menu-opened-path aside-open?)
         (assoc-in [:drawing :in-progress?] false)
         (assoc-in [:camera :offset-x] (if aside-open?
                                         (get-in state state/aside-width-path)
-                                        0)))))
+                                        0))
+        (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time))))
 
 (defmethod control-event :overlay-info-toggled
   [target message _ state]

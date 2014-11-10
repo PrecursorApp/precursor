@@ -13,7 +13,7 @@
             [frontend.components.common :as common]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
-            [frontend.utils.seq :refer [dissoc-in]]
+            [frontend.utils.seq :refer [dissoc-in select-in]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [ankha.core :as ankha])
@@ -57,12 +57,12 @@
                       {:opts {:keymap keymap
                               :error-ch (get-in app [:comms :errors])}})]))))))
 
-(defn auth-link [app owner]
+(defn auth-link [data owner]
   (reify
     om/IRender
     (render [_]
       (html
-       (if (:cust app)
+       (if (:cust data)
          [:form {:method "post" :action "/logout" :ref "logout-form"}
           [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
           [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
@@ -76,11 +76,10 @@
                            :title "Sign Up"}
           (common/icon :login)])))))
 
-
-(defn app [app owner]
+(defn main-actions [data owner]
   (reify
     om/IInitState
-    (init-state [_] {:unseen-eids #{:dummy}
+    (init-state [_] {:unseen-chats-count 0
                      :listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -89,17 +88,46 @@
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
                    (when-let [chat-datoms (seq (filter #(= :chat/body (:a %)) (:tx-data tx-report)))]
-                     (om/update-state! owner :unseen-eids (fn [eids] (set/union eids (set (map :e chat-datoms)))))))))
+                     (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
       (d/unlisten! (om/get-shared (om/get-shared owner :db)) (om/get-state owner :listener-key)))
-    om/IDidUpdate
-    (did-update [_ _ _]
-      (when (and (get-in app state/aside-menu-opened-path)
-                 (seq (om/get-state owner :unseen-eids)))
-        (om/set-state! owner :unseen-eids #{})))
-    om/IRenderState
-    (render-state [_ {:keys [unseen-eids]}]
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            aside-opened? (get-in data state/aside-menu-opened-path)
+            db @db
+            chat-timestamps (->> (d/q '[:find ?t
+                                        :where [?t :chat/body]]
+                                      db)
+                                 (map #(:server/timestamp (d/entity db (first %)))))
+            last-read-time (get-in data (state/last-read-chat-time-path (:document/id data)))
+            unread-chat-count (if last-read-time
+                                (count (filter #(> % last-read-time) chat-timestamps))
+                                ;; add one for the dummy message
+                                (inc (count chat-timestamps)))]
+        (html
+         [:div.main-actions
+          [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
+                           :class (when-not aside-opened? "closed")
+                           :title (if aside-opened? "Close Menu" "Open Menu")}
+           (common/icon :menu)]
+          (when (and (not aside-opened?) (pos? unread-chat-count))
+            [:div.unseen-eids (str unread-chat-count)])
+          (om/build auth-link data)
+          [:a.action-newdoc {:href "/"
+                             :target "_self"
+                             :title "New Document"}
+           (common/icon :newdoc)]
+          [:a.action-info {:on-click #(cast! :overlay-info-toggled)
+                           :title "What is this thing?"}
+           (common/icon :info)]])))))
+
+
+(defn app [app owner]
+  (reify
+    om/IRender
+    (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             aside-opened? (get-in app state/aside-menu-opened-path)
             overlay-info-open? (get-in app state/overlay-info-opened-path)]
@@ -109,21 +137,10 @@
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
-                [:div.main-actions
-                 [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
-                                  :class (when-not aside-opened? "closed")
-                                  :title (if aside-opened? "Close Menu" "Open Menu")}
-                  (common/icon :menu)]
-                 (when (and (not aside-opened?) (seq unseen-eids))
-                   [:div.unseen-eids (str (count unseen-eids))])
-                 (om/build auth-link app)
-                 [:a.action-newdoc {:href "/"
-                                    :target "_self"
-                                    :title "New Document"}
-                  (common/icon :newdoc)]
-                 [:a.action-info {:on-click #(cast! :overlay-info-toggled)
-                                  :title "What is this thing?"}
-                  (common/icon :info)]]
+                (om/build main-actions (select-in app [state/aside-menu-opened-path
+                                                       [:cust]
+                                                       [:document/id]
+                                                       (state/last-read-chat-time-path (:document/id app))]))
                 (when (and (:mouse app) (not= :touch (:type (:mouse app))))
                   [:div.mouse-stats
                    (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))])

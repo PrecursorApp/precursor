@@ -68,6 +68,9 @@
 
 (def chat-mobile-opened-path (conj browser-settings-path :chat-mobile-toggled))
 
+(defn last-read-chat-time-path [document-id]
+  (conj browser-settings-path :document-settings document-id :last-read-chat-time))
+
 (def overlay-info-opened-path [:aside-menu-opened])
 
 (def aside-width-path [:aside-width])
