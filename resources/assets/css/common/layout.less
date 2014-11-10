@@ -192,7 +192,7 @@
     width: 0;
     transition-timing-function: @bezier_transform;
     .icon-user {
-      margin: 0 (((@tile - @icon_width) / 2) / 2);
+      margin: 0 .5em;
       transition-delay: @aside_speed_slow;
     }
     .aside-chat {
@@ -263,7 +263,7 @@
   }
   .icon-user {
     .flex(0 0 auto);
-    margin: 0 ((@tile - @icon_width) / 2);
+    margin: 0 1em;
     transition+: margin @aside_speed @bezier_transform 0ms;
   }
 }
