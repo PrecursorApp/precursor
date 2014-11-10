@@ -15,9 +15,11 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+      {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+       :touch-enabled? false})
     om/IDidMount
     (did-mount [_]
+      (om/set-state! owner :touch-enabled? (.hasOwnProperty js/window "ontouchstart"))
       (d/listen! (om/get-shared owner :db)
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
@@ -42,7 +44,11 @@
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
-            dummy-chat {:chat/body "Welcome to Precursor! Right-click on the canvas to access tools and share your url to collaborate."
+            dummy-chat {:chat/body (str "Welcome to Precursor! "
+                                        (if (om/get-state owner :touch-enabled?)
+                                          "Tap and hold on the canvas to access tools"
+                                          "Right-click on the canvas to access tools")
+                                        "  and share your url to collaborate.")
                         :chat/color "#00b233"
                         :session/uuid "Danny"
                         :server/timestamp (js/Date. 0)}]
