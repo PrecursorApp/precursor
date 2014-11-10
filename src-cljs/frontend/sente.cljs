@@ -47,7 +47,8 @@
 (defmethod handle-message :datomic/transaction [app-state message data]
   (let [datoms (:tx-data data)]
     (d/transact (:db @app-state)
-                (map ds/datom->transaction datoms))))
+                (map ds/datom->transaction datoms)
+                {:server-update true})))
 
 
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]

@@ -15,21 +15,11 @@
 (defonce sente-state (atom {}))
 
 (defn uuid
-  "Have to remove - so that we can parse it out of the client-uuid"
   []
   (UUID/randomUUID))
 
 (defn user-id-fn [req]
-  (let [uid (get-in req [:session :uid])]
-    ;; have to stringify this for sente for comparisons to work
-    (str uid)))
-
-(defn wrap-user-id [handler]
-  (fn [req]
-    (handler
-     (if-not (get-in req [:session :uid])
-       (assoc-in req [:session :uid] (uuid))
-       req))))
+  (-> req :cookies (get "prcrsr-client-id") :value))
 
 ;; hash-map of document-id to connected users
 ;; Used to keep track of which transactions to send to which user
@@ -134,9 +124,13 @@
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document/id)
-        datoms (->> ?data :datoms (remove (comp nil? :v)))]
+        datoms (->> ?data :datoms (remove (comp nil? :v)))
+        cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
     (log/infof "transacting %s on %s for %s" datoms document-id client-uuid)
-    (datomic/transact! datoms document-id (UUID/fromString (client-uuid->uuid client-uuid)))))
+    (datomic/transact! datoms
+                       document-id
+                       (UUID/fromString (client-uuid->uuid client-uuid))
+                       cust-uuid)))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document/id)
@@ -181,7 +175,8 @@
                      (try
                        (ws-handler req)
                        (catch Exception e
-                         (log/error e)))
+                         (log/error e)
+                         (.printStackTrace e)))
                      (recur)))))
 
 (defn init []

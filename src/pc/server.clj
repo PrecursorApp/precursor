@@ -39,9 +39,6 @@
   (routes
    (POST "/api/entity-ids" request
          (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
-   (POST "/api/transact" request
-         (let [body (-> request :body slurp edn/read-string)]
-           (datomic/transact! (:datoms body) (:document-id body) (get-in request [:session :uid]))))
    (GET "/api/document/:id" [id]
         ;; TODO: should probably verify document exists
         ;; TODO: take tx-date as a param
@@ -114,7 +111,11 @@
             {:status 400
              :body "There was a problem logging you in."}
 
-            (let [cust (auth/cust-from-google-oauth-code code (some-> req :session :uid))]
+            (let [cust (auth/cust-from-google-oauth-code code nil
+                                                         ;; (some-> req :session :uid)
+                                                         ;; figure out how to associate non-logged in session-id with
+                                                         ;; logged-in session id
+                                                         )]
               {:status 302
                :body ""
                :session (assoc (:session req)
@@ -192,7 +193,6 @@
 (defn handler [sente-state]
   (->
    (app sente-state)
-   (sente/wrap-user-id)
    (auth-middleware)
    (wrap-anti-forgery)
    (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
