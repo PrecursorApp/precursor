@@ -144,7 +144,7 @@
                 [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)
                                        :class (when-not overlay-info-open? "hidden")}
                  [:div.info-background]
-                 [:button.info-close
+                 [:a.info-close {:role "button"}
                   (common/icon :times)]
                  [:article {:on-click #(.stopPropagation :overlay-info-toggled)}
                   [:h1 "What's this?"]

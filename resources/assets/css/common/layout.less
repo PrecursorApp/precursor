@@ -394,6 +394,7 @@
   article {
     position: relative;
     max-width: (@tile * 10);
+    padding: 1em;
     transition: @aside_speed_slow @bezier_transform;
   }
 }
@@ -411,7 +412,7 @@
   .icon_stroke(@gray);
   position: absolute;
   top: 0;
-  left: 0;
+  right: 0;
   width: @tile;
   height: @tile;
   transition: @aside_speed @bezier_fadein;
