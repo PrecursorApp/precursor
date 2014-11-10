@@ -2,6 +2,7 @@
   (:require [cemerick.url :as url]
             [cheshire.core :as json]
             [clojure.core.async :as async]
+            [clojure.set :as set]
             [clojure.tools.logging :as log]
             [clojure.tools.reader.edn :as edn]
             [clj-time.core :as time]
@@ -35,6 +36,12 @@
   (or (= :https (:scheme req))
       (= "https" (get-in req [:headers "x-forwarded-proto"]))))
 
+(def bucket-doc-ids (atom #{}))
+
+(defn clean-bucket-doc-ids []
+  (swap! bucket-doc-ids (fn [b]
+                          (set/intersection b (set (keys @sente/document-subs))))))
+
 (defn app [sente-state]
   (routes
    (POST "/api/entity-ids" request
@@ -54,15 +61,22 @@
           @(d/transact (pcd/conn) [{:db/id document-id :document/name "Untitled"}])
           (redirect (str "/document/" document-id))))
    ;; Group newcomers into buckets with bucket-count users in each bucket.
-   ;; TODO: exclude documents that didn't start out as buckets.
    (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]
         (let [bucket-count (Integer/parseInt bucket-count)]
-          (if-let [eid (ffirst (sort-by (comp - count last)
-                                        (filter (fn [[doc-id subs]]
-                                                  (< (count subs) bucket-count))
-                                                @sente/document-subs)))]
-            (redirect (str "/document/" eid))
-            (redirect "/"))))
+          (when (< 100 (count @bucket-doc-ids)
+                   (clean-bucket-doc-ids)))
+          (if-let [doc-id (ffirst (sort-by (comp - count last)
+                                           (filter (fn [[doc-id subs]]
+                                                     ;; only send them to docs created by the bucketing
+                                                     (and (contains? @bucket-doc-ids doc-id)
+                                                          ;; only send them to docs that are occupied
+                                                          (< 0 (count subs) bucket-count)))
+                                                   @sente/document-subs)))]
+            (redirect (str "/document/" doc-id))
+            (let [[doc-id] (pcd/generate-eids (pcd/conn) 1)]
+              @(d/transact (pcd/conn) [{:db/id doc-id :document/name "Untitled"}])
+              (swap! bucket-doc-ids conj doc-id)
+              (redirect (str "/document/" doc-id))))))
    (GET "/interesting" []
         {:status 200
          :body (str
@@ -181,6 +195,7 @@
          :body (:public-message t)})
       (catch Object e
         (log/error e)
+        (.printStackTrace e)
         {:status 500
          :body "Sorry, something completely unexpected happened!"}))))
 
