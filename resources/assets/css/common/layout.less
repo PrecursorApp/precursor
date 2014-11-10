@@ -90,8 +90,10 @@
   top: 0;
   left: 0;
   width: @tile;
+  height: 100%;
   a {
     .flexy(center, center);
+    width: 100%;
     height: @tile;
     cursor: pointer;
     &:not(:hover) {
@@ -137,6 +139,9 @@
       .transform(rotate(-45deg); translate(.75em, -.75em));
     }
   }
+}
+.action-info {
+  margin-top: auto;
 }
 .unseen-eids {
   .box-sizing(content-box);
@@ -466,23 +471,4 @@
     color: @white;
     background: @font_color;
   }
-}
-input.logout {
-  position: fixed;
-  top: 1em;
-  right: 1em;
-  background: none;
-  border: none;
-  &:focus {
-    background: none;
-    border: none;
-  }
-  color: @gray_light;
-  cursor: pointer;
-}
-a.login {
-  position: fixed;
-  top: 1em;
-  right: 1em;
-  color: @gray_light;
 }

@@ -63,15 +63,18 @@
     (render [_]
       (html
        (if (:cust app)
-         [:form {:method "post" :action "/logout"}
+         [:form {:method "post" :action "/logout" :ref "logout-form"}
           [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
           [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
                                                                  (.-href)
                                                                  (url/url)
                                                                  :path)}]
-          [:input.logout {:type "submit" :value "Logout"}]]
-         [:a.login {:href (auth/auth-url)}
-          "Sign up"])))))
+          [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
+                             :title "Sign Out"}
+           (common/icon :logout)]]
+         [:a.action-login {:href (auth/auth-url)
+                           :title "Login or Sign Up"}
+          (common/icon :login)])))))
 
 
 (defn app [app owner]
@@ -109,21 +112,21 @@
                 [:div.main-actions
                  [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
                                   :class (when-not aside-opened? "closed")
-                                  :title "Open Menu"}
+                                  :title (if aside-opened? "Close Menu" "Open Menu")}
                   (common/icon :menu)]
                  (when (and (not aside-opened?) (seq unseen-eids))
                    [:div.unseen-eids (str (count unseen-eids))])
-                 [:a.action-info {:on-click #(cast! :overlay-info-toggled)
-                                  :title "What's this?"}
-                  (common/icon :info)]
+                 (om/build auth-link app)
                  [:a.action-newdoc {:href "/"
                                     :target "_self"
                                     :title "New Document"}
-                  (common/icon :newdoc)]]
+                  (common/icon :newdoc)]
+                 [:a.action-info {:on-click #(cast! :overlay-info-toggled)
+                                  :title "What is this thing?"}
+                  (common/icon :info)]]
                 (when (and (:mouse app) (not= :touch (:type (:mouse app))))
                   [:div.mouse-stats
                    (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))])
-                (om/build auth-link app)
                 (when (get-in app [:menu :open?])
                   [:div.radial-menu {:style {:top  (- (get-in app [:menu :y]) 192)
                                              :left (- (get-in app [:menu :x]) 192)}}
