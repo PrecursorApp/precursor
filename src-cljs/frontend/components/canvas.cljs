@@ -182,7 +182,7 @@
                                                       false)}
                                      ;; TODO: experiment with a contentEditable div
                                      (dom/input #js {:type "text"
-                                                     :placeholder "Write something..."
+                                                     :placeholder "Type something..."
                                                      :value (or (:layer/text layer) "")
                                                      ;; TODO: defaults for each layer when we create them
                                                      :style (clj->js (merge text-style
