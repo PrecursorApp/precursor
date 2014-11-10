@@ -2,6 +2,7 @@ dependencies:
   pre:
     - git submodule update --init
     - lein cljsbuild once production
+    - lein run -m pc.less/compile!
 
 test:
   override:
@@ -12,3 +13,4 @@ deployment:
     branch: master
     commands:
       - scp resources/public/cljs/production/frontend.js precursor@prcrsr.com:/usr/home/precursor/livemocker/resources/public/js/vendor/frontend-production.js
+      - scp resources/assets/css/app.css precursor@prcrsr.com:/usr/home/precursor/livemocker/resources/assets/css/app.css
