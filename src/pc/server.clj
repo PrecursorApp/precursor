@@ -39,9 +39,6 @@
   (routes
    (POST "/api/entity-ids" request
          (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
-   (POST "/api/transact" request
-         (let [body (-> request :body slurp edn/read-string)]
-           (datomic/transact! (:datoms body) (:document-id body) (get-in request [:session :uid]))))
    (GET "/api/document/:id" [id]
         ;; TODO: should probably verify document exists
         ;; TODO: take tx-date as a param
