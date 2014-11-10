@@ -15,8 +15,7 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
-       :mount-time (js/Date.)})
+      {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
       (d/listen! (om/get-shared owner :db)
@@ -46,7 +45,7 @@
             dummy-chat {:chat/body "Welcome to Precursor! Right-click on the canvas to access tools and share your url to collaborate."
                         :chat/color "#00b233"
                         :session/uuid "Danny"
-                        :server/timestamp (om/get-state owner :mount-time)}]
+                        :server/timestamp (js/Date. 0)}]
         (html
          [:section.aside-chat
           [:div.chat-messages {:ref "chat-messages"}
