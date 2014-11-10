@@ -13,7 +13,7 @@
    :settings        {:browser-settings {:show-grid?  true
                                         :night-mode? true
                                         :current-tool :rect
-                                        :aside-menu-opened true
+                                        :aside-menu-opened false
                                         :chat-mobile-opened true}}
    :current-user    nil
    :instrumentation []
