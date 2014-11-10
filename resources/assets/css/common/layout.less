@@ -368,46 +368,6 @@
   left: (((@radial_menu_size * 1.5) - @size) / 2);
   cursor: default;
 }
-.right-click-menu {
-  display: none !important; // hold off for now
-  .flexy(column);
-  .outline(@gray_dark);
-  position: fixed;
-  top: 25%;
-  left: 25%;
-  width: (@radial_menu_size * (2 / 3));
-  background: @gray_darker;
-  overflow: hidden;
-  button {
-    .flexy();
-    height: (@tile / 2);
-    padding: 0 1em;
-    color: @gray_light;
-    background: @gray_darker;
-    transition: 200ms;
-    &:hover {
-      color: @gray_lighter;
-      background: @gray_dark;
-    }
-  }
-  hr {
-    width: 100%;
-    border: 0;
-    box-shadow: 0 1px @gray_dark inset;
-    height: 1px;
-  }
-}
-.right-click-align {
-  display: none !important; // hold off for now
-  .flexy(column);
-  width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  button {
-    background: @app_background;
-  }
-}
 .overlay-info {
   .flexy(center, center);
   position: absolute;
