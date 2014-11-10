@@ -40,6 +40,9 @@
   + .text-layer {
     pointer-events: none;
   }
+  &.layer-in-progress {
+    fill: @blue;
+  }
 }
 .selectable-group {
   &:hover {
@@ -51,6 +54,12 @@
       }
       &.selected {
         stroke: @selection_color;
+      }
+    }
+    .text-layer {
+      fill: lighten(@selection_color, 13);
+      &.selected {
+        fill: @selection_color;
       }
     }
   }

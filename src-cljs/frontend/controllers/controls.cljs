@@ -2,6 +2,7 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [cljs.reader :as reader]
             [clojure.set :as set]
+            [clojure.string :as str]
             [frontend.async :refer [put!]]
             [frontend.components.forms :refer [release-button!]]
             [datascript :as d]
@@ -132,7 +133,7 @@
   (-> state
       (assoc-in [:drawing :layer :layer/text] value)))
 
-(defn move-in-progress-drawing [state x y]
+(defn draw-in-progress-drawing [state x y]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
         points ((fnil conj []) (get-in state [:drawing :points]) {:x x :y x :rx rx :ry ry})]
@@ -154,16 +155,43 @@
                         {:layer/rx (Math/abs (- (:layer/start-x layer)
                                                 (:layer/current-x layer)))
                          :layer/ry (Math/abs (- (:layer/start-y layer)
-                                                (:layer/current-y layer)))}))))))  )
+                                                (:layer/current-y layer)))})))))))
+
+(defn move-points [points move-x move-y]
+  (map (fn [{:keys [rx ry]}]
+         {:rx (+ rx move-x)
+          :ry (+ ry move-y)})
+       points))
+
+(defn move-drawing [state x y]
+  (let [[start-x start-y] (get-in state [:drawing :starting-mouse-position])
+        [rx ry] (cameras/screen->point (:camera state) x y)
+        [move-x move-y] [(- rx start-x) (- ry start-y)]
+        [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
+        points (get-in state [:drawing :points])
+        original (get-in state [:drawing :original-layer])]
+    (-> state
+        (update-in [:drawing :layer]
+                   (fn [layer]
+                     (-> (assoc layer
+                           :layer/start-x (+ snap-move-x (:layer/start-x original))
+                           :layer/end-x (+ snap-move-x (:layer/end-x original))
+                           :layer/current-x (+ snap-move-x (:layer/end-x original))
+                           :layer/start-y (+ snap-move-y (:layer/start-y original))
+                           :layer/end-y (+ snap-move-y (:layer/end-y original))
+                           :layer/current-y (+ snap-move-y (:layer/end-y original)))
+                         (cond-> (= :layer.type/path (:layer/type layer))
+                                 (assoc :layer/path (svg/points->path (move-points points move-x move-y))))))))))
 
 (defmethod control-event :mouse-moved
   [target message [x y] state]
   (-> state
       (update-mouse x y)
       (cond-> (get-in state [:drawing :in-progress?])
-              (move-in-progress-drawing x y)
+              (draw-in-progress-drawing x y)
 
-              )))
+              (get-in state [:drawing :moving?])
+              (move-drawing x y))))
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
@@ -172,7 +200,8 @@
                     [:frontend/mouse-position (merge
                                                {:tool (get-in current-state state/current-tool-path)
                                                 :document/id (:document/id current-state)
-                                                :layer (when (get-in current-state [:drawing :in-progress?])
+                                                :layer (when (or (get-in current-state [:drawing :in-progress?])
+                                                                 (get-in current-state [:drawing :moving?]))
                                                          (get-in current-state [:drawing :layer]))}
                                                (when (and x y)
                                                  {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
@@ -223,7 +252,6 @@
         (update-in [:drawing] assoc :in-progress? false)
         (assoc-in [:drawing :points] [])
         (assoc-in [:mouse :down] false)
-        (update-mouse x y)
         ;; TODO: get rid of nils (datomic doesn't like them)
         (update-in [:drawing :layer]
                    (fn [layer]
@@ -245,11 +273,28 @@
                             {:layer/child bounding-eids})))))
         (assoc-in [:camera :moving?] false))))
 
+(defn drop-layer
+  "Finalizes layer translation"
+  [state]
+  (-> state
+      (update-in [:drawing :layer] dissoc :layer/current-x :layer/current-y)
+      (assoc-in [:drawing :moving?] false)
+      (assoc-in [:mouse :down] false)
+      (assoc-in [:drawing :points] [])))
+
 (defmethod control-event :mouse-released
   [target message [x y] state]
-  (if (= :layer.type/text (get-in state [:drawing :layer :layer/type]))
+  (if (and (not (get-in state [:drawing :moving?]))
+           (= :layer.type/text (get-in state [:drawing :layer :layer/type])))
     state
-    (finalize-layer state)))
+    (-> state
+        (update-mouse x y)
+
+        (cond-> (get-in state [:drawing :in-progress?])
+                (finalize-layer)
+
+                (get-in state [:drawing :moving?])
+                (drop-layer)))))
 
 (defmethod control-event :mouse-depressed
   [target message [x y button type] state]
@@ -280,7 +325,8 @@
   [target message [x y button type] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
-        was-drawing? (get-in previous-state [:drawing :in-progress?])
+        was-drawing? (or (get-in previous-state [:drawing :in-progress?])
+                         (get-in previous-state [:drawing :moving?]))
         layer        (get-in current-state [:drawing :layer])]
     (cond
      (and (not= type "touchend")
@@ -288,7 +334,9 @@
           (get-in current-state [:menu :open?]))
      (cast! [:menu-closed])
 
-     (= :layer.type/text (:layer/type layer)) nil
+     (and (not (get-in previous-state [:drawing :moving?]))
+          (= :layer.type/text (:layer/type layer)))
+     nil
 
      was-drawing? (do (d/transact! db [layer])
                       (cast! [:mouse-moved [x y]]))
@@ -320,9 +368,22 @@
       (d/transact! db (for [eid selected-eids]
                         [:db.fn/retractEntity eid])))))
 
+(defn parse-points-from-path [path]
+  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
+    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
+
 (defmethod control-event :layer-selected
-  [target message layer state]
-  (assoc state :selected-eid (:db/id layer)))
+  [target message {:keys [layer x y]} state]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+    (-> state
+        (assoc :selected-eid (:db/id layer))
+        (assoc-in [:drawing :layer] (assoc layer
+                                      :layer/current-x (:layer/end-x layer)
+                                      :layer/current-y (:layer/end-y layer)))
+        (assoc-in [:drawing :original-layer] layer)
+        (assoc-in [:drawing :points] (when (:layer/path layer) (parse-points-from-path (:layer/path layer))))
+        (assoc-in [:drawing :moving?] true)
+        (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :menu-opened
   [target message _ state]

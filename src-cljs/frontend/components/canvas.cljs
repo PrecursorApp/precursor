@@ -107,8 +107,9 @@
                                                :onMouseDown
                                                #(do
                                                   (.stopPropagation %)
-                                                  (cast! :layer-selected {:db/id (:db/id layer)}))
-                                               :onMouseUp #(.stopPropagation %)
+                                                  (cast! :layer-selected {:layer layer
+                                                                          :x (first (cameras/screen-event-coords %))
+                                                                          :y (second (cameras/screen-event-coords %))}))
                                                :className "selectable-layer")))
                               (svg-element selected-eids (assoc layer
                                                            :onMouseDown (when (and (= :text tool)
@@ -117,7 +118,7 @@
                                                                              (.stopPropagation %)
                                                                              (cast! :text-layer-re-edited layer)))
                                                            :onMouseUp (when (and (= :text tool)
-                                                                                   (= :layer.type/text (:layer/type layer)))
+                                                                                 (= :layer.type/text (:layer/type layer)))
                                                                         #(.stopPropagation %))
                                                            :className (when (= :text tool)
                                                                         "editable")))))
@@ -313,7 +314,8 @@
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
                   (om/build svg-layers (assoc (select-keys payload [:selected-eid])
-                                         :editing-eids (set (concat (when (settings/drawing-in-progress? payload)
+                                         :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
+                                                                              (settings/moving-drawing? payload))
                                                                       [(:db/id (settings/drawing payload))])
                                                                     (remove nil? (map :db/id subs-layers))))
                                          :tool (get-in payload state/current-tool-path)))
@@ -323,6 +325,7 @@
                     (om/build text-input (get-in payload [:drawing :layer])))
 
                   (when-let [sel (cond
+                                  (settings/moving-drawing? payload) (settings/drawing payload)
                                   (= :layer.type/text (get-in payload [:drawing :layer :layer/type])) nil
                                   (settings/selection-in-progress? payload) (settings/selection payload)
                                   (settings/drawing-in-progress? payload) (settings/drawing payload)
@@ -331,7 +334,8 @@
                            (let [sel (merge sel
                                             {:layer/end-x (:layer/current-x sel)
                                              :layer/end-y (:layer/current-y sel)}
-                                            (when (not= :layer.type/text (:layer/type sel))
+                                            (when (or (settings/moving-drawing? payload)
+                                                      (not= :layer.type/text (:layer/type sel)))
                                               {:className "layer-in-progress"})
                                             (when (= :layer.type/group (:layer/type sel))
                                               {:layer/type :layer.type/rect
