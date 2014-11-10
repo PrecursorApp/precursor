@@ -28,10 +28,17 @@
     om/IWillUnmount
     (will-unmount [_]
       (d/unlisten! (om/get-shared (om/get-shared owner :db)) (om/get-state owner :listener-key)))
+    om/IWillUpdate
+    (will-update [_ _ _]
+      ;; check for scrolled all of the way down
+      (let [node (om/get-node owner "chat-messages")]
+        (om/set-state! owner :auto-scroll (= (- (.-scrollHeight node) (.-scrollTop node))
+                                             (.-clientHeight node)))))
     om/IDidUpdate
     (did-update [_ _ _]
-      ;; maybe scroll chat
-      )
+      (when (om/get-state owner :auto-scroll)
+        (set! (.-scrollTop (om/get-node owner "chat-messages"))
+              10000000)))
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
@@ -42,7 +49,7 @@
                         :server/timestamp (om/get-state owner :mount-time)}]
         (html
          [:section.aside-chat
-          [:div.chat-messages
+          [:div.chat-messages {:ref "chat-messages"}
            (for [chat (sort-by :server/timestamp (concat chats [dummy-chat]))
                  :let [id (apply str (take 6 (str (:session/uuid chat))))]]
              (html [:div.message
