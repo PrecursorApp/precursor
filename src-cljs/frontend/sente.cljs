@@ -27,7 +27,8 @@
                                           :show-mouse? true}])
               (d/transact (:db @app-state)
                           ;; hack to prevent loops
-                          (concat layers chats [{:db/id -1 :server/update true}])))))
+                          (concat layers chats)
+                          {:server-update true}))))
 
 (defn fetch-subscribers [sente-state app-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 2000
