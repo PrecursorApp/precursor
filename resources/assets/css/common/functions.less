@@ -62,16 +62,16 @@
 .rotate(...) {
   .prefixer(transform; ~"rotate(@{arguments}deg)"; webkit);
 }
-.scale(...) {
-  .prefixer(transform, scale(@arguments), webkit);
+.scale(@x; @y: @x) {
+  .prefixer(transform, scale(@x, @y), webkit);
 }
-.scale3d(@x; @y: @x; @z: 1;) {
+.scale3d(@x; @y: @x; @z: 1) {
   .prefixer(transform, scale3d(@x, @y, @z), webkit);
 }
-.translate(...) {
-  .prefixer(transform, translate(@arguments), webkit);
+.translate(@x; @y: @x) {
+  .prefixer(transform, translate(@x, @y), webkit);
 }
-.translate3d(@x; @y: @x; @z: 1;) {
+.translate3d(@x; @y: @x; @z: 1) {
   .prefixer(transform, translate3d(@x, @y, @z), webkit);
 }
 .translateZ(...) {
