@@ -189,7 +189,6 @@
 (defn handler [sente-state]
   (->
    (app sente-state)
-   (sente/wrap-user-id)
    (auth-middleware)
    (wrap-anti-forgery)
    (wrap-session {:store (cookie-store {:key (profile/http-session-key)})

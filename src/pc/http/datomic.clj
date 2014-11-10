@@ -64,7 +64,7 @@
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
-  [datoms document-id session-uuid]
+  [datoms document-id session-uuid cust-uuid]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
         (< 1000 (count datoms))
@@ -85,7 +85,8 @@
                                (map (partial coerce-floats float-attrs))
                                (map (partial coerce-uuids uuid-attrs))
                                (map (partial coerce-server-timestamp server-timestamp))
-                               (concat [{:db/id txid :document/id document-id :session/uuid session-uuid}])
+                               (concat [(merge {:db/id txid :document/id document-id :session/uuid session-uuid}
+                                               (when cust-uuid {:cust/uuid cust-uuid}))])
                                (d/transact conn)
                                deref
                                :tx-data
@@ -94,7 +95,7 @@
 
 (defn get-annotations [transaction]
   (let [txid (-> transaction :tx-data first :tx)]
-    (->> txid (d/entity (:db-after transaction)) (#(select-keys % [:document/id :session/uuid])))))
+    (->> txid (d/entity (:db-after transaction)) (#(select-keys % [:document/id :session/uuid :cust/uuid])))))
 
 (defn handle-precursor-pings [document-id datoms]
   (when-let [ping-datoms (seq (filter #(and (= :chat/body (:a %))

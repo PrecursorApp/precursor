@@ -8,6 +8,7 @@
             [dommy.core :as dommy]
             [goog.dom]
             [goog.dom.DomHelper]
+            [goog.net.Cookies]
             [frontend.camera :as camera-helper]
             [frontend.components.app :as app]
             [frontend.controllers.controls :as controls-con]
@@ -31,7 +32,8 @@
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
                    [frontend.utils :refer [inspect timing swallow-errors]])
-  (:use-macros [dommy.macros :only [node sel sel1]]))
+  (:use-macros [dommy.macros :only [node sel sel1]])
+  (:import [cljs.core.UUID]))
 
 (enable-console-print!)
 
@@ -101,6 +103,9 @@
         cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
     (atom (assoc initial-state
             :document/id document-id
+            ;; id for the browser, used to filter transactions
+            ;; TODO: rename client-uuid to something else
+            :client-id (UUID. (utils/uuid))
             :db  (ds/make-initial-db document-id)
             :cust cust
             :comms {:controls      controls-ch
@@ -247,13 +252,13 @@
 
     (go (while true
           (alt!
-           controls-tap ([v] (controls-handler v state container))
-           nav-tap ([v] (nav-handler v state history-imp))
-           api-tap ([v] (api-handler v state container))
-           errors-tap ([v] (errors-handler v state container))
-           ;; Capture the current history for playback in the absence
-           ;; of a server to store it
-           (async/timeout 10000) (do (print "TODO: print out history: ")))))))
+            controls-tap ([v] (controls-handler v state container))
+            nav-tap ([v] (nav-handler v state history-imp))
+            api-tap ([v] (api-handler v state container))
+            errors-tap ([v] (errors-handler v state container))
+            ;; Capture the current history for playback in the absence
+            ;; of a server to store it
+            (async/timeout 10000) (do (print "TODO: print out history: ")))))))
 
 (defn setup-browser-repl [repl-url]
   (when repl-url
@@ -291,6 +296,7 @@
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (browser-settings/setup! state)
+    (.set (goog.net.Cookies. js/document) "prcrsr-client-id" (:client-id @state) -1 "/" false)
     ;; TODO: find a better place to put this
     (swap! state (fn [s] (assoc-in s [:camera :offset-x] (if (get-in s state/aside-menu-opened-path)
                                                            (get-in s state/aside-width-path)
