@@ -15,13 +15,15 @@ i {
       height: @to_em;
     }
   }
-  [class*="stroke"] {
-    fill: none;
-    stroke: @white;
-    stroke-width: 8;
-  }
   [class*="dot"] {
     stroke-linecap: round;
     stroke-width: 20;
+  }
+}
+path {
+  &[class*="stroke"] {
+    fill: none;
+    stroke: @white;
+    stroke-width: 8;
   }
 }
