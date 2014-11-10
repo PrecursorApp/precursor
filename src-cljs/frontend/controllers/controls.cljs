@@ -132,34 +132,38 @@
   (-> state
       (assoc-in [:drawing :layer :layer/text] value)))
 
+(defn move-in-progress-drawing [state x y]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)
+        [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
+        points ((fnil conj []) (get-in state [:drawing :points]) {:x x :y x :rx rx :ry ry})]
+    (-> state
+        (assoc-in [:drawing :points] points)
+        (update-in [:drawing :layer] assoc
+                   :layer/current-x snap-x
+                   :layer/current-y snap-y)
+        (update-in [:drawing :layer]
+                   (fn [layer]
+                     (merge
+                      layer
+                      (when (= :text (get-in state state/current-tool-path))
+                        {:layer/start-x snap-x
+                         :layer/start-y snap-y})
+                      (when (= :pen (get-in state state/current-tool-path))
+                        {:layer/path (svg/points->path points)})
+                      (when (= :circle (get-in state state/current-tool-path))
+                        {:layer/rx (Math/abs (- (:layer/start-x layer)
+                                                (:layer/current-x layer)))
+                         :layer/ry (Math/abs (- (:layer/start-y layer)
+                                                (:layer/current-y layer)))}))))))  )
+
 (defmethod control-event :mouse-moved
   [target message [x y] state]
-  (let [[rx ry] (cameras/screen->point (:camera state) x y)
-        [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)]
-    (let [r (if (get-in state [:drawing :in-progress?])
-              (let [points ((fnil conj []) (get-in state [:drawing :points]) {:x x :y x :rx rx :ry ry})]
-                (-> state
-                    (update-mouse x y)
-                    (assoc-in [:drawing :points] points)
-                    (update-in [:drawing :layer] assoc
-                               :layer/current-x snap-x
-                               :layer/current-y snap-y)
-                    (update-in [:drawing :layer]
-                               (fn [layer]
-                                 (merge
-                                  layer
-                                  (when (= :text (get-in state state/current-tool-path))
-                                    {:layer/start-x snap-x
-                                     :layer/start-y snap-y})
-                                  (when (= :pen (get-in state state/current-tool-path))
-                                    {:layer/path (svg/points->path points)})
-                                  (when (= :circle (get-in state state/current-tool-path))
-                                    {:layer/rx (Math/abs (- (:layer/start-x layer)
-                                                            (:layer/current-x layer)))
-                                     :layer/ry (Math/abs (- (:layer/start-y layer)
-                                                            (:layer/current-y layer)))}))))))
-              (update-mouse state x y))]
-      r)))
+  (-> state
+      (update-mouse x y)
+      (cond-> (get-in state [:drawing :in-progress?])
+              (move-in-progress-drawing x y)
+
+              )))
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
