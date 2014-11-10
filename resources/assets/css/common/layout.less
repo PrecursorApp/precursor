@@ -56,14 +56,6 @@
     fill: none;
     stroke-width: 6;
   }
-  .svg-text-form {
-    input {
-      border: none;
-      background: none;
-      outline: none;
-      box-shadow: 0 -1px @select_blue inset;
-    }
-  }
 }
 #grid,
 #small-grid {
@@ -439,6 +431,11 @@
 }
 .svg-text-form {
   input[type="text"] {
+    .placeholder_style(color; @gray);
     font-weight: 300;
+    border: none;
+    background: none;
+    outline: none;
+    box-shadow: 0 -1px @select_blue inset;
   }
 }

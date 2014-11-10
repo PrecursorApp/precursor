@@ -182,10 +182,11 @@
                                                       false)}
                                      ;; TODO: experiment with a contentEditable div
                                      (dom/input #js {:type "text"
+                                                     :placeholder "Write something..."
                                                      :value (or (:layer/text layer) "")
                                                      ;; TODO: defaults for each layer when we create them
                                                      :style (clj->js (merge text-style
-                                                                            {:width (+ 150 (om/get-state owner :input-min-width))}))
+                                                                            {:width (+ 256 (om/get-state owner :input-min-width))}))
                                                      :ref "input"
                                                      :onChange #(cast! :text-layer-edited {:value (.. % -target -value)})})
                                      (dom/div #js {:style (clj->js (merge {:visibility "hidden"
