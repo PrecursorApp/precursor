@@ -1,9 +1,19 @@
-[data-right]:not([data-right=""]),
-[data-left]:not([data-left=""]),
-[data-bottom]:not([data-bottom=""]),
-[data-top]:not([data-top=""]) {
+[data-bottom][data-bottom=""],
+[data-right][data-right=""],
+[data-left][data-left=""],
+[data-top][data-top=""] {
+  &:before,
+  &:after {
+    display: none;
+  }
+}
+[data-bottom],
+[data-right],
+[data-left],
+[data-top] {
   position: relative;
-  &:before, &:after {
+  &:before,
+  &:after {
     position: absolute;
     transition: @speed_fast (@speed * 4);
     z-index: @zindex_tooltip;
@@ -23,55 +33,33 @@
     white-space: nowrap;
   }
   &:not(:hover) {
-    &:before, &:after {
+    &:before,
+    &:after {
       opacity: 0;
       transition: @speed 0;
       margin: 0;
     }
   }
 }
-[data-right]:not([data-right=""]),
-[data-left]:not([data-left=""]) {
-  &:before, &:after {
+[data-right],
+[data-left] {
+  &:before,
+  &:after {
     .translate(0, -50%);
     top: 50%;
   }
 }
-[data-bottom]:not([data-bottom=""]),
-[data-top]:not([data-top=""]) {
-  &:before, &:after {
+[data-bottom],
+[data-top] {
+  &:before,
+  &:after {
     .translate(-50%, 0);
     left: 50%;
   }
 }
-[data-right]:not([data-right=""]) {
-  &:before, &:after {
-    left: 100%;
-  }
-  &:before {
-    margin-left: -.5em;
-    border-right-color: @tooltip_color;
-  }
+[data-bottom] {
+  &:before,
   &:after {
-    content: attr(data-right);
-    margin-left: .5em;
-  }
-}
-[data-left]:not([data-left=""]) {
-  &:before, &:after {
-    right: 100%;
-  }
-  &:before {
-    margin-right: -.5em;
-    border-left-color: @tooltip_color;
-  }
-  &:after {
-    content: attr(data-left);
-    margin-right: .5em;
-  }
-}
-[data-bottom]:not([data-bottom=""]) {
-  &:before, &:after {
     top: 100%;
   }
   &:before {
@@ -83,8 +71,37 @@
     margin-top: .5em;
   }
 }
-[data-top]:not([data-top=""]) {
-  &:before, &:after {
+[data-right] {
+  &:before,
+  &:after {
+    left: 100%;
+  }
+  &:before {
+    margin-left: -.5em;
+    border-right-color: @tooltip_color;
+  }
+  &:after {
+    content: attr(data-right);
+    margin-left: .5em;
+  }
+}
+[data-left] {
+  &:before,
+  &:after {
+    right: 100%;
+  }
+  &:before {
+    margin-right: -.5em;
+    border-left-color: @tooltip_color;
+  }
+  &:after {
+    content: attr(data-left);
+    margin-right: .5em;
+  }
+}
+[data-top] {
+  &:before,
+  &:after {
     bottom: 100%;
   }
   &:before {
