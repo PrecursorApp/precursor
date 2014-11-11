@@ -70,10 +70,10 @@
                                                                  (url/url)
                                                                  :path)}]
           [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
-                             :data-tooltip-right "Logout"}
+                             :data-right "Logout"}
            (common/icon :logout)]]
          [:a.action-login {:href (auth/auth-url)
-                           :data-tooltip-right "Sign Up"}
+                           :data-right "Sign Up"}
           (common/icon :login)])))))
 
 (defn main-actions [data owner]
@@ -110,18 +110,17 @@
          [:div.main-actions
           [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
                            :class (when-not aside-opened? "closed")
-                           :data-tooltip-right (if aside-opened? "Close Menu" "Open Menu")}
+                           :data-right (if aside-opened? "Close Menu" "Open Menu")}
            (common/icon :menu)]
           (when (and (not aside-opened?) (pos? unread-chat-count))
             [:div.unseen-eids (str unread-chat-count)])
           (om/build auth-link data)
           [:a.action-newdoc {:href "/"
                              :target "_self"
-                             ; :title "New Document"
-                             :data-tooltip-right "New Document"}
+                             :data-right "New Document"}
            (common/icon :newdoc)]
           [:a.action-info {:on-click #(cast! :overlay-info-toggled)
-                           :data-tooltip-right "What is this thing?"}
+                           :data-right "What is this thing?"}
            (common/icon :info)]])))))
 
 
