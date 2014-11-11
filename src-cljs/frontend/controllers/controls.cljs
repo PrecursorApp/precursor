@@ -81,7 +81,20 @@
 
 (defmethod control-event :key-state-changed
   [target message [{:keys [key-name-kw depressed?]}] state]
-  (assoc-in state [:keyboard key-name-kw] depressed?))
+  (-> state
+      (assoc-in [:keyboard key-name-kw] depressed?)
+      (cond->
+       (and (= :ctrl? key-name-kw)
+            depressed?
+            (not (get-in state [:drawing :in-progress?])))
+       (-> (update-in [:menu] assoc
+                      :open? true
+                      :x (get-in state [:mouse :x])
+                      :y (get-in state [:mouse :y])))
+
+       (and (= :ctrl? key-name-kw)
+            (not depressed?))
+       (assoc-in [:menu :open?] false))))
 
 (defmethod post-control-event! :key-state-changed
   [target message [{:keys [key-name-kw depressed?]}] state]
