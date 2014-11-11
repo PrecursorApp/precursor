@@ -79,7 +79,7 @@
     :select "default"
     "crosshair"))
 
-(defn svg-layers [{:keys [editing-eids selected-eid tool]} owner]
+(defn svg-layers [{:keys [editing-eids selected-eid selected-eids tool]} owner]
   (reify
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -96,7 +96,12 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            selected-eids (if selected-eid (layer-model/selected-eids @db selected-eid) #{})
+            selected-eids (cond
+                           (seq selected-eids) selected-eids
+
+                           selected-eid (layer-model/selected-eids @db selected-eid)
+
+                           :else #{})
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
         (apply dom/g #js {:className "layers"}
                (mapv (fn [layer]
@@ -322,7 +327,10 @@
                                                                               (settings/moving-drawing? payload))
                                                                       [(:db/id (settings/drawing payload))])
                                                                     (remove nil? (map :db/id subs-layers))))
-                                         :tool (get-in payload state/current-tool-path)))
+                                         :tool (get-in payload state/current-tool-path)
+                                         :selected-eids (when (and (settings/drawing-in-progress? payload)
+                                                                   (get-in payload [:drawing :layer :layer/child]))
+                                                          (get-in payload [:drawing :layer :layer/child]))))
                   (om/build subscriber-layers {:layers subs-layers})
                   (when (and (settings/drawing-in-progress? payload)
                              (= :layer.type/text (get-in payload [:drawing :layer :layer/type])))

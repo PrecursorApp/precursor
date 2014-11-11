@@ -133,10 +133,30 @@
   (-> state
       (assoc-in [:drawing :layer :layer/text] value)))
 
+(defn eids-in-bounding-box [db {:keys [start-x end-x start-y end-y] :as box}]
+  (let [x0 (min start-x end-x)
+        x1 (max start-x end-x)
+        y0 (min start-y end-y)
+        y1 (max start-y end-y)
+        has-x0 (set (map :e (d/index-range db :layer/start-x x0 x1)))
+        has-x1 (set (map :e (d/index-range db :layer/end-x x0 x1)))
+        has-y0 (set (map :e (d/index-range db :layer/start-y y0 y1)))
+        has-y1 (set (map :e (d/index-range db :layer/end-y y0 y1)))]
+    (set/union (set/intersection has-x0 has-y0)
+               (set/intersection has-x0 has-y1)
+               (set/intersection has-x1 has-y0)
+               (set/intersection has-x1 has-y1))))
+
 (defn draw-in-progress-drawing [state x y]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
-        points ((fnil conj []) (get-in state [:drawing :points]) {:x x :y x :rx rx :ry ry})]
+        points ((fnil conj []) (get-in state [:drawing :points]) {:x x :y x :rx rx :ry ry})
+        bounding-eids (when (= (get-in state [:drawing :layer :layer/type]) :layer.type/group)
+                        (eids-in-bounding-box (-> state :db deref)
+                                              {:start-x (get-in state [:drawing :layer :layer/start-x])
+                                               :end-x snap-x
+                                               :start-y (get-in state [:drawing :layer :layer/start-y])
+                                               :end-y snap-y}))]
     (-> state
         (assoc-in [:drawing :points] points)
         (update-in [:drawing :layer] assoc
@@ -155,7 +175,9 @@
                         {:layer/rx (Math/abs (- (:layer/start-x layer)
                                                 (:layer/current-x layer)))
                          :layer/ry (Math/abs (- (:layer/start-y layer)
-                                                (:layer/current-y layer)))})))))))
+                                                (:layer/current-y layer)))})
+                      (when (seq bounding-eids)
+                        {:layer/child bounding-eids})))))))
 
 (defn move-points [points move-x move-y]
   (map (fn [{:keys [rx ry]}]
@@ -221,19 +243,6 @@
                                           :show-mouse? show-mouse?
                                           :mouse-owner-uuid client-uuid}]))
 
-(defn eids-in-bounding-box [db {:keys [start-x end-x start-y end-y] :as box}]
-  (let [x0 (min start-x end-x)
-        x1 (max start-x end-x)
-        y0 (min start-y end-y)
-        y1 (max start-y end-y)
-        has-x0 (set (map :e (d/index-range db :layer/start-x x0 x1)))
-        has-x1 (set (map :e (d/index-range db :layer/end-x x0 x1)))
-        has-y0 (set (map :e (d/index-range db :layer/start-y y0 y1)))
-        has-y1 (set (map :e (d/index-range db :layer/end-y y0 y1)))]
-    (set/union (set/intersection has-x0 has-y0)
-               (set/intersection has-x0 has-y1)
-               (set/intersection has-x1 has-y0)
-               (set/intersection has-x1 has-y1))))
 
 (defn finalize-layer [state]
   (let [{:keys [x y]} (get-in state [:mouse])
