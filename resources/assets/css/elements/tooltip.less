@@ -15,7 +15,7 @@
   &:before,
   &:after {
     position: absolute;
-    transition: @speed_fast (@speed * 4);
+    transition: @speed (@speed * 4);
     z-index: @zindex_tooltip;
     pointer-events: none;
     .mq_640({ display: none; });
@@ -36,7 +36,7 @@
     &:before,
     &:after {
       opacity: 0;
-      transition: @speed 0;
+      transition: margin @speed 0ms, opacity @speed_fast 0ms;
       margin: 0;
     }
   }
