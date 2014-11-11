@@ -100,7 +100,8 @@
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
         (apply dom/g #js {:className "layers"}
                (mapv (fn [layer]
-                       (dom/g #js {:className (when (= :select tool) "selectable-group")}
+                       (dom/g #js {:className (when (= :select tool) "selectable-group")
+                                   :key (:db/id layer)}
                               (when (= :select tool)
                                 (svg-element selected-eids
                                              (assoc layer
@@ -110,7 +111,8 @@
                                                   (cast! :layer-selected {:layer layer
                                                                           :x (first (cameras/screen-event-coords %))
                                                                           :y (second (cameras/screen-event-coords %))}))
-                                               :className "selectable-layer")))
+                                               :className "selectable-layer"
+                                               :key (str "selectable-" (:db/id layer)))))
                               (svg-element selected-eids (assoc layer
                                                            :onMouseDown (when (and (= :text tool)
                                                                                    (= :layer.type/text (:layer/type layer)))
@@ -121,7 +123,8 @@
                                                                                  (= :layer.type/text (:layer/type layer)))
                                                                         #(.stopPropagation %))
                                                            :className (when (= :text tool)
-                                                                        "editable")))))
+                                                                        "editable")
+                                                           :key (:db/id layer)))))
                      (remove #(or (= :layer.type/group (:layer/type %))
                                   (contains? editing-eids (:db/id %))) layers)))))))
 
