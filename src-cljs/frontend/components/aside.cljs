@@ -57,7 +57,7 @@
           [:div.chat-messages {:ref "chat-messages"}
            (for [chat (sort-by :server/timestamp (concat chats [dummy-chat]))
                  :let [id (apply str (take 6 (str (:session/uuid chat))))]]
-             (html [:div.message
+             (html [:div.message {:key id}
                     [:span {:style {:color (or (:chat/color chat) (str "#" id))}}
                      (if (= (str (:session/uuid chat))
                             client-uuid)
@@ -88,29 +88,31 @@
             client-id (:client-uuid app)
             aside-opened? (get-in app state/aside-menu-opened-path)
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)]
-       (html
+        (html
          [:aside.app-aside {:class (concat
-                                     (when-not aside-opened? ["closed"])
-                                     (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))
+                                    (when-not aside-opened? ["closed"])
+                                    (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))
                             :style {:width (if aside-opened?
                                              (get-in app state/aside-width-path)
                                              0)}}
           [:button.aside-switcher {:on-click #(cast! :chat-mobile-toggled)
-                                   ; :class (if chat-mobile-open? "chat-mobile" "people-mobile")
+                                   ;; :class (if chat-mobile-open? "chat-mobile" "people-mobile")
                                    }
-            [:span.aside-switcher-option {:class (when-not chat-mobile-open? "toggled")} "People"]
-            [:span.aside-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
+           [:span.aside-switcher-option {:class (when-not chat-mobile-open? "toggled")} "People"]
+           [:span.aside-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
           [:section.aside-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-             [:button {:title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
+             [:button {:key client-id
+                       :title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
                        :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}
               (common/icon :user (when show-mouse? {:path-props
-                                                     {:style
-                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))
+                                                    {:style
+                                                     {:stroke (get-in app [:subscribers client-id :color])}}}))
               [:span "You"]])
            (for [[id {:keys [show-mouse? color]}] (dissoc (:subscribers app) client-id)
                  :let [id-str (apply str (take 6 id))]]
              [:button {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
+                       :key id
                        :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
               (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
               [:span id-str]])]

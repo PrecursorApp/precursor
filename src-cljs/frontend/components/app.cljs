@@ -153,7 +153,7 @@
                                             :on-mouse-up #(do (cast! :tool-selected [tool]))
                                             :on-touch-end #(do (cast! :tool-selected [tool]))}])]
                    (for [[tool template] tools-templates]
-                     [:div.radial-tool-type
+                     [:div.radial-tool-type {:key tool}
                       (common/icon (:type template))
                       [:span (name tool)]])
                    [:div.radial-menu-nub]])]
