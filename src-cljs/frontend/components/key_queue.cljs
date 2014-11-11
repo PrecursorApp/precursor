@@ -69,7 +69,7 @@
   This fn will never return just 'shift' or any other lone modifier key."
   [event]
   (let [mods (event-modifiers event)
-        which (.-which event)        
+        which (.-which event)
         key (or (code->key which) (.toLowerCase (js/String.fromCharCode which)))]  
     (if (and key (not (empty? key)) (not (some #{key} mod-keys)))
       (join "+" (conj mods key)))))

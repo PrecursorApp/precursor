@@ -79,9 +79,19 @@
   [target message _ state]
   (update-in state [:camera :x] dec))
 
+(defmulti handle-keyboard-shortcut (fn [shortcut-name state] shortcut-name))
+
+(defmethod handle-keyboard-shortcut :default
+  [shortcut-name state]
+  (assoc-in state state/current-tool-path shortcut-name))
+
 (defmethod control-event :key-state-changed
-  [target message [{:keys [key-name-kw depressed?]}] state]
-  (assoc-in state [:keyboard key-name-kw] depressed?))
+  [target message [{:keys [key key-name-kw depressed?]}] state]
+  (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
+    (-> state
+        (assoc-in [:keyboard key-name-kw] depressed?)
+        (cond->> (and depressed? (contains? (set (vals shortcuts)) key))
+                 (handle-keyboard-shortcut (get (set/map-invert shortcuts) key))))))
 
 (defmethod post-control-event! :key-state-changed
   [target message [{:keys [key-name-kw depressed?]}] state]

@@ -62,9 +62,10 @@
       (when (get suppressed-key-combos key-string)
         (.preventDefault event))
       (when-not (.-repeat event)
-        (when-let [human-name (get keyq/code->key (.-which event))]
+        (let [human-name (keyq/event->key event)]
           (let [key-name (keyword (str human-name "?"))]
             (cast! :key-state-changed [{:key-name-kw key-name
+                                        :key         human-name
                                         :code        (.-which event)
                                         :depressed?  (= direction :down)}])))))))
 

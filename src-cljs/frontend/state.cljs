@@ -15,6 +15,12 @@
                                         :current-tool :rect
                                         :aside-menu-opened false
                                         :chat-mobile-opened true}}
+   :keyboard-shortcuts {:select "s"
+                        :circle "c"
+                        :rect "r"
+                        :line "l"
+                        :pen "p"
+                        :text "t"}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
@@ -70,6 +76,8 @@
 
 (defn last-read-chat-time-path [document-id]
   (conj browser-settings-path :document-settings document-id :last-read-chat-time))
+
+(def keyboard-shortcuts-path [:keyboard-shortcuts])
 
 (def overlay-info-opened-path [:aside-menu-opened])
 
