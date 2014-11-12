@@ -1,26 +1,11 @@
+.order(...) {
+  .prefixer(box-ordinal-group, @arguments, webkit moz); // Old Syntax
+  .prefixer(order, @arguments, webkit moz);
+}
 .flex(@a: 0; ...) {
   .prefixer(box-flex; extract(@a, 1); webkit); // Old Syntax
   .prefixer(flex; @arguments; webkit);
 }
-
-.justify-content(...) {
-  .infer_replace(@a) when (@a = flex-start), (@a = flex-end), (@a = space-between) {
-    .prefixer(box-pack; replace(replace(@a, "flex-", " "), "space-between", " justify"); webkit);
-  }.infer_replace(@arguments);
-  .infer_replace(@a) when (default()) {
-    .prefixer(box-pack; @arguments; webkit);
-  }.infer_replace(@arguments);
-  .prefixer(justify-content; @arguments; webkit);
-}
-
-.flex-direction(...) {
-  .infer_reverse(@a) when (@a = row-reverse), (@a = column-reverse) {
-    .prefixer(box-direction; reverse; webkit); // Old Syntax
-  }.infer_reverse(@arguments);
-  .prefixer(box-orient; replace(replace(replace(@arguments, "-reverse", " "), "column", " vertical"), "row", " horizontal"); webkit); // Old Syntax
-  .prefixer(flex-direction; @arguments; webkit);
-}
-
 .align-items(...) {
   .infer_replace(@a) when (@a = flex-start), (@a = flex-end) {
     .prefixer(box-align; replace(@a, "flex-", " "); webkit); // Old Syntax
@@ -30,24 +15,46 @@
   }.infer_replace(@arguments);
   .prefixer(align-items; @arguments; webkit);
 }
-
+.justify-content(...) {
+  .infer_replace(@a) when (@a = flex-start), (@a = flex-end), (@a = space-between) {
+    .prefixer(box-pack; replace(replace(@a, "flex-", " "), "space-between", " justify"); webkit);
+  }.infer_replace(@arguments);
+  .infer_replace(@a) when (default()) {
+    .prefixer(box-pack; @arguments; webkit);
+  }.infer_replace(@arguments);
+  .prefixer(justify-content; @arguments; webkit);
+}
+.flex-direction(...) {
+  .infer_reverse(@a) when (@a = row-reverse), (@a = column-reverse) {
+    .prefixer(box-direction; reverse; webkit); // Old Syntax
+  }.infer_reverse(@arguments);
+  .prefixer(box-orient; replace(replace(replace(@arguments, "-reverse", " "), "column", " vertical"), "row", " horizontal"); webkit); // Old Syntax
+  .prefixer(flex-direction; @arguments; webkit);
+}
+.flex-wrap(...) {
+  .infer_wrap(@a) when (@a = wrap) {
+    .prefixer(box-lines; multiple; webkit);
+  }.infer_wrap(@arguments);
+  .infer_nowrap(@a) when (@a = nowrap) {
+    .prefixer(box-lines; single; webkit);
+  }.infer_nowrap(@arguments);
+  .prefixer(flex-wrap; @arguments; webkit)
+}
 .flexy(...) {
-
-  display: -webkit-box;
-  display: box;
-  display: -webkit-flex;
-  display: flex;
-
-  .infer_single(@a) when (length(@a) = 1) {
+  .prefixer_value(display; box; webkit);
+  .prefixer_value(display; flex; webkit);
+  .infer_1(@a) when (length(@a) = 1) {
     .infer_direction(@a) when (@a = row), (@a = row-reverse), (@a = column), (@a = column-reverse) {
       .flex-direction(@a);
+    }.infer_direction(@a);
+    .infer_direction(@a) when (@a = wrap), (@a = nowrap) {
+      .flex-wrap(@a);
     }.infer_direction(@a);
     .infer_direction(@a) when (default()) {
       .align-items(@a);
     }.infer_direction(@a);
-  }.infer_single(@arguments);
-
-  .infer_double(@a) when (length(@a) = 2) {
+  }.infer_1(@arguments);
+  .infer_2(@a) when (length(@a) = 2) {
     .infer_column(@a) when (extract(@a, 1) = column), (extract(@a, 1) = column-reverse) {
       .flex-direction(extract(@a, 1));
       .justify-content(extract(@a, 2))
@@ -56,12 +63,16 @@
       .align-items(extract(@a, 1));
       .justify-content(extract(@a, 2));
     }.infer_column(@a);
-  }.infer_double(@arguments);
-
-  .infer_triple(@a) when (length(@a) = 3) {
+  }.infer_2(@arguments);
+  .infer_3(@a) when (length(@a) = 3) {
     .align-items(extract(@a, 1));
     .justify-content(extract(@a, 2));
-    .flex-direction(extract(@a, 3))
-  }.infer_triple(@arguments);
-
+    .flex-direction(extract(@a, 3));
+  }.infer_3(@arguments);
+  .infer_4(@a) when (length(@a) = 4) {
+    .align-items(extract(@a, 1));
+    .justify-content(extract(@a, 2));
+    .flex-direction(extract(@a, 3));
+    .flex-wrap(extract(@a, 4));
+  }.infer_4(@arguments);
 }
