@@ -93,16 +93,19 @@
 }
 .main-actions {
   .flexy(column);
+  .user-select(none);
   position: absolute;
   top: 0;
   left: 0;
   width: @tile;
   height: 100%;
+  pointer-events: none;
   a {
     .flexy(center, center);
     width: 100%;
     height: @tile;
     cursor: pointer;
+    pointer-events: auto;
     &:not(:hover) {
       .icon_stroke(@gray);
     }
