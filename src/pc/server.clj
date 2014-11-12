@@ -83,27 +83,11 @@
               @(d/transact (pcd/conn) [{:db/id doc-id :document/name "Untitled"}])
               (swap! bucket-doc-ids conj doc-id)
               (redirect (str "/document/" doc-id))))))
-   (GET "/interesting" []
-        {:status 200
-         :body (str
-                "<html></body>"
-                (clojure.string/join
-                 " "
-                 (or (seq (for [doc-id (db-admin/interesting-doc-ids {:layer-threshold 10})]
-                            (format "<p><a href=\"/document/%s\"><img width=100 src=\"/document/%s.svg\"></a></p>" doc-id doc-id doc-id)))
-                     ["Nothing interesting today :("]))
-                "</body></html")})
 
+   (GET "/interesting" []
+        (content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))
    (GET ["/interesting/:layer-count" :layer-count #"[0-9]+"] [layer-count]
-        {:status 200
-         :body (str
-                "<html></body>"
-                (clojure.string/join
-                 " "
-                 (or (seq (for [doc-id (db-admin/interesting-doc-ids {:layer-threshold (Integer/parseInt layer-count)})]
-                            (format "<p><a href=\"/document/%s\">%s</a></p>" doc-id doc-id)))
-                     ["Nothing interesting today :("]))
-                "</body></html")})
+        (content/interesting (db-admin/interesting-doc-ids {:layer-threshold (Integer/parseInt layer-count)})))
 
    (GET "/occupied" []
         ;; TODO: fix whatever is causing this :(
