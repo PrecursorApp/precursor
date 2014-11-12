@@ -73,43 +73,6 @@ p {
     }
   }
 }
-// p {
-//   a {
-//     color: inherit;
-//     position: relative;
-//     &:before,
-//     &:after {
-//       content: "";
-//       position: absolute;
-//       left: 0;
-//       top: 0;
-//       width: 100%;
-//       height: (((@font_height - @font_size) / 2) + @font_size);
-//       border-bottom: 1px dotted;
-//       transition: 100ms;
-//       transition-timing-function: cubic-bezier(.21, -.21, .55, 1.13);
-//     }
-//     &:before {
-//       border-color: @font_color_hover;
-//       opacity: 1;
-//     }
-//     &:after {
-//       border-color: @font_color;
-//       opacity: 0;
-//       .scale(0);
-//     }
-//     &:hover {
-//       &:before {
-//         opacity: 0;
-//         .scale(0)
-//       }
-//       &:after {
-//         opacity: 1;
-//         .scale(1, 1);
-//       }
-//     }
-//   }
-// }
 h1, h2, h3, h4, h5, h6 {
   line-height: 1em;
   margin: 0 0 @font_size;
