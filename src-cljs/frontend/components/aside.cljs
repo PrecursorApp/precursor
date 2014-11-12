@@ -57,7 +57,7 @@
           [:div.chat-messages {:ref "chat-messages"}
            (for [chat (sort-by :server/timestamp (concat chats [dummy-chat]))
                  :let [id (apply str (take 6 (str (:session/uuid chat))))]]
-             (html [:div.message {:key id}
+             (html [:div.message {:key (:db/id chat)}
                     [:span {:style {:color (or (:chat/color chat) (str "#" id))}}
                      (if (= (str (:session/uuid chat))
                             client-uuid)
