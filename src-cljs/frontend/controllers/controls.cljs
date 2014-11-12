@@ -108,8 +108,12 @@
   (update-in state state/night-mode-path not))
 
 (defn update-mouse [state x y]
-  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
-    (update-in state [:mouse] assoc :x x :y y :rx rx :ry ry)))
+  (if (and x y)
+    (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+      (update-in state [:mouse] assoc :x x :y y :rx rx :ry ry))
+    (do
+      (utils/mlog "Called update-mouse without x and y coordinates")
+      state)))
 
 (defmethod control-event :drawing-started
   [target message [x y] state]
@@ -218,6 +222,7 @@
 (defmethod control-event :mouse-moved
   [target message [x y] state]
   (-> state
+
       (update-mouse x y)
       (cond-> (get-in state [:drawing :in-progress?])
               (draw-in-progress-drawing x y)
