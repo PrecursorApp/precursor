@@ -25,6 +25,7 @@
             [pc.less :as less]
             [pc.views.content :as content]
             [pc.utils :refer (inspect)]
+            [pc.render :refer (render-layers)]
             [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
@@ -51,6 +52,11 @@
         ;; TODO: take tx-date as a param
         {:status 200
          :body (pr-str {:layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong id)})})})
+   (GET "/document/:document-id.svg" [document-id :as req]
+        (let [layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong document-id)})]
+          {:status 200
+           :headers {"Content-Type" "image/svg+xml"}
+           :body (render-layers layers)}))
    (GET "/document/:document-id" [document-id :as req]
         (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                              :google-client-id (google-client-id)}
@@ -84,7 +90,7 @@
                 (clojure.string/join
                  " "
                  (or (seq (for [doc-id (db-admin/interesting-doc-ids {:layer-threshold 10})]
-                            (format "<p><a href=\"/document/%s\">%s</a></p>" doc-id doc-id)))
+                            (format "<p><a href=\"/document/%s\"><img width=100 src=\"/document/%s.svg\"></a></p>" doc-id doc-id doc-id)))
                      ["Nothing interesting today :("]))
                 "</body></html")})
 

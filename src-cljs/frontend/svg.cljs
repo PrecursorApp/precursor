@@ -46,3 +46,16 @@
     :strokeWidth 0;(:layer/stroke-width layer 0)
     :fontFamily (:layer/font-family layer "Roboto")
     :fontSize   (:layer/font-size layer 24)}))
+
+(defn layer->svg-line [layer]
+  {:x1          (:layer/start-x layer)
+   :y1          (:layer/start-y layer)
+   :x2          (:layer/end-x layer)
+   :y2          (:layer/end-y layer)
+   :strokeWidth (:layer/stroke-width layer)})
+
+(defn layer->svg-path [layer]
+  {:d (:layer/path layer)
+   :stroke (:layer/stroke layer "black")
+   :fill "none"
+   :strokeWidth (:layer/stroke-width layer)})
