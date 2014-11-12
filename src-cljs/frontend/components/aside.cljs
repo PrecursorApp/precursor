@@ -74,6 +74,7 @@
                                    (cast! :chat-submitted)
                                    false)}
            [:textarea {:id "chat-box"
+                       :tab-index "1"
                        :type "text"
                        :value (or chat-body "")
                        :placeholder "Send a message..."
