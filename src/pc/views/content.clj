@@ -52,4 +52,4 @@
       [:a {:href (str "/document/" doc-id)} doc-id]])])
 
 (defn interesting [doc-ids]
-  (h/html (layout {} (interesting* doc-ids))))
+  (h/html (layout {} (interesting* (reverse (sort doc-ids))))))
