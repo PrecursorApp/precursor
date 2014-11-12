@@ -23,6 +23,9 @@
   }.prefix(@property; @value; @rest);
   @{property}: @value;
 }
+.text_size_increase(@increment, @base: @font_size) {
+  font-size: round(@base + (@phi * pow(@increment, 2)));
+}
 .placeholder_style(@property; @value) {
   &::-webkit-input-placeholder {@{property}: @value;}
   &:-moz-placeholder           {@{property}: @value;}
