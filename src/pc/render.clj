@@ -37,10 +37,10 @@
         height (if (pos? min-y)
                  max-y
                  (- max-y min-y))]
-    (html [:svg.svg-line-graph.hello {:width width
-                                      :height height
-                                      :style "background: #333"
-                                      :xmlns "http://www.w3.org/2000/svg"
-                                      :xmlns:xlink "http://www.w3.org/1999/xlink"
-                                      :version "1.1"}
+    (html [:svg {:width (+ width 500)
+                 :height (+ height 500)
+                 :style "background: #333"
+                 :xmlns "http://www.w3.org/2000/svg"
+                 :xmlns:xlink "http://www.w3.org/1999/xlink"
+                 :version "1.1"}
            (map svg-element (filter #(not= :layer.type/group (:layer/type %)) layers))])))
