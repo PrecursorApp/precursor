@@ -27,7 +27,6 @@
    :entity-ids      #{}
    :document/id     17592186046465
    :subscribers     {}
-   ;; This isn't passed to the components, it can be accessed though om/get-shared :_app-state-do-not-use
    :aside-width     256
    :inputs          nil})
 

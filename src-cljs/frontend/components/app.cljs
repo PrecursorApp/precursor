@@ -124,7 +124,7 @@
            (common/icon :info)]])))))
 
 
-(defn app [app owner]
+(defn app* [app owner]
   (reify
     om/IRender
     (render [_]
@@ -183,3 +183,19 @@
                       " in the chat."]
                   [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
                    "Okay, sounds good."]]]]])))))
+
+(defn print-view [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html [:div#app
+             [:img {:src (str "/document/" (:document/id app) ".svg")}]]))))
+
+(defn app [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       (if (:printing? app)
+         (om/build print-view app {:opts {:react-key "print"}})
+         (om/build app* app {:opts {:react-key "noprint"}}))))))

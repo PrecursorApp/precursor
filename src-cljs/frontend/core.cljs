@@ -239,6 +239,10 @@
     (js/window.addEventListener "beforeunload" handle-close!)
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
 
+    ;; only works for Firefox
+    (js/window.addEventListener "beforeprint" #(cast! :printing-started {}) false)
+    (js/window.addEventListener "afterprint" #(cast! :printing-finished {}) false)
+
     (routes/define-routes! state)
     (install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down
                                              :handle-mouse-up    handle-canvas-mouse-up
@@ -331,3 +335,6 @@
   (refresh-css!))
 
 (setup!)
+
+(defn toggle-print []
+  (swap! debug-state update-in [:printing?] not))

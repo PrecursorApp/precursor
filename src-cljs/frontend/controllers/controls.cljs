@@ -548,3 +548,13 @@
 ;   [target message _ state]
 ;   (-> state
 ;       (assoc-in state/right-click-learned-path false)))
+
+(defmethod control-event :printing-started
+  [target message _ state]
+  (-> state
+      (assoc :printing? true)))
+
+(defmethod control-event :printing-finished
+  [target message _ state]
+  (-> state
+      (assoc :printing? false)))
