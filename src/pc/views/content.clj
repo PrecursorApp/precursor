@@ -40,3 +40,16 @@
 
 (defn app [view-data]
   (h/html (app* view-data)))
+
+(defn interesting* [doc-ids]
+  [:div.interesting
+   (if-not (seq doc-ids)
+     [:p "Nothing interesting today"])
+   (for [doc-id doc-ids]
+     [:div.doc-preview
+      [:a {:href (str "/document/" doc-id)}
+       [:img {:src (str "/document/" doc-id ".svg")}]]
+      [:a {:href (str "/document/" doc-id)} doc-id]])])
+
+(defn interesting [doc-ids]
+  (h/html (layout {} (interesting* (reverse (sort doc-ids))))))

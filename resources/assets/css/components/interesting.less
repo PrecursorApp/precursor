@@ -1,0 +1,21 @@
+.interesting {
+  .flexy(center, space-around, row, wrap);
+  .doc-preview {
+    .flexy(column);
+    padding: 1em;
+    img {
+      width: 400px;
+    }
+    a {
+      img {
+        outline: 3px solid @link_color;
+      }
+    }
+    a:visited {
+      color: @gray;
+      img {
+        outline-color: transparent;
+      }
+    }
+  }
+}

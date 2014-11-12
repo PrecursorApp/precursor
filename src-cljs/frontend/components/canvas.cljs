@@ -51,21 +51,14 @@
                       (if (contains? selected-eids (:db/id layer))
                         {:className (str (:className layer) " selected shape-layer")}
                         {:className (str (:className layer) " shape-layer")})
-                      {:x1          (:layer/start-x layer)
-                       :y1          (:layer/start-y layer)
-                       :x2          (:layer/end-x layer)
-                       :y2          (:layer/end-y layer)
-                       :strokeWidth (:layer/stroke-width layer)}))))
+                      (svg/layer->svg-line layer)))))
 
 (defmethod svg-element :layer.type/path
   [selected-eids layer]
   (dom/path
    (clj->js (merge layer
-                   {:d (:layer/path layer)
-                    :stroke (:layer/stroke layer "black")
-                    :fill "none"
-                    :strokeWidth (:layer/stroke-width layer)
-                    :className (str (:className layer)
+                   (svg/layer->svg-path layer)
+                   {:className (str (:className layer)
                                     " shape-layer "
                                     (when (contains? selected-eids (:db/id layer)) " selected"))}))))
 
