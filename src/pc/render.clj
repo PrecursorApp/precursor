@@ -21,10 +21,11 @@
   [:path (svg/layer->svg-path layer)])
 
 (defn render-layers [layers]
-  (let [start-xs (map :layer/start-x layers)
-        start-ys (map :layer/start-y layers)
-        end-xs (map :layer/end-x layers)
-        end-ys (map :layer/end-y layers)
+  (let [layers (filter #(not= :layer.type/group (:layer/type %)) layers)
+        start-xs (remove #(.isNaN %) (map :layer/start-x layers))
+        start-ys (remove #(.isNaN %) (map :layer/start-y layers))
+        end-xs (remove #(.isNaN %) (map :layer/end-x layers))
+        end-ys (remove #(.isNaN %) (map :layer/end-y layers))
         xs (concat start-xs end-xs)
         ys (concat start-ys end-ys)
         min-x (apply min xs)
@@ -43,4 +44,4 @@
                  :xmlns "http://www.w3.org/2000/svg"
                  :xmlns:xlink "http://www.w3.org/1999/xlink"
                  :version "1.1"}
-           (map svg-element (filter #(not= :layer.type/group (:layer/type %)) layers))])))
+           (map svg-element layers)])))
