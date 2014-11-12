@@ -1,6 +1,11 @@
 .app-main {
   .flex(1);
   position: relative;
+  &:not(:hover) {
+    .radial-tip {
+      display: none;
+    }
+  }
 }
 #grid,
 #small-grid {
@@ -231,6 +236,15 @@
   top: (((@radial_menu_size * 1.5) - @size) / 2);
   left: (((@radial_menu_size * 1.5) - @size) / 2);
   cursor: default;
+}
+.radial-tip {
+  position: absolute;
+  top: -@tile;
+  left: -@tile;
+  white-space: nowrap;
+  .mq_640({
+    display: none;
+  });
 }
 .svg-text-form {
   input[type="text"] {

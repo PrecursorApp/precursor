@@ -130,7 +130,8 @@
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             aside-opened? (get-in app state/aside-menu-opened-path)
-            overlay-info-open? (get-in app state/overlay-info-opened-path)]
+            overlay-info-open? (get-in app state/overlay-info-opened-path)
+            right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div#app
                (om/build aside/menu app)
                [:main.app-main {:onContextMenu (fn [e]
@@ -157,7 +158,13 @@
                      [:div.radial-tool-type {:key tool}
                       (common/icon (:type template))
                       [:span (name tool)]])
-                   [:div.radial-menu-nub]])]
+                   [:div.radial-menu-nub]])
+                (when (and (not right-click-learned?) (:mouse app))
+                  [:div.radial-tip {:style {:top  (+ (get-in app [:mouse :y]) 16)
+                                            :left (+ (get-in app [:mouse :x]) (if aside-opened? (- 16 256) 16) )}}
+                   (if (= :touch (get-in app [:mouse :type]))
+                     "Tap and hold to select tool"
+                     "Right-click to select tool")])]
                [:div.app-overlay
                 [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)
                                        :class (when-not overlay-info-open? "hidden")}

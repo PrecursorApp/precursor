@@ -412,7 +412,8 @@
                  :open? true
                  :x (get-in state [:mouse :x])
                  :y (get-in state [:mouse :y]))
-      (assoc-in [:drawing :in-progress?] false)))
+      (assoc-in [:drawing :in-progress?] false)
+      (assoc-in state/right-click-learned-path true)))
 
 (defmethod control-event :menu-closed
   [target message _ state]
@@ -537,3 +538,8 @@
 (defmethod post-control-event! :chat-link-clicked
   [target message _ previous-state current-state]
   (.focus (sel1 target "#chat-box")))
+
+; (defmethod control-event :right-click-learned
+;   [target message _ state]
+;   (-> state
+;       (assoc-in state/right-click-learned-path false)))
