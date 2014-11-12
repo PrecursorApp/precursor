@@ -1,3 +1,9 @@
+// Helpers
+
+@phi: (1 + sqrt(5)) / 2;
+
+// Colors
+
 @black:                 #000;
 @gray_darkest:          #111;
 @gray_darker:           #333;
@@ -10,7 +16,7 @@
 
 @blue:               #299ADE;
 
-@app_background: @gray_darker;
+// Typography
 
 @font_size: 16px;
 @font_height: 24px;
@@ -23,28 +29,34 @@
 @link_color: @blue;
 @link_color_hover: lighten(@link_color, 13);
 
+@headings_weight: 300;
+
 @selection_color: @blue;
 
 @icon_width: @font_size;
 
-@tile: (@font_size * 4);
+// Animation
 
-@aside_width: (@tile * 4);
 @speed: 250ms;
 @speed_fast: (@speed * 0.4);
 @speed_slow: (@speed * 1.5);
 
 @bezier_fadein: cubic-bezier(0.445, 0.05, 0.55, 0.95);
-@bezier_transform: cubic-bezier(0.39, 0.575, 0.565, 1);
 @bezier_bounce: cubic-bezier(.55,0,.55,1.44);
+@bezier_transform: cubic-bezier(0.39, 0.575, 0.565, 1);
 
 @cascade: 10ms;
 
+// Components
+
+@tile: (@font_size * 4);
+@aside_width: (@tile * 4);
 @radial_menu_size: @aside_width;
 
-@headings_weight: 300;
-
+@app_background: @gray_darker;
 @tooltip_color: @gray_dark;
+
+// z-index index
 
 @zindex_info_background: 2;
 @zindex_info_article: 3;
