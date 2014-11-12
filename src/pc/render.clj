@@ -40,7 +40,6 @@
                  (- max-y min-y))]
     (html [:svg {:width (+ width 500)
                  :height (+ height 500)
-                 :style "background: #333"
                  :xmlns "http://www.w3.org/2000/svg"
                  :xmlns:xlink "http://www.w3.org/1999/xlink"
                  :version "1.1"}
