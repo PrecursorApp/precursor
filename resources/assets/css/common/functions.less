@@ -15,6 +15,14 @@
   }.prefix(@property; @value; @rest);
   @{property}: @value;
 }
+.prefixer_value(@property; @value; @rest...) {
+  .prefix(@property; @value; @rest; @counter: length(@rest)) when (@counter > 0) {
+    .prefix(@property; @value; @rest; (@counter - 1));
+    @prefix: extract(@rest, @counter);
+    @{property}: ~"-@{prefix}-@{value}";
+  }.prefix(@property; @value; @rest);
+  @{property}: @value;
+}
 .placeholder_style(@property; @value) {
   &::-webkit-input-placeholder {@{property}: @value;}
   &:-moz-placeholder           {@{property}: @value;}
