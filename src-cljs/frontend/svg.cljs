@@ -37,8 +37,8 @@
   (merge
    layer
    {:className (str (:className layer) " text-layer")
-    :x (:layer/start-x layer)
-    :y (:layer/start-y layer)
+    :x (+ (:layer/start-x layer) 1)
+    :y (- (:layer/start-y layer) 2)
     :key (:layer/id layer)
     ;; TODO: defaults for each layer when we create them
     :fontSize   (:layer/font-size layer 20)}))
