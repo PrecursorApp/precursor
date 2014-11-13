@@ -12,7 +12,7 @@
    :environment     "development"
    :settings        {:browser-settings {:show-grid?  true
                                         :night-mode? true
-                                        :current-tool :rect
+                                        :current-tool :pen
                                         :aside-menu-opened false
                                         :chat-mobile-opened true
                                         :right-click-learned false}}
