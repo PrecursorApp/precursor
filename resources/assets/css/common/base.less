@@ -59,28 +59,20 @@ p {
   }
 }
 h1, h2, h3, h4, h5, h6 {
+  margin: 0 0 1rem;
+}
+h1, h2, h3, h4 {
   line-height: 1em;
-  margin: 0 0 @font_size;
-  & when not (@headings_weight = bold) {
-    font-weight: @headings_weight;
-  }
+  font-weight: 300;
 }
-h1 {
-  .text_size_increase(5);
+h5, h6 {
+  line-height: 1.5em;
+  font-weight: normal;
 }
-h2 {
-  .text_size_increase(4);
-}
-h3 {
-  .text_size_increase(3);
-}
-h4 {
-  .text_size_increase(2);
-}
-h5 {
-  .text_size_increase(1);
-}
-h6 {
-  .text_size_increase(0);
-}
+h1 { font-size: 4.0rem; }
+h2 { font-size: 3.0rem; }
+h3 { font-size: 2.0rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.0rem; }
+h6 { font-size: .75rem; }
 
