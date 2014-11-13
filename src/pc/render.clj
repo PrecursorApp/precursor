@@ -26,8 +26,8 @@
         start-ys (remove #(.isNaN %) (map :layer/start-y layers))
         end-xs (remove #(.isNaN %) (map :layer/end-x layers))
         end-ys (remove #(.isNaN %) (map :layer/end-y layers))
-        xs (concat start-xs end-xs)
-        ys (concat start-ys end-ys)
+        xs (or (seq (concat start-xs end-xs)) [0])
+        ys (or (seq (concat start-ys end-ys)) [0])
         min-x (apply min xs)
         min-y (apply min ys)
         max-x (apply max xs)
@@ -40,7 +40,6 @@
                  (- max-y min-y))]
     (html [:svg {:width (+ width 500)
                  :height (+ height 500)
-                 :style "background: #333"
                  :xmlns "http://www.w3.org/2000/svg"
                  :xmlns:xlink "http://www.w3.org/1999/xlink"
                  :version "1.1"}
