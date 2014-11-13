@@ -28,7 +28,7 @@
                      (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
-      (d/unlisten! (om/get-shared (om/get-shared owner :db)) (om/get-state owner :listener-key)))
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
     om/IWillUpdate
     (will-update [_ _ _]
       ;; check for scrolled all of the way down

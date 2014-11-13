@@ -85,7 +85,7 @@
                      (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
-      (d/unlisten! (om/get-shared (om/get-shared owner :db)) (om/get-state owner :listener-key)))
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
