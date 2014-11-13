@@ -57,7 +57,7 @@
           {:status 200
            :headers {"Content-Type" "image/svg+xml"}
            :body (render-layers layers)}))
-   (GET "/document/:document-id" [document-id :as req]
+   (GET ["/document/:document-id" :document-id #"[0-9]+"] [document-id :as req]
         (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                              :google-client-id (google-client-id)}
                             (when-let [cust (-> req :auth :cust)]
