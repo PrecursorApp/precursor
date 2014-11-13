@@ -438,9 +438,7 @@
         entity-id       (-> state :entity-ids first)
         layer           (assoc (layers/make-layer entity-id (:document/id state) rx ry)
                           :layer/type :layer.type/text
-                          :layer/font-family "Roboto"
-                          :layer/font-size 24
-                          :layer/stroke-width 0
+                          :layer/font-size 20
                           :layer/text text)]
     (-> state
         (assoc-in [:drawing :layer] layer)

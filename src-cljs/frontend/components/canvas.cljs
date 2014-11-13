@@ -175,8 +175,7 @@
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
-            text-style {:font-size (:layer/font-size layer 24)
-                        :font-family (:layer/font-family layer "Roboto")}]
+            text-style {:font-size (:layer/font-size layer 20)}]
         (dom/foreignObject #js {:width "100%"
                                 :height "100%"
                                 :x (:layer/current-x layer)
