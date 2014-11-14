@@ -15,10 +15,15 @@
   &:before,
   &:after {
     position: absolute;
-    transition: @speed (@speed * 4);
+    transition+: margin @speed (@speed * 4);
+    transition+: opacity @speed (@speed * 4);
+    transition+: visibility @speed (@speed * 4);
+    transition+: padding @speed (@speed * 4);
     z-index: @zindex_tooltip;
     pointer-events: none;
-    .mq_640({ display: none; });
+    .mq_640({
+      display: none;
+    });
   }
   &:before {
     content: "";
@@ -35,9 +40,15 @@
   &:not(:hover) {
     &:before,
     &:after {
+      visibility: hidden;
       opacity: 0;
-      transition: margin @speed 0ms, opacity @speed_fast 0ms;
-      margin: 0;
+      width: 0;
+      padding: 0;
+      border: 0;
+      overflow: hidden;
+      transition+: margin @speed 0ms;
+      transition+: opacity @speed 0ms;
+      transition+: visibility @speed 0ms;
     }
   }
 }
