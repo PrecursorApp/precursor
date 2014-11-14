@@ -205,9 +205,6 @@
                    (fn [layer]
                      (merge
                       layer
-                      (when (= :text (get-in state state/current-tool-path))
-                        {:layer/start-x snap-x
-                         :layer/start-y snap-y})
                       (when (= :pen (get-in state state/current-tool-path))
                         {:layer/path (svg/points->path points)})
                       (when (= :circle (get-in state state/current-tool-path))

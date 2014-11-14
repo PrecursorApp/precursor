@@ -178,9 +178,9 @@
             text-style {:font-size (:layer/font-size layer 20)}]
         (dom/foreignObject #js {:width "100%"
                                 :height "100%"
-                                :x (:layer/current-x layer)
+                                :x (:layer/start-x layer)
                                 ;; TODO: defaults for each layer when we create them
-                                :y (- (:layer/current-y layer) (:layer/font-size layer 20))}
+                                :y (- (:layer/start-y layer) (:layer/font-size layer 20))}
                            (dom/form #js {:className "svg-text-form"
                                           :onSubmit (fn [e]
                                                       (cast! :text-layer-finished)
