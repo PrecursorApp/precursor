@@ -518,7 +518,8 @@
 (defmethod control-event :overlay-info-toggled
   [target message _ state]
   (-> state
-      (update-in state/overlay-info-opened-path not)))
+      (update-in state/overlay-info-opened-path not)
+      (assoc-in state/info-button-learned-path true)))
 
 (defmethod post-control-event! :application-shutdown
   [target message _ previous-state current-state]

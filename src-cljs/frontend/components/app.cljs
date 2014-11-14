@@ -105,7 +105,8 @@
             unread-chat-count (if last-read-time
                                 (count (filter #(> % last-read-time) chat-timestamps))
                                 ;; add one for the dummy message
-                                (inc (count chat-timestamps)))]
+                                (inc (count chat-timestamps)))
+            info-button-learned? (get-in data state/info-button-learned-path)]
         (html
          [:div.main-actions
           [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
@@ -120,6 +121,7 @@
                              :data-right "New Document"}
            (common/icon :newdoc)]
           [:a.action-info {:on-click #(cast! :overlay-info-toggled)
+                           :class (when-not info-button-learned? "hover")
                            :data-right "What is this thing?"}
            (common/icon :info)]])))))
 
@@ -139,6 +141,7 @@
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
                 (om/build main-actions (select-in app [state/aside-menu-opened-path
+                                                       state/info-button-learned-path
                                                        [:cust]
                                                        [:document/id]
                                                        (state/last-read-chat-time-path (:document/id app))]))

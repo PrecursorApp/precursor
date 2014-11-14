@@ -15,7 +15,8 @@
                                         :current-tool :pen
                                         :aside-menu-opened false
                                         :chat-mobile-opened true
-                                        :right-click-learned false}}
+                                        :right-click-learned false
+                                        :info-button-learned false}}
    :keyboard-shortcuts {:select "s"
                         :circle "c"
                         :rect "r"
@@ -76,6 +77,8 @@
 (def chat-mobile-opened-path (conj browser-settings-path :chat-mobile-toggled))
 
 (def right-click-learned-path (conj browser-settings-path :right-click-learned))
+
+(def info-button-learned-path (conj browser-settings-path :info-button-learned))
 
 (defn last-read-chat-time-path [document-id]
   (conj browser-settings-path :document-settings document-id :last-read-chat-time))
