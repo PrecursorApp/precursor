@@ -541,8 +541,3 @@
 (defmethod post-control-event! :chat-link-clicked
   [target message _ previous-state current-state]
   (.focus (sel1 target "#chat-box")))
-
-; (defmethod control-event :right-click-learned
-;   [target message _ state]
-;   (-> state
-;       (assoc-in state/right-click-learned-path false)))
