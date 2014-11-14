@@ -15,10 +15,10 @@
   &:before,
   &:after {
     position: absolute;
-    transition+: margin @speed (@speed * 4);
+    transition+: margin @speed_fast (@speed * 4);
     transition+: opacity @speed (@speed * 4);
-    transition+: visibility @speed (@speed * 4);
-    transition+: padding @speed (@speed * 4);
+    transition+: visibility 0ms 0ms;
+    transition+: padding @speed_fast (@speed * 4);
     z-index: @zindex_tooltip;
     pointer-events: none;
     .mq_640({
@@ -43,12 +43,12 @@
       visibility: hidden;
       opacity: 0;
       width: 0;
+      height: 0;
+      margin: 0;
       padding: 0;
       border: 0;
       overflow: hidden;
-      transition+: margin @speed 0ms;
-      transition+: opacity @speed 0ms;
-      transition+: visibility @speed 0ms;
+      transition: visibility 0ms @speed;
     }
   }
 }
