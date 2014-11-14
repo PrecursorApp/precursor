@@ -22,7 +22,8 @@
                         :rect "r"
                         :line "l"
                         :pen "p"
-                        :text "t"}
+                        :text "t"
+                        :undo "meta+z"}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}

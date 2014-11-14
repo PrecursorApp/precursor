@@ -82,6 +82,17 @@
   (let [{:keys [a e v tx added]} datom]
     [(if added :db/add :db/retract) e a v]))
 
+(defn datom->reverse-transaction [datom]
+  (let [{:keys [a e v tx added]} datom]
+    [(if added :db/retract :db/add) e a v]))
+
+(defn reverse-transaction [transaction conn]
+  (let [datoms (:tx-data transaction)]
+    (d/transact! conn
+                 (mapv datom->reverse-transaction datoms)
+                 {:undo true
+                  :can-undo? true})))
+
 (defn make-initial-db [document-id]
   (let [schema {:aka {:db/cardinality :db.cardinality/many}
                 :layer/child {:db/cardinality :db.cardinality/many}}

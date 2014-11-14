@@ -208,6 +208,8 @@
         cast!                    (fn [message data & [transient?]]
                                    (put! (:controls comms) [message data transient?]))
         histories                (atom [])
+        undo-state               (atom {:transactions []
+                                        :last-undo nil})
         container                (find-app-container top-level-node)
         uri-path                 (.getPath utils/parsed-uri)
         history-path             "/"
@@ -223,9 +225,14 @@
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
         handle-close!            #(cast! :application-shutdown [@histories])]
+    (swap! state assoc :undo-state undo-state)
 
     (d/listen! (:db @state)
                (fn [tx-report]
+                 (when (-> tx-report :tx-meta :can-undo?)
+                   (swap! undo-state update-in [:transactions] conj tx-report)
+                   (when-not (-> tx-report :tx-meta :undo)
+                     (swap! undo-state assoc-in [:last-undo] nil)))
                  (when-not (-> tx-report :tx-meta :server-update)
                    (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
                      (doseq [datom-group (partition-all 500 datoms)]
