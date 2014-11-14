@@ -26,7 +26,7 @@
     }
   }
   &.selected {
-    stroke: @selection_color;
+    stroke: @color_select;
   }
   + .shape-layer {
     pointer-events: none;
@@ -37,11 +37,11 @@
   fill: @gray_light;
   &.editable {
     &:hover {
-      fill: lighten(@selection_color, 13);
+      fill: @color_select_hover;
     }
   }
   &.selected {
-    fill: @selection_color;
+    fill: @color_select;
   }
   + .text-layer {
     pointer-events: none;
@@ -53,19 +53,19 @@
 .selectable-group {
   &:hover {
     .shape-layer {
-      stroke: lighten(@selection_color, 13);
+      stroke: @color_select_hover;
       transition-duration: @speed_fast;
       + .shape-layer {
         stroke-width: 4;
       }
       &.selected {
-        stroke: @selection_color;
+        stroke: @color_select;
       }
     }
     .text-layer {
-      fill: lighten(@selection_color, 13);
+      fill: @color_select_hover;
       &.selected {
-        fill: @selection_color;
+        fill: @color_select;
       }
     }
   }
@@ -252,7 +252,7 @@
 .svg-text-form {
   input[type="text"] {
     .placeholder_style(color; @gray);
-    color: @selection_color;
+    color: @color_select_hover;
     background: none;
     border: none;
     outline: none;
