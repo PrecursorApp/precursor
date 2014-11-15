@@ -95,9 +95,7 @@
         (swap! i dec)))
     @result))
 
-;; TODO: have some way to handle pre-and-post
-(defmethod handle-keyboard-shortcut :undo
-  [shortcut-name state]
+(defn handle-undo [state]
   (let [{:keys [transactions last-undo]} @(:undo-state state)
         transaction-to-undo (if last-undo
                               ;; TODO: something special for no transactions to undo
@@ -109,6 +107,16 @@
       (ds/reverse-transaction transaction-to-undo (:db state))
       (swap! (:undo-state state) assoc :last-undo transaction-to-undo))
     state))
+
+;; TODO: have some way to handle pre-and-post
+(defmethod handle-keyboard-shortcut :undo
+  [shortcut-name state]
+  (handle-undo state))
+
+;; TODO: find a better way to handle multiple keyboard shortcuts for the same thing
+(defmethod handle-keyboard-shortcut :undo-windows
+  [shortcut-name state]
+  (handle-undo state))
 
 (defmethod control-event :key-state-changed
   [target message [{:keys [key key-name-kw depressed?]}] state]
