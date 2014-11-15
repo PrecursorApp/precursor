@@ -212,7 +212,7 @@
         (apply dom/g nil (mapv (fn [l] (svg-element #{} (merge l {:strokeDasharray "5,5"
                                                                   :layer/fill "none"
                                                                   :style {:stroke (:subscriber-color l)}
-                                                                  :fillOpacity "0.25"}
+                                                                  :fillOpacity "0.5"}
                                                                (when (= :layer.type/text (:layer/type l))
                                                                  {:layer/stroke "none"
                                                                   :style {:fill (:subscriber-color l)}}))))
