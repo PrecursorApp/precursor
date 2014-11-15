@@ -1,6 +1,6 @@
 (ns pc.render
   (:require [pc.svg :as svg]
-            [hiccup.core :refer (html)]))
+            [hiccup.core :refer (h html)]))
 
 (defmulti svg-element (fn [layer] (:layer/type layer)))
 
@@ -10,7 +10,7 @@
 
 (defmethod svg-element :layer.type/text
   [layer]
-  [:text (svg/layer->svg-text layer) (:layer/text layer)])
+  [:text (svg/layer->svg-text layer) (h (:layer/text layer))])
 
 (defmethod svg-element :layer.type/line
   [layer]
