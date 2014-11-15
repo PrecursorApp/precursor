@@ -357,12 +357,12 @@
       (assoc-in [:mouse :type] (if (= type "mousedown") :mouse :touch))))
 
 (defmethod post-control-event! :mouse-depressed
-  [target message [x y {:keys [button meta?]}] previous-state current-state]
+  [target message [x y {:keys [button ctrl?]}] previous-state current-state]
   (let [cast! (fn [msg & [payload]]
                 (put! (get-in current-state [:comms :controls]) [msg payload]))]
     (cond
      (= button 2) (cast! :menu-opened)
-     (and (= button 0) meta?) (cast! :menu-opened)
+     (and (= button 0) ctrl?) (cast! :menu-opened)
      ;; turning off Cmd+click for opening the menu
      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
@@ -377,7 +377,7 @@
      :else                                             nil)))
 
 (defmethod post-control-event! :mouse-released
-  [target message [x y {:keys [button type meta?]}] previous-state current-state]
+  [target message [x y {:keys [button type ctrl?]}] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
@@ -386,7 +386,7 @@
     (cond
      (and (not= type "touchend")
           (not= button 2)
-          (not (and (= button 0) meta?))
+          (not (and (= button 0) ctrl?))
           (get-in current-state [:menu :open?]))
      (cast! [:menu-closed])
 
