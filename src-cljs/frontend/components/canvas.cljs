@@ -178,9 +178,9 @@
             text-style {:font-size (:layer/font-size layer 20)}]
         (dom/foreignObject #js {:width "100%"
                                 :height "100%"
-                                :x (:layer/current-x layer)
+                                :x (:layer/start-x layer)
                                 ;; TODO: defaults for each layer when we create them
-                                :y (- (:layer/current-y layer) (:layer/font-size layer 20))}
+                                :y (- (:layer/start-y layer) (:layer/font-size layer 20))}
                            (dom/form #js {:className "svg-text-form"
                                           :onSubmit (fn [e]
                                                       (cast! :text-layer-finished)
@@ -211,7 +211,11 @@
         (dom/g nil nil)
         (apply dom/g nil (mapv (fn [l] (svg-element #{} (merge l {:strokeDasharray "5,5"
                                                                   :layer/fill "none"
-                                                                  :fillOpacity "0.25"})))
+                                                                  :style {:stroke (:subscriber-color l)}
+                                                                  :fillOpacity "0.5"}
+                                                               (when (= :layer.type/text (:layer/type l))
+                                                                 {:layer/stroke "none"
+                                                                  :style {:fill (:subscriber-color l)}}))))
                                layers))))))
 
 (defn svg-canvas [payload owner opts]
@@ -225,7 +229,7 @@
                                     (conj acc (assoc layer
                                                 :layer/end-x (:layer/current-x layer)
                                                 :layer/end-y (:layer/current-y layer)
-                                                :style {:stroke (:color subscriber)}
+                                                :subscriber-color (:color subscriber)
                                                 :layer/stroke (apply str "#" (take 6 id))))
                                     acc))
                                 [] (:subscribers payload))]

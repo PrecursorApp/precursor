@@ -37,14 +37,21 @@
 
 (enable-console-print!)
 
+(defn event-props [event]
+  {:button  (.-button event)
+   :type (.-type event)
+   :meta? (.-metaKey event)
+   :ctrl? (.-ctrlKey event)})
+
 (defn handle-mouse-move [cast! event]
-  (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (.-button event) (.-type event)) true))
+  (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (event-props event))
+         true))
 
 (defn handle-mouse-down [cast! event]
-  (cast! :mouse-depressed (conj (camera-helper/screen-event-coords event) (.-button event) (.-type event)) false))
+  (cast! :mouse-depressed (conj (camera-helper/screen-event-coords event) (event-props event)) false))
 
 (defn handle-mouse-up [cast! event]
-  (cast! :mouse-released (conj (camera-helper/screen-event-coords event) (.-button event) (.-type event)) false))
+  (cast! :mouse-released (conj (camera-helper/screen-event-coords event) (event-props event)) false))
 
 (defn disable-mouse-wheel [event]
   (.stopPropagation event))
@@ -100,7 +107,7 @@
 
 (defn app-state []
   (let [initial-state (state/initial-state)
-        document-id (js/parseInt (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
+        document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
         cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
     (atom (assoc initial-state
             :document/id document-id
@@ -208,6 +215,8 @@
         cast!                    (fn [message data & [transient?]]
                                    (put! (:controls comms) [message data transient?]))
         histories                (atom [])
+        undo-state               (atom {:transactions []
+                                        :last-undo nil})
         container                (find-app-container top-level-node)
         uri-path                 (.getPath utils/parsed-uri)
         history-path             "/"
@@ -223,9 +232,14 @@
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
         handle-close!            #(cast! :application-shutdown [@histories])]
+    (swap! state assoc :undo-state undo-state)
 
     (d/listen! (:db @state)
                (fn [tx-report]
+                 (when (-> tx-report :tx-meta :can-undo?)
+                   (swap! undo-state update-in [:transactions] conj tx-report)
+                   (when-not (-> tx-report :tx-meta :undo)
+                     (swap! undo-state assoc-in [:last-undo] nil)))
                  (when-not (-> tx-report :tx-meta :server-update)
                    (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
                      (doseq [datom-group (partition-all 500 datoms)]

@@ -2,7 +2,7 @@ dependencies:
   post:
     - git submodule update --init
     - lein cljsbuild once production
-    - lein run -m pc.less/compile!
+    - lein run -m pc.tasks/compile-less
 
 test:
   override:

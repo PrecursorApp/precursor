@@ -85,6 +85,39 @@
   [shortcut-name state]
   (assoc-in state state/current-tool-path shortcut-name))
 
+(defn vec-index [v elem]
+  (let [result (atom nil)
+        i (atom (dec (count v)))]
+    (while (not @result)
+      (if (or (= -1 @i)
+              (= elem (nth v @i)))
+        (reset! result @i)
+        (swap! i dec)))
+    @result))
+
+(defn handle-undo [state]
+  (let [{:keys [transactions last-undo]} @(:undo-state state)
+        transaction-to-undo (if last-undo
+                              ;; TODO: something special for no transactions to undo
+                              (let [next-undo-index (dec (utils/inspect (vec-index transactions last-undo)))]
+                                (when-not (neg? next-undo-index)
+                                  (nth transactions next-undo-index)))
+                              (last transactions))]
+    (when transaction-to-undo
+      (ds/reverse-transaction transaction-to-undo (:db state))
+      (swap! (:undo-state state) assoc :last-undo transaction-to-undo))
+    state))
+
+;; TODO: have some way to handle pre-and-post
+(defmethod handle-keyboard-shortcut :undo
+  [shortcut-name state]
+  (handle-undo state))
+
+;; TODO: find a better way to handle multiple keyboard shortcuts for the same thing
+(defmethod handle-keyboard-shortcut :undo-windows
+  [shortcut-name state]
+  (handle-undo state))
+
 (defmethod control-event :key-state-changed
   [target message [{:keys [key key-name-kw depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
@@ -180,9 +213,6 @@
                    (fn [layer]
                      (merge
                       layer
-                      (when (= :text (get-in state state/current-tool-path))
-                        {:layer/start-x snap-x
-                         :layer/start-y snap-y})
                       (when (= :pen (get-in state state/current-tool-path))
                         {:layer/path (svg/points->path points)})
                       (when (= :circle (get-in state state/current-tool-path))
@@ -321,17 +351,18 @@
                 (drop-layer)))))
 
 (defmethod control-event :mouse-depressed
-  [target message [x y button type] state]
+  [target message [x y {:keys [button type]}] state]
   (-> state
       (update-mouse x y)
       (assoc-in [:mouse :type] (if (= type "mousedown") :mouse :touch))))
 
 (defmethod post-control-event! :mouse-depressed
-  [target message [x y button] previous-state current-state]
+  [target message [x y {:keys [button ctrl?]}] previous-state current-state]
   (let [cast! (fn [msg & [payload]]
                 (put! (get-in current-state [:comms :controls]) [msg payload]))]
     (cond
      (= button 2) (cast! :menu-opened)
+     (and (= button 0) ctrl?) (cast! :menu-opened)
      ;; turning off Cmd+click for opening the menu
      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
@@ -346,7 +377,7 @@
      :else                                             nil)))
 
 (defmethod post-control-event! :mouse-released
-  [target message [x y button type] previous-state current-state]
+  [target message [x y {:keys [button type ctrl?]}] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
@@ -355,6 +386,7 @@
     (cond
      (and (not= type "touchend")
           (not= button 2)
+          (not (and (= button 0) ctrl?))
           (get-in current-state [:menu :open?]))
      (cast! [:menu-closed])
 
@@ -362,7 +394,8 @@
           (= :layer.type/text (:layer/type layer)))
      nil
 
-     was-drawing? (do (d/transact! db [layer])
+     was-drawing? (do (when (layer-model/detectable? layer)
+                        (d/transact! db [layer] {:can-undo? true}))
                       (cast! [:mouse-moved [x y]]))
 
      :else nil)))
@@ -376,7 +409,8 @@
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         layer        (get-in current-state [:drawing :layer])]
-    (d/transact! db [layer])
+    (when (layer-model/detectable? layer)
+      (d/transact! db [layer] {:can-undo? true}))
     (cast! [:mouse-moved [x y]])))
 
 (defmethod control-event :deleted-selected
@@ -390,7 +424,8 @@
           document-id (:document/id current-state)
           selected-eids (layer-model/selected-eids @db selected-eid)]
       (d/transact! db (for [eid selected-eids]
-                        [:db.fn/retractEntity eid])))))
+                        [:db.fn/retractEntity eid])
+                   {:can-undo? true}))))
 
 (defn parse-points-from-path [path]
   (let [points (map js/parseInt (str/split (subs path 1) #" "))]
@@ -431,25 +466,6 @@
       (assoc-in state/current-tool-path tool)
       (assoc-in [:menu :open?] false)))
 
-(defmethod control-event :text-layer-created
-  [target message [text [x y]] state]
-  (let [{:keys [rx ry]} (:mouse state)
-        [rx ry]         (cameras/screen->point (:camera state) x y)
-        entity-id       (-> state :entity-ids first)
-        layer           (assoc (layers/make-layer entity-id (:document/id state) rx ry)
-                          :layer/type :layer.type/text
-                          :layer/font-size 20
-                          :layer/text text)]
-    (-> state
-        (assoc-in [:drawing :layer] layer)
-        (update-in [:entity-ids] disj entity-id))))
-
-(defmethod post-control-event! :text-layer-created
-  [target message [x y] previous-state current-state]
-  (let [db    (:db current-state)
-        layer (get-in current-state [:drawing :layer])]
-    (d/transact! db [layer])))
-
 (defmethod control-event :text-layer-re-edited
   [target message layer state]
   (-> state
@@ -487,14 +503,14 @@
   (let [db (:db current-state)
         client-uuid (:client-uuid previous-state)
         color (get-in previous-state [:subscribers client-uuid :color])]
-    (d/transact db [{:chat/body (get-in previous-state [:chat :body])
-                     :chat/color color
-                     :db/id (get-in previous-state [:chat :entity-id])
-                     :session/uuid client-uuid
-                     :document/id (:document/id previous-state)
-                     :client/timestamp (js/Date.)
-                     ;; server will overwrite this
-                     :server/timestamp (js/Date.)}])))
+    (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
+                      :chat/color color
+                      :db/id (get-in previous-state [:chat :entity-id])
+                      :session/uuid client-uuid
+                      :document/id (:document/id previous-state)
+                      :client/timestamp (js/Date.)
+                      ;; server will overwrite this
+                      :server/timestamp (js/Date.)}])))
 
 (defmethod control-event :aside-menu-toggled
   [target message _ state]

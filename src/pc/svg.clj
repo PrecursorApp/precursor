@@ -26,7 +26,7 @@
    :fill "black"
    :stroke-width 0
    :font-family (:layer/font-family layer "Helvetica")
-   :font-size   (:layer/font-size layer 24)})
+   :font-size   (:layer/font-size layer 20)})
 
 (defn layer->svg-line [layer]
   {:x1          (:layer/start-x layer)

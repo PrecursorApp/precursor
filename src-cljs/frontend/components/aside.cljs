@@ -66,13 +66,13 @@
                     (str " " (:chat/body chat))]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)
-                  :on-key-press #(when (and (= "Enter" (.-key %))
-                                            (not (.-shiftKey %))
-                                            (not (.-ctrlKey %))
-                                            (not (.-metaKey %))
-                                            (not (.-altKey %)))
-                                   (cast! :chat-submitted)
-                                   false)}
+                  :on-key-down #(when (and (= "Enter" (.-key %))
+                                           (not (.-shiftKey %))
+                                           (not (.-ctrlKey %))
+                                           (not (.-metaKey %))
+                                           (not (.-altKey %)))
+                                  (cast! :chat-submitted)
+                                  false)}
            [:textarea {:id "chat-box"
                        :tab-index "1"
                        :type "text"
