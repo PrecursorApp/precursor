@@ -37,14 +37,20 @@
 
 (enable-console-print!)
 
+(defn event-props [event]
+  {:button  (.-button event)
+   :type (.-type event)
+   :meta? (.-metaKey event)})
+
 (defn handle-mouse-move [cast! event]
-  (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (.-button event) (.-type event)) true))
+  (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (event-props event))
+         true))
 
 (defn handle-mouse-down [cast! event]
-  (cast! :mouse-depressed (conj (camera-helper/screen-event-coords event) (.-button event) (.-type event)) false))
+  (cast! :mouse-depressed (conj (camera-helper/screen-event-coords event) (event-props event)) false))
 
 (defn handle-mouse-up [cast! event]
-  (cast! :mouse-released (conj (camera-helper/screen-event-coords event) (.-button event) (.-type event)) false))
+  (cast! :mouse-released (conj (camera-helper/screen-event-coords event) (event-props event)) false))
 
 (defn disable-mouse-wheel [event]
   (.stopPropagation event))
