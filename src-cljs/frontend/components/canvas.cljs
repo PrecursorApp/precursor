@@ -211,7 +211,11 @@
         (dom/g nil nil)
         (apply dom/g nil (mapv (fn [l] (svg-element #{} (merge l {:strokeDasharray "5,5"
                                                                   :layer/fill "none"
-                                                                  :fillOpacity "0.25"})))
+                                                                  :style {:stroke (:subscriber-color l)}
+                                                                  :fillOpacity "0.25"}
+                                                               (when (= :layer.type/text (:layer/type l))
+                                                                 {:layer/stroke "none"
+                                                                  :style {:fill (:subscriber-color l)}}))))
                                layers))))))
 
 (defn svg-canvas [payload owner opts]
@@ -225,7 +229,7 @@
                                     (conj acc (assoc layer
                                                 :layer/end-x (:layer/current-x layer)
                                                 :layer/end-y (:layer/current-y layer)
-                                                :style {:stroke (:color subscriber)}
+                                                :subscriber-color (:color subscriber)
                                                 :layer/stroke (apply str "#" (take 6 id))))
                                     acc))
                                 [] (:subscribers payload))]
