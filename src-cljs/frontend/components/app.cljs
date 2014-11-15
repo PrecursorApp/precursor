@@ -184,5 +184,10 @@
                            :role "button"}
                        "@prcrsr"]
                       " in the chat."]
-                  [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
-                   "Okay, sounds good."]]]]])))))
+                  [:div.info-buttons
+                   [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
+                    "Okay, sounds good."]
+                   [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
+                                     :title "Keep track of our changes on Twitter."
+                                     :target "_blank"}
+                    "What should we add next?"]]]]]])))))
