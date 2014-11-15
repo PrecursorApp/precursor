@@ -68,19 +68,21 @@
   &::-webkit-scrollbar {
     width: 0; // we should calculate to get this effect in the dom
   }
-  button {
-    .flex(0 0 @tile);
-    .flexy(center);
-    .button_icon_cascade(32);
-    .icon_stroke(@gray_lighter);
-    min-height: (@tile / 2);
-    color: @gray_light;
-    &:hover,
-    &:active {
-      .icon_stroke(@gray_lightest);
-      cursor: pointer;
-      color: @gray_lighter;
-      background: @gray_dark;
+  a {
+    &[role="button"] {
+      .flex(0 0 @tile);
+      .flexy(center);
+      .button_icon_cascade(32);
+      .icon_stroke(@gray_lighter);
+      min-height: (@tile / 2);
+      color: @gray_light;
+      &:hover,
+      &:active {
+        .icon_stroke(@gray_lightest);
+        cursor: pointer;
+        color: @gray_lighter;
+        background: @gray_dark;
+      }
     }
   }
   .icon-user {

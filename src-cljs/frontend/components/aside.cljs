@@ -103,18 +103,20 @@
            [:span.aside-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
           [:section.aside-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-             [:button {:key client-id
-                       :title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
-                       :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}
+             [:a {:key client-id
+                  :title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
+                  :role "button"
+                  :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}
               (common/icon :user (when show-mouse? {:path-props
                                                     {:style
                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))
               [:span "You"]])
            (for [[id {:keys [show-mouse? color]}] (dissoc (:subscribers app) client-id)
                  :let [id-str (apply str (take 6 id))]]
-             [:button {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
-                       :key id
-                       :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
+             [:a {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
+                  :role "button"
+                  :key id
+                  :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
               (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
               [:span id-str]])]
           ;; XXX better name here
