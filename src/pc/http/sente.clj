@@ -33,6 +33,7 @@
     (log/infof "notifying %s about new transactions for %s" uid (:document/id data))
     ((:send-fn @sente-state) uid [:datomic/transaction data]))
   (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
+    (log/infof "notifying %s about new server timestamp for %s" (:session/uuid data) (:document/id data))
     ((:send-fn @sente-state) (str (:session/uuid data)) [:datomic/transaction (assoc data :tx-data server-timestamps)])))
 
 (defn ws-handler-dispatch-fn [req]

@@ -8,6 +8,7 @@
             [datascript :as d]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
+            [frontend.favicon :as favicon]
             [frontend.layers :as layers]
             [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
@@ -482,11 +483,19 @@
 
 (defmethod control-event :chat-db-updated
   [target message _ state]
-  (if  (get-in state state/aside-menu-opened-path)
+  (if (get-in state state/aside-menu-opened-path)
     (let [db @(:db state)
           last-chat-time (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))]
       (assoc-in state (state/last-read-chat-time-path (:document/id state)) last-chat-time))
     state))
+
+(defmethod post-control-event! :chat-db-updated
+  [target message _ previous-state current-state]
+  (if (not (get-in current-state state/aside-menu-opened-path))
+    (let [db @(:db current-state)
+          last-time (get-in current-state (state/last-read-chat-time-path (:document/id current-state)))
+          unread-chats? (pos? (chat-model/compute-unread-chat-count db last-time))]
+      (favicon/set-unread!))))
 
 (defmethod control-event :chat-body-changed
   [target message {:keys [value]} state]
@@ -521,18 +530,20 @@
   [target message _ state]
   (let [aside-open? (not (get-in state state/aside-menu-opened-path))
         db @(:db state)
-        last-chat-time (->> (d/q '[:find ?t
-                                   :where [?t :chat/body]]
-                                 db)
-                            (map #(:server/timestamp (d/entity db (first %))))
-                            sort
-                            last)]
+        last-chat-time (or (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))
+                           (js/Date. 0))]
     (-> state
         (assoc-in state/aside-menu-opened-path aside-open?)
+        (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time)
         (assoc-in [:drawing :in-progress?] false)
         (assoc-in [:camera :offset-x] (if aside-open?
                                         (get-in state state/aside-width-path)
                                         0)))))
+
+(defmethod post-control-event! :aside-menu-toggled
+  [target message _ previous-state current-state]
+  (when (get-in current-state state/aside-menu-opened-path)
+    (favicon/set-normal!)))
 
 (defmethod control-event :overlay-info-toggled
   [target message _ state]
