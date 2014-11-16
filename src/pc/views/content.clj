@@ -11,6 +11,7 @@
     [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
     [:link.css-styles {:rel "stylesheet", :href (str "/css/app.css?rand=" (Math/random))}]
     [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
+    [:link {:rel "icon" :href "/favicon.ico" :type "image/ico"}]
     [:script {:type "text/javascript"}
      (format "window.Precursor = JSON.parse('%s')" (json/encode view-data))]
     (when (prod-assets?)
