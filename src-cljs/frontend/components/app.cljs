@@ -133,6 +133,7 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             aside-opened? (get-in app state/aside-menu-opened-path)
             overlay-info-open? (get-in app state/overlay-info-opened-path)
+            overlay-shortcuts-open? (get-in app state/overlay-shortcuts-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div#app
                (om/build aside/menu app)
@@ -171,11 +172,11 @@
                [:div.app-overlay
                 [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)
                                        :class (when-not overlay-info-open? "hidden")}
-                 [:div.info-background]
-                 [:a.info-close {:role "button"}
+                 [:div.overlay-background]
+                 [:a.overlay-close {:role "button"}
                   (common/icon :times)]
                  [:article {:on-click #(.stopPropagation :overlay-info-toggled)}
-                  [:h1 "What's this?"]
+                  [:h1 {:on-click #(cast! :overlay-shortcuts-opened)} "What's this?"]
                   [:p "Precursor is a collaborative idea tool.
                       Think of it as a notebook with infinite pages – use it to create sketches, rapid prototypes, notes, and everything in between.
                       Share your URL to collaborate and you'll instantly have multiple people working in the same document.
@@ -190,4 +191,15 @@
                    [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
                                      :title "Keep track of our changes on Twitter."
                                      :target "_blank"}
-                    "What should we add next?"]]]]]])))))
+                    "What should we add next?"]]]]
+                [:figure.overlay-shortcuts {:on-click #(cast! :overlay-shortcuts-opened)
+                                            :class (when-not overlay-shortcuts-open? "hidden")}
+                 [:div.overlay-background]
+                 [:a.overlay-close {:role "button"}
+                  (common/icon :times)]
+                 [:article {:on-click #(.stopPropagation :overlay-shortcuts-opened)}
+                  [:table
+                   [:tr
+                    [:td "test"]
+                    [:td "test"]]]]]
+                ]])))))

@@ -537,6 +537,11 @@
       (update-in state/overlay-info-opened-path not)
       (assoc-in state/info-button-learned-path true)))
 
+(defmethod control-event :overlay-shortcuts-opened
+  [target message _ state]
+  (-> state
+      (update-in state/overlay-shortcuts-opened-path not)))
+
 (defmethod post-control-event! :application-shutdown
   [target message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
