@@ -23,17 +23,20 @@
             [frontend.sente :as sente]
             [frontend.state :as state]
             [goog.events]
+            [goog.events.EventType]
             [om.core :as om :include-macros true]
             [frontend.history :as history]
             [frontend.browser-settings :as browser-settings]
             [frontend.utils :as utils :refer [mlog merror third]]
             [frontend.utils.ajax :as ajax]
             [frontend.datetime :as datetime]
+            [goog.labs.dom.PageVisibilityMonitor]
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
                    [frontend.utils :refer [inspect timing swallow-errors]])
   (:use-macros [dommy.macros :only [node sel sel1]])
-  (:import [cljs.core.UUID]))
+  (:import [cljs.core.UUID]
+           [goog.events.EventType]))
 
 (enable-console-print!)
 
@@ -139,13 +142,14 @@
     (:log-channels? utils/initial-query-map)))
 
 (defn controls-handler
-  [value state container]
+  [value state browser-state]
   (when true
     (mlog "Controls Verbose: " value))
   (binding [frontend.async/*uuid* (:uuid (meta value))]
     (let [previous-state @state]
-      (swap! state (partial controls-con/control-event container (first value) (second value)))
-      (controls-con/post-control-event! container (first value) (second value) previous-state @state))))
+      ;; TODO: control-event probably shouldn't get browser-state
+      (swap! state (partial controls-con/control-event browser-state (first value) (second value)))
+      (controls-con/post-control-event! browser-state (first value) (second value) previous-state @state))))
 
 (defn nav-handler
   [value state history]
@@ -218,6 +222,7 @@
         undo-state               (atom {:transactions []
                                         :last-undo nil})
         container                (find-app-container top-level-node)
+        visibility-monitor       (goog.labs.dom.PageVisibilityMonitor.)
         uri-path                 (.getPath utils/parsed-uri)
         history-path             "/"
         controls-tap             (chan)
@@ -256,6 +261,11 @@
     (js/window.addEventListener "mouseup"   handle-canvas-mouse-up false)
     (js/window.addEventListener "beforeunload" handle-close!)
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
+    (.listen visibility-monitor
+             goog.events.EventType/VISIBILITYCHANGE
+             #(cast! :visibility-changed {:hidden? (.-hidden %)
+                                          :visibility-state (.-visibilityState %)})
+             false)
 
     (routes/define-routes! state)
     (install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down
@@ -271,7 +281,8 @@
 
     (go (while true
           (alt!
-            controls-tap ([v] (controls-handler v state container))
+            controls-tap ([v] (controls-handler v state {:container container
+                                                         :visibility-monitor visibility-monitor}))
             nav-tap ([v] (nav-handler v state history-imp))
             api-tap ([v] (api-handler v state container))
             errors-tap ([v] (errors-handler v state container))

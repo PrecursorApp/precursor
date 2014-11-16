@@ -31,28 +31,28 @@
 ;; --- Navigation Multimethod Declarations ---
 
 (defmulti control-event
-  ;; target is the DOM node at the top level for the app
+  ;; browser-state is a map that includes DOM node at the top level for the app
   ;; message is the dispatch method (1st arg in the channel vector)
   ;; state is current state of the app
   ;; return value is the new state
-  (fn [target message args state] message))
+  (fn [browser-state message args state] message))
 
 (defmulti post-control-event!
-  (fn [target message args previous-state current-state] message))
+  (fn [browser-state message args previous-state current-state] message))
 
 ;; --- Navigation Multimethod Implementations ---
 
 (defmethod control-event :default
-  [target message args state]
+  [browser-state message args state]
   (utils/mlog "Unknown controls: " message)
   state)
 
 (defmethod post-control-event! :default
-  [target message args previous-state current-state]
+  [browser-state message args previous-state current-state]
   (utils/mlog "No post-control for: " message))
 
 (defmethod control-event :state-restored
-  [target message path state]
+  [browser-state message path state]
   (let [str-data (.getItem js/sessionStorage "circle-state")]
     (if (seq str-data)
       (-> str-data
@@ -61,24 +61,24 @@
       state)))
 
 (defmethod post-control-event! :state-persisted
-  [target message channel-id previous-state current-state]
+  [browser-state message channel-id previous-state current-state]
   (.setItem js/sessionStorage "circle-state"
             (pr-str (dissoc current-state :comms))))
 
 (defmethod control-event :camera-nudged-up
-  [target message _ state]
+  [browser-state message _ state]
   (update-in state [:camera :y] inc))
 
 (defmethod control-event :camera-nudged-down
-  [target message _ state]
+  [browser-state message _ state]
   (update-in state [:camera :y] dec))
 
 (defmethod control-event :camera-nudged-left
-  [target message _ state]
+  [browser-state message _ state]
   (update-in state [:camera :x] inc))
 
 (defmethod control-event :camera-nudged-right
-  [target message _ state]
+  [browser-state message _ state]
   (update-in state [:camera :x] dec))
 
 (defmulti handle-keyboard-shortcut (fn [shortcut-name state] shortcut-name))
@@ -121,7 +121,7 @@
   (handle-undo state))
 
 (defmethod control-event :key-state-changed
-  [target message [{:keys [key key-name-kw depressed?]}] state]
+  [browser-state message [{:keys [key key-name-kw depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
     (-> state
         (assoc-in [:keyboard key-name-kw] depressed?)
@@ -129,17 +129,17 @@
                  (handle-keyboard-shortcut (get (set/map-invert shortcuts) key))))))
 
 (defmethod post-control-event! :key-state-changed
-  [target message [{:keys [key-name-kw depressed?]}] state]
+  [browser-state message [{:keys [key-name-kw depressed?]}] state]
   ;; TODO: better way to handle this
   (when (= key-name-kw :backspace?)
     (put! (get-in state [:comms :controls]) [:deleted-selected])))
 
 (defmethod control-event :show-grid-toggled
-  [target message {:keys [project-id]} state]
+  [browser-state message {:keys [project-id]} state]
   (update-in state state/show-grid-path not))
 
 (defmethod control-event :night-mode-toggled
-  [target message {:keys [project-id]} state]
+  [browser-state message {:keys [project-id]} state]
   (update-in state state/night-mode-path not))
 
 (defn update-mouse [state x y]
@@ -151,7 +151,7 @@
       state)))
 
 (defmethod control-event :drawing-started
-  [target message [x y] state]
+  [browser-state message [x y] state]
   (let [;{:keys [x y]} (get-in state [:mouse])
         [rx ry]       (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
@@ -178,7 +178,7 @@
             r)))
 
 (defmethod control-event :text-layer-edited
-  [target message {:keys [value]} state]
+  [browser-state message {:keys [value]} state]
   (-> state
       (assoc-in [:drawing :layer :layer/text] value)))
 
@@ -252,7 +252,7 @@
                                  (assoc :layer/path (svg/points->path (move-points points move-x move-y))))))))))
 
 (defmethod control-event :mouse-moved
-  [target message [x y] state]
+  [browser-state message [x y] state]
   (-> state
 
       (update-mouse x y)
@@ -276,15 +276,15 @@
                                                  {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
 
 (defmethod post-control-event! :text-layer-edited
-  [target message _ current-state previous-state]
+  [browser-state message _ current-state previous-state]
   (maybe-notify-subscribers! current-state nil nil))
 
 (defmethod post-control-event! :mouse-moved
-  [target message [x y] current-state previous-state]
+  [browser-state message [x y] current-state previous-state]
   (maybe-notify-subscribers! current-state x y))
 
 (defmethod post-control-event! :show-mouse-toggled
-  [target message {:keys [client-uuid show-mouse?]} current-state previous-state]
+  [browser-state message {:keys [client-uuid show-mouse?]} current-state previous-state]
   (sente/send-msg (:sente current-state)
                   [:frontend/share-mouse {:document/id (:document/id current-state)
                                           :show-mouse? show-mouse?
@@ -339,7 +339,7 @@
       (assoc-in [:drawing :points] [])))
 
 (defmethod control-event :mouse-released
-  [target message [x y] state]
+  [browser-state message [x y] state]
   (if (and (not (get-in state [:drawing :moving?]))
            (= :layer.type/text (get-in state [:drawing :layer :layer/type])))
     state
@@ -353,13 +353,13 @@
                 (drop-layer)))))
 
 (defmethod control-event :mouse-depressed
-  [target message [x y {:keys [button type]}] state]
+  [browser-state message [x y {:keys [button type]}] state]
   (-> state
       (update-mouse x y)
       (assoc-in [:mouse :type] (if (= type "mousedown") :mouse :touch))))
 
 (defmethod post-control-event! :mouse-depressed
-  [target message [x y {:keys [button ctrl?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button ctrl?]}] previous-state current-state]
   (let [cast! (fn [msg & [payload]]
                 (put! (get-in current-state [:comms :controls]) [msg payload]))]
     (cond
@@ -379,7 +379,7 @@
      :else                                             nil)))
 
 (defmethod post-control-event! :mouse-released
-  [target message [x y {:keys [button type ctrl?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button type ctrl?]}] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
@@ -403,11 +403,11 @@
      :else nil)))
 
 (defmethod control-event :text-layer-finished
-  [target message [x y] state]
+  [browser-state message [x y] state]
   (finalize-layer state))
 
 (defmethod post-control-event! :text-layer-finished
-  [target message [x y] previous-state current-state]
+  [browser-state message [x y] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         layer        (get-in current-state [:drawing :layer])]
@@ -416,11 +416,11 @@
     (cast! [:mouse-moved [x y]])))
 
 (defmethod control-event :deleted-selected
-  [target message _ state]
+  [browser-state message _ state]
   (dissoc state :selected-eid))
 
 (defmethod post-control-event! :deleted-selected
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (when-let [selected-eid (:selected-eid previous-state)]
     (let [db (:db current-state)
           document-id (:document/id current-state)
@@ -434,7 +434,7 @@
     (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
 
 (defmethod control-event :layer-selected
-  [target message {:keys [layer x y]} state]
+  [browser-state message {:keys [layer x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)]
     (-> state
         (assoc :selected-eid (:db/id layer))
@@ -447,7 +447,7 @@
         (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :menu-opened
-  [target message _ state]
+  [browser-state message _ state]
   (print "menu opened")
   (-> state
       (update-in [:menu] assoc
@@ -458,18 +458,18 @@
       (assoc-in state/right-click-learned-path true)))
 
 (defmethod control-event :menu-closed
-  [target message _ state]
+  [browser-state message _ state]
   (-> state
       (assoc-in [:menu :open?] false)))
 
 (defmethod control-event :tool-selected
-  [target message [tool] state]
+  [browser-state message [tool] state]
   (-> state
       (assoc-in state/current-tool-path tool)
       (assoc-in [:menu :open?] false)))
 
 (defmethod control-event :text-layer-re-edited
-  [target message layer state]
+  [browser-state message layer state]
   (-> state
       (assoc-in [:drawing :layer] (assoc layer
                                     :layer/current-x (:layer/start-x layer)
@@ -478,11 +478,11 @@
       (assoc-in state/current-tool-path :text)))
 
 (defmethod post-control-event! :text-layer-re-edited
-  [target message layer previous-state current-state]
+  [browser-state message layer previous-state current-state]
   (maybe-notify-subscribers! current-state nil nil))
 
 (defmethod control-event :chat-db-updated
-  [target message _ state]
+  [browser-state message _ state]
   (if (get-in state state/aside-menu-opened-path)
     (let [db @(:db state)
           last-chat-time (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))]
@@ -490,16 +490,26 @@
     state))
 
 (defmethod post-control-event! :chat-db-updated
-  [target message _ previous-state current-state]
-  (if (not (get-in current-state state/aside-menu-opened-path))
-    (let [db @(:db current-state)
-          last-time (get-in current-state (state/last-read-chat-time-path (:document/id current-state)))
-          unread-chats? (pos? (chat-model/compute-unread-chat-count db last-time))]
-      (when unread-chats?
-        (favicon/set-unread!)))))
+  [browser-state message _ previous-state current-state]
+  (cond
+   (.isHidden (:visibility-monitor browser-state))
+   (favicon/set-unread!)
+
+   (not (get-in current-state state/aside-menu-opened-path))
+   (let [db @(:db current-state)
+         last-time (get-in current-state (state/last-read-chat-time-path (:document/id current-state)))
+         unread-chats? (pos? (chat-model/compute-unread-chat-count db last-time))]
+     (when unread-chats?
+       (favicon/set-unread!)))))
+
+(defmethod post-control-event! :visibility-changed
+  [browser-state message {:keys [hidden?]} previous-state current-state]
+  (when (and (not hidden?)
+             (get-in current-state state/aside-menu-opened-path))
+    (favicon/set-normal!)))
 
 (defmethod control-event :chat-body-changed
-  [target message {:keys [value]} state]
+  [browser-state message {:keys [value]} state]
   (let [entity-id (or (get-in state [:chat :entity-id])
                       (-> state :entity-ids first))]
     (-> state
@@ -508,13 +518,13 @@
         (update-in [:entity-ids] disj entity-id))))
 
 (defmethod control-event :chat-submitted
-  [target message _ state]
+  [browser-state message _ state]
   (-> state
       (assoc-in [:chat :body] nil)
       (assoc-in [:chat :entity-id] nil)))
 
 (defmethod post-control-event! :chat-submitted
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
         client-uuid (:client-uuid previous-state)
         color (get-in previous-state [:subscribers client-uuid :color])]
@@ -528,7 +538,7 @@
                       :server/timestamp (js/Date.)}])))
 
 (defmethod control-event :aside-menu-toggled
-  [target message _ state]
+  [browser-state message _ state]
   (let [aside-open? (not (get-in state state/aside-menu-opened-path))
         db @(:db state)
         last-chat-time (or (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))
@@ -542,27 +552,27 @@
                                         0)))))
 
 (defmethod post-control-event! :aside-menu-toggled
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (when (get-in current-state state/aside-menu-opened-path)
     (favicon/set-normal!)))
 
 (defmethod control-event :overlay-info-toggled
-  [target message _ state]
+  [browser-state message _ state]
   (-> state
       (update-in state/overlay-info-opened-path not)
       (assoc-in state/info-button-learned-path true)))
 
 (defmethod post-control-event! :application-shutdown
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
 
 (defmethod control-event :chat-mobile-toggled
-  [target message _ state]
+  [browser-state message _ state]
   (-> state
       (update-in state/chat-mobile-opened-path not)))
 
 (defmethod control-event :chat-link-clicked
-  [target message _ state]
+  [browser-state message _ state]
    (-> state
      (assoc-in state/overlay-info-opened-path false)
      (assoc-in state/aside-menu-opened-path true)
@@ -571,5 +581,5 @@
      (assoc-in [:chat :body] "@prcrsr ")))
 
 (defmethod post-control-event! :chat-link-clicked
-  [target message _ previous-state current-state]
-  (.focus (sel1 target "#chat-box")))
+  [browser-state message _ previous-state current-state]
+  (.focus (sel1 (:container browser-state) "#chat-box")))
