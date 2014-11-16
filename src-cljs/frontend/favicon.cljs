@@ -6,15 +6,12 @@
 
 (def favicon-query "link[rel='icon']")
 
-(defn get-color []
-  (last (re-find #"favicon-([^\.]+)\.ico" (attrs/attr (sel1 favicon-query) :href))))
-
-(defn set-color! [color]
+(defn set-favicon! [path]
   (utils/swallow-errors
-   (if (= color (get-color))
-     (utils/mlog "Not setting favicon to same color")
-     (attrs/set-attr! (sel1 favicon-query) :href (str "/favicon-" color ".ico?v=28")))))
+   (attrs/set-attr! (sel1 favicon-query) :href path)))
 
-(defn reset! []
-  ;; This seemed clever at the time, undefined is the default dark blue
-  (set-color! "undefined"))
+(defn set-unread! []
+  (set-favicon! "/favicon-notification.ico"))
+
+(defn set-normal! []
+  (set-favicon! "/favicon.ico"))

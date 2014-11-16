@@ -480,9 +480,13 @@
   [target message layer previous-state current-state]
   (maybe-notify-subscribers! current-state nil nil))
 
-(defmethod control-event :db-updated
+(defmethod control-event :chat-db-updated
   [target message _ state]
-  (assoc state :random-number (Math/random)))
+  (if  (get-in state state/aside-menu-opened-path)
+    (let [db @(:db state)
+          last-chat-time (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))]
+      (assoc-in state (state/last-read-chat-time-path (:document/id state)) last-chat-time))
+    state))
 
 (defmethod control-event :chat-body-changed
   [target message {:keys [value]} state]
@@ -528,9 +532,7 @@
         (assoc-in [:drawing :in-progress?] false)
         (assoc-in [:camera :offset-x] (if aside-open?
                                         (get-in state state/aside-width-path)
-                                        0))
-        (assoc-in (state/last-read-chat-time-path (:document/id state)) (or last-chat-time
-                                                                            (js/Date. 0))))))
+                                        0)))))
 
 (defmethod control-event :overlay-info-toggled
   [target message _ state]

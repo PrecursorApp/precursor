@@ -236,6 +236,10 @@
 
     (d/listen! (:db @state)
                (fn [tx-report]
+                 ;; TODO: figure out why I can send tx-report through controls ch
+                 ;; (cast! :db-updated {:tx-report tx-report})
+                 (when (first (filter #(= :server/timestamp (:a %)) (:tx-data tx-report)))
+                   (cast! :chat-db-updated []))
                  (when (-> tx-report :tx-meta :can-undo?)
                    (swap! undo-state update-in [:transactions] conj tx-report)
                    (when-not (-> tx-report :tx-meta :undo)
