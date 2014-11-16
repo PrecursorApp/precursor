@@ -24,7 +24,8 @@
                         :pen "p"
                         :text "t"
                         :undo "meta+z"
-                        :undo-windows "ctrl+z"}
+                        :undo-windows "ctrl+z"
+                        :shortcuts-menu "shift+/"}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
@@ -88,5 +89,7 @@
 (def keyboard-shortcuts-path [:keyboard-shortcuts])
 
 (def overlay-info-opened-path [:aside-menu-opened])
+
+(def overlay-shortcuts-opened-path [:overlay-shortcuts-opened])
 
 (def aside-width-path [:aside-width])

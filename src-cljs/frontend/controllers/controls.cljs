@@ -120,6 +120,11 @@
   [shortcut-name state]
   (handle-undo state))
 
+(defmethod handle-keyboard-shortcut :shortcuts-menu
+  [shortcut-name state]
+  (-> state
+      (update-in state/overlay-shortcuts-opened-path not)))
+
 (defmethod control-event :key-state-changed
   [browser-state message [{:keys [key key-name-kw depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
@@ -561,6 +566,12 @@
   (-> state
       (update-in state/overlay-info-opened-path not)
       (assoc-in state/info-button-learned-path true)))
+
+(defmethod control-event :overlay-closed
+  [target message _ state]
+  (-> state
+      (assoc-in state/overlay-info-opened-path false)
+      (assoc-in state/overlay-shortcuts-opened-path false)))
 
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]

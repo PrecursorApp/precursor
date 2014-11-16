@@ -130,6 +130,7 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             aside-opened? (get-in app state/aside-menu-opened-path)
             overlay-info-open? (get-in app state/overlay-info-opened-path)
+            overlay-shortcuts-open? (get-in app state/overlay-shortcuts-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div#app
                (om/build aside/menu app)
@@ -168,10 +169,10 @@
                [:div.app-overlay
                 [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)
                                        :class (when-not overlay-info-open? "hidden")}
-                 [:div.info-background]
-                 [:a.info-close {:role "button"}
+                 [:div.overlay-background]
+                 [:a.overlay-close {:role "button"}
                   (common/icon :times)]
-                 [:article {:on-click #(.stopPropagation :overlay-info-toggled)}
+                 [:article {:on-click #(.stopPropagation %)}
                   [:h1 "What's this?"]
                   [:p
                    "Precursor is a collaborative idea tool. "
@@ -191,4 +192,33 @@
                    [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
                                      :title "Keep track of our changes on Twitter."
                                      :target "_blank"}
-                    "What should we add next?"]]]]]])))))
+                    "What should we add next?"]]]]
+                [:figure.overlay-shortcuts {:on-click #(cast! :overlay-closed)
+                                            :class (when-not overlay-shortcuts-open? "hidden")}
+                 [:div.overlay-background]
+                 [:a.overlay-close {:role "button"}
+                  (common/icon :times)]
+                 [:article {:on-click #(.stopPropagation %)}
+                  [:h2 "Tools Shortcuts"]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "S"]
+                   [:div.shortcuts-result "Select"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "R"]
+                   [:div.shortcuts-result "Rectangle"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "C"]
+                   [:div.shortcuts-result "Circle"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "L"]
+                   [:div.shortcuts-result "Line"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "P"]
+                   [:div.shortcuts-result "Pen"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "T"]
+                   [:div.shortcuts-result "Text"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "Cmd"]
+                   [:div.shortcuts-key "Z"]
+                   [:div.shortcuts-result "Undo"]]]]]])))))

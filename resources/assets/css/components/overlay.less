@@ -1,4 +1,5 @@
-.overlay-info {
+.overlay-info,
+.overlay-shortcuts {
   .flexy(center, center);
   position: absolute;
   top: 0;
@@ -6,6 +7,7 @@
   width: 100%;
   height: 100%;
   color: @gray_dark;
+  z-index: @zindex_info_background;
   visibility: visible;
   &.hidden {
     visibility: hidden;
@@ -13,10 +15,10 @@
       .scale3d(.3);
       opacity: 0;
     }
-    .info-background {
+    .overlay-background {
       opacity: 0;
     }
-    .info-close {
+    .overlay-close {
       opacity: 0;
     }
   }
@@ -28,7 +30,7 @@
     transition: @speed_slow @bezier_transform;
   }
 }
-.info-background {
+.overlay-background {
   position: absolute;
   top: 0;
   left: 0;
@@ -38,7 +40,7 @@
   z-index: @zindex_info_background;
   transition: @speed @bezier_fadein;
 }
-.info-close {
+.overlay-close {
   .flexy(center, center);
   .icon_stroke(@gray);
   position: absolute;
@@ -73,4 +75,32 @@
 }
 .info-buttons {
   .flexy(flex-end, space-between);
+}
+.shortcuts-item {
+  .flexy(center);
+  margin: 1em 0;
+}
+.shortcuts-key {
+  .flexy(center, center);
+  min-width: 2em;
+  height: 2em;
+  padding: 0 .5em;
+  border: 1px solid @gray_light;
+  border-radius: 5px;
+  + .shortcuts-key {
+    position: relative;
+    margin-left: 1em;
+    &:before {
+      .flexy(center, center);
+      content: "+";
+      position: absolute;
+      right: 100%;
+      width: 1em;
+      // text-align: center;
+      margin-top: .25em;
+    }
+  }
+}
+.shortcuts-result {
+  margin: 0 1em;
 }
