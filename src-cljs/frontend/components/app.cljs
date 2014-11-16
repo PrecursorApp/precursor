@@ -175,8 +175,8 @@
                  [:div.overlay-background]
                  [:a.overlay-close {:role "button"}
                   (common/icon :times)]
-                 [:article {:on-click #(.stopPropagation :overlay-info-toggled)}
-                  [:h1 {:on-click #(cast! :overlay-shortcuts-opened)} "What's this?"]
+                 [:article {:on-click #(.stopPropagation %)}
+                  [:h1 "What's this?"]
                   [:p "Precursor is a collaborative idea tool.
                       Think of it as a notebook with infinite pages – use it to create sketches, rapid prototypes, notes, and everything in between.
                       Share your URL to collaborate and you'll instantly have multiple people working in the same document.
@@ -192,12 +192,12 @@
                                      :title "Keep track of our changes on Twitter."
                                      :target "_blank"}
                     "What should we add next?"]]]]
-                [:figure.overlay-shortcuts {:on-click #(cast! :overlay-shortcuts-opened)
+                [:figure.overlay-shortcuts {:on-click #(cast! :overlay-closed)
                                             :class (when-not overlay-shortcuts-open? "hidden")}
                  [:div.overlay-background]
                  [:a.overlay-close {:role "button"}
                   (common/icon :times)]
-                 [:article {:on-click #(.stopPropagation :overlay-shortcuts-opened)}
+                 [:article {:on-click #(.stopPropagation %)}
                   [:h2 "Tools Shortcuts"]
                   [:div.shortcuts-item
                    [:div.shortcuts-key "S"]

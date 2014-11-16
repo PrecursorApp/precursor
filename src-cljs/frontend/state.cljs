@@ -24,7 +24,8 @@
                         :pen "p"
                         :text "t"
                         :undo "meta+z"
-                        :undo-windows "ctrl+z"}
+                        :undo-windows "ctrl+z"
+                        :shortcuts-menu "shift+/"}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
