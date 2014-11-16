@@ -25,10 +25,9 @@
               (put! (get-in @app-state [:comms :controls])
                     [:show-mouse-toggled {:client-uuid client-uuid
                                           :show-mouse? true}])
-              (d/transact (:db @app-state)
-                          ;; hack to prevent loops
-                          (concat layers chats)
-                          {:server-update true}))))
+              (d/transact! (:db @app-state)
+                           (concat layers chats)
+                           {:server-update true}))))
 
 (defn fetch-subscribers [sente-state app-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 2000
@@ -47,9 +46,9 @@
 
 (defmethod handle-message :datomic/transaction [app-state message data]
   (let [datoms (:tx-data data)]
-    (d/transact (:db @app-state)
-                (map ds/datom->transaction datoms)
-                {:server-update true})))
+    (d/transact! (:db @app-state)
+                 (map ds/datom->transaction datoms)
+                 {:server-update true})))
 
 
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
