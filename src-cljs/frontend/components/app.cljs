@@ -11,6 +11,8 @@
             [frontend.components.key-queue :as keyq]
             [frontend.components.canvas :as canvas]
             [frontend.components.common :as common]
+            [frontend.favicon :as favicon]
+            [frontend.models.chat :as chat-model]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in select-in]]
@@ -79,8 +81,7 @@
 (defn main-actions [data owner]
   (reify
     om/IInitState
-    (init-state [_] {:unseen-chats-count 0
-                     :listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
       (d/listen! (om/get-shared owner :db)
@@ -96,16 +97,12 @@
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
             aside-opened? (get-in data state/aside-menu-opened-path)
-            db @db
-            chat-timestamps (->> (d/q '[:find ?t
-                                        :where [?t :chat/body]]
-                                      db)
-                                 (map #(:server/timestamp (d/entity db (first %)))))
             last-read-time (get-in data (state/last-read-chat-time-path (:document/id data)))
+            unread-chat-count (utils/inspect (chat-model/compute-unread-chat-count @db last-read-time))
             unread-chat-count (if last-read-time
-                                (count (filter #(> % last-read-time) chat-timestamps))
+                                unread-chat-count
                                 ;; add one for the dummy message
-                                (inc (count chat-timestamps)))
+                                (inc unread-chat-count))
             info-button-learned? (get-in data state/info-button-learned-path)]
         (html
          [:div.main-actions

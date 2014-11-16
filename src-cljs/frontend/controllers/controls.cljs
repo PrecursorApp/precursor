@@ -9,6 +9,7 @@
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
             [frontend.layers :as layers]
+            [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
             [frontend.routes :as routes]
             [frontend.sente :as sente]
