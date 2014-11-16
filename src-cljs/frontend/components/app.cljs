@@ -198,8 +198,26 @@
                  [:a.overlay-close {:role "button"}
                   (common/icon :times)]
                  [:article {:on-click #(.stopPropagation :overlay-shortcuts-opened)}
-                  [:table
-                   [:tr
-                    [:td "test"]
-                    [:td "test"]]]]]
-                ]])))))
+                  [:h2 "Tools Shortcuts"]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "S"]
+                   [:div.shortcuts-result "Select"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "R"]
+                   [:div.shortcuts-result "Rectangle"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "C"]
+                   [:div.shortcuts-result "Circle"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "L"]
+                   [:div.shortcuts-result "Line"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "P"]
+                   [:div.shortcuts-result "Pen"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "T"]
+                   [:div.shortcuts-result "Text"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "Cmd"]
+                   [:div.shortcuts-key "Z"]
+                   [:div.shortcuts-result "Undo"]]]]]])))))
