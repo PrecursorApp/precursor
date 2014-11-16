@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [inflections "0.8.2"]
 
-                 [datascript "0.4.2"]
+                 [datascript "0.5.1"]
 
                  [compojure "1.1.8"]
                  [cheshire "5.2.0"]
