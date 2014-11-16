@@ -495,7 +495,8 @@
     (let [db @(:db current-state)
           last-time (get-in current-state (state/last-read-chat-time-path (:document/id current-state)))
           unread-chats? (pos? (chat-model/compute-unread-chat-count db last-time))]
-      (favicon/set-unread!))))
+      (when unread-chats?
+        (favicon/set-unread!)))))
 
 (defmethod control-event :chat-body-changed
   [target message {:keys [value]} state]
