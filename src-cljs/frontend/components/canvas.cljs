@@ -180,7 +180,7 @@
                                 :height "100%"
                                 :x (:layer/start-x layer)
                                 ;; TODO: defaults for each layer when we create them
-                                :y (- (:layer/start-y layer) (:layer/font-size layer 20))}
+                                :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
                            (dom/form #js {:className "svg-text-form"
                                           :onSubmit (fn [e]
                                                       (cast! :text-layer-finished)
