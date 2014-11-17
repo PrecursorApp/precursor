@@ -541,6 +541,9 @@
         color (get-in previous-state [:subscribers client-uuid :color])]
     (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
                       :chat/color color
+                      :cust/uuid (get-in current-state [:cust :uuid])
+                      ;; TODO: teach frontend to lookup cust/name from cust/uuid
+                      :chat/cust-name (get-in current-state [:cust :name])
                       :db/id (get-in previous-state [:chat :entity-id])
                       :session/uuid client-uuid
                       :document/id (:document/id previous-state)
