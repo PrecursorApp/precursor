@@ -3,25 +3,10 @@
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [pc.datomic :as pcd]
+            [pc.http.datomic-common :as common]
             [datomic.api :refer [db q] :as d])
   (:import java.util.UUID))
 
-
-(defn public?
-  "Only let the frontend access entities with the entity-ids we create for the frontend"
-  [db datom]
-  (->> datom :e (d/entity db) :dummy (= :dummy/dummy)))
-
-(defn enum? [a]
-  (contains? #{:layer/type :entity/type} a))
-
-(defn datom-read-api [db datom]
-  (let [{:keys [e a v tx added] :as d} datom
-        a (:db/ident (d/entity db a))
-        v (if (enum? a)
-            (:db/ident (d/entity db v))
-            v)]
-    {:e e :a a :v v :tx tx :added added}))
 
 (defn get-float-attrs [db]
   (set (map last (d/q '{:find [?t ?i]
@@ -69,7 +54,7 @@
                               uuid-attrs (get-uuid-attrs db)
                               server-timestamp (java.util.Date.)]
                           (->> datoms
-                               (filter (partial public? db))
+                               (filter (partial common/public? db))
                                (map pcd/datom->transaction)
                                (map (partial coerce-floats float-attrs))
                                (map (partial coerce-uuids uuid-attrs))
@@ -79,5 +64,5 @@
                                (d/transact conn)
                                deref
                                :tx-data
-                               (filter (partial public? db))
-                               (map (partial datom-read-api db))))}}))
+                               (filter (partial common/public? db))
+                               (map (partial common/datom-read-api db))))}}))
