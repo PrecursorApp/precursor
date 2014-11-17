@@ -25,7 +25,8 @@
                         :text "t"
                         :undo "meta+z"
                         :undo-windows "ctrl+z"
-                        :shortcuts-menu "shift+/"}
+                        :shortcuts-menu "shift+/"
+                        :escape-interaction "esc"}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
