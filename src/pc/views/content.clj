@@ -2,7 +2,25 @@
   (:require [cheshire.core :as json]
             [hiccup.core :as h]
             [pc.views.scripts :as scripts]
-            [pc.profile :refer (prod-assets?)]))
+            [pc.profile :refer (prod-assets?)])
+  (:import java.util.UUID))
+
+(defn embed-json-in-head
+  "Safely embed json in the header. json-string will be parsed and defined as window.`variable-name`.
+  Replaces the unsafe <script>variable-name = (->json clojure-map)</script>.
+  HTML escapes the json-string, embeds it in a tag's value, then lets the browser's html parser
+  unescape the json-string, runs it through JSON.parse and defines it as window.`variable-name`."
+  [variable-name json-string]
+  (let [id (-> (java.util.UUID/randomUUID))]
+    (h/html
+     [:meta {:id id
+             ;; hiccup will escape the json-string
+             :content json-string}]
+     [:script {:type "text/javascript"}
+      ;; getElementById(id).content will unescape the json-string
+      (format "%s = JSON.parse(document.getElementById('%s').content);"
+              variable-name
+              id)])))
 
 (defn layout [view-data & content]
   [:html
@@ -12,8 +30,7 @@
     [:link.css-styles {:rel "stylesheet", :href (str "/css/app.css?rand=" (Math/random))}]
     [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
     [:link {:rel "icon" :href "/favicon.ico" :type "image/ico"}]
-    [:script {:type "text/javascript"}
-     (format "window.Precursor = JSON.parse('%s')" (json/encode view-data))]
+    (embed-json-in-head "window.Precursor" (json/encode view-data))
     (when (prod-assets?)
       scripts/google-analytics)]
    [:body
