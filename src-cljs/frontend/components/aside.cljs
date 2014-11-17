@@ -112,15 +112,15 @@
               (common/icon :user (when show-mouse? {:path-props
                                                     {:style
                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))
-              [:span "You"]])
-           (for [[id {:keys [show-mouse? color]}] (dissoc (:subscribers app) client-id)
+              [:span (or (get-in app [:cust :name]) "You")]])
+           (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
                  :let [id-str (apply str (take 6 id))]]
              [:a {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
                   :role "button"
                   :key id
                   :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
               (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
-              [:span id-str]])]
+              [:span (or cust-name id-str)]])]
           ;; XXX better name here
           (om/build chat-aside {:db (:db app)
                                 :client-uuid (:client-uuid app)
