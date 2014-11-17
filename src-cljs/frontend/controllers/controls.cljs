@@ -608,7 +608,11 @@
   [browser-state message {:keys [id-str]} state]
    (-> state
      (assoc-in state/chat-mobile-opened-path true)
-     (assoc-in [:chat :body] (str "@" id-str " "))))
+     (update-in [:chat :body] (fn [s]
+                                (str (when (seq s)
+                                       ;; maybe separate with space
+                                       (str s (when (not= " " (last s)) " ")))
+                                     "@" id-str " ")))))
 
 (defmethod post-control-event! :aside-user-clicked
   [browser-state message _ previous-state current-state]
