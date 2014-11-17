@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
-            [pc.http.datomic2 :as datomic]
+            [pc.http.datomic2 :as datomic2]
             [pc.models.layer :as layer]
             [pc.models.chat :as chat]
             [pc.datomic :as pcd]
@@ -131,10 +131,10 @@
         datoms (->> ?data :datoms (remove (comp nil? :v)))
         cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
     (log/infof "transacting %s on %s for %s" datoms document-id client-uuid)
-    (datomic/transact! datoms
-                       document-id
-                       (UUID/fromString (client-uuid->uuid client-uuid))
-                       cust-uuid)))
+    (datomic2/transact! datoms
+                        document-id
+                        (UUID/fromString (client-uuid->uuid client-uuid))
+                        cust-uuid)))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document/id)
