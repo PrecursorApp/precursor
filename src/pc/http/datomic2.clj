@@ -35,6 +35,10 @@
     [type e a server-timestamp]
     transaction))
 
+;; TODO: teach the frontend how to lookup cust/name from cust/uuid
+(defn chat-cust-name? [[type e a v :as transaction]]
+  (= a :chat/cust-name))
+
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
@@ -59,6 +63,7 @@
                                (map (partial coerce-floats float-attrs))
                                (map (partial coerce-uuids uuid-attrs))
                                (map (partial coerce-server-timestamp server-timestamp))
+                               (remove chat-cust-name?)
                                (concat [(merge {:db/id txid :document/id document-id :session/uuid session-uuid}
                                                (when cust-uuid {:cust/uuid cust-uuid}))])
                                (d/transact conn)

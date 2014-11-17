@@ -139,6 +139,11 @@
               :db/index true
               :db/doc "User email")
 
+   (attribute :cust/name
+              :db.type/string
+              :db/index false
+              :db/doc "User-submitted name")
+
    (attribute :cust/verified-email
               :db.type/boolean)
 

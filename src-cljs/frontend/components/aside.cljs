@@ -56,13 +56,15 @@
          [:section.aside-chat
           [:div.chat-messages {:ref "chat-messages"}
            (for [chat (sort-by :server/timestamp (concat chats [dummy-chat]))
-                 :let [id (apply str (take 6 (str (:session/uuid chat))))]]
+                 :let [id (apply str (take 6 (str (:session/uuid chat))))
+                       name (or (:chat/cust-name chat)
+                                (if (= (str (:session/uuid chat))
+                                       client-uuid)
+                                  "You"
+                                  id))]]
              (html [:div.message {:key (:db/id chat)}
                     [:span {:style {:color (or (:chat/color chat) (str "#" id))}}
-                     (if (= (str (:session/uuid chat))
-                            client-uuid)
-                       "You"
-                       id)]
+                     name]
                     (str " " (:chat/body chat))]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)
@@ -110,15 +112,15 @@
               (common/icon :user (when show-mouse? {:path-props
                                                     {:style
                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))
-              [:span "You"]])
-           (for [[id {:keys [show-mouse? color]}] (dissoc (:subscribers app) client-id)
+              [:span (or (get-in app [:cust :name]) "You")]])
+           (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
                  :let [id-str (apply str (take 6 id))]]
              [:a {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
                   :role "button"
                   :key id
                   :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
               (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
-              [:span id-str]])]
+              [:span (or cust-name id-str)]])]
           ;; XXX better name here
           (om/build chat-aside {:db (:db app)
                                 :client-uuid (:client-uuid app)

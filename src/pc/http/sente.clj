@@ -98,19 +98,22 @@
     ;;"#bdc3c7"
     })
 
-(defn subscribe-to-doc [document-id uuid]
+(defn subscribe-to-doc [document-id uuid cust-name]
   (swap! document-subs update-in [document-id]
          (fn [subs]
            (let [available-colors (or (seq (apply disj colors (map :color (vals subs))))
                                       (seq colors))]
-             (update-in subs [uuid :color] (fn [c] (or c (rand-nth available-colors))))))))
+             (-> subs
+                 (update-in [uuid :color] (fn [c] (or c (rand-nth available-colors))))
+                 (assoc-in [uuid :cust-name] cust-name))))))
 
 (defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
   (let [document-id (-> ?data :document-id)
         db (pcd/default-db)
         cid (client-uuid->uuid client-uuid)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
-    (subscribe-to-doc document-id (client-uuid->uuid client-uuid))
+    (subscribe-to-doc document-id (client-uuid->uuid client-uuid)
+                      (-> req :ring-req :auth :cust :cust/name))
     (doseq [[uid _] (get @document-subs document-id)]
       ((:send-fn @sente-state) uid [:frontend/subscriber-joined (merge {:client-uuid cid}
                                                                        (get-in @document-subs [document-id cid]))]))
@@ -123,7 +126,8 @@
 (defmethod ws-handler :frontend/fetch-subscribers [{:keys [client-uuid ?data ?reply-fn] :as req}]
   (let [document-id (-> ?data :document-id)]
     (log/infof "fetching subscribers for %s on %s" client-uuid document-id)
-    (subscribe-to-doc document-id (client-uuid->uuid client-uuid))
+    (subscribe-to-doc document-id (client-uuid->uuid client-uuid)
+                      (-> req :ring-req :auth :cust :cust/name))
     (?reply-fn {:subscribers (get @document-subs document-id)})))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
