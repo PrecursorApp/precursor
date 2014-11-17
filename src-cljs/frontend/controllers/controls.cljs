@@ -603,3 +603,22 @@
 (defmethod post-control-event! :chat-link-clicked
   [browser-state message _ previous-state current-state]
   (.focus (sel1 (:container browser-state) "#chat-box")))
+
+(defmethod control-event :aside-user-clicked
+  [browser-state message {:keys [id-str]} state]
+   (-> state
+     (assoc-in state/chat-mobile-opened-path true)
+     (assoc-in [:chat :body] (str "@" id-str " "))))
+
+(defmethod post-control-event! :aside-user-clicked
+  [browser-state message _ previous-state current-state]
+  (.focus (sel1 (:container browser-state) "#chat-box")))
+
+(defmethod control-event :self-updated
+  [browser-state message {:keys [name]} state]
+  (assoc-in state [:cust :name] name))
+
+(defmethod post-control-event! :self-updated
+  [browser-state message {:keys [name]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/update-self {:document/id (:document/id current-state)
+                                                                 :cust/name name}]))

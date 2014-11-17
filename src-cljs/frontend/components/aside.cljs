@@ -84,13 +84,21 @@
 
 (defn menu [app owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState (init-state [_] {:editing-name? false
+                                   :new-name ""})
+    om/IDidUpdate
+    (did-update [_ _ _]
+      (when (and (om/get-state owner :editing-name?)
+                 (om/get-node owner "name-edit"))
+        (.focus (om/get-node owner "name-edit"))))
+    om/IRenderState
+    (render-state [_ {:keys [editing-name? new-name]}]
       (let [{:keys [cast!]} (om/get-shared owner)
             controls-ch (om/get-shared owner [:comms :controls])
             client-id (:client-uuid app)
             aside-opened? (get-in app state/aside-menu-opened-path)
-            chat-mobile-open? (get-in app state/chat-mobile-opened-path)]
+            chat-mobile-open? (get-in app state/chat-mobile-opened-path)
+            can-edit? (not (empty? (:cust app)))]
         (html
          [:aside.app-aside {:class (concat
                                     (when-not aside-opened? ["closed"])
@@ -107,20 +115,33 @@
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
              [:a {:key client-id
                   :title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
+                  :class (if can-edit?
+                           "editable"
+                           "uneditable")
                   :role "button"
-                  :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid client-id :show-mouse? (not show-mouse?)}])}
+                  :on-click #(when can-edit?
+                               (om/set-state! owner :editing-name? true))}
               (common/icon :user (when show-mouse? {:path-props
                                                     {:style
                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))
-              [:span (or (get-in app [:cust :name]) "You")]])
+
+              (if editing-name?
+                [:form {:on-submit #(do (cast! :self-updated {:name new-name})
+                                        (om/set-state! owner :editing-name? false)
+                                        false)}
+                 [:input {:type "text"
+                          :ref "name-edit"
+                          :tab-index 1
+                          :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
+                [:span (or (get-in app [:cust :name]) "You")])])
            (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
-                 :let [id-str (apply str (take 6 id))]]
+                 :let [id-str (or cust-name (apply str (take 6 id)))]]
              [:a {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
                   :role "button"
                   :key id
-                  :on-click #(put! controls-ch [:show-mouse-toggled {:client-uuid id :show-mouse? (not show-mouse?)}])}
+                  :on-click #(cast! :aside-user-clicked {:id-str id-str})}
               (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
-              [:span (or cust-name id-str)]])]
+              [:span id-str]])]
           ;; XXX better name here
           (om/build chat-aside {:db (:db app)
                                 :client-uuid (:client-uuid app)

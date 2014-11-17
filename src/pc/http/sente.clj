@@ -7,6 +7,7 @@
             [pc.http.datomic2 :as datomic2]
             [pc.models.layer :as layer]
             [pc.models.chat :as chat]
+            [pc.models.cust :as cust]
             [pc.datomic :as pcd]
             [taoensso.sente :as sente])
   (:import java.util.UUID))
@@ -166,9 +167,22 @@
                              (assoc-in subs [document-id mouse-owner-uuid :show-mouse?] show-mouse?)
                              subs)))
     (doseq [[uid _] (get @document-subs document-id)]
-      ((:send-fn @sente-state) uid [:frontend/share-mouse {:client-uuid cid
-                                                           :show-mouse? show-mouse?
-                                                           :mouse-owner-uuid mouse-owner-uuid}]))))
+      ((:send-fn @sente-state) uid [:frontend/share-mouse
+                                    {:client-uuid cid
+                                     :show-mouse? show-mouse?
+                                     :mouse-owner-uuid mouse-owner-uuid}]))))
+
+(defmethod ws-handler :frontend/update-self [{:keys [client-uuid ?data] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (let [doc-id (-> ?data :document/id)
+          cid (client-uuid->uuid client-uuid)]
+      (log/infof "updating self for %s" (:cust/uuid cust))
+      (let [new-cust (cust/update! cust {:cust/name (:cust/name ?data)})]
+        (doseq [[uid _] (get @document-subs doc-id)]
+          ;; TODO: use update-subscriber for everything
+          ((:send-fn @sente-state) uid [:frontend/update-subscriber
+                                        {:client-uuid cid
+                                         :subscriber-data {:cust-name (:cust/name new-cust)}}]))))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log

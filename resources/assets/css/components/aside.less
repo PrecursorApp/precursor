@@ -83,6 +83,12 @@
         color: @gray_lighter;
         background: @gray_dark;
       }
+      &.editable {
+        cursor: text;
+      }
+      &.uneditable {
+        cursor: default;
+      }
     }
   }
   .icon-user {
@@ -90,7 +96,16 @@
     margin: 0 1em;
     transition: margin @speed @bezier_transform 0ms;
   }
+  input {
+    height: @tile;
+    max-height: (@tile * 2);
+    background: none;
+    border: none;
+    outline: 0;
+    color: @white;
+  }
 }
+
 .aside-chat {
   .justify-content(flex-end);
   form {
