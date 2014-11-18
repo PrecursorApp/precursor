@@ -283,16 +283,13 @@
                                  (.preventDefault event)
                                  (.stopPropagation event)
                                  (let [dx     (- (aget event "deltaX"))
-                                       dy     (if (aget event "nativeEvent" "webkitDirectionInvertedFromDevice")
-                                                ;; Detect inverted scroll (natural scroll)
-                                                (aget event "deltaY")
-                                                (- (aget event "deltaY")))]
+                                       dy     (aget event "deltaY")]
                                    (om/transact! payload (fn [state]
                                                            (let [camera (cameras/camera state)
                                                                  mode   (cameras/camera-mouse-mode state)]
                                                              (if (= mode :zoom)
                                                                (cameras/set-zoom state (partial + (* -0.002 dy)))
-                                                               (cameras/move-camera state dx dy)))))))}
+                                                               (cameras/move-camera state dx (- dy))))))))}
                  (dom/defs nil
                    (dom/pattern #js {:id           "small-grid"
                                      :width        (str (cameras/grid-width camera))
