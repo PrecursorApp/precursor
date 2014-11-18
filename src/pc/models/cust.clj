@@ -44,3 +44,8 @@
                                                           [:db/add (:db/id cust) a v])
                                                         new-attrs))]
     (pcd/touch+ (d/entity db-after (:db/id cust)))))
+
+(defn cust-count [db]
+  (ffirst (q '{:find [(count ?t)]
+               :where [[?t :google-account/sub]]}
+             db)))

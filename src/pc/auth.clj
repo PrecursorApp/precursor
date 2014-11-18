@@ -10,8 +10,11 @@
 ;; TODO: move this elsewhere
 (defn ping-chat-with-new-user [email]
   (try
-    (http/post "https://hooks.slack.com/services/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"
-               {:form-params {"payload" (json/encode {:text (str "New user! " email)})}})
+    (let [db (pcd/default-db)
+          message (str "New user (#" (cust/cust-count db) "): " email)]
+      (http/post "https://hooks.slack.com/services/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"
+                 ;; Note: counting this way is racy!
+                 {:form-params {"payload" (json/encode {:text message})}}))
     (catch Exception e
       (.printStacktrace e)
       (log/error e))))
