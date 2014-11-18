@@ -142,7 +142,8 @@
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-name-kw depressed?]}] state]
   ;; TODO: better way to handle this
-  (when (= key-name-kw :backspace?)
+  (when (or (= key-name-kw :backspace?)
+            (= key-name-kw :del?))
     (put! (get-in state [:comms :controls]) [:deleted-selected])))
 
 (defmethod control-event :show-grid-toggled
