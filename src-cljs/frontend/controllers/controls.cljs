@@ -188,6 +188,25 @@
                 (update-in [:entity-ids] disj entity-id))]
             r)))
 
+(defmethod control-event :layer-duplicated
+  [browser-state message {:keys [layer x y]} state]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)
+        entity-id (-> state :entity-ids first)]
+    (-> state
+        (assoc :selected-eid entity-id)
+        (assoc-in [:drawing :original-layer] layer)
+        (assoc-in [:drawing :layer] (assoc layer
+                                      :db/id entity-id
+                                      :layer/start-x (:layer/start-x layer)
+                                      :layer/end-x (:layer/end-x layer)
+                                      :layer/current-x (:layer/end-x layer)
+                                      :layer/current-y (:layer/end-y layer)))
+        (assoc-in [:drawing :moving?] true)
+        ;; TODO: handle points
+        (assoc-in [:drawing :points] (when (:layer/path layer) (parse-points-from-path (:layer/path layer))))
+        (assoc-in [:drawing :starting-mouse-position] [rx ry])
+        (update-in [:entity-ids] disj entity-id))))
+
 (defmethod control-event :text-layer-edited
   [browser-state message {:keys [value]} state]
   (-> state
@@ -389,12 +408,21 @@
      (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
      :else                                             nil)))
 
+(defn detectable-movement?
+  "Checks to make sure we moved the layer from its starting position"
+  [original-layer layer]
+  (or (not= (:layer/start-x layer)
+            (:layer/start-x original-layer))
+      (not= (:layer/start-y layer)
+            (:layer/start-y original-layer))))
+
 (defmethod post-control-event! :mouse-released
   [browser-state message [x y {:keys [button type ctrl?]}] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
                          (get-in previous-state [:drawing :moving?]))
+        original-layer (get-in previous-state [:drawing :original-layer])
         layer        (get-in current-state [:drawing :layer])]
     (cond
      (and (not= type "touchend")
@@ -407,7 +435,9 @@
           (= :layer.type/text (:layer/type layer)))
      nil
 
-     was-drawing? (do (when (layer-model/detectable? layer)
+     was-drawing? (do (when (and (layer-model/detectable? layer)
+                                 (or (not (get-in previous-state [:drawing :moving?]))
+                                     (detectable-movement? original-layer layer)))
                         (d/transact! db [layer] {:can-undo? true}))
                       (cast! [:mouse-moved [x y]]))
 

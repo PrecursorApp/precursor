@@ -106,9 +106,14 @@
                                                :onMouseDown
                                                #(do
                                                   (.stopPropagation %)
-                                                  (cast! :layer-selected {:layer layer
-                                                                          :x (first (cameras/screen-event-coords %))
-                                                                          :y (second (cameras/screen-event-coords %))}))
+                                                  (if (.-altKey %)
+                                                    (cast! :layer-duplicated
+                                                           {:layer layer
+                                                            :x (first (cameras/screen-event-coords %))
+                                                            :y (second (cameras/screen-event-coords %))})
+                                                    (cast! :layer-selected {:layer layer
+                                                                            :x (first (cameras/screen-event-coords %))
+                                                                            :y (second (cameras/screen-event-coords %))})))
                                                :className "selectable-layer"
                                                :key (str "selectable-" (:db/id layer)))))
                               (svg-element selected-eids (assoc layer
