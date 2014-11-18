@@ -162,6 +162,10 @@
       (utils/mlog "Called update-mouse without x and y coordinates")
       state)))
 
+(defn parse-points-from-path [path]
+  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
+    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
+
 (defmethod control-event :drawing-started
   [browser-state message [x y] state]
   (let [;{:keys [x y]} (get-in state [:mouse])
@@ -470,10 +474,6 @@
       (d/transact! db (for [eid selected-eids]
                         [:db.fn/retractEntity eid])
                    {:can-undo? true}))))
-
-(defn parse-points-from-path [path]
-  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
-    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
 
 (defmethod control-event :layer-selected
   [browser-state message {:keys [layer x y]} state]
