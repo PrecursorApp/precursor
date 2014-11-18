@@ -11,7 +11,7 @@
 (defn ping-chat-with-new-user [email]
   (try
     (let [db (pcd/default-db)
-          message (str "New user (#" (cust/cust-count db) "): " email)]
+          message (str "New user (#" (inc (cust/cust-count db)) "): " email)]
       (http/post "https://hooks.slack.com/services/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"
                  ;; Note: counting this way is racy!
                  {:form-params {"payload" (json/encode {:text message})}}))
