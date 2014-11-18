@@ -15,7 +15,7 @@
             [om.dom :as dom :include-macros true]
             [clojure.string :refer [join split]]
             [dommy.core :as dommy]
-            [frontend.utils :as utils])
+            [frontend.utils :as utils :include-macros true])
   (:require-macros [cljs.core.async.macros :as async]))
 
 (def code->key
@@ -46,33 +46,28 @@
 (defn event-modifiers
   "Given a keydown event, return the modifier keys that were being held."
   [e]
-  (into [] (filter identity [(if (.-shiftKey e) "shift")
-                             (if (.-altKey e)   "alt")
-                             (if (.-ctrlKey e)  "ctrl")
-                             (if (.-metaKey e)  "meta")])))
+  (into [] (filter identity [(when (.-shiftKey e) "shift")
+                             (when (.-altKey e)   "alt")
+                             (when (.-ctrlKey e)  "ctrl")
+                             (when (.-metaKey e)  "meta")])))
  
 (def mod-keys
   "A vector of the modifier keys that we use to compare against to make
   sure that we don't report things like pressing the shift key as independent events.
   This may not be desirable behavior, depending on the use case, but it works for
   what I need."
-  [;; shift
-   (js/String.fromCharCode 16)
-   ;; ctrl
-   (js/String.fromCharCode 17)
-   ;; alt
-   (js/String.fromCharCode 18)])
+  #{"alt" "ctrl" "shift"})
  
 (defn event->key
   "Given an event, return a string like 'up' or 'shift+l' or 'ctrl+;'
-  describing the key that was pressed.
-  This fn will never return just 'shift' or any other lone modifier key."
+  describing the key that was pressed. Will return lone modifier keys, like shift or ctrl"
   [event]
   (let [mods (event-modifiers event)
         which (.-which event)
-        key (or (code->key which) (.toLowerCase (js/String.fromCharCode which)))]  
-    (if (and key (not (empty? key)) (not (some #{key} mod-keys)))
-      (join "+" (conj mods key)))))
+        key (or (code->key which) (.toLowerCase (js/String.fromCharCode which)))]
+    (if (and key (not (empty? key)))
+      (join "+" (concat mods (when (not (some #{key} mods))
+                               [key]))))))
 
 (defn log-keystroke [e]
   (utils/mlog "key event" e) e)
