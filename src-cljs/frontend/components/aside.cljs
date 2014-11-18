@@ -128,6 +128,13 @@
               (if editing-name?
                 [:form {:on-submit #(do (cast! :self-updated {:name new-name})
                                         (om/set-state! owner :editing-name? false)
+                                        false)
+                        :on-blur #(do (cast! :self-updated {:name new-name})
+                                      (om/set-state! owner :editing-name? false)
+                                      false)
+                        :on-key-down #(when (= "Escape" (utils/inspect (.-key %)))
+                                        (om/set-state! owner :editing-name? false)
+                                        (om/set-state! owner :new-name "")
                                         false)}
                  [:input {:type "text"
                           :ref "name-edit"
