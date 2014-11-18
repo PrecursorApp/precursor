@@ -1,5 +1,6 @@
 (ns frontend.core
-  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+  (:require [cemerick.url :as url]
+            [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [frontend.async :refer [put!]]
             [weasel.repl :as ws-repl]
             [clojure.browser.repl :as repl]
@@ -111,28 +112,34 @@
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
+        query-map (url/query->map (.getQuery utils/parsed-uri))
         cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
-    (atom (assoc initial-state
-            :document/id document-id
-            ;; id for the browser, used to filter transactions
-            ;; TODO: rename client-uuid to something else
-            :client-id (UUID. (utils/uuid))
-            :db  (ds/make-initial-db document-id)
-            :cust cust
-            :comms {:controls      controls-ch
-                    :api           api-ch
-                    :errors        errors-ch
-                    :nav           navigation-ch
-                    :controls-mult (async/mult controls-ch)
-                    :api-mult      (async/mult api-ch)
-                    :errors-mult   (async/mult errors-ch)
-                    :nav-mult      (async/mult navigation-ch)
-                    :mouse-move    {:ch mouse-move-ch
-                                    :mult (async/mult mouse-move-ch)}
-                    :mouse-down    {:ch mouse-down-ch
-                                    :mult (async/mult mouse-down-ch)}
-                    :mouse-up      {:ch mouse-up-ch
-                                    :mult (async/mult mouse-up-ch)}}))))
+    (atom (-> (assoc initial-state
+                :document/id document-id
+                ;; id for the browser, used to filter transactions
+                ;; TODO: rename client-uuid to something else
+                :client-id (UUID. (utils/uuid))
+                :db  (ds/make-initial-db document-id)
+                :cust cust
+                :comms {:controls      controls-ch
+                        :api           api-ch
+                        :errors        errors-ch
+                        :nav           navigation-ch
+                        :controls-mult (async/mult controls-ch)
+                        :api-mult      (async/mult api-ch)
+                        :errors-mult   (async/mult errors-ch)
+                        :nav-mult      (async/mult navigation-ch)
+                        :mouse-move    {:ch mouse-move-ch
+                                        :mult (async/mult mouse-move-ch)}
+                        :mouse-down    {:ch mouse-down-ch
+                                        :mult (async/mult mouse-down-ch)}
+                        :mouse-up      {:ch mouse-up-ch
+                                        :mult (async/mult mouse-up-ch)}})
+              (update-in [:camera] merge
+                         (when (get query-map "x") {:x (js/parseInt (get query-map "x"))})
+                         (when (get query-map "y") {:y (js/parseInt (get query-map "y"))})
+                         (when (get query-map "zf") {:zf (js/parseInt (get query-map "zf"))})
+                         (when (get query-map "zf") {:z-exact (js/parseInt (get query-map "zf"))}))))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"
@@ -282,7 +289,8 @@
     (go (while true
           (alt!
             controls-tap ([v] (controls-handler v state {:container container
-                                                         :visibility-monitor visibility-monitor}))
+                                                         :visibility-monitor visibility-monitor
+                                                         :history-imp history-imp}))
             nav-tap ([v] (nav-handler v state history-imp))
             api-tap ([v] (api-handler v state container))
             errors-tap ([v] (errors-handler v state container))

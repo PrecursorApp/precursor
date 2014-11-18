@@ -1,5 +1,6 @@
 (ns frontend.controllers.controls
-  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+  (:require [cemerick.url :as url]
+            [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -657,3 +658,29 @@
   [browser-state message {:keys [name]} previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/update-self {:document/id (:document/id current-state)
                                                                  :cust/name name}]))
+
+(defmethod control-event :canvas-scrolled
+  [browser-state message {:keys [dx dy]} state]
+  (let [camera (cameras/camera state)
+        mode   (cameras/camera-mouse-mode state)]
+    (if (= mode :zoom)
+      (cameras/set-zoom state (partial + (* -0.002 dy)))
+      (cameras/move-camera state dx dy))))
+
+(def scroll-timer (atom nil))
+
+(defmethod post-control-event! :canvas-scrolled
+  [{:keys [history-imp]} message _ previous-state current-state]
+  (let [{:keys [zf x y]} (:camera current-state)
+        token (.getToken history-imp)
+        [_ path query] (re-find #"([^\?]+)[\?]*(.*)" token)]
+    (swap! scroll-timer
+           (fn [s]
+             (js/window.clearTimeout s)
+             (js/setTimeout
+              #(.replaceToken history-imp
+                              (str path "?"
+                                   (url/map->query
+                                    (merge (url/query->map query)
+                                           {"x" x "y" y "zf" zf}))))
+              200)))))
