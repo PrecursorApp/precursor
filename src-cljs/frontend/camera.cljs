@@ -1,7 +1,14 @@
 (ns frontend.camera)
 
+(def max-zoom 5)
+(def min-zoom 0.1)
+(def zoom-increment 0.1)
+
 (defn camera [state]
   (:camera state))
+
+(defn snap [increment value]
+  (js/parseFloat (.toFixed (* increment (js/Math.round (/ value increment))) 2)))
 
 (defn grid-width [camera]
   (* (:zf camera) 10))
@@ -18,8 +25,15 @@
 (defn show-grid? [state]
   (get-in state [:camera :show-grid?]))
 
+(defn bounded [lower-bound upper-bound value]
+  (max lower-bound (min upper-bound value)))
+
 (defn set-zoom [state f]
-  (update-in state [:camera :zf] f))
+  (let [old-z-exact (get-in state [:camera :z-exact])
+        new-z-exact (bounded min-zoom max-zoom (f old-z-exact))]
+    (-> state
+        (assoc-in [:camera :z-exact] new-z-exact)
+        (assoc-in [:camera :zf] (snap zoom-increment new-z-exact)))))
 
 (defn move-camera [state dx dy]
   (-> state
@@ -35,11 +49,20 @@
   [(.. event -pageX)
    (.. event -pageY)])
 
+(defn grid-size->snap-increment
+  "Step function to determine snap increment"
+  [grid-size]
+  (condp > grid-size
+    5 100
+    10 50
+    20 10
+    50 5
+    5))
+
 (defn snap-to-grid [camera x y]
-  (let [h (/ (grid-height camera) 1)
-        w (/ (grid-width camera) 1)]
-    [(* h (js/Math.round (/ x h)))
-     (* w (js/Math.round (/ y h)))]))
+  (let [increment (grid-size->snap-increment (grid-width camera))]
+    [(* increment (js/Math.round (/ x increment)))
+     (* increment (js/Math.round (/ y increment)))]))
 
 (defn screen->point [camera x y]
   [(/ (- x (:x camera) (:offset-x camera))

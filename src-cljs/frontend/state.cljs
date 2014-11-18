@@ -4,6 +4,7 @@
   {:camera          {:x          0
                      :y          0
                      :zf         1
+                     :z-exact    1
                      :offset-x   0
                      :offset-y   0
                      :show-grid? true}
