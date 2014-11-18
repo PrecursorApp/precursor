@@ -25,7 +25,7 @@
 (defn layout [view-data & content]
   [:html
    [:head
-    [:title "Precursor - Mockups from the future"]
+    [:title "Precursor - Simple collaborative prototyping"]
     [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
     [:link.css-styles {:rel "stylesheet", :href (str "/css/app.css?rand=" (Math/random))}]
     [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
