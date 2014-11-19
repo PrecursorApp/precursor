@@ -2,6 +2,7 @@
   (:require [datomic.api :refer [db q] :as d]
             [clj-time.core :as time]
             [clj-time.coerce :refer [to-date]]
+            [pc.auth]
             [pc.datomic :as pcd]))
 
 (defn interesting-doc-ids [{:keys [start-time end-time layer-threshold limit]
@@ -27,3 +28,10 @@
                                                               db doc-id))
                                                  0)))
                         doc-ids))))
+
+(defn populate-user-info-from-sub []
+  (let [db (pcd/default-db)]
+    (doseq [[eid] (d/q '{:find [?t]
+                         :where [[?t :google-account/sub]]}
+                       db)]
+      (pc.auth/update-user-from-sub (d/entity db eid)))))
