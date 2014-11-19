@@ -9,6 +9,7 @@
             [goog.dom]
             [goog.dom.DomHelper]
             [goog.net.Cookies]
+            [frontend.analytics :as analytics]
             [frontend.camera :as camera-helper]
             [frontend.components.app :as app]
             [frontend.controllers.controls :as controls-con]
@@ -149,7 +150,9 @@
     (let [previous-state @state]
       ;; TODO: control-event probably shouldn't get browser-state
       (swap! state (partial controls-con/control-event browser-state (first value) (second value)))
-      (controls-con/post-control-event! browser-state (first value) (second value) previous-state @state))))
+      (controls-con/post-control-event! browser-state (first value) (second value) previous-state @state)
+      ;; TODO: enable a way to set the event separate from the control event
+      (analytics/track-control (first value)))))
 
 (defn nav-handler
   [value state history]
@@ -332,6 +335,8 @@
                                                            (get-in s state/aside-width-path)
                                                            0))))
     (main state top-level-node history-imp)
+    (when (:cust @state)
+      (analytics/init-user (:cust @state)))
     (sente/init state)
     (setup-entity-id-fetcher state)
     (if-let [error-status (get-in @state [:render-context :status])]
