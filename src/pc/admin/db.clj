@@ -3,7 +3,8 @@
             [clj-time.core :as time]
             [clj-time.coerce :refer [to-date]]
             [pc.auth]
-            [pc.datomic :as pcd]))
+            [pc.datomic :as pcd]
+            [slingshot.slingshot :refer (try+)]))
 
 (defn interesting-doc-ids [{:keys [start-time end-time layer-threshold limit]
                             :or {start-time (time/minus (time/now) (time/days 1))
@@ -33,5 +34,10 @@
   (let [db (pcd/default-db)]
     (doseq [[eid] (d/q '{:find [?t]
                          :where [[?t :google-account/sub]]}
-                       db)]
-      (pc.auth/update-user-from-sub (d/entity db eid)))))
+                       db)
+            :let [cust (d/entity db eid)]]
+      (try+
+        (println "adding" (:cust/email cust))
+        (pc.auth/update-user-from-sub cust)
+        (catch :status t
+          (println "error updating" (d/touch cust)))))))
