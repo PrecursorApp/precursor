@@ -499,6 +499,22 @@
         (assoc-in [:drawing :original-layers] [layer])
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
+
+(defmethod control-event :group-selected
+  [browser-state message {:keys [group-eid layer-eids x y]} state]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)
+        db @(:db state)
+        layers (map #(ds/touch+ (d/entity db %)) layer-eids)]
+    (-> state
+        (assoc :selected-eid group-eid)
+        ;; TODO: maybe we should always deal with layers?
+        (assoc-in [:drawing :layers] (map (fn [layer]
+                                            (assoc layer
+                                              :layer/current-x (:layer/end-x layer)
+                                              :layer/current-y (:layer/end-y layer)
+                                              :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
+                                          layers))
+        (assoc-in [:drawing :original-layers] layers)
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 

@@ -111,9 +111,16 @@
                                                            {:layer layer
                                                             :x (first (cameras/screen-event-coords %))
                                                             :y (second (cameras/screen-event-coords %))})
-                                                    (cast! :layer-selected {:layer layer
-                                                                            :x (first (cameras/screen-event-coords %))
-                                                                            :y (second (cameras/screen-event-coords %))})))
+                                                    (do
+                                                      (if (and (< 1 (count selected-eids))
+                                                               (contains? selected-eids (:db/id layer)))
+                                                        (cast! :group-selected {:x (first (cameras/screen-event-coords %))
+                                                                                :y (second (cameras/screen-event-coords %))
+                                                                                :group-eid selected-eid
+                                                                                :layer-eids (disj selected-eids selected-eid)})
+                                                        (cast! :layer-selected {:layer layer
+                                                                                :x (first (cameras/screen-event-coords %))
+                                                                                :y (second (cameras/screen-event-coords %))})))))
                                                :className "selectable-layer"
                                                :key (str "selectable-" (:db/id layer)))))
                               (svg-element selected-eids (assoc layer
