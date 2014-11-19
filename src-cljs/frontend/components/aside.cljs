@@ -113,14 +113,16 @@
            [:span.aside-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
           [:section.aside-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-             [:a {:key client-id
-                  :title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
-                  :class (if can-edit?
-                           "editable"
-                           "uneditable")
+             [:a.people-you {:key client-id
+                  ; :title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
+                  ; :class (if can-edit?
+                  ;          "editable"
+                  ;          "uneditable")
+                  :data-bottom (when-not can-edit? "Click to edit")
                   :role "button"
-                  :on-click #(when can-edit?
-                               (om/set-state! owner :editing-name? true))}
+                  :on-click #(if can-edit?
+                               (om/set-state! owner :editing-name? true)
+                               (cast! :overlay-username-toggled))}
               (common/icon :user (when show-mouse? {:path-props
                                                     {:style
                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))

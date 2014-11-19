@@ -664,11 +664,19 @@
       (update-in state/overlay-info-opened-path not)
       (assoc-in state/info-button-learned-path true)))
 
+(defmethod control-event :overlay-username-toggled
+  [browser-state message _ state]
+  (-> state
+      (update-in state/overlay-username-opened-path not)
+      ; (assoc-in state/info-button-learned-path true)
+      ))
+
 (defmethod control-event :overlay-closed
   [target message _ state]
   (-> state
       (assoc-in state/overlay-info-opened-path false)
-      (assoc-in state/overlay-shortcuts-opened-path false)))
+      (assoc-in state/overlay-shortcuts-opened-path false)
+      (assoc-in state/overlay-username-opened-path false)))
 
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]

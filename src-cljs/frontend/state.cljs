@@ -92,6 +92,8 @@
 
 (def overlay-info-opened-path [:aside-menu-opened])
 
+(def overlay-username-opened-path [:overlay-username-opened])
+
 (def overlay-shortcuts-opened-path [:overlay-shortcuts-opened])
 
 (def aside-width-path [:aside-width])

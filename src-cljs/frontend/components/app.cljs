@@ -131,6 +131,7 @@
             aside-opened? (get-in app state/aside-menu-opened-path)
             overlay-info-open? (get-in app state/overlay-info-opened-path)
             overlay-shortcuts-open? (get-in app state/overlay-shortcuts-opened-path)
+            overlay-username-open? (get-in app state/overlay-username-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div#app
                (om/build aside/menu app)
@@ -221,4 +222,26 @@
                   [:div.shortcuts-item
                    [:div.shortcuts-key "Cmd"]
                    [:div.shortcuts-key "Z"]
-                   [:div.shortcuts-result "Undo"]]]]]])))))
+                   [:div.shortcuts-result "Undo"]]]]
+                [:figure.overlay-info {:on-click #(cast! :overlay-closed)
+                                       :class (when-not overlay-username-open? "hidden")}
+                 [:div.overlay-background]
+                 [:a.overlay-close {:role "button"}
+                  (common/icon :times)]
+                 [:article {:on-click #(.stopPropagation %)}
+                  [:h2 "Want your your friends to know who you are?"]
+                  [:p
+                   "Precursor is a collaborative idea tool. "
+                   "Think of it as a notebook with infinite pages – use it to create sketches, "
+                   "rapid prototypes, notes, and everything in between. "
+                   [:a {:on-click #(cast! :chat-link-clicked)
+                        :role "button"}
+                    "@prcrsr"]
+                   " in the chat."]
+                  [:div.info-buttons
+                   [:a.info-okay {:href (auth/auth-url)
+                                  :role "button"}
+                    "Sign Up"]
+                   [:a.info-twitter {:on-click #(cast! :overlay-closed)
+                                     :role "button"}
+                    "No thanks."]]]]]])))))
