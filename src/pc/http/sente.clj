@@ -146,12 +146,19 @@
         mouse-position (-> ?data :mouse-position)
         tool (-> ?data :tool)
         layer (-> ?data :layer)
+        layers (-> ?data :layers)
         cid (client-uuid->uuid client-uuid)]
     (doseq [[uid _] (dissoc (get @document-subs document-id) cid)]
       ((:send-fn @sente-state) uid [:frontend/mouse-move (merge
                                                           {:client-uuid cid
                                                            :tool tool
-                                                           :layer layer}
+                                                           ;; TODO: remove :layer logic, just here for backward compat
+                                                           :layer (if layer
+                                                                    layer
+                                                                    (first layers))
+                                                           :layers (if layers
+                                                                     layers
+                                                                     [layer])}
                                                           (when mouse-position
                                                             {:mouse-position mouse-position}))]))))
 
