@@ -45,7 +45,7 @@
                                   :google-account/sub (:sub user-info)
                                   :cust/uuid (or session-uuid (UUID/randomUUID))})]
           (ping-chat-with-new-user (:email user-info))
-          (update-user-from-sub user)
+          (future (update-user-from-sub user))
           user)
         (catch Exception e
           (if (pcd/unique-conflict? e)
