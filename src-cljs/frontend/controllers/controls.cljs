@@ -210,6 +210,33 @@
         (assoc-in [:drawing :starting-mouse-position] [rx ry])
         (update-in [:entity-ids] disj entity-id))))
 
+(defmethod control-event :group-duplicated
+  [browser-state message {:keys [group-eid layer-eids x y]} state]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)
+        ;; TODO: better way to get selected layers
+        db @(:db state)
+        layers (map #(ds/touch+ (d/entity db %)) layer-eids)
+        [group-id & entity-ids :as used-ids] (take (inc (count layers)) (:entity-ids state))
+        group-layer (assoc (ds/touch+ (d/entity db group-eid))
+                      :layer/child (set entity-ids)
+                      :db/id group-id)]
+    (-> state
+        (assoc :selected-eid group-id)
+        (assoc-in [:drawing :original-layers] (conj layers group-layer))
+        (assoc-in [:drawing :layers] (conj (map (fn [layer entity-id]
+                                                  (assoc layer
+                                                    :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
+                                                    :db/id entity-id
+                                                    :layer/start-x (:layer/start-x layer)
+                                                    :layer/end-x (:layer/end-x layer)
+                                                    :layer/current-x (:layer/end-x layer)
+                                                    :layer/current-y (:layer/end-y layer)))
+                                                layers entity-ids)
+                                           group-layer))
+        (assoc-in [:drawing :moving?] true)
+        (assoc-in [:drawing :starting-mouse-position] [rx ry])
+        (update-in [:entity-ids] (fn [eids] (apply disj eids used-ids))))))
+
 (defmethod control-event :text-layer-edited
   [browser-state message {:keys [value]} state]
   (-> state

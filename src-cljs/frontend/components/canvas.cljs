@@ -106,18 +106,27 @@
                                                :onMouseDown
                                                #(do
                                                   (.stopPropagation %)
-                                                  (if (.-altKey %)
-                                                    (cast! :layer-duplicated
-                                                           {:layer layer
-                                                            :x (first (cameras/screen-event-coords %))
-                                                            :y (second (cameras/screen-event-coords %))})
-                                                    (do
-                                                      (if (and (< 1 (count selected-eids))
-                                                               (contains? selected-eids (:db/id layer)))
+                                                  (let [group? (and (< 1 (count selected-eids))
+                                                                    (contains? selected-eids (:db/id layer)))]
+                                                    (if (.-altKey %)
+                                                      (if group?
+                                                        (cast! :group-duplicated
+                                                               {:group-eid selected-eid
+                                                                :layer-eids (disj selected-eids selected-eid)
+                                                                :x (first (cameras/screen-event-coords %))
+                                                                :y (second (cameras/screen-event-coords %))})
+
+                                                        (cast! :layer-duplicated
+                                                               {:layer layer
+                                                                :x (first (cameras/screen-event-coords %))
+                                                                :y (second (cameras/screen-event-coords %))}))
+
+                                                      (if group?
                                                         (cast! :group-selected {:x (first (cameras/screen-event-coords %))
                                                                                 :y (second (cameras/screen-event-coords %))
                                                                                 :group-eid selected-eid
                                                                                 :layer-eids (disj selected-eids selected-eid)})
+
                                                         (cast! :layer-selected {:layer layer
                                                                                 :x (first (cameras/screen-event-coords %))
                                                                                 :y (second (cameras/screen-event-coords %))})))))
@@ -345,9 +354,9 @@
                     (om/build text-input (get-in payload [:drawing :layers 0])))
 
                   (when-let [sels (cond
-                                   (settings/moving-drawing? payload) (settings/drawing payload)
-                                   (= :layer.type/text (get-in payload [:drawing :layer 0 :layer/type])) nil
-                                   (settings/selection-in-progress? payload) [(settings/selection payload)]
+                                   (settings/moving-drawing? payload) (remove #(= :layer.type/group (:layer/type %))
+                                                                              (settings/drawing payload))
+                                   (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])) nil
                                    (settings/drawing-in-progress? payload) (settings/drawing payload)
                                    :else nil)]
                     (apply dom/g #js {:className "layers"}
