@@ -320,7 +320,7 @@
         layers (get-in state [:drawing :layers])
         snap-paths? (first (filter #(not= :layer.type/path (:layer/type %)) layers))
         layers (map (fn [layer original]
-                      (move-layer layer original {:snap-x snap-move-x :snap-y snap-move-y :x move-x :y move-y :snap-paths snap-paths?}))
+                      (move-layer layer original {:snap-x snap-move-x :snap-y snap-move-y :x move-x :y move-y :snap-paths? snap-paths?}))
                     layers
                     (get-in state [:drawing :original-layers]))]
     (assoc-in state [:drawing :layers] layers)))
