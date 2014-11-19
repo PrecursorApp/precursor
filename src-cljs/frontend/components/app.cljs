@@ -98,7 +98,7 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             aside-opened? (get-in data state/aside-menu-opened-path)
             last-read-time (get-in data (state/last-read-chat-time-path (:document/id data)))
-            unread-chat-count (utils/inspect (chat-model/compute-unread-chat-count @db last-read-time))
+            unread-chat-count (chat-model/compute-unread-chat-count @db last-read-time)
             unread-chat-count (if last-read-time
                                 unread-chat-count
                                 ;; add one for the dummy message

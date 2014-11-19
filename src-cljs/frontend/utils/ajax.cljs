@@ -83,7 +83,7 @@
                       ;; TODO: use a custom reader or similar for raw to handle more like json
                       :raw {:format (clj-ajax/raw-format)
                             :handler #(binding [frontend.async/*uuid* uuid]
-                                        (put! channel [message :success {:resp (utils/inspect %) :context context}]))
+                                        (put! channel [message :success {:resp % :context context}]))
                             :error-handler #(binding [frontend.async/*uuid* uuid]
                                               (put! channel [message :failed {:resp % :url url :context context :status :failed}]))})]
     (clj-ajax/ajax-request url method
