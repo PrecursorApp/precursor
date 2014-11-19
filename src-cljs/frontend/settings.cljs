@@ -13,4 +13,4 @@
   (get-in state [:selection :layer]))
 
 (defn drawing [state]
-  (get-in state [:drawing :layer]))
+  (get-in state [:drawing :layers]))

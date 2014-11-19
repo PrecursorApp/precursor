@@ -230,12 +230,14 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             camera (:camera payload)
             subs-layers (reduce (fn [acc [id subscriber]]
-                                  (if-let [layer (:layer subscriber)]
-                                    (conj acc (assoc layer
-                                                :layer/end-x (:layer/current-x layer)
-                                                :layer/end-y (:layer/current-y layer)
-                                                :subscriber-color (:color subscriber)
-                                                :layer/stroke (apply str "#" (take 6 id))))
+                                  (if-let [layers (seq (:layers subscriber))]
+                                    (concat acc (map (fn [layer]
+                                                       (assoc layer
+                                                         :layer/end-x (:layer/current-x layer)
+                                                         :layer/end-y (:layer/current-y layer)
+                                                         :subscriber-color (:color subscriber)
+                                                         :layer/stroke (apply str "#" (take 6 id))))
+                                                     layers))
                                     acc))
                                 [] (:subscribers payload))]
         (dom/svg #js {:width "100%"
@@ -322,33 +324,36 @@
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
                   (om/build svg-layers (assoc (select-keys payload [:selected-eid])
                                          :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
-                                                                              (settings/moving-drawing? payload))
-                                                                      [(:db/id (settings/drawing payload))])
-                                                                    (remove nil? (map :db/id subs-layers))))
+                                                                               (settings/moving-drawing? payload))
+                                                                       (concat [(:db/id (settings/drawing payload))]
+                                                                               (map :db/id (get-in payload [:drawing :layers]))))
+                                                                     (remove nil? (map :db/id subs-layers))))
                                          :tool (get-in payload state/current-tool-path)
                                          :selected-eids (when (and (settings/drawing-in-progress? payload)
-                                                                   (get-in payload [:drawing :layer :layer/child]))
-                                                          (get-in payload [:drawing :layer :layer/child]))))
+                                                                   (get-in payload [:drawing :layers 0 :layer/child]))
+                                                          (get-in payload [:drawing :layers 0 :layer/child]))))
                   (om/build subscriber-layers {:layers subs-layers})
                   (when (and (settings/drawing-in-progress? payload)
-                             (= :layer.type/text (get-in payload [:drawing :layer :layer/type])))
-                    (om/build text-input (get-in payload [:drawing :layer])))
+                             (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
+                    (om/build text-input (get-in payload [:drawing :layers 0])))
 
-                  (when-let [sel (cond
-                                  (settings/moving-drawing? payload) (settings/drawing payload)
-                                  (= :layer.type/text (get-in payload [:drawing :layer :layer/type])) nil
-                                  (settings/selection-in-progress? payload) (settings/selection payload)
-                                  (settings/drawing-in-progress? payload) (settings/drawing payload)
-                                  :else nil)]
-                    (dom/g #js {:className "layers"}
-                           (let [sel (merge sel
-                                            {:layer/end-x (:layer/current-x sel)
-                                             :layer/end-y (:layer/current-y sel)}
-                                            (when (or (settings/moving-drawing? payload)
-                                                      (not= :layer.type/text (:layer/type sel)))
-                                              {:className "layer-in-progress"})
-                                            (when (= :layer.type/group (:layer/type sel))
-                                              {:layer/type :layer.type/rect
-                                               :className "layer-in-progress selection"
-                                               :strokeDasharray "2,3"}))]
-                             (svg-element #{} sel))))))))))
+                  (when-let [sels (cond
+                                   (settings/moving-drawing? payload) (settings/drawing payload)
+                                   (= :layer.type/text (get-in payload [:drawing :layer 0 :layer/type])) nil
+                                   (settings/selection-in-progress? payload) [(settings/selection payload)]
+                                   (settings/drawing-in-progress? payload) (settings/drawing payload)
+                                   :else nil)]
+                    (apply dom/g #js {:className "layers"}
+                           (map (fn [sel]
+                                  (let [sel (merge sel
+                                                   {:layer/end-x (:layer/current-x sel)
+                                                    :layer/end-y (:layer/current-y sel)}
+                                                   (when (or (settings/moving-drawing? payload)
+                                                             (not= :layer.type/text (:layer/type sel)))
+                                                     {:className "layer-in-progress"})
+                                                   (when (= :layer.type/group (:layer/type sel))
+                                                     {:layer/type :layer.type/rect
+                                                      :className "layer-in-progress selection"
+                                                      :strokeDasharray "2,3"}))]
+                                    (svg-element #{} sel)))
+                                sels)))))))))
