@@ -4,7 +4,9 @@
             [pc.util.jwt :as jwt]
             [cemerick.url :as url]
             [cheshire.core :as json]
-            [clj-http.client :as http]))
+            [clj-http.client :as http]
+            [clj-time.format]
+            [clj-time.coerce]))
 
 (def dev-google-client-secret "r5t9LYCCJA3SaHnsDNg-dRsF")
 (defn google-client-secret []
@@ -13,6 +15,10 @@
 (def dev-google-client-id "572837751423-3ei6f9eg2ml3r7oadufjns94b5c91hle.apps.googleusercontent.com")
 (defn google-client-id []
   (or (System/getenv "GOOGLE_CLIENT_ID") dev-google-client-id))
+
+(def dev-google-api-key "AIzaSyBWzHPN4uvs8eJl2aXmo75YgTPJUDZzbf0")
+(defn google-api-key []
+  (or (System/getenv "GOOGLE_API_KEY") dev-google-api-key))
 
 (defn redirect-uri []
   (str (url/map->URL
@@ -45,3 +51,14 @@
       parse-id-token
       ;; :sub is google's unique identifier for the user
       (select-keys [:email :email_verified :sub])))
+
+(defn user-info-from-sub [sub]
+  (let [resp (-> (http/get (format "https://www.googleapis.com/plus/v1/people/%s" sub)
+                           {:query-params {:key (google-api-key)}})
+                 :body
+                 json/decode)]
+    {:first-name (get-in resp ["name" "givenName"])
+     :last-name (get-in resp ["name" "familyName"])
+     :birthday (some-> resp (get "birthday") clj-time.format/parse clj-time.coerce/to-date)
+     :gender (get resp "gender")
+     :occupation (get resp "occupation")}))

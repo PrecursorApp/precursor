@@ -159,7 +159,22 @@
    (attribute :cust/http-session-key
               :db.type/uuid
               :db/index true
-              :db/doc "Session key stored in the cookie that is used to find the user")])
+              :db/doc "Session key stored in the cookie that is used to find the user")
+
+   (attribute :cust/first-name
+              :db.type/string)
+
+   (attribute :cust/last-name
+              :db.type/string)
+
+   (attribute :cust/birthday
+              :db.type/instant)
+
+   (attribute :cust/gender
+              :db.type/string)
+
+   (attribute :cust/occupation
+              :db.type/string)])
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))
