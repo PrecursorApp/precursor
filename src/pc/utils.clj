@@ -16,3 +16,6 @@
   `(do
      (require 'weasel.repl.websocket)
      (cemerick.piggieback/cljs-repl :repl-env (weasel.repl.websocket/repl-env :ip "0.0.0.0" :port 9001))))
+
+(defn remove-map-nils [unnested-map]
+  (into {} (remove (comp nil? last) unnested-map)))
