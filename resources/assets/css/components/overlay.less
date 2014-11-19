@@ -21,6 +21,10 @@
     .overlay-close {
       opacity: 0;
     }
+    .mixpanel-badge {
+      opacity: 0;
+      transition: @speed_fast @bezier_fadein;
+    }
   }
   article {
     position: relative;
@@ -103,4 +107,17 @@
 }
 .shortcuts-result {
   margin: 0 1em;
+}
+.mixpanel-badge {
+  position: absolute;
+  bottom: 1em;
+  right: 1em;
+  z-index: @zindex_info_mixpanel;
+  transition: @speed @bezier_fadein @speed;
+  .mq_640({
+    display: none;
+  });
+  svg {
+    fill: @gray_light;
+  }
 }
