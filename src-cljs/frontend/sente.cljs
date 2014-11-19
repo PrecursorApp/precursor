@@ -18,7 +18,7 @@
                      (apply (:send-fn sente-state) message rest))))))
 
 (defn subscribe-to-document [sente-state app-state document-id]
-  (send-msg sente-state [:frontend/subscribe {:document-id document-id}] 2000
+  (send-msg sente-state [:frontend/subscribe {:document-id document-id}] 10000
             (fn [{:keys [document layers chats client-uuid]}]
               (swap! app-state assoc :client-uuid client-uuid)
               ;; TODO: if this is a good idea, then make it the default
@@ -30,7 +30,7 @@
                            {:server-update true}))))
 
 (defn fetch-subscribers [sente-state app-state document-id]
-  (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 2000
+  (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
             (fn [{:keys [subscribers]}]
               (swap! app-state update-in [:subscribers] (fn [s]
                                                           (merge-with merge
