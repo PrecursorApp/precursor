@@ -15,6 +15,11 @@
                                      ;; probably a uuid type
                                      :cust/http-sesion-key String}))
 
+(defn all [db]
+  (pcd/touch-all '{:find [?e]
+                   :where [[?e :google-account/sub]]}
+                 db))
+
 ;; TODO: maybe these should return an entity instead of touching?
 (defn find-by-google-sub [db google-sub]
   (pcd/touch-one '{:find [?e] :in [$ ?sub]

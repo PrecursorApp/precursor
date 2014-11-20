@@ -6,6 +6,7 @@
             [frontend.async :refer [put!]]
             [frontend.components.forms :refer [release-button!]]
             [datascript :as d]
+            [frontend.analytics.mixpanel :as mixpanel]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
             [frontend.favicon :as favicon]
@@ -714,3 +715,12 @@
   [browser-state message {:keys [name]} previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/update-self {:document/id (:document/id current-state)
                                                                  :cust/name name}]))
+
+
+(defmethod post-control-event! :track-external-link-clicked
+  [target message {:keys [path event properties]} previous-state current-state]
+  (let [redirect #(js/window.location.replace path)]
+    (go (alt!
+         (mixpanel/managed-track event properties) ([v] (do (utils/mlog "tracked" v "... redirecting")
+                                                            (redirect)))
+         (async/timeout 1000) (redirect)))))
