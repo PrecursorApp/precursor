@@ -26,7 +26,8 @@
                         :text #{"t"}
                         :undo #{"meta+z" "ctrl+z"}
                         :shortcuts-menu #{"shift+/"}
-                        :escape-interaction #{"esc"}}
+                        :escape-interaction #{"esc"}
+                        :reset-canvas-position #{"home" "1"}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}

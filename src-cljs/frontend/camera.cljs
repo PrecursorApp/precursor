@@ -7,6 +7,9 @@
 (defn camera [state]
   (:camera state))
 
+(defn reset [camera]
+  (assoc camera :x 0 :y 0 :zf 1 :zf-exact 1))
+
 (defn snap [increment value]
   (js/parseFloat (.toFixed (* increment (js/Math.round (/ value increment))) 2)))
 
