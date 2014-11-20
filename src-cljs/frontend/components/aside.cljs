@@ -53,7 +53,9 @@
                                            (str "@" (str/lower-case chat-bot))]
                                           " for help."]
                         :chat/color "#00b233"
-                        :session/uuid chat-bot
+                        :session/uuid (if (= chat-bot "Prcrsr")
+                                        (str/lower-case chat-bot)
+                                        chat-bot)
                         :server/timestamp (js/Date. 0)}]
         (html
          [:section.aside-chat
