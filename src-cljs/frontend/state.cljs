@@ -17,7 +17,8 @@
                                         :aside-menu-opened false
                                         :chat-mobile-opened true
                                         :right-click-learned false
-                                        :info-button-learned false}}
+                                        :info-button-learned false
+                                        :change-username-learned false}}
    :keyboard-shortcuts {:select "s"
                         :circle "c"
                         :rect "r"
@@ -84,6 +85,8 @@
 (def right-click-learned-path (conj browser-settings-path :right-click-learned))
 
 (def info-button-learned-path (conj browser-settings-path :info-button-learned))
+
+(def change-username-learned-path (conj browser-settings-path :change-username-learned))
 
 (defn doc-settings-path [doc-id]
   (conj browser-settings-path :document-settings doc-id))

@@ -230,15 +230,10 @@
                  [:a.overlay-close {:role "button"}
                   (common/icon :times)]
                  [:article {:on-click #(.stopPropagation %)}
-                  [:h2 "Want your your friends to know who you are?"]
+                  [:h2 "Want your team to know who you are?"]
                   [:p
-                   "Precursor is a collaborative idea tool. "
-                   "Think of it as a notebook with infinite pages – use it to create sketches, "
-                   "rapid prototypes, notes, and everything in between. "
-                   [:a {:on-click #(cast! :chat-link-clicked)
-                        :role "button"}
-                    "@prcrsr"]
-                   " in the chat."]
+                   "Make your protoyping even simpler by using your name in chat. "
+                   "Sign up using your Google account and edit your display names."]
                   [:div.info-buttons
                    [:a.info-okay {:href (auth/auth-url)
                                   :role "button"}

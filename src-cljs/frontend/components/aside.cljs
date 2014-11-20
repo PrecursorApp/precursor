@@ -103,7 +103,8 @@
             aside-opened? (get-in app state/aside-menu-opened-path)
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])
-            can-edit? (not (empty? (:cust app)))]
+            can-edit? (not (empty? (:cust app)))
+            change-username-learned? (get-in app state/change-username-learned-path)]
         (html
          [:aside.app-aside {:class (concat
                                     (when-not aside-opened? ["closed"])
@@ -119,11 +120,7 @@
           [:section.aside-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
              [:a.people-you {:key client-id
-                  ; :title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
-                  ; :class (if can-edit?
-                  ;          "editable"
-                  ;          "uneditable")
-                  :data-bottom (when-not can-edit? "Click to edit")
+                  :data-bottom (when (and can-edit? (not change-username-learned?)) "Click to edit")
                   :role "button"
                   :on-click #(if can-edit?
                                (om/set-state! owner :editing-name? true)
