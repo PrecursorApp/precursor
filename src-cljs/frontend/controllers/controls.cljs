@@ -734,8 +734,7 @@
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
   (-> state
-    (assoc-in [:cust :name] name)
-    (assoc-in state/change-username-learned-path true)))
+    (assoc-in [:cust :name] name)))
 
 (defmethod post-control-event! :self-updated
   [browser-state message {:keys [name]} previous-state current-state]

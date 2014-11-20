@@ -120,7 +120,7 @@
           [:section.aside-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
              [:a.people-you {:key client-id
-                  :data-bottom (when-not change-username-learned? "Click to edit")
+                  :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
                   :role "button"
                   :on-click #(if can-edit?
                                (om/set-state! owner :editing-name? true)
