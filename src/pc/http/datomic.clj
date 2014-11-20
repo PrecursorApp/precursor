@@ -25,7 +25,7 @@
 
 (defn handle-precursor-pings [document-id datoms]
   (if-let [ping-datoms (seq (filter #(and (= :chat/body (:a %))
-                                            (re-find #"@prcrsr" (:v %)))
+                                            (re-find #"(?i)@prcrsr|@danny|@daniel" (:v %)))
                                       datoms))]
     (doseq [datom ping-datoms
             :let [message (format "<https://prcrsr.com/document/%s|%s>: %s"
