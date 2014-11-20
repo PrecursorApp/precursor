@@ -78,8 +78,10 @@
              (common/icon :logout)]]
            [:a.action-login {:href (auth/auth-url)
                              :data-right "Sign Up"
-                             :on-click #(cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                             :event "Signup Clicked"})}
+                             :on-click #(do
+                                          (.preventDefault %)
+                                          (cast! :track-external-link-clicked {:path (auth/auth-url)
+                                                                               :event "Signup Clicked"}))}
             (common/icon :login)]))))))
 
 (defn main-actions [data owner]
