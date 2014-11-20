@@ -117,11 +117,7 @@
             {:status 400
              :body "There was a problem logging you in."}
 
-            (let [cust (auth/cust-from-google-oauth-code code nil
-                                                         ;; (some-> req :session :uid)
-                                                         ;; figure out how to associate non-logged in session-id with
-                                                         ;; logged-in session id
-                                                         )]
+            (let [cust (auth/cust-from-google-oauth-code code req)]
               {:status 302
                :body ""
                :session (assoc (:session req)

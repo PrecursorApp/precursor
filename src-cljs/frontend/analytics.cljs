@@ -16,6 +16,9 @@
 (defn track-page [page & [props]]
   (mixpanel/track page props))
 
+(defn track [page & [props]]
+  (mixpanel/track page props))
+
 (def controls-blacklist #{:chat-db-updated
                           :mouse-moved
                           :chat-body-changed
