@@ -117,11 +117,6 @@
   [shortcut-name state]
   (handle-undo state))
 
-;; TODO: find a better way to handle multiple keyboard shortcuts for the same thing
-(defmethod handle-keyboard-shortcut :undo-windows
-  [shortcut-name state]
-  (handle-undo state))
-
 (defmethod handle-keyboard-shortcut :shortcuts-menu
   [shortcut-name state]
   (-> state
@@ -138,8 +133,9 @@
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
     (-> state
         (assoc-in [:keyboard key-name-kw] depressed?)
-        (cond->> (and depressed? (contains? (set (vals shortcuts)) key))
-                 (handle-keyboard-shortcut (get (set/map-invert shortcuts) key))))))
+        (cond->> (and depressed? (contains? (apply set/union (vals shortcuts)) key))
+                 (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key))
+                                                          (keys shortcuts))))))))
 
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-name-kw depressed?]}] state]
