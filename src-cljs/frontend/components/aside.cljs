@@ -1,5 +1,6 @@
 (ns frontend.components.aside
   (:require [clojure.set :as set]
+            [clojure.string :as str]
             [datascript :as d]
             [frontend.async :refer [put!]]
             [frontend.components.common :as common]
@@ -11,7 +12,7 @@
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
-(defn chat-aside [{:keys [db chat-body client-uuid aside-menu-opened]} owner]
+(defn chat-aside [{:keys [db chat-body client-uuid aside-menu-opened chat-bot]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -45,12 +46,12 @@
       (let [{:keys [cast!]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
             dummy-chat {:chat/body (str "Welcome to Precursor! "
-                                        (if (om/get-state owner :touch-enabled?)
-                                          "Tap and hold on the canvas to access tools"
-                                          "Right-click on the canvas to access tools")
-                                        "  and share your url to collaborate.")
+                                        "Create fast prototypes and share your url to collaborate. "
+                                        "Chat "
+                                        (str "@" (str/lower-case chat-bot))
+                                        " for help.")
                         :chat/color "#00b233"
-                        :session/uuid "Danny"
+                        :session/uuid chat-bot
                         :server/timestamp (js/Date. 0)}]
         (html
          [:section.aside-chat
@@ -98,6 +99,7 @@
             client-id (:client-uuid app)
             aside-opened? (get-in app state/aside-menu-opened-path)
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
+            document-id (get-in app [:document/id])
             can-edit? (not (empty? (:cust app)))]
         (html
          [:aside.app-aside {:class (concat
@@ -153,4 +155,5 @@
           (om/build chat-aside {:db (:db app)
                                 :client-uuid (:client-uuid app)
                                 :chat-body (get-in app [:chat :body])
+                                :chat-bot (get-in app (state/doc-chat-bot-path document-id))
                                 :aside-menu-opened (get-in app state/aside-menu-opened-path)})])))))

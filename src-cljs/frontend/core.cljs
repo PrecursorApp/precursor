@@ -113,27 +113,29 @@
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
         cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
-    (atom (assoc initial-state
-            :document/id document-id
-            ;; id for the browser, used to filter transactions
-            ;; TODO: rename client-uuid to something else
-            :client-id (UUID. (utils/uuid))
-            :db  (ds/make-initial-db document-id)
-            :cust cust
-            :comms {:controls      controls-ch
-                    :api           api-ch
-                    :errors        errors-ch
-                    :nav           navigation-ch
-                    :controls-mult (async/mult controls-ch)
-                    :api-mult      (async/mult api-ch)
-                    :errors-mult   (async/mult errors-ch)
-                    :nav-mult      (async/mult navigation-ch)
-                    :mouse-move    {:ch mouse-move-ch
-                                    :mult (async/mult mouse-move-ch)}
-                    :mouse-down    {:ch mouse-down-ch
-                                    :mult (async/mult mouse-down-ch)}
-                    :mouse-up      {:ch mouse-up-ch
-                                    :mult (async/mult mouse-up-ch)}}))))
+    (atom (-> (assoc initial-state
+                :document/id document-id
+                ;; id for the browser, used to filter transactions
+                ;; TODO: rename client-uuid to something else
+                :client-id (UUID. (utils/uuid))
+                :db  (ds/make-initial-db document-id)
+                :cust cust
+                :comms {:controls      controls-ch
+                        :api           api-ch
+                        :errors        errors-ch
+                        :nav           navigation-ch
+                        :controls-mult (async/mult controls-ch)
+                        :api-mult      (async/mult api-ch)
+                        :errors-mult   (async/mult errors-ch)
+                        :nav-mult      (async/mult navigation-ch)
+                        :mouse-move    {:ch mouse-move-ch
+                                        :mult (async/mult mouse-move-ch)}
+                        :mouse-down    {:ch mouse-down-ch
+                                        :mult (async/mult mouse-down-ch)}
+                        :mouse-up      {:ch mouse-up-ch
+                                        :mult (async/mult mouse-up-ch)}})
+              (update-in (state/doc-chat-bot-path document-id)
+                         #(if % % (if (= 0 (rand-int 2)) "Danny" "Daniel")))))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"
