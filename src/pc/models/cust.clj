@@ -54,3 +54,10 @@
   (ffirst (q '{:find [(count ?t)]
                :where [[?t :google-account/sub]]}
              db)))
+
+(defn created-at [db cust]
+  (ffirst (d/q '{:find [?i]
+                 :in [$ ?sub]
+                 :where [[_ :google-account/sub ?sub ?tx]
+                         [?tx :db/txInstant ?i]]}
+               db (:google-account/sub cust))))

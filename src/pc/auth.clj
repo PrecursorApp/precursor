@@ -25,12 +25,14 @@
 (defn update-user-from-sub [cust]
   (let [sub (:google-account/sub cust)
         {:keys [first-name last-name
-                birthday gender occupation]} (google-auth/user-info-from-sub sub)]
-    (cust/update! cust (utils/remove-map-nils {:cust/first-name first-name
-                                               :cust/last-name last-name
-                                               :cust/birthday birthday
-                                               :cust/gender gender
-                                               :cust/occupation occupation}))))
+                birthday gender occupation]} (google-auth/user-info-from-sub sub)
+        cust (cust/update! cust (utils/remove-map-nils {:cust/first-name first-name
+                                                        :cust/last-name last-name
+                                                        :cust/birthday birthday
+                                                        :cust/gender gender
+                                                        :cust/occupation occupation}))]
+    (analytics/track-user-info cust)
+    cust))
 
 (defn cust-from-google-oauth-code [code ring-req]
   {:post [(string? (:google-account/sub %))]} ;; should never break, but just in case...

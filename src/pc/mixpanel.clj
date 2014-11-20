@@ -40,6 +40,9 @@
       (json/generate-string)
       (base64/encode)))
 
+(defn ->mixpanel-date [datetime]
+  (clj-time.format/unparse (clj-time.format/formatter "yyyy-MM-dd") datetime))
+
 (defn api-call* [_ uri data]
   (let [resp (http/post (str endpoint uri) {:query-params {:data (encode data)}})
         success? (-> resp :body (Integer/parseInt) (= 1))]
@@ -68,4 +71,13 @@
   [distinct-id alias]
   (track "$create_alias" distinct-id :alias alias))
 
-;; TODO: set people properties
+(defn engage
+  "Send Mixpanel 'people' data. data is a map containing one of '$set', '$set_once', '$add', '$append'
+   optional properties can be passed by adding them as keys to data"
+  [distinct-id data]
+  (let [now (-> (time/now) (clj-time.coerce/to-long) (/ 1000) (int))
+        data (merge data
+                    {:$distinct_id distinct-id
+                     :$token (api-token)
+                     :$time now})]
+    (api-call "/engage" data)))
