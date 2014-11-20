@@ -9,7 +9,7 @@
   (mixpanel/track "$signup" (:cust/uuid cust)))
 
 (defn track-user-info [cust]
-  (let [created-at (pc.utils/inspect (cust-model/created-at (pcd/default-db) cust))]
+  (let [created-at (cust-model/created-at (pcd/default-db) cust)]
     (mixpanel/engage (:cust/uuid cust) {:$set {:$first_name (:cust/first-name cust)
                                                :$last_name (:cust/last-name cust)
                                                :$created (-> created-at
