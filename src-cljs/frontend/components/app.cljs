@@ -4,6 +4,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [datascript :as d]
+            [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]
             [frontend.components.aside :as aside]
@@ -193,6 +194,7 @@
                    [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
                     "Okay, sounds good."]
                    [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
+                                     :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
                                      :title "Keep track of our changes on Twitter."
                                      :target "_blank"}
                     "What should we add next?"]]]
