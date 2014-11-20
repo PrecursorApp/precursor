@@ -664,9 +664,9 @@
 (defmethod post-control-event! :aside-menu-toggled
   [browser-state message _ previous-state current-state]
   (if (get-in current-state state/aside-menu-opened-path)
-    (do (mixpanel/track "Aside menu opened")
+    (do (analytics/track "Aside menu opened")
         (favicon/set-normal!))
-    (mixpanel/track "Aside menu closed")))
+    (analytics/track "Aside menu closed")))
 
 (defmethod control-event :overlay-info-toggled
   [browser-state message _ state]
