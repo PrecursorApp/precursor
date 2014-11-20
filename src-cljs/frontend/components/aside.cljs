@@ -45,11 +45,13 @@
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
-            dummy-chat {:chat/body (str "Welcome to Precursor! "
-                                        "Create fast prototypes and share your url to collaborate. "
-                                        "Chat "
-                                        (str "@" (str/lower-case chat-bot))
-                                        " for help.")
+            dummy-chat {:chat/body [:span "Welcome to Precursor! "
+                                          "Create fast prototypes and share your url to collaborate. "
+                                          "Chat "
+                                          [:a {:on-click #(cast! :aside-user-clicked {:id-str (str/lower-case chat-bot)})
+                                               :role "button"}
+                                           (str "@" (str/lower-case chat-bot))]
+                                          " for help."]
                         :chat/color "#00b233"
                         :session/uuid chat-bot
                         :server/timestamp (js/Date. 0)}]
@@ -66,7 +68,8 @@
              (html [:div.message {:key (:db/id chat)}
                     [:span {:style {:color (or (:chat/color chat) (str "#" id))}}
                      name]
-                    (str " " (:chat/body chat))]))]
+                    " "
+                    (:chat/body chat)]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)
                   :on-key-down #(when (and (= "Enter" (.-key %))
