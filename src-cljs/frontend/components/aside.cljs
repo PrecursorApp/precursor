@@ -147,7 +147,7 @@
                 [:span (or (get-in app [:cust :name]) "You")])])
            (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
                  :let [id-str (or cust-name (apply str (take 6 id)))]]
-             [:a {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
+             [:a {:title "Ping this person in chat."
                   :role "button"
                   :key id
                   :on-click #(cast! :aside-user-clicked {:id-str id-str})}
