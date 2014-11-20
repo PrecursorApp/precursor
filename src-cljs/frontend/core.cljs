@@ -136,7 +136,7 @@
                                         :mult (async/mult mouse-up-ch)}})
               (browser-settings/restore-browser-settings)
               (update-in (state/doc-chat-bot-path document-id)
-                         #(if % % (rand-nth ["Daniel" "Danny" "Prcrsr"])))))))
+                         #(if % % (rand-nth ["Daniel" "Danny" "prcrsr"])))))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"
