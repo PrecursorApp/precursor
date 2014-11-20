@@ -150,14 +150,6 @@
             (= key-name-kw :del?))
     (put! (get-in state [:comms :controls]) [:deleted-selected])))
 
-(defmethod control-event :show-grid-toggled
-  [browser-state message {:keys [project-id]} state]
-  (update-in state state/show-grid-path not))
-
-(defmethod control-event :night-mode-toggled
-  [browser-state message {:keys [project-id]} state]
-  (update-in state state/night-mode-path not))
-
 (defn update-mouse [state x y]
   (if (and x y)
     (let [[rx ry] (cameras/screen->point (:camera state) x y)]

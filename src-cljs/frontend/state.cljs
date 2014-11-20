@@ -11,9 +11,7 @@
    :error-message   nil
    :changelog       nil
    :environment     "development"
-   :settings        {:browser-settings {:show-grid?  true
-                                        :night-mode? true
-                                        :current-tool :pen
+   :settings        {:browser-settings {:current-tool :pen
                                         :aside-menu-opened false
                                         :chat-mobile-opened true
                                         :right-click-learned false
@@ -70,10 +68,6 @@
 (def docs-articles-results-query-path [:docs-articles-results-query])
 
 (def user-options-shown-path [:user-options-shown])
-
-(def show-grid-path (conj browser-settings-path :show-grid?))
-
-(def night-mode-path (conj browser-settings-path :night-mode?))
 
 (def current-tool-path (conj browser-settings-path :current-tool))
 
