@@ -6,6 +6,8 @@
             [frontend.async :refer [put!]]
             [frontend.components.forms :refer [release-button!]]
             [datascript :as d]
+            [frontend.analytics :as analytics]
+            [frontend.analytics.mixpanel :as mixpanel]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
             [frontend.favicon :as favicon]
@@ -115,11 +117,6 @@
   [shortcut-name state]
   (handle-undo state))
 
-;; TODO: find a better way to handle multiple keyboard shortcuts for the same thing
-(defmethod handle-keyboard-shortcut :undo-windows
-  [shortcut-name state]
-  (handle-undo state))
-
 (defmethod handle-keyboard-shortcut :shortcuts-menu
   [shortcut-name state]
   (-> state
@@ -132,13 +129,19 @@
       (assoc-in state/overlay-shortcuts-opened-path false)
       (assoc-in state/overlay-username-opened-path false)))
 
+(defmethod handle-keyboard-shortcut :reset-canvas-position
+  [shortcut-name state]
+  (-> state
+      (update-in [:camera] cameras/reset)))
+
 (defmethod control-event :key-state-changed
   [browser-state message [{:keys [key key-name-kw depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
     (-> state
         (assoc-in [:keyboard key-name-kw] depressed?)
-        (cond->> (and depressed? (contains? (set (vals shortcuts)) key))
-                 (handle-keyboard-shortcut (get (set/map-invert shortcuts) key))))))
+        (cond->> (and depressed? (contains? (apply set/union (vals shortcuts)) key))
+                 (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key))
+                                                          (keys shortcuts))))))))
 
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-name-kw depressed?]}] state]
@@ -557,6 +560,12 @@
       (assoc-in [:drawing :in-progress?] false)
       (assoc-in state/right-click-learned-path true)))
 
+(defmethod post-control-event! :menu-opened
+  [browser-state message _ previous-state current-state]
+  (when (and (not (get-in previous-state state/right-click-learned-path))
+             (get-in current-state state/right-click-learned-path))
+    (analytics/track "Radial menu learned")))
+
 (defmethod control-event :menu-closed
   [browser-state message _ state]
   (-> state
@@ -656,8 +665,10 @@
 
 (defmethod post-control-event! :aside-menu-toggled
   [browser-state message _ previous-state current-state]
-  (when (get-in current-state state/aside-menu-opened-path)
-    (favicon/set-normal!)))
+  (if (get-in current-state state/aside-menu-opened-path)
+    (do (analytics/track "Aside menu opened")
+        (favicon/set-normal!))
+    (analytics/track "Aside menu closed")))
 
 (defmethod control-event :overlay-info-toggled
   [browser-state message _ state]
@@ -671,6 +682,12 @@
       (update-in state/overlay-username-opened-path not)
       ; (assoc-in state/info-button-learned-path true)
       ))
+
+(defmethod post-control-event! :overlay-info-toggled
+  [browser-state message _ previous-state current-state]
+  (when (and (not (get-in previous-state state/info-button-learned-path))
+             (get-in current-state state/info-button-learned-path))
+    (analytics/track "What's this learned")))
 
 (defmethod control-event :overlay-closed
   [target message _ state]
@@ -724,3 +741,12 @@
   [browser-state message {:keys [name]} previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/update-self {:document/id (:document/id current-state)
                                                                  :cust/name name}]))
+
+
+(defmethod post-control-event! :track-external-link-clicked
+  [target message {:keys [path event properties]} previous-state current-state]
+  (let [redirect #(js/window.location.replace path)]
+    (go (alt!
+         (mixpanel/managed-track event properties) ([v] (do (utils/mlog "tracked" v "... redirecting")
+                                                            (redirect)))
+         (async/timeout 1000) (redirect)))))

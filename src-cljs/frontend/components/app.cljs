@@ -4,6 +4,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [datascript :as d]
+            [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]
             [frontend.components.aside :as aside]
@@ -63,20 +64,25 @@
   (reify
     om/IRender
     (render [_]
-      (html
-       (if (:cust data)
-         [:form {:method "post" :action "/logout" :ref "logout-form"}
-          [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
-          [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
-                                                                 (.-href)
-                                                                 (url/url)
-                                                                 :path)}]
-          [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
-                             :data-right "Logout"}
-           (common/icon :logout)]]
-         [:a.action-login {:href (auth/auth-url)
-                           :data-right "Sign Up"}
-          (common/icon :login)])))))
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+         (if (:cust data)
+           [:form {:method "post" :action "/logout" :ref "logout-form"}
+            [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
+            [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
+                                                                   (.-href)
+                                                                   (url/url)
+                                                                   :path)}]
+            [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
+                               :data-right "Logout"}
+             (common/icon :logout)]]
+           [:a.action-login {:href (auth/auth-url)
+                             :data-right "Sign Up"
+                             :on-click #(do
+                                          (.preventDefault %)
+                                          (cast! :track-external-link-clicked {:path (auth/auth-url)
+                                                                               :event "Signup Clicked"}))}
+            (common/icon :login)]))))))
 
 (defn main-actions [data owner]
   (reify
@@ -191,6 +197,7 @@
                    [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
                     "Okay, sounds good."]
                    [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
+                                     :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
                                      :title "Keep track of our changes on Twitter."
                                      :target "_blank"}
                     "What should we add next?"]]]
@@ -220,6 +227,9 @@
                   [:div.shortcuts-item
                    [:div.shortcuts-key "T"]
                    [:div.shortcuts-result "Text"]]
+                  [:div.shortcuts-item
+                   [:div.shortcuts-key "1"]
+                   [:div.shortcuts-result "Snap to origin"]]
                   [:div.shortcuts-item
                    [:div.shortcuts-key "Cmd"]
                    [:div.shortcuts-key "Z"]

@@ -19,16 +19,16 @@
                                         :right-click-learned false
                                         :info-button-learned false
                                         :change-username-learned false}}
-   :keyboard-shortcuts {:select "s"
-                        :circle "c"
-                        :rect "r"
-                        :line "l"
-                        :pen "p"
-                        :text "t"
-                        :undo "meta+z"
-                        :undo-windows "ctrl+z"
-                        :shortcuts-menu "shift+/"
-                        :escape-interaction "esc"}
+   :keyboard-shortcuts {:select #{"s"}
+                        :circle #{"c"}
+                        :rect #{"r"}
+                        :line #{"l"}
+                        :pen #{"p"}
+                        :text #{"t"}
+                        :undo #{"meta+z" "ctrl+z"}
+                        :shortcuts-menu #{"shift+/"}
+                        :escape-interaction #{"esc"}
+                        :reset-canvas-position #{"home" "1"}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}

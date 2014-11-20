@@ -4,6 +4,8 @@
             [clj-time.coerce :refer [to-date]]
             [pc.auth]
             [pc.datomic :as pcd]
+            [pc.models.doc :as doc-model]
+            [pc.models.layer :as layer-model]
             [slingshot.slingshot :refer (try+)]))
 
 (defn interesting-doc-ids [{:keys [start-time end-time layer-threshold limit]
@@ -41,3 +43,14 @@
         (pc.auth/update-user-from-sub cust)
         (catch :status t
           (println "error updating" (d/touch cust)))))))
+
+(defn copy-document
+  "Creates a copy of the document, without any of the document's history"
+  [db doc]
+  (let [layers (layer-model/find-by-document db doc)
+        new-doc (doc-model/create! {:document/name (str "Clone of " (:document/name doc))})]
+    (d/transact (pcd/conn) (map (fn [l] (assoc l
+                                          :db/id (d/tempid :db.part/user)
+                                          :document/id (:db/id new-doc)))
+                                layers))
+    new-doc))

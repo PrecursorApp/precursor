@@ -58,6 +58,7 @@
                               uuid-attrs (get-uuid-attrs db)
                               server-timestamp (java.util.Date.)]
                           (->> datoms
+                               (remove #(= :dummy (:a %)))
                                (filter (partial common/public? db))
                                (map pcd/datom->transaction)
                                (map (partial coerce-floats float-attrs))
