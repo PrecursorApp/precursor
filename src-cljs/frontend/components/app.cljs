@@ -63,20 +63,23 @@
   (reify
     om/IRender
     (render [_]
-      (html
-       (if (:cust data)
-         [:form {:method "post" :action "/logout" :ref "logout-form"}
-          [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
-          [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
-                                                                 (.-href)
-                                                                 (url/url)
-                                                                 :path)}]
-          [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
-                             :data-right "Logout"}
-           (common/icon :logout)]]
-         [:a.action-login {:href (auth/auth-url)
-                           :data-right "Sign Up"}
-          (common/icon :login)])))))
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+         (if (:cust data)
+           [:form {:method "post" :action "/logout" :ref "logout-form"}
+            [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
+            [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
+                                                                   (.-href)
+                                                                   (url/url)
+                                                                   :path)}]
+            [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
+                               :data-right "Logout"}
+             (common/icon :logout)]]
+           [:a.action-login {:href (auth/auth-url)
+                             :data-right "Sign Up"
+                             :on-click #(cast! :track-external-link-clicked {:path (auth/auth-url)
+                                                                             :event "Signup Clicked"})}
+            (common/icon :login)]))))))
 
 (defn main-actions [data owner]
   (reify

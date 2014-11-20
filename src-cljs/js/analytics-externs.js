@@ -22,6 +22,7 @@ mixpanel.people.delete_user;
 mixpanel.people.set;
 mixpanel.name_tag
 mixpanel.identify;
+mixpanel.get_distinct_id;
 
 var _pq;
 _pq.push;
