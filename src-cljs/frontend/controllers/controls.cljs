@@ -671,9 +671,7 @@
 (defmethod control-event :overlay-username-toggled
   [browser-state message _ state]
   (-> state
-      (update-in state/overlay-username-opened-path not)
-      ; (assoc-in state/info-button-learned-path true)
-      ))
+      (update-in state/overlay-username-opened-path not)))
 
 (defmethod post-control-event! :overlay-info-toggled
   [browser-state message _ previous-state current-state]
