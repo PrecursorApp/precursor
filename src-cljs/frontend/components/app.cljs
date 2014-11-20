@@ -230,10 +230,10 @@
                  [:a.overlay-close {:role "button"}
                   (common/icon :times)]
                  [:article {:on-click #(.stopPropagation %)}
-                  [:h2 "Want your team to know who you are?"]
+                  [:h2 "Communicate faster with a display name."]
                   [:p
-                   "Make your protoyping even simpler by using your name in chat. "
-                   "Sign up using your Google account and edit your display names."]
+                   "Help your team recognize you in Precursor by using your name in chat. "
+                   "Sign up using your Google account and edit your display name."]
                   [:div.info-buttons
                    [:a.info-okay {:href (auth/auth-url)
                                   :role "button"}
