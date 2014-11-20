@@ -6,6 +6,7 @@
             [frontend.async :refer [put!]]
             [frontend.components.forms :refer [release-button!]]
             [datascript :as d]
+            [frontend.analytics :as analytics]
             [frontend.analytics.mixpanel :as mixpanel]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
@@ -556,6 +557,12 @@
                  :y (get-in state [:mouse :y]))
       (assoc-in [:drawing :in-progress?] false)
       (assoc-in state/right-click-learned-path true)))
+
+(defmethod post-control-event! :menu-opened
+  [browser-state message _ previous-state current-state]
+  (when (and (not (get-in previous-state state/right-click-learned-path))
+             (get-in current-state state/right-click-learned-path))
+    (analytics/track "Radial menu learned")))
 
 (defmethod control-event :menu-closed
   [browser-state message _ state]
