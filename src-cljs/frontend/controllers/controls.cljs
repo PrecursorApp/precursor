@@ -128,6 +128,11 @@
       (assoc-in state/overlay-info-opened-path false)
       (assoc-in state/overlay-shortcuts-opened-path false)))
 
+(defmethod handle-keyboard-shortcut :reset-canvas-position
+  [shortcut-name state]
+  (-> state
+      (update-in [:camera] cameras/reset)))
+
 (defmethod control-event :key-state-changed
   [browser-state message [{:keys [key key-name-kw depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
