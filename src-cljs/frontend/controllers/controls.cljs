@@ -129,7 +129,8 @@
   [shortcut-name state]
   (-> state
       (assoc-in state/overlay-info-opened-path false)
-      (assoc-in state/overlay-shortcuts-opened-path false)))
+      (assoc-in state/overlay-shortcuts-opened-path false)
+      (assoc-in state/overlay-username-opened-path false)))
 
 (defmethod control-event :key-state-changed
   [browser-state message [{:keys [key key-name-kw depressed?]}] state]
@@ -675,8 +676,7 @@
   [target message _ state]
   (-> state
       (assoc-in state/overlay-info-opened-path false)
-      (assoc-in state/overlay-shortcuts-opened-path false)
-      (assoc-in state/overlay-username-opened-path false)))
+      (assoc-in state/overlay-shortcuts-opened-path false)))
 
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
