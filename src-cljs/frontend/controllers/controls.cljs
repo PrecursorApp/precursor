@@ -674,6 +674,12 @@
       (update-in state/overlay-info-opened-path not)
       (assoc-in state/info-button-learned-path true)))
 
+(defmethod post-control-event! :overlay-info-toggled
+  [browser-state message _ previous-state current-state]
+  (when (and (not (get-in previous-state state/info-button-learned-path))
+             (get-in current-state state/info-button-learned-path))
+    (analytics/track "What's this learned")))
+
 (defmethod control-event :overlay-closed
   [target message _ state]
   (-> state
