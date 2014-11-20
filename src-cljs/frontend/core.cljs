@@ -9,6 +9,7 @@
             [goog.dom]
             [goog.dom.DomHelper]
             [goog.net.Cookies]
+            [frontend.analytics :as analytics]
             [frontend.camera :as camera-helper]
             [frontend.components.app :as app]
             [frontend.controllers.controls :as controls-con]
@@ -112,27 +113,30 @@
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
         cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
-    (atom (assoc initial-state
-            :document/id document-id
-            ;; id for the browser, used to filter transactions
-            ;; TODO: rename client-uuid to something else
-            :client-id (UUID. (utils/uuid))
-            :db  (ds/make-initial-db document-id)
-            :cust cust
-            :comms {:controls      controls-ch
-                    :api           api-ch
-                    :errors        errors-ch
-                    :nav           navigation-ch
-                    :controls-mult (async/mult controls-ch)
-                    :api-mult      (async/mult api-ch)
-                    :errors-mult   (async/mult errors-ch)
-                    :nav-mult      (async/mult navigation-ch)
-                    :mouse-move    {:ch mouse-move-ch
-                                    :mult (async/mult mouse-move-ch)}
-                    :mouse-down    {:ch mouse-down-ch
-                                    :mult (async/mult mouse-down-ch)}
-                    :mouse-up      {:ch mouse-up-ch
-                                    :mult (async/mult mouse-up-ch)}}))))
+    (atom (-> (assoc initial-state
+                :document/id document-id
+                ;; id for the browser, used to filter transactions
+                ;; TODO: rename client-uuid to something else
+                :client-id (UUID. (utils/uuid))
+                :db  (ds/make-initial-db document-id)
+                :cust cust
+                :comms {:controls      controls-ch
+                        :api           api-ch
+                        :errors        errors-ch
+                        :nav           navigation-ch
+                        :controls-mult (async/mult controls-ch)
+                        :api-mult      (async/mult api-ch)
+                        :errors-mult   (async/mult errors-ch)
+                        :nav-mult      (async/mult navigation-ch)
+                        :mouse-move    {:ch mouse-move-ch
+                                        :mult (async/mult mouse-move-ch)}
+                        :mouse-down    {:ch mouse-down-ch
+                                        :mult (async/mult mouse-down-ch)}
+                        :mouse-up      {:ch mouse-up-ch
+                                        :mult (async/mult mouse-up-ch)}})
+              (browser-settings/restore-browser-settings)
+              (update-in (state/doc-chat-bot-path document-id)
+                         #(if % % (rand-nth ["Daniel" "Danny" "prcrsr"])))))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"
@@ -149,7 +153,9 @@
     (let [previous-state @state]
       ;; TODO: control-event probably shouldn't get browser-state
       (swap! state (partial controls-con/control-event browser-state (first value) (second value)))
-      (controls-con/post-control-event! browser-state (first value) (second value) previous-state @state))))
+      (controls-con/post-control-event! browser-state (first value) (second value) previous-state @state)
+      ;; TODO: enable a way to set the event separate from the control event
+      (analytics/track-control (first value)))))
 
 (defn nav-handler
   [value state history]
@@ -311,11 +317,11 @@
 
 (defn setup-entity-id-fetcher [state]
   (let [api-ch (-> state deref :comms :api)]
-    (fetch-entity-ids api-ch 10)
+    (fetch-entity-ids api-ch 40)
     (add-watch state :entity-id-fetcher (fn [key ref old new]
-                                          (when (> 5 (-> new :entity-ids count))
+                                          (when (> 20 (-> new :entity-ids count))
                                             (println "fetching more entity ids")
-                                            (fetch-entity-ids api-ch 20))))))
+                                            (fetch-entity-ids api-ch 40))))))
 
 (defn ^:export setup! []
   (apply-app-id-hack)
@@ -332,6 +338,8 @@
                                                            (get-in s state/aside-width-path)
                                                            0))))
     (main state top-level-node history-imp)
+    (when (:cust @state)
+      (analytics/init-user (:cust @state)))
     (sente/init state)
     (setup-entity-id-fetcher state)
     (if-let [error-status (get-in @state [:render-context :status])]

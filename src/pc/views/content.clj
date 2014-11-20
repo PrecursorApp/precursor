@@ -32,7 +32,8 @@
     [:link {:rel "icon" :href "/favicon.ico" :type "image/ico"}]
     (embed-json-in-head "window.Precursor" (json/encode view-data))
     (when (prod-assets?)
-      scripts/google-analytics)]
+      scripts/google-analytics)
+    (scripts/mixpanel)]
    [:body
     [:div.alerts-container]
     content]])

@@ -193,7 +193,8 @@
                    [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
                                      :title "Keep track of our changes on Twitter."
                                      :target "_blank"}
-                    "What should we add next?"]]]]
+                    "What should we add next?"]]]
+                 (common/mixpanel-badge)]
                 [:figure.overlay-shortcuts {:on-click #(cast! :overlay-closed)
                                             :class (when-not overlay-shortcuts-open? "hidden")}
                  [:div.overlay-background]
