@@ -13,7 +13,8 @@
             [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [frontend.utils :refer [html]])
+  (:require-macros [frontend.utils :refer [html]]
+                   [dommy.macros :refer [sel sel1]])
   (:import [goog.ui IdGenerator]))
 
 ;; layers are always denominated in absolute coordinates
@@ -103,6 +104,16 @@
                               (when (= :select tool)
                                 (svg-element selected-eids
                                              (assoc layer
+                                               :onClick #(.stopPropagation %)
+                                               :onDoubleClick
+                                               #(do
+                                                  ;(.stopPropagation %)
+                                                  (cast! :canvas-aligned-to-layer-center
+                                                         {:layer layer
+                                                          ;; TODO: need a better way to get canvas size
+                                                          :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
+                                                                         {:width (.-width size)
+                                                                          :height (.-height size)})}))
                                                :onMouseDown
                                                #(do
                                                   (.stopPropagation %)
