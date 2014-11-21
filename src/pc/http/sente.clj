@@ -5,6 +5,7 @@
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
             [pc.http.datomic2 :as datomic2]
+            [pc.email :as email]
             [pc.models.layer :as layer]
             [pc.models.chat :as chat]
             [pc.models.cust :as cust]
@@ -190,6 +191,32 @@
           ((:send-fn @sente-state) uid [:frontend/update-subscriber
                                         {:client-uuid cid
                                          :subscriber-data {:cust-name (:cust/name new-cust)}}]))))))
+
+(defmethod ws-handler :frontend/send-invite [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  ;; This may turn out to be a bad idea, but error handling is done through creating chats
+  (let [[chat-id] (pcd/generate-eids (pcd/conn) 1)
+        doc-id (-> ?data :document/id)
+        send-chat (fn [body]
+                    @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                              :document/id doc-id}
+                                             {:chat/body body
+                                              :server/timestamp (java.util.Date.)
+                                              :document/id doc-id
+                                              :db/id chat-id}]))]
+    (if-let [cust (-> req :ring-req :auth :cust)]
+      (let [email (-> ?data :email)
+            cid (client-uuid->uuid client-uuid)]
+        (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
+        (try
+          (send-chat "Invite sent!")
+          (email/send-chat-invite {:cust cust :to-email email :doc-id doc-id})
+          ;; TODO: should this come from the admin or a special bot user?
+
+          (catch Exception e
+            (log/error e)
+            (.printStackTrace e)
+            (send-chat "Sorry! There was a problem sending the invite."))))
+      (pc.utils/inspect (send-chat "Please sign up to send a chat.")))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
