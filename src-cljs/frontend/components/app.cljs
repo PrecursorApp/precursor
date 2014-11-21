@@ -109,7 +109,8 @@
                                 unread-chat-count
                                 ;; add one for the dummy message
                                 (inc unread-chat-count))
-            info-button-learned? (get-in data state/info-button-learned-path)]
+            info-button-learned? (get-in data state/info-button-learned-path)
+            newdoc-button-learned? (get-in data state/newdoc-button-learned-path)]
         (html
          [:div.main-actions
           [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
@@ -119,9 +120,11 @@
           (when (and (not aside-opened?) (pos? unread-chat-count))
             [:div.unseen-eids (str unread-chat-count)])
           (om/build auth-link data)
-          [:a.action-newdoc {:href "/"
+          [:a.action-newdoc {:on-click #(cast! :newdoc-button-clicked)
+                             :href "/"
                              :target "_self"
-                             :data-right "New Document"}
+                             :data-right (when-not newdoc-button-learned? "New Document")
+                             :title (when newdoc-button-learned? "New Document")}
            (common/icon :newdoc)]
           [:a.action-info {:on-click #(cast! :overlay-info-toggled)
                            :class (when-not info-button-learned? "hover")
@@ -148,6 +151,7 @@
                 (om/build canvas/svg-canvas app)
                 (om/build main-actions (select-in app [state/aside-menu-opened-path
                                                        state/info-button-learned-path
+                                                       state/newdoc-button-learned-path
                                                        [:cust]
                                                        [:document/id]
                                                        (state/last-read-chat-time-path (:document/id app))]))

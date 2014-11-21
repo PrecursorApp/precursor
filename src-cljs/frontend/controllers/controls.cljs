@@ -563,6 +563,11 @@
   (-> state
       (assoc-in [:menu :open?] false)))
 
+(defmethod control-event :newdoc-button-clicked
+  [browser-state message _ state]
+  (-> state
+      (assoc-in state/newdoc-button-learned-path true)))
+
 (defmethod control-event :tool-selected
   [browser-state message [tool] state]
   (-> state
