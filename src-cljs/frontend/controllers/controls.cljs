@@ -683,7 +683,8 @@
   [target message _ state]
   (-> state
       (assoc-in state/overlay-info-opened-path false)
-      (assoc-in state/overlay-shortcuts-opened-path false)))
+      (assoc-in state/overlay-shortcuts-opened-path false)
+      (assoc-in state/overlay-username-opened-path false)))
 
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
