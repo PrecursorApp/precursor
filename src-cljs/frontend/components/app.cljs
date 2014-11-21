@@ -74,7 +74,8 @@
                                                                    (.-href)
                                                                    (url/url)
                                                                    :path)}]
-            [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))}
+            [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
+                               :title "Logout"}
              (common/icon :logout)]]
            [:a.action-login {:href (auth/auth-url)
                              :data-right (when-not login-button-learned? "Sign Up")
