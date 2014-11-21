@@ -103,7 +103,8 @@
             aside-opened? (get-in app state/aside-menu-opened-path)
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])
-            can-edit? (not (empty? (:cust app)))]
+            can-edit? (not (empty? (:cust app)))
+            change-username-learned? (get-in app state/change-username-learned-path)]
         (html
          [:aside.app-aside {:class (concat
                                     (when-not aside-opened? ["closed"])
@@ -118,14 +119,12 @@
            [:span.aside-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
           [:section.aside-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-             [:a {:key client-id
-                  :title "You're viewing this document. Try inviting others. Click to toggle sharing your mouse position."
-                  :class (if can-edit?
-                           "editable"
-                           "uneditable")
+             [:a.people-you {:key client-id
+                  :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
                   :role "button"
-                  :on-click #(when can-edit?
-                               (om/set-state! owner :editing-name? true))}
+                  :on-click #(if can-edit?
+                               (om/set-state! owner :editing-name? true)
+                               (cast! :overlay-username-toggled))}
               (common/icon :user (when show-mouse? {:path-props
                                                     {:style
                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))
@@ -148,7 +147,7 @@
                 [:span (or (get-in app [:cust :name]) "You")])])
            (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
                  :let [id-str (or cust-name (apply str (take 6 id)))]]
-             [:a {:title "An anonymous user is viewing this document. Click to toggle showing their mouse position."
+             [:a {:title "Ping this person in chat."
                   :role "button"
                   :key id
                   :on-click #(cast! :aside-user-clicked {:id-str id-str})}

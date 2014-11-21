@@ -137,6 +137,7 @@
             aside-opened? (get-in app state/aside-menu-opened-path)
             overlay-info-open? (get-in app state/overlay-info-opened-path)
             overlay-shortcuts-open? (get-in app state/overlay-shortcuts-opened-path)
+            overlay-username-open? (get-in app state/overlay-username-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div#app
                (om/build aside/menu app)
@@ -232,4 +233,21 @@
                   [:div.shortcuts-item
                    [:div.shortcuts-key "Cmd"]
                    [:div.shortcuts-key "Z"]
-                   [:div.shortcuts-result "Undo"]]]]]])))))
+                   [:div.shortcuts-result "Undo"]]]]
+                [:figure.overlay-info {:on-click #(cast! :overlay-closed)
+                                       :class (when-not overlay-username-open? "hidden")}
+                 [:div.overlay-background]
+                 [:a.overlay-close {:role "button"}
+                  (common/icon :times)]
+                 [:article {:on-click #(.stopPropagation %)}
+                  [:h2 "Let's change that name."]
+                  [:p
+                   "Help your team communicate faster with each other by using custom names. "
+                   "Log in or sign up to change how your name appears in chat."]
+                  [:div.info-buttons
+                   [:a.info-okay {:href (auth/auth-url)
+                                  :role "button"}
+                    "Sign Up"]
+                   [:a.info-twitter {:on-click #(cast! :overlay-closed)
+                                     :role "button"}
+                    "No thanks."]]]]]])))))
