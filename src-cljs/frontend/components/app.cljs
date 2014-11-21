@@ -64,7 +64,8 @@
   (reify
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [cast! (om/get-shared owner :cast!)
+            login-button-learned? (get-in data state/login-button-learned-path)]
         (html
          (if (:cust data)
            [:form {:method "post" :action "/logout" :ref "logout-form"}
@@ -77,9 +78,11 @@
                                :data-right "Logout"}
              (common/icon :logout)]]
            [:a.action-login {:href (auth/auth-url)
-                             :data-right "Sign Up"
+                             :data-right (when-not login-button-learned? "Sign Up")
+                             :title (when login-button-learned? "Log In")
                              :on-click #(do
                                           (.preventDefault %)
+                                          (cast! :login-button-clicked)
                                           (cast! :track-external-link-clicked {:path (auth/auth-url)
                                                                                :event "Signup Clicked"}))}
             (common/icon :login)]))))))
@@ -152,6 +155,7 @@
                 (om/build main-actions (select-in app [state/aside-menu-opened-path
                                                        state/info-button-learned-path
                                                        state/newdoc-button-learned-path
+                                                       state/login-button-learned-path
                                                        [:cust]
                                                        [:document/id]
                                                        (state/last-read-chat-time-path (:document/id app))]))
