@@ -234,8 +234,8 @@
                    [:div.shortcuts-key "Cmd"]
                    [:div.shortcuts-key "Z"]
                    [:div.shortcuts-result "Undo"]]]]
-                [:figure.overlay-info {:on-click #(cast! :overlay-closed)
-                                       :class (when-not overlay-username-open? "hidden")}
+                [:figure.overlay-change-name {:on-click #(cast! :overlay-closed)
+                                              :class (when-not overlay-username-open? "hidden")}
                  [:div.overlay-background]
                  [:a.overlay-close {:role "button"}
                   (common/icon :times)]
