@@ -64,7 +64,8 @@
   (reify
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [cast! (om/get-shared owner :cast!)
+            login-button-learned? (get-in data state/login-button-learned-path)]
         (html
          (if (:cust data)
            [:form {:method "post" :action "/logout" :ref "logout-form"}
@@ -77,9 +78,11 @@
                                :data-right "Logout"}
              (common/icon :logout)]]
            [:a.action-login {:href (auth/auth-url)
-                             :data-right "Sign Up"
+                             :data-right (when-not login-button-learned? "Sign Up")
+                             :title (when login-button-learned? "Log In")
                              :on-click #(do
                                           (.preventDefault %)
+                                          (cast! :login-button-clicked)
                                           (cast! :track-external-link-clicked {:path (auth/auth-url)
                                                                                :event "Signup Clicked"}))}
             (common/icon :login)]))))))
@@ -109,7 +112,8 @@
                                 unread-chat-count
                                 ;; add one for the dummy message
                                 (inc unread-chat-count))
-            info-button-learned? (get-in data state/info-button-learned-path)]
+            info-button-learned? (get-in data state/info-button-learned-path)
+            newdoc-button-learned? (get-in data state/newdoc-button-learned-path)]
         (html
          [:div.main-actions
           [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
@@ -119,13 +123,16 @@
           (when (and (not aside-opened?) (pos? unread-chat-count))
             [:div.unseen-eids (str unread-chat-count)])
           (om/build auth-link data)
-          [:a.action-newdoc {:href "/"
+          [:a.action-newdoc {:on-click #(cast! :newdoc-button-clicked)
+                             :href "/"
                              :target "_self"
-                             :data-right "New Document"}
+                             :data-right (when-not newdoc-button-learned? "New Document")
+                             :title (when newdoc-button-learned? "New Document")}
            (common/icon :newdoc)]
           [:a.action-info {:on-click #(cast! :overlay-info-toggled)
                            :class (when-not info-button-learned? "hover")
-                           :data-right "What is this thing?"}
+                           :data-right (when-not info-button-learned? "What is this thing?")
+                           :title (when info-button-learned? "What is this thing?")}
            (common/icon :info)]])))))
 
 
@@ -147,6 +154,8 @@
                 (om/build canvas/svg-canvas app)
                 (om/build main-actions (select-in app [state/aside-menu-opened-path
                                                        state/info-button-learned-path
+                                                       state/newdoc-button-learned-path
+                                                       state/login-button-learned-path
                                                        [:cust]
                                                        [:document/id]
                                                        (state/last-read-chat-time-path (:document/id app))]))
