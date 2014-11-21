@@ -13,7 +13,8 @@
             [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [frontend.utils :refer [html]])
+  (:require-macros [frontend.utils :refer [html]]
+                   [dommy.macros :refer [sel sel1]])
   (:import [goog.ui IdGenerator]))
 
 ;; layers are always denominated in absolute coordinates
@@ -115,7 +116,6 @@
                                                                 :layer-eids (disj selected-eids selected-eid)
                                                                 :x (first (cameras/screen-event-coords %))
                                                                 :y (second (cameras/screen-event-coords %))})
-
                                                         (cast! :layer-duplicated
                                                                {:layer layer
                                                                 :x (first (cameras/screen-event-coords %))

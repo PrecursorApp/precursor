@@ -114,7 +114,7 @@
          [:div.main-actions
           [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
                            :class (when-not aside-opened? "closed")
-                           :data-right (if aside-opened? "Close Menu" "Open Menu")}
+                           :data-right (when-not aside-opened? "Open Menu")}
            (common/icon :menu)]
           (when (and (not aside-opened?) (pos? unread-chat-count))
             [:div.unseen-eids (str unread-chat-count)])

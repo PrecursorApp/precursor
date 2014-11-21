@@ -211,7 +211,7 @@
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         ;; TODO: better way to get selected layers
         db @(:db state)
-        layers (map #(ds/touch+ (d/entity db %)) layer-eids)
+        layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)
         [group-id & entity-ids :as used-ids] (take (inc (count layers)) (:entity-ids state))
         group-layer (assoc (ds/touch+ (d/entity db group-eid))
                       :layer/child (set entity-ids)
@@ -219,15 +219,15 @@
     (-> state
         (assoc :selected-eid group-id)
         (assoc-in [:drawing :original-layers] (conj layers group-layer))
-        (assoc-in [:drawing :layers] (conj (map (fn [layer entity-id]
-                                                  (assoc layer
-                                                    :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
-                                                    :db/id entity-id
-                                                    :layer/start-x (:layer/start-x layer)
-                                                    :layer/end-x (:layer/end-x layer)
-                                                    :layer/current-x (:layer/end-x layer)
-                                                    :layer/current-y (:layer/end-y layer)))
-                                                layers entity-ids)
+        (assoc-in [:drawing :layers] (conj (mapv (fn [layer entity-id]
+                                                   (assoc layer
+                                                     :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
+                                                     :db/id entity-id
+                                                     :layer/start-x (:layer/start-x layer)
+                                                     :layer/end-x (:layer/end-x layer)
+                                                     :layer/current-x (:layer/end-x layer)
+                                                     :layer/current-y (:layer/end-y layer)))
+                                                 layers entity-ids)
                                            group-layer))
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry])
@@ -315,10 +315,10 @@
         [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
         layers (get-in state [:drawing :layers])
         snap-paths? (first (filter #(not= :layer.type/path (:layer/type %)) layers))
-        layers (map (fn [layer original]
-                      (move-layer layer original {:snap-x snap-move-x :snap-y snap-move-y :x move-x :y move-y :snap-paths? snap-paths?}))
-                    layers
-                    (get-in state [:drawing :original-layers]))]
+        layers (mapv (fn [layer original]
+                       (move-layer layer original {:snap-x snap-move-x :snap-y snap-move-y :x move-x :y move-y :snap-paths? snap-paths?}))
+                     layers
+                     (get-in state [:drawing :original-layers]))]
     (assoc-in state [:drawing :layers] layers)))
 
 (defmethod control-event :mouse-moved
@@ -403,7 +403,7 @@
   "Finalizes layer translation"
   [state]
   (-> state
-      (update-in [:drawing :layers] (fn [layers] (map #(dissoc % :layer/current-x :layer/current-y) layers)))
+      (update-in [:drawing :layers] (fn [layers] (mapv #(dissoc % :layer/current-x :layer/current-y) layers)))
       (assoc-in [:drawing :moving?] false)
       (assoc-in [:mouse :down] false)))
 
@@ -463,7 +463,7 @@
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
                          (get-in previous-state [:drawing :moving?]))
         original-layers (get-in previous-state [:drawing :original-layers])
-        layers        (map #(dissoc % :points) (get-in current-state [:drawing :layers]))]
+        layers        (mapv #(dissoc % :points) (get-in current-state [:drawing :layers]))]
     (cond
      (and (not= type "touchend")
           (not= button 2)
@@ -527,16 +527,16 @@
   [browser-state message {:keys [group-eid layer-eids x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         db @(:db state)
-        layers (map #(ds/touch+ (d/entity db %)) layer-eids)]
+        layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)]
     (-> state
         (assoc :selected-eid group-eid)
         ;; TODO: maybe we should always deal with layers?
-        (assoc-in [:drawing :layers] (map (fn [layer]
-                                            (assoc layer
-                                              :layer/current-x (:layer/end-x layer)
-                                              :layer/current-y (:layer/end-y layer)
-                                              :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
-                                          layers))
+        (assoc-in [:drawing :layers] (mapv (fn [layer]
+                                             (assoc layer
+                                               :layer/current-x (:layer/end-x layer)
+                                               :layer/current-y (:layer/end-y layer)
+                                               :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
+                                           layers))
         (assoc-in [:drawing :original-layers] layers)
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
@@ -739,3 +739,23 @@
          (mixpanel/managed-track event properties) ([v] (do (utils/mlog "tracked" v "... redirecting")
                                                             (redirect)))
          (async/timeout 1000) (redirect)))))
+
+(defmethod control-event :canvas-aligned-to-layer-center
+  [browser-state message {:keys [layer canvas-size]} state]
+  (let [layer-width (js/Math.abs (- (:layer/start-x layer)
+                                    (:layer/end-x layer)))
+        layer-height (js/Math.abs (- (:layer/start-y layer)
+                                     (:layer/end-y layer)))
+        layer-start-x (min (:layer/start-x layer)
+                           (:layer/end-x layer))
+        layer-start-y (min (:layer/start-y layer)
+                           (:layer/end-y layer))]
+    (-> state
+        (assoc-in [:camera :x] (+ (/ (:width canvas-size) 2)
+                                  (- (+ layer-start-x
+                                        (/ layer-width 2)))))
+        (assoc-in [:camera :y] (+ (/ (:height canvas-size) 2)
+                                  (- (+ layer-start-y
+                                        (/ layer-height 2)))))
+        (assoc-in [:drawing :in-progress?] false)
+        (assoc-in [:drawing :moving?] false))))
