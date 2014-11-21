@@ -1,6 +1,24 @@
 (ns pc.email
   (:require [clojure.string :as str]
+            [hiccup.core :as hiccup]
             [pc.mailgun :as mailgun]))
+
+(defn chat-invite-html [doc-id]
+  (hiccup/html
+   [:html
+    [:body
+     [:div "Hey there,"]
+     [:div
+      "Come draw with me on Precursor: "
+      [:a {:href (str "https://prcrsr.com/document/" doc-id)}
+       (str "https://prcrsr.com/document/" doc-id)]]
+     [:div
+      [:a {:href (str "https://prcrsr.com/document/" doc-id)}
+       [:img {:width 256
+              :src (str "https://prcrsr.com/document/" doc-id ".svg?printer-friendly=false")}]]]
+     [:div {:style "font-size: 12px"}
+      "If you think this message was an error, let us know: "
+      [:a {:href "mailto:info@prcrsr.com"} "info@prcrsr.com"] "."]]]))
 
 (defn send-chat-invite [{:keys [cust to-email doc-id]}]
   (mailgun/send-message {:from "Precursor <draw@prcrsr.com>"
@@ -20,4 +38,4 @@
                                                        :else nil)
                                                  "invited you to a document on Precursor"))
                          :text (str "Hey there,\nCome draw with me on Precursor: https://prcrsr.com/document" doc-id)
-                         :html (format "<html><body><div>Hey there,</div><br /><div>Come draw with me on Precursor: <a href=\"https://prcrsr.com/document/%s\">https://prcrsr.com/document/%s</a></div></body></html>" doc-id doc-id)}))
+                         :html (chat-invite-html doc-id)}))
