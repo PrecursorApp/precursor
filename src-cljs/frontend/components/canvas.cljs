@@ -1,6 +1,7 @@
 (ns frontend.components.canvas
   (:require [datascript :as d]
             [cljs.core.async :refer [put!]]
+            [clojure.string :as str]
             [frontend.camera :as cameras]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
@@ -105,16 +106,31 @@
                               ;; If the non-selectable-layer comes last in the DOM it render above the selectable-layer,
                               ;; and it steal the pointer-events. I.e., you click right in the center of the stroke and nothing happens.
                               (svg-element selected-eids (assoc layer
-                                                           :onMouseDown (when (and (= :text tool)
-                                                                                   (= :layer.type/text (:layer/type layer)))
-                                                                          #(do
-                                                                             (.stopPropagation %)
-                                                                             (cast! :text-layer-re-edited layer)))
+                                                           :onMouseDown (cond
+                                                                         (and (= :text tool)
+                                                                              (= :layer.type/text (:layer/type layer)))
+                                                                         #(do
+                                                                            (.stopPropagation %)
+                                                                            (cast! :text-layer-re-edited layer))
+
+                                                                         (:layer/ui-action layer)
+                                                                         #(do
+                                                                            (.stopPropagation %)
+                                                                            (cast! :canvas-aligned-to-layer-center
+                                                                                   {:ui-id (:layer/ui-action layer)
+                                                                                    :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
+                                                                                                   {:width (.-width size)
+                                                                                                    :height (.-height size)})}))
+                                                                         :else nil)
                                                            :onMouseUp (when (and (= :text tool)
                                                                                  (= :layer.type/text (:layer/type layer)))
                                                                         #(.stopPropagation %))
-                                                           :className (when (= :text tool)
-                                                                        "editable")
+                                                           :className (str/join " "
+                                                                                (concat (when (= :text tool)
+                                                                                          ["editable"])
+                                                                                        (when (and (= :select tool)
+                                                                                                   (:layer/ui-action layer))
+                                                                                          ["action"])))
                                                            :key (:db/id layer)))
                               (when (= :select tool)
                                 (svg-element selected-eids
@@ -124,27 +140,37 @@
                                                   (.stopPropagation %)
                                                   (let [group? (and (< 1 (count selected-eids))
                                                                     (contains? selected-eids (:db/id layer)))]
-                                                    (if (.-altKey %)
-                                                      (if group?
-                                                        (cast! :group-duplicated
-                                                               {:group-eid selected-eid
-                                                                :layer-eids (disj selected-eids selected-eid)
-                                                                :x (first (cameras/screen-event-coords %))
-                                                                :y (second (cameras/screen-event-coords %))})
-                                                        (cast! :layer-duplicated
-                                                               {:layer layer
-                                                                :x (first (cameras/screen-event-coords %))
-                                                                :y (second (cameras/screen-event-coords %))}))
 
-                                                      (if group?
-                                                        (cast! :group-selected {:x (first (cameras/screen-event-coords %))
-                                                                                :y (second (cameras/screen-event-coords %))
-                                                                                :group-eid selected-eid
-                                                                                :layer-eids (disj selected-eids selected-eid)})
+                                                    (cond
+                                                     (= (.-button %) 2)
+                                                     (cast! :layer-secondary-menu-opened {:layer layer
+                                                                                          :x (first (cameras/screen-event-coords %))
+                                                                                          :y (second (cameras/screen-event-coords %))})
 
-                                                        (cast! :layer-selected {:layer layer
-                                                                                :x (first (cameras/screen-event-coords %))
-                                                                                :y (second (cameras/screen-event-coords %))})))))
+
+                                                     (and (.-altKey %) group?)
+                                                     (cast! :group-duplicated
+                                                            {:group-eid selected-eid
+                                                             :layer-eids (disj selected-eids selected-eid)
+                                                             :x (first (cameras/screen-event-coords %))
+                                                             :y (second (cameras/screen-event-coords %))})
+
+                                                     (and (.-altKey %) (not group?))
+                                                     (cast! :layer-duplicated
+                                                            {:layer layer
+                                                             :x (first (cameras/screen-event-coords %))
+                                                             :y (second (cameras/screen-event-coords %))})
+
+                                                     group?
+                                                     (cast! :group-selected {:x (first (cameras/screen-event-coords %))
+                                                                             :y (second (cameras/screen-event-coords %))
+                                                                             :group-eid selected-eid
+                                                                             :layer-eids (disj selected-eids selected-eid)})
+
+                                                     :else
+                                                     (cast! :layer-selected {:layer layer
+                                                                             :x (first (cameras/screen-event-coords %))
+                                                                             :y (second (cameras/screen-event-coords %))}))))
                                                :className "selectable-layer"
                                                :key (str "selectable-" (:db/id layer)))))))
                      (remove #(or (= :layer.type/group (:layer/type %))
@@ -241,6 +267,46 @@
                                                                  {:layer/stroke "none"
                                                                   :style {:fill (:subscriber-color l)}}))))
                                layers))))))
+
+(defn layer-secondary-menu [{:keys [layer x y]} owner]
+  (reify
+    om/IDidMount
+    (did-mount [_]
+      (.focus (om/get-node owner "id-input")))
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)]
+        (dom/foreignObject #js {:width "100%"
+                                :height "100%"
+                                :x x
+                                ;; TODO: defaults for each layer when we create them
+                                :y y}
+          (dom/form #js {:className "svg-text-form"
+                         :onMouseDown #(.stopPropagation %)
+                         :onMouseUp #(.stopPropagation %)
+                         :onSubmit (fn [e]
+                                     (cast! :layer-secondary-menu-options-submitted)
+                                     false)
+                         :onKeyDown #(when (= "Enter" (.-key %))
+                                       (cast! :layer-secondary-menu-options-submitted)
+                                       false)}
+                    (dom/div nil
+                      (dom/input #js {:type "text"
+                                      :ref "id-input"
+                                      :onClick #(.focus (om/get-node owner "id-input"))
+                                      :placeholder "Name this shape..."
+                                      :value (or (:layer/ui-id layer) "")
+                                      ;; TODO: defaults for each layer when we create them
+                                      :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})}))
+
+                    (dom/div nil
+                      (dom/input #js {:type "text"
+                                      :ref "reference-input"
+                                      :onClick #(.focus (om/get-node owner "reference-input"))
+                                      :placeholder "Snap to named shape..."
+                                      :value (or (:layer/ui-action layer) "")
+                                      ;; TODO: defaults for each layer when we create them
+                                      :onChange #(cast! :layer-ui-action-edited {:value (.. % -target -value)})}))))))))
 
 (defn svg-canvas [payload owner opts]
   (reify
@@ -355,6 +421,11 @@
                   (when (and (settings/drawing-in-progress? payload)
                              (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
                     (om/build text-input (get-in payload [:drawing :layers 0])))
+
+                  (when (get-in payload [:layer-secondary-menu :opened?])
+                    (om/build layer-secondary-menu {:layer (get-in payload [:layer-secondary-menu :layer])
+                                                    :x (get-in payload [:layer-secondary-menu :x])
+                                                    :y (get-in payload [:layer-secondary-menu :y])}))
 
                   (when-let [sels (cond
                                    (settings/moving-drawing? payload) (remove #(= :layer.type/group (:layer/type %))

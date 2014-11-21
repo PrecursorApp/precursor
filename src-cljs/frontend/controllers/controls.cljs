@@ -752,8 +752,10 @@
          (async/timeout 1000) (redirect)))))
 
 (defmethod control-event :canvas-aligned-to-layer-center
-  [browser-state message {:keys [layer canvas-size]} state]
-  (let [layer-width (js/Math.abs (- (:layer/start-x layer)
+  [browser-state message {:keys [ui-id canvas-size]} state]
+  (let [db @(:db state)
+        layer (layer-model/find-by-ui-id db ui-id)
+        layer-width (js/Math.abs (- (:layer/start-x layer)
                                     (:layer/end-x layer)))
         layer-height (js/Math.abs (- (:layer/start-y layer)
                                      (:layer/end-y layer)))
@@ -770,3 +772,35 @@
                                         (/ layer-height 2)))))
         (assoc-in [:drawing :in-progress?] false)
         (assoc-in [:drawing :moving?] false))))
+
+(defmethod control-event :layer-secondary-menu-opened
+  [browser-state message {:keys [layer x y]} state]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+    (-> state
+        (update-mouse x y)
+        (assoc-in [:layer-secondary-menu :opened?] true)
+        (assoc-in [:layer-secondary-menu :layer] layer)
+        (assoc-in [:layer-secondary-menu :x] rx)
+        (assoc-in [:layer-secondary-menu :y] ry))))
+
+(defmethod control-event :layer-secondary-menu-options-submitted
+  [browser-state message _ state]
+  (-> state
+      (assoc-in [:layer-secondary-menu :opened?] false)))
+
+(defmethod post-control-event! :layer-secondary-menu-options-submitted
+  [browser-state message _ previous-state current-state]
+  (let [db (:db current-state)]
+    (d/transact! db [(select-keys (get-in current-state [:layer-secondary-menu :layer])
+                                  [:db/id :layer/ui-id :layer/ui-action])])))
+
+
+(defmethod control-event :layer-ui-id-edited
+  [browser-state message {:keys [value]} state]
+  (-> state
+      (assoc-in [:layer-secondary-menu :layer :layer/ui-id] value)))
+
+(defmethod control-event :layer-ui-action-edited
+  [browser-state message {:keys [value]} state]
+  (-> state
+      (assoc-in [:layer-secondary-menu :layer :layer/ui-action] value)))

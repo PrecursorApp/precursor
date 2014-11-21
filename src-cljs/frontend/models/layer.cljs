@@ -10,6 +10,12 @@
       (conj (:layer/child layer) selected-eid)
       #{selected-eid})))
 
+(defn find-by-ui-id [db ui-id]
+  (d/entity db (ffirst (d/q '{:find [?t]
+                              :in [$ ?id]
+                              :where [[?t :layer/ui-id ?id]]}
+                            db ui-id))))
+
 ;; Checks if the layer will be noticed if we put it on the canvas
 (defmulti detectable? (fn [layer] (:layer/type layer)))
 
