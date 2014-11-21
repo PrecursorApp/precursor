@@ -740,3 +740,23 @@
          (mixpanel/managed-track event properties) ([v] (do (utils/mlog "tracked" v "... redirecting")
                                                             (redirect)))
          (async/timeout 1000) (redirect)))))
+
+(defmethod control-event :canvas-aligned-to-layer-center
+  [browser-state message {:keys [layer canvas-size]} state]
+  (let [layer-width (js/Math.abs (- (:layer/start-x layer)
+                                    (:layer/end-x layer)))
+        layer-height (js/Math.abs (- (:layer/start-y layer)
+                                     (:layer/end-y layer)))
+        layer-start-x (min (:layer/start-x layer)
+                           (:layer/end-x layer))
+        layer-start-y (min (:layer/start-y layer)
+                           (:layer/end-y layer))]
+    (-> state
+        (assoc-in [:camera :x] (+ (/ (:width canvas-size) 2)
+                                  (- (+ layer-start-x
+                                        (/ layer-width 2)))))
+        (assoc-in [:camera :y] (+ (/ (:height canvas-size) 2)
+                                  (- (+ layer-start-y
+                                        (/ layer-height 2)))))
+        (assoc-in [:drawing :in-progress?] false)
+        (assoc-in [:drawing :moving?] false))))
