@@ -125,7 +125,8 @@
            (common/icon :newdoc)]
           [:a.action-info {:on-click #(cast! :overlay-info-toggled)
                            :class (when-not info-button-learned? "hover")
-                           :data-right "What is this thing?"}
+                           :data-right (when-not info-button-learned? "What is this thing?")
+                           :title (when info-button-learned? "What is this thing?")}
            (common/icon :info)]])))))
 
 
