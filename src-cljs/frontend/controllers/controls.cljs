@@ -659,6 +659,7 @@
                            (js/Date. 0))]
     (-> state
         (assoc-in state/aside-menu-opened-path aside-open?)
+        (assoc-in state/menu-button-learned-path true)
         (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time)
         (assoc-in [:drawing :in-progress?] false)
         (assoc-in [:camera :offset-x] (if aside-open?
