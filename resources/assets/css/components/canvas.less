@@ -31,9 +31,6 @@
   &.selected {
     stroke: @color_select;
   }
-  + .shape-layer {
-    pointer-events: none;
-  }
 }
 .text-layer {
   .user-select(none);
@@ -58,7 +55,7 @@
     .shape-layer {
       stroke: @color_select_hover;
       transition-duration: @speed_fast;
-      + .shape-layer {
+      &:not(.selectable-layer) {
         stroke-width: 4;
       }
       &.selected {
