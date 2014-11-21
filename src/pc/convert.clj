@@ -1,9 +1,5 @@
 (ns pc.convert
-  (:import [javax.imageio ImageIO]
-           [org.apache.commons.io FileUtils]
-           [java.io ByteArrayOutputStream ByteArrayInputStream]
-           [java.awt Color]
-           [java.awt.image BufferedImage]
+  (:import [java.io ByteArrayOutputStream ByteArrayInputStream]
            [org.apache.batik.transcoder.image PNGTranscoder]
            [org.apache.batik.transcoder TranscoderInput TranscoderOutput]))
 
