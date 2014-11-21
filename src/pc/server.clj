@@ -25,6 +25,7 @@
             [pc.less :as less]
             [pc.views.content :as content]
             [pc.utils :refer (inspect)]
+            [pc.convert :refer (svg->png)]
             [pc.render :refer (render-layers)]
             [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
             [ring.middleware.session :refer (wrap-session)]
@@ -57,6 +58,13 @@
           {:status 200
            :headers {"Content-Type" "image/svg+xml"}
            :body (render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
+   (GET "/document/:document-id.png" [document-id :as req]
+        (let [layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong document-id)})]
+          {:status 200
+           :headers {"Content-Type" "image/png"}
+           :body (svg->png (render-layers layers
+                                          :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                          :size-limit 2000))}))
    (GET ["/document/:document-id" :document-id #"[0-9]+"] [document-id :as req]
         (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                              :google-client-id (google-client-id)}
