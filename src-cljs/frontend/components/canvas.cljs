@@ -104,16 +104,6 @@
                               (when (= :select tool)
                                 (svg-element selected-eids
                                              (assoc layer
-                                               :onClick #(.stopPropagation %)
-                                               :onDoubleClick
-                                               #(do
-                                                  ;(.stopPropagation %)
-                                                  (cast! :canvas-aligned-to-layer-center
-                                                         {:layer layer
-                                                          ;; TODO: need a better way to get canvas size
-                                                          :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
-                                                                         {:width (.-width size)
-                                                                          :height (.-height size)})}))
                                                :onMouseDown
                                                #(do
                                                   (.stopPropagation %)
@@ -126,7 +116,6 @@
                                                                 :layer-eids (disj selected-eids selected-eid)
                                                                 :x (first (cameras/screen-event-coords %))
                                                                 :y (second (cameras/screen-event-coords %))})
-
                                                         (cast! :layer-duplicated
                                                                {:layer layer
                                                                 :x (first (cameras/screen-event-coords %))
