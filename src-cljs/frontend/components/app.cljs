@@ -183,7 +183,7 @@
                                             :left (+ (get-in app [:mouse :x]) (if aside-opened? (- 16 256) 16) )}}
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
-                     "Right-click to select tool")])]
+                     "Try right-click")])]
                [:div.app-overlay
                 [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)
                                        :class (when-not overlay-info-open? "hidden")}
