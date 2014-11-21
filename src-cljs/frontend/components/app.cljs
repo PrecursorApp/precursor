@@ -242,7 +242,7 @@
                  [:article {:on-click #(.stopPropagation %)}
                   [:h2 "Let's change that name."]
                   [:p
-                   "Help your team communicate faster with eachother by using custom names. "
+                   "Help your team communicate faster with each other by using custom names. "
                    "Log in or sign up to change how your name appears in chat."]
                   [:div.info-buttons
                    [:a.info-okay {:href (auth/auth-url)
