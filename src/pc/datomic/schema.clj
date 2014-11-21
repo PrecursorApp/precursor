@@ -101,6 +101,14 @@
               :db/cardinality :db.cardinality/many
               :db/doc "Layer's children")
 
+   (attribute :layer/ui-id
+              :db.type/string
+              :db/doc "User-provided identifier for layer")
+
+   (attribute :layer/ui-action
+              :db.type/string
+              :db/doc "User-provided action for layer")
+
    ;; No logins at the moment, so we'll use this to identify users
    (attribute :session/uuid
               :db.type/uuid
