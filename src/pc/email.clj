@@ -9,18 +9,21 @@
   (hiccup/html
    [:html
     [:body
-     [:p "Hey there,"]
      [:p
-      "Come draw with me on Precursor: "
+      "I'm prototyping something on Precursor, come join me at "
       [:a {:href (str "https://prcrsr.com/document/" doc-id)}
-       (str "https://prcrsr.com/document/" doc-id)]]
+       (str "https://prcrsr.com/document/" doc-id)]
+      "."]
+     [:p "This is what I have so far:"]
      [:p
-      [:a {:href (str "https://prcrsr.com/document/" doc-id)}
-       [:img {:width 256
-              :src (str "https://prcrsr.com/document/" doc-id ".png?printer-friendly=false")}]]]
+      [:a {:href (str "https://prcrsr.com/document/" doc-id)
+           :style "display: inline-block"}
+       [:img {:width 325
+              :style "border: 1px solid #888888;"
+              :alt "Images disabled? Just come and take a look."
+              :src (str "https://prcrsr.com/document/" doc-id ".png")}]]]
      [:p {:style "font-size: 12px"}
-      "If you think this message was an error, let us know: "
-      [:a {:href "mailto:info@prcrsr.com"} "info@prcrsr.com"] "."
+      "Tell us if this message is an error info@prcrsr.com."
       ;; Add some hidden text so that Google doesn't try to trim these.
       [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
        " Sent at "
@@ -28,7 +31,7 @@
        "."]]]]))
 
 (defn send-chat-invite [{:keys [cust to-email doc-id]}]
-  (mailgun/send-message {:from "Precursor <draw@prcrsr.com>"
+  (mailgun/send-message {:from "Precursor <joinme@prcrsr.com>"
                          :to to-email
                          :subject (str/trim (str (:cust/first-name cust)
                                                  (when (and (:cust/first-name cust)
