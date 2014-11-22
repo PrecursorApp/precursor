@@ -582,9 +582,9 @@
 (defmethod control-event :text-layer-re-edited
   [browser-state message layer state]
   (-> state
-      (assoc-in [:drawing :layers 0] (assoc layer
+      (assoc-in [:drawing :layers] [(assoc layer
                                       :layer/current-x (:layer/start-x layer)
-                                      :layer/current-y (:layer/start-y layer)))
+                                      :layer/current-y (:layer/start-y layer))])
       (assoc-in [:drawing :in-progress?] true)
       (assoc-in state/current-tool-path :text)))
 
