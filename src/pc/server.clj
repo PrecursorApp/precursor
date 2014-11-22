@@ -151,6 +151,11 @@
                                                            (profile/http-port))
                                                    :path redirect-to}))}
           :session nil})
+
+   (GET "/email/welcome/:template" [template]
+        {:status 200
+         :body (content/email-welcome template)})
+
    (ANY "*" [] {:status 404 :body "Page not found."})))
 
 (defn log-request [req resp ms]
