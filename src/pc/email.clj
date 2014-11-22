@@ -21,7 +21,7 @@
        [:img {:width 325
               :style "border: 1px solid #888888;"
               :alt "Images disabled? Just come and take a look."
-              :src (str "https://prcrsr.com/document/" doc-id ".png")}]]]
+              :src (str "https://prcrsr.com/document/" doc-id ".png?rand=" (rand))}]]]
      [:p {:style "font-size: 12px"}
       "Tell us if this message is an error info@prcrsr.com."
       ;; Add some hidden text so that Google doesn't try to trim these.
