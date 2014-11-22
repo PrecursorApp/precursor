@@ -15,8 +15,10 @@
 
 (defn email-landing [template-name]
   [:div.email-landing
-   [:img {:src (get-gif-url template-name)}]
+   [:a {:href "/"
+        :title "Make something."}
+    [:img {:src (get-gif-url template-name)}]]
    [:a.email-landing-button {:href "/"
                              :role "button"
-                             :title "It's free!"}
-    "Made with Precursor"]])
+                             :title "Make something."}
+    "Make with Precursor"]])
