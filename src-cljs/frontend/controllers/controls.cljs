@@ -650,7 +650,8 @@
                                                                           :email email}]))))
 
 (defn chat-cmd [body]
-  (last (re-find #"^/([^\s]+)" body)))
+  (when (seq body)
+    (last (re-find #"^/([^\s]+)" body))))
 
 (defmethod post-control-event! :chat-submitted
   [browser-state message _ previous-state current-state]
