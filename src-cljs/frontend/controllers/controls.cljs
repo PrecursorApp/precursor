@@ -775,25 +775,26 @@
 
 (defmethod control-event :canvas-aligned-to-layer-center
   [browser-state message {:keys [ui-id canvas-size]} state]
-  (let [db @(:db state)
-        layer (layer-model/find-by-ui-id db ui-id)
-        layer-width (js/Math.abs (- (:layer/start-x layer)
-                                    (:layer/end-x layer)))
-        layer-height (js/Math.abs (- (:layer/start-y layer)
-                                     (:layer/end-y layer)))
-        layer-start-x (min (:layer/start-x layer)
-                           (:layer/end-x layer))
-        layer-start-y (min (:layer/start-y layer)
-                           (:layer/end-y layer))]
-    (-> state
-        (assoc-in [:camera :x] (+ (/ (:width canvas-size) 2)
-                                  (- (+ layer-start-x
-                                        (/ layer-width 2)))))
-        (assoc-in [:camera :y] (+ (/ (:height canvas-size) 2)
-                                  (- (+ layer-start-y
-                                        (/ layer-height 2)))))
-        (assoc-in [:drawing :in-progress?] false)
-        (assoc-in [:drawing :moving?] false))))
+  ;; TODO: how to handle no layer for ui-id
+  (if-let [layer (layer-model/find-by-ui-id @(:db state) ui-id)]
+    (let [layer-width (js/Math.abs (- (:layer/start-x layer)
+                                      (:layer/end-x layer)))
+          layer-height (js/Math.abs (- (:layer/start-y layer)
+                                       (:layer/end-y layer)))
+          layer-start-x (min (:layer/start-x layer)
+                             (:layer/end-x layer))
+          layer-start-y (min (:layer/start-y layer)
+                             (:layer/end-y layer))]
+      (-> state
+          (assoc-in [:camera :x] (+ (/ (:width canvas-size) 2)
+                                    (- (+ layer-start-x
+                                          (/ layer-width 2)))))
+          (assoc-in [:camera :y] (+ (/ (:height canvas-size) 2)
+                                    (- (+ layer-start-y
+                                          (/ layer-height 2)))))
+          (assoc-in [:drawing :in-progress?] false)
+          (assoc-in [:drawing :moving?] false)))
+    state))
 
 (defmethod control-event :layer-secondary-menu-opened
   [browser-state message {:keys [layer x y]} state]
