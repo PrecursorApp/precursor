@@ -794,13 +794,18 @@
     (d/transact! db [(select-keys (get-in current-state [:layer-secondary-menu :layer])
                                   [:db/id :layer/ui-id :layer/ui-action])])))
 
+(defn empty-str->nil [s]
+  (if (str/blank? s)
+    nil
+    s))
 
+;; TODO: need a way to delete these 2 values
 (defmethod control-event :layer-ui-id-edited
   [browser-state message {:keys [value]} state]
   (-> state
-      (assoc-in [:layer-secondary-menu :layer :layer/ui-id] value)))
+      (assoc-in [:layer-secondary-menu :layer :layer/ui-id] (empty-str->nil value))))
 
 (defmethod control-event :layer-ui-action-edited
   [browser-state message {:keys [value]} state]
   (-> state
-      (assoc-in [:layer-secondary-menu :layer :layer/ui-action] value)))
+      (assoc-in [:layer-secondary-menu :layer :layer/ui-action] (empty-str->nil value))))
