@@ -15,7 +15,7 @@
      [:div
       [:a {:href (str "https://prcrsr.com/document/" doc-id)}
        [:img {:width 256
-              :src (str "https://prcrsr.com/document/" doc-id ".svg?printer-friendly=false")}]]]
+              :src (str "https://prcrsr.com/document/" doc-id ".png?printer-friendly=false")}]]]
      [:div {:style "font-size: 12px"}
       "If you think this message was an error, let us know: "
       [:a {:href "mailto:info@prcrsr.com"} "info@prcrsr.com"] "."]]]))
