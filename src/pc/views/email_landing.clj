@@ -4,6 +4,14 @@
             [pc.views.scripts :as scripts]
             [pc.profile :refer (prod-assets?)]))
 
+(def template->gif-url
+  {"simple-tools" "/email/simple-tools.gif"})
+
+(defn get-gif-url [template-name]
+  (get template->gif-url template-name "/email/simple-tools.gif"))
+
 
 (defn email-landing [template-name]
-  [:div "Welcome to Precursor"])
+  [:div
+   [:p "Welcome to Precursor"]
+   [:p [:img {:src (get-gif-url template-name)}]]])
