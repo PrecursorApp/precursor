@@ -1,5 +1,6 @@
 .overlay-info,
-.overlay-shortcuts {
+.overlay-shortcuts,
+.overlay-change-name {
   .flexy(center, center);
   position: absolute;
   top: 0;
@@ -63,6 +64,7 @@
   }
 }
 .info-okay {
+  .flexy(center, center);
   min-height: 3.5em;
   min-width: 10.5em;
   line-height: 1em;
@@ -75,6 +77,9 @@
   &:hover {
     color: @white;
     background: @font_color;
+  }
+  &:not(:hover) {
+    color: inherit;
   }
 }
 .info-buttons {

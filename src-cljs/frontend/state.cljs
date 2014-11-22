@@ -11,13 +11,14 @@
    :error-message   nil
    :changelog       nil
    :environment     "development"
-   :settings        {:browser-settings {:show-grid?  true
-                                        :night-mode? true
-                                        :current-tool :pen
+   :settings        {:browser-settings {:current-tool :pen
                                         :aside-menu-opened false
                                         :chat-mobile-opened true
                                         :right-click-learned false
-                                        :info-button-learned false}}
+                                        :menu-button-learned false
+                                        :info-button-learned false
+                                        :newdoc-button-learned false
+                                        :login-button-learned false}}
    :keyboard-shortcuts {:select #{"s"}
                         :circle #{"c"}
                         :rect #{"r"}
@@ -71,10 +72,6 @@
 
 (def user-options-shown-path [:user-options-shown])
 
-(def show-grid-path (conj browser-settings-path :show-grid?))
-
-(def night-mode-path (conj browser-settings-path :night-mode?))
-
 (def current-tool-path (conj browser-settings-path :current-tool))
 
 (def aside-menu-opened-path (conj browser-settings-path :aside-menu-opened))
@@ -83,7 +80,13 @@
 
 (def right-click-learned-path (conj browser-settings-path :right-click-learned))
 
+(def menu-button-learned-path (conj browser-settings-path :menu-button-learned))
+
 (def info-button-learned-path (conj browser-settings-path :info-button-learned))
+
+(def newdoc-button-learned-path (conj browser-settings-path :newdoc-button-learned))
+
+(def login-button-learned-path (conj browser-settings-path :login-button-learned))
 
 (defn doc-settings-path [doc-id]
   (conj browser-settings-path :document-settings doc-id))
@@ -97,6 +100,8 @@
 (def keyboard-shortcuts-path [:keyboard-shortcuts])
 
 (def overlay-info-opened-path [:aside-menu-opened])
+
+(def overlay-username-opened-path [:overlay-username-opened])
 
 (def overlay-shortcuts-opened-path [:overlay-shortcuts-opened])
 

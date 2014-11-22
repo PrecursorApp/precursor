@@ -126,7 +126,8 @@
   [shortcut-name state]
   (-> state
       (assoc-in state/overlay-info-opened-path false)
-      (assoc-in state/overlay-shortcuts-opened-path false)))
+      (assoc-in state/overlay-shortcuts-opened-path false)
+      (assoc-in state/overlay-username-opened-path false)))
 
 (defmethod handle-keyboard-shortcut :reset-canvas-position
   [shortcut-name state]
@@ -148,14 +149,6 @@
   (when (or (= key-name-kw :backspace?)
             (= key-name-kw :del?))
     (put! (get-in state [:comms :controls]) [:deleted-selected])))
-
-(defmethod control-event :show-grid-toggled
-  [browser-state message {:keys [project-id]} state]
-  (update-in state state/show-grid-path not))
-
-(defmethod control-event :night-mode-toggled
-  [browser-state message {:keys [project-id]} state]
-  (update-in state state/night-mode-path not))
 
 (defn update-mouse [state x y]
   (if (and x y)
@@ -570,6 +563,16 @@
   (-> state
       (assoc-in [:menu :open?] false)))
 
+(defmethod control-event :newdoc-button-clicked
+  [browser-state message _ state]
+  (-> state
+      (assoc-in state/newdoc-button-learned-path true)))
+
+(defmethod control-event :login-button-clicked
+  [browser-state message _ state]
+  (-> state
+      (assoc-in state/login-button-learned-path true)))
+
 (defmethod control-event :tool-selected
   [browser-state message [tool] state]
   (-> state
@@ -676,6 +679,7 @@
                            (js/Date. 0))]
     (-> state
         (assoc-in state/aside-menu-opened-path aside-open?)
+        (assoc-in state/menu-button-learned-path true)
         (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time)
         (assoc-in [:drawing :in-progress?] false)
         (assoc-in [:camera :offset-x] (if aside-open?
@@ -695,6 +699,11 @@
       (update-in state/overlay-info-opened-path not)
       (assoc-in state/info-button-learned-path true)))
 
+(defmethod control-event :overlay-username-toggled
+  [browser-state message _ state]
+  (-> state
+      (update-in state/overlay-username-opened-path not)))
+
 (defmethod post-control-event! :overlay-info-toggled
   [browser-state message _ previous-state current-state]
   (when (and (not (get-in previous-state state/info-button-learned-path))
@@ -705,7 +714,8 @@
   [target message _ state]
   (-> state
       (assoc-in state/overlay-info-opened-path false)
-      (assoc-in state/overlay-shortcuts-opened-path false)))
+      (assoc-in state/overlay-shortcuts-opened-path false)
+      (assoc-in state/overlay-username-opened-path false)))
 
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
@@ -745,7 +755,8 @@
 
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
-  (assoc-in state [:cust :name] name))
+  (-> state
+    (assoc-in [:cust :name] name)))
 
 (defmethod post-control-event! :self-updated
   [browser-state message {:keys [name]} previous-state current-state]

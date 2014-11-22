@@ -64,7 +64,8 @@
   (reify
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [cast! (om/get-shared owner :cast!)
+            login-button-learned? (get-in data state/login-button-learned-path)]
         (html
          (if (:cust data)
            [:form {:method "post" :action "/logout" :ref "logout-form"}
@@ -74,12 +75,14 @@
                                                                    (url/url)
                                                                    :path)}]
             [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
-                               :data-right "Logout"}
+                               :title "Logout"}
              (common/icon :logout)]]
            [:a.action-login {:href (auth/auth-url)
-                             :data-right "Sign Up"
+                             :data-right (when-not login-button-learned? "Sign Up")
+                             :title (when login-button-learned? "Log In")
                              :on-click #(do
                                           (.preventDefault %)
+                                          (cast! :login-button-clicked)
                                           (cast! :track-external-link-clicked {:path (auth/auth-url)
                                                                                :event "Signup Clicked"}))}
             (common/icon :login)]))))))
@@ -109,23 +112,29 @@
                                 unread-chat-count
                                 ;; add one for the dummy message
                                 (inc unread-chat-count))
-            info-button-learned? (get-in data state/info-button-learned-path)]
+            info-button-learned? (get-in data state/info-button-learned-path)
+            menu-button-learned? (get-in data state/menu-button-learned-path)
+            newdoc-button-learned? (get-in data state/newdoc-button-learned-path)]
         (html
          [:div.main-actions
           [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
                            :class (when-not aside-opened? "closed")
-                           :data-right (if aside-opened? "Close Menu" "Open Menu")}
+                           :data-right (when-not menu-button-learned? "Open Menu")
+                           :title (when menu-button-learned? (if aside-opened? "Close Menu" "Open Menu"))}
            (common/icon :menu)]
           (when (and (not aside-opened?) (pos? unread-chat-count))
             [:div.unseen-eids (str unread-chat-count)])
           (om/build auth-link data)
-          [:a.action-newdoc {:href "/"
+          [:a.action-newdoc {:on-click #(cast! :newdoc-button-clicked)
+                             :href "/"
                              :target "_self"
-                             :data-right "New Document"}
+                             :data-right (when-not newdoc-button-learned? "New Document")
+                             :title (when newdoc-button-learned? "New Document")}
            (common/icon :newdoc)]
           [:a.action-info {:on-click #(cast! :overlay-info-toggled)
                            :class (when-not info-button-learned? "hover")
-                           :data-right "What is this thing?"}
+                           :data-right (when-not info-button-learned? "What is this thing?")
+                           :title (when info-button-learned? "What is this thing?")}
            (common/icon :info)]])))))
 
 
@@ -137,6 +146,7 @@
             aside-opened? (get-in app state/aside-menu-opened-path)
             overlay-info-open? (get-in app state/overlay-info-opened-path)
             overlay-shortcuts-open? (get-in app state/overlay-shortcuts-opened-path)
+            overlay-username-open? (get-in app state/overlay-username-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div#app
                (om/build aside/menu app)
@@ -145,7 +155,10 @@
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
                 (om/build main-actions (select-in app [state/aside-menu-opened-path
+                                                       state/menu-button-learned-path
                                                        state/info-button-learned-path
+                                                       state/newdoc-button-learned-path
+                                                       state/login-button-learned-path
                                                        [:cust]
                                                        [:document/id]
                                                        (state/last-read-chat-time-path (:document/id app))]))
@@ -171,7 +184,7 @@
                                             :left (+ (get-in app [:mouse :x]) (if aside-opened? (- 16 256) 16) )}}
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
-                     "Right-click to select tool")])]
+                     "Try right-click")])]
                [:div.app-overlay
                 [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)
                                        :class (when-not overlay-info-open? "hidden")}
@@ -232,4 +245,21 @@
                   [:div.shortcuts-item
                    [:div.shortcuts-key "Cmd"]
                    [:div.shortcuts-key "Z"]
-                   [:div.shortcuts-result "Undo"]]]]]])))))
+                   [:div.shortcuts-result "Undo"]]]]
+                [:figure.overlay-change-name {:on-click #(cast! :overlay-closed)
+                                              :class (when-not overlay-username-open? "hidden")}
+                 [:div.overlay-background]
+                 [:a.overlay-close {:role "button"}
+                  (common/icon :times)]
+                 [:article {:on-click #(.stopPropagation %)}
+                  [:h2 "Let's change that name."]
+                  [:p
+                   "Help your team communicate faster with each other by using custom names. "
+                   "Log in or sign up to change how your name appears in chat."]
+                  [:div.info-buttons
+                   [:a.info-okay {:href (auth/auth-url)
+                                  :role "button"}
+                    "Sign Up"]
+                   [:a.info-twitter {:on-click #(cast! :overlay-closed)
+                                     :role "button"}
+                    "No thanks."]]]]]])))))
