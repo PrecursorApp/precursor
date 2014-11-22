@@ -43,7 +43,7 @@
   &.selected {
     fill: @color_select;
   }
-  + .text-layer {
+  &:not(.selectable-layer) {
     pointer-events: none;
   }
   &.layer-in-progress {
