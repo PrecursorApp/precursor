@@ -113,24 +113,11 @@
                                                                             (.stopPropagation %)
                                                                             (cast! :text-layer-re-edited layer))
 
-                                                                         (:layer/ui-action layer)
-                                                                         #(do
-                                                                            (.stopPropagation %)
-                                                                            (cast! :canvas-aligned-to-layer-center
-                                                                                   {:ui-id (:layer/ui-action layer)
-                                                                                    :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
-                                                                                                   {:width (.-width size)
-                                                                                                    :height (.-height size)})}))
                                                                          :else nil)
                                                            :onMouseUp (when (and (= :text tool)
                                                                                  (= :layer.type/text (:layer/type layer)))
                                                                         #(.stopPropagation %))
-                                                           :className (str/join " "
-                                                                                (concat (when (= :text tool)
-                                                                                          ["editable"])
-                                                                                        (when (and (= :select tool)
-                                                                                                   (:layer/ui-action layer))
-                                                                                          ["action"])))
+                                                           :className (when (= :text tool) "editable")
                                                            :key (:db/id layer)))
                               (when (= :select tool)
                                 (svg-element selected-eids
@@ -172,7 +159,19 @@
                                                                              :x (first (cameras/screen-event-coords %))
                                                                              :y (second (cameras/screen-event-coords %))}))))
                                                :className "selectable-layer"
-                                               :key (str "selectable-" (:db/id layer)))))))
+                                               :key (str "selectable-" (:db/id layer)))))
+                              (when (:layer/ui-action layer)
+                                (svg-element selected-eids
+                                             (assoc layer
+                                               :onMouseDown #(do
+                                                               (.stopPropagation %)
+                                                               (cast! :canvas-aligned-to-layer-center
+                                                                      {:ui-id (:layer/ui-action layer)
+                                                                       :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
+                                                                                      {:width (.-width size)
+                                                                                       :height (.-height size)})}))
+                                               :className "action"
+                                               :key (str "action-" (:db/id layer)))))))
                      (remove #(or (= :layer.type/group (:layer/type %))
                                   (contains? editing-eids (:db/id %))) layers)))))))
 
