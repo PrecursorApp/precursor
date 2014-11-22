@@ -2,23 +2,23 @@
   (:require [pc.svg :as svg]
             [hiccup.core :refer (h html)]))
 
-(defmulti svg-element (fn [layer] (:layer/type layer)))
+(defmulti svg-element (fn [layer opts] (:layer/type layer)))
 
 (defmethod svg-element :layer.type/rect
-  [layer]
-  [:rect (svg/layer->svg-rect layer)])
+  [layer opts]
+  [:rect (svg/layer->svg-rect layer opts)])
 
 (defmethod svg-element :layer.type/text
-  [layer]
-  [:text (svg/layer->svg-text layer) (h (:layer/text layer))])
+  [layer opts]
+  [:text (svg/layer->svg-text layer opts) (h (:layer/text layer))])
 
 (defmethod svg-element :layer.type/line
-  [layer]
-  [:line (svg/layer->svg-line layer)])
+  [layer opts]
+  [:line (svg/layer->svg-line layer opts)])
 
 (defmethod svg-element :layer.type/path
-  [layer]
-  [:path (svg/layer->svg-path layer)])
+  [layer opts]
+  [:path (svg/layer->svg-path layer opts)])
 
 ;; Getting placement here is a bit tricky.
 ;; Goal is to reproduce the canvas exactly as it is in the app, except in
@@ -26,7 +26,7 @@
 ;; If they've only drawn in positive x and y coordinates, then we're good
 ;; If they've drawn in negative directions, then we to shift the viewport in the
 ;; that direction with a transform.
-(defn render-layers [layers]
+(defn render-layers [layers & {:keys [invert-colors? size-limit]}]
   (let [layers (filter #(not= :layer.type/group (:layer/type %)) layers)
         start-xs (remove #(.isNaN %) (map :layer/start-x layers))
         start-ys (remove #(.isNaN %) (map :layer/start-y layers))
@@ -50,10 +50,20 @@
         offset-left (if (neg? min-x)
                       (+ 250 (- min-x))
                       0)]
-    (html [:svg {:width (+ width 500)
-                 :height (+ height 500)
-                 :xmlns "http://www.w3.org/2000/svg"
-                 :xmlns:xlink "http://www.w3.org/1999/xlink"
-                 :version "1.1"}
+    (html [:svg (merge
+                 {:width (apply min (concat [(+ width 500)]
+                                            (when size-limit
+                                              [size-limit])))
+                  :height (apply min (concat [(+ height 500)]
+                                             (when size-limit
+                                               [size-limit])))
+                  :xmlns "http://www.w3.org/2000/svg"
+                  :xmlns:xlink "http://www.w3.org/1999/xlink"
+                  :version "1.1"}
+                 (when invert-colors?
+                   {:style "background: #333"}))
+           ;; hack to make pngs work
+           (when invert-colors?
+             [:rect {:width "100%" :height "100%" :fill "#333"}])
            [:g {:transform (format "translate(%s, %s)" offset-left offset-top)}
-            (map svg-element layers)]])))
+            (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))

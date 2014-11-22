@@ -104,6 +104,14 @@
     @(d/transact conn [{:db/id :layer/child
                         :db/ident :layer/child-deprecated}])))
 
+(defn add-prcrsr-bot
+  "Adds a precursor bot"
+  [conn]
+  @(d/transact conn [{:db/id (d/tempid :db.part/user)
+                      :cust/email "prcrsr-bot@prcrsr.com"
+                      :cust/name "prcrsr"
+                      :cust/uuid (d/squuid)}]))
+
 
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
@@ -111,7 +119,8 @@
   (array-map
    0 #'add-migrations-entity
    1 #'layer-longs->floats
-   2 #'layer-child-uuid->long))
+   2 #'layer-child-uuid->long
+   3 #'add-prcrsr-bot))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"
