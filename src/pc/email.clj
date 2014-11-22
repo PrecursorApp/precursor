@@ -1,5 +1,7 @@
 (ns pc.email
   (:require [clojure.string :as str]
+            [clj-time.core :as time]
+            [clj-time.format]
             [hiccup.core :as hiccup]
             [pc.mailgun :as mailgun]))
 
@@ -7,18 +9,23 @@
   (hiccup/html
    [:html
     [:body
-     [:div "Hey there,"]
-     [:div
+     [:p "Hey there,"]
+     [:p
       "Come draw with me on Precursor: "
       [:a {:href (str "https://prcrsr.com/document/" doc-id)}
        (str "https://prcrsr.com/document/" doc-id)]]
-     [:div
+     [:p
       [:a {:href (str "https://prcrsr.com/document/" doc-id)}
        [:img {:width 256
               :src (str "https://prcrsr.com/document/" doc-id ".png?printer-friendly=false")}]]]
-     [:div {:style "font-size: 12px"}
+     [:p {:style "font-size: 12px"}
       "If you think this message was an error, let us know: "
-      [:a {:href "mailto:info@prcrsr.com"} "info@prcrsr.com"] "."]]]))
+      [:a {:href "mailto:info@prcrsr.com"} "info@prcrsr.com"] "."
+      ;; Add some hidden text so that Google doesn't try to trim these.
+      [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
+       " Sent at "
+       (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
+       "."]]]]))
 
 (defn send-chat-invite [{:keys [cust to-email doc-id]}]
   (mailgun/send-message {:from "Precursor <draw@prcrsr.com>"
