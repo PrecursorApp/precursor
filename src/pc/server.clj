@@ -28,6 +28,7 @@
             [pc.convert :refer (svg->png)]
             [pc.render :refer (render-layers)]
             [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
+            [ring.middleware.reload :refer (wrap-reload)]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
             [ring.util.response :refer (redirect)]
@@ -44,6 +45,7 @@
   (swap! bucket-doc-ids (fn [b]
                           (set/intersection b (set (keys @sente/document-subs))))))
 
+;; TODO: make this reloadable without reloading the server
 (defn app [sente-state]
   (routes
    (POST "/api/entity-ids" request
@@ -201,6 +203,13 @@
       (handler (assoc req :auth {:cust cust}))
       (handler req))))
 
+(defn wrap-wrap-reload
+  "Only applies wrap-reload middleware in development"
+  [handler]
+  (if (profile/prod?)
+    handler
+    (wrap-reload handler)))
+
 (defn handler [sente-state]
   (->
    (app sente-state)
@@ -212,6 +221,7 @@
                                  :max-age (* 60 60 24 365)
                                  :secure (profile/force-ssl?)}})
    (ssl-middleware)
+   (wrap-wrap-reload)
    (exception-middleware)
    (logging-middleware)
    (site)))

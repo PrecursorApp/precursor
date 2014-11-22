@@ -634,6 +634,25 @@
       (assoc-in [:chat :body] nil)
       (assoc-in [:chat :entity-id] nil)))
 
+(defmulti handle-cmd-chat (fn [state cmd]
+                            (utils/mlog "handling chat command:" cmd)
+                            cmd))
+
+;; TODO: more robust cmd parsing
+(defmethod handle-cmd-chat :default
+  [state cmd chat]
+  (utils/mlog "unknown chat command:" cmd))
+
+(defmethod handle-cmd-chat "invite"
+  [state cmd body]
+  (let [email (last (re-find #"/invite\s+([^\s]+)" body))]
+    (utils/inspect (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
+                                                                          :email email}]))))
+
+(defn chat-cmd [body]
+  (when (seq body)
+    (last (re-find #"^/([^\s]+)" body))))
+
 (defmethod post-control-event! :chat-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
@@ -649,7 +668,9 @@
                       :document/id (:document/id previous-state)
                       :client/timestamp (js/Date.)
                       ;; server will overwrite this
-                      :server/timestamp (js/Date.)}])))
+                      :server/timestamp (js/Date.)}])
+    (when-let [cmd (chat-cmd (get-in previous-state [:chat :body]))]
+      (handle-cmd-chat current-state cmd (get-in previous-state [:chat :body])))))
 
 (defmethod control-event :aside-menu-toggled
   [browser-state message _ state]
