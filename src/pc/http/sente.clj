@@ -215,12 +215,11 @@
         (try
           (send-chat "Invite sent!")
           (email/send-chat-invite {:cust cust :to-email email :doc-id doc-id})
-          ;; TODO: should this come from the admin or a special bot user?
-
           (catch Exception e
             (log/error e)
             (.printStackTrace e)
             (send-chat "Sorry! There was a problem sending the invite."))))
+
       (send-chat "Please sign up to send an invite."))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
