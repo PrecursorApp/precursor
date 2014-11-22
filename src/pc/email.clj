@@ -45,4 +45,8 @@
                                                        :else nil)
                                                  "invited you to a document on Precursor"))
                          :text (str "Hey there,\nCome draw with me on Precursor: https://prcrsr.com/document" doc-id)
-                         :html (chat-invite-html doc-id)}))
+                         :html (chat-invite-html doc-id)
+                         :o:tracking "yes"
+                         :o:tracking-opens "yes"
+                         :o:tracking-clicks "no"
+                         :o:campaign "chat_invites"}))
