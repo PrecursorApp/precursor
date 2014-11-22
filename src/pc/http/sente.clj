@@ -4,6 +4,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
+            [pc.auth :as auth]
             [pc.http.datomic2 :as datomic2]
             [pc.email :as email]
             [pc.models.layer :as layer]
@@ -196,13 +197,17 @@
   ;; This may turn out to be a bad idea, but error handling is done through creating chats
   (let [[chat-id] (pcd/generate-eids (pcd/conn) 1)
         doc-id (-> ?data :document/id)
+        db (pcd/default-db)
         send-chat (fn [body]
                     @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
                                               :document/id doc-id}
                                              {:chat/body body
                                               :server/timestamp (java.util.Date.)
                                               :document/id doc-id
-                                              :db/id chat-id}]))]
+                                              :db/id chat-id
+                                              :cust/uuid (auth/prcrsr-bot-uuid db)
+                                              ;; default bot color, also used on frontend chats
+                                              :chat/color "#00b233"}]))]
     (if-let [cust (-> req :ring-req :auth :cust)]
       (let [email (-> ?data :email)
             cid (client-uuid->uuid client-uuid)]
@@ -216,7 +221,7 @@
             (log/error e)
             (.printStackTrace e)
             (send-chat "Sorry! There was a problem sending the invite."))))
-      (pc.utils/inspect (send-chat "Please sign up to send a chat.")))))
+      (send-chat "Please sign up to send an invite."))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
