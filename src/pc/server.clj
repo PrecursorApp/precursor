@@ -152,7 +152,7 @@
                                                    :path redirect-to}))}
           :session nil})
 
-   (GET "/email/welcome/:template" [template]
+   (GET "/email/welcome/:template.gif" [template]
         {:status 200
          :body (content/email-welcome template)})
 
