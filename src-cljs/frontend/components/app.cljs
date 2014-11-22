@@ -75,7 +75,7 @@
                                                                    (url/url)
                                                                    :path)}]
             [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
-                               :data-right "Logout"}
+                               :title "Logout"}
              (common/icon :logout)]]
            [:a.action-login {:href (auth/auth-url)
                              :data-right (when-not login-button-learned? "Sign Up")
@@ -113,12 +113,14 @@
                                 ;; add one for the dummy message
                                 (inc unread-chat-count))
             info-button-learned? (get-in data state/info-button-learned-path)
+            menu-button-learned? (get-in data state/menu-button-learned-path)
             newdoc-button-learned? (get-in data state/newdoc-button-learned-path)]
         (html
          [:div.main-actions
           [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
                            :class (when-not aside-opened? "closed")
-                           :data-right (when-not aside-opened? "Open Menu")}
+                           :data-right (when-not menu-button-learned? "Open Menu")
+                           :title (when menu-button-learned? (if aside-opened? "Close Menu" "Open Menu"))}
            (common/icon :menu)]
           (when (and (not aside-opened?) (pos? unread-chat-count))
             [:div.unseen-eids (str unread-chat-count)])
@@ -153,6 +155,7 @@
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
                 (om/build main-actions (select-in app [state/aside-menu-opened-path
+                                                       state/menu-button-learned-path
                                                        state/info-button-learned-path
                                                        state/newdoc-button-learned-path
                                                        state/login-button-learned-path
@@ -181,7 +184,7 @@
                                             :left (+ (get-in app [:mouse :x]) (if aside-opened? (- 16 256) 16) )}}
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
-                     "Right-click to select tool")])]
+                     "Try right-click")])]
                [:div.app-overlay
                 [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)
                                        :class (when-not overlay-info-open? "hidden")}

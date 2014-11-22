@@ -15,6 +15,7 @@
                                         :aside-menu-opened false
                                         :chat-mobile-opened true
                                         :right-click-learned false
+                                        :menu-button-learned false
                                         :info-button-learned false
                                         :newdoc-button-learned false
                                         :login-button-learned false}}
@@ -78,6 +79,8 @@
 (def chat-mobile-opened-path (conj browser-settings-path :chat-mobile-toggled))
 
 (def right-click-learned-path (conj browser-settings-path :right-click-learned))
+
+(def menu-button-learned-path (conj browser-settings-path :menu-button-learned))
 
 (def info-button-learned-path (conj browser-settings-path :info-button-learned))
 

@@ -47,9 +47,11 @@
   &.selected {
     fill: @color_select;
   }
-  + .text-layer {
-    pointer-events: none;
-  }
+  // TODO: not sure what this will break, but it makes text
+  //       1. selectable w/ select tool and 2. editable w/ text tool.
+  // &:not(.selectable-layer) {
+  //   pointer-events: none;
+  // }
   &.layer-in-progress {
     fill: @blue;
   }

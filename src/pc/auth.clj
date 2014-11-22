@@ -1,6 +1,7 @@
 (ns pc.auth
   (:require [cheshire.core :as json]
             [clojure.tools.logging :as log]
+            [datomic.api :as d]
             [org.httpkit.client :as http]
             [pc.analytics :as analytics]
             [pc.auth.google :as google-auth]
@@ -59,3 +60,11 @@
           (if (pcd/unique-conflict? e)
             (cust/find-by-google-sub (pcd/default-db) (:sub user-info))
             (throw e)))))))
+
+(def prcrsr-bot-email "prcrsr-bot@prcrsr.com")
+(defn prcrsr-bot-uuid [db]
+  (ffirst (d/q '{:find [?u]
+                 :in [$ ?e]
+                 :where [[?t :cust/email ?e]
+                         [?t :cust/uuid ?u]]}
+               db prcrsr-bot-email)))
