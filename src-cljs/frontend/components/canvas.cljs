@@ -345,22 +345,22 @@
                                       :value (or (:layer/ui-id layer) "")
                                       ;; TODO: defaults for each layer when we create them
                                       :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})}))
+                    (when-not (= :layer.type/line (:layer/type layer))
+                      (dom/div nil
+                        (apply
+                         dom/select #js {:type "text"
+                                         :ref "reference-input"
+                                         :value (or (:layer/ui-target layer) "")
+                                         ;; TODO: defaults for each layer when we create them
+                                         :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})}
+                         (dom/option #js {:value ""}
+                                     "None")
 
-                    (dom/div nil
-                      (apply
-                       dom/select #js {:type "text"
-                                       :ref "reference-input"
-                                       :value (or (:layer/ui-target layer) "")
-                                       ;; TODO: defaults for each layer when we create them
-                                       :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})}
-                       (dom/option #js {:value ""}
-                                   "None")
-
-                       (for [target (sort (distinct (concat targets
-                                                            (when (:layer/ui-target layer)
-                                                              [(:layer/ui-target layer)]))))]
-                         (dom/option #js {:value target}
-                                     target))))))))))
+                         (for [target (sort (distinct (concat targets
+                                                              (when (:layer/ui-target layer)
+                                                                [(:layer/ui-target layer)]))))]
+                           (dom/option #js {:value target}
+                                       target)))))))))))
 
 (defn svg-canvas [payload owner opts]
   (reify
