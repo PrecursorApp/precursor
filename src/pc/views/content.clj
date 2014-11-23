@@ -2,6 +2,7 @@
   (:require [cheshire.core :as json]
             [hiccup.core :as h]
             [pc.views.scripts :as scripts]
+            [pc.views.email-landing :as email-landing]
             [pc.profile :refer (prod-assets?)])
   (:import java.util.UUID))
 
@@ -72,3 +73,6 @@
 
 (defn interesting [doc-ids]
   (h/html (layout {} (interesting* (reverse (sort doc-ids))))))
+
+(defn email-welcome [template-name]
+  (h/html (layout {} (email-landing/email-landing template-name))))
