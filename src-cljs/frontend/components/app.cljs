@@ -194,17 +194,19 @@
                  [:article {:on-click #(.stopPropagation %)}
                   [:h1 "What's this?"]
                   [:p
-                   "Precursor is a collaborative idea tool. "
-                   "Think of it as a notebook with infinite pages – use it to create sketches, "
-                   "rapid prototypes, notes, and everything in between. "
-                   "Share your URL to collaborate and you'll instantly have multiple people "
-                   "working in the same document. "
-                   "It's still a work in progress, so if you have feedback or a great idea "
-                   "for us sketch it up and ping "
+                   "Precursor is a no-nonsense prototyping tool—"
+                   "use it for sketching, rapid prototyping, and team brainstorming. "
+                   [:a {:on-click #(cast! :invite-link-clicked)
+                        :role "button"}
+                    "Invite your team"]
+                   " and everyone can collaborate in the same document, instantly. "
+                   " We're still pretty new, so if you have feedback or a great idea sketch it up and ping "
                    [:a {:on-click #(cast! :chat-link-clicked)
                         :role "button"}
                     "@prcrsr"]
-                   " in the chat."]
+                   " in the chat, or say "
+                   [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"}
+                    "hi@prcrsr.com"]]
                   [:div.info-buttons
                    [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
                     "Okay, sounds good."]
@@ -212,7 +214,7 @@
                                      :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
                                      :title "Keep track of our changes on Twitter."
                                      :target "_blank"}
-                    "What should we add next?"]]]
+                    "Tell us what to add next."]]]
                  (common/mixpanel-badge)]
                 [:figure.overlay-shortcuts {:on-click #(cast! :overlay-closed)
                                             :class (when-not overlay-shortcuts-open? "hidden")}

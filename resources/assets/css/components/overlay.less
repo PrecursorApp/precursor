@@ -27,6 +27,18 @@
       transition: @speed_fast @bezier_fadein;
     }
   }
+  a {
+    &:not(:hover) {
+      color: @gray_darker;
+    }
+  }
+  p {
+    a {
+      &:not(:hover) {
+        border-bottom: 1px dotted @gray_light;
+      }
+    }
+  }
   article {
     position: relative;
     max-width: (@tile * 10);

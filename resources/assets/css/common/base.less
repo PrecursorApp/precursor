@@ -1,5 +1,5 @@
 html {
-  color: @font_color;
+  color: @gray_light;
   font-family: @font_family;
   font-size: @font_size;
   line-height: @line_height;
@@ -12,7 +12,6 @@ body {
 }
 #app {
   .flexy();
-  color: @gray_lighter;
   background: @app_background;
   height: 100vh;
   overflow: hidden;
@@ -46,17 +45,10 @@ a {
   color: @color_link;
   text-decoration: none;
   &:hover {
-    color: inherit;
+    color: @color_link_hover;
   }
   &[role="button"] {
     cursor: pointer;
-  }
-}
-p {
-  a {
-    &:hover {
-      border-bottom: 1px dotted @color_link;
-    }
   }
 }
 h1, h2, h3, h4, h5, h6 {
