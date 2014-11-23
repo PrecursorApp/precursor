@@ -302,7 +302,8 @@
 
 (defn layer-properties [{:keys [layer x y]} owner]
   (reify
-    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                                   :input-expanded false})
     om/IDidMount
     (did-mount [_]
       (.focus (om/get-node owner "id-input"))
@@ -346,21 +347,26 @@
                                       ;; TODO: defaults for each layer when we create them
                                       :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})}))
                     (when-not (= :layer.type/line (:layer/type layer))
-                      (dom/div nil
-                        (apply
-                         dom/select #js {:type "text"
-                                         :ref "reference-input"
-                                         :value (or (:layer/ui-target layer) "")
-                                         ;; TODO: defaults for each layer when we create them
-                                         :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})}
-                         (dom/option #js {:value ""}
-                                     "None")
-
-                         (for [target (sort (distinct (concat targets
-                                                              (when (:layer/ui-target layer)
-                                                                [(:layer/ui-target layer)]))))]
-                           (dom/option #js {:value target}
-                                       target)))))))))))
+                      (dom/div #js {:className "text-select"}
+                        (dom/div #js {:className "input-container"}
+                          (dom/input #js {:type "text"
+                                          :ref "target-input"
+                                          :value (or (:layer/ui-target layer) "")
+                                          :onClick #(.focus (om/get-node owner "target-input"))
+                                          :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})})
+                          (dom/button #js {:onClick #(do (om/update-state! owner :input-expanded not)
+                                                         false)}
+                                      "\\/"))
+                        (apply dom/div #js {:className "target-options"}
+                               (when (om/get-state owner :input-expanded)
+                                 (for [target (sort (distinct (concat targets
+                                                                      (when (:layer/ui-target layer)
+                                                                        [(:layer/ui-target layer)]))))]
+                                   (dom/div #js {:className "target-option"
+                                                 :onClick #(do (cast! :layer-ui-target-edited {:value target})
+                                                               (om/set-state! owner :input-expanded false)
+                                                               (.focus (om/get-node owner "target-input")))}
+                                     target))))))))))))
 
 (defn svg-canvas [payload owner opts]
   (reify
