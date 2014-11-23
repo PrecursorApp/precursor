@@ -191,7 +191,9 @@
                                                :className (str "action interactive-layer "
                                                                (when (and (< 1 (count selected-eids))
                                                                           (contains? selected-eids (:db/id layer)))
-                                                                 "selected-group"))
+                                                                 "selected-group ")
+                                                               (when-not (pos? (layer-model/count-by-ui-id @db (:layer/ui-action layer)))
+                                                                 "invalid-action"))
                                                :key (str "action-" (:db/id layer)))))
                               (filter :layer/ui-action renderable-layers)))))))))
 
