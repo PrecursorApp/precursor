@@ -188,6 +188,12 @@
                 (update-in [:entity-ids] disj entity-id))]
             r)))
 
+(defn inc-str-id [str-id]
+  (str/replace str-id #"(.+?)(-{0,1})(\d+)?$" (fn [match base dash num]
+                                            (str base
+                                                 "-"
+                                                 (inc (js/parseInt (or num "0")))))))
+
 (defmethod control-event :layer-duplicated
   [browser-state message {:keys [layer x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
@@ -201,7 +207,11 @@
                                         :layer/start-x (:layer/start-x layer)
                                         :layer/end-x (:layer/end-x layer)
                                         :layer/current-x (:layer/end-x layer)
-                                        :layer/current-y (:layer/end-y layer))])
+                                        :layer/current-y (:layer/end-y layer)
+                                        :layer/ui-id (when (:layer/ui-id layer)
+                                                       (inc-str-id (:layer/ui-id layer)))
+                                        :layer/ui-action (when (:layer/ui-action layer)
+                                                           (inc-str-id (:layer/ui-action layer))))])
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry])
         (update-in [:entity-ids] disj entity-id))))
@@ -226,7 +236,11 @@
                                                      :layer/start-x (:layer/start-x layer)
                                                      :layer/end-x (:layer/end-x layer)
                                                      :layer/current-x (:layer/end-x layer)
-                                                     :layer/current-y (:layer/end-y layer)))
+                                                     :layer/current-y (:layer/end-y layer)
+                                                     :layer/ui-id (when (:layer/ui-id layer)
+                                                                    (inc-str-id (:layer/ui-id layer)))
+                                                     :layer/ui-action (when (:layer/ui-action layer)
+                                                                        (inc-str-id (:layer/ui-action layer)))))
                                                  layers entity-ids)
                                            group-layer))
         (assoc-in [:drawing :moving?] true)
