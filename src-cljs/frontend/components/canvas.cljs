@@ -302,12 +302,25 @@
 
 (defn layer-properties [{:keys [layer x y]} owner]
   (reify
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
-      (.focus (om/get-node owner "id-input")))
+      (.focus (om/get-node owner "id-input"))
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when (some #(= (:a %) :layer/ui-id) (:tx-data tx-report))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            targets (map first (d/q '{:find [?id]
+                                      :where [[_ :layer/ui-id ?id]]}
+                                    @db))]
         (dom/foreignObject #js {:width "100%"
                                 :height "100%"
                                 :x x
@@ -332,13 +345,18 @@
                                       :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})}))
 
                     (dom/div nil
-                      (dom/input #js {:type "text"
-                                      :ref "reference-input"
-                                      :onClick #(.focus (om/get-node owner "reference-input"))
-                                      :placeholder "Snap to named shape..."
-                                      :value (or (:layer/ui-target layer) "")
-                                      ;; TODO: defaults for each layer when we create them
-                                      :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})}))))))))
+                      (apply
+                       dom/select #js {:type "text"
+                                       :ref "reference-input"
+                                       :value (or (:layer/ui-target layer) "")
+                                       ;; TODO: defaults for each layer when we create them
+                                       :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})}
+                       (dom/option #js {:value ""}
+                                   "None")
+
+                       (for [target targets]
+                         (dom/option #js {:value target}
+                                     target))))))))))
 
 (defn svg-canvas [payload owner opts]
   (reify
