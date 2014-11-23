@@ -180,6 +180,11 @@
                                                 :onMouseDown #(do
                                                                 (.stopPropagation %)
                                                                 (cond
+                                                                 (or (= (.-button %) 2)
+                                                                     (and (= (.-button %) 0) (.-ctrlKey %)))
+                                                                 (cast! :layer-secondary-menu-opened {:layer layer
+                                                                                                      :x (first (cameras/screen-event-coords %))
+                                                                                                      :y (second (cameras/screen-event-coords %))})
                                                                  (and (< 1 (count selected-eids))
                                                                       (contains? selected-eids (:db/id layer)))
                                                                  (cast! :group-selected
