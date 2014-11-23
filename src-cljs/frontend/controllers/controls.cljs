@@ -451,6 +451,7 @@
      (and (= button 0) ctrl?) (cast! :menu-opened)
      ;; turning off Cmd+click for opening the menu
      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
+     (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
                                                                 ;; if you click while writing text, you probably wanted to place it there
