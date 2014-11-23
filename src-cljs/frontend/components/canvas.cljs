@@ -168,13 +168,14 @@
                             renderable-layers))
                (when (= :select tool)
                  (apply dom/g #js {:className "layers interactive-layers"}
-                        (for [layer (filter :layer/ui-action renderable-layers)
-                              :let [invalid? (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-action layer))))]]
+                        (for [layer (filter :layer/ui-target renderable-layers)
+                              :let [invalid? (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-target layer))))]]
                           (dom/g nil
 
                                  (when invalid?
                                    (dom/title nil
-                                              (str "This action doesn't point to any named shape. Right-click on a shape to name it " (:layer/ui-id layer))))
+                                              (str "This action links to "  (:layer/ui-target layer) ", but no shapes have that name."
+                                                   " Right-click on a shape to name it " (:layer/ui-target layer))))
                                  (svg-element selected-eids
                                               (assoc layer
                                                 :onMouseDown #(do
@@ -195,7 +196,7 @@
 
                                                                  :else
                                                                  (cast! :canvas-aligned-to-layer-center
-                                                                        {:ui-id (:layer/ui-action layer)
+                                                                        {:ui-id (:layer/ui-target layer)
                                                                          :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
                                                                                         {:width (.-width size)
                                                                                          :height (.-height size)})})))
@@ -335,9 +336,9 @@
                                       :ref "reference-input"
                                       :onClick #(.focus (om/get-node owner "reference-input"))
                                       :placeholder "Snap to named shape..."
-                                      :value (or (:layer/ui-action layer) "")
+                                      :value (or (:layer/ui-target layer) "")
                                       ;; TODO: defaults for each layer when we create them
-                                      :onChange #(cast! :layer-ui-action-edited {:value (.. % -target -value)})}))))))))
+                                      :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})}))))))))
 
 (defn svg-canvas [payload owner opts]
   (reify

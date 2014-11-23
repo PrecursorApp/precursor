@@ -105,7 +105,7 @@
               :db.type/string
               :db/doc "User-provided identifier for layer")
 
-   (attribute :layer/ui-action
+   (attribute :layer/ui-target
               :db.type/string
               :db/doc "User-provided action for layer")
 

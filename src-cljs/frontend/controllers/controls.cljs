@@ -210,8 +210,8 @@
                                         :layer/current-y (:layer/end-y layer)
                                         :layer/ui-id (when (:layer/ui-id layer)
                                                        (inc-str-id (:layer/ui-id layer)))
-                                        :layer/ui-action (when (:layer/ui-action layer)
-                                                           (inc-str-id (:layer/ui-action layer))))])
+                                        :layer/ui-target (when (:layer/ui-target layer)
+                                                           (inc-str-id (:layer/ui-target layer))))])
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry])
         (update-in [:entity-ids] disj entity-id))))
@@ -239,8 +239,8 @@
                                                      :layer/current-y (:layer/end-y layer)
                                                      :layer/ui-id (when (:layer/ui-id layer)
                                                                     (inc-str-id (:layer/ui-id layer)))
-                                                     :layer/ui-action (when (:layer/ui-action layer)
-                                                                        (inc-str-id (:layer/ui-action layer)))))
+                                                     :layer/ui-target (when (:layer/ui-target layer)
+                                                                        (inc-str-id (:layer/ui-target layer)))))
                                                  layers entity-ids)
                                            group-layer))
         (assoc-in [:drawing :moving?] true)
@@ -829,7 +829,7 @@
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)]
     (d/transact! db [(select-keys (get-in current-state [:layer-secondary-menu :layer])
-                                  [:db/id :layer/ui-id :layer/ui-action])])))
+                                  [:db/id :layer/ui-id :layer/ui-target])])))
 
 (defn empty-str->nil [s]
   (if (str/blank? s)
@@ -842,7 +842,7 @@
   (-> state
       (assoc-in [:layer-secondary-menu :layer :layer/ui-id] (empty-str->nil value))))
 
-(defmethod control-event :layer-ui-action-edited
+(defmethod control-event :layer-ui-target-edited
   [browser-state message {:keys [value]} state]
   (-> state
-      (assoc-in [:layer-secondary-menu :layer :layer/ui-action] (empty-str->nil value))))
+      (assoc-in [:layer-secondary-menu :layer :layer/ui-target] (empty-str->nil value))))
