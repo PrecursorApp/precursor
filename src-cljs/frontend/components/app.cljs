@@ -197,24 +197,33 @@
                    "Precursor is a no-nonsense prototyping tool—"
                    "use it for sketching, rapid prototyping, and team brainstorming. "
                    [:a {:on-click #(cast! :invite-link-clicked)
-                        :role "button"}
+                        :role "button"
+                        :title "In chat, type \"/invite their@email.com\""}
                     "Invite your team"]
                    " and everyone can collaborate in the same document, instantly. "
                    " We're still pretty new, so if you have feedback or a great idea sketch it up and ping "
                    [:a {:on-click #(cast! :chat-link-clicked)
-                        :role "button"}
+                        :role "button"
+                        :title "Start any chat with \"@prcrsr\" and we'll see it."}
                     "@prcrsr"]
                    " in the chat, or say "
-                   [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"}
+                   [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
+                        :title "We love feedback, good or bad."}
                     "hi@prcrsr.com"]]
                   [:div.info-buttons
                    [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
                     "Okay, sounds good."]
-                   [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
-                                     :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-                                     :title "Keep track of our changes on Twitter."
-                                     :target "_blank"}
-                    "Tell us what to add next."]]]
+                   ;; TODO ab test this ".info-twitter" link with the the current one below -dk
+                   ;; [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
+                   ;;                   :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+                   ;;                   :data-top "Tell us what to add next."
+                   ;;                   :target "_blank"}
+                   ;;   (common/icon :twitter)]
+                   [:p [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
+                                         :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+                                         :title "On Twitter"
+                                         :target "_blank"}
+                     "Tell us what to add next."]]]]
                  (common/mixpanel-badge)]
                 [:figure.overlay-shortcuts {:on-click #(cast! :overlay-closed)
                                             :class (when-not overlay-shortcuts-open? "hidden")}

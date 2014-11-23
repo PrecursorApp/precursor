@@ -42,9 +42,11 @@ img {
   max-width: 100%;
 }
 a {
+  .icon_fill(@color_link);
   color: @color_link;
   text-decoration: none;
   &:hover {
+    .icon_fill(@color_link_hover);
     color: @color_link_hover;
   }
   &[role="button"] {
