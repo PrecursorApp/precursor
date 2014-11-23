@@ -194,17 +194,17 @@
                  [:article {:on-click #(.stopPropagation %)}
                   [:h1 "What's this?"]
                   [:p
-                   "Precursor is a no nonsense prototyping tool. "
-                   "Think of it like a notebook with infinite pages—"
-                   "use it for simple sketching, rapid prototyping, team brainstorming, or just sharing ideas. "
-                   "Share your url or "
-                   [:a {:href "#"} "send invites"]
-                   " and you'll instantly have multiple people collaborating in real-time. "
-                   "Precursor is still young so if you have feedback or a great idea, sketch it up or type it out and ping "
+                   "Precursor is a no-nonsense prototyping tool—"
+                   "use it for sketching, rapid prototyping, and team brainstorming. "
+                   [:a {:on-click #(cast! :chat-link-clicked)
+                        :role "button"}
+                    "Invite your team"]
+                   " and everyone can collaborate in the same document, instantly. "
+                   " We're still pretty new, so if you have feedback or a great idea sketch it up and ping "
                    [:a {:on-click #(cast! :chat-link-clicked)
                         :role "button"}
                     "@prcrsr"]
-                   " in the chat. Or say "
+                   " in the chat, or say "
                    [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"}
                     "hi@prcrsr.com"]]
                   [:div.info-buttons
