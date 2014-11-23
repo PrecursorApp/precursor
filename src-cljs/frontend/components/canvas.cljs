@@ -168,34 +168,39 @@
                             renderable-layers))
                (when (= :select tool)
                  (apply dom/g #js {:className "layers interactive-layers"}
-                        (mapv (fn [layer]
-                                (svg-element selected-eids
-                                             (assoc layer
-                                               :onMouseDown #(do
-                                                               (.stopPropagation %)
-                                                               (cond
-                                                                (and (< 1 (count selected-eids))
-                                                                     (contains? selected-eids (:db/id layer)))
-                                                                (cast! :group-selected
-                                                                       {:x (first (cameras/screen-event-coords %))
-                                                                        :y (second (cameras/screen-event-coords %))
-                                                                        :group-eid selected-eid
-                                                                        :layer-eids (disj selected-eids selected-eid)})
+                        (for [layer (filter :layer/ui-action renderable-layers)
+                              :let [invalid? (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-action layer))))]]
+                          (dom/g nil
 
-                                                                :else
-                                                                (cast! :canvas-aligned-to-layer-center
-                                                                       {:ui-id (:layer/ui-action layer)
-                                                                        :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
-                                                                                       {:width (.-width size)
-                                                                                        :height (.-height size)})})))
-                                               :className (str "action interactive-layer "
-                                                               (when (and (< 1 (count selected-eids))
-                                                                          (contains? selected-eids (:db/id layer)))
-                                                                 "selected-group ")
-                                                               (when-not (pos? (layer-model/count-by-ui-id @db (:layer/ui-action layer)))
-                                                                 "invalid-action"))
-                                               :key (str "action-" (:db/id layer)))))
-                              (filter :layer/ui-action renderable-layers)))))))))
+                                 (when invalid?
+                                   (dom/title nil
+                                              (str "This action doesn't point to any named shape. Right-click on a shape to name it " (:layer/ui-id layer))))
+                                 (svg-element selected-eids
+                                              (assoc layer
+                                                :onMouseDown #(do
+                                                                (.stopPropagation %)
+                                                                (cond
+                                                                 (and (< 1 (count selected-eids))
+                                                                      (contains? selected-eids (:db/id layer)))
+                                                                 (cast! :group-selected
+                                                                        {:x (first (cameras/screen-event-coords %))
+                                                                         :y (second (cameras/screen-event-coords %))
+                                                                         :group-eid selected-eid
+                                                                         :layer-eids (disj selected-eids selected-eid)})
+
+                                                                 :else
+                                                                 (cast! :canvas-aligned-to-layer-center
+                                                                        {:ui-id (:layer/ui-action layer)
+                                                                         :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
+                                                                                        {:width (.-width size)
+                                                                                         :height (.-height size)})})))
+                                                :className (str "action interactive-layer "
+                                                                (when (and (< 1 (count selected-eids))
+                                                                           (contains? selected-eids (:db/id layer)))
+                                                                  "selected-group ")
+                                                                (when invalid?
+                                                                  "invalid-action"))
+                                                :key (str "action-" (:db/id layer)))))))))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
