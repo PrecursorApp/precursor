@@ -408,10 +408,10 @@
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
                   (om/build svg-layers (assoc (select-keys payload [:selected-eid])
                                          :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
-                                                                               (settings/moving-drawing? payload))
-                                                                       (concat [(:db/id (settings/drawing payload))]
-                                                                               (map :db/id (get-in payload [:drawing :layers]))))
-                                                                     (remove nil? (map :db/id subs-layers))))
+                                                                              (settings/moving-drawing? payload))
+                                                                      (concat [(:db/id (settings/drawing payload))]
+                                                                              (map :db/id (get-in payload [:drawing :layers]))))
+                                                                    (remove nil? (map :db/id subs-layers))))
                                          :tool (get-in payload state/current-tool-path)
                                          :selected-eids (when (and (settings/drawing-in-progress? payload)
                                                                    (get-in payload [:drawing :layers 0 :layer/child]))
