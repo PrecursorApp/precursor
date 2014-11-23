@@ -174,8 +174,8 @@
 
                                  (when invalid?
                                    (dom/title nil
-                                              (str "This action links to "  (:layer/ui-target layer) ", but no shapes have that name."
-                                                   " Right-click on a shape to name it " (:layer/ui-target layer))))
+                                              (str "This action links to \""  (:layer/ui-target layer) "\", but no shapes have that name."
+                                                   " Right-click on a shape's border to name it " (:layer/ui-target layer))))
                                  (svg-element selected-eids
                                               (assoc layer
                                                 :onMouseDown #(do
@@ -318,9 +318,11 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            targets (map first (d/q '{:find [?id]
-                                      :where [[_ :layer/ui-id ?id]]}
-                                    @db))]
+            ;; TODO: figure out how to handle nils in datascript
+            targets (remove nil?
+                            (map first (d/q '{:find [?id]
+                                              :where [[_ :layer/ui-id ?id]]}
+                                            @db)))]
         (dom/foreignObject #js {:width "100%"
                                 :height "100%"
                                 :x x
@@ -354,7 +356,9 @@
                        (dom/option #js {:value ""}
                                    "None")
 
-                       (for [target targets]
+                       (for [target (sort (distinct (concat targets
+                                                            (when (:layer/ui-target layer)
+                                                              [(:layer/ui-target layer)]))))]
                          (dom/option #js {:value target}
                                      target))))))))))
 
