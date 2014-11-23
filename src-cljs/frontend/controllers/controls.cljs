@@ -189,10 +189,9 @@
             r)))
 
 (defn inc-str-id [str-id]
-  (str/replace str-id #"(.+?)(-{0,1})(\d+)?$" (fn [match base dash num]
-                                            (str base
-                                                 "-"
-                                                 (inc (js/parseInt (or num "0")))))))
+  (if-let [[match base num] (re-find #"(.+)\((\d+)\)" str-id)]
+    (str base "(" (inc (js/parseInt num)) ")")
+    (str str-id " (1)")))
 
 (defmethod control-event :layer-duplicated
   [browser-state message {:keys [layer x y]} state]
