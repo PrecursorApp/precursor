@@ -206,8 +206,8 @@
             cid (client-uuid->uuid client-uuid)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
         (try
-          (send-chat "Invite sent!")
           (email/send-chat-invite {:cust cust :to-email email :doc-id doc-id})
+          (send-chat "Invite sent!")
           (catch Exception e
             (log/error e)
             (.printStackTrace e)
