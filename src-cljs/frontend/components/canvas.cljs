@@ -135,9 +135,9 @@
                                                            (cond
                                                             (or (= (.-button %) 2)
                                                                 (and (= (.-button %) 0) (.-ctrlKey %)))
-                                                            (cast! :layer-secondary-menu-opened {:layer layer
-                                                                                                 :x (first (cameras/screen-event-coords %))
-                                                                                                 :y (second (cameras/screen-event-coords %))})
+                                                            (cast! :layer-properties-opened {:layer layer
+                                                                                             :x (first (cameras/screen-event-coords %))
+                                                                                             :y (second (cameras/screen-event-coords %))})
 
 
                                                             (and (.-altKey %) group?)
@@ -183,9 +183,9 @@
                                                                 (cond
                                                                  (or (= (.-button %) 2)
                                                                      (and (= (.-button %) 0) (.-ctrlKey %)))
-                                                                 (cast! :layer-secondary-menu-opened {:layer layer
-                                                                                                      :x (first (cameras/screen-event-coords %))
-                                                                                                      :y (second (cameras/screen-event-coords %))})
+                                                                 (cast! :layer-properties-opened {:layer layer
+                                                                                                  :x (first (cameras/screen-event-coords %))
+                                                                                                  :y (second (cameras/screen-event-coords %))})
                                                                  (and (< 1 (count selected-eids))
                                                                       (contains? selected-eids (:db/id layer)))
                                                                  (cast! :group-selected
@@ -300,7 +300,7 @@
                                                                   :style {:fill (:subscriber-color l)}}))))
                                layers))))))
 
-(defn layer-secondary-menu [{:keys [layer x y]} owner]
+(defn layer-properties [{:keys [layer x y]} owner]
   (reify
     om/IDidMount
     (did-mount [_]
@@ -313,14 +313,14 @@
                                 :x x
                                 ;; TODO: defaults for each layer when we create them
                                 :y y}
-          (dom/form #js {:className "svg-text-form"
+          (dom/form #js {:className "layer-properties"
                          :onMouseDown #(.stopPropagation %)
                          :onMouseUp #(.stopPropagation %)
                          :onSubmit (fn [e]
-                                     (cast! :layer-secondary-menu-options-submitted)
+                                     (cast! :layer-properties-submitted)
                                      false)
                          :onKeyDown #(when (= "Enter" (.-key %))
-                                       (cast! :layer-secondary-menu-options-submitted)
+                                       (cast! :layer-properties-submitted)
                                        false)}
                     (dom/div nil
                       (dom/input #js {:type "text"
@@ -454,10 +454,10 @@
                              (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
                     (om/build text-input (get-in payload [:drawing :layers 0])))
 
-                  (when (get-in payload [:layer-secondary-menu :opened?])
-                    (om/build layer-secondary-menu {:layer (get-in payload [:layer-secondary-menu :layer])
-                                                    :x (get-in payload [:layer-secondary-menu :x])
-                                                    :y (get-in payload [:layer-secondary-menu :y])}))
+                  (when (get-in payload [:layer-properties-menu :opened?])
+                    (om/build layer-properties {:layer (get-in payload [:layer-properties-menu :layer])
+                                                :x (get-in payload [:layer-properties-menu :x])
+                                                :y (get-in payload [:layer-properties-menu :y])}))
 
                   (when-let [sels (cond
                                    (settings/moving-drawing? payload) (remove #(= :layer.type/group (:layer/type %))

@@ -810,25 +810,25 @@
           (assoc-in [:drawing :moving?] false)))
     state))
 
-(defmethod control-event :layer-secondary-menu-opened
+(defmethod control-event :layer-properties-opened
   [browser-state message {:keys [layer x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)]
     (-> state
         (update-mouse x y)
-        (assoc-in [:layer-secondary-menu :opened?] true)
-        (assoc-in [:layer-secondary-menu :layer] layer)
-        (assoc-in [:layer-secondary-menu :x] rx)
-        (assoc-in [:layer-secondary-menu :y] ry))))
+        (assoc-in [:layer-properties-menu :opened?] true)
+        (assoc-in [:layer-properties-menu :layer] layer)
+        (assoc-in [:layer-properties-menu :x] rx)
+        (assoc-in [:layer-properties-menu :y] ry))))
 
-(defmethod control-event :layer-secondary-menu-options-submitted
+(defmethod control-event :layer-properties-submitted
   [browser-state message _ state]
   (-> state
-      (assoc-in [:layer-secondary-menu :opened?] false)))
+      (assoc-in [:layer-properties-menu :opened?] false)))
 
-(defmethod post-control-event! :layer-secondary-menu-options-submitted
+(defmethod post-control-event! :layer-properties-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)]
-    (d/transact! db [(select-keys (get-in current-state [:layer-secondary-menu :layer])
+    (d/transact! db [(select-keys (get-in current-state [:layer-properties-menu :layer])
                                   [:db/id :layer/ui-id :layer/ui-target])])))
 
 (defn empty-str->nil [s]
@@ -840,9 +840,9 @@
 (defmethod control-event :layer-ui-id-edited
   [browser-state message {:keys [value]} state]
   (-> state
-      (assoc-in [:layer-secondary-menu :layer :layer/ui-id] (empty-str->nil value))))
+      (assoc-in [:layer-properties-menu :layer :layer/ui-id] (empty-str->nil value))))
 
 (defmethod control-event :layer-ui-target-edited
   [browser-state message {:keys [value]} state]
   (-> state
-      (assoc-in [:layer-secondary-menu :layer :layer/ui-target] (empty-str->nil value))))
+      (assoc-in [:layer-properties-menu :layer :layer/ui-target] (empty-str->nil value))))
