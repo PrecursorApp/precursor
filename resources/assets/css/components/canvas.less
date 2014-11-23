@@ -31,11 +31,6 @@
   &.selected {
     stroke: @color_select;
   }
-  &.action {
-    fill: rgba(255,255,255,0.1);
-    cursor: pointer;
-    stroke-width: 0;
-  }
 }
 .text-layer {
   .user-select(none);
@@ -80,6 +75,15 @@
 .selectable-layer {
   stroke-width: 20;
   stroke-opacity: 0;
+}
+.interactive-layer {
+  fill: rgba(255,255,255,0.1);
+  cursor: pointer;
+  stroke-width: 0;
+  // when the select tool has selected it inside its area
+  &.selected-group {
+    cursor: default;
+  }
 }
 .mouse-stats {
   .user-select(none);

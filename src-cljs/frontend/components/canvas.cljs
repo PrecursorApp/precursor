@@ -97,83 +97,103 @@
                            selected-eid (layer-model/selected-eids @db selected-eid)
 
                            :else #{})
-            layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)]
-        (apply dom/g #js {:className "layers"}
-               (mapv (fn [layer]
-                       (dom/g #js {:className (when (= :select tool) "selectable-group")
-                                   :key (:db/id layer)}
-                              ;; The order of selectable-layer and non-selectable-layer is important!
-                              ;; If the non-selectable-layer comes last in the DOM it render above the selectable-layer,
-                              ;; and it steal the pointer-events. I.e., you click right in the center of the stroke and nothing happens.
-                              (svg-element selected-eids (assoc layer
-                                                           :onMouseDown (cond
-                                                                         (and (= :text tool)
-                                                                              (= :layer.type/text (:layer/type layer)))
-                                                                         #(do
-                                                                            (.stopPropagation %)
-                                                                            (cast! :text-layer-re-edited layer))
+            layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)
+            renderable-layers (remove #(or (= :layer.type/group (:layer/type %))
+                                           (contains? editing-eids (:db/id %))) layers)]
+        ;; TODO: this should probably be split into a couple of components
+        (dom/g nil
+               (apply dom/g #js {:className "layers"}
+                      (mapv (fn [layer]
+                              (dom/g #js {:className (when (= :select tool) "selectable-group")
+                                          :key (:db/id layer)}
+                                     ;; The order of selectable-layer and non-selectable-layer is important!
+                                     ;; If the non-selectable-layer comes last in the DOM it render above the selectable-layer,
+                                     ;; and it steal the pointer-events. I.e., you click right in the center of the stroke and nothing happens.
+                                     (svg-element selected-eids (assoc layer
+                                                                  :onMouseDown (cond
+                                                                                (and (= :text tool)
+                                                                                     (= :layer.type/text (:layer/type layer)))
+                                                                                #(do
+                                                                                   (.stopPropagation %)
+                                                                                   (cast! :text-layer-re-edited layer))
 
-                                                                         :else nil)
-                                                           :onMouseUp (when (and (= :text tool)
-                                                                                 (= :layer.type/text (:layer/type layer)))
-                                                                        #(.stopPropagation %))
-                                                           :className (when (= :text tool) "editable")
-                                                           :key (:db/id layer)))
-                              (when (= :select tool)
-                                (svg-element selected-eids
-                                             (assoc layer
-                                               :onMouseDown
-                                               #(do
-                                                  (.stopPropagation %)
-                                                  (let [group? (and (< 1 (count selected-eids))
-                                                                    (contains? selected-eids (:db/id layer)))]
+                                                                                :else nil)
+                                                                  :onMouseUp (when (and (= :text tool)
+                                                                                        (= :layer.type/text (:layer/type layer)))
+                                                                               #(.stopPropagation %))
+                                                                  :className (when (= :text tool) "editable")
+                                                                  :key (:db/id layer)))
+                                     (when (= :select tool)
+                                       (svg-element selected-eids
+                                                    (assoc layer
+                                                      :onMouseDown
+                                                      #(do
+                                                         (.stopPropagation %)
+                                                         (let [group? (and (< 1 (count selected-eids))
+                                                                           (contains? selected-eids (:db/id layer)))]
 
-                                                    (cond
-                                                     (= (.-button %) 2)
-                                                     (cast! :layer-secondary-menu-opened {:layer layer
-                                                                                          :x (first (cameras/screen-event-coords %))
-                                                                                          :y (second (cameras/screen-event-coords %))})
+                                                           (cond
+                                                            (or (= (.-button %) 2)
+                                                                (and (= (.-button %) 0) (.-ctrlKey %)))
+                                                            (cast! :layer-secondary-menu-opened {:layer layer
+                                                                                                 :x (first (cameras/screen-event-coords %))
+                                                                                                 :y (second (cameras/screen-event-coords %))})
 
 
-                                                     (and (.-altKey %) group?)
-                                                     (cast! :group-duplicated
-                                                            {:group-eid selected-eid
-                                                             :layer-eids (disj selected-eids selected-eid)
-                                                             :x (first (cameras/screen-event-coords %))
-                                                             :y (second (cameras/screen-event-coords %))})
+                                                            (and (.-altKey %) group?)
+                                                            (cast! :group-duplicated
+                                                                   {:group-eid selected-eid
+                                                                    :layer-eids (disj selected-eids selected-eid)
+                                                                    :x (first (cameras/screen-event-coords %))
+                                                                    :y (second (cameras/screen-event-coords %))})
 
-                                                     (and (.-altKey %) (not group?))
-                                                     (cast! :layer-duplicated
-                                                            {:layer layer
-                                                             :x (first (cameras/screen-event-coords %))
-                                                             :y (second (cameras/screen-event-coords %))})
+                                                            (and (.-altKey %) (not group?))
+                                                            (cast! :layer-duplicated
+                                                                   {:layer layer
+                                                                    :x (first (cameras/screen-event-coords %))
+                                                                    :y (second (cameras/screen-event-coords %))})
 
-                                                     group?
-                                                     (cast! :group-selected {:x (first (cameras/screen-event-coords %))
-                                                                             :y (second (cameras/screen-event-coords %))
-                                                                             :group-eid selected-eid
-                                                                             :layer-eids (disj selected-eids selected-eid)})
+                                                            group?
+                                                            (cast! :group-selected {:x (first (cameras/screen-event-coords %))
+                                                                                    :y (second (cameras/screen-event-coords %))
+                                                                                    :group-eid selected-eid
+                                                                                    :layer-eids (disj selected-eids selected-eid)})
 
-                                                     :else
-                                                     (cast! :layer-selected {:layer layer
-                                                                             :x (first (cameras/screen-event-coords %))
-                                                                             :y (second (cameras/screen-event-coords %))}))))
-                                               :className "selectable-layer"
-                                               :key (str "selectable-" (:db/id layer)))))
-                              (when (:layer/ui-action layer)
+                                                            :else
+                                                            (cast! :layer-selected {:layer layer
+                                                                                    :x (first (cameras/screen-event-coords %))
+                                                                                    :y (second (cameras/screen-event-coords %))}))))
+                                                      :className "selectable-layer"
+                                                      :key (str "selectable-" (:db/id layer)))))))
+                            renderable-layers))
+               (when (= :select tool)
+                 (apply dom/g #js {:className "layers interactive-layers"}
+                        (mapv (fn [layer]
                                 (svg-element selected-eids
                                              (assoc layer
                                                :onMouseDown #(do
                                                                (.stopPropagation %)
-                                                               (cast! :canvas-aligned-to-layer-center
-                                                                      {:ui-id (:layer/ui-action layer)
-                                                                       :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
-                                                                                      {:width (.-width size)
-                                                                                       :height (.-height size)})}))
-                                               :className "action"
-                                               :key (str "action-" (:db/id layer)))))))
-                     (remove #(or (= :layer.type/group (:layer/type %))
-                                  (contains? editing-eids (:db/id %))) layers)))))))
+                                                               (cond
+                                                                (and (< 1 (count selected-eids))
+                                                                     (contains? selected-eids (:db/id layer)))
+                                                                (cast! :group-selected
+                                                                       {:x (first (cameras/screen-event-coords %))
+                                                                        :y (second (cameras/screen-event-coords %))
+                                                                        :group-eid selected-eid
+                                                                        :layer-eids (disj selected-eids selected-eid)})
+
+                                                                :else
+                                                                (cast! :canvas-aligned-to-layer-center
+                                                                       {:ui-id (:layer/ui-action layer)
+                                                                        :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
+                                                                                       {:width (.-width size)
+                                                                                        :height (.-height size)})})))
+                                               :className (str "action interactive-layer "
+                                                               (when (and (< 1 (count selected-eids))
+                                                                          (contains? selected-eids (:db/id layer)))
+                                                                 "selected-group"))
+                                               :key (str "action-" (:db/id layer)))))
+                              (filter :layer/ui-action renderable-layers)))))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
