@@ -196,7 +196,7 @@
                   [:p
                    "Precursor is a no-nonsense prototyping tool—"
                    "use it for sketching, rapid prototyping, and team brainstorming. "
-                   [:a {:on-click #(cast! :chat-link-clicked)
+                   [:a {:on-click #(cast! :invite-link-clicked)
                         :role "button"}
                     "Invite your team"]
                    " and everyone can collaborate in the same document, instantly. "

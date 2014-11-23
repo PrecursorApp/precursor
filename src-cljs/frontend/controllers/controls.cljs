@@ -740,6 +740,19 @@
   [browser-state message _ previous-state current-state]
   (.focus (sel1 (:container browser-state) "#chat-box")))
 
+(defmethod control-event :invite-link-clicked
+  [browser-state message _ state]
+   (-> state
+     (assoc-in state/overlay-info-opened-path false)
+     (assoc-in state/aside-menu-opened-path true)
+     (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
+     (assoc-in state/chat-mobile-opened-path true)
+     (assoc-in [:chat :body] "/invite ")))
+
+(defmethod post-control-event! :invite-link-clicked
+  [browser-state message _ previous-state current-state]
+  (.focus (sel1 (:container browser-state) "#chat-box")))
+
 (defmethod control-event :aside-user-clicked
   [browser-state message {:keys [id-str]} state]
    (-> state
