@@ -104,7 +104,9 @@
         (dom/g nil
                (apply dom/g #js {:className "layers"}
                       (mapv (fn [layer]
-                              (dom/g #js {:className (when (= :select tool) "selectable-group")
+                              (dom/g #js {:className (str (when (= :select tool) "selectable-group ")
+                                                          (when (and (= :select tool) (:layer/ui-target layer))
+                                                            "interactive"))
                                           :key (:db/id layer)}
                                      ;; The order of selectable-layer and non-selectable-layer is important!
                                      ;; If the non-selectable-layer comes last in the DOM it render above the selectable-layer,
@@ -121,10 +123,7 @@
                                                                   :onMouseUp (when (and (= :text tool)
                                                                                         (= :layer.type/text (:layer/type layer)))
                                                                                #(.stopPropagation %))
-                                                                  :className (str (when (= :text tool) "editable ")
-                                                                                  (and (when (= :select tool))
-                                                                                       (:layer/ui-target layer)
-                                                                                       "interactive-stroke"))
+                                                                  :className (when (= :text tool) "editable")
                                                                   :key (:db/id layer)))
                                      (when (= :select tool)
                                        (svg-element selected-eids
