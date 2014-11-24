@@ -342,7 +342,7 @@
                       (dom/input #js {:type "text"
                                       :ref "id-input"
                                       :onClick #(.focus (om/get-node owner "id-input"))
-                                      :placeholder "Name this shape..."
+                                      :placeholder "Give this shape a unique id"
                                       :value (or (:layer/ui-id layer) "")
                                       ;; TODO: defaults for each layer when we create them
                                       :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})}))
@@ -351,6 +351,7 @@
                         (dom/div #js {:className "input-container"}
                           (dom/input #js {:type "text"
                                           :ref "target-input"
+                                          :placeholder "Link to another shape"
                                           :value (or (:layer/ui-target layer) "")
                                           :onClick #(.focus (om/get-node owner "target-input"))
                                           :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})})
