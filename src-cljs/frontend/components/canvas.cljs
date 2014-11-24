@@ -102,14 +102,17 @@
                            :else #{})
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)
             renderable-layers (remove #(or (= :layer.type/group (:layer/type %))
-                                           (contains? editing-eids (:db/id %))) layers)]
+                                           (contains? editing-eids (:db/id %))) layers)
+            target-layers (filter :layer/ui-target renderable-layers)]
         ;; TODO: this should probably be split into a couple of components
         (dom/g nil
                (apply dom/g #js {:className "layers"}
                       (mapv (fn [layer]
                               (dom/g #js {:className (str (when (= :select tool) "selectable-group ")
-                                                          (when (and (= :select tool) (:layer/ui-target layer))
-                                                            "interactive ")
+                                                          (cond (and (= :select tool) (:layer/ui-target layer))
+                                                                "interactive "
+                                                                (and (= :select tool) (seq target-layers))
+                                                                "non-interactive ")
                                                           (when (contains? (om/get-state owner :hovered-eids)
                                                                            (:db/id layer))
                                                             "hover"))
@@ -176,7 +179,7 @@
                             renderable-layers))
                (when (= :select tool)
                  (apply dom/g #js {:className "layers interactive-layers"}
-                        (for [layer (filter :layer/ui-target renderable-layers)
+                        (for [layer target-layers
                               :let [invalid? (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-target layer))))]]
                           (dom/g nil
 
