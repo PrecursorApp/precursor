@@ -188,10 +188,34 @@
                 (update-in [:entity-ids] disj entity-id))]
             r)))
 
-(defn inc-str-id [str-id]
-  (if-let [[match base num] (re-find #"(.+)\((\d+)\)" str-id)]
-    (str base "(" (inc (js/parseInt num)) ")")
-    (str str-id " (1)")))
+;; These are used to globally increment names for layer targets and ids
+;; There is definitely a better to do this, but not sure what it is at the moment.
+;; Sorry for the complex code :/
+;; Offset is there so you can duplicate multiple shapes
+(def str-id-regex #"(.+)\((\d+)\)$")
+(defn inc-str-id [db str-id & {:keys [offset]
+                               :or {offset 0}}]
+  (let [[_ base _] (re-find str-id-regex str-id)
+        base (or base (str str-id " "))
+        ids (map first (d/q '[:find ?id :where [_ :layer/ui-id ?id]] db))
+        max-num (reduce (fn [acc str-id]
+                          (if-let [[match num] (re-find (re-pattern (str base "\\((\\d+\\))$")) str-id)]
+                            (max acc (js/parseInt num))
+                            acc))
+                        0 ids)]
+    (str base "(" (+ 1 offset max-num) ")")))
+
+(defn inc-str-target [db str-target & {:keys [offset]
+                                       :or {offset 0}}]
+  (let [[_ base _] (re-find str-id-regex str-target)
+        base (or base (str str-target " "))
+        ids (map first (d/q '[:find ?id :where [_ :layer/ui-target ?id]] db))
+        max-num (reduce (fn [acc str-target]
+                          (if-let [[match num] (re-find (re-pattern (str base "\\((\\d+\\))$")) str-target)]
+                            (max acc (js/parseInt num))
+                            acc))
+                        0 ids)]
+    (str base "(" (+ 1 offset max-num) ")")))
 
 (defmethod control-event :layer-duplicated
   [browser-state message {:keys [layer x y]} state]
@@ -208,9 +232,9 @@
                                         :layer/current-x (:layer/end-x layer)
                                         :layer/current-y (:layer/end-y layer)
                                         :layer/ui-id (when (:layer/ui-id layer)
-                                                       (inc-str-id (:layer/ui-id layer)))
+                                                       (inc-str-id @(:db state) (:layer/ui-id layer)))
                                         :layer/ui-target (when (:layer/ui-target layer)
-                                                           (inc-str-id (:layer/ui-target layer))))])
+                                                           (inc-str-target @(:db state) (:layer/ui-target layer))))])
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry])
         (update-in [:entity-ids] disj entity-id))))
@@ -228,7 +252,7 @@
     (-> state
         (assoc :selected-eid group-id)
         (assoc-in [:drawing :original-layers] (conj layers group-layer))
-        (assoc-in [:drawing :layers] (conj (mapv (fn [layer entity-id]
+        (assoc-in [:drawing :layers] (conj (mapv (fn [layer entity-id index]
                                                    (assoc layer
                                                      :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
                                                      :db/id entity-id
@@ -237,10 +261,10 @@
                                                      :layer/current-x (:layer/end-x layer)
                                                      :layer/current-y (:layer/end-y layer)
                                                      :layer/ui-id (when (:layer/ui-id layer)
-                                                                    (inc-str-id (:layer/ui-id layer)))
+                                                                    (inc-str-id @(:db state) (:layer/ui-id layer) :offset index))
                                                      :layer/ui-target (when (:layer/ui-target layer)
-                                                                        (inc-str-id (:layer/ui-target layer)))))
-                                                 layers entity-ids)
+                                                                        (inc-str-target @(:db state) (:layer/ui-target layer) :offset index))))
+                                                 layers entity-ids (range))
                                            group-layer))
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry])
