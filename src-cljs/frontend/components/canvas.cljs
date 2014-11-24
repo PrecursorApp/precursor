@@ -322,10 +322,12 @@
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
             ;; TODO: figure out how to handle nils in datascript
-            targets (remove nil?
-                            (map first (d/q '{:find [?id]
-                                              :where [[_ :layer/ui-id ?id]]}
-                                            @db)))]
+            targets (->> (d/q '{:find [?id]
+                                :where [[_ :layer/ui-id ?id]]}
+                              @db)
+                         (map first)
+                         (remove nil?)
+                         sort)]
         (dom/foreignObject #js {:width "100%"
                                 :height "100%"
                                 :x x
@@ -357,14 +359,13 @@
                                           :value (or (:layer/ui-target layer) "")
                                           :onClick #(.focus (om/get-node owner "target-input"))
                                           :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})})
-                          (dom/button #js {:onClick #(do (om/update-state! owner :input-expanded not)
-                                                         false)}
-                                      "\\/"))
+                          (when (seq targets)
+                            (dom/button #js {:onClick #(do (om/update-state! owner :input-expanded not)
+                                                           false)}
+                                        "\\/")))
                         (apply dom/div #js {:className "target-options"}
                                (when (om/get-state owner :input-expanded)
-                                 (for [target (sort (distinct (concat targets
-                                                                      (when (:layer/ui-target layer)
-                                                                        [(:layer/ui-target layer)]))))]
+                                 (for [target targets]
                                    (dom/div #js {:className "target-option"
                                                  :onClick #(do (cast! :layer-ui-target-edited {:value target})
                                                                (om/set-state! owner :input-expanded false)
