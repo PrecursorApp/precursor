@@ -121,7 +121,10 @@
                                                                   :onMouseUp (when (and (= :text tool)
                                                                                         (= :layer.type/text (:layer/type layer)))
                                                                                #(.stopPropagation %))
-                                                                  :className (when (= :text tool) "editable")
+                                                                  :className (str (when (= :text tool) "editable ")
+                                                                                  (and (when (= :select tool))
+                                                                                       (:layer/ui-target layer)
+                                                                                       "interactive-stroke"))
                                                                   :key (:db/id layer)))
                                      (when (= :select tool)
                                        (svg-element selected-eids
@@ -200,7 +203,7 @@
                                                                          :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
                                                                                         {:width (.-width size)
                                                                                          :height (.-height size)})})))
-                                                :className (str "action interactive-layer "
+                                                :className (str "action interactive-fill "
                                                                 (when (and (< 1 (count selected-eids))
                                                                            (contains? selected-eids (:db/id layer)))
                                                                   "selected-group ")
