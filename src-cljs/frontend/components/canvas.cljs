@@ -186,6 +186,7 @@
                                                    " Right-click on a shape's border to name it " (:layer/ui-target layer))))
                                  (svg-element selected-eids
                                               (assoc layer
+                                                :padding 4 ;; only works for rects right now
                                                 :onMouseEnter #(om/update-state! owner :hovered-eids
                                                                                  (fn [eids] (conj eids (:db/id layer))))
                                                 :onMouseLeave #(om/update-state! owner :hovered-eids
