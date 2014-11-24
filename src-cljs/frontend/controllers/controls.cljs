@@ -197,7 +197,7 @@
                                :or {offset 0}}]
   (let [[_ base _] (re-find str-id-regex str-id)
         base (or base (str str-id " "))
-        ids (map first (d/q '[:find ?id :where [_ :layer/ui-id ?id]] db))
+        ids (remove nil? (map first (d/q '[:find ?id :where [_ :layer/ui-id ?id]] db)))
         max-num (reduce (fn [acc str-id]
                           (if-let [[match num] (re-find (re-pattern (str base "\\((\\d+\\))$")) str-id)]
                             (max acc (js/parseInt num))
@@ -205,11 +205,12 @@
                         0 ids)]
     (str base "(" (+ 1 offset max-num) ")")))
 
+
 (defn inc-str-target [db str-target & {:keys [offset]
                                        :or {offset 0}}]
   (let [[_ base _] (re-find str-id-regex str-target)
         base (or base (str str-target " "))
-        ids (map first (d/q '[:find ?id :where [_ :layer/ui-target ?id]] db))
+        ids (remove nil? (map first (d/q '[:find ?id :where [_ :layer/ui-target ?id]] db)))
         max-num (reduce (fn [acc str-target]
                           (if-let [[match num] (re-find (re-pattern (str base "\\((\\d+\\))$")) str-target)]
                             (max acc (js/parseInt num))
