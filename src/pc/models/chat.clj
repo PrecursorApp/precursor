@@ -21,15 +21,16 @@
                db cust-uuid)))
 
 (defn find-by-document [db document]
-  (map
-   (fn [[chat-id]]
-     (let [e (pcd/touch+ (d/entity db chat-id))]
-       ;; TODO: teach the frontend how to lookup cust/name
-       (assoc e :chat/cust-name (when-let [uuid (:cust/uuid e)]
-                                  (find-chat-name db uuid)))))
-   (d/q '{:find [?t] :in [$ ?document-id]
-          :where [[?t :document/id ?document-id]]}
-        db (:db/id document))))
+  (let [memo-find-name (memoize find-chat-name)]
+    (map
+     (fn [[chat-id]]
+       (let [e (pcd/touch+ (d/entity db chat-id))]
+         ;; TODO: teach the frontend how to lookup cust/name
+         (assoc e :chat/cust-name (when-let [uuid (:cust/uuid e)]
+                                    (memo-find-name db uuid)))))
+     (d/q '{:find [?t] :in [$ ?document-id]
+            :where [[?t :document/id ?document-id]]}
+          db (:db/id document)))))
 
 (comment
   (let [[doc-id & layer-ids] (pcd/generate-eids (pcd/conn) 4)]
