@@ -7,6 +7,7 @@
 (def template->gif-url
   {"simple-tools"      "/email/simple-tools.gif"
    "team-chat"         "/email/team-chat.gif"
+   "interactive-demo"  "/email/interactive-demo.gif"
    "this-email"        "/email/this-email.gif"
    "multi-duplication" "/email/multi-duplication.gif"})
 
