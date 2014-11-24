@@ -76,7 +76,10 @@
 
 (defn svg-layers [{:keys [editing-eids selected-eid selected-eids tool]} owner]
   (reify
-    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IInitState
+    (init-state [_]
+      {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+       :hovered-eids #{}})
     om/IDidMount
     (did-mount [_]
       (d/listen! (om/get-shared owner :db)
@@ -106,7 +109,10 @@
                       (mapv (fn [layer]
                               (dom/g #js {:className (str (when (= :select tool) "selectable-group ")
                                                           (when (and (= :select tool) (:layer/ui-target layer))
-                                                            "interactive"))
+                                                            "interactive ")
+                                                          (when (contains? (om/get-state owner :hovered-eids)
+                                                                           (:db/id layer))
+                                                            "hover"))
                                           :key (:db/id layer)}
                                      ;; The order of selectable-layer and non-selectable-layer is important!
                                      ;; If the non-selectable-layer comes last in the DOM it render above the selectable-layer,
@@ -180,6 +186,10 @@
                                                    " Right-click on a shape's border to name it " (:layer/ui-target layer))))
                                  (svg-element selected-eids
                                               (assoc layer
+                                                :onMouseEnter #(om/update-state! owner :hovered-eids
+                                                                                 (fn [eids] (conj eids (:db/id layer))))
+                                                :onMouseLeave #(om/update-state! owner :hovered-eids
+                                                                                 (fn [eids] (disj eids (:db/id layer))))
                                                 :onMouseDown #(do
                                                                 (.stopPropagation %)
                                                                 (cond
