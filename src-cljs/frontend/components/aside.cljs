@@ -12,6 +12,18 @@
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
+(def url-regex #"(?im)\b(?:https?|ftp)://[-A-Za-z0-9+@#/%?=~_|!:,.;]*[-A-Za-z0-9+@#/%=~_|]")
+
+(defn linkify [text]
+  (let [matches (re-seq url-regex text)
+        ;; may need to add [""], split can return empty array
+        parts (or (seq (str/split text url-regex)) [""])]
+    (reduce (fn [acc [pre url]]
+              (conj acc [:span pre] (when url [:a {:href url :target "_blank"} url])))
+            [:span] (partition-all 2 (concat (interleave parts
+                                                         matches)
+                                             [(last parts)])))))
+
 (defn chat-aside [{:keys [db chat-body client-uuid aside-menu-opened chat-bot]} owner]
   (reify
     om/IInitState
@@ -64,12 +76,15 @@
                                 (if (= (str (:session/uuid chat))
                                        client-uuid)
                                   "You"
-                                  id))]]
+                                  id))
+                       chat-body (if (string? (:chat/body chat))
+                                   (linkify (:chat/body chat))
+                                   (:chat/body chat))]]
              (html [:div.message {:key (:db/id chat)}
                     [:span {:style {:color (or (:chat/color chat) (str "#" id))}}
                      name]
                     " "
-                    (:chat/body chat)]))]
+                    chat-body]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)
                   :on-key-down #(when (and (= "Enter" (.-key %))
