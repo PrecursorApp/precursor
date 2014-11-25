@@ -290,15 +290,12 @@
                                          (js/clearInterval (om/get-state owner :touch-timer))
                                          ((:handle-mouse-move! handlers) (aget touches "0")))))
                       :onMouseDown (fn [event]
-                                     (.preventDefault event)
+                                     ;;(.preventDefault event)
                                      (.stopPropagation event)
-                                     ;;(.addEventListener js/document "mousemove" handle-mouse-move false)
-                                     (js/console.log event)
                                      ((:handle-mouse-down handlers) event))
                       :onMouseUp (fn [event]
                                    (.preventDefault event)
                                    (.stopPropagation event)
-                                   ;;(.removeEventListener js/document "mousemove" handle-mouse-move false)
                                    ((:handle-mouse-up handlers) event))
                       :onWheel (fn [event]
                                  (.preventDefault event)
