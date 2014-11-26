@@ -28,6 +28,11 @@
   &:-moz-placeholder           {@{property}: @value;}
   &::-moz-placeholder          {@{property}: @value;}
 }
+.scrollbar_hide() {
+  &::-webkit-scrollbar {
+    width: 0; // we should calculate to get this effect in the dom
+  }
+}
 .box-sizing(...) {
   .prefixer(box-sizing, @arguments, webkit moz);
 }

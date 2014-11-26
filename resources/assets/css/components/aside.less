@@ -129,14 +129,12 @@
   }
 }
 .chat-messages {
+  .scrollbar_hide(); // TODO we should calculate to get this effect in the dom
   padding: 1em 0;
   overflow-y: auto;
   .mq_640({
     width: @aside_width;
   });
-  &::-webkit-scrollbar {
-    width: 0; // we should calculate to get this effect in the dom
-  }
   span {
     word-break: break-word;
   }
