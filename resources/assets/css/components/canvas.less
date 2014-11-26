@@ -50,8 +50,10 @@
     }
   }
   &.interactive-fill {
-    fill: transparent;
-    cursor: pointer;
+    &:not(.invalid) {
+      fill: transparent;
+      cursor: pointer;
+    }
   }
   &.layer-outline {
     stroke: @gray_light;
