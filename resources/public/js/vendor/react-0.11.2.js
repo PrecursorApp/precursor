@@ -6995,6 +6995,7 @@ var ReactDOM = mapObject({
   canvas: false,
   caption: false,
   cite: false,
+  clipPath: false,
   code: false,
   col: true,
   colgroup: false,
@@ -13735,6 +13736,7 @@ var MUST_USE_ATTRIBUTE = DOMProperty.injection.MUST_USE_ATTRIBUTE;
 
 var SVGDOMPropertyConfig = {
   Properties: {
+    clipPath: MUST_USE_ATTRIBUTE,
     cx: MUST_USE_ATTRIBUTE,
     cy: MUST_USE_ATTRIBUTE,
     d: MUST_USE_ATTRIBUTE,
@@ -13751,6 +13753,7 @@ var SVGDOMPropertyConfig = {
     markerEnd: MUST_USE_ATTRIBUTE,
     markerMid: MUST_USE_ATTRIBUTE,
     markerStart: MUST_USE_ATTRIBUTE,
+    mask: MUST_USE_ATTRIBUTE,
     offset: MUST_USE_ATTRIBUTE,
     opacity: MUST_USE_ATTRIBUTE,
     patternContentUnits: MUST_USE_ATTRIBUTE,
@@ -13781,6 +13784,7 @@ var SVGDOMPropertyConfig = {
     y: MUST_USE_ATTRIBUTE
   },
   DOMAttributeNames: {
+    clipPath: 'clip-path',
     fillOpacity: 'fill-opacity',
     fontFamily: 'font-family',
     fontSize: 'font-size',
@@ -13789,6 +13793,7 @@ var SVGDOMPropertyConfig = {
     markerEnd: 'marker-end',
     markerMid: 'marker-mid',
     markerStart: 'marker-start',
+    mask: 'mask',
     patternContentUnits: 'patternContentUnits',
     patternUnits: 'patternUnits',
     patternTransform: 'patternTransform',
@@ -16604,11 +16609,14 @@ var shouldWrap = {
   // Force wrapping for SVG elements because if they get created inside a <div>,
   // they will be initialized in the wrong namespace (and will not display).
   'circle': true,
+  'clipPath': true,
+  'clippath': true,
   'defs': true,
   'ellipse': true,
   'g': true,
   'line': true,
   'linearGradient': true,
+  'mask': true,
   'foreignObject': true,
   'foreignobject': true,
   'path': true,
@@ -16648,6 +16656,8 @@ var markupWrap = {
   'th': trWrap,
 
   'circle': svgWrap,
+  'clipPath': svgWrap,
+  'clippath': svgWrap,
   'defs': svgWrap,
   'ellipse': svgWrap,
   'foreignObject': svgWrap,
@@ -16655,6 +16665,7 @@ var markupWrap = {
   'g': svgWrap,
   'line': svgWrap,
   'linearGradient': svgWrap,
+  'mask': svgWrap,
   'path': svgWrap,
   'polygon': svgWrap,
   'polyline': svgWrap,

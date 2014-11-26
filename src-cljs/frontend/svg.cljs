@@ -7,31 +7,25 @@
   (str "M" (str/join " " (map (fn [p] (str (:rx p) " " (:ry p))) points))))
 
 (defn layer->svg-rect [layer]
-  (let [layer (layers/normalized-abs-coords layer)]
+  (let [layer (layers/normalized-abs-coords layer)
+        padding (get layer :padding 0)]
     (merge
      layer
      {:className     (str "shape-layer " (:className layer))
-      :x             (:layer/start-x layer)
-      :y             (:layer/start-y layer)
+      :x             (+ (:layer/start-x layer) padding)
+      :y             (+ (:layer/start-y layer) padding)
       :width         (- (or (:layer/current-x layer)
-                            (:layer/end-x layer)) (:layer/start-x layer))
+                            (:layer/end-x layer))
+                        (:layer/start-x layer)
+                        (* padding 2))
       :height        (- (or (:layer/current-y layer)
-                            (:layer/end-y layer)) (:layer/start-y layer))
+                            (:layer/end-y layer))
+                        (:layer/start-y layer)
+                        (* padding 2))
       :fill          (:layer/fill layer "none")
       :key           (:layer/id layer)
-      :stroke        (cond
-                      (:layer/selected? layer) "pink"
-                      (:layer/hovered? layer) "green"
-                      :else (:layer/stroke layer "black"))
-      :strokeWidth   (cond
-                      (:layer/selected? layer) 4
-                      (:layer/hovered? layer) 4
-                      :else (:layer/stroke-width layer 1))
       :rx            (:layer/rx layer)
-      :ry            (:layer/ry layer)
-      :strokeOpacity (cond
-                      (:layer/selected? layer) 0.2
-                      :else 1)})))
+      :ry            (:layer/ry layer)})))
 
 (defn layer->svg-text [layer]
   (merge

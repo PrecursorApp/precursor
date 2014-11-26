@@ -16,20 +16,54 @@
     stroke: @gray_dark;
   }
 }
+.layers {
+  &.live {
+    &.layer-handle {
+      ~ .layer-outline {
+        transition-delay: @speed_fast;
+      }
+    }
+  }
+}
+.selectable-group {
+  .layer-handle {
+    stroke: transparent;
+    stroke-width: 20;
+    &:hover {
+      ~ .layer-outline {
+        stroke: @color_select_hover;
+        stroke-width: 4;
+        transition-duration: @speed_fast;
+      }
+    }
+  }
+}
 .shape-layer {
+  stroke: none;
   fill: none;
-  stroke: @gray_light;
-  stroke-width: 2;
-  transition: stroke-width @speed;
   &.layer-in-progress {
-    stroke: @blue;
+    stroke: @color_select;
+    stroke-width: 2;
     &.selection {
       stroke: @white;
       stroke-width: 1;
     }
   }
-  &.selected {
-    stroke: @color_select;
+  &.interactive-fill {
+    &:not(.invalid) {
+      fill: transparent;
+      cursor: pointer;
+    }
+  }
+  &.layer-outline {
+    stroke: @gray_light;
+    stroke-width: 2;
+    pointer-events: none;
+    transition: @speed @bezier_transform;
+    &.selected {
+      stroke-width: 2;
+      stroke: @color_select;
+    }
   }
 }
 .text-layer {
@@ -43,27 +77,21 @@
   &.selected {
     fill: @color_select;
   }
-  // TODO: not sure what this will break, but it makes text
-  //       1. selectable w/ select tool and 2. editable w/ text tool.
-  // &:not(.selectable-layer) {
-  //   pointer-events: none;
-  // }
   &.layer-in-progress {
-    fill: @blue;
+    fill: @color_select;
+    stroke-opacity: 1;
+  }
+  &.interactive-fill {
+    cursor: pointer;
+  }
+}
+.static {
+  .interactive-fill {
+    display: none;
   }
 }
 .selectable-group {
   &:hover {
-    .shape-layer {
-      stroke: @color_select_hover;
-      transition-duration: @speed_fast;
-      &:not(.selectable-layer) {
-        stroke-width: 4;
-      }
-      &.selected {
-        stroke: @color_select;
-      }
-    }
     .text-layer {
       fill: @color_select_hover;
       &.selected {
@@ -71,10 +99,6 @@
       }
     }
   }
-}
-.selectable-layer {
-  stroke-width: 20;
-  stroke-opacity: 0;
 }
 .mouse-stats {
   .user-select(none);
@@ -189,6 +213,18 @@
     }
   }
 }
+.svg-text-form {
+  input[type="text"] {
+    .placeholder_style(color; @gray);
+    color: @color_select_hover;
+    background: none;
+    border: none;
+    outline: none;
+  }
+}
+  //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾//
+ //  Radial Right-Click Menu  //
+//___________________________//
 .radial-menu {
   position: fixed;
   width: (@radial_menu_size * 1.5);
@@ -251,12 +287,86 @@
     display: none;
   });
 }
-.svg-text-form {
-  input[type="text"] {
-    .placeholder_style(color; @gray);
-    color: @color_select_hover;
-    background: none;
-    border: none;
-    outline: none;
+  //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾//
+ //  Layer Properties Right-Click Menu  //
+//_____________________________________//
+.layer-properties {
+  .flexy(column);
+  width: @aside_width;
+  padding-top: 5px; // keeps adaptive placeholder from getting cut off
+  .layer-property-id {
+    background: @app_background;
+    &:not(:focus) {
+      box-shadow: 0 -1px @gray_dark inset;
+      border-bottom-width: 0;
+    }
+  }
+  .layer-property-target {
+    background: @app_background;
+    &:focus {
+      border-top-color: transparent !important;
+      box-shadow: 0 -1px @blue;
+      ~ .property-dropdown-targets {
+        &:not(.expanded) {
+          border-bottom-color: @blue;
+        }
+      }
+    }
+    &:not(:focus) {
+      border-top-color: transparent;
+    }
+    &.expanded {
+      border-bottom-color: transparent;
+    }
+  }
+}
+.layer-property {
+  .flexy(column);
+}
+.layer-property-button {
+  font-size: 1.5em; // for ellipsis icon hack
+  line-height: 0; // for ellipsis icon hack
+  top: 0;
+  right: 0;
+  width: 3rem;
+  height: 3rem;
+  margin: -3rem 0 0 auto;
+  padding-bottom: 1rem; // for ellipsis icon hack
+  &:hover {
+    color: @blue;
+  }
+}
+.property-dropdown-targets {
+  .flexy(column);
+  .scrollbar_hide(); // TODO we should calculate to get this effect in the dom
+  max-height: (@tile * 5);
+  background: @gray_darker;
+  border: 1px solid @gray_dark;
+  border-top: none;
+  overflow-y: auto;
+  transition: max-height @speed_slow @bezier_transform;
+  &:not(.expanded) {
+    max-height: 0;
+    margin-top: -1px;
+  }
+}
+.property-dropdown-target {
+  .flex(0 0 3em);
+  color: @gray_dark;
+  line-height: 1em;
+  padding: 1em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition+: color @speed_fast @bezier_fadein;
+  transition+: border @speed_fast @bezier_fadein;
+  transition+: text-indent @speed @bezier_transform;
+  &:hover {
+    text-indent: 3px;
+    border-color: @gray_lighter;
+    transition-duration+: 0ms;
+    transition-duration+: 0ms;
+    transition-duration+: @speed;
   }
 }

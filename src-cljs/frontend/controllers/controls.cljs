@@ -188,6 +188,36 @@
                 (update-in [:entity-ids] disj entity-id))]
             r)))
 
+;; These are used to globally increment names for layer targets and ids
+;; There is definitely a better to do this, but not sure what it is at the moment.
+;; Sorry for the complex code :/
+;; Offset is there so you can duplicate multiple shapes
+(def str-id-regex #"(.+)\((\d+)\)$")
+(defn inc-str-id [db str-id & {:keys [offset]
+                               :or {offset 0}}]
+  (let [[_ base _] (re-find str-id-regex str-id)
+        base (or base (str str-id " "))
+        ids (remove nil? (map first (d/q '[:find ?id :where [_ :layer/ui-id ?id]] db)))
+        max-num (reduce (fn [acc str-id]
+                          (if-let [[match num] (re-find (re-pattern (str base "\\((\\d+\\))$")) str-id)]
+                            (max acc (js/parseInt num))
+                            acc))
+                        0 ids)]
+    (str base "(" (+ 1 offset max-num) ")")))
+
+
+(defn inc-str-target [db str-target & {:keys [offset]
+                                       :or {offset 0}}]
+  (let [[_ base _] (re-find str-id-regex str-target)
+        base (or base (str str-target " "))
+        ids (remove nil? (map first (d/q '[:find ?id :where [_ :layer/ui-target ?id]] db)))
+        max-num (reduce (fn [acc str-target]
+                          (if-let [[match num] (re-find (re-pattern (str base "\\((\\d+\\))$")) str-target)]
+                            (max acc (js/parseInt num))
+                            acc))
+                        0 ids)]
+    (str base "(" (+ 1 offset max-num) ")")))
+
 (defmethod control-event :layer-duplicated
   [browser-state message {:keys [layer x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
@@ -201,7 +231,11 @@
                                         :layer/start-x (:layer/start-x layer)
                                         :layer/end-x (:layer/end-x layer)
                                         :layer/current-x (:layer/end-x layer)
-                                        :layer/current-y (:layer/end-y layer))])
+                                        :layer/current-y (:layer/end-y layer)
+                                        :layer/ui-id (when (:layer/ui-id layer)
+                                                       (inc-str-id @(:db state) (:layer/ui-id layer)))
+                                        :layer/ui-target (when (:layer/ui-target layer)
+                                                           (inc-str-target @(:db state) (:layer/ui-target layer))))])
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry])
         (update-in [:entity-ids] disj entity-id))))
@@ -219,15 +253,19 @@
     (-> state
         (assoc :selected-eid group-id)
         (assoc-in [:drawing :original-layers] (conj layers group-layer))
-        (assoc-in [:drawing :layers] (conj (mapv (fn [layer entity-id]
+        (assoc-in [:drawing :layers] (conj (mapv (fn [layer entity-id index]
                                                    (assoc layer
                                                      :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
                                                      :db/id entity-id
                                                      :layer/start-x (:layer/start-x layer)
                                                      :layer/end-x (:layer/end-x layer)
                                                      :layer/current-x (:layer/end-x layer)
-                                                     :layer/current-y (:layer/end-y layer)))
-                                                 layers entity-ids)
+                                                     :layer/current-y (:layer/end-y layer)
+                                                     :layer/ui-id (when (:layer/ui-id layer)
+                                                                    (inc-str-id @(:db state) (:layer/ui-id layer) :offset index))
+                                                     :layer/ui-target (when (:layer/ui-target layer)
+                                                                        (inc-str-target @(:db state) (:layer/ui-target layer) :offset index))))
+                                                 layers entity-ids (range))
                                            group-layer))
         (assoc-in [:drawing :moving?] true)
         (assoc-in [:drawing :starting-mouse-position] [rx ry])
@@ -437,6 +475,7 @@
      (and (= button 0) ctrl?) (cast! :menu-opened)
      ;; turning off Cmd+click for opening the menu
      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
+     (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
      (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
                                                                 ;; if you click while writing text, you probably wanted to place it there
@@ -787,21 +826,61 @@
          (async/timeout 1000) (redirect)))))
 
 (defmethod control-event :canvas-aligned-to-layer-center
-  [browser-state message {:keys [layer canvas-size]} state]
-  (let [layer-width (js/Math.abs (- (:layer/start-x layer)
-                                    (:layer/end-x layer)))
-        layer-height (js/Math.abs (- (:layer/start-y layer)
-                                     (:layer/end-y layer)))
-        layer-start-x (min (:layer/start-x layer)
-                           (:layer/end-x layer))
-        layer-start-y (min (:layer/start-y layer)
-                           (:layer/end-y layer))]
+  [browser-state message {:keys [ui-id canvas-size]} state]
+  ;; TODO: how to handle no layer for ui-id
+  (if-let [layer (layer-model/find-by-ui-id @(:db state) ui-id)]
+    (let [layer-width (js/Math.abs (- (:layer/start-x layer)
+                                      (:layer/end-x layer)))
+          layer-height (js/Math.abs (- (:layer/start-y layer)
+                                       (:layer/end-y layer)))
+          layer-start-x (min (:layer/start-x layer)
+                             (:layer/end-x layer))
+          layer-start-y (min (:layer/start-y layer)
+                             (:layer/end-y layer))]
+      (-> state
+          (assoc-in [:camera :x] (+ (/ (:width canvas-size) 2)
+                                    (- (+ layer-start-x
+                                          (/ layer-width 2)))))
+          (assoc-in [:camera :y] (+ (/ (:height canvas-size) 2)
+                                    (- (+ layer-start-y
+                                          (/ layer-height 2)))))
+          (assoc-in [:drawing :in-progress?] false)
+          (assoc-in [:drawing :moving?] false)))
+    state))
+
+(defmethod control-event :layer-properties-opened
+  [browser-state message {:keys [layer x y]} state]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
     (-> state
-        (assoc-in [:camera :x] (+ (/ (:width canvas-size) 2)
-                                  (- (+ layer-start-x
-                                        (/ layer-width 2)))))
-        (assoc-in [:camera :y] (+ (/ (:height canvas-size) 2)
-                                  (- (+ layer-start-y
-                                        (/ layer-height 2)))))
-        (assoc-in [:drawing :in-progress?] false)
-        (assoc-in [:drawing :moving?] false))))
+        (update-mouse x y)
+        (assoc-in [:layer-properties-menu :opened?] true)
+        (assoc-in [:layer-properties-menu :layer] layer)
+        (assoc-in [:layer-properties-menu :x] rx)
+        (assoc-in [:layer-properties-menu :y] ry))))
+
+(defmethod control-event :layer-properties-submitted
+  [browser-state message _ state]
+  (-> state
+      (assoc-in [:layer-properties-menu :opened?] false)))
+
+(defmethod post-control-event! :layer-properties-submitted
+  [browser-state message _ previous-state current-state]
+  (let [db (:db current-state)]
+    (d/transact! db [(select-keys (get-in current-state [:layer-properties-menu :layer])
+                                  [:db/id :layer/ui-id :layer/ui-target])])))
+
+(defn empty-str->nil [s]
+  (if (str/blank? s)
+    nil
+    s))
+
+;; TODO: need a way to delete these 2 values
+(defmethod control-event :layer-ui-id-edited
+  [browser-state message {:keys [value]} state]
+  (-> state
+      (assoc-in [:layer-properties-menu :layer :layer/ui-id] (empty-str->nil value))))
+
+(defmethod control-event :layer-ui-target-edited
+  [browser-state message {:keys [value]} state]
+  (-> state
+      (assoc-in [:layer-properties-menu :layer :layer/ui-target] (empty-str->nil value))))
