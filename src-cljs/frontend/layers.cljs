@@ -54,7 +54,7 @@
    :layer/start-y      y
    :layer/end-x        x
    :layer/end-y        y
-   :layer/fill         "white"
+   :layer/fill         "none"
    :layer/stroke-width 1
    :layer/stroke-color "black"
    :layer/name         "placeholder"

@@ -24,19 +24,8 @@
                         (* padding 2))
       :fill          (:layer/fill layer "none")
       :key           (:layer/id layer)
-      :stroke        (cond
-                      (:layer/selected? layer) "pink"
-                      (:layer/hovered? layer) "green"
-                      :else (:layer/stroke layer "black"))
-      :strokeWidth   (cond
-                      (:layer/selected? layer) 4
-                      (:layer/hovered? layer) 4
-                      :else (:layer/stroke-width layer 1))
       :rx            (:layer/rx layer)
-      :ry            (:layer/ry layer)
-      :strokeOpacity (cond
-                      (:layer/selected? layer) 0.2
-                      :else 1)})))
+      :ry            (:layer/ry layer)})))
 
 (defn layer->svg-text [layer]
   (merge
