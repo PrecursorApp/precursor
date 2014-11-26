@@ -172,7 +172,7 @@
                                                        (contains? selected-eids (:db/id layer)))
                                               "selected-group ")
                                             (when invalid?
-                                              "invalid-action"))
+                                              "invalid"))
                             :key (str "action-" (:db/id layer))))))))
 
 (defn svg-layers [{:keys [editing-eids selected-eid selected-eids tool]} owner]
