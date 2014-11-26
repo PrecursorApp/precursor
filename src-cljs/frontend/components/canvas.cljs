@@ -360,48 +360,48 @@
                                        (cast! :layer-properties-submitted)
                                        false)}
                     (dom/div #js {:className "layer-property"}
-                      (dom/label #js {:data-adaptive ""}
-                        (dom/input #js {:type "text"
-                                        :ref "id-input"
-                                        :className "layer-property-id"
-                                        :onClick #(.focus (om/get-node owner "id-input"))
-                                        :required "true"
-                                        :value (or (:layer/ui-id layer) "")
-                                        ;; TODO: defaults for each layer when we create them
-                                        :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})})
-                        (dom/label #js {:data-placeholder "name"
-                                        :data-placeholder-nil "define a name"
-                                        :data-placeholder-busy "defining name"})))
+                      (dom/input #js {:type "text"
+                                      :ref "id-input"
+                                      :className "layer-property-id"
+                                      :onClick #(.focus (om/get-node owner "id-input"))
+                                      :required "true"
+                                      :data-adaptive ""
+                                      :value (or (:layer/ui-id layer) "")
+                                      ;; TODO: defaults for each layer when we create them
+                                      :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})})
+                      (dom/label #js {:data-placeholder "name"
+                                      :data-placeholder-nil "define a name"
+                                      :data-placeholder-busy "defining name"}))
                     (when-not (= :layer.type/line (:layer/type layer))
                       (dom/div #js {:className "layer-property"}
-                        (dom/label #js {:data-adaptive ""}
-                          (dom/input #js {:type "text"
-                                          :ref "target-input"
-                                          :className (if (om/get-state owner :input-expanded)
-                                                       "layer-property-target expanded"
-                                                       "layer-property-target")
-                                          :required "true"
-                                          :value (or (:layer/ui-target layer) "")
-                                          :onClick #(.focus (om/get-node owner "target-input"))
-                                          :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})})
-                          (dom/label #js {:data-placeholder "is targeting"
-                                          :data-placeholder-nil "define a target"
-                                          :data-placeholder-busy "defining target"}))
+                        (dom/input #js {:type "text"
+                                        :ref "target-input"
+                                        :className (if (om/get-state owner :input-expanded)
+                                                     "layer-property-target expanded"
+                                                     "layer-property-target")
+                                        :required "true"
+                                        :data-adaptive ""
+                                        :value (or (:layer/ui-target layer) "")
+                                        :onClick #(.focus (om/get-node owner "target-input"))
+                                        :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})})
+                        (dom/label #js {:data-placeholder "is targeting"
+                                        :data-placeholder-nil "define a target"
+                                        :data-placeholder-busy "defining target"})
                         (when (seq targets)
                           (dom/button #js {:className "layer-property-button"
                                            :onClick #(do (om/update-state! owner :input-expanded not)
                                                          false)}
                                       "..."))))
-                    (dom/div #js {:className "layer-property-dropdown"}
-                      (when (om/get-state owner :input-expanded)
-                        (apply dom/div #js {:className "property-dropdown-targets"}
-                               (for [target targets]
-                                 (dom/a #js {:className "property-dropdown-target"
-                                             :role "button"
-                                             :onClick #(do (cast! :layer-ui-target-edited {:value target})
-                                                           (om/set-state! owner :input-expanded false)
-                                                           (.focus (om/get-node owner "target-input")))}
-                                   target)))))))))))
+                    (apply dom/div #js {:className (if (om/get-state owner :input-expanded)
+                                                     "property-dropdown-targets expanded"
+                                                     "property-dropdown-targets")}
+                           (for [target targets]
+                             (dom/a #js {:className "property-dropdown-target"
+                                         :role "button"
+                                         :onClick #(do (cast! :layer-ui-target-edited {:value target})
+                                                       (om/set-state! owner :input-expanded false)
+                                                       (.focus (om/get-node owner "target-input")))}
+                               target)))))))))
 
 (defn svg-canvas [payload owner opts]
   (reify

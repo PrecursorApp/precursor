@@ -283,6 +283,7 @@
 .layer-properties {
   .flexy(column);
   width: @aside_width;
+  padding-top: 5px; // keeps adaptive placeholder from getting cut off
   .layer-property-id {
     background: @app_background;
     &:not(:focus) {
@@ -306,34 +307,37 @@
 }
 .layer-property {
   .flexy(column);
-  position: relative;
-  z-index: 1;
 }
 .layer-property-button {
-  position: absolute;
   font-size: 1.5em; // for ellipsis icon hack
   line-height: 0; // for ellipsis icon hack
   top: 0;
   right: 0;
   width: 3rem;
   height: 3rem;
+  margin: -3rem 0 0 auto;
   padding-bottom: 1rem; // for ellipsis icon hack
   &:hover {
     color: @blue;
   }
 }
-.layer-property-dropdown {
-  overflow: hidden;
-}
 .property-dropdown-targets {
   .flexy(column);
-  .animation(in-fade-down @speed_slow @bezier_transform);
   .scrollbar_hide(); // TODO we should calculate to get this effect in the dom
   max-height: (@aside_width * 1);
   background: @gray_darker;
   border: 1px solid @gray_dark;
   border-top: none;
   overflow-y: auto;
+  transition+: all @speed @bezier_transform;
+  transition+: visibility 0ms @bezier_transform 0ms;
+  &:not(.expanded) {
+    opacity: 0;
+    visibility: hidden;
+    margin-top: -1em;
+    transition+: all @speed_fast @bezier_transform;
+    transition+: visibility 0ms @bezier_transform @speed_fast;
+  }
 }
 .property-dropdown-target {
   .flex(0 0 3em);
