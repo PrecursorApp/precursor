@@ -296,6 +296,11 @@
     &:focus {
       border-top-color: transparent !important;
       box-shadow: 0 -1px @blue;
+      ~ .property-dropdown-targets {
+        &:not(.expanded) {
+          border-bottom-color: @blue;
+        }
+      }
     }
     &:not(:focus) {
       border-top-color: transparent;
@@ -324,19 +329,15 @@
 .property-dropdown-targets {
   .flexy(column);
   .scrollbar_hide(); // TODO we should calculate to get this effect in the dom
-  max-height: (@aside_width * 1);
+  max-height: (@tile * 5);
   background: @gray_darker;
   border: 1px solid @gray_dark;
   border-top: none;
   overflow-y: auto;
-  transition+: all @speed @bezier_transform;
-  transition+: visibility 0ms @bezier_transform 0ms;
+  transition: max-height @speed_slow @bezier_transform;
   &:not(.expanded) {
-    opacity: 0;
-    visibility: hidden;
-    margin-top: -1em;
-    transition+: all @speed_fast @bezier_transform;
-    transition+: visibility 0ms @bezier_transform @speed_fast;
+    max-height: 0;
+    margin-top: -1px;
   }
 }
 .property-dropdown-target {
