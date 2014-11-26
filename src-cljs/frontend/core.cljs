@@ -317,11 +317,11 @@
 
 (defn setup-entity-id-fetcher [state]
   (let [api-ch (-> state deref :comms :api)]
-    (fetch-entity-ids api-ch 100)
+    (fetch-entity-ids api-ch 40)
     (add-watch state :entity-id-fetcher (fn [key ref old new]
-                                          (when (> 90 (-> new :entity-ids count))
+                                          (when (> 20 (-> new :entity-ids count))
                                             (println "fetching more entity ids")
-                                            (fetch-entity-ids api-ch 100))))))
+                                            (fetch-entity-ids api-ch 40))))))
 
 (defn ^:export setup! []
   (apply-app-id-hack)
