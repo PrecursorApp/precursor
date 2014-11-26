@@ -356,6 +356,7 @@
           (dom/form #js {:className "layer-properties"
                          :onMouseDown #(.stopPropagation %)
                          :onMouseUp #(.stopPropagation %)
+                         :onWheel #(.stopPropagation %)
                          :onSubmit (fn [e]
                                      (cast! :layer-properties-submitted)
                                      false)
