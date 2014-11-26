@@ -16,20 +16,52 @@
     stroke: @gray_dark;
   }
 }
+.layers {
+  &.live {
+    &.layer-handle {
+      ~ .layer-outline {
+        transition-delay: @speed_fast;
+      }
+    }
+  }
+}
+.selectable-group {
+  .layer-handle {
+    stroke: transparent;
+    stroke-width: 20;
+    &:hover {
+      ~ .layer-outline {
+        stroke: @color_select_hover;
+        stroke-width: 4;
+        transition-duration: @speed_fast;
+      }
+    }
+  }
+}
 .shape-layer {
+  stroke: none;
   fill: none;
-  stroke: @gray_light;
-  stroke-width: 2;
-  transition: stroke-width @speed;
   &.layer-in-progress {
-    stroke: @blue;
+    stroke: @color_select;
+    stroke-width: 2;
     &.selection {
       stroke: @white;
       stroke-width: 1;
     }
   }
-  &.selected {
-    stroke: @color_select;
+  &.interactive-fill {
+    fill: transparent;
+    cursor: pointer;
+  }
+  &.layer-outline {
+    stroke: @gray_light;
+    stroke-width: 2;
+    pointer-events: none;
+    transition: @speed @bezier_transform;
+    &.selected {
+      stroke-width: 2;
+      stroke: @color_select;
+    }
   }
 }
 .text-layer {
@@ -43,50 +75,19 @@
   &.selected {
     fill: @color_select;
   }
-  // TODO: not sure what this will break, but it makes text
-  //       1. selectable w/ select tool and 2. editable w/ text tool.
-  // &:not(.selectable-layer) {
-  //   pointer-events: none;
-  // }
   &.layer-in-progress {
-    fill: @blue;
+    fill: @color_select;
+    stroke-opacity: 1;
   }
 }
 .selectable-group {
   &:hover {
-    .shape-layer {
-      stroke: @color_select_hover;
-      transition-duration: @speed_fast;
-      &:not(.selectable-layer) {
-        stroke-width: 4;
-      }
-      &.selected {
-        stroke: @color_select;
-      }
-    }
     .text-layer {
       fill: @color_select_hover;
       &.selected {
         fill: @color_select;
       }
     }
-  }
-}
-.selectable-layer {
-  stroke-width: 20;
-  stroke-opacity: 0;
-}
-.interactive-layer {
-  fill: rgba(255,255,255,0.1);
-  cursor: pointer;
-  stroke-width: 0;
-  // when the select tool has selected it inside its area
-  &.selected-group {
-    cursor: default;
-  }
-  &.invalid-action {
-    fill: fade(@red, 10%);
-    cursor: no-drop;
   }
 }
 .mouse-stats {
