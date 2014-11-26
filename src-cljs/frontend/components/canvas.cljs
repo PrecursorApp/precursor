@@ -90,6 +90,10 @@
                                                (contains? selected-eids (:db/id layer)))]
 
                                (cond
+                                (and (= :text tool)
+                                     (= :layer.type/text (:layer/type layer)))
+                                (cast! :text-layer-re-edited layer)
+
                                 (not= :select tool) nil
 
                                 (or (= (.-button %) 2)
@@ -122,23 +126,14 @@
                                 (cast! :layer-selected {:layer layer
                                                         :x (first (cameras/screen-event-coords %))
                                                         :y (second (cameras/screen-event-coords %))}))))
-                          :className "selectable-layer layer-handle"
+                          :className (str "selectable-layer layer-handle "
+                                          (when (and (= :layer.type/text (:layer/type layer))
+                                                     (= :text tool)) "editable "))
                           :key (str "selectable-" (:db/id layer))))
-           (svg-element selected-eids (assoc layer
-                                        :onMouseDown (cond
-                                                      (and (= :text tool)
-                                                           (= :layer.type/text (:layer/type layer)))
-                                                      #(do
-                                                         (.stopPropagation %)
-                                                         (cast! :text-layer-re-edited layer))
-
-                                                      :else nil)
-                                        :onMouseUp (when (and (= :text tool)
-                                                              (= :layer.type/text (:layer/type layer)))
-                                                     #(.stopPropagation %))
-                                        :className (str "layer-outline "
-                                                        (when (= :text tool) "editable"))
-                                        :key (:db/id layer)))
+           (when-not (= :layer.type/text (:layer/type layer))
+             (svg-element selected-eids (assoc layer
+                                          :className (str "layer-outline "                                                     )
+                                          :key (:db/id layer))))
            ;; TODO: figure out what to do with this title
            ;; (when invalid?
            ;;   (dom/title nil
@@ -211,7 +206,9 @@
             {idle-layers false live-layers true} (group-by (comp boolean :layer/ui-target)
                                                            renderable-layers)]
         ;; TODO: this should probably be split into a couple of components
-        (dom/g #js {:className (str "tool-" tool)}
+        (dom/g #js {:className (if (= :select tool)
+                                 "interactive"
+                                 "static")}
                (apply dom/g #js {:className "layers idle"}
                       (mapv #(layer-group % {:live? false
                                              :cast! cast!
