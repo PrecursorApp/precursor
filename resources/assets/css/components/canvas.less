@@ -79,6 +79,14 @@
     fill: @color_select;
     stroke-opacity: 1;
   }
+  &.interactive-fill {
+    cursor: pointer;
+  }
+}
+.static {
+  .interactive-fill {
+    display: none;
+  }
 }
 .selectable-group {
   &:hover {
