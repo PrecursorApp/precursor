@@ -202,6 +202,18 @@
     }
   }
 }
+.svg-text-form {
+  input[type="text"] {
+    .placeholder_style(color; @gray);
+    color: @color_select_hover;
+    background: none;
+    border: none;
+    outline: none;
+  }
+}
+  //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾//
+ //  Radial Right-Click Menu  //
+//___________________________//
 .radial-menu {
   position: fixed;
   width: (@radial_menu_size * 1.5);
@@ -264,21 +276,81 @@
     display: none;
   });
 }
-.svg-text-form {
-  input[type="text"] {
-    .placeholder_style(color; @gray);
-    color: @color_select_hover;
-    background: none;
-    border: none;
-    outline: none;
+  //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾//
+ //  Layer Properties Right-Click Menu  //
+//_____________________________________//
+.layer-properties {
+  .flexy(column);
+  width: @aside_width;
+  .layer-property-id {
+    background: @app_background;
+    &:not(:focus) {
+      box-shadow: 0 -1px @gray_dark inset;
+      border-bottom-width: 0;
+    }
+  }
+  .layer-property-target {
+    background: @app_background;
+    &:focus {
+      border-top-color: transparent !important;
+      box-shadow: 0 -1px @blue;
+    }
+    &:not(:focus) {
+      border-top-color: transparent;
+    }
+    &.expanded {
+      border-bottom-color: transparent;
+    }
   }
 }
-form.layer-properties {
-  input[type="text"] {
-    .placeholder_style(color; @gray);
-    color: @black;
-    background: @white;
-    border: none;
-    outline: none;
+.layer-property {
+  .flexy(column);
+  position: relative;
+  z-index: 1;
+}
+.layer-property-button {
+  position: absolute;
+  font-size: 1.5em; // for ellipsis icon hack
+  line-height: 0; // for ellipsis icon hack
+  top: 0;
+  right: 0;
+  width: 3rem;
+  height: 3rem;
+  padding-bottom: 1rem; // for ellipsis icon hack
+  &:hover {
+    color: @blue;
+  }
+}
+.layer-property-dropdown {
+  overflow: hidden;
+}
+.property-dropdown-targets {
+  .flexy(column);
+  .animation(in-fade-down @speed_slow @bezier_transform);
+  .scrollbar_hide(); // TODO we should calculate to get this effect in the dom
+  max-height: (@aside_width * 1);
+  background: @gray_darker;
+  border: 1px solid @gray_dark;
+  border-top: none;
+  overflow-y: auto;
+}
+.property-dropdown-target {
+  .flex(0 0 3em);
+  color: @gray_dark;
+  line-height: 1em;
+  padding: 1em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition+: color @speed_fast @bezier_fadein;
+  transition+: border @speed_fast @bezier_fadein;
+  transition+: text-indent @speed @bezier_transform;
+  &:hover {
+    text-indent: 3px;
+    border-color: @gray_lighter;
+    transition-duration+: 0ms;
+    transition-duration+: 0ms;
+    transition-duration+: @speed;
   }
 }
