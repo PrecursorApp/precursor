@@ -77,25 +77,6 @@
 (defn layer-group [layer {:keys [tool selected-eids selected-eid cast! db live?]}]
   (dom/g #js {:className (str "layer " (when (= :select tool) "selectable-group "))
               :key (str (:db/id layer) live?)}
-         ;; The order of selectable-layer and non-selectable-layer is important!
-         ;; If the non-selectable-layer comes last in the DOM it render above the selectable-layer,
-         ;; and it steal the pointer-events. I.e., you click right in the center of the stroke and nothing happens.
-         ;; But not for long, we're fixing this with pointer-events!
-         (svg-element selected-eids (assoc layer
-                                      :onMouseDown (cond
-                                                    (and (= :text tool)
-                                                         (= :layer.type/text (:layer/type layer)))
-                                                    #(do
-                                                       (.stopPropagation %)
-                                                       (cast! :text-layer-re-edited layer))
-
-                                                    :else nil)
-                                      :onMouseUp (when (and (= :text tool)
-                                                            (= :layer.type/text (:layer/type layer)))
-                                                   #(.stopPropagation %))
-                                      :className (str "layer-outline "
-                                                      (when (= :text tool) "editable"))
-                                      :key (:db/id layer)))
          (svg-element selected-eids
                       (assoc layer
                         :onMouseDown
@@ -139,6 +120,21 @@
                                                       :y (second (cameras/screen-event-coords %))}))))
                         :className "selectable-layer layer-handle"
                         :key (str "selectable-" (:db/id layer))))
+         (svg-element selected-eids (assoc layer
+                                      :onMouseDown (cond
+                                                    (and (= :text tool)
+                                                         (= :layer.type/text (:layer/type layer)))
+                                                    #(do
+                                                       (.stopPropagation %)
+                                                       (cast! :text-layer-re-edited layer))
+
+                                                    :else nil)
+                                      :onMouseUp (when (and (= :text tool)
+                                                            (= :layer.type/text (:layer/type layer)))
+                                                   #(.stopPropagation %))
+                                      :className (str "layer-outline "
+                                                      (when (= :text tool) "editable"))
+                                      :key (:db/id layer)))
          (when (:layer/ui-target layer)
            (let [invalid? (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-target layer))))]
              ;; TODO: figure out what to do with this title
