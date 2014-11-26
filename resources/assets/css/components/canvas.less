@@ -346,8 +346,10 @@
   overflow-y: auto;
   transition: max-height @speed_slow @bezier_transform;
   &:not(.expanded) {
-    max-height: 0;
-    margin-top: -1px;
+    display: none;
+    // transition keeps making the dropdown clip out of place :(
+    // max-height: 0;
+    // margin-top: -1px;
   }
 }
 .property-dropdown-target {
