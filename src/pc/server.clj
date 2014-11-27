@@ -16,6 +16,7 @@
             [pc.admin.db :as db-admin]
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
+            [pc.http.doc :refer (duplicate-doc)]
             [pc.http.sente :as sente]
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
@@ -154,7 +155,11 @@
 
    (GET "/email/welcome/:template.gif" [template]
         {:status 200
-         :body (content/email-welcome template)})
+         :body (content/email-welcome template {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*})})
+
+   (POST "/duplicate/:document-name" [document-name :as req]
+
+         (redirect (str "/document/" (duplicate-doc document-name (-> req :auth :cust)))))
 
    (ANY "*" [] {:status 404 :body "Page not found."})))
 
