@@ -24,6 +24,7 @@
             [pc.profile :as profile]
             [pc.less :as less]
             [pc.views.content :as content]
+            [pc.views.blog :as blog]
             [pc.utils :refer (inspect)]
             [pc.convert :refer (svg->png)]
             [pc.render :refer (render-layers)]
@@ -155,6 +156,13 @@
    (GET "/email/welcome/:template.gif" [template]
         {:status 200
          :body (content/email-welcome template)})
+
+   (GET "/blog" []
+        {:status 200
+         :body (blog/render-page nil)})
+   (GET "/blog/:slug" [slug]
+        {:status 200
+         :body (blog/render-page slug)})
 
    (ANY "*" [] {:status 404 :body "Page not found."})))
 
