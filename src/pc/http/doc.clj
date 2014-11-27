@@ -6,7 +6,7 @@
             [pc.datomic :as pcd]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model])
-  (:import [java.io.PushbackReader]))
+  (:import [java.io PushbackReader]))
 
 (defn read-doc [doc]
   (edn/read (PushbackReader. (io/reader (io/resource (format "docs/%s.edn" doc))))))
