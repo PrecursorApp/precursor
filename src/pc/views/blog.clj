@@ -1,11 +1,24 @@
 (ns pc.views.blog
   (:require [hiccup.core :refer [html]]
+            [pc.profile :as profile]
             [pc.views.content]
-            [pc.views.blog.interactive-layers]
             [pc.util.http :as http-util]))
 
+(defonce requires (atom #{}))
+
+(defn post-ns [slug]
+  (symbol (str "pc.views.blog." slug)))
+
+;; This is probably a bad idea, but it seems to work pretty well.
+(defn maybe-require [slug]
+  (let [ns (post-ns slug)]
+    (when-not (contains? @requires ns)
+      (require ns)
+      (swap! requires conj ns))))
+
 (defn post-fn [slug]
-  (ns-resolve (symbol (str "pc.views.blog." slug))
+  (maybe-require slug)
+  (ns-resolve (post-ns slug)
               (symbol slug)))
 
 (defn post-url [slug]
@@ -15,7 +28,8 @@
 (def slugs
   "Sorted array of slugs, assumes the post content can be found in the
    function returned by post-fn"
-  ["interactive-layers"])
+  ["instrumenting-om-components"
+   "interactive-layers"])
 
 (defn post-exists? [slug]
   (not= -1 (.indexOf slugs slug)))
