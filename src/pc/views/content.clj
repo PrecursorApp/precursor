@@ -74,5 +74,5 @@
 (defn interesting [doc-ids]
   (h/html (layout {} (interesting* (reverse (sort doc-ids))))))
 
-(defn email-welcome [template-name]
-  (h/html (layout {} (email-landing/email-landing template-name))))
+(defn email-welcome [template-name {:keys [CSRFToken]}]
+  (h/html (layout {} (email-landing/email-landing template-name CSRFToken))))
