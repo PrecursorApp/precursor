@@ -4,7 +4,8 @@
             [clojure.tools.logging :as log]
             [datomic.api :as d]
             [pc.datomic :as pcd]
-            [pc.models.doc :as doc-model])
+            [pc.models.doc :as doc-model]
+            [pc.models.layer :as layer-model])
   (:import [java.io.PushbackReader]))
 
 (defn read-doc [doc]
@@ -27,3 +28,14 @@
                                        {:cust/uuid (:cust/uuid cust)}))))
       (log/infof "requested duplicate doc for non-existent doc %s" document-name))
     new-doc-id))
+
+(defn save-doc
+  "Helper function to save an existing doc, still needs to be committed and added to docs
+   after it has been saved."
+  [doc-id doc-name]
+  (spit (format "resources/docs/%s.edn" doc-name)
+        (pr-str (map #(dissoc % :db/id :document/id)
+                     ;; we may want to save groups at some point in the future, right now they
+                     ;; just take up space.
+                     (remove #(= :layer.type/group (:layer/type %))
+                             (layer-model/find-by-document (pcd/default-db) {:db/id doc-id}))))))
