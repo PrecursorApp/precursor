@@ -9,8 +9,9 @@
 
     [:p "We'll prototype a simple iPhone app with three different views."]
 
-    [:p [:div [:iframe {:src "http://gfycat.com/ifr/NervousBlissfulGrayling" :frameborder "0" :scrolling "no"
-                        :width "640" :height "480" :style "-webkit-backface-visibility: hidden;-webkit-transform: scale(1);"}]]]
+    [:p [:div
+         [:iframe {:src "http://gfycat.com/ifr/NervousBlissfulGrayling" :frameborder "0" :scrolling "no"
+                   :width "640" :height "480" :style "-webkit-backface-visibility: hidden;-webkit-transform: scale(1);"}]]]
 
 
     [:h2 "Name Shapes"]
@@ -29,7 +30,7 @@
 
     [:h2 "Define Targets"]
 
-    [:p "Now that we've named our main views, we can right-click on a shape to select a target from the drop-down menu."]
+    [:p "Now that we've named our main views, we can right-click on a shape to select one of the views to target from the drop-down menu."]
 
     [:p [:img {:src "/blog/interactive-layers/select-target.png"
                :width "800px"}]]
@@ -40,7 +41,7 @@
 
     [:h3 "Extend the Illusion"]
 
-    [:p "The transitions will feel more realistic if we can't see the views before we move to them. We can accomplish this "
+    [:p "The transitions will feel more realistic if we can't see the next view before we move to it. We can accomplish this "
      "by selecting the views and spacing them out. You can do this very easily by zooming out. Simply hold your "
      "alt or option key and scroll down. Then select each shape and space them out. "
      "You can get back to the default view by pressing the \"1\" key."]
