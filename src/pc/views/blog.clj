@@ -22,8 +22,7 @@
               (symbol slug)))
 
 (defn post-url [slug]
-  (str (assoc (http-util/self-base-url)
-         :path (str "/blog/" slug))))
+  (str "/blog/" slug))
 
 (def slugs
   "Sorted array of slugs, assumes the post content can be found in the
@@ -40,7 +39,22 @@
    (for [slug slugs]
      [:p
       [:a {:href (post-url slug)}
-       (:title ((post-fn slug)))]])])
+       (:title ((post-fn slug)))]])
+   [:p
+    [:a {:href "/blog"}
+     "Building a radial menu"]]
+   [:p
+    [:a {:href "/blog"}
+     "Precursor announces 1 billion seed round"]]
+   [:p
+    [:a {:href "/blog"}
+     "Photoshop is dead, long live Precursor"]]
+   [:p
+    [:a {:href "/blog"}
+     "Importing your Precursor prototypes into Photoshop"]]
+   [:p
+    [:a {:href "/blog"}
+     "Introduction to creating gifs of interactive prototypes"]]])
 
 (defn single-post [slug]
   (let [post ((post-fn slug))]
