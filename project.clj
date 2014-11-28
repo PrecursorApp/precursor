@@ -51,6 +51,8 @@
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.1.5"]
                  [com.cemerick/url "0.1.1"]
+                 [hiccups "0.3.0"]
+
                  [weasel "0.4.2"] ;; repl
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
