@@ -53,27 +53,27 @@
       [:a.blogroll-post {:href (post-url slug)}
        [:h3 (:title ((post-fn slug)))]
        [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-       [:h6 "by Danny on Nov 27"]])
+       [:h6 "Danny"]])
     [:a.blogroll-post {:href "/blog"}
      [:h3 "Building a radial menu"]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Danny on Nov 27"]]
+     [:h6 "Daniel"]]
     [:a.blogroll-post {:href "/blog"}
      [:h3 "Precursor announces 1 billion seed round"]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Danny on Nov 27"]]
+     [:h6 "Danny"]]
     [:a.blogroll-post {:href "/blog"}
      [:h3 "Photoshop is dead, long live Precursor"]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Danny on Nov 27"]]
+     [:h6 "Daniel"]]
     [:a.blogroll-post {:href "/blog"}
      [:h3 "Importing your Precursor prototypes into Photoshop"]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Danny on Nov 27"]]
+     [:h6 "Danny"]]
     [:a.blogroll-post {:href "/blog"}
      [:h3 "Introduction to creating gifs of interactive prototypes"]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Danny on Nov 27"]]]])
+     [:h6 "Daniel"]]]])
 
 (defn single-post [slug]
   (let [post ((post-fn slug))]
@@ -89,9 +89,6 @@
          [:nav.navigation
           [:a.navigation-logomark {:href "/"}
            logomark]
-          ; [:div.navigation-breadcrumbs
-          ;  [:a {:href "/blog"}
-          ;   "blog"]]
           [:a.navigation-promote {:href "#"
                                   :data-bottom "Make something."}
            "Prototyping for teams."]]
@@ -99,8 +96,6 @@
            (single-post slug)
            (overview))
          [:footer.navigation.footer
-          ; [:a.navigation-logomark {:href "/"}
-          ;  logomark]
           [:a.navigation-promote {:href "#"
                                   :data-left "See new changes."}
            twitter]])))

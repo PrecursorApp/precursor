@@ -1,15 +1,5 @@
 .page-blog {
   color: @gray_dark;
-  // a {
-  //   color: @gray_darker;
-  //   .icon_stroke(@gray_darker);
-  //   .icon_fill(@gray_darker);
-  //   &:hover {
-  //     .icon_stroke(@color_link_hover);
-  //     .icon_fill(@color_link_hover);
-  //     color: @color_link_hover;
-  //   }
-  // }
   a {
     &:not(:hover) {
       .icon_fill(@gray_darker);
@@ -65,34 +55,6 @@
     }
   }
 }
-.navigation-logomark {
-  &:not(:hover) {
-    // color: @gray_dark;
-    // .icon_fill(@gray_darker);
-  }
-}
-// .navigation-logomark {
-//   padding: 1em .5em 1em 1em;
-// }
-// .navigation-breadcrumbs {
-//   a {
-//     &:before {
-//       content: "/";
-//       padding-right: 1ex;
-//       color: @gray_light;
-//     }
-//     &:not(:hover) {
-//       color: @gray_light;
-//     }
-//   }
-// }
-// .navigation-promote {
-//   margin-left: auto;
-//   padding: 1em;
-//   &:not(:hover) {
-//     color: @gray_light;
-//   }
-// }
 .blogroll-post {
   .flexy(column);
   position: relative;
@@ -103,9 +65,6 @@
   &:hover {
     color: @gray_dark;
     transition-duration: @speed_fast;
-    h3 {
-      // color: @gray_dark;
-    }
     &:before {
       width: 100%;
       transition: @speed @bezier_transform @speed_fast;
@@ -124,9 +83,15 @@
     border-bottom: 2px solid @blue;
     transition: @speed_fast @bezier_transform;
   }
+  p {
+    color: @gray;
+  }
   h3,
   h6 {
     margin: 0;
+  }
+  h6 {
+    font-weight: 500;
   }
 }
 .blogroll,
@@ -137,6 +102,7 @@
 .bloghead {
   padding: @tile 0;
   h1 {
+    font-weight: 400;
     margin: 0;
   }
 }

@@ -4,7 +4,6 @@
   {:title "Instrumenting Om Components"
    :body
    (list
-
     [:article
      [:p
       "One of the big challenges in using React.js and Om is understanding how the code you write "
