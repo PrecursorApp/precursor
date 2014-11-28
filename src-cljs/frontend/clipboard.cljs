@@ -134,7 +134,8 @@
   [layer opts]
   [:path (layer->svg-path layer opts)])
 
-(defn render-layers [{:keys [layers] :as layer-data} & {:keys [invert-colors? size-limit]}]
+;; TODO: take path width/height into account
+(defn render-layers [{:keys [layers] :as layer-data} & {:keys [invert-colors?]}]
   (let [layers (filter #(not= :layer.type/group (:layer/type %)) layers)
         start-xs (remove #(js/isNaN %) (map :layer/start-x layers))
         start-ys (remove #(js/isNaN %) (map :layer/start-y layers))
@@ -146,26 +147,14 @@
         min-y (apply min ys)
         max-x (apply max xs)
         max-y (apply max ys)
-        width (if (pos? min-x)
-                max-x
-                (- max-x min-x))
-        height (if (pos? min-y)
-                 max-y
-                 (- max-y min-y))
-        offset-top (if (neg? min-y)
-                     (+ 250 (- min-y))
-                     0)
-        offset-left (if (neg? min-x)
-                      (+ 250 (- min-x))
-                      0)]
+        width (+ 2 (js/Math.abs (- max-x min-x))) ;; room for stroke
+        height (+ 2 (js/Math.abs (- max-y min-y)))
+        offset-top (- 1 min-y)
+        offset-left (- 1 min-x)]
     (hiccups/html
      [:svg (merge
-            {:width (apply min (concat [(+ width 500)]
-                                       (when size-limit
-                                         [size-limit])))
-             :height (apply min (concat [(+ height 500)]
-                                        (when size-limit
-                                          [size-limit])))
+            {:width width
+             :height height
              :xmlns "http://www.w3.org/2000/svg"
              :xmlns:xlink "http://www.w3.org/1999/xlink"
              :version "1.1"}
