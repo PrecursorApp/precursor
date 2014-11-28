@@ -884,3 +884,35 @@
   [browser-state message {:keys [value]} state]
   (-> state
       (assoc-in [:layer-properties-menu :layer :layer/ui-target] (empty-str->nil value))))
+
+(defmethod control-event :layers-pasted
+  [browser-state message {:keys [layers rx ry]} state]
+  (let [[group-id & layer-ids :as used-ids] (take (inc (count layers)) (:entity-ids state))
+        doc-id (:document/id state)
+        mouse (:mouse state)
+        [current-rx current-ry] (cameras/screen->point (:camera state) (:x mouse) (:y mouse))
+        [move-x move-y] [(- current-rx rx) (- current-ry ry)]
+        [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
+        snap-paths? (first (filter #(not= :layer.type/path (:layer/type %)) layers))]
+    (-> state
+        (assoc-in [:clipboard :layers] (conj (mapv (fn [l eid]
+                                                     (-> l
+                                                         (assoc :layer/ancestor (:db/id l)
+                                                                :db/id eid
+                                                                :document/id doc-id)
+                                                         (move-layer l
+                                                                     {:snap-x snap-move-x :snap-y snap-move-y
+                                                                      :move-x move-x :move-y move-y :snap-paths? snap-paths?})
+                                                         (dissoc :layer/current-x :layer/current-y)))
+                                                   layers layer-ids)
+                                             {:db/id group-id
+                                              :layer/type :layer.type/group
+                                              :layer/child (set layer-ids)}))
+        (assoc-in [:selected-eid] group-id)
+        (update-in [:entity-ids] #(apply disj % used-ids)))))
+
+(defmethod post-control-event! :layers-pasted
+  [browser-state message _ previous-state current-state]
+  (let [db (:db current-state)
+        layers (get-in current-state [:clipboard :layers])]
+    (d/transact! db layers {:can-undo? true})))
