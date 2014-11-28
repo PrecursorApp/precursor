@@ -11,6 +11,7 @@
             [goog.net.Cookies]
             [frontend.analytics :as analytics]
             [frontend.camera :as camera-helper]
+            [frontend.clipboard :as clipboard]
             [frontend.components.app :as app]
             [frontend.controllers.controls :as controls-con]
             [frontend.controllers.navigation :as nav-con]
@@ -243,6 +244,7 @@
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
         handle-close!            #(cast! :application-shutdown [@histories])]
+
     (swap! state assoc :undo-state undo-state)
 
     (d/listen! (:db @state)
@@ -267,11 +269,15 @@
     (js/window.addEventListener "mouseup"   handle-canvas-mouse-up false)
     (js/window.addEventListener "beforeunload" handle-close!)
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
+    (js/window.addEventListener "copy" #(clipboard/handle-copy! @state %))
+    (js/window.addEventListener "paste" #(clipboard/handle-paste! @state %))
     (.listen visibility-monitor
              goog.events.EventType/VISIBILITYCHANGE
              #(cast! :visibility-changed {:hidden? (.-hidden %)
                                           :visibility-state (.-visibilityState %)})
              false)
+
+
 
     (routes/define-routes! state)
     (install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down

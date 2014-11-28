@@ -109,6 +109,10 @@
               :db.type/string
               :db/doc "User-provided action for layer")
 
+   (attribute :layer/ancestor
+              :db.type/long
+              :db/doc "db/id of this layer's parent. Could be called \"parent\", but want to avoid confusion with \"child\", which is taken.")
+
    ;; No logins at the moment, so we'll use this to identify users
    (attribute :session/uuid
               :db.type/uuid
