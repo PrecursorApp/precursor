@@ -455,7 +455,7 @@
                                      (.stopPropagation event)
                                      ((:handle-mouse-down handlers) event))
                       :onMouseUp (fn [event]
-                                   (.preventDefault event)
+                                   ;(.preventDefault event)
                                    (.stopPropagation event)
                                    ((:handle-mouse-up handlers) event))
                       :onWheel (fn [event]
