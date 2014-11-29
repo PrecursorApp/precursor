@@ -4,20 +4,20 @@ i {
       width: 1em;
       height: 1em;
     }
-  }
-  [class*="dot"] {
-    stroke-linecap: round;
-    stroke-width: 20;
-  }
-}
-path {
-  &[class*="stroke"] {
-    fill: none;
-    stroke: @white;
-    stroke-width: 8;
-  }
-  &[class*="fill"] {
-    fill: @white;
-    stroke: none;
+    path {
+      &[class*="stroke"] {
+        fill: none;
+        stroke: @white;
+        stroke-width: 8;
+      }
+      &[class*="fill"] {
+        fill: @white;
+        stroke: none;
+      }
+      &[class*="dot"] {
+        stroke-linecap: round;
+        stroke-width: 20;
+      }
+    }
   }
 }
