@@ -1,32 +1,16 @@
-.overlay-info,
-.overlay-shortcuts,
-.overlay-change-name {
+.app-overlay {
   .flexy(center, center);
+  // .animation(in-fade (@speed * 2));
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   color: @gray_dark;
+  // background: fade(@black, (100 / 3));
+  // background: fade(@gray_darker, 50);
+  overflow: hidden;
   z-index: @zindex_info_background;
-  visibility: visible;
-  &.hidden {
-    visibility: hidden;
-    article {
-      .scale3d(.3);
-      opacity: 0;
-    }
-    .overlay-background {
-      opacity: 0;
-    }
-    .overlay-close {
-      opacity: 0;
-    }
-    .mixpanel-badge {
-      opacity: 0;
-      transition: @speed_fast @bezier_fadein;
-    }
-  }
   a {
     &:not(:hover) {
       .icon_fill(@gray_darker);
@@ -48,6 +32,57 @@
     transition: @speed_slow @bezier_transform;
   }
 }
+.app-overlay-background {
+  .animation(in-fade @speed);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: fade(@gray_darker, 50);
+  z-index: -1;
+}
+
+.overlay-info,
+.overlay-shortcuts,
+.overlay-change-name {
+  //
+}
+
+.overlay-shortcuts {
+
+}
+
+.dashboard {
+  @width: (@aside_width * 1.5);
+  .animation(in-fade-right @speed_fast);
+  .animation-bezier(@bezier_transform);
+  width: @width;
+  height: 100%;
+  margin-left: auto;
+  background: @white;
+  box-shadow: @width 0 @white;
+  // box-shadow: -1em 0 12em @black;
+  // hold off on shadow for now, may not be necessary
+  &:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: @width;
+    width: (@width * 2);
+    height: 100%;
+    // background-image: linear-gradient(to right, fade(@black, 0), fade(@black, (100 / 3)) 100%);
+    background-image: linear-gradient(to right, fade(@gray_darker, 0), fade(@gray_darker, 66));
+    pointer-events: none;
+  }
+}
+.dashboard-display {
+  section {
+    margin: 1em;
+  }
+}
+
+
 .overlay-background {
   position: absolute;
   top: 0;
