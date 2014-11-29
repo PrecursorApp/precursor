@@ -1,21 +1,3 @@
-.icon_stroke(...) {
-  .icon_stroke_color(@a) when (iscolor(@a)) {
-    i {
-      [class*="stroke"] {
-        stroke: @arguments;
-      }
-    }
-  }.icon_stroke_color(@arguments);
-}
-.icon_fill(...) {
-  .icon_fill_color(@a) when (iscolor(@a)) {
-    i {
-      [class*="fill"] {
-        fill: @arguments;
-      }
-    }
-  }.icon_fill_color(@arguments);
-}
 i {
   &[class|="icon"] {
     svg {
