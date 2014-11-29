@@ -243,7 +243,8 @@
         handle-mouse-move!       #(handle-mouse-move cast! %)
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
-        handle-close!            #(cast! :application-shutdown [@histories])]
+        handle-close!            #(do (cast! :application-shutdown [@histories])
+                                      nil)]
 
     (swap! state assoc :undo-state undo-state)
 
