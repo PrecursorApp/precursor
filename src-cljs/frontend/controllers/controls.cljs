@@ -894,18 +894,18 @@
         new-y (- (/ (- (:height canvas-size) height) 2)
                  (:y (:camera state)))
         [move-x move-y] [(- new-x min-x) (- new-y min-y)]
-        [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
-        snap-paths? (first (filter #(not= :layer.type/path (:layer/type %)) layers))]
+        [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)]
     (-> state
         (assoc-in [:clipboard :layers] (conj (mapv (fn [l eid]
                                                      (-> l
                                                          (assoc :layer/ancestor (:db/id l)
                                                                 :db/id eid
-                                                                :document/id doc-id)
-                                                         (move-layer l
-                                                                     {:snap-x snap-move-x :snap-y snap-move-y
-                                                                      :move-x move-x :move-y move-y :snap-paths? snap-paths?})
-                                                         (dissoc :layer/current-x :layer/current-y)))
+                                                                :document/id doc-id
+                                                                :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
+                                                         (#(move-layer % %
+                                                                       {:snap-x snap-move-x :snap-y snap-move-y
+                                                                        :move-x move-x :move-y move-y :snap-paths? true}))
+                                                         (dissoc :layer/current-x :layer/current-y :points)))
                                                    layers layer-ids)
                                              {:db/id group-id
                                               :layer/type :layer.type/group

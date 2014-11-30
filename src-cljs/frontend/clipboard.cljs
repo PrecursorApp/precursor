@@ -10,6 +10,7 @@
             [frontend.utils :as utils :include-macros true]
             [goog.dom.xml :as xml]
             [goog.string :as gstring]
+            [goog.style]
             [hiccups.runtime :as hiccupsrt])
   (:require-macros [hiccups.core :as hiccups]
                    [dommy.macros :refer [sel sel1]]))
