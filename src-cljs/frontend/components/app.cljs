@@ -12,6 +12,7 @@
             [frontend.components.key-queue :as keyq]
             [frontend.components.canvas :as canvas]
             [frontend.components.common :as common]
+            [frontend.components.overlay :as overlay]
             [frontend.favicon :as favicon]
             [frontend.models.chat :as chat-model]
             [frontend.state :as state]
@@ -144,9 +145,6 @@
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             aside-opened? (get-in app state/aside-menu-opened-path)
-            overlay-info-open? (get-in app state/overlay-info-opened-path)
-            overlay-shortcuts-open? (get-in app state/overlay-shortcuts-opened-path)
-            overlay-username-open? (get-in app state/overlay-username-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div#app
                (om/build aside/menu app)
@@ -185,95 +183,5 @@
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
                      "Try right-click")])]
-               (when (or overlay-info-open? overlay-shortcuts-open? overlay-username-open?)
-                [:div.app-overlay {:on-click #(cast! :overlay-closed)}
-                 [:div.app-overlay-background]
-                 (when overlay-info-open?
-                  [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)}
-                   [:div.overlay-background]
-                   [:a.overlay-close {:role "button"}
-                    (common/icon :times)]
-                   [:article {:on-click #(.stopPropagation %)}
-                    [:h1 "What's this?"]
-                    [:p
-                     "Precursor is a no-nonsense prototyping tool—"
-                     "use it for sketching, rapid prototyping, and team brainstorming. "
-                     [:a {:on-click #(cast! :invite-link-clicked)
-                          :role "button"
-                          :title "In chat, type \"/invite their@email.com\""}
-                      "Invite your team"]
-                     " and everyone can collaborate in the same document, instantly. "
-                     " We're still pretty new, so if you have feedback or a great idea sketch it up and ping "
-                     [:a {:on-click #(cast! :chat-link-clicked)
-                          :role "button"
-                          :title "Start any chat with \"@prcrsr\" and we'll see it."}
-                      "@prcrsr"]
-                     " in the chat, or say "
-                     [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
-                          :title "We love feedback, good or bad."}
-                      "hi@prcrsr.com"]]
-                    [:div.info-buttons
-                     [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
-                      "Okay, sounds good."]
-                     ;; TODO ab test this ".info-twitter" link with the the current one below -dk
-                     ;; [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
-                     ;;                   :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-                     ;;                   :data-top "Tell us what to add next."
-                     ;;                   :target "_blank"}
-                     ;;   (common/icon :twitter)]
-                     [:p [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
-                                           :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-                                           :title "On Twitter"
-                                           :target "_blank"}
-                       "Tell us what to add next."]]]]
-                   (common/mixpanel-badge)])
-                 (when overlay-shortcuts-open?
-                  [:aside.dashboard {:on-click #(.stopPropagation %)}
-                   ; [:div.overlay-background]
-                   ; [:a.overlay-close {:role "button"}
-                   ;  (common/icon :times)]
-                   [:div.dashboard-display
-                    [:section
-                     [:h2 "Shortcuts"]
-                     [:div.shortcuts-item
-                      [:div.shortcuts-key "S"]
-                      [:div.shortcuts-result "Select"]]
-                     [:div.shortcuts-item
-                      [:div.shortcuts-key "R"]
-                      [:div.shortcuts-result "Rectangle"]]
-                     [:div.shortcuts-item
-                      [:div.shortcuts-key "C"]
-                      [:div.shortcuts-result "Circle"]]
-                     [:div.shortcuts-item
-                      [:div.shortcuts-key "L"]
-                      [:div.shortcuts-result "Line"]]
-                     [:div.shortcuts-item
-                      [:div.shortcuts-key "P"]
-                      [:div.shortcuts-result "Pen"]]
-                     [:div.shortcuts-item
-                      [:div.shortcuts-key "T"]
-                      [:div.shortcuts-result "Text"]]
-                     [:div.shortcuts-item
-                      [:div.shortcuts-key "1"]
-                      [:div.shortcuts-result "Snap to origin"]]
-                     [:div.shortcuts-item
-                      [:div.shortcuts-key "Cmd"]
-                      [:div.shortcuts-key "Z"]
-                     [:div.shortcuts-result "Undo"]]]]])
-                 (when overlay-username-open?
-                  [:figure.overlay-change-name {:on-click #(cast! :overlay-closed)}
-                   [:div.overlay-background]
-                   [:a.overlay-close {:role "button"}
-                    (common/icon :times)]
-                   [:article {:on-click #(.stopPropagation %)}
-                    [:h2 "Let's change that name."]
-                    [:p
-                     "Help your team communicate faster with each other by using custom names. "
-                     "Log in or sign up to change how your name appears in chat."]
-                    [:div.info-buttons
-                     [:a.info-okay {:href (auth/auth-url)
-                                    :role "button"}
-                      "Sign Up"]
-                     [:a.info-twitter {:on-click #(cast! :overlay-closed)
-                                       :role "button"}
-                      "No thanks."]]]])])])))))
+               (when (:overlay app)
+                (om/build overlay/overlay app))])))))
