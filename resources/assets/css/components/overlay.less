@@ -33,13 +33,13 @@
   }
 }
 .app-overlay-background {
-  .animation(in-fade @speed);
+  .animation(in-fade @speed_fast @bezier_fadein);
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: fade(@gray_darker, 50);
+  background: fade(@gray_darker, 66);
   z-index: -1;
 }
 
@@ -50,7 +50,7 @@
 }
 
 .overlay-shortcuts {
-
+  //
 }
 
 .dashboard {
@@ -61,20 +61,20 @@
   height: 100%;
   margin-left: auto;
   background: @white;
-  box-shadow: @width 0 @white;
+  // box-shadow: (@width / 2) 0 @white;
   // box-shadow: -1em 0 12em @black;
   // hold off on shadow for now, may not be necessary
-  &:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: @width;
-    width: (@width * 2);
-    height: 100%;
-    // background-image: linear-gradient(to right, fade(@black, 0), fade(@black, (100 / 3)) 100%);
-    background-image: linear-gradient(to right, fade(@gray_darker, 0), fade(@gray_darker, 66));
-    pointer-events: none;
-  }
+  // &:before {
+  //   content: "";
+  //   position: absolute;
+  //   top: 0;
+  //   right: @width;
+  //   width: (@width * 2);
+  //   height: 100%;
+  //   // background-image: linear-gradient(to right, fade(@black, 0), fade(@black, (100 / 3)) 100%);
+  //   background-image: linear-gradient(to right, fade(@gray_darker, 0), fade(@gray_darker, 66));
+  //   pointer-events: none;
+  // }
 }
 .dashboard-display {
   section {
