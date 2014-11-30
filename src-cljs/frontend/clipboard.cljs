@@ -10,8 +10,10 @@
             [frontend.utils :as utils :include-macros true]
             [goog.dom.xml :as xml]
             [goog.string :as gstring]
+            [goog.style]
             [hiccups.runtime :as hiccupsrt])
-  (:require-macros [hiccups.core :as hiccups]))
+  (:require-macros [hiccups.core :as hiccups]
+                   [dommy.macros :refer [sel sel1]]))
 
 ;; TODO: all of this rendering code is shared with the backend. Obviously, this
 ;;       isn't the best place for it, but no great ideas for how to move it.
@@ -163,7 +165,11 @@
       ;; hack to make pngs work
       (when invert-colors?
         [:rect {:width "100%" :height "100%" :fill "#333"}])
-      [:metadata (pr-str layer-data)]
+      [:metadata (pr-str (assoc layer-data
+                           :width width
+                           :height height
+                           :min-x min-x
+                           :min-y min-y))]
       [:g {:transform (gstring/format "translate(%s, %s)" offset-left offset-top)}
        (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))
 
@@ -187,4 +193,7 @@
                                  (re-find #"<metadata>(.+)</metadata>")
                                  last
                                  reader/read-string)]
-    (put! (get-in app-state [:comms :controls]) [:layers-pasted layer-data])))
+    (let [size (goog.style/getSize (sel1 "#svg-canvas"))
+          canvas-size {:width (.-width size)
+                       :height (.-height size)}]
+      (put! (get-in app-state [:comms :controls]) [:layers-pasted (assoc layer-data :canvas-size canvas-size)]))))

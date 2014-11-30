@@ -22,7 +22,9 @@
               (conj acc [:span pre] (when url [:a {:href url :target "_blank"} url])))
             [:span] (partition-all 2 (concat (interleave parts
                                                          matches)
-                                             [(last parts)])))))
+                                             (when (not= (count parts)
+                                                         (count matches))
+                                               [(last parts)]))))))
 
 (defn chat-aside [{:keys [db chat-body client-uuid aside-menu-opened chat-bot]} owner]
   (reify
