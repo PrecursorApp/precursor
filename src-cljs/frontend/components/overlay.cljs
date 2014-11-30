@@ -65,8 +65,8 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.options-view {:class (str "option-view-" "shortcuts")}
-           [:div.option-frame
+          [:div.menu-view {:class (str "menu-view-" "shortcuts")}
+           [:div.menu-view-frame
             [:div.shortcuts-item
              [:div.shortcuts-key "S"]
              [:div.shortcuts-result "Select"]]
@@ -99,22 +99,22 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:figure.overlay-change-name {:on-click #(cast! :overlay-closed)}
-           [:div.overlay-background]
-           [:a.overlay-close {:role "button"}
-            (common/icon :times)]
-           [:article {:on-click #(.stopPropagation %)}
-            [:h2 "Let's change that name."]
-            [:p
-             "Help your team communicate faster with each other by using custom names. "
-             "Log in or sign up to change how your name appears in chat."]
-            [:div.info-buttons
-             [:a.info-okay {:href (auth/auth-url)
-                            :role "button"}
-              "Sign Up"]
-             [:a.info-twitter {:on-click #(cast! :overlay-closed)
-                               :role "button"}
-              "No thanks."]]]])))))
+         [:div.menu-prompt {:class (str "menu-prompt-" "username")}
+          [:div.menu-header
+           [:a.menu-close {:on-click #(cast! :overlay-closed)
+                           :role "button"}
+            (common/icon :times)]]
+          [:div.menu-prompt-body
+           [:h2 "Let's change that name."]
+           [:p
+            "Help your team communicate faster with each other by using custom names. "
+            "Log in or sign up to change how your name appears in chat."]
+           [:a.prompt-button {:href (auth/auth-url)
+                              :role "button"}
+            "Sign Up"]]
+          [:div.menu-footer
+           [:a.menu-footer-link {:href "#"}
+            "No thanks."]]])))))
 
 (def overlay-components
   {:info info
@@ -130,16 +130,18 @@
         (html
           [:div.app-overlay {:on-click #(cast! :overlay-closed)}
            [:div.app-overlay-background]
-           [:aside.app-overlay-options {:on-click #(.stopPropagation %)}
-            [:div.options-header
-             [:a.options-back {:on-click #(cast! :overlay-closed)
-                               :role "button"}
-              (common/icon :arrow-left)]
-             [:div.option-title
-              [:h3 "Shortcuts"]]
-             ; [:a.options-close {:on-click #(cast! :overlay-closed)
-             ;                    :role "button"}
-             ;  (common/icon :times)]
-             ]
-            [:div.options-body
-             (om/build overlay-component app)]]])))))
+
+           ; [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
+           ;  [:div.menu-header
+           ;   [:a.menu-back {:on-click #(cast! :overlay-closed)
+           ;                  :role "button"}
+           ;    (common/icon :arrow-left)]
+           ;   [:div.menu-title
+           ;    [:h3 "Shortcuts"]]]
+           ;  [:div.menu-body
+           ;   (om/build overlay-component app)]]
+
+           [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
+            (om/build overlay-component app)]
+
+           ])))))

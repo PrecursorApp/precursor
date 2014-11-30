@@ -25,13 +25,6 @@
       }
     }
   }
-  article {
-    position: relative;
-    max-width: (@tile * 10);
-    padding: 1em;
-    z-index: @zindex_info_article;
-    transition: @speed_slow @bezier_transform;
-  }
 }
 .app-overlay-background {
   .animation(in-fade @speed_fast @bezier_fadein);
@@ -43,19 +36,16 @@
   background: fade(@gray_darker, 66);
   z-index: -1;
 }
-.app-overlay-options {
+.app-overlay-menu {
   .flexy(column);
   .animation(in-fade-right @speed_fast);
   .animation-bezier(@bezier_transform);
-  width: @options_width;
+  width: @menu_width;
   height: 100%;
   margin-left: auto;
   background: @white;
 }
-.option-frame {
-  width: @options_width;
-}
-.options-header {
+.menu-header {
   .flex(0 0 @tile);
   .flexy(center, space-between);
   position: relative;
@@ -70,7 +60,7 @@
     }
   }
 }
-.option-title {
+.menu-title {
   .flexy(center, center);
   position: absolute;
   top: 0;
@@ -84,19 +74,29 @@
     pointer-events: auto;
   }
 }
-.options-body {
+.menu-body {
   .flex(1 0 100%);
   .flexy();
 }
-.options-view {
+.menu-view {
   .flex(0 0 0%);
   overflow: hidden;
   transition: @speed @bezier_transform;
   &:last-of-type {
-    .flex(0 0 @options_width);
+    .flex(0 0 @menu_width);
     // box-shadow: 1px 0 @gray_light;
   }
 }
+.menu-view-frame {
+  width: @menu_width;
+}
+.menu-footer {
+  .flex(0 0 @tile);
+  .flexy(center);
+}
+.menu-footer-link {
+  margin: 0 2rem;
+}
 
 
 
@@ -105,28 +105,32 @@
 
 
 
-.info-okay {
-  .flexy(center, center);
-  min-height: 3.5em;
-  min-width: 10.5em;
-  line-height: 1em;
-  padding: 1em 2em;
-  border: 1px solid @font_color;
-  transition: @speed_fast @bezier_fadein;
-  .mq_640({
-    width: 100%;
-  });
-  &:hover {
-    color: @white;
-    background: @font_color;
-  }
-  &:not(:hover) {
-    color: inherit;
+.menu-prompt {
+  .flex(1 0 100%);
+  .flexy(column);
+}
+.menu-prompt-body {
+  margin: auto 2rem;
+  &:last-of-type {
+    padding-bottom: @tile;
   }
 }
-.info-buttons {
-  .flexy(flex-end, space-between);
+.prompt-button {
+  &[role="button"] {
+    .flexy(center, center);
+    height: @tile;
+    transition: @speed_fast @bezier_fadein;
+    border: 1px solid @font_color;
+    &:hover {
+      color: @white;
+      background: @font_color;
+    }
+  }
 }
+
+
+
+
 .shortcuts-item {
   .flexy(center);
   margin: 1em;
@@ -155,6 +159,10 @@
 .shortcuts-result {
   margin: 0 1em;
 }
+
+
+
+
 .mixpanel-badge {
   position: absolute;
   bottom: 1em;
