@@ -60,13 +60,14 @@
       (let [{:keys [cast!]} (om/get-shared owner)
             client-id (str client-uuid)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
-            dummy-chat {:chat/body [:span "Welcome to Precursor! "
-                                          "Create fast prototypes and share your url to collaborate. "
-                                          "Chat "
-                                          [:a {:on-click #(cast! :aside-user-clicked {:id-str (str/lower-case chat-bot)})
-                                               :role "button"}
-                                           (str "@" (str/lower-case chat-bot))]
-                                          " for help."]
+            dummy-chat {:chat/body [:span
+                                    "Welcome to Precursor! "
+                                    "Create fast prototypes and share your url to collaborate. "
+                                    "Chat "
+                                    [:a {:on-click #(cast! :aside-user-clicked {:id-str (str/lower-case chat-bot)})
+                                         :role "button"}
+                                     (str "@" (str/lower-case chat-bot))]
+                                    " for help."]
                         :chat/color "#00b233"
                         :session/uuid chat-bot
                         :server/timestamp (js/Date. 0)}]
