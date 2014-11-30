@@ -1,10 +1,11 @@
 (ns frontend.controllers.navigation
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as str]
+            [datascript :as d]
             [frontend.async :refer [put!]]
             [frontend.db :as db]
             [frontend.state :as state]
-            [frontend.stefon :as stefon]
+            [frontend.sente :as sente]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils.vcs-url :as vcs-url]
@@ -67,18 +68,32 @@
 
 (defmethod navigated-to :document
   [history-imp navigation-point args state]
-  (-> (navigated-default navigation-point args state)
-      (assoc :document/id (:document/id args)
-             :undo-state (atom {:transactions []
-                                :last-undo nil}))
-      (update-in [:db] db/reset-db!)))
+  (let [doc-id (:document/id args)]
+    (-> (navigated-default navigation-point args state)
+        (assoc :document/id doc-id
+               :undo-state (atom {:transactions []
+                                  :last-undo nil})
+               :db-listener-key (utils/uuid))
+        (update-in (state/doc-chat-bot-path doc-id)
+                   #(or % (rand-nth ["daniel" "danny" "prcrsr"])))
+        (dissoc :subscribers)
+        ;; TODO: at some point we'll only want to get rid of the layers. Maybe have multiple dbs or
+        ;;       find them by doc-id? Will still need a way to clean out old docs.
+        (update-in [:db] db/reset-db!))))
 
 (defmethod post-navigated-to! :document
   [history-imp navigation-point _ previous-state current-state]
-  ;; TODO: get rid of old db
-  (db/setup-listener! (:db current-state)
-                      (fn [message data & [transient?]]
-                        (put! (get-in current-state [:comms :controls]) [message data transient?]))
-                      (:document/id current-state)
-                      (:undo-state current-state)
-                      (:sente current-state)))
+  (let [sente-state (:sente current-state)
+        doc-id (:document/id current-state)]
+    (when-let [prev-doc-id (:document/id previous-state)]
+      (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}]))
+    (sente/subscribe-to-document sente-state doc-id)
+    (sente/fetch-subscribers sente-state doc-id)
+    (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
+    (db/setup-listener! (:db current-state)
+                        (:db-listener-key current-state)
+                        (fn [message data & [transient?]]
+                          (put! (get-in current-state [:comms :controls]) [message data transient?]))
+                        doc-id
+                        (:undo-state current-state)
+                        sente-state)))

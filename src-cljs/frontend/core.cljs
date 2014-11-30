@@ -131,9 +131,7 @@
                                         :mult (async/mult mouse-down-ch)}
                         :mouse-up      {:ch mouse-up-ch
                                         :mult (async/mult mouse-up-ch)}})
-              (browser-settings/restore-browser-settings)
-              (update-in (state/doc-chat-bot-path document-id)
-                         #(or % (rand-nth ["daniel" "danny" "prcrsr"])))))))
+              (browser-settings/restore-browser-settings)))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"

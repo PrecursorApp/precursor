@@ -10,12 +10,12 @@
 
 (defn reset-db! [db-atom]
   (reset! db-atom @(make-initial-db))
-  (reset! (:listeners (meta db-atom)) {})
   db-atom)
 
-(defn setup-listener! [db cast! document-id undo-state sente-state]
+(defn setup-listener! [db key cast! document-id undo-state sente-state]
   (d/listen!
    db
+   key
    (fn [tx-report]
      ;; TODO: figure out why I can send tx-report through controls ch
      ;; (cast! :db-updated {:tx-report tx-report})
