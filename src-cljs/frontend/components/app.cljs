@@ -138,7 +138,7 @@
            (common/icon :info)]])))))
 
 
-(defn app [app owner]
+(defn app* [app owner]
   (reify
     om/IRender
     (render [_]
@@ -274,3 +274,11 @@
                    [:a.info-twitter {:on-click #(cast! :overlay-closed)
                                      :role "button"}
                     "No thanks."]]]]]])))))
+
+(defn app [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (if (:navigation-point app)
+        (om/build app* app)
+        (html [:div#app])))))
