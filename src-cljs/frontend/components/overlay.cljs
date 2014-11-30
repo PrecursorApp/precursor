@@ -65,38 +65,33 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:aside.dashboard {:on-click #(.stopPropagation %)}
-           ; [:div.overlay-background]
-           ; [:a.overlay-close {:role "button"}
-           ;  (common/icon :times)]
-           [:div.dashboard-display
-            [:section
-             [:h2 "Shortcuts"]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "S"]
-              [:div.shortcuts-result "Select"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "R"]
-              [:div.shortcuts-result "Rectangle"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "C"]
-              [:div.shortcuts-result "Circle"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "L"]
-              [:div.shortcuts-result "Line"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "P"]
-              [:div.shortcuts-result "Pen"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "T"]
-              [:div.shortcuts-result "Text"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "1"]
-              [:div.shortcuts-result "Snap to origin"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "Cmd"]
-              [:div.shortcuts-key "Z"]
-             [:div.shortcuts-result "Undo"]]]]])))))
+          [:div.options-view {:class (str "option-view-" "shortcuts")}
+           [:div.option-frame
+            [:div.shortcuts-item
+             [:div.shortcuts-key "S"]
+             [:div.shortcuts-result "Select"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "R"]
+             [:div.shortcuts-result "Rectangle"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "C"]
+             [:div.shortcuts-result "Circle"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "L"]
+             [:div.shortcuts-result "Line"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "P"]
+             [:div.shortcuts-result "Pen"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "T"]
+             [:div.shortcuts-result "Text"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "1"]
+             [:div.shortcuts-result "Snap to origin"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "Cmd"]
+             [:div.shortcuts-key "Z"]
+            [:div.shortcuts-result "Undo"]]]])))))
 
 (defn username [app owner]
   (reify
@@ -135,4 +130,16 @@
         (html
           [:div.app-overlay {:on-click #(cast! :overlay-closed)}
            [:div.app-overlay-background]
-           (om/build overlay-component app)])))))
+           [:aside.app-overlay-options {:on-click #(.stopPropagation %)}
+            [:div.options-header
+             [:a.options-back {:on-click #(cast! :overlay-closed)
+                               :role "button"}
+              (common/icon :arrow-left)]
+             [:div.option-title
+              [:h3 "Shortcuts"]]
+             ; [:a.options-close {:on-click #(cast! :overlay-closed)
+             ;                    :role "button"}
+             ;  (common/icon :times)]
+             ]
+            [:div.options-body
+             (om/build overlay-component app)]]])))))

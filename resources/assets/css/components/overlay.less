@@ -1,20 +1,21 @@
 .app-overlay {
   .flexy(center, center);
-  // .animation(in-fade (@speed * 2));
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   color: @gray_dark;
-  // background: fade(@black, (100 / 3));
-  // background: fade(@gray_darker, 50);
   overflow: hidden;
   z-index: @zindex_info_background;
   a {
-    &:not(:hover) {
-      .icon_fill(@gray_darker);
-      color: @gray_darker;
+    color: @gray_darker;
+    .icon_stroke(@gray_darker);
+    .icon_fill(@gray_darker);
+    &:hover {
+      .icon_stroke(@color_link_hover);
+      .icon_fill(@color_link_hover);
+      color: @color_link_hover;
     }
   }
   p {
@@ -42,75 +43,68 @@
   background: fade(@gray_darker, 66);
   z-index: -1;
 }
-
-.overlay-info,
-.overlay-shortcuts,
-.overlay-change-name {
-  //
-}
-
-.overlay-shortcuts {
-  //
-}
-
-.dashboard {
-  @width: (@aside_width * 1.5);
+.app-overlay-options {
+  .flexy(column);
   .animation(in-fade-right @speed_fast);
   .animation-bezier(@bezier_transform);
-  width: @width;
+  width: @options_width;
   height: 100%;
   margin-left: auto;
   background: @white;
-  // box-shadow: (@width / 2) 0 @white;
-  // box-shadow: -1em 0 12em @black;
-  // hold off on shadow for now, may not be necessary
-  // &:before {
-  //   content: "";
-  //   position: absolute;
-  //   top: 0;
-  //   right: @width;
-  //   width: (@width * 2);
-  //   height: 100%;
-  //   // background-image: linear-gradient(to right, fade(@black, 0), fade(@black, (100 / 3)) 100%);
-  //   background-image: linear-gradient(to right, fade(@gray_darker, 0), fade(@gray_darker, 66));
-  //   pointer-events: none;
-  // }
 }
-.dashboard-display {
-  section {
-    margin: 1em;
+.option-frame {
+  width: @options_width;
+}
+.options-header {
+  .flex(0 0 @tile);
+  .flexy(center, space-between);
+  position: relative;
+  a {
+    .flexy(center, center);
+    width: @tile;
+    height: @tile;
+    font-size: 1.5em;
+    transition: @speed @bezier_fadein;
+    &:not(:hover) {
+      .icon_stroke(@gray_dark);
+    }
   }
 }
-
-
-.overlay-background {
+.option-title {
+  .flexy(center, center);
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: @white;
-  z-index: @zindex_info_background;
-  transition: @speed @bezier_fadein;
-}
-.overlay-close {
-  .flexy(center, center);
-  .icon_stroke(@gray);
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: @tile;
-  height: @tile;
-  z-index: @zindex_info_close;
-  transition: @speed @bezier_fadein;
-  i {
-    font-size: 2em;
-    transition: @speed_fast @bezier_transform;
-  }
-  &:hover {
-    .icon_stroke(@black);
+  margin: 0 auto;
+  pointer-events: none;
+  h3 {
+    margin: 0;
+    pointer-events: auto;
   }
 }
+.options-body {
+  .flex(1 0 100%);
+  .flexy();
+}
+.options-view {
+  .flex(0 0 0%);
+  overflow: hidden;
+  transition: @speed @bezier_transform;
+  &:last-of-type {
+    .flex(0 0 @options_width);
+    // box-shadow: 1px 0 @gray_light;
+  }
+}
+
+
+
+
+
+
+
+
 .info-okay {
   .flexy(center, center);
   min-height: 3.5em;
@@ -135,7 +129,7 @@
 }
 .shortcuts-item {
   .flexy(center);
-  margin: 1em 0;
+  margin: 1em;
 }
 .shortcuts-key {
   .flexy(center, center);
