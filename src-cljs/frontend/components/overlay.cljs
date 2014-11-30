@@ -20,44 +20,36 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:figure.overlay-info {:on-click #(cast! :overlay-info-toggled)}
-           [:div.overlay-background]
-           [:a.overlay-close {:role "button"}
-            (common/icon :times)]
-           [:article {:on-click #(.stopPropagation %)}
-            [:h1 "What's this?"]
+          [:div.menu-prompt {:class (str "menu-prompt-" "info")}
+           [:div.menu-header
+            [:a.menu-close {:on-click #(cast! :overlay-closed)
+                            :role "button"}
+             (common/icon :times)]]
+           [:div.menu-prompt-body
+            [:h2 "What is Precursor?"]
             [:p
-             "Precursor is a no-nonsense prototyping tool—"
-             "use it for sketching, rapid prototyping, and team brainstorming. "
+             "No-nonsense prototyping—"
+             "Perfect for wireframing, sketching, and brainstorming. "
              [:a {:on-click #(cast! :invite-link-clicked)
                   :role "button"
                   :title "In chat, type \"/invite their@email.com\""}
-              "Invite your team"]
-             " and everyone can collaborate in the same document, instantly. "
-             " We're still pretty new, so if you have feedback or a great idea sketch it up and ping "
-             [:a {:on-click #(cast! :chat-link-clicked)
-                  :role "button"
-                  :title "Start any chat with \"@prcrsr\" and we'll see it."}
-              "@prcrsr"]
-             " in the chat, or say "
+              "Invite"]
+             " a teammate and collaborate instantly. "
+             " We just got started, so if you have feedback say "
              [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
                   :title "We love feedback, good or bad."}
               "hi@prcrsr.com"]]
-            [:div.info-buttons
-             [:button.info-okay {:on-click #(cast! :overlay-info-toggled)}
-              "Okay, sounds good."]
-             ;; TODO ab test this ".info-twitter" link with the the current one below -dk
-             ;; [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
-             ;;                   :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-             ;;                   :data-top "Tell us what to add next."
-             ;;                   :target "_blank"}
-             ;;   (common/icon :twitter)]
-             [:p [:a.info-twitter {:href "https://twitter.com/prcrsr_app"
+            [:a.prompt-button {:on-click #(cast! :overlay-info-toggled)
+                               :role "button"}
+             "Okay"]]
+           [:div.menu-footer
+            [:p
+             [:a.menu-footer-link {:href "https://twitter.com/prcrsr_app"
                                    :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
                                    :title "On Twitter"
                                    :target "_blank"}
-               "Tell us what to add next."]]]]
-           (common/mixpanel-badge)])))))
+              "Tell us what to add next."]]
+            (common/mixpanel-badge)]])))))
 
 (defn shortcuts [app owner]
   (reify
