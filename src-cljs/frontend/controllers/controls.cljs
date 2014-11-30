@@ -103,7 +103,7 @@
   (let [{:keys [transactions last-undo]} @(:undo-state state)
         transaction-to-undo (if last-undo
                               ;; TODO: something special for no transactions to undo
-                              (let [next-undo-index (dec (utils/inspect (vec-index transactions last-undo)))]
+                              (let [next-undo-index (dec (vec-index transactions last-undo))]
                                 (when-not (neg? next-undo-index)
                                   (nth transactions next-undo-index)))
                               (last transactions))]
@@ -685,8 +685,8 @@
 (defmethod handle-cmd-chat "invite"
   [state cmd body]
   (let [email (last (re-find #"/invite\s+([^\s]+)" body))]
-    (utils/inspect (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
-                                                                          :email email}]))))
+    (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
+                                                           :email email}])))
 
 (defn chat-cmd [body]
   (when (seq body)
