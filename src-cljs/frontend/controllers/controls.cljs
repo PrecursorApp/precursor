@@ -695,7 +695,7 @@
 (defmethod post-control-event! :chat-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
-        client-uuid (:client-uuid previous-state)
+        client-uuid (str (:client-uuid previous-state))
         color (get-in previous-state [:subscribers client-uuid :color])]
     (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
                       :chat/color color
