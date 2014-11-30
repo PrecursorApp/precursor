@@ -71,9 +71,14 @@
         mult (:ch-recv-mult sente-state)]
     (async/tap mult tap)
     (go-loop []
-             (when-let [res (<! tap)]
-               (utils/swallow-errors (handle-message app-state (first (second (:event res))) (second (second (:event res)))))
-               (recur)))))
+      (when-let [{[type data] :event} (<! tap)]
+        ;; other type is :chsk/state, sent when the ws is opened.
+        ;; might be a good thing to watch when we reconnect?
+        (when (= :chsk/recv type)
+          (utils/swallow-errors
+           (let [[message message-data] data]
+             (handle-message app-state message message-data))))
+        (recur)))))
 
 (defn init [app-state]
   (let [{:keys [chsk ch-recv send-fn state] :as sente-state} (sente/make-channel-socket! "/chsk" {:type :auto})]
