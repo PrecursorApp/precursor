@@ -337,6 +337,9 @@
     (when (and (env/development?) (= js/window.location.protocol "http:"))
       (swallow-errors (setup-browser-repl)))))
 
+(defn ^:export inspect-state []
+  (js/console.log (clj->js @debug-state)))
+
 #_(defn reinstall-om! []
   (install-om debug-state (find-app-container (find-top-level-node)) (:comms @debug-state)))
 
