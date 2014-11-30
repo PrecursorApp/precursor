@@ -2,7 +2,6 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [frontend.async :refer [put!]]
             [weasel.repl :as ws-repl]
-            [clojure.browser.repl :as repl]
             [clojure.string :as string]
             [datascript :as d]
             [dommy.core :as dommy]
@@ -288,10 +287,7 @@
             ;; of a server to store it
             (async/timeout 10000) (do (print "TODO: print out history: ")))))))
 
-(defn setup-browser-repl [repl-url]
-  (when repl-url
-    (mlog "setup-browser-repl calling repl/connect with repl-url: " repl-url)
-    (repl/connect repl-url))
+(defn setup-browser-repl []
   ;; this is harmless if it fails
   (ws-repl/connect "ws://localhost:9001" :verbose true)
   ;; the repl tries to take over *out*, workaround for
@@ -339,10 +335,7 @@
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
       (sec/dispatch! (str "/" (.getToken history-imp))))
     (when (and (env/development?) (= js/window.location.protocol "http:"))
-      (try
-        (setup-browser-repl (get-in @state [:render-context :browser_connected_repl_url]))
-        (catch js/error e
-          (merror e))))))
+      (swallow-errors (setup-browser-repl)))))
 
 #_(defn reinstall-om! []
   (install-om debug-state (find-app-container (find-top-level-node)) (:comms @debug-state)))
