@@ -75,10 +75,13 @@
                               {:cust {:email (:cust/email cust)
                                       :uuid (:cust/uuid cust)
                                       :name (:cust/name cust)}}))))
-   (GET "/" []
-        (let [[document-id] (pcd/generate-eids (pcd/conn) 1)]
-          @(d/transact (pcd/conn) [{:db/id document-id :document/name "Untitled"}])
+   (GET "/" req
+        (let [[document-id] (pcd/generate-eids (pcd/conn) 1)
+              cust-uuid (get-in req [:auth :cust :cust/uuid])]
+          @(d/transact (pcd/conn) [(merge {:db/id document-id :document/name "Untitled"}
+                                          (when cust-uuid {:document/creator cust-uuid}))])
           (redirect (str "/document/" document-id))))
+
    ;; Group newcomers into buckets with bucket-count users in each bucket.
    (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]
         (let [bucket-count (Integer/parseInt bucket-count)]
