@@ -11,3 +11,12 @@
                            temp-id)
          (d/entity db-after)
          pcd/touch+)))
+
+(defn find-created-by-cust
+  "Returns document entity ids for every doc created by the given cust"
+  [db cust]
+  (map first
+       (d/q '{:find [?t]
+              :in [$ ?uuid]
+              :where [[?t :document/creator ?uuid]]}
+            db (:cust/uuid cust))))

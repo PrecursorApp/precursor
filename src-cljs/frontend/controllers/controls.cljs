@@ -918,3 +918,12 @@
   (let [db (:db current-state)
         layers (get-in current-state [:clipboard :layers])]
     (d/transact! db layers {:can-undo? true})))
+
+(defmethod post-control-event! :created-fetched
+  [browser-state message _ previous-state current-state]
+  (sente/send-msg
+   (:sente current-state)
+   [:frontend/fetch-created]
+   10000
+   (fn [{:keys [doc-ids]}]
+     (put! (get-in current-state [:comms :api]) [:created-doc-ids :success {:doc-ids doc-ids}]))))

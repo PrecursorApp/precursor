@@ -47,15 +47,6 @@
       (submethod target message status args previous-state current-state)
       (merror "Unknown api: " message status args))))
 
-(defmethod api-event [:default :started]
-  [target message status args state]
-  (mlog "No api for" [message status])
-  state)
-
-(defmethod post-api-event! [:default :started]
-  [target message status args previous-state current-state]
-  (mlog "No post-api for: " [message status]))
-
 (defmethod api-event [:default :success]
   [target message status args state]
   (mlog "No api for" [message status])
@@ -87,3 +78,7 @@
 (defmethod api-event [:entity-ids :success]
   [target message status args state]
   (update-in state [:entity-ids] (fnil into #{}) (get-in args [:resp :entity-ids])))
+
+(defmethod api-event [:created-doc-ids :success]
+  [target message status {:keys [doc-ids]} state]
+  (assoc-in state [:cust :created-doc-ids] doc-ids))

@@ -10,6 +10,7 @@
             [pc.models.layer :as layer]
             [pc.models.chat :as chat]
             [pc.models.cust :as cust]
+            [pc.models.doc :as doc-model]
             [pc.datomic :as pcd]
             [taoensso.sente :as sente])
   (:import java.util.UUID))
@@ -132,6 +133,15 @@
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid)
                       (-> req :ring-req :auth :cust :cust/name))
     (?reply-fn {:subscribers (get @document-subs document-id)})))
+
+(defmethod ws-handler :frontend/fetch-created [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (let [cust (-> req :ring-req :auth :cust)
+        ;; TODO: at some point we may want to limit, but it's just a list of longs, so meh
+        ;;limit (get ?data :limit 100)
+        ;;offset (get ?data :offset 0)
+        ]
+    (log/infof "fetching created for %s" client-uuid)
+    (?reply-fn {:doc-ids (sort-by - (doc-model/find-created-by-cust (pcd/default-db) cust))})))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
   (let [document-id (-> ?data :document/id)
