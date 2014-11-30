@@ -174,6 +174,7 @@
               [:span id-str]])]
           ;; XXX better name here
           (om/build chat-aside {:db (:db app)
+                                :document/id (:document/id app)
                                 :client-uuid (:client-uuid app)
                                 :chat-body (get-in app [:chat :body])
                                 :chat-bot (get-in app (state/doc-chat-bot-path document-id))

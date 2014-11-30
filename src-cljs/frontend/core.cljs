@@ -107,15 +107,11 @@
 (def navigation-ch
   (chan))
 
-;; hack to pull document-id out of the url
-(def document-id utils/parsed-uri)
-
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
         cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
     (atom (-> (assoc initial-state
-                :document/id document-id
                 ;; id for the browser, used to filter transactions
                 ;; TODO: rename client-uuid to something else
                 :client-uuid (UUID. (utils/uuid))
