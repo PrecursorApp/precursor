@@ -886,12 +886,14 @@
       (assoc-in [:layer-properties-menu :layer :layer/ui-target] (empty-str->nil value))))
 
 (defmethod control-event :layers-pasted
-  [browser-state message {:keys [layers rx ry]} state]
+  [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
   (let [[group-id & layer-ids :as used-ids] (take (inc (count layers)) (:entity-ids state))
         doc-id (:document/id state)
-        mouse (:mouse state)
-        [current-rx current-ry] (cameras/screen->point (:camera state) (:x mouse) (:y mouse))
-        [move-x move-y] [(- current-rx rx) (- current-ry ry)]
+        new-x (- (/ (- (:width canvas-size) width) 2)
+                 (:x (:camera state)))
+        new-y (- (/ (- (:height canvas-size) height) 2)
+                 (:y (:camera state)))
+        [move-x move-y] [(- new-x min-x) (- new-y min-y)]
         [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
         snap-paths? (first (filter #(not= :layer.type/path (:layer/type %)) layers))]
     (-> state
