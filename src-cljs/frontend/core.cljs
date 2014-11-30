@@ -17,6 +17,7 @@
             [frontend.controllers.navigation :as nav-con]
             [frontend.components.key-queue :as keyq]
             [frontend.datascript :as ds]
+            [frontend.db :as db]
             [frontend.routes :as routes]
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
@@ -118,8 +119,8 @@
                 :document/id document-id
                 ;; id for the browser, used to filter transactions
                 ;; TODO: rename client-uuid to something else
-                :db  (ds/make-initial-db document-id)
                 :client-uuid (UUID. (utils/uuid))
+                :db  (db/make-initial-db)
                 :cust cust
                 :comms {:controls      controls-ch
                         :api           api-ch
@@ -247,22 +248,6 @@
                                       nil)]
 
     (swap! state assoc :undo-state undo-state)
-
-    (d/listen! (:db @state)
-               (fn [tx-report]
-                 ;; TODO: figure out why I can send tx-report through controls ch
-                 ;; (cast! :db-updated {:tx-report tx-report})
-                 (when (first (filter #(= :server/timestamp (:a %)) (:tx-data tx-report)))
-                   (cast! :chat-db-updated []))
-                 (when (-> tx-report :tx-meta :can-undo?)
-                   (swap! undo-state update-in [:transactions] conj tx-report)
-                   (when-not (-> tx-report :tx-meta :undo)
-                     (swap! undo-state assoc-in [:last-undo] nil)))
-                 (when-not (-> tx-report :tx-meta :server-update)
-                   (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
-                     (doseq [datom-group (partition-all 500 datoms)]
-                       (sente/send-msg (:sente @state) [:frontend/transaction {:datoms datom-group
-                                                                               :document/id (:document/id @state)}]))))))
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
