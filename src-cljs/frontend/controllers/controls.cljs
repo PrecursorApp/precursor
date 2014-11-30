@@ -372,7 +372,7 @@
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
-  (when (get-in current-state [:subscribers (:client-uuid current-state) :show-mouse?])
+  (when (get-in current-state [:subscribers (str (:client-uuid current-state)) :show-mouse?])
     (sente/send-msg (:sente current-state)
                     [:frontend/mouse-position (merge
                                                {:tool (get-in current-state state/current-tool-path)

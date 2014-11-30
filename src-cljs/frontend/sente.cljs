@@ -20,7 +20,6 @@
 (defn subscribe-to-document [sente-state app-state document-id]
   (send-msg sente-state [:frontend/subscribe {:document-id document-id}] 10000
             (fn [{:keys [document layers chats client-uuid]}]
-              (swap! app-state assoc :client-uuid client-uuid)
               ;; TODO: if this is a good idea, then make it the default
               (put! (get-in @app-state [:comms :controls])
                     [:show-mouse-toggled {:client-uuid client-uuid

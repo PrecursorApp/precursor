@@ -118,8 +118,8 @@
                 :document/id document-id
                 ;; id for the browser, used to filter transactions
                 ;; TODO: rename client-uuid to something else
-                :client-id (UUID. (utils/uuid))
                 :db  (ds/make-initial-db document-id)
+                :client-uuid (UUID. (utils/uuid))
                 :cust cust
                 :comms {:controls      controls-ch
                         :api           api-ch
@@ -339,7 +339,7 @@
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (browser-settings/setup! state)
-    (.set (goog.net.Cookies. js/document) "prcrsr-client-id" (:client-id @state) -1 "/" false)
+    (.set (goog.net.Cookies. js/document) "prcrsr-client-id" (:client-uuid @state) -1 "/" false)
     ;; TODO: find a better place to put this
     (swap! state (fn [s] (assoc-in s [:camera :offset-x] (if (get-in s state/aside-menu-opened-path)
                                                            (get-in s state/aside-width-path)

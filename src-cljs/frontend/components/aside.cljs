@@ -58,6 +58,7 @@
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
+            client-id (str client-uuid)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
             dummy-chat {:chat/body [:span "Welcome to Precursor! "
                                           "Create fast prototypes and share your url to collaborate. "
@@ -76,7 +77,7 @@
                  :let [id (apply str (take 6 (str (:session/uuid chat))))
                        name (or (:chat/cust-name chat)
                                 (if (= (str (:session/uuid chat))
-                                       client-uuid)
+                                       client-id)
                                   "You"
                                   id))
                        chat-body (if (string? (:chat/body chat))
@@ -116,7 +117,7 @@
     (render-state [_ {:keys [editing-name? new-name]}]
       (let [{:keys [cast!]} (om/get-shared owner)
             controls-ch (om/get-shared owner [:comms :controls])
-            client-id (:client-uuid app)
+            client-id (str (:client-uuid app))
             aside-opened? (get-in app state/aside-menu-opened-path)
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])
@@ -137,11 +138,11 @@
           [:section.aside-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
              [:a.people-you {:key client-id
-                  :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
-                  :role "button"
-                  :on-click #(if can-edit?
-                               (om/set-state! owner :editing-name? true)
-                               (cast! :overlay-username-toggled))}
+                             :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
+                             :role "button"
+                             :on-click #(if can-edit?
+                                          (om/set-state! owner :editing-name? true)
+                                          (cast! :overlay-username-toggled))}
               (common/icon :user (when show-mouse? {:path-props
                                                     {:style
                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))

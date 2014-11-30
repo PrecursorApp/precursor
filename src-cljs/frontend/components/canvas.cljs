@@ -257,7 +257,7 @@
     om/IRender
     (render [_]
       (apply dom/g nil
-             (om/build-all cursor (dissoc subscribers client-uuid) {:opts {:client-uuid client-uuid}})))))
+             (om/build-all cursor (dissoc subscribers (str client-uuid)))))))
 
 (defn text-input [layer owner]
   (reify
