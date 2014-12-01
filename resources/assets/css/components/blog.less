@@ -80,42 +80,32 @@
   }
 }
 .blogroll-post {
-  .flexy(column);
-  position: relative;
   color: @gray_dark;
-  padding: 2rem 0;
-  border-bottom: 1px dotted @gray_light;
-  transition: color @speed @bezier_fadein;
+  padding: 1em 0 2em;
+  border-bottom: 1px solid @gray_lighter;
   &:hover {
-    color: @gray_dark;
-    transition-duration: @speed_fast;
-    &:before {
-      width: 100%;
-      transition: @speed @bezier_transform @speed_fast;
+    color: @gray_darker;
+  }
+  a {
+    .flexy();
+    padding: 1em 0;
+    transition: color @speed_fast @bezier_fadein;
+    &:not(:hover) {
+      color: inherit;
+      transition-duration: @speed;
     }
-  }
-  &:first-of-type {
-    padding-top: 0;
-  }
-  &:before {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 0;
-    height: 0;
-    border-bottom: 2px solid @blue;
-    transition: @speed_fast @bezier_transform;
   }
   p {
     color: @gray;
+    margin: 0 0 1em;
   }
-  h3,
-  h6 {
+  h3 {
     margin: 0;
   }
   h6 {
+    color: @gray;
     font-weight: 500;
+    margin: ~"calc((1.25rem - 1.5em) / 2) 0";
   }
 }
 .blogroll,
@@ -126,7 +116,6 @@
 .bloghead {
   padding: @tile 0;
   h1 {
-    font-weight: 400;
     margin: 0;
   }
 }
