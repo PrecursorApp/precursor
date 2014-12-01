@@ -9,12 +9,32 @@ html {
 }
 body {
   margin: 0;
-}
-#app {
-  .flexy();
   background: @app_background;
+}
+.app {
+  .flexy(column);
+  background: darken(@app_background, 2);
   height: 100vh;
   overflow: hidden;
+}
+.app-main {
+  .flexy();
+  height: 100%;
+  background: @app_background;
+  overflow: hidden;
+  transition: @speed_fast @bezier_transform;
+}
+.app-main-outline {
+  .user-select(none);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 1px solid transparent;
+  pointer-events: none;
+  transition+: all @speed_fast @bezier_transform;
+  transition+: box-shadow @speed @bezier_transform;
 }
 a {
   background: transparent;
