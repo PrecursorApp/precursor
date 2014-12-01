@@ -82,6 +82,14 @@
 (defmethod ws-handler :frontend/close-connection [{:keys [client-uuid] :as req}]
   (close-connection client-uuid))
 
+(defmethod ws-handler :frontend/unsubscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (let [document-id (-> ?data :document-id)
+        cid (client-uuid->uuid client-uuid)]
+    (log/infof "unsubscribing %s from %s" client-uuid document-id)
+    (swap! document-subs update-in [document-id] dissoc cid)
+    (doseq [[uid _] (get @document-subs document-id)]
+      ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-uuid cid}]))))
+
 (def colors
   #{"#1abc9c"
     "#2ecc71"

@@ -46,7 +46,7 @@
    [:div#player-container]
    [:div#app-container]
    [:div.debugger-container]
-   [:div#app]
+   [:div#om-app]
    (if (prod-assets?)
      [:script {:type "text/javascript" :src (str "/js/vendor/frontend-production.js?rand=" (Math/random))}]
      (if false

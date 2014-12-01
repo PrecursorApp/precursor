@@ -2,7 +2,6 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [frontend.async :refer [put!]]
             [weasel.repl :as ws-repl]
-            [clojure.browser.repl :as repl]
             [clojure.string :as string]
             [datascript :as d]
             [dommy.core :as dommy]
@@ -11,11 +10,13 @@
             [goog.net.Cookies]
             [frontend.analytics :as analytics]
             [frontend.camera :as camera-helper]
+            [frontend.clipboard :as clipboard]
             [frontend.components.app :as app]
             [frontend.controllers.controls :as controls-con]
             [frontend.controllers.navigation :as nav-con]
             [frontend.components.key-queue :as keyq]
             [frontend.datascript :as ds]
+            [frontend.db :as db]
             [frontend.routes :as routes]
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
@@ -106,19 +107,15 @@
 (def navigation-ch
   (chan))
 
-;; hack to pull document-id out of the url
-(def document-id utils/parsed-uri)
-
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
         cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
     (atom (-> (assoc initial-state
-                :document/id document-id
                 ;; id for the browser, used to filter transactions
                 ;; TODO: rename client-uuid to something else
-                :client-id (UUID. (utils/uuid))
-                :db  (ds/make-initial-db document-id)
+                :client-uuid (UUID. (utils/uuid))
+                :db  (db/make-initial-db)
                 :cust cust
                 :comms {:controls      controls-ch
                         :api           api-ch
@@ -134,9 +131,7 @@
                                         :mult (async/mult mouse-down-ch)}
                         :mouse-up      {:ch mouse-up-ch
                                         :mult (async/mult mouse-up-ch)}})
-              (browser-settings/restore-browser-settings)
-              (update-in (state/doc-chat-bot-path document-id)
-                         #(if % % (rand-nth ["daniel" "danny" "prcrsr"])))))))
+              (browser-settings/restore-browser-settings)))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"
@@ -242,24 +237,10 @@
         handle-mouse-move!       #(handle-mouse-move cast! %)
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
-        handle-close!            #(cast! :application-shutdown [@histories])]
-    (swap! state assoc :undo-state undo-state)
+        handle-close!            #(do (cast! :application-shutdown [@histories])
+                                      nil)]
 
-    (d/listen! (:db @state)
-               (fn [tx-report]
-                 ;; TODO: figure out why I can send tx-report through controls ch
-                 ;; (cast! :db-updated {:tx-report tx-report})
-                 (when (first (filter #(= :server/timestamp (:a %)) (:tx-data tx-report)))
-                   (cast! :chat-db-updated []))
-                 (when (-> tx-report :tx-meta :can-undo?)
-                   (swap! undo-state update-in [:transactions] conj tx-report)
-                   (when-not (-> tx-report :tx-meta :undo)
-                     (swap! undo-state assoc-in [:last-undo] nil)))
-                 (when-not (-> tx-report :tx-meta :server-update)
-                   (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
-                     (doseq [datom-group (partition-all 500 datoms)]
-                       (sente/send-msg (:sente @state) [:frontend/transaction {:datoms datom-group
-                                                                               :document/id (:document/id @state)}]))))))
+    (swap! state assoc :undo-state undo-state)
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
@@ -267,11 +248,15 @@
     (js/window.addEventListener "mouseup"   handle-canvas-mouse-up false)
     (js/window.addEventListener "beforeunload" handle-close!)
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
+    (js/window.addEventListener "copy" #(clipboard/handle-copy! @state %))
+    (js/window.addEventListener "paste" #(clipboard/handle-paste! @state %))
     (.listen visibility-monitor
              goog.events.EventType/VISIBILITYCHANGE
              #(cast! :visibility-changed {:hidden? (.-hidden %)
                                           :visibility-state (.-visibilityState %)})
              false)
+
+
 
     (routes/define-routes! state)
     (install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down
@@ -296,21 +281,12 @@
             ;; of a server to store it
             (async/timeout 10000) (do (print "TODO: print out history: ")))))))
 
-(defn setup-browser-repl [repl-url]
-  (when repl-url
-    (mlog "setup-browser-repl calling repl/connect with repl-url: " repl-url)
-    (repl/connect repl-url))
+(defn setup-browser-repl []
   ;; this is harmless if it fails
   (ws-repl/connect "ws://localhost:9001" :verbose true)
   ;; the repl tries to take over *out*, workaround for
   ;; https://github.com/cemerick/austin/issues/49
   (js/setInterval #(enable-console-print!) 1000))
-
-(defn apply-app-id-hack
-  "Hack to make the top-level id of the app the same as the
-   current knockout app. Lets us use the same stylesheet."
-  []
-  (goog.dom.setProperties (sel1 "#app") #js {:id "om-app"}))
 
 (defn fetch-entity-ids [api-ch eid-count]
   (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
@@ -324,7 +300,6 @@
                                             (fetch-entity-ids api-ch 40))))))
 
 (defn ^:export setup! []
-  (apply-app-id-hack)
   (js/React.initializeTouchEvents true)
   (let [state (app-state)
         top-level-node (find-top-level-node)
@@ -332,7 +307,7 @@
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (browser-settings/setup! state)
-    (.set (goog.net.Cookies. js/document) "prcrsr-client-id" (:client-id @state) -1 "/" false)
+    (.set (goog.net.Cookies. js/document) "prcrsr-client-id" (:client-uuid @state) -1 "/" false)
     ;; TODO: find a better place to put this
     (swap! state (fn [s] (assoc-in s [:camera :offset-x] (if (get-in s state/aside-menu-opened-path)
                                                            (get-in s state/aside-width-path)
@@ -347,10 +322,10 @@
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
       (sec/dispatch! (str "/" (.getToken history-imp))))
     (when (and (env/development?) (= js/window.location.protocol "http:"))
-      (try
-        (setup-browser-repl (get-in @state [:render-context :browser_connected_repl_url]))
-        (catch js/error e
-          (merror e))))))
+      (swallow-errors (setup-browser-repl)))))
+
+(defn ^:export inspect-state []
+  (clj->js @debug-state))
 
 #_(defn reinstall-om! []
   (install-om debug-state (find-app-container (find-top-level-node)) (:comms @debug-state)))

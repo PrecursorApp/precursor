@@ -33,6 +33,24 @@
     width: 0; // we should calculate to get this effect in the dom
   }
 }
+.icon_stroke(...) {
+  .icon_stroke_color(@a) when (iscolor(@a)) {
+    i {
+      [class*="stroke"] {
+        stroke: @arguments;
+      }
+    }
+  }.icon_stroke_color(@arguments);
+}
+.icon_fill(...) {
+  .icon_fill_color(@a) when (iscolor(@a)) {
+    i {
+      [class*="fill"] {
+        fill: @arguments;
+      }
+    }
+  }.icon_fill_color(@arguments);
+}
 .box-sizing(...) {
   .prefixer(box-sizing, @arguments, webkit moz);
 }
