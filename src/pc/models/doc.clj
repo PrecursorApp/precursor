@@ -20,6 +20,17 @@
               :in [$ ?uuid]
               :where [[?t :document/creator ?uuid]]}
             db (:cust/uuid cust))))
+
+(defn find-touched-by-cust
+  "Returns document entity ids for every doc touched by the given cust"
+  [db cust]
+  (map first
+       (d/q '{:find [?doc-id]
+              :in [$ ?uuid]
+              :where [[?t :cust/uuid ?uuid]
+                      [?t :document/id ?doc-id]]}
+            db (:cust/uuid cust))))
+
 (defn last-updated-time [db doc-id]
   (ffirst (d/q '{:find [(max ?i)]
                  :in [$ ?doc-id]

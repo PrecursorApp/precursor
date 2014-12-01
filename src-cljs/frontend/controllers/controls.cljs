@@ -927,3 +927,12 @@
    10000
    (fn [{:keys [docs]}]
      (put! (get-in current-state [:comms :api]) [:created-docs :success {:docs docs}]))))
+
+(defmethod post-control-event! :touched-fetched
+  [browser-state message _ previous-state current-state]
+  (sente/send-msg
+   (:sente current-state)
+   [:frontend/fetch-touched]
+   10000
+   (fn [{:keys [docs]}]
+     (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))

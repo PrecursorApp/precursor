@@ -82,3 +82,7 @@
 (defmethod api-event [:created-docs :success]
   [target message status {:keys [docs]} state]
   (assoc-in state [:cust :created-docs] docs))
+
+(defmethod api-event [:touched-docs :success]
+  [target message status {:keys [docs]} state]
+  (assoc-in state [:cust :touched-docs] docs))
