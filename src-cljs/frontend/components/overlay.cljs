@@ -52,14 +52,53 @@
            [:div.menu-footer
             (common/mixpanel-badge)]])))))
 
+; (defn shortcuts [app owner]
+;   (reify
+;     om/IRender
+;     (render [_]
+;       (let [cast! (om/get-shared owner :cast!)]
+;         (html
+;           [:div.menu-view {:class (str "menu-view-" "shortcuts")}
+;            [:div.menu-view-frame
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "S"]
+;              [:div.shortcuts-result "Select"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "R"]
+;              [:div.shortcuts-result "Rectangle"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "C"]
+;              [:div.shortcuts-result "Circle"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "L"]
+;              [:div.shortcuts-result "Line"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "P"]
+;              [:div.shortcuts-result "Pen"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "T"]
+;              [:div.shortcuts-result "Text"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "1"]
+;              [:div.shortcuts-result "Snap to origin"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "Cmd"]
+;              [:div.shortcuts-key "Z"]
+;             [:div.shortcuts-result "Undo"]]]])))))
+
 (defn shortcuts [app owner]
   (reify
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view {:class (str "menu-view-" "shortcuts")}
-           [:div.menu-view-frame
+          [:div.menu-prompt {:class (str "menu-prompt-" "shortcuts")}
+           [:div.menu-header
+            [:a.menu-close {:on-click #(cast! :overlay-closed)
+                            :role "button"}
+             (common/icon :times)]]
+           [:div.menu-prompt-body
+            [:h2 "Shortcuts"]
             [:div.shortcuts-item
              [:div.shortcuts-key "S"]
              [:div.shortcuts-result "Select"]]
@@ -112,8 +151,10 @@
 (def overlay-components
   {:info {:component info
           :menu-type :prompt}
+   ; :shortcuts {:component shortcuts
+   ;             :menu-type :view}
    :shortcuts {:component shortcuts
-               :menu-type :view}
+               :menu-type :prompt}
    :username {:component username
               :menu-type :prompt}})
 
