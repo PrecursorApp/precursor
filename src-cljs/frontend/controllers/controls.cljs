@@ -103,7 +103,7 @@
   (let [{:keys [transactions last-undo]} @(:undo-state state)
         transaction-to-undo (if last-undo
                               ;; TODO: something special for no transactions to undo
-                              (let [next-undo-index (dec (utils/inspect (vec-index transactions last-undo)))]
+                              (let [next-undo-index (dec (vec-index transactions last-undo))]
                                 (when-not (neg? next-undo-index)
                                   (nth transactions next-undo-index)))
                               (last transactions))]
@@ -372,7 +372,7 @@
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
-  (when (get-in current-state [:subscribers (:client-uuid current-state) :show-mouse?])
+  (when (get-in current-state [:subscribers (str (:client-uuid current-state)) :show-mouse?])
     (sente/send-msg (:sente current-state)
                     [:frontend/mouse-position (merge
                                                {:tool (get-in current-state state/current-tool-path)
@@ -685,8 +685,8 @@
 (defmethod handle-cmd-chat "invite"
   [state cmd body]
   (let [email (last (re-find #"/invite\s+([^\s]+)" body))]
-    (utils/inspect (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
-                                                                          :email email}]))))
+    (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
+                                                           :email email}])))
 
 (defn chat-cmd [body]
   (when (seq body)
@@ -695,7 +695,7 @@
 (defmethod post-control-event! :chat-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
-        client-uuid (:client-uuid previous-state)
+        client-uuid (str (:client-uuid previous-state))
         color (get-in previous-state [:subscribers client-uuid :color])]
     (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
                       :chat/color color

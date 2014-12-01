@@ -175,7 +175,7 @@
                                               "invalid"))
                             :key (str "action-" (:db/id layer))))))))
 
-(defn svg-layers [{:keys [editing-eids selected-eid selected-eids tool]} owner]
+(defn svg-layers [{:keys [editing-eids selected-eid selected-eids tool] :as data} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -257,7 +257,7 @@
     om/IRender
     (render [_]
       (apply dom/g nil
-             (om/build-all cursor (dissoc subscribers client-uuid) {:opts {:client-uuid client-uuid}})))))
+             (om/build-all cursor (dissoc subscribers (str client-uuid)))))))
 
 (defn text-input [layer owner]
   (reify
@@ -499,7 +499,7 @@
                  (dom/g
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
-                  (om/build svg-layers (assoc (select-keys payload [:selected-eid])
+                  (om/build svg-layers (assoc (select-keys payload [:selected-eid :document/id])
                                          :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
                                                                               (settings/moving-drawing? payload))
                                                                       (concat [(:db/id (settings/drawing payload))]
