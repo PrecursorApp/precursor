@@ -26,4 +26,4 @@
 
 (defn set-people-props [props]
   (utils/swallow-errors
-   (utils/inspect (js/mixpanel.people.set (clj->js props)))))
+   (js/mixpanel.people.set (clj->js props))))
