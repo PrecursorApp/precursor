@@ -192,6 +192,7 @@
         (dom/div #js {:id "app" :className "app"}
           (when (:overlay app)
             (om/build overlay/overlay app))
-          (om/build app* app))
+          (om/build app* app)
+          (dom/div #js {:className "app-main-outline"}))
 
         (html [:div#app])))))
