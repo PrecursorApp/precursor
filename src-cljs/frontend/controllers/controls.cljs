@@ -925,5 +925,5 @@
    (:sente current-state)
    [:frontend/fetch-created]
    10000
-   (fn [{:keys [doc-ids]}]
-     (put! (get-in current-state [:comms :api]) [:created-doc-ids :success {:doc-ids doc-ids}]))))
+   (fn [{:keys [docs]}]
+     (put! (get-in current-state [:comms :api]) [:created-docs :success {:docs docs}]))))

@@ -147,7 +147,12 @@
         ;; TODO: at some point we may want to limit, but it's just a list of longs, so meh
         ;;limit (get ?data :limit 100)
         ;;offset (get ?data :offset 0)
-        ]
+        db (pcd/default-db)
+        doc-ids (doc-model/find-created-by-cust db cust)]
+    (log/infof "fetching created for %s" client-uuid)
+    (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
+                                         :last-updated-instant (doc-model/last-updated-time db doc-id)})
+                           doc-ids)})))
     (log/infof "fetching created for %s" client-uuid)
     (?reply-fn {:doc-ids (sort-by - (doc-model/find-created-by-cust (pcd/default-db) cust))})))
 

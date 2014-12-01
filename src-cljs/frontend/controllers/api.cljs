@@ -79,6 +79,6 @@
   [target message status args state]
   (update-in state [:entity-ids] (fnil into #{}) (get-in args [:resp :entity-ids])))
 
-(defmethod api-event [:created-doc-ids :success]
-  [target message status {:keys [doc-ids]} state]
-  (assoc-in state [:cust :created-doc-ids] doc-ids))
+(defmethod api-event [:created-docs :success]
+  [target message status {:keys [docs]} state]
+  (assoc-in state [:cust :created-docs] docs))
