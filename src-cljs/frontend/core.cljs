@@ -288,12 +288,6 @@
   ;; https://github.com/cemerick/austin/issues/49
   (js/setInterval #(enable-console-print!) 1000))
 
-(defn apply-app-id-hack
-  "Hack to make the top-level id of the app the same as the
-   current knockout app. Lets us use the same stylesheet."
-  []
-  (goog.dom.setProperties (sel1 "#app") #js {:id "om-app"}))
-
 (defn fetch-entity-ids [api-ch eid-count]
   (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
 
@@ -306,7 +300,6 @@
                                             (fetch-entity-ids api-ch 40))))))
 
 (defn ^:export setup! []
-  (apply-app-id-hack)
   (js/React.initializeTouchEvents true)
   (let [state (app-state)
         top-level-node (find-top-level-node)
