@@ -6,6 +6,7 @@
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]
             [frontend.components.common :as common]
+            [frontend.components.doc-viewer :as doc-viewer]
             [frontend.datascript :as ds]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
@@ -156,14 +157,19 @@
    :shortcuts {:component shortcuts
                :menu-type :prompt}
    :username {:component username
-              :menu-type :prompt}})
+              :menu-type :prompt}
+   :doc-viewer {:component doc-viewer/doc-viewer
+                :menu-type :prompt}})
 
 (defn overlay [app owner]
   (reify
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            overlay-component (get overlay-components (or (:overlay app) :info))]
+            overlay-component (get overlay-components :doc-viewer
+                                   ;; Temporary hack until we have a way to trigger doc viewer
+                                   ;; (or (:overlay app) :info
+                                   )]
         (html
           [:div.app-overlay {:on-click #(cast! :overlay-closed)}
            [:div.app-overlay-background]
