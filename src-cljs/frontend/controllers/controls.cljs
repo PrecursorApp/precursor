@@ -665,31 +665,44 @@
         (assoc-in [:chat :entity-id] entity-id)
         (update-in [:entity-ids] disj entity-id))))
 
-(defmethod control-event :chat-submitted
-  [browser-state message _ state]
-  (-> state
-      (assoc-in [:chat :body] nil)
-      (assoc-in [:chat :entity-id] nil)))
+(defn chat-cmd [body]
+  (when (seq body)
+    (last (re-find #"^/([^\s]+)" body))))
 
 (defmulti handle-cmd-chat (fn [state cmd]
                             (utils/mlog "handling chat command:" cmd)
                             cmd))
 
-;; TODO: more robust cmd parsing
 (defmethod handle-cmd-chat :default
   [state cmd chat]
-  (utils/mlog "unknown chat command:" cmd))
+  (utils/mlog "unknown chat command:" cmd)
+  state)
 
-(defmethod handle-cmd-chat "invite"
+(defmethod handle-cmd-chat "toggle-grid"
+  [state cmd chat]
+  (update-in state [:camera :show-grid?] not))
+
+(defmethod control-event :chat-submitted
+  [browser-state message _ state]
+  (-> state
+      (handle-cmd-chat (chat-cmd (get-in state [:chat :body])) (get-in state [:chat :body]))
+      (assoc-in [:chat :body] nil)
+      (assoc-in [:chat :entity-id] nil)))
+
+(defmulti post-handle-cmd-chat (fn [state cmd]
+                                 (utils/mlog "post-handling chat command:" cmd)
+                                 cmd))
+
+;; TODO: more robust cmd parsing
+(defmethod post-handle-cmd-chat :default
+  [state cmd chat]
+  (utils/mlog "unknown post chat command:" cmd))
+
+(defmethod post-handle-cmd-chat "invite"
   [state cmd body]
   (let [email (last (re-find #"/invite\s+([^\s]+)" body))]
     (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
                                                            :email email}])))
-
-(defn chat-cmd [body]
-  (when (seq body)
-    (last (re-find #"^/([^\s]+)" body))))
-
 (defmethod post-control-event! :chat-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
@@ -707,7 +720,7 @@
                       ;; server will overwrite this
                       :server/timestamp (js/Date.)}])
     (when-let [cmd (chat-cmd (get-in previous-state [:chat :body]))]
-      (handle-cmd-chat current-state cmd (get-in previous-state [:chat :body])))))
+      (post-handle-cmd-chat current-state cmd (get-in previous-state [:chat :body])))))
 
 (defmethod control-event :aside-menu-toggled
   [browser-state message _ state]
