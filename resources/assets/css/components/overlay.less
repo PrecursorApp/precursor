@@ -1,6 +1,4 @@
-.overlay-info,
-.overlay-shortcuts,
-.overlay-change-name {
+.app-overlay {
   .flexy(center, center);
   position: absolute;
   top: 0;
@@ -8,29 +6,16 @@
   width: 100%;
   height: 100%;
   color: @gray_dark;
+  overflow: hidden;
   z-index: @zindex_info_background;
-  visibility: visible;
-  &.hidden {
-    visibility: hidden;
-    article {
-      .scale3d(.3);
-      opacity: 0;
-    }
-    .overlay-background {
-      opacity: 0;
-    }
-    .overlay-close {
-      opacity: 0;
-    }
-    .mixpanel-badge {
-      opacity: 0;
-      transition: @speed_fast @bezier_fadein;
-    }
-  }
   a {
-    &:not(:hover) {
-      .icon_fill(@gray_darker);
-      color: @gray_darker;
+    color: @gray_darker;
+    .icon_stroke(@gray_darker);
+    .icon_fill(@gray_darker);
+    &:hover {
+      .icon_stroke(@color_link_hover);
+      .icon_fill(@color_link_hover);
+      color: @color_link_hover;
     }
   }
   p {
@@ -40,67 +25,135 @@
       }
     }
   }
-  article {
-    position: relative;
-    max-width: (@tile * 10);
-    padding: 1em;
-    z-index: @zindex_info_article;
-    transition: @speed_slow @bezier_transform;
+  + .app-main {
+    .scale3d(.97);
+    .filter(blur(2px));
+    + .app-main-outline {
+      top: 1.5%;
+      left: 1.5%;
+      width: 97%;
+      height: 97%;
+      border-color: fade(@white, 05);
+      box-shadow: 0 5px 8px rgba(0, 0, 0, 0.13);
+    }
   }
 }
-.overlay-background {
+.app-overlay-background {
+  .animation(in-fade @speed_fast @bezier_fadein);
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: @white;
-  z-index: @zindex_info_background;
-  transition: @speed @bezier_fadein;
+  // background: fade(@gray_darker, 66);
+  z-index: -1;
 }
-.overlay-close {
+.app-overlay-menu {
+  .flexy(column);
+  .animation(in-fade-right @speed_fast);
+  .animation-bezier(@bezier_transform);
+  width: @menu_width;
+  height: 100%;
+  margin-left: auto;
+  background: @white;
+}
+.menu-header {
+  .flex(0 0 @tile);
+  .flexy(center, space-between);
+  position: relative;
+  a {
+    .flexy(center, center);
+    width: @tile;
+    height: @tile;
+    font-size: 1.5em;
+    transition: @speed @bezier_fadein;
+    &:not(:hover) {
+      .icon_stroke(@gray_dark);
+    }
+    &:only-child {
+      margin-left: auto;
+    }
+  }
+}
+.menu-title {
   .flexy(center, center);
-  .icon_stroke(@gray);
   position: absolute;
   top: 0;
-  right: 0;
-  width: @tile;
-  height: @tile;
-  z-index: @zindex_info_close;
-  transition: @speed @bezier_fadein;
-  i {
-    font-size: 2em;
-    transition: @speed_fast @bezier_transform;
-  }
-  &:hover {
-    .icon_stroke(@black);
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  pointer-events: none;
+  h3 {
+    margin: 0;
+    pointer-events: auto;
   }
 }
-.info-okay {
-  .flexy(center, center);
-  min-height: 3.5em;
-  min-width: 10.5em;
-  line-height: 1em;
-  padding: 1em 2em;
-  border: 1px solid @font_color;
-  transition: @speed_fast @bezier_fadein;
+.menu-body {
+  .flex(1 0 100%);
+  .flexy();
+}
+.menu-view {
+  .flex(0 0 0%);
+  overflow: hidden;
+  transition: @speed @bezier_transform;
+  &:last-of-type {
+    .flex(0 0 @menu_width);
+    // box-shadow: 1px 0 @gray_light;
+  }
+}
+.menu-view-frame {
+  width: @menu_width;
+}
+.menu-footer {
+  .flex(0 0 @tile);
+  .flexy(center);
   .mq_640({
-    width: 100%;
+    display: none;
   });
-  &:hover {
-    color: @white;
-    background: @font_color;
-  }
-  &:not(:hover) {
-    color: inherit;
+}
+.menu-footer-link {
+  margin: 0 2rem;
+}
+
+
+
+
+
+
+
+
+.menu-prompt {
+  .flex(1 0 100%);
+  .flexy(column);
+}
+.menu-prompt-body {
+  .flex(1 1 100%);
+  padding: 2rem;
+  &:last-of-type {
+    padding-bottom: @tile;
   }
 }
-.info-buttons {
-  .flexy(flex-end, space-between);
+.prompt-button {
+  &[role="button"] {
+    .flexy(center, center);
+    height: @tile;
+    transition: @speed_fast @bezier_fadein;
+    border: 1px solid @font_color;
+    &:hover {
+      color: @white;
+      background: @font_color;
+    }
+  }
 }
+
+
+
+
 .shortcuts-item {
   .flexy(center);
-  margin: 1em 0;
+  margin: 1em;
+  margin: 1em 0; // TODO remove when making shortcuts a menu view instead of prompt
 }
 .shortcuts-key {
   .flexy(center, center);
@@ -126,6 +179,10 @@
 .shortcuts-result {
   margin: 0 1em;
 }
+
+
+
+
 .mixpanel-badge {
   position: absolute;
   bottom: 1em;

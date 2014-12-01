@@ -90,6 +90,12 @@
   box-shadow+:  1px  0   @color;
   box-shadow+: -1px  0   @color;
 }
+.filter(...) {
+  .for(@arguments); .-each(@argument) {
+      -webkit-filter+_: @argument;
+              filter+_: @argument;
+  }
+}
 .rotate(...) {
   .prefixer(transform; ~"rotate(@{arguments}deg)"; webkit);
 }
@@ -121,9 +127,9 @@
   -webkit-animation: @arguments;
           animation: @arguments;
 }
-.animation-bezier(@x1, @y1, @x2, @y2) {
-  -webkit-animation-timing-function: cubic-bezier(@x1, @y1, @x2, @y2);
-          animation-timing-function: cubic-bezier(@x1, @y1, @x2, @y2);
+.animation-bezier(...) {
+  -webkit-animation-timing-function: @arguments;
+          animation-timing-function: @arguments;
 }
 
 @keyframes in-bounce {
@@ -147,4 +153,22 @@
   60%  { -webkit-transform: scale3d(1.05,1.05,1.05); }
   80%  { -webkit-transform: scale3d(.95,.95,.95); }
   100% { -webkit-transform: scale3d(1,1,1); opacity: 1;}
+}
+
+@keyframes in-fade {
+  0%   {opacity: 0;}
+  100% {opacity: 1;}
+}
+@-webkit-keyframes in-fade {
+  0%   {opacity: 0;}
+  100% {opacity: 1;}
+}
+
+@keyframes in-fade-right {
+  0%   { opacity: 0; transform: translate3d(50%, 0, 0);}
+  100% { opacity: 1; transform: none;}
+}
+@-webkit-keyframes in-fade-right {
+  0%   { opacity: 0; -webkit-transform: translate3d(50%, 0, 0);}
+  100% { opacity: 1; -webkit-transform: none;}
 }
