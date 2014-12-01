@@ -129,7 +129,7 @@
 }
 .menu-prompt-body {
   .flex(1 1 100%);
-  padding: 2rem;
+  padding: 0 2rem;
   &:last-of-type {
     padding-bottom: @tile;
   }
@@ -184,14 +184,7 @@
 
 
 .mixpanel-badge {
-  position: absolute;
-  bottom: 1em;
-  right: 1em;
-  z-index: @zindex_info_mixpanel;
-  transition: @speed @bezier_fadein @speed;
-  .mq_640({
-    display: none;
-  });
+  margin: 0 1em 0 auto;
   svg {
     fill: @gray_mixpanel;
   }
