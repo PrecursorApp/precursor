@@ -29,26 +29,27 @@
             [:h2 "What is Precursor?"]
             [:p
              "No-nonsense prototyping—"
-             "Perfect for wireframing, sketching, and brainstorming. "
+             "perfect for wireframing, sketching, and brainstorming. "
              [:a {:on-click #(cast! :invite-link-clicked)
                   :role "button"
                   :title "In chat, type \"/invite their@email.com\""}
               "Invite"]
-             " a teammate and collaborate instantly. "
+             " your team and collaborate with them instantly. "
              " We just got started, so if you have feedback say "
              [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
                   :title "We love feedback, good or bad."}
-              "hi@prcrsr.com"]]
+              "hi@prcrsr.com"]
+             " or on "
+             [:a {:href "https://twitter.com/prcrsr_app"
+                  :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+                  :title "On Twitter"
+                  :target "_blank"}
+              "Twitter"]
+             "."]
             [:a.prompt-button {:on-click #(cast! :overlay-info-toggled)
                                :role "button"}
              "Okay"]]
            [:div.menu-footer
-            [:p
-             [:a.menu-footer-link {:href "https://twitter.com/prcrsr_app"
-                                   :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-                                   :title "On Twitter"
-                                   :target "_blank"}
-              "Tell us what to add next."]]
             (common/mixpanel-badge)]])))))
 
 (defn shortcuts [app owner]
@@ -109,31 +110,32 @@
             "No thanks."]]])))))
 
 (def overlay-components
-  {:info info
-   :shortcuts shortcuts
-   :username username})
+  {:info {:component info
+          :menu-type :prompt}
+   :shortcuts {:component shortcuts
+               :menu-type :view}
+   :username {:component username
+              :menu-type :prompt}})
 
 (defn overlay [app owner]
   (reify
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            overlay-component (get overlay-components (:overlay app) info)]
+            overlay-component (get overlay-components (or (:overlay app) :info))]
         (html
           [:div.app-overlay {:on-click #(cast! :overlay-closed)}
            [:div.app-overlay-background]
+           (if (= :view (:menu-type overlay-component))
+             [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
+              [:div.menu-header
+               [:a.menu-back {:on-click #(cast! :overlay-closed)
+                              :role "button"}
+                (common/icon :arrow-left)]
+               [:div.menu-title
+                [:h3 "Shortcuts"]]]
+              [:div.menu-body
+               (om/build (:component overlay-component) app)]]
 
-           ; [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
-           ;  [:div.menu-header
-           ;   [:a.menu-back {:on-click #(cast! :overlay-closed)
-           ;                  :role "button"}
-           ;    (common/icon :arrow-left)]
-           ;   [:div.menu-title
-           ;    [:h3 "Shortcuts"]]]
-           ;  [:div.menu-body
-           ;   (om/build overlay-component app)]]
-
-           [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
-            (om/build overlay-component app)]
-
-           ])))))
+             [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
+              (om/build (:component overlay-component) app)])])))))

@@ -70,6 +70,9 @@
     &:not(:hover) {
       .icon_stroke(@gray_dark);
     }
+    &:only-child {
+      margin-left: auto;
+    }
   }
 }
 .menu-title {
@@ -122,7 +125,8 @@
   .flexy(column);
 }
 .menu-prompt-body {
-  margin: auto 2rem;
+  .flex(1 1 100%);
+  padding: 2rem;
   &:last-of-type {
     padding-bottom: @tile;
   }
