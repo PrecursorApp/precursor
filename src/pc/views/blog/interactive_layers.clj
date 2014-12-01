@@ -1,4 +1,5 @@
-(ns pc.views.blog.interactive-layers)
+(ns pc.views.blog.interactive-layers
+  (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]))
 
 (defn interactive-layers []
   {:title "Introduction to Interactive Layers"
@@ -7,6 +8,15 @@
     [:article
      [:p "In this tutorial, we'll show you how to use Precursor's simple interactive layers to prototype complex user flows."]
      [:p "We'll prototype a simple iPhone app with three different views."]]
+
+    [:article.cta
+     [:form {:method "post" :action "/duplicate/interactive-demo" :target "_blank"}
+      [:input {:type "hidden" :name "__anti-forgery-token"
+               :value ring.middleware.anti-forgery/*anti-forgery-token*}]
+      [:button.blog-cta-button {:href "/"
+                                :role "button"
+                                :title "Make something."}
+       "Reproduce this demo"]]]
 
     [:figure [:img {:src "/email/interactive-demo.gif"}]]
 
@@ -42,4 +52,12 @@
       "You can get back to the default view by pressing the \"1\" key."]]
 
     [:figure [:img {:src "/blog/interactive-layers/space-layers.png"}]]
-    )})
+
+    [:article.cta
+     [:form {:method "post" :action "/duplicate/interactive-demo" :target "_blank"}
+      [:input {:type "hidden" :name "__anti-forgery-token"
+               :value ring.middleware.anti-forgery/*anti-forgery-token*}]
+      [:button.blog-cta-button {:href "/"
+                                     :role "button"
+                                     :title "Make something."}
+       "Reproduce this demo"]]])})

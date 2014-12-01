@@ -26,6 +26,10 @@
     &.wide {
       max-width: (@tile * 15);
     }
+    &.cta {
+      .flexy(center, center, column);
+      padding: 1em;
+    }
   }
   figure {
     > img,
@@ -35,6 +39,26 @@
     }
   }
 }
+.blog-cta-button {
+  .flexy(center, center);
+  min-height: 3.5em;
+  min-width: 10.5em;
+  line-height: 1em;
+  padding: 1em 2em;
+  border: 1px solid @font_color;
+  transition: @speed_fast @bezier_fadein;
+  .mq_640({
+    width: 100%;
+  });
+  &:hover {
+    color: @white;
+    background: @font_color;
+  }
+  &:not(:hover) {
+    color: @gray_dark;
+  }
+}
+
 .navigation {
   .flexy(center);
   height: @tile;
@@ -106,4 +130,3 @@
     margin: 0;
   }
 }
-
