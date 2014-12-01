@@ -50,11 +50,12 @@
         (html
          [:div.menu-prompt {:class (str "menu-prompt-" "doc-viewer")}
           [:div.menu-header
+           [:div.menu-title
+            [:h3 "Your Docs"]]
            [:a.menu-close {:on-click #(cast! :overlay-closed)
                            :role "button"}
             (common/icon :times)]]
           [:div.menu-prompt-body
-           [:h2 "Your Docs"]
            [:a {:on-click #(cast! :touched-fetched)
                 :role "button"}
             "Fetch docs"]
@@ -62,12 +63,12 @@
            (for [[time-bucket bucket-docs] (reverse (sort-by #(:last-updated-instant (first (last %)))
                                                              (group-by #(date->bucket (:last-updated-instant %)) docs)))]
              (list*
-              [:div.time-bucket (str "Updated " time-bucket)]
+              [:div.recent-time-group
+               [:h2 time-bucket]]
 
               (for [doc bucket-docs]
-                [:a {:href (str "/document/" (:db/id doc))}
-                 [:img {:src (str "/document/" (:db/id doc) ".svg")
-                        :style {:border "1px solid black"
-                                :margin-bottom 20}
-                        :width 300
-                        :height 300}]])))]])))))
+                [:div.recent-doc
+                 [:a.recent-doc-thumb {:href (str "/document/" (:db/id doc))}
+                  [:img {:src (str "/document/" (:db/id doc) ".svg")}]]
+                 [:a.recent-doc-title {:href (str "/document/" (:db/id doc))}
+                  (str (:db/id doc))]])))]])))))

@@ -192,7 +192,10 @@
   }
 }
 
-
+.recent-time-group {
+  text-transform: capitalize;
+  margin: 2em 0;
+}
 .recent-doc {
   .flexy(flex-end, center, column);
 }
@@ -200,11 +203,10 @@
   line-height: 1rem;
   margin-bottom: 1.5rem;
 }
-.recent-doc-preview {
+.recent-doc-thumb {
   display: block;
   width: 20rem;
   height: 15rem;
-  // margin: 2em 0;
   margin-bottom: .5rem;
   border: 1px solid @gray_lighter;
   overflow: hidden;
@@ -212,14 +214,9 @@
   &:hover {
     border-color: @gray;
     transition-duration: @speed_fast;
-    // img {
-    //   opacity: .8;
-    //   transition-duration: @speed_fast;
-    // }
   }
   img {
     width: 100%;
     opacity: .5;
-    // transition: @speed @bezier_fadein;
   }
 }
