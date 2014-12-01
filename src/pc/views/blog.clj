@@ -45,13 +45,13 @@
 
 (defn overview []
   [:div.blogroll
-   [:div.bloghead
-    [:article
-     [:h1.blogroll-title "Blog"]]]
+   [:div.blog-head
+    [:a.blog-head-logo {:href "/"}
+     logomark]]
    [:article
     (for [slug slugs]
-      [:div.blogroll-post {:href (post-url slug)}
-       [:a {:href "#"}
+      [:div.blogroll-post
+       [:a {:href (post-url slug)}
         [:h3 (:title ((post-fn slug)))]]
        [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
        [:h6 "by Danny"]])
@@ -84,7 +84,7 @@
 (defn single-post [slug]
   (let [post ((post-fn slug))]
     [:div.blogpost
-     [:div.bloghead
+     [:div.blog-head
       [:article
        [:h1 (:title post)]]]
      (:body post)]))
@@ -92,16 +92,17 @@
 (defn render-page [slug]
   (html (pc.views.content/layout
          {}
-         [:nav.navigation
-          [:a.navigation-logomark {:href "/"}
-           logomark]
-          [:a.navigation-promote {:href "#"
-                                  :data-bottom "Make something."}
+         [:nav.navigation.header
+          [:a.navigation-title {:href "/blog"
+                                :title "The Blog"}
+           "Precursor"]
+          [:a.navigation-promote {:href "/"
+                                  :title "Try it out."}
            "Prototyping for teams."]]
          (if (post-exists? slug)
            (single-post slug)
            (overview))
          [:footer.navigation.footer
-          [:a.navigation-promote {:href "#"
-                                  :data-left "See new changes."}
+          [:a.navigation-promote {:href "https://twitter.com/prcrsr_app"
+                                  :data-right "Follow our changelog."}
            twitter]])))
