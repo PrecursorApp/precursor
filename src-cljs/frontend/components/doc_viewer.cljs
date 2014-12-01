@@ -8,6 +8,7 @@
             [frontend.datascript :as ds]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [goog.date]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]])
