@@ -25,6 +25,10 @@
       }
     }
   }
+  + .app-main {
+    .scale3d(.97);
+    .filter(blur(2px));
+  }
 }
 .app-overlay-background {
   .animation(in-fade @speed_fast @bezier_fadein);
@@ -33,7 +37,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: fade(@gray_darker, 66);
+  // background: fade(@gray_darker, 66);
   z-index: -1;
 }
 .app-overlay-menu {

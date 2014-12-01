@@ -139,16 +139,16 @@
            (common/icon :info)]])))))
 
 
-(defn app [app owner]
+(defn app* [app owner]
   (reify
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             aside-opened? (get-in app state/aside-menu-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
-        (html [:div#app
+        (html [:div.app-main
                (om/build aside/menu app)
-               [:main.app-main {:onContextMenu (fn [e]
+               [:div.app-canvas {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
@@ -182,6 +182,13 @@
                                             :left (+ (get-in app [:mouse :x]) (if aside-opened? (- 16 256) 16) )}}
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
-                     "Try right-click")])]
-               (when (:overlay app)
-                (om/build overlay/overlay app))])))))
+                     "Try right-click")])]])))))
+
+(defn app [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {:id "app"}
+      (when (:overlay app)
+       (om/build overlay/overlay app))
+      (om/build app* app)))))

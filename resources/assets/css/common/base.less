@@ -11,10 +11,18 @@ body {
   margin: 0;
 }
 #app {
-  .flexy();
-  background: @app_background;
+  .flexy(column);
+  // background: @app_background;
+  // background: darken(@app_background, 3);
+  background: darken(@app_background, 2);
   height: 100vh;
   overflow: hidden;
+}
+.app-main {
+  .flexy();
+  background: @app_background;
+  overflow: hidden;
+  transition: @speed_fast @bezier_transform;
 }
 a {
   background: transparent;

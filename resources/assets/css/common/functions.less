@@ -72,6 +72,12 @@
   box-shadow+:  1px  0   @color;
   box-shadow+: -1px  0   @color;
 }
+.filter(...) {
+  .for(@arguments); .-each(@argument) {
+      -webkit-filter+_: @argument;
+              filter+_: @argument;
+  }
+}
 .rotate(...) {
   .prefixer(transform; ~"rotate(@{arguments}deg)"; webkit);
 }
