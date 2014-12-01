@@ -1,41 +1,23 @@
-.icon_stroke(...) {
-  .icon_stroke_color(@a) when (iscolor(@a)) {
-    i {
-      [class*="stroke"] {
-        stroke: @arguments;
-      }
-    }
-  }.icon_stroke_color(@arguments);
-}
-.icon_fill(...) {
-  .icon_fill_color(@a) when (iscolor(@a)) {
-    i {
-      [class*="fill"] {
-        fill: @arguments;
-      }
-    }
-  }.icon_fill_color(@arguments);
-}
 i {
   &[class|="icon"] {
     svg {
       width: 1em;
       height: 1em;
     }
-  }
-  [class*="dot"] {
-    stroke-linecap: round;
-    stroke-width: 20;
-  }
-}
-path {
-  &[class*="stroke"] {
-    fill: none;
-    stroke: @white;
-    stroke-width: 8;
-  }
-  &[class*="fill"] {
-    fill: @white;
-    stroke: none;
+    path {
+      &[class*="stroke"] {
+        fill: none;
+        stroke: @white;
+        stroke-width: 8;
+      }
+      &[class*="fill"] {
+        fill: @white;
+        stroke: none;
+      }
+      &[class*="dot"] {
+        stroke-linecap: round;
+        stroke-width: 20;
+      }
+    }
   }
 }

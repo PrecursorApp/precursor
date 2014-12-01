@@ -10,9 +10,14 @@
 (defn define-spec-routes! [nav-ch]
   (defroute trailing-slash #"(.+)/$" [path]
     (put! nav-ch [:navigate! {:path path :replace-token? true}]))
-  (defroute v1-not-found "*" []
+  (defroute not-found "*" []
     (put! nav-ch [:error {:status 404}])))
+
+(defn define-user-routes! [nav-ch]
+  (defroute document #"/document/(\d+)" [doc-id]
+    (put! nav-ch [:document {:document/id (long doc-id)}])))
 
 (defn define-routes! [state]
   (let [nav-ch (get-in @state [:comms :nav])]
+    (define-user-routes! nav-ch)
     (define-spec-routes! nav-ch)))

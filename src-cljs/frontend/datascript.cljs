@@ -92,9 +92,3 @@
                  (mapv datom->reverse-transaction datoms)
                  {:undo true
                   :can-undo? true})))
-
-(defn make-initial-db [document-id]
-  (let [schema {:aka {:db/cardinality :db.cardinality/many}
-                :layer/child {:db/cardinality :db.cardinality/many}}
-        conn   (d/create-conn schema)]
-    conn))

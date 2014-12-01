@@ -188,7 +188,10 @@
   (reify
     om/IRender
     (render [_]
-      (dom/div #js {:id "app"}
-      (when (:overlay app)
-       (om/build overlay/overlay app))
-      (om/build app* app)))))
+      (if (:navigation-point app)
+        (dom/div #js {:id "app"}
+          (when (:overlay app)
+            (om/build overlay/overlay app))
+          (om/build app* app))
+
+        (html [:div#app])))))

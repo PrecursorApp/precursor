@@ -103,7 +103,7 @@
   (let [{:keys [transactions last-undo]} @(:undo-state state)
         transaction-to-undo (if last-undo
                               ;; TODO: something special for no transactions to undo
-                              (let [next-undo-index (dec (utils/inspect (vec-index transactions last-undo)))]
+                              (let [next-undo-index (dec (vec-index transactions last-undo))]
                                 (when-not (neg? next-undo-index)
                                   (nth transactions next-undo-index)))
                               (last transactions))]
@@ -370,7 +370,7 @@
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
-  (when (get-in current-state [:subscribers (:client-uuid current-state) :show-mouse?])
+  (when (get-in current-state [:subscribers (str (:client-uuid current-state)) :show-mouse?])
     (sente/send-msg (:sente current-state)
                     [:frontend/mouse-position (merge
                                                {:tool (get-in current-state state/current-tool-path)
@@ -683,8 +683,8 @@
 (defmethod handle-cmd-chat "invite"
   [state cmd body]
   (let [email (last (re-find #"/invite\s+([^\s]+)" body))]
-    (utils/inspect (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
-                                                                          :email email}]))))
+    (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
+                                                           :email email}])))
 
 (defn chat-cmd [body]
   (when (seq body)
@@ -693,7 +693,7 @@
 (defmethod post-control-event! :chat-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
-        client-uuid (:client-uuid previous-state)
+        client-uuid (str (:client-uuid previous-state))
         color (get-in previous-state [:subscribers client-uuid :color])]
     (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
                       :chat/color color
@@ -880,3 +880,37 @@
   [browser-state message {:keys [value]} state]
   (-> state
       (assoc-in [:layer-properties-menu :layer :layer/ui-target] (empty-str->nil value))))
+
+(defmethod control-event :layers-pasted
+  [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
+  (let [[group-id & layer-ids :as used-ids] (take (inc (count layers)) (:entity-ids state))
+        doc-id (:document/id state)
+        new-x (- (/ (- (:width canvas-size) width) 2)
+                 (:x (:camera state)))
+        new-y (- (/ (- (:height canvas-size) height) 2)
+                 (:y (:camera state)))
+        [move-x move-y] [(- new-x min-x) (- new-y min-y)]
+        [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)]
+    (-> state
+        (assoc-in [:clipboard :layers] (conj (mapv (fn [l eid]
+                                                     (-> l
+                                                         (assoc :layer/ancestor (:db/id l)
+                                                                :db/id eid
+                                                                :document/id doc-id
+                                                                :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
+                                                         (#(move-layer % %
+                                                                       {:snap-x snap-move-x :snap-y snap-move-y
+                                                                        :move-x move-x :move-y move-y :snap-paths? true}))
+                                                         (dissoc :layer/current-x :layer/current-y :points)))
+                                                   layers layer-ids)
+                                             {:db/id group-id
+                                              :layer/type :layer.type/group
+                                              :layer/child (set layer-ids)}))
+        (assoc-in [:selected-eid] group-id)
+        (update-in [:entity-ids] #(apply disj % used-ids)))))
+
+(defmethod post-control-event! :layers-pasted
+  [browser-state message _ previous-state current-state]
+  (let [db (:db current-state)
+        layers (get-in current-state [:clipboard :layers])]
+    (d/transact! db layers {:can-undo? true})))
