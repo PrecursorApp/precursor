@@ -79,9 +79,12 @@
                       1
                       -1)
         end-y (+ (:layer/start-y layer) (* height-sign width))]
-    (assoc layer
-      :layer/current-y end-y
-      :layer/end-y end-y)))
+    (-> layer
+        (assoc :layer/current-y end-y
+               :layer/end-y end-y)
+        (#(if (:layer/rx %)
+            (assoc % :layer/ry (:layer/rx %))
+            %)))))
 
 (defmethod force-even :layer.type/line
   [layer]
