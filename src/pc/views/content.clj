@@ -35,7 +35,7 @@
     (when (prod-assets?)
       scripts/google-analytics)
     (scripts/mixpanel)]
-   [:body {:class "page-blog"}
+   [:body
     [:div.alerts-container]
     content]])
 

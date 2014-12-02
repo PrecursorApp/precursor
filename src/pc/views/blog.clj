@@ -87,17 +87,18 @@
 (defn render-page [slug]
   (html (pc.views.content/layout
          {}
-         [:nav.navigation.header
-          [:a.navigation-title {:href "/"
-                                :title "Make something."}
-           "Precursor"]
-          [:a.navigation-promote {:href "/"
-                                  :title "Try it out."}
-           "Prototyping for teams."]]
-         (if (post-exists? slug)
-           (single-post slug)
-           (overview))
-         [:footer.navigation.footer
-          [:a.navigation-promote {:href "https://twitter.com/prcrsr_app"
-                                  :data-right "Follow our changelog."}
-           twitter]])))
+         [:div.page-blog
+          [:nav.navigation.header
+           [:a.navigation-title {:href "/"
+                                 :title "Make something."}
+            "Precursor"]
+           [:a.navigation-promote {:href "/"
+                                   :title "Try it out."}
+            "Prototyping for teams."]]
+          (if (post-exists? slug)
+            (single-post slug)
+            (overview))
+          [:footer.navigation.footer
+           [:a.navigation-promote {:href "https://twitter.com/prcrsr_app"
+                                   :data-right "Follow our changelog."}
+            twitter]]])))
