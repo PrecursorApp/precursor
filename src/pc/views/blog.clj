@@ -56,11 +56,15 @@
      (:name author)]
     author-name))
 
-(defn overview []
-  [:div.blogroll
+(defn blog-head []
+  [:article
    [:div.blog-head
     [:a.blog-head-logo {:href "/blog"}
-     logomark]]
+     logomark]]])
+
+(defn overview []
+  [:div.blogroll
+   (blog-head)
    [:article
     (for [slug slugs
           :let [{:keys [title blurb author] :as content} ((post-fn slug))]]
@@ -73,12 +77,7 @@
 (defn single-post [slug]
   (let [post ((post-fn slug))]
     [:div.blogpost
-     ; [:div.blog-head
-     ;  [:article
-     ;   [:h1 (:title post)]]]
-     [:div.blog-head
-      [:a.blog-head-logo {:href "/blog"}
-       logomark]]
+     (blog-head)
      [:div.blogpost-title
       [:article
        [:h1 (:title post)]]]
