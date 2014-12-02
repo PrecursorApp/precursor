@@ -1,4 +1,6 @@
 .page-blog {
+  .flexy(column);
+  min-height: 100vh;
   color: @gray_dark;
   a {
     color: @gray_darker;
@@ -69,8 +71,8 @@
 }
 
 .navigation {
+  .flex(0 0 @tile);
   .flexy(center, space-between);
-  height: @tile;
   padding: 0 1.5em;
   &.header {
     border-bottom: 1px solid @gray_lighter;
@@ -117,6 +119,7 @@
 }
 .blogroll,
 .blogpost {
+  .flex(1 1 100%);
   font-size: 1.250em;
   margin-bottom: (@tile * 3);
 }
