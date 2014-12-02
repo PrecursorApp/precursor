@@ -7,11 +7,14 @@
    :body
    (list
     [:article
-     [:p "Jason Fried wrote a post that explained why his team avoids Photoshop for UI design. "
-         "The problem is that some tools add more cognitive load to a process than they offer in value. "
-         "I admire this type of process refinement through reflection. "
-         "I also think it's relevant to other parts of design, such as the ideation. "]
-     [:p "Someone asked the following question in the comments section of that post.
+     [:p "Jason Fried wrote a "
+         [:a {:href "https://signalvnoise.com/posts/1061-why-we-skip-photoshop"} "post"]
+         " that explained why his team avoids Photoshop for UI design.
+         The problem is that some tools add more cognitive load to a process than they offer in value.
+         I admire this type of process refinement through reflection.
+         I also think it's relevant to other parts of design, such as the ideation. "]
+     [:p [:a {:href "https://signalvnoise.com/posts/1061-why-we-skip-photoshop#comment_26681"} "Henry Balanon"]
+         " asked the following question in the comments section of that post.
          The question seems so simple, and yet it outlines a very complicated problem."]]
 
     [:article
@@ -19,12 +22,12 @@
 
     [:article
      [:h3 "Remote collaboration is hard with pen and paper."]
-     [:p "I've worked with many remote teammates and trying to share paper sketches with them is almost impossible. "
-         "I remember practicing the ol' email-a-photo technique myself. "
-         "Interestingly, further down from the quote above, others admitted that they actually scan their drawings. Whoa."]
-     [:p "This is enough of a problem that I bet we could make another list similar to the Photoshop list. "
-         "We'll even reference another hallmark of the tradition design process; pen and paper. "
-         "Only this time we'll focus on the ideation/brainstorming stage of design."]]
+     [:p "I've worked with many remote teammates and trying to share paper sketches with them is almost impossible.
+         I remember practicing the ol' email-a-photo technique myself.
+         Interestingly, further down from the quote above, others admitted that they actually scan their drawings. Whoa."]
+     [:p "This is enough of a problem that I bet we could make another list similar to the Photoshop list.
+         We'll even reference another hallmark of the tradition design process; pen and paper.
+         Only this time we'll focus on the ideation/brainstorming stage of design."]]
 
     [:article
      [:h3 "Here are a few reasons we want to replace pen and paper:"]
@@ -61,9 +64,10 @@
 
     [:article
      [:h3 "Prototypes deserve more than just a pen and paper."]
-     [:p "None of this is to say that I think pen and paper has no place anymore.
-         I still use it for disposable ideas when I'm not close to my computer or tablet.
+     [:p "None of this is to say that I think pen and paper have no place anymore.
+         I still use them for disposable ideas when I'm not close to a computer or tablet.
          But I want something better for my prototypes; something just as fast and simple to share as it is to use."]
      [:p "My friend, Daniel and I looked for something like this and didn't find it, so we built it ourselves.
-         We only started a few weeks ago, but we already have a more creative and collaborative workflow as a result.
-         Precursor allows us to be productive as a team in a way that pen and paper never will."]])})
+         We only started a few weeks ago, but we already have a more creative and collaborative workflow as a result. "
+         [:a {:href "/"} "Precursor"]
+         " allows us to be productive as a team in a way that pen and paper never will."]])})
