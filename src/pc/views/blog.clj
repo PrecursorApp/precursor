@@ -49,11 +49,12 @@
     [:article
      [:h1.blogroll-title "Blog"]]]
    [:article
-    (for [slug slugs]
+    (for [slug slugs
+          :let [content ((post-fn slug))]]
       [:a.blogroll-post {:href (post-url slug)}
-       [:h3 (:title ((post-fn slug)))]
-       [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-       [:h6 "Danny"]])
+       [:h3 (:title content)]
+       [:p (:blurb content)]
+       [:h6 (:author content)]])
     [:a.blogroll-post {:href "/blog"}
      [:h3 "Building a radial menu"]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]

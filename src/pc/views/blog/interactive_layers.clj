@@ -3,6 +3,8 @@
 
 (defn interactive-layers []
   {:title "Introduction to Interactive Layers"
+   :blurb "Learn how to build complex interactive prototypes from Precursor's simple components."
+   :author "Daniel"
    :body
    (list
     [:article
