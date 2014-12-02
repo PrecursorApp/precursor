@@ -74,6 +74,9 @@
    :menu-stroke-top "M5,25h90"
    :menu-stroke-middle "M5,50h90"
    :menu-stroke-bottom "M5,75h90"
+   :clock-stroke "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z M50,20v30 M71.2,71.2L50,50"
+   :arrow-right-stroke "M95,50H5 M59,86l36-36L59,14"
+   :arrow-left-stroke "M95,50H5 M41,14L5,50l36,36"
    :twitter-fill "M100,19c-3.7,1.6-7.6,2.7-11.8,3.2c4.2-2.5,7.5-6.6,9-11.4c-4,2.4-8.4,4.1-13,5c-3.7-4-9.1-6.5-15-6.5 c-11.3,0-20.5,9.2-20.5,20.5c0,1.6,0.2,3.2,0.5,4.7c-17.1-0.9-32.2-9-42.3-21.4c-1.8,3-2.8,6.6-2.8,10.3c0,7.1,3.6,13.4,9.1,17.1 c-3.4-0.1-6.5-1-9.3-2.6c0,0.1,0,0.2,0,0.3c0,9.9,7.1,18.2,16.5,20.1c-1.7,0.5-3.5,0.7-5.4,0.7c-1.3,0-2.6-0.1-3.9-0.4 c2.6,8.2,10.2,14.1,19.2,14.2c-7,5.5-15.9,8.8-25.5,8.8c-1.7,0-3.3-0.1-4.9-0.3c9.1,5.8,19.9,9.2,31.4,9.2 c37.7,0,58.4-31.3,58.4-58.4c0-0.9,0-1.8-0.1-2.7C93.8,26.7,97.2,23.1,100,19z"
    :newdoc-stroke "M58,80V50 M43,65h30 M12,77l0-52L32,5l34,0v20 M58,35 c-16.6,0-30,13.4-30,30s13.4,30,30,30s30-13.4,30-30S74.6,35,58,35z M12,25h20V5"
    :login-stroke "M35,82.1V70 M5,43.6h42.9 M30.7,60.7l17.1-17.1 L30.7,26.4 M35,17.1V5h60c0,0,0,77.1,0,77.1L52.1,95V17.9L88.3,7"
@@ -110,6 +113,9 @@
    :crosshair {:paths [:crosshair-stroke]}
    :ibeam {:paths [:ibeam-stroke]}
    :menu {:paths [:menu-stroke-top :menu-stroke-middle :menu-stroke-bottom]}
+   :clock {:paths [:clock-stroke]}
+   :arrow-left {:paths [:arrow-left-stroke]}
+   :arrow-right {:paths [:arrow-right-stroke]}
    :twitter {:paths [:twitter-fill]}
    :newdoc {:paths [:newdoc-stroke]}
    :login {:paths [:login-stroke]}
