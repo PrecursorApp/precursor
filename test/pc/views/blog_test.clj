@@ -1,4 +1,4 @@
-(ns pc.views.test-blog
+(ns pc.views.blog-test
   (:require [clojure.test :refer :all]
             [clojure.string :as str]
             [hiccup.core :as hiccup]
