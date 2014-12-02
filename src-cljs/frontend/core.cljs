@@ -46,7 +46,8 @@
   {:button  (.-button event)
    :type (.-type event)
    :meta? (.-metaKey event)
-   :ctrl? (.-ctrlKey event)})
+   :ctrl? (.-ctrlKey event)
+   :shift? (.-shiftKey event)})
 
 (defn handle-mouse-move [cast! event]
   (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (event-props event))

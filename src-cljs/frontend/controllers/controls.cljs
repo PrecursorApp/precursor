@@ -16,6 +16,7 @@
             [frontend.models.layer :as layer-model]
             [frontend.routes :as routes]
             [frontend.sente :as sente]
+            [frontend.settings :as settings]
             [frontend.state :as state]
             [frontend.stripe :as stripe]
             [frontend.svg :as svg]
@@ -83,10 +84,10 @@
   [browser-state message _ state]
   (update-in state [:camera :x] dec))
 
-(defmulti handle-keyboard-shortcut (fn [shortcut-name state] shortcut-name))
+(defmulti handle-keyboard-shortcut (fn [state shortcut-name] shortcut-name))
 
 (defmethod handle-keyboard-shortcut :default
-  [shortcut-name state]
+  [state shortcut-name]
   (assoc-in state state/current-tool-path shortcut-name))
 
 (defn vec-index [v elem]
@@ -114,21 +115,21 @@
 
 ;; TODO: have some way to handle pre-and-post
 (defmethod handle-keyboard-shortcut :undo
-  [shortcut-name state]
+  [state shortcut-name]
   (handle-undo state))
 
 (defmethod handle-keyboard-shortcut :shortcuts-menu
-  [shortcut-name state]
+  [state shortcut-name]
   (-> state
       (update-in [:overlay] #(if (= % :shortcuts) nil :shortcuts))))
 
 (defmethod handle-keyboard-shortcut :escape-interaction
-  [shortcut-name state]
+  [state shortcut-name]
   (-> state
       (assoc :overlay nil)))
 
 (defmethod handle-keyboard-shortcut :reset-canvas-position
-  [shortcut-name state]
+  [state shortcut-name]
   (-> state
       (update-in [:camera] cameras/reset)))
 
@@ -137,16 +138,18 @@
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
     (-> state
         (assoc-in [:keyboard key-name-kw] depressed?)
-        (cond->> (and depressed? (contains? (apply set/union (vals shortcuts)) key))
-                 (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key))
-                                                          (keys shortcuts))))))))
+        (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key))
+                (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key))
+                                                         (keys shortcuts))))
+                (and (= "shift" key) (settings/drawing-in-progress? state))
+                (assoc-in [:drawing :layers 0 :force-even?] depressed?)))))
 
 (defmethod post-control-event! :key-state-changed
-  [browser-state message [{:keys [key-name-kw depressed?]}] state]
+  [browser-state message [{:keys [key-name-kw depressed?]}] previous-state current-state]
   ;; TODO: better way to handle this
   (when (or (= key-name-kw :backspace?)
             (= key-name-kw :del?))
-    (put! (get-in state [:comms :controls]) [:deleted-selected])))
+    (put! (get-in current-state [:comms :controls]) [:deleted-selected])))
 
 (defn update-mouse [state x y]
   (if (and x y)
@@ -292,7 +295,7 @@
                             (set/intersection has-x1 has-y0)
                             (set/intersection has-x1 has-y1))))))
 
-(defn draw-in-progress-drawing [state x y]
+(defn draw-in-progress-drawing [state x y {:keys [force-even?]}]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
         points ((fnil conj []) (get-in state [:drawing :layers 0 :points]) {:x x :y x :rx rx :ry ry})
@@ -303,10 +306,11 @@
                                                :start-y (get-in state [:drawing :layers 0 :layer/start-y])
                                                :end-y snap-y}))]
     (-> state
-        (update-in [:drawing :layers 0] assoc
-                   :points points
-                   :layer/current-x snap-x
-                   :layer/current-y snap-y)
+        (update-in [:drawing :layers 0] #(-> %
+                                             (assoc :points points
+                                                    :force-even? force-even?
+                                                    :layer/current-x snap-x
+                                                    :layer/current-y snap-y)))
         (update-in [:drawing :layers 0]
                    (fn [layer]
                      (merge
@@ -358,12 +362,12 @@
     (assoc-in state [:drawing :layers] layers)))
 
 (defmethod control-event :mouse-moved
-  [browser-state message [x y] state]
+  [browser-state message [x y {:keys [shift?]}] state]
   (-> state
 
       (update-mouse x y)
       (cond-> (get-in state [:drawing :in-progress?])
-              (draw-in-progress-drawing x y)
+              (draw-in-progress-drawing x y {:force-even? shift?})
 
               (get-in state [:drawing :moving?])
               (move-drawings x y))))
@@ -409,30 +413,28 @@
                                                :start-y (get-in state [:drawing :layers 0 :layer/start-y])
                                                :end-y snap-y}))]
     (-> state
-        (update-in [:drawing :layers 0] dissoc :layer/current-x :layer/current-y)
-        (update-in [:drawing :layers 0] assoc :layer/end-x snap-x :layer/end-y snap-y)
         (update-in [:drawing] assoc :in-progress? false)
         (assoc-in [:mouse :down] false)
         ;; TODO: get rid of nils (datomic doesn't like them)
         (update-in [:drawing :layers 0]
                    (fn [layer]
                      (-> layer
-                         (dissoc
-                          :points
-                          :layer/current-x
-                          :layer/current-y)
-                         (merge
-                          {:layer/end-x snap-x
-                           :layer/end-y snap-y}
-                          (when (= :circle (get-in state state/current-tool-path))
-                            {:layer/rx (Math/abs (- (:layer/start-x layer)
-                                                    (:layer/end-x layer)))
-                             :layer/ry (Math/abs (- (:layer/start-y layer)
-                                                    (:layer/end-y layer)))})
-                          (when (= layer-type :layer.type/path)
-                            {:layer/path (svg/points->path (:points layer))})
-                          (when (seq bounding-eids)
-                            {:layer/child bounding-eids})))))
+                         (dissoc :points :force-even? :layer/current-x :layer/current-y)
+                         (assoc :layer/end-x snap-x
+                                :layer/end-y snap-y)
+                         (#(if (:force-even? layer)
+                             (layers/force-even %)
+                             %))
+                         (#(merge %
+                            (when (= :circle (get-in state state/current-tool-path))
+                              {:layer/rx (Math/abs (- (:layer/start-x %)
+                                                      (:layer/end-x %)))
+                               :layer/ry (Math/abs (- (:layer/start-y %)
+                                                      (:layer/end-y %)))})
+                            (when (= layer-type :layer.type/path)
+                              {:layer/path (svg/points->path (:points layer))})
+                            (when (seq bounding-eids)
+                              {:layer/child bounding-eids}))))))
         (assoc-in [:camera :moving?] false))))
 
 (defn drop-layers
