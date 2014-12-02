@@ -58,7 +58,6 @@
      [:form {:method "post" :action "/duplicate/interactive-demo" :target "_blank"}
       [:input {:type "hidden" :name "__anti-forgery-token"
                :value ring.middleware.anti-forgery/*anti-forgery-token*}]
-      [:button.blog-cta-button {:href "/"
-                                     :role "button"
-                                     :title "Make something."}
+      [:button.blog-cta-button {:role "button"
+                                :title "Make something."}
        "Reproduce this demo"]]])})
