@@ -1,6 +1,6 @@
-(ns pc.views.blog.replace-pen-and-paper)
+(ns pc.views.blog.lets-replace-pen-and-paper)
 
-(defn replace-pen-and-paper []
+(defn lets-replace-pen-and-paper []
   {:title "Let's replace pen and paper."
    :blurb "I've worked with many remote teammates and trying to share paper sketches with them is almost impossible..."
    :author "Danny"

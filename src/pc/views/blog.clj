@@ -29,7 +29,7 @@
    function returned by post-fn"
   [;"instrumenting-om-components"
    "interactive-layers"
-   "replace-pen-and-paper"])
+   "lets-replace-pen-and-paper"])
 
 (defn post-exists? [slug]
   (not= -1 (.indexOf slugs slug)))
