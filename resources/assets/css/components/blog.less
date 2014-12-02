@@ -11,9 +11,13 @@
     }
   }
   p {
+    margin: 0 0 .5em;
     a {
+      transition: @speed_fast @bezier_fadein;
       &:not(:hover) {
-        border-bottom: 1px dotted @gray_light;
+        box-shadow: 0 -1px @white inset, 0 -2px @gray_light inset;
+        text-shadow: 1px 0 @white, 2px 0 @white, 3px 0 @white, -1px 0 @white, -2px 0 @white, -3px 0 @white;
+        transition-duration: @speed;
       }
     }
   }
@@ -28,6 +32,9 @@
     &.cta {
       .flexy(center, center, column);
       padding: 1em;
+    }
+    > h3 {
+      margin: 1em 0 .5em;
     }
   }
   figure {
@@ -71,10 +78,13 @@
 }
 .blogroll-post {
   color: @gray_dark;
-  padding: 1em 0 2em;
-  border-bottom: 1px solid @gray_lighter;
+  padding: 1em 0;
+  box-shadow: 0 1px @gray_lighter;
   &:hover {
     color: @gray_darker;
+  }
+  &:first-child {
+    padding-top: 0;
   }
   a {
     .flexy();
@@ -88,14 +98,13 @@
   p {
     color: @gray;
     margin: 0 0 1em;
+    &:last-child {
+      line-height: 1;
+    }
   }
   h3 {
+    line-height: 1;
     margin: 0;
-  }
-  h6 {
-    color: @gray;
-    font-weight: 500;
-    margin: ~"calc((1.25rem - 1.5em) / 2) 0";
   }
 }
 .blogroll,
@@ -103,17 +112,12 @@
   font-size: 1.250em;
   margin-bottom: (@tile * 3);
 }
-.blogroll {
-  .blog-head {
-    padding: 6em 0 4em;
-  }
+.blogpost-title {
+  margin-bottom: 2em;
 }
 .blog-head {
   .flexy(center, center, column);
   padding: 5em 0;
-  h1 {
-    margin: 0;
-  }
   .blog-head-logo {
     .icon_fill(@gray_light);
     font-size: 2em;

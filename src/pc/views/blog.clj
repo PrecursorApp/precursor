@@ -46,7 +46,7 @@
 (defn overview []
   [:div.blogroll
    [:div.blog-head
-    [:a.blog-head-logo {:href "/"}
+    [:a.blog-head-logo {:href "/blog"}
      logomark]]
    [:article
     (for [slug slugs]
@@ -54,37 +54,43 @@
        [:a {:href (post-url slug)}
         [:h3 (:title ((post-fn slug)))]]
        [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-       [:h6 "by Danny"]])
+       [:p "by Danny"]])
     [:div.blogroll-post
      [:a {:href "#"}
       [:h3 "Building a radial menu"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Daniel"]]
+     [:p "by Daniel"]]
     [:div.blogroll-post
      [:a {:href "#"}
       [:h3 "Precursor announces 1 billion seed round"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Danny"]]
+     [:p "by Danny"]]
     [:div.blogroll-post
      [:a {:href "#"}
       [:h3 "Photoshop is dead, long live Precursor"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Daniel"]]
+     [:p "by Daniel"]]
     [:div.blogroll-post
      [:a {:href "#"}
       [:h3 "Importing your Precursor prototypes into Photoshop"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Danny"]]
+     [:p "by Danny"]]
     [:div.blogroll-post
      [:a {:href "#"}
       [:h3 "Introduction to creating gifs of interactive prototypes"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-     [:h6 "by Daniel"]]]])
+     [:p "by Daniel"]]]])
 
 (defn single-post [slug]
   (let [post ((post-fn slug))]
     [:div.blogpost
+     ; [:div.blog-head
+     ;  [:article
+     ;   [:h1 (:title post)]]]
      [:div.blog-head
+      [:a.blog-head-logo {:href "/blog"}
+       logomark]]
+     [:div.blogpost-title
       [:article
        [:h1 (:title post)]]]
      (:body post)]))
@@ -93,8 +99,8 @@
   (html (pc.views.content/layout
          {}
          [:nav.navigation.header
-          [:a.navigation-title {:href "/blog"
-                                :title "The Blog"}
+          [:a.navigation-title {:href "/"
+                                :title "Make something."}
            "Precursor"]
           [:a.navigation-promote {:href "/"
                                   :title "Try it out."}
