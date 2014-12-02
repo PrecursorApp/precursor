@@ -53,32 +53,34 @@
     (for [slug slugs
           :let [content ((post-fn slug))]]
       [:div.blogroll-post
-       [:a {:href (post-url slug)}
+       [:a.blogroll-post-title {:href (post-url slug)}
         [:h3 (:title content)]]
        [:p (:blurb content)]
-       [:p (:author content)]])
+       [:p
+        [:a.blogroll-post-author {:href "#"}
+         (:author content)]]])
     [:div.blogroll-post
-     [:a {:href "#"}
+     [:a.blogroll-post-title {:href "#"}
       [:h3 "Building a radial menu"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
      [:p "by Daniel"]]
     [:div.blogroll-post
-     [:a {:href "#"}
+     [:a.blogroll-post-title {:href "#"}
       [:h3 "Precursor announces 1 billion seed round"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
      [:p "by Danny"]]
     [:div.blogroll-post
-     [:a {:href "#"}
+     [:a.blogroll-post-title {:href "#"}
       [:h3 "Photoshop is dead, long live Precursor"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
      [:p "by Daniel"]]
     [:div.blogroll-post
-     [:a {:href "#"}
+     [:a.blogroll-post-title {:href "#"}
       [:h3 "Importing your Precursor prototypes into Photoshop"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
      [:p "by Danny"]]
     [:div.blogroll-post
-     [:a {:href "#"}
+     [:a.blogroll-post-title {:href "#"}
       [:h3 "Introduction to creating gifs of interactive prototypes"]]
      [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
      [:p "by Daniel"]]]])
