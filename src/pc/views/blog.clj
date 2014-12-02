@@ -59,7 +59,8 @@
 (defn blog-head []
   [:article
    [:div.blog-head
-    [:a.blog-head-logo {:href "/blog"}
+    [:a.blog-head-logo {:href "/blog"
+                        :title "Precursor Blog"}
      logomark]]])
 
 (defn overview []

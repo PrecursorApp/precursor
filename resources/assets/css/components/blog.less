@@ -142,13 +142,19 @@
 .blog-head {
   .flexy(column);
   .blog-head-logo {
-    .icon_fill(@gray_light);
     font-size: 2em;
     text-align: center;
     margin: 1.5em 5em;
     padding: 1em 0;
+    .logomark-fill {
+      fill: @gray_light;
+      transition: @speed_slow @bezier_fadein;
+    }
     &:hover {
-      .icon_fill(@gray_light);
+      .logomark-fill {
+        fill: darken(@gray_light, 8);
+        transition-duration: @speed_fast;
+      }
     }
   }
 }
