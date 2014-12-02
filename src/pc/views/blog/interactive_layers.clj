@@ -9,16 +9,15 @@
    (list
     [:article
      [:p "In this tutorial, we'll show you how to use Precursor's simple interactive layers to prototype complex user flows."]
-     [:p "We'll prototype a simple iPhone app with three different views."]]
-
-    [:article.cta
-     [:form {:method "post" :action "/duplicate/interactive-demo" :target "_blank"}
+     [:p "We'll prototype a simple iPhone app with three different views."]
+     [:form {:id "interactive-demo-form" :method "post" :action "/duplicate/interactive-demo"}
       [:input {:type "hidden" :name "__anti-forgery-token"
                :value ring.middleware.anti-forgery/*anti-forgery-token*}]
-      [:button.blog-cta-button {:href "/"
-                                :role "button"
-                                :title "Make something."}
-       "Reproduce this demo"]]]
+      [:p "You can "
+       ;; falls back to email welcome gif if js doesn't execute for some reason
+       [:a {:onclick "event.preventDefault(); document.getElementById('interactive-demo-form').submit()" :href "/email/welcome/interactive-demo.gif"}
+        "follow along on Precursor"]
+       "  with your own copy of the document we created for this tutorial."]]]
 
     [:figure [:img {:src "/email/interactive-demo.gif"}]]
 
