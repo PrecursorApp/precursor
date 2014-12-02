@@ -28,7 +28,8 @@
   "Sorted array of slugs, assumes the post content can be found in the
    function returned by post-fn"
   ["instrumenting-om-components"
-   "interactive-layers"])
+   "interactive-layers"
+   "replace-pen-and-paper"])
 
 (defn post-exists? [slug]
   (not= -1 (.indexOf slugs slug)))
