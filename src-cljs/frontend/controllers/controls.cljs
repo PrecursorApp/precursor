@@ -419,12 +419,12 @@
         (update-in [:drawing :layers 0]
                    (fn [layer]
                      (-> layer
-                         (dissoc :points :force-even? :layer/current-x :layer/current-y)
                          (assoc :layer/end-x snap-x
                                 :layer/end-y snap-y)
                          (#(if (:force-even? layer)
                              (layers/force-even %)
                              %))
+                         (dissoc :points :force-even? :layer/current-x :layer/current-y)
                          (#(merge %
                             (when (= :circle (get-in state state/current-tool-path))
                               {:layer/rx (Math/abs (- (:layer/start-x %)
