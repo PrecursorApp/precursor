@@ -27,7 +27,7 @@
 (def slugs
   "Sorted array of slugs, assumes the post content can be found in the
    function returned by post-fn"
-  ["instrumenting-om-components"
+  [;"instrumenting-om-components"
    "interactive-layers"
    "replace-pen-and-paper"])
 
@@ -50,12 +50,13 @@
     [:a.blog-head-logo {:href "/blog"}
      logomark]]
    [:article
-    (for [slug slugs]
+    (for [slug slugs
+          :let [content ((post-fn slug))]]
       [:div.blogroll-post
        [:a {:href (post-url slug)}
-        [:h3 (:title ((post-fn slug)))]]
-       [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc nisl erat, ullamcorper nec enim suscipit, accumsan pharetra lorem..."]
-       [:p "by Danny"]])
+        [:h3 (:title content)]]
+       [:p (:blurb content)]
+       [:p (:author content)]])
     [:div.blogroll-post
      [:a {:href "#"}
       [:h3 "Building a radial menu"]]
