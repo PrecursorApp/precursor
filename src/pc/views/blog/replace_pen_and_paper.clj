@@ -2,6 +2,8 @@
 
 (defn replace-pen-and-paper []
   {:title "Let's replace pen and paper."
+   :blurb "I've worked with many remote teammates and trying to share paper sketches with them is almost impossible..."
+   :author "Danny"
    :body
    (list
     [:article
@@ -12,23 +14,14 @@
      [:p "Someone asked the following question in the comments section of that post.
          The question seems so simple, and yet it outlines a very complicated problem."]]
 
-    ; [:figure
-    ;  [:a {:href "https://signalvnoise.com/posts/1061-why-we-skip-photoshop#comment_26681"}
-    ;   [:img {:src "/blog/replace-pen-and-paper/pen-paper-quote.png"}]]]
-
     [:article
      [:blockquote "How do you share paper sketches with the people outside of Chicago?"]]
-
-    ; [:article
-    ;  [:p "Someone asked this question in the comments section of that post.
-    ;      The question seems so simple, and yet it outlines a very complicated problem."]]
 
     [:article
      [:h3 "Remote collaboration is hard with pen and paper."]
      [:p "I've worked with many remote teammates and trying to share paper sketches with them is almost impossible. "
          "I remember practicing the ol' email-a-photo technique myself. "
          "Interestingly, further down from the quote above, others admitted that they actually scan their drawings. Whoa."]
-     ; [:h3 "This is a real problem."]
      [:p "This is enough of a problem that I bet we could make another list similar to the Photoshop list. "
          "We'll even reference another hallmark of the tradition design process; pen and paper. "
          "Only this time we'll focus on the ideation/brainstorming stage of design."]]
@@ -73,5 +66,4 @@
          But I want something better for my prototypes; something just as fast and simple to share as it is to use."]
      [:p "My friend, Daniel and I looked for something like this and didn't find it, so we built it ourselves.
          We only started a few weeks ago, but we already have a more creative and collaborative workflow as a result.
-         Precursor allows us to be productive as a team in a way that pen and paper never will."]]
-     )})
+         Precursor allows us to be productive as a team in a way that pen and paper never will."]])})
