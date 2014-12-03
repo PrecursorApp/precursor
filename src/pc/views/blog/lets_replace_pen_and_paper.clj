@@ -7,27 +7,32 @@
    :body
    (list
     [:article
-     [:p "Jason Fried wrote a "
+     [:p [:a {:href "https://twitter.com/jasonfried"} "Jason Fried"]
+         " wrote a "
          [:a {:href "https://signalvnoise.com/posts/1061-why-we-skip-photoshop"} "post"]
-         " that explained why his team avoids Photoshop for UI design.
-         The problem is that some tools add more cognitive load to a process than they offer in value.
-         I admire this type of process refinement through reflection.
-         I also think it's relevant to other parts of design, such as the ideation. "]
-     [:p [:a {:href "https://signalvnoise.com/posts/1061-why-we-skip-photoshop#comment_26681"} "Henry Balanon"]
-         " asked the following question in the comments section of that post.
-         The question seems so simple, and yet it outlines a very complicated problem."]]
+         " that explained why his team avoids Photoshop when designing UI.
+         It simply added more cognitive load than it offered in value.
+         I admire this type of purification.
+         I want to make similar refinements even earlier in my own process."]
+     [:p "After reading the same post "
+         [:a {:href "https://signalvnoise.com/posts/1061-why-we-skip-photoshop#comment_26681"} "Henry Balanon"]
+         " asked a deceivingly simple question in the comments section.
+         This question perfectly summarizes a very old dilemma:"]]
 
     [:article
      [:blockquote "How do you share paper sketches with the people outside of Chicago?"]]
 
     [:article
      [:h3 "Remote collaboration is hard with pen and paper."]
-     [:p "I've worked with many remote teammates and trying to share paper sketches with them is almost impossible.
+     [:p "I've worked with many remote teammates and trying to share paper sketches with them is nearly impossible.
          I remember practicing the ol' email-a-photo technique myself.
          Interestingly, further down from the quote above, others admitted that they actually scan their drawings. Whoa."]
-     [:p "This is enough of a problem that I bet we could make another list similar to the Photoshop list.
-         We'll even reference another hallmark of the tradition design process; pen and paper.
-         Only this time we'll focus on the ideation/brainstorming stage of design."]]
+     [:p " Scanning pen and paper sketches? That's where I draw the line!
+         Let's compose another list, just like the "
+         [:a {:href "https://signalvnoise.com/posts/1061-why-we-skip-photoshop"} "first"]
+         ".
+         We'll reference another trademark of a traditional design process; pen and paper.
+         But this time let's focus on an earlier stage in the design process; ideation and brainstorming."]]
 
     [:article
      [:h3 "Here are a few reasons we want to replace pen and paper:"]
