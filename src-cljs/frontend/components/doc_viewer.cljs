@@ -56,12 +56,9 @@
                            :role "button"}
             (common/icon :times)]]
           [:div.menu-prompt-body
-           [:a {:on-click #(cast! :touched-fetched)
-                :role "button"}
-            "Fetch docs"]
-
-           (for [[time-bucket bucket-docs] (reverse (sort-by #(:last-updated-instant (first (last %)))
-                                                             (group-by #(date->bucket (:last-updated-instant %)) docs)))]
+           (for [[time-bucket bucket-docs]
+                 (reverse (sort-by #(:last-updated-instant (first (last %)))
+                                   (group-by #(date->bucket (:last-updated-instant %)) docs)))]
              (list*
               [:div.recent-time-group
                [:h2 time-bucket]]
