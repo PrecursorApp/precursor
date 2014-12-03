@@ -25,6 +25,7 @@
             [pc.profile :as profile]
             [pc.less :as less]
             [pc.views.content :as content]
+            [pc.views.blog :as blog]
             [pc.utils :refer (inspect)]
             [pc.convert :refer (svg->png)]
             [pc.render :refer (render-layers)]
@@ -160,6 +161,13 @@
    (POST "/duplicate/:document-name" [document-name :as req]
 
          (redirect (str "/document/" (duplicate-doc document-name (-> req :auth :cust)))))
+
+   (GET "/blog" []
+        {:status 200
+         :body (blog/render-page nil)})
+   (GET "/blog/:slug" [slug]
+        {:status 200
+         :body (blog/render-page slug)})
 
    (ANY "*" [] {:status 404 :body "Page not found."})))
 
