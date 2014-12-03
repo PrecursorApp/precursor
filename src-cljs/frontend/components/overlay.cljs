@@ -173,10 +173,7 @@
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            overlay-component (get overlay-components :doc-viewer
-                                   ;; Temporary hack until we have a way to trigger doc viewer
-                                   ;; (or (:overlay app) :info
-                                   )]
+            overlay-component (get overlay-components (or (:overlay app) :info))]
         (html
           [:div.app-overlay {:on-click #(cast! :overlay-closed)}
            [:div.app-overlay-background]
