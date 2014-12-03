@@ -527,7 +527,10 @@
                                    :else nil)]
                     (apply dom/g #js {:className "layers"}
                            (map (fn [sel]
-                                  (let [sel (merge sel
+                                  (let [sel (if (:force-even? sel)
+                                              (layers/force-even sel)
+                                              sel)
+                                        sel (merge sel
                                                    {:layer/end-x (:layer/current-x sel)
                                                     :layer/end-y (:layer/current-y sel)}
                                                    (when (or (settings/moving-drawing? payload)

@@ -4,10 +4,6 @@ dependencies:
     - lein cljsbuild once production
     - lein run -m pc.tasks/compile-less
 
-test:
-  override:
-    - echo what could go wrong
-
 deployment:
   prod:
     branch: master
