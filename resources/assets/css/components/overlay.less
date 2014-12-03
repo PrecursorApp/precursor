@@ -206,6 +206,7 @@
 }
 .recent-doc-thumb {
   display: block;
+  position: relative;
   width: 20rem;
   height: 15rem;
   margin-bottom: .5rem;
@@ -220,4 +221,44 @@
     width: 100%;
     opacity: .5;
   }
+}
+
+.loading {
+  .loading-ellipses {
+    display: block;
+  }
+  .recent-doc-title {
+    visibility: hidden;
+  }
+  img {
+    display: none;
+  }
+  img.loading-image {
+    display: block;
+  }
+}
+img.loading-image {
+  display: none;
+}
+
+.loading-ellipses {
+  position: absolute;
+  bottom: 0.5em;
+  right: 1em;
+  display: none;
+}
+
+.loading-ellipses i {
+  opacity: 0;
+  .animation(dot 1.3s 0.0s infinite);
+}
+
+.loading-ellipses i+i {
+  opacity: 0;
+  .animation(dot 1.3s 0.2s infinite);
+}
+
+.loading-ellipses i+i+i {
+  opacity: 0;
+  .animation(dot 1.3s 0.3s infinite);
 }

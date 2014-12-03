@@ -86,7 +86,9 @@
              (html
               [:div.recent-doc
                [:a.recent-doc-thumb {:href (str "/document/" (:db/id doc))}
-                [:img {:src (str "/document/" (:db/id doc) ".svg")}]]
+                [:img {:src (str "/document/" (:db/id doc) ".svg")}]
+                [:img.loading-image]
+                [:i.loading-ellipses [:i "."] [:i "."] [:i "."]]]
                [:a.recent-doc-title {:href (str "/document/" (:db/id doc))}
                 (str (:db/id doc))]]))))]))))
 
