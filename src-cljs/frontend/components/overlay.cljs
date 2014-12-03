@@ -143,6 +143,12 @@
             "Help your team communicate faster with each other by using custom names. "
             "Log in or sign up to change how your name appears in chat."]
            [:a.prompt-button {:href (auth/auth-url)
+                              :on-click #(do
+                                           (.preventDefault %)
+                                           (cast! :track-external-link-clicked
+                                                  {:path (auth/auth-url)
+                                                   :event "Signup Clicked"
+                                                   :properties {:source "username-overlay"}}))
                               :role "button"}
             "Sign Up"]]
           [:div.menu-footer
