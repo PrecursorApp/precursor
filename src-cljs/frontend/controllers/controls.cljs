@@ -947,9 +947,11 @@
 
 (defmethod post-control-event! :your-docs-opened
   [browser-state message _ previous-state current-state]
-  (sente/send-msg
-   (:sente current-state)
-   [:frontend/fetch-touched]
-   10000
-   (fn [{:keys [docs]}]
-     (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))
+  (when (:cust current-state)
+    (sente/send-msg
+     (:sente current-state)
+     [:frontend/fetch-touched]
+     10000
+     (fn [{:keys [docs]}]
+       (when docs
+         (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
