@@ -125,6 +125,11 @@
    (attribute :document/name
               :db.type/string)
 
+   (attribute :document/creator
+              :db.type/uuid
+              :db/index true
+              :db/doc "cust/uuid of the cust that created the document")
+
    (attribute :dummy
               :db.type/ref)
    (enum :dummy/dummy)

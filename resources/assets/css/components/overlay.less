@@ -61,6 +61,7 @@
   .flex(0 0 @tile);
   .flexy(center, space-between);
   position: relative;
+  border-bottom: 1px solid @gray_lighter; // TODO not sure if i want this
   a {
     .flexy(center, center);
     width: @tile;
@@ -129,7 +130,9 @@
 }
 .menu-prompt-body {
   .flex(1 1 100%);
+  .scrollbar_hide();
   padding: 0 2rem;
+  overflow-y: auto;
   &:last-of-type {
     padding-bottom: @tile;
   }
@@ -188,4 +191,74 @@
   svg {
     fill: @gray_mixpanel;
   }
+}
+
+.recent-time-group {
+  text-transform: capitalize;
+  margin: 2em 0;
+}
+.recent-doc {
+  .flexy(flex-end, center, column);
+}
+.recent-doc-title {
+  line-height: 1rem;
+  margin-bottom: 1.5rem;
+}
+.recent-doc-thumb {
+  display: block;
+  position: relative;
+  width: 20rem;
+  height: 15rem;
+  margin-bottom: .5rem;
+  border: 1px solid @gray_lighter;
+  overflow: hidden;
+  transition: @speed @bezier_fadein;
+  &:hover {
+    border-color: @gray;
+    transition-duration: @speed_fast;
+  }
+  img {
+    width: 100%;
+    opacity: .5;
+  }
+}
+
+.loading {
+  .loading-ellipses {
+    display: block;
+  }
+  .recent-doc-title {
+    visibility: hidden;
+  }
+  img {
+    display: none;
+  }
+  img.loading-image {
+    display: block;
+  }
+}
+img.loading-image {
+  display: none;
+}
+
+.loading-ellipses {
+  position: absolute;
+  bottom: 0.5em;
+  right: 1em;
+  display: none;
+}
+
+.loading-ellipses i {
+  opacity: 0;
+  .animation(dot 1.3s 0.0s infinite);
+}
+
+.loading-ellipses i+i {
+  opacity: 0;
+  .animation(dot 1.3s 0.2s infinite);
+}
+
+.loading-ellipses i+i+i {
+  opacity: 0;
+  .animation(dot 1.3s 0.3s infinite);
 }

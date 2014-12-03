@@ -49,7 +49,7 @@
                  [prismatic/dommy "0.1.2"]
                  [sablono "0.2.16"]
                  [secretary "1.2.1"]
-                 [com.andrewmcveigh/cljs-time "0.1.5"]
+                 [com.andrewmcveigh/cljs-time "0.2.4"]
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 

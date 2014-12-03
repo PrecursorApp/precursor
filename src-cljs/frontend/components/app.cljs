@@ -115,7 +115,8 @@
                                 (inc unread-chat-count))
             info-button-learned? (get-in data state/info-button-learned-path)
             menu-button-learned? (get-in data state/menu-button-learned-path)
-            newdoc-button-learned? (get-in data state/newdoc-button-learned-path)]
+            newdoc-button-learned? (get-in data state/newdoc-button-learned-path)
+            your-docs-learned? (get-in data state/your-docs-learned-path)]
         (html
          [:div.main-actions
           [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
@@ -132,6 +133,10 @@
                              :data-right (when-not newdoc-button-learned? "New Document")
                              :title (when newdoc-button-learned? "New Document")}
            (common/icon :newdoc)]
+          [:a.action-your-docs {:on-click #(cast! :your-docs-opened)
+                                :data-right (when-not your-docs-learned? "Your Docs")
+                                :title (when your-docs-learned? "Your Docs")}
+           (common/icon :clock)]
           [:a.action-info {:on-click #(cast! :overlay-info-toggled)
                            :class (when-not info-button-learned? "hover")
                            :data-right (when-not info-button-learned? "What is this thing?")

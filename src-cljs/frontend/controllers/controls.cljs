@@ -929,3 +929,29 @@
   (let [db (:db current-state)
         layers (get-in current-state [:clipboard :layers])]
     (d/transact! db layers {:can-undo? true})))
+
+(defmethod post-control-event! :created-fetched
+  [browser-state message _ previous-state current-state]
+  (sente/send-msg
+   (:sente current-state)
+   [:frontend/fetch-created]
+   10000
+   (fn [{:keys [docs]}]
+     (put! (get-in current-state [:comms :api]) [:created-docs :success {:docs docs}]))))
+
+(defmethod control-event :your-docs-opened
+  [browser-state message _ state]
+  (-> state
+      (assoc-in [:overlay] :doc-viewer)
+      (assoc-in state/your-docs-learned-path true)))
+
+(defmethod post-control-event! :your-docs-opened
+  [browser-state message _ previous-state current-state]
+  (when (:cust current-state)
+    (sente/send-msg
+     (:sente current-state)
+     [:frontend/fetch-touched]
+     10000
+     (fn [{:keys [docs]}]
+       (when docs
+         (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))

@@ -6,6 +6,7 @@
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]
             [frontend.components.common :as common]
+            [frontend.components.doc-viewer :as doc-viewer]
             [frontend.datascript :as ds]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
@@ -142,10 +143,17 @@
             "Help your team communicate faster with each other by using custom names. "
             "Log in or sign up to change how your name appears in chat."]
            [:a.prompt-button {:href (auth/auth-url)
+                              :on-click #(do
+                                           (.preventDefault %)
+                                           (cast! :track-external-link-clicked
+                                                  {:path (auth/auth-url)
+                                                   :event "Signup Clicked"
+                                                   :properties {:source "username-overlay"}}))
                               :role "button"}
             "Sign Up"]]
           [:div.menu-footer
-           [:a.menu-footer-link {:href "#"}
+           [:a.menu-footer-link {:on-click #(cast! :overlay-closed)
+                                 :role "button"}
             "No thanks."]]])))))
 
 (def overlay-components
@@ -156,7 +164,9 @@
    :shortcuts {:component shortcuts
                :menu-type :prompt}
    :username {:component username
-              :menu-type :prompt}})
+              :menu-type :prompt}
+   :doc-viewer {:component doc-viewer/doc-viewer
+                :menu-type :prompt}})
 
 (defn overlay [app owner]
   (reify
