@@ -152,7 +152,7 @@
                               :role "button"}
             "Sign Up"]]
           [:div.menu-footer
-           [:a.menu-footer-link {:href "#"}
+           [:a.menu-footer-link {:on-click #(cast! :overlay-closed)}
             "No thanks."]]])))))
 
 (def overlay-components
