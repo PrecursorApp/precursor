@@ -74,6 +74,7 @@
    :menu-stroke-top "M5,25h90"
    :menu-stroke-middle "M5,50h90"
    :menu-stroke-bottom "M5,75h90"
+   :circle-stroke "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z"
    :clock-stroke "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z M71.2,71.2C71.2,71.2,50,50,50,50V20"
    :arrow-right-stroke "M95,50H5 M59,86l36-36L59,14"
    :arrow-left-stroke "M95,50H5 M41,14L5,50l36,36"
@@ -113,6 +114,7 @@
    :crosshair {:paths [:crosshair-stroke]}
    :ibeam {:paths [:ibeam-stroke]}
    :menu {:paths [:menu-stroke-top :menu-stroke-middle :menu-stroke-bottom]}
+   :circle {:paths [:circle-stroke]}
    :clock {:paths [:clock-stroke]}
    :arrow-left {:paths [:arrow-left-stroke]}
    :arrow-right {:paths [:arrow-right-stroke]}
@@ -137,8 +139,12 @@
    (svg-icon icon-name {:path-props path-props
                         :svg-props svg-props})])
 
-(def spinner
-  (icon :logomark-precursor))
+(defn spinner []
+  [:svg.spinner {:width "100" :height "100" :viewBox "0 0 100 100"}
+   [:circle.path {:fill "none" :stroke-width "8" :stroke-linecap "round" :cx "50" :cy "50" :r "45"}]])
+
+; (def spinner
+;   (icon :logomark-precursor))
 
 (defn mixpanel-badge []
   [:a.mixpanel-badge {:href "https://mixpanel.com/f/partner"
