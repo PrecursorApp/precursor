@@ -1,4 +1,5 @@
-(ns frontend.settings)
+(ns frontend.settings
+  (:require [frontend.models.layer :as layer-model]))
 
 (defn selection-in-progress? [state]
   (get-in state [:selection :in-progress?]))
@@ -14,3 +15,7 @@
 
 (defn drawing [state]
   (get-in state [:drawing :layers]))
+
+(defn selected-eids [state]
+  (layer-model/selected-eids @(:db state)
+                             (:selected-eid state)))

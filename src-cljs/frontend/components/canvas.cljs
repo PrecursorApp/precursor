@@ -74,7 +74,7 @@
     :select "default"
     "crosshair"))
 
-(defn layer-group [layer {:keys [tool selected-eids selected-eid cast! db live?]}]
+(defn layer-group [layer {:keys [tool selected-eids cast! db live?]}]
   (let [invalid? (and (:layer/ui-target layer)
                       (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-target layer)))))]
     (dom/g #js {:className (str "layer "
@@ -105,8 +105,7 @@
 
                                 (and (.-altKey %) group?)
                                 (cast! :group-duplicated
-                                       {:group-eid selected-eid
-                                        :layer-eids (disj selected-eids selected-eid)
+                                       {:layer-eids selected-eids
                                         :x (first (cameras/screen-event-coords %))
                                         :y (second (cameras/screen-event-coords %))})
 
@@ -119,13 +118,13 @@
                                 group?
                                 (cast! :group-selected {:x (first (cameras/screen-event-coords %))
                                                         :y (second (cameras/screen-event-coords %))
-                                                        :group-eid selected-eid
-                                                        :layer-eids (disj selected-eids selected-eid)})
+                                                        :layer-eids selected-eids})
 
                                 :else
                                 (cast! :layer-selected {:layer layer
                                                         :x (first (cameras/screen-event-coords %))
-                                                        :y (second (cameras/screen-event-coords %))}))))
+                                                        :y (second (cameras/screen-event-coords %))
+                                                        :append? (.-shiftKey %)}))))
                           :className (str "selectable-layer layer-handle "
                                           (when (and (= :layer.type/text (:layer/type layer))
                                                      (= :text tool)) "editable "))
@@ -157,8 +156,7 @@
                                              (cast! :group-selected
                                                     {:x (first (cameras/screen-event-coords %))
                                                      :y (second (cameras/screen-event-coords %))
-                                                     :group-eid selected-eid
-                                                     :layer-eids (disj selected-eids selected-eid)})
+                                                     :layer-eids selected-eids})
 
                                              :else
                                              (cast! :canvas-aligned-to-layer-center
@@ -175,7 +173,7 @@
                                               "invalid"))
                             :key (str "action-" (:db/id layer))))))))
 
-(defn svg-layers [{:keys [editing-eids selected-eid selected-eids tool] :as data} owner]
+(defn svg-layers [{:keys [editing-eids selected-eids tool] :as data} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -194,12 +192,7 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            selected-eids (cond
-                           (seq selected-eids) selected-eids
-
-                           selected-eid (layer-model/selected-eids @db selected-eid)
-
-                           :else #{})
+            selected-eids (or selected-eids #{})
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)
             renderable-layers (remove #(or (= :layer.type/group (:layer/type %))
                                            (contains? editing-eids (:db/id %))) layers)
@@ -214,7 +207,6 @@
                                              :cast! cast!
                                              :tool tool
                                              :selected-eids selected-eids
-                                             :selected-eid selected-eid
                                              :db db})
                             idle-layers))
                (apply dom/g #js {:className "layers live"}
@@ -222,7 +214,6 @@
                                              :cast! cast!
                                              :tool tool
                                              :selected-eids selected-eids
-                                             :selected-eid selected-eid
                                              :db db})
                             live-layers)))))))
 
@@ -499,16 +490,13 @@
                  (dom/g
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-uuid]))
-                  (om/build svg-layers (assoc (select-keys payload [:selected-eid :document/id])
+                  (om/build svg-layers (assoc (select-keys payload [:selected-eids :document/id])
                                          :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
                                                                               (settings/moving-drawing? payload))
                                                                       (concat [(:db/id (settings/drawing payload))]
                                                                               (map :db/id (get-in payload [:drawing :layers]))))
                                                                     (remove nil? (map :db/id subs-layers))))
-                                         :tool (get-in payload state/current-tool-path)
-                                         :selected-eids (when (and (settings/drawing-in-progress? payload)
-                                                                   (get-in payload [:drawing :layers 0 :layer/child]))
-                                                          (get-in payload [:drawing :layers 0 :layer/child]))))
+                                         :tool (get-in payload state/current-tool-path)))
                   (om/build subscriber-layers {:layers subs-layers})
                   (when (and (settings/drawing-in-progress? payload)
                              (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))

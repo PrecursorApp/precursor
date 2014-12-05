@@ -46,3 +46,7 @@
 (defmethod detectable? :layer.type/text
   [layer]
   (seq (:layer/text layer)))
+
+(defmethod detectable? :layer.type/group
+  [layer]
+  false)

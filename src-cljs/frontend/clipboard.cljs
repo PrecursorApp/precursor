@@ -178,8 +178,7 @@
     (when-let [layers (seq (remove
                             #(= :layer.type/group (:layer/type %))
                             (map #(ds/touch+ (d/entity @(:db app-state) %))
-                                 (layer-model/selected-eids @(:db app-state)
-                                                            (:selected-eid app-state)))))]
+                                 (:selected-eids app-state))))]
       (let [mouse (:mouse app-state)
             [rx ry] (cameras/screen->point (:camera app-state) (:x mouse) (:y mouse))]
         (.preventDefault event)
