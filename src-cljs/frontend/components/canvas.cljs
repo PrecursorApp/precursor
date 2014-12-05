@@ -115,6 +115,10 @@
                                         :x (first (cameras/screen-event-coords %))
                                         :y (second (cameras/screen-event-coords %))})
 
+                                (and (.-shiftKey %) (contains? selected-eids (:db/id layer)))
+                                (cast! :layer-deselected {:layer layer})
+
+
                                 group?
                                 (cast! :group-selected {:x (first (cameras/screen-event-coords %))
                                                         :y (second (cameras/screen-event-coords %))

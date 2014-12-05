@@ -589,6 +589,15 @@
         (update-in [:drawing :original-layers]
                    (fn [layers]
                      (filterv #(not= (:db/id layer) (:db/id %)) layers)))
+        (update-in [:drawing :layers]
+                   (fn [layers]
+                     ;; TODO: handle this better, should probably dissoc just before saving
+                     (mapv (fn [layer]
+                             (assoc layer
+                               :layer/current-x (:layer/end-x layer)
+                               :layer/current-y (:layer/end-y layer)
+                               :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
+                           layers)))
         (assoc-in [:drawing :moving?] (not (empty? selected-eids))))))
 
 (defmethod control-event :group-selected
