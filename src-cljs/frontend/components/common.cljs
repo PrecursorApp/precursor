@@ -76,6 +76,12 @@
    :menu-stroke-bottom "M5,75h90"
    :circle-stroke "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z"
    :clock-stroke "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z M71.2,71.2C71.2,71.2,50,50,50,50V20"
+   :shift-stroke "M5,52L50,7l45,45H70.5V93H29.5V52H5z"
+   :option-stroke "M95,15H65 M95,85H75L35,15H5"
+   :control-stroke "M86,41L50,5L14,41"
+   :command-stroke "M65,35v30H35V35H65z M20,5C11.7,5,5,11.7,5,20 c0,8.3,6.7,15,15,15h15V20C35,11.7,28.3,5,20,5z M95,20c0-8.3-6.7-15-15-15c-8.3,0-15,6.7-15,15v15h15C88.3,35,95,28.3,95,20z M5,80c0,8.3,6.7,15,15,15c8.3,0,15-6.7,15-15V65H20C11.7,65,5,71.7,5,80z M80,65H65v15c0,8.3,6.7,15,15,15c8.3,0,15-6.7,15-15 C95,71.7,88.3,65,80,65z"
+   :arrow-up-stroke "M50,95V5 M86,41L50,5L14,41"
+   :arrow-down-stroke "M50,95V5 M14,59l36,36l36-36"
    :arrow-right-stroke "M95,50H5 M59,86l36-36L59,14"
    :arrow-left-stroke "M95,50H5 M41,14L5,50l36,36"
    :twitter-fill "M100,19c-3.7,1.6-7.6,2.7-11.8,3.2c4.2-2.5,7.5-6.6,9-11.4c-4,2.4-8.4,4.1-13,5c-3.7-4-9.1-6.5-15-6.5 c-11.3,0-20.5,9.2-20.5,20.5c0,1.6,0.2,3.2,0.5,4.7c-17.1-0.9-32.2-9-42.3-21.4c-1.8,3-2.8,6.6-2.8,10.3c0,7.1,3.6,13.4,9.1,17.1 c-3.4-0.1-6.5-1-9.3-2.6c0,0.1,0,0.2,0,0.3c0,9.9,7.1,18.2,16.5,20.1c-1.7,0.5-3.5,0.7-5.4,0.7c-1.3,0-2.6-0.1-3.9-0.4 c2.6,8.2,10.2,14.1,19.2,14.2c-7,5.5-15.9,8.8-25.5,8.8c-1.7,0-3.3-0.1-4.9-0.3c9.1,5.8,19.9,9.2,31.4,9.2 c37.7,0,58.4-31.3,58.4-58.4c0-0.9,0-1.8-0.1-2.7C93.8,26.7,97.2,23.1,100,19z"
@@ -116,6 +122,12 @@
    :menu {:paths [:menu-stroke-top :menu-stroke-middle :menu-stroke-bottom]}
    :circle {:paths [:circle-stroke]}
    :clock {:paths [:clock-stroke]}
+   :shift {:paths [:shift-stroke]}
+   :option {:paths [:option-stroke]}
+   :control {:paths [:control-stroke]}
+   :command {:paths [:command-stroke]}
+   :arrow-up {:paths [:arrow-up-stroke]}
+   :arrow-down {:paths [:arrow-down-stroke]}
    :arrow-left {:paths [:arrow-left-stroke]}
    :arrow-right {:paths [:arrow-right-stroke]}
    :twitter {:paths [:twitter-fill]}
