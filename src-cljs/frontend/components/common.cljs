@@ -106,16 +106,7 @@
    :user {:paths [:user-stroke]}
    :users {:paths [:users-stroke]}
    :bullet {:paths [:dot-stroke]}
-   :logo {:paths [:turn :circle]}
-   :pass {:paths [:turn :check]}
-   :fail {:paths [:turn :times]}
    :queued {:paths [:turn :clock]}
-   :logo-light {:paths [:slim_turn :slim_circle]}
-   :busy-light {:paths [:slim_turn :slim_circle]}
-   :pass-light {:paths [:slim_check]}
-   :fail-light {:paths [:slim_times]}
-   :hold-light {:paths [:slim_clock]}
-   :stop-light {:paths [:slim_ban]}
    :chat {:paths [:chat-stroke]}
    :crosshair {:paths [:crosshair-stroke]}
    :ibeam {:paths [:ibeam-stroke]}
@@ -134,11 +125,7 @@
    :newdoc {:paths [:newdoc-stroke]}
    :login {:paths [:login-stroke]}
    :logout {:paths [:logout-stroke]}
-   :info {:paths [:info-stroke]}
-   :settings-light {:paths [:slim_settings :slim_circle]}
-   :none-light {:paths [:slim_circle]}
-   :repo {:paths [:repo]}
-   :spinner {:paths [:turn :circle]}})
+   :info {:paths [:info-stroke]}})
 
 (defn svg-icon [icon-name & [{:keys [path-props svg-props]}]]
   (let [template (get icon-templates icon-name)]
