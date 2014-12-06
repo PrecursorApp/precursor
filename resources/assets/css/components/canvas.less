@@ -31,9 +31,12 @@
     stroke-width: 20;
     &:hover {
       ~ .layer-outline {
-        stroke: @color_select_hover;
+        stroke: @white;
         stroke-width: 4;
         transition-duration: @speed_fast;
+        &.selected {
+          stroke: @color_select_hover;
+        }
       }
     }
   }
