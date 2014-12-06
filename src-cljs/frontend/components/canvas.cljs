@@ -230,7 +230,7 @@
 
     "text" :ibeam
 
-    "select" :tool-select))
+    "select" :cursor))
 
 (defn cursor [[id subscriber] owner]
   (reify

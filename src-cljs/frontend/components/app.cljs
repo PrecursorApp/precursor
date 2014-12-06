@@ -25,17 +25,17 @@
   (:import [goog.ui IdGenerator]))
 
 (def tools-templates
-  {:circle {:type :tool-circle
+  {:circle {:type :ellipse
             :path "M302.9,128C292,109.1,276.2,92.8,256,81.1S213.8,64,192,64l0,128 L302.9,128z"}
-   :rect   {:type :tool-rect
+   :rect   {:type :rectangle
             :path "M302.9,256c10.9-18.8,17.1-40.7,17.1-64s-6.2-45.2-17.1-64L192,192 L302.9,256z"}
-   :line   {:type :tool-line
+   :line   {:type :line
             :path "M192,320c21.8,0,43.8-5.5,64-17.2s36-28,46.9-46.8L192,192L192,320z"}
-   :pen    {:type :tool-pen
+   :pen    {:type :pencil
             :path "M81.1,256c10.9,18.8,26.7,35.2,46.9,46.8s42.2,17.2,64,17.2l0-128 L81.1,256z"}
-   :text   {:type :tool-text
+   :text   {:type :text
             :path "M81.1,128C70.2,146.8,64,168.7,64,192s6.2,45.2,17.1,64L192,192 L81.1,128z"}
-   :select {:type :tool-select
+   :select {:type :cursor
             :path "M192,64c-21.8,0-43.8,5.5-64,17.2s-36,28-46.9,46.8L192,192L192,64z"}})
 
 (def keymap
