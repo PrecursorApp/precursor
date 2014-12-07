@@ -50,11 +50,11 @@
 }
 .app-overlay-menu {
   .flexy(column);
-  .animation(in-fade-right @speed_fast);
+  .animation(in-fade-left @speed_fast);
   .animation-bezier(@bezier_transform);
   width: @menu_width;
   height: 100%;
-  margin-left: auto;
+  margin-right: auto;
   background: @white;
 }
 .menu-header {
@@ -67,7 +67,7 @@
     .flexy(center, center);
     width: @tile;
     height: @tile;
-    font-size: 1.5em;
+    // font-size: 1.5em;
     transition: @speed @bezier_fadein;
     &:not(:hover) {
       .icon_stroke(@gray_dark);

@@ -15,6 +15,40 @@
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
+(defn main-menu [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+          [:div.menu-view {:class (str "menu-view-" "shortcuts")}
+           [:div.menu-view-frame
+            [:div.shortcuts-item
+             [:div.shortcuts-key "S"]
+             [:div.shortcuts-result "Select"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "R"]
+             [:div.shortcuts-result "Rectangle"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "C"]
+             [:div.shortcuts-result "Circle"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "L"]
+             [:div.shortcuts-result "Line"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "P"]
+             [:div.shortcuts-result "Pen"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "T"]
+             [:div.shortcuts-result "Text"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "1"]
+             [:div.shortcuts-result "Snap to origin"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "Cmd"]
+             [:div.shortcuts-key "Z"]
+            [:div.shortcuts-result "Undo"]]]])))))
+
 (defn info [app owner]
   (reify
     om/IRender
@@ -163,6 +197,8 @@
    ;;             :menu-type :view}
    :shortcuts {:component shortcuts
                :menu-type :prompt}
+   :main-menu {:component main-menu
+               :menu-type :view}
    :username {:component username
               :menu-type :prompt}
    :doc-viewer {:component doc-viewer/doc-viewer
@@ -181,8 +217,7 @@
              [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
               [:div.menu-header
                [:a.menu-back {:on-click #(cast! :overlay-closed)
-                              :role "button"}
-                (common/icon :arrow-left)]
+                              :role "button"}]
                [:div.menu-title
                 [:h3 "Shortcuts"]]]
               [:div.menu-body

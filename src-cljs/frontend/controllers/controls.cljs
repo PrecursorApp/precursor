@@ -990,3 +990,9 @@
      (fn [{:keys [docs]}]
        (when docs
          (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
+
+(defmethod control-event :main-menu-opened
+  [browser-state message _ state]
+  (-> state
+      (assoc-in [:overlay] :main-menu)
+      (assoc-in state/main-menu-learned-path true)))

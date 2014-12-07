@@ -88,6 +88,19 @@
                                                                                :event "Signup Clicked"}))}
             (common/icon :login)]))))))
 
+(defn main-menu-button [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            overlay-component (get overlay-components (or (:overlay app) :info))]
+        (html
+          [:a.main-menu-button {:on-click #(cast! :main-menu-opened)
+                                :role "button"
+                                :data-right (when-not menu-button-learned? "Open Menu")
+                                :title (when menu-button-learned? "Open Menu")}
+           (common/icon :menu)])))))
+
 (defn main-actions [data owner]
   (reify
     om/IInitState
@@ -119,11 +132,16 @@
             your-docs-learned? (get-in data state/your-docs-learned-path)]
         (html
          [:div.main-actions
-          [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
-                           :class (when-not aside-opened? "closed")
-                           :data-right (when-not menu-button-learned? "Open Menu")
-                           :title (when menu-button-learned? (if aside-opened? "Close Menu" "Open Menu"))}
-           (common/icon :menu)]
+         ; [:a.action-menu {:on-click #(cast! :main-menu-opened)
+         ;                  :role "button"
+         ;                  :data-right (when-not menu-button-learned? "Open Menu")
+         ;                  :title (when menu-button-learned? "Open Menu")}
+         ;  (common/icon :menu)]
+          ; [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
+          ;                  :class (when-not aside-opened? "closed")
+          ;                  :data-right (when-not menu-button-learned? "Open Menu")
+          ;                  :title (when menu-button-learned? (if aside-opened? "Close Menu" "Open Menu"))}
+          ;  (common/icon :menu)]
           (when (and (not aside-opened?) (pos? unread-chat-count))
             [:div.unseen-eids (str unread-chat-count)])
           (om/build auth-link data)
@@ -198,6 +216,7 @@
           (when (:overlay app)
             (om/build overlay/overlay app))
           (om/build app* app)
+          (om/build main-menu-button app)
           (dom/div #js {:className "app-main-outline"}))
 
         (html [:div#app])))))

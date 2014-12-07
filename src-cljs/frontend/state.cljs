@@ -90,6 +90,8 @@
 
 (def your-docs-learned-path (conj browser-settings-path :your-docs-learned))
 
+(def main-menu-learned-path (conj browser-settings-path :main-menu-learned))
+
 (defn doc-settings-path [doc-id]
   (conj browser-settings-path :document-settings doc-id))
 
