@@ -195,20 +195,20 @@
 
 (def overlay-components
   {:info {:component info
-          :menu-type :prompt}
+          :type :prompt}
    :shortcuts {:title "Shortcuts"
                :component shortcuts
-               :menu-type :view}
+               :type :menu}
    ; :shortcuts {:title "Shortcuts"
    ;             :component shortcuts
-   ;             :menu-type :prompt}
+   ;             :type :prompt}
    :start {:title "Precursor"
            :component start
-           :menu-type :view}
+           :type :menu}
    :username {:component username
-              :menu-type :prompt}
+              :type :prompt}
    :doc-viewer {:component doc-viewer/doc-viewer
-                :menu-type :prompt}})
+                :type :prompt}})
 
 (defn overlay [app owner]
   (reify
@@ -219,7 +219,7 @@
         (html
           [:div.app-overlay {:on-click #(cast! :overlay-closed)}
            [:div.app-overlay-background]
-           (if (= :view (:menu-type overlay-component))
+           (if (= :menu (:type overlay-component))
              [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
               [:div.menu-header
                [:a.menu-back {:on-click #(cast! :overlay-closed)

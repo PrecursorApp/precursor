@@ -97,6 +97,7 @@
         (html
           [:a.main-menu-button {:on-click #(cast! :main-menu-opened)
                                 :role "button"
+                                ; :class (when-not overlay-component "closed")
                                 :data-right (when-not menu-button-learned? "Open Menu")
                                 :title (when menu-button-learned? "Open Menu")}
            (common/icon :menu)])))))
