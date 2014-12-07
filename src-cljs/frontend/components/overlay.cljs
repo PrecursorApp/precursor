@@ -8,6 +8,7 @@
             [frontend.components.common :as common]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.datascript :as ds]
+            [frontend.overlay :refer [current-overlay]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true]
@@ -173,7 +174,7 @@
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            overlay-component (get overlay-components (or (:overlay app) :info))]
+            overlay-component (get overlay-components (or (current-overlay app) :info))]
         (html
           [:div.app-overlay {:on-click #(cast! :overlay-closed)}
            [:div.app-overlay-background]
