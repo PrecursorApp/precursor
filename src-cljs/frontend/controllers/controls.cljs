@@ -994,5 +994,5 @@
 (defmethod control-event :main-menu-opened
   [browser-state message _ state]
   (-> state
-      (assoc-in [:overlay] :main-menu)
+      (assoc-in [:overlay] :start)
       (assoc-in state/main-menu-learned-path true)))

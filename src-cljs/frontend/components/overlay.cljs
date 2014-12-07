@@ -15,39 +15,26 @@
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
-(defn main-menu [app owner]
+(defn start [app owner]
   (reify
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view {:class (str "menu-view-" "shortcuts")}
+          [:div.menu-view {:class (str "menu-view-" "start")}
            [:div.menu-view-frame
-            [:div.shortcuts-item
-             [:div.shortcuts-key "S"]
-             [:div.shortcuts-result "Select"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "R"]
-             [:div.shortcuts-result "Rectangle"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "C"]
-             [:div.shortcuts-result "Circle"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "L"]
-             [:div.shortcuts-result "Line"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "P"]
-             [:div.shortcuts-result "Pen"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "T"]
-             [:div.shortcuts-result "Text"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "1"]
-             [:div.shortcuts-result "Snap to origin"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "Cmd"]
-             [:div.shortcuts-key "Z"]
-            [:div.shortcuts-result "Undo"]]]])))))
+            [:a.menu-item {:role "button"}
+             (common/icon :newdoc)
+             [:span "New Document"]]
+            [:a.menu-item {:role "button"}
+             (common/icon :clock)
+             [:span "Recent Documents"]]
+            [:a.menu-item {:role "button"}
+             (common/icon :users)
+             [:span "Invite Collaborators"]]
+            [:a.menu-item {:role "button"}
+             (common/icon :logout)
+             [:span "Log out"]]]])))))
 
 (defn info [app owner]
   (reify
@@ -195,10 +182,12 @@
           :menu-type :prompt}
    ;; :shortcuts {:component shortcuts
    ;;             :menu-type :view}
-   :shortcuts {:component shortcuts
+   :shortcuts {:title "Shortcuts"
+               :component shortcuts
                :menu-type :prompt}
-   :main-menu {:component main-menu
-               :menu-type :view}
+   :start {:title "Precursor"
+           :component start
+           :menu-type :view}
    :username {:component username
               :menu-type :prompt}
    :doc-viewer {:component doc-viewer/doc-viewer
@@ -218,8 +207,9 @@
               [:div.menu-header
                [:a.menu-back {:on-click #(cast! :overlay-closed)
                               :role "button"}]
-               [:div.menu-title
-                [:h3 "Shortcuts"]]]
+               (when (:title overlay-component)
+                [:div.menu-title
+                 [:h4 (str (:title overlay-component))]])]
               [:div.menu-body
                (om/build (:component overlay-component) app)]]
 

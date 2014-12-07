@@ -61,8 +61,7 @@
   .flex(0 0 @tile);
   .flexy(center, space-between);
   position: relative;
-  margin-bottom: 2em;
-  border-bottom: 1px solid @gray_lighter; // TODO not sure if i want this
+  border-bottom: 1px solid @gray_light; // TODO not sure if i want this
   a {
     .flexy(center, center);
     width: @tile;
@@ -86,7 +85,7 @@
   height: 100%;
   margin: 0 auto;
   pointer-events: none;
-  h3 {
+  h4 {
     margin: 0;
     pointer-events: auto;
   }
@@ -94,6 +93,7 @@
 .menu-body {
   .flex(1 0 100%);
   .flexy();
+  overflow-y: auto;
 }
 .menu-view {
   .flex(0 0 0%);
@@ -105,7 +105,9 @@
   }
 }
 .menu-view-frame {
+  .flexy(column);
   width: @menu_width;
+  height: ~"calc(100vh - @{tile})";
 }
 .menu-footer {
   .flex(0 0 @tile);
@@ -116,6 +118,31 @@
 }
 .menu-footer-link {
   margin: 0 2rem;
+}
+
+
+.menu-item {
+  &[role="button"] {
+    .flexy(center);
+    .icon_stroke(@gray_dark);
+    height: @tile;
+    color: @gray_dark;
+    transition: @speed_fast @bezier_fadein;
+    &:hover {
+      .icon_stroke(@gray_darkest);
+      color: @gray_darkest;
+      background: @gray_lightest;
+    }
+    &:last-of-type {
+      margin-top: auto;
+    }
+    i {
+      padding: 1.5rem;
+    }
+    path {
+      transition: @speed_fast @bezier_fadein;
+    }
+  }
 }
 
 

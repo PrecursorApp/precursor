@@ -101,6 +101,19 @@
                                 :title (when menu-button-learned? "Open Menu")}
            (common/icon :menu)])))))
 
+(defn chat-menu-button [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            overlay-component (get overlay-components (or (:overlay app) :info))]
+        (html
+          [:a.chat-menu-button {:on-click #(cast! :main-menu-opened)
+                                :role "button"
+                                :data-left (when-not menu-button-learned? "Open Menu")
+                                :title (when menu-button-learned? "Open Menu")}
+           (common/icon :chat)])))))
+
 (defn main-actions [data owner]
   (reify
     om/IInitState
@@ -175,14 +188,15 @@
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
-                (om/build main-actions (select-in app [state/aside-menu-opened-path
-                                                       state/menu-button-learned-path
-                                                       state/info-button-learned-path
-                                                       state/newdoc-button-learned-path
-                                                       state/login-button-learned-path
-                                                       [:cust]
-                                                       [:document/id]
-                                                       (state/last-read-chat-time-path (:document/id app))]))
+                (om/build chat-menu-button app)
+                ; (om/build main-actions (select-in app [state/aside-menu-opened-path
+                ;                                        state/menu-button-learned-path
+                ;                                        state/info-button-learned-path
+                ;                                        state/newdoc-button-learned-path
+                ;                                        state/login-button-learned-path
+                ;                                        [:cust]
+                ;                                        [:document/id]
+                ;                                        (state/last-read-chat-time-path (:document/id app))]))
                 (when (and (:mouse app) (not= :touch (:type (:mouse app))))
                   [:div.mouse-stats
                    (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))])
