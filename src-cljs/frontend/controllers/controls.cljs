@@ -14,6 +14,7 @@
             [frontend.layers :as layers]
             [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
+            [frontend.overlay :as overlay]
             [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.settings :as settings]
@@ -120,13 +121,11 @@
 
 (defmethod handle-keyboard-shortcut :shortcuts-menu
   [state shortcut-name]
-  (-> state
-      (update-in [:overlay] #(if (= % :shortcuts) nil :shortcuts))))
+  (overlay/replace-overlay state :shortcuts))
 
 (defmethod handle-keyboard-shortcut :escape-interaction
   [state shortcut-name]
-  (-> state
-      (assoc :overlay nil)))
+  (overlay/clear-overlays state))
 
 (defmethod handle-keyboard-shortcut :reset-canvas-position
   [state shortcut-name]
@@ -787,13 +786,13 @@
 (defmethod control-event :overlay-info-toggled
   [browser-state message _ state]
   (-> state
-      (update-in [:overlay] #(if (= % :info) nil :info))
+      (overlay/replace-overlay :info)
       (assoc-in state/info-button-learned-path true)))
 
 (defmethod control-event :overlay-username-toggled
   [browser-state message _ state]
   (-> state
-      (update-in [:overlay] #(if (= % :username) nil :username))))
+      (overlay/replace-overlay :username)))
 
 (defmethod post-control-event! :overlay-info-toggled
   [browser-state message _ previous-state current-state]
@@ -803,8 +802,7 @@
 
 (defmethod control-event :overlay-closed
   [target message _ state]
-  (-> state
-      (assoc :overlay nil)))
+  (overlay/clear-overlays state))
 
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
@@ -818,7 +816,7 @@
 (defmethod control-event :chat-link-clicked
   [browser-state message _ state]
    (-> state
-     (assoc :overlay nil)
+     (overlay/clear-overlays)
      (assoc-in state/aside-menu-opened-path true)
      (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
      (assoc-in state/chat-mobile-opened-path true)
@@ -831,7 +829,7 @@
 (defmethod control-event :invite-link-clicked
   [browser-state message _ state]
    (-> state
-     (assoc :overlay nil)
+     (overlay/clear-overlays)
      (assoc-in state/aside-menu-opened-path true)
      (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
      (assoc-in state/chat-mobile-opened-path true)
@@ -977,7 +975,7 @@
 (defmethod control-event :your-docs-opened
   [browser-state message _ state]
   (-> state
-      (assoc-in [:overlay] :doc-viewer)
+      (overlay/replace-overlay :doc-viewer)
       (assoc-in state/your-docs-learned-path true)))
 
 (defmethod post-control-event! :your-docs-opened
