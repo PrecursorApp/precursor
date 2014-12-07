@@ -52,11 +52,6 @@
   (routes
    (POST "/api/entity-ids" request
          (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
-   (GET "/api/document/:id" [id]
-        ;; TODO: should probably verify document exists
-        ;; TODO: take tx-date as a param
-        {:status 200
-         :body (pr-str {:layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong id)})})})
    (GET "/document/:document-id.svg" [document-id :as req]
         (let [layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong document-id)})]
           {:status 200
