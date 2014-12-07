@@ -184,12 +184,12 @@
     transition-duration: @speed_slow, @speed_fast;
     transition-timing-function: @bezier_transform, @bezier_fadein;
   }
-  // &.inverted {
-  //   .icon_stroke(@gray_light);
-  //   &:hover {
-  //     .icon_stroke(@gray_dark);
-  //   }
-  // }
+  &.bkg-light {
+    .icon_stroke(@gray_light);
+    &:hover {
+      .icon_stroke(@gray_dark);
+    }
+  }
   &.closed {
     path {
       transition-timing-function: @bezier_bounce, @bezier_fadein;

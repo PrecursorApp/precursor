@@ -15,26 +15,42 @@
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
+; (defn start [app owner]
+;   (reify
+;     om/IRender
+;     (render [_]
+;       (let [cast! (om/get-shared owner :cast!)]
+;         (html
+;           [:div.menu-view {:class (str "menu-view-" "start")}
+;            [:div.menu-view-frame
+;             [:a.menu-item {:role "button"}
+;              (common/icon :newdoc)
+;              [:span "New Document"]]
+;             [:a.menu-item {:role "button"}
+;              (common/icon :clock)
+;              [:span "Recent Documents"]]
+;             [:a.menu-item {:role "button"}
+;              (common/icon :users)
+;              [:span "Invite Collaborators"]]
+;             [:a.menu-item {:role "button"}
+;              (common/icon :logout)
+;              [:span "Log out"]]]])))))
+
 (defn start [app owner]
   (reify
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view {:class (str "menu-view-" "start")}
+          [:div.menu-view {:class (str "menu-view-" "invite")}
            [:div.menu-view-frame
-            [:a.menu-item {:role "button"}
-             (common/icon :newdoc)
-             [:span "New Document"]]
-            [:a.menu-item {:role "button"}
-             (common/icon :clock)
-             [:span "Recent Documents"]]
-            [:a.menu-item {:role "button"}
-             (common/icon :users)
-             [:span "Invite Collaborators"]]
-            [:a.menu-item {:role "button"}
-             (common/icon :logout)
-             [:span "Log out"]]]])))))
+            [:p "Enter someone's email address and send them an invite to join your document."]
+            [:form
+             [:input {:type "text"
+                      :required "true"
+                      :data-adaptive ""}]
+             [:label {:data-placeholder "test"}]]
+            ]])))))
 
 (defn info [app owner]
   (reify
@@ -74,53 +90,14 @@
            [:div.menu-footer
             (common/mixpanel-badge)]])))))
 
-;; (defn shortcuts [app owner]
-;;   (reify
-;;     om/IRender
-;;     (render [_]
-;;       (let [cast! (om/get-shared owner :cast!)]
-;;         (html
-;;           [:div.menu-view {:class (str "menu-view-" "shortcuts")}
-;;            [:div.menu-view-frame
-;;             [:div.shortcuts-item
-;;              [:div.shortcuts-key "S"]
-;;              [:div.shortcuts-result "Select"]]
-;;             [:div.shortcuts-item
-;;              [:div.shortcuts-key "R"]
-;;              [:div.shortcuts-result "Rectangle"]]
-;;             [:div.shortcuts-item
-;;              [:div.shortcuts-key "C"]
-;;              [:div.shortcuts-result "Circle"]]
-;;             [:div.shortcuts-item
-;;              [:div.shortcuts-key "L"]
-;;              [:div.shortcuts-result "Line"]]
-;;             [:div.shortcuts-item
-;;              [:div.shortcuts-key "P"]
-;;              [:div.shortcuts-result "Pen"]]
-;;             [:div.shortcuts-item
-;;              [:div.shortcuts-key "T"]
-;;              [:div.shortcuts-result "Text"]]
-;;             [:div.shortcuts-item
-;;              [:div.shortcuts-key "1"]
-;;              [:div.shortcuts-result "Snap to origin"]]
-;;             [:div.shortcuts-item
-;;              [:div.shortcuts-key "Cmd"]
-;;              [:div.shortcuts-key "Z"]
-;;             [:div.shortcuts-result "Undo"]]]])))))
-
 (defn shortcuts [app owner]
   (reify
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-prompt {:class (str "menu-prompt-" "shortcuts")}
-           [:div.menu-header
-            [:a.menu-close {:on-click #(cast! :overlay-closed)
-                            :role "button"}
-             (common/icon :times)]]
-           [:div.menu-prompt-body
-            [:h2 "Shortcuts"]
+          [:div.menu-view {:class (str "menu-view-" "shortcuts")}
+           [:div.menu-view-frame
             [:div.shortcuts-item
              [:div.shortcuts-key "S"]
              [:div.shortcuts-result "Select"]]
@@ -146,6 +123,45 @@
              [:div.shortcuts-key "Cmd"]
              [:div.shortcuts-key "Z"]
             [:div.shortcuts-result "Undo"]]]])))))
+
+; (defn shortcuts [app owner]
+;   (reify
+;     om/IRender
+;     (render [_]
+;       (let [cast! (om/get-shared owner :cast!)]
+;         (html
+;           [:div.menu-prompt {:class (str "menu-prompt-" "shortcuts")}
+;            [:div.menu-header
+;             [:a.menu-close {:on-click #(cast! :overlay-closed)
+;                             :role "button"}
+;              (common/icon :times)]]
+;            [:div.menu-prompt-body
+;             [:h2 "Shortcuts"]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "S"]
+;              [:div.shortcuts-result "Select"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "R"]
+;              [:div.shortcuts-result "Rectangle"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "C"]
+;              [:div.shortcuts-result "Circle"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "L"]
+;              [:div.shortcuts-result "Line"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "P"]
+;              [:div.shortcuts-result "Pen"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "T"]
+;              [:div.shortcuts-result "Text"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "1"]
+;              [:div.shortcuts-result "Snap to origin"]]
+;             [:div.shortcuts-item
+;              [:div.shortcuts-key "Cmd"]
+;              [:div.shortcuts-key "Z"]
+;             [:div.shortcuts-result "Undo"]]]])))))
 
 (defn username [app owner]
   (reify
@@ -180,11 +196,12 @@
 (def overlay-components
   {:info {:component info
           :menu-type :prompt}
-   ;; :shortcuts {:component shortcuts
-   ;;             :menu-type :view}
    :shortcuts {:title "Shortcuts"
                :component shortcuts
-               :menu-type :prompt}
+               :menu-type :view}
+   ; :shortcuts {:title "Shortcuts"
+   ;             :component shortcuts
+   ;             :menu-type :prompt}
    :start {:title "Precursor"
            :component start
            :menu-type :view}
