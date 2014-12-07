@@ -120,7 +120,7 @@
              [:div.shortcuts-key "1"]
              [:div.shortcuts-result "Snap to origin"]]
             [:div.shortcuts-item
-             [:div.shortcuts-key "Cmd"]
+             [:div.shortcuts-key (common/icon :command)]
              [:div.shortcuts-key "Z"]
             [:div.shortcuts-result "Undo"]]]])))))
 
