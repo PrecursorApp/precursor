@@ -8,13 +8,29 @@
             [frontend.components.common :as common]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.datascript :as ds]
-            [frontend.overlay :refer [current-overlay]]
+            [frontend.overlay :refer [current-overlay overlay-visible?]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
+
+(defn main-menu-button [data owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            menu-button-learned? (get-in data state/menu-button-learned-path)] ; TODO figure out if this should be different because we used to call chat menu "the menu"
+        (html
+          [:a.main-menu-button {:on-click (if (overlay-visible? data)
+                                            #(cast! :overlay-menu-closed)
+                                            #(cast! :main-menu-opened))
+                                :role "button"
+                                :class (when-not (overlay-visible? data) "closed")
+                                :data-right (when-not menu-button-learned? "Open Menu")
+                                :title (when menu-button-learned? "Open Menu")}
+           (common/icon :menu)])))))
 
 ; (defn start [app owner]
 ;   (reify
@@ -216,20 +232,18 @@
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            overlay-component (get overlay-components (or (current-overlay app) :info))]
+            overlay-components (map #(get overlay-components %) (get-in app state/overlays-path))
+            title (:title (last overlay-components))]
         (html
           [:div.app-overlay {:on-click #(cast! :overlay-closed)}
            [:div.app-overlay-background]
-           (if (= :menu (:type overlay-component))
-             [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
-              [:div.menu-header
-               [:a.menu-back {:on-click #(cast! :overlay-closed)
-                              :role "button"}]
-               (when (:title overlay-component)
-                [:div.menu-title
-                 [:h4 (str (:title overlay-component))]])]
-              [:div.menu-body
-               (om/build (:component overlay-component) app)]]
-
-             [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
-              (om/build (:component overlay-component) app)])])))))
+            [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
+             [:div.menu-header
+              [:a.menu-back {:on-click #(cast! :overlay-closed)
+                             :role "button"}]
+              (when title
+               [:div.menu-title
+                [:h4 (str title)]])]
+             [:div.menu-body
+              (for [component overlay-components]
+               (om/build (:component component) app))]]])))))

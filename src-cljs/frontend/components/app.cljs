@@ -89,20 +89,6 @@
                                                                                :event "Signup Clicked"}))}
             (common/icon :login)]))))))
 
-(defn main-menu-button [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            overlay-component (get overlay-components (or (:overlay app) :info))]
-        (html
-          [:a.main-menu-button {:on-click #(cast! :main-menu-opened)
-                                :role "button"
-                                ; :class (when-not overlay-component "closed")
-                                :data-right (when-not menu-button-learned? "Open Menu")
-                                :title (when menu-button-learned? "Open Menu")}
-           (common/icon :menu)])))))
-
 (defn chat-menu-button [app owner]
   (reify
     om/IRender
@@ -232,7 +218,7 @@
           (when (overlay-visible? app)
             (om/build overlay/overlay app))
           (om/build app* app)
-          (om/build main-menu-button app)
+          (om/build overlay/main-menu-button (select-in app [state/overlays-path state/menu-button-learned-path]))
           (dom/div #js {:className "app-main-outline"}))
 
         (html [:div#app])))))

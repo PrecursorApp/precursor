@@ -121,7 +121,7 @@
 
 (defmethod handle-keyboard-shortcut :shortcuts-menu
   [state shortcut-name]
-  (overlay/replace-overlay state :shortcuts))
+  (overlay/add-overlay state :shortcuts))
 
 (defmethod handle-keyboard-shortcut :escape-interaction
   [state shortcut-name]
@@ -804,6 +804,10 @@
   [target message _ state]
   (overlay/clear-overlays state))
 
+(defmethod control-event :overlay-menu-closed
+  [target message _ state]
+  (overlay/pop-overlay state))
+
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
@@ -992,5 +996,5 @@
 (defmethod control-event :main-menu-opened
   [browser-state message _ state]
   (-> state
-      (assoc-in [:overlay] :start)
+      (overlay/replace-overlay :start)
       (assoc-in state/main-menu-learned-path true)))
