@@ -15,6 +15,7 @@
             [frontend.components.overlay :as overlay]
             [frontend.favicon :as favicon]
             [frontend.models.chat :as chat-model]
+            [frontend.overlay :refer [overlay-visible?]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in select-in]]
@@ -195,7 +196,7 @@
     (render [_]
       (if (:navigation-point app)
         (dom/div #js {:id "app" :className "app"}
-          (when (:overlay app)
+          (when (overlay-visible? app)
             (om/build overlay/overlay app))
           (om/build app* app)
           (dom/div #js {:className "app-main-outline"}))

@@ -108,3 +108,5 @@
 (def overlay-shortcuts-opened-path [:overlay-shortcuts-opened])
 
 (def aside-width-path [:aside-width])
+
+(def overlays-path [:overlays])
