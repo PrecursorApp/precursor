@@ -164,16 +164,6 @@
   transition: @speed;
   z-index: @zindex_main_menu;
 
-  // &:hover {
-  //   + .unseen-eids {
-  //     background: lighten(#c0392b, 10);
-  //     color: @white;
-  //     border: 2px solid lighten(#c0392b, 10);
-  //     padding: ~"calc(.25em + 2px)";
-  //     margin: -4px 0 0 -4px;
-  //   }
-  // }
-
   .icon_stroke(@gray);
 
   &:hover {
@@ -243,43 +233,40 @@
   height: @tile;
   &:hover {
     .icon_stroke(@white);
+    .unseen-eids {
+      background: lighten(#c0392b, 10);
+      color: @white;
+      border-color: lighten(#c0392b, 10);
+      height: 1.8em;
+      min-width: 1.8em;
+      padding: 2px 4px;
+      bottom: 3.1em;
+      right: 3.1em;
+    }
   }
 }
-.action-info {
-  margin-top: auto;
-}
 .unseen-eids {
-  .box-sizing(content-box);
-  .transform-origin(center);
   .animation(in-bounce (@speed * 2));
   .user-select(none);
   position: absolute;
-  font-size: .75em;
-  font-weight: bold;
-  line-height: .75em;
-  text-align: center;
-  top: 1.25em;
-  left: 3em;
-  height: .75em;
-  min-width: .75em;
-  margin: -2px 0 0 -2px; // offsets the size of border
-  padding: .25em;
+  font-family: @font_mono;
+  font-size: 0.625rem;
+  line-height: 1em;
+  bottom: 3.2em;
+  right: 3.2em;
+  height: 1.6em;
+  min-width: 1.6em;
+  padding: 2px 3px;
   color: lighten(#c0392b, 10);
   background: @gray_darker;
   border: 2px solid lighten(#c0392b, 10);
-  border-radius: 2em;
-  box-shadow: 0 2px @gray_darker, -2px 0 @gray_darker;
+  border-radius: 2rem;
+  box-shadow: 0 2px @gray_darker, 2px 0 @gray_darker, 2px 2px @gray_darker;
   pointer-events: none;
-  transition: @speed;
-  i {
-    svg {
-      width: 1.25em;
-      height: 1.25em;
-    }
-    path {
-      stroke: @white;
-    }
-  }
+  transition: @speed @bezier_transform;
+}
+.action-info {
+  margin-top: auto;
 }
 .svg-text-form {
   input[type="text"] {

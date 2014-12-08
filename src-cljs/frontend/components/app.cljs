@@ -89,19 +89,51 @@
                                                                                :event "Signup Clicked"}))}
             (common/icon :login)]))))))
 
+
+
+
+
+
 (defn chat-menu-button [app owner]
   (reify
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when-let [chat-datoms (seq (filter #(= :chat/body (:a %)) (:tx-data tx-report)))]
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            overlay-component (get overlay-components (or (:overlay app) :info))]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            aside-opened? (get-in app state/aside-menu-opened-path)
+            last-read-time (get-in app (state/last-read-chat-time-path (:document/id app)))
+            unread-chat-count (chat-model/compute-unread-chat-count @db last-read-time)
+            unread-chat-count (if last-read-time
+                                unread-chat-count
+                                ;; add one for the dummy message
+                                (inc unread-chat-count))
+            ; overlay-component (get overlay-components (or (:overlay app) :info))
+            ]
         (html
           [:a.chat-menu-button {:on-click #(cast! :aside-menu-toggled)
                                 :role "button"
                                 ; :data-left (when-not menu-button-learned? "Chat")
                                 ; :title (when menu-button-learned? "Chat")
                                 }
-           (common/icon :chat)])))))
+           (common/icon :chat)
+           (when (and (not aside-opened?) (pos? unread-chat-count))
+             [:i.unseen-eids (str unread-chat-count)])])))))
+
+
+
+
 
 (defn main-actions [data owner]
   (reify
