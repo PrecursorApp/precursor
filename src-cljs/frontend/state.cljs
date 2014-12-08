@@ -92,6 +92,10 @@
 
 (def main-menu-learned-path (conj browser-settings-path :main-menu-learned))
 
+(def invite-menu-learned-path (conj browser-settings-path :invite-menu-learned))
+
+(def shortcuts-menu-learned-path (conj browser-settings-path :shortcuts-menu-learned))
+
 (defn doc-settings-path [doc-id]
   (conj browser-settings-path :document-settings doc-id))
 

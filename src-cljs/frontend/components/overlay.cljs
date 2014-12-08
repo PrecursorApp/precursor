@@ -27,31 +27,13 @@
                                             #(cast! :overlay-menu-closed)
                                             #(cast! :main-menu-opened))
                                 :role "button"
-                                :class (when (overlay-visible? data) "close bkg-light")
+                                :class (when (overlay-visible? data)
+                                         (if (= :start (current-overlay data))
+                                           "close bkg-light"
+                                           "back bkg-light"))
                                 :data-right (when-not menu-button-learned? "Open Menu")
                                 :title (when menu-button-learned? "Open Menu")}
            (common/icon :menu)])))))
-
-; (defn start [app owner]
-;   (reify
-;     om/IRender
-;     (render [_]
-;       (let [cast! (om/get-shared owner :cast!)]
-;         (html
-;           [:div.menu-view {:class (str "menu-view-" "start")}
-;            [:div.menu-view-frame
-;             [:a.menu-item {:role "button"}
-;              (common/icon :newdoc)
-;              [:span "New Document"]]
-;             [:a.menu-item {:role "button"}
-;              (common/icon :clock)
-;              [:span "Recent Documents"]]
-;             [:a.menu-item {:role "button"}
-;              (common/icon :users)
-;              [:span "Invite Collaborators"]]
-;             [:a.menu-item {:role "button"}
-;              (common/icon :logout)
-;              [:span "Log out"]]]])))))
 
 (defn start [app owner]
   (reify
@@ -59,14 +41,43 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view {:class (str "menu-view-" "invite")}
+          [:div.menu-view {:class (str "menu-view-" "start")}
            [:div.menu-view-frame
-            [:p "Enter someone's email address and send them an invite to join your document."]
-            [:form
+            [:a.menu-item {:role "button"}
+             (common/icon :newdoc)
+             [:span "New Document"]]
+            [:a.menu-item {:on-click #(cast! :your-docs-opened)
+                           :role "button"}
+             (common/icon :clock)
+             [:span "Recent Documents"]]
+            [:a.menu-item {:on-click #(cast! :invite-menu-opened)
+                           :role "button"}
+             (common/icon :users)
+             [:span "Invite Collaborators"]]
+            [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
+                           :role "button"}
+             (common/icon :command)
+             [:span "Shortcuts"]]
+            [:a.menu-item {:role "button"}
+             (common/icon :logout)
+             [:span "Log out"]]]])))))
+
+(defn invite [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+          [:div.menu-view {:class (str "menu-view-" "invite")}
+           [:article.menu-view-frame
+            [:p "Enter your teammate's email address and and press enter to send them an invite to collaborate with you in your document. Separate multiple emails with a space or a comma."]
+            [:form.menu-invite-form
              [:input {:type "text"
                       :required "true"
                       :data-adaptive ""}]
-             [:label {:data-placeholder "test"}]]
+             [:label {:data-placeholder "Teammate's Email"
+                      :data-placeholder-nil "What's your teammate's email?"
+                      :data-placeholder-forgot "Don't forget to press enter."}]]
             ]])))))
 
 (defn info [app owner]
@@ -216,16 +227,17 @@
    :shortcuts {:title "Shortcuts"
                :component shortcuts
                :type :menu}
-   ; :shortcuts {:title "Shortcuts"
-   ;             :component shortcuts
-   ;             :type :prompt}
    :start {:title "Precursor"
            :component start
            :type :menu}
+   :invite {:title "Invite Collaborators"
+           :component invite
+           :type :menu}
    :username {:component username
               :type :prompt}
-   :doc-viewer {:component doc-viewer/doc-viewer
-                :type :prompt}})
+   :doc-viewer {:title "Recent Documents"
+                :component doc-viewer/doc-viewer
+                :type :menu}})
 
 (defn overlay [app owner]
   (reify
@@ -243,7 +255,7 @@
                              :role "button"}]
               (when title
                [:div.menu-title
-                [:h4 (str title)]])]
+                [:h4 title]])]
              [:div.menu-body
               (for [component overlay-components]
                (om/build (:component component) app))]]])))))

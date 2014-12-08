@@ -65,6 +65,19 @@ input {
           }
         }
       }
+      &:valid {
+        &:not(:focus) {
+          + label {
+            &[data-placeholder] {
+              &[data-placeholder] {
+                &:before {
+                  content: attr(data-placeholder-forgot);
+                }
+              }
+            }
+          }
+        }
+      }
     }
     + label {
       &[data-placeholder] {
@@ -85,6 +98,20 @@ input {
           background-size: 100% 0;
           background-repeat: no-repeat;
           background-position: center;
+        }
+      }
+    }
+  }
+}
+.app-overlay {
+  input {
+    &[data-adaptive] {
+      + label {
+        &[data-placeholder] {
+          &:before {
+            color: @gray;
+            background-image: linear-gradient(to bottom, @overlay_background, @overlay_background);
+          }
         }
       }
     }

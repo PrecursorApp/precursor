@@ -57,7 +57,7 @@
   width: @menu_width;
   height: 100%;
   margin-right: auto;
-  background: @white;
+  background: @overlay_background;
 }
 .menu-header {
   .flex(0 0 @tile);
@@ -105,11 +105,16 @@
     .flex(0 0 @menu_width);
     // box-shadow: 1px 0 @gray_light;
   }
+  article {
+    padding: 2rem;
+  }
 }
 .menu-view-frame {
   .flexy(column);
+  .scrollbar_hide();
   width: @menu_width;
   height: ~"calc(100vh - @{tile})";
+  overflow-y: auto;
 }
 .menu-footer {
   .flex(0 0 @tile);
@@ -145,6 +150,9 @@
       transition: @speed_fast @bezier_fadein;
     }
   }
+}
+.menu-invite-form {
+  .flexy(column);
 }
 
 
@@ -226,20 +234,25 @@
 .recent-time-group {
   text-transform: capitalize;
   margin-bottom: 2em;
+  &:not(:first-child) {
+    margin-top: 5em;
+  }
 }
 .recent-doc {
-  .flexy(flex-end, center, column);
+  // .flexy(flex-end, center, column);
 }
 .recent-doc-title {
-  line-height: 1rem;
-  margin-bottom: 1.5rem;
+  display: block;
+  line-height: 1em;
+  // margin-bottom: 1.5rem;
+  margin: 1em 0;
 }
 .recent-doc-thumb {
   display: block;
   position: relative;
   width: 20rem;
   height: 15rem;
-  margin-bottom: .5rem;
+  // margin-bottom: .5rem;
   border: 1px solid @gray_lighter;
   overflow: hidden;
   transition: @speed @bezier_fadein;

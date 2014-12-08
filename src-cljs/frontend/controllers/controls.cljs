@@ -979,7 +979,7 @@
 (defmethod control-event :your-docs-opened
   [browser-state message _ state]
   (-> state
-      (overlay/replace-overlay :doc-viewer)
+      (overlay/add-overlay :doc-viewer)
       (assoc-in state/your-docs-learned-path true)))
 
 (defmethod post-control-event! :your-docs-opened
@@ -998,3 +998,15 @@
   (-> state
       (overlay/replace-overlay :start)
       (assoc-in state/main-menu-learned-path true)))
+
+(defmethod control-event :invite-menu-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :invite)
+      (assoc-in state/invite-menu-learned-path true)))
+
+(defmethod control-event :shortcuts-menu-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :shortcuts)
+      (assoc-in state/shortcuts-menu-learned-path true)))

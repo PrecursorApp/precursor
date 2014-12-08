@@ -45,10 +45,10 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-prompt {:class (str "menu-prompt-" "username")}
-          [:div.menu-header
-           [:a.menu-close {:on-click #(cast! :overlay-closed)
-                           :role "button"}
-            (common/icon :times)]]
+          ; [:div.menu-header
+          ;  [:a.menu-close {:on-click #(cast! :overlay-closed)
+          ;                  :role "button"}
+          ;   (common/icon :times)]]
           [:div.menu-prompt-body
            [:h2 "Don't lose your creations"]
            [:p
@@ -89,8 +89,9 @@
                 [:img {:src (str "/document/" (:db/id doc) ".svg")}]
                 [:img.loading-image]
                 [:i.loading-ellipses [:i "."] [:i "."] [:i "."]]]
-               [:a.recent-doc-title {:href (str "/document/" (:db/id doc))}
-                (str (:db/id doc))]]))))]))))
+               [:div.recent-doc-title
+                [:a {:href (str "/document/" (:db/id doc))}
+                 (str (:db/id doc))]]]))))]))))
 
 (defn dummy-docs [current-doc-id doc-count]
   (repeat doc-count {:db/id current-doc-id
@@ -115,14 +116,14 @@
                        (reverse)
                        (take 100)))]
         (html
-         [:div.menu-prompt {:class (str "menu-prompt-" "doc-viewer")}
-          [:div.menu-header
-           [:div.menu-title
-            [:h3 "Your Docs"]]
-           [:a.menu-close {:on-click #(cast! :overlay-closed)
-                           :role "button"}
-            (common/icon :times)]]
-          [:div.menu-prompt-body {:class (when (nil? touched-docs)
+         [:div.menu-view {:class (str "menu-prompt-" "doc-viewer")}
+          ; [:div.menu-header
+          ;  [:div.menu-title
+          ;   [:h3 "Your Docs"]]
+          ;  [:a.menu-close {:on-click #(cast! :overlay-closed)
+          ;                  :role "button"}
+          ;   (common/icon :times)]]
+          [:article.menu-view-frame {:class (when (nil? touched-docs)
                                            "loading")}
            (if (seq docs)
              (om/build docs-list docs))]])))))
