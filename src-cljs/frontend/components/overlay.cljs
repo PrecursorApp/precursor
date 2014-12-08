@@ -79,7 +79,7 @@
                       :data-adaptive ""}]
              [:label {:data-placeholder "Teammate's Email"
                       :data-placeholder-nil "What's your teammate's email?"
-                      :data-placeholder-forgot "Don't forget to press enter."}]]
+                      :data-placeholder-forgot "Don't forget to submit."}]]
             ]])))))
 
 (defn info [app owner]
@@ -127,7 +127,7 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.menu-view {:class (str "menu-view-" "shortcuts")}
-           [:div.menu-view-frame
+           [:article.menu-view-frame
             [:div.shortcuts-item
              [:div.shortcuts-key "S"]
              [:div.shortcuts-result "Select"]]
@@ -253,11 +253,10 @@
            [:div.app-overlay-background]
             [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
              [:div.menu-header
-              [:a.menu-back {:on-click #(cast! :overlay-closed)
-                             :role "button"}]
-              (when title
-               [:div.menu-title
-                [:h4 title]])]
+              ; [:a.menu-back {:on-click #(cast! :overlay-closed)
+              ;                :role "button"}]
+              (for [component overlay-components]
+               [:h4 {:title title} (:title component)])]
              [:div.menu-body
               (for [component overlay-components]
                (om/build (:component component) app))]]])))))

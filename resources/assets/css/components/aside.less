@@ -1,10 +1,12 @@
 .app-aside {
   .flexy(column);
-  width: @aside_width;
-  box-shadow: 1px 0 @gray_dark;
+  // width: @aside_width;
+  width: 20vw;
+  min-width: 16rem;
+  box-shadow: -1px 0 @gray_dark;
   overflow: hidden;
-  transition: @speed;
-  transition-timing-function: @bezier_bounce;
+  transition: @speed @bezier_transform;
+  // transition-timing-function: @bezier_bounce;
   .mq_640({
     .flex-direction(row);
     position: relative;
@@ -12,6 +14,7 @@
   });
   &.closed {
     width: 0;
+    min-width: 0;
     transition-timing-function: @bezier_transform;
     .icon-user {
       margin: 0 .5em;
@@ -35,7 +38,8 @@
   section {
     .flex(1 1 auto);
     .flexy(column);
-    width: @aside_width;
+    width: 20vw;
+    min-width: 16rem;
     min-height: @aside_width;
     .mq_640({
       .flex(0 0 100%);

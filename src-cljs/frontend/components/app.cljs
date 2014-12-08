@@ -96,10 +96,11 @@
       (let [cast! (om/get-shared owner :cast!)
             overlay-component (get overlay-components (or (:overlay app) :info))]
         (html
-          [:a.chat-menu-button {:on-click #(cast! :main-menu-opened)
+          [:a.chat-menu-button {:on-click #(cast! :aside-menu-toggled)
                                 :role "button"
-                                :data-left (when-not menu-button-learned? "Open Menu")
-                                :title (when menu-button-learned? "Open Menu")}
+                                ; :data-left (when-not menu-button-learned? "Chat")
+                                ; :title (when menu-button-learned? "Chat")
+                                }
            (common/icon :chat)])))))
 
 (defn main-actions [data owner]
@@ -171,7 +172,6 @@
             aside-opened? (get-in app state/aside-menu-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div.app-main
-               (om/build aside/menu app)
                [:div.app-canvas {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
@@ -207,7 +207,8 @@
                                             :left (+ (get-in app [:mouse :x]) (if aside-opened? (- 16 256) 16) )}}
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
-                     "Try right-click")])]])))))
+                     "Try right-click")])]
+               (om/build aside/menu app)])))))
 
 (defn app [app owner]
   (reify
@@ -218,7 +219,7 @@
           (when (overlay-visible? app)
             (om/build overlay/overlay app))
           (om/build app* app)
-          (om/build overlay/main-menu-button (select-in app [state/overlays-path state/menu-button-learned-path]))
-          (dom/div #js {:className "app-main-outline"}))
+          (dom/div #js {:className "app-main-outline"})
+          (om/build overlay/main-menu-button (select-in app [state/overlays-path state/menu-button-learned-path])))
 
         (html [:div#app])))))

@@ -35,7 +35,7 @@
    :document/id     17592186046465
    :subscribers     {}
    ;; This isn't passed to the components, it can be accessed though om/get-shared :_app-state-do-not-use
-   :aside-width     256
+   :aside-width     0
    :inputs          nil})
 
 (def user-path [:current-user])

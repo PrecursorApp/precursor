@@ -128,50 +128,51 @@
          [:aside.app-aside {:class (concat
                                     (when-not aside-opened? ["closed"])
                                     (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))
-                            :style {:width (if aside-opened?
-                                             (get-in app state/aside-width-path)
-                                             0)}}
+                            ; :style {:width (if aside-opened?
+                            ;                  (get-in app state/aside-width-path)
+                            ;                  0)}
+                            }
           [:button.aside-switcher {:on-click #(cast! :chat-mobile-toggled)
                                    ;; :class (if chat-mobile-open? "chat-mobile" "people-mobile")
                                    }
            [:span.aside-switcher-option {:class (when-not chat-mobile-open? "toggled")} "People"]
            [:span.aside-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
-          [:section.aside-people
-           (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-             [:a.people-you {:key client-id
-                             :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
-                             :role "button"
-                             :on-click #(if can-edit?
-                                          (om/set-state! owner :editing-name? true)
-                                          (cast! :overlay-username-toggled))}
-              (common/icon :user (when show-mouse? {:path-props
-                                                    {:style
-                                                     {:stroke (get-in app [:subscribers client-id :color])}}}))
+          ; [:section.aside-people
+          ;  (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+          ;    [:a.people-you {:key client-id
+          ;                    :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
+          ;                    :role "button"
+          ;                    :on-click #(if can-edit?
+          ;                                 (om/set-state! owner :editing-name? true)
+          ;                                 (cast! :overlay-username-toggled))}
+          ;     (common/icon :user (when show-mouse? {:path-props
+          ;                                           {:style
+          ;                                            {:stroke (get-in app [:subscribers client-id :color])}}}))
 
-              (if editing-name?
-                [:form {:on-submit #(do (cast! :self-updated {:name new-name})
-                                        (om/set-state! owner :editing-name? false)
-                                        false)
-                        :on-blur #(do (cast! :self-updated {:name new-name})
-                                      (om/set-state! owner :editing-name? false)
-                                      false)
-                        :on-key-down #(when (= "Escape" (.-key %))
-                                        (om/set-state! owner :editing-name? false)
-                                        (om/set-state! owner :new-name "")
-                                        false)}
-                 [:input {:type "text"
-                          :ref "name-edit"
-                          :tab-index 1
-                          :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
-                [:span (or (get-in app [:cust :name]) "You")])])
-           (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
-                 :let [id-str (or cust-name (apply str (take 6 id)))]]
-             [:a {:title "Ping this person in chat."
-                  :role "button"
-                  :key id
-                  :on-click #(cast! :aside-user-clicked {:id-str id-str})}
-              (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
-              [:span id-str]])]
+          ;     (if editing-name?
+          ;       [:form {:on-submit #(do (cast! :self-updated {:name new-name})
+          ;                               (om/set-state! owner :editing-name? false)
+          ;                               false)
+          ;               :on-blur #(do (cast! :self-updated {:name new-name})
+          ;                             (om/set-state! owner :editing-name? false)
+          ;                             false)
+          ;               :on-key-down #(when (= "Escape" (.-key %))
+          ;                               (om/set-state! owner :editing-name? false)
+          ;                               (om/set-state! owner :new-name "")
+          ;                               false)}
+          ;        [:input {:type "text"
+          ;                 :ref "name-edit"
+          ;                 :tab-index 1
+          ;                 :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
+          ;       [:span (or (get-in app [:cust :name]) "You")])])
+          ;  (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
+          ;        :let [id-str (or cust-name (apply str (take 6 id)))]]
+          ;    [:a {:title "Ping this person in chat."
+          ;         :role "button"
+          ;         :key id
+          ;         :on-click #(cast! :aside-user-clicked {:id-str id-str})}
+          ;     (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
+          ;     [:span id-str]])]
           ;; XXX better name here
           (om/build chat-aside {:db (:db app)
                                 :document/id (:document/id app)

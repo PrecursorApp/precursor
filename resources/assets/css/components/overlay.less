@@ -61,7 +61,8 @@
 }
 .menu-header {
   .flex(0 0 @tile);
-  .flexy(center, space-between);
+  // .flexy(center, space-between);
+  .flexy(center);
   position: relative;
   border-bottom: 1px solid @gray_light; // TODO not sure if i want this
   a {
@@ -77,21 +78,37 @@
       margin-left: auto;
     }
   }
-}
-.menu-title {
-  .flexy(center, center);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0 auto;
-  pointer-events: none;
   h4 {
+    .flex(0 1 100%);
+    .animation(in-fade-top (@speed * 3));
+    text-overflow: ellipsis;
+    white-space: nowrap;
     margin: 0;
-    pointer-events: auto;
+    // padding-right: 1rem;
+    padding: 0 1rem 0 @tile;
+    overflow: hidden;
+    &:not(:last-of-type) {
+      display: none;
+    }
   }
 }
+.menu-title {
+
+}
+// .menu-title {
+//   .flexy(center, center);
+//   position: absolute;
+//   top: 0;
+//   left: 0;
+//   width: 100%;
+//   height: 100%;
+//   margin: 0 auto;
+//   pointer-events: none;
+//   h4 {
+//     margin: 0;
+//     pointer-events: auto;
+//   }
+// }
 .menu-body {
   .flex(1 0 100%);
   .flexy();
@@ -99,6 +116,7 @@
 }
 .menu-view {
   .flex(0 0 0%);
+  .flexy(flex-start, flex-end);
   overflow: hidden;
   transition: @speed @bezier_transform;
   &:last-of-type {
@@ -112,7 +130,8 @@
 .menu-view-frame {
   .flexy(column);
   .scrollbar_hide();
-  width: @menu_width;
+  // width: @menu_width;
+  min-width: @menu_width;
   height: ~"calc(100vh - @{tile})";
   overflow-y: auto;
 }
@@ -131,9 +150,9 @@
 .menu-item {
   &[role="button"] {
     .flexy(center);
-    .icon_stroke(@gray_dark);
+    .icon_stroke(@gray);
     height: @tile;
-    color: @gray_dark;
+    color: @gray;
     transition: @speed_fast @bezier_fadein;
     &:hover {
       .icon_stroke(@gray_darkest);
@@ -193,8 +212,7 @@
 
 .shortcuts-item {
   .flexy(center);
-  margin: 1em;
-  // margin: 1em 0; // TODO remove when making shortcuts a menu view instead of prompt
+  margin-bottom: 1em;
 }
 .shortcuts-key {
   .flexy(center, center);
@@ -246,6 +264,11 @@
   line-height: 1em;
   // margin-bottom: 1.5rem;
   margin: 1em 0;
+  a {
+    &:not(:hover) {
+      color: @gray;
+    }
+  }
 }
 .recent-doc-thumb {
   display: block;

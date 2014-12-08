@@ -108,14 +108,14 @@
 }
 .mouse-stats {
   .user-select(none);
-  position: fixed;
+  position: absolute;
   color: @gray;
   font-family: @font_mono;
-  font-size: 0.750em;
-  text-align: right;
+  font-size: 0.625rem;
+  // text-align: right;
   top: 100%;
-  width: 100%;
-  right: 0.5em;
+  // width: 100%;
+  left: 0.5em;
   margin-top: -2em;
   pointer-events: none;
   transition: @speed @bezier_fadein;
@@ -155,11 +155,12 @@
 .main-menu-button {
   .flexy(center, center);
   position: absolute;
-  font-size: 1.5em;
+  // font-size: 1.5em;
   top: 0;
   left: 0;
   width: @tile;
   height: @tile;
+  transition: @speed;
   z-index: @zindex_main_menu;
 
   // &:hover {
@@ -185,9 +186,9 @@
     transition-timing-function: @bezier_transform, @bezier_fadein, @bezier_fadein;
   }
   &.bkg-light {
-    .icon_stroke(@gray_light);
+    // .icon_stroke(@gray_light);
     &:hover {
-      .icon_stroke(@gray_dark);
+      .icon_stroke(@gray_darkest);
     }
   }
   &.close {
@@ -224,12 +225,18 @@
       }
     }
   }
+  &:not(.close) {
+    &:not(.back) {
+      font-size: 1.5em;
+    }
+  }
 }
 .chat-menu-button {
   .icon_stroke(@gray);
   .flexy(center, center);
   position: absolute;
-  top: 0;
+  font-size: 1.5em;
+  bottom: 0;
   right: 0;
   width: @tile;
   height: @tile;
