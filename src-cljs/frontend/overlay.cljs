@@ -18,3 +18,6 @@
 
 (defn overlay-visible? [state]
   (last (get-in state state/overlays-path)))
+
+(defn overlay-count [state]
+  (count (get-in state state/overlays-path)))

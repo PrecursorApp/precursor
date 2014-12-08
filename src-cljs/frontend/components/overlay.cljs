@@ -8,7 +8,7 @@
             [frontend.components.common :as common]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.datascript :as ds]
-            [frontend.overlay :refer [current-overlay overlay-visible?]]
+            [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true]
@@ -28,9 +28,11 @@
                                             #(cast! :main-menu-opened))
                                 :role "button"
                                 :class (when (overlay-visible? data)
-                                         (if (= :start (current-overlay data))
-                                           "close bkg-light"
-                                           "back bkg-light"))
+                                         (concat
+                                           ["bkg-light"]
+                                           (if (< 1 (overlay-count data))
+                                             ["back"]
+                                             ["close"])))
                                 :data-right (when-not menu-button-learned? "Open Menu")
                                 :title (when menu-button-learned? "Open Menu")}
            (common/icon :menu)])))))
