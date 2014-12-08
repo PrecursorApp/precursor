@@ -155,6 +155,7 @@
 .main-menu-button {
   .flexy(center, center);
   position: absolute;
+  font-size: 1.5em;
   top: 0;
   left: 0;
   width: @tile;
@@ -178,11 +179,10 @@
   }
 
   path {
-    .random_cascade(3);
-    transition-property: -webkit-transform, opacity;
-    transition-property: transform, opacity;
-    transition-duration: @speed_slow, @speed_fast;
-    transition-timing-function: @bezier_transform, @bezier_fadein;
+    -webkit-transition-property: -webkit-transform, opacity, stroke;
+    transition-property: transform, opacity, stroke;
+    transition-duration: @speed_slow, @speed, @speed_fast;
+    transition-timing-function: @bezier_transform, @bezier_fadein, @bezier_fadein;
   }
   &.bkg-light {
     .icon_stroke(@gray_light);
@@ -190,38 +190,37 @@
       .icon_stroke(@gray_dark);
     }
   }
-  &.closed {
+  &.close {
     path {
-      transition-timing-function: @bezier_bounce, @bezier_fadein;
+      transition-timing-function: @bezier_bounce, @bezier_fadein, @bezier_fadein;
+      &[class*="top"] {
+        .transform(translate3d(32.32px, -3.03px, 0) rotate3d(0, 0, 1, 45deg));
+      }
+      &[class*="btm"] {
+        .transform(translate3d(-38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));
+      }
     }
-    .menu-start-stroke {
-      .transform(scale3d(.707, 1, 1); translate3d(0, 25px, 0); rotate3d(0, 0, 1, -45deg));
-    }
-    .menu-center-stroke {
-      .transform(scale3d(.707, 1, 1); translate3d(0, 50px, 0); rotate3d(0, 0, 1, -45deg));
-    }
-    .menu-end-stroke {
-      .transform(scale3d(.707, 1, 1); translate3d(70.5px, 4.25px, 0); rotate3d(0, 0, 1, 45deg));
+    .menu-mid-stroke {
+      opacity: 0;
+      .transform(translate3d(-20.71px, 50px, 0) rotate3d(0, 0, 1, -45deg));
     }
   }
   &.back {
     path {
-      transition-duration: @speed, @speed_slow;
-    }
-    .menu-start-stroke {
-      .transform(translate3d(-50px, 0, 0));
-    }
-    .menu-center-stroke {
-      .transform(scale3d(.707, 1, 1); translate3d(0, 50px, 0); rotate3d(0, 0, 1, -45deg));
-    }
-    .menu-end-stroke {
-      .transform(translate3d(-50px, 0, 0));
-    }
-  }
-  &:not(.closed) {
-    &:not(.back) {
-      .menu-center-stroke {
-        opacity: 0;
+      transition-timing-function: @bezier_bounce, @bezier_fadein, @bezier_fadein;
+      &:not(.menu-mid-stroke) {
+        &[class*="left"] {
+          opacity: 0;
+        }
+        &[class*="right"] {
+          stroke-linecap: square;
+        }
+      }
+      &[class*="top"] {
+        .transform(translate3d(-12.68px, -3.03px, 0) rotate3d(0, 0, 1, 45deg));
+      }
+      &[class*="btm"] {
+        .transform(translate3d(-83.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));
       }
     }
   }

@@ -27,7 +27,7 @@
                                             #(cast! :overlay-menu-closed)
                                             #(cast! :main-menu-opened))
                                 :role "button"
-                                :class (when-not (overlay-visible? data) "closed")
+                                :class (when (overlay-visible? data) "close bkg-light")
                                 :data-right (when-not menu-button-learned? "Open Menu")
                                 :title (when menu-button-learned? "Open Menu")}
            (common/icon :menu)])))))

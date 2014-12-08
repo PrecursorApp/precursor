@@ -71,9 +71,11 @@
    :chat-stroke "M60.8,63.2c-0.2,12-12.9,21.5-28.3,21.2 c-3.5-0.1-6.8-0.6-9.8-1.6L8.5,88.8c0,0,4.8-9.7,0.4-15.3c-2.6-3.4-4-7.3-3.9-11.4c0.2-12,12.9-21.5,28.3-21.2 C48.7,41.2,61,51.2,60.8,63.2z M68.5,73.9L89.7,83c0,0-7.2-14.5-0.6-22.9c3.8-5,6-10.9,5.9-17.2c-0.4-18-19.4-32.2-42.5-31.7 c-19.1,0.4-35,10.7-39.8,24.4"
    :crosshair-stroke "M50,5v90 M5,50h90"
    :ibeam-stroke "M50,10v80 M41.3,95h-10 M68.7,95h-10 M45,50h10 M50,90 l-8.7,5 M50,90l8.7,5 M58.7,5h10 M31.3,5h10 M58.7,5L50,10 M41.3,5l8.7,5"
-   :menu-start-stroke "M5,5l90,90"
-   :menu-center-stroke "M5,5l90,90"
-   :menu-end-stroke "M5,95L95,5"
+   :menu-top-left-stroke "M5,25h45"
+   :menu-top-right-stroke "M50,25h45"
+   :menu-mid-stroke "M5,50h90"
+   :menu-btm-left-stroke "M5,75h45"
+   :menu-btm-right-stroke "M50,75h45"
    :clock-stroke "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z M71.2,71.2C71.2,71.2,50,50,50,50V20"
    :shift-stroke "M5,52L50,7l45,45H70.5V93H29.5V52H5z"
    :option-stroke "M95,15H65 M95,85H75L35,15H5"
@@ -109,7 +111,7 @@
    :chat {:paths [:chat-stroke]}
    :crosshair {:paths [:crosshair-stroke]}
    :ibeam {:paths [:ibeam-stroke]}
-   :menu {:paths [:menu-start-stroke :menu-center-stroke :menu-end-stroke]}
+   :menu {:paths [:menu-top-left-stroke :menu-top-right-stroke :menu-mid-stroke :menu-btm-left-stroke :menu-btm-right-stroke]}
    :clock {:paths [:clock-stroke]}
    :shift {:paths [:shift-stroke]}
    :option {:paths [:option-stroke]}
