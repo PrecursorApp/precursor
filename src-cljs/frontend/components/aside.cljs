@@ -127,11 +127,7 @@
         (html
          [:aside.app-aside {:class (concat
                                     (when-not aside-opened? ["closed"])
-                                    (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))
-                            ; :style {:width (if aside-opened?
-                            ;                  (get-in app state/aside-width-path)
-                            ;                  0)}
-                            }
+                                    (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))}
           [:button.aside-switcher {:on-click #(cast! :chat-mobile-toggled)
                                    ;; :class (if chat-mobile-open? "chat-mobile" "people-mobile")
                                    }
