@@ -1,8 +1,7 @@
 .app-chat {
   .flexy(column);
-  // width: @tile_chat;
   width: 20vw;
-  min-width: 16rem;
+  min-width: @tile_chat;
   box-shadow: -1px 0 @gray_dark;
   overflow: hidden;
   transition: @speed @bezier_transform;
@@ -68,10 +67,8 @@
   }
 }
 .chat-people {
+  .scrollbar_hide(); // we should calculate to get this effect in the dom
   overflow-y: auto;
-  &::-webkit-scrollbar {
-    width: 0; // we should calculate to get this effect in the dom
-  }
   a {
     &[role="button"] {
       .flex(0 0 @tile);
@@ -106,7 +103,6 @@
     color: @white;
   }
 }
-
 .chat-log {
   .justify-content(flex-end);
   form {
