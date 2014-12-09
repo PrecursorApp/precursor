@@ -774,8 +774,7 @@
         (assoc-in [:drawing :in-progress?] false)
         (assoc-in [:camera :offset-x] (if aside-open?
                                         (get-in state state/aside-width-path)
-                                        0))
-        )))
+                                        0)))))
 
 (defmethod post-control-event! :aside-menu-toggled
   [browser-state message _ previous-state current-state]
