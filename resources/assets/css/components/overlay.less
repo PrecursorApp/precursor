@@ -173,7 +173,8 @@
 }
 .menu-invite-form {
   .flexy(column);
-  margin-bottom: 1em;
+  padding-bottom: 1em;
+  margin-bottom: auto;
 }
 .invite-recipient {
   .flexy();
@@ -187,11 +188,14 @@
       }
     }
   }
-  // &:last-of-type {
-  //   a {
-  //     opacity: 1;
-  //   }
-  // }
+  &:not(:hover) {
+    color: @gray_light;
+  }
+  &:last-of-type {
+    a {
+      opacity: 1;
+    }
+  }
   a {
     opacity: 0;
     margin-left: .5em;
