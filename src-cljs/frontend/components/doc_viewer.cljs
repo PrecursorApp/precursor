@@ -109,7 +109,7 @@
         (html
          [:div.menu-view {:class (str "menu-prompt-" "doc-viewer")}
           [:article.menu-view-frame {:class (when (nil? touched-docs)
-                                           "loading")}
+                                              "loading")}
            (if (seq docs)
              (om/build docs-list docs))]])))))
 
