@@ -89,10 +89,11 @@
                            :role "button"}
              (common/icon :clock)
              [:span "Your Documents"]]
-            [:a.menu-item {:on-click #(cast! :invite-menu-opened)
-                           :role "button"}
-             (common/icon :users)
-             [:span "Invite Collaborators"]]
+            ;; TODO finish wiring up invite stuff -dk (12/09/14)
+            ;; [:a.menu-item {:on-click #(cast! :invite-menu-opened)
+            ;;                :role "button"}
+            ;;  (common/icon :users)
+            ;;  [:span "Invite Collaborators"]]
             [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
                            :role "button"}
              (common/icon :command)
@@ -138,7 +139,11 @@
            [:article.menu-view-frame
             [:h2 "What is Precursor?"]
             [:p "No-nonsense prototyping—perfect for wireframing, sketching, and brainstorming. "
-                [:a {:on-click #(cast! :invite-menu-opened)
+                ;; TODO finish wiring up invite stuff -dk (12/09/14)
+                ;; [:a {:on-click #(cast! :invite-menu-opened)
+                ;;      :role "button"}
+                ;;  "Invite"]
+                [:a {:on-click #(cast! :invite-link-clicked)
                      :role "button"
                      :title "In chat, type \"/invite their@email.com\""}
                  "Invite"]
