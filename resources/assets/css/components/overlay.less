@@ -47,7 +47,6 @@
   left: 0;
   width: 100%;
   height: 100%;
-  // background: fade(@gray_darker, 66);
   z-index: -1;
 }
 .app-overlay-menu {
@@ -61,15 +60,13 @@
 }
 .menu-header {
   .flex(0 0 @tile);
-  // .flexy(center, space-between);
   .flexy(center);
   position: relative;
-  border-bottom: 1px solid @gray_light; // TODO not sure if i want this
+  border-bottom: 1px solid @gray_light;
   a {
     .flexy(center, center);
     width: @tile;
     height: @tile;
-    // font-size: 1.5em;
     transition: @speed @bezier_fadein;
     &:not(:hover) {
       .icon_stroke(@gray_dark);
@@ -84,7 +81,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     margin: 0;
-    // padding-right: 1rem;
     padding: 0 1rem 0 @tile;
     overflow: hidden;
     &:not(:last-of-type) {
@@ -92,23 +88,6 @@
     }
   }
 }
-.menu-title {
-
-}
-// .menu-title {
-//   .flexy(center, center);
-//   position: absolute;
-//   top: 0;
-//   left: 0;
-//   width: 100%;
-//   height: 100%;
-//   margin: 0 auto;
-//   pointer-events: none;
-//   h4 {
-//     margin: 0;
-//     pointer-events: auto;
-//   }
-// }
 .menu-body {
   .flex(1 0 100%);
   .flexy();
@@ -121,7 +100,6 @@
   transition: @speed @bezier_transform;
   &:last-of-type {
     .flex(0 0 @menu_width);
-    // box-shadow: 1px 0 @gray_light;
   }
   article {
     padding: 2rem;
@@ -130,7 +108,6 @@
 .menu-view-frame {
   .flexy(column);
   .scrollbar_hide();
-  // width: @menu_width;
   min-width: @menu_width;
   height: ~"calc(100vh - @{tile})";
   overflow-y: auto;
@@ -145,8 +122,6 @@
 .menu-footer-link {
   margin: 0 2rem;
 }
-
-
 .menu-item {
   &[role="button"] {
     .flexy(center);
@@ -214,14 +189,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-
-
-
-
-
-
-
 .menu-prompt {
   .flex(1 0 100%);
   .flexy(column);
@@ -247,10 +214,6 @@
     }
   }
 }
-
-
-
-
 .shortcuts-item {
   .flexy(center);
   margin-bottom: 1em;
@@ -271,7 +234,6 @@
       position: absolute;
       right: 100%;
       width: 1em;
-      // text-align: center;
       margin-top: .25em;
     }
   }
@@ -279,17 +241,12 @@
 .shortcuts-result {
   margin: 0 1em;
 }
-
-
-
-
 .mixpanel-badge {
   margin: auto auto 0;
   svg {
     fill: @gray_mixpanel;
   }
 }
-
 .recent-time-group {
   text-transform: capitalize;
   margin-bottom: 2em;
@@ -297,13 +254,9 @@
     margin-top: 5em;
   }
 }
-.recent-doc {
-  // .flexy(flex-end, center, column);
-}
 .recent-doc-title {
   display: block;
   line-height: 1em;
-  // margin-bottom: 1.5rem;
   margin: 1em 0;
   a {
     &:not(:hover) {
@@ -316,7 +269,6 @@
   position: relative;
   width: 20rem;
   height: 15rem;
-  // margin-bottom: .5rem;
   border: 1px solid @gray_lighter;
   overflow: hidden;
   transition: @speed @bezier_fadein;
@@ -329,7 +281,7 @@
     opacity: .5;
   }
 }
-
+// TODO come back to cleanup loading styles here -dk (12/09/14)
 .loading {
   .loading-ellipses {
     display: block;
@@ -347,24 +299,20 @@
 img.loading-image {
   display: none;
 }
-
 .loading-ellipses {
   position: absolute;
   bottom: 0.5em;
   right: 1em;
   display: none;
 }
-
 .loading-ellipses i {
   opacity: 0;
   .animation(dot 1.3s 0.0s infinite);
 }
-
 .loading-ellipses i+i {
   opacity: 0;
   .animation(dot 1.3s 0.2s infinite);
 }
-
 .loading-ellipses i+i+i {
   opacity: 0;
   .animation(dot 1.3s 0.3s infinite);
