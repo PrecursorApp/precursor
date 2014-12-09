@@ -154,11 +154,12 @@
     width: 100%;
     height: @tile;
     color: @gray;
-    transition: @speed_fast @bezier_fadein;
+    transition: color @speed_fast @bezier_fadein, background @speed @bezier_fadein;
     &:hover {
       .icon_stroke(@gray_darkest);
       color: @gray_darkest;
       background: @gray_lightest;
+      transition-duration: @speed_fast, 0ms;
     }
     &:last-child {
       margin-top: auto;
