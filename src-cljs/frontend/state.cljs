@@ -108,7 +108,7 @@
 
 (def keyboard-shortcuts-path [:keyboard-shortcuts])
 
-(def overlay-info-opened-path [:aside-menu-opened])
+(def overlay-info-opened-path [:overlay-info-opened])
 
 (def overlay-username-opened-path [:overlay-username-opened])
 
