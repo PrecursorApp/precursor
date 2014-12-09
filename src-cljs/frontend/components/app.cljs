@@ -90,9 +90,10 @@
                                 (inc unread-chat-count))]
         (html
           [:a.chat-button {:on-click #(cast! :chat-toggled)
-                                :role "button"
-                                :data-left (when-not chat-button-learned? "Open Chat")
-                                :title (when chat-button-learned? "Chat")}
+                           :role "button"
+                           :data-left (when-not chat-button-learned? "Open Chat")
+                           :title (when chat-button-learned?
+                                    (if chat-opened? "Close Chat" "Open Chat"))}
            (when (and (not chat-opened?) (pos? unread-chat-count))
              [:i.unseen-eids (str unread-chat-count)])
            (common/icon :chat)])))))
