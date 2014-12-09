@@ -111,67 +111,6 @@
                           :title (when info-button-learned? "What is Precursor?")}
            (common/icon :info)])))))
 
-(defn main-actions [data owner]
-  (reify
-    om/IInitState
-    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
-    om/IDidMount
-    (did-mount [_]
-      (d/listen! (om/get-shared owner :db)
-                 (om/get-state owner :listener-key)
-                 (fn [tx-report]
-                   ;; TODO: better way to check if state changed
-                   (when-let [chat-datoms (seq (filter #(= :chat/body (:a %)) (:tx-data tx-report)))]
-                     (om/refresh! owner)))))
-    om/IWillUnmount
-    (will-unmount [_]
-      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! db]} (om/get-shared owner)
-            aside-opened? (get-in data state/aside-menu-opened-path)
-            last-read-time (get-in data (state/last-read-chat-time-path (:document/id data)))
-            unread-chat-count (chat-model/compute-unread-chat-count @db last-read-time)
-            unread-chat-count (if last-read-time
-                                unread-chat-count
-                                ;; add one for the dummy message
-                                (inc unread-chat-count))
-            info-button-learned? (get-in data state/info-button-learned-path)
-            menu-button-learned? (get-in data state/menu-button-learned-path)
-            newdoc-button-learned? (get-in data state/newdoc-button-learned-path)
-            your-docs-learned? (get-in data state/your-docs-learned-path)]
-        (html
-         [:div.main-actions
-         ; [:a.action-menu {:on-click #(cast! :main-menu-opened)
-         ;                  :role "button"
-         ;                  :data-right (when-not menu-button-learned? "Open Menu")
-         ;                  :title (when menu-button-learned? "Open Menu")}
-         ;  (common/icon :menu)]
-          ; [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
-          ;                  :class (when-not aside-opened? "closed")
-          ;                  :data-right (when-not menu-button-learned? "Open Menu")
-          ;                  :title (when menu-button-learned? (if aside-opened? "Close Menu" "Open Menu"))}
-          ;  (common/icon :menu)]
-          (when (and (not aside-opened?) (pos? unread-chat-count))
-            [:div.unseen-eids (str unread-chat-count)])
-          (om/build overlay/auth-link data)
-          [:a.action-newdoc {:on-click #(cast! :newdoc-button-clicked)
-                             :href "/"
-                             :target "_self"
-                             :data-right (when-not newdoc-button-learned? "New Document")
-                             :title (when newdoc-button-learned? "New Document")}
-           (common/icon :newdoc)]
-          [:a.action-your-docs {:on-click #(cast! :your-docs-opened)
-                                :data-right (when-not your-docs-learned? "Your Docs")
-                                :title (when your-docs-learned? "Your Docs")}
-           (common/icon :clock)]
-          [:a.action-info {:on-click #(cast! :overlay-info-toggled)
-                           :class (when-not info-button-learned? "hover")
-                           :data-right (when-not info-button-learned? "What is this thing?")
-                           :title (when info-button-learned? "What is this thing?")}
-           (common/icon :info)]])))))
-
-
 (defn app* [app owner]
   (reify
     om/IRender
@@ -187,14 +126,6 @@
                 (om/build chat-menu-button app)
                 (when-not (:cust app)
                   (om/build about-button (select-in app [state/info-button-learned-path])))
-                ; (om/build main-actions (select-in app [state/aside-menu-opened-path
-                ;                                        state/menu-button-learned-path
-                ;                                        state/info-button-learned-path
-                ;                                        state/newdoc-button-learned-path
-                ;                                        state/login-button-learned-path
-                ;                                        [:cust]
-                ;                                        [:document/id]
-                ;                                        (state/last-read-chat-time-path (:document/id app))]))
                 (when (and (:mouse app) (not= :touch (:type (:mouse app))))
                   [:div.mouse-stats
                    (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))])
