@@ -787,7 +787,7 @@
 (defmethod control-event :overlay-info-toggled
   [browser-state message _ state]
   (-> state
-      (overlay/replace-overlay :info)
+      (overlay/add-overlay :info)
       (assoc-in state/info-button-learned-path true)))
 
 (defmethod control-event :overlay-username-toggled

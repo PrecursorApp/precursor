@@ -74,6 +74,10 @@
         (html
           [:div.menu-view {:class (str "menu-view-" "start")}
            [:div.menu-view-frame
+            [:a.menu-item {:on-click #(cast! :overlay-info-toggled)
+                           :role "button"}
+             (common/icon :info)
+             [:span "About"]]
             [:a.menu-item {:on-click #(cast! :newdoc-button-clicked)
                            :href "/"
                            :target "_self"
