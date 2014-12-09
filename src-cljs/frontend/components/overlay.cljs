@@ -22,7 +22,7 @@
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            menu-button-learned? (get-in data state/menu-button-learned-path)] ; TODO figure out if this should be different because we used to call chat menu "the menu"
+            main-menu-learned? (get-in data state/main-menu-learned-path)]
         (html
           [:a.main-menu-button {:on-click (if (overlay-visible? data)
                                             #(cast! :overlay-menu-closed)
@@ -72,7 +72,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view {:class (str "menu-view-" "start")}
+          [:div.menu-view
            [:div.menu-view-frame
             [:a.menu-item {:on-click #(cast! :overlay-info-toggled)
                            :role "button"}
@@ -104,7 +104,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view {:class (str "menu-view-" "invite")}
+          [:div.menu-view
            [:article.menu-view-frame
             [:h2 "Show this idea to your team."]
             [:p "Send your team invites to come collaborate with you in this doc. Separate emails with a space or a comma."]
@@ -133,7 +133,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view {:class (str "menu-view-" "info")}
+          [:div.menu-view
            [:article.menu-view-frame
             [:h2 "What is Precursor?"]
             [:p "No-nonsense prototyping—perfect for wireframing, sketching, and brainstorming. "
@@ -174,7 +174,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view {:class (str "menu-view-" "shortcuts")}
+          [:div.menu-view
            [:article.menu-view-frame
             [:h2 "Move fast, make things."]
             [:div.shortcuts-item
@@ -209,7 +209,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.menu-view {:class (str "menu-view-" "username")}
+         [:div.menu-view
           [:article.menu-view-frame
            [:h2 "Let's change that name."]
            [:p "Sign up to change how your name appears in chat.
