@@ -93,9 +93,23 @@
                                 ; :data-left (when-not menu-button-learned? "Chat")
                                 ; :title (when menu-button-learned? "Chat")
                                 }
-           (common/icon :chat)
            (when (and (not aside-opened?) (pos? unread-chat-count))
-             [:i.unseen-eids (str unread-chat-count)])])))))
+             [:i.unseen-eids (str unread-chat-count)])
+           (common/icon :chat)])))))
+
+(defn about-button [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            info-button-learned? (get-in app state/info-button-learned-path)]
+        (html
+          [:a.about-info {:on-click #(cast! :overlay-info-toggled)
+                          :role "button"
+                          :class (when-not info-button-learned? "hover")
+                          :data-left (when-not info-button-learned? "What is Precursor?")
+                          :title (when info-button-learned? "What is Precursor?")}
+           (common/icon :info)])))))
 
 (defn main-actions [data owner]
   (reify
@@ -140,7 +154,7 @@
           ;  (common/icon :menu)]
           (when (and (not aside-opened?) (pos? unread-chat-count))
             [:div.unseen-eids (str unread-chat-count)])
-          (om/build auth-link data)
+          (om/build overlay/auth-link data)
           [:a.action-newdoc {:on-click #(cast! :newdoc-button-clicked)
                              :href "/"
                              :target "_self"
@@ -171,6 +185,8 @@
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
                 (om/build chat-menu-button app)
+                (when-not (:cust app)
+                  (om/build about-button app))
                 ; (om/build main-actions (select-in app [state/aside-menu-opened-path
                 ;                                        state/menu-button-learned-path
                 ;                                        state/info-button-learned-path

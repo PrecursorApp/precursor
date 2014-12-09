@@ -245,6 +245,22 @@
     }
   }
 }
+.about-info {
+  .flexy(center, center);
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: @tile;
+  height: @tile;
+  &:not(:hover) {
+    .icon_stroke(@gray);
+  }
+  i {
+    svg {
+      font-size: 1.5em;
+    }
+  }
+}
 .unseen-eids {
   .animation(in-bounce (@speed * 2));
   .user-select(none);
@@ -264,6 +280,11 @@
   box-shadow: 0 2px @gray_darker, 2px 0 @gray_darker, 2px 2px @gray_darker;
   pointer-events: none;
   transition: @speed @bezier_transform;
+  + i {
+    .chat-stroke {
+      stroke: lighten(#c0392b, 10);;
+    }
+  }
 }
 .action-info {
   margin-top: auto;

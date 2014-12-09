@@ -17,6 +17,17 @@
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
+(defn about-button [data owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            menu-button-learned? (get-in data state/menu-button-learned-path)] ; TODO figure out if this should be different because we used to call chat menu "the menu"
+        (html
+          [:a.about-cta {:on-click #(cast! :overlay-info-toggled)
+                         :role "button"}
+           "About"])))))
+
 (defn main-menu-button [data owner]
   (reify
     om/IRender
