@@ -1,6 +1,6 @@
-.app-aside {
+.app-chat {
   .flexy(column);
-  // width: @aside_width;
+  // width: @tile_chat;
   width: 20vw;
   min-width: 16rem;
   box-shadow: -1px 0 @gray_dark;
@@ -20,7 +20,7 @@
       margin: 0 .5em;
       transition-delay: @speed_slow;
     }
-    .aside-chat {
+    .chat-log {
       textarea {
         padding-left: 0;
         opacity: 0;
@@ -30,7 +30,7 @@
   }
   &.show-chat-on-mobile {
     .mq_640({
-      .aside-people {
+      .chat-people {
         margin-left: -100%;
       }
     });
@@ -40,25 +40,25 @@
     .flexy(column);
     width: 20vw;
     min-width: 16rem;
-    min-height: @aside_width;
+    min-height: @tile_chat;
     .mq_640({
       .flex(0 0 100%);
       transition: @speed;
     });
   }
 }
-.aside-switcher {
+.chat-switcher {
   display: none;
   position: absolute;
   color: @white;
   top: 0;
   left: 0;
-  width: @aside_width;
+  width: @tile_chat;
   .mq_640({
     .flexy();
   });
 }
-.aside-switcher-option {
+.chat-switcher-option {
   .flex(0 0 50%);
   .flexy(center, center);
   height: @tile;
@@ -67,7 +67,7 @@
     background: fade(@black, 13);
   }
 }
-.aside-people {
+.chat-people {
   overflow-y: auto;
   &::-webkit-scrollbar {
     width: 0; // we should calculate to get this effect in the dom
@@ -107,7 +107,7 @@
   }
 }
 
-.aside-chat {
+.chat-log {
   .justify-content(flex-end);
   form {
     .flex(0 0 auto);
@@ -137,12 +137,35 @@
   padding: 1em 0;
   overflow-y: auto;
   .mq_640({
-    width: @aside_width;
+    width: @tile_chat;
   });
   span {
     word-break: break-word;
   }
   .message {
     padding: 0 1em;
+  }
+}
+.chat-button {
+  .icon_stroke(@gray);
+  .flexy(center, center);
+  position: absolute;
+  font-size: 1.5em;
+  bottom: 0;
+  right: 0;
+  width: @tile;
+  height: @tile;
+  &:hover {
+    .icon_stroke(@white);
+    .unseen-eids {
+      background: lighten(#c0392b, 10);
+      color: @white;
+      border-color: lighten(#c0392b, 10);
+      height: 1.8em;
+      min-width: 1.8em;
+      padding: 2px 4px;
+      bottom: 3.1em;
+      right: 3.1em;
+    }
   }
 }

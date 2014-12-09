@@ -247,7 +247,7 @@
         (html
           [:div.app-overlay {:on-click #(cast! :overlay-closed)}
            [:div.app-overlay-background]
-            [:aside.app-overlay-menu {:on-click #(.stopPropagation %)}
+            [:div.app-overlay-menu {:on-click #(.stopPropagation %)}
              [:div.menu-header
               (for [component overlay-components]
                [:h4 {:title title} (:title component)])]

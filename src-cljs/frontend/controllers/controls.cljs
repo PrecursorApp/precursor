@@ -670,7 +670,7 @@
 
 (defmethod control-event :chat-db-updated
   [browser-state message _ state]
-  (if (get-in state state/aside-menu-opened-path)
+  (if (get-in state state/chat-opened-path)
     (let [db @(:db state)
           last-chat-time (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))]
       (assoc-in state (state/last-read-chat-time-path (:document/id state)) last-chat-time))
@@ -682,7 +682,7 @@
    (.isHidden (:visibility-monitor browser-state))
    (favicon/set-unread!)
 
-   (not (get-in current-state state/aside-menu-opened-path))
+   (not (get-in current-state state/chat-opened-path))
    (let [db @(:db current-state)
          last-time (get-in current-state (state/last-read-chat-time-path (:document/id current-state)))
          unread-chats? (pos? (chat-model/compute-unread-chat-count db last-time))]
@@ -692,7 +692,7 @@
 (defmethod post-control-event! :visibility-changed
   [browser-state message {:keys [hidden?]} previous-state current-state]
   (when (and (not hidden?)
-             (get-in current-state state/aside-menu-opened-path))
+             (get-in current-state state/chat-opened-path))
     (favicon/set-normal!)))
 
 (defmethod control-event :chat-body-changed
@@ -761,27 +761,29 @@
     (when-let [cmd (chat-cmd (get-in previous-state [:chat :body]))]
       (post-handle-cmd-chat current-state cmd (get-in previous-state [:chat :body])))))
 
-(defmethod control-event :aside-menu-toggled
+(defmethod control-event :chat-toggled
   [browser-state message _ state]
-  (let [aside-open? (not (get-in state state/aside-menu-opened-path))
+  (let [chat-open? (not (get-in state state/chat-opened-path))
         db @(:db state)
         last-chat-time (or (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))
                            (js/Date. 0))]
     (-> state
-        (assoc-in state/aside-menu-opened-path aside-open?)
-        (assoc-in state/menu-button-learned-path true)
+        (assoc-in state/chat-opened-path chat-open?)
+        (assoc-in state/chat-button-learned-path true)
         (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time)
         (assoc-in [:drawing :in-progress?] false)
-        (assoc-in [:camera :offset-x] (if aside-open?
-                                        (get-in state state/aside-width-path)
-                                        0)))))
+        ;; TODO: not sure if i should delete this or not since we dont offset for chat anymore -dk (12/09/14)
+        ;; (assoc-in [:camera :offset-x] (if aside-open?
+        ;;                                 (get-in state state/aside-width-path)
+        ;;                                 0))
+        )))
 
-(defmethod post-control-event! :aside-menu-toggled
+(defmethod post-control-event! :chat-toggled
   [browser-state message _ previous-state current-state]
-  (if (get-in current-state state/aside-menu-opened-path)
-    (do (analytics/track "Aside menu opened")
+  (if (get-in current-state state/chat-opened-path)
+    (do (analytics/track "Chat opened")
         (favicon/set-normal!))
-    (analytics/track "Aside menu closed")))
+    (analytics/track "Chat closed")))
 
 (defmethod control-event :overlay-info-toggled
   [browser-state message _ state]
@@ -821,8 +823,9 @@
   [browser-state message _ state]
    (-> state
      (overlay/clear-overlays)
-     (assoc-in state/aside-menu-opened-path true)
-     (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
+     (assoc-in state/chat-opened-path true)
+     ;; TODO: not sure if i should delete this or not since we dont offset for chat anymore -dk (12/09/14)
+     ;; (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
      (assoc-in state/chat-mobile-opened-path true)
      (assoc-in [:chat :body] "@prcrsr ")))
 
@@ -834,8 +837,9 @@
   [browser-state message _ state]
    (-> state
      (overlay/clear-overlays)
-     (assoc-in state/aside-menu-opened-path true)
-     (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
+     (assoc-in state/chat-opened-path true)
+     ;; TODO: not sure if i should delete this or not since we dont offset for chat anymore -dk (12/09/14)
+     ;; (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
      (assoc-in state/chat-mobile-opened-path true)
      (assoc-in [:chat :body] "/invite ")))
 
@@ -843,7 +847,7 @@
   [browser-state message _ previous-state current-state]
   (.focus (sel1 (:container browser-state) "#chat-box")))
 
-(defmethod control-event :aside-user-clicked
+(defmethod control-event :chat-user-clicked
   [browser-state message {:keys [id-str]} state]
    (-> state
      (assoc-in state/chat-mobile-opened-path true)
@@ -853,7 +857,7 @@
                                        (str s (when (not= " " (last s)) " ")))
                                      "@" id-str " ")))))
 
-(defmethod post-control-event! :aside-user-clicked
+(defmethod post-control-event! :chat-user-clicked
   [browser-state message _ previous-state current-state]
   (.focus (sel1 (:container browser-state) "#chat-box")))
 

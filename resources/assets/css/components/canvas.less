@@ -222,29 +222,6 @@
     }
   }
 }
-.chat-menu-button {
-  .icon_stroke(@gray);
-  .flexy(center, center);
-  position: absolute;
-  font-size: 1.5em;
-  bottom: 0;
-  right: 0;
-  width: @tile;
-  height: @tile;
-  &:hover {
-    .icon_stroke(@white);
-    .unseen-eids {
-      background: lighten(#c0392b, 10);
-      color: @white;
-      border-color: lighten(#c0392b, 10);
-      height: 1.8em;
-      min-width: 1.8em;
-      padding: 2px 4px;
-      bottom: 3.1em;
-      right: 3.1em;
-    }
-  }
-}
 .about-info {
   .flexy(center, center);
   position: absolute;
@@ -357,7 +334,7 @@
 //_____________________________________//
 .layer-properties {
   .flexy(column);
-  width: @aside_width;
+  width: @tile_chat;
   padding-top: 5px; // keeps adaptive placeholder from getting cut off
   .layer-property-id {
     background: @app_background;

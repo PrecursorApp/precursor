@@ -7,7 +7,7 @@
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]
-            [frontend.components.aside :as aside]
+            [frontend.components.chat :as chat]
             [frontend.components.inspector :as inspector]
             [frontend.components.key-queue :as keyq]
             [frontend.components.canvas :as canvas]
@@ -62,7 +62,7 @@
                       {:opts {:keymap keymap
                               :error-ch (get-in app [:comms :errors])}})]))))))
 
-(defn chat-menu-button [app owner]
+(defn chat-button [app owner]
   (reify
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -80,7 +80,8 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            aside-opened? (get-in app state/aside-menu-opened-path)
+            chat-opened? (get-in app state/chat-opened-path)
+            chat-button-learned? (get-in app state/chat-button-learned-path)
             last-read-time (get-in app (state/last-read-chat-time-path (:document/id app)))
             unread-chat-count (chat-model/compute-unread-chat-count @db last-read-time)
             unread-chat-count (if last-read-time
@@ -88,12 +89,11 @@
                                 ;; add one for the dummy message
                                 (inc unread-chat-count))]
         (html
-          [:a.chat-menu-button {:on-click #(cast! :aside-menu-toggled)
+          [:a.chat-button {:on-click #(cast! :chat-toggled)
                                 :role "button"
-                                ; :data-left (when-not menu-button-learned? "Chat")
-                                ; :title (when menu-button-learned? "Chat")
-                                }
-           (when (and (not aside-opened?) (pos? unread-chat-count))
+                                :data-left (when-not chat-button-learned? "Open Chat")
+                                :title (when chat-button-learned? "Chat")}
+           (when (and (not chat-opened?) (pos? unread-chat-count))
              [:i.unseen-eids (str unread-chat-count)])
            (common/icon :chat)])))))
 
@@ -116,14 +116,14 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
-            aside-opened? (get-in app state/aside-menu-opened-path)
+            chat-opened? (get-in app state/chat-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div.app-main
                [:div.app-canvas {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
-                (om/build chat-menu-button app)
+                (om/build chat-button app)
                 (when-not (:cust app)
                   (om/build about-button (select-in app [state/info-button-learned-path])))
                 (when (and (:mouse app) (not= :touch (:type (:mouse app))))
@@ -145,11 +145,11 @@
                    [:div.radial-menu-nub]])
                 (when (and (not right-click-learned?) (:mouse app))
                   [:div.radial-tip {:style {:top  (+ (get-in app [:mouse :y]) 16)
-                                            :left (+ (get-in app [:mouse :x]) (if aside-opened? (- 16 256) 16) )}}
+                                            :left (+ (get-in app [:mouse :x]) (if chat-opened? (- 16 256) 16) )}}
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
                      "Try right-click")])]
-               (om/build aside/menu app)])))))
+               (om/build chat/menu app)])))))
 
 (defn app [app owner]
   (reify

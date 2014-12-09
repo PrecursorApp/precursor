@@ -1,4 +1,4 @@
-(ns frontend.components.aside
+(ns frontend.components.chat
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [datascript :as d]
@@ -26,7 +26,7 @@
                                                          (count matches))
                                                [(last parts)]))))))
 
-(defn chat-aside [{:keys [db chat-body client-uuid aside-menu-opened chat-bot]} owner]
+(defn chat [{:keys [db chat-body client-uuid chat-opened chat-bot]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -64,7 +64,7 @@
                                     "Welcome to Precursor! "
                                     "Create fast prototypes and share your url to collaborate. "
                                     "Chat "
-                                    [:a {:on-click #(cast! :aside-user-clicked {:id-str (str/lower-case chat-bot)})
+                                    [:a {:on-click #(cast! :chat-user-clicked {:id-str (str/lower-case chat-bot)})
                                          :role "button"}
                                      (str "@" (str/lower-case chat-bot))]
                                     " for help."]
@@ -72,7 +72,7 @@
                         :session/uuid chat-bot
                         :server/timestamp (js/Date. 0)}]
         (html
-         [:section.aside-chat
+         [:section.chat-log
           [:div.chat-messages {:ref "chat-messages"}
            (for [chat (sort-by :server/timestamp (concat chats [dummy-chat]))
                  :let [id (apply str (take 6 (str (:session/uuid chat))))
@@ -119,21 +119,21 @@
       (let [{:keys [cast!]} (om/get-shared owner)
             controls-ch (om/get-shared owner [:comms :controls])
             client-id (str (:client-uuid app))
-            aside-opened? (get-in app state/aside-menu-opened-path)
+            chat-opened? (get-in app state/chat-opened-path)
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])
             can-edit? (not (empty? (:cust app)))
             change-username-learned? (get-in app state/change-username-learned-path)]
         (html
-         [:aside.app-aside {:class (concat
-                                    (when-not aside-opened? ["closed"])
+         [:div.app-chat {:class (concat
+                                    (when-not chat-opened? ["closed"])
                                     (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))}
-          [:button.aside-switcher {:on-click #(cast! :chat-mobile-toggled)
+          [:button.chat-switcher {:on-click #(cast! :chat-mobile-toggled)
                                    ;; :class (if chat-mobile-open? "chat-mobile" "people-mobile")
                                    }
-           [:span.aside-switcher-option {:class (when-not chat-mobile-open? "toggled")} "People"]
-           [:span.aside-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
-          [:section.aside-people
+           [:span.chat-switcher-option {:class (when-not chat-mobile-open? "toggled")} "People"]
+           [:span.chat-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
+          [:section.chat-people
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
              [:a.people-you {:key client-id
                              :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
@@ -166,13 +166,13 @@
              [:a {:title "Ping this person in chat."
                   :role "button"
                   :key id
-                  :on-click #(cast! :aside-user-clicked {:id-str id-str})}
+                  :on-click #(cast! :chat-user-clicked {:id-str id-str})}
               (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
               [:span id-str]])]
           ;; XXX better name here
-          (om/build chat-aside {:db (:db app)
-                                :document/id (:document/id app)
-                                :client-uuid (:client-uuid app)
-                                :chat-body (get-in app [:chat :body])
-                                :chat-bot (get-in app (state/doc-chat-bot-path document-id))
-                                :aside-menu-opened (get-in app state/aside-menu-opened-path)})])))))
+          (om/build chat {:db (:db app)
+                          :document/id (:document/id app)
+                          :client-uuid (:client-uuid app)
+                          :chat-body (get-in app [:chat :body])
+                          :chat-bot (get-in app (state/doc-chat-bot-path document-id))
+                          :chat-opened (get-in app state/chat-opened-path)})])))))
