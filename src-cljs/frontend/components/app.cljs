@@ -62,38 +62,6 @@
                       {:opts {:keymap keymap
                               :error-ch (get-in app [:comms :errors])}})]))))))
 
-(defn auth-link [data owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            login-button-learned? (get-in data state/login-button-learned-path)]
-        (html
-         (if (:cust data)
-           [:form {:method "post" :action "/logout" :ref "logout-form"}
-            [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
-            [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
-                                                                   (.-href)
-                                                                   (url/url)
-                                                                   :path)}]
-            [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
-                               :title "Logout"}
-             (common/icon :logout)]]
-           [:a.action-login {:href (auth/auth-url)
-                             :data-right (when-not login-button-learned? "Sign Up")
-                             :title (when login-button-learned? "Log In")
-                             :on-click #(do
-                                          (.preventDefault %)
-                                          (cast! :login-button-clicked)
-                                          (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                               :event "Signup Clicked"}))}
-            (common/icon :login)]))))))
-
-
-
-
-
-
 (defn chat-menu-button [app owner]
   (reify
     om/IInitState
@@ -118,9 +86,7 @@
             unread-chat-count (if last-read-time
                                 unread-chat-count
                                 ;; add one for the dummy message
-                                (inc unread-chat-count))
-            ; overlay-component (get overlay-components (or (:overlay app) :info))
-            ]
+                                (inc unread-chat-count))]
         (html
           [:a.chat-menu-button {:on-click #(cast! :aside-menu-toggled)
                                 :role "button"
@@ -130,10 +96,6 @@
            (common/icon :chat)
            (when (and (not aside-opened?) (pos? unread-chat-count))
              [:i.unseen-eids (str unread-chat-count)])])))))
-
-
-
-
 
 (defn main-actions [data owner]
   (reify

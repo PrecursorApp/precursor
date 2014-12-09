@@ -121,7 +121,7 @@
 
 (defmethod handle-keyboard-shortcut :shortcuts-menu
   [state shortcut-name]
-  (overlay/add-overlay state :shortcuts))
+  (overlay/replace-overlay state :shortcuts))
 
 (defmethod handle-keyboard-shortcut :escape-interaction
   [state shortcut-name]

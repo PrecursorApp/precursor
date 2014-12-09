@@ -109,7 +109,7 @@
 .mouse-stats {
   .user-select(none);
   position: absolute;
-  color: @gray;
+  color: fade(@white, 21);
   font-family: @font_mono;
   font-size: 0.625rem;
   line-height: 1em;
@@ -284,6 +284,7 @@
   position: fixed;
   width: (@radial_menu_size * 1.5);
   height: (@radial_menu_size * 1.5);
+  z-index: @zindex_radial_menu;
 }
 .radial-button {
   fill: @gray_darker;

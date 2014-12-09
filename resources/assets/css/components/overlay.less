@@ -151,6 +151,7 @@
   &[role="button"] {
     .flexy(center);
     .icon_stroke(@gray);
+    width: 100%;
     height: @tile;
     color: @gray;
     transition: @speed_fast @bezier_fadein;
@@ -159,7 +160,7 @@
       color: @gray_darkest;
       background: @gray_lightest;
     }
-    &:last-of-type {
+    &:last-child {
       margin-top: auto;
     }
     i {
@@ -172,6 +173,41 @@
 }
 .menu-invite-form {
   .flexy(column);
+  margin-bottom: 1em;
+}
+.invite-recipient {
+  .flexy();
+  &:hover {
+    a {
+      opacity: 1;
+    }
+    ~ .invite-recipient {
+      a {
+        opacity: 0;
+      }
+    }
+  }
+  // &:last-of-type {
+  //   a {
+  //     opacity: 1;
+  //   }
+  // }
+  a {
+    opacity: 0;
+    margin-left: .5em;
+    &:not(:hover) {
+      &:after {
+        content: "?";
+        pointer-events: none;
+      }
+    }
+  }
+}
+.invite-recipient-email {
+  max-width: 80%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 
@@ -194,7 +230,7 @@
     padding-bottom: @tile;
   }
 }
-.prompt-button {
+.menu-button {
   &[role="button"] {
     .flexy(center, center);
     height: @tile;
@@ -243,7 +279,7 @@
 
 
 .mixpanel-badge {
-  margin: 0 1em 0 auto;
+  margin: auto auto 0;
   svg {
     fill: @gray_mixpanel;
   }
