@@ -18,6 +18,7 @@
                                         :menu-button-learned false
                                         :info-button-learned false
                                         :newdoc-button-learned false
+                                        :main-menu-learned false
                                         :login-button-learned false}}
    :keyboard-shortcuts {:select #{"s"}
                         :circle #{"c"}

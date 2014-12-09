@@ -230,6 +230,6 @@
             (om/build overlay/overlay app))
           (om/build app* app)
           (dom/div #js {:className "app-main-outline"})
-          (om/build overlay/main-menu-button (select-in app [state/overlays-path state/menu-button-learned-path])))
+          (om/build overlay/main-menu-button (select-in app [state/overlays-path state/main-menu-learned-path])))
 
         (html [:div#app])))))

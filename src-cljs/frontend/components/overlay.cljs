@@ -34,8 +34,9 @@
                                            (if (< 1 (overlay-count data))
                                              ["back"]
                                              ["close"])))
-                                :data-right (when-not menu-button-learned? "Open Menu")
-                                :title (when menu-button-learned? "Open Menu")}
+                                :data-right (when-not (utils/inspect main-menu-learned?) "Open Menu")
+                                :title (when main-menu-learned?
+                                         (if (overlay-visible? data) "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
 
 (defn auth-link [app owner]
