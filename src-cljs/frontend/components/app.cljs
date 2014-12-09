@@ -97,12 +97,12 @@
              [:i.unseen-eids (str unread-chat-count)])
            (common/icon :chat)])))))
 
-(defn about-button [app owner]
+(defn about-button [data owner]
   (reify
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            info-button-learned? (get-in app state/info-button-learned-path)]
+            info-button-learned? (get-in data state/info-button-learned-path)]
         (html
           [:a.about-info {:on-click #(cast! :overlay-info-toggled)
                           :role "button"
@@ -186,7 +186,7 @@
                 (om/build canvas/svg-canvas app)
                 (om/build chat-menu-button app)
                 (when-not (:cust app)
-                  (om/build about-button app))
+                  (om/build about-button (select-in app [state/info-button-learned-path])))
                 ; (om/build main-actions (select-in app [state/aside-menu-opened-path
                 ;                                        state/menu-button-learned-path
                 ;                                        state/info-button-learned-path
