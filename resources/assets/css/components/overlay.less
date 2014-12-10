@@ -1,5 +1,7 @@
 .app-overlay {
   .flexy(center, center);
+  .icon_stroke(@gray_dark);
+  .icon_fill(@gray_dark);
   position: absolute;
   top: 0;
   left: 0;
@@ -45,29 +47,25 @@
   left: 0;
   width: 100%;
   height: 100%;
-  // background: fade(@gray_darker, 66);
   z-index: -1;
 }
 .app-overlay-menu {
   .flexy(column);
-  .animation(in-fade-right @speed_fast);
+  .animation(in-fade-left @speed_fast);
   .animation-bezier(@bezier_transform);
   width: @menu_width;
   height: 100%;
-  margin-left: auto;
-  background: @white;
+  margin-right: auto;
+  background: @overlay_background;
 }
 .menu-header {
   .flex(0 0 @tile);
-  .flexy(center, space-between);
-  position: relative;
-  margin-bottom: 2em;
-  border-bottom: 1px solid @gray_lighter; // TODO not sure if i want this
+  .flexy(center);
+  border-bottom: 1px solid @gray_light;
   a {
     .flexy(center, center);
     width: @tile;
     height: @tile;
-    font-size: 1.5em;
     transition: @speed @bezier_fadein;
     &:not(:hover) {
       .icon_stroke(@gray_dark);
@@ -76,36 +74,56 @@
       margin-left: auto;
     }
   }
-}
-.menu-title {
-  .flexy(center, center);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0 auto;
-  pointer-events: none;
-  h3 {
+  h4 {
+    .flex(0 1 100%);
+    .animation(in-fade-top (@speed * 3));
+    text-overflow: ellipsis;
+    white-space: nowrap;
     margin: 0;
-    pointer-events: auto;
+    padding: 0 1rem 0 @tile;
+    overflow: hidden;
+    &:not(:last-of-type) {
+      display: none;
+    }
   }
 }
 .menu-body {
   .flex(1 0 100%);
   .flexy();
+  overflow-y: auto;
 }
 .menu-view {
   .flex(0 0 0%);
+  .flexy(flex-start, flex-end);
   overflow: hidden;
   transition: @speed @bezier_transform;
   &:last-of-type {
     .flex(0 0 @menu_width);
-    // box-shadow: 1px 0 @gray_light;
+    .mq_640({
+      .flex(0 0 100vw);
+    });
+  }
+  article {
+    padding: 2rem;
+  }
+  footer {
+    margin-top: auto;
+    padding: 2rem;
   }
 }
 .menu-view-frame {
-  width: @menu_width;
+  .flexy(column);
+  .scrollbar_hide();
+  min-width: @menu_width;
+  height: ~"calc(100% - @{tile})";
+  overflow-y: auto;
+  .mq_640({
+    width: 100vw;
+    min-width: 100vw;
+  });
+  > .menu-item {
+    .flex(0 0 @tile);
+  }
 }
 .menu-footer {
   .flex(0 0 @tile);
@@ -117,14 +135,72 @@
 .menu-footer-link {
   margin: 0 2rem;
 }
-
-
-
-
-
-
-
-
+.menu-item {
+  &[role="button"] {
+    .flexy(center);
+    .icon_stroke(@gray);
+    width: 100%;
+    color: @gray;
+    transition: color @speed_fast @bezier_fadein, background @speed @bezier_fadein;
+    &:hover {
+      .icon_stroke(@gray_darkest);
+      color: @gray_darkest;
+      background: @gray_lightest;
+      transition-duration: @speed_fast, 0ms;
+    }
+    &:last-child {
+      margin-top: auto;
+    }
+    i {
+      padding: 1.5rem;
+    }
+    path {
+      transition: @speed_fast @bezier_fadein;
+    }
+  }
+}
+.menu-invite-form {
+  .flexy(column);
+  padding-bottom: 1em;
+  margin-bottom: auto;
+}
+.invite-recipient {
+  .flexy();
+  &:hover {
+    a {
+      opacity: 1;
+    }
+    ~ .invite-recipient {
+      a {
+        opacity: 0;
+      }
+    }
+  }
+  &:not(:hover) {
+    color: @gray_light;
+  }
+  &:last-of-type {
+    a {
+      opacity: 1;
+    }
+  }
+  a {
+    opacity: 0;
+    margin-left: .5em;
+    &:not(:hover) {
+      &:after {
+        content: "?";
+        pointer-events: none;
+      }
+    }
+  }
+}
+.invite-recipient-email {
+  max-width: 80%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .menu-prompt {
   .flex(1 0 100%);
   .flexy(column);
@@ -138,10 +214,11 @@
     padding-bottom: @tile;
   }
 }
-.prompt-button {
+.menu-button {
   &[role="button"] {
     .flexy(center, center);
     height: @tile;
+    margin-bottom: @tile;
     transition: @speed_fast @bezier_fadein;
     border: 1px solid @font_color;
     &:hover {
@@ -150,14 +227,9 @@
     }
   }
 }
-
-
-
-
 .shortcuts-item {
   .flexy(center);
-  margin: 1em;
-  margin: 1em 0; // TODO remove when making shortcuts a menu view instead of prompt
+  margin-bottom: 1em;
 }
 .shortcuts-key {
   .flexy(center, center);
@@ -175,7 +247,6 @@
       position: absolute;
       right: 100%;
       width: 1em;
-      // text-align: center;
       margin-top: .25em;
     }
   }
@@ -183,34 +254,38 @@
 .shortcuts-result {
   margin: 0 1em;
 }
-
-
-
-
 .mixpanel-badge {
-  margin: 0 1em 0 auto;
+  margin: auto auto 0;
+  .mq_640({
+    display: none;
+  });
   svg {
     fill: @gray_mixpanel;
   }
 }
-
 .recent-time-group {
   text-transform: capitalize;
   margin-bottom: 2em;
-}
-.recent-doc {
-  .flexy(flex-end, center, column);
+  &:not(:first-child) {
+    margin-top: 5em;
+  }
 }
 .recent-doc-title {
-  line-height: 1rem;
-  margin-bottom: 1.5rem;
+  display: block;
+  line-height: 1em;
+  margin: 1em 0;
+  a {
+    &:not(:hover) {
+      color: @gray;
+    }
+  }
 }
 .recent-doc-thumb {
   display: block;
   position: relative;
   width: 20rem;
+  max-width: 100%;
   height: 15rem;
-  margin-bottom: .5rem;
   border: 1px solid @gray_lighter;
   overflow: hidden;
   transition: @speed @bezier_fadein;
@@ -223,7 +298,7 @@
     opacity: .5;
   }
 }
-
+// TODO come back to cleanup loading styles here -dk (12/09/14)
 .loading {
   .loading-ellipses {
     display: block;
@@ -241,24 +316,20 @@
 img.loading-image {
   display: none;
 }
-
 .loading-ellipses {
   position: absolute;
   bottom: 0.5em;
   right: 1em;
   display: none;
 }
-
 .loading-ellipses i {
   opacity: 0;
   .animation(dot 1.3s 0.0s infinite);
 }
-
 .loading-ellipses i+i {
   opacity: 0;
   .animation(dot 1.3s 0.2s infinite);
 }
-
 .loading-ellipses i+i+i {
   opacity: 0;
   .animation(dot 1.3s 0.3s infinite);

@@ -12,12 +12,14 @@
    :changelog       nil
    :environment     "development"
    :settings        {:browser-settings {:current-tool :pen
-                                        :aside-menu-opened false
+                                        :chat-opened false
                                         :chat-mobile-opened true
                                         :right-click-learned false
                                         :menu-button-learned false
                                         :info-button-learned false
                                         :newdoc-button-learned false
+                                        :main-menu-learned false
+                                        :chat-button-learned false
                                         :login-button-learned false}}
    :keyboard-shortcuts {:select #{"s"}
                         :circle #{"c"}
@@ -34,8 +36,6 @@
    :entity-ids      #{}
    :document/id     17592186046465
    :subscribers     {}
-   ;; This isn't passed to the components, it can be accessed though om/get-shared :_app-state-do-not-use
-   :aside-width     256
    :inputs          nil})
 
 (def user-path [:current-user])
@@ -74,7 +74,7 @@
 
 (def current-tool-path (conj browser-settings-path :current-tool))
 
-(def aside-menu-opened-path (conj browser-settings-path :aside-menu-opened))
+(def chat-opened-path (conj browser-settings-path :chat-opened))
 
 (def chat-mobile-opened-path (conj browser-settings-path :chat-mobile-toggled))
 
@@ -90,6 +90,14 @@
 
 (def your-docs-learned-path (conj browser-settings-path :your-docs-learned))
 
+(def main-menu-learned-path (conj browser-settings-path :main-menu-learned))
+
+(def invite-menu-learned-path (conj browser-settings-path :invite-menu-learned))
+
+(def shortcuts-menu-learned-path (conj browser-settings-path :shortcuts-menu-learned))
+
+(def chat-button-learned-path (conj browser-settings-path :chat-button-learned))
+
 (defn doc-settings-path [doc-id]
   (conj browser-settings-path :document-settings doc-id))
 
@@ -101,12 +109,10 @@
 
 (def keyboard-shortcuts-path [:keyboard-shortcuts])
 
-(def overlay-info-opened-path [:aside-menu-opened])
+(def overlay-info-opened-path [:overlay-info-opened])
 
 (def overlay-username-opened-path [:overlay-username-opened])
 
 (def overlay-shortcuts-opened-path [:overlay-shortcuts-opened])
-
-(def aside-width-path [:aside-width])
 
 (def overlays-path [:overlays])

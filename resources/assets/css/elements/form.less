@@ -65,6 +65,20 @@ input {
           }
         }
       }
+      &:valid {
+        &:not(:focus) {
+          + label {
+            &[data-placeholder] {
+              &[data-placeholder-forgot] {
+                &:before {
+                  color: @gray_dark;
+                  content: attr(data-placeholder-forgot);
+                }
+              }
+            }
+          }
+        }
+      }
     }
     + label {
       &[data-placeholder] {
@@ -85,6 +99,25 @@ input {
           background-size: 100% 0;
           background-repeat: no-repeat;
           background-position: center;
+        }
+      }
+    }
+  }
+}
+.app-overlay {
+  input {
+    &[data-adaptive] {
+      &[required] {
+        &:not(:focus) {
+          border-color: @gray_light;
+        }
+      }
+      + label {
+        &[data-placeholder] {
+          &:before {
+            color: @gray_light;
+            background-image: linear-gradient(to bottom, @overlay_background, @overlay_background);
+          }
         }
       }
     }
