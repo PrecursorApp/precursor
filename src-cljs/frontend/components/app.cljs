@@ -147,7 +147,7 @@
                    [:div.radial-menu-nub]])
                 (when (and (not right-click-learned?) (:mouse app))
                   [:div.radial-tip {:style {:top  (+ (get-in app [:mouse :y]) 16)
-                                            :left (+ (get-in app [:mouse :x]) (if chat-opened? (- 16 256) 16) )}}
+                                            :left (+ (get-in app [:mouse :x]) 16)}}
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
                      "Try right-click")])]
