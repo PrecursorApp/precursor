@@ -21,6 +21,7 @@
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
             [pc.models.cust :as cust]
+            [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
             [pc.profile :as profile]
             [pc.less :as less]
@@ -72,11 +73,9 @@
                                       :uuid (:cust/uuid cust)
                                       :name (:cust/name cust)}}))))
    (GET "/" req
-        (let [[document-id] (pcd/generate-eids (pcd/conn) 1)
-              cust-uuid (get-in req [:auth :cust :cust/uuid])]
-          @(d/transact (pcd/conn) [(merge {:db/id document-id :document/name "Untitled"}
-                                          (when cust-uuid {:document/creator cust-uuid}))])
-          (redirect (str "/document/" document-id))))
+        (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+              doc (doc-model/create-public-doc! (when cust-uuid {:document/creator cust-uuid}))]
+          (redirect (str "/document/" (:db/id doc)))))
 
    ;; Group newcomers into buckets with bucket-count users in each bucket.
    (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]
@@ -91,10 +90,9 @@
                                                           (< 0 (count subs) bucket-count)))
                                                    @sente/document-subs)))]
             (redirect (str "/document/" doc-id))
-            (let [[doc-id] (pcd/generate-eids (pcd/conn) 1)]
-              @(d/transact (pcd/conn) [{:db/id doc-id :document/name "Untitled"}])
-              (swap! bucket-doc-ids conj doc-id)
-              (redirect (str "/document/" doc-id))))))
+            (let [doc (doc-model/create-public-doc! {})]
+              (swap! bucket-doc-ids conj (:db/id doc))
+              (redirect (str "/document/" (:db/id doc)))))))
 
    (GET "/interesting" []
         (content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))

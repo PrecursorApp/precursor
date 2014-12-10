@@ -12,6 +12,19 @@
          (d/entity db-after)
          pcd/touch+)))
 
+(def default-name "Untitled")
+
+(defn create-public-doc! [doc-attrs]
+  (create! (merge {:dummy :dummy/dummy
+                   :document/name "Untitled"
+                   :document/privacy :document.privacy/public}
+                  doc-attrs)))
+
+
+;; TODO: should this check that it's really a document?
+(defn find-by-id [db id]
+  (d/entity db id))
+
 (defn find-created-by-cust
   "Returns document entity ids for every doc created by the given cust"
   [db cust]
