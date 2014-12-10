@@ -1,14 +1,14 @@
 .app-canvas {
   .flex(1);
   position: relative;
-  &:not(:hover) {
-    .radial-tip {
-      display: none;
-    }
-  }
 }
 #svg-canvas {
   .user-select(none);
+  &:not(:hover) {
+    ~ .radial-tip {
+      display: none;
+    }
+  }
 }
 #grid,
 #small-grid {
@@ -219,8 +219,8 @@
 .about-info {
   .flexy(center, center);
   position: absolute;
-  top: 0;
-  right: 0;
+  top: @tile;
+  left: 0;
   width: @tile;
   height: @tile;
   &:not(:hover) {

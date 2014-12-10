@@ -109,7 +109,7 @@
           [:a.about-info {:on-click #(cast! :overlay-info-toggled)
                           :role "button"
                           :class (when-not info-button-learned? "hover")
-                          :data-left (when-not info-button-learned? "What is Precursor?")
+                          :data-right (when-not info-button-learned? "What is Precursor?")
                           :title (when info-button-learned? "What is Precursor?")}
            (common/icon :info)])))))
 
