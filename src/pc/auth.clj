@@ -1,6 +1,7 @@
 (ns pc.auth
   (:require [cheshire.core :as json]
             [clojure.tools.logging :as log]
+            [crypto.equality :as crypto]
             [datomic.api :as d]
             [org.httpkit.client :as http]
             [pc.analytics :as analytics]
@@ -68,3 +69,13 @@
                  :where [[?t :cust/email ?e]
                          [?t :cust/uuid ?u]]}
                db prcrsr-bot-email)))
+
+(defn has-document-permission? [doc auth]
+  (or (= :document.privacy/public (:document/privacy doc))
+      (and (get-in auth [:cust :cust/uuid])
+           (:document/creator doc)
+           (crypto/eq? (str (get-in auth [:cust :cust/uuid]))
+                       (str (:document/creator doc))))))
+
+(defn logged-in? [ring-req]
+  (seq (get-in ring-req [:auth :cust])))

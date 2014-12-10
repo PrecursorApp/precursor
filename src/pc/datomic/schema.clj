@@ -130,6 +130,15 @@
               :db/index true
               :db/doc "cust/uuid of the cust that created the document")
 
+   (attribute :document/privacy
+              :db.type/ref)
+   (enum :document.privacy/public)
+   (enum :document.privacy/private)
+
+   (attribute :document.collaborators
+              :db.type/uuid
+              :db/doc "cust/uuid of any users that were invited")
+
    (attribute :dummy
               :db.type/ref)
    (enum :dummy/dummy)

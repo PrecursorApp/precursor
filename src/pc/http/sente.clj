@@ -12,6 +12,8 @@
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
             [pc.datomic :as pcd]
+            [pc.utils :as utils]
+            [slingshot.slingshot :refer (try+ throw+)]
             [taoensso.sente :as sente])
   (:import java.util.UUID))
 
@@ -47,6 +49,26 @@
   "Get the client's user-id from the client-uuid"
   [client-uuid]
   (str/replace client-uuid #"-[^-]+$" ""))
+
+(defn check-document-access-from-auth [doc-id req]
+  (let [doc (doc-model/find-by-id (:db req) doc-id)]
+    (when-not (auth/has-document-permission? doc (-> req :ring-req :auth))
+      (if (auth/logged-in? (:ring-req req))
+        (throw+ {:status 401
+                 :error-msg "This document is private. Please log in to access it."
+                 :error-key :document-requires-login})
+        (throw+ {:status 403
+                 :error-msg "This document is private. Please request access."
+                 :error-key :document-requires-invite})))))
+
+;; TODO: make sure to kick the user out of subscribed if he loses access
+(defn check-subscribed [doc-id req]
+  (get-in @document-subs [doc-id (-> req :client-uuid client-uuid->uuid)]))
+
+;; TODO: this should take an access level at some point
+(defn check-document-access [doc-id req]
+  (or (check-subscribed doc-id req)
+      (check-document-access-from-auth doc-id req)))
 
 (defmulti ws-handler ws-handler-dispatch-fn)
 
@@ -84,6 +106,7 @@
   (close-connection client-uuid))
 
 (defmethod ws-handler :frontend/unsubscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document-id) req)
   (let [document-id (-> ?data :document-id)
         cid (client-uuid->uuid client-uuid)]
     (log/infof "unsubscribing %s from %s" client-uuid document-id)
@@ -117,30 +140,38 @@
                                       (seq colors))]
              (-> subs
                  (update-in [uuid :color] (fn [c] (or c (rand-nth available-colors))))
-                 (assoc-in [uuid :cust-name] cust-name))))))
+                 (assoc-in [uuid :cust-name] cust-name)
+                 (assoc-in [uuid :show-mouse?] true))))))
 
+;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
+;;       all of the data asynchronously
 (defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document-id) req)
   (let [document-id (-> ?data :document-id)
-        db (pcd/default-db)
-        cid (client-uuid->uuid client-uuid)]
+        cid (client-uuid->uuid client-uuid)
+        send-fn (:send-fn @sente-state)]
     (log/infof "subscribing %s to %s" client-uuid document-id)
+
     (subscribe-to-doc document-id (client-uuid->uuid client-uuid)
                       (-> req :ring-req :auth :cust :cust/name))
     (doseq [[uid _] (get @document-subs document-id)]
-      ((:send-fn @sente-state) uid [:frontend/subscriber-joined (merge {:client-uuid cid}
-                                                                       (get-in @document-subs [document-id cid]))]))
-    (let [resp {:layers (layer/find-by-document db {:db/id document-id})
-                :chats (chat/find-by-document db {:db/id document-id})
-                :document (pcd/touch+ (d/entity db document-id))
-                :client-uuid (client-uuid->uuid client-uuid)}]
-      (?reply-fn resp))))
+      (send-fn uid [:frontend/subscriber-joined (merge {:client-uuid cid}
+                                                       (get-in @document-subs [document-id cid]))]))
 
-(defmethod ws-handler :frontend/fetch-subscribers [{:keys [client-uuid ?data ?reply-fn] :as req}]
-  (let [document-id (-> ?data :document-id)]
-    (log/infof "fetching subscribers for %s on %s" client-uuid document-id)
-    (subscribe-to-doc document-id (client-uuid->uuid client-uuid)
-                      (-> req :ring-req :auth :cust :cust/name))
-    (?reply-fn {:subscribers (get @document-subs document-id)})))
+    (log/infof "sending layers for %s to %s" document-id cid)
+    (send-fn (str cid) [:frontend/db-entities
+                        {:document/id document-id
+                         :entities (layer/find-by-document (:db req) {:db/id document-id})
+                         :entity-type :layer}])
+    (log/infof "sending chats %s to %s" document-id cid)
+    (send-fn (str cid) [:frontend/db-entities
+                        {:document/id document-id
+                         :entities (chat/find-by-document (:db req) {:db/id document-id})
+                         :entity-type :chat}])
+    (log/infof "sending subscribers for %s to %s" document-id cid)
+    (send-fn (str cid) [:frontend/subscribers
+                        {:document/id document-id
+                         :subscribers (get @document-subs document-id)}])))
 
 (defmethod ws-handler :frontend/fetch-created [{:keys [client-uuid ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
@@ -148,11 +179,10 @@
           ;; list of longs, so meh
           ;; limit (get ?data :limit 100)
           ;; offset (get ?data :offset 0)
-          db (pcd/default-db)
-          doc-ids (doc-model/find-created-by-cust db cust)]
+          doc-ids (doc-model/find-created-by-cust (:db req) cust)]
       (log/infof "fetching created for %s" client-uuid)
       (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
-                                           :last-updated-instant (doc-model/last-updated-time db doc-id)})
+                                           :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
                              doc-ids)}))))
 
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-uuid ?data ?reply-fn] :as req}]
@@ -161,14 +191,14 @@
           ;; list of longs, so meh
           ;; limit (get ?data :limit 100)
           ;; offset (get ?data :offset 0)
-          db (pcd/default-db)
-          doc-ids (doc-model/find-touched-by-cust db cust)]
+          doc-ids (doc-model/find-touched-by-cust (:db req) cust)]
       (log/infof "fetching touched for %s" client-uuid)
       (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
-                                           :last-updated-instant (doc-model/last-updated-time db doc-id)})
+                                           :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
                              doc-ids)}))))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
+  (check-document-access (-> ?data :document/id) req)
   (let [document-id (-> ?data :document/id)
         datoms (->> ?data :datoms (remove (comp nil? :v)))
         cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
@@ -179,6 +209,7 @@
                         cust-uuid)))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-uuid ?data] :as req}]
+  (check-document-access (-> ?data :document/id) req)
   (let [document-id (-> ?data :document/id)
         mouse-position (-> ?data :mouse-position)
         tool (-> ?data :tool)
@@ -192,29 +223,16 @@
                                                           (when mouse-position
                                                             {:mouse-position mouse-position}))]))))
 
-;; TODO: maybe need a compare-and-set! here
-(defmethod ws-handler :frontend/share-mouse [{:keys [client-uuid ?data] :as req}]
-  (let [document-id (-> ?data :document/id)
-        show-mouse? (-> ?data :show-mouse?)
-        mouse-owner-uuid (-> ?data :mouse-owner-uuid)
-        cid (client-uuid->uuid client-uuid)]
-    (log/infof "toggling share-mouse to %s from %s for %s" show-mouse? mouse-owner-uuid cid)
-    (swap! document-subs (fn [subs]
-                           (if (get-in subs [document-id mouse-owner-uuid])
-                             (assoc-in subs [document-id mouse-owner-uuid :show-mouse?] show-mouse?)
-                             subs)))
-    (doseq [[uid _] (get @document-subs document-id)]
-      ((:send-fn @sente-state) uid [:frontend/share-mouse
-                                    {:client-uuid cid
-                                     :show-mouse? show-mouse?
-                                     :mouse-owner-uuid mouse-owner-uuid}]))))
-
 (defmethod ws-handler :frontend/update-self [{:keys [client-uuid ?data] :as req}]
+  ;; TODO: update subscribers in a different way
+  (check-document-access (-> ?data :document/id) req)
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [doc-id (-> ?data :document/id)
           cid (client-uuid->uuid client-uuid)]
       (log/infof "updating self for %s" (:cust/uuid cust))
       (let [new-cust (cust/update! cust {:cust/name (:cust/name ?data)})]
+        ;; TODO: name shouldn't be stored here, it should be in the client-side db
+        (swap! document-subs utils/update-when-in [doc-id (str cid)] assoc :cust-name (:cust/name new-cust))
         (doseq [[uid _] (get @document-subs doc-id)]
           ;; TODO: use update-subscriber for everything
           ((:send-fn @sente-state) uid [:frontend/update-subscriber
@@ -223,9 +241,9 @@
 
 (defmethod ws-handler :frontend/send-invite [{:keys [client-uuid ?data ?reply-fn] :as req}]
   ;; This may turn out to be a bad idea, but error handling is done through creating chats
+  (check-document-access (-> ?data :document/id) req)
   (let [[chat-id] (pcd/generate-eids (pcd/conn) 1)
         doc-id (-> ?data :document/id)
-        db (pcd/default-db)
         send-chat (fn [body]
                     @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
                                               :document/id doc-id}
@@ -233,7 +251,7 @@
                                               :server/timestamp (java.util.Date.)
                                               :document/id doc-id
                                               :db/id chat-id
-                                              :cust/uuid (auth/prcrsr-bot-uuid db)
+                                              :cust/uuid (auth/prcrsr-bot-uuid (:db req))
                                               ;; default bot color, also used on frontend chats
                                               :chat/color "#00b233"}]))]
     (if-let [cust (-> req :ring-req :auth :cust)]
@@ -254,17 +272,26 @@
   ;; don't log
   nil)
 
+(defn handle-req [req]
+  (try+
+   (ws-handler (assoc req :db (pcd/default-db)))
+   (catch :status t
+     (let [send-fn (:send-fn @sente-state)]
+       (log/error t)
+       ;; TODO: should this use the send-fn? We can do that too, I guess, inside of the defmethod.
+       ;; TODO: rip out sente and write a sensible library
+       (send-fn (str (client-uuid->uuid (:client-uuid req))) [:frontend/error {:status (:status t)
+                                                              :error-msg (:error-msg t)
+                                                              :event (:event req)
+                                                              :event-data (:?data req)}])))))
+
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))
         mult (async/mult (:ch-recv sente-state))]
     (async/tap mult tap)
     (async/go-loop []
                    (when-let [req (async/<! tap)]
-                     (try
-                       (ws-handler req)
-                       (catch Exception e
-                         (log/error e)
-                         (.printStackTrace e)))
+                     (utils/straight-jacket (handle-req req))
                      (recur)))))
 
 (defn init []

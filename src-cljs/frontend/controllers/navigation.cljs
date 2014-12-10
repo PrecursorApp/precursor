@@ -88,7 +88,7 @@
     (when-let [prev-doc-id (:document/id previous-state)]
       (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}]))
     (sente/subscribe-to-document sente-state doc-id)
-    (sente/fetch-subscribers sente-state doc-id)
+    ;; TODO: probably only need one listener key here, and can write a fn replace-listener
     (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
     (db/setup-listener! (:db current-state)
                         (:db-listener-key current-state)
