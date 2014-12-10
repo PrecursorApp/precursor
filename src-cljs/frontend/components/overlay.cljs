@@ -111,8 +111,8 @@
           [:div.menu-view
            [:div.menu-view-frame
             [:article
-             [:h2 "Show this idea to your team."]
-             [:p "Send your team invites to come collaborate with you in this doc. Separate emails with a space or a comma."]
+             [:h2 "Share this with your team."]
+             [:p "Send your teammates invites to come collaborate with you in this doc. Separate emails with a space or a comma."]
              [:form.menu-invite-form
               [:input {:type "text"
                        :required "true"
@@ -142,7 +142,8 @@
            [:div.menu-view-frame
             [:article
              [:h2 "What is Precursor?"]
-             [:p "No-nonsense prototyping—perfect for wireframing, sketching, and brainstorming. "
+             [:p "Precursor is a no-nonsense prototyping tool.
+                 Use it for wireframing, sketching, and brainstorming. "
                  ;; TODO finish wiring up invite stuff -dk (12/09/14)
                  ;; [:a {:on-click #(cast! :invite-menu-opened)
                  ;;      :role "button"}
@@ -151,8 +152,9 @@
                       :role "button"
                       :title "In chat, type \"/invite their@email.com\""}
                   "Invite"]
-                 " your team and collaborate with them instantly.
-                 We just got started, so if you have feedback say "
+                 " your team to collaborate instantly.
+                 Have feedback or a great idea?
+                 Say "
                  [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback" :title "We love feedback, good or bad."}
                   "hi@prcrsr.com"]
                  " or on "
@@ -166,7 +168,7 @@
                [:a.menu-button {:on-click #(cast! :overlay-menu-closed) :role "button"} "Okay"]
                (list
                  [:p "Sign up and we'll even keep track of all your docs.
-                     Never lose a great idea ever again!"]
+                     Never lose a great idea again!"]
                  [:a.menu-button {:href (auth/auth-url)
                                   :on-click #(do
                                                (.preventDefault %)
@@ -226,7 +228,7 @@
            [:article
             [:h2 "Let's change that name."]
             [:p "Sign up to change how your name appears in chat.
-                Let your team know who you are while you collaborate together!"]
+                Let your team know who you are while you collaborate together."]
             [:a.menu-button {:href (auth/auth-url)
                              :on-click #(do
                                           (.preventDefault %)
