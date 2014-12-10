@@ -34,7 +34,8 @@
                                            (if (< 1 (overlay-count data))
                                              ["back"]
                                              ["close"])))
-                                :data-right (when-not (utils/inspect main-menu-learned?) "Open Menu")
+                                :data-right (when-not main-menu-learned?
+                                              (if (overlay-visible? data) "Close Menu" "Open Menu"))
                                 :title (when main-menu-learned?
                                          (if (overlay-visible? data) "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
