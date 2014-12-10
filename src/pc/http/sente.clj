@@ -54,12 +54,12 @@
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
     (when-not (auth/has-document-permission? doc (-> req :ring-req :auth))
       (if (auth/logged-in? (:ring-req req))
-        (throw+ {:status 401
-                 :error-msg "This document is private. Please log in to access it."
-                 :error-key :document-requires-login})
         (throw+ {:status 403
                  :error-msg "This document is private. Please request access."
-                 :error-key :document-requires-invite})))))
+                 :error-key :document-requires-invite})
+        (throw+ {:status 401
+                 :error-msg "This document is private. Please log in to access it."
+                 :error-key :document-requires-login})))))
 
 ;; TODO: make sure to kick the user out of subscribed if he loses access
 (defn check-subscribed [doc-id req]
