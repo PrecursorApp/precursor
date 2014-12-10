@@ -280,7 +280,7 @@
        (log/error t)
        ;; TODO: should this use the send-fn? We can do that too, I guess, inside of the defmethod.
        ;; TODO: rip out sente and write a sensible library
-       (send-fn (str (client-uuid->uuid (:client-uuid req))) [:frontend/error {:status (:status t)
+       (send-fn (str (client-uuid->uuid (:client-uuid req))) [:frontend/error {:status-code (:status t)
                                                               :error-msg (:error-msg t)
                                                               :event (:event req)
                                                               :event-data (:?data req)}])))))
