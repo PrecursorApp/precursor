@@ -115,12 +115,15 @@
   .flexy(column);
   .scrollbar_hide();
   min-width: @menu_width;
-  height: ~"calc(100vh - @{tile})";
+  height: ~"calc(100% - @{tile})";
   overflow-y: auto;
   .mq_640({
     width: 100vw;
     min-width: 100vw;
   });
+  > .menu-item {
+    .flex(0 0 @tile);
+  }
 }
 .menu-footer {
   .flex(0 0 @tile);
@@ -134,7 +137,6 @@
 }
 .menu-item {
   &[role="button"] {
-    .flex(0 0 @tile);
     .flexy(center);
     .icon_stroke(@gray);
     width: 100%;
