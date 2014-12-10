@@ -53,25 +53,77 @@
   (routes
    (POST "/api/entity-ids" request
          (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
+
    (GET "/document/:document-id.svg" [document-id :as req]
-        (let [layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong document-id)})]
-          {:status 200
-           :headers {"Content-Type" "image/svg+xml"}
-           :body (render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
+        (let [db (pcd/default-db)
+              doc (doc-model/find-by-id db (Long/parseLong document-id))]
+          (cond (nil? doc)
+                (if-let [doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
+                  (redirect (str "/document/" (:db/id doc) ".svg"))
+
+                  {:status 404
+                   ;; TODO: Maybe return a "not found" image.
+                   :body "Document not found."})
+
+                (auth/has-document-permission? doc (-> req :auth))
+                (let [layers (layer/find-by-document db doc)]
+                  {:status 200
+                   :headers {"Content-Type" "image/svg+xml"}
+                   :body (render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))})
+
+                (auth/logged-in? req)
+                {:status 403
+                 ;; TODO: use an image here
+                 :body "Please request permission to access this document"}
+
+                :else
+                {:status 401
+                 ;; TODO: use an image here
+                 :body "Please log in so that we can check if you have permission to access this document"})))
    (GET "/document/:document-id.png" [document-id :as req]
-        (let [layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong document-id)})]
-          {:status 200
-           :headers {"Content-Type" "image/png"}
-           :body (svg->png (render-layers layers
-                                          :invert-colors? (-> req :params :printer-friendly (= "false"))
-                                          :size-limit 2000))}))
+        (let [db (pcd/default-db)
+              doc (doc-model/find-by-id db (Long/parseLong document-id))]
+          (cond (nil? doc)
+                (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
+                  (redirect (str "/document/" (:db/id redirect-doc) ".png"))
+
+                  {:status 404
+                   ;; TODO: Return a "not found" image.
+                   :body "Document not found."})
+
+                (auth/has-document-permission? doc (-> req :auth))
+                (let [layers (layer/find-by-document db doc)]
+                  {:status 200
+                   :headers {"Content-Type" "image/png"}
+                   :body (svg->png (render-layers layers
+                                                  :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                  :size-limit 2000))})
+
+                (auth/logged-in? req)
+                {:status 403
+                 ;; TODO: use an image here
+                 :body "Please request permission to access this document"}
+
+                :else
+                {:status 401
+                 ;; TODO: use an image here
+                 :body "Please log in so that we can check if you have permission to access this document"})))
+
    (GET ["/document/:document-id" :document-id #"[0-9]+"] [document-id :as req]
-        (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                             :google-client-id (google-client-id)}
-                            (when-let [cust (-> req :auth :cust)]
-                              {:cust {:email (:cust/email cust)
-                                      :uuid (:cust/uuid cust)
-                                      :name (:cust/name cust)}}))))
+        (let [db (pcd/default-db)
+              doc (doc-model/find-by-id db (Long/parseLong document-id))]
+          (if doc
+            (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                                 :google-client-id (google-client-id)}
+                                (when-let [cust (-> req :auth :cust)]
+                                  {:cust {:email (:cust/email cust)
+                                          :uuid (:cust/uuid cust)
+                                          :name (:cust/name cust)}})))
+            (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
+              (redirect (str "/document/" (:db/id redirect-doc)))
+              ;; TODO: this should be a 404...
+              (redirect "/")))))
+
    (GET "/" req
         (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
               doc (doc-model/create-public-doc! (when cust-uuid {:document/creator cust-uuid}))]
@@ -96,6 +148,7 @@
 
    (GET "/interesting" []
         (content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))
+
    (GET ["/interesting/:layer-count" :layer-count #"[0-9]+"] [layer-count]
         (content/interesting (db-admin/interesting-doc-ids {:layer-threshold (Integer/parseInt layer-count)})))
 
@@ -114,6 +167,7 @@
                             (format "<p><a href=\"/document/%s\">%s</a> with %s users</p>" doc-id doc-id (count subs))))
                      ["Nothing occupied right now :("]))
                 "</body></html")})
+
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
@@ -137,6 +191,7 @@
                                                                 (profile/http-port))
                                                         :path (or (get parsed-state "redirect-path") "/")
                                                         :query (get parsed-state "redirect-query")}))}}))))
+
    (POST "/logout" {{redirect-to :redirect-to} :params :as req}
          (when-let [cust (-> req :auth :cust)]
            (cust/retract-session-key! cust))
