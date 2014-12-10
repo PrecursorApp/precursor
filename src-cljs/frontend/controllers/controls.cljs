@@ -771,12 +771,7 @@
         (assoc-in state/chat-opened-path chat-open?)
         (assoc-in state/chat-button-learned-path true)
         (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time)
-        (assoc-in [:drawing :in-progress?] false)
-        ;; TODO: not sure if i should delete this or not since we dont offset for chat anymore -dk (12/09/14)
-        ;; (assoc-in [:camera :offset-x] (if aside-open?
-        ;;                                 (get-in state state/aside-width-path)
-        ;;                                 0))
-        )))
+        (assoc-in [:drawing :in-progress?] false))))
 
 (defmethod post-control-event! :chat-toggled
   [browser-state message _ previous-state current-state]
@@ -824,8 +819,6 @@
    (-> state
      (overlay/clear-overlays)
      (assoc-in state/chat-opened-path true)
-     ;; TODO: not sure if i should delete this or not since we dont offset for chat anymore -dk (12/09/14)
-     ;; (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
      (assoc-in state/chat-mobile-opened-path true)
      (assoc-in [:chat :body] "@prcrsr ")))
 
@@ -838,8 +831,6 @@
    (-> state
      (overlay/clear-overlays)
      (assoc-in state/chat-opened-path true)
-     ;; TODO: not sure if i should delete this or not since we dont offset for chat anymore -dk (12/09/14)
-     ;; (assoc-in [:camera :offset-x] (get-in state state/aside-width-path))
      (assoc-in state/chat-mobile-opened-path true)
      (assoc-in [:chat :body] "/invite ")))
 
