@@ -44,30 +44,22 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.menu-prompt {:class (str "menu-prompt-" "username")}
-          [:div.menu-header
-           [:a.menu-close {:on-click #(cast! :overlay-closed)
-                           :role "button"}
-            (common/icon :times)]]
-          [:div.menu-prompt-body
-           [:h2 "Don't lose your creations"]
-           [:p
-            "Log in or sign up to view all of the docs you created."]
-           [:a.prompt-button {:href (auth/auth-url)
-                              :role "button"
-                              :on-click #(do
-                                           (.preventDefault %)
-                                           (cast! :track-external-link-clicked
-                                                  {:path (auth/auth-url)
-                                                   :event "Signup Clicked"
-                                                   :properties {:source "your-docs-overlay"}}))}
-            "Sign Up"]]
-          [:div.menu-footer
-           [:a.menu-footer-link {:on-click #(do
-                                              (.preventDefault %)
-                                              (cast! :overlay-closed))
-                                 :role "button"}
-            "No thanks."]]])))))
+         [:div.menu-view {:class (str "menu-prompt-" "username")}
+          [:div.menu-view-frame
+           [:article
+            [:h2 "Remember that one idea?"]
+            [:p "Neither do we—well, not yet at least.
+                Sign up and we'll remember your ideas for you.
+                Never lose a great idea ever again!"]
+            [:a.menu-button {:href (auth/auth-url)
+                             :role "button"
+                             :on-click #(do
+                                          (.preventDefault %)
+                                          (cast! :track-external-link-clicked
+                                                 {:path (auth/auth-url)
+                                                  :event "Signup Clicked"
+                                                  :properties {:source "your-docs-overlay"}}))}
+             "Sign Up"]]]])))))
 
 (defn docs-list [docs owner]
   (reify
@@ -89,8 +81,9 @@
                 [:img {:src (str "/document/" (:db/id doc) ".svg")}]
                 [:img.loading-image]
                 [:i.loading-ellipses [:i "."] [:i "."] [:i "."]]]
-               [:a.recent-doc-title {:href (str "/document/" (:db/id doc))}
-                (str (:db/id doc))]]))))]))))
+               [:div.recent-doc-title
+                [:a {:href (str "/document/" (:db/id doc))}
+                 (str (:db/id doc))]]]))))]))))
 
 (defn dummy-docs [current-doc-id doc-count]
   (repeat doc-count {:db/id current-doc-id
@@ -115,17 +108,12 @@
                        (reverse)
                        (take 100)))]
         (html
-         [:div.menu-prompt {:class (str "menu-prompt-" "doc-viewer")}
-          [:div.menu-header
-           [:div.menu-title
-            [:h3 "Your Docs"]]
-           [:a.menu-close {:on-click #(cast! :overlay-closed)
-                           :role "button"}
-            (common/icon :times)]]
-          [:div.menu-prompt-body {:class (when (nil? touched-docs)
-                                           "loading")}
-           (if (seq docs)
-             (om/build docs-list docs))]])))))
+         [:div.menu-view
+          [:div.menu-view-frame {:class (when (nil? touched-docs)
+                                              "loading")}
+           [:article
+            (if (seq docs)
+              (om/build docs-list docs))]]])))))
 
 ;; Four states
 ;; 1. Logged out

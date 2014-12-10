@@ -7,7 +7,7 @@
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]
-            [frontend.components.aside :as aside]
+            [frontend.components.chat :as chat]
             [frontend.components.inspector :as inspector]
             [frontend.components.key-queue :as keyq]
             [frontend.components.canvas :as canvas]
@@ -62,34 +62,7 @@
                       {:opts {:keymap keymap
                               :error-ch (get-in app [:comms :errors])}})]))))))
 
-(defn auth-link [data owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            login-button-learned? (get-in data state/login-button-learned-path)]
-        (html
-         (if (:cust data)
-           [:form {:method "post" :action "/logout" :ref "logout-form"}
-            [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
-            [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
-                                                                   (.-href)
-                                                                   (url/url)
-                                                                   :path)}]
-            [:a.action-logout {:on-click #(.submit (om/get-node owner "logout-form"))
-                               :title "Logout"}
-             (common/icon :logout)]]
-           [:a.action-login {:href (auth/auth-url)
-                             :data-right (when-not login-button-learned? "Sign Up")
-                             :title (when login-button-learned? "Log In")
-                             :on-click #(do
-                                          (.preventDefault %)
-                                          (cast! :login-button-clicked)
-                                          (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                               :event "Signup Clicked"}))}
-            (common/icon :login)]))))))
-
-(defn main-actions [data owner]
+(defn chat-button [app owner]
   (reify
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -107,65 +80,54 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            aside-opened? (get-in data state/aside-menu-opened-path)
-            last-read-time (get-in data (state/last-read-chat-time-path (:document/id data)))
+            chat-opened? (get-in app state/chat-opened-path)
+            chat-button-learned? (get-in app state/chat-button-learned-path)
+            last-read-time (get-in app (state/last-read-chat-time-path (:document/id app)))
             unread-chat-count (chat-model/compute-unread-chat-count @db last-read-time)
             unread-chat-count (if last-read-time
                                 unread-chat-count
                                 ;; add one for the dummy message
-                                (inc unread-chat-count))
-            info-button-learned? (get-in data state/info-button-learned-path)
-            menu-button-learned? (get-in data state/menu-button-learned-path)
-            newdoc-button-learned? (get-in data state/newdoc-button-learned-path)
-            your-docs-learned? (get-in data state/your-docs-learned-path)]
+                                (inc unread-chat-count))]
         (html
-         [:div.main-actions
-          [:a.action-menu {:on-click #(cast! :aside-menu-toggled)
-                           :class (when-not aside-opened? "closed")
-                           :data-right (when-not menu-button-learned? "Open Menu")
-                           :title (when menu-button-learned? (if aside-opened? "Close Menu" "Open Menu"))}
-           (common/icon :menu)]
-          (when (and (not aside-opened?) (pos? unread-chat-count))
-            [:div.unseen-eids (str unread-chat-count)])
-          (om/build auth-link data)
-          [:a.action-newdoc {:on-click #(cast! :newdoc-button-clicked)
-                             :href "/"
-                             :target "_self"
-                             :data-right (when-not newdoc-button-learned? "New Document")
-                             :title (when newdoc-button-learned? "New Document")}
-           (common/icon :newdoc)]
-          [:a.action-your-docs {:on-click #(cast! :your-docs-opened)
-                                :data-right (when-not your-docs-learned? "Your Docs")
-                                :title (when your-docs-learned? "Your Docs")}
-           (common/icon :clock)]
-          [:a.action-info {:on-click #(cast! :overlay-info-toggled)
-                           :class (when-not info-button-learned? "hover")
-                           :data-right (when-not info-button-learned? "What is this thing?")
-                           :title (when info-button-learned? "What is this thing?")}
-           (common/icon :info)]])))))
+          [:a.chat-button {:on-click #(cast! :chat-toggled)
+                           :role "button"
+                           :data-left (when-not chat-button-learned?
+                                        (if chat-opened? "Close Chat" "Open Chat"))
+                           :title (when chat-button-learned?
+                                    (if chat-opened? "Close Chat" "Open Chat"))}
+           (when (and (not chat-opened?) (pos? unread-chat-count))
+             [:i.unseen-eids (str unread-chat-count)])
+           (common/icon :chat)])))))
 
+(defn about-button [data owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            info-button-learned? (get-in data state/info-button-learned-path)]
+        (html
+          [:a.about-info {:on-click #(cast! :overlay-info-toggled)
+                          :role "button"
+                          :class (when-not info-button-learned? "hover")
+                          :data-right (when-not info-button-learned? "What is Precursor?")
+                          :title (when info-button-learned? "What is Precursor?")}
+           (common/icon :info)])))))
 
 (defn app* [app owner]
   (reify
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
-            aside-opened? (get-in app state/aside-menu-opened-path)
+            chat-opened? (get-in app state/chat-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div.app-main
-               (om/build aside/menu app)
                [:div.app-canvas {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
-                (om/build main-actions (select-in app [state/aside-menu-opened-path
-                                                       state/menu-button-learned-path
-                                                       state/info-button-learned-path
-                                                       state/newdoc-button-learned-path
-                                                       state/login-button-learned-path
-                                                       [:cust]
-                                                       [:document/id]
-                                                       (state/last-read-chat-time-path (:document/id app))]))
+                (om/build chat-button app)
+                (when-not (:cust app)
+                  (om/build about-button (select-in app [state/info-button-learned-path])))
                 (when (and (:mouse app) (not= :touch (:type (:mouse app))))
                   [:div.mouse-stats
                    (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))])
@@ -185,10 +147,11 @@
                    [:div.radial-menu-nub]])
                 (when (and (not right-click-learned?) (:mouse app))
                   [:div.radial-tip {:style {:top  (+ (get-in app [:mouse :y]) 16)
-                                            :left (+ (get-in app [:mouse :x]) (if aside-opened? (- 16 256) 16) )}}
+                                            :left (+ (get-in app [:mouse :x]) 16)}}
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
-                     "Try right-click")])]])))))
+                     "Try right-click")])]
+               (om/build chat/menu app)])))))
 
 (defn app [app owner]
   (reify
@@ -199,6 +162,7 @@
           (when (overlay-visible? app)
             (om/build overlay/overlay app))
           (om/build app* app)
-          (dom/div #js {:className "app-main-outline"}))
+          (dom/div #js {:className "app-main-outline"})
+          (om/build overlay/main-menu-button (select-in app [state/overlays-path state/main-menu-learned-path])))
 
         (html [:div#app])))))

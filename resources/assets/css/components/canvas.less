@@ -1,14 +1,14 @@
 .app-canvas {
   .flex(1);
   position: relative;
-  &:not(:hover) {
-    .radial-tip {
-      display: none;
-    }
-  }
 }
 #svg-canvas {
   .user-select(none);
+  &:not(:hover) {
+    ~ .radial-tip {
+      display: none;
+    }
+  }
 }
 #grid,
 #small-grid {
@@ -108,15 +108,16 @@
 }
 .mouse-stats {
   .user-select(none);
-  position: fixed;
+  position: absolute;
   color: @gray;
   font-family: @font_mono;
-  font-size: 0.750em;
-  text-align: right;
-  top: 100%;
+  font-size: 0.625rem;
+  line-height: 1em;
+  text-align: center;
+  bottom: 0;
   width: 100%;
-  right: 0.5em;
-  margin-top: -2em;
+  left: 0;
+  padding: .5em;
   pointer-events: none;
   transition: @speed @bezier_fadein;
   .mq_640({
@@ -152,94 +153,107 @@
     }
   }
 }
-.action-menu {
+.main-menu-button {
+  .flexy(center, center);
+  .icon_stroke(@gray);
+  position: absolute;
+  font-size: 1.5rem;
+  top: 0;
+  left: 0;
+  width: @tile;
+  height: @tile;
+  transition: @speed;
+  z-index: @zindex_main_menu;
   &:hover {
-    + .unseen-eids {
-      background: lighten(#c0392b, 10);
-      color: @white;
-      border: 2px solid lighten(#c0392b, 10);
-      padding: ~"calc(.25em + 2px)";
-      margin: -4px 0 0 -4px;
+    .icon_stroke(@white);
+    &.bkg-light {
+      .icon_stroke(@gray_darkest);
     }
   }
   path {
-    .random_cascade(3);
-    transition-property: -webkit-transform, opacity;
-    transition-property: transform, opacity;
-    transition-duration: @speed_slow, @speed_fast;
-    transition-timing-function: @bezier_transform, @bezier_fadein;
+    -webkit-transition-property: -webkit-transform, opacity, stroke;
+    transition-property: transform, opacity, stroke;
+    transition-duration: @speed_slow, @speed, @speed_fast;
+    transition-timing-function: @bezier_transform, @bezier_fadein, @bezier_fadein;
   }
-  &.closed {
+  &.close,
+  &.back {
+    font-size: 1rem;
     path {
-      transition-timing-function: @bezier_bounce, @bezier_fadein;
+      transition-timing-function: @bezier_bounce, @bezier_fadein, @bezier_fadein;
     }
-    .menu-start-stroke {
-      .transform(scale3d(.707, 1, 1); translate3d(0, 25px, 0); rotate3d(0, 0, 1, -45deg));
+  }
+  &.close {
+    path {
+      &[class*="top"] {
+        .transform(translate3d(32.32px, -3.03px, 0) rotate3d(0, 0, 1, 45deg));
+      }
+      &[class*="btm"] {
+        .transform(translate3d(-38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));
+      }
     }
-    .menu-center-stroke {
-      .transform(scale3d(.707, 1, 1); translate3d(0, 50px, 0); rotate3d(0, 0, 1, -45deg));
-    }
-    .menu-end-stroke {
-      .transform(scale3d(.707, 1, 1); translate3d(70.5px, 4.25px, 0); rotate3d(0, 0, 1, 45deg));
+    .menu-mid-stroke {
+      opacity: 0;
+      .transform(translate3d(-20.71px, 50px, 0) rotate3d(0, 0, 1, -45deg));
     }
   }
   &.back {
     path {
-      transition-duration: @speed, @speed_slow;
-    }
-    .menu-start-stroke {
-      .transform(translate3d(-50px, 0, 0));
-    }
-    .menu-center-stroke {
-      .transform(scale3d(.707, 1, 1); translate3d(0, 50px, 0); rotate3d(0, 0, 1, -45deg));
-    }
-    .menu-end-stroke {
-      .transform(translate3d(-50px, 0, 0));
-    }
-  }
-  &:not(.closed) {
-    &:not(.back) {
-      .menu-center-stroke {
-        opacity: 0;
+      &:not(.menu-mid-stroke) {
+        &[class*="left"] {
+          opacity: 0;
+        }
+        &[class*="right"] {
+          stroke-linecap: square;
+        }
+      }
+      &[class*="top"] {
+        .transform(translate3d(-12.68px, -3.03px, 0) rotate3d(0, 0, 1, 45deg));
+      }
+      &[class*="btm"] {
+        .transform(translate3d(-83.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));
       }
     }
   }
 }
-.action-info {
-  margin-top: auto;
+.about-info {
+  .flexy(center, center);
+  position: absolute;
+  top: @tile;
+  left: 0;
+  width: @tile;
+  height: @tile;
+  &:not(:hover) {
+    .icon_stroke(@gray);
+  }
+  i {
+    svg {
+      font-size: 1.5em;
+    }
+  }
 }
 .unseen-eids {
-  .box-sizing(content-box);
-  .transform-origin(center);
   .animation(in-bounce (@speed * 2));
   .user-select(none);
   position: absolute;
-  font-size: .75em;
-  font-weight: bold;
-  line-height: .75em;
-  text-align: center;
-  top: 1.25em;
-  left: 3em;
-  height: .75em;
-  min-width: .75em;
-  margin: -2px 0 0 -2px; // offsets the size of border
-  padding: .25em;
+  font-family: @font_mono;
+  font-size: 0.625rem;
+  line-height: 1em;
+  bottom: 3.2em;
+  right: 3.2em;
+  height: 1.6em;
+  min-width: 1.6em;
+  padding: 2px 3px;
   color: lighten(#c0392b, 10);
   background: @gray_darker;
   border: 2px solid lighten(#c0392b, 10);
-  border-radius: 2em;
-  box-shadow: 0 2px @gray_darker, -2px 0 @gray_darker;
+  border-radius: 2rem;
+  box-shadow: 0 2px @gray_darker, 2px 0 @gray_darker, 2px 2px @gray_darker;
   pointer-events: none;
-  transition: @speed;
-  i {
-    svg {
-      width: 1.25em;
-      height: 1.25em;
-    }
-    path {
-      stroke: @white;
-    }
-  }
+  transition: @speed @bezier_transform;
+}
+.action-info {
+  margin-top: auto;
 }
 .svg-text-form {
   input[type="text"] {
@@ -257,6 +271,7 @@
   position: fixed;
   width: (@radial_menu_size * 1.5);
   height: (@radial_menu_size * 1.5);
+  z-index: @zindex_radial_menu;
 }
 .radial-button {
   fill: @gray_darker;
@@ -313,7 +328,7 @@
 //_____________________________________//
 .layer-properties {
   .flexy(column);
-  width: @aside_width;
+  width: @tile_chat;
   padding-top: 5px; // keeps adaptive placeholder from getting cut off
   .layer-property-id {
     background: @app_background;

@@ -309,10 +309,6 @@
     (def debug-state state)
     (browser-settings/setup! state)
     (.set (goog.net.Cookies. js/document) "prcrsr-client-id" (:client-uuid @state) -1 "/" false)
-    ;; TODO: find a better place to put this
-    (swap! state (fn [s] (assoc-in s [:camera :offset-x] (if (get-in s state/aside-menu-opened-path)
-                                                           (get-in s state/aside-width-path)
-                                                           0))))
     (main state top-level-node history-imp)
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
