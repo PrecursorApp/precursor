@@ -95,6 +95,7 @@
             ;;  (common/icon :users)
             ;;  [:span "Invite Collaborators"]]
             [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
+                           :class "mobile-hidden"
                            :role "button"}
              (common/icon :command)
              [:span "Shortcuts"]]
@@ -107,27 +108,28 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.menu-view
-           [:article.menu-view-frame
-            [:h2 "Show this idea to your team."]
-            [:p "Send your team invites to come collaborate with you in this doc. Separate emails with a space or a comma."]
-            [:form.menu-invite-form
-             [:input {:type "text"
-                      :required "true"
-                      :data-adaptive ""}]
-             [:label {:data-placeholder "Teammate's Email"
-                      :data-placeholder-nil "What's your teammate's email?"
-                      :data-placeholder-forgot "Don't forget to submit."}]]
-            [:p "You've sent 3 invitations to this doc."]
-            [:div.invite-recipient
-             [:div.invite-recipient-email "fake@email.com"]
-             [:a {:role "button"} "Resend"]]
-            [:div.invite-recipient
-             [:div.invite-recipient-email "fake@email.com"]
-             [:a {:role "button"} "Resend"]]
-            [:div.invite-recipient
-             [:div.invite-recipient-email "fake@email.com"]
-             [:a {:role "button"} "Resend"]]
-            ]])))))
+           [:div.menu-view-frame
+            [:article
+             [:h2 "Show this idea to your team."]
+             [:p "Send your team invites to come collaborate with you in this doc. Separate emails with a space or a comma."]
+             [:form.menu-invite-form
+              [:input {:type "text"
+                       :required "true"
+                       :data-adaptive ""}]
+              [:label {:data-placeholder "Teammate's Email"
+                       :data-placeholder-nil "What's your teammate's email?"
+                       :data-placeholder-forgot "Don't forget to submit."}]]
+             [:p "You've sent 3 invitations to this doc."]
+             [:div.invite-recipient
+              [:div.invite-recipient-email "fake@email.com"]
+              [:a {:role "button"} "Resend"]]
+             [:div.invite-recipient
+              [:div.invite-recipient-email "fake@email.com"]
+              [:a {:role "button"} "Resend"]]
+             [:div.invite-recipient
+              [:div.invite-recipient-email "fake@email.com"]
+              [:a {:role "button"} "Resend"]]]
+             ]])))))
 
 (defn info [app owner]
   (reify
@@ -136,43 +138,45 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.menu-view
-           [:article.menu-view-frame
-            [:h2 "What is Precursor?"]
-            [:p "No-nonsense prototyping—perfect for wireframing, sketching, and brainstorming. "
-                ;; TODO finish wiring up invite stuff -dk (12/09/14)
-                ;; [:a {:on-click #(cast! :invite-menu-opened)
-                ;;      :role "button"}
-                ;;  "Invite"]
-                [:a {:on-click #(cast! :invite-link-clicked)
-                     :role "button"
-                     :title "In chat, type \"/invite their@email.com\""}
-                 "Invite"]
-                " your team and collaborate with them instantly.
-                We just got started, so if you have feedback say "
-                [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback" :title "We love feedback, good or bad."}
-                 "hi@prcrsr.com"]
-                " or on "
-                [:a {:href "https://twitter.com/prcrsr_app"
-                     :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-                     :title "@prcrsr_app"
-                     :target "_blank"}
-                 "Twitter"]
-                "."]
-            (if (:cust app)
-              [:a.menu-button {:on-click #(cast! :overlay-menu-closed) :role "button"} "Okay"]
-              (list
-                [:p "Sign up and we'll even keep track of all your docs.
-                    Never lose a great idea ever again!"]
-                [:a.menu-button {:href (auth/auth-url)
-                                 :on-click #(do
-                                              (.preventDefault %)
-                                              (cast! :track-external-link-clicked
-                                                     {:path (auth/auth-url)
-                                                      :event "Signup Clicked"
-                                                      :properties {:source "username-overlay"}}))
-                                 :role "button"}
-                 "Sign Up"]))
-            (common/mixpanel-badge)]])))))
+           [:div.menu-view-frame
+            [:article
+             [:h2 "What is Precursor?"]
+             [:p "No-nonsense prototyping—perfect for wireframing, sketching, and brainstorming. "
+                 ;; TODO finish wiring up invite stuff -dk (12/09/14)
+                 ;; [:a {:on-click #(cast! :invite-menu-opened)
+                 ;;      :role "button"}
+                 ;;  "Invite"]
+                 [:a {:on-click #(cast! :invite-link-clicked)
+                      :role "button"
+                      :title "In chat, type \"/invite their@email.com\""}
+                  "Invite"]
+                 " your team and collaborate with them instantly.
+                 We just got started, so if you have feedback say "
+                 [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback" :title "We love feedback, good or bad."}
+                  "hi@prcrsr.com"]
+                 " or on "
+                 [:a {:href "https://twitter.com/prcrsr_app"
+                      :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+                      :title "@prcrsr_app"
+                      :target "_blank"}
+                  "Twitter"]
+                 "."]
+             (if (:cust app)
+               [:a.menu-button {:on-click #(cast! :overlay-menu-closed) :role "button"} "Okay"]
+               (list
+                 [:p "Sign up and we'll even keep track of all your docs.
+                     Never lose a great idea ever again!"]
+                 [:a.menu-button {:href (auth/auth-url)
+                                  :on-click #(do
+                                               (.preventDefault %)
+                                               (cast! :track-external-link-clicked
+                                                      {:path (auth/auth-url)
+                                                       :event "Signup Clicked"
+                                                       :properties {:source "username-overlay"}}))
+                                  :role "button"}
+                  "Sign Up"]))]
+            [:footer {:class "mobile-hidden"}
+             (common/mixpanel-badge)]]])))))
 
 (defn shortcuts [app owner]
   (reify
@@ -181,33 +185,34 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.menu-view
-           [:article.menu-view-frame
-            [:h2 "Move fast, make things."]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "S"]
-             [:div.shortcuts-result "Select"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "R"]
-             [:div.shortcuts-result "Rectangle"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "C"]
-             [:div.shortcuts-result "Circle"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "L"]
-             [:div.shortcuts-result "Line"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "P"]
-             [:div.shortcuts-result "Pen"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "T"]
-             [:div.shortcuts-result "Text"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "1"]
-             [:div.shortcuts-result "Snap to origin"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key (common/icon :command)]
-             [:div.shortcuts-key "Z"]
-            [:div.shortcuts-result "Undo"]]]])))))
+           [:div.menu-view-frame
+            [:article
+             [:h2 "Move fast, make things."]
+             [:div.shortcuts-item
+              [:div.shortcuts-key "S"]
+              [:div.shortcuts-result "Select"]]
+             [:div.shortcuts-item
+              [:div.shortcuts-key "R"]
+              [:div.shortcuts-result "Rectangle"]]
+             [:div.shortcuts-item
+              [:div.shortcuts-key "C"]
+              [:div.shortcuts-result "Circle"]]
+             [:div.shortcuts-item
+              [:div.shortcuts-key "L"]
+              [:div.shortcuts-result "Line"]]
+             [:div.shortcuts-item
+              [:div.shortcuts-key "P"]
+              [:div.shortcuts-result "Pen"]]
+             [:div.shortcuts-item
+              [:div.shortcuts-key "T"]
+              [:div.shortcuts-result "Text"]]
+             [:div.shortcuts-item
+              [:div.shortcuts-key "1"]
+              [:div.shortcuts-result "Snap to origin"]]
+             [:div.shortcuts-item
+              [:div.shortcuts-key (common/icon :command)]
+              [:div.shortcuts-key "Z"]
+             [:div.shortcuts-result "Undo"]]]]])))))
 
 (defn username [app owner]
   (reify
@@ -216,19 +221,20 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          [:article.menu-view-frame
-           [:h2 "Let's change that name."]
-           [:p "Sign up to change how your name appears in chat.
-               Let your team know who you are while you collaborate together!"]
-           [:a.menu-button {:href (auth/auth-url)
-                            :on-click #(do
-                                         (.preventDefault %)
-                                         (cast! :track-external-link-clicked
-                                                {:path (auth/auth-url)
-                                                 :event "Signup Clicked"
-                                                 :properties {:source "username-overlay"}}))
-                            :role "button"}
-            "Sign Up"]]])))))
+          [:div.menu-view-frame
+           [:article
+            [:h2 "Let's change that name."]
+            [:p "Sign up to change how your name appears in chat.
+                Let your team know who you are while you collaborate together!"]
+            [:a.menu-button {:href (auth/auth-url)
+                             :on-click #(do
+                                          (.preventDefault %)
+                                          (cast! :track-external-link-clicked
+                                                 {:path (auth/auth-url)
+                                                  :event "Signup Clicked"
+                                                  :properties {:source "username-overlay"}}))
+                             :role "button"}
+             "Sign Up"]]]])))))
 
 (def overlay-components
   {:info {:component info}

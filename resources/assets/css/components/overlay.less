@@ -2,7 +2,7 @@
   .flexy(center, center);
   .icon_stroke(@gray_dark);
   .icon_fill(@gray_dark);
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -61,7 +61,6 @@
 .menu-header {
   .flex(0 0 @tile);
   .flexy(center);
-  position: relative;
   border-bottom: 1px solid @gray_light;
   a {
     .flexy(center, center);
@@ -100,8 +99,15 @@
   transition: @speed @bezier_transform;
   &:last-of-type {
     .flex(0 0 @menu_width);
+    .mq_640({
+      .flex(0 0 100vw);
+    });
   }
   article {
+    padding: 2rem;
+  }
+  footer {
+    margin-top: auto;
     padding: 2rem;
   }
 }
@@ -111,6 +117,10 @@
   min-width: @menu_width;
   height: ~"calc(100vh - @{tile})";
   overflow-y: auto;
+  .mq_640({
+    width: 100vw;
+    min-width: 100vw;
+  });
 }
 .menu-footer {
   .flex(0 0 @tile);
@@ -124,10 +134,10 @@
 }
 .menu-item {
   &[role="button"] {
+    .flex(0 0 @tile);
     .flexy(center);
     .icon_stroke(@gray);
     width: 100%;
-    height: @tile;
     color: @gray;
     transition: color @speed_fast @bezier_fadein, background @speed @bezier_fadein;
     &:hover {
@@ -206,6 +216,7 @@
   &[role="button"] {
     .flexy(center, center);
     height: @tile;
+    margin-bottom: @tile;
     transition: @speed_fast @bezier_fadein;
     border: 1px solid @font_color;
     &:hover {
@@ -243,6 +254,9 @@
 }
 .mixpanel-badge {
   margin: auto auto 0;
+  .mq_640({
+    display: none;
+  });
   svg {
     fill: @gray_mixpanel;
   }
@@ -268,6 +282,7 @@
   display: block;
   position: relative;
   width: 20rem;
+  max-width: 100%;
   height: 15rem;
   border: 1px solid @gray_lighter;
   overflow: hidden;
