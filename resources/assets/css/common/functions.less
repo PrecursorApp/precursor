@@ -96,6 +96,10 @@
               filter+_: @argument;
   }
 }
+.gradient(@type; @rest...) {
+  @colors: ~`"@{rest}".slice(1,-1)`;
+  background-image: linear-gradient(@type, @colors);
+}
 .rotate(...) {
   .prefixer(transform; ~"rotate(@{arguments}deg)"; webkit);
 }

@@ -30,6 +30,7 @@
   [;"instrumenting-om-components"
    "interactive-layers"
    ;"lets-replace-pen-and-paper"
+   "product-hunt-wake-up-call"
    ])
 
 (defn post-exists? [slug]
