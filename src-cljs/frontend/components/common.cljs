@@ -138,12 +138,8 @@
    (svg-icon icon-name {:path-props path-props
                         :svg-props svg-props})])
 
-(defn spinner []
-  [:svg.spinner {:width "100" :height "100" :viewBox "0 0 100 100"}
-   [:circle.path {:fill "none" :stroke-width "8" :stroke-linecap "round" :cx "50" :cy "50" :r "45"}]])
-
-; (def spinner
-;   (icon :logomark-precursor))
+(def spinner
+  (icon :logomark-precursor))
 
 (defn mixpanel-badge []
   [:a.mixpanel-badge {:href "https://mixpanel.com/f/partner"
