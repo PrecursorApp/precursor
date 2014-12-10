@@ -82,7 +82,7 @@
      (blog-head)
      [:div.blogpost-title
       [:article
-       [:h1 (:title post)]]]
+       [:h2 (:title post)]]]
      (:body post)]))
 
 (defn render-page [slug]
