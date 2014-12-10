@@ -148,6 +148,11 @@
               :db/index true
               :db/doc "Document entity id")
 
+   (attribute :document/invalid-id
+              :db.type/long
+              :db/index true
+              :db/doc "invalid document/id that was migrated")
+
    (attribute :chat/body
               :db.type/string)
 
