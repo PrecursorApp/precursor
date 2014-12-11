@@ -23,7 +23,7 @@
          I called to wake Daniel up as well."]]
 
     [:figure
-     [:a.img {:href "http://www.producthunt.com/posts/precursor" :data-caption-white "Thanks Julie!"}
+     [:a.img {:href "http://www.producthunt.com/posts/precursor" :data-caption-white "Thanks, Julie!"}
       [:img {:src "/blog/product-hunt-wake-up-call/julie-post.png"}]]]
 
     [:article
@@ -35,7 +35,7 @@
          There's no jumping through hoops just to share your idea."]]
 
     [:figure
-     [:a.img {:href "/" :data-caption-dark "It's faster than even we expected."}
+     [:a.img {:href "/" :data-caption-black "It's faster than even we expected."}
       [:img {:src "/email/collaboration-demo.gif"}]]]
 
     [:article
@@ -48,7 +48,7 @@
          I wouldn't have lost that idea if had I sketched it out sooner or if I drew it on something that couldn't get misplaced."]]
 
     [:article
-     [:h3 "Product Hunt loved Precursor, and we loved their feedback."]
+     [:h3 "Product Hunt loved Precursor, and we loved the feedback."]
      [:p "By mid-day Precursor had been shared on several other sites, but Product Hunt was still responsible for the majority of our traffic.
          What we found most interesting about the Product Hunt traffic was not its volume, but its quality of feedback.
          Over and over again, the Product Hunt community offered us insightful and actionable feedback.
@@ -67,4 +67,37 @@
      [:p "The next big features we have planned are private docs and team features.
          Many people have asked for the ability to share ideas with their team privately, so we've made this our top priority.
          Hopefully the Product Hunt community will have us back again at some point to share a new offering."]]
+
+    [:article
+     [:h3 "tl;dr Here's how we did."]
+     [:p "Precursor has only been live in its current form for a few months.
+         Luckily, we set up analytics just before we were featured on Product Hunt.
+         Here's a few stats that we found interesting:"]
+     [:ul
+      [:li "69,306 layers created"]
+      [:li "17,876 pageviews"]
+      [:li "12,437 unique docs"]
+      [:li "9,547 total users"]
+      [:li "2,368 docs with multiple views"]
+      [:li "1,025 docs with multiple collaborators"]
+      [:li "464 collaborators joined Julie's doc"]
+      [:li "270 Redditors made this masterpiece"]]]
+
+    [:figure
+     [:img {:src "/blog/product-hunt-wake-up-call/traffic-spike.png"}]]
+
+    [:article
+     [:p "After that weekend we broke 300 sign ups.
+         To put that number into perspective, before Product Hunt we had less than 10 sign ups.
+         We didn't have much of a sign up process either.
+         At that point almost everything in the app could be done without signing up."]
+     [:p "The morning after being on Product Hunt, our server went down from 2am to 7am.
+         The load was likely enough to take it down, but we don't know for sure since we were asleep."]]
+
+    [:figure
+     [:img {:src "/blog/product-hunt-wake-up-call/server-crash.png"}]]
+
+    [:article
+     [:p "All in all, it was a fantastic experience.
+         We've learned a lot about our product in the last few weeks, and now we feel like we have a well-defined direction for growth."]]
     )})

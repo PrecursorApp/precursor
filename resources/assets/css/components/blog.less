@@ -131,75 +131,17 @@
     > img,
     > video,
     > a {
-      &:only-child {
-        width: 100%;
-        margin: 2rem 0;
+      // &:only-child {
+      //   width: 100%;
+      //   margin: 2rem 0;
+      // }
+      width: 100%;
+      margin: 1rem 0;
+      &:first-child {
+        margin-top: 2rem;
       }
-    }
-    img {
-      border: 1px solid @gray_lighter;
-    }
-    [data-caption-white] {
-      display: block;
-      position: relative;
-      &:after {
-        .flexy(flex-end, center);
-        .gradient(to bottom; fade(@white, 0) 25%; fade(@white, 90) 75%);
-        content: attr(data-caption-white);
-        color: transparent;
-        font-size: 1rem;
-        opacity: 0;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: 1px solid @gray;
-        transition+: opacity @speed @bezier_fadein 0ms;
-        transition+: color @speed @bezier_fadein @speed_fast;
-        transition+: padding @speed @bezier_fadein @speed_fast;
-        transition+: font-size @speed @bezier_fadein @speed_fast;
-      }
-      &:hover {
-        &:after {
-          color: @gray;
-          opacity: 1;
-          padding: 1rem;
-          font-size: 0.750rem;
-        }
-      }
-    }
-    [data-caption-dark] {
-      display: block;
-      position: relative;
-      &:after {
-        .flexy(flex-end, center);
-        .gradient(to bottom; fade(@black, 0) 25%; fade(@black, 90) 75%);
-        content: attr(data-caption-dark);
-        color: transparent;
-        font-size: 1rem;
-        opacity: 0;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: 1px solid transparent;
-        transition+: opacity @speed @bezier_fadein 0ms;
-        transition+: color @speed @bezier_fadein @speed_fast;
-        transition+: padding @speed @bezier_fadein @speed_fast;
-        transition+: font-size @speed @bezier_fadein @speed_fast;
-      }
-      &:hover {
-        &:after {
-          color: @gray_light;
-          opacity: 1;
-          padding: 1rem;
-          font-size: 0.750rem;
-        }
-      }
-      img {
-        border-color: transparent;
+      &:last-child {
+        margin-bottom: 2rem;
       }
     }
   }

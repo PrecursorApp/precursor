@@ -1,0 +1,54 @@
+[data-caption-white],
+[data-caption-black] {
+  display: block;
+  position: relative;
+  &:after {
+    .flexy(flex-end, center);
+    color: transparent;
+    font-size: 1rem;
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition+: opacity   @speed @bezier_fadein 0ms;
+    transition+: color     @speed @bezier_fadein    @speed_fast;
+    transition+: padding   @speed @bezier_transform @speed_fast;
+    transition+: font-size @speed @bezier_transform @speed_fast;
+  }
+  &:hover {
+    &:after {
+      opacity: 1;
+      font-size: 0.750rem;
+      padding: 1rem;
+      transition+: opacity   @speed @bezier_fadein 0ms;
+      transition+: color     @speed_fast @bezier_fadein    @speed_fast;
+      transition+: padding   @speed_fast @bezier_transform @speed_fast;
+      transition+: font-size @speed_fast @bezier_transform @speed_fast;
+    }
+  }
+}
+[data-caption-white] {
+  .outline();
+  &:after {
+    .gradient(to bottom; fade(@white, 0) 25%; fade(@white, 90) 75%);
+    content: attr(data-caption-white);
+  }
+  &:hover {
+    &:after {
+      color: @gray;
+    }
+  }
+}
+[data-caption-black] {
+  &:after {
+    .gradient(to bottom; fade(@black, 0) 25%; fade(@black, 30) 75%);
+    content: attr(data-caption-black);
+  }
+  &:hover {
+    &:after {
+      color: @gray_light;
+    }
+  }
+}
