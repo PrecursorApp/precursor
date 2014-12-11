@@ -80,8 +80,8 @@
       [:li "9,547 total users"]
       [:li "2,368 docs with multiple views"]
       [:li "1,025 docs with multiple collaborators"]
-      [:li "464 collaborators joined Julie's doc"]
-      [:li "270 Redditors made this masterpiece"]]]
+      [:li "464 collaborators joined " [:a {:href "/document/17592186400920"} "Julie's doc"]]
+      [:li "270 Redditors made " [:a {:href "/document/17592187872308"} "this masterpiece"]]]]
 
     [:figure
      [:img {:src "/blog/product-hunt-wake-up-call/traffic-spike.png"}]]
