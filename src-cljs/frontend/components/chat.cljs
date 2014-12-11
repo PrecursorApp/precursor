@@ -1,12 +1,16 @@
 (ns frontend.components.chat
   (:require [clojure.set :as set]
             [clojure.string :as str]
+            [cljs-time.core :as time]
+            [cljs-time.format :as time-format]
             [datascript :as d]
             [frontend.async :refer [put!]]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
+            [frontend.datetime :as datetime]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [goog.date]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]])
@@ -83,12 +87,15 @@
                                   id))
                        chat-body (if (string? (:chat/body chat))
                                    (linkify (:chat/body chat))
-                                   (:chat/body chat))]]
-             (html [:div.message {:key (:db/id chat)}
-                    [:span {:style {:color (or (:chat/color chat) (str "#" id))}}
-                     name]
-                    " "
-                    chat-body]))]
+                                   (:chat/body chat))
+                       short-time (datetime/short-time (js/Date.parse (:server/timestamp chat)))]]
+             (html [:div.chat-message {:key (:db/id chat)}
+                    [:div.message-head
+                     [:div.message-sender {:style {:color (or (:chat/color chat) (str "#" id))}} name]
+                     [:div.message-time short-time]]
+                    [:div.message-body
+                     [:div.message-content chat-body]]
+                    ]))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)
                   :on-key-down #(when (and (= "Enter" (.-key %))

@@ -138,9 +138,23 @@
   span {
     word-break: break-word;
   }
-  .message {
-    padding: 0 1em;
-  }
+}
+.chat-message {
+  padding: 0 1em;
+}
+.message-head {
+  .flexy();
+}
+.message-time {
+  color: @gray_dark;
+  font-size: 0.75rem;
+  line-height: ~"@{line_height}rem";
+  text-transform: lowercase;
+  word-spacing: -.5ex;
+  margin-left: .5em;
+}
+.message-body {
+  padding-bottom: .5em;
 }
 .chat-button {
   .icon_stroke(@gray);
