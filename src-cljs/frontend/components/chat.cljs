@@ -122,8 +122,7 @@
             chat-opened? (get-in app state/chat-opened-path)
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])
-            can-edit? (not (empty? (:cust app)))
-            change-username-learned? (get-in app state/change-username-learned-path)]
+            can-edit? (not (empty? (:cust app)))]
         (html
          [:div.app-chat {:class (concat
                                     (when-not chat-opened? ["closed"])
