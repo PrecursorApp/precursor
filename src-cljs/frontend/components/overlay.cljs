@@ -127,7 +127,7 @@
              [:label {:data-placeholder "Teammate's Email"
                       :data-placeholder-nil "What's your teammate's email?"
                       :data-placeholder-forgot "Don't forget to submit."}]]
-            (when-let [response (first (seq (get-in app (state/invite-responses-path (:document/id app)))))]
+            (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
               [:div response])
             ;; TODO: keep track of invites
             ;; [:p "You've sent 3 invitations to this doc."]
