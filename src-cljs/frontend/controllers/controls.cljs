@@ -1012,11 +1012,11 @@
       (assoc-in state/invite-email-path value)))
 
 (defmethod control-event :email-invite-submitted
-  [browser-state message {:keys [value]} state]
+  [browser-state message _ state]
   (assoc-in state state/invite-email-path nil))
 
 (defmethod post-control-event! :email-invite-submitted
-  [browser-state message {:keys [value]} previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (let [email (get-in previous-state state/invite-email-path)
         doc-id (:document/id previous-state)]
     (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
