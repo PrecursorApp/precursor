@@ -54,11 +54,17 @@
                  [hiccups "0.3.0"]
 
                  [weasel "0.4.2"] ;; repl
+                 [figwheel "0.1.7-SNAPSHOT"] ;; hate using snapshots :/
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
 
+  :figwheel {:http-server-root "public"
+             :server-port 3448
+             :css-dirs ["resources/public/css"]}
+
   :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
-            [com.cemerick/austin "0.1.4"]]
+            [com.cemerick/austin "0.1.4"]
+            [lein-figwheel "0.1.7-SNAPSHOT"]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]
