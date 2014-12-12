@@ -50,7 +50,7 @@
             [:h2 "Remember that one idea?"]
             [:p "Neither do we—well, not yet at least.
                 Sign up and we'll remember your ideas for you.
-                Never lose a great idea ever again!"]
+                Never lose a great idea again!"]
             [:a.menu-button {:href (auth/auth-url)
                              :role "button"
                              :on-click #(do

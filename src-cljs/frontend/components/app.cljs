@@ -150,7 +150,7 @@
                                             :left (+ (get-in app [:mouse :x]) 16)}}
                    (if (= :touch (get-in app [:mouse :type]))
                      "Tap and hold to select tool"
-                     "Try right-click")])]
+                     "Right-click.")])]
                (om/build chat/menu app)])))))
 
 (defn app [app owner]
