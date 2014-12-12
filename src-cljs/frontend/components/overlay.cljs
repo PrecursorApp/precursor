@@ -114,19 +114,30 @@
            [:article
             [:h2 "Share this with your team."]
             [:p "Send your teammates invites to come collaborate with you in this doc."]
-            [:form.menu-invite-form {:on-submit #(do (cast! :invite-submitted)
-                                                     false)
-                                     :on-key-down #(when (= "Enter" (.-key %))
-                                                     (cast! :email-invite-submitted)
-                                                     false)}
-             [:input {:type "text"
-                      :required "true"
-                      :data-adaptive ""
-                      :value (or invite-email "")
-                      :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
-             [:label {:data-placeholder "Teammate's Email"
-                      :data-placeholder-nil "What's your teammate's email?"
-                      :data-placeholder-forgot "Don't forget to submit."}]]
+            (if-not (:cust app)
+              [:a.menu-button {:href (auth/auth-url)
+                               :on-click #(do
+                                            (.preventDefault %)
+                                            (cast! :track-external-link-clicked
+                                                   {:path (auth/auth-url)
+                                                    :event "Signup Clicked"
+                                                    :properties {:source "username-overlay"}}))
+                               :role "button"}
+               "Sign Up"]
+
+              [:form.menu-invite-form {:on-submit #(do (cast! :invite-submitted)
+                                                       false)
+                                       :on-key-down #(when (= "Enter" (.-key %))
+                                                       (cast! :email-invite-submitted)
+                                                       false)}
+               [:input {:type "text"
+                        :required "true"
+                        :data-adaptive ""
+                        :value (or invite-email "")
+                        :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+               [:label {:data-placeholder "Teammate's Email"
+                        :data-placeholder-nil "What's your teammate's email?"
+                        :data-placeholder-forgot "Don't forget to submit."}]])
             (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
               [:div response])
             ;; TODO: keep track of invites
