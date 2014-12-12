@@ -1005,3 +1005,8 @@
   (-> state
       (overlay/add-overlay :shortcuts)
       (assoc-in state/shortcuts-menu-learned-path true)))
+
+(defmethod control-event :document-permissions-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :document-permissions)))

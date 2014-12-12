@@ -70,6 +70,7 @@
                                                             s)))))
 
 (defmethod handle-message :frontend/error [app-state message data]
+  (put! (get-in @app-state [:comms :errors]) [:document-permission-error data])
   (utils/inspect data))
 
 

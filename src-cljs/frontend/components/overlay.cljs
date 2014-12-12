@@ -8,6 +8,7 @@
             [frontend.auth :as auth]
             [frontend.components.common :as common]
             [frontend.components.doc-viewer :as doc-viewer]
+            [frontend.components.document-access :as document-access]
             [frontend.datascript :as ds]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
@@ -74,33 +75,39 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view
-           [:div.menu-view-frame
-            [:a.menu-item {:on-click #(cast! :overlay-info-toggled)
-                           :role "button"}
-             (common/icon :info)
-             [:span "About"]]
-            [:a.menu-item {:on-click #(cast! :newdoc-button-clicked)
-                           :href "/"
-                           :target "_self"
-                           :role "button"}
-             (common/icon :newdoc)
-             [:span "New Document"]]
-            [:a.menu-item {:on-click #(cast! :your-docs-opened)
-                           :role "button"}
-             (common/icon :clock)
-             [:span "Your Documents"]]
-            ;; TODO finish wiring up invite stuff -dk (12/09/14)
-            ;; [:a.menu-item {:on-click #(cast! :invite-menu-opened)
-            ;;                :role "button"}
-            ;;  (common/icon :users)
-            ;;  [:span "Invite Collaborators"]]
-            [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
-                           :class "mobile-hidden"
-                           :role "button"}
-             (common/icon :command)
-             [:span "Shortcuts"]]
-            (om/build auth-link app)]])))))
+         [:div.menu-view
+          [:div.menu-view-frame
+           [:a.menu-item {:on-click #(cast! :overlay-info-toggled)
+                          :role "button"}
+            (common/icon :info)
+            [:span "About"]]
+           [:a.menu-item {:on-click #(cast! :newdoc-button-clicked)
+                          :href "/"
+                          :target "_self"
+                          :role "button"}
+            (common/icon :newdoc)
+            [:span "New Document"]]
+           [:a.menu-item {:on-click #(cast! :your-docs-opened)
+                          :role "button"}
+            (common/icon :clock)
+            [:span "Your Documents"]]
+           ;; TODO finish wiring up invite stuff -dk (12/09/14)
+           ;; [:a.menu-item {:on-click #(cast! :invite-menu-opened)
+           ;;                :role "button"}
+           ;;  (common/icon :users)
+           ;;  [:span "Invite Collaborators"]]
+           [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
+                          :class "mobile-hidden"
+                          :role "button"}
+            (common/icon :command)
+            [:span "Shortcuts"]]
+           (when (= :none (get-in app (state/document-access-path (:document/id app))))
+             [:a.menu-item {:on-click #(cast! :document-permissions-opened)
+                            :role "button"}
+              (common/icon :login)
+              [:span "Request Access"]])
+
+           (om/build auth-link app)]])))))
 
 (defn invite [app owner]
   (reify
@@ -246,10 +253,12 @@
    :start {:title "Precursor"
            :component start}
    :invite {:title "Invite Collaborators"
-           :component invite}
+            :component invite}
    :username {:component username}
    :doc-viewer {:title "Recent Documents"
-                :component doc-viewer/doc-viewer}})
+                :component doc-viewer/doc-viewer}
+   :document-permissions {:title "Request Access"
+                          :component document-access/permissions-overlay}})
 
 (defn overlay [app owner]
   (reify

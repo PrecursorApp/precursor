@@ -7,8 +7,13 @@
 (defn add-overlay [state overlay]
   (update-in state state/overlays-path conj overlay))
 
+(defn safe-pop [v]
+  (if (empty? v)
+    v
+    (pop v)))
+
 (defn pop-overlay [state]
-  (update-in state state/overlays-path pop))
+  (update-in state state/overlays-path safe-pop))
 
 (defn replace-overlay [state overlay]
   (assoc-in state state/overlays-path [overlay]))

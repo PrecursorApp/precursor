@@ -116,3 +116,6 @@
 (def overlay-shortcuts-opened-path [:overlay-shortcuts-opened])
 
 (def overlays-path [:overlays])
+
+(defn document-access-path [doc-id]
+  [:doc-props (str doc-id) :access])
