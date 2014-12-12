@@ -1,5 +1,6 @@
 (ns pc.views.blog.product-hunt-wake-up-call
-  (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]))
+  (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
+            [pc.views.blog.common :as common]))
 
 (defn product-hunt-wake-up-call []
   {:title "Product Hunt was a wake up call, literally."
@@ -32,13 +33,7 @@
          To start prototyping, simply visit the root url, right-click to select a tool, and then draw.
          That's it--there's no software to install or sign up required.
          If you want to show your prototypes to a teammate, just send them a link; you'll instantly be able to collaborate in real-time.
-         There's no jumping through hoops just to share your idea."]]
-
-    [:figure
-     [:a.img {:href "/" :data-caption-black "It's faster than even we expected."}
-      [:img {:src "/email/collaboration-demo.gif"}]]]
-
-    [:article
+         There's no jumping through hoops just to share your idea."]
      [:p "Daniel and I both work with a lot of remote developers and we find it difficult to share quick, rough sketches with teammates.
          We researched many prototyping tools but we couldn't find one that met our expectations in terms of simple, efficient collaboration.
          Everything was overly complex and made impromptu teamwork a chore.
@@ -47,12 +42,25 @@
          We know the pain of losing a good idea; the worst part for me is knowing that it didn't have to happen.
          I wouldn't have lost that idea if had I sketched it out sooner or if I drew it on something that couldn't get misplaced."]]
 
+    [:figure
+     [:a.img {:href "/" :data-caption-black "It's faster than even we expected."}
+      [:img {:src "/email/collaboration-demo.gif"}]]]
+
+    ; [:article
+    ;  [:p "Daniel and I both work with a lot of remote developers and we find it difficult to share quick, rough sketches with teammates.
+    ;      We researched many prototyping tools but we couldn't find one that met our expectations in terms of simple, efficient collaboration.
+    ;      Everything was overly complex and made impromptu teamwork a chore.
+    ;      Rather than settling, we decided to scratch our own itch."]
+    ;  [:p "Our initial goal was to simply help ourselves share ideas as efficiently and effectively as possible, and then make it insanely easy to share those ideas.
+    ;      We know the pain of losing a good idea; the worst part for me is knowing that it didn't have to happen.
+    ;      I wouldn't have lost that idea if had I sketched it out sooner or if I drew it on something that couldn't get misplaced."]]
+
     [:article
      [:h3 "Product Hunt loved Precursor, and we loved the feedback."]
      [:p "By mid-day Precursor had been shared on several other sites, but Product Hunt was still responsible for the majority of our traffic.
          What we found most interesting about the Product Hunt traffic was not its volume, but its quality of feedback.
          Over and over again, the Product Hunt community offered us insightful and actionable feedback.
-         Most of the time it even considered many constraints that the project actually faced."]
+         A lot of it even considered constraints that the project actually faced."]
      [:p "Users understood that Precursor just got started, and that it was a minimum viable product to a more well-defined prototyping solution.
          I was astounded every time someone acknowledged this explicitly.
          Rather than write us off because of missing features, they told us which features they'd like to see next.
@@ -61,7 +69,8 @@
      [:p "The Product Hunt feedback was too valuable to waste so we began handling support in real-time.
          If a question was asked in-app, we arrived within seconds to respond and collect feedback.
          We even started responding to feature requests by building the requested feature, rather than just a promise to do it later.
-         Once users told us exactly what they wanted it was easy to prioritize and build things the same day."]
+         Once users told us exactly what they wanted it was easy to prioritize and build things quickly."]
+     (common/tweet "andymerskin" "534549512354672641")
      [:p "Precursor started as just a weekend project for us, but Product Hunt has shown us that there's significant interest in the problem we're trying to solve.
          I'm happy to say that we're no longer just adding features on the weekends; we'll be spending a lot more time on it in the coming weeks and plan to work on it full-time."]
      [:p "The next big features we have planned are private docs and team features.
@@ -69,7 +78,7 @@
          Hopefully the Product Hunt community will have us back again at some point to share a new offering."]]
 
     [:article
-     [:h3 "tl;dr Here's how we did."]
+     [:h3 "And here's how we did."]
      [:p "Precursor has only been live in its current form for a few months.
          Luckily, we set up analytics just before we were featured on Product Hunt.
          Here's a few stats that we found interesting:"]
@@ -84,20 +93,15 @@
       [:li "270 Redditors made " [:a {:href "/document/17592187872308"} "this masterpiece"]]]]
 
     [:figure
-     [:img {:src "/blog/product-hunt-wake-up-call/traffic-spike.png"}]]
-
-    [:article
-     [:p "After that weekend we broke 300 sign ups.
-         To put that number into perspective, before Product Hunt we had less than 10 sign ups.
-         We didn't have much of a sign up process either.
-         At that point almost everything in the app could be done without signing up."]
-     [:p "The morning after being on Product Hunt, our server went down from 2am to 7am.
-         The load was likely enough to take it down, but we don't know for sure since we were asleep."]]
-
-    [:figure
-     [:img {:src "/blog/product-hunt-wake-up-call/server-crash.png"}]]
-
-    [:article
-     [:p "All in all, it was a fantastic experience.
-         We've learned a lot about our product in the last few weeks, and now we feel like we have a well-defined direction for growth."]]
-    )})
+     [:a {:data-caption-white "This is what our traffic looked like before and after the Product Hunt post.
+                              That dip on the 16th was actually our server crashing :("}
+      [:img {:src "/blog/product-hunt-wake-up-call/traffic-spike.png"}]]
+     [:a {:data-caption-white "Here's an hourly overview of the same data.
+                              We think the server crashed under the load but we're not sure since we were asleep.
+                              We've upgraded our hardware after that."}
+      [:img {:src "/blog/product-hunt-wake-up-call/server-crash.png"}]]
+     (common/tweet "benarent" "534592531917312000")
+     (common/tweet "fotosdelviaje" "534070940120780801")
+     (common/tweet "magmip" "534074309191688192" :no-parent true)
+     (common/tweet "TimDaub" "534351950419345408")
+     ])})

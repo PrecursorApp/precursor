@@ -28,9 +28,9 @@
   "Sorted array of slugs, assumes the post content can be found in the
    function returned by post-fn"
   [;"instrumenting-om-components"
+   "product-hunt-wake-up-call"
    "interactive-layers"
    ;"lets-replace-pen-and-paper"
-   "product-hunt-wake-up-call"
    ])
 
 (defn post-exists? [slug]

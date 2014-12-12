@@ -3,3 +3,40 @@
     display: none !important;
   });
 }
+[id|="twitter-widget"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 1rem 0 !important;
+}
+.twitter-tweet {
+  &:not(:empty) {
+    .flexy(center);
+    font-size: inherit;
+    font-weight: inherit;
+    min-height: (186px - 24);
+    margin: 1em 0;
+    padding: 1.25rem 0 1.250rem 1.875rem;
+    border-color: #eee #ddd #bbb;
+    border-radius: 5px;
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: 0 1px 3px fade(@black, 15);
+    a {
+      &:before {
+        content: attr(data-loading-tweet);
+      }
+      &:after {
+        .animation(tweet-load @speed_slow @bezier_fadein 3s both);
+        content: attr(data-failed-tweet);
+      }
+    }
+  }
+}
+@keyframes tweet-load {
+  0%   {opacity: 0;}
+  100% {opacity: 1;}
+}
+@-webkit-keyframes tweet-load {
+  0%   {opacity: 0;}
+  100% {opacity: 1;}
+}
