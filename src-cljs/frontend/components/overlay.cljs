@@ -91,10 +91,10 @@
              (common/icon :clock)
              [:span "Your Documents"]]
             ;; TODO finish wiring up invite stuff -dk (12/09/14)
-            ;; [:a.menu-item {:on-click #(cast! :invite-menu-opened)
-            ;;                :role "button"}
-            ;;  (common/icon :users)
-            ;;  [:span "Invite Collaborators"]]
+            [:a.menu-item {:on-click #(cast! :invite-menu-opened)
+                           :role "button"}
+             (common/icon :users)
+             [:span "Invite Collaborators"]]
             [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
                            :class "mobile-hidden"
                            :role "button"}
@@ -106,31 +106,52 @@
   (reify
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [cast! (om/get-shared owner :cast!)
+            invite-email (get-in app state/invite-email-path)]
         (html
-          [:div.menu-view
-           [:div.menu-view-frame
-            [:article
-             [:h2 "Share this with your team."]
-             [:p "Send your teammates invites to come collaborate with you in this doc. Separate emails with a space or a comma."]
-             [:form.menu-invite-form
-              [:input {:type "text"
-                       :required "true"
-                       :data-adaptive ""}]
-              [:label {:data-placeholder "Teammate's Email"
-                       :data-placeholder-nil "What's your teammate's email?"
-                       :data-placeholder-forgot "Don't forget to submit."}]]
-             [:p "You've sent 3 invitations to this doc."]
-             [:div.invite-recipient
-              [:div.invite-recipient-email "fake@email.com"]
-              [:a {:role "button"} "Resend"]]
-             [:div.invite-recipient
-              [:div.invite-recipient-email "fake@email.com"]
-              [:a {:role "button"} "Resend"]]
-             [:div.invite-recipient
-              [:div.invite-recipient-email "fake@email.com"]
-              [:a {:role "button"} "Resend"]]]
-             ]])))))
+         [:div.menu-view
+          [:div.menu-view-frame
+           [:article
+            [:h2 "Share this with your team."]
+            [:p "Send your teammates invites to come collaborate with you in this doc."]
+            (if-not (:cust app)
+              [:a.menu-button {:href (auth/auth-url)
+                               :on-click #(do
+                                            (.preventDefault %)
+                                            (cast! :track-external-link-clicked
+                                                   {:path (auth/auth-url)
+                                                    :event "Signup Clicked"
+                                                    :properties {:source "username-overlay"}}))
+                               :role "button"}
+               "Sign Up"]
+
+              [:form.menu-invite-form {:on-submit #(do (cast! :invite-submitted)
+                                                       false)
+                                       :on-key-down #(when (= "Enter" (.-key %))
+                                                       (cast! :email-invite-submitted)
+                                                       false)}
+               [:input {:type "text"
+                        :required "true"
+                        :data-adaptive ""
+                        :value (or invite-email "")
+                        :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+               [:label {:data-placeholder "Teammate's Email"
+                        :data-placeholder-nil "What's your teammate's email?"
+                        :data-placeholder-forgot "Don't forget to submit."}]])
+            (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
+              [:div response])
+            ;; TODO: keep track of invites
+            ;; [:p "You've sent 3 invitations to this doc."]
+            ;; [:div.invite-recipient
+            ;;  [:div.invite-recipient-email "fake@email.com"]
+            ;;  [:a {:role "button"} "Resend"]]
+            ;; [:div.invite-recipient
+            ;;  [:div.invite-recipient-email "fake@email.com"]
+            ;;  [:a {:role "button"} "Resend"]]
+            ;; [:div.invite-recipient
+            ;;  [:div.invite-recipient-email "fake@email.com"]
+            ;;  [:a {:role "button"} "Resend"]]
+            ]]])))))
 
 (defn info [app owner]
   (reify
