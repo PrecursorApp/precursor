@@ -116,3 +116,8 @@
 (def overlay-shortcuts-opened-path [:overlay-shortcuts-opened])
 
 (def overlays-path [:overlays])
+
+(def invite-email-path [:invite-email])
+
+(defn invite-responses-path [doc-id]
+  [:doc-settings doc-id :invite-responses])
