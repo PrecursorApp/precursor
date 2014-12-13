@@ -20,7 +20,7 @@
                  [log4j/apache-log4j-extras "1.1"]
                  [org.slf4j/slf4j-api "1.6.2"]
                  [org.slf4j/slf4j-log4j12 "1.6.2"]
-                 [cider/cider-nrepl "0.7.0-SNAPSHOT"]
+                 [cider/cider-nrepl "0.8.1"]
                  [clj-http "1.0.0"]
                  [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop]]
 
