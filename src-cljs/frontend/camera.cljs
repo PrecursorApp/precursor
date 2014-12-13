@@ -56,9 +56,10 @@
   "Step function to determine snap increment"
   [grid-size]
   (condp > grid-size
-    5 100
-    10 50
-    20 10
+    3 100
+    4 50
+    8 25
+    15 10
     50 5
     5))
 
