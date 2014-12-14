@@ -183,7 +183,7 @@
               {:status 302
                :body ""
                :session (assoc (:session req)
-                          :http-session-key (:cust/http-session-key cust))
+                               :http-session-key (:cust/http-session-key cust))
                :headers {"Location" (str (url/map->URL {:host (profile/hostname)
                                                         :protocol (if (ssl? req) "https" "http")
                                                         :port (if (ssl? req)

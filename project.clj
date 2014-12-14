@@ -83,6 +83,8 @@
              "-Djna.library.path=target/native/macosx/x86_64:target/native/linux/x86_64:target/native/linux/x86"
              "-Dfile.encoding=UTF-8"]
 
+  :repl-options {:init-ns pc.repl}
+
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src-cljs"
                                        "yaks/om/src"]

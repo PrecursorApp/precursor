@@ -5,7 +5,8 @@
             pc.less
             pc.logging
             pc.nrepl
-            pc.server))
+            pc.server
+            pc.repl))
 
 (def init-fns [#'pc.logging/init
                #'pc.nrepl/init
