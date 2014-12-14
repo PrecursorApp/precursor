@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)])
   (:require [cljs.core.async :as async :refer (<! >! put! chan)]
             [clojure.set :as set]
+            [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [taoensso.sente  :as sente :refer (cb-success?)]
             [frontend.datascript :as ds]
@@ -18,9 +19,7 @@
                      (remove-watch ref watch-id)))))))
 
 (defn subscribe-to-document [sente-state document-id]
-  (send-msg sente-state [:frontend/subscribe {:document-id document-id}] 10000
-            (fn [data]
-              (put! (:ch-recv sente-state) [:chsk/recv [:frontend/subscribe data]]))))
+  (send-msg sente-state [:frontend/subscribe {:document-id document-id}]))
 
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
@@ -61,6 +60,11 @@
     (d/transact! (:db @app-state)
                  (:entities data)
                  {:server-update true})))
+
+(defmethod handle-message :frontend/invite-response [app-state message data]
+  (let [doc-id (:document/id data)
+        response (:response data)]
+    (swap! app-state update-in (state/invite-responses-path doc-id) conj response)))
 
 (defmethod handle-message :frontend/subscribers [app-state message {:keys [subscribers] :as data}]
   (when (= (:document/id data) (:document/id @app-state))

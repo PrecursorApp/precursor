@@ -244,29 +244,34 @@
   (check-document-access (-> ?data :document/id) req)
   (let [[chat-id] (pcd/generate-eids (pcd/conn) 1)
         doc-id (-> ?data :document/id)
-        send-chat (fn [body]
-                    @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
-                                              :document/id doc-id}
-                                             {:chat/body body
-                                              :server/timestamp (java.util.Date.)
-                                              :document/id doc-id
-                                              :db/id chat-id
-                                              :cust/uuid (auth/prcrsr-bot-uuid (:db req))
-                                              ;; default bot color, also used on frontend chats
-                                              :chat/color "#00b233"}]))]
+        invite-loc (-> ?data :invite-loc)
+        notify-invite (fn [body]
+                        (if (= :overlay invite-loc)
+                          ((:send-fn @sente-state) (str (client-uuid->uuid client-uuid))
+                           [:frontend/invite-response {:document/id doc-id
+                                                       :response body}])
+                          @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                                    :document/id doc-id}
+                                                   {:chat/body body
+                                                    :server/timestamp (java.util.Date.)
+                                                    :document/id doc-id
+                                                    :db/id chat-id
+                                                    :cust/uuid (auth/prcrsr-bot-uuid (:db req))
+                                                    ;; default bot color, also used on frontend chats
+                                                    :chat/color "#00b233"}])))]
     (if-let [cust (-> req :ring-req :auth :cust)]
       (let [email (-> ?data :email)
             cid (client-uuid->uuid client-uuid)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
         (try
           (email/send-chat-invite {:cust cust :to-email email :doc-id doc-id})
-          (send-chat "Invite sent!")
+          (notify-invite (str "Invite sent to " email))
           (catch Exception e
             (log/error e)
             (.printStackTrace e)
-            (send-chat "Sorry! There was a problem sending the invite."))))
+            (notify-invite (str "Sorry! There was a problem sending the invite to " email)))))
 
-      (send-chat "Please sign up to send an invite."))))
+      (notify-invite "Please sign up to send an invite."))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log

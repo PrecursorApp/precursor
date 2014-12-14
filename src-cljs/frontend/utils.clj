@@ -28,11 +28,16 @@
   "wraps errors in a try/catch statement, logging issues to the console
    and optionally rethrowing them if configured to do so."
   [& action]
-  `(try ~@action
-        (catch :default e#
-          (merror e#)
-          (when (:rethrow-errors? initial-query-map)
-            (throw e#)))))
+  `(try
+     (try ~@action
+          (catch js/Error e#
+            (merror e#)
+            (when (:rethrow-errors? initial-query-map)
+              (throw e#))))
+     (catch :default e2#
+       (merror e2#)
+       (when (:rethrow-errors? initial-query-map)
+         (throw e2#)))))
 
 (defmacro defrender
   "Reifies an IRender component that only has a render function and

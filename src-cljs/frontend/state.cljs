@@ -117,5 +117,11 @@
 
 (def overlays-path [:overlays])
 
+
+(def invite-email-path [:invite-email])
+
+(defn invite-responses-path [doc-id]
+  [:doc-settings doc-id :invite-responses])
+
 (defn document-access-path [doc-id]
-  [:doc-props (str doc-id) :access])
+  [:doc-settings (str doc-id) :access])
