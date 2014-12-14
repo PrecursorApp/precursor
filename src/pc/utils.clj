@@ -38,7 +38,7 @@
          (do
            ~@body)
          (catch Object e#
-           (println "1")
+           (log/error e# "1st straight jacket")
            ;; need rollbar integration
            ;; (rollbar/rollbar :exception (-> ~'&throw-context :throwable)
            ;;                    :data {:cmd (str (quote ~body))})
