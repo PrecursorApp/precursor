@@ -1,6 +1,7 @@
 (ns frontend.auth
   (:require [cemerick.url :as url]
             [clojure.string :as str]
+            [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]))
 
 (def google-client-id (aget js/window "Precursor" "google-client-id"))
@@ -23,3 +24,7 @@
                                 :scope (str/join " " scopes)
                                 :redirect_uri (google-redirect-uri)
                                 :state state}}))))
+
+;; TODO: we should have more info about users and docs in the frontend db
+(defn has-document-access? [state doc-id]
+  (not= :none (get-in state (state/document-access-path doc-id))))

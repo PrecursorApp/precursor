@@ -70,12 +70,16 @@
                          [?t :cust/uuid ?u]]}
                db prcrsr-bot-email)))
 
+(defn document-permission [doc cust]
+  (when (and cust
+             (:document/creator doc)
+             (crypto/eq? (str (:cust/uuid cust))
+                         (str (:document/creator doc))))
+    :admin))
+
 (defn has-document-permission? [doc auth]
   (or (= :document.privacy/public (:document/privacy doc))
-      (and (get-in auth [:cust :cust/uuid])
-           (:document/creator doc)
-           (crypto/eq? (str (get-in auth [:cust :cust/uuid]))
-                       (str (:document/creator doc))))))
+      (= :admin (document-permission doc (:cust auth)))))
 
 (defn logged-in? [ring-req]
   (seq (get-in ring-req [:auth :cust])))

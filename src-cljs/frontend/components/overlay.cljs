@@ -91,11 +91,16 @@
                            :role "button"}
              (common/icon :clock)
              [:span "Your Documents"]]
-            ;; TODO finish wiring up invite stuff -dk (12/09/14)
-            [:a.menu-item {:on-click #(cast! :invite-menu-opened)
-                           :role "button"}
-             (common/icon :users)
-             [:span "Invite Collaborators"]]
+            (if (auth/has-document-access? app (:document/id app))
+              [:a.menu-item {:on-click #(cast! :invite-menu-opened)
+                             :role "button"}
+               (common/icon :users)
+               [:span "Invite Collaborators"]]
+
+              [:a.menu-item {:on-click #(cast! :document-permissions-opened)
+                             :role "button"}
+               (common/icon :users)
+               [:span "Request Access"]])
             [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
                            :class "mobile-hidden"
                            :role "button"}
@@ -274,6 +279,7 @@
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
                           :component document-access/permissions-overlay}})
+
 
 (defn overlay [app owner]
   (reify
