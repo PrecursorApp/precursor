@@ -39,6 +39,9 @@
 (defn chat-cust-name? [[type e a v :as transaction]]
   (= a :chat/cust-name))
 
+;; TODO: only let creators mark things as private
+;; TODO: only let people on the white list make things as private
+
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
