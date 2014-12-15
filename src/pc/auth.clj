@@ -72,15 +72,16 @@
                db prcrsr-bot-email)))
 
 (defn document-permission [db doc cust]
-  (cond (and cust
-             (:document/creator doc)
-             (crypto/eq? (str (:cust/uuid cust))
-                         (str (:document/creator doc))))
-        :admin
+  (when cust
+    (cond (and (:document/creator doc)
+               (crypto/eq? (str (:cust/uuid cust))
+                           (str (:document/creator doc))))
+          :admin
 
-        (contains? (permission-model/permits db doc cust) :permission.permits/admin)
-        :admin
-        :else nil))
+          (contains? (permission-model/permits db doc cust) :permission.permits/admin)
+          :admin
+
+          :else nil)))
 
 (defn has-document-permission? [db doc auth]
   (or (= :document.privacy/public (:document/privacy doc))
