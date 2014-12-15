@@ -58,17 +58,17 @@
                               uuid-attrs (get-uuid-attrs db)
                               server-timestamp (java.util.Date.)]
                           (->> datoms
-                               (remove #(= :dummy (:a %)))
-                               (filter (partial common/public? db))
-                               (map pcd/datom->transaction)
-                               (map (partial coerce-floats float-attrs))
-                               (map (partial coerce-uuids uuid-attrs))
-                               (map (partial coerce-server-timestamp server-timestamp))
-                               (remove chat-cust-name?)
-                               (concat [(merge {:db/id txid :document/id document-id :session/uuid session-uuid}
-                                               (when cust-uuid {:cust/uuid cust-uuid}))])
-                               (d/transact conn)
-                               deref
-                               :tx-data
-                               (filter (partial common/public? db))
-                               (map (partial common/datom-read-api db))))}}))
+                            (remove #(= :dummy (:a %)))
+                            (filter (fn [datom] (common/public? db (:e datom))))
+                            (map pcd/datom->transaction)
+                            (map (partial coerce-floats float-attrs))
+                            (map (partial coerce-uuids uuid-attrs))
+                            (map (partial coerce-server-timestamp server-timestamp))
+                            (remove chat-cust-name?)
+                            (concat [(merge {:db/id txid :document/id document-id :session/uuid session-uuid}
+                                            (when cust-uuid {:cust/uuid cust-uuid}))])
+                            (d/transact conn)
+                            deref
+                            :tx-data
+                            (filter (partial common/public? db))
+                            (map (partial common/datom-read-api db))))}}))
