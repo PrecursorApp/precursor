@@ -1,9 +1,11 @@
 (ns frontend.components.document-access
   (:require [clojure.string :as str]
+            [datascript :as d]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]
             [frontend.components.common :as common]
+            [frontend.models.doc :as doc-model]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true]
@@ -11,7 +13,7 @@
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
-(defn permissions-overlay [app owner]
+(defn permission-denied-overlay [app owner]
   (reify
     om/IRender
     (render [_]
@@ -36,7 +38,7 @@
                                              (cast! :track-external-link-clicked
                                                     {:path (auth/auth-url)
                                                      :event "Signup Clicked"
-                                                     :properties {:source "permissions-overlay"}}))
+                                                     :properties {:source "permission-denied-overlay"}}))
                                 :role "button"}
                 "Sign In"]))
             [:p "Anything you draw on this document will only be visible to you. "]
@@ -44,3 +46,40 @@
              "If you want a document of your own, you can "
              [:a {:href "/" :target "_self"} "create your own document"]
              ". "]]]])))))
+
+(defn manage-permissions-overlay [app owner]
+  (reify
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when (seq (filter #(= :document/privacy (:a %))
+                                      (:tx-data tx-report)))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
+
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc-id (:document/id app)
+            doc (doc-model/find-by-id @db doc-id)
+            private? (= :document.privacy/private (utils/inspect (:document/privacy doc)))]
+        (html
+         [:div.menu-view
+          [:div.menu-view-frame
+           [:article
+            [:input {:type "checkbox"
+                     :checked private?
+                     :onChange #(cast! :document-privacy-changed
+                                       {:doc-id doc-id
+                                        :setting (if private?
+                                                   :document.privacy/public
+                                                   :document.privacy/private)})}]
+            (if (= :document.privacy/public (:document/privacy doc))
+              [:label "Check to make document private"]
+              [:label "Uncheck to make document public"])]]])))))

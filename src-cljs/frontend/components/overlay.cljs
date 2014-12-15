@@ -10,6 +10,7 @@
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
             [frontend.datascript :as ds]
+            [frontend.models.doc :as doc-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
@@ -71,42 +72,63 @@
 
 (defn start [app owner]
   (reify
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when-let [chat-datoms (seq (filter #(= :document/privacy (:a %))
+                                                       (:tx-data tx-report)))]
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
-          [:div.menu-view
-           [:div.menu-view-frame
-            [:a.menu-item {:on-click #(cast! :overlay-info-toggled)
-                           :role "button"}
-             (common/icon :info)
-             [:span "About"]]
-            [:a.menu-item {:on-click #(cast! :newdoc-button-clicked)
-                           :href "/"
-                           :target "_self"
-                           :role "button"}
-             (common/icon :newdoc)
-             [:span "New Document"]]
-            [:a.menu-item {:on-click #(cast! :your-docs-opened)
-                           :role "button"}
-             (common/icon :clock)
-             [:span "Your Documents"]]
-            (if (auth/has-document-access? app (:document/id app))
-              [:a.menu-item {:on-click #(cast! :invite-menu-opened)
-                             :role "button"}
-               (common/icon :users)
-               [:span "Invite Collaborators"]]
+         [:div.menu-view
+          [:div.menu-view-frame
+           [:a.menu-item {:on-click #(cast! :overlay-info-toggled)
+                          :role "button"}
+            (common/icon :info)
+            [:span "About"]]
+           [:a.menu-item {:on-click #(cast! :newdoc-button-clicked)
+                          :href "/"
+                          :target "_self"
+                          :role "button"}
+            (common/icon :newdoc)
+            [:span "New Document"]]
+           [:a.menu-item {:on-click #(cast! :your-docs-opened)
+                          :role "button"}
+            (common/icon :clock)
+            [:span "Your Documents"]]
+           ;; TODO: should this use the permissions model? Would have to send some
+           ;;       info about the document
+           (if (auth/has-document-access? app (:document/id app))
+             [:a.menu-item {:on-click #(cast! :invite-menu-opened)
+                            :role "button"}
+              (common/icon :users)
+              [:span "Invite Collaborators"]]
 
-              [:a.menu-item {:on-click #(cast! :document-permissions-opened)
-                             :role "button"}
-               (common/icon :users)
-               [:span "Request Access"]])
-            [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
-                           :class "mobile-hidden"
-                           :role "button"}
-             (common/icon :command)
-             [:span "Shortcuts"]]
-            (om/build auth-link app)]])))))
+             [:a.menu-item {:on-click #(cast! :document-permissions-opened)
+                            :role "button"}
+              (common/icon :users)
+              [:span "Request Access"]])
+           (if (auth/admin? @db doc {:cust/uuid (get-in app [:cust :uuid])})
+             [:a.menu-item {:on-click #(cast! :manage-permissions-opened)
+                            :role "button"}
+              (common/icon :users)
+              [:span "Manage permissions and privacy"]])
+           [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
+                          :class "mobile-hidden"
+                          :role "button"}
+            (common/icon :command)
+            [:span "Shortcuts"]]
+           (om/build auth-link app)]])))))
 
 (defn invite [app owner]
   (reify
@@ -278,7 +300,9 @@
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
-                          :component document-access/permissions-overlay}})
+                          :component document-access/permission-denied-overlay}
+   :manage-permissions {:title "Manage Access"
+                        :component document-access/manage-permissions-overlay}})
 
 
 (defn overlay [app owner]

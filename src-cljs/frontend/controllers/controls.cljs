@@ -1012,6 +1012,11 @@
   (-> state
       (overlay/add-overlay :document-permissions)))
 
+(defmethod control-event :manage-permissions-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :manage-permissions)))
+
 (defmethod control-event :invite-email-changed
   [browser-state message {:keys [value]} state]
   (-> state
@@ -1028,3 +1033,8 @@
     (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
                                                                    :email email
                                                                    :invite-loc :overlay}])))
+
+(defmethod post-control-event! :document-privacy-changed
+  [browser-state message {:keys [doc-id setting]} previous-state current-state]
+  (d/transact! (:db current-state)
+               [{:db/id doc-id :document/privacy setting}]))

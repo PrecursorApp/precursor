@@ -158,6 +158,13 @@
       (send-fn uid [:frontend/subscriber-joined (merge {:client-uuid cid}
                                                        (get-in @document-subs [document-id cid]))]))
 
+    ;; TODO: we'll need a read-api or something here at some point
+    (log/infof "sending document for %s to %s" document-id cid)
+    (send-fn (str cid) [:frontend/db-entities
+                        {:document/id document-id
+                         :entities [(pcd/touch+ (doc-model/find-by-id (:db req) document-id))]
+                         :entity-type :document}])
+
     (log/infof "sending layers for %s to %s" document-id cid)
     (send-fn (str cid) [:frontend/db-entities
                         {:document/id document-id

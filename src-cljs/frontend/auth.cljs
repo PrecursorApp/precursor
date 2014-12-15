@@ -28,3 +28,7 @@
 ;; TODO: we should have more info about users and docs in the frontend db
 (defn has-document-access? [state doc-id]
   (not= :none (get-in state (state/document-access-path doc-id))))
+
+;; TODO: handle more cases
+(defn admin? [db doc cust]
+  (= (str (:document/creator doc)) (str (:cust/uuid cust))))
