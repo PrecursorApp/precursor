@@ -6,4 +6,5 @@
             [pc.models.chat :as chat-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
-            [pc.models.layer :as layer-model]))
+            [pc.models.layer :as layer-model]
+            [pc.models.permission :as permission-model]))

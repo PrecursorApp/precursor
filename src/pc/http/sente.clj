@@ -52,7 +52,7 @@
 
 (defn check-document-access-from-auth [doc-id req]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
-    (when-not (auth/has-document-permission? doc (-> req :ring-req :auth))
+    (when-not (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth))
       (if (auth/logged-in? (:ring-req req))
         (throw+ {:status 403
                  :error-msg "This document is private. Please request access."

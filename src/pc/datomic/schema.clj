@@ -10,6 +10,12 @@
          {:db/cardinality :db.cardinality/one}
          opts))
 
+(defn function [ident fn & {:as opts}]
+  (merge {:db/id (d/tempid :db.part/user)
+          :db/ident ident
+          :db/fn fn}
+         opts))
+
 (defn enum [ident]
   {:db/id (d/tempid :db.part/user)
    :db/ident ident})
@@ -205,7 +211,47 @@
               :db.type/string)
 
    (attribute :cust/occupation
-              :db.type/string)])
+              :db.type/string)
+
+   (attribute :permission/document
+              :db.type/long
+              :db/doc "db/id of the document")
+
+   (attribute :permission/cust
+              :db.type/long
+              :db/doc "db/id of the user")
+
+   (attribute :permission/status
+              :db.type/ref
+              :db/doc "status of a permission request")
+
+   (enum :permission.status/pending)
+   (enum :permission.status/granted)
+   (enum :permission.status/denied)
+   (enum :permission.status/revoked)
+
+   (attribute :permission/permits
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "permission granted by permission")
+
+   (enum :permission.permits/admin)
+
+
+   (function :pc.models.permission/grant-permit
+             #db/fn {:lang :clojure
+                     :params [db doc-id cust-id permit]
+                     :code (if-let [id (ffirst (d/q '{:find [?t]
+                                                      :in [$ ?doc-id ?cust-id]
+                                                      :where [[?t :permission/document ?doc-id]
+                                                              [?t :permission/cust ?cust-id]]}
+                                                    db doc-id cust-id))]
+                             [[:db/add id :permission/permits permit]]
+                             (let [temp-id (d/tempid :db.part/user)]
+                               [[:db/add temp-id :permission/document doc-id]
+                                [:db/add temp-id :permission/cust cust-id]
+                                [:db/add temp-id :permission/permits permit]]))}
+             :db/doc "Adds a permit, with composite uniqueness constraint on doc and cust")])
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))

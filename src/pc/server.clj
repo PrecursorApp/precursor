@@ -65,7 +65,7 @@
                    ;; TODO: Maybe return a "not found" image.
                    :body "Document not found."})
 
-                (auth/has-document-permission? doc (-> req :auth))
+                (auth/has-document-permission? db doc (-> req :auth))
                 (let [layers (layer/find-by-document db doc)]
                   {:status 200
                    :headers {"Content-Type" "image/svg+xml"}
@@ -91,7 +91,7 @@
                    ;; TODO: Return a "not found" image.
                    :body "Document not found."})
 
-                (auth/has-document-permission? doc (-> req :auth))
+                (auth/has-document-permission? db doc (-> req :auth))
                 (let [layers (layer/find-by-document db doc)]
                   {:status 200
                    :headers {"Content-Type" "image/png"}

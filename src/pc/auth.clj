@@ -7,6 +7,7 @@
             [pc.analytics :as analytics]
             [pc.auth.google :as google-auth]
             [pc.models.cust :as cust]
+            [pc.models.permission :as permission-model]
             [pc.datomic :as pcd]
             [pc.profile :as profile]
             [pc.utils :as utils])
@@ -70,16 +71,20 @@
                          [?t :cust/uuid ?u]]}
                db prcrsr-bot-email)))
 
-(defn document-permission [doc cust]
-  (when (and cust
+(defn document-permission [db doc cust]
+  (cond (and cust
              (:document/creator doc)
              (crypto/eq? (str (:cust/uuid cust))
                          (str (:document/creator doc))))
-    :admin))
+        :admin
 
-(defn has-document-permission? [doc auth]
+        (contains? (permission-model/permits db doc cust) :permission.permits/admin)
+        :admin
+        :else nil))
+
+(defn has-document-permission? [db doc auth]
   (or (= :document.privacy/public (:document/privacy doc))
-      (= :admin (document-permission doc (:cust auth)))))
+      (= :admin (document-permission db doc (:cust auth)))))
 
 (defn logged-in? [ring-req]
   (seq (get-in ring-req [:auth :cust])))
