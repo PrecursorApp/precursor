@@ -3,3 +3,80 @@
     display: none !important;
   });
 }
+
+@sections:    20;
+@cylinder:    360;
+@rotation:    @cylinder / @sections;
+@start_at:    5;
+
+@saturate:    66%;
+@brighten:    100%;
+
+@mix_tone:    fade(@tinge, 34);
+@mix_dark:    fade(@black, 21);
+@mix_lite:    fade(@white, 21);
+
+@red_base:    ((00 * @rotation) + @start_at);
+@orange_base: ((01 * @rotation) + @start_at);
+@yellow_base: ((03 * @rotation) + @start_at);
+@green_base:  ((06 * @rotation) + @start_at);
+@cyan_base:   ((09 * @rotation) + @start_at);
+@blue_base:   ((11 * @rotation) + @start_at);
+@purple_base: ((15 * @rotation) + @start_at);
+@pink_base:   ((17 * @rotation) + @start_at);
+
+@red:         softlight(hsv(@red_base,    @saturate, @brighten), @mix_tone);
+@orange:      softlight(hsv(@orange_base, @saturate, @brighten), @mix_tone);
+@yellow:      softlight(hsv(@yellow_base, @saturate, @brighten), @mix_tone);
+@green:       softlight(hsv(@green_base,  @saturate, @brighten), @mix_tone);
+@cyan:        softlight(hsv(@cyan_base,   @saturate, @brighten), @mix_tone);
+@blue:        softlight(hsv(@blue_base,   @saturate, @brighten), @mix_tone);
+@purple:      softlight(hsv(@purple_base, @saturate, @brighten), @mix_tone);
+@pink:        softlight(hsv(@pink_base,   @saturate, @brighten), @mix_tone);
+
+@red_soft:    overlay(lighten(@red,    13), @mix_dark);
+@orange_soft: overlay(lighten(@orange, 13), @mix_dark);
+@yellow_soft: overlay(lighten(@yellow, 13), @mix_dark);
+@green_soft:  overlay(lighten(@green,  13), @mix_dark);
+@cyan_soft:   overlay(lighten(@cyan,   13), @mix_dark);
+@blue_soft:   overlay(lighten(@blue,   13), @mix_dark);
+@purple_soft: overlay(lighten(@purple, 13), @mix_dark);
+@pink_soft:   overlay(lighten(@pink,   13), @mix_dark);
+
+@red_deep:    overlay( darken(@red,    21), @mix_lite);
+@orange_deep: overlay( darken(@orange, 21), @mix_lite);
+@yellow_deep: overlay( darken(@yellow, 21), @mix_lite);
+@green_deep:  overlay( darken(@green,  21), @mix_lite);
+@cyan_deep:   overlay( darken(@cyan,   21), @mix_lite);
+@blue_deep:   overlay( darken(@blue,   21), @mix_lite);
+@purple_deep: overlay( darken(@purple, 21), @mix_lite);
+@pink_deep:   overlay( darken(@pink,   21), @mix_lite);
+
+.message { // for testings colors in order
+  &:nth-child(01)>span:first-child{color: @red_soft !important;}
+  &:nth-child(02)>span:first-child{color: @orange_soft !important;}
+  &:nth-child(03)>span:first-child{color: @yellow_soft !important;}
+  &:nth-child(04)>span:first-child{color: @green_soft !important;}
+  &:nth-child(05)>span:first-child{color: @cyan_soft !important;}
+  &:nth-child(06)>span:first-child{color: @blue_soft !important;}
+  &:nth-child(07)>span:first-child{color: @purple_soft !important;}
+  &:nth-child(08)>span:first-child{color: @pink_soft !important;}
+
+  &:nth-child(09)>span:first-child{color: @red !important;}
+  &:nth-child(10)>span:first-child{color: @orange !important;}
+  &:nth-child(11)>span:first-child{color: @yellow !important;}
+  &:nth-child(12)>span:first-child{color: @green !important;}
+  &:nth-child(13)>span:first-child{color: @cyan !important;}
+  &:nth-child(14)>span:first-child{color: @blue !important;}
+  &:nth-child(15)>span:first-child{color: @purple !important;}
+  &:nth-child(16)>span:first-child{color: @pink !important;}
+
+  &:nth-child(17)>span:first-child{color: @red_deep !important;}
+  &:nth-child(18)>span:first-child{color: @orange_deep !important;}
+  &:nth-child(19)>span:first-child{color: @yellow_deep !important;}
+  &:nth-child(20)>span:first-child{color: @green_deep !important;}
+  &:nth-child(21)>span:first-child{color: @cyan_deep !important;}
+  &:nth-child(22)>span:first-child{color: @blue_deep !important;}
+  &:nth-child(23)>span:first-child{color: @purple_deep !important;}
+  &:nth-child(24)>span:first-child{color: @pink_deep !important;}
+}

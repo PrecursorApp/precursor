@@ -74,7 +74,7 @@
         (html
          [:section.chat-log
           [:div.chat-messages {:ref "chat-messages"}
-           (for [chat (sort-by :server/timestamp (concat chats [dummy-chat]))
+           (for [chat (sort-by :server/timestamp chats)
                  :let [id (apply str (take 6 (str (:session/uuid chat))))
                        name (or (:chat/cust-name chat)
                                 (if (= (str (:session/uuid chat))
