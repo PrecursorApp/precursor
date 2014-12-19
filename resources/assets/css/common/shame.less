@@ -4,55 +4,67 @@
   });
 }
 
-@sections:    20;
-@cylinder:    360;
-@rotation:    @cylinder / @sections;
-@start_at:    5;
+// Palette Settings //
+@sections:    020;  // Evenly distributed hues, should be a divisor of spectrum
+@spectrum:    360;  // Should be 360, see wikipedia.org/wiki/HSL_and_HSV
+@starting:    005;  // Starting position on specturm, keep small to start at red
 
-@saturate:    66%;
-@brighten:    100%;
+// Palette Blending //
+@saturant:    66%;  // Saturation applied to each base color
+@strength:    99%;  // Lightness applied to each base color
+@compound:    33%;  // Tinge blended into each base color
+@softness:    13%;  // Lighten applied to each soft color
+@darkness:    21%;  // Black overlaid to balance lighten
+@deepness:    21%;  // Darken applied to each deep color
+@liteness:    21%;  // White overlaid to balance darken
 
-@mix_tone:    fade(@tinge, 34);
-@mix_dark:    fade(@black, 21);
-@mix_lite:    fade(@white, 21);
+// Palette Pigments //
+@hue_roja:    00;   // Integer > 0
+@hue_oran:    01;   // Distributed integer
+@hue_yell:    03;   // Distributed integer
+@hue_gree:    06;   // Distributed integer
+@hue_cyan:    09;   // Distributed integer
+@hue_blue:    11;   // Distributed integer
+@hue_purp:    15;   // Distributed integer
+@hue_pink:    17;   // Integer < "sections"
 
-@red_base:    ((00 * @rotation) + @start_at);
-@orange_base: ((01 * @rotation) + @start_at);
-@yellow_base: ((03 * @rotation) + @start_at);
-@green_base:  ((06 * @rotation) + @start_at);
-@cyan_base:   ((09 * @rotation) + @start_at);
-@blue_base:   ((11 * @rotation) + @start_at);
-@purple_base: ((15 * @rotation) + @start_at);
-@pink_base:   ((17 * @rotation) + @start_at);
+@red_base:    hsv(@starting + (@hue_roja * (@spectrum / @sections)), @saturant, @strength);
+@orange_base: hsv(@starting + (@hue_oran * (@spectrum / @sections)), @saturant, @strength);
+@yellow_base: hsv(@starting + (@hue_yell * (@spectrum / @sections)), @saturant, @strength);
+@green_base:  hsv(@starting + (@hue_gree * (@spectrum / @sections)), @saturant, @strength);
+@cyan_base:   hsv(@starting + (@hue_cyan * (@spectrum / @sections)), @saturant, @strength);
+@blue_base:   hsv(@starting + (@hue_blue * (@spectrum / @sections)), @saturant, @strength);
+@purple_base: hsv(@starting + (@hue_purp * (@spectrum / @sections)), @saturant, @strength);
+@pink_base:   hsv(@starting + (@hue_pink * (@spectrum / @sections)), @saturant, @strength);
 
-@red:         softlight(hsv(@red_base,    @saturate, @brighten), @mix_tone);
-@orange:      softlight(hsv(@orange_base, @saturate, @brighten), @mix_tone);
-@yellow:      softlight(hsv(@yellow_base, @saturate, @brighten), @mix_tone);
-@green:       softlight(hsv(@green_base,  @saturate, @brighten), @mix_tone);
-@cyan:        softlight(hsv(@cyan_base,   @saturate, @brighten), @mix_tone);
-@blue:        softlight(hsv(@blue_base,   @saturate, @brighten), @mix_tone);
-@purple:      softlight(hsv(@purple_base, @saturate, @brighten), @mix_tone);
-@pink:        softlight(hsv(@pink_base,   @saturate, @brighten), @mix_tone);
+@red:         softlight(@red_base,    fade(@tinge, @compound));
+@orange:      softlight(@orange_base, fade(@tinge, @compound));
+@yellow:      softlight(@yellow_base, fade(@tinge, @compound));
+@green:       softlight(@green_base,  fade(@tinge, @compound));
+@cyan:        softlight(@cyan_base,   fade(@tinge, @compound));
+@blue:        softlight(@blue_base,   fade(@tinge, @compound));
+@purple:      softlight(@purple_base, fade(@tinge, @compound));
+@pink:        softlight(@pink_base,   fade(@tinge, @compound));
 
-@red_soft:    overlay(lighten(@red,    13), @mix_dark);
-@orange_soft: overlay(lighten(@orange, 13), @mix_dark);
-@yellow_soft: overlay(lighten(@yellow, 13), @mix_dark);
-@green_soft:  overlay(lighten(@green,  13), @mix_dark);
-@cyan_soft:   overlay(lighten(@cyan,   13), @mix_dark);
-@blue_soft:   overlay(lighten(@blue,   13), @mix_dark);
-@purple_soft: overlay(lighten(@purple, 13), @mix_dark);
-@pink_soft:   overlay(lighten(@pink,   13), @mix_dark);
+@red_soft:    overlay(lighten(@red,    @softness), fade(@black, @darkness));
+@orange_soft: overlay(lighten(@orange, @softness), fade(@black, @darkness));
+@yellow_soft: overlay(lighten(@yellow, @softness), fade(@black, @darkness));
+@green_soft:  overlay(lighten(@green,  @softness), fade(@black, @darkness));
+@cyan_soft:   overlay(lighten(@cyan,   @softness), fade(@black, @darkness));
+@blue_soft:   overlay(lighten(@blue,   @softness), fade(@black, @darkness));
+@purple_soft: overlay(lighten(@purple, @softness), fade(@black, @darkness));
+@pink_soft:   overlay(lighten(@pink,   @softness), fade(@black, @darkness));
 
-@red_deep:    overlay( darken(@red,    21), @mix_lite);
-@orange_deep: overlay( darken(@orange, 21), @mix_lite);
-@yellow_deep: overlay( darken(@yellow, 21), @mix_lite);
-@green_deep:  overlay( darken(@green,  21), @mix_lite);
-@cyan_deep:   overlay( darken(@cyan,   21), @mix_lite);
-@blue_deep:   overlay( darken(@blue,   21), @mix_lite);
-@purple_deep: overlay( darken(@purple, 21), @mix_lite);
-@pink_deep:   overlay( darken(@pink,   21), @mix_lite);
+@red_deep:    overlay( darken(@red,    @deepness), fade(@white, @liteness));
+@orange_deep: overlay( darken(@orange, @deepness), fade(@white, @liteness));
+@yellow_deep: overlay( darken(@yellow, @deepness), fade(@white, @liteness));
+@green_deep:  overlay( darken(@green,  @deepness), fade(@white, @liteness));
+@cyan_deep:   overlay( darken(@cyan,   @deepness), fade(@white, @liteness));
+@blue_deep:   overlay( darken(@blue,   @deepness), fade(@white, @liteness));
+@purple_deep: overlay( darken(@purple, @deepness), fade(@white, @liteness));
+@pink_deep:   overlay( darken(@pink,   @deepness), fade(@white, @liteness));
 
-.message { // for testings colors in order
+.message { // only for testings colors in order
   &:nth-child(01)>span:first-child{color: @red_soft !important;}
   &:nth-child(02)>span:first-child{color: @orange_soft !important;}
   &:nth-child(03)>span:first-child{color: @yellow_soft !important;}
