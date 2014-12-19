@@ -12,6 +12,7 @@
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [goog.labs.userAgent.browser :as ua]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]])
@@ -204,39 +205,56 @@
 
 (defn shortcuts [app owner]
   (reify
+    om/IInitState (init-state [_] {:copy-paste-works? (ua/isChrome)})
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view
-           [:div.menu-view-frame
-            [:article
-             [:h2 "Move fast, make things."]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "S"]
-              [:div.shortcuts-result "Select"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "R"]
-              [:div.shortcuts-result "Rectangle"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "C"]
-              [:div.shortcuts-result "Circle"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "L"]
-              [:div.shortcuts-result "Line"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "P"]
-              [:div.shortcuts-result "Pen"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "T"]
-              [:div.shortcuts-result "Text"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key "1"]
-              [:div.shortcuts-result "Snap to origin"]]
-             [:div.shortcuts-item
-              [:div.shortcuts-key (common/icon :command)]
-              [:div.shortcuts-key "Z"]
-             [:div.shortcuts-result "Undo"]]]]])))))
+         [:div.menu-view
+          [:div.menu-view-frame
+           [:article
+            [:h2 "Move fast, make things."]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "S"]
+             [:div.shortcuts-result "Select"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "R"]
+             [:div.shortcuts-result "Rectangle"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "C"]
+             [:div.shortcuts-result "Circle"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "L"]
+             [:div.shortcuts-result "Line"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "P"]
+             [:div.shortcuts-result "Pen"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "T"]
+             [:div.shortcuts-result "Text"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "1"]
+             [:div.shortcuts-result "Snap to origin"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "?"]
+             [:div.shortcuts-result "Reopen this menu"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key "Delete"]
+             [:div.shortcuts-result "Delete selected"]]
+            [:div.shortcuts-item
+             [:div.shortcuts-key (common/icon :command)]
+             [:div.shortcuts-key "Z"]
+             [:div.shortcuts-result "Undo"]]
+            (when (om/get-state owner [:copy-paste-works?])
+              (list
+               [:div.shortcuts-item
+                [:div.shortcuts-key (common/icon :command)]
+                [:div.shortcuts-key "C"]
+                [:div.shortcuts-result "Copy"]]
+               [:div.shortcuts-item
+                [:div.shortcuts-key (common/icon :command)]
+                [:div.shortcuts-key "V"]
+                [:div.shortcuts-result "Paste"]]))]]])))))
 
 (defn username [app owner]
   (reify
