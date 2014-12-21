@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)])
   (:require [cljs.core.async :as async :refer (<! >! put! chan)]
             [clojure.set :as set]
+            [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [taoensso.sente  :as sente :refer (cb-success?)]
             [frontend.datascript :as ds]
@@ -55,6 +56,11 @@
 
 (defmethod handle-message :frontend/update-subscriber [app-state message data]
   (swap! app-state update-in [:subscribers (:client-uuid data)] merge (:subscriber-data data)))
+
+(defmethod handle-message :frontend/invite-response [app-state message data]
+  (let [doc-id (:document/id data)
+        response (:response data)]
+    (swap! app-state update-in (state/invite-responses-path doc-id) conj response)))
 
 ;; These are a little bit different, we're putting the message on the channel in a send-msg callback
 (defmethod handle-message :frontend/subscribe [app-state message data]

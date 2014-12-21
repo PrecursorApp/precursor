@@ -20,7 +20,7 @@
                  [log4j/apache-log4j-extras "1.1"]
                  [org.slf4j/slf4j-api "1.6.2"]
                  [org.slf4j/slf4j-log4j12 "1.6.2"]
-                 [cider/cider-nrepl "0.7.0-SNAPSHOT"]
+                 [cider/cider-nrepl "0.8.1"]
                  [clj-http "1.0.0"]
                  [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop]]
 
@@ -54,11 +54,17 @@
                  [hiccups "0.3.0"]
 
                  [weasel "0.4.2"] ;; repl
+                 [figwheel "0.1.7-SNAPSHOT"] ;; hate using snapshots :/
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
 
+  :figwheel {:http-server-root "public"
+             :server-port 3448
+             :css-dirs ["resources/public/css"]}
+
   :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
-            [com.cemerick/austin "0.1.4"]]
+            [com.cemerick/austin "0.1.4"]
+            [lein-figwheel "0.1.7-SNAPSHOT"]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]
