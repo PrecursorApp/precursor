@@ -139,8 +139,34 @@
     word-break: break-word;
   }
 }
+.chat-date {
+  .flexy(center, center);
+  color: @gray_dark;
+  &:before,
+  &:after {
+    .flex(1);
+    content: "";
+    margin: 0 .25rem;
+    border-bottom: 1px solid; // calling w/o color forces inheritance
+  }
+}
 .chat-message {
-  padding: 0 1em;
+  padding: 0 .125rem 0 1rem;
+  a {
+    transition: @speed_fast @bezier_fadein;
+    &:not(:hover) {
+      color: inherit;
+      // TODO make a function for this thing (also used in blog.less)
+      box-shadow+:   0  -1px @gray_darker inset;
+      box-shadow+:   0  -2px @gray_light  inset;
+      text-shadow+:  1px 0   @gray_darker;
+      text-shadow+:  2px 0   @gray_darker;
+      text-shadow+:  3px 0   @gray_darker;
+      text-shadow+: -1px 0   @gray_darker;
+      text-shadow+: -2px 0   @gray_darker;
+      text-shadow+: -3px 0   @gray_darker;
+    }
+  }
 }
 .message-head {
   .flexy();
@@ -150,11 +176,8 @@
   font-size: 0.75rem;
   line-height: ~"@{line_height}rem";
   text-transform: lowercase;
-  word-spacing: -.5ex;
-  margin-left: auto;
-}
-.message-body {
-  padding-bottom: .5em;
+  word-spacing: -.1875rem;
+  margin-left: .5rem;
 }
 .chat-button {
   .icon_stroke(@gray);
