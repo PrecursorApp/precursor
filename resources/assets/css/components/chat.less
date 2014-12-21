@@ -140,15 +140,10 @@
   }
 }
 .chat-date {
-  .flexy(center, center);
   color: @gray_dark;
-  &:before,
-  &:after {
-    .flex(1);
-    content: "";
-    margin: 0 .25rem;
-    border-bottom: 1px solid; // calling w/o color forces inheritance
-  }
+  margin: 0;
+  padding-left: 1rem;
+  text-indent: -.25rem; // better aligns h2 with chats
 }
 .chat-message {
   padding: 0 .125rem 0 1rem;
