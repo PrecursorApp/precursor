@@ -215,20 +215,12 @@
 
    (attribute :permission/document
               :db.type/long
+              :db/index true
               :db/doc "db/id of the document")
 
    (attribute :permission/cust
               :db.type/long
               :db/doc "db/id of the user")
-
-   (attribute :permission/status
-              :db.type/ref
-              :db/doc "status of a permission request")
-
-   (enum :permission.status/pending)
-   (enum :permission.status/granted)
-   (enum :permission.status/denied)
-   (enum :permission.status/revoked)
 
    (attribute :permission/permits
               :db.type/ref
@@ -251,7 +243,54 @@
                                [[:db/add temp-id :permission/document doc-id]
                                 [:db/add temp-id :permission/cust cust-id]
                                 [:db/add temp-id :permission/permits permit]]))}
-             :db/doc "Adds a permit, with composite uniqueness constraint on doc and cust")])
+             :db/doc "Adds a permit, with composite uniqueness constraint on doc and cust")
+
+   (attribute :access-request/document
+              :db.type/long
+              :db/index true
+              :db/doc "db/id of the document")
+   (attribute :access-request/status
+              :db.type/ref)
+   ;; no granted status, b/c those are just permissions
+   (enum :access-request.status/pending)
+   (enum :access-request.status/denied)
+
+   ;; used when access is granted to someone without an account
+   (attribute :access-grant/document
+              :db.type/long
+              :db/index true
+              :db/doc "db/id of the document")
+
+   (attribute :access-grant/email
+              :db.type/string
+              :db/doc "email that was granted access")
+
+   (attribute :access-grant/token
+              :db.type/string
+              :db/doc "correlates email that was granted access with the account that claims the grant")
+
+   (attribute :access-grant/expiry
+              :db.type/instant
+              :db/doc "time that the access-grant expires")
+
+   (function :pc.models.access-grant/create-grant
+             #db/fn {:lang :clojure
+                     :params [db doc-id email token expiry]
+                     :code (when-not (ffirst (d/q '{:find [?t]
+                                                    :in [$ ?doc-id ?email ?now]
+                                                    :where [[?t :access-grant/document ?doc-id]
+                                                            [?t :access-grant/email ?email]
+                                                            [?t :access-grant/expiry ?expiry]
+                                                            [(> ?expiry ?now)]]}
+                                                  db doc-id email (java.util.Date.)))
+                             (let [temp-id (d/tempid :db.part/user)]
+                               [[:db/add temp-id :access-grant/document doc-id]
+                                [:db/add temp-id :access-grant/email email]
+                                [:db/add temp-id :access-grant/token token]
+                                [:db/add temp-id :access-grant/expiry expiry]]))}
+             :db/doc "Adds a grant, with composite uniqueness constraint on doc and email, accounting for expiration")
+
+   ])
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))

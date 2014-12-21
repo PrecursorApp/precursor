@@ -11,6 +11,8 @@
             [pc.models.chat :as chat]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
+            [pc.models.access-grant :as access-grant-model]
+            [pc.models.permission :as permission-model]
             [pc.datomic :as pcd]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
@@ -178,7 +180,23 @@
     (log/infof "sending subscribers for %s to %s" document-id cid)
     (send-fn (str cid) [:frontend/subscribers
                         {:document/id document-id
-                         :subscribers (get @document-subs document-id)}])))
+                         :subscribers (get @document-subs document-id)}])
+
+    ;; These are interesting b/c they're read-only. And by "interesting", I mean "bad"
+    ;; We should find a way to let the frontend edit things
+    (log/infof "sending permission-data for %s to %s" document-id cid)
+    (send-fn (str cid) [:frontend/db-entities
+                        {:document/id document-id
+                         :entities (map (partial permission-model/read-api (:db req))
+                                        (permission-model/find-by-document (:db req)
+                                                                           {:db/id document-id}))
+                         :entity-type :permission}])
+    (send-fn (str cid) [:frontend/db-entities
+                        {:document/id document-id
+                         :entities (map access-grant-model/read-api
+                                        (access-grant-model/find-by-document (:db req)
+                                                                             {:db/id document-id}))
+                         :entity-type :access-grant}])))
 
 (defmethod ws-handler :frontend/fetch-created [{:keys [client-uuid ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]

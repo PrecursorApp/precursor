@@ -5,6 +5,7 @@
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]
             [frontend.components.common :as common]
+            [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
@@ -56,7 +57,8 @@
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
-                   (when (seq (filter #(= :document/privacy (:a %))
+                   (when (seq (filter #(or (= :document/privacy (:a %))
+                                           (= :permission/document (:a %)))
                                       (:tx-data tx-report)))
                      (om/refresh! owner)))))
     om/IWillUnmount
@@ -68,18 +70,41 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)
-            private? (= :document.privacy/private (utils/inspect (:document/privacy doc)))]
+            private? (= :document.privacy/private (:document/privacy doc))
+            permission-grant-email (get-in app state/permission-grant-email-path)
+            permissions (utils/inspect (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/document ?doc-id]] @db doc-id))]
         (html
          [:div.menu-view
           [:div.menu-view-frame
            [:article
-            [:input {:type "checkbox"
-                     :checked private?
-                     :onChange #(cast! :document-privacy-changed
-                                       {:doc-id doc-id
-                                        :setting (if private?
-                                                   :document.privacy/public
-                                                   :document.privacy/private)})}]
-            (if (= :document.privacy/public (:document/privacy doc))
-              [:label "Check to make document private"]
-              [:label "Uncheck to make document public"])]]])))))
+            [:label
+             [:input {:type "checkbox"
+                      :checked private?
+                      :onChange #(cast! :document-privacy-changed
+                                        {:doc-id doc-id
+                                         :setting (if private?
+                                                    :document.privacy/public
+                                                    :document.privacy/private)})}]
+             (if private?
+               "Uncheck to make document public"
+               "Check to make document private")]
+            (when private?
+              (list
+               [:p "Grant access to a colleague"]
+               [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
+                                                        false)
+                                        :on-key-down #(when (= "Enter" (.-key %))
+                                                        (cast! :permission-grant-submitted)
+                                                        false)}
+                [:input {:type "text"
+                         :required "true"
+                         :data-adaptive ""
+                         :value (or permission-grant-email "")
+                         :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
+                [:label {:data-placeholder "Teammate's Email"
+                         :data-placeholder-nil "What's your teammate's email?"
+                         :data-placeholder-forgot "Don't forget to submit."}]]
+               (when (seq permissions)
+                 "People with access:")
+               (for [p permissions]
+                 [:div (:permission/cust p)])))]]])))))

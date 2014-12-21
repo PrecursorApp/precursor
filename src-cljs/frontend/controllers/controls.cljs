@@ -1034,6 +1034,24 @@
                                                                    :email email
                                                                    :invite-loc :overlay}])))
 
+(defmethod control-event :permission-grant-email-changed
+  [browser-state message {:keys [value]} state]
+  (-> state
+      (assoc-in state/permission-grant-email-path value)))
+
+(defmethod control-event :permission-grant-submitted
+  [browser-state message _ state]
+  (assoc-in state state/permission-grant-email-path nil))
+
+(defmethod post-control-event! :permission-grant-submitted
+  [browser-state message _ previous-state current-state]
+  (let [email (get-in previous-state state/permission-grant-email-path)
+        doc-id (:document/id previous-state)]
+    (sente/send-msg (:sente current-state) [:frontend/send-permission-grant {:document/id doc-id
+                                                                             :email email
+                                                                             :invite-loc :overlay}])))
+
+
 (defmethod post-control-event! :document-privacy-changed
   [browser-state message {:keys [doc-id setting]} previous-state current-state]
   (d/transact! (:db current-state)

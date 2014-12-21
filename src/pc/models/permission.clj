@@ -1,6 +1,4 @@
 (ns pc.models.permission
-  "cust is what would usually be called user, we call it cust b/c
-   Clojure has already taken the name user in the repl"
   (:require [pc.datomic :as pcd]
             [datomic.api :refer [db q] :as d]))
 
@@ -15,3 +13,20 @@
 
 (defn grant-permit [doc cust permit]
   @(d/transact (pcd/conn) [[:pc.models.permission/grant-permit (:db/id doc) (:db/id cust) permit]]))
+
+(defn read-api [db permission]
+  (-> permission
+    (select-keys [:permission/document
+                  :permission/cust
+                  :permission/permits
+                  :db/id])
+    (#(into {} %))
+    (update-in [:permission/cust] #(:cust/email (d/entity db %)))))
+
+(defn find-by-document [db doc]
+  (->> (d/q '{:find [?t]
+              :in [$ ?doc-id]
+              :where [[?t :permission/document ?doc-id]]}
+            db (:db/id doc))
+    (map first)
+    (map #(d/entity db %))))
