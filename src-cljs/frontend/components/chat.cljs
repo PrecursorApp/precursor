@@ -131,10 +131,11 @@
                                     " for help."]
                         :chat/color "#00b233"
                         :session/uuid chat-bot
-                        :server/timestamp (js/Date. 0)}]
+                        :server/timestamp (js/Date.)}]
         (html
          [:section.chat-log
           [:div.chat-messages {:ref "chat-messages"}
+           (om/build chat-item dummy-chat {:opts {:show-sender? true}})
            (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
              (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
                                               chat-groups)]
@@ -143,10 +144,11 @@
                                (not= #{"Today"} (set (keys chat-groups))))
                        [:h2.chat-date time])
                      (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
-                       (om/build chat-item chat {:key :db/id
-                                                 :opts {:client-id client-id
-                                                        :show-sender? (not= (chat-model/display-name prev-chat client-id)
-                                                                            (chat-model/display-name chat client-id))}})))))]
+                       (om/build chat-item chat
+                                 {:key :db/id
+                                  :opts {:client-id client-id
+                                         :show-sender? (not= (chat-model/display-name prev-chat client-id)
+                                                             (chat-model/display-name chat client-id))}})))))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)
                   :on-key-down #(when (and (= "Enter" (.-key %))
