@@ -225,7 +225,14 @@
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
   (check-document-access (-> ?data :document/id) req)
   (let [document-id (-> ?data :document/id)
-        datoms (->> ?data :datoms (remove (comp nil? :v)))
+        datoms (->> ?data
+                 :datoms
+                 (remove (comp nil? :v))
+                 ;; Don't let people sneak layers into other documents
+                 (map (fn [d] (if (= :document/id (:a d))
+                                (assoc d :v document-id)
+                                d))))
+        _ (def datoms datoms)
         cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
     (log/infof "transacting %s on %s for %s" datoms document-id client-uuid)
     (datomic2/transact! datoms
