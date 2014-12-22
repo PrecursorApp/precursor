@@ -1,4 +1,3 @@
-;; Hack to get around circular dependency
 (ns pc.http.datomic2
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :as log]
@@ -35,9 +34,42 @@
     [type e a server-timestamp]
     transaction))
 
-;; TODO: teach the frontend how to lookup cust/name from cust/uuid
-(defn chat-cust-name? [[type e a v :as transaction]]
-  (= a :chat/cust-name))
+(def whitelist
+  #{:layer/name
+    :layer/uuid
+    :layer/type
+    :layer/start-x
+    :layer/start-y
+    :layer/end-x
+    :layer/end-y
+    :layer/rx
+    :layer/ry
+    :layer/stroke-width
+    :layer/stroke-color
+    :layer/opacity
+    :layer/start-sx
+    :layer/start-sy
+    :layer/fill
+    :layer/font-family
+    :layer/text
+    :layer/font-size
+    :layer/path
+    :layer/child
+    :layer/ui-id
+    :layer/ui-target
+    :session/uuid
+    :document/id ;; TODO: for layers use layer/document
+    :document/name
+    :document/privacy
+    :chat/body
+    :chat/color
+    :cust/uuid
+    :client/timestamp
+    :server/timestamp
+    :entity/type})
+
+(defn whitelisted? [[type e a v :as transaction]]
+  (contains? whitelist a))
 
 ;; TODO: only let creators mark things as private
 ;; TODO: only let people on the white list make things as private
@@ -67,7 +99,7 @@
                             (map (partial coerce-floats float-attrs))
                             (map (partial coerce-uuids uuid-attrs))
                             (map (partial coerce-server-timestamp server-timestamp))
-                            (remove chat-cust-name?)
+                            (filter whitelisted?)
                             (concat [(merge {:db/id txid :document/id document-id :session/uuid session-uuid}
                                             (when cust-uuid {:cust/uuid cust-uuid}))])
                             (d/transact conn)
