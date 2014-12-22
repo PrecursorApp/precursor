@@ -110,3 +110,18 @@ textarea {
 p {
   margin: 0 0 1em;
 }
+.divider,
+.divider-small {
+  .flexy(center, center);
+  &:before,
+  &:after {
+    .flex(1);
+    content: "";
+    margin: 0 .25rem;
+    border-bottom: 1px solid; // calling w/o color forces inheritance
+  }
+}
+.divider-small {
+  font-size: 0.75rem;
+  line-height: ~"@{line_height}rem";
+}
