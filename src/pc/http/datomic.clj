@@ -44,10 +44,10 @@
   (let [annotations (get-annotations transaction)]
     (when (:document/id annotations)
       (when-let [public-datoms (->> transaction
-                                    :tx-data
-                                    (filter (partial common/public? (:db-before transaction)))
-                                    (map (partial common/datom-read-api (:db-after transaction)))
-                                    seq)]
+                                 :tx-data
+                                 (filter (fn [d] (common/public? (:db-before transaction) (:e d))))
+                                 (map (partial common/datom-read-api (:db-after transaction)))
+                                 seq)]
         (sente/notify-transaction (merge {:tx-data public-datoms}
                                          annotations))
         (when (profile/prod?)

@@ -71,7 +71,4 @@
                             (concat [(merge {:db/id txid :document/id document-id :session/uuid session-uuid}
                                             (when cust-uuid {:cust/uuid cust-uuid}))])
                             (d/transact conn)
-                            deref
-                            :tx-data
-                            (filter (partial common/public? db))
-                            (map (partial common/datom-read-api db))))}}))
+                            deref))}}))
