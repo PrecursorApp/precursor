@@ -312,8 +312,8 @@
                   (common/icon :google)]
                  [:span.google-login-body "Sign in"]]]]
               [:div.content
-               [:h1 "Collaborate on every idea with your whole team."]
-               [:h3 "Productive prototyping without all the nonsense."]
+               [:h1 "Collaborate on every idea with your entire team."]
+               [:h4 "Productive prototyping without all the nonsense."]
                [:button "Launch Precursor"]]]
              [:div.home-body
               [:article.featurette
