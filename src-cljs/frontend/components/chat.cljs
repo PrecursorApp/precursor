@@ -142,7 +142,7 @@
                (list (when (or (not= 1 (count chat-groups))
                                (not= #{"Today"} (set (keys chat-groups))))
                        [:h2.chat-date time])
-                     (for [[prev-chat chat] (partition 2 1 (concat [nil] chat-group))]
+                     (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
                        (om/build chat-item chat {:key :db/id
                                                  :opts {:client-id client-id
                                                         :show-sender? (not= (chat-model/display-name prev-chat client-id)
