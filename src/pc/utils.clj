@@ -1,6 +1,7 @@
 (ns pc.utils
   (:require clojure.pprint
             [clojure.tools.logging :as log]
+            [schejulure.core :as schejulure]
             [slingshot.slingshot :refer (try+)]))
 
 (defmacro inspect
@@ -60,3 +61,19 @@
   give up and cry about it."
   [& body]
   `(straight-jacket* ~@body))
+
+(defonce safe-scheduled-jobs (ref {}))
+
+(defn safe-schedule
+  "Schedules var to be run on schedule. Will cancel old schedule if called multiple times
+  with the same var."
+  [schedule f]
+  (assert (var? f))
+  (let [new-job (schejulure/schedule schedule (fn [] (future (f))))]
+    (dosync
+     (alter safe-scheduled-jobs
+            (fn [jobs]
+              (let [job-name (str f)
+                    old-job (get jobs job-name)]
+                (when old-job (.cancel old-job false))
+                (assoc jobs job-name new-job)))))))

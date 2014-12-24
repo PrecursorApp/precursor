@@ -29,6 +29,8 @@
                  [http-kit "2.1.18"]
                  [com.taoensso/sente "1.2.0"]
 
+                 [schejulure "1.0.1"]
+
                  [org.clojars.pallix/batik "1.7.0"]
                  [com.cemerick/pomegranate "0.3.0"]
 
