@@ -81,6 +81,8 @@
              "-XX:+CMSClassUnloadingEnabled"
              "-Dfile.encoding=UTF-8"]
 
+  :clean-targets ^{:protect false} [:target-path "resources/public/cljs/"]
+
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src-cljs"
                                        "yaks/om/src"]
