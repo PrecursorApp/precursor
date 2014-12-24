@@ -31,7 +31,7 @@ Compile the frontend clojurescript assets:
 lein figwheel dev
 ```
 
-Then go to http://localhost:8080
+Then go to [http://localhost:8080](http://localhost:8080)
 
 ### Browser REPL
 
