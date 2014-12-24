@@ -305,6 +305,34 @@
 
       (notify-invite "Please sign up to send an invite."))))
 
+(defmethod ws-handler :frontend/send-permission-grant [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  ;; This may turn out to be a bad idea, but error handling is done through creating chats
+  (check-document-access (-> ?data :document/id) req)
+  (let [[chat-id] (pcd/generate-eids (pcd/conn) 1)
+        doc-id (-> ?data :document/id)
+        invite-loc (-> ?data :invite-loc)
+        notify-grant (fn [body]
+                       (if (= :overlay invite-loc)
+                         ((:send-fn @sente-state) (str (client-uuid->uuid client-uuid))
+                          [:frontend/permission-grant-response {:document/id doc-id
+                                                                :response body}])))]
+    (if-let [cust (-> req :ring-req :auth :cust)]
+      (let [email (-> ?data :email)
+            cid (client-uuid->uuid client-uuid)
+            annotations {:document/id doc-id
+                         :session/uuid (UUID/fromString cid)
+                         :cust/uuid (:cust/uuid cust)
+                         :transaction/broadcast true}]
+        (if-let [grantee (cust/find-by-email (:db req) email)]
+          (permission-model/grant-permit {:db/id doc-id}
+                                         grantee
+                                         :permission.permits/admin
+                                         annotations)
+          (access-grant-model/grant-access {:db/id doc-id}
+                                           email
+                                           annotations)))
+      (comment (notify-invite "Please sign up to send an invite.")))))
+
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
   nil)

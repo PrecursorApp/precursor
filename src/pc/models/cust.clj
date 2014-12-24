@@ -26,6 +26,11 @@
                    :where [[?e :google-account/sub ?sub]]}
                  db google-sub))
 
+(defn find-by-email [db email]
+  (pcd/touch-one '{:find [?e] :in [$ ?email]
+                   :where [[?e :cust/email ?email]]}
+                 db email))
+
 (defn find-by-http-session-key [db http-session-key]
   (pcd/touch-one '{:find [?e] :in [$ ?key]
                    :where [[?e :cust/http-session-key ?key]]}

@@ -11,8 +11,11 @@
                                  [?permit-id _ ?permits]]}
                        db (:db/id doc) (:db/id cust)))))
 
-(defn grant-permit [doc cust permit]
-  @(d/transact (pcd/conn) [[:pc.models.permission/grant-permit (:db/id doc) (:db/id cust) permit]]))
+(defn grant-permit [doc cust permit annotations]
+  (let [txid (d/tempid :db.part/tx)]
+    @(d/transact (pcd/conn)
+                 [(assoc annotations :db/id txid)
+                  [:pc.models.permission/grant-permit (:db/id doc) (:db/id cust) permit]])))
 
 (defn read-api [db permission]
   (-> permission
