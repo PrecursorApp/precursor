@@ -1,3 +1,5 @@
+@margin_featurette: 30vh;
+
 .app-overlay {
   .flexy(center, center);
   .icon_stroke(@gray_dark);
@@ -336,7 +338,6 @@ img.loading-image {
 }
 
 .app-overlay-home {
-  // .flexy(column);
   position: absolute;
   top: 0;
   left: 0;
@@ -409,20 +410,11 @@ img.loading-image {
   background: blue;
 }
 .jumbotron {
-  // .flex(0 0 75vh);
   .flexy(center);
-  // color: @gray_lighter;
   min-height: 90vh;
   padding-top: @tile;
-  // background: red;
-  // h3 {
-  //   color: @gray;
-  //   font-weight: 300;
-  // }
   button {
     .flexy(center, center);
-    // color: @gray_darker;
-    // background: @white;
     height: @tile;
     padding: 0 (@tile / 2);
     margin-top: @tile;
@@ -447,12 +439,6 @@ img.loading-image {
   // .flex(0 0 2500px);
   background: @overlay_background;
 }
-
-
-
-
-
-@margin_featurette: 30vh;
 .featurette {
   .box-sizing(content-box);
   .flexy();
@@ -477,11 +463,6 @@ img.loading-image {
       });
     }
   }
-  // &.featurette-how {
-  //   .featurette-story {
-  //     .flex(2);
-  //   }
-  // }
 }
 .featurette-how {
   .featurette-story {
@@ -503,12 +484,6 @@ img.loading-image {
 .featurette-media {
   .order(3);
 }
-
-
-
-
-
-
 
 //
 // TODO all below for dev only!
