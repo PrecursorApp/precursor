@@ -290,7 +290,10 @@
                                 [:db/add temp-id :access-grant/expiry expiry]]))}
              :db/doc "Adds a grant, with composite uniqueness constraint on doc and email, accounting for expiration")
 
-   ])
+   (attribute :transaction/broadcast
+              :db.type/boolean
+              :db/doc "Used to annotate transaction and let frontend know if it should broadcast")])
+
 (defonce schema-ents (atom nil))
 
 (defn enums []

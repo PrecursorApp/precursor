@@ -34,7 +34,7 @@
     [type e a server-timestamp]
     transaction))
 
-(def whitelist
+(def incoming-whitelist
   #{:layer/name
     :layer/uuid
     :layer/type
@@ -69,7 +69,7 @@
     :entity/type})
 
 (defn whitelisted? [[type e a v :as transaction]]
-  (contains? whitelist a))
+  (contains? incoming-whitelist a))
 
 ;; TODO: only let creators mark things as private
 ;; TODO: only let people on the white list make things as private
@@ -100,7 +100,10 @@
                             (map (partial coerce-uuids uuid-attrs))
                             (map (partial coerce-server-timestamp server-timestamp))
                             (filter whitelisted?)
-                            (concat [(merge {:db/id txid :document/id document-id :session/uuid session-uuid}
+                            (concat [(merge {:db/id txid
+                                             :document/id document-id
+                                             :session/uuid session-uuid
+                                             :transaction/broadcast true}
                                             (when cust-uuid {:cust/uuid cust-uuid}))])
                             (d/transact conn)
                             deref))}}))

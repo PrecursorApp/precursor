@@ -42,7 +42,8 @@
 (defn notify-subscribers [transaction]
   (def myt transaction)
   (let [annotations (get-annotations transaction)]
-    (when (:document/id annotations)
+    (when (and (:document/id annotations)
+               (:transaction/broadcast annotations))
       (when-let [public-datoms (->> transaction
                                  :tx-data
                                  (filter (fn [d] (common/public? (:db-before transaction) (:e d))))
@@ -62,5 +63,6 @@
                      (try
                        (notify-subscribers transaction)
                        (catch Exception e
+                         (.printStacktrace e)
                          (log/error e)))
                      (recur)))))
