@@ -17,6 +17,7 @@
                  [(assoc annotations :db/id txid)
                   [:pc.models.permission/grant-permit (:db/id doc) (:db/id cust) permit]])))
 
+;; TODO: figure out how to have only 1 read-api (maybe only send datoms?)
 (defn read-api [db permission]
   (-> permission
     (select-keys [:permission/document

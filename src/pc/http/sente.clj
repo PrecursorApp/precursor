@@ -320,7 +320,6 @@
       (let [email (-> ?data :email)
             cid (client-uuid->uuid client-uuid)
             annotations {:document/id doc-id
-                         :session/uuid (UUID/fromString cid)
                          :cust/uuid (:cust/uuid cust)
                          :transaction/broadcast true}]
         (if-let [grantee (cust/find-by-email (:db req) email)]

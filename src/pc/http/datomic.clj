@@ -110,6 +110,16 @@
            :v (chat-model/find-chat-name db (:v d)))
     d))
 
+(defmethod translate-datom :cust/uuid [db d]
+  (if (:chat/body (d/entity db (:e d)))
+    (assoc d
+           :a :chat/cust-name
+           :v (chat-model/find-chat-name db (:v d)))
+    d))
+
+(defmethod translate-datom :permission/cust [db d]
+  (update-in d [:v] #(:cust/email (d/entity db %))))
+
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
         a (schema/get-ident a)
