@@ -79,11 +79,12 @@
              "-Xss1m"
              "-Xmx1024m"
              "-XX:+CMSClassUnloadingEnabled"
-             "-Djava.library.path=target/native/macosx/x86_64:target/native/linux/x86_64:target/native/linux/x86"
-             "-Djna.library.path=target/native/macosx/x86_64:target/native/linux/x86_64:target/native/linux/x86"
              "-Dfile.encoding=UTF-8"]
 
+
   :repl-options {:init-ns pc.repl}
+
+  :clean-targets ^{:protect false} [:target-path "resources/public/cljs/"]
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src-cljs"
