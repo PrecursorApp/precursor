@@ -291,11 +291,27 @@
              :db/doc "Adds a grant, with composite uniqueness constraint on doc and email, accounting for expiration")
 
    ])
+(defonce schema-ents (atom nil))
+
+(defn enums []
+  (set (map :db/ident (filter #(= :db.type/ref (:db/valueType %))
+                              @schema-ents))))
+
+(defn get-ident [a]
+  (:db/ident (first (filter #(= a (:db/id %)) @schema-ents))))
+
+(defn get-schema-ents [db]
+  (pcd/touch-all '{:find [?t]
+                   :where [[?t :db/ident ?ident]]}
+                 db))
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))
   ([conn]
-     @(d/transact conn schema)))
+   (let [res @(d/transact conn schema)
+         ents (get-schema-ents (:db-after res))]
+     (reset! schema-ents ents)
+     res)))
 
 (defn init []
   (ensure-schema))
