@@ -7,6 +7,8 @@
             [pc.http.datomic-common :as common]
             [pc.http.sente :as sente]
             [pc.datomic :as pcd]
+            [pc.datomic.schema :as schema]
+            [pc.models.chat :as chat-model]
             [pc.profile :as profile]
             [datomic.api :refer [db q] :as d])
   (:import java.util.UUID))
@@ -19,9 +21,10 @@
         :else
         {:status 200 :body (pr-str {:entity-ids (pcd/generate-eids (pcd/conn) eid-count)})}))
 
+;; TODO: is the transaction guaranteed to be the first? Can there be multiple?
 (defn get-annotations [transaction]
   (let [txid (-> transaction :tx-data first :tx)]
-    (->> txid (d/entity (:db-after transaction)) (#(select-keys % [:document/id :session/uuid :cust/uuid])))))
+    (d/entity (:db-after transaction) txid)))
 
 (defn handle-precursor-pings [document-id datoms]
   (if-let [ping-datoms (seq (filter #(and (= :chat/body (:a %))
@@ -39,6 +42,86 @@
         (http/post "https://hooks.slack.com/services/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"
                    {:form-params {"payload" (json/encode {:text message})}})))))
 
+(def outgoing-whitelist
+  #{:layer/name
+    :layer/uuid
+    :layer/type
+    :layer/start-x
+    :layer/start-y
+    :layer/end-x
+    :layer/end-y
+    :layer/rx
+    :layer/ry
+    :layer/fill
+    :layer/stroke-width
+    :layer/stroke-color
+    :layer/opacity
+
+    :entity/type
+
+    :layer/start-sx
+    :layer/start-sy
+
+    :layer/font-family
+    :layer/text
+    :layer/font-size
+    :layer/path
+    :layer/child
+    :layer/ui-id
+    :layer/ui-target
+    :session/uuid
+    :document/id ;; TODO: for layers use layer/document
+    :document/uuid
+    :document/name
+    :document/creator
+    :document/collaborators
+    :document/privacy
+    :chat/body
+    :chat/color
+    :chat/cust-name
+    :cust/uuid
+    :client/timestamp
+    :server/timestamp
+
+    :permission/document
+    :permission/cust ;; translated
+    :permission/permits})
+
+;; TODO: teach the frontend how to lookup name from cust/uuid
+;;       this will break if something else is associating cust/uuids
+(defn maybe-replace-cust-uuid [db {:keys [a] :as d}]
+  (if (= a :cust/uuid)
+    (assoc d
+      :a :chat/cust-name
+      :v (chat-model/find-chat-name db (:v d)))
+    d))
+
+(defn translate-datom-dispatch-fn [db d] (:a d))
+
+(defmulti translate-datom translate-datom-dispatch-fn)
+
+(defmethod translate-datom :default [db d]
+  d)
+
+(defmethod translate-datom :cust/uuid [db d]
+  (if (:chat/body (d/entity db (:e d)))
+    (assoc d
+           :a :chat/cust-name
+           :v (chat-model/find-chat-name db (:v d)))
+    d))
+
+(defn datom-read-api [db datom]
+  (let [{:keys [e a v tx added] :as d} datom
+        a (schema/get-ident a)
+        v (if (contains? (schema/enums) a)
+            (schema/get-ident v)
+            v)]
+    (->> {:e e :a a :v v :tx tx :added added}
+      (translate-datom db))))
+
+(defn whitelisted? [datom]
+  (contains? outgoing-whitelist (:a datom)))
+
 (defn notify-subscribers [transaction]
   (def myt transaction)
   (let [annotations (get-annotations transaction)]
@@ -46,8 +129,8 @@
                (:transaction/broadcast annotations))
       (when-let [public-datoms (->> transaction
                                  :tx-data
-                                 (filter (fn [d] (common/public? (:db-before transaction) (:e d))))
-                                 (map (partial common/datom-read-api (:db-after transaction)))
+                                 (map (partial datom-read-api (:db-after transaction)))
+                                 (filter whitelisted?)
                                  seq)]
         (sente/notify-transaction (merge {:tx-data public-datoms}
                                          annotations))
