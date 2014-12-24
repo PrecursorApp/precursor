@@ -275,7 +275,7 @@
 
    (function :pc.models.access-grant/create-grant
              #db/fn {:lang :clojure
-                     :params [db doc-id email token expiry]
+                     :params [db doc-id email token expiry & extra-fields]
                      :code (when-not (ffirst (d/q '{:find [?t]
                                                     :in [$ ?doc-id ?email ?now]
                                                     :where [[?t :access-grant/document ?doc-id]
@@ -284,15 +284,31 @@
                                                             [(> ?expiry ?now)]]}
                                                   db doc-id email (java.util.Date.)))
                              (let [temp-id (d/tempid :db.part/user)]
-                               [[:db/add temp-id :access-grant/document doc-id]
-                                [:db/add temp-id :access-grant/email email]
-                                [:db/add temp-id :access-grant/token token]
-                                [:db/add temp-id :access-grant/expiry expiry]]))}
+                               (concat [[:db/add temp-id :access-grant/document doc-id]
+                                        [:db/add temp-id :access-grant/email email]
+                                        [:db/add temp-id :access-grant/token token]
+                                        [:db/add temp-id :access-grant/expiry expiry]]
+                                       (for [[field value] extra-fields]
+                                         [:db/add temp-id field value]))))}
              :db/doc "Adds a grant, with composite uniqueness constraint on doc and email, accounting for expiration")
 
    (attribute :transaction/broadcast
               :db.type/boolean
-              :db/doc "Used to annotate transaction and let frontend know if it should broadcast")])
+              :db/doc "Used to annotate transaction and let frontend know if it should broadcast")
+
+   ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
+   (attribute :needs-email
+              :db.type/ref
+              :db/index true
+              :db/cardinality :db.cardinality/many
+              :db/doc "Annotate an entity to say that it needs an email")
+
+   (attribute :sent-email
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Annotate an entity to say that a given email has been sent")
+
+   (enum :email/access-grant-created)])
 
 (defonce schema-ents (atom nil))
 

@@ -25,4 +25,4 @@
         expiry (clj-time.coerce/to-date (time/plus (time/now) (time/weeks 2)))]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:pc.models.access-grant/create-grant (:db/id doc) email token expiry]])))
+                  [:pc.models.access-grant/create-grant (:db/id doc) email token expiry [:needs-email :email/access-grant-created]]])))
