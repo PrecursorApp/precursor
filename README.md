@@ -34,6 +34,7 @@ That will start a server on port 8080 and start an nrepl on port 6005.
 Compile the frontend clojurescript assets:
 
 ```
+lein clean
 lein figwheel dev
 ```
 
@@ -48,3 +49,11 @@ nrepl in to the nrepl server and run:
 ```
 
 Then reload the app.
+
+### Troubleshooting
+
+Try running:
+
+```
+lein clean
+```
