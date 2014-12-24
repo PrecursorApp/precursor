@@ -2,6 +2,12 @@
 
 ## Usage
 
+Fetch the Om source, which is installed as a submodule (in yaks/om):
+
+```
+git submodule update --init
+```
+
 Install node dependencies (requires a recent version of node):
 
 ```
