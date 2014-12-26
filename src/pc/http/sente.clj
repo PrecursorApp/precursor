@@ -54,7 +54,7 @@
 
 (defn check-document-access-from-auth [doc-id req]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
-    (when-not (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth))
+    (when-not (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth) :admin)
       (if (auth/logged-in? (:ring-req req))
         (throw+ {:status 403
                  :error-msg "This document is private. Please request access."
@@ -329,6 +329,7 @@
                                          annotations)
           (access-grant-model/grant-access {:db/id doc-id}
                                            email
+                                           cust
                                            annotations)))
       (comment (notify-invite "Please sign up to send an invite.")))))
 

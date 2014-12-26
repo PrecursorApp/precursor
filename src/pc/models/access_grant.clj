@@ -19,10 +19,21 @@
     (map first)
     (map #(d/entity db %))))
 
-(defn grant-access [doc email annotations]
+(defn find-by-token [db token]
+  (->> (d/q '{:find [?t]
+              :in [$ ?token]
+              :where [[?t :access-grant/token ?token]]}
+            db token)
+    ffirst
+    (d/entity db)))
+
+(defn grant-access [doc email granter annotations]
   (let [txid (d/tempid :db.part/tx)
         token (crypto.random/url-part 32)
         expiry (clj-time.coerce/to-date (time/plus (time/now) (time/weeks 2)))]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:pc.models.access-grant/create-grant (:db/id doc) email token expiry [:needs-email :email/access-grant-created]]])))
+                  [:pc.models.access-grant/create-grant (:db/id doc) (:db/id granter) email token expiry [:needs-email :email/access-grant-created]]])))
+
+(defn get-granter [db access-grant]
+  (d/entity db (:access-grant/granter access-grant)))

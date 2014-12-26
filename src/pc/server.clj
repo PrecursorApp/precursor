@@ -20,6 +20,7 @@
             [pc.http.sente :as sente]
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
+            [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
@@ -65,7 +66,7 @@
                    ;; TODO: Maybe return a "not found" image.
                    :body "Document not found."})
 
-                (auth/has-document-permission? db doc (-> req :auth))
+                (auth/has-document-permission? db doc (-> req :auth) :read)
                 (let [layers (layer/find-by-document db doc)]
                   {:status 200
                    :headers {"Content-Type" "image/svg+xml"}
@@ -91,7 +92,7 @@
                    ;; TODO: Return a "not found" image.
                    :body "Document not found."})
 
-                (auth/has-document-permission? db doc (-> req :auth))
+                (auth/has-document-permission? db doc (-> req :auth) :read)
                 (let [layers (layer/find-by-document db doc)]
                   {:status 200
                    :headers {"Content-Type" "image/png"}
@@ -268,8 +269,12 @@
 
 (defn auth-middleware [handler]
   (fn [req]
-    (if-let [cust (some->> req :session :http-session-key (cust/find-by-http-session-key (pcd/default-db)))]
-      (handler (assoc req :auth {:cust cust}))
+    (let [db (pcd/default-db)
+          cust (some->> req :session :http-session-key (cust/find-by-http-session-key db))
+          access-grant (some->> req :params :access-grant-token (access-grant-model/find-by-token db))
+          req (cond-> req
+                cust (assoc-in [:auth :cust] cust)
+                access-grant (assoc-in [:auth :access-grant] access-grant))]
       (handler req))))
 
 (defn wrap-wrap-reload

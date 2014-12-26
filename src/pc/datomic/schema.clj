@@ -273,9 +273,13 @@
               :db.type/instant
               :db/doc "time that the access-grant expires")
 
+   (attribute :access-grant/granter
+              :db.type/long ;; TODO: make this a ref!
+              :db/doc "time that the access-grant expires")
+
    (function :pc.models.access-grant/create-grant
              #db/fn {:lang :clojure
-                     :params [db doc-id email token expiry & extra-fields]
+                     :params [db doc-id granter-id email token expiry & extra-fields]
                      :code (when-not (ffirst (d/q '{:find [?t]
                                                     :in [$ ?doc-id ?email ?now]
                                                     :where [[?t :access-grant/document ?doc-id]
@@ -287,7 +291,8 @@
                                (concat [[:db/add temp-id :access-grant/document doc-id]
                                         [:db/add temp-id :access-grant/email email]
                                         [:db/add temp-id :access-grant/token token]
-                                        [:db/add temp-id :access-grant/expiry expiry]]
+                                        [:db/add temp-id :access-grant/expiry expiry]
+                                        [:db/add temp-id :access-grant/granter granter-id]]
                                        (for [[field value] extra-fields]
                                          [:db/add temp-id field value]))))}
              :db/doc "Adds a grant, with composite uniqueness constraint on doc and email, accounting for expiration")
@@ -308,7 +313,8 @@
               :db/cardinality :db.cardinality/many
               :db/doc "Annotate an entity to say that a given email has been sent")
 
-   (enum :email/access-grant-created)])
+   (enum :email/access-grant-created)
+   (enum :email/fake)])
 
 (defonce schema-ents (atom nil))
 

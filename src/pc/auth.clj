@@ -71,7 +71,7 @@
                          [?t :cust/uuid ?u]]}
                db prcrsr-bot-email)))
 
-(defn document-permission [db doc cust]
+(defn cust-permission [db doc cust]
   (when cust
     (cond (and (:document/creator doc)
                (crypto/eq? (str (:cust/uuid cust))
@@ -83,9 +83,27 @@
 
           :else nil)))
 
-(defn has-document-permission? [db doc auth]
+(defn access-grant-permission [db doc access-grant]
+  (when (and access-grant
+             (:db/id doc)
+             (= (:db/id doc)
+                (:access-grant/document access-grant)))
+    :read))
+
+(defn document-permission [db doc auth]
+  (or (cust-permission db doc (:cust auth))
+      (access-grant-permission db doc (:access-grant auth))))
+
+(def scope-heirarchy [:read :admin])
+
+(defn contains-scope? [heirarchy granted-scope requested-scope]
+  (contains? (set (take (inc (.indexOf heirarchy granted-scope)) heirarchy))
+             requested-scope))
+
+;; TODO: public and have permission are different things
+(defn has-document-permission? [db doc auth scope]
   (or (= :document.privacy/public (:document/privacy doc))
-      (= :admin (document-permission db doc (:cust auth)))))
+      (contains-scope? scope-heirarchy (document-permission db doc auth) scope)))
 
 (defn logged-in? [ring-req]
   (seq (get-in ring-req [:auth :cust])))
