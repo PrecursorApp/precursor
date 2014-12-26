@@ -8,6 +8,7 @@
             [pc.http.sente :as sente]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
+            [pc.email :as email]
             [pc.models.chat :as chat-model]
             [pc.profile :as profile]
             [datomic.api :refer [db q] :as d])
@@ -133,7 +134,6 @@
   (contains? outgoing-whitelist (:a datom)))
 
 (defn notify-subscribers [transaction]
-  (def myt transaction)
   (let [annotations (get-annotations transaction)]
     (when (and (:document/id annotations)
                (:transaction/broadcast annotations))
@@ -147,6 +147,17 @@
         (when (profile/prod?)
           (handle-precursor-pings (:document/id annotations) public-datoms))))))
 
+(defn send-emails [transaction]
+  (doseq [datom (:tx-data transaction)]
+    (when (= :email/access-grant-created (schema/get-ident (:v datom)))
+      (log/infof "Sending access grant email for %s" (:e datom))
+      (future (email/send-access-grant-email (:db-after transaction) (:e datom))))))
+
+(defn handle-transaction [transaction]
+  (def myt transaction)
+  (notify-subscribers transaction)
+  (send-emails transaction))
+
 (defn init []
   (let [conn (pcd/conn)
         tap (async/chan (async/sliding-buffer 1024))]
@@ -154,7 +165,7 @@
     (async/go-loop []
                    (when-let [transaction (async/<! tap)]
                      (try
-                       (notify-subscribers transaction)
+                       (handle-transaction transaction)
                        (catch Exception e
                          (.printStacktrace e)
                          (log/error e)))

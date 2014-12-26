@@ -1,12 +1,14 @@
 (ns pc.email
   (:require [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [clj-time.core :as time]
             [clj-time.format]
             [datomic.api :as d]
             [hiccup.core :as hiccup]
             [pc.datomic :as pcd]
             [pc.mailgun :as mailgun]
-            [pc.models.access-grant :as access-grant-model]))
+            [pc.models.access-grant :as access-grant-model]
+            [pc.utils]))
 
 (defn emails-to-send [db eid]
   (set (map first
@@ -23,6 +25,11 @@
                                    [:db/add eid :sent-email email-enum]])]
     (and (contains? (emails-to-send (:db-before t) eid) email-enum)
          (not (contains? (emails-to-send (:db-after t) eid) email-enum)))))
+
+(defn unmark-sent-email
+  [eid email-enum]
+  @(d/transact (pcd/conn) [[:db/add eid :needs-email email-enum]
+                           [:db/retract eid :sent-email email-enum]]))
 
 (defn chat-invite-html [doc-id]
   (hiccup/html
@@ -102,16 +109,15 @@
          (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
          "."]]]])))
 
-
-;; TODO: need to keep track of who sent the access grant!
-(defn send-access-grant [db access-grant-eid]
+(defn send-access-grant-email* [db access-grant-eid]
   (let [access-grant (d/entity db access-grant-eid)
         doc-id (:access-grant/document access-grant)
-        granter (access-grant-model/get-granter access-grant)
+        granter (access-grant-model/get-granter db access-grant)
         token (:access-grant/token access-grant)]
     (mailgun/send-message {:from "Precursor <joinme@prcrsr.com>"
                            :to (:access-grant/email access-grant)
-                           :subject (str (format))
+                           :subject (str (format-inviter granter)
+                                         " invited you to a document on Precursor")
                            :text (str "Hey there,\nCome draw with me on Precursor: https://prcrsr.com/document" doc-id
                                       "?access-grant-token=" token)
                            :html (access-grant-html doc-id token)
@@ -119,3 +125,28 @@
                            :o:tracking-opens "yes"
                            :o:tracking-clicks "no"
                            :o:campaign "access_grant_invites"})))
+
+(defn send-access-grant-email [db access-grant-eid]
+  (if (mark-sent-email access-grant-eid :email/access-grant-created)
+    (try
+      (log/infof "sending access-grant-email for %s" access-grant-eid)
+      (send-access-grant-email* db access-grant-eid)
+      (catch Exception e
+        (.printStackTrace e)
+        (unmark-sent-email access-grant-eid :email/access-grant-created)))
+    (log/infof "not re-sending access-grant-email for %s" access-grant-eid)))
+
+(defn send-access-grant-email-cron
+  "Used to catch any emails missed by the transaction watcher."
+  []
+  (let [db (pcd/default-db)]
+    (doseq [[grant-eid] (d/q '{:find [?t]
+                               :in [$ ?email]
+                               :where [[?t :access-grant/email]
+                                       [?t :needs-email ?email]]}
+                             db :email/access-grant-created)]
+      (log/infof "queueing access grant email for %s" grant-eid)
+      (send-access-grant-email db grant-eid))))
+
+(defn init []
+  (pc.utils/safe-schedule {:minute (range 0 60 5)} #'send-access-grant-email-cron))
