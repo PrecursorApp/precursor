@@ -10,11 +10,15 @@
   (let [port (.getPort utils/parsed-uri)]
     (str (.getScheme utils/parsed-uri) "://" (.getDomain utils/parsed-uri) (when port (str ":" port)) "/auth/google")))
 
-(defn auth-url [& {:keys [redirect-path scopes]
+(defn auth-url [& {:keys [redirect-path scopes redirect-query]
                    :or {scopes ["openid" "email"]}}]
-  (let [state (url/url-encode (js/JSON.stringify #js {:csrf-token (utils/csrf-token)
+  (let [url (url/url (.. js/window -location -href))
+        state (url/url-encode (js/JSON.stringify #js {:csrf-token (utils/csrf-token)
                                                       :redirect-path (or redirect-path
-                                                                         (-> (.-location js/window) (.-href) url/url :path))}))]
+                                                                         (:path url))
+                                                      :redirect-query (or redirect-query
+                                                                          (when (seq (:query url))
+                                                                            (url/map->query (:query url))))}))]
     (str (url/map->URL {:protocol "https"
                         :host "accounts.google.com"
                         :path "/o/oauth2/auth"
