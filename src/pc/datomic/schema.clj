@@ -255,6 +255,25 @@
    (enum :access-request.status/pending)
    (enum :access-request.status/denied)
 
+   (attribute :access-request/cust
+              :db.type/long
+              :db/doc "db/id of the user")
+
+   (function :pc.models.access-request/create-request
+             #db/fn {:lang :clojure
+                     :params [db doc-id cust-id & extra-fields]
+                     :code (when-not (ffirst (d/q '{:find [?t]
+                                                    :in [$ ?doc-id ?cust-id]
+                                                    :where [[?t :access-request/document ?doc-id]
+                                                            [?t :access-request/cust ?cust-id]]}
+                                                  db doc-id cust-id))
+                             (let [temp-id (d/tempid :db.part/user)]
+                               (concat [[:db/add temp-id :access-request/document doc-id]
+                                        [:db/add temp-id :access-request/cust cust-id]]
+                                       (for [[field value] extra-fields]
+                                         [:db/add temp-id field value]))))}
+             :db/doc "Adds an access request, with composite uniqueness constraint on doc and cust")
+
    ;; used when access is granted to someone without an account
    (attribute :access-grant/document
               :db.type/long
@@ -314,6 +333,7 @@
               :db/doc "Annotate an entity to say that a given email has been sent")
 
    (enum :email/access-grant-created)
+   (enum :email/access-request-created)
    (enum :email/fake)])
 
 (defonce schema-ents (atom nil))

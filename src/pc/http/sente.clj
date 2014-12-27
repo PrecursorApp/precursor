@@ -5,15 +5,16 @@
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
-            [pc.http.datomic2 :as datomic2]
+            [pc.datomic :as pcd]
             [pc.email :as email]
-            [pc.models.layer :as layer]
+            [pc.http.datomic2 :as datomic2]
+            [pc.models.access-grant :as access-grant-model]
+            [pc.models.access-request :as access-request-model]
             [pc.models.chat :as chat]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
-            [pc.models.access-grant :as access-grant-model]
+            [pc.models.layer :as layer]
             [pc.models.permission :as permission-model]
-            [pc.datomic :as pcd]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
             [taoensso.sente :as sente])
@@ -184,6 +185,7 @@
 
     ;; These are interesting b/c they're read-only. And by "interesting", I mean "bad"
     ;; We should find a way to let the frontend edit things
+    ;; TODO: only send this stuff when it's needed
     (log/infof "sending permission-data for %s to %s" document-id cid)
     (send-fn (str cid) [:frontend/db-entities
                         {:document/id document-id
@@ -196,7 +198,14 @@
                          :entities (map access-grant-model/read-api
                                         (access-grant-model/find-by-document (:db req)
                                                                              {:db/id document-id}))
-                         :entity-type :access-grant}])))
+                         :entity-type :access-grant}])
+
+    (send-fn (str cid) [:frontend/db-entities
+                        {:document/id document-id
+                         :entities (map access-request-model/read-api
+                                        (access-request-model/find-by-document (:db req)
+                                                                               {:db/id document-id}))
+                         :entity-type :access-request}])))
 
 (defmethod ws-handler :frontend/fetch-created [{:keys [client-uuid ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
@@ -324,21 +333,24 @@
                                            cust
                                            annotations)))
       (comment (notify-invite "Please sign up to send an invite.")))))
+
+;; TODO: don't send request if they already have access
+(defmethod ws-handler :frontend/send-permission-request [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (let [doc-id (-> ?data :document/id)]
     (if-let [cust (-> req :ring-req :auth :cust)]
-      (let [email (-> ?data :email)
-            cid (client-uuid->uuid client-uuid)
-            annotations {:document/id doc-id
-                         :cust/uuid (:cust/uuid cust)
-                         :transaction/broadcast true}]
-        (if-let [grantee (cust/find-by-email (:db req) email)]
-          (permission-model/grant-permit {:db/id doc-id}
-                                         grantee
-                                         :permission.permits/admin
-                                         annotations)
-          (access-grant-model/grant-access {:db/id doc-id}
-                                           email
-                                           cust
-                                           annotations)))
+      (if-let [doc (doc-model/find-by-id (:db req) doc-id)]
+        (let [email (-> ?data :email)
+              cid (client-uuid->uuid client-uuid)
+              annotations {:document/id doc-id
+                           :cust/uuid (:cust/uuid cust)
+                           :transaction/broadcast true}]
+          (access-request-model/create-request doc cust annotations)
+          ;; have to send it manually to the requestor b/c user won't be subscribed
+          ((:send-fn @sente-state) (str cid) [:frontend/db-entities
+                                              {:document/id doc-id
+                                               :entities (map (partial access-request-model/read-api (:db req))
+                                                              (access-request-model/find-by-doc-and-cust (:db req) doc cust))
+                                               :entity-type :permission}])))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 (defmethod ws-handler :chsk/ws-ping [req]

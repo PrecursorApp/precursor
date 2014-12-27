@@ -59,7 +59,8 @@
                    ;; TODO: better way to check if state changed
                    (when (seq (filter #(or (= :document/privacy (:a %))
                                            (= :permission/document (:a %))
-                                           (= :access-grant/document (:a %)))
+                                           (= :access-grant/document (:a %))
+                                           (= :access-request/document (:a %)))
                                       (:tx-data tx-report)))
                      (om/refresh! owner)))))
     om/IWillUnmount
@@ -74,7 +75,8 @@
             private? (= :document.privacy/private (:document/privacy doc))
             permission-grant-email (get-in app state/permission-grant-email-path)
             permissions (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/document ?doc-id]] @db doc-id)
-            access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)]
+            access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
+            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
          [:div.menu-view
           [:div.menu-view-frame
@@ -111,5 +113,9 @@
                  "People with access:")
                (for [p permissions]
                  [:div (:permission/cust p)])
-               (for [a access-grants]
-                 [:div (:access-grant/email a)])))]]])))))
+               (for [g access-grants]
+                 [:div (:access-grant/email g)])
+               (when (seq access-requests)
+                 "People requesting access:")
+               (for [r access-requests]
+                 [:div (:access-request/cust r)])))]]])))))

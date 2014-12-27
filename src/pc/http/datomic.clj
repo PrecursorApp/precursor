@@ -89,7 +89,12 @@
     :permission/permits
 
     :access-grant/document
-    :access-grant/email})
+    :access-grant/email
+
+    :access-request/document
+    :access-request/cust ;; translated
+    :access-request/status
+    })
 
 ;; TODO: teach the frontend how to lookup name from cust/uuid
 ;;       this will break if something else is associating cust/uuids
@@ -122,6 +127,9 @@
     d))
 
 (defmethod translate-datom :permission/cust [db d]
+  (update-in d [:v] #(:cust/email (d/entity db %))))
+
+(defmethod translate-datom :access-request/cust [db d]
   (update-in d [:v] #(:cust/email (d/entity db %))))
 
 (defn datom-read-api [db datom]

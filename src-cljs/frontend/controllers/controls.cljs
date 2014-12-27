@@ -1056,3 +1056,9 @@
   [browser-state message {:keys [doc-id setting]} previous-state current-state]
   (d/transact! (:db current-state)
                [{:db/id doc-id :document/privacy setting}]))
+
+
+(defmethod post-control-event! :permission-requested
+  [browser-state message {:keys [doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/send-permission-request {:document/id doc-id
+                                                                             :invite-loc :overlay}]))
