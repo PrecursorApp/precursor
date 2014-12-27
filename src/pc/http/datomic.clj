@@ -86,7 +86,10 @@
 
     :permission/document
     :permission/cust ;; translated
-    :permission/permits})
+    :permission/permits
+
+    :access-grant/document
+    :access-grant/email})
 
 ;; TODO: teach the frontend how to lookup name from cust/uuid
 ;;       this will break if something else is associating cust/uuids

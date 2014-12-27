@@ -58,7 +58,8 @@
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
                    (when (seq (filter #(or (= :document/privacy (:a %))
-                                           (= :permission/document (:a %)))
+                                           (= :permission/document (:a %))
+                                           (= :access-grant/document (:a %)))
                                       (:tx-data tx-report)))
                      (om/refresh! owner)))))
     om/IWillUnmount
@@ -72,7 +73,8 @@
             doc (doc-model/find-by-id @db doc-id)
             private? (= :document.privacy/private (:document/privacy doc))
             permission-grant-email (get-in app state/permission-grant-email-path)
-            permissions (utils/inspect (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/document ?doc-id]] @db doc-id))]
+            permissions (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/document ?doc-id]] @db doc-id)
+            access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)]
         (html
          [:div.menu-view
           [:div.menu-view-frame
@@ -104,7 +106,10 @@
                 [:label {:data-placeholder "Teammate's Email"
                          :data-placeholder-nil "What's your teammate's email?"
                          :data-placeholder-forgot "Don't forget to submit."}]]
-               (when (seq permissions)
+               (when (or (seq permissions)
+                         (seq access-grants))
                  "People with access:")
                (for [p permissions]
-                 [:div (:permission/cust p)])))]]])))))
+                 [:div (:permission/cust p)])
+               (for [a access-grants]
+                 [:div (:access-grant/email a)])))]]])))))
