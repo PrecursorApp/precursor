@@ -17,6 +17,13 @@
                  [(assoc annotations :db/id txid)
                   [:pc.models.permission/grant-permit (:db/id doc) (:db/id cust) permit]])))
 
+(defn convert-access-grant [access-grant cust annotations]
+  (let [txid (d/tempid :db.part/tx)]
+    @(d/transact (pcd/conn)
+                 [(assoc annotations :db/id txid)
+                  [:pc.models.permission/grant-permit (:access-grant/document access-grant) (:db/id cust) :permission.permits/admin]
+                  [:db.fn/retractEntity (:db/id access-grant)]])))
+
 ;; TODO: figure out how to have only 1 read-api (maybe only send datoms?)
 (defn read-api [db permission]
   (-> permission
