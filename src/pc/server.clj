@@ -278,7 +278,7 @@
                                                                   :cust/uuid (:cust/uuid cust)
                                                                   :transaction/broadcast true}))
       (handler (cond cust (assoc-in req [:auth :cust] cust)
-                     access-grant (assoc-in req [:auth :access-grant])
+                     access-grant (assoc-in req [:auth :access-grant] access-grant)
                      :else req)))))
 
 (defn wrap-wrap-reload
