@@ -344,13 +344,13 @@
               annotations {:document/id doc-id
                            :cust/uuid (:cust/uuid cust)
                            :transaction/broadcast true}]
-          (access-request-model/create-request doc cust annotations)
-          ;; have to send it manually to the requestor b/c user won't be subscribed
-          ((:send-fn @sente-state) (str cid) [:frontend/db-entities
-                                              {:document/id doc-id
-                                               :entities (map (partial access-request-model/read-api (:db req))
-                                                              (access-request-model/find-by-doc-and-cust (:db req) doc cust))
-                                               :entity-type :permission}])))
+          (let [{:keys [db-after]} (access-request-model/create-request doc cust annotations)]
+            ;; have to send it manually to the requestor b/c user won't be subscribed
+            ((:send-fn @sente-state) (str cid) [:frontend/db-entities
+                                                {:document/id doc-id
+                                                 :entities (map (partial access-request-model/read-api db-after)
+                                                                (access-request-model/find-by-doc-and-cust db-after doc cust))
+                                                 :entity-type :access-request}]))))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 (defmethod ws-handler :chsk/ws-ping [req]

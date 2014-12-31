@@ -16,21 +16,37 @@
 
 (defn permission-denied-overlay [app owner]
   (reify
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when (seq (filter #(or (= :access-request/document (:a %)))
+                                      (:tx-data tx-report)))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            doc-id (:document/id app)]
+      (let [{:keys [db cast!]} (om/get-shared owner)
+            doc-id (:document/id app)
+            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
          [:div.menu-view
           [:div.menu-view-frame
            [:article
             [:h2 "This document is private"]
             (if (:cust app)
-              (list
-               [:p "Let the owner know you want to collaborate."]
-               [:a.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})
-                                :role "button"}
-                "Request access"])
+              (if (seq access-requests)
+                [:p "We've notified the owner that you want access to this document."]
+                (list
+                 [:p "Let the owner know you want to collaborate."]
+                 [:a.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})
+                                  :role "button"}
+                  "Request access"]))
               (list
                [:p "To check if you have access or to request access"]
                [:a.menu-button {:href (auth/auth-url)
