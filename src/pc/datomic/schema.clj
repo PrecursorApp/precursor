@@ -269,7 +269,8 @@
                                                   db doc-id cust-id))
                              (let [temp-id (d/tempid :db.part/user)]
                                (concat [[:db/add temp-id :access-request/document doc-id]
-                                        [:db/add temp-id :access-request/cust cust-id]]
+                                        [:db/add temp-id :access-request/cust cust-id]
+                                        [:db/add temp-id :access-request/status :access-request.status/pending]]
                                        (for [[field value] extra-fields]
                                          [:db/add temp-id field value]))))}
              :db/doc "Adds an access request, with composite uniqueness constraint on doc and cust")
