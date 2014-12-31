@@ -2,6 +2,7 @@
   (:require pc.datomic
             pc.datomic.migrations
             pc.datomic.schema
+            pc.email
             pc.less
             pc.logging
             pc.nrepl
@@ -14,6 +15,7 @@
                #'pc.datomic/init
                #'pc.datomic.migrations/init
                #'pc.datomic.schema/init
+               #'pc.email/init
                #'pc.server/init])
 
 (defn pretty-now []
