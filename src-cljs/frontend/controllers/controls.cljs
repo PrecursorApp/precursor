@@ -1062,3 +1062,15 @@
   [browser-state message {:keys [doc-id]} previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/send-permission-request {:document/id doc-id
                                                                              :invite-loc :overlay}]))
+
+(defmethod post-control-event! :access-request-granted
+  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/grant-access-request {:document/id doc-id
+                                                                          :request-id request-id
+                                                                          :invite-loc :overlay}]))
+
+(defmethod post-control-event! :access-request-denied
+  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/deny-access-request {:document/id doc-id
+                                                                         :request-id request-id
+                                                                         :invite-loc :overlay}]))

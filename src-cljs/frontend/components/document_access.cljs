@@ -76,7 +76,8 @@
                    (when (seq (filter #(or (= :document/privacy (:a %))
                                            (= :permission/document (:a %))
                                            (= :access-grant/document (:a %))
-                                           (= :access-request/document (:a %)))
+                                           (= :access-request/document (:a %))
+                                           (= :access-request/status (:a %)))
                                       (:tx-data tx-report)))
                      (om/refresh! owner)))))
     om/IWillUnmount
@@ -92,7 +93,9 @@
             permission-grant-email (get-in app state/permission-grant-email-path)
             permissions (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/document ?doc-id]] @db doc-id)
             access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
-            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
+            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)
+            {pending-requests false denied-requests true} (group-by #(= :access-request.status/denied (:access-request/status %))
+                                                                    access-requests)]
         (html
          [:div.menu-view
           [:div.menu-view-frame
@@ -131,7 +134,27 @@
                  [:div (:permission/cust p)])
                (for [g access-grants]
                  [:div (:access-grant/email g)])
-               (when (seq access-requests)
+               (when (seq pending-requests)
                  "People requesting access:")
-               (for [r access-requests]
-                 [:div (:access-request/cust r)])))]]])))))
+               (for [r pending-requests]
+                 [:div (:access-request/cust r)
+                  " "
+                  [:a {:role "button"
+                       :on-click #(cast! :access-request-granted {:request-id (:db/id r)
+                                                                  :doc-id doc-id})}
+                   "Grant access"]
+                  " "
+                  [:a {:role "button"
+                       :on-click #(cast! :access-request-denied {:request-id (:db/id r)
+                                                                 :doc-id doc-id})}
+                   "Deny access"]])
+               (when (seq denied-requests)
+                 [:div
+                  "Denied requests:"
+                  (for [r denied-requests]
+                    [:div (:access-request/cust r)
+                     " "
+                     [:a {:role "button"
+                          :on-click #(cast! :access-request-granted {:request-id (:db/id r)
+                                                                     :doc-id doc-id})}
+                      "Grant access"]])])))]]])))))

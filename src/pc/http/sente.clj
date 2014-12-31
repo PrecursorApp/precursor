@@ -202,7 +202,7 @@
 
     (send-fn (str cid) [:frontend/db-entities
                         {:document/id document-id
-                         :entities (map access-request-model/read-api
+                         :entities (map (partial access-request-model/read-api (:db req))
                                         (access-request-model/find-by-document (:db req)
                                                                                {:db/id document-id}))
                          :entity-type :access-request}])))
@@ -332,6 +332,36 @@
                                            email
                                            cust
                                            annotations)))
+      (comment (notify-invite "Please sign up to send an invite.")))))
+
+(defmethod ws-handler :frontend/grant-access-request [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document/id) req)
+  (let [doc-id (-> ?data :document/id)]
+    (if-let [request (some->> ?data :request-id (access-request-model/find-by-id (:db req)))]
+      (let [cid (client-uuid->uuid client-uuid)
+            cust (-> req :ring-req :auth :cust)
+            annotations {:document/id doc-id
+                         :cust/uuid (:cust/uuid cust)
+                         :transaction/broadcast true}]
+        ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
+        ;;       Right now it's too easy to accidentally forget to check.
+        (assert (= doc-id (:access-request/document request)))
+        (permission-model/convert-access-request request annotations))
+      (comment (notify-invite "Please sign up to send an invite.")))))
+
+(defmethod ws-handler :frontend/deny-access-request [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document/id) req)
+  (let [doc-id (-> ?data :document/id)]
+    (if-let [request (some->> ?data :request-id (access-request-model/find-by-id (:db req)))]
+      (let [cid (client-uuid->uuid client-uuid)
+            cust (-> req :ring-req :auth :cust)
+            annotations {:document/id doc-id
+                         :cust/uuid (:cust/uuid cust)
+                         :transaction/broadcast true}]
+        ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
+        ;;       Right now it's too easy to accidentally forget to check.
+        (assert (= doc-id (:access-request/document request)))
+        (access-request-model/deny-request request annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 ;; TODO: don't send request if they already have access

@@ -7,10 +7,17 @@
   (-> permission
     (select-keys [:access-request/document
                   :access-request/cust
+                  ;; TODO: different read api based on permissions
+                  :access-request/status
                   :db/id])
     (#(into {} %))
     (update-in [:access-request/cust] #(:cust/email (d/entity db %)))))
 
+(defn find-by-id [db id]
+  (let [candidate (d/entity db id)]
+    ;; faster than using a datalog query
+    (when (:access-request/document candidate)
+      candidate)))
 
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]
@@ -34,3 +41,9 @@
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
                   [:pc.models.access-request/create-request (:db/id doc) (:db/id cust) [:needs-email :email/access-request-created]]])))
+
+(defn deny-request [request annotations]
+  (let [txid (d/tempid :db.part/tx)]
+    @(d/transact (pcd/conn)
+                 [(assoc annotations :db/id txid)
+                  [:db/add (:db/id request) :access-request/status :access-request.status/denied]])))
