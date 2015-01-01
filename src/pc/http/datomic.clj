@@ -1,17 +1,18 @@
 (ns pc.http.datomic
   (:require [cheshire.core :as json]
+            [clj-time.core :as time]
             [clojure.core.async :as async]
             [clojure.tools.logging :as log]
-            [clj-time.core :as time]
+            [datomic.api :refer [db q] :as d]
             [org.httpkit.client :as http]
-            [pc.http.datomic-common :as common]
-            [pc.http.sente :as sente]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
             [pc.email :as email]
+            [pc.http.datomic-common :as common]
+            [pc.http.sente :as sente]
             [pc.models.chat :as chat-model]
             [pc.profile :as profile]
-            [datomic.api :refer [db q] :as d])
+            [slingshot.slingshot :refer (try+)])
   (:import java.util.UUID))
 
 (defn entity-id-request [eid-count]
@@ -159,10 +160,17 @@
           (handle-precursor-pings (:document/id annotations) public-datoms))))))
 
 (defn send-emails [transaction]
-  (doseq [datom (:tx-data transaction)]
-    (when (= :email/access-grant-created (schema/get-ident (:v datom)))
-      (log/infof "Sending access grant email for %s" (:e datom))
-      (future (email/send-access-grant-email (:db-after transaction) (:e datom))))))
+  (let [annotations (delay (get-annotations transaction))]
+    (doseq [datom (:tx-data transaction)]
+      (when (and (= :needs-email (schema/get-ident (:a datom)))
+                 (not (:transaction.source/unmark-sent-email @annotations)))
+        (log/infof "Queueing email for %s" (:e datom))
+        (future
+          (try+
+            (email/send-entity-email (:db-after transaction) (schema/get-ident (:v datom)) (:e datom))
+            (catch Exception e
+              (.printStackTrace e)
+              (log/error e))))))))
 
 (defn handle-transaction [transaction]
   (def myt transaction)
@@ -178,6 +186,6 @@
                      (try
                        (handle-transaction transaction)
                        (catch Exception e
-                         (.printStacktrace e)
+                         (.printStackTrace e)
                          (log/error e)))
                      (recur)))))

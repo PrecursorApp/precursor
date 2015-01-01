@@ -1,14 +1,17 @@
 (ns pc.email
-  (:require [clojure.string :as str]
-            [clojure.tools.logging :as log]
-            [clj-time.core :as time]
+  (:require [clj-time.core :as time]
             [clj-time.format]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [datomic.api :as d]
             [hiccup.core :as hiccup]
             [pc.datomic :as pcd]
             [pc.mailgun :as mailgun]
             [pc.models.access-grant :as access-grant-model]
-            [pc.utils]))
+            [pc.models.cust :as cust-model]
+            [pc.models.doc :as doc-model]
+            [pc.utils]
+            [slingshot.slingshot :refer (try+)]))
 
 (defn emails-to-send [db eid]
   (set (map first
@@ -28,8 +31,11 @@
 
 (defn unmark-sent-email
   [eid email-enum]
-  @(d/transact (pcd/conn) [[:db/add eid :needs-email email-enum]
-                           [:db/retract eid :sent-email email-enum]]))
+  (let [txid (d/tempid :db.part/tx)]
+    @(d/transact (pcd/conn) [{:db/id txid
+                              :transaction/source :transaction.source/unmark-sent-email}
+                             [:db/add eid :needs-email email-enum]
+                             [:db/retract eid :sent-email email-enum]])))
 
 (defn chat-invite-html [doc-id]
   (hiccup/html
@@ -109,7 +115,7 @@
          (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
          "."]]]])))
 
-(defn send-access-grant-email* [db access-grant-eid]
+(defn send-access-grant-email [db access-grant-eid]
   (let [access-grant (d/entity db access-grant-eid)
         doc-id (:access-grant/document access-grant)
         granter (access-grant-model/get-granter db access-grant)
@@ -126,27 +132,71 @@
                            :o:tracking-clicks "no"
                            :o:campaign "access_grant_invites"})))
 
-(defn send-access-grant-email [db access-grant-eid]
-  (if (mark-sent-email access-grant-eid :email/access-grant-created)
-    (try
-      (log/infof "sending access-grant-email for %s" access-grant-eid)
-      (send-access-grant-email* db access-grant-eid)
+(defn send-access-request-email [db request-eid]
+  (let [access-request (d/entity db request-eid)
+        requester (cust-model/find-by-id db (:access-request/cust access-request))
+        doc (doc-model/find-by-id db (:access-request/document access-request))
+        doc-id (:db/id doc)
+        doc-owner (cust-model/find-by-id db (:document/creator doc))]
+    (mailgun/send-message {:from "Precursor <joinme@prcrsr.com>"
+                           :to (:access-grant/email access-grant)
+                           :subject (str (format-requester granter)
+                                         " wants access to your document on Precursor")
+                           :text (str "Hey there,\nSomeone wants access to your document on Precursor: https://prcrsr.com/document" doc-id
+                                      "\nYou can grant or deny them access from the document's settings page.")
+                           :html (access-request-html doc-id)
+                           :o:tracking "yes"
+                           :o:tracking-opens "yes"
+                           :o:tracking-clicks "no"
+                           :o:campaign "access_grant_invites"})))
+
+(defn send-entity-email-dispatch-fn [db email-enum eid] email-enum)
+
+(defmulti send-entity-email send-entity-email-dispatch-fn)
+
+(defmethod send-entity-email :default
+  [db email-enum access-grant-eid]
+  (log/infof "No send-entity-email fn for %s" email-enum))
+
+(defmethod send-entity-email :email/access-grant-created
+  [db email-enum eid]
+  (assert false)
+  (if (mark-sent-email eid :email/access-grant-created)
+    (try+
+      (log/infof "sending access-grant email for %s" eid)
+      (send-access-grant-email db eid)
       (catch Exception e
         (.printStackTrace e)
-        (unmark-sent-email access-grant-eid :email/access-grant-created)))
+        (unmark-sent-email eid :email/access-grant-created)))
+    (log/infof "not re-sending access-grant email for %s" eid)))
+
+(defmethod send-entity-email :email/access-request-created
+  [db email-enum eid]
+  (assert false)
+  (if (mark-sent-email eid :email/access-request-created)
+    (try+
+      (log/infof "sending access-request email for %s" eid)
+      (send-access-request-email db eid)
+      (catch Exception e
+        (.printStackTrace e)
+        (unmark-sent-email eid :email/access-request-created)))
     (log/infof "not re-sending access-grant-email for %s" access-grant-eid)))
 
-(defn send-access-grant-email-cron
+
+(defn send-missed-entity-emails-cron
   "Used to catch any emails missed by the transaction watcher."
   []
   (let [db (pcd/default-db)]
-    (doseq [[grant-eid] (d/q '{:find [?t]
-                               :in [$ ?email]
-                               :where [[?t :access-grant/email]
-                                       [?t :needs-email ?email]]}
-                             db :email/access-grant-created)]
-      (log/infof "queueing access grant email for %s" grant-eid)
-      (send-access-grant-email db grant-eid))))
+    (doseq [[eid email-enum] (d/q '{:find [?t ?email-ident]
+                                    :where [[?t :needs-email ?email]
+                                            [?email :db/ident ?email-ident]]}
+                                  db)]
+      (log/infof "queueing %s email for %s" email-enum eid)
+      (try
+        (send-entity-email db email-enum eid)
+        (catch Exception e
+          (.printStackTrace e)
+          (log/error e))))))
 
 (defn init []
-  (pc.utils/safe-schedule {:minute (range 0 60 5)} #'send-access-grant-email-cron))
+  (pc.utils/safe-schedule {:minute (range 0 60 5)} #'send-missed-entity-emails-cron))

@@ -130,13 +130,13 @@
                (when (or (seq permissions)
                          (seq access-grants))
                  "People with access:")
-               (for [p permissions]
+               (for [p (sort-by :db/id permissions)]
                  [:div (:permission/cust p)])
-               (for [g access-grants]
+               (for [g (sort-by :db/id access-grants)]
                  [:div (:access-grant/email g)])
                (when (seq pending-requests)
                  "People requesting access:")
-               (for [r pending-requests]
+               (for [r (sort-by :db/id pending-requests)]
                  [:div (:access-request/cust r)
                   " "
                   [:a {:role "button"
@@ -151,7 +151,7 @@
                (when (seq denied-requests)
                  [:div
                   "Denied requests:"
-                  (for [r denied-requests]
+                  (for [r (sort-by :db/id denied-requests)]
                     [:div (:access-request/cust r)
                      " "
                      [:a {:role "button"

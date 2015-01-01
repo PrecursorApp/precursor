@@ -22,7 +22,7 @@
                  ;; Note: counting this way is racy!
                  {:form-params {"payload" (json/encode {:text message})}}))
     (catch Exception e
-      (.printStacktrace e)
+      (.printStackTrace e)
       (log/error e))))
 
 (defn update-user-from-sub [cust]
