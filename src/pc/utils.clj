@@ -10,7 +10,8 @@
     `(do
        (let [value# (quote ~value)
              result# ~value]
-         (println value# "is" (with-out-str (clojure.pprint/pprint result#)))
+         (when (= java.io.PrintWriter (type *out*))
+           (println value# "is" (with-out-str (clojure.pprint/pprint result#))))
          (log/infof "%s is %s" value# result#)
          result#)))
 
