@@ -471,22 +471,27 @@
   [browser-state message [x y {:keys [button ctrl?]}] previous-state current-state]
   (let [cast! (fn [msg & [payload]]
                 (put! (get-in current-state [:comms :controls]) [msg payload]))]
+    ;; If you click while writing text, you probably wanted to place it there
+    ;; You also want the right-click menu to open
+    (when (and (= (get-in current-state state/current-tool-path) :text)
+               (get-in current-state [:drawing :in-progress?]))
+      (cast! :text-layer-finished [x y]))
     (cond
-     (= button 2) (cast! :menu-opened)
-     (and (= button 0) ctrl?) (cast! :menu-opened)
-     ;; turning off Cmd+click for opening the menu
-     ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
-     (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
-     (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
-                                                                ;; if you click while writing text, you probably wanted to place it there
-                                                                (cast! :text-layer-finished [x y])
-                                                                (cast! :drawing-started [x y]))
-     (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
-     :else                                             nil)))
+      (= button 2) (cast! :menu-opened)
+      (and (= button 0) ctrl?) (cast! :menu-opened)
+      ;; turning off Cmd+click for opening the menu
+      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
+      (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
+      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
+
+                                                                 (cast! :text-layer-finished [x y])
+                                                                 (cast! :drawing-started [x y]))
+      (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
+      :else                                             nil)))
 
 (defn detectable-movement?
   "Checks to make sure we moved the layer from its starting position"

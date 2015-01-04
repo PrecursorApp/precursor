@@ -276,27 +276,34 @@
                                 :x (:layer/start-x layer)
                                 ;; TODO: defaults for each layer when we create them
                                 :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
-                           (dom/form #js {:className "svg-text-form"
-                                          :onSubmit (fn [e]
-                                                      (cast! :text-layer-finished)
-                                                      false)}
-                                     ;; TODO: experiment with a contentEditable div
-                                     (dom/input #js {:type "text"
-                                                     :placeholder "Type something..."
-                                                     :value (or (:layer/text layer) "")
-                                                     ;; TODO: defaults for each layer when we create them
-                                                     :style (clj->js (merge text-style
-                                                                            {:width (+ 256 (om/get-state owner :input-min-width))}))
-                                                     :ref "input"
-                                                     :onChange #(cast! :text-layer-edited {:value (.. % -target -value)})})
-                                     (dom/div #js {:style (clj->js (merge {:visibility "hidden"
-                                                                           :position "fixed"
-                                                                           :top "-100px"
-                                                                           :left "0"
-                                                                           :display "inline-block"}
-                                                                          text-style))
-                                                   :ref "input-width-tester"}
-                                              (:layer/text layer))))))))
+          (dom/form #js {:className "svg-text-form"
+                         :onMouseDown #(.stopPropagation %)
+                         :onMouseUp #(.stopPropagation %)
+                         :onWheel #(.stopPropagation %)
+
+                         :onSubmit (fn [e]
+                                     (cast! :text-layer-finished)
+                                     false)
+                         :onKeyDown #(when (= "Enter" (.-key %))
+                                       (cast! :text-layer-finished)
+                                       false)}
+                    ;; TODO: experiment with a contentEditable div
+                    (dom/input #js {:type "text"
+                                    :placeholder "Type something..."
+                                    :value (or (:layer/text layer) "")
+                                    ;; TODO: defaults for each layer when we create them
+                                    :style (clj->js (merge text-style
+                                                           {:width (+ 256 (om/get-state owner :input-min-width))}))
+                                    :ref "input"
+                                    :onChange #(cast! :text-layer-edited {:value (.. % -target -value)})})
+                    (dom/div #js {:style (clj->js (merge {:visibility "hidden"
+                                                          :position "fixed"
+                                                          :top "-100px"
+                                                          :left "0"
+                                                          :display "inline-block"}
+                                                         text-style))
+                                  :ref "input-width-tester"}
+                      (:layer/text layer))))))))
 
 (defn subscriber-layers [{:keys [layers]} owner]
   (reify
