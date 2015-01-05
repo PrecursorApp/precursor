@@ -24,7 +24,10 @@
 (defn mark-sent-email
   "Returns true if this was the first transaction to mark the email as sent. False if it wasn't."
   [eid email-enum]
-  (let [t @(d/transact (pcd/conn) [[:db/retract eid :needs-email email-enum]
+  (let [txid (d/tempid :db.part/tx)
+        t @(d/transact (pcd/conn) [{:db/id txid
+                                    :transaction/source :transaction.source/mark-sent-email}
+                                   [:db/retract eid :needs-email email-enum]
                                    [:db/add eid :sent-email email-enum]])]
     (and (contains? (emails-to-send (:db-before t) eid) email-enum)
          (not (contains? (emails-to-send (:db-after t) eid) email-enum)))))
@@ -76,6 +79,16 @@
                        (str (:cust/email inviter) " ")
 
                        :else nil))))
+
+(defn format-requester [requester]
+  (let [full-name (str/trim (str (:cust/first-name requester)
+                                 " "
+                                 (when (:cust/first-name requester)
+                                   (:cust/last-name requester))))]
+    (str/trim (str full-name " "
+                   (when-not (str/blank? full-name) "(")
+                   (:cust/email requester)
+                   (when-not (str/blank? full-name) ")")))))
 
 (defn send-chat-invite [{:keys [cust to-email doc-id]}]
   (mailgun/send-message {:from "Precursor <joinme@prcrsr.com>"
@@ -132,6 +145,24 @@
                            :o:tracking-clicks "no"
                            :o:campaign "access_grant_invites"})))
 
+(defn access-request-html [doc-id requester]
+  (let [doc-link (str "https://prcrsr.com/document/" doc-id)]
+    (hiccup/html
+     [:html
+      [:body
+       [:p (str (format-requester requester) " wants access to one of your documents on Precursor.")]
+       [:p "Go to the "
+        [:a {:href (str "https://prcrsr.com/document/" doc-id "?overlay=manage-permissions")}
+         "manage permissions page"]
+        " to grant or deny access."]
+       [:p {:style "font-size: 12px"}
+        "Tell us if this message was sent in error info@prcrsr.com."
+        ;; Add some hidden text so that Google doesn't try to trim these.
+        [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
+         " Sent at "
+         (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
+         "."]]]])))
+
 (defn send-access-request-email [db request-eid]
   (let [access-request (d/entity db request-eid)
         requester (cust-model/find-by-id db (:access-request/cust access-request))
@@ -139,12 +170,12 @@
         doc-id (:db/id doc)
         doc-owner (cust-model/find-by-id db (:document/creator doc))]
     (mailgun/send-message {:from "Precursor <joinme@prcrsr.com>"
-                           :to (:access-grant/email access-grant)
-                           :subject (str (format-requester granter)
+                           :to (:cust/email requester)
+                           :subject (str (format-requester requester)
                                          " wants access to your document on Precursor")
                            :text (str "Hey there,\nSomeone wants access to your document on Precursor: https://prcrsr.com/document" doc-id
                                       "\nYou can grant or deny them access from the document's settings page.")
-                           :html (access-request-html doc-id)
+                           :html (access-request-html doc-id requester)
                            :o:tracking "yes"
                            :o:tracking-opens "yes"
                            :o:tracking-clicks "no"
@@ -160,12 +191,11 @@
 
 (defmethod send-entity-email :email/access-grant-created
   [db email-enum eid]
-  (assert false)
   (if (mark-sent-email eid :email/access-grant-created)
     (try+
       (log/infof "sending access-grant email for %s" eid)
       (send-access-grant-email db eid)
-      (catch Exception e
+      (catch Object e
         (.printStackTrace e)
         (unmark-sent-email eid :email/access-grant-created)))
     (log/infof "not re-sending access-grant email for %s" eid)))
@@ -180,7 +210,7 @@
       (catch Exception e
         (.printStackTrace e)
         (unmark-sent-email eid :email/access-request-created)))
-    (log/infof "not re-sending access-grant-email for %s" access-grant-eid)))
+    (log/infof "not re-sending access-request email for %s" eid)))
 
 
 (defn send-missed-entity-emails-cron
@@ -192,9 +222,9 @@
                                             [?email :db/ident ?email-ident]]}
                                   db)]
       (log/infof "queueing %s email for %s" email-enum eid)
-      (try
+      (try+
         (send-entity-email db email-enum eid)
-        (catch Exception e
+        (catch Object e
           (.printStackTrace e)
           (log/error e))))))
 

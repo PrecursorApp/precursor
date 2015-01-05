@@ -324,6 +324,7 @@
               :db.type/ref
               :db/doc "Annotates transaction")
    (enum :transaction.source/unmark-sent-email)
+   (enum :transaction.source/mark-sent-email)
 
    ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
    (attribute :needs-email

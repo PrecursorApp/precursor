@@ -163,12 +163,14 @@
   (let [annotations (delay (get-annotations transaction))]
     (doseq [datom (:tx-data transaction)]
       (when (and (= :needs-email (schema/get-ident (:a datom)))
-                 (not (:transaction.source/unmark-sent-email @annotations)))
+                 (not (contains? #{:transaction.source/unmark-sent-email
+                                   :transaction.source/mark-sent-email}
+                                 (:transaction.source @annotations))))
         (log/infof "Queueing email for %s" (:e datom))
         (future
           (try+
             (email/send-entity-email (:db-after transaction) (schema/get-ident (:v datom)) (:e datom))
-            (catch Exception e
+            (catch Object e
               (.printStackTrace e)
               (log/error e))))))))
 
