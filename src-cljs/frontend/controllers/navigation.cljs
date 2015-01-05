@@ -4,6 +4,7 @@
             [datascript :as d]
             [frontend.async :refer [put!]]
             [frontend.db :as db]
+            [frontend.overlay :as overlay]
             [frontend.state :as state]
             [frontend.sente :as sente]
             [frontend.utils.ajax :as ajax]
@@ -77,6 +78,9 @@
         (update-in (state/doc-chat-bot-path doc-id)
                    #(or % (rand-nth ["daniel" "danny" "prcrsr"])))
         (dissoc :subscribers)
+        (#(if-let [overlay (get-in args [:query-params :overlay])]
+            (overlay/replace-overlay % (keyword overlay))
+            %))
         ;; TODO: at some point we'll only want to get rid of the layers. Maybe have multiple dbs or
         ;;       find them by doc-id? Will still need a way to clean out old docs.
         (update-in [:db] db/reset-db!))))
