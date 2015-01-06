@@ -10,8 +10,10 @@
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.datascript :as ds]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
+            [frontend.scroll :as scroll]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [goog.dom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]])
@@ -290,15 +292,28 @@
    [:path.border {:d "M0,24v608c0,4.4,3.6,8,8,8h1008 c4.4,0,8-3.6,8-8V24"}]
    [:path.actions {:d "M16,12c0,2.2-1.8,4-4,4s-4-1.8-4-4s1.8-4,4-4S16,9.8,16,12z M44,8c-2.2,0-4,1.8-4,4s1.8,4,4,4 c2.2,0,4-1.8,4-4S46.2,8,44,8z M28,8c-2.2,0-4,1.8-4,4s1.8,4,4,4s4-1.8,4-4S30.2,8,28,8z"}]])
 
+(defn past-center? [owner ref]
+  (let [node (om/get-node owner ref)
+        vh (.-height (goog.dom/getViewportSize))]
+    (< (.-top (.getBoundingClientRect node)) (/ vh 2))))
+
+;; TODO: update to new om so that we don't need this
+(defn maybe-set-state! [owner korks value]
+  (when (not= (om/get-state owner korks) value)
+    (om/set-state! owner korks value)))
+
 (defn overlay [app owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState (init-state [_] {:past-center-featurettes #{}})
+    om/IRenderState
+    (render-state [_ {:keys [past-center-featurettes]}]
       (let [cast! (om/get-shared owner :cast!)
             overlay-components (map #(get overlay-components %) (get-in app state/overlays-path))
             title (:title (last overlay-components))]
         (html
-          [:div.app-overlay {:on-click #(cast! :overlay-closed)}
+         [:div.app-overlay {:on-click #(cast! :overlay-closed)
+                            :on-scroll #(maybe-set-state! owner [:past-center-featurettes]
+                                                          (set (filter (partial past-center? owner) ["1" "2" "3" "4" "5"])))}
            [:div.app-overlay-background]
             [:div.app-overlay-home
              [:div.jumbotron
@@ -316,35 +331,40 @@
                [:h4 "Productive prototyping without all the nonsense."]
                [:button "Launch Precursor"]]]
              [:div.home-body
-              [:article.featurette
+              [:article.featurette {:ref "1"
+                                    :class (when (contains? past-center-featurettes "1") "active")}
                [:div.featurette-story
                 [:h2 "Sharing prototypes should be simple."]
                 [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                     Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                     Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
                [:div.featurette-media screen]]
-              [:article.featurette.featurette-how
+              [:article.featurette.featurette-how  {:ref "2"
+                                                    :class (when (contains? past-center-featurettes "2") "active")}
                [:div.featurette-story
                 [:h2 "Express your ideas efficiently with simple tools."]
                 [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                     Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                     Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
                [:div.featurette-media screen]]
-              [:article.featurette.featurette-how
+              [:article.featurette.featurette-how {:ref "3"
+                                                   :class (when (contains? past-center-featurettes "3") "active")}
                [:div.featurette-story
                 [:h2 "Interact with your ideas before building them."]
                 [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                     Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                     Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
                [:div.featurette-media screen]]
-              [:article.featurette.featurette-how
+              [:article.featurette.featurette-how {:ref "4"
+                                                   :class (when (contains? past-center-featurettes "4") "active")}
                [:div.featurette-story
                 [:h2 "Share your ideas faster without forgetting them."]
                 [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                     Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                     Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
                [:div.featurette-media screen]]
-              [:article.featurette
+              [:article.featurette {:ref "5"
+                                    :class (when (contains? past-center-featurettes "5") "active")}
                [:div.featurette-story
                 [:h2 "Pure prototyping, just focus on the idea."]
                 [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
