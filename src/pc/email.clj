@@ -202,7 +202,6 @@
 
 (defmethod send-entity-email :email/access-request-created
   [db email-enum eid]
-  (assert false)
   (if (mark-sent-email eid :email/access-request-created)
     (try+
       (log/infof "sending access-request email for %s" eid)
