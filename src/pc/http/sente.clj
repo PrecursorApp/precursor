@@ -393,17 +393,18 @@
   nil)
 
 (defn handle-req [req]
-  (try+
-   (ws-handler (assoc req :db (pcd/default-db)))
-   (catch :status t
-     (let [send-fn (:send-fn @sente-state)]
-       (log/error t)
-       ;; TODO: should this use the send-fn? We can do that too, I guess, inside of the defmethod.
-       ;; TODO: rip out sente and write a sensible library
-       (send-fn (str (client-uuid->uuid (:client-uuid req))) [:frontend/error {:status-code (:status t)
-                                                              :error-msg (:error-msg t)
-                                                              :event (:event req)
-                                                              :event-data (:?data req)}])))))
+  (utils/with-report-exceptions
+    (try+
+     (ws-handler (assoc req :db (pcd/default-db)))
+     (catch :status t
+       (let [send-fn (:send-fn @sente-state)]
+         (log/error t)
+         ;; TODO: should this use the send-fn? We can do that too, I guess, inside of the defmethod.
+         ;; TODO: rip out sente and write a sensible library
+         (send-fn (str (client-uuid->uuid (:client-uuid req))) [:frontend/error {:status-code (:status t)
+                                                                                 :error-msg (:error-msg t)
+                                                                                 :event (:event req)
+                                                                                 :event-data (:?data req)}]))))))
 
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))
