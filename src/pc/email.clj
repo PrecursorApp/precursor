@@ -170,7 +170,7 @@
         doc-id (:db/id doc)
         doc-owner (cust-model/find-by-id db (:document/creator doc))]
     (mailgun/send-message {:from "Precursor <joinme@prcrsr.com>"
-                           :to (:cust/email requester)
+                           :to (:cust/email doc-owner)
                            :subject (str (format-requester requester)
                                          " wants access to your document on Precursor")
                            :text (str "Hey there,\nSomeone wants access to your document on Precursor: https://prcrsr.com/document" doc-id
@@ -179,7 +179,7 @@
                            :o:tracking "yes"
                            :o:tracking-opens "yes"
                            :o:tracking-clicks "no"
-                           :o:campaign "access_grant_invites"})))
+                           :o:campaign "access_request"})))
 
 (defn send-entity-email-dispatch-fn [db email-enum eid] email-enum)
 
