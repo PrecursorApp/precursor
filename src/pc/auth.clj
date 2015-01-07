@@ -76,7 +76,7 @@
     (cond (and (:document/creator doc)
                (crypto/eq? (str (:cust/uuid cust))
                            (str (:document/creator doc))))
-          :admin
+          :owner
 
           (contains? (permission-model/permits db doc cust) :permission.permits/admin)
           :admin
@@ -94,7 +94,7 @@
   (or (cust-permission db doc (:cust auth))
       (access-grant-permission db doc (:access-grant auth))))
 
-(def scope-heirarchy [:read :admin])
+(def scope-heirarchy [:read :admin :owner])
 
 (defn contains-scope? [heirarchy granted-scope requested-scope]
   (contains? (set (take (inc (.indexOf heirarchy granted-scope)) heirarchy))

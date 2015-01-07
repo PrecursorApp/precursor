@@ -53,9 +53,9 @@
   [client-uuid]
   (str/replace client-uuid #"-[^-]+$" ""))
 
-(defn check-document-access-from-auth [doc-id req]
+(defn check-document-access-from-auth [doc-id req scope]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
-    (when-not (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth) :admin)
+    (when-not (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth) scope)
       (if (auth/logged-in? (:ring-req req))
         (throw+ {:status 403
                  :error-msg "This document is private. Please request access."
@@ -65,13 +65,16 @@
                  :error-key :document-requires-login})))))
 
 ;; TODO: make sure to kick the user out of subscribed if he loses access
-(defn check-subscribed [doc-id req]
-  (get-in @document-subs [doc-id (-> req :client-uuid client-uuid->uuid)]))
+(defn check-subscribed [doc-id req scope]
+  ;; TODO: we're making a simplifying assumption that subscribed == :admin
+  ;;       That needs to be fixed at some point
+  (when (= scope :admin)
+    (get-in @document-subs [doc-id (-> req :client-uuid client-uuid->uuid)])))
 
 ;; TODO: this should take an access level at some point
-(defn check-document-access [doc-id req]
-  (or (check-subscribed doc-id req)
-      (check-document-access-from-auth doc-id req)))
+(defn check-document-access [doc-id req scope]
+  (or (check-subscribed doc-id req scope)
+      (check-document-access-from-auth doc-id req scope)))
 
 (defmulti ws-handler ws-handler-dispatch-fn)
 
@@ -109,7 +112,7 @@
   (close-connection client-uuid))
 
 (defmethod ws-handler :frontend/unsubscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document-id) req)
+  (check-document-access (-> ?data :document-id) req :admin)
   (let [document-id (-> ?data :document-id)
         cid (client-uuid->uuid client-uuid)]
     (log/infof "unsubscribing %s from %s" client-uuid document-id)
@@ -149,7 +152,7 @@
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
 (defmethod ws-handler :frontend/subscribe [{:keys [client-uuid ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document-id) req)
+  (check-document-access (-> ?data :document-id) req :admin)
   (let [document-id (-> ?data :document-id)
         cid (client-uuid->uuid client-uuid)
         send-fn (:send-fn @sente-state)]
@@ -232,7 +235,7 @@
                              doc-ids)}))))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-uuid ?data] :as req}]
-  (check-document-access (-> ?data :document/id) req)
+  (check-document-access (-> ?data :document/id) req :admin)
   (let [document-id (-> ?data :document/id)
         datoms (->> ?data
                  :datoms
@@ -250,7 +253,7 @@
                         cust-uuid)))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-uuid ?data] :as req}]
-  (check-document-access (-> ?data :document/id) req)
+  (check-document-access (-> ?data :document/id) req :admin)
   (let [document-id (-> ?data :document/id)
         mouse-position (-> ?data :mouse-position)
         tool (-> ?data :tool)
@@ -266,7 +269,7 @@
 
 (defmethod ws-handler :frontend/update-self [{:keys [client-uuid ?data] :as req}]
   ;; TODO: update subscribers in a different way
-  (check-document-access (-> ?data :document/id) req)
+  (check-document-access (-> ?data :document/id) req :admin)
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [doc-id (-> ?data :document/id)
           cid (client-uuid->uuid client-uuid)]
@@ -282,7 +285,7 @@
 
 (defmethod ws-handler :frontend/send-invite [{:keys [client-uuid ?data ?reply-fn] :as req}]
   ;; This may turn out to be a bad idea, but error handling is done through creating chats
-  (check-document-access (-> ?data :document/id) req)
+  (check-document-access (-> ?data :document/id) req :admin)
   (let [[chat-id] (pcd/generate-eids (pcd/conn) 1)
         doc-id (-> ?data :document/id)
         invite-loc (-> ?data :invite-loc)
@@ -315,7 +318,7 @@
       (notify-invite "Please sign up to send an invite."))))
 
 (defmethod ws-handler :frontend/send-permission-grant [{:keys [client-uuid ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document/id) req)
+  (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)]
     (if-let [cust (-> req :ring-req :auth :cust)]
       (let [email (-> ?data :email)
@@ -335,7 +338,7 @@
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 (defmethod ws-handler :frontend/grant-access-request [{:keys [client-uuid ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document/id) req)
+  (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)]
     (if-let [request (some->> ?data :request-id (access-request-model/find-by-id (:db req)))]
       (let [cid (client-uuid->uuid client-uuid)
@@ -350,7 +353,7 @@
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 (defmethod ws-handler :frontend/deny-access-request [{:keys [client-uuid ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document/id) req)
+  (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)]
     (if-let [request (some->> ?data :request-id (access-request-model/find-by-id (:db req)))]
       (let [cid (client-uuid->uuid client-uuid)
