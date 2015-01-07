@@ -197,7 +197,8 @@
       (send-access-grant-email db eid)
       (catch Object e
         (.printStackTrace e)
-        (unmark-sent-email eid :email/access-grant-created)))
+        (unmark-sent-email eid :email/access-grant-created)
+        (throw+ e)))
     (log/infof "not re-sending access-grant email for %s" eid)))
 
 (defmethod send-entity-email :email/access-request-created
@@ -208,7 +209,8 @@
       (send-access-request-email db eid)
       (catch Exception e
         (.printStackTrace e)
-        (unmark-sent-email eid :email/access-request-created)))
+        (unmark-sent-email eid :email/access-request-created)
+        (throw+ e)))
     (log/infof "not re-sending access-request email for %s" eid)))
 
 
