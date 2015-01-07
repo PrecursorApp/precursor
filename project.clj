@@ -28,6 +28,7 @@
                  [ring/ring-anti-forgery "1.0.0"]
                  [http-kit "2.1.18"]
                  [com.taoensso/sente "1.2.0"]
+                 [clj-stacktrace "0.2.8"]
 
                  [schejulure "1.0.1"]
 
