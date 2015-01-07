@@ -6,6 +6,9 @@
             [cheshire.core :as json]
             [pc.profile :as profile]))
 
+;; copied from https://github.com/rollbar/clj-rollbar, but
+;; uses async http requests and a faster json formatter
+
 (def endpoint
   "Rollbar API endpoint base URL"
   "https://api.rollbar.com/api/1/item/")
