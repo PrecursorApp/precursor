@@ -30,3 +30,8 @@
 (defn http-session-key []
   (or (System/getenv "HTTP_SESSION_KEY")
       dev-session-key))
+
+(defn env []
+  (if (prod?)
+    "production"
+    "development"))

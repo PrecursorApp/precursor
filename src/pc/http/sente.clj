@@ -15,6 +15,7 @@
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
             [pc.models.permission :as permission-model]
+            [pc.rollbar :as rollbar]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
             [taoensso.sente :as sente])
@@ -311,6 +312,7 @@
           (email/send-chat-invite {:cust cust :to-email email :doc-id doc-id})
           (notify-invite (str "Invite sent to " email))
           (catch Exception e
+            (rollbar/report-exception e)
             (log/error e)
             (.printStackTrace e)
             (notify-invite (str "Sorry! There was a problem sending the invite to " email)))))

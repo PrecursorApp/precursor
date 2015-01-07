@@ -15,15 +15,12 @@
 
 ;; TODO: move this elsewhere
 (defn ping-chat-with-new-user [email]
-  (try
+  (utils/with-report-exceptions
     (let [db (pcd/default-db)
           message (str "New user (#" (cust/cust-count db) "): " email)]
       (http/post "https://hooks.slack.com/services/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"
                  ;; Note: counting this way is racy!
-                 {:form-params {"payload" (json/encode {:text message})}}))
-    (catch Exception e
-      (.printStackTrace e)
-      (log/error e))))
+                 {:form-params {"payload" (json/encode {:text message})}}))))
 
 (defn update-user-from-sub [cust]
   (let [sub (:google-account/sub cust)

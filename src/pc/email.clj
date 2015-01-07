@@ -221,11 +221,8 @@
                                             [?email :db/ident ?email-ident]]}
                                   db)]
       (log/infof "queueing %s email for %s" email-enum eid)
-      (try+
-        (send-entity-email db email-enum eid)
-        (catch Object e
-          (.printStackTrace e)
-          (log/error e))))))
+      (pc.utils/with-report-exceptions
+        (send-entity-email db email-enum eid)))))
 
 (defn init []
   (pc.utils/safe-schedule {:minute (range 0 60 5)} #'send-missed-entity-emails-cron))

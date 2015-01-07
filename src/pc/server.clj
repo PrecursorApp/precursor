@@ -25,6 +25,7 @@
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
             [pc.models.permission :as permission-model]
+            [pc.rollbar :as rollbar]
             [pc.profile :as profile]
             [pc.less :as less]
             [pc.views.content :as content]
@@ -239,6 +240,7 @@
       (try
         (log-request req resp (time/in-millis (time/interval start stop)))
         (catch Exception e
+          (rollbar/report-exception e :request req)
           (log/error e)))
       resp)))
 
@@ -266,6 +268,7 @@
       (catch Object e
         (log/error e)
         (.printStackTrace e)
+        (rollbar/report-exception e :request req)
         {:status 500
          :body "Sorry, something completely unexpected happened!"}))))
 

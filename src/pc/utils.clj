@@ -1,6 +1,7 @@
 (ns pc.utils
   (:require clojure.pprint
             [clojure.tools.logging :as log]
+            [pc.rollbar :as rollbar]
             [schejulure.core :as schejulure]
             [slingshot.slingshot :refer (try+)]))
 
@@ -48,10 +49,10 @@
         (catch Object _#
           (let [t# (-> ~'&throw-context :throwable)]
             (.printStackTrace ^Throwable t#)
-            (println "2")
+            (println "2nd straight jacket")
             (log/errorf t# "straight-jacket"))))
        (catch Exception e#
-         (println "3")
+
          (println "*** Straight Jacket WTF ***")))
      nil))
 
@@ -78,3 +79,21 @@
                     old-job (get jobs job-name)]
                 (when old-job (.cancel old-job false))
                 (assoc jobs job-name new-job)))))))
+
+(defn safe-throw-hook
+  "Safe slingshot throw-hook implementation that excludes :environment to
+  prevent secure information such as oauth tokens being leaked via rollbars"
+  [context]
+  (throw (slingshot.support/get-throwable (dissoc context :environment))))
+
+(defmacro with-report-exceptions
+  "Catches exceptions and reports to log and rollbar, doesn't rethrow"
+  [& body]
+  `(try+
+    (binding [slingshot.support/*throw-hook* safe-throw-hook]
+      ~@body)
+    (catch Object _#
+      (let [t# (-> ~'&throw-context :throwable)]
+        (rollbar/report-exception t#)
+        (.printStackTrace t#)
+        (log/error t#)))))

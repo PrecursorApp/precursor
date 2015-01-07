@@ -12,6 +12,7 @@
             [pc.http.sente :as sente]
             [pc.models.chat :as chat-model]
             [pc.profile :as profile]
+            [pc.utils :as utils]
             [slingshot.slingshot :refer (try+)])
   (:import java.util.UUID))
 
@@ -168,11 +169,8 @@
                                  (:transaction.source @annotations))))
         (log/infof "Queueing email for %s" (:e datom))
         (future
-          (try+
-            (email/send-entity-email (:db-after transaction) (schema/get-ident (:v datom)) (:e datom))
-            (catch Object e
-              (.printStackTrace e)
-              (log/error e))))))))
+          (utils/with-report-exceptions
+            (email/send-entity-email (:db-after transaction) (schema/get-ident (:v datom)) (:e datom))))))))
 
 (defn handle-transaction [transaction]
   (def myt transaction)
@@ -185,9 +183,6 @@
     (async/tap (async/mult pcd/tx-report-ch) tap)
     (async/go-loop []
                    (when-let [transaction (async/<! tap)]
-                     (try
-                       (handle-transaction transaction)
-                       (catch Exception e
-                         (.printStackTrace e)
-                         (log/error e)))
+                     (utils/with-report-exceptions
+                       (handle-transaction transaction))
                      (recur)))))
