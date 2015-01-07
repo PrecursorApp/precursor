@@ -42,10 +42,7 @@
            ~@body)
          (catch Object e#
            (log/error e# "1st straight jacket")
-           ;; need rollbar integration
-           ;; (rollbar/rollbar :exception (-> ~'&throw-context :throwable)
-           ;;                    :data {:cmd (str (quote ~body))})
-           ))
+           (rollbar/report-exception e#)))
         (catch Object _#
           (let [t# (-> ~'&throw-context :throwable)]
             (.printStackTrace ^Throwable t#)
