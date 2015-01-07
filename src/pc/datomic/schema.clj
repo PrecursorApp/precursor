@@ -340,7 +340,13 @@
 
    (enum :email/access-grant-created)
    (enum :email/access-request-created)
-   (enum :email/fake)])
+   (enum :email/fake)
+
+   (attribute :flags
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Annotate an entity with feature flags")
+   (enum :flags/private-docs)])
 
 (defonce schema-ents (atom nil))
 

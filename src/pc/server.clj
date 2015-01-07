@@ -120,7 +120,8 @@
                                 (when-let [cust (-> req :auth :cust)]
                                   {:cust {:email (:cust/email cust)
                                           :uuid (:cust/uuid cust)
-                                          :name (:cust/name cust)}})))
+                                          :name (:cust/name cust)
+                                          :flags (:flags cust)}})))
             (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
               (redirect (str "/document/" (:db/id redirect-doc)))
               ;; TODO: this should be a 404...
