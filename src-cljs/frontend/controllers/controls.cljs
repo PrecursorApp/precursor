@@ -1059,8 +1059,11 @@
 
 (defmethod post-control-event! :document-privacy-changed
   [browser-state message {:keys [doc-id setting]} previous-state current-state]
+  ;; privacy is on the write blacklist until we have a better way to do attribute-level permissions
   (d/transact! (:db current-state)
-               [{:db/id doc-id :document/privacy setting}]))
+               [{:db/id doc-id :document/privacy setting}])
+  (sente/send-msg (:sente current-state) [:frontend/change-privacy {:document/id doc-id
+                                                                    :setting setting}]))
 
 
 (defmethod post-control-event! :permission-requested

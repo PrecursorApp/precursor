@@ -60,7 +60,6 @@
     :session/uuid
     :document/id ;; TODO: for layers use layer/document
     :document/name
-    :document/privacy
     :chat/body
     :chat/color
     :cust/uuid

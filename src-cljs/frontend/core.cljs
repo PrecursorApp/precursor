@@ -111,7 +111,9 @@
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
-        cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
+        cust (-> (aget js/window "Precursor" "cust")
+               (js->clj :keywordize-keys true)
+               (update-in [:flags] #(set (map keyword %))))]
     (atom (-> (assoc initial-state
                 ;; id for the browser, used to filter transactions
                 ;; TODO: rename client-uuid to something else

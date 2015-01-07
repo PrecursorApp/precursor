@@ -319,6 +319,20 @@
 
       (notify-invite "Please sign up to send an invite."))))
 
+(defmethod ws-handler :frontend/change-privacy [{:keys [client-uuid ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document/id) req :owner)
+  (let [doc-id (-> ?data :document/id)
+        cust (-> req :ring-req :auth :cust)
+        _ (assert (contains? (:flags cust) :flags/private-docs))
+        ;; letting datomic's schema do validation for us, might be a bad idea?
+        setting (-> ?data :setting)
+        annotations {:document/id doc-id
+                     :cust/uuid (:cust/uuid cust)
+                     :transaction/broadcast true}
+        txid (d/tempid :db.part/tx)]
+    (d/transact (pcd/conn) [(assoc annotations :db/id txid)
+                            [:db/add doc-id :document/privacy setting]])))
+
 (defmethod ws-handler :frontend/send-permission-grant [{:keys [client-uuid ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)]

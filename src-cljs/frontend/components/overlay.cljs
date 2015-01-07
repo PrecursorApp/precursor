@@ -119,7 +119,8 @@
                             :role "button"}
               (common/icon :users)
               [:span "Request Access"]])
-           (if (auth/admin? @db doc {:cust/uuid (get-in app [:cust :uuid])})
+           (if (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
+                    (auth/admin? @db doc {:cust/uuid (get-in app [:cust :uuid])}))
              [:a.menu-item {:on-click #(cast! :manage-permissions-opened)
                             :role "button"}
               (common/icon :users)
