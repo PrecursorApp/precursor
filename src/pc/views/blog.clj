@@ -17,9 +17,12 @@
       (swap! requires conj ns))))
 
 (defn post-fn [slug]
-  (maybe-require slug)
-  (ns-resolve (post-ns slug)
-              (symbol slug)))
+  (try
+    (maybe-require slug)
+    (ns-resolve (post-ns slug)
+                (symbol slug))
+    (catch Exception e
+      nil)))
 
 (defn post-url [slug]
   (str "/blog/" slug))
@@ -27,14 +30,15 @@
 (def slugs
   "Sorted array of slugs, assumes the post content can be found in the
    function returned by post-fn"
-  [;"instrumenting-om-components"
-   "product-hunt-wake-up-call"
-   "interactive-layers"
-   ;"lets-replace-pen-and-paper"
+  ["interactive-layers"
+   ;; "product-hunt-wake-up-call"
+   ;; "instrumenting-om-components"
+   ;; "lets-replace-pen-and-paper"
    ])
 
 (defn post-exists? [slug]
-  (not= -1 (.indexOf slugs slug)))
+  (not= -1 (.indexOf slugs slug))
+  (post-fn slug))
 
 (def logomark
   [:i {:class "icon-logomark"}
