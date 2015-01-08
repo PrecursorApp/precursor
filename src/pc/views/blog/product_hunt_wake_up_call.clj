@@ -12,9 +12,9 @@
      [:p "On November 15 around 8am, I woke up to nearly 100 notifications on my phone.
          In my mostly-asleep state I assumed all the noises were just my alarm.
          When I finally got up and slid my phone open, I was shocked by what I found."]
-     [:p "The previous night, my friend Daniel and I shared our weekend project on with Hacker News.
-         Knowing that the project was still very young, we were interested in suggestions of what features to add next.
-         We received some feedback but nothing substantial."]
+     [:p "The previous night, my friend Daniel and I shared our weekend project on Hacker News.
+         The project was still very young so we were interested in suggestions of what features to add next.
+         Our post slid off of \"New\" quickly though; it bombed to say the least."]
      [:p "Later that night, a designer from Paris named Julie found our project and submitted it to Product Hunt.
          It quickly rose to #1 and attracted a slew of European traffic.
          Luckily, Daniel had previously set up alerts for us when someone signed up or tried chatting with us in the app.
