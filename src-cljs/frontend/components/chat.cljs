@@ -185,11 +185,11 @@
             can-edit? (not (empty? (:cust app)))]
         (html
          [:div.app-chat {:class (concat
-                                    (when-not chat-opened? ["closed"])
-                                    (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))}
+                                 (when-not chat-opened? ["closed"])
+                                 (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))}
           [:button.chat-switcher {:on-click #(cast! :chat-mobile-toggled)
-                                   ;; :class (if chat-mobile-open? "chat-mobile" "people-mobile")
-                                   }
+                                  ;; :class (if chat-mobile-open? "chat-mobile" "people-mobile")
+                                  }
            [:span.chat-switcher-option {:class (when-not chat-mobile-open? "toggled")} "People"]
            [:span.chat-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
           [:section.chat-people
@@ -205,10 +205,12 @@
                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))
 
               (if editing-name?
-                [:form {:on-submit #(do (cast! :self-updated {:name new-name})
+                [:form {:on-submit #(do (when-not (str/blank? new-name)
+                                          (cast! :self-updated {:name new-name}))
                                         (om/set-state! owner :editing-name? false)
                                         false)
-                        :on-blur #(do (cast! :self-updated {:name new-name})
+                        :on-blur #(do (when-not (str/blank? new-name)
+                                        (cast! :self-updated {:name new-name}))
                                       (om/set-state! owner :editing-name? false)
                                       false)
                         :on-key-down #(when (= "Escape" (.-key %))
