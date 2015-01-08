@@ -1,7 +1,6 @@
 (ns frontend.core
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [frontend.async :refer [put!]]
-            [weasel.repl :as ws-repl]
             [clojure.string :as string]
             [datascript :as d]
             [dommy.core :as dommy]
@@ -17,6 +16,7 @@
             [frontend.components.key-queue :as keyq]
             [frontend.datascript :as ds]
             [frontend.db :as db]
+            [frontend.dev :as dev]
             [frontend.routes :as routes]
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
@@ -111,7 +111,9 @@
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
-        cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
+        cust (-> (aget js/window "Precursor" "cust")
+               (js->clj :keywordize-keys true)
+               (utils/update-when-in [:flags] #(set (map keyword %))))]
     (atom (-> (assoc initial-state
                 ;; id for the browser, used to filter transactions
                 ;; TODO: rename client-uuid to something else
@@ -200,15 +202,15 @@
 
 (defn install-om [state container comms cast! handlers]
   (om/root
-     app/app
-     state
-     {:target container
-      :shared {:comms                 comms
-               :db                    (:db @state)
-               :cast!                 cast!
-               :timer-atom            (setup-timer-atom)
-               :_app-state-do-not-use state
-               :handlers              handlers}}))
+   app/app
+   state
+   {:target container
+    :shared {:comms                 comms
+             :db                    (:db @state)
+             :cast!                 cast!
+             :timer-atom            (setup-timer-atom)
+             :_app-state-do-not-use state
+             :handlers              handlers}}))
 
 (defn find-top-level-node []
   (sel1 :body))
@@ -239,7 +241,12 @@
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
         handle-close!            #(do (cast! :application-shutdown [@histories])
-                                      nil)]
+                                      nil)
+        om-setup                 #(install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down
+                                                                           :handle-mouse-up    handle-canvas-mouse-up
+                                                                           :handle-mouse-move! handle-mouse-move!
+                                                                           :handle-key-down    handle-key-down
+                                                                           :handle-key-up      handle-key-up})]
 
     (swap! state assoc :undo-state undo-state)
 
@@ -260,11 +267,11 @@
 
 
     (routes/define-routes! state)
-    (install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down
-                                             :handle-mouse-up    handle-canvas-mouse-up
-                                             :handle-mouse-move! handle-mouse-move!
-                                             :handle-key-down    handle-key-down
-                                             :handle-key-up      handle-key-up})
+    (om-setup)
+
+
+    (when (and (env/development?) (= js/window.location.protocol "http:"))
+      (swallow-errors (dev/setup-figwheel {:js-callback om-setup})))
 
     (async/tap (:controls-mult comms) controls-tap)
     (async/tap (:nav-mult comms) nav-tap)
@@ -281,13 +288,6 @@
             ;; Capture the current history for playback in the absence
             ;; of a server to store it
             (async/timeout 10000) (do (print "TODO: print out history: ")))))))
-
-(defn setup-browser-repl []
-  ;; this is harmless if it fails
-  (ws-repl/connect "ws://localhost:9001" :verbose true)
-  ;; the repl tries to take over *out*, workaround for
-  ;; https://github.com/cemerick/austin/issues/49
-  (js/setInterval #(enable-console-print!) 1000))
 
 (defn fetch-entity-ids [api-ch eid-count]
   (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
@@ -319,24 +319,9 @@
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
       (sec/dispatch! (str "/" (.getToken history-imp))))
     (when (and (env/development?) (= js/window.location.protocol "http:"))
-      (swallow-errors (setup-browser-repl)))))
+      (swallow-errors (dev/setup-browser-repl)))))
 
 (defn ^:export inspect-state []
   (clj->js @debug-state))
 
-#_(defn reinstall-om! []
-  (install-om debug-state (find-app-container (find-top-level-node)) (:comms @debug-state)))
-
-(defn refresh-css! []
-  (let [is-app-css? #(re-matches #"/assets/css/app.*?\.css(?:\.less)?" (dommy/attr % :href))
-        old-link (->> (sel [:head :link])
-                      (filter is-app-css?)
-                      first)]
-        (dommy/append! (sel1 :head) [:link {:rel "stylesheet" :href "/assets/css/app.css"}])
-        (dommy/remove! old-link)))
-
-#_(defn update-ui! []
-  (reinstall-om!)
-  (refresh-css!))
-
-(setup!)
+(defonce startup (setup!))

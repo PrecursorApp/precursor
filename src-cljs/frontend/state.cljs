@@ -34,7 +34,7 @@
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
-   :document/id     17592186046465
+   :document/id     nil
    :subscribers     {}
    :inputs          nil})
 
@@ -116,3 +116,12 @@
 (def overlay-shortcuts-opened-path [:overlay-shortcuts-opened])
 
 (def overlays-path [:overlays])
+
+(def invite-email-path [:invite-email])
+(def permission-grant-email-path [:permission-grant-email])
+
+(defn invite-responses-path [doc-id]
+  [:doc-settings doc-id :invite-responses])
+
+(defn document-access-path [doc-id]
+  [:doc-settings (str doc-id) :access])

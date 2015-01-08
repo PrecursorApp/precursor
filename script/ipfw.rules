@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# Should be copied to /etc/ipfw.sh
+# More instruction in the FreeBSD handbook:
+#   https://www.freebsd.org/doc/handbook/firewalls-ipfw.html
+
+# Flush out the list before we begin.
+ipfw -q -f flush
+
+# Set rules command prefix
+cmd="ipfw -q add"
+pif="vtnet0"     # interface name of NIC attached to Internet
+
+# TODO: needs a whitelist, but blacklist will work for now
+$cmd 00003 deny all from any to any 4334 via vtnet0
+$cmd 00004 deny all from any to any 4335 via vtnet0
+$cmd 00005 deny all from any to any 4336 via vtnet0
+$cmd 00006 deny all from any to any 6005 via vtnet0
+$cmd 00007 deny all from any to any 8080 via vtnet0
+$cmd 00008 deny all from any to any 8089 via vtnet0
+$cmd 00009 allow all from any to any via vtnet0
+
+# No restrictions on Loopback Interface
+$cmd 00010 allow all from any to any via lo0

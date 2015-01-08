@@ -20,7 +20,7 @@
                  [log4j/apache-log4j-extras "1.1"]
                  [org.slf4j/slf4j-api "1.6.2"]
                  [org.slf4j/slf4j-log4j12 "1.6.2"]
-                 [cider/cider-nrepl "0.7.0-SNAPSHOT"]
+                 [cider/cider-nrepl "0.8.1"]
                  [clj-http "1.0.0"]
                  [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop]]
 
@@ -28,6 +28,9 @@
                  [ring/ring-anti-forgery "1.0.0"]
                  [http-kit "2.1.18"]
                  [com.taoensso/sente "1.2.0"]
+                 [clj-stacktrace "0.2.8"]
+
+                 [schejulure "1.0.1"]
 
                  [org.clojars.pallix/batik "1.7.0"]
                  [com.cemerick/pomegranate "0.3.0"]
@@ -54,11 +57,17 @@
                  [hiccups "0.3.0"]
 
                  [weasel "0.4.2"] ;; repl
+                 [figwheel "0.1.7-SNAPSHOT"] ;; hate using snapshots :/
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
 
+  :figwheel {:http-server-root "public"
+             :server-port 3448
+             :css-dirs ["resources/public/css"]}
+
   :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
-            [com.cemerick/austin "0.1.4"]]
+            [com.cemerick/austin "0.1.4"]
+            [lein-figwheel "0.1.7-SNAPSHOT"]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]
@@ -73,9 +82,12 @@
              "-Xss1m"
              "-Xmx1024m"
              "-XX:+CMSClassUnloadingEnabled"
-             "-Djava.library.path=target/native/macosx/x86_64:target/native/linux/x86_64:target/native/linux/x86"
-             "-Djna.library.path=target/native/macosx/x86_64:target/native/linux/x86_64:target/native/linux/x86"
              "-Dfile.encoding=UTF-8"]
+
+
+  :repl-options {:init-ns pc.repl}
+
+  :clean-targets ^{:protect false} [:target-path "resources/public/cljs/"]
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src-cljs"

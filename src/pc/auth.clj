@@ -1,11 +1,13 @@
 (ns pc.auth
   (:require [cheshire.core :as json]
             [clojure.tools.logging :as log]
+            [crypto.equality :as crypto]
             [datomic.api :as d]
             [org.httpkit.client :as http]
             [pc.analytics :as analytics]
             [pc.auth.google :as google-auth]
             [pc.models.cust :as cust]
+            [pc.models.permission :as permission-model]
             [pc.datomic :as pcd]
             [pc.profile :as profile]
             [pc.utils :as utils])
@@ -13,15 +15,12 @@
 
 ;; TODO: move this elsewhere
 (defn ping-chat-with-new-user [email]
-  (try
+  (utils/with-report-exceptions
     (let [db (pcd/default-db)
           message (str "New user (#" (cust/cust-count db) "): " email)]
       (http/post "https://hooks.slack.com/services/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"
                  ;; Note: counting this way is racy!
-                 {:form-params {"payload" (json/encode {:text message})}}))
-    (catch Exception e
-      (.printStacktrace e)
-      (log/error e))))
+                 {:form-params {"payload" (json/encode {:text message})}}))))
 
 (defn update-user-from-sub [cust]
   (let [sub (:google-account/sub cust)
@@ -68,3 +67,40 @@
                  :where [[?t :cust/email ?e]
                          [?t :cust/uuid ?u]]}
                db prcrsr-bot-email)))
+
+(defn cust-permission [db doc cust]
+  (when cust
+    (cond (and (:document/creator doc)
+               (crypto/eq? (str (:cust/uuid cust))
+                           (str (:document/creator doc))))
+          :owner
+
+          (contains? (permission-model/permits db doc cust) :permission.permits/admin)
+          :admin
+
+          :else nil)))
+
+(defn access-grant-permission [db doc access-grant]
+  (when (and access-grant
+             (:db/id doc)
+             (= (:db/id doc)
+                (:access-grant/document access-grant)))
+    :read))
+
+(defn document-permission [db doc auth]
+  (or (cust-permission db doc (:cust auth))
+      (access-grant-permission db doc (:access-grant auth))))
+
+(def scope-heirarchy [:read :admin :owner])
+
+(defn contains-scope? [heirarchy granted-scope requested-scope]
+  (contains? (set (take (inc (.indexOf heirarchy granted-scope)) heirarchy))
+             requested-scope))
+
+;; TODO: public and have permission are different things
+(defn has-document-permission? [db doc auth scope]
+  (or (= :document.privacy/public (:document/privacy doc))
+      (contains-scope? scope-heirarchy (document-permission db doc auth) scope)))
+
+(defn logged-in? [ring-req]
+  (seq (get-in ring-req [:auth :cust])))

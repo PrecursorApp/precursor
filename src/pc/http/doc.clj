@@ -15,19 +15,19 @@
   {"interactive-demo" (read-doc "interactive-demo")})
 
 (defn duplicate-doc [document-name cust]
-  (let [conn (pcd/conn)
-        [new-doc-id] (pcd/generate-eids conn 1)]
+  (let [doc (doc-model/create-public-doc! (merge {:document/name (str "Copy of " document-name)}
+                                                 (when (:cust/uuid cust) {:document/creator (:cust/uuid cust)})))]
     (if-let [layers (get docs document-name)]
-      @(d/transact conn (conj (map #(assoc %
-                                      :db/id (d/tempid :db.part/user)
-                                      :document/id new-doc-id)
-                                   layers)
-                              (merge {:db/id (d/tempid :db.part/tx)
-                                      :document/id new-doc-id}
-                                     (when (:cust/uuid cust)
-                                       {:cust/uuid (:cust/uuid cust)}))))
+      @(d/transact (pcd/conn) (conj (map #(assoc %
+                                            :db/id (d/tempid :db.part/user)
+                                            :document/id (:db/id doc))
+                                         layers)
+                                    (merge {:db/id (d/tempid :db.part/tx)
+                                            :document/id (:db/id doc)}
+                                           (when (:cust/uuid cust)
+                                             {:cust/uuid (:cust/uuid cust)}))))
       (log/infof "requested duplicate doc for non-existent doc %s" document-name))
-    new-doc-id))
+    (:db/id doc)))
 
 (defn save-doc
   "Helper function to save an existing doc, still needs to be committed and added to docs

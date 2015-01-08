@@ -471,22 +471,27 @@
   [browser-state message [x y {:keys [button ctrl?]}] previous-state current-state]
   (let [cast! (fn [msg & [payload]]
                 (put! (get-in current-state [:comms :controls]) [msg payload]))]
+    ;; If you click while writing text, you probably wanted to place it there
+    ;; You also want the right-click menu to open
+    (when (and (= (get-in current-state state/current-tool-path) :text)
+               (get-in current-state [:drawing :in-progress?]))
+      (cast! :text-layer-finished [x y]))
     (cond
-     (= button 2) (cast! :menu-opened)
-     (and (= button 0) ctrl?) (cast! :menu-opened)
-     ;; turning off Cmd+click for opening the menu
-     ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
-     (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
-     (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
-                                                                ;; if you click while writing text, you probably wanted to place it there
-                                                                (cast! :text-layer-finished [x y])
-                                                                (cast! :drawing-started [x y]))
-     (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
-     :else                                             nil)))
+      (= button 2) (cast! :menu-opened)
+      (and (= button 0) ctrl?) (cast! :menu-opened)
+      ;; turning off Cmd+click for opening the menu
+      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
+      (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
+      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
+
+                                                                 (cast! :text-layer-finished [x y])
+                                                                 (cast! :drawing-started [x y]))
+      (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
+      :else                                             nil)))
 
 (defn detectable-movement?
   "Checks to make sure we moved the layer from its starting position"
@@ -1005,3 +1010,75 @@
   (-> state
       (overlay/add-overlay :shortcuts)
       (assoc-in state/shortcuts-menu-learned-path true)))
+
+
+(defmethod control-event :document-permissions-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :document-permissions)))
+
+(defmethod control-event :manage-permissions-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :manage-permissions)))
+
+(defmethod control-event :invite-email-changed
+  [browser-state message {:keys [value]} state]
+  (-> state
+      (assoc-in state/invite-email-path value)))
+
+(defmethod control-event :email-invite-submitted
+  [browser-state message _ state]
+  (assoc-in state state/invite-email-path nil))
+
+(defmethod post-control-event! :email-invite-submitted
+  [browser-state message _ previous-state current-state]
+  (let [email (get-in previous-state state/invite-email-path)
+        doc-id (:document/id previous-state)]
+    (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
+                                                                   :email email
+                                                                   :invite-loc :overlay}])))
+
+(defmethod control-event :permission-grant-email-changed
+  [browser-state message {:keys [value]} state]
+  (-> state
+      (assoc-in state/permission-grant-email-path value)))
+
+(defmethod control-event :permission-grant-submitted
+  [browser-state message _ state]
+  (assoc-in state state/permission-grant-email-path nil))
+
+(defmethod post-control-event! :permission-grant-submitted
+  [browser-state message _ previous-state current-state]
+  (let [email (get-in previous-state state/permission-grant-email-path)
+        doc-id (:document/id previous-state)]
+    (sente/send-msg (:sente current-state) [:frontend/send-permission-grant {:document/id doc-id
+                                                                             :email email
+                                                                             :invite-loc :overlay}])))
+
+
+(defmethod post-control-event! :document-privacy-changed
+  [browser-state message {:keys [doc-id setting]} previous-state current-state]
+  ;; privacy is on the write blacklist until we have a better way to do attribute-level permissions
+  (d/transact! (:db current-state)
+               [{:db/id doc-id :document/privacy setting}])
+  (sente/send-msg (:sente current-state) [:frontend/change-privacy {:document/id doc-id
+                                                                    :setting setting}]))
+
+
+(defmethod post-control-event! :permission-requested
+  [browser-state message {:keys [doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/send-permission-request {:document/id doc-id
+                                                                             :invite-loc :overlay}]))
+
+(defmethod post-control-event! :access-request-granted
+  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/grant-access-request {:document/id doc-id
+                                                                          :request-id request-id
+                                                                          :invite-loc :overlay}]))
+
+(defmethod post-control-event! :access-request-denied
+  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/deny-access-request {:document/id doc-id
+                                                                         :request-id request-id
+                                                                         :invite-loc :overlay}]))

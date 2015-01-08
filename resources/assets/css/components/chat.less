@@ -138,9 +138,41 @@
   span {
     word-break: break-word;
   }
-  .message {
-    padding: 0 1em;
+}
+.chat-date {
+  color: @gray_dark;
+  margin: 0;
+  padding-left: 1rem;
+  text-indent: -.25rem; // better aligns h2 with chats
+}
+.chat-message {
+  padding: 0 .125rem 0 1rem;
+  a {
+    transition: @speed_fast @bezier_fadein;
+    &:not(:hover) {
+      color: inherit;
+      // TODO make a function for this thing (also used in blog.less)
+      box-shadow+:   0  -1px @gray_darker inset;
+      box-shadow+:   0  -2px @gray_light  inset;
+      text-shadow+:  1px 0   @gray_darker;
+      text-shadow+:  2px 0   @gray_darker;
+      text-shadow+:  3px 0   @gray_darker;
+      text-shadow+: -1px 0   @gray_darker;
+      text-shadow+: -2px 0   @gray_darker;
+      text-shadow+: -3px 0   @gray_darker;
+    }
   }
+}
+.message-head {
+  .flexy();
+}
+.message-time {
+  color: @gray_dark;
+  font-size: 0.75rem;
+  line-height: ~"@{line_height}rem";
+  text-transform: lowercase;
+  word-spacing: -.1875rem;
+  margin-left: .5rem;
 }
 .chat-button {
   .icon_stroke(@gray);

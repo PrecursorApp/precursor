@@ -4,6 +4,7 @@
             [datascript :as d]
             [frontend.async :refer [put!]]
             [frontend.db :as db]
+            [frontend.overlay :as overlay]
             [frontend.state :as state]
             [frontend.sente :as sente]
             [frontend.utils.ajax :as ajax]
@@ -77,6 +78,9 @@
         (update-in (state/doc-chat-bot-path doc-id)
                    #(or % (rand-nth ["daniel" "danny" "prcrsr"])))
         (dissoc :subscribers)
+        (#(if-let [overlay (get-in args [:query-params :overlay])]
+            (overlay/replace-overlay % (keyword overlay))
+            %))
         ;; TODO: at some point we'll only want to get rid of the layers. Maybe have multiple dbs or
         ;;       find them by doc-id? Will still need a way to clean out old docs.
         (update-in [:db] db/reset-db!))))
@@ -88,7 +92,7 @@
     (when-let [prev-doc-id (:document/id previous-state)]
       (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}]))
     (sente/subscribe-to-document sente-state doc-id)
-    (sente/fetch-subscribers sente-state doc-id)
+    ;; TODO: probably only need one listener key here, and can write a fn replace-listener
     (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
     (db/setup-listener! (:db current-state)
                         (:db-listener-key current-state)
