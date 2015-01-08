@@ -113,7 +113,7 @@
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
         cust (-> (aget js/window "Precursor" "cust")
                (js->clj :keywordize-keys true)
-               (update-in [:flags] #(set (map keyword %))))]
+               (utils/update-when-in [:flags] #(set (map keyword %))))]
     (atom (-> (assoc initial-state
                 ;; id for the browser, used to filter transactions
                 ;; TODO: rename client-uuid to something else
