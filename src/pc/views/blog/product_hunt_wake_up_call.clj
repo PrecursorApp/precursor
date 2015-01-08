@@ -100,7 +100,7 @@
       [:img {:src "/blog/product-hunt-wake-up-call/traffic-spike.png"}]]
      [:a {:data-caption-white "Here's an hourly overview of the same data.
                               We think the server crashed under the load but we're not sure since we were asleep.
-                              We've upgraded our hardware after that."}
+                              We've upgraded our hardware since then."}
       [:img {:src "/blog/product-hunt-wake-up-call/server-crash.png"}]]
      (common/tweet "benarent" "534592531917312000")
      (common/tweet "fotosdelviaje" "534070940120780801")
