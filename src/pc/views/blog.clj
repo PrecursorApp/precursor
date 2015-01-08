@@ -27,13 +27,16 @@
 (def slugs
   "Sorted array of slugs, assumes the post content can be found in the
    function returned by post-fn"
-  [;"instrumenting-om-components"
-   "interactive-layers"
-   ;"lets-replace-pen-and-paper"
+  [{:slug "interactive-layers"
+    :display-in-overview true}
+   {:slug "product-hunt-wake-up-call"
+    :display-in-overview false}
+   ;; "instrumenting-om-components"
+   ;; "lets-replace-pen-and-paper"
    ])
 
 (defn post-exists? [slug]
-  (not= -1 (.indexOf slugs slug)))
+  (not= -1 (.indexOf (map :slug slugs) slug)))
 
 (def logomark
   [:i {:class "icon-logomark"}
@@ -68,7 +71,7 @@
   [:div.blogroll
    (blog-head)
    [:article
-    (for [slug slugs
+    (for [slug (->> slugs (filter :display-in-overview) (map :slug))
           :let [{:keys [title blurb author] :as content} ((post-fn slug))]]
       [:div.blogroll-post
        [:a.blogroll-post-title {:href (post-url slug)}
@@ -82,7 +85,7 @@
      (blog-head)
      [:div.blogpost-title
       [:article
-       [:h1 (:title post)]]]
+       [:h2 (:title post)]]]
      (:body post)]))
 
 (defn render-page [slug]
