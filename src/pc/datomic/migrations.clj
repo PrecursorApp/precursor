@@ -2,7 +2,8 @@
   (:require [pc.datomic :as pcd]
             [clojure.string]
             [clojure.tools.logging :as log]
-            [datomic.api :refer [db q] :as d]))
+            [datomic.api :refer [db q] :as d]
+            [pc.models.doc :as doc-model]))
 
 (defn migration-entity
   "Finds the entity that keeps track of the migration version, there should
@@ -112,6 +113,47 @@
                       :cust/name "prcrsr"
                       :cust/uuid (d/squuid)}]))
 
+;; TODO: figure out what to do with things like /document/1
+(defn make-existing-documents-public
+  "Marks all existing documents as public"
+  [conn]
+  (let [db (db conn)
+        doc-ids (map first (d/q '{:find [?t]
+                                  :where [[?t :document/name]]}
+                                db))]
+    (dorun (map-indexed
+            (fn [i ids]
+              (log/infof "making batch %s of %s public" i (/ (count doc-ids) 1000 1.0))
+              @(d/transact conn (map (fn [id]
+                                       {:db/id id
+                                        :document/privacy :document.privacy/public})
+                                     ids)))
+            (partition-all 1000 doc-ids)))))
+
+(defn change-document-id [conn db old-id new-id]
+  (let [eids (map first (d/q '{:find [?t]
+                               :in [$ ?old-id]
+                               :where [[?t :document/id ?old-id]]}
+                             db old-id))]
+    (log/infof "migrating %s eids from %s to %s" (count eids) old-id new-id)
+    @(d/transact conn (mapv (fn [eid] {:db/id eid :document/id new-id}) eids))))
+
+(defn migrate-fake-documents
+  "Migrates documents (i.e. chats, layers, transactions) with invalid document ids to valid document ids"
+  [conn]
+  (let [db (db conn)
+        doc-ids (map first (d/q '{:find [?doc-id]
+                                  :in [$]
+                                  :where [[?t :document/id ?doc-id]
+                                          [(missing? $ ?doc-id :document/name)]]}
+                                db))]
+    (dorun
+     (map-indexed (fn [i invalid-id]
+                    (let [new-doc (doc-model/create-public-doc! {:document/invalid-id invalid-id})]
+                      (log/infof "migrating %s (%s of %s)" invalid-id i (count doc-ids))
+                      (change-document-id conn db invalid-id (:db/id new-doc))))
+                  doc-ids))))
+
 
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
@@ -120,7 +162,9 @@
    0 #'add-migrations-entity
    1 #'layer-longs->floats
    2 #'layer-child-uuid->long
-   3 #'add-prcrsr-bot))
+   3 #'add-prcrsr-bot
+   4 #'make-existing-documents-public
+   5 #'migrate-fake-documents))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"

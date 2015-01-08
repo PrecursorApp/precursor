@@ -2,17 +2,20 @@
   (:require pc.datomic
             pc.datomic.migrations
             pc.datomic.schema
+            pc.email
             pc.less
             pc.logging
             pc.nrepl
-            pc.server))
+            pc.server
+            pc.repl))
 
 (def init-fns [#'pc.logging/init
                #'pc.nrepl/init
                #'pc.less/init
                #'pc.datomic/init
-               #'pc.datomic.migrations/init
                #'pc.datomic.schema/init
+               #'pc.datomic.migrations/init
+               #'pc.email/init
                #'pc.server/init])
 
 (defn pretty-now []

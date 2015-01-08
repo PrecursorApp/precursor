@@ -2,6 +2,7 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as str]
             [frontend.async :refer [put!]]
+            [frontend.overlay :as overlay]
             [frontend.state :as state]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
@@ -59,3 +60,11 @@
   [container message args previous-state current-state]
   (when (get-in current-state state/error-message-path)
     (set! (.-scrollTop (sel1 "body")) 0)))
+
+(defmethod error :document-permission-error
+  [container message data state]
+  ;; When we have more fine-grained permissions, we'll put more info
+  ;; into the state
+  (-> state
+      (overlay/replace-overlay :document-permissions)
+      (assoc-in (state/document-access-path (:document/id state)) :none)))

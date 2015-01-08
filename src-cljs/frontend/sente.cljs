@@ -19,9 +19,7 @@
                      (remove-watch ref watch-id)))))))
 
 (defn subscribe-to-document [sente-state document-id]
-  (send-msg sente-state [:frontend/subscribe {:document-id document-id}] 10000
-            (fn [data]
-              (put! (:ch-recv sente-state) [:chsk/recv [:frontend/subscribe data]]))))
+  (send-msg sente-state [:frontend/subscribe {:document-id document-id}]))
 
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
@@ -57,27 +55,27 @@
 (defmethod handle-message :frontend/update-subscriber [app-state message data]
   (swap! app-state update-in [:subscribers (:client-uuid data)] merge (:subscriber-data data)))
 
+(defmethod handle-message :frontend/db-entities [app-state message data]
+  (when (= (:document/id data) (:document/id @app-state))
+    (d/transact! (:db @app-state)
+                 (:entities data)
+                 {:server-update true})))
+
 (defmethod handle-message :frontend/invite-response [app-state message data]
   (let [doc-id (:document/id data)
         response (:response data)]
     (swap! app-state update-in (state/invite-responses-path doc-id) conj response)))
 
-;; These are a little bit different, we're putting the message on the channel in a send-msg callback
-(defmethod handle-message :frontend/subscribe [app-state message data]
-  (let [{:keys [document layers chats client-uuid]} data]
-    ;; TODO: if this is a good idea, then make it the default
-    (put! (get-in @app-state [:comms :controls])
-          [:show-mouse-toggled {:client-uuid client-uuid
-                                :show-mouse? true}])
-    (d/transact! (:db @app-state)
-                 (concat layers chats)
-                 {:server-update true})))
+(defmethod handle-message :frontend/subscribers [app-state message {:keys [subscribers] :as data}]
+  (when (= (:document/id data) (:document/id @app-state))
+    (swap! app-state update-in [:subscribers] (fn [s]
+                                                (merge-with merge
+                                                            subscribers
+                                                            s)))))
 
-(defmethod handle-message :frontend/fetch-subscribers [app-state message {:keys [subscribers]}]
-  (swap! app-state update-in [:subscribers] (fn [s]
-                                              (merge-with merge
-                                                          subscribers
-                                                          s))))
+(defmethod handle-message :frontend/error [app-state message data]
+  (put! (get-in @app-state [:comms :errors]) [:document-permission-error data])
+  (utils/inspect data))
 
 
 (defn do-something [app-state sente-state]

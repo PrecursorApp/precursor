@@ -10,6 +10,12 @@
          {:db/cardinality :db.cardinality/one}
          opts))
 
+(defn function [ident fn & {:as opts}]
+  (merge {:db/id (d/tempid :db.part/user)
+          :db/ident ident
+          :db/fn fn}
+         opts))
+
 (defn enum [ident]
   {:db/id (d/tempid :db.part/user)
    :db/ident ident})
@@ -130,6 +136,15 @@
               :db/index true
               :db/doc "cust/uuid of the cust that created the document")
 
+   (attribute :document/privacy
+              :db.type/ref)
+   (enum :document.privacy/public)
+   (enum :document.privacy/private)
+
+   (attribute :document.collaborators
+              :db.type/uuid
+              :db/doc "cust/uuid of any users that were invited")
+
    (attribute :dummy
               :db.type/ref)
    (enum :dummy/dummy)
@@ -138,6 +153,11 @@
               :db.type/long
               :db/index true
               :db/doc "Document entity id")
+
+   (attribute :document/invalid-id
+              :db.type/long
+              :db/index true
+              :db/doc "invalid document/id that was migrated")
 
    (attribute :chat/body
               :db.type/string)
@@ -191,12 +211,164 @@
               :db.type/string)
 
    (attribute :cust/occupation
-              :db.type/string)])
+              :db.type/string)
+
+   (attribute :permission/document
+              :db.type/long
+              :db/index true
+              :db/doc "db/id of the document")
+
+   (attribute :permission/cust
+              :db.type/long
+              :db/doc "db/id of the user")
+
+   (attribute :permission/permits
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "permission granted by permission")
+
+   (enum :permission.permits/admin)
+
+
+   (function :pc.models.permission/grant-permit
+             #db/fn {:lang :clojure
+                     :params [db doc-id cust-id permit]
+                     :code (if-let [id (ffirst (d/q '{:find [?t]
+                                                      :in [$ ?doc-id ?cust-id]
+                                                      :where [[?t :permission/document ?doc-id]
+                                                              [?t :permission/cust ?cust-id]]}
+                                                    db doc-id cust-id))]
+                             [[:db/add id :permission/permits permit]]
+                             (let [temp-id (d/tempid :db.part/user)]
+                               [[:db/add temp-id :permission/document doc-id]
+                                [:db/add temp-id :permission/cust cust-id]
+                                [:db/add temp-id :permission/permits permit]]))}
+             :db/doc "Adds a permit, with composite uniqueness constraint on doc and cust")
+
+   (attribute :access-request/document
+              :db.type/long
+              :db/index true
+              :db/doc "db/id of the document")
+   (attribute :access-request/status
+              :db.type/ref)
+   ;; no granted status, b/c those are just permissions
+   (enum :access-request.status/pending)
+   (enum :access-request.status/denied)
+
+   (attribute :access-request/cust
+              :db.type/long
+              :db/doc "db/id of the user")
+
+   (function :pc.models.access-request/create-request
+             #db/fn {:lang :clojure
+                     :params [db doc-id cust-id & extra-fields]
+                     :code (when-not (ffirst (d/q '{:find [?t]
+                                                    :in [$ ?doc-id ?cust-id]
+                                                    :where [[?t :access-request/document ?doc-id]
+                                                            [?t :access-request/cust ?cust-id]]}
+                                                  db doc-id cust-id))
+                             (let [temp-id (d/tempid :db.part/user)]
+                               (concat [[:db/add temp-id :access-request/document doc-id]
+                                        [:db/add temp-id :access-request/cust cust-id]
+                                        [:db/add temp-id :access-request/status :access-request.status/pending]]
+                                       (for [[field value] extra-fields]
+                                         [:db/add temp-id field value]))))}
+             :db/doc "Adds an access request, with composite uniqueness constraint on doc and cust")
+
+   ;; used when access is granted to someone without an account
+   (attribute :access-grant/document
+              :db.type/long
+              :db/index true
+              :db/doc "db/id of the document")
+
+   (attribute :access-grant/email
+              :db.type/string
+              :db/doc "email that was granted access")
+
+   (attribute :access-grant/token
+              :db.type/string
+              :db/doc "correlates email that was granted access with the account that claims the grant")
+
+   (attribute :access-grant/expiry
+              :db.type/instant
+              :db/doc "time that the access-grant expires")
+
+   (attribute :access-grant/granter
+              :db.type/long ;; TODO: make this a ref!
+              :db/doc "time that the access-grant expires")
+
+   (function :pc.models.access-grant/create-grant
+             #db/fn {:lang :clojure
+                     :params [db doc-id granter-id email token expiry & extra-fields]
+                     :code (when-not (ffirst (d/q '{:find [?t]
+                                                    :in [$ ?doc-id ?email ?now]
+                                                    :where [[?t :access-grant/document ?doc-id]
+                                                            [?t :access-grant/email ?email]
+                                                            [?t :access-grant/expiry ?expiry]
+                                                            [(> ?expiry ?now)]]}
+                                                  db doc-id email (java.util.Date.)))
+                             (let [temp-id (d/tempid :db.part/user)]
+                               (concat [[:db/add temp-id :access-grant/document doc-id]
+                                        [:db/add temp-id :access-grant/email email]
+                                        [:db/add temp-id :access-grant/token token]
+                                        [:db/add temp-id :access-grant/expiry expiry]
+                                        [:db/add temp-id :access-grant/granter granter-id]]
+                                       (for [[field value] extra-fields]
+                                         [:db/add temp-id field value]))))}
+             :db/doc "Adds a grant, with composite uniqueness constraint on doc and email, accounting for expiration")
+
+   (attribute :transaction/broadcast
+              :db.type/boolean
+              :db/doc "Used to annotate transaction and let frontend know if it should broadcast")
+   (attribute :transaction/source
+              :db.type/ref
+              :db/doc "Annotates transaction")
+   (enum :transaction.source/unmark-sent-email)
+   (enum :transaction.source/mark-sent-email)
+
+   ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
+   (attribute :needs-email
+              :db.type/ref
+              :db/index true
+              :db/cardinality :db.cardinality/many
+              :db/doc "Annotate an entity to say that it needs an email")
+
+   (attribute :sent-email
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Annotate an entity to say that a given email has been sent")
+
+   (enum :email/access-grant-created)
+   (enum :email/access-request-created)
+   (enum :email/fake)
+
+   (attribute :flags
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Annotate an entity with feature flags")
+   (enum :flags/private-docs)])
+
+(defonce schema-ents (atom nil))
+
+(defn enums []
+  (set (map :db/ident (filter #(= :db.type/ref (:db/valueType %))
+                              @schema-ents))))
+
+(defn get-ident [a]
+  (:db/ident (first (filter #(= a (:db/id %)) @schema-ents))))
+
+(defn get-schema-ents [db]
+  (pcd/touch-all '{:find [?t]
+                   :where [[?t :db/ident ?ident]]}
+                 db))
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))
   ([conn]
-     @(d/transact conn schema)))
+   (let [res @(d/transact conn schema)
+         ents (get-schema-ents (:db-after res))]
+     (reset! schema-ents ents)
+     res)))
 
 (defn init []
   (ensure-schema))

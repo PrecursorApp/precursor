@@ -28,6 +28,9 @@
                  [ring/ring-anti-forgery "1.0.0"]
                  [http-kit "2.1.18"]
                  [com.taoensso/sente "1.2.0"]
+                 [clj-stacktrace "0.2.8"]
+
+                 [schejulure "1.0.1"]
 
                  [org.clojars.pallix/batik "1.7.0"]
                  [com.cemerick/pomegranate "0.3.0"]
@@ -80,6 +83,9 @@
              "-Xmx1024m"
              "-XX:+CMSClassUnloadingEnabled"
              "-Dfile.encoding=UTF-8"]
+
+
+  :repl-options {:init-ns pc.repl}
 
   :clean-targets ^{:protect false} [:target-path "resources/public/cljs/"]
 

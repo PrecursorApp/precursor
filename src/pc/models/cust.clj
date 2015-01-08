@@ -20,11 +20,22 @@
                    :where [[?e :google-account/sub]]}
                  db))
 
+(defn find-by-id [db id]
+  (let [candidate (d/entity db id)]
+    ;; faster than using a datalog query
+    (when (:cust/email candidate)
+      candidate)))
+
 ;; TODO: maybe these should return an entity instead of touching?
 (defn find-by-google-sub [db google-sub]
   (pcd/touch-one '{:find [?e] :in [$ ?sub]
                    :where [[?e :google-account/sub ?sub]]}
                  db google-sub))
+
+(defn find-by-email [db email]
+  (pcd/touch-one '{:find [?e] :in [$ ?email]
+                   :where [[?e :cust/email ?email]]}
+                 db email))
 
 (defn find-by-http-session-key [db http-session-key]
   (pcd/touch-one '{:find [?e] :in [$ ?key]

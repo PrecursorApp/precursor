@@ -14,8 +14,9 @@
     (put! nav-ch [:error {:status 404}])))
 
 (defn define-user-routes! [nav-ch]
-  (defroute document #"/document/(\d+)" [doc-id]
-    (put! nav-ch [:document {:document/id (long doc-id)}])))
+  (defroute document #"/document/(\d+)" [doc-id {:keys [query-params]}]
+    (put! nav-ch [:document {:document/id (long doc-id)
+                             :query-params query-params}])))
 
 (defn define-routes! [state]
   (let [nav-ch (get-in @state [:comms :nav])]
