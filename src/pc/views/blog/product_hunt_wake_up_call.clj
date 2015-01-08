@@ -3,7 +3,7 @@
             [pc.views.blog.common :as common]))
 
 (defn product-hunt-wake-up-call []
-  {:title "Product Hunt was a wake up call, literally."
+  {:title "Product Hunt was a wake up call."
    :blurb "What we found most interesting about the Product Hunt traffic was not its volume, but its quality of feedback..."
    :author "Danny"
    :body
@@ -13,13 +13,13 @@
          In my mostly-asleep state I assumed all the noises were just my alarm.
          When I finally got up and slid my phone open, I was shocked by what I found."]
      [:p "The previous night, my friend Daniel and I shared our weekend project on Hacker News.
-         The project was still very young so we were interested in suggestions of what features to add next.
-         Our post slid off of \"New\" quickly though; it bombed to say the least."]
-     [:p "Later that night, a designer from Paris named Julie found our project and submitted it to Product Hunt.
+         It was new and we were interested in feedback on what to add next.
+         Unfortunately the post didn't receive much attention and we went to bed disheartened, without any real feedback."]
+     [:p "Julie, a designer from Paris, found our project later that night and submitted it to Product Hunt.
          It quickly rose to #1 and attracted a slew of European traffic.
-         Luckily, Daniel had previously set up alerts for us when someone signed up or tried chatting with us in the app.
+         Daniel set up Slack alerts for us when someone signed up or tried chatting with us in the app.
          The notifications I woke up to were those alerts.
-         People were trying the app but we weren't around to interact with them.
+         People were trying the app but we weren't around to interact with them!
          As soon as I realized this I instantly jumped out of bed, grabbed my computer, and started chatting with all of our new users.
          I called to wake Daniel up as well."]]
 
@@ -30,11 +30,13 @@
     [:article
      [:h3 "The product is called Precursor."]
      [:p "Precursor is no-nonsense prototyping tool designed around team workflows.
-         To start prototyping, simply visit the root url, right-click to select a tool, and then draw.
+         To start prototyping, go to "
+         [:a {:href "/"} "prcrsr.com"]
+         ", select a tool with right-click, and then draw.
          That's it--there's no software to install or sign up required.
          If you want to show your prototypes to a teammate, just send them a link; you'll instantly be able to collaborate in real-time.
          There's no jumping through hoops just to share your idea."]
-     [:p "Daniel and I both work with a lot of remote developers and we find it difficult to share quick, rough sketches with teammates.
+     [:p "Daniel and I have both worked with a lot of remote developers and we find it difficult to share rough ideas quickly with teammates.
          We researched many prototyping tools but we couldn't find one that met our expectations in terms of simple, efficient collaboration.
          Everything was overly complex and made impromptu teamwork a chore.
          Rather than settling, we decided to scratch our own itch."]
@@ -59,13 +61,10 @@
      [:h3 "Product Hunt loved Precursor, and we loved the feedback."]
      [:p "By mid-day Precursor had been shared on several other sites, but Product Hunt was still responsible for the majority of our traffic.
          What we found most interesting about the Product Hunt traffic was not its volume, but its quality of feedback.
-         Over and over again, the Product Hunt community offered us insightful and actionable feedback.
-         A lot of it even considered constraints that the project actually faced."]
+         Over and over again, the Product Hunt community offered us insightful and actionable feedback."]
      [:p "Users understood that Precursor just got started, and that it was a minimum viable product to a more well-defined prototyping solution.
-         I was astounded every time someone acknowledged this explicitly.
          Rather than write us off because of missing features, they told us which features they'd like to see next.
-         Many even shared their use-case; telling us how they'll use it, how it helps now, and how it could help more in the future.
-         I've never witnessed such appropriate feedback, and it came from complete strangers."]
+         Many even shared their use-case; telling us how they'll use it, how it helps now, and how it could help more in the future."]
      [:p "The Product Hunt feedback was too valuable to waste so we began handling support in real-time.
          If a question was asked in-app, we arrived within seconds to respond and collect feedback.
          We even started responding to feature requests by building the requested feature, rather than just a promise to do it later.
@@ -79,13 +78,13 @@
          We're excited to continue building and refining Precusor until it becomes an essential tool."]
      [:p "Our most requested feature is a way to share ideas privately, so we're making private docs our top priority.
          In fact, we're nearly done with an early build of private docs.
-         If your team is interested in early access to this say "
+         If your team is interested in early access, say "
          [:a {:href "mailto:hi@prcrsr.com?Subject=I%20am%20interested%20in%20private%20docs"} "hi@prcrsr.com"]]]
 
     [:article
      [:h3 "All of this happened in one weekend."]
      [:ul
-      [:li "69,306 layers created"]
+      [:li "69,306 shapes created"]
       [:li "17,876 pageviews"]
       [:li "12,437 unique docs"]
       [:li "9,547 total users"]
