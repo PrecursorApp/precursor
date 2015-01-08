@@ -17,3 +17,4 @@ pom.xml.asc
 /.repl/*
 /resources/public/css/app.css
 /production.sh
+/datomic-free*/
