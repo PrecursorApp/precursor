@@ -11,7 +11,7 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.utils]
-            [slingshot.slingshot :refer (try+)]))
+            [slingshot.slingshot :refer (throw+ try+)]))
 
 (defn emails-to-send [db eid]
   (set (map first
