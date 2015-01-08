@@ -13,8 +13,8 @@
                #'pc.nrepl/init
                #'pc.less/init
                #'pc.datomic/init
-               #'pc.datomic.migrations/init
                #'pc.datomic.schema/init
+               #'pc.datomic.migrations/init
                #'pc.email/init
                #'pc.server/init])
 
