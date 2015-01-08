@@ -9,7 +9,7 @@
   (is (not (str/blank? thing))))
 
 (deftest all-posts-have-all-fields
-  (doseq [slug blog/slugs]
+  (doseq [slug (map :slug blog/slugs)]
     (testing slug
       (let [{:keys [title blurb author body] :as content} ((blog/post-fn slug))]
         (check-non-empty-string title)
