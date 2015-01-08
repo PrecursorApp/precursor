@@ -70,18 +70,20 @@
          If a question was asked in-app, we arrived within seconds to respond and collect feedback.
          We even started responding to feature requests by building the requested feature, rather than just a promise to do it later.
          Once users told us exactly what they wanted it was easy to prioritize and build things quickly."]
-     (common/tweet "andymerskin" "534549512354672641")
-     [:p "Precursor started as just a weekend project for us, but Product Hunt has shown us that there's significant interest in the problem we're trying to solve.
-         I'm happy to say that we're no longer just adding features on the weekends; we'll be spending a lot more time on it in the coming weeks and plan to work on it full-time."]
-     [:p "The next big features we have planned are private docs and team features.
-         Many people have asked for the ability to share ideas with their team privately, so we've made this our top priority.
-         Hopefully the Product Hunt community will have us back again at some point to share a new offering."]]
+     (common/tweet "andymerskin" "534549512354672641")]
 
     [:article
-     [:h3 "And here's how we did."]
-     [:p "Precursor has only been live in its current form for a few months.
-         Luckily, we set up analytics just before we were featured on Product Hunt.
-         Here's a few stats that we found interesting:"]
+     [:h3 "We'll keep growing."]
+     [:p "Precursor started as a weekend project but Product Hunt showed us that there's interest in a solution like this.
+         Even now, many users are still requesting new features that make collaborating with their team even easier.
+         We're excited to continue building and refining Precusor until it becomes an essential tool."]
+     [:p "Our most requested feature is a way to share ideas privately, so we're making private docs our top priority.
+         In fact, we're nearly done with an early build of private docs.
+         If your team is interested in early access to this say "
+         [:a {:href "mailto:hi@prcrsr.com?Subject=I%20am%20interested%20in%20private%20docs"} "hi@prcrsr.com"]]]
+
+    [:article
+     [:h3 "All of this happened in one weekend."]
      [:ul
       [:li "69,306 layers created"]
       [:li "17,876 pageviews"]
