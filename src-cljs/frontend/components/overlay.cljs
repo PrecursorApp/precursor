@@ -316,16 +316,16 @@
                                                           (set (filter (partial past-center? owner) ["1" "2" "3" "4" "5"])))}
            [:div.app-overlay-background]
             [:div.app-overlay-home
+             [:nav.home-nav
+              [:div.content
+               [:a.nav-item {:role "button"} "Precursor"]
+               [:a.nav-item {:role "button"} "Pricing"]
+               [:a.nav-item {:role "button"} "Blog"]
+               [:a.nav-item.google-login {:role "button"}
+                [:span.google-login-icon
+                 (common/icon :google)]
+                [:span.google-login-body "Sign in"]]]]
              [:div.jumbotron
-              [:div.home-nav
-               [:div.content
-                [:a.nav-item {:role "button"} "Precursor"]
-                [:a.nav-item {:role "button"} "Pricing"]
-                [:a.nav-item {:role "button"} "Blog"]
-                [:a.nav-item.google-login {:role "button"}
-                 [:span.google-login-icon
-                  (common/icon :google)]
-                 [:span.google-login-body "Sign in"]]]]
               [:div.content
                [:h1 "Collaborate on every idea with your entire team."]
                [:h4 "Productive prototyping without all the nonsense."]
@@ -350,7 +350,7 @@
               [:article.featurette.featurette-how {:ref "3"
                                                    :class (when (contains? past-center-featurettes "3") "active")}
                [:div.featurette-story
-                [:h2 "Interact with your ideas before building them."]
+                [:h2 "Interact with your idea before developing it."]
                 [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                     Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                     Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
@@ -370,7 +370,37 @@
                 [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                     Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                     Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-               [:div.featurette-media screen]]]]
+               [:div.featurette-media screen]]]
+             [:div.jumbotron
+              [:div.content
+               [:h1 "Collaborate on every idea with your entire team."]
+               [:h4 "Productive prototyping without all the nonsense."]
+               ; [:div.jumbotron-buttons
+               ;  [:a.google-login {:role "button"}
+               ;   [:span.google-login-icon
+               ;    (common/icon :google)]
+               ;   [:span.google-login-body "Sign in with Google"]]
+               ;  [:button "Try it first"]]
+
+               [:div.jumbotron-buttons
+                [:a.google-login {:role "button"}
+                 [:span.google-login-icon
+                  (common/icon :google)]
+                 [:span.google-login-body "Sign in with Google"]]
+                [:a {:role "button"} "Or Try It First"]]
+
+               ; [:a.google-login {:role "button"}
+               ;  [:span.google-login-icon
+               ;   (common/icon :google)]
+               ;  [:span.google-login-body "Sign in with Google"]]
+               ; [:a {:role "button"} "Or try it first"]
+
+               ]]
+             [:nav.home-foot
+              [:div.content
+               [:a.nav-item {:role "button"} "Precursor"]
+               [:a.nav-item {:role "button"} "Pricing"]
+               [:a.nav-item {:role "button"} "Blog"]]]]
             [:div.app-overlay-menu {:on-click #(.stopPropagation %)
                                     :style {:display "none"}}
              [:div.menu-header

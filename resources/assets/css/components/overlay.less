@@ -345,36 +345,41 @@ img.loading-image {
   height: 100%;
   background: #333;
   overflow-y: auto;
+  nav {
+    .flexy();
+    height: @tile;
+    .content {
+      .flex(1 1 100%);
+      .flexy(center);
+    }
+    .nav-item {
+      color: @gray;
+      &:first-of-type {
+        margin-right: auto;
+      }
+      &:not(:first-of-type) {
+        margin-left: @tile / 2;
+      }
+    }
+  }
   .jumbotron {
     color: @gray_light;
   }
 }
 .home-nav {
-  .flexy();
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: @tile;
   border-bottom: 1px solid fade(@black, 13);
-  .content {
-    .flex(1 1 100%);
-    .flexy(center);
-  }
-  .nav-item {
-    color: @gray;
-    &:first-of-type {
-      margin-right: auto;
-    }
-    &:not(:first-of-type) {
-      margin-left: @tile / 2;
-    }
-  }
+}
+.home-foot {
+  border-top: 1px solid fade(@black, 13);
 }
 .google-login {
   @color: #3A7AF3;
   @shadow: darken(desaturate(@color, 34), 13);
-  .flexy();
+  .flexy(center);
   .user-select(none);
   background-color: @color;
   border-bottom: 1px solid @shadow;
@@ -403,6 +408,21 @@ img.loading-image {
     box-shadow: 0 2px @shadow inset;
   }
 }
+.jumbotron-buttons {
+  .flexy(flex-start, flex-end, column);
+  a {
+    &:not(:hover) {
+      color: @white;
+    }
+  }
+  .google-login {
+    height: @tile;
+    margin: @tile 0 1rem;
+    span {
+      padding: 1.5em;
+    }
+  }
+}
 .home-nav-items {
   max-width: @tile_content;
   height: @tile;
@@ -413,6 +433,9 @@ img.loading-image {
   .flexy(center);
   min-height: 90vh;
   padding-top: @tile;
+  &:last-of-type {
+    min-height: 100vh;
+  }
   button {
     .flexy(center, center);
     height: @tile;
@@ -436,7 +459,6 @@ img.loading-image {
   padding-right: 1rem;
 }
 .home-body {
-  // .flex(0 0 2500px);
   background: @overlay_background;
 }
 .featurette {
