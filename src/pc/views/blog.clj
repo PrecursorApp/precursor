@@ -27,10 +27,10 @@
 (def slugs
   "Sorted array of slugs, assumes the post content can be found in the
    function returned by post-fn"
-  [{:slug "interactive-layers"
+  [{:slug "product-hunt-wake-up-call"
     :display-in-overview true}
-   {:slug "product-hunt-wake-up-call"
-    :display-in-overview false}
+   {:slug "interactive-layers"
+    :display-in-overview true}
    ;; "instrumenting-om-components"
    ;; "lets-replace-pen-and-paper"
    ])
