@@ -40,9 +40,9 @@
          We researched many prototyping tools but we couldn't find one that met our expectations in terms of simple, efficient collaboration.
          Everything was overly complex and made impromptu teamwork a chore.
          Rather than settling, we decided to scratch our own itch."]
-     [:p "Our initial goal was to simply help ourselves share ideas as efficiently and effectively as possible, and then make it insanely easy to share those ideas.
-         We know the pain of losing a good idea; the worst part for me is knowing that it didn't have to happen.
-         I wouldn't have lost that idea if had I sketched it out sooner or if I drew it on something that couldn't get misplaced."]]
+     [:p "Our goal was to express our ideas fast while simultaneously making them dead simple to share.
+         It's frustrating to lose a good idea over something that's easily preventable.
+         We never want to lose another idea because we held it for too long or misplaced a sketch of it."]]
 
     [:figure
      [:a.img {:href "/" :data-caption-black "It's faster than even we expected."}
