@@ -59,7 +59,7 @@
 
     [:article
      [:h3 "Product Hunt loved Precursor, and we loved the feedback."]
-     [:p "By mid-day Precursor had been shared on several other sites, but Product Hunt was still responsible for the majority of our traffic.
+     [:p "By mid-day Precursor was being shared on several other sites, but Product Hunt was still responsible for the majority of our traffic.
          What we found most interesting about the Product Hunt traffic was not its volume, but its quality of feedback.
          Over and over again, the Product Hunt community offered us insightful and actionable feedback."]
      [:p "Users understood that Precursor just got started, and that it was a minimum viable product to a more well-defined prototyping solution.
