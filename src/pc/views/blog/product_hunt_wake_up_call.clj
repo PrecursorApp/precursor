@@ -37,7 +37,7 @@
          If you want to show your prototypes to a teammate, just send them a link; you'll instantly be able to collaborate in real-time.
          There's no jumping through hoops just to share your idea."]
      [:p "Daniel and I have both worked with a lot of remote developers and we find it difficult to share rough ideas quickly with teammates.
-         We researched many prototyping tools but we couldn't find one that met our expectations in terms of simple, efficient collaboration.
+         We researched many prototyping tools but we couldn't find any that met our expectations in terms of simplicity and efficient collaboration.
          Everything was overly complex and made impromptu teamwork a chore.
          Rather than settling, we decided to scratch our own itch."]
      [:p "Our goal was to express our ideas fast while simultaneously making them dead simple to share.
