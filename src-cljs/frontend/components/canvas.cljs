@@ -78,7 +78,13 @@
   (reify
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner [:cast!])]
+      (let [cast! (om/get-shared owner [:cast!])
+            ;; easier than calcing width, b/c we can just multiply by 2
+            handle-offset (max 1
+                               (min 4
+                                    (int (/ (min (js/Math.abs (- (:layer/start-x layer) (:layer/end-x layer)))
+                                                 (js/Math.abs (- (:layer/start-y layer) (:layer/end-y layer))))
+                                            4))))]
         (apply dom/g #js {:className "edit-handles"}
                (for [[x y] (layers/endpoints layer)]
                  (dom/rect #js {:className (str "edit-handle "
@@ -88,10 +94,10 @@
                                                 (if (= y (max (:layer/start-y layer) (:layer/end-y layer)))
                                                   "bottom "
                                                   "top "))
-                                :x (- x 4)
-                                :y (- y 4)
-                                :width 8
-                                :height 8
+                                :x (- x handle-offset)
+                                :y (- y handle-offset)
+                                :width (* 2 handle-offset)
+                                :height (* 2 handle-offset)
                                 :onMouseDown #(do (.stopPropagation %)
                                                   (cast! :drawing-edited {:layer layer
                                                                           :x x
