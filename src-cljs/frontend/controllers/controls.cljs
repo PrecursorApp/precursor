@@ -334,7 +334,7 @@
                         {:layer/path (svg/points->path points)})
                       (when (or (= :circle (get-in state state/current-tool-path))
                                 ;; TODO: hack to preserve border-radius for re-editing circles
-                                (layers/circle layer))
+                                (layers/circle? layer))
                         {:layer/rx (Math/abs (- (:layer/start-x layer)
                                                 (:layer/current-x layer)))
                          :layer/ry (Math/abs (- (:layer/start-y layer)
