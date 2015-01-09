@@ -111,8 +111,7 @@
                                    :output-to "resources/public/cljs/test/frontend-dev.js"
                                    :output-dir "resources/public/cljs/test"
                                    :optimizations :advanced
-                                   :externs ["datascript/externs.js"
-                                             "test-js/externs.js"
+                                   :externs ["test-js/externs.js"
                                              "src-cljs/js/react-externs.js"
                                              "src-cljs/js/pusher-externs.js"
                                              "src-cljs/js/ci-externs.js"
@@ -126,8 +125,7 @@
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
                                    :optimizations :advanced
-                                   :externs ["datascript/externs.js"
-                                             "react/externs/react.js"
+                                   :externs ["react/externs/react.js"
                                              "src-cljs/js/react-externs.js"
                                              "src-cljs/js/pusher-externs.js"
                                              "src-cljs/js/ci-externs.js"
