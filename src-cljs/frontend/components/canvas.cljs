@@ -80,7 +80,7 @@
     (render [_]
       (let [cast! (om/get-shared owner [:cast!])]
         (apply dom/g #js {:className "edit-handles"}
-               (for [[x y] (utils/inspect (layers/endpoints layer))]
+               (for [[x y] (layers/endpoints layer)]
                  (dom/rect #js {:className (str "edit-handle "
                                                 (if (= x (max (:layer/start-x layer) (:layer/end-x layer)))
                                                   "right "

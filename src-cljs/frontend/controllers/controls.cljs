@@ -193,12 +193,12 @@
   (-> state
     (assoc-in [:drawing :in-progress?] true)
     (assoc-in [:drawing :layers] [(-> layer
-                                    (update-in [:layer/start-x] #(utils/inspect (if (= % x)
-                                                                                  (:layer/end-x layer)
-                                                                                  %)))
-                                    (update-in [:layer/start-y] #(utils/inspect (if (= % y)
-                                                                                  (:layer/end-y layer)
-                                                                                  %)))
+                                    (update-in [:layer/start-x] #(if (= % x)
+                                                                   (:layer/end-x layer)
+                                                                   %))
+                                    (update-in [:layer/start-y] #(if (= % y)
+                                                                   (:layer/end-y layer)
+                                                                   %))
                                     (dissoc :layer/end-x :layer/end-y)
                                     (assoc :layer/current-x x
                                            :layer/current-y y))])
