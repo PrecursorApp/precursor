@@ -130,6 +130,11 @@
                           :role "button"}
             (common/icon :command)
             [:span "Shortcuts"]]
+           [:a.menu-item {:href "/blog"
+                          :target "_blank"
+                          :role "button"}
+            (common/icon :command)
+            [:span "Blog"]]
            (om/build auth-link app)]])))))
 
 (defn invite [app owner]
