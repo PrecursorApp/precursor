@@ -111,6 +111,17 @@
                                 (when (= :select tool) "selectable-group ")
                                 (when invalid? "invalid "))
                 :key (str (:db/id layer) live?)}
+
+           (when (and show-handles? (layers/circle? layer))
+             (let [layer (layers/normalized-abs-coords layer)]
+               (dom/rect #js {:className "handle-outline"
+                              :x (:layer/start-x layer)
+                              :y (:layer/start-y layer)
+                              :width (- (:layer/end-x layer) (:layer/start-x layer))
+                              :height (- (:layer/end-y layer) (:layer/start-y layer))
+                              :fill "none"
+                              :strokeWidth 1})))
+
            (svg-element selected-eids
                         (assoc layer
                                :onMouseDown
@@ -165,10 +176,7 @@
                                :key (str "selectable-" (:db/id layer))))
            (when-not (= :layer.type/text (:layer/type layer))
              (svg-element selected-eids (assoc layer
-                                               :className (str "layer-outline "
-                                                               (when (and show-handles?
-                                                                          (layers/circle? layer))
-                                                                 " show-handles"))
+                                               :className (str "layer-outline ")
                                                :key (:db/id layer))))
            ;; TODO: figure out what to do with this title
            ;; (when invalid?
