@@ -186,7 +186,26 @@
                 (update-mouse x y)
                 (assoc-in [:selected-eids] #{entity-id})
                 (update-in [:entity-ids] disj entity-id))]
-            r)))
+      r)))
+
+(defmethod control-event :drawing-edited
+  [browser-state message {:keys [layer x y]} state]
+  (-> state
+    (assoc-in [:drawing :in-progress?] true)
+    (assoc-in [:drawing :layers] [(-> layer
+                                    (update-in [:layer/start-x] #(utils/inspect (if (= % x)
+                                                                                  (:layer/end-x layer)
+                                                                                  %)))
+                                    (update-in [:layer/start-y] #(utils/inspect (if (= % y)
+                                                                                  (:layer/end-y layer)
+                                                                                  %)))
+                                    (dissoc :layer/end-x :layer/end-y)
+                                    (assoc :layer/current-x x
+                                           :layer/current-y y))])
+    (assoc-in [:mouse :down] true)
+    ;; TODO: do we need to update mouse?
+    ;; (update-mouse x y)
+    (assoc-in [:selected-eids] #{(:db/id layer)})))
 
 ;; These are used to globally increment names for layer targets and ids
 ;; There is definitely a better to do this, but not sure what it is at the moment.
@@ -313,7 +332,9 @@
                       layer
                       (when (= :pen (get-in state state/current-tool-path))
                         {:layer/path (svg/points->path points)})
-                      (when (= :circle (get-in state state/current-tool-path))
+                      (when (or (= :circle (get-in state state/current-tool-path))
+                                ;; TODO: hack to preserve border-radius for re-editing circles
+                                (layers/circle layer))
                         {:layer/rx (Math/abs (- (:layer/start-x layer)
                                                 (:layer/current-x layer)))
                          :layer/ry (Math/abs (- (:layer/start-y layer)
