@@ -408,3 +408,23 @@
     transition-duration+: @speed;
   }
 }
+.edit-handles {
+  .edit-handle {
+    fill: @color_select;
+    &.bottom.right {
+      cursor: nwse-resize;
+    }
+    &.top.left {
+      cursor: nwse-resize;
+    }
+    &.bottom.left {
+      cursor: nesw-resize;
+    }
+    &.top.right {
+      cursor: nesw-resize;
+    }
+  }
+}
+.show-handles {
+  outline: 1px dotted @color_select;
+}
