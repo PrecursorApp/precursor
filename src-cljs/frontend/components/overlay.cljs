@@ -133,7 +133,7 @@
            [:a.menu-item {:href "/blog"
                           :target "_blank"
                           :role "button"}
-            (common/icon :command)
+            (common/icon :blog)
             [:span "Blog"]]
            (om/build auth-link app)]])))))
 
