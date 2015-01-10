@@ -85,6 +85,15 @@
   [browser-state message _ state]
   (update-in state [:camera :x] dec))
 
+(defn cancel-drawing [state]
+  (-> state
+    (assoc :drawing nil)
+    (assoc-in [:mouse :down] false)))
+
+(defmethod control-event :cancel-drawing
+  [browser-state message _ state]
+  (cancel-drawing state))
+
 (defmulti handle-keyboard-shortcut (fn [state shortcut-name] shortcut-name))
 
 (defmethod handle-keyboard-shortcut :default
@@ -130,7 +139,8 @@
   [state shortcut-name]
   (-> state
     overlay/clear-overlays
-    close-menu))
+    close-menu
+    cancel-drawing))
 
 (defmethod handle-keyboard-shortcut :reset-canvas-position
   [state shortcut-name]

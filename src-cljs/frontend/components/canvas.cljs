@@ -335,9 +335,15 @@
                          :onSubmit (fn [e]
                                      (cast! :text-layer-finished)
                                      false)
-                         :onKeyDown #(when (= "Enter" (.-key %))
-                                       (cast! :text-layer-finished)
-                                       false)}
+                         :onKeyDown #(cond (= "Enter" (.-key %))
+                                           (do (cast! :text-layer-finished)
+                                               false)
+
+                                           (= "Escape" (.-key %))
+                                           (do (cast! :cancel-drawing)
+                                               false)
+
+                                           :else nil)}
                     ;; TODO: experiment with a contentEditable div
                     (dom/input #js {:type "text"
                                     :placeholder "Type something..."
