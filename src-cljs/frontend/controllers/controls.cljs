@@ -123,9 +123,14 @@
   [state shortcut-name]
   (overlay/replace-overlay state :shortcuts))
 
+(defn close-menu [state]
+  (assoc-in state [:menu :open?] false))
+
 (defmethod handle-keyboard-shortcut :escape-interaction
   [state shortcut-name]
-  (overlay/clear-overlays state))
+  (-> state
+    overlay/clear-overlays
+    close-menu))
 
 (defmethod handle-keyboard-shortcut :reset-canvas-position
   [state shortcut-name]
@@ -663,7 +668,7 @@
 (defmethod control-event :menu-closed
   [browser-state message _ state]
   (-> state
-      (assoc-in [:menu :open?] false)))
+    close-menu))
 
 (defmethod control-event :newdoc-button-clicked
   [browser-state message _ state]
