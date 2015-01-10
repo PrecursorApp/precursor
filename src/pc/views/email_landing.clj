@@ -10,7 +10,8 @@
    "interactive-demo"  "/email/interactive-demo.gif"
    "collaboration-demo"  "/email/collaboration-demo.gif"
    "this-email"        "/email/this-email.gif"
-   "multi-duplication" "/email/multi-duplication.gif"})
+   "multi-duplication" "/email/multi-duplication.gif"
+   "reddit-timelapse" "/email/reddit-timelapse.gif"})
 
 (defn get-gif-url [template-name]
   (get template->gif-url template-name "/email/simple-tools.gif"))
