@@ -2,10 +2,10 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as str]
             [frontend.async :refer [put!]]
+            [frontend.utils :as utils :include-macros true]
             [goog.events :as events]
-            [frontend.utils :as utils :include-macros true])
-  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
-                   [secretary.core :refer [defroute]]))
+            [secretary.core :as secretary :include-macros true :refer-macros [defroute]])
+  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
 
 (defn define-spec-routes! [nav-ch]
   (defroute trailing-slash #"(.+)/$" [path]
