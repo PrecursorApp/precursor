@@ -39,8 +39,8 @@
 
                  [fs "0.11.1"]
 
-                 [ankha "0.1.2"]
-                 [org.clojure/clojurescript "0.0-2371"]
+                 [ankha "0.1.4"]
+                 [org.clojure/clojurescript "0.0-2665"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [cljs-ajax "0.2.6"]
 
@@ -48,15 +48,16 @@
                  ;; but not Om yet)
                  ;;[om "0.6.4"]
 
-                 [com.facebook/react "0.11.2"] ;; include for externs
-                 [sablono "0.2.16"]
+                 [com.facebook/react "0.12.2.1"] ;; include for externs
+                 ;; TODO: revert back to sablono once new release is cut
+                 [dwwoelfel/sablono "0.3.0-9aace24eaa377c4199f7335bc7dfd3218e391ebf"]
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 
                  [weasel "0.4.2"] ;; repl
-                 [figwheel "0.1.7-SNAPSHOT"] ;; hate using snapshots :/
+                 [figwheel "0.2.1-SNAPSHOT"] ;; hate using snapshots :/
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
 
@@ -64,9 +65,9 @@
              :server-port 3448
              :css-dirs ["resources/public/css"]}
 
-  :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
-            [com.cemerick/austin "0.1.4"]
-            [lein-figwheel "0.1.7-SNAPSHOT"]]
+  :plugins [[lein-cljsbuild "1.0.4"]
+            [com.cemerick/austin "0.1.6"]
+            [lein-figwheel "0.2.1-SNAPSHOT"]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]
@@ -120,7 +121,7 @@
                        {:id "production"
                         :source-paths ["src-cljs" "yaks/om/src"]
                         :compiler {:pretty-print false
-                                   :preamble ["public/js/vendor/react-0.11.2.min.js"]
+                                   :preamble ["public/js/vendor/react-0.12.2.min.js"]
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
                                    :optimizations :advanced
