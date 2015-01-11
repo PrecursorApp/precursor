@@ -101,7 +101,8 @@
                                 :onMouseDown #(do (.stopPropagation %)
                                                   (cast! :drawing-edited {:layer layer
                                                                           :x x
-                                                                          :y y}))})))))))
+                                                                          :y y}))
+                                :key (str "edit-handle-" x "-" y)})))))))
 
 (defn layer-group [layer {:keys [tool selected-eids cast! db live?]}]
   (let [invalid? (and (:layer/ui-target layer)
@@ -130,6 +131,10 @@
 
            (svg-element selected-eids
                         (assoc layer
+                               :className (str "selectable-layer layer-handle "
+                                               (when (and (= :layer.type/text (:layer/type layer))
+                                                          (= :text tool)) "editable "))
+                               :key (str "selectable-" (:db/id layer))
                                :onMouseDown
                                #(do
                                   (.stopPropagation %)
@@ -175,11 +180,7 @@
                                       (cast! :layer-selected {:layer layer
                                                               :x (first (cameras/screen-event-coords %))
                                                               :y (second (cameras/screen-event-coords %))
-                                                              :append? (.-shiftKey %)}))))
-                               :className (str "selectable-layer layer-handle "
-                                               (when (and (= :layer.type/text (:layer/type layer))
-                                                          (= :text tool)) "editable "))
-                               :key (str "selectable-" (:db/id layer))))
+                                                              :append? (.-shiftKey %)}))))))
            (when-not (= :layer.type/text (:layer/type layer))
              (svg-element selected-eids (assoc layer
                                                :className (str "layer-outline ")
@@ -371,7 +372,8 @@
         (apply dom/g nil (mapv (fn [l] (svg-element #{} (merge l {:strokeDasharray "5,5"
                                                                   :layer/fill "none"
                                                                   :style {:stroke (:subscriber-color l)}
-                                                                  :fillOpacity "0.5"}
+                                                                  :fillOpacity "0.5"
+                                                                  :key (str (:db/id l) "-subscriber-layer")}
                                                                (when (= :layer.type/text (:layer/type l))
                                                                  {:layer/stroke "none"
                                                                   :style {:fill (:subscriber-color l)}}))))
@@ -596,5 +598,5 @@
                                                      {:layer/type :layer.type/rect
                                                       :className "layer-in-progress selection"
                                                       :strokeDasharray "2,3"}))]
-                                    (svg-element #{} sel)))
+                                    (svg-element #{} (assoc sel :key (str (:db/id sel) "-in-progress")))))
                                 sels)))))))))

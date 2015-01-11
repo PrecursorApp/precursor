@@ -42,7 +42,7 @@
                         (linkify (:chat/body chat))
                         (:chat/body chat))
             short-time (datetime/short-time (js/Date.parse (:server/timestamp chat)))]
-        (html [:div.chat-message {:key (:db/id chat)}
+        (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                [:div.message-head
                 (when show-sender?
                   (list

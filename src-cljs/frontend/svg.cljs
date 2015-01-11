@@ -23,7 +23,6 @@
                         (:layer/start-y layer)
                         (* padding 2))
       :fill          (:layer/fill layer "none")
-      :key           (:layer/id layer)
       :rx            (:layer/rx layer)
       :ry            (:layer/ry layer)})))
 
