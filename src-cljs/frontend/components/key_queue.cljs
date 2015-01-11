@@ -11,11 +11,11 @@
   key combinations need to be pressed within one second, or the loop
   forgets about them."
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer put! close!]]
-            [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
             [clojure.string :refer [join split]]
-            [dommy.core :as dommy]
-            [frontend.utils :as utils :include-macros true])
+            [frontend.utils :as utils :include-macros true]
+            [goog.events]
+            [om.core :as om :include-macros true]
+            [om.dom :as dom :include-macros true])
   (:require-macros [cljs.core.async.macros :as async]))
 
 (def code->key
@@ -66,8 +66,8 @@
   describing the key that was pressed. Will return lone modifier keys, like shift or ctrl"
   [event]
   (let [mods (event-modifiers event)
-        which (.-which event)
-        key (or (code->key which) (.toLowerCase (js/String.fromCharCode which)))]
+        code (.-keyCode event)
+        key (or (code->key code) (.toLowerCase (js/String.fromCharCode code)))]
     (if (and key (not (empty? key)))
       (join "+" (concat mods (when (not (some #{key} mods))
                                [key]))))))
@@ -76,10 +76,9 @@
   (utils/mlog "key event" e) e)
 
 (defn start-key-queue [key-ch]
-  (dommy/listen! js/document :keydown
-                 #(when-let [k (event->key %)]
-                    ;;(log-keystroke k)
-                    (async/put! key-ch k))))
+  (goog.events/listen js/document "keydown"
+                      #(when-let [k (event->key %)]
+                         (async/put! key-ch k))))
 
 (def global-key-ch
   (->> 1000 async/sliding-buffer async/chan))

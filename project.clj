@@ -49,7 +49,6 @@
                  ;;[om "0.6.4"]
 
                  [com.facebook/react "0.11.2"] ;; include for externs
-                 [prismatic/dommy "0.1.2"]
                  [sablono "0.2.16"]
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]

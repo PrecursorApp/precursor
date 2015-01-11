@@ -1,12 +1,10 @@
 (ns frontend.history
   (:require [clojure.string :as string]
-            [dommy.core :as dommy]
             [frontend.utils :as utils :include-macros true]
             [goog.events :as events]
             [goog.history.Html5History :as html5-history]
             [goog.window :as window]
             [secretary.core :as sec])
-  (:require-macros [dommy.macros :refer [sel sel1]])
   (:import [goog.history Html5History]
            [goog.events EventType Event BrowserEvent]
            [goog History]))
@@ -81,9 +79,9 @@
       (and (.-platformModifierKey event)
            (.isButton event goog.events.BrowserEvent.MouseButton.LEFT))))
 
-(defn setup-link-dispatcher! [history-imp top-level-node]
+(defn setup-link-dispatcher! [history-imp]
   (let [dom-helper (goog.dom.DomHelper.)]
-    (events/listen top-level-node "click"
+    (events/listen js/document "click"
                    #(let [-target (.. % -target)
                           target (if (= (.-tagName -target) "A")
                                    -target
@@ -106,7 +104,7 @@
                           (do (utils/mlog "navigating to" location)
                               (.setToken history-imp new-token))))))))
 
-(defn new-history-imp [top-level-node]
+(defn new-history-imp []
   ;; need a history element, or goog will overwrite the entire dom
   (let [dom-helper (goog.dom.DomHelper.)
         node (.createDom dom-helper "input" #js {:class "history hide"})]
@@ -118,4 +116,4 @@
     (set-current-token!) ; Stop Safari from double-dispatching
     (disable-erroneous-popstate!) ; Stop Safari from double-dispatching
     (.setEnabled true) ; This will fire a navigate event with the current token
-    (setup-link-dispatcher! top-level-node)))
+    (setup-link-dispatcher!)))

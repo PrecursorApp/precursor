@@ -11,11 +11,11 @@
             [frontend.state :as state]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
+            [goog.dom]
             [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [frontend.utils :refer [html]]
-                   [dommy.macros :refer [sel sel1]])
+  (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
 ;; layers are always denominated in absolute coordinates
@@ -216,7 +216,7 @@
                                                    :else
                                                    (cast! :canvas-aligned-to-layer-center
                                                           {:ui-id (:layer/ui-target layer)
-                                                           :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
+                                                           :canvas-size (let [size (goog.style/getSize (goog.dom/getElement "svg-canvas"))]
                                                                           {:width (.-width size)
                                                                            :height (.-height size)})})))
 
