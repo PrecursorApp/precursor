@@ -335,14 +335,14 @@
 
                          :onSubmit (fn [e]
                                      (cast! :text-layer-finished)
-                                     false)
+                                     (utils/stop-event e))
                          :onKeyDown #(cond (= "Enter" (.-key %))
                                            (do (cast! :text-layer-finished)
-                                               false)
+                                               (utils/stop-event %))
 
                                            (= "Escape" (.-key %))
                                            (do (cast! :cancel-drawing)
-                                               false)
+                                               (utils/stop-event %))
 
                                            :else nil)}
                     ;; TODO: experiment with a contentEditable div
@@ -416,10 +416,10 @@
                          :onWheel #(.stopPropagation %)
                          :onSubmit (fn [e]
                                      (cast! :layer-properties-submitted)
-                                     false)
+                                     (utils/stop-event e))
                          :onKeyDown #(when (= "Enter" (.-key %))
                                        (cast! :layer-properties-submitted)
-                                       false)}
+                                       (utils/stop-event %))}
                     (dom/input #js {:type "text"
                                     :ref "id-input"
                                     :className "layer-property-id"
@@ -451,7 +451,7 @@
                       (when (seq targets)
                         (dom/button #js {:className "layer-property-button"
                                          :onClick #(do (om/update-state! owner :input-expanded not)
-                                                       false)}
+                                                       (utils/stop-event %))}
                                     "...")))
                     (apply dom/div #js {:className (if (om/get-state owner :input-expanded)
                                                      "property-dropdown-targets expanded"
@@ -512,16 +512,15 @@
                                          (js/clearInterval (om/get-state owner :touch-timer))
                                          ((:handle-mouse-move! handlers) (aget touches "0")))))
                       :onMouseDown (fn [event]
+                                     ((:handle-mouse-down handlers) event)
                                      ;;(.preventDefault event)
                                      (.stopPropagation event)
-                                     ((:handle-mouse-down handlers) event))
+                                     )
                       :onMouseUp (fn [event]
+                                   ((:handle-mouse-up handlers) event)
                                    ;(.preventDefault event)
-                                   (.stopPropagation event)
-                                   ((:handle-mouse-up handlers) event))
+                                   (.stopPropagation event))
                       :onWheel (fn [event]
-                                 (.preventDefault event)
-                                 (.stopPropagation event)
                                  (let [dx     (- (aget event "deltaX"))
                                        dy     (aget event "deltaY")]
                                    (om/transact! payload (fn [state]
@@ -529,7 +528,8 @@
                                                                  mode   (cameras/camera-mouse-mode state)]
                                                              (if (= mode :zoom)
                                                                (cameras/set-zoom state (partial + (* -0.002 dy)))
-                                                               (cameras/move-camera state dx (- dy))))))))}
+                                                               (cameras/move-camera state dx (- dy)))))))
+                                 (utils/stop-event event))}
                  (dom/defs nil
                    (dom/pattern #js {:id           "small-grid"
                                      :width        (str (cameras/grid-width camera))
