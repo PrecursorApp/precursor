@@ -58,7 +58,7 @@
 (defmethod svg-element :layer.type/path
   [selected-eids layer]
   (dom/path
-   (clj->js (merge layer
+   (clj->js (merge (dissoc layer :points)
                    (svg/layer->svg-path layer)
                    {:className (str (:className layer)
                                     " shape-layer "
