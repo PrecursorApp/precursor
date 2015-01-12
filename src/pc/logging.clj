@@ -27,4 +27,5 @@
     (.removeAllAppenders root-logger)
     (.addAppender root-logger log-appender)
     (.addAppender root-logger (ConsoleAppender. layout))
-    (.setLevel root-logger Level/INFO)))
+    (.setLevel root-logger Level/INFO)
+    (.setLevel (Logger/getLogger "com.amazonaws") Level/WARN)))

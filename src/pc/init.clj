@@ -1,5 +1,6 @@
 (ns pc.init
-  (:require pc.datomic
+  (:require pc.assets
+            pc.datomic
             pc.datomic.migrations
             pc.datomic.schema
             pc.email
@@ -15,6 +16,7 @@
                #'pc.datomic/init
                #'pc.datomic.schema/init
                #'pc.datomic.migrations/init
+               #'pc.assets/init
                #'pc.email/init
                #'pc.server/init])
 
