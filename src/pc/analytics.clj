@@ -1,5 +1,6 @@
 (ns pc.analytics
   (:require [clj-time.coerce]
+            [pc.mailchimp :as mailchimp]
             [pc.mixpanel :as mixpanel]
             [pc.models.cust :as cust-model]
             [pc.datomic :as pcd]))
@@ -22,7 +23,8 @@
                                                                  clj-time.coerce/from-date
                                                                  mixpanel/->mixpanel-date)
                                                :verified_email (:cust/verified-email cust)
-                                               :occupation (:cust/occupation cust)}})))
+                                               :occupation (:cust/occupation cust)}})
+    (mailchimp/maybe-subscribe cust)))
 
 (defn track-login [cust]
   (mixpanel/track "Login" (:cust/uuid cust)))
