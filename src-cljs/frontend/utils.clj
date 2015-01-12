@@ -31,10 +31,12 @@
   `(try
      (try ~@action
           (catch js/Error e#
+            (js/Rollbar.error e#)
             (merror e#)
             (when (:rethrow-errors? initial-query-map)
               (throw e#))))
      (catch :default e2#
+       (js/Rollbar.error e2#)
        (merror e2#)
        (when (:rethrow-errors? initial-query-map)
          (throw e2#)))))
