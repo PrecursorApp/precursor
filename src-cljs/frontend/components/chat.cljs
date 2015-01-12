@@ -208,18 +208,22 @@
                 [:form {:on-submit #(do (when-not (str/blank? new-name)
                                           (cast! :self-updated {:name new-name}))
                                         (om/set-state! owner :editing-name? false)
-                                        false)
+                                        (om/set-state! owner :new-name "")
+                                        (utils/stop-event %))
                         :on-blur #(do (when-not (str/blank? new-name)
                                         (cast! :self-updated {:name new-name}))
                                       (om/set-state! owner :editing-name? false)
-                                      false)
+                                      (om/set-state! owner :new-name "")
+                                      (utils/stop-event %))
                         :on-key-down #(when (= "Escape" (.-key %))
                                         (om/set-state! owner :editing-name? false)
                                         (om/set-state! owner :new-name "")
-                                        false)}
+                                        (utils/stop-event %))}
                  [:input {:type "text"
                           :ref "name-edit"
                           :tab-index 1
+                          ;; TODO: figure out why we need value here
+                          :value new-name
                           :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
                 [:span (or (get-in app [:cust :name]) "You")])])
            (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
