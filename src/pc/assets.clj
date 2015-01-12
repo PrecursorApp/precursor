@@ -16,6 +16,26 @@
            org.apache.commons.codec.binary.Hex
            org.apache.commons.io.IOUtils))
 
+;; TODO: upload and assetify all of the sourcemap sources
+;;       equivalent to a source-code dump, so give it some thought first
+
+;; How the asset-manifest works:
+;; https://prcrsr.com/document/17592193885179
+;; manifest-pointer is edn, points at the current manifest in the cdn
+;; manifest is edn, maps local files to their keys in s3
+;; keys are assetified by the md5 of their content (frontend.js -> frontend-:md5.js)
+;; Cloudfront urls match s3 keys (e.g. frontend-:md5.js -> https://dt...cloudfront.net/frontend-:md5.js)
+
+#_(t/def-alias ManifestPointer (HMap :mandatory {:s3-bucket String
+                                                 :s3-key String}))
+
+#_(t/def-alias Asset (HMap :mandatory {:s3-bucket String
+                                       :s3-key String}))
+
+#_(t/def-alias Manifest (HMap :mandatory {:s3-bucket String
+                                          :s3-key String
+                                          :assets (IPersistentMap (t/Map String Asset))}))
+
 (def aws-access-key "AKIAJ6CLYJYRMXJGMMEQ")
 (def aws-secret-key "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")
 
@@ -48,6 +68,7 @@
       (cdn-url manifest-value))
     path))
 
+;; TODO: make the caller set credentials
 (defn fetch-specific-manifest [bucket key]
   (amazonica.core/with-credential [aws-access-key aws-secret-key]
     (-> (s3/get-object :bucket-name bucket :key key)
@@ -120,6 +141,7 @@
                                          {:name source :content (clojure.java.io/file (fs/join (fs/dirname source-map) source))})))})))
 
 (defn upload-manifest [sha1]
+  ;; TODO: this is dumb, we shouldn't write to the file
   (update-sourcemap-url assets-directory "/cljs/production/frontend.js")
   (amazonica.core/with-credential [aws-access-key aws-secret-key]
     (let [manifest-key (str "releases/" sha1)
