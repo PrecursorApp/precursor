@@ -125,8 +125,7 @@
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
                                    :optimizations :advanced
-                                   :externs ["react/externs/react.js"
-                                             "src-cljs/js/react-externs.js"
+                                   :externs ["src-cljs/js/react-externs.js"
                                              "src-cljs/js/pusher-externs.js"
                                              "src-cljs/js/ci-externs.js"
                                              "src-cljs/js/analytics-externs.js"
