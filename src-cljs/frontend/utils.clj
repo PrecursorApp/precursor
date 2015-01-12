@@ -36,7 +36,6 @@
             (when (:rethrow-errors? initial-query-map)
               (throw e#))))
      (catch :default e2#
-       (js/Rollbar.error e2#)
        (merror e2#)
        (when (:rethrow-errors? initial-query-map)
          (throw e2#)))))
