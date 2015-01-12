@@ -24,7 +24,7 @@
                                                                  mixpanel/->mixpanel-date)
                                                :verified_email (:cust/verified-email cust)
                                                :occupation (:cust/occupation cust)}})
-    (mailchimp/maybe-subscribe cust)))
+    (mailchimp/maybe-list-subscribe cust)))
 
 (defn track-login [cust]
   (mixpanel/track "Login" (:cust/uuid cust)))
