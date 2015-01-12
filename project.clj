@@ -95,15 +95,15 @@
                         :compiler {:output-to "resources/public/cljs/out/frontend-dev.js"
                                    :output-dir "resources/public/cljs/out"
                                    :optimizations :none
-                                   :source-map "resources/public/cljs/out/sourcemap-dev.js"}}
+                                   :source-map "resources/public/cljs/out/sourcemap-frontend.map"}}
                        {:id "production"
                         :source-paths ["src-cljs" "yaks/om/src"]
                         :compiler {:pretty-print false
                                    :preamble ["public/js/vendor/react-0.12.2.min.js"]
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
+                                   :output-wrapper false
                                    :optimizations :advanced
                                    :externs ["src-cljs/js/react-externs.js"
                                              "src-cljs/js/analytics-externs.js"]
-                                   ;; :source-map "resources/public/cljs/production/sourcemap-frontend.js"
-                                   }}]})
+                                   :source-map "resources/public/cljs/production/sourcemap-frontend.map"}}]})
