@@ -34,6 +34,7 @@
     (embed-json-in-head "window.Precursor" (json/encode view-data))
     (when (prod-assets?)
       scripts/google-analytics)
+    (scripts/rollbar (pc.profile/env))
     (scripts/mixpanel)]
    [:body
     [:div.alerts-container]

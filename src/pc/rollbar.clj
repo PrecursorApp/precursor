@@ -14,6 +14,7 @@
   "https://api.rollbar.com/api/1/item/")
 
 (def token "cca6d7468e71428fb656f573e5012eaf")
+(def rollbar-client-token "744b16251ecf48d285e4f5e9470bf32f")
 
 (defn build-payload
   [access-token data-maps]
