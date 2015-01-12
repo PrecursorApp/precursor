@@ -191,3 +191,7 @@
     (if-not (identical? sentinel (get-in m ks sentinel))
       (apply update-in m ks f args)
       m)))
+
+(defn stop-event [e]
+  (.stopPropagation e)
+  (.preventDefault e))

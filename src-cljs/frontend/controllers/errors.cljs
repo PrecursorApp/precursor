@@ -11,8 +11,7 @@
             [goog.dom]
             [goog.string :as gstring]
             [goog.style])
-  (:require-macros [dommy.macros :refer [sel sel1]]
-                   [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
+  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
 
 ;; --- Errors Multimethod Declarations ---
 
@@ -50,7 +49,7 @@
 (defmethod post-error! :api-error
   [container message args previous-state current-state]
   (when (get-in current-state state/error-message-path)
-    (set! (.-scrollTop (sel1 "body")) 0)))
+    (set! (.-scrollTop js/document.body) 0)))
 
 (defmethod error :error-triggered
   [container message error state]
@@ -59,7 +58,7 @@
 (defmethod post-error! :error-triggered
   [container message args previous-state current-state]
   (when (get-in current-state state/error-message-path)
-    (set! (.-scrollTop (sel1 "body")) 0)))
+    (set! (.-scrollTop js/document.body) 0)))
 
 (defmethod error :document-permission-error
   [container message data state]

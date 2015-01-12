@@ -11,11 +11,11 @@
             [frontend.state :as state]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
+            [goog.dom]
             [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [frontend.utils :refer [html]]
-                   [dommy.macros :refer [sel sel1]])
+  (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
 ;; layers are always denominated in absolute coordinates
@@ -58,7 +58,7 @@
 (defmethod svg-element :layer.type/path
   [selected-eids layer]
   (dom/path
-   (clj->js (merge layer
+   (clj->js (merge (dissoc layer :points)
                    (svg/layer->svg-path layer)
                    {:className (str (:className layer)
                                     " shape-layer "
@@ -101,7 +101,8 @@
                                 :onMouseDown #(do (.stopPropagation %)
                                                   (cast! :drawing-edited {:layer layer
                                                                           :x x
-                                                                          :y y}))})))))))
+                                                                          :y y}))
+                                :key (str "edit-handle-" x "-" y)})))))))
 
 (defn layer-group [layer {:keys [tool selected-eids cast! db live?]}]
   (let [invalid? (and (:layer/ui-target layer)
@@ -130,6 +131,10 @@
 
            (svg-element selected-eids
                         (assoc layer
+                               :className (str "selectable-layer layer-handle "
+                                               (when (and (= :layer.type/text (:layer/type layer))
+                                                          (= :text tool)) "editable "))
+                               :key (str "selectable-" (:db/id layer))
                                :onMouseDown
                                #(do
                                   (.stopPropagation %)
@@ -175,11 +180,7 @@
                                       (cast! :layer-selected {:layer layer
                                                               :x (first (cameras/screen-event-coords %))
                                                               :y (second (cameras/screen-event-coords %))
-                                                              :append? (.-shiftKey %)}))))
-                               :className (str "selectable-layer layer-handle "
-                                               (when (and (= :layer.type/text (:layer/type layer))
-                                                          (= :text tool)) "editable "))
-                               :key (str "selectable-" (:db/id layer))))
+                                                              :append? (.-shiftKey %)}))))))
            (when-not (= :layer.type/text (:layer/type layer))
              (svg-element selected-eids (assoc layer
                                                :className (str "layer-outline ")
@@ -216,7 +217,7 @@
                                                    :else
                                                    (cast! :canvas-aligned-to-layer-center
                                                           {:ui-id (:layer/ui-target layer)
-                                                           :canvas-size (let [size (goog.style/getSize (sel1 "#svg-canvas"))]
+                                                           :canvas-size (let [size (goog.style/getSize (goog.dom/getElement "svg-canvas"))]
                                                                           {:width (.-width size)
                                                                            :height (.-height size)})})))
 
@@ -334,14 +335,14 @@
 
                          :onSubmit (fn [e]
                                      (cast! :text-layer-finished)
-                                     false)
+                                     (utils/stop-event e))
                          :onKeyDown #(cond (= "Enter" (.-key %))
                                            (do (cast! :text-layer-finished)
-                                               false)
+                                               (utils/stop-event %))
 
                                            (= "Escape" (.-key %))
                                            (do (cast! :cancel-drawing)
-                                               false)
+                                               (utils/stop-event %))
 
                                            :else nil)}
                     ;; TODO: experiment with a contentEditable div
@@ -371,7 +372,8 @@
         (apply dom/g nil (mapv (fn [l] (svg-element #{} (merge l {:strokeDasharray "5,5"
                                                                   :layer/fill "none"
                                                                   :style {:stroke (:subscriber-color l)}
-                                                                  :fillOpacity "0.5"}
+                                                                  :fillOpacity "0.5"
+                                                                  :key (str (:db/id l) "-subscriber-layer")}
                                                                (when (= :layer.type/text (:layer/type l))
                                                                  {:layer/stroke "none"
                                                                   :style {:fill (:subscriber-color l)}}))))
@@ -414,10 +416,10 @@
                          :onWheel #(.stopPropagation %)
                          :onSubmit (fn [e]
                                      (cast! :layer-properties-submitted)
-                                     false)
+                                     (utils/stop-event e))
                          :onKeyDown #(when (= "Enter" (.-key %))
                                        (cast! :layer-properties-submitted)
-                                       false)}
+                                       (utils/stop-event %))}
                     (dom/input #js {:type "text"
                                     :ref "id-input"
                                     :className "layer-property-id"
@@ -449,7 +451,7 @@
                       (when (seq targets)
                         (dom/button #js {:className "layer-property-button"
                                          :onClick #(do (om/update-state! owner :input-expanded not)
-                                                       false)}
+                                                       (utils/stop-event %))}
                                     "...")))
                     (apply dom/div #js {:className (if (om/get-state owner :input-expanded)
                                                      "property-dropdown-targets expanded"
@@ -510,16 +512,15 @@
                                          (js/clearInterval (om/get-state owner :touch-timer))
                                          ((:handle-mouse-move! handlers) (aget touches "0")))))
                       :onMouseDown (fn [event]
+                                     ((:handle-mouse-down handlers) event)
                                      ;;(.preventDefault event)
                                      (.stopPropagation event)
-                                     ((:handle-mouse-down handlers) event))
+                                     )
                       :onMouseUp (fn [event]
+                                   ((:handle-mouse-up handlers) event)
                                    ;(.preventDefault event)
-                                   (.stopPropagation event)
-                                   ((:handle-mouse-up handlers) event))
+                                   (.stopPropagation event))
                       :onWheel (fn [event]
-                                 (.preventDefault event)
-                                 (.stopPropagation event)
                                  (let [dx     (- (aget event "deltaX"))
                                        dy     (aget event "deltaY")]
                                    (om/transact! payload (fn [state]
@@ -527,7 +528,8 @@
                                                                  mode   (cameras/camera-mouse-mode state)]
                                                              (if (= mode :zoom)
                                                                (cameras/set-zoom state (partial + (* -0.002 dy)))
-                                                               (cameras/move-camera state dx (- dy))))))))}
+                                                               (cameras/move-camera state dx (- dy)))))))
+                                 (utils/stop-event event))}
                  (dom/defs nil
                    (dom/pattern #js {:id           "small-grid"
                                      :width        (str (cameras/grid-width camera))
@@ -596,5 +598,5 @@
                                                      {:layer/type :layer.type/rect
                                                       :className "layer-in-progress selection"
                                                       :strokeDasharray "2,3"}))]
-                                    (svg-element #{} sel)))
+                                    (svg-element #{} (assoc sel :key (str (:db/id sel) "-in-progress")))))
                                 sels)))))))))

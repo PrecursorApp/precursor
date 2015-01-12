@@ -3,7 +3,6 @@
             [frontend.async :refer [put!]]
             [clojure.string :as string]
             [datascript :as d]
-            [dommy.core :as dommy]
             [goog.dom]
             [goog.dom.DomHelper]
             [goog.net.Cookies]
@@ -36,7 +35,6 @@
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
                    [frontend.utils :refer [inspect timing swallow-errors]])
-  (:use-macros [dommy.macros :only [node sel sel1]])
   (:import [cljs.core.UUID]
            [goog.events.EventType]))
 
@@ -212,20 +210,17 @@
              :_app-state-do-not-use state
              :handlers              handlers}}))
 
-(defn find-top-level-node []
-  (sel1 :body))
+(defn find-app-container []
+  (goog.dom/getElement "om-app"))
 
-(defn find-app-container [top-level-node]
-  (sel1 top-level-node "#om-app"))
-
-(defn main [state top-level-node history-imp]
+(defn main [state history-imp]
   (let [comms                    (:comms @state)
         cast!                    (fn [message data & [transient?]]
                                    (put! (:controls comms) [message data transient?]))
         histories                (atom [])
         undo-state               (atom {:transactions []
                                         :last-undo nil})
-        container                (find-app-container top-level-node)
+        container                (find-app-container)
         visibility-monitor       (goog.labs.dom.PageVisibilityMonitor.)
         uri-path                 (.getPath utils/parsed-uri)
         history-path             "/"
@@ -303,13 +298,12 @@
 (defn ^:export setup! []
   (js/React.initializeTouchEvents true)
   (let [state (app-state)
-        top-level-node (find-top-level-node)
-        history-imp (history/new-history-imp top-level-node)]
+        history-imp (history/new-history-imp)]
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (browser-settings/setup! state)
     (.set (goog.net.Cookies. js/document) "prcrsr-client-id" (:client-uuid @state) -1 "/" false)
-    (main state top-level-node history-imp)
+    (main state history-imp)
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
     (sente/init state)

@@ -52,7 +52,7 @@
      (if false
        [:script {:type "text/javascript" :src "/js/bin-debug/main.js"}]
        (list
-        [:script {:type "text/javascript" :src "/js/vendor/react-0.11.2.js"}]
+        [:script {:type "text/javascript" :src "/js/vendor/react-0.12.2.js"}]
         [:script {:type "text/javascript" :src "/cljs/out/goog/base.js"}]
         [:script {:type "text/javascript" :src "/cljs/out/frontend-dev.js"}]
         [:script {:type "text/javascript"}

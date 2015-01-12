@@ -25,11 +25,11 @@
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
             [frontend.utils.state :as state-utils]
+            [goog.dom]
             [goog.string :as gstring]
             [goog.labs.userAgent.engine :as engine]
             goog.style)
-  (:require-macros [dommy.macros :refer [sel sel1]]
-                   [cljs.core.async.macros :as am :refer [go go-loop alt!]])
+  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.fx.dom.Scroll]))
 
 ;; --- Navigation Multimethod Declarations ---
@@ -865,7 +865,7 @@
 
 (defmethod post-control-event! :chat-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (sel1 (:container browser-state) "#chat-box")))
+  (.focus (goog.dom/getElement "chat-box")))
 
 (defmethod control-event :invite-link-clicked
   [browser-state message _ state]
@@ -877,7 +877,7 @@
 
 (defmethod post-control-event! :invite-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (sel1 (:container browser-state) "#chat-box")))
+  (.focus (goog.dom/getElement "chat-box")))
 
 (defmethod control-event :chat-user-clicked
   [browser-state message {:keys [id-str]} state]
@@ -891,7 +891,7 @@
 
 (defmethod post-control-event! :chat-user-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (sel1 (:container browser-state) "#chat-box")))
+  (.focus (goog.dom/getElement "chat-box")))
 
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
