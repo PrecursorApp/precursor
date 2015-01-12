@@ -2,6 +2,7 @@
   (:require [amazonica.aws.s3 :as s3]
             [amazonica.core]
             [cemerick.url :as url]
+            [cheshire.core :as json]
             [clj-http.client :as http]
             [clojure.java.io :as io]
             [clojure.string :as str]
@@ -34,13 +35,15 @@
 (def cdn-base-url "https://dtwdl3ecuoduc.cloudfront.net")
 
 (defonce asset-manifest (atom {}))
+(defn asset-manifest-version [] (get @asset-manifest :version))
 
 (defn cdn-url [manifest-value]
   (str cdn-base-url "/" (:s3-key manifest-value)))
 
-(defn asset-path [path]
+(defn asset-path [path & {:keys [manifest]
+                          :or {manifest @asset-manifest}}]
   (if (pc.profile/prod-assets?)
-    (let [manifest-value (get @asset-manifest path)]
+    (let [manifest-value (get-in manifest [:assets path])]
       (assert manifest-value)
       (cdn-url manifest-value))
     path))
@@ -61,7 +64,7 @@
       (#(fetch-specific-manifest (:s3-bucket %) (:s3-key %))))))
 
 (defn validate-manifest! [manifest]
-  (doseq [[path value] manifest]
+  (doseq [[path value] (:assets manifest)]
     (assert (< 0 (count (:body (http/get (cdn-url value))))))))
 
 (defn load-manifest! []
@@ -104,22 +107,36 @@
     (spit js-full-path (str/replace file-string mapping-re (fn [[_ start _]]
                                                              (str start (assetify map-path md5)))))))
 
+(defn upload-sourcemap [sha1 manifest]
+  (let [source-map "resources/public/cljs/production/sourcemap-frontend.map"
+        sources (-> source-map slurp json/decode (get "sources"))]
+    (http/post "https://api.rollbar.com/api/1/sourcemap"
+               {:multipart (concat [{:name "access_token" :content rollbar/token}
+                                    {:name "version" :content sha1}
+                                    {:name "minified_url" :content (asset-path "/cljs/production/frontend.js" :manifest manifest)}
+                                    {:name "source_map" :content (clojure.java.io/file source-map)}]
+                                   (for [source sources]
+                                     (do (println source)
+                                         {:name source :content (clojure.java.io/file (fs/join (fs/dirname source-map) source))})))})))
+
 (defn upload-manifest [sha1]
   (update-sourcemap-url assets-directory "/cljs/production/frontend.js")
   (amazonica.core/with-credential [aws-access-key aws-secret-key]
     (let [manifest-key (str "releases/" sha1)
-          manifest (reduce (fn [acc path]
-                             (let [file-path (str assets-directory path)
-                                   md5 (md5 file-path)
-                                   ;; TODO: figure out a better way to handle leading slashes
-                                   key (assetify (subs path 1) md5)]
-                               (log/infof "pushing %s to %s" file-path key)
-                               (s3/put-object :bucket-name cdn-bucket :key key :file file-path
-                                              :metadata {:content-type (mime-type-of file-path)
-                                                         :cache-control "max-age=3155692"})
-                               (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))
-                           {} manifest-paths)
-          manifest-bytes (.getBytes (pr-str manifest) "UTF-8")]
+          assets (reduce (fn [acc path]
+                           (let [file-path (str assets-directory path)
+                                 md5 (md5 file-path)
+                                 ;; TODO: figure out a better way to handle leading slashes
+                                 key (assetify (subs path 1) md5)]
+                             (log/infof "pushing %s to %s" file-path key)
+                             (s3/put-object :bucket-name cdn-bucket :key key :file file-path
+                                            :metadata {:content-type (mime-type-of file-path)
+                                                       :cache-control "max-age=3155692"})
+                             (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))
+                         {} manifest-paths)
+          manifest {:assets assets :code-version sha1}
+          manifest-bytes (.getBytes (pr-str manifest)
+                                    "UTF-8")]
       (log/infof "uploading manifest to %s: %s" manifest-key manifest)
       (s3/put-object :bucket-name cdn-bucket
                      :key manifest-key
@@ -128,7 +145,9 @@
                                 :content-type "application/edn"})
       (validate-manifest! (fetch-specific-manifest cdn-bucket manifest-key))
       (log/infof "moving manifest pointer to %s" manifest-key)
-      (move-manifest-pointer cdn-bucket manifest-key))))
+      (move-manifest-pointer cdn-bucket manifest-key)
+      (log/infof "uploading sourcemap to rollbar")
+      (upload-sourcemap sha1 manifest))))
 
 ;; single agent to prevent dos
 (defonce reload-agent (agent nil :error-handler (fn [a e]
