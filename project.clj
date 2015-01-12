@@ -96,28 +96,6 @@
                                    :output-dir "resources/public/cljs/out"
                                    :optimizations :none
                                    :source-map "resources/public/cljs/out/sourcemap-dev.js"}}
-                       {:id "whitespace"
-                        :source-paths ["src-cljs"
-                                       "yaks/om/src"]
-                        :compiler {:output-to "resources/public/cljs/whitespace/frontend.js"
-                                   :output-dir "resources/public/cljs/whitespace"
-                                   :optimizations :whitespace
-                                   ;; :source-map "resources/public/cljs/whitespace/sourcemap.js"
-                                   }}
-
-                       {:id "test"
-                        :source-paths ["src-cljs" "test-cljs" "yaks/om/src"]
-                        :compiler {:pretty-print true
-                                   :output-to "resources/public/cljs/test/frontend-dev.js"
-                                   :output-dir "resources/public/cljs/test"
-                                   :optimizations :advanced
-                                   :externs ["test-js/externs.js"
-                                             "src-cljs/js/react-externs.js"
-                                             "src-cljs/js/pusher-externs.js"
-                                             "src-cljs/js/ci-externs.js"
-                                             "src-cljs/js/analytics-externs.js"
-                                             "src-cljs/js/intercom-jquery-externs.js"]
-                                   :source-map "resources/public/cljs/test/sourcemap-dev.js"}}
                        {:id "production"
                         :source-paths ["src-cljs" "yaks/om/src"]
                         :compiler {:pretty-print false
@@ -126,11 +104,6 @@
                                    :output-dir "resources/public/cljs/production"
                                    :optimizations :advanced
                                    :externs ["src-cljs/js/react-externs.js"
-                                             "src-cljs/js/pusher-externs.js"
-                                             "src-cljs/js/ci-externs.js"
-                                             "src-cljs/js/analytics-externs.js"
-                                             "src-cljs/js/intercom-jquery-externs.js"]
+                                             "src-cljs/js/analytics-externs.js"]
                                    ;; :source-map "resources/public/cljs/production/sourcemap-frontend.js"
-                                   }}]
-              :test-commands {"frontend-unit-tests"
-                              ["node_modules/karma/bin/karma" "start" "karma.conf.js" "--single-run"]}})
+                                   }}]})
