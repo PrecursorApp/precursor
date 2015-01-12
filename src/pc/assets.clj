@@ -140,11 +140,14 @@
                                      (do (println source)
                                          {:name source :content (clojure.java.io/file (fs/join (fs/dirname source-map) source))})))})))
 
+(defn make-manifest-key [sha1]
+  (str "releases/" sha1))
+
 (defn upload-manifest [sha1]
   ;; TODO: this is dumb, we shouldn't write to the file
   (update-sourcemap-url assets-directory "/cljs/production/frontend.js")
   (amazonica.core/with-credential [aws-access-key aws-secret-key]
-    (let [manifest-key (str "releases/" sha1)
+    (let [manifest-key (make-manifest-key sha1)
           assets (reduce (fn [acc path]
                            (let [file-path (str assets-directory path)
                                  md5 (md5 file-path)
@@ -181,3 +184,8 @@
   (send-off reload-agent (fn [a]
                            (let [manifest (load-manifest!)]
                              (log/infof "reloaded frontend assets to %s" manifest)))))
+
+(defn rollback-manifest [sha1]
+  (let [manifest-key (make-manifest-key sha1)]
+    (validate-manifest! (fetch-specific-manifest cdn-bucket manifest-key))
+    (move-manifest-pointer cdn-bucket manifest-key)))
