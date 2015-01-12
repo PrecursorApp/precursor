@@ -318,4 +318,7 @@
 (defn ^:export inspect-state []
   (clj->js @debug-state))
 
+(defn ^:export throw-error []
+  (throw (Exception. "This is an exception")))
+
 (defonce startup (setup!))
