@@ -60,5 +60,5 @@
                                  (get dribbble-profile "followers_count"))))]
       (http/post "https://hooks.slack.com/services/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"
                  {:form-params {"payload" (json/encode {:text message
-                                                        :username "new-user-bot"
+                                                        :username (:cust/email cust)
                                                         :icon_url (str (:google-account/avatar cust))})}}))))
