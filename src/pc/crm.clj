@@ -40,3 +40,25 @@
                  :query-params {:access_token dribbble-token}})
     :body
     json/decode))
+
+(defn ping-chat-with-new-user [cust]
+  (utils/with-report-exceptions
+    (let [db (pcd/default-db)
+          ;; Note: counting this way is racy!
+          cust-count (cust-model/cust-count db)
+          dribbble-profile (some-> cust :cust/guessed-dribbble-username get-dribbble-profile)
+          cust-name (str/trim (str (:cust/first-name cust) " " (:cust/last-name cust)))
+          message (str (format "New user (#%s): <https://plus.google.com/%s|%s> %s"
+                               cust-count
+                               (:google-account/sub cust)
+                               cust-name
+                               (:cust/email cust))
+                       (when dribbble-profile
+                         (format "\nDribbble: <%s|%s> %s followers "
+                                 (get dribbble-profile "html_url")
+                                 (get dribbble-profile "username")
+                                 (get dribbble-profile "followers_count"))))]
+      (http/post "https://hooks.slack.com/services/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"
+                 {:form-params {"payload" (json/encode {:text message
+                                                        :username "new-user-bot"
+                                                        :icon_url (str (:google-account/avatar cust))})}}))))

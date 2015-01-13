@@ -192,6 +192,9 @@
               :db/unique :db.unique/value
               :db/doc "Account id unique across Google: https://developers.google.com/accounts/docs/OAuth2Login")
 
+   (attribute :google-account/avatar
+              :db.type/uri)
+
    (attribute :cust/uuid
               :db.type/uuid
               :db/index true)
