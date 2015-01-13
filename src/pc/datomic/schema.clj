@@ -184,10 +184,16 @@
    (attribute :cust/verified-email
               :db.type/boolean)
 
+   (attribute :cust/guessed-dribbble-username
+              :db.type/string)
+
    (attribute :google-account/sub
               :db.type/string
               :db/unique :db.unique/value
               :db/doc "Account id unique across Google: https://developers.google.com/accounts/docs/OAuth2Login")
+
+   (attribute :google-account/avatar
+              :db.type/uri)
 
    (attribute :cust/uuid
               :db.type/uuid

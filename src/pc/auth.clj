@@ -6,6 +6,7 @@
             [org.httpkit.client :as http]
             [pc.analytics :as analytics]
             [pc.auth.google :as google-auth]
+            [pc.crm :as crm]
             [pc.models.cust :as cust]
             [pc.models.permission :as permission-model]
             [pc.datomic :as pcd]
@@ -13,31 +14,31 @@
             [pc.utils :as utils])
   (:import java.util.UUID))
 
-;; TODO: move this elsewhere
-(defn ping-chat-with-new-user [email]
-  (utils/with-report-exceptions
-    (let [db (pcd/default-db)
-          message (str "New user (#" (cust/cust-count db) "): " email)]
-      (http/post "https://hooks.slack.com/services/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"
-                 ;; Note: counting this way is racy!
-                 {:form-params {"payload" (json/encode {:text message})}}))))
-
 (defn update-user-from-sub [cust]
   (let [sub (:google-account/sub cust)
-        {:keys [first-name last-name
-                birthday gender occupation]} (google-auth/user-info-from-sub sub)
-        cust (cust/update! cust (utils/remove-map-nils {:cust/first-name first-name
-                                                        :cust/last-name last-name
-                                                        :cust/birthday birthday
-                                                        :cust/gender gender
-                                                        :cust/occupation occupation}))]
-    (analytics/track-user-info cust)
+        {:keys [first-name last-name gender
+                avatar-url birthday occupation]} (utils/with-report-exceptions
+                                                   (google-auth/user-info-from-sub sub))
+        cust (-> cust
+               (cust/update! (utils/remove-map-nils {:cust/first-name first-name
+                                                     :cust/last-name last-name
+                                                     :cust/birthday birthday
+                                                     :cust/gender gender
+                                                     :cust/occupation occupation
+                                                     :google-account/avatar avatar-url}))
+               crm/update-with-dribbble-username)]
+    (utils/with-report-exceptions
+      (analytics/track-user-info cust))
+    (when (profile/prod?)
+      (utils/with-report-exceptions
+        (crm/ping-chat-with-new-user cust)))
     cust))
 
 (defn cust-from-google-oauth-code [code ring-req]
   {:post [(string? (:google-account/sub %))]} ;; should never break, but just in case...
-  (let [user-info (google-auth/user-info-from-code code)]
-    (if-let [cust (cust/find-by-google-sub (pcd/default-db) (:sub user-info))]
+  (let [user-info (google-auth/user-info-from-code code)
+        db (pcd/default-db)]
+    (if-let [cust (cust/find-by-google-sub db (:sub user-info))]
       (do
         (analytics/track-login cust)
         (cust/update! cust (merge {:cust/email (:email user-info)
@@ -50,10 +51,8 @@
                                   :cust/http-session-key (UUID/randomUUID)
                                   :google-account/sub (:sub user-info)
                                   :cust/uuid (UUID/randomUUID)})]
-          (when (profile/prod?)
-            (ping-chat-with-new-user (:email user-info)))
           (analytics/track-signup user ring-req)
-          (future (update-user-from-sub user))
+          (future (utils/with-report-exceptions (update-user-from-sub user)))
           user)
         (catch Exception e
           (if (pcd/unique-conflict? e)
