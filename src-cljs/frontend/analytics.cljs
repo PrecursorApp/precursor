@@ -32,7 +32,10 @@
                           :camera-nudged-right
                           :camera-nudged-left
                           :camera-nudged-down
-                          :camera-nudged-up})
+                          :camera-nudged-up
+                          :text-layer-edited
+                          :layer-ui-id-edited
+                          :layer-ui-target-edited})
 
 (defn track-control [event state]
   (when-not (contains? controls-blacklist event)
