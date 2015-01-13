@@ -19,7 +19,7 @@
 
 (def dribbble-user-link-re #"^https://dribbble\.com/([^/]+)$")
 (defn find-dribbble-username [cust]
-  (when (and (:cust/first-name cust) (:cust/last-name cust))
+  (when (:cust/last-name cust)
     (some->> (search-dribbble (str (:cust/first-name cust) " " (:cust/last-name cust)))
       (map #(get % "link"))
       (filter #(re-find dribbble-user-link-re %))
