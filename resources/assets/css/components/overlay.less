@@ -94,7 +94,8 @@
 }
 .menu-view {
   .flex(0 0 0%);
-  .flexy(flex-start, flex-end);
+  // .flexy(flex-start, flex-end);
+  .flexy(flex-end, flex-start, column);
   overflow: hidden;
   transition: @speed @bezier_transform;
   &:last-of-type {
@@ -104,11 +105,11 @@
     });
   }
   article {
-    padding: 2rem;
+    padding: 1.5rem;
   }
   footer {
     margin-top: auto;
-    padding: 2rem;
+    padding: 1.5rem;
   }
 }
 .menu-view-frame {
@@ -138,11 +139,17 @@
   &[role="button"] {
     .flexy(center);
     .icon_stroke(@gray);
+    .icon_fill(@gray);
     width: 100%;
     color: @gray;
-    transition: color @speed_fast @bezier_fadein, background @speed @bezier_fadein;
+    cursor: pointer;
+    transition+: color @speed_fast @bezier_fadein;
+    transition+: background @speed @bezier_fadein;
+    transition+: height @speed_fast @bezier_fadein;
+    overflow: hidden;
     &:hover {
       .icon_stroke(@gray_darkest);
+      .icon_fill(@gray_darkest);
       color: @gray_darkest;
       background: @gray_lightest;
       transition-duration: @speed_fast, 0ms;
@@ -332,4 +339,57 @@ img.loading-image {
 .loading-ellipses i+i+i {
   opacity: 0;
   .animation(dot 1.3s 0.3s infinite);
+}
+.privacy-select {
+  .flexy(column);
+  width: 100%;
+  margin-top: auto;
+  &:not(:hover) {
+    input {
+      &:not(:checked) {
+        + label {
+          height: 0;
+        }
+      }
+    }
+  }
+  &:hover {
+    input {
+      &:checked {
+        + label {
+          // .icon_stroke(@blue);
+          // .icon_fill(@blue);
+          // color: @blue;
+        }
+      }
+    }
+  }
+  input {
+    display: none;
+    &:checked {
+      + label {
+        &.menu-item {
+          // background: red;
+          .icon_stroke(@blue);
+          .icon_fill(@blue);
+          color: @blue;
+          &:hover {
+            // .icon_stroke(@color_select_hover);
+            // .icon_fill(@color_select_hover);
+            // color: @color_select_hover;
+          }
+        }
+      }
+    }
+  }
+  label {
+  //   // .flex(0 0 50%);
+  //   // .flex(0 0 @tile);
+  //   .flexy(center, center);
+  //   cursor: pointer;
+    height: @tile;
+  //   background: @gray_light;
+  //   overflow: hidden;
+  //   transition: @speed @bezier_transform;
+  }
 }

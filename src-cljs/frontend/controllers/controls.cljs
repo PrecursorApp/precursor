@@ -1035,11 +1035,17 @@
       (overlay/replace-overlay :start)
       (assoc-in state/main-menu-learned-path true)))
 
-(defmethod control-event :invite-menu-opened
+; (defmethod control-event :invite-menu-opened
+;   [browser-state message _ state]
+;   (-> state
+;       (overlay/add-overlay :invite)
+;       (assoc-in state/invite-menu-learned-path true)))
+
+(defmethod control-event :sharing-menu-opened
   [browser-state message _ state]
   (-> state
-      (overlay/add-overlay :invite)
-      (assoc-in state/invite-menu-learned-path true)))
+      (overlay/add-overlay :sharing)
+      (assoc-in state/sharing-menu-learned-path true)))
 
 (defmethod control-event :shortcuts-menu-opened
   [browser-state message _ state]
