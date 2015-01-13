@@ -184,6 +184,9 @@
    (attribute :cust/verified-email
               :db.type/boolean)
 
+   (attribute :cust/guessed-dribbble-username
+              :db.type/string)
+
    (attribute :google-account/sub
               :db.type/string
               :db/unique :db.unique/value
