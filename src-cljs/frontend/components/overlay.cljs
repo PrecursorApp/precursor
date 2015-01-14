@@ -254,15 +254,9 @@
                        :data-placeholder-nil "Type their email"
                        :data-placeholder-forgot "Don't forget to submit"}]]
              [:div.requested-access-list
-              (when (or (seq permissions)
-                        (seq access-grants))
-                [:h4 "Approved"])
-              (for [p (sort-by :db/id permissions)]
-                [:div (:permission/cust p)])
-              (for [g (sort-by :db/id access-grants)]
-                [:div (:access-grant/email g)])
-              (when (seq pending-requests)
-                [:h4 "Pending"])
+              [:h4 "Requests"]
+              (when (empty? pending-requests)
+                "none")
               (for [r (sort-by :db/id pending-requests)]
                 [:div (:access-request/cust r)
                  " "
@@ -275,16 +269,26 @@
                       :on-click #(cast! :access-request-denied {:request-id (:db/id r)
                                                                 :doc-id doc-id})}
                   (common/icon :times)]])
-              (when (seq denied-requests)
-                [:div
-                 [:h4 "Denied"]
-                 (for [r (sort-by :db/id denied-requests)]
-                   [:div (:access-request/cust r)
-                    " "
-                    [:a {:role "button"
-                         :on-click #(cast! :access-request-granted {:request-id (:db/id r)
-                                                                    :doc-id doc-id})}
-                     "Grant access"]])])]))])))))
+
+              [:h4 "Approved"]
+              (when (and (empty? permissions)
+                         (empty? access-grants))
+                "none")
+              (for [p (sort-by :db/id permissions)]
+                [:div (:permission/cust p)])
+              (for [g (sort-by :db/id access-grants)]
+                [:div (:access-grant/email g)])
+
+              [:h4 "Denied"]
+              (when (empty? denied-requests)
+                "none")
+              (for [r (sort-by :db/id denied-requests)]
+                [:div (:access-request/cust r)
+                 " "
+                 [:a {:role "button"
+                      :on-click #(cast! :access-request-granted {:request-id (:db/id r)
+                                                                 :doc-id doc-id})}
+                  "Grant access"]])]))])))))
 
 (defn public-sharing [app owner]
   (reify
