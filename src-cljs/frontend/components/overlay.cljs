@@ -238,8 +238,8 @@
           (when private?
             (list
              [:h2 "Share this idea."]
-             [:p "This document is only visible to those who have been granted access.
-                 Try notifying a collaborator about requesting access."]
+             [:p "This document is only visible to those who have been granted access."
+              " Add a teammate's email to grant them access."]
              [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
                                                       false)
                                       :on-key-down #(when (= "Enter" (.-key %))
