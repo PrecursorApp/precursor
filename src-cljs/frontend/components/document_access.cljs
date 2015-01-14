@@ -43,7 +43,7 @@
             (if (:cust app)
               (if (seq access-requests)
                 [:p
-                 [:span "We've notified the owner about your request.
+                 [:span "Okay, we've notified the owner about your request.
                         While you wait for a response, try prototyping in "]
                  [:a {:href "/" :target "_self"} "your own document"]
                  [:span "."]]
@@ -51,7 +51,7 @@
                 (list
                   [:p
                    [:span "Anything you prototype here will only be visible to you.
-                          Try requesting access to this document or even "]
+                          Try requesting access or even "]
                    [:a {:href "/" :target "_self"} "create your own"]
                    [:span "."]]
                   [:a.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})

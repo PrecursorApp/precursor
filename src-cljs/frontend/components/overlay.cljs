@@ -237,10 +237,9 @@
          [:article
           (when private?
             (list
-             [:h2 "Share this with your team."]
-             ; [:p "Grant access to a colleague"]
-             ; [:p "Send your teammates invites to come collaborate with you in this doc."]
-             [:p "This document is only visible to those who have been granted access. Try granting access to your teammates."]
+             [:h2 "Share this idea."]
+             [:p "This document is only visible to those who have been granted access.
+                 Try notifying a collaborator about requesting access."]
              [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
                                                       false)
                                       :on-key-down #(when (= "Enter" (.-key %))
@@ -252,39 +251,40 @@
                        :value (or permission-grant-email "")
                        :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
               [:label {:data-placeholder "Email"
-                       :data-placeholder-nil "What's their email?"
-                       :data-placeholder-forgot "Don't forget to submit."}]]
-             (when (or (seq permissions)
-                       (seq access-grants))
-               "People with access:")
-             (for [p (sort-by :db/id permissions)]
-               [:div (:permission/cust p)])
-             (for [g (sort-by :db/id access-grants)]
-               [:div (:access-grant/email g)])
-             (when (seq pending-requests)
-               "People requesting access:")
-             (for [r (sort-by :db/id pending-requests)]
-               [:div (:access-request/cust r)
-                " "
-                [:a {:role "button"
-                     :on-click #(cast! :access-request-granted {:request-id (:db/id r)
+                       :data-placeholder-nil "Type their email"
+                       :data-placeholder-forgot "Don't forget to submit"}]]
+             [:div.requested-access-list
+              (when (or (seq permissions)
+                        (seq access-grants))
+                [:h4 "Approved"])
+              (for [p (sort-by :db/id permissions)]
+                [:div (:permission/cust p)])
+              (for [g (sort-by :db/id access-grants)]
+                [:div (:access-grant/email g)])
+              (when (seq pending-requests)
+                [:h4 "Pending"])
+              (for [r (sort-by :db/id pending-requests)]
+                [:div (:access-request/cust r)
+                 " "
+                 [:a {:role "button"
+                      :on-click #(cast! :access-request-granted {:request-id (:db/id r)
+                                                                 :doc-id doc-id})}
+                  (common/icon :check)]
+                 " "
+                 [:a {:role "button"
+                      :on-click #(cast! :access-request-denied {:request-id (:db/id r)
                                                                 :doc-id doc-id})}
-                 "Grant access"]
-                " "
-                [:a {:role "button"
-                     :on-click #(cast! :access-request-denied {:request-id (:db/id r)
-                                                               :doc-id doc-id})}
-                 "Deny access"]])
-             (when (seq denied-requests)
-               [:div
-                "Denied requests:"
-                (for [r (sort-by :db/id denied-requests)]
-                  [:div (:access-request/cust r)
-                   " "
-                   [:a {:role "button"
-                        :on-click #(cast! :access-request-granted {:request-id (:db/id r)
-                                                                   :doc-id doc-id})}
-                    "Grant access"]])])))])))))
+                  (common/icon :times)]])
+              (when (seq denied-requests)
+                [:div
+                 [:h4 "Denied"]
+                 (for [r (sort-by :db/id denied-requests)]
+                   [:div (:access-request/cust r)
+                    " "
+                    [:a {:role "button"
+                         :on-click #(cast! :access-request-granted {:request-id (:db/id r)
+                                                                    :doc-id doc-id})}
+                     "Grant access"]])])]))])))))
 
 (defn public-sharing [app owner]
   (reify
@@ -294,7 +294,7 @@
             invite-email (get-in app state/invite-email-path)]
         (html
          [:article
-          [:h2 "Share this with anyone."]
+          [:h2 "Share this idea."]
           [:p "This document is visible to everyone. Try emailing friends and asking them to collaborate on it with you."]
           (if-not (:cust app)
             [:a.menu-button {:href (auth/auth-url)
@@ -318,8 +318,8 @@
                       :value (or invite-email "")
                       :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
              [:label {:data-placeholder "Email"
-                      :data-placeholder-nil "What's their email?"
-                      :data-placeholder-forgot "Don't forget to submit."}]])
+                      :data-placeholder-nil "Type their email"
+                      :data-placeholder-forgot "Don't forget to submit"}]])
           (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
             [:div response])
           ;; TODO: keep track of invites
