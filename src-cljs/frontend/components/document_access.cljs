@@ -38,31 +38,38 @@
          [:div.menu-view
           [:div.menu-view-frame
            [:article
-            [:h2 "This document is private"]
+            [:h2 "This document is private."]
+
             (if (:cust app)
               (if (seq access-requests)
-                [:p "We've notified the owner that you want access to this document."]
+                [:p
+                 [:span "We've notified the owner about your request.
+                        While you wait for a response, try prototyping in "]
+                 [:a {:href "/" :target "_self"} "your own document"]
+                 [:span "."]]
+
                 (list
-                 [:p "Let the owner know you want to collaborate."]
-                 [:a.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})
-                                  :role "button"}
-                  "Request access"]))
+                  [:p
+                   [:span "Anything you prototype here will only be visible to you.
+                          Try requesting access to this document or even "]
+                   [:a {:href "/" :target "_self"} "create your own"]
+                   [:span "."]]
+                  [:a.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})
+                                   :role "button"}
+                   "Request Access"]))
+
               (list
-               [:p "To check if you have access or to request access"]
-               [:a.menu-button {:href (auth/auth-url)
-                                :on-click #(do
-                                             (.preventDefault %)
-                                             (cast! :track-external-link-clicked
-                                                    {:path (auth/auth-url)
-                                                     :event "Signup Clicked"
-                                                     :properties {:source "permission-denied-overlay"}}))
-                                :role "button"}
-                "Sign In"]))
-            [:p "Anything you draw on this document will only be visible to you. "]
-            [:p
-             "If you want a document of your own, you can "
-             [:a {:href "/" :target "_self"} "create your own document"]
-             ". "]]]])))))
+                [:p "Anything you prototype here will only be visible to you.
+                    Try signing in and then requesting access to this document."]
+                [:a.menu-button {:href (auth/auth-url)
+                                 :role "button"
+                                 :on-click #(do
+                                              (.preventDefault %)
+                                              (cast! :track-external-link-clicked
+                                                     {:path (auth/auth-url)
+                                                      :event "Signup Clicked"
+                                                      :properties {:source "permission-denied-overlay"}}))}
+                 "Sign In"]))]]])))))
 
 (defn manage-permissions-overlay [app owner]
   (reify
