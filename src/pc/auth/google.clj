@@ -61,4 +61,9 @@
      :last-name (get-in resp ["name" "familyName"])
      :birthday (some-> resp (get "birthday") clj-time.format/parse clj-time.coerce/to-date)
      :gender (get resp "gender")
-     :occupation (get resp "occupation")}))
+     :occupation (get resp "occupation")
+     :avatar-url (some-> (get-in resp ["image" "url"])
+                   url/url
+                   (assoc :query {})
+                   str
+                   (java.net.URI.))}))
