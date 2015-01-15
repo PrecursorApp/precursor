@@ -12,14 +12,16 @@
   (if (-> sente-state :state deref :open?)
     (apply (:send-fn sente-state) message rest)
     (let [watch-id (utils/uuid)]
+      ;; TODO: handle this in the handle-message fn below
       (add-watch (:state sente-state) watch-id
                  (fn [key ref old new]
                    (when (:open? new)
                      (apply (:send-fn sente-state) message rest)
                      (remove-watch ref watch-id)))))))
 
-(defn subscribe-to-document [sente-state document-id]
-  (send-msg sente-state [:frontend/subscribe {:document-id document-id}]))
+(defn subscribe-to-document [sente-state document-id & {:keys [requested-color]}]
+  (send-msg sente-state [:frontend/subscribe {:document-id document-id
+                                              :requested-color requested-color}]))
 
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
@@ -73,19 +75,35 @@
   (put! (get-in @app-state [:comms :errors]) [:document-permission-error data])
   (utils/inspect data))
 
+(defmethod handle-message :chsk/state [app-state message data]
+  (let [state @app-state]
+    (utils/inspect data)
+    (when (and (:open? data)
+               (not (:first-open? data))
+               (:document/id state))
+      ;; TODO: This seems like a bad place for this. Can we share the same code that
+      ;;       we use for subscribing from the nav channel in the first place?
+      (subscribe-to-document
+       (:sente state) (:document/id state)
+       :requested-color (get-in state [:subscribers (:client-id state) :color])))))
+
 
 (defn do-something [app-state sente-state]
   (let [tap (async/chan (async/sliding-buffer 10))
         mult (:ch-recv-mult sente-state)]
     (async/tap mult tap)
     (go-loop []
-      (when-let [{[type data] :event} (<! tap)]
-        ;; other type is :chsk/state, sent when the ws is opened.
-        ;; might be a good thing to watch when we reconnect?
-        (when (= :chsk/recv type)
-          (utils/swallow-errors
-           (let [[message message-data] data]
-             (handle-message app-state message message-data))))
+      (when-let [{[type data] :event :as stuff} (<! tap)]
+        (case type
+          :chsk/recv (utils/swallow-errors
+                      (let [[message message-data] data]
+                        (handle-message app-state message message-data)))
+
+          ;; :chsk/state is sent when the ws is opened or closed
+          :chsk/state (utils/swallow-errors
+                       (handle-message app-state type data))
+
+          nil)
         (recur)))))
 
 (defn init [app-state]
