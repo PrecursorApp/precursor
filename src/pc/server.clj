@@ -17,6 +17,7 @@
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
             [pc.http.doc :refer (duplicate-doc)]
+            [pc.http.lb :as lb]
             [pc.http.sente :as sente]
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
@@ -225,10 +226,15 @@
         {:status 200
          :body (blog/render-page slug)})
 
+   (GET "/health-check" req
+        (lb/health-check-response req))
+
    (ANY "*" [] {:status 404 :body "Page not found."})))
 
 (defn log-request [req resp ms]
-  (when-not (re-find #"^/cljs" (:uri req))
+  (when-not (or (re-find #"^/cljs" (:uri req))
+                (and (= 200 (:status resp))
+                     (re-find #"^/health-check$" (:uri req))))
     (let [cust (-> req :auth :cust)
           cust-str (when cust (str (:db/id cust) " (" (:cust/email cust) ")"))]
       (log/infof "%s: %s %s for %s %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) cust-str ms))))
