@@ -117,7 +117,8 @@
               doc (doc-model/find-by-id db (Long/parseLong document-id))]
           (if doc
             (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                                 :google-client-id (google-client-id)}
+                                 :google-client-id (google-client-id)
+                                 :sente-id (-> req :session :sente-id)}
                                 (when-let [cust (-> req :auth :cust)]
                                   {:cust {:email (:cust/email cust)
                                           :uuid (:cust/uuid cust)
@@ -292,11 +293,26 @@
     handler
     (wrap-reload handler)))
 
+(defn assoc-sente-id [req response sente-id]
+  (if (= (get-in req [:session :sente-id]) sente-id)
+    response
+    (-> response
+      (assoc :session (:session response (:session req)))
+      (assoc-in [:session :sente-id] sente-id))))
+
+(defn wrap-sente-id [handler]
+  (fn [req]
+    (let [sente-id (or (get-in req [:session :sente-id])
+                       (str (UUID/randomUUID)))]
+      (if-let [response (handler req)]
+        (assoc-sente-id req response sente-id)))))
+
 (defn handler [sente-state]
   (->
    (app sente-state)
    (auth-middleware)
    (wrap-anti-forgery)
+   (wrap-sente-id)
    (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
                   :cookie-attrs {:http-only true
                                  :expires (time-format/unparse (:rfc822 time-format/formatters) (time/from-now (time/years 1))) ;; expire one year after the server starts up

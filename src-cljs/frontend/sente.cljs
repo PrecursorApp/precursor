@@ -40,16 +40,16 @@
                  {:server-update true})))
 
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
-  (swap! app-state update-in [:subscribers (:client-uuid data)] merge (dissoc data :client-uuid)))
+  (swap! app-state update-in [:subscribers (:client-id data)] merge (dissoc data :client-id)))
 
 (defmethod handle-message :frontend/subscriber-left [app-state message data]
-  (swap! app-state update-in [:subscribers] dissoc (:client-uuid data)))
+  (swap! app-state update-in [:subscribers] dissoc (:client-id data)))
 
 (defmethod handle-message :frontend/mouse-move [app-state message data]
-  (swap! app-state utils/update-when-in [:subscribers (:client-uuid data)] merge (select-keys data [:mouse-position :tool :layers])))
+  (swap! app-state utils/update-when-in [:subscribers (:client-id data)] merge (select-keys data [:mouse-position :tool :layers])))
 
 (defmethod handle-message :frontend/update-subscriber [app-state message data]
-  (swap! app-state update-in [:subscribers (:client-uuid data)] merge (:subscriber-data data)))
+  (swap! app-state update-in [:subscribers (:client-id data)] merge (:subscriber-data data)))
 
 (defmethod handle-message :frontend/db-entities [app-state message data]
   (when (= (:document/id data) (:document/id @app-state))
@@ -89,6 +89,9 @@
         (recur)))))
 
 (defn init [app-state]
-  (let [{:keys [chsk ch-recv send-fn state] :as sente-state} (sente/make-channel-socket! "/chsk" {:type :auto})]
+  (let [{:keys [chsk ch-recv send-fn state] :as sente-state}
+        (sente/make-channel-socket! "/chsk" {:type :auto
+                                             :chsk-url-fn (fn [& args]
+                                                            (utils/inspect (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state))))})]
     (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
     (do-something app-state (:sente @app-state))))

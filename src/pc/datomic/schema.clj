@@ -120,9 +120,13 @@
               :db/doc "db/id of this layer's parent. Could be called \"parent\", but want to avoid confusion with \"child\", which is taken.")
 
    ;; No logins at the moment, so we'll use this to identify users
+   ;; chats rely on this, is it a good idea? Nice to have something stable across tabs
    (attribute :session/uuid
               :db.type/uuid
               :db/index true)
+
+   (attribute :session/client-id
+              :db.type/string)
 
    (attribute :document/uuid
               :db.type/uuid
