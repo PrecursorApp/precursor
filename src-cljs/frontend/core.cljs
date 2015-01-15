@@ -109,8 +109,8 @@
 
 (defn set-tab-id []
   (let [storage-imp (localstorage/new-sessionstorage-imp)]
-    (or (inspect (localstorage/read storage-imp "tab-id"))
-        (let [tab-id (inspect (utils/uuid))]
+    (or (localstorage/read storage-imp "tab-id")
+        (let [tab-id (utils/uuid)]
           (localstorage/save! storage-imp "tab-id" tab-id)
           tab-id))))
 

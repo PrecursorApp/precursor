@@ -77,7 +77,6 @@
 
 (defmethod handle-message :chsk/state [app-state message data]
   (let [state @app-state]
-    (utils/inspect data)
     (when (and (:open? data)
                (not (:first-open? data))
                (:document/id state))
@@ -110,6 +109,6 @@
   (let [{:keys [chsk ch-recv send-fn state] :as sente-state}
         (sente/make-channel-socket! "/chsk" {:type :auto
                                              :chsk-url-fn (fn [& args]
-                                                            (utils/inspect (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state))))})]
+                                                            (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state)))})]
     (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
     (do-something app-state (:sente @app-state))))
