@@ -427,14 +427,6 @@
   [browser-state message [x y] current-state previous-state]
   (maybe-notify-subscribers! current-state x y))
 
-(defmethod post-control-event! :show-mouse-toggled
-  [browser-state message {:keys [client-uuid show-mouse?]} current-state previous-state]
-  (sente/send-msg (:sente current-state)
-                  [:frontend/share-mouse {:document/id (:document/id current-state)
-                                          :show-mouse? show-mouse?
-                                          :mouse-owner-uuid client-uuid}]))
-
-
 (defn finalize-layer [state]
   (let [{:keys [x y]} (get-in state [:mouse])
         [rx ry] (cameras/screen->point (:camera state) x y)

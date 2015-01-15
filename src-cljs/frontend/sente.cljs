@@ -49,9 +49,6 @@
 (defmethod handle-message :frontend/mouse-move [app-state message data]
   (swap! app-state update-in [:subscribers (:client-uuid data)] merge (select-keys data [:mouse-position :tool :layers])))
 
-(defmethod handle-message :frontend/share-mouse [app-state message data]
-  (swap! app-state assoc-in [:subscribers (:mouse-owner-uuid data) :show-mouse?] (:show-mouse? data)))
-
 (defmethod handle-message :frontend/update-subscriber [app-state message data]
   (swap! app-state update-in [:subscribers (:client-uuid data)] merge (:subscriber-data data)))
 
