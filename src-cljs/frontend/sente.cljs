@@ -45,9 +45,8 @@
 (defmethod handle-message :frontend/subscriber-left [app-state message data]
   (swap! app-state update-in [:subscribers] dissoc (:client-uuid data)))
 
-;; TODO: update-when-in
 (defmethod handle-message :frontend/mouse-move [app-state message data]
-  (swap! app-state update-in [:subscribers (:client-uuid data)] merge (select-keys data [:mouse-position :tool :layers])))
+  (swap! app-state utils/update-when-in [:subscribers (:client-uuid data)] merge (select-keys data [:mouse-position :tool :layers])))
 
 (defmethod handle-message :frontend/update-subscriber [app-state message data]
   (swap! app-state update-in [:subscribers (:client-uuid data)] merge (:subscriber-data data)))
