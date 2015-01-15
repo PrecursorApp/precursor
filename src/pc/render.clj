@@ -1,6 +1,9 @@
 (ns pc.render
   (:require [pc.svg :as svg]
-            [hiccup.core :refer (h html)]))
+            [hiccup.core :refer (h html)])
+  (:import [java.io ByteArrayOutputStream ByteArrayInputStream]
+           [org.apache.batik.transcoder.image PNGTranscoder]
+           [org.apache.batik.transcoder TranscoderInput TranscoderOutput]))
 
 (defmulti svg-element (fn [layer opts] (:layer/type layer)))
 
@@ -67,3 +70,11 @@
              [:rect {:width "100%" :height "100%" :fill "#333"}])
            [:g {:transform (format "translate(%s, %s)" offset-left offset-top)}
             (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))
+
+(defn svg->png [content]
+  (let [out (ByteArrayOutputStream.)]
+    (with-in-str content
+      (.transcode (PNGTranscoder.)
+                  (TranscoderInput. *in*)
+                  (TranscoderOutput. out)))
+    (clojure.java.io/input-stream (.toByteArray out))))
