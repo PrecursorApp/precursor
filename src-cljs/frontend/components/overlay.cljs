@@ -132,7 +132,51 @@
             [:span "Blog"]]
            (om/build auth-link app)]])))))
 
+;; TODO: add types to db
+(defn access-entity-type [access-entity]
+  (cond (contains? access-entity :permission/document)
+        :permission
 
+        (contains? access-entity :access-grant/document)
+        :access-grant
+
+        (contains? access-entity :access-request/document)
+        :access-request
+
+        :else nil))
+
+;; TODO: this should call om/build somehow
+(defmulti render-access-entity (fn [entity cast!]
+                                 (access-entity-type entity)))
+
+(defmethod render-access-entity :permission
+  [entity cast!]
+  [:div
+   [:img {:src (utils/gravatar-url (:permission/cust entity))}]
+   (:permission/cust entity)])
+
+(defmethod render-access-entity :access-grant
+  [entity cast!]
+  [:div
+   [:img {:src (utils/gravatar-url (:access-grant/email entity))}]
+   (:access-grant/email entity)])
+
+(defmethod render-access-entity :access-request
+  [entity cast!]
+  [:div
+   [:img {:src (utils/gravatar-url (:access-request/cust entity))}]
+   (:access-request/cust entity)
+   " "
+   [:a {:role "button"
+        :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
+                                                   :doc-id (:access-request/document entity)})}
+    (common/icon :check)]
+   " "
+   (when-not (= :access-request.status/denied (:access-request/status entity))
+     [:a {:role "button"
+          :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
+                                                    :doc-id (:access-request/document entity)})}
+      (common/icon :times)])])
 
 (defn private-sharing [app owner]
   (reify
@@ -162,65 +206,28 @@
             permission-grant-email (get-in app state/permission-grant-email-path)
             permissions (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/document ?doc-id]] @db doc-id)
             access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
-            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)
-            {pending-requests false denied-requests true} (group-by #(= :access-request.status/denied (:access-request/status %))
-                                                                    access-requests)]
+            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
          [:article
-          (when private?
-            (list
-             [:h2 "Share this idea."]
-             [:p "This document is only visible to those who have been granted access."
-              " Add a teammate's email to grant them access."]
-             [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
-                                                      false)
-                                      :on-key-down #(when (= "Enter" (.-key %))
-                                                      (cast! :permission-grant-submitted)
-                                                      false)}
-              [:input {:type "text"
-                       :required "true"
-                       :data-adaptive ""
-                       :value (or permission-grant-email "")
-                       :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
-              [:label {:data-placeholder "Email"
-                       :data-placeholder-nil "Type their email"
-                       :data-placeholder-forgot "Don't forget to submit"}]]
-             [:div.requested-access-list
-              [:h4 "Requests"]
-              (when (empty? pending-requests)
-                "none")
-              (for [r (sort-by :db/id pending-requests)]
-                [:div (:access-request/cust r)
-                 " "
-                 [:a {:role "button"
-                      :on-click #(cast! :access-request-granted {:request-id (:db/id r)
-                                                                 :doc-id doc-id})}
-                  (common/icon :check)]
-                 " "
-                 [:a {:role "button"
-                      :on-click #(cast! :access-request-denied {:request-id (:db/id r)
-                                                                :doc-id doc-id})}
-                  (common/icon :times)]])
-
-              [:h4 "Approved"]
-              (when (and (empty? permissions)
-                         (empty? access-grants))
-                "none")
-              (for [p (sort-by :db/id permissions)]
-                [:div (:permission/cust p)])
-              (for [g (sort-by :db/id access-grants)]
-                [:div (:access-grant/email g)])
-
-              [:h4 "Denied"]
-              (when (empty? denied-requests)
-                "none")
-              (for [r (sort-by :db/id denied-requests)]
-                [:div (:access-request/cust r)
-                 " "
-                 [:a {:role "button"
-                      :on-click #(cast! :access-request-granted {:request-id (:db/id r)
-                                                                 :doc-id doc-id})}
-                  "Grant access"]])]))])))))
+          [:h2 "Share this idea."]
+          [:p "This document is only visible to those who have been granted access."
+           " Add a teammate's email to grant them access."]
+          [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
+                                                   false)
+                                   :on-key-down #(when (= "Enter" (.-key %))
+                                                   (cast! :permission-grant-submitted)
+                                                   false)}
+           [:input {:type "text"
+                    :required "true"
+                    :data-adaptive ""
+                    :value (or permission-grant-email "")
+                    :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
+           [:label {:data-placeholder "Email"
+                    :data-placeholder-nil "Type their email"
+                    :data-placeholder-forgot "Don't forget to submit"}]]
+          [:div.access-list
+           (for [access-entity (sort-by :db/id (concat permissions access-grants access-requests))]
+             (render-access-entity access-entity cast!))]])))))
 
 (defn public-sharing [app owner]
   (reify
