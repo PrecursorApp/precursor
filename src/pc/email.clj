@@ -168,7 +168,7 @@
         requester (cust-model/find-by-id db (:access-request/cust access-request))
         doc (doc-model/find-by-id db (:access-request/document access-request))
         doc-id (:db/id doc)
-        doc-owner (cust-model/find-by-id db (:document/creator doc))]
+        doc-owner (cust-model/find-by-uuid db (:document/creator doc))]
     (mailgun/send-message {:from "Precursor <joinme@prcrsr.com>"
                            :to (:cust/email doc-owner)
                            :subject (str (format-requester requester)
