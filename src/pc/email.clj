@@ -152,7 +152,7 @@
       [:body
        [:p (str (format-requester requester) " wants access to one of your documents on Precursor.")]
        [:p "Go to the "
-        [:a {:href (str "https://prcrsr.com/document/" doc-id "?overlay=manage-permissions")}
+        [:a {:href (str "https://prcrsr.com/document/" doc-id "?overlay=sharing")}
          "manage permissions page"]
         " to grant or deny access."]
        [:p {:style "font-size: 12px"}
