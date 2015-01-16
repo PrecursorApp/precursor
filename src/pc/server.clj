@@ -238,6 +238,9 @@
                      (= "/health-check" (:uri req))))
     (let [cust (-> req :auth :cust)
           cust-str (when cust (str (:db/id cust) " (" (:cust/email cust) ")"))]
+      ;; log haproxy status if health check is down
+      (when (= "/health-check" (:uri req))
+        (log/info (:headers req)))
       (log/infof "%s: %s %s for %s %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) cust-str ms))))
 
 (defn logging-middleware [handler]
