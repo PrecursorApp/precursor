@@ -234,7 +234,7 @@
 (defn log-request [req resp ms]
   (when-not (or (re-find #"^/cljs" (:uri req))
                 (and (= 200 (:status resp))
-                     (re-find #"^/health-check$" (:uri req))))
+                     (= "/health-check" (:uri req))))
     (let [cust (-> req :auth :cust)
           cust-str (when cust (str (:db/id cust) " (" (:cust/email cust) ")"))]
       (log/infof "%s: %s %s for %s %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) cust-str ms))))
