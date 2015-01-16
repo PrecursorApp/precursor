@@ -229,7 +229,8 @@
          :body (blog/render-page slug)})
 
    ;; TODO: protect this route with admin credentials
-   (POST "/admin/reload-assets" []
+   ;;       and move to non-web ns
+   (GET "/admin/reload-assets" []
          (pc.assets/reload-assets))
 
    (GET "/health-check" req

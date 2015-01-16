@@ -9,4 +9,4 @@ deployment:
     branch: master
     commands:
       - lein run -m pc.assets/upload-manifest ${CIRCLE_SHA1}
-      - curl -X POST https://prcrsr.com/admin/reload-assets
+      - curl -f https://prcrsr.com/admin/reload-assets
