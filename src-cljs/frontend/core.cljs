@@ -3,7 +3,6 @@
             [frontend.async :refer [put!]]
             [clojure.string :as string]
             [datascript :as d]
-            [dommy.core :as dommy]
             [goog.dom]
             [goog.dom.DomHelper]
             [goog.net.Cookies]
@@ -22,6 +21,7 @@
             [frontend.controllers.errors :as errors-con]
             [frontend.env :as env]
             [frontend.instrumentation :refer [wrap-api-instrumentation]]
+            [frontend.localstorage :as localstorage]
             [frontend.sente :as sente]
             [frontend.state :as state]
             [goog.events]
@@ -36,7 +36,6 @@
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
                    [frontend.utils :refer [inspect timing swallow-errors]])
-  (:use-macros [dommy.macros :only [node sel sel1]])
   (:import [cljs.core.UUID]
            [goog.events.EventType]))
 
@@ -71,7 +70,7 @@
                        (js/String.fromCharCode (.-which event)))
         tokens     [shift? meta? ctrl? alt? char]
         key-string (string/join "+" (filter identity tokens))]
-    (when-not (contains? #{"INPUT" "TEXTAREA"} (.. event -target -tagName))
+    (when-not (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
       (when (get suppressed-key-combos key-string)
         (.preventDefault event))
       (when-not (.-repeat event)
@@ -108,31 +107,46 @@
 (def navigation-ch
   (chan))
 
+(defn set-tab-id []
+  (let [storage-imp (localstorage/new-sessionstorage-imp)]
+    (or (localstorage/read storage-imp "tab-id")
+        (let [tab-id (utils/uuid)]
+          (localstorage/save! storage-imp "tab-id" tab-id)
+          tab-id))))
+
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
-        cust (js->clj (aget js/window "Precursor" "cust") :keywordize-keys true)]
+        cust (-> (aget js/window "Precursor" "cust")
+               (js->clj :keywordize-keys true)
+               (utils/update-when-in [:flags] #(set (map keyword %))))
+        tab-id (set-tab-id)
+        sente-id (aget js/window "Precursor" "sente-id")]
+    ;; TODO: can remove this after we remove the cookie check in user-id-fn on the backend
+    (.remove (goog.net.Cookies. js/document) "prcrsr-client-id" "/")
     (atom (-> (assoc initial-state
-                ;; id for the browser, used to filter transactions
-                ;; TODO: rename client-uuid to something else
-                :client-uuid (UUID. (utils/uuid))
-                :db  (db/make-initial-db)
-                :cust cust
-                :comms {:controls      controls-ch
-                        :api           api-ch
-                        :errors        errors-ch
-                        :nav           navigation-ch
-                        :controls-mult (async/mult controls-ch)
-                        :api-mult      (async/mult api-ch)
-                        :errors-mult   (async/mult errors-ch)
-                        :nav-mult      (async/mult navigation-ch)
-                        :mouse-move    {:ch mouse-move-ch
-                                        :mult (async/mult mouse-move-ch)}
-                        :mouse-down    {:ch mouse-down-ch
-                                        :mult (async/mult mouse-down-ch)}
-                        :mouse-up      {:ch mouse-up-ch
-                                        :mult (async/mult mouse-up-ch)}})
-              (browser-settings/restore-browser-settings)))))
+                     ;; id for the browser, used to filter transactions
+                     ;; TODO: rename client-uuid to something else
+                     :tab-id tab-id
+                     :sente-id sente-id
+                     :client-id (str sente-id "-" tab-id)
+                     :db  (db/make-initial-db)
+                     :cust cust
+                     :comms {:controls      controls-ch
+                             :api           api-ch
+                             :errors        errors-ch
+                             :nav           navigation-ch
+                             :controls-mult (async/mult controls-ch)
+                             :api-mult      (async/mult api-ch)
+                             :errors-mult   (async/mult errors-ch)
+                             :nav-mult      (async/mult navigation-ch)
+                             :mouse-move    {:ch mouse-move-ch
+                                             :mult (async/mult mouse-move-ch)}
+                             :mouse-down    {:ch mouse-down-ch
+                                             :mult (async/mult mouse-down-ch)}
+                             :mouse-up      {:ch mouse-up-ch
+                                             :mult (async/mult mouse-up-ch)}})
+            (browser-settings/restore-browser-settings)))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"
@@ -146,12 +160,12 @@
   (when true
     (mlog "Controls Verbose: " value))
   (binding [frontend.async/*uuid* (:uuid (meta value))]
-    (let [previous-state @state]
-      ;; TODO: control-event probably shouldn't get browser-state
-      (swap! state (partial controls-con/control-event browser-state (first value) (second value)))
-      (controls-con/post-control-event! browser-state (first value) (second value) previous-state @state)
+    (let [previous-state @state
+          ;; TODO: control-event probably shouldn't get browser-state
+          current-state (swap! state (partial controls-con/control-event browser-state (first value) (second value)))]
+      (controls-con/post-control-event! browser-state (first value) (second value) previous-state current-state)
       ;; TODO: enable a way to set the event separate from the control event
-      (analytics/track-control (first value)))))
+      (analytics/track-control (first value) current-state))))
 
 (defn nav-handler
   [value state history]
@@ -210,20 +224,17 @@
              :_app-state-do-not-use state
              :handlers              handlers}}))
 
-(defn find-top-level-node []
-  (sel1 :body))
+(defn find-app-container []
+  (goog.dom/getElement "om-app"))
 
-(defn find-app-container [top-level-node]
-  (sel1 top-level-node "#om-app"))
-
-(defn main [state top-level-node history-imp]
+(defn main [state history-imp]
   (let [comms                    (:comms @state)
         cast!                    (fn [message data & [transient?]]
                                    (put! (:controls comms) [message data transient?]))
         histories                (atom [])
         undo-state               (atom {:transactions []
                                         :last-undo nil})
-        container                (find-app-container top-level-node)
+        container                (find-app-container)
         visibility-monitor       (goog.labs.dom.PageVisibilityMonitor.)
         uri-path                 (.getPath utils/parsed-uri)
         history-path             "/"
@@ -301,13 +312,11 @@
 (defn ^:export setup! []
   (js/React.initializeTouchEvents true)
   (let [state (app-state)
-        top-level-node (find-top-level-node)
-        history-imp (history/new-history-imp top-level-node)]
+        history-imp (history/new-history-imp)]
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (browser-settings/setup! state)
-    (.set (goog.net.Cookies. js/document) "prcrsr-client-id" (:client-uuid @state) -1 "/" false)
-    (main state top-level-node history-imp)
+    (main state history-imp)
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
     (sente/init state)
@@ -321,5 +330,8 @@
 
 (defn ^:export inspect-state []
   (clj->js @debug-state))
+
+(defn ^:export test-rollbar []
+  (swallow-errors (throw "This is an exception")))
 
 (defonce startup (setup!))

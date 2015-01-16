@@ -25,11 +25,11 @@
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
             [frontend.utils.state :as state-utils]
+            [goog.dom]
             [goog.string :as gstring]
             [goog.labs.userAgent.engine :as engine]
             goog.style)
-  (:require-macros [dommy.macros :refer [sel sel1]]
-                   [cljs.core.async.macros :as am :refer [go go-loop alt!]])
+  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.fx.dom.Scroll]))
 
 ;; --- Navigation Multimethod Declarations ---
@@ -85,6 +85,15 @@
   [browser-state message _ state]
   (update-in state [:camera :x] dec))
 
+(defn cancel-drawing [state]
+  (-> state
+    (assoc :drawing nil)
+    (assoc-in [:mouse :down] false)))
+
+(defmethod control-event :cancel-drawing
+  [browser-state message _ state]
+  (cancel-drawing state))
+
 (defmulti handle-keyboard-shortcut (fn [state shortcut-name] shortcut-name))
 
 (defmethod handle-keyboard-shortcut :default
@@ -121,11 +130,19 @@
 
 (defmethod handle-keyboard-shortcut :shortcuts-menu
   [state shortcut-name]
-  (overlay/replace-overlay state :shortcuts))
+  (if (= :shortcuts (overlay/current-overlay state))
+    (overlay/clear-overlays state)
+    (overlay/replace-overlay state :shortcuts)))
+
+(defn close-menu [state]
+  (assoc-in state [:menu :open?] false))
 
 (defmethod handle-keyboard-shortcut :escape-interaction
   [state shortcut-name]
-  (overlay/clear-overlays state))
+  (-> state
+    overlay/clear-overlays
+    close-menu
+    cancel-drawing))
 
 (defmethod handle-keyboard-shortcut :reset-canvas-position
   [state shortcut-name]
@@ -186,7 +203,26 @@
                 (update-mouse x y)
                 (assoc-in [:selected-eids] #{entity-id})
                 (update-in [:entity-ids] disj entity-id))]
-            r)))
+      r)))
+
+(defmethod control-event :drawing-edited
+  [browser-state message {:keys [layer x y]} state]
+  (-> state
+    (assoc-in [:drawing :in-progress?] true)
+    (assoc-in [:drawing :layers] [(-> layer
+                                    (update-in [:layer/start-x] #(if (= % x)
+                                                                   (:layer/end-x layer)
+                                                                   %))
+                                    (update-in [:layer/start-y] #(if (= % y)
+                                                                   (:layer/end-y layer)
+                                                                   %))
+                                    (dissoc :layer/end-x :layer/end-y)
+                                    (assoc :layer/current-x x
+                                           :layer/current-y y))])
+    (assoc-in [:mouse :down] true)
+    ;; TODO: do we need to update mouse?
+    ;; (update-mouse x y)
+    (assoc-in [:selected-eids] #{(:db/id layer)})))
 
 ;; These are used to globally increment names for layer targets and ids
 ;; There is definitely a better to do this, but not sure what it is at the moment.
@@ -313,7 +349,9 @@
                       layer
                       (when (= :pen (get-in state state/current-tool-path))
                         {:layer/path (svg/points->path points)})
-                      (when (= :circle (get-in state state/current-tool-path))
+                      (when (or (= :circle (get-in state state/current-tool-path))
+                                ;; TODO: hack to preserve border-radius for re-editing circles
+                                (layers/circle? layer))
                         {:layer/rx (Math/abs (- (:layer/start-x layer)
                                                 (:layer/current-x layer)))
                          :layer/ry (Math/abs (- (:layer/start-y layer)
@@ -372,7 +410,7 @@
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
-  (when (get-in current-state [:subscribers (str (:client-uuid current-state)) :show-mouse?])
+  (when (get-in current-state [:subscribers (:client-id current-state) :show-mouse?])
     (sente/send-msg (:sente current-state)
                     [:frontend/mouse-position (merge
                                                {:tool (get-in current-state state/current-tool-path)
@@ -390,14 +428,6 @@
 (defmethod post-control-event! :mouse-moved
   [browser-state message [x y] current-state previous-state]
   (maybe-notify-subscribers! current-state x y))
-
-(defmethod post-control-event! :show-mouse-toggled
-  [browser-state message {:keys [client-uuid show-mouse?]} current-state previous-state]
-  (sente/send-msg (:sente current-state)
-                  [:frontend/share-mouse {:document/id (:document/id current-state)
-                                          :show-mouse? show-mouse?
-                                          :mouse-owner-uuid client-uuid}]))
-
 
 (defn finalize-layer [state]
   (let [{:keys [x y]} (get-in state [:mouse])
@@ -471,22 +501,27 @@
   [browser-state message [x y {:keys [button ctrl?]}] previous-state current-state]
   (let [cast! (fn [msg & [payload]]
                 (put! (get-in current-state [:comms :controls]) [msg payload]))]
+    ;; If you click while writing text, you probably wanted to place it there
+    ;; You also want the right-click menu to open
+    (when (and (= (get-in current-state state/current-tool-path) :text)
+               (get-in current-state [:drawing :in-progress?]))
+      (cast! :text-layer-finished [x y]))
     (cond
-     (= button 2) (cast! :menu-opened)
-     (and (= button 0) ctrl?) (cast! :menu-opened)
-     ;; turning off Cmd+click for opening the menu
-     ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
-     (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
-     (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
-                                                                ;; if you click while writing text, you probably wanted to place it there
-                                                                (cast! :text-layer-finished [x y])
-                                                                (cast! :drawing-started [x y]))
-     (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
-     (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
-     :else                                             nil)))
+      (= button 2) (cast! :menu-opened)
+      (and (= button 0) ctrl?) (cast! :menu-opened)
+      ;; turning off Cmd+click for opening the menu
+      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
+      (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
+      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
+
+                                                                 (cast! :text-layer-finished [x y])
+                                                                 (cast! :drawing-started [x y]))
+      (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
+      :else                                             nil)))
 
 (defn detectable-movement?
   "Checks to make sure we moved the layer from its starting position"
@@ -637,7 +672,7 @@
 (defmethod control-event :menu-closed
   [browser-state message _ state]
   (-> state
-      (assoc-in [:menu :open?] false)))
+    close-menu))
 
 (defmethod control-event :newdoc-button-clicked
   [browser-state message _ state]
@@ -745,15 +780,15 @@
 (defmethod post-control-event! :chat-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
-        client-uuid (str (:client-uuid previous-state))
-        color (get-in previous-state [:subscribers client-uuid :color])]
+        client-id (:client-id previous-state)
+        color (get-in previous-state [:subscribers client-id :color])]
     (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
                       :chat/color color
                       :cust/uuid (get-in current-state [:cust :uuid])
                       ;; TODO: teach frontend to lookup cust/name from cust/uuid
                       :chat/cust-name (get-in current-state [:cust :name])
                       :db/id (get-in previous-state [:chat :entity-id])
-                      :session/uuid client-uuid
+                      :session/uuid (:sente-id previous-state)
                       :document/id (:document/id previous-state)
                       :client/timestamp (js/Date.)
                       ;; server will overwrite this
@@ -824,7 +859,7 @@
 
 (defmethod post-control-event! :chat-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (sel1 (:container browser-state) "#chat-box")))
+  (.focus (goog.dom/getElement "chat-box")))
 
 (defmethod control-event :invite-link-clicked
   [browser-state message _ state]
@@ -836,7 +871,7 @@
 
 (defmethod post-control-event! :invite-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (sel1 (:container browser-state) "#chat-box")))
+  (.focus (goog.dom/getElement "chat-box")))
 
 (defmethod control-event :chat-user-clicked
   [browser-state message {:keys [id-str]} state]
@@ -850,7 +885,7 @@
 
 (defmethod post-control-event! :chat-user-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (sel1 (:container browser-state) "#chat-box")))
+  (.focus (goog.dom/getElement "chat-box")))
 
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
@@ -1006,6 +1041,17 @@
       (overlay/add-overlay :shortcuts)
       (assoc-in state/shortcuts-menu-learned-path true)))
 
+
+(defmethod control-event :document-permissions-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :document-permissions)))
+
+(defmethod control-event :manage-permissions-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :manage-permissions)))
+
 (defmethod control-event :invite-email-changed
   [browser-state message {:keys [value]} state]
   (-> state
@@ -1022,3 +1068,47 @@
     (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
                                                                    :email email
                                                                    :invite-loc :overlay}])))
+
+(defmethod control-event :permission-grant-email-changed
+  [browser-state message {:keys [value]} state]
+  (-> state
+      (assoc-in state/permission-grant-email-path value)))
+
+(defmethod control-event :permission-grant-submitted
+  [browser-state message _ state]
+  (assoc-in state state/permission-grant-email-path nil))
+
+(defmethod post-control-event! :permission-grant-submitted
+  [browser-state message _ previous-state current-state]
+  (let [email (get-in previous-state state/permission-grant-email-path)
+        doc-id (:document/id previous-state)]
+    (sente/send-msg (:sente current-state) [:frontend/send-permission-grant {:document/id doc-id
+                                                                             :email email
+                                                                             :invite-loc :overlay}])))
+
+
+(defmethod post-control-event! :document-privacy-changed
+  [browser-state message {:keys [doc-id setting]} previous-state current-state]
+  ;; privacy is on the write blacklist until we have a better way to do attribute-level permissions
+  (d/transact! (:db current-state)
+               [{:db/id doc-id :document/privacy setting}])
+  (sente/send-msg (:sente current-state) [:frontend/change-privacy {:document/id doc-id
+                                                                    :setting setting}]))
+
+
+(defmethod post-control-event! :permission-requested
+  [browser-state message {:keys [doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/send-permission-request {:document/id doc-id
+                                                                             :invite-loc :overlay}]))
+
+(defmethod post-control-event! :access-request-granted
+  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/grant-access-request {:document/id doc-id
+                                                                          :request-id request-id
+                                                                          :invite-loc :overlay}]))
+
+(defmethod post-control-event! :access-request-denied
+  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/deny-access-request {:document/id doc-id
+                                                                         :request-id request-id
+                                                                         :invite-loc :overlay}]))

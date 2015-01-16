@@ -8,12 +8,12 @@
             [frontend.models.layer :as layer-model]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
+            [goog.dom]
             [goog.dom.xml :as xml]
             [goog.string :as gstring]
             [goog.style]
             [hiccups.runtime :as hiccupsrt])
-  (:require-macros [hiccups.core :as hiccups]
-                   [dommy.macros :refer [sel sel1]]))
+  (:require-macros [hiccups.core :as hiccups]))
 
 ;; TODO: all of this rendering code is shared with the backend. Obviously, this
 ;;       isn't the best place for it, but no great ideas for how to move it.
@@ -192,7 +192,7 @@
                                  (re-find #"<metadata>(.+)</metadata>")
                                  last
                                  reader/read-string)]
-    (let [size (goog.style/getSize (sel1 "#svg-canvas"))
+    (let [size (goog.style/getSize (goog.dom/getElement "svg-canvas"))
           canvas-size {:width (.-width size)
                        :height (.-height size)}]
       (put! (get-in app-state [:comms :controls]) [:layers-pasted (assoc layer-data :canvas-size canvas-size)]))))

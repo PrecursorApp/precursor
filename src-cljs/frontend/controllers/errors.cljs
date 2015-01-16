@@ -2,6 +2,7 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as str]
             [frontend.async :refer [put!]]
+            [frontend.overlay :as overlay]
             [frontend.state :as state]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
@@ -10,8 +11,7 @@
             [goog.dom]
             [goog.string :as gstring]
             [goog.style])
-  (:require-macros [dommy.macros :refer [sel sel1]]
-                   [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
+  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
 
 ;; --- Errors Multimethod Declarations ---
 
@@ -49,7 +49,7 @@
 (defmethod post-error! :api-error
   [container message args previous-state current-state]
   (when (get-in current-state state/error-message-path)
-    (set! (.-scrollTop (sel1 "body")) 0)))
+    (set! (.-scrollTop js/document.body) 0)))
 
 (defmethod error :error-triggered
   [container message error state]
@@ -58,4 +58,12 @@
 (defmethod post-error! :error-triggered
   [container message args previous-state current-state]
   (when (get-in current-state state/error-message-path)
-    (set! (.-scrollTop (sel1 "body")) 0)))
+    (set! (.-scrollTop js/document.body) 0)))
+
+(defmethod error :document-permission-error
+  [container message data state]
+  ;; When we have more fine-grained permissions, we'll put more info
+  ;; into the state
+  (-> state
+      (overlay/replace-overlay :document-permissions)
+      (assoc-in (state/document-access-path (:document/id state)) :none)))

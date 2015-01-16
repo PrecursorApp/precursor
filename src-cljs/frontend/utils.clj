@@ -31,6 +31,7 @@
   `(try
      (try ~@action
           (catch js/Error e#
+            (js/Rollbar.error e#)
             (merror e#)
             (when (:rethrow-errors? initial-query-map)
               (throw e#))))

@@ -111,3 +111,21 @@
         :layer/end-x (+ (:layer/start-x layer) new-width)
         :layer/current-y (+ (:layer/start-y layer) new-height)
         :layer/end-y (+ (:layer/start-y layer) new-height)))))
+
+(defmulti endpoints :layer/type)
+
+(defmethod endpoints :layer.type/rect
+  [layer]
+  (for [x ((juxt :layer/start-x :layer/end-x) layer)
+        y ((juxt :layer/start-y :layer/end-y) layer)]
+    [x y]))
+
+(defmethod endpoints :layer.type/line
+  [layer]
+  [[(:layer/start-x layer) (:layer/start-y layer)]
+   [(:layer/end-x layer) (:layer/end-y layer)]])
+
+;; TODO: hack to determine if shape is a circle, should be stored in the model
+(defn circle? [layer]
+  (or (:layer/rx layer)
+      (:layer/ry layer)))

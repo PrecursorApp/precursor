@@ -17,11 +17,17 @@
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
             [pc.http.doc :refer (duplicate-doc)]
+            [pc.http.lb :as lb]
             [pc.http.sente :as sente]
+            [pc.assets]
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
+            [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust]
+            [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
+            [pc.models.permission :as permission-model]
+            [pc.rollbar :as rollbar]
             [pc.profile :as profile]
             [pc.less :as less]
             [pc.views.content :as content]
@@ -39,7 +45,8 @@
 
 (defn ssl? [req]
   (or (= :https (:scheme req))
-      (= "https" (get-in req [:headers "x-forwarded-proto"]))))
+      (= "https" (get-in req [:headers "x-forwarded-proto"]))
+      (seq (get-in req [:headers "x-haproxy-server-state"]))))
 
 (def bucket-doc-ids (atom #{}))
 
@@ -52,36 +59,83 @@
   (routes
    (POST "/api/entity-ids" request
          (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
-   (GET "/api/document/:id" [id]
-        ;; TODO: should probably verify document exists
-        ;; TODO: take tx-date as a param
-        {:status 200
-         :body (pr-str {:layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong id)})})})
+
    (GET "/document/:document-id.svg" [document-id :as req]
-        (let [layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong document-id)})]
-          {:status 200
-           :headers {"Content-Type" "image/svg+xml"}
-           :body (render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
+        (let [db (pcd/default-db)
+              doc (doc-model/find-by-id db (Long/parseLong document-id))]
+          (cond (nil? doc)
+                (if-let [doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
+                  (redirect (str "/document/" (:db/id doc) ".svg"))
+
+                  {:status 404
+                   ;; TODO: Maybe return a "not found" image.
+                   :body "Document not found."})
+
+                (auth/has-document-permission? db doc (-> req :auth) :read)
+                (let [layers (layer/find-by-document db doc)]
+                  {:status 200
+                   :headers {"Content-Type" "image/svg+xml"}
+                   :body (render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))})
+
+                (auth/logged-in? req)
+                {:status 403
+                 ;; TODO: use an image here
+                 :body "Please request permission to access this document"}
+
+                :else
+                {:status 401
+                 ;; TODO: use an image here
+                 :body "Please log in so that we can check if you have permission to access this document"})))
    (GET "/document/:document-id.png" [document-id :as req]
-        (let [layers (layer/find-by-document (pcd/default-db) {:db/id (Long/parseLong document-id)})]
-          {:status 200
-           :headers {"Content-Type" "image/png"}
-           :body (svg->png (render-layers layers
-                                          :invert-colors? (-> req :params :printer-friendly (= "false"))
-                                          :size-limit 2000))}))
+        (let [db (pcd/default-db)
+              doc (doc-model/find-by-id db (Long/parseLong document-id))]
+          (cond (nil? doc)
+                (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
+                  (redirect (str "/document/" (:db/id redirect-doc) ".png"))
+
+                  {:status 404
+                   ;; TODO: Return a "not found" image.
+                   :body "Document not found."})
+
+                (auth/has-document-permission? db doc (-> req :auth) :read)
+                (let [layers (layer/find-by-document db doc)]
+                  {:status 200
+                   :headers {"Content-Type" "image/png"}
+                   :body (svg->png (render-layers layers
+                                                  :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                  :size-limit 2000))})
+
+                (auth/logged-in? req)
+                {:status 403
+                 ;; TODO: use an image here
+                 :body "Please request permission to access this document"}
+
+                :else
+                {:status 401
+                 ;; TODO: use an image here
+                 :body "Please log in so that we can check if you have permission to access this document"})))
+
    (GET ["/document/:document-id" :document-id #"[0-9]+"] [document-id :as req]
-        (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                             :google-client-id (google-client-id)}
-                            (when-let [cust (-> req :auth :cust)]
-                              {:cust {:email (:cust/email cust)
-                                      :uuid (:cust/uuid cust)
-                                      :name (:cust/name cust)}}))))
+        (let [db (pcd/default-db)
+              doc (doc-model/find-by-id db (Long/parseLong document-id))]
+          (if doc
+            (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                                 :google-client-id (google-client-id)
+                                 :sente-id (-> req :session :sente-id)}
+                                (when-let [cust (-> req :auth :cust)]
+                                  {:cust {:email (:cust/email cust)
+                                          :uuid (:cust/uuid cust)
+                                          :name (:cust/name cust)
+                                          :flags (:flags cust)}})))
+            (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
+              (redirect (str "/document/" (:db/id redirect-doc)))
+              ;; TODO: this should be a 404...
+              (redirect "/")))))
+
    (GET "/" req
-        (let [[document-id] (pcd/generate-eids (pcd/conn) 1)
-              cust-uuid (get-in req [:auth :cust :cust/uuid])]
-          @(d/transact (pcd/conn) [(merge {:db/id document-id :document/name "Untitled"}
-                                          (when cust-uuid {:document/creator cust-uuid}))])
-          (redirect (str "/document/" document-id))))
+        (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+              doc (doc-model/create-public-doc! (when cust-uuid {:document/creator cust-uuid}))]
+          (redirect (str "/document/" (:db/id doc)))))
 
    ;; Group newcomers into buckets with bucket-count users in each bucket.
    (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]
@@ -96,13 +150,13 @@
                                                           (< 0 (count subs) bucket-count)))
                                                    @sente/document-subs)))]
             (redirect (str "/document/" doc-id))
-            (let [[doc-id] (pcd/generate-eids (pcd/conn) 1)]
-              @(d/transact (pcd/conn) [{:db/id doc-id :document/name "Untitled"}])
-              (swap! bucket-doc-ids conj doc-id)
-              (redirect (str "/document/" doc-id))))))
+            (let [doc (doc-model/create-public-doc! {})]
+              (swap! bucket-doc-ids conj (:db/id doc))
+              (redirect (str "/document/" (:db/id doc)))))))
 
    (GET "/interesting" []
         (content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))
+
    (GET ["/interesting/:layer-count" :layer-count #"[0-9]+"] [layer-count]
         (content/interesting (db-admin/interesting-doc-ids {:layer-threshold (Integer/parseInt layer-count)})))
 
@@ -121,6 +175,7 @@
                             (format "<p><a href=\"/document/%s\">%s</a> with %s users</p>" doc-id doc-id (count subs))))
                      ["Nothing occupied right now :("]))
                 "</body></html")})
+
    (compojure.route/resources "/" {:root "public"
                                    :mime-types {:svg "image/svg"}})
    (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn sente-state) req))
@@ -136,7 +191,7 @@
               {:status 302
                :body ""
                :session (assoc (:session req)
-                          :http-session-key (:cust/http-session-key cust))
+                               :http-session-key (:cust/http-session-key cust))
                :headers {"Location" (str (url/map->URL {:host (profile/hostname)
                                                         :protocol (if (ssl? req) "https" "http")
                                                         :port (if (ssl? req)
@@ -144,6 +199,7 @@
                                                                 (profile/http-port))
                                                         :path (or (get parsed-state "redirect-path") "/")
                                                         :query (get parsed-state "redirect-query")}))}}))))
+
    (POST "/logout" {{redirect-to :redirect-to} :params :as req}
          (when-let [cust (-> req :auth :cust)]
            (cust/retract-session-key! cust))
@@ -172,12 +228,26 @@
         {:status 200
          :body (blog/render-page slug)})
 
+   ;; TODO: protect this route with admin credentials
+   ;;       and move to non-web ns
+   (GET "/admin/reload-assets" []
+        (pc.assets/reload-assets)
+        {:status 200})
+
+   (GET "/health-check" req
+        (lb/health-check-response req))
+
    (ANY "*" [] {:status 404 :body "Page not found."})))
 
 (defn log-request [req resp ms]
-  (when-not (re-find #"^/cljs" (:uri req))
+  (when-not (or (re-find #"^/cljs" (:uri req))
+                (and (= 200 (:status resp))
+                     (= "/health-check" (:uri req))))
     (let [cust (-> req :auth :cust)
           cust-str (when cust (str (:db/id cust) " (" (:cust/email cust) ")"))]
+      ;; log haproxy status if health check is down
+      (when (= "/health-check" (:uri req))
+        (log/info (:headers req)))
       (log/infof "%s: %s %s for %s %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) cust-str ms))))
 
 (defn logging-middleware [handler]
@@ -188,6 +258,7 @@
       (try
         (log-request req resp (time/in-millis (time/interval start stop)))
         (catch Exception e
+          (rollbar/report-exception e :request req)
           (log/error e)))
       resp)))
 
@@ -215,14 +286,22 @@
       (catch Object e
         (log/error e)
         (.printStackTrace e)
+        (rollbar/report-exception e :request req)
         {:status 500
          :body "Sorry, something completely unexpected happened!"}))))
 
 (defn auth-middleware [handler]
   (fn [req]
-    (if-let [cust (some->> req :session :http-session-key (cust/find-by-http-session-key (pcd/default-db)))]
-      (handler (assoc req :auth {:cust cust}))
-      (handler req))))
+    (let [db (pcd/default-db)
+          cust (some->> req :session :http-session-key (cust/find-by-http-session-key db))
+          access-grant (some->> req :params :access-grant-token (access-grant-model/find-by-token db))]
+      (when (and cust access-grant)
+        (permission-model/convert-access-grant access-grant cust {:document/id (:access-grant/document access-grant)
+                                                                  :cust/uuid (:cust/uuid cust)
+                                                                  :transaction/broadcast true}))
+      (handler (cond cust (assoc-in req [:auth :cust] cust)
+                     access-grant (assoc-in req [:auth :access-grant] access-grant)
+                     :else req)))))
 
 (defn wrap-wrap-reload
   "Only applies wrap-reload middleware in development"
@@ -231,11 +310,26 @@
     handler
     (wrap-reload handler)))
 
+(defn assoc-sente-id [req response sente-id]
+  (if (= (get-in req [:session :sente-id]) sente-id)
+    response
+    (-> response
+      (assoc :session (:session response (:session req)))
+      (assoc-in [:session :sente-id] sente-id))))
+
+(defn wrap-sente-id [handler]
+  (fn [req]
+    (let [sente-id (or (get-in req [:session :sente-id])
+                       (str (UUID/randomUUID)))]
+      (if-let [response (handler (assoc-in req [:session :sente-id] sente-id))]
+        (assoc-sente-id req response sente-id)))))
+
 (defn handler [sente-state]
   (->
    (app sente-state)
    (auth-middleware)
    (wrap-anti-forgery)
+   (wrap-sente-id)
    (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
                   :cookie-attrs {:http-only true
                                  :expires (time-format/unparse (:rfc822 time-format/formatters) (time/from-now (time/years 1))) ;; expire one year after the server starts up

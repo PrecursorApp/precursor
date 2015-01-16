@@ -76,6 +76,7 @@
    :menu-mid-stroke "M5,50h90"
    :menu-btm-left-stroke "M5,75h45"
    :menu-btm-right-stroke "M50,75h45"
+   :blog-stroke "M85,32.5H35 M35,50h50 M35,67.5h50 M25,85h60 c5.5,0,10-4.5,10-10V15H25v60c0,5.5-4.5,10-10,10S5,80.5,5,75V35h15"
    :clock-stroke "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z M71.2,71.2C71.2,71.2,50,50,50,50V20"
    :shift-stroke "M5,52L50,7l45,45H70.5V93H29.5V52H5z"
    :option-stroke "M95,15H65 M95,85H75L35,15H5"
@@ -113,6 +114,7 @@
    :crosshair {:paths [:crosshair-stroke]}
    :ibeam {:paths [:ibeam-stroke]}
    :menu {:paths [:menu-top-left-stroke :menu-top-right-stroke :menu-mid-stroke :menu-btm-left-stroke :menu-btm-right-stroke]}
+   :blog {:paths [:blog-stroke]}
    :clock {:paths [:clock-stroke]}
    :shift {:paths [:shift-stroke]}
    :option {:paths [:option-stroke]}

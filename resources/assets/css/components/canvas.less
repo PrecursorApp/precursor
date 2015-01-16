@@ -315,6 +315,7 @@
   cursor: default;
 }
 .radial-tip {
+  .user-select(none);
   position: absolute;
   top: -@tile;
   left: -@tile;
@@ -407,4 +408,25 @@
     transition-duration+: 0ms;
     transition-duration+: @speed;
   }
+}
+.edit-handles {
+  .edit-handle {
+    fill: @color_select;
+    &.bottom.right {
+      cursor: nwse-resize;
+    }
+    &.top.left {
+      cursor: nwse-resize;
+    }
+    &.bottom.left {
+      cursor: nesw-resize;
+    }
+    &.top.right {
+      cursor: nesw-resize;
+    }
+  }
+}
+.handle-outline {
+  stroke: @color_select;
+  stroke-dasharray: 1,1;
 }

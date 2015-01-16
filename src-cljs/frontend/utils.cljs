@@ -183,3 +183,15 @@
   (let [maps (filter identity maps)]
     (assert (every? map? maps))
     (apply merge-with deep-merge* maps)))
+
+(defn update-when-in
+  "update-in, but only if the nested sequence of keys already exists!"
+  [m ks f & args]
+  (let [sentinel (js-obj)]
+    (if-not (identical? sentinel (get-in m ks sentinel))
+      (apply update-in m ks f args)
+      m)))
+
+(defn stop-event [e]
+  (.stopPropagation e)
+  (.preventDefault e))
