@@ -159,7 +159,7 @@
       (when (and (= :needs-email (schema/get-ident (:a datom)))
                  (not (contains? #{:transaction.source/unmark-sent-email
                                    :transaction.source/mark-sent-email}
-                                 (:transaction.source @annotations))))
+                                 (:transaction/source @annotations))))
         (log/infof "Queueing email for %s" (:e datom))
         (future
           (utils/with-report-exceptions
