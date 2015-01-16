@@ -32,12 +32,12 @@
                                                [(last parts)]))))))
 
 
-(defn chat-item [chat owner {:keys [client-id show-sender?]}]
+(defn chat-item [chat owner {:keys [sente-id show-sender?]}]
   (reify
     om/IRender
     (render [_]
       (let [id (apply str (take 6 (str (:session/uuid chat))))
-            name (chat-model/display-name chat client-id)
+            name (chat-model/display-name chat sente-id)
             chat-body (if (string? (:chat/body chat))
                         (linkify (:chat/body chat))
                         (:chat/body chat))
@@ -87,7 +87,7 @@
      (time/after? time (time/minus start-of-day (time/days 6))) (day-of-week (time/day-of-week time))
      :else (str (month-of-year (.getMonth time)) " " (.getDate time)))))
 
-(defn chat [{:keys [db chat-body client-uuid chat-opened chat-bot]} owner]
+(defn chat [{:keys [db chat-body sente-id client-id chat-opened chat-bot]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -119,7 +119,6 @@
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
-            client-id (str client-uuid)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
             dummy-chat {:chat/body [:span
                                     "Welcome to Precursor! "
@@ -146,9 +145,9 @@
                      (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
                        (om/build chat-item chat
                                  {:key :db/id
-                                  :opts {:client-id client-id
-                                         :show-sender? (not= (chat-model/display-name prev-chat client-id)
-                                                             (chat-model/display-name chat client-id))}})))))]
+                                  :opts {:sente-id sente-id
+                                         :show-sender? (not= (chat-model/display-name prev-chat sente-id)
+                                                             (chat-model/display-name chat sente-id))}})))))]
           [:form {:on-submit #(do (cast! :chat-submitted)
                                   false)
                   :on-key-down #(when (and (= "Enter" (.-key %))
@@ -178,7 +177,7 @@
     (render-state [_ {:keys [editing-name? new-name]}]
       (let [{:keys [cast!]} (om/get-shared owner)
             controls-ch (om/get-shared owner [:comms :controls])
-            client-id (str (:client-uuid app))
+            client-id (:client-id app)
             chat-opened? (get-in app state/chat-opened-path)
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])
@@ -237,7 +236,8 @@
           ;; XXX better name here
           (om/build chat {:db (:db app)
                           :document/id (:document/id app)
-                          :client-uuid (:client-uuid app)
+                          :sente-id (:sente-id app)
+                          :client-id (:client-id app)
                           :chat-body (get-in app [:chat :body])
                           :chat-bot (get-in app (state/doc-chat-bot-path document-id))
                           :chat-opened (get-in app state/chat-opened-path)})])))))

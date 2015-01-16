@@ -1,6 +1,7 @@
 (ns pc.views.content
   (:require [cheshire.core :as json]
             [hiccup.core :as h]
+            [pc.assets]
             [pc.views.scripts :as scripts]
             [pc.views.email-landing :as email-landing]
             [pc.profile :refer (prod-assets?)])
@@ -28,12 +29,13 @@
    [:head
     [:title "Precursor - Simple collaborative prototyping"]
     [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
-    [:link.css-styles {:rel "stylesheet", :href (str "/css/app.css?rand=" (Math/random))}]
+    [:link.css-styles {:rel "stylesheet", :href (pc.assets/asset-path "/css/app.css")}]
     [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
     [:link {:rel "icon" :href "/favicon.ico" :type "image/ico"}]
     (embed-json-in-head "window.Precursor" (json/encode view-data))
     (when (prod-assets?)
       scripts/google-analytics)
+    (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))
     (scripts/mixpanel)]
    [:body
     [:div.alerts-container]
@@ -48,7 +50,7 @@
    [:div.debugger-container]
    [:div#om-app]
    (if (prod-assets?)
-     [:script {:type "text/javascript" :src (str "/js/vendor/frontend-production.js?rand=" (Math/random))}]
+     [:script {:type "text/javascript" :src (pc.assets/asset-path "/cljs/production/frontend.js")}]
      (if false
        [:script {:type "text/javascript" :src "/js/bin-debug/main.js"}]
        (list

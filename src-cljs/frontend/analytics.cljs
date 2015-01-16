@@ -1,10 +1,13 @@
 (ns frontend.analytics
   (:require [frontend.analytics.mixpanel :as mixpanel]
+            [frontend.analytics.rollbar :as rollbar]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]))
 
 
 (defn init-user [cust]
+  (utils/swallow-errors
+   (rollbar/init (:uuid cust) (:email cust)))
   (utils/swallow-errors
    (mixpanel/identify (:uuid cust))
    (mixpanel/name-tag (:email cust))

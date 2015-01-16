@@ -467,7 +467,7 @@
              [:div.shortcuts-result "Snap to origin"]]
             [:div.shortcuts-item
              [:div.shortcuts-key "?"]
-             [:div.shortcuts-result "Reopen this menu"]]
+             [:div.shortcuts-result "Toggle this menu"]]
             [:div.shortcuts-item
              [:div.shortcuts-key "Delete"]
              [:div.shortcuts-result "Delete selected"]]

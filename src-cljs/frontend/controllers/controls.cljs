@@ -130,7 +130,9 @@
 
 (defmethod handle-keyboard-shortcut :shortcuts-menu
   [state shortcut-name]
-  (overlay/replace-overlay state :shortcuts))
+  (if (= :shortcuts (overlay/current-overlay state))
+    (overlay/clear-overlays state)
+    (overlay/replace-overlay state :shortcuts)))
 
 (defn close-menu [state]
   (assoc-in state [:menu :open?] false))
@@ -408,7 +410,7 @@
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
-  (when (get-in current-state [:subscribers (str (:client-uuid current-state)) :show-mouse?])
+  (when (get-in current-state [:subscribers (:client-id current-state) :show-mouse?])
     (sente/send-msg (:sente current-state)
                     [:frontend/mouse-position (merge
                                                {:tool (get-in current-state state/current-tool-path)
@@ -426,14 +428,6 @@
 (defmethod post-control-event! :mouse-moved
   [browser-state message [x y] current-state previous-state]
   (maybe-notify-subscribers! current-state x y))
-
-(defmethod post-control-event! :show-mouse-toggled
-  [browser-state message {:keys [client-uuid show-mouse?]} current-state previous-state]
-  (sente/send-msg (:sente current-state)
-                  [:frontend/share-mouse {:document/id (:document/id current-state)
-                                          :show-mouse? show-mouse?
-                                          :mouse-owner-uuid client-uuid}]))
-
 
 (defn finalize-layer [state]
   (let [{:keys [x y]} (get-in state [:mouse])
@@ -786,15 +780,15 @@
 (defmethod post-control-event! :chat-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
-        client-uuid (str (:client-uuid previous-state))
-        color (get-in previous-state [:subscribers client-uuid :color])]
+        client-id (:client-id previous-state)
+        color (get-in previous-state [:subscribers client-id :color])]
     (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
                       :chat/color color
                       :cust/uuid (get-in current-state [:cust :uuid])
                       ;; TODO: teach frontend to lookup cust/name from cust/uuid
                       :chat/cust-name (get-in current-state [:cust :name])
                       :db/id (get-in previous-state [:chat :entity-id])
-                      :session/uuid client-uuid
+                      :session/uuid (:sente-id previous-state)
                       :document/id (:document/id previous-state)
                       :client/timestamp (js/Date.)
                       ;; server will overwrite this

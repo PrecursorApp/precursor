@@ -27,8 +27,15 @@ mixpanel.get_distinct_id;
 var _pq;
 _pq.push;
 
-var _rollbar;
-_rollbar.push;
+var Rollbar;
+Rollbar.error;
+Rollbar.critical;
+Rollbar.warning;
+Rollbar.info;
+Rollbar.debug;
+Rollbar.configure;
+Rollbar.scope;
+Rollbar.error;
 
 var twttr;
 twttr.conversion;

@@ -21,6 +21,7 @@
             [frontend.controllers.errors :as errors-con]
             [frontend.env :as env]
             [frontend.instrumentation :refer [wrap-api-instrumentation]]
+            [frontend.localstorage :as localstorage]
             [frontend.sente :as sente]
             [frontend.state :as state]
             [goog.events]
@@ -69,7 +70,7 @@
                        (js/String.fromCharCode (.-which event)))
         tokens     [shift? meta? ctrl? alt? char]
         key-string (string/join "+" (filter identity tokens))]
-    (when-not (contains? #{"INPUT" "TEXTAREA"} (.. event -target -tagName))
+    (when-not (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
       (when (get suppressed-key-combos key-string)
         (.preventDefault event))
       (when-not (.-repeat event)
@@ -106,33 +107,46 @@
 (def navigation-ch
   (chan))
 
+(defn set-tab-id []
+  (let [storage-imp (localstorage/new-sessionstorage-imp)]
+    (or (localstorage/read storage-imp "tab-id")
+        (let [tab-id (utils/uuid)]
+          (localstorage/save! storage-imp "tab-id" tab-id)
+          tab-id))))
+
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
         cust (-> (aget js/window "Precursor" "cust")
                (js->clj :keywordize-keys true)
-               (utils/update-when-in [:flags] #(set (map keyword %))))]
+               (utils/update-when-in [:flags] #(set (map keyword %))))
+        tab-id (set-tab-id)
+        sente-id (aget js/window "Precursor" "sente-id")]
+    ;; TODO: can remove this after we remove the cookie check in user-id-fn on the backend
+    (.remove (goog.net.Cookies. js/document) "prcrsr-client-id" "/")
     (atom (-> (assoc initial-state
-                ;; id for the browser, used to filter transactions
-                ;; TODO: rename client-uuid to something else
-                :client-uuid (UUID. (utils/uuid))
-                :db  (db/make-initial-db)
-                :cust cust
-                :comms {:controls      controls-ch
-                        :api           api-ch
-                        :errors        errors-ch
-                        :nav           navigation-ch
-                        :controls-mult (async/mult controls-ch)
-                        :api-mult      (async/mult api-ch)
-                        :errors-mult   (async/mult errors-ch)
-                        :nav-mult      (async/mult navigation-ch)
-                        :mouse-move    {:ch mouse-move-ch
-                                        :mult (async/mult mouse-move-ch)}
-                        :mouse-down    {:ch mouse-down-ch
-                                        :mult (async/mult mouse-down-ch)}
-                        :mouse-up      {:ch mouse-up-ch
-                                        :mult (async/mult mouse-up-ch)}})
-              (browser-settings/restore-browser-settings)))))
+                     ;; id for the browser, used to filter transactions
+                     ;; TODO: rename client-uuid to something else
+                     :tab-id tab-id
+                     :sente-id sente-id
+                     :client-id (str sente-id "-" tab-id)
+                     :db  (db/make-initial-db)
+                     :cust cust
+                     :comms {:controls      controls-ch
+                             :api           api-ch
+                             :errors        errors-ch
+                             :nav           navigation-ch
+                             :controls-mult (async/mult controls-ch)
+                             :api-mult      (async/mult api-ch)
+                             :errors-mult   (async/mult errors-ch)
+                             :nav-mult      (async/mult navigation-ch)
+                             :mouse-move    {:ch mouse-move-ch
+                                             :mult (async/mult mouse-move-ch)}
+                             :mouse-down    {:ch mouse-down-ch
+                                             :mult (async/mult mouse-down-ch)}
+                             :mouse-up      {:ch mouse-up-ch
+                                             :mult (async/mult mouse-up-ch)}})
+            (browser-settings/restore-browser-settings)))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"
@@ -302,7 +316,6 @@
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (browser-settings/setup! state)
-    (.set (goog.net.Cookies. js/document) "prcrsr-client-id" (:client-uuid @state) -1 "/" false)
     (main state history-imp)
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
@@ -317,5 +330,8 @@
 
 (defn ^:export inspect-state []
   (clj->js @debug-state))
+
+(defn ^:export test-rollbar []
+  (swallow-errors (throw "This is an exception")))
 
 (defonce startup (setup!))

@@ -9,7 +9,7 @@
                  [datascript "0.7.1"]
 
                  [compojure "1.1.8"]
-                 [cheshire "5.2.0"]
+                 [cheshire "5.4.0"]
                  [clj-time "0.6.0"]
                  [org.clojure/tools.nrepl "0.2.3"]
                  [javax.servlet/servlet-api "2.5"]
@@ -21,19 +21,22 @@
                  [org.slf4j/slf4j-api "1.6.2"]
                  [org.slf4j/slf4j-log4j12 "1.6.2"]
                  [cider/cider-nrepl "0.8.1"]
-                 [clj-http "1.0.0"]
-                 [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop]]
+                 [clj-http "1.0.1"]
+                 [com.datomic/datomic-free "0.9.4899" :exclusions [[org.slf4j/slf4j-nop]
+                                                                   [com.amazonaws/aws-java-sdk]]]
+                 [amazonica "0.3.12"]
 
                  [ring/ring "1.2.2"]
                  [ring/ring-anti-forgery "1.0.0"]
                  [http-kit "2.1.18"]
-                 [com.taoensso/sente "1.2.0"]
+                 [com.taoensso/sente "1.3.0-RC1"]
                  [clj-stacktrace "0.2.8"]
 
                  [schejulure "1.0.1"]
 
                  [org.clojars.pallix/batik "1.7.0"]
                  [com.cemerick/pomegranate "0.3.0"]
+                 [com.novemberain/pantomime "2.3.0"]
 
                  [crypto-equality "1.0.0"]
 
@@ -95,15 +98,15 @@
                         :compiler {:output-to "resources/public/cljs/out/frontend-dev.js"
                                    :output-dir "resources/public/cljs/out"
                                    :optimizations :none
-                                   :source-map "resources/public/cljs/out/sourcemap-dev.js"}}
+                                   :source-map "resources/public/cljs/out/sourcemap-frontend.map"}}
                        {:id "production"
                         :source-paths ["src-cljs" "yaks/om/src"]
                         :compiler {:pretty-print false
                                    :preamble ["public/js/vendor/react-0.12.2.min.js"]
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
+                                   :output-wrapper false
                                    :optimizations :advanced
                                    :externs ["src-cljs/js/react-externs.js"
                                              "src-cljs/js/analytics-externs.js"]
-                                   ;; :source-map "resources/public/cljs/production/sourcemap-frontend.js"
-                                   }}]})
+                                   :source-map "resources/public/cljs/production/sourcemap-frontend.map"}}]})
