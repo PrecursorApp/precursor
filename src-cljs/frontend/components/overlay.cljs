@@ -226,7 +226,7 @@
                     :data-placeholder-nil "Type their email"
                     :data-placeholder-forgot "Don't forget to submit"}]]
           [:div.access-list
-           (for [access-entity (sort-by :db/id (concat permissions access-grants access-requests))]
+           (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
              (render-access-entity access-entity cast!))]])))))
 
 (defn public-sharing [app owner]
