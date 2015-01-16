@@ -120,24 +120,6 @@
               (common/icon :users)
               [:span "Request Access"]])
 
-           ;; (if (auth/has-document-access? app (:document/id app))
-           ;;   [:a.menu-item {:on-click #(cast! :invite-menu-opened)
-           ;;                  :role "button"}
-           ;;    (common/icon :users)
-           ;;    [:span "Invite Collaborators"]]
-
-           ;;   [:a.menu-item {:on-click #(cast! :document-permissions-opened)
-           ;;                  :role "button"}
-           ;;    (common/icon :users)
-           ;;    [:span "Request Access"]])
-
-           ;; (if (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
-           ;;          (auth/admin? @db doc {:cust/uuid (get-in app [:cust :uuid])}))
-           ;;   [:a.menu-item {:on-click #(cast! :manage-permissions-opened)
-           ;;                  :role "button"}
-           ;;    (common/icon :users)
-           ;;    [:span "Manage permissions and privacy"]])
-
            [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
                           :class "mobile-hidden"
                           :role "button"}
@@ -150,56 +132,7 @@
             [:span "Blog"]]
            (om/build auth-link app)]])))))
 
-; (defn invite [app owner]
-;   (reify
-;     om/IRender
-;     (render [_]
-;       (let [cast! (om/get-shared owner :cast!)
-;             invite-email (get-in app state/invite-email-path)]
-;         (html
-;          [:div.menu-view
-;           [:div.menu-view-frame
-;            [:article
-;             [:h2 "Share this with your team."]
-;             [:p "Send your teammates invites to come collaborate with you in this doc."]
-;             (if-not (:cust app)
-;               [:a.menu-button {:href (auth/auth-url)
-;                                :on-click #(do
-;                                             (.preventDefault %)
-;                                             (cast! :track-external-link-clicked
-;                                                    {:path (auth/auth-url)
-;                                                     :event "Signup Clicked"
-;                                                     :properties {:source "username-overlay"}}))
-;                                :role "button"}
-;                "Sign Up"]
 
-;               [:form.menu-invite-form {:on-submit #(do (cast! :invite-submitted)
-;                                                        false)
-;                                        :on-key-down #(when (= "Enter" (.-key %))
-;                                                        (cast! :email-invite-submitted)
-;                                                        false)}
-;                [:input {:type "text"
-;                         :required "true"
-;                         :data-adaptive ""
-;                         :value (or invite-email "")
-;                         :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
-;                [:label {:data-placeholder "Teammate's Email"
-;                         :data-placeholder-nil "What's your teammate's email?"
-;                         :data-placeholder-forgot "Don't forget to submit."}]])
-;             (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
-;               [:div response])
-;             ;; TODO: keep track of invites
-;             ;; [:p "You've sent 3 invitations to this doc."]
-;             ;; [:div.invite-recipient
-;             ;;  [:div.invite-recipient-email "fake@email.com"]
-;             ;;  [:a {:role "button"} "Resend"]]
-;             ;; [:div.invite-recipient
-;             ;;  [:div.invite-recipient-email "fake@email.com"]
-;             ;;  [:a {:role "button"} "Resend"]]
-;             ;; [:div.invite-recipient
-;             ;;  [:div.invite-recipient-email "fake@email.com"]
-;             ;;  [:a {:role "button"} "Resend"]]
-;             ]]])))))
 
 (defn private-sharing [app owner]
   (reify
@@ -226,7 +159,6 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)
-            private? (= :document.privacy/private (:document/privacy doc))
             permission-grant-email (get-in app state/permission-grant-email-path)
             permissions (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/document ?doc-id]] @db doc-id)
             access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
