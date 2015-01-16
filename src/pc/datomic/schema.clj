@@ -120,9 +120,13 @@
               :db/doc "db/id of this layer's parent. Could be called \"parent\", but want to avoid confusion with \"child\", which is taken.")
 
    ;; No logins at the moment, so we'll use this to identify users
+   ;; chats rely on this, is it a good idea? Nice to have something stable across tabs
    (attribute :session/uuid
               :db.type/uuid
               :db/index true)
+
+   (attribute :session/client-id
+              :db.type/string)
 
    (attribute :document/uuid
               :db.type/uuid
@@ -184,10 +188,16 @@
    (attribute :cust/verified-email
               :db.type/boolean)
 
+   (attribute :cust/guessed-dribbble-username
+              :db.type/string)
+
    (attribute :google-account/sub
               :db.type/string
               :db/unique :db.unique/value
               :db/doc "Account id unique across Google: https://developers.google.com/accounts/docs/OAuth2Login")
+
+   (attribute :google-account/avatar
+              :db.type/uri)
 
    (attribute :cust/uuid
               :db.type/uuid
