@@ -2,7 +2,7 @@
   (:require [pc.svg :as svg]
             [hiccup.core :refer (h html)])
   (:import [java.io ByteArrayOutputStream ByteArrayInputStream]
-           [org.apache.batik.transcoder.image PNGTranscoder]
+           [org.apache.batik.transcoder.image PNGTranscoder JPEGTranscoder]
            [org.apache.batik.transcoder TranscoderInput TranscoderOutput]))
 
 (defmulti svg-element (fn [layer opts] (:layer/type layer)))
@@ -75,6 +75,14 @@
   (let [out (ByteArrayOutputStream.)]
     (with-in-str content
       (.transcode (PNGTranscoder.)
+                  (TranscoderInput. *in*)
+                  (TranscoderOutput. out)))
+    (clojure.java.io/input-stream (.toByteArray out))))
+
+(defn svg->jpg [content]
+  (let [out (ByteArrayOutputStream.)]
+    (with-in-str content
+      (.transcode (JPEGTranscoder.)
                   (TranscoderInput. *in*)
                   (TranscoderOutput. out)))
     (clojure.java.io/input-stream (.toByteArray out))))

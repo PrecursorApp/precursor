@@ -1,7 +1,14 @@
 (ns pc.replay
-  (:require [datomic.api :as d]
+  (:require [clojure.java.io :as io]
+            [clojure.tools.logging :as log]
+            [datomic.api :as d]
+            [fs]
+            [gift.core :refer [make-gif]]
             [pc.datomic :as pcd]
-            [pc.datomic.schema :as schema]))
+            [pc.datomic.schema :as schema]
+            [pc.models.layer :as layer-model]
+            [pc.render :as render]
+            [pc.utils :as utils]))
 
 (defn get-document-transactions
   "Gets the broadcasted transactions for a document"
@@ -52,3 +59,22 @@
                                  :document/id (:db/id new-doc)
                                  :transaction/broadcast true}))
         (Thread/sleep sleep-ms)))))
+
+(defn ->gif [db doc]
+  (let [image-dir (fs/tempdir)]
+    (try
+      (let [transactions (get-document-transactions db doc)
+            files (for [t (sort-by :db/txInstant transactions)
+                        :let [t-db (d/as-of db (:db/id t))
+                              filepath (fs/join image-dir (str (.toEpochMilli (.toInstant (:db/txInstant t)))
+                                                               ".jpg"))
+                              layers (layer-model/find-by-document t-db doc)
+                              svg (render/render-layers layers :invert-colors? true)
+                              image-stream (render/svg->jpg svg)]]
+                    (do
+                      (io/copy image-stream (io/file filepath))
+                      filepath))]
+        (make-gif "output.gif" files))
+      (finally
+        ;; XXX delete image-dir
+        (utils/inspect image-dir)))))

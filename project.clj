@@ -33,6 +33,9 @@
                  [schejulure "1.0.1"]
 
                  [org.clojars.pallix/batik "1.7.0"]
+                 ;; TODO: need to replace this with a verison that doesn't require a filesystem
+                 [gift "0.1.0"]
+
                  [com.cemerick/pomegranate "0.3.0"]
 
                  [crypto-equality "1.0.0"]
