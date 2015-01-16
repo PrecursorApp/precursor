@@ -314,7 +314,7 @@
   (fn [req]
     (let [sente-id (or (get-in req [:session :sente-id])
                        (str (UUID/randomUUID)))]
-      (if-let [response (handler req)]
+      (if-let [response (handler (assoc-in req [:session :sente-id] sente-id))]
         (assoc-sente-id req response sente-id)))))
 
 (defn handler [sente-state]
