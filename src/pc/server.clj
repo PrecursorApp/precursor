@@ -44,7 +44,8 @@
 
 (defn ssl? [req]
   (or (= :https (:scheme req))
-      (= "https" (get-in req [:headers "x-forwarded-proto"]))))
+      (= "https" (get-in req [:headers "x-forwarded-proto"]))
+      (seq (get-in req [:headers "x-haproxy-server-state"]))))
 
 (def bucket-doc-ids (atom #{}))
 
