@@ -19,6 +19,7 @@
             [pc.http.doc :refer (duplicate-doc)]
             [pc.http.lb :as lb]
             [pc.http.sente :as sente]
+            [pc.assets]
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
             [pc.models.access-grant :as access-grant-model]
@@ -226,6 +227,10 @@
    (GET "/blog/:slug" [slug]
         {:status 200
          :body (blog/render-page slug)})
+
+   ;; TODO: protect this route with admin credentials
+   (POST "/admin/reload-assets" []
+         (pc.assets/reload-assets))
 
    (GET "/health-check" req
         (lb/health-check-response req))
