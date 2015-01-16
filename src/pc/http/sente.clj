@@ -31,12 +31,15 @@
 (defn user-id-fn [req]
   ;; {:pre [(seq (get-in req [:session :sente-id]))
   ;;        (seq (get-in req [:params :tab-id]))]}
-  ;; TODO: uncomment once the frontend fully deploys
-  ;; XXX: is the backward compat thing going to work?
-  (or (get-in req [:cookies "prcrsr-client-id" :value])
-      (str (get-in req [:session :sente-id])
-           "-"
-           (get-in req [:params :tab-id]))))
+  (when (or (empty? (get-in req [:session :sente-id]))
+            (empty? (get-in req [:params :tab-id])))
+    (let [msg (format "sente-id or tab-id is nil for %s" (get-in req [:session :http-session-key]))]
+      (rollbar/report-exception (Exception. msg))
+      (log/errorf msg)))
+
+  (str (get-in req [:session :sente-id])
+       "-"
+       (get-in req [:params :tab-id])))
 
 ;; hash-map of document-id to connected users
 ;; Used to keep track of which transactions to send to which user
