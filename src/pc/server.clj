@@ -231,7 +231,8 @@
    ;; TODO: protect this route with admin credentials
    ;;       and move to non-web ns
    (GET "/admin/reload-assets" []
-         (pc.assets/reload-assets))
+        (pc.assets/reload-assets)
+        {:status 200})
 
    (GET "/health-check" req
         (lb/health-check-response req))
