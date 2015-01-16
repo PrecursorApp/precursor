@@ -130,7 +130,9 @@
 
 (defmethod handle-keyboard-shortcut :shortcuts-menu
   [state shortcut-name]
-  (overlay/replace-overlay state :shortcuts))
+  (if (= :shortcuts (overlay/current-overlay state))
+    (overlay/clear-overlays state)
+    (overlay/replace-overlay state :shortcuts)))
 
 (defn close-menu [state]
   (assoc-in state [:menu :open?] false))
