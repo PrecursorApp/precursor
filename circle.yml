@@ -8,5 +8,6 @@ deployment:
   prod:
     branch: master
     commands:
+      - exit 1
       - scp resources/public/cljs/production/frontend.js precursor@prcrsr.com:/usr/home/precursor/livemocker/resources/public/js/vendor/frontend-production.js
       - scp resources/public/css/app.css precursor@prcrsr.com:/usr/home/precursor/livemocker/resources/public/css/app.css

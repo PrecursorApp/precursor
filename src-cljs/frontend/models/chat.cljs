@@ -17,9 +17,9 @@
     0
     (count (chat-timestamps-since db last-read-time))))
 
-(defn display-name [chat client-id]
+(defn display-name [chat sente-id]
   (or (:chat/cust-name chat)
       (if (= (str (:session/uuid chat))
-             client-id)
+             sente-id)
         "You"
         (apply str (take 6 (str (:session/uuid chat)))))))

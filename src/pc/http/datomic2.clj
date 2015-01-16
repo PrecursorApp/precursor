@@ -34,6 +34,11 @@
     [type e a server-timestamp]
     transaction))
 
+(defn coerce-session-uuid [session-uuid [type e a v :as transaction]]
+  (if (= :session/uuid a)
+    [type e a session-uuid]
+    transaction))
+
 (def incoming-whitelist
   #{:layer/name
     :layer/uuid
@@ -76,7 +81,7 @@
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
-  [datoms document-id session-uuid cust-uuid]
+  [datoms {:keys [document-id client-id session-uuid cust-uuid]}]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
         (< 1000 (count datoms))
@@ -98,10 +103,12 @@
                             (map (partial coerce-floats float-attrs))
                             (map (partial coerce-uuids uuid-attrs))
                             (map (partial coerce-server-timestamp server-timestamp))
+                            (map (partial coerce-session-uuid session-uuid))
                             (filter whitelisted?)
                             (concat [(merge {:db/id txid
                                              :document/id document-id
                                              :session/uuid session-uuid
+                                             :session/client-id client-id
                                              :transaction/broadcast true}
                                             (when cust-uuid {:cust/uuid cust-uuid}))])
                             (d/transact conn)

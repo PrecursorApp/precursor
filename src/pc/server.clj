@@ -17,6 +17,7 @@
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
             [pc.http.doc :refer (duplicate-doc)]
+            [pc.http.lb :as lb]
             [pc.http.sente :as sente]
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
@@ -117,7 +118,8 @@
               doc (doc-model/find-by-id db (Long/parseLong document-id))]
           (if doc
             (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                                 :google-client-id (google-client-id)}
+                                 :google-client-id (google-client-id)
+                                 :sente-id (-> req :session :sente-id)}
                                 (when-let [cust (-> req :auth :cust)]
                                   {:cust {:email (:cust/email cust)
                                           :uuid (:cust/uuid cust)
@@ -224,10 +226,15 @@
         {:status 200
          :body (blog/render-page slug)})
 
+   (GET "/health-check" req
+        (lb/health-check-response req))
+
    (ANY "*" [] {:status 404 :body "Page not found."})))
 
 (defn log-request [req resp ms]
-  (when-not (re-find #"^/cljs" (:uri req))
+  (when-not (or (re-find #"^/cljs" (:uri req))
+                (and (= 200 (:status resp))
+                     (= "/health-check" (:uri req))))
     (let [cust (-> req :auth :cust)
           cust-str (when cust (str (:db/id cust) " (" (:cust/email cust) ")"))]
       (log/infof "%s: %s %s for %s %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) cust-str ms))))
@@ -292,11 +299,26 @@
     handler
     (wrap-reload handler)))
 
+(defn assoc-sente-id [req response sente-id]
+  (if (= (get-in req [:session :sente-id]) sente-id)
+    response
+    (-> response
+      (assoc :session (:session response (:session req)))
+      (assoc-in [:session :sente-id] sente-id))))
+
+(defn wrap-sente-id [handler]
+  (fn [req]
+    (let [sente-id (or (get-in req [:session :sente-id])
+                       (str (UUID/randomUUID)))]
+      (if-let [response (handler req)]
+        (assoc-sente-id req response sente-id)))))
+
 (defn handler [sente-state]
   (->
    (app sente-state)
    (auth-middleware)
    (wrap-anti-forgery)
+   (wrap-sente-id)
    (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
                   :cookie-attrs {:http-only true
                                  :expires (time-format/unparse (:rfc822 time-format/formatters) (time/from-now (time/years 1))) ;; expire one year after the server starts up
