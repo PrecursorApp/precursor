@@ -151,9 +151,14 @@
 
 (defmethod render-access-entity :permission
   [entity cast!]
-  [:div
-   [:img {:src (utils/gravatar-url (:permission/cust entity))}]
-   (:permission/cust entity)])
+  [:div.access-card
+   [:div.access-avatar
+    [:img {:src (utils/gravatar-url (:permission/cust entity))}]]
+   [:div.access-details
+    [:div.access-detail {:title (:permission/cust entity)}
+     [:div.access-name "Danny King"]]
+    [:div.access-detail
+     [:div.access-status "Was granted access today."]]]])
 
 (defmethod render-access-entity :access-grant
   [entity cast!]
@@ -163,20 +168,33 @@
 
 (defmethod render-access-entity :access-request
   [entity cast!]
-  [:div
-   [:img {:src (utils/gravatar-url (:access-request/cust entity))}]
-   (:access-request/cust entity)
-   " "
-   [:a {:role "button"
-        :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
-                                                   :doc-id (:access-request/document entity)})}
-    (common/icon :check)]
-   " "
-   (when-not (= :access-request.status/denied (:access-request/status entity))
-     [:a {:role "button"
-          :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
-                                                    :doc-id (:access-request/document entity)})}
-      (common/icon :times)])])
+  [:div.access-card {:class (if (= :access-request.status/denied (:access-request/status entity))
+                              "denied"
+                              "requesting")}
+   [:div.access-avatar {:title "Requesting permission to edit this doc"}
+    [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
+   [:div.access-details
+    [:div.access-detail {:title (:access-request/cust entity)}
+     [:span.access-name "Danny King"]]
+    [:div.access-detail
+     [:div.access-status
+      (if (= :access-request.status/denied (:access-request/status entity))
+        "Was denied access today."
+        "Requested access today.")]]]
+   [:div.access-options
+    (when-not (= :access-request.status/denied (:access-request/status entity))
+      [:a.access-option {:role "button"
+                         :class "negative"
+                         :title "Decline"
+                         :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
+                                                                   :doc-id (:access-request/document entity)})}
+       (common/icon :times)])
+    [:a.access-option {:role "button"
+                       :class "positive"
+                       :title "Approve"
+                       :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
+                                                                  :doc-id (:access-request/document entity)})}
+     (common/icon :check)]]])
 
 (defn private-sharing [app owner]
   (reify
@@ -208,26 +226,31 @@
             access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
-         [:article
-          [:h2 "Share this idea."]
-          [:p "This document is only visible to those who have been granted access."
-           " Add a teammate's email to grant them access."]
-          [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
-                                                   false)
-                                   :on-key-down #(when (= "Enter" (.-key %))
-                                                   (cast! :permission-grant-submitted)
-                                                   false)}
-           [:input {:type "text"
-                    :required "true"
-                    :data-adaptive ""
-                    :value (or permission-grant-email "")
-                    :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
-           [:label {:data-placeholder "Email"
-                    :data-placeholder-nil "Type their email"
-                    :data-placeholder-forgot "Don't forget to submit"}]]
-          [:div.access-list
-           (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
-             (render-access-entity access-entity cast!))]])))))
+          [:div ; TODO make this a list, or at least get rid of div somehow
+           [:article
+            ; [:h2 "This document is private."]
+            [:h2
+             [:span "This document is "]
+             [:span.privacy-private-word "private."]]
+            [:p.privacy-private-words "It's only visible to users with access."
+             " Email a teammate and notify them to request access."]
+            [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
+                                                     false)
+                                     :on-key-down #(when (= "Enter" (.-key %))
+                                                     (cast! :permission-grant-submitted)
+                                                     false)}
+             [:input {:type "text"
+                      :required "true"
+                      :data-adaptive ""
+                      :value (or permission-grant-email "")
+                      :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
+             [:label {:data-placeholder "Teammate's email"
+                      :data-placeholder-nil "What's your teammate's email?"
+                      :data-placeholder-forgot "Don't forget to submit!"}]]]
+
+           [:div.access-list
+            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
+              (render-access-entity access-entity cast!))]])))))
 
 (defn public-sharing [app owner]
   (reify
@@ -236,37 +259,41 @@
       (let [cast! (om/get-shared owner :cast!)
             invite-email (get-in app state/invite-email-path)]
         (html
-         [:article
-          [:h2 "Share this idea."]
-          [:p "This document is visible to everyone. Try emailing friends and asking them to collaborate on it with you."]
-          (if-not (:cust app)
-            [:a.menu-button {:href (auth/auth-url)
-                             :on-click #(do
-                                          (.preventDefault %)
-                                          (cast! :track-external-link-clicked
-                                                 {:path (auth/auth-url)
-                                                  :event "Signup Clicked"
-                                                  :properties {:source "username-overlay"}}))
-                             :role "button"}
-             "Sign Up"]
+          [:article
+           ; [:h2 "This document is public."]
+           [:h2
+            [:span "This document is "]
+            [:span.privacy-public-word "public."]]
+           [:p.privacy-public-words "It's visible to everyone.
+               Email a friend to invite them to collaborate."]
+           (if-not (:cust app)
+             [:a.menu-button {:href (auth/auth-url)
+                              :on-click #(do
+                                           (.preventDefault %)
+                                           (cast! :track-external-link-clicked
+                                                  {:path (auth/auth-url)
+                                                   :event "Signup Clicked"
+                                                   :properties {:source "username-overlay"}}))
+                              :role "button"}
+              "Sign Up"]
 
-            [:form.menu-invite-form {:on-submit #(do (cast! :invite-submitted)
-                                                     false)
-                                     :on-key-down #(when (= "Enter" (.-key %))
-                                                     (cast! :email-invite-submitted)
-                                                     false)}
-             [:input {:type "text"
-                      :required "true"
-                      :data-adaptive ""
-                      :value (or invite-email "")
-                      :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
-             [:label {:data-placeholder "Email"
-                      :data-placeholder-nil "Type their email"
-                      :data-placeholder-forgot "Don't forget to submit"}]])
-          (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
-            [:div response])
-          ;; TODO: keep track of invites
-          ])))))
+             [:form.menu-invite-form {:on-submit #(do (cast! :invite-submitted)
+                                                      false)
+                                      :on-key-down #(when (= "Enter" (.-key %))
+                                                      (cast! :email-invite-submitted)
+                                                      false)}
+              [:input {:type "text"
+                       :required "true"
+                       :data-adaptive ""
+                       :value (or invite-email "")
+                       :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+              [:label {:data-placeholder "Collaborator's email"
+                       :data-placeholder-nil "What's your collaborator's email?"
+                       :data-placeholder-forgot "Don't forget to submit!"}]])
+           (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
+             [:div response])
+           ;; TODO: keep track of invites
+           ])))))
 
 (defn sharing [app owner]
   (reify
@@ -283,7 +310,6 @@
     om/IWillUnmount
     (will-unmount [_]
       (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
-
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -294,11 +320,11 @@
         (html
          [:div.menu-view
           [:div.menu-view-frame
-
            (if private?
              (om/build private-sharing app)
              (om/build public-sharing app))
 
+           ;; TODO: keep track of invites
            [:form.privacy-select
             [:input {:type "radio"
                      :id "privacy-public"
@@ -319,9 +345,7 @@
                                         :setting :document.privacy/private})}]
             [:label.menu-item {:for "privacy-private" :role "button"}
              (common/icon :lock)
-             [:span "Private"]]]
-
-           ]])))))
+             [:span "Private"]]]]])))))
 
 (defn info [app owner]
   (reify
