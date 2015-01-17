@@ -55,7 +55,7 @@
 (def cdn-base-url "https://dtwdl3ecuoduc.cloudfront.net")
 
 (defonce asset-manifest (atom {}))
-(defn asset-manifest-version [] (get @asset-manifest :version))
+(defn asset-manifest-version [] (get @asset-manifest :code-version))
 
 (defn cdn-url [manifest-value]
   (str cdn-base-url "/" (:s3-key manifest-value)))
