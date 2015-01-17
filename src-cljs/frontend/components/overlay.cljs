@@ -162,9 +162,14 @@
 
 (defmethod render-access-entity :access-grant
   [entity cast!]
-  [:div
-   [:img {:src (utils/gravatar-url (:access-grant/email entity))}]
-   (:access-grant/email entity)])
+  [:div.access-card
+   [:div.access-avatar
+    [:img {:src (utils/gravatar-url (:access-grant/email entity))}]]
+   [:div.access-details
+    [:div.access-detail {:title (:access-grant/email entity)}
+     [:div.access-name (:access-grant/email entity)]]
+    [:div.access-detail
+     [:div.access-status "Was granted access today."]]]])
 
 (defmethod render-access-entity :access-request
   [entity cast!]
