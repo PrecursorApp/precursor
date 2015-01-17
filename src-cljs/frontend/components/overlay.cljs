@@ -156,7 +156,7 @@
     [:img {:src (utils/gravatar-url (:permission/cust entity))}]]
    [:div.access-details
     [:div.access-detail {:title (:permission/cust entity)}
-     [:div.access-name "Danny King"]]
+     [:div.access-name (:permission/cust entity)]]
     [:div.access-detail
      [:div.access-status "Was granted access today."]]]])
 
@@ -180,7 +180,7 @@
     [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
    [:div.access-details
     [:div.access-detail {:title (:access-request/cust entity)}
-     [:span.access-name "Danny King"]]
+     [:span.access-name (:access-request/cust entity)]]
     [:div.access-detail
      [:div.access-status
       (if (= :access-request.status/denied (:access-request/status entity))
