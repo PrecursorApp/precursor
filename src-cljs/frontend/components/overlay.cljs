@@ -231,31 +231,30 @@
             access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
-          [:div ; TODO make this a list, or at least get rid of div somehow
-           [:article
-            ; [:h2 "This document is private."]
-            [:h2
-             [:span "This document is "]
-             [:span.privacy-private-word "private."]]
-            [:p.privacy-private-words "It's only visible to users with access."
-             " Email a teammate and notify them to request access."]
-            [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
-                                                     false)
-                                     :on-key-down #(when (= "Enter" (.-key %))
-                                                     (cast! :permission-grant-submitted)
-                                                     false)}
-             [:input {:type "text"
-                      :required "true"
-                      :data-adaptive ""
-                      :value (or permission-grant-email "")
-                      :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
-             [:label {:data-placeholder "Teammate's email"
-                      :data-placeholder-nil "What's your teammate's email?"
-                      :data-placeholder-forgot "Don't forget to submit!"}]]]
+         [:div ; TODO make this a list, or at least get rid of div somehow
+          [:article
+           [:h2
+            [:span "This document is "]
+            [:span.privacy-private-word "private."]]
+           [:p.privacy-private-words "It's only visible to users with access."
+            " Email a teammate and notify them to request access."]
+           [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
+                                                    false)
+                                    :on-key-down #(when (= "Enter" (.-key %))
+                                                    (cast! :permission-grant-submitted)
+                                                    false)}
+            [:input {:type "text"
+                     :required "true"
+                     :data-adaptive ""
+                     :value (or permission-grant-email "")
+                     :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
+            [:label {:data-placeholder "Teammate's email"
+                     :data-placeholder-nil "What's your teammate's email?"
+                     :data-placeholder-forgot "Don't forget to submit!"}]]]
 
-           [:div.access-list
-            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
-              (render-access-entity access-entity cast!))]])))))
+          [:div.access-list
+           (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
+             (render-access-entity access-entity cast!))]])))))
 
 (defn public-sharing [app owner]
   (reify
