@@ -152,7 +152,7 @@
       [:body
        [:p (str (format-requester requester) " wants access to one of your documents on Precursor.")]
        [:p "Go to the "
-        [:a {:href (str "https://prcrsr.com/document/" doc-id "?overlay=manage-permissions")}
+        [:a {:href (str "https://prcrsr.com/document/" doc-id "?overlay=sharing")}
          "manage permissions page"]
         " to grant or deny access."]
        [:p {:style "font-size: 12px"}
@@ -168,7 +168,7 @@
         requester (cust-model/find-by-id db (:access-request/cust access-request))
         doc (doc-model/find-by-id db (:access-request/document access-request))
         doc-id (:db/id doc)
-        doc-owner (cust-model/find-by-id db (:document/creator doc))]
+        doc-owner (cust-model/find-by-uuid db (:document/creator doc))]
     (mailgun/send-message {:from "Precursor <joinme@prcrsr.com>"
                            :to (:cust/email doc-owner)
                            :subject (str (format-requester requester)
@@ -195,10 +195,10 @@
     (try+
       (log/infof "sending access-grant email for %s" eid)
       (send-access-grant-email db eid)
-      (catch Object e
-        (.printStackTrace e)
+      (catch Object t
+        (.printStackTrace (:throwable &throw-context))
         (unmark-sent-email eid :email/access-grant-created)
-        (throw+ e)))
+        (throw+ t)))
     (log/infof "not re-sending access-grant email for %s" eid)))
 
 (defmethod send-entity-email :email/access-request-created
@@ -207,10 +207,10 @@
     (try+
       (log/infof "sending access-request email for %s" eid)
       (send-access-request-email db eid)
-      (catch Exception e
-        (.printStackTrace e)
+      (catch Object t
+        (.printStackTrace (:throwable &throw-context))
         (unmark-sent-email eid :email/access-request-created)
-        (throw+ e)))
+        (throw+ t)))
     (log/infof "not re-sending access-request email for %s" eid)))
 
 

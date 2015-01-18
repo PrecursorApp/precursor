@@ -398,7 +398,7 @@
             ;; have to send it manually to the requestor b/c user won't be subscribed
             ((:send-fn @sente-state) client-id [:frontend/db-entities
                                                 {:document/id doc-id
-                                                 :entities (map (partial access-request-model/read-api db-after)
+                                                 :entities (map (partial access-request-model/requester-read-api db-after)
                                                                 (access-request-model/find-by-doc-and-cust db-after doc cust))
                                                  :entity-type :access-request}]))))
       (comment (notify-invite "Please sign up to send an invite.")))))
@@ -409,20 +409,21 @@
 
 (defn handle-req [req]
   (utils/with-report-exceptions
-    (try+
-     (ws-handler (assoc req
-                        :db (pcd/default-db)
-                        ;; TODO: Have to kill sente
-                        :client-id (user-id-fn (:ring-req req))))
-     (catch :status t
-       (let [send-fn (:send-fn @sente-state)]
-         (log/error t)
-         ;; TODO: should this use the send-fn? We can do that too, I guess, inside of the defmethod.
-         ;; TODO: rip out sente and write a sensible library
-         (send-fn (:client-id req) [:frontend/error {:status-code (:status t)
-                                                     :error-msg (:error-msg t)
-                                                     :event (:event req)
-                                                     :event-data (:?data req)}]))))))
+    (let [client-id (user-id-fn (:ring-req req))]
+      (try+
+       (ws-handler (assoc req
+                          :db (pcd/default-db)
+                          ;; TODO: Have to kill sente
+                          :client-id client-id))
+       (catch :status t
+         (let [send-fn (:send-fn @sente-state)]
+           (log/error t)
+           ;; TODO: should this use the send-fn? We can do that too, I guess, inside of the defmethod.
+           ;; TODO: rip out sente and write a sensible library
+           (send-fn client-id [:frontend/error {:status-code (:status t)
+                                                :error-msg (:error-msg t)
+                                                :event (:event req)
+                                                :event-data (:?data req)}])))))))
 
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))

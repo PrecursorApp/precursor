@@ -89,13 +89,18 @@
     :permission/document
     :permission/cust ;; translated
     :permission/permits
+    :permission/grant-date
 
     :access-grant/document
     :access-grant/email
+    :access-grant/grant-date
 
     :access-request/document
     :access-request/cust ;; translated
     :access-request/status
+    :access-request/create-date
+    :access-request/deny-date
+
     })
 
 ;; TODO: teach the frontend how to lookup name from cust/uuid
@@ -159,7 +164,7 @@
       (when (and (= :needs-email (schema/get-ident (:a datom)))
                  (not (contains? #{:transaction.source/unmark-sent-email
                                    :transaction.source/mark-sent-email}
-                                 (:transaction.source @annotations))))
+                                 (:transaction/source @annotations))))
         (log/infof "Queueing email for %s" (:e datom))
         (future
           (utils/with-report-exceptions
