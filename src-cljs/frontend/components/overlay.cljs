@@ -154,7 +154,8 @@
 (defmethod render-access-entity :permission
   [entity cast!]
   [:div.access-card
-   [:img.access-avatar {:src (utils/gravatar-url (:permission/cust entity))}]
+   [:div.access-avatar
+    [:img {:src (utils/gravatar-url (:permission/cust entity))}]]
    [:div.access-details
     [:span {:title (:permission/cust entity)} (:permission/cust entity)]
     [:span.access-status "Was granted access today."]]])
@@ -162,7 +163,8 @@
 (defmethod render-access-entity :access-grant
   [entity cast!]
   [:div.access-card
-   [:img.access-avatar {:src (utils/gravatar-url (:access-grant/email entity))}]
+   [:div.access-avatar
+    [:img {:src (utils/gravatar-url (:access-grant/email entity))}]]
    [:div.access-details
     [:span {:title (:access-grant/email entity)} (:access-grant/email entity)]
     [:span.access-status "Was granted access today."]]])
@@ -172,7 +174,8 @@
   [:div.access-card {:class (if (= :access-request.status/denied (:access-request/status entity))
                               "denied"
                               "requesting")}
-   [:img.access-avatar {:src (utils/gravatar-url (:access-request/cust entity))}]
+   [:div.access-avatar
+    [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
    [:div.access-details
     [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
     [:span.access-status
