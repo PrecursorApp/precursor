@@ -328,31 +328,32 @@
              (om/build private-sharing app)
              (om/build public-sharing app))
 
-           ;; TODO: keep track of invites
-           [:div.menu-foot
-            [:form.privacy-select
-             [:input.privacy-radio {:type "radio"
-                                    :hidden "true"
-                                    :id "privacy-public"
-                                    :name "privacy"
-                                    :checked (not private?)
-                                    :onChange #(cast! :document-privacy-changed
-                                                      {:doc-id doc-id
-                                                       :setting :document.privacy/public})}]
-             [:label.privacy-label {:for "privacy-public" :role "button"}
-              (common/icon :globe)
-              [:span "Public"]]
-             [:input.privacy-radio {:type "radio"
-                                    :hidden "true"
-                                    :id "privacy-private"
-                                    :name "privacy"
-                                    :checked private?
-                                    :onChange #(cast! :document-privacy-changed
-                                                      {:doc-id doc-id
-                                                       :setting :document.privacy/private})}]
-             [:label.privacy-label {:for "privacy-private" :role "button"}
-              (common/icon :lock)
-              [:span "Private"]]]]]])))))
+           (when (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
+                      (auth/admin? @db doc {:cust/uuid (get-in app [:cust :uuid])}))
+             [:div.menu-foot
+              [:form.privacy-select
+               [:input.privacy-radio {:type "radio"
+                                      :hidden "true"
+                                      :id "privacy-public"
+                                      :name "privacy"
+                                      :checked (not private?)
+                                      :onChange #(cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/public})}]
+               [:label.privacy-label {:for "privacy-public" :role "button"}
+                (common/icon :globe)
+                [:span "Public"]]
+               [:input.privacy-radio {:type "radio"
+                                      :hidden "true"
+                                      :id "privacy-private"
+                                      :name "privacy"
+                                      :checked private?
+                                      :onChange #(cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/private})}]
+               [:label.privacy-label {:for "privacy-private" :role "button"}
+                (common/icon :lock)
+                [:span "Private"]]]])]])))))
 
 (defn info [app owner]
   (reify
@@ -493,9 +494,7 @@
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
-                          :component document-access/permission-denied-overlay}
-   :manage-permissions {:title "Manage Access"
-                        :component document-access/manage-permissions-overlay}})
+                          :component document-access/permission-denied-overlay}})
 
 
 (defn overlay [app owner]
