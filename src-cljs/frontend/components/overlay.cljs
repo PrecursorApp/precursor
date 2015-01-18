@@ -268,7 +268,7 @@
            [:h2
             [:span "This document is "]
             [:span.privacy-public-word "public."]]
-           [:p.privacy-public-words "It's visible to everyone.
+           [:p.privacy-public-words "It's visible to everyone who can guess the URL.
                Email a friend to invite them to collaborate."]
            (if-not (:cust app)
              [:a.menu-button {:href (auth/auth-url)
