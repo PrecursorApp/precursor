@@ -197,6 +197,6 @@
   (.preventDefault e))
 
 (defn gravatar-url [email & {:keys [default]
-                             :or {default "http://i.imgur.com/yb7FUET.gif"}}]
+                             :or {default "blank"}}]
   (str "https://www.gravatar.com/avatar/" (md5 (string/lower-case email))
        "?d=" (js/encodeURIComponent default)))
