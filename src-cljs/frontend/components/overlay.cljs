@@ -158,7 +158,7 @@
     [:img {:src (utils/gravatar-url (:permission/cust entity))}]]
    [:div.access-details
     [:span {:title (:permission/cust entity)} (:permission/cust entity)]
-    [:span.access-status "Was granted access today."]]])
+    [:span.access-status (str "Was granted access " (:permission/grant-date entity))]]])
 
 (defmethod render-access-entity :access-grant
   [entity cast!]
@@ -167,7 +167,7 @@
     [:img {:src (utils/gravatar-url (:access-grant/email entity))}]]
    [:div.access-details
     [:span {:title (:access-grant/email entity)} (:access-grant/email entity)]
-    [:span.access-status "Was granted access today."]]])
+    [:span.access-status (str "Was granted access " (:access-grant/grant-date entity))]]])
 
 (defmethod render-access-entity :access-request
   [entity cast!]
@@ -180,8 +180,8 @@
     [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
     [:span.access-status
      (if (= :access-request.status/denied (:access-request/status entity))
-       "Was denied access today."
-       "Requested access today.")]]
+       (str "Was denied access " (:access-request/deny-date entity))
+       (str "Requested access " (:access-request/create-date entity)))]]
    [:div.access-options
     (when-not (= :access-request.status/denied (:access-request/status entity))
       [:a.access-option {:role "button"

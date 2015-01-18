@@ -89,13 +89,18 @@
     :permission/document
     :permission/cust ;; translated
     :permission/permits
+    :permission/grant-date
 
     :access-grant/document
     :access-grant/email
+    :access-grant/grant-date
 
     :access-request/document
     :access-request/cust ;; translated
     :access-request/status
+    :access-request/create-date
+    :access-request/deny-date
+
     })
 
 ;; TODO: teach the frontend how to lookup name from cust/uuid

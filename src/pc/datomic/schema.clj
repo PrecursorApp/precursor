@@ -237,12 +237,16 @@
               :db/cardinality :db.cardinality/many
               :db/doc "permission granted by permission")
 
+   (attribute :permission/grant-date
+              :db.type/instant
+              :db/doc "time permission was created (or access-grant if it came first)")
+
    (enum :permission.permits/admin)
 
 
    (function :pc.models.permission/grant-permit
              #db/fn {:lang :clojure
-                     :params [db doc-id cust-id permit]
+                     :params [db doc-id cust-id permit grant-date & extra-fields]
                      :code (if-let [id (ffirst (d/q '{:find [?t]
                                                       :in [$ ?doc-id ?cust-id]
                                                       :where [[?t :permission/document ?doc-id]
@@ -250,9 +254,13 @@
                                                     db doc-id cust-id))]
                              [[:db/add id :permission/permits permit]]
                              (let [temp-id (d/tempid :db.part/user)]
-                               [[:db/add temp-id :permission/document doc-id]
-                                [:db/add temp-id :permission/cust cust-id]
-                                [:db/add temp-id :permission/permits permit]]))}
+                               (concat
+                                [[:db/add temp-id :permission/document doc-id]
+                                 [:db/add temp-id :permission/cust cust-id]
+                                 [:db/add temp-id :permission/permits permit]
+                                 [:db/add temp-id :permission/grant-date grant-date]]
+                                (for [[field value] extra-fields]
+                                  [:db/add temp-id field value]))))}
              :db/doc "Adds a permit, with composite uniqueness constraint on doc and cust")
 
    (attribute :access-request/document
@@ -269,9 +277,18 @@
               :db.type/long
               :db/doc "db/id of the user")
 
+   (attribute :access-request/create-date
+              :db.type/instant
+              :db/doc "date request was created")
+
+   ;; TODO: need a way to let the frontend perform history queries
+   (attribute :access-request/deny-date
+              :db.type/instant
+              :db/doc "date request was denied")
+
    (function :pc.models.access-request/create-request
              #db/fn {:lang :clojure
-                     :params [db doc-id cust-id & extra-fields]
+                     :params [db doc-id cust-id create-date & extra-fields]
                      :code (when-not (ffirst (d/q '{:find [?t]
                                                     :in [$ ?doc-id ?cust-id]
                                                     :where [[?t :access-request/document ?doc-id]
@@ -280,7 +297,8 @@
                              (let [temp-id (d/tempid :db.part/user)]
                                (concat [[:db/add temp-id :access-request/document doc-id]
                                         [:db/add temp-id :access-request/cust cust-id]
-                                        [:db/add temp-id :access-request/status :access-request.status/pending]]
+                                        [:db/add temp-id :access-request/status :access-request.status/pending]
+                                        [:db/add temp-id :access-request/create-date create-date]]
                                        (for [[field value] extra-fields]
                                          [:db/add temp-id field value]))))}
              :db/doc "Adds an access request, with composite uniqueness constraint on doc and cust")
@@ -307,9 +325,13 @@
               :db.type/long ;; TODO: make this a ref!
               :db/doc "time that the access-grant expires")
 
+   (attribute :access-grant/grant-date
+              :db.type/instant
+              :db/doc "time that the access-grant was created")
+
    (function :pc.models.access-grant/create-grant
              #db/fn {:lang :clojure
-                     :params [db doc-id granter-id email token expiry & extra-fields]
+                     :params [db doc-id granter-id email token expiry grant-date & extra-fields]
                      :code (when-not (ffirst (d/q '{:find [?t]
                                                     :in [$ ?doc-id ?email ?now]
                                                     :where [[?t :access-grant/document ?doc-id]
@@ -322,6 +344,7 @@
                                         [:db/add temp-id :access-grant/email email]
                                         [:db/add temp-id :access-grant/token token]
                                         [:db/add temp-id :access-grant/expiry expiry]
+                                        [:db/add temp-id :access-grant/grant-date grant-date]
                                         [:db/add temp-id :access-grant/granter granter-id]]
                                        (for [[field value] extra-fields]
                                          [:db/add temp-id field value]))))}

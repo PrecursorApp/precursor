@@ -15,13 +15,18 @@
   (let [txid (d/tempid :db.part/tx)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:pc.models.permission/grant-permit (:db/id doc) (:db/id cust) permit]])))
+                  [:pc.models.permission/grant-permit (:db/id doc) (:db/id cust) permit (java.util.Date.)]])))
 
 (defn convert-access-grant [access-grant cust annotations]
   (let [txid (d/tempid :db.part/tx)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:pc.models.permission/grant-permit (:access-grant/document access-grant) (:db/id cust) :permission.permits/admin]
+                  [:pc.models.permission/grant-permit
+                   (:access-grant/document access-grant)
+                   (:db/id cust)
+                   :permission.permits/admin
+                   (or (:access-grant/grant-date access-grant)
+                       (java.util.Date.))]
                   [:db.fn/retractEntity (:db/id access-grant)]])))
 
 (defn convert-access-request [access-request annotations]
@@ -31,7 +36,8 @@
                   [:pc.models.permission/grant-permit
                    (:access-request/document access-request)
                    (:access-request/cust access-request)
-                   :permission.permits/admin]
+                   :permission.permits/admin
+                   (java.util.Date.)]
                   [:db.fn/retractEntity (:db/id access-request)]])))
 
 ;; TODO: figure out how to have only 1 read-api (maybe only send datoms?)
@@ -40,6 +46,7 @@
     (select-keys [:permission/document
                   :permission/cust
                   :permission/permits
+                  :permission/grant-date
                   :db/id])
     (#(into {} %))
     (update-in [:permission/cust] #(:cust/email (d/entity db %)))))

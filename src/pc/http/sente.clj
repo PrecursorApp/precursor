@@ -398,7 +398,7 @@
             ;; have to send it manually to the requestor b/c user won't be subscribed
             ((:send-fn @sente-state) client-id [:frontend/db-entities
                                                 {:document/id doc-id
-                                                 :entities (map (partial access-request-model/read-api db-after)
+                                                 :entities (map (partial access-request-model/requester-read-api db-after)
                                                                 (access-request-model/find-by-doc-and-cust db-after doc cust))
                                                  :entity-type :access-request}]))))
       (comment (notify-invite "Please sign up to send an invite.")))))
