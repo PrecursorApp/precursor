@@ -434,7 +434,14 @@ img.loading-image {
   border-radius: @size;
   transition: @speed @bezier_fadein;
   img {
+    width: @size;
+    height: @size;
     border-radius: @size;
+    background-image: url("/img/avatar.svg");
+    box-shadow+:  0    1px @gray_light inset;
+    box-shadow+:  0   -1px @gray_light inset;
+    box-shadow+:  1px  0   @gray_light inset;
+    box-shadow+: -1px  0   @gray_light inset;
   }
 }
 .access-details {
