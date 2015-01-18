@@ -14,6 +14,7 @@
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [frontend.utils.date :refer (date->bucket)]
             [goog.labs.userAgent.browser :as ua]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -134,6 +135,9 @@
             [:span "Blog"]]
            (om/build auth-link app)]])))))
 
+(defn format-access-date [date]
+  (date->bucket date :sentence? true))
+
 ;; TODO: add types to db
 (defn access-entity-type [access-entity]
   (cond (contains? access-entity :permission/document)
@@ -158,7 +162,7 @@
     [:img {:src (utils/gravatar-url (:permission/cust entity))}]]
    [:div.access-details
     [:span {:title (:permission/cust entity)} (:permission/cust entity)]
-    [:span.access-status (str "Was granted access " (:permission/grant-date entity))]]])
+    [:span.access-status (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]])
 
 (defmethod render-access-entity :access-grant
   [entity cast!]
@@ -167,7 +171,7 @@
     [:img {:src (utils/gravatar-url (:access-grant/email entity))}]]
    [:div.access-details
     [:span {:title (:access-grant/email entity)} (:access-grant/email entity)]
-    [:span.access-status (str "Was granted access " (:access-grant/grant-date entity))]]])
+    [:span.access-status (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]])
 
 (defmethod render-access-entity :access-request
   [entity cast!]
@@ -180,8 +184,8 @@
     [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
     [:span.access-status
      (if (= :access-request.status/denied (:access-request/status entity))
-       (str "Was denied access " (:access-request/deny-date entity))
-       (str "Requested access " (:access-request/create-date entity)))]]
+       (str "Was denied access " (format-access-date (:access-request/deny-date entity)))
+       (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
    [:div.access-options
     (when-not (= :access-request.status/denied (:access-request/status entity))
       [:a.access-option {:role "button"
