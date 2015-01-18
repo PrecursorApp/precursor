@@ -51,25 +51,27 @@
             login-button-learned? (get-in app state/login-button-learned-path)]
         (html
          (if (:cust app)
-           [:form.menu-item {:method "post" :action "/logout" :ref "logout-form" :role "button"}
-            [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
-            [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
-                                                                   (.-href)
-                                                                   (url/url)
-                                                                   :path)}]
-            [:a.menu-item {:on-click #(.submit (om/get-node owner "logout-form"))
-                           :role "button"}
-             (common/icon :logout)
-             [:span "Log out"]]]
-           [:a.menu-item  {:href (auth/auth-url)
-                           :role "button"
-                           :on-click #(do
-                                        (.preventDefault %)
-                                        (cast! :login-button-clicked)
-                                        (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                             :event "Signup Clicked"}))}
-            (common/icon :login)
-            [:span "Log in"]]))))))
+           [:div.menu-foot
+            [:form.menu-item {:method "post" :action "/logout" :ref "logout-form" :role "button"}
+             [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
+             [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
+                                                                    (.-href)
+                                                                    (url/url)
+                                                                    :path)}]
+             [:a.menu-item {:on-click #(.submit (om/get-node owner "logout-form"))
+                            :role "button"}
+              (common/icon :logout)
+              [:span "Log out"]]]]
+           [:div.menu-foot
+            [:a.menu-item  {:href (auth/auth-url)
+                            :role "button"
+                            :on-click #(do
+                                         (.preventDefault %)
+                                         (cast! :login-button-clicked)
+                                         (cast! :track-external-link-clicked {:path (auth/auth-url)
+                                                                              :event "Signup Clicked"}))}
+             (common/icon :login)
+             [:span "Log in"]]]))))))
 
 (defn start [app owner]
   (reify
@@ -152,40 +154,31 @@
 (defmethod render-access-entity :permission
   [entity cast!]
   [:div.access-card
-   [:div.access-avatar
-    [:img {:src (utils/gravatar-url (:permission/cust entity))}]]
+   [:img.access-avatar {:src (utils/gravatar-url (:permission/cust entity))}]
    [:div.access-details
-    [:div.access-detail {:title (:permission/cust entity)}
-     [:div.access-name (:permission/cust entity)]]
-    [:div.access-detail
-     [:div.access-status "Was granted access today."]]]])
+    [:span {:title (:permission/cust entity)} (:permission/cust entity)]
+    [:span.access-status "Was granted access today."]]])
 
 (defmethod render-access-entity :access-grant
   [entity cast!]
   [:div.access-card
-   [:div.access-avatar
-    [:img {:src (utils/gravatar-url (:access-grant/email entity))}]]
+   [:img.access-avatar {:src (utils/gravatar-url (:access-grant/email entity))}]
    [:div.access-details
-    [:div.access-detail {:title (:access-grant/email entity)}
-     [:div.access-name (:access-grant/email entity)]]
-    [:div.access-detail
-     [:div.access-status "Was granted access today."]]]])
+    [:span {:title (:access-grant/email entity)} (:access-grant/email entity)]
+    [:span.access-status "Was granted access today."]]])
 
 (defmethod render-access-entity :access-request
   [entity cast!]
   [:div.access-card {:class (if (= :access-request.status/denied (:access-request/status entity))
                               "denied"
                               "requesting")}
-   [:div.access-avatar {:title "Requesting permission to edit this doc"}
-    [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
+   [:img.access-avatar {:src (utils/gravatar-url (:access-request/cust entity))}]
    [:div.access-details
-    [:div.access-detail {:title (:access-request/cust entity)}
-     [:span.access-name (:access-request/cust entity)]]
-    [:div.access-detail
-     [:div.access-status
-      (if (= :access-request.status/denied (:access-request/status entity))
-        "Was denied access today."
-        "Requested access today.")]]]
+    [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
+    [:span.access-status
+     (if (= :access-request.status/denied (:access-request/status entity))
+       "Was denied access today."
+       "Requested access today.")]]
    [:div.access-options
     (when-not (= :access-request.status/denied (:access-request/status entity))
       [:a.access-option {:role "button"
@@ -323,33 +316,36 @@
             private? (= :document.privacy/private (:document/privacy doc))]
         (html
          [:div.menu-view
-          [:div.menu-view-frame
+          [:div.menu-view-frame.foot {:class (when private? "private")}
            (if private?
              (om/build private-sharing app)
              (om/build public-sharing app))
 
            ;; TODO: keep track of invites
-           [:form.privacy-select
-            [:input {:type "radio"
-                     :id "privacy-public"
-                     :name "privacy"
-                     :checked (not private?)
-                     :onChange #(cast! :document-privacy-changed
-                                       {:doc-id doc-id
-                                        :setting :document.privacy/public})}]
-            [:label.menu-item {:for "privacy-public" :role "button"}
-             (common/icon :globe)
-             [:span "Public"]]
-            [:input {:type "radio"
-                     :id "privacy-private"
-                     :name "privacy"
-                     :checked private?
-                     :onChange #(cast! :document-privacy-changed
-                                       {:doc-id doc-id
-                                        :setting :document.privacy/private})}]
-            [:label.menu-item {:for "privacy-private" :role "button"}
-             (common/icon :lock)
-             [:span "Private"]]]]])))))
+           [:div.menu-foot
+            [:form.privacy-select
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-public"
+                                    :name "privacy"
+                                    :checked (not private?)
+                                    :onChange #(cast! :document-privacy-changed
+                                                      {:doc-id doc-id
+                                                       :setting :document.privacy/public})}]
+             [:label.privacy-label {:for "privacy-public" :role "button"}
+              (common/icon :globe)
+              [:span "Public"]]
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-private"
+                                    :name "privacy"
+                                    :checked private?
+                                    :onChange #(cast! :document-privacy-changed
+                                                      {:doc-id doc-id
+                                                       :setting :document.privacy/private})}]
+             [:label.privacy-label {:for "privacy-private" :role "button"}
+              (common/icon :lock)
+              [:span "Private"]]]]]])))))
 
 (defn info [app owner]
   (reify
@@ -397,7 +393,7 @@
                                                        :properties {:source "username-overlay"}}))
                                   :role "button"}
                   "Sign Up"]))]
-            [:footer {:class "mobile-hidden"}
+            [:div.menu-foot {:class "mobile-hidden"}
              (common/mixpanel-badge)]]])))))
 
 (defn shortcuts [app owner]
@@ -476,7 +472,8 @@
              "Sign Up"]]]])))))
 
 (def overlay-components
-  {:info {:component info}
+  {:info {:title "About"
+          :component info}
    :shortcuts {:title "Shortcuts"
                :component shortcuts}
    :start {:title "Precursor"
