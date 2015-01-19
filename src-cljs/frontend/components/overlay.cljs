@@ -438,7 +438,7 @@
                [:td [:div.shortcuts-key {:title "1 Key"} "1"]]
                [:td [:div.shortcuts-result {:title "Initial view when entering doc."} "Origin"]]]
               [:tr
-               [:td [:div.shortcuts-key {:title "1 Key"} "2"]]
+               [:td [:div.shortcuts-key {:title "2 Key"} "2"]]
                [:td [:div.shortcuts-result {:title "Return to previous view after jumping to origin."} "Return"]]]
               [:tr
                [:td [:div.shortcuts-key {:title "? Key"} "?"]]
