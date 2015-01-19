@@ -226,32 +226,52 @@
     }
   }
 }
-.shortcuts-item {
-  .flexy(center);
-  margin-bottom: 1em;
+.shortcuts-items {
+  width: 100%;
+  td {
+    padding: .5em 0;
+  }
 }
-.shortcuts-key {
+.shortcuts-keys {
+  .flexy(center);
+}
+.shortcuts-key,
+.shortcuts-misc {
   .flexy(center, center);
-  min-width: 2em;
-  height: 2em;
-  padding: 0 .5em;
-  border: 1px solid @gray_light;
-  border-radius: 5px;
-  + .shortcuts-key {
+  width: 2rem;
+  height: 2rem;
+  margin-left: auto;
+  cursor: default;
+  + .shortcuts-key,
+  + .shortcuts-misc {
     position: relative;
-    margin-left: 1em;
+    margin-left: 1.5em;
     &:before {
       .flexy(center, center);
       content: "+";
       position: absolute;
       right: 100%;
-      width: 1em;
+      width: 1.5em;
       margin-top: .25em;
     }
   }
 }
+.shortcuts-key {
+  .outline(@gray_light);
+  border-radius: 5px;
+  &.no-symbol {
+    font-size: 0.750em;
+  }
+}
+.shortcuts-misc {
+  .icon_stroke(stroke-width; 4);
+  i {
+    font-size: 1.9em;
+  }
+}
 .shortcuts-result {
   margin: 0 1em;
+  cursor: default;
 }
 .mixpanel-badge {
   margin: auto auto 0;
