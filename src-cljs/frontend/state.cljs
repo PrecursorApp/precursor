@@ -21,11 +21,11 @@
                                         :main-menu-learned false
                                         :chat-button-learned false
                                         :login-button-learned false}}
-   :keyboard-shortcuts {:select #{"s"}
-                        :circle #{"c"}
-                        :rect #{"r"}
-                        :line #{"l"}
-                        :pen #{"p"}
+   :keyboard-shortcuts {:select #{"v"}
+                        :circle #{"l"}
+                        :rect #{"m"}
+                        :line #{"/"}
+                        :pen #{"n"}
                         :text #{"t"}
                         :undo #{"meta+z" "ctrl+z"}
                         :shortcuts-menu #{"shift+/"}
