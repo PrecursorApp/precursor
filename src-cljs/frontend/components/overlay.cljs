@@ -313,14 +313,14 @@
                [:td
                 [:div.shortcuts-keys
                  [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
-                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-               [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
+                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+               [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
               [:tr
                [:td
                 [:div.shortcuts-keys
                  [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
-                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-               [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
+                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+               [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
               ;;
               ;; keystrokes beginning with "shift"
               ;;
@@ -330,15 +330,15 @@
                [:td
                 [:div.shortcuts-keys
                  [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
-                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-               [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
+                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+               [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
               [:tr
                [:td
                 [:div.shortcuts-keys
                  [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
-                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-               [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]]]
-            ]]])))))
+                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+               [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
+              ]]]]])))))
 
 (defn username [app owner]
   (reify
