@@ -13,8 +13,15 @@
   "Rollbar API endpoint base URL"
   "https://api.rollbar.com/api/1/item/")
 
-(def token "cca6d7468e71428fb656f573e5012eaf")
-(def rollbar-client-token "744b16251ecf48d285e4f5e9470bf32f")
+(defn token []
+  (if (profile/prod?)
+    "cca6d7468e71428fb656f573e5012eaf"
+    "cac8b256153f4485938751ec3731c9e2"))
+
+(defn rollbar-client-token []
+  (if (profile/prod?)
+    "2eaa2b1406d945edaddad08619bbe1ac"
+    "744b16251ecf48d285e4f5e9470bf32f"))
 
 (defn build-payload
   [access-token data-maps]
@@ -136,4 +143,4 @@
                                   (parse-exception exception))}}
         request-map (if request (request-data request user-id) {})
         data-maps [data-map trace-map request-map]]
-    (send-payload (build-payload token data-maps))))
+    (send-payload (build-payload (token) data-maps))))
