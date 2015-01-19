@@ -37,6 +37,13 @@
                    :where [[?e :cust/email ?email]]}
                  db email))
 
+(defn find-by-uuid [db uuid]
+  (pcd/touch-one '{:find [?e] :in [$ ?uuid]
+                   :where [[?e :cust/uuid ?uuid]
+                           [?e :cust/email]]}
+                 db uuid))
+
+
 (defn find-by-http-session-key [db http-session-key]
   (pcd/touch-one '{:find [?e] :in [$ ?key]
                    :where [[?e :cust/http-session-key ?key]]}

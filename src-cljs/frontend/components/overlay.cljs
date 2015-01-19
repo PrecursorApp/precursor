@@ -14,6 +14,7 @@
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [frontend.utils.date :refer (date->bucket)]
             [goog.labs.userAgent.browser :as ua]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -51,25 +52,27 @@
             login-button-learned? (get-in app state/login-button-learned-path)]
         (html
          (if (:cust app)
-           [:form.menu-item {:method "post" :action "/logout" :ref "logout-form" :role "button"}
-            [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
-            [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
-                                                                   (.-href)
-                                                                   (url/url)
-                                                                   :path)}]
-            [:a.menu-item {:on-click #(.submit (om/get-node owner "logout-form"))
-                           :role "button"}
-             (common/icon :logout)
-             [:span "Log out"]]]
-           [:a.menu-item  {:href (auth/auth-url)
-                           :role "button"
-                           :on-click #(do
-                                        (.preventDefault %)
-                                        (cast! :login-button-clicked)
-                                        (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                             :event "Signup Clicked"}))}
-            (common/icon :login)
-            [:span "Log in"]]))))))
+           [:div.menu-foot
+            [:form.menu-item {:method "post" :action "/logout" :ref "logout-form" :role "button"}
+             [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
+             [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
+                                                                    (.-href)
+                                                                    (url/url)
+                                                                    :path)}]
+             [:a.menu-item {:on-click #(.submit (om/get-node owner "logout-form"))
+                            :role "button"}
+              (common/icon :logout)
+              [:span "Log out"]]]]
+           [:div.menu-foot
+            [:a.menu-item  {:href (auth/auth-url)
+                            :role "button"
+                            :on-click #(do
+                                         (.preventDefault %)
+                                         (cast! :login-button-clicked)
+                                         (cast! :track-external-link-clicked {:path (auth/auth-url)
+                                                                              :event "Signup Clicked"}))}
+             (common/icon :login)
+             [:span "Log in"]]]))))))
 
 (defn start [app owner]
   (reify
@@ -110,21 +113,16 @@
            ;; TODO: should this use the permissions model? Would have to send some
            ;;       info about the document
            (if (auth/has-document-access? app (:document/id app))
-             [:a.menu-item {:on-click #(cast! :invite-menu-opened)
+             [:a.menu-item {:on-click #(cast! :sharing-menu-opened)
                             :role "button"}
               (common/icon :users)
-              [:span "Invite Collaborators"]]
+              [:span "Sharing"]]
 
              [:a.menu-item {:on-click #(cast! :document-permissions-opened)
                             :role "button"}
               (common/icon :users)
               [:span "Request Access"]])
-           (if (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
-                    (auth/admin? @db doc {:cust/uuid (get-in app [:cust :uuid])}))
-             [:a.menu-item {:on-click #(cast! :manage-permissions-opened)
-                            :role "button"}
-              (common/icon :users)
-              [:span "Manage permissions and privacy"]])
+
            [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
                           :class "mobile-hidden"
                           :role "button"}
@@ -137,56 +135,225 @@
             [:span "Blog"]]
            (om/build auth-link app)]])))))
 
-(defn invite [app owner]
+(defn format-access-date [date]
+  (date->bucket date :sentence? true))
+
+;; TODO: add types to db
+(defn access-entity-type [access-entity]
+  (cond (contains? access-entity :permission/document)
+        :permission
+
+        (contains? access-entity :access-grant/document)
+        :access-grant
+
+        (contains? access-entity :access-request/document)
+        :access-request
+
+        :else nil))
+
+;; TODO: this should call om/build somehow
+(defmulti render-access-entity (fn [entity cast!]
+                                 (access-entity-type entity)))
+
+(defmethod render-access-entity :permission
+  [entity cast!]
+  [:div.access-card
+   [:div.access-avatar
+    [:img {:src (utils/gravatar-url (:permission/cust entity))}]]
+   [:div.access-details
+    [:span {:title (:permission/cust entity)} (:permission/cust entity)]
+    [:span.access-status (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]])
+
+(defmethod render-access-entity :access-grant
+  [entity cast!]
+  [:div.access-card
+   [:div.access-avatar
+    [:img {:src (utils/gravatar-url (:access-grant/email entity))}]]
+   [:div.access-details
+    [:span {:title (:access-grant/email entity)} (:access-grant/email entity)]
+    [:span.access-status (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]])
+
+(defmethod render-access-entity :access-request
+  [entity cast!]
+  [:div.access-card {:class (if (= :access-request.status/denied (:access-request/status entity))
+                              "denied"
+                              "requesting")}
+   [:div.access-avatar
+    [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
+   [:div.access-details
+    [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
+    [:span.access-status
+     (if (= :access-request.status/denied (:access-request/status entity))
+       (str "Was denied access " (format-access-date (:access-request/deny-date entity)))
+       (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
+   [:div.access-options
+    (when-not (= :access-request.status/denied (:access-request/status entity))
+      [:a.access-option {:role "button"
+                         :class "negative"
+                         :title "Decline"
+                         :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
+                                                                   :doc-id (:access-request/document entity)})}
+       (common/icon :times)])
+    [:a.access-option {:role "button"
+                       :class "positive"
+                       :title "Approve"
+                       :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
+                                                                  :doc-id (:access-request/document entity)})}
+     (common/icon :check)]]])
+
+(defn private-sharing [app owner]
+  (reify
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when (seq (filter #(or (= :document/privacy (:a %))
+                                           (= :permission/document (:a %))
+                                           (= :access-grant/document (:a %))
+                                           (= :access-request/document (:a %))
+                                           (= :access-request/status (:a %)))
+                                      (:tx-data tx-report)))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
+
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc-id (:document/id app)
+            doc (doc-model/find-by-id @db doc-id)
+            permission-grant-email (get-in app state/permission-grant-email-path)
+            permissions (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/document ?doc-id]] @db doc-id)
+            access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
+            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
+        (html
+         [:div ; TODO make this a list, or at least get rid of div somehow
+          [:article
+           [:h2
+            [:span "This document is "]
+            [:span.privacy-private-word "private."]]
+           [:p.privacy-private-words "It's only visible to users with access."
+            " Email a teammate and notify them to request access."]
+           [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
+                                                    false)
+                                    :on-key-down #(when (= "Enter" (.-key %))
+                                                    (cast! :permission-grant-submitted)
+                                                    false)}
+            [:input {:type "text"
+                     :required "true"
+                     :data-adaptive ""
+                     :value (or permission-grant-email "")
+                     :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
+            [:label {:data-placeholder "Teammate's email"
+                     :data-placeholder-nil "What's your teammate's email?"
+                     :data-placeholder-forgot "Don't forget to submit!"}]]]
+
+          [:div.access-list
+           (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
+             (render-access-entity access-entity cast!))]])))))
+
+(defn public-sharing [app owner]
   (reify
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             invite-email (get-in app state/invite-email-path)]
         (html
-         [:div.menu-view
-          [:div.menu-view-frame
-           [:article
-            [:h2 "Share this with your team."]
-            [:p "Send your teammates invites to come collaborate with you in this doc."]
-            (if-not (:cust app)
-              [:a.menu-button {:href (auth/auth-url)
-                               :on-click #(do
-                                            (.preventDefault %)
-                                            (cast! :track-external-link-clicked
-                                                   {:path (auth/auth-url)
-                                                    :event "Signup Clicked"
-                                                    :properties {:source "username-overlay"}}))
-                               :role "button"}
-               "Sign Up"]
+          [:article
+           ; [:h2 "This document is public."]
+           [:h2
+            [:span "This document is "]
+            [:span.privacy-public-word "public."]]
+           [:p.privacy-public-words "It's visible to everyone who can guess the URL.
+               Email a friend to invite them to collaborate."]
+           (if-not (:cust app)
+             [:a.menu-button {:href (auth/auth-url)
+                              :on-click #(do
+                                           (.preventDefault %)
+                                           (cast! :track-external-link-clicked
+                                                  {:path (auth/auth-url)
+                                                   :event "Signup Clicked"
+                                                   :properties {:source "username-overlay"}}))
+                              :role "button"}
+              "Sign Up"]
 
-              [:form.menu-invite-form {:on-submit #(do (cast! :invite-submitted)
-                                                       false)
-                                       :on-key-down #(when (= "Enter" (.-key %))
-                                                       (cast! :email-invite-submitted)
-                                                       false)}
-               [:input {:type "text"
-                        :required "true"
-                        :data-adaptive ""
-                        :value (or invite-email "")
-                        :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
-               [:label {:data-placeholder "Teammate's Email"
-                        :data-placeholder-nil "What's your teammate's email?"
-                        :data-placeholder-forgot "Don't forget to submit."}]])
-            (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
-              [:div response])
-            ;; TODO: keep track of invites
-            ;; [:p "You've sent 3 invitations to this doc."]
-            ;; [:div.invite-recipient
-            ;;  [:div.invite-recipient-email "fake@email.com"]
-            ;;  [:a {:role "button"} "Resend"]]
-            ;; [:div.invite-recipient
-            ;;  [:div.invite-recipient-email "fake@email.com"]
-            ;;  [:a {:role "button"} "Resend"]]
-            ;; [:div.invite-recipient
-            ;;  [:div.invite-recipient-email "fake@email.com"]
-            ;;  [:a {:role "button"} "Resend"]]
-            ]]])))))
+             [:form.menu-invite-form {:on-submit #(do (cast! :invite-submitted)
+                                                      false)
+                                      :on-key-down #(when (= "Enter" (.-key %))
+                                                      (cast! :email-invite-submitted)
+                                                      false)}
+              [:input {:type "text"
+                       :required "true"
+                       :data-adaptive ""
+                       :value (or invite-email "")
+                       :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+              [:label {:data-placeholder "Collaborator's email"
+                       :data-placeholder-nil "What's your collaborator's email?"
+                       :data-placeholder-forgot "Don't forget to submit!"}]])
+           (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
+             [:div response])
+           ;; TODO: keep track of invites
+           ])))))
+
+(defn sharing [app owner]
+  (reify
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when (seq (filter #(or (= :document/privacy (:a %)))
+                                      (:tx-data tx-report)))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            invite-email (get-in app state/invite-email-path)
+            doc-id (:document/id app)
+            doc (doc-model/find-by-id @db doc-id)
+            private? (= :document.privacy/private (:document/privacy doc))]
+        (html
+         [:div.menu-view
+          [:div.menu-view-frame.foot {:class (when private? "private")}
+           (if private?
+             (om/build private-sharing app)
+             (om/build public-sharing app))
+
+           (when (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
+                      (auth/admin? @db doc {:cust/uuid (get-in app [:cust :uuid])}))
+             [:div.menu-foot
+              [:form.privacy-select
+               [:input.privacy-radio {:type "radio"
+                                      :hidden "true"
+                                      :id "privacy-public"
+                                      :name "privacy"
+                                      :checked (not private?)
+                                      :onChange #(cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/public})}]
+               [:label.privacy-label {:for "privacy-public" :role "button"}
+                (common/icon :globe)
+                [:span "Public"]]
+               [:input.privacy-radio {:type "radio"
+                                      :hidden "true"
+                                      :id "privacy-private"
+                                      :name "privacy"
+                                      :checked private?
+                                      :onChange #(cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/private})}]
+               [:label.privacy-label {:for "privacy-private" :role "button"}
+                (common/icon :lock)
+                [:span "Private"]]]])]])))))
 
 (defn info [app owner]
   (reify
@@ -234,7 +401,7 @@
                                                        :properties {:source "username-overlay"}}))
                                   :role "button"}
                   "Sign Up"]))]
-            [:footer {:class "mobile-hidden"}
+            [:div.menu-foot {:class "mobile-hidden"}
              (common/mixpanel-badge)]]])))))
 
 (defn shortcuts [app owner]
@@ -363,20 +530,21 @@
              "Sign Up"]]]])))))
 
 (def overlay-components
-  {:info {:component info}
+  {:info {:title "About"
+          :component info}
    :shortcuts {:title "Shortcuts"
                :component shortcuts}
    :start {:title "Precursor"
            :component start}
-   :invite {:title "Invite Collaborators"
-            :component invite}
+   ; :invite {:title "Invite Collaborators"
+   ;          :component invite}
+   :sharing {:title "Sharing"
+             :component sharing}
    :username {:component username}
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
-                          :component document-access/permission-denied-overlay}
-   :manage-permissions {:title "Manage Access"
-                        :component document-access/manage-permissions-overlay}})
+                          :component document-access/permission-denied-overlay}})
 
 
 (defn overlay [app owner]

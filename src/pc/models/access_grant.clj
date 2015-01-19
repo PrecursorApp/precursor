@@ -9,6 +9,7 @@
   (select-keys grant [:access-grant/document
                       :access-grant/email
                       :access-grant/expiry
+                      :access-grant/grant-date
                       :db/id]))
 
 (defn find-by-document [db doc]
@@ -30,10 +31,18 @@
 (defn grant-access [doc email granter annotations]
   (let [txid (d/tempid :db.part/tx)
         token (crypto.random/url-part 32)
-        expiry (clj-time.coerce/to-date (time/plus (time/now) (time/weeks 2)))]
+        grant-date (java.util.Date.)
+        expiry (clj-time.coerce/to-date (time/plus (clj-time.coerce/from-date grant-date) (time/weeks 2)))]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:pc.models.access-grant/create-grant (:db/id doc) (:db/id granter) email token expiry [:needs-email :email/access-grant-created]]])))
+                  [:pc.models.access-grant/create-grant
+                   (:db/id doc)
+                   (:db/id granter)
+                   email
+                   token
+                   expiry
+                   grant-date
+                   [:needs-email :email/access-grant-created]]])))
 
 (defn get-granter [db access-grant]
   (d/entity db (:access-grant/granter access-grant)))

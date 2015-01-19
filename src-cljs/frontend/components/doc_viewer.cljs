@@ -9,34 +9,12 @@
             [frontend.datascript :as ds]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [frontend.utils.date :refer (date->bucket)]
             [goog.date]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
-
-(def day-of-week
-  {1 "Monday"
-   2 "Tuesday"
-   3 "Wednesday"
-   4 "Thursday"
-   5 "Friday"
-   6 "Saturday"
-   7 "Sunday"})
-
-(defn date->bucket [date]
-  (let [time (goog.date.DateTime. date)
-        start-of-day (doto (goog.date.DateTime.)
-                       (.setHours 0)
-                       (.setMinutes 0)
-                       (.setSeconds 0)
-                       (.setMilliseconds 0))]
-    (cond
-     (time/after? time start-of-day) "today"
-     (time/after? time (time/minus start-of-day (time/days 1))) "yesterday"
-     (time/after? time (time/minus start-of-day (time/days 6))) (day-of-week (time/day-of-week time))
-     (time/after? time (time/minus start-of-day (time/days 14))) "last week"
-     :else "a while ago")))
 
 (defn signup-prompt [app owner]
   (reify
