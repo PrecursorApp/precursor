@@ -34,5 +34,5 @@
   (not= :none (get-in state (state/document-access-path doc-id))))
 
 ;; TODO: handle more cases
-(defn admin? [db doc cust]
+(defn owner? [db doc cust]
   (= (str (:document/creator doc)) (str (:cust/uuid cust))))
