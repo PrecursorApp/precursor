@@ -129,9 +129,13 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 100%;
+  width: @menu_width;
   background: @overlay_background;
   // box-shadow: 0 1px @gray_light inset;
+  .mq_640({
+    width: 100vw;
+    min-width: 100vw;
+  });
 }
 .menu-item {
   &[role="button"] {
