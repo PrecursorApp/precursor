@@ -7,8 +7,19 @@
 (defn camera [state]
   (:camera state))
 
+(defn position [camera]
+  (select-keys camera [:x :y :zf :z-exact]))
+
 (defn reset [camera]
-  (assoc camera :x 0 :y 0 :zf 1 :z-exact 1))
+  (let [new-camera (assoc camera :x 0 :y 0 :zf 1 :z-exact 1)]
+    (if (and (:previous camera) (= (position new-camera) (position camera)))
+      new-camera
+      (assoc new-camera :previous camera))))
+
+(defn previous [camera]
+  (if (:previous camera)
+    (:previous camera)
+    camera))
 
 (defn snap [increment value]
   (js/parseFloat (.toFixed (* increment (js/Math.round (/ value increment))) 2)))

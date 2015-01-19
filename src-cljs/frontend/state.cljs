@@ -30,7 +30,8 @@
                         :undo #{"meta+z" "ctrl+z"}
                         :shortcuts-menu #{"shift+/"}
                         :escape-interaction #{"esc"}
-                        :reset-canvas-position #{"home" "1"}}
+                        :reset-canvas-position #{"home" "1"}
+                        :return-from-origin #{"2"}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
