@@ -21,16 +21,17 @@
                                         :main-menu-learned false
                                         :chat-button-learned false
                                         :login-button-learned false}}
-   :keyboard-shortcuts {:select #{"s"}
-                        :circle #{"c"}
-                        :rect #{"r"}
-                        :line #{"l"}
-                        :pen #{"p"}
+   :keyboard-shortcuts {:select #{"v"}
+                        :circle #{"l"}
+                        :rect #{"m"}
+                        :line #{"/"}
+                        :pen #{"n"}
                         :text #{"t"}
                         :undo #{"meta+z" "ctrl+z"}
                         :shortcuts-menu #{"shift+/"}
                         :escape-interaction #{"esc"}
-                        :reset-canvas-position #{"home" "1"}}
+                        :reset-canvas-position #{"home" "1"}
+                        :return-from-origin #{"2"}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}

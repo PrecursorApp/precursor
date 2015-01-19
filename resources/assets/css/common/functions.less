@@ -34,6 +34,15 @@
   }
 }
 .icon_stroke(...) {
+  .icon_stroke_any(@a) when not (iscolor(@a)) {
+    @p: extract(@a, 1);
+    @v: extract(@a, 2);
+    i {
+      [class*="stroke"] {
+        @{p}: @v;
+      }
+    }
+  }.icon_stroke_any(@arguments);
   .icon_stroke_color(@a) when (iscolor(@a)) {
     i {
       [class*="stroke"] {

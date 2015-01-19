@@ -147,7 +147,12 @@
 (defmethod handle-keyboard-shortcut :reset-canvas-position
   [state shortcut-name]
   (-> state
-      (update-in [:camera] cameras/reset)))
+    (update-in [:camera] cameras/reset)))
+
+(defmethod handle-keyboard-shortcut :return-from-origin
+  [state shortcut-name]
+  (-> state
+    (update-in [:camera] cameras/previous)))
 
 (defmethod control-event :key-state-changed
   [browser-state message [{:keys [key key-name-kw depressed?]}] state]

@@ -414,48 +414,101 @@
          [:div.menu-view
           [:div.menu-view-frame
            [:article
-            [:h2 "Move fast, make things."]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "S"]
-             [:div.shortcuts-result "Select"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "R"]
-             [:div.shortcuts-result "Rectangle"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "C"]
-             [:div.shortcuts-result "Circle"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "L"]
-             [:div.shortcuts-result "Line"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "P"]
-             [:div.shortcuts-result "Pen"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "T"]
-             [:div.shortcuts-result "Text"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "1"]
-             [:div.shortcuts-result "Snap to origin"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "?"]
-             [:div.shortcuts-result "Toggle this menu"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key "Delete"]
-             [:div.shortcuts-result "Delete selected"]]
-            [:div.shortcuts-item
-             [:div.shortcuts-key (common/icon :command)]
-             [:div.shortcuts-key "Z"]
-             [:div.shortcuts-result "Undo"]]
-            (when (om/get-state owner [:copy-paste-works?])
-              (list
-               [:div.shortcuts-item
-                [:div.shortcuts-key (common/icon :command)]
-                [:div.shortcuts-key "C"]
-                [:div.shortcuts-result "Copy"]]
-               [:div.shortcuts-item
-                [:div.shortcuts-key (common/icon :command)]
-                [:div.shortcuts-key "V"]
-                [:div.shortcuts-result "Paste"]]))]]])))))
+            [:table.shortcuts-items
+             [:tbody
+              [:tr
+               [:td [:div.shortcuts-key {:title "V Key"} "V"]]
+               [:td [:div.shortcuts-result {:title "Switch to Select Tool."} "Select"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "M Key"} "M"]]
+               [:td [:div.shortcuts-result {:title "Switch to Rectangle Tool."} "Rectangle"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "L Key"} "L"]]
+               [:td [:div.shortcuts-result {:title "Switch to Circle Tool."} "Circle"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "Forward Slash Key"} "/"]]
+               [:td [:div.shortcuts-result {:title "Switch to Line Tool."} "Line"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "N Key"} "N"]]
+               [:td [:div.shortcuts-result {:title "Switch to Pen Tool."} "Pen"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "T Key"} "T"]]
+               [:td [:div.shortcuts-result {:title "Switch to Text Tool."} "Text"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "1 Key"} "1"]]
+               [:td [:div.shortcuts-result {:title "Initial view when entering doc."} "Origin"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "2 Key"} "2"]]
+               [:td [:div.shortcuts-result {:title "Return to previous view after jumping to origin."} "Return"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "? Key"} "?"]]
+               [:td [:div.shortcuts-result {:title "Hold shift, press \"/\"."} "Shortcuts"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "Delete Key"} (common/icon :delete)]]
+               [:td [:div.shortcuts-result {:title "Delete selected shape(s)."} "Delete"]]]
+              [:tr
+               [:td [:div.shortcuts-key {:title "Escape Key"} (common/icon :esc)]]
+               [:td [:div.shortcuts-result {:title "Cancel action or close menu."} "Cancel"]]]
+              ;;
+              ;; keystrokes beginning with "command"
+              ;;
+              [:tr
+               [:td {:col-span "2"}]]
+              (when (om/get-state owner [:copy-paste-works?])
+                (list
+                 [:tr
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "C Key"} "C"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
+                 [:tr
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "V Key"} "V"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]))
+              [:tr
+               [:td
+                [:div.shortcuts-keys
+                 [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                 [:div.shortcuts-key {:title "Z Key"} "Z"]]]
+               [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
+              ;;
+              ;; keystrokes beginning with "option"
+              ;;
+              [:tr
+               [:td {:col-span "2"}]]
+              [:tr
+               [:td
+                [:div.shortcuts-keys
+                 [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+               [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
+              [:tr
+               [:td
+                [:div.shortcuts-keys
+                 [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+               [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
+              ;;
+              ;; keystrokes beginning with "shift"
+              ;;
+              [:tr
+               [:td {:col-span "2"}]]
+              [:tr
+               [:td
+                [:div.shortcuts-keys
+                 [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
+                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+               [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
+              [:tr
+               [:td
+                [:div.shortcuts-keys
+                 [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
+                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+               [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
+              ]]]]])))))
 
 (defn username [app owner]
   (reify
