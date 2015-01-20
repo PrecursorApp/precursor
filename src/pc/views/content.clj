@@ -50,7 +50,7 @@
    [:div.debugger-container]
    [:div#om-app]
    (if (prod-assets?)
-     [:script {:type "text/javascript" :src (pc.assets/asset-path "/cljs/production/frontend.js")}]
+     [:script {:type "text/javascript" :crossorigin "anonymous" :src (pc.assets/asset-path "/cljs/production/frontend.js")}]
      (if false
        [:script {:type "text/javascript" :src "/js/bin-debug/main.js"}]
        (list
