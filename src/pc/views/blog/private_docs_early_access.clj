@@ -21,7 +21,7 @@
    :body
    (list
      [:article
-      [:p "These are a few questions we thought users may ask while participating in early access to private docs features.
+      [:p "These are a few questions we think users may ask while participating in early access to our private doc features.
           If you can think of any other questions that you think might be useful, "
           [:a {:href "mailto:hi@prcrsr.com"} "let us know"]
           " and we'll throw it in."]]
