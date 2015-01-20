@@ -137,7 +137,7 @@
     (http/post "https://api.rollbar.com/api/1/sourcemap"
                {:multipart (concat [{:name "access_token" :content (rollbar/token)}
                                     {:name "version" :content sha1}
-                                    {:name "minified_url" :content (manifest-asset-path "/cljs/production/frontend.js" manifest)}
+                                    {:name "minified_url" :content (manifest-asset-path manifest "/cljs/production/frontend.js")}
                                     {:name "source_map" :content (clojure.java.io/file source-map)}]
                                    (for [source sources]
                                      (do (println source)
