@@ -56,7 +56,7 @@
 
     [:article
      [:h3 "What kind of feedback should I share?"]
-     [:p "There's a lot left to build for team features and private docs, but we think we’re off to a good start.
+     [:p "There's a lot left to build for team features and private docs, but we think we're off to a good start.
          We'd love to hear your feedback on everything that's working well and anything that could be improved.
          The earlier we find bugs and design flaws, the easier they will be to fix."]]
 
@@ -74,8 +74,8 @@
 
     [:article
      [:h3 "How will team features work going forward?"]
-     [:p "Soon we’ll be offering these features to teams using a premium subscription model.
+     [:p "Soon we'll be offering these features to teams using a premium subscription model.
          We believe Precursor provides simplicity to an otherwise complicated market, and we want our pricing model to reflect that.
-         We’re aiming to start these plans at $10 per user, per month.
-         Please let us know how you feel about this price, we’re excited to hear your feedback!"]]
+         We're aiming to start these plans at $10 per user, per month.
+         Please let us know how you feel about this price, we're excited to hear your feedback!"]]
     )})
