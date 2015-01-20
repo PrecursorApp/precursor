@@ -132,7 +132,7 @@
   (let [source-map "resources/public/cljs/production/sourcemap-frontend.map"
         sources (-> source-map slurp json/decode (get "sources"))]
     (http/post "https://api.rollbar.com/api/1/sourcemap"
-               {:multipart (concat [{:name "access_token" :content rollbar/token}
+               {:multipart (concat [{:name "access_token" :content (rollbar/token)}
                                     {:name "version" :content sha1}
                                     {:name "minified_url" :content (asset-path "/cljs/production/frontend.js" :manifest manifest)}
                                     {:name "source_map" :content (clojure.java.io/file source-map)}]
