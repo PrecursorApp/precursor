@@ -4,7 +4,7 @@
 
 (defn private-docs-early-access []
   {:title "Private docs early access."
-   :blurb ""
+   :blurb "How to access and use our new privacy settings"
    :author "Danny"
    :body
    (list
