@@ -29,16 +29,17 @@
    and optionally rethrowing them if configured to do so."
   [& action]
   `(try
-     (try ~@action
-          (catch js/Error e#
-            (js/Rollbar.error e#)
-            (merror e#)
-            (when (:rethrow-errors? initial-query-map)
-              (throw e#))))
-     (catch :default e2#
-       (merror e2#)
-       (when (:rethrow-errors? initial-query-map)
-         (throw e2#)))))
+     (try
+       (try
+         ~@action
+         (catch js/Error e#
+           (js/Rollbar.error e#)
+           (merror e#)))
+       (catch :default e2#
+         (js/Rollbar.error e#)
+         (merror e2#)))
+     (catch :default e3#
+       (merror e3#))))
 
 (defmacro defrender
   "Reifies an IRender component that only has a render function and
