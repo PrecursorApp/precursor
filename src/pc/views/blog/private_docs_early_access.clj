@@ -6,7 +6,9 @@
 (defn demo [placeholder gif & {:keys [caption]}]
   [:figure.play-gif {:alt "demo"
                      :onmouseover (format "this.getElementsByTagName('img')[0].src = '%s'" gif)
-                     :onmouseout (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)}
+                     :ontouchstart (format "this.getElementsByTagName('img')[0].src = '%s'" gif)
+                     :onmouseout (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)
+                     :ontouchend (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)}
    [:a (when caption
          {:data-caption-black caption})
     [:img {:src placeholder}]]])
