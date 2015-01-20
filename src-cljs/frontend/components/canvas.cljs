@@ -524,9 +524,8 @@
                                  (let [dx     (- (aget event "deltaX"))
                                        dy     (aget event "deltaY")]
                                    (om/transact! payload (fn [state]
-                                                           (let [camera (cameras/camera state)
-                                                                 mode   (cameras/camera-mouse-mode state)]
-                                                             (if (= mode :zoom)
+                                                           (let [camera (cameras/camera state)]
+                                                             (if (aget event "altKey")
                                                                (cameras/set-zoom state (partial + (* -0.002 dy)))
                                                                (cameras/move-camera state dx (- dy)))))))
                                  (utils/stop-event event))}

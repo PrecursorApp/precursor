@@ -54,11 +54,6 @@
    (update-in [:camera :x] + dx)
    (update-in [:camera :y] + dy)))
 
-(defn camera-mouse-mode [state]
-  (cond
-   (get-in state [:keyboard :alt?]) :zoom
-   :else :pan))
-
 (defn screen-event-coords [event]
   [(.. event -pageX)
    (.. event -pageY)])
