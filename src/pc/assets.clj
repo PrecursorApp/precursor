@@ -60,12 +60,15 @@
 (defn cdn-url [manifest-value]
   (str cdn-base-url "/" (:s3-key manifest-value)))
 
+(defn manifest-asset-path [manifest path]
+  (let [manifest-value (get-in manifest [:assets path])]
+    (assert manifest-value)
+    (cdn-url manifest-value)))
+
 (defn asset-path [path & {:keys [manifest]
                           :or {manifest @asset-manifest}}]
   (if (pc.profile/prod-assets?)
-    (let [manifest-value (get-in manifest [:assets path])]
-      (assert manifest-value)
-      (cdn-url manifest-value))
+    (manifest-asset-path manifest path)
     path))
 
 ;; TODO: make the caller set credentials
@@ -134,7 +137,7 @@
     (http/post "https://api.rollbar.com/api/1/sourcemap"
                {:multipart (concat [{:name "access_token" :content (rollbar/token)}
                                     {:name "version" :content sha1}
-                                    {:name "minified_url" :content (asset-path "/cljs/production/frontend.js" :manifest manifest)}
+                                    {:name "minified_url" :content (manifest-path "/cljs/production/frontend.js" manifest)}
                                     {:name "source_map" :content (clojure.java.io/file source-map)}]
                                    (for [source sources]
                                      (do (println source)
