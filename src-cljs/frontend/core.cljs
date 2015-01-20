@@ -332,6 +332,6 @@
   (clj->js @debug-state))
 
 (defn ^:export test-rollbar []
-  (swallow-errors (throw "This is an exception")))
+  (swallow-errors (throw (js/Error. "This is an exception"))))
 
 (defonce startup (setup!))
