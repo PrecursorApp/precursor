@@ -107,26 +107,16 @@
 (def navigation-ch
   (chan))
 
-(defn set-tab-id []
-  (let [storage-imp (localstorage/new-sessionstorage-imp)]
-    (or (localstorage/read storage-imp "tab-id")
-        (let [tab-id (utils/uuid)]
-          (localstorage/save! storage-imp "tab-id" tab-id)
-          tab-id))))
-
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
         cust (-> (aget js/window "Precursor" "cust")
                (js->clj :keywordize-keys true)
                (utils/update-when-in [:flags] #(set (map keyword %))))
-        tab-id (set-tab-id)
+        tab-id (utils/uuid)
         sente-id (aget js/window "Precursor" "sente-id")]
-    ;; TODO: can remove this after we remove the cookie check in user-id-fn on the backend
-    (.remove (goog.net.Cookies. js/document) "prcrsr-client-id" "/")
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
-                     ;; TODO: rename client-uuid to something else
                      :tab-id tab-id
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
