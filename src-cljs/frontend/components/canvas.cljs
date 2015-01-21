@@ -462,22 +462,37 @@
                                          :onClick #(do (cast! :layer-ui-target-edited {:value target})
                                                        (om/set-state! owner :input-expanded false)
                                                        (.focus (om/get-node owner "target-input")))}
-                               target)))))))))
+                                    target)))))))))
+
+(defn touches->clj [touches]
+  (mapv (fn [t]
+          {:client-x (aget t "clientX")
+           :client-y (aget t "clientY")
+           :page-x (aget t "pageX")
+           :page-y (aget t "pageY")
+           :identifier (aget t "identifier")})
+        ;; touches aren't seqable
+        (js/Array.prototype.slice.call touches)))
 
 (defn svg-canvas [payload owner opts]
   (reify
+    om/IInitState (init-state [_]
+                    ;; use an atom for performance, don't want to constantly
+                    ;; re-render when we set-state!
+                    {:touches (atom nil)})
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             camera (:camera payload)
+            in-progress? (settings/drawing-in-progress? payload)
             subs-layers (reduce (fn [acc [id subscriber]]
                                   (if-let [layers (seq (:layers subscriber))]
                                     (concat acc (map (fn [layer]
                                                        (assoc layer
-                                                         :layer/end-x (:layer/current-x layer)
-                                                         :layer/end-y (:layer/current-y layer)
-                                                         :subscriber-color (:color subscriber)
-                                                         :layer/stroke (apply str "#" (take 6 id))))
+                                                              :layer/end-x (:layer/current-x layer)
+                                                              :layer/end-y (:layer/current-y layer)
+                                                              :subscriber-color (:color subscriber)
+                                                              :layer/stroke (apply str "#" (take 6 id))))
                                                      layers))
                                     acc))
                                 [] (:subscribers payload))]
@@ -490,35 +505,58 @@
                                   :cursor (state->cursor payload)}
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
-                                        (when (= (.-length touches) 1)
-                                          (.preventDefault event)
-                                          ;; This was keeping app-main's touch event from working
-                                          ;; (.stopPropagation event)
-                                          (js/console.log event)
-                                          (om/set-state! owner :touch-timer (js/setTimeout #(cast! :menu-opened) 500))
-                                          ((:handle-mouse-down handlers) (aget touches "0")))))
+                                        (cond
+                                          (= (.-length touches) 1)
+                                          (do
+                                            (.preventDefault event)
+                                            (om/set-state! owner :touch-timer (js/setTimeout #(cast! :menu-opened) 500))
+                                            ((:handle-mouse-down handlers) (aget touches "0")))
+
+                                          (= (.-length touches) 2)
+                                          (do
+                                            (js/clearInterval (om/get-state owner :touch-timer))
+                                            (cast! :cancel-drawing)
+                                            (reset! (om/get-state owner :touches) (touches->clj touches)))
+
+                                          :else nil)))
                       :onTouchEnd (fn [event]
                                     (.preventDefault event)
-                                        ; (.stopPropagation event)
-                                    (js/console.log event)
                                     (js/clearInterval (om/get-state owner :touch-timer))
-                                    ((:handle-mouse-up handlers) event))
+                                    (if (= (.-length (aget event "changedTouches")) 1)
+                                      ((:handle-mouse-up handlers) event)
+                                      (cast! :cancel-drawing)))
                       :onTouchMove (fn [event]
                                      (let [touches (.-touches event)]
-                                       (when (= (.-length touches) 1)
-                                         (.preventDefault event)
-                                         (.stopPropagation event)
-                                         (js/console.log event)
-                                         (js/clearInterval (om/get-state owner :touch-timer))
-                                         ((:handle-mouse-move! handlers) (aget touches "0")))))
+                                       (cond (= (.-length touches) 1)
+                                             (do
+                                               (.preventDefault event)
+                                               (.stopPropagation event)
+                                               (js/clearInterval (om/get-state owner :touch-timer))
+                                               ((:handle-mouse-move! handlers) (aget touches "0")))
+
+                                             (= (.-length touches) 2)
+                                             (do
+                                               (.preventDefault event)
+                                               (.stopPropagation event)
+                                               (js/clearInterval (om/get-state owner :touch-timer))
+                                               (when in-progress?
+                                                 (cast! :cancel-drawing))
+                                               (let [touches-atom (om/get-state owner :touches)
+                                                     previous-touches @touches-atom
+                                                     current-touches (touches->clj touches)]
+                                                 (reset! touches-atom current-touches)
+                                                 (om/transact! payload (fn [state]
+                                                                         (cameras/move-camera state
+                                                                                              (- (:client-x (first current-touches))
+                                                                                                 (:client-x (first previous-touches)))
+                                                                                              (- (:client-y (first current-touches))
+                                                                                                 (:client-y (first previous-touches))))))))
+                                             :else nil)))
                       :onMouseDown (fn [event]
                                      ((:handle-mouse-down handlers) event)
-                                     ;;(.preventDefault event)
-                                     (.stopPropagation event)
-                                     )
+                                     (.stopPropagation event))
                       :onMouseUp (fn [event]
                                    ((:handle-mouse-up handlers) event)
-                                   ;(.preventDefault event)
                                    (.stopPropagation event))
                       :onWheel (fn [event]
                                  (let [dx     (- (aget event "deltaX"))
@@ -560,12 +598,12 @@
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-id]))
                   (om/build svg-layers (assoc (select-keys payload [:selected-eids :document/id])
-                                         :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
-                                                                              (settings/moving-drawing? payload))
-                                                                      (concat [(:db/id (settings/drawing payload))]
-                                                                              (map :db/id (get-in payload [:drawing :layers]))))
-                                                                    (remove nil? (map :db/id subs-layers))))
-                                         :tool (get-in payload state/current-tool-path)))
+                                              :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
+                                                                                   (settings/moving-drawing? payload))
+                                                                           (concat [(:db/id (settings/drawing payload))]
+                                                                                   (map :db/id (get-in payload [:drawing :layers]))))
+                                                                         (remove nil? (map :db/id subs-layers))))
+                                              :tool (get-in payload state/current-tool-path)))
                   (om/build subscriber-layers {:layers subs-layers})
                   (when (and (settings/drawing-in-progress? payload)
                              (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
@@ -577,11 +615,11 @@
                                                 :y (get-in payload [:layer-properties-menu :y])}))
 
                   (when-let [sels (cond
-                                   (settings/moving-drawing? payload) (remove #(= :layer.type/group (:layer/type %))
-                                                                              (settings/drawing payload))
-                                   (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])) nil
-                                   (settings/drawing-in-progress? payload) (settings/drawing payload)
-                                   :else nil)]
+                                    (settings/moving-drawing? payload) (remove #(= :layer.type/group (:layer/type %))
+                                                                               (settings/drawing payload))
+                                    (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])) nil
+                                    (settings/drawing-in-progress? payload) (settings/drawing payload)
+                                    :else nil)]
                     (apply dom/g #js {:className "layers"}
                            (map (fn [sel]
                                   (let [sel (if (:force-even? sel)
