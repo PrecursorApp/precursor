@@ -474,6 +474,14 @@
         ;; touches aren't seqable
         (js/Array.prototype.slice.call touches)))
 
+(defn measure [[x1 y1] [x2 y2]]
+  (Math/sqrt (+ (Math/pow (- x2 x1) 2)
+                (Math/pow (- y2 y1) 2))))
+
+(defn center [[x1 y1] [x2 y2]]
+  [(/ (+ x2 x1) 2)
+   (/ (+ y2 y1) 2)])
+
 (defn svg-canvas [payload owner opts]
   (reify
     om/IInitState (init-state [_]
@@ -509,6 +517,7 @@
                                           (= (.-length touches) 1)
                                           (do
                                             (.preventDefault event)
+                                            (js/clearInterval (om/get-state owner :touch-timer))
                                             (om/set-state! owner :touch-timer (js/setTimeout #(cast! :menu-opened) 500))
                                             ((:handle-mouse-down handlers) (aget touches "0")))
 
@@ -518,7 +527,7 @@
                                             (cast! :cancel-drawing)
                                             (reset! (om/get-state owner :touches) (touches->clj touches)))
 
-                                          :else nil)))
+                                          :else (js/clearInterval (om/get-state owner :touch-timer)))))
                       :onTouchEnd (fn [event]
                                     (.preventDefault event)
                                     (js/clearInterval (om/get-state owner :touch-timer))
@@ -542,15 +551,27 @@
                                                (when in-progress?
                                                  (cast! :cancel-drawing))
                                                (let [touches-atom (om/get-state owner :touches)
-                                                     previous-touches @touches-atom
-                                                     current-touches (touches->clj touches)]
+                                                     [p-a p-b :as previous-touches] @touches-atom
+                                                     [c-a c-b :as current-touches] (touches->clj touches)
+
+                                                     p-center (center [(:page-x p-a) (:page-y p-a)]
+                                                                      [(:page-x p-b) (:page-y p-b)])
+
+                                                     c-center (center [(:page-x c-a) (:page-y c-a)]
+                                                                      [(:page-x c-b) (:page-y c-b)])
+
+                                                     drift-x (- (first c-center) (first p-center))
+                                                     drift-y (- (second c-center) (second p-center))
+
+                                                     spread (- (measure [(:page-x p-a) (:page-y p-a)]
+                                                                        [(:page-x p-b) (:page-y p-b)])
+                                                               (measure [(:page-x c-a) (:page-y c-a)]
+                                                                        [(:page-x c-b) (:page-y c-b)]))]
                                                  (reset! touches-atom current-touches)
                                                  (om/transact! payload (fn [state]
-                                                                         (cameras/move-camera state
-                                                                                              (- (:client-x (first current-touches))
-                                                                                                 (:client-x (first previous-touches)))
-                                                                                              (- (:client-y (first current-touches))
-                                                                                                 (:client-y (first previous-touches))))))))
+                                                                         (-> state
+                                                                           (cameras/set-zoom (partial + (* -0.004 spread)))
+                                                                           (cameras/move-camera drift-x drift-y))))))
                                              :else nil)))
                       :onMouseDown (fn [event]
                                      ((:handle-mouse-down handlers) event)
