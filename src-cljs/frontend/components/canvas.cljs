@@ -570,7 +570,8 @@
                                                  (reset! touches-atom current-touches)
                                                  (om/transact! payload (fn [state]
                                                                          (-> state
-                                                                           (cameras/set-zoom (partial + (* -0.004 spread)))
+                                                                           (cameras/set-zoom c-center
+                                                                                             (partial + (* -0.004 spread)))
                                                                            (cameras/move-camera drift-x drift-y))))))
                                              :else nil)))
                       :onMouseDown (fn [event]
@@ -580,12 +581,12 @@
                                    ((:handle-mouse-up handlers) event)
                                    (.stopPropagation event))
                       :onWheel (fn [event]
-                                 (let [dx     (- (aget event "deltaX"))
-                                       dy     (aget event "deltaY")]
+                                 (let [dx (- (aget event "deltaX"))
+                                       dy (aget event "deltaY")]
                                    (om/transact! payload (fn [state]
                                                            (let [camera (cameras/camera state)]
                                                              (if (aget event "altKey")
-                                                               (cameras/set-zoom state (partial + (* -0.002 dy)))
+                                                               (cameras/set-zoom state (cameras/screen-event-coords event) (partial + (* -0.002 dy)))
                                                                (cameras/move-camera state dx (- dy)))))))
                                  (utils/stop-event event))}
                  (dom/defs nil

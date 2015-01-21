@@ -42,12 +42,17 @@
 (defn bounded [lower-bound upper-bound value]
   (max lower-bound (min upper-bound value)))
 
-(defn set-zoom [state f]
+(defn set-zoom [state screen-center f]
   (let [old-z-exact (get-in state [:camera :z-exact])
-        new-z-exact (bounded min-zoom max-zoom (f old-z-exact))]
+        new-z-exact (bounded min-zoom max-zoom (f old-z-exact))
+        [x_s y_s] screen-center
+        old-zf (get-in state [:camera :zf])
+        new-zf (snap zoom-increment new-z-exact)]
     (-> state
         (assoc-in [:camera :z-exact] new-z-exact)
-        (assoc-in [:camera :zf] (snap zoom-increment new-z-exact)))))
+        (assoc-in [:camera :zf] new-zf)
+        (update-in [:camera :x] (fn [x] (+ x (* (- x_s x) (- 1 (/ new-zf old-zf))))))
+        (update-in [:camera :y] (fn [y] (+ y (* (- y_s y) (- 1 (/ new-zf old-zf)))))))))
 
 (defn move-camera [state dx dy]
   (-> state
