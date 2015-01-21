@@ -1,7 +1,9 @@
 (ns pc.models.cust
   "cust is what would usually be called user, we call it cust b/c
    Clojure has already taken the name user in the repl"
-  (:require [pc.datomic :as pcd]
+  (:require [clojure.tools.logging :as log]
+            [pc.datomic :as pcd]
+            [pc.models.flag :as flag-model]
             [datomic.api :refer [db q] :as d]))
 
 
@@ -79,3 +81,7 @@
                  :where [[_ :google-account/sub ?sub ?tx]
                          [?tx :db/txInstant ?i]]}
                db (:google-account/sub cust))))
+
+(defn turn-on-private-docs [db email]
+  (let [cust (find-by-email db email)]
+    (flag-model/add-flag cust :flags/private-docs)))
