@@ -2,7 +2,7 @@
 
 (def max-zoom 5)
 (def min-zoom 0.1)
-(def zoom-increment 0.1)
+(def zoom-increment 0.05)
 
 (defn camera [state]
   (:camera state))
