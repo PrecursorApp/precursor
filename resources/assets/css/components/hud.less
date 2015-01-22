@@ -42,6 +42,10 @@
       fill: @gray_dark;
       transition-duration: @speed_fast;
     }
+    .radial-icon {
+      stroke: @white;
+      transition-duration: @speed_fast;
+    }
   }
   &:active {
     .radial-pie {
@@ -57,9 +61,10 @@
 .radial-icon {
   .shape_position(@radial_tools);
   fill: none;
-  stroke: @white;
+  stroke: @gray_light;
   stroke-width: 8;
   pointer-events: none;
+  transition: @speed @bezier_fadein;
 }
 .radial-point {
   fill: @gray_dark;
