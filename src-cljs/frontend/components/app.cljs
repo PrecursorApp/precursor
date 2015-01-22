@@ -31,25 +31,6 @@
     om/IDisplayName (display-name [_] "App")
     om/IRender
     (render [_]
-      (if-not (:navigation-point app)
-        (html [:div#app])
-
-        (let [controls-ch (om/get-shared owner [:comms :controls])
-              persist-state! #(put! controls-ch [:state-persisted])
-              restore-state! #(put! controls-ch [:state-restored])
-              logged-in? (get-in app state/user-path)]
-          (reset! keymap {["ctrl+s"] persist-state!
-                          ["ctrl+r"] restore-state!})
-          (html
-           [:div#app
-            (om/build keyq/keyboard-handler app
-                      {:opts {:keymap keymap
-                              :error-ch (get-in app [:comms :errors])}})]))))))
-
-(defn app* [app owner]
-  (reify
-    om/IRender
-    (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             chat-opened? (get-in app state/chat-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
