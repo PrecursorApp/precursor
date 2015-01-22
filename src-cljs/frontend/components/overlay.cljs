@@ -426,7 +426,7 @@
                [:td [:div.shortcuts-key {:title "L Key"} "L"]]
                [:td [:div.shortcuts-result {:title "Switch to Circle Tool."} "Circle"]]]
               [:tr
-               [:td [:div.shortcuts-key {:title "Forward Slash Key"} "/"]]
+               [:td [:div.shortcuts-key {:title "Backslash Key"} "\\"]]
                [:td [:div.shortcuts-result {:title "Switch to Line Tool."} "Line"]]]
               [:tr
                [:td [:div.shortcuts-key {:title "N Key"} "N"]]
