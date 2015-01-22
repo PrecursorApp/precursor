@@ -24,7 +24,7 @@
    :keyboard-shortcuts {:select #{"v"}
                         :circle #{"l"}
                         :rect #{"m"}
-                        :line #{"/"}
+                        :line #{"\\"}
                         :pen #{"n"}
                         :text #{"t"}
                         :undo #{"meta+z" "ctrl+z"}
