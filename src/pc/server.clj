@@ -294,14 +294,16 @@
   (fn [req]
     (let [db (pcd/default-db)
           cust (some->> req :session :http-session-key (cust/find-by-http-session-key db))
-          access-grant (some->> req :params :access-grant-token (access-grant-model/find-by-token db))]
+          access-grant (some->> req :params :access-grant-token (access-grant-model/find-by-token db))
+          permission (some->> req :params :auth-token (permission-model/find-by-token db))]
       (when (and cust access-grant)
         (permission-model/convert-access-grant access-grant cust {:document/id (:access-grant/document access-grant)
                                                                   :cust/uuid (:cust/uuid cust)
                                                                   :transaction/broadcast true}))
-      (handler (cond cust (assoc-in req [:auth :cust] cust)
-                     access-grant (assoc-in req [:auth :access-grant] access-grant)
-                     :else req)))))
+      (handler (-> (cond cust (assoc-in req [:auth :cust] cust)
+                         access-grant (assoc-in req [:auth :access-grant] access-grant)
+                         :else req)
+                 (assoc-in [:auth :permission] permission))))))
 
 (defn wrap-wrap-reload
   "Only applies wrap-reload middleware in development"

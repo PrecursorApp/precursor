@@ -1,5 +1,8 @@
 (ns pc.models.permission
   (:require [pc.datomic :as pcd]
+            [clj-time.coerce]
+            [clj-time.core :as time]
+            [crypto.random]
             [datomic.api :refer [db q] :as d]))
 
 (defn permits [db doc cust]
@@ -58,3 +61,34 @@
             db (:db/id doc))
     (map first)
     (map #(d/entity db %))))
+
+(defn find-by-token [db token]
+  (->> (d/q '{:find [?t]
+                  :in [$ ?token]
+                  :where [[?t :permission/token ?token]]}
+                db token)
+    first
+    (d/entity db)))
+
+(defn expired? [permission]
+  (when-let [expiry (:permission/expiry permission)]
+    (.after expiry (java.util.Date.))))
+
+(defn create-document-image-permission!
+  "Creates a token-based permission that can be used to access the svg and png images
+   of the document. Used by emails to provide thumbnails."
+  [doc]
+  (let [temp-id (d/tempid :db.part/user)
+        token (crypto.random/url-part 32)
+        expiry (-> (time/now) (time/plus (time/weeks 2)) (clj-time.coerce/to-date))
+        {:keys [tempids db-after]} @(d/transact (pcd/conn)
+                                                [{:db/id temp-id
+                                                  :permission/permits #{:permission.permits/read}
+                                                  :permission/token token
+                                                  ;; TODO: ref for doc
+                                                  :permission/document (:db/id doc)
+                                                  :permission/expiry expiry}])]
+    (->> (d/resolve-tempid db-after
+                           tempids
+                           temp-id)
+         (d/entity db-after))))

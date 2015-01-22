@@ -236,14 +236,23 @@
               :db.type/ref
               :db/cardinality :db.cardinality/many
               :db/doc "permission granted by permission")
+   (enum :permission.permits/admin)
+   (enum :permission.permits/read)
+
+   (attribute :permission/token
+              :db.type/string
+              :db/unique :db.unique/value
+              :db/doc "secret token used to look up permission")
+
+   (attribute :permission/expiry
+              :db.type/instant
+              :db/doc "Date permission expires, may be removed from db at this point")
 
    (attribute :permission/grant-date
               :db.type/instant
               :db/doc "time permission was created (or access-grant if it came first)")
 
-   (enum :permission.permits/admin)
-
-
+   ;; TODO: rename to grant-cust-permit
    (function :pc.models.permission/grant-permit
              #db/fn {:lang :clojure
                      :params [db doc-id cust-id permit grant-date & extra-fields]
