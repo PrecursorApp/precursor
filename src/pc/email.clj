@@ -184,7 +184,7 @@
     (mailgun/send-message {:from "Precursor <joinme@prcrsr.com>"
                            :to (:cust/email grantee)
                            :subject (str (format-inviter granter)
-                                         " invited you to a document on Precursor")
+                                         " gave you access to a document on Precursor")
                            :text (str "Hey there,\nCome draw with me on Precursor: https://prcrsr.com/document" doc-id)
                            :html (permission-grant-html doc-id image-permission)
                            :o:tracking "yes"
