@@ -248,6 +248,10 @@
               :db.type/instant
               :db/doc "Date permission expires, may be removed from db at this point")
 
+   (attribute :permission/granter
+              :db.type/long ;; TODO: make this a ref!
+              :db/doc "user that granted the permission")
+
    (attribute :permission/grant-date
               :db.type/instant
               :db/doc "time permission was created (or access-grant if it came first)")
@@ -332,7 +336,7 @@
 
    (attribute :access-grant/granter
               :db.type/long ;; TODO: make this a ref!
-              :db/doc "time that the access-grant expires")
+              :db/doc "user that granted the permission")
 
    (attribute :access-grant/grant-date
               :db.type/instant
@@ -382,6 +386,7 @@
 
    (enum :email/access-grant-created)
    (enum :email/access-request-created)
+   (enum :email/document-permission-for-customer-granted)
    (enum :email/fake)
 
    (attribute :flags

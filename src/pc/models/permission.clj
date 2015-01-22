@@ -14,11 +14,18 @@
                                  [?permit-id _ ?permits]]}
                        db (:db/id doc) (:db/id cust)))))
 
-(defn grant-permit [doc cust permit annotations]
+(defn grant-permit [doc granter cust permit annotations]
   (let [txid (d/tempid :db.part/tx)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:pc.models.permission/grant-permit (:db/id doc) (:db/id cust) permit (java.util.Date.)]])))
+                  [:pc.models.permission/grant-permit
+                   (:db/id doc)
+                   (:db/id cust)
+                   permit
+                   (java.util.Date.)
+                   [:needs-email :email/document-permission-for-customer-granted]
+                   ;; TODO: use a ref for this
+                   [:permission/granter (:db/id granter)]]])))
 
 (defn convert-access-grant [access-grant cust annotations]
   (let [txid (d/tempid :db.part/tx)]
@@ -29,7 +36,9 @@
                    (:db/id cust)
                    :permission.permits/admin
                    (or (:access-grant/grant-date access-grant)
-                       (java.util.Date.))]
+                       (java.util.Date.))
+                   (when-let [granter (:access-grant/granter access-grant)]
+                     [:permission/granter granter])]
                   [:db.fn/retractEntity (:db/id access-grant)]])))
 
 (defn convert-access-request [access-request annotations]
@@ -64,15 +73,15 @@
 
 (defn find-by-token [db token]
   (->> (d/q '{:find [?t]
-                  :in [$ ?token]
-                  :where [[?t :permission/token ?token]]}
-                db token)
-    first
+              :in [$ ?token]
+              :where [[?t :permission/token ?token]]}
+            db token)
+    ffirst
     (d/entity db)))
 
 (defn expired? [permission]
   (when-let [expiry (:permission/expiry permission)]
-    (.after expiry (java.util.Date.))))
+    (.before expiry (java.util.Date.))))
 
 (defn create-document-image-permission!
   "Creates a token-based permission that can be used to access the svg and png images
@@ -91,4 +100,7 @@
     (->> (d/resolve-tempid db-after
                            tempids
                            temp-id)
-         (d/entity db-after))))
+      (d/entity db-after))))
+
+(defn get-granter [db permission]
+  (d/entity db (:permission/granter permission)))
