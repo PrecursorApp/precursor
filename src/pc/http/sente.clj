@@ -348,6 +348,7 @@
                          :transaction/broadcast true}]
         (if-let [grantee (cust/find-by-email (:db req) email)]
           (permission-model/grant-permit {:db/id doc-id}
+                                         cust
                                          grantee
                                          :permission.permits/admin
                                          annotations)

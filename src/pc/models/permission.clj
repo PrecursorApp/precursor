@@ -1,5 +1,8 @@
 (ns pc.models.permission
   (:require [pc.datomic :as pcd]
+            [clj-time.coerce]
+            [clj-time.core :as time]
+            [crypto.random]
             [datomic.api :refer [db q] :as d]))
 
 (defn permits [db doc cust]
@@ -11,11 +14,18 @@
                                  [?permit-id _ ?permits]]}
                        db (:db/id doc) (:db/id cust)))))
 
-(defn grant-permit [doc cust permit annotations]
+(defn grant-permit [doc granter cust permit annotations]
   (let [txid (d/tempid :db.part/tx)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:pc.models.permission/grant-permit (:db/id doc) (:db/id cust) permit (java.util.Date.)]])))
+                  [:pc.models.permission/grant-permit
+                   (:db/id doc)
+                   (:db/id cust)
+                   permit
+                   (java.util.Date.)
+                   [:needs-email :email/document-permission-for-customer-granted]
+                   ;; TODO: use a ref for this
+                   [:permission/granter (:db/id granter)]]])))
 
 (defn convert-access-grant [access-grant cust annotations]
   (let [txid (d/tempid :db.part/tx)]
@@ -26,7 +36,9 @@
                    (:db/id cust)
                    :permission.permits/admin
                    (or (:access-grant/grant-date access-grant)
-                       (java.util.Date.))]
+                       (java.util.Date.))
+                   (when-let [granter (:access-grant/granter access-grant)]
+                     [:permission/granter granter])]
                   [:db.fn/retractEntity (:db/id access-grant)]])))
 
 (defn convert-access-request [access-request annotations]
@@ -58,3 +70,37 @@
             db (:db/id doc))
     (map first)
     (map #(d/entity db %))))
+
+(defn find-by-token [db token]
+  (->> (d/q '{:find [?t]
+              :in [$ ?token]
+              :where [[?t :permission/token ?token]]}
+            db token)
+    ffirst
+    (d/entity db)))
+
+(defn expired? [permission]
+  (when-let [expiry (:permission/expiry permission)]
+    (.before expiry (java.util.Date.))))
+
+(defn create-document-image-permission!
+  "Creates a token-based permission that can be used to access the svg and png images
+   of the document. Used by emails to provide thumbnails."
+  [doc]
+  (let [temp-id (d/tempid :db.part/user)
+        token (crypto.random/url-part 32)
+        expiry (-> (time/now) (time/plus (time/weeks 2)) (clj-time.coerce/to-date))
+        {:keys [tempids db-after]} @(d/transact (pcd/conn)
+                                                [{:db/id temp-id
+                                                  :permission/permits #{:permission.permits/read}
+                                                  :permission/token token
+                                                  ;; TODO: ref for doc
+                                                  :permission/document (:db/id doc)
+                                                  :permission/expiry expiry}])]
+    (->> (d/resolve-tempid db-after
+                           tempids
+                           temp-id)
+      (d/entity db-after))))
+
+(defn get-granter [db permission]
+  (d/entity db (:permission/granter permission)))
