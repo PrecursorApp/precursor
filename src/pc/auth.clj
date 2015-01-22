@@ -91,12 +91,12 @@
              (:db/id doc)
              (:permission/document permission)
              (= (:db/id doc) (:permission/document permission))
-             (not (permission-model/expired? permission))
-             (cond (contains? (:permission/permits permission) :permission.permits/admin)
-                   :admin
-                   (contains? (:permission/permits permission) :permission.permits/read)
-                   :read
-                   :else nil))))
+             (not (permission-model/expired? permission)))
+    (cond (contains? (:permission/permits permission) :permission.permits/admin)
+          :admin
+          (contains? (:permission/permits permission) :permission.permits/read)
+          :read
+          :else nil)))
 
 ;; TODO: unify these so that there is only 1 permission type
 ;;       Could still have multiple permissions for a doc, but want
@@ -104,6 +104,8 @@
 ;; TODO: this should return a :permission/permits type of thing
 (defn document-permission [db doc auth]
   (or (cust-permission db doc (:cust auth))
+      ;; TODO: stop using access grant tokens as permissions
+      ;;       Can remove once all of the tokens expire
       (access-grant-permission db doc (:access-grant auth))
       (permission-permission db doc (:permission auth))))
 
