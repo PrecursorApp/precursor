@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [pc.profile]
             [fs])
   (:import [java.nio.file
             Path Paths FileSystems WatchEvent$Kind StandardWatchEventKinds
@@ -117,5 +118,6 @@
   (start-watcher!))
 
 (defn init []
-  (compile!)
-  (start-watcher!))
+  (when (pc.profile/compile-less?)
+    (compile!)
+    (start-watcher!)))
