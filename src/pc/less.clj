@@ -18,10 +18,15 @@
 
 (def less-dir "resources/assets/css")
 (def less-file "resources/assets/css/app.css.less")
-(def output-file "resources/public/css/app.css")
+(def output-dir "resources/public/css/")
+(def output-file (str output-dir "app.css"))
 
 (def lessc-path "node_modules/.bin/lessc")
-(def lessc-options "-x")
+(defn lessc-options [output-file output-dir]
+  (str "-x"
+       " --source-map=" output-file ".map"
+       " --source-map-basepath=" output-dir
+       " --source-map-less-inline"))
 
 (def watch-opts-cdm
   (into-array WatchEvent$Kind [StandardWatchEventKinds/ENTRY_CREATE
@@ -30,7 +35,7 @@
 
 (defn compile! [& {:keys [src dest]
                    :or {src less-file dest output-file}}]
-  (let [cmd (format "%s %s %s > %s" lessc-path lessc-options src dest)
+  (let [cmd (format "%s %s %s > %s" lessc-path (lessc-options dest output-dir) src dest)
         res (shell/sh "bash" "-c" cmd)]
     (if (not= 0 (:exit res))
       (throw (Exception. (format "Couldn't compile less with %s returned exit code %s: %s %s" cmd (:exit res) (:out res) (:err res))))
