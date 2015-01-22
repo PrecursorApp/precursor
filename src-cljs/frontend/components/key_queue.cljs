@@ -44,7 +44,8 @@
    221 "]"
    187 "="
    189 "-"
-   190 "."})
+   190 "."
+   220 "\\"})
  
 (defn event-modifiers
   "Given a keydown event, return the modifier keys that were being held."
