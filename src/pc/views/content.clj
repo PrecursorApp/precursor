@@ -41,9 +41,9 @@
     [:meta {:name "format-detection"                      :content "telephone=no"}]
 
     ;; TODO make the rest of these startup images
-    [:link {:href  "750x1294.png" :rel "apple-touch-startup-image" :media "(device-width: 375px) and (device-height: 667px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 2)"}]
-    [:link {:href "1242x2148.png" :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 3)"}]
-    [:link {:href "2208x1182.png" :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
+    [:link {:href  "/img/750x1294.png" :rel "apple-touch-startup-image" :media "(device-width: 375px) and (device-height: 667px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 2)"}]
+    [:link {:href "/img/1242x2148.png" :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 3)"}]
+    [:link {:href "/img/2208x1182.png" :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
 
     [:meta {:name "og:card"         :content "summary"}]
     [:meta {:name "og:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
