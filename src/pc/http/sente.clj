@@ -119,7 +119,7 @@
   (check-document-access (-> ?data :document-id) req :admin)
   (let [document-id (-> ?data :document-id)]
     (log/infof "unsubscribing %s from %s" client-id document-id)
-    (swap! document-subs update-in [document-id] dissoc client-id)
+    (close-connection client-id)
     (doseq [[uid _] (get @document-subs document-id)]
       ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))))
 
