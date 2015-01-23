@@ -27,11 +27,30 @@
 (defn layout [view-data & content]
   [:html
    [:head
-    [:title "Precursor - Simple collaborative prototyping"]
-    [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
-    [:link.css-styles {:rel "stylesheet", :href (pc.assets/asset-path "/css/app.css")}]
-    [:link {:rel "stylesheet" :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400" :type "text/css"}]
-    [:link {:rel "icon" :href "/favicon.ico" :type "image/ico"}]
+    [:title "Precursor is a fast web app for prototyping — make simple stuff."]
+    [:meta {:charset    "utf-8"}]
+    [:meta {:http-equiv "X-UA-Compatible"     :content "IE=edge"}]
+    [:meta {:name       "description"         :content "Your wireframe should be easy to share with any developer on your team. Design fast with iPhone and iPad collaboration. Precursor is productive prototyping."}]
+    [:meta {:name       "viewport"            :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
+
+    ;; TODO finish ogs
+    ;; [:meta {:name       "og:card"        :content "summary"}]
+    ;; [:meta {:name       "og:site"        :content "@prcrsr_app"}]
+    ;; [:meta {:name       "og:title"       :content "Precursor is a fast web app for prototyping."}]
+    ;; [:meta {:name       "og:description" :content "You can prototype product design wireframes with a fast and simple web app."}]
+    ;; [:meta {:name       "og:image"       :content ""}]
+    ;; [:meta {:name       "og:url"         :content "https://prcrsr.com/"}]
+
+    [:meta {:name       "twitter:card"        :content "summary"}]
+    [:meta {:name       "twitter:site"        :content "@prcrsr_app"}]
+    [:meta {:name       "twitter:title"       :content "Precursor is a fast web app for prototyping."}]
+    [:meta {:name       "twitter:description" :content "You can prototype product design wireframes with a fast and simple web app."}]
+    [:meta {:name       "twitter:image"       :content ""}] ; TODO
+    [:meta {:name       "twitter:url"         :content "https://prcrsr.com/"}]
+
+    [:link {:rel        "apple-touch-icon"    :href    "/apple-touch-icon.png"}]
+    [:link {:rel        "stylesheet"          :href    (pc.assets/asset-path "/css/app.css")}]
+    [:link {:rel        "stylesheet"          :href    "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
     (embed-json-in-head "window.Precursor" (json/encode view-data))
     (when (prod-assets?)
       scripts/google-analytics)
