@@ -425,11 +425,11 @@
                                                  {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
 
 (defmethod post-control-event! :text-layer-edited
-  [browser-state message _ current-state previous-state]
+  [browser-state message _ previous-state current-state]
   (maybe-notify-subscribers! current-state nil nil))
 
 (defmethod post-control-event! :mouse-moved
-  [browser-state message [x y] current-state previous-state]
+  [browser-state message [x y] previous-state current-state]
   (maybe-notify-subscribers! current-state x y))
 
 (defn finalize-layer [state]
