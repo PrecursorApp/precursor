@@ -313,8 +313,6 @@
   (-> state
       (assoc-in [:drawing :layers 0 :layer/text] value)))
 
-(defn selectable? [db e]
-  (not= :layer.type/group (:layer/type (d/entity db e))))
 
 (defn eids-in-bounding-box [db {:keys [start-x end-x start-y end-y] :as box}]
   (let [x0 (min start-x end-x)
@@ -325,11 +323,10 @@
         has-x1 (set (map :e (d/index-range db :layer/end-x x0 x1)))
         has-y0 (set (map :e (d/index-range db :layer/start-y y0 y1)))
         has-y1 (set (map :e (d/index-range db :layer/end-y y0 y1)))]
-    (set (filter (partial selectable? db)
-                 (set/union (set/intersection has-x0 has-y0)
-                            (set/intersection has-x0 has-y1)
-                            (set/intersection has-x1 has-y0)
-                            (set/intersection has-x1 has-y1))))))
+    (set/union (set/intersection has-x0 has-y0)
+               (set/intersection has-x0 has-y1)
+               (set/intersection has-x1 has-y0)
+               (set/intersection has-x1 has-y1))))
 
 (defn draw-in-progress-drawing [state x y {:keys [force-even?]}]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
