@@ -698,14 +698,19 @@
 (defmethod control-event :text-layer-re-edited
   [browser-state message layer state]
   (-> state
-      (assoc-in [:drawing :layers] [(assoc layer
-                                      :layer/current-x (:layer/start-x layer)
-                                      :layer/current-y (:layer/start-y layer))])
-      (assoc-in [:drawing :in-progress?] true)
-      (assoc-in state/current-tool-path :text)))
+    (assoc-in [:drawing :layers] [(assoc layer
+                                         :layer/current-x (:layer/start-x layer)
+                                         :layer/current-y (:layer/start-y layer))])
+    (assoc-in [:selected-eids] #{(:db/id layer)})
+    (assoc-in [:drawing :in-progress?] true)
+    (assoc-in state/current-tool-path :text)))
 
 (defmethod post-control-event! :text-layer-re-edited
   [browser-state message layer previous-state current-state]
+  (when (get-in previous-state [:drawing :in-progress?])
+    (d/transact! (:db current-state)
+                 (get-in (finalize-layer previous-state) [:drawing :layers])
+                 {:can-undo? true}))
   (maybe-notify-subscribers! current-state nil nil))
 
 (defmethod control-event :chat-db-updated
