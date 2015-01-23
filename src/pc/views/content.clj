@@ -27,31 +27,51 @@
 (defn layout [view-data & content]
   [:html
    [:head
-    [:title "Precursor is a fast web app for prototyping — make simple stuff."]
+    [:title "Precursor—fast prototyping web app, makes collaboration easy."]
     [:meta {:charset    "utf-8"}]
-    [:meta {:http-equiv "X-UA-Compatible"     :content "IE=edge"}]
-    [:meta {:name       "description"         :content "Your wireframe should be easy to share with any developer on your team. Design fast with iPhone and iPad collaboration. Precursor is productive prototyping."}]
-    [:meta {:name       "viewport"            :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
+    [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
 
-    ;; TODO finish ogs
-    ;; [:meta {:name       "og:card"        :content "summary"}]
-    ;; [:meta {:name       "og:site"        :content "@prcrsr_app"}]
-    ;; [:meta {:name       "og:title"       :content "Precursor is a fast web app for prototyping."}]
-    ;; [:meta {:name       "og:description" :content "You can prototype product design wireframes with a fast and simple web app."}]
-    ;; [:meta {:name       "og:image"       :content ""}]
-    ;; [:meta {:name       "og:url"         :content "https://prcrsr.com/"}]
+    [:meta {:name       "description"     :content "Your wireframe should be easy to share with any developer on your team. Design fast with iPhone and iPad collaboration. Precursor is productive prototyping."}]
 
-    [:meta {:name       "twitter:card"        :content "summary"}]
-    [:meta {:name       "twitter:site"        :content "@prcrsr_app"}]
-    [:meta {:name       "twitter:title"       :content "Precursor is a fast web app for prototyping."}]
-    [:meta {:name       "twitter:description" :content "You can prototype product design wireframes with a fast and simple web app."}]
-    [:meta {:name       "twitter:image"       :content ""}] ; TODO
-    [:meta {:name       "twitter:url"         :content "https://prcrsr.com/"}]
+    [:meta {:name "viewport"                              :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
+    [:meta {:name "apple-touch-fullscreen"                :content "yes"}]
+    [:meta {:name "apple-mobile-web-app-capable"          :content "yes"}]
+    [:meta {:name "apple-mobile-web-app-status-bar-style" :content "black"}]
+    [:meta {:name "apple-mobile-web-app-title"            :content "Precursor"}]
+    [:meta {:name "format-detection"                      :content "telephone=no"}]
 
-    [:link {:rel "icon" :href "/favicon.ico" :type "image/ico"}]
-    [:link {:rel        "apple-touch-icon"    :href    "/apple-touch-icon.png"}]
-    [:link {:rel        "stylesheet"          :href    (pc.assets/asset-path "/css/app.css")}]
-    [:link {:rel        "stylesheet"          :href    "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
+    ;; TODO make the rest of these startup images
+    [:link {:href  "750x1294.png" :rel "apple-touch-startup-image" :media "(device-width: 375px) and (device-height: 667px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 2)"}]
+    [:link {:href "1242x2148.png" :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 3)"}]
+    [:link {:href "2208x1182.png" :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
+
+    [:meta {:name "og:card"         :content "summary"}]
+    [:meta {:name "og:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
+    [:meta {:name "og:image"        :content "/img/precursor-logo.png"}]
+    [:meta {:name "og:image:width"  :content "1200"}]
+    [:meta {:name "og:image:height" :content "1200"}]
+    [:meta {:name "og:site_name"    :content "Precursor"}]
+    [:meta {:name "og:title"        :content "Fast prototyping web app, makes collaboration easy."}]
+    [:meta {:name "og:type"         :content "website"}]
+    [:meta {:name "og:url"          :content "https://prcrsr.com/"}]
+
+    [:meta {:name "twitter:card"         :content "summary_large_image"}]
+    [:meta {:name "twitter:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
+    [:meta {:name "twitter:image:src"    :content "/img/precursor-logo.png"}]
+    [:meta {:name "twitter:image:width"  :content "1200"}]
+    [:meta {:name "twitter:image:height" :content "1200"}]
+    [:meta {:name "twitter:site"         :content "@prcrsr_app"}]
+    [:meta {:name "twitter:site:id"      :content "2900854766"}]
+    [:meta {:name "twitter:title"        :content "Fast prototyping web app, makes collaboration easy."}]
+    [:meta {:name "twitter:url"          :content "https://prcrsr.com/"}]
+
+    [:link {:rel "icon"             :href "/favicon.ico"}]
+    [:link {:rel "apple-touch-icon" :href "/img/apple-touch-icon.png"}]
+    [:link {:rel "stylesheet"       :href (pc.assets/asset-path "/css/app.css")}]
+    [:link {:rel "stylesheet"       :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
+
+    [:style "html{-webkit-text-size-adjust:100%}"] ; prevents resizing when launching from ios home screen
+
     (embed-json-in-head "window.Precursor" (json/encode view-data))
     (when (prod-assets?)
       scripts/google-analytics)
