@@ -566,7 +566,8 @@
         db           (:db current-state)
         layer        (get-in current-state [:drawing :layers 0])]
     (when (layer-model/detectable? layer)
-      (d/transact! db [layer] {:can-undo? true}))))
+      (d/transact! db [layer] {:can-undo? true}))
+    (maybe-notify-subscribers! current-state nil nil)))
 
 (defmethod control-event :deleted-selected
   [browser-state message _ state]
