@@ -36,11 +36,11 @@
 
 (defn compile! [& {:keys [src dest]
                    :or {src less-file dest output-file}}]
-  (let [cmd (format "%s %s %s > %s" lessc-path (lessc-options dest output-dir) src dest)
+  (let [cmd (format "%s %s %s" lessc-path (lessc-options dest output-dir) src dest)
         res (shell/sh "bash" "-c" cmd)]
     (if (not= 0 (:exit res))
       (throw (Exception. (format "Couldn't compile less with %s returned exit code %s: %s %s" cmd (:exit res) (:out res) (:err res))))
-      (:out res))))
+      (spit dest (:out res)))))
 
 (defn ->path [path]
   (.getPath (FileSystems/getDefault) path (into-array String [])))
