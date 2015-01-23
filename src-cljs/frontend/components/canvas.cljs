@@ -311,11 +311,11 @@
     om/IDidMount
     (did-mount [_]
       (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (goog.style/getSize (om/get-node owner "input-width-tester")))))
+      (om/set-state! owner :input-min-width (.-width (.getBBox (om/get-node owner "text-size-helper")))))
     om/IDidUpdate
     (did-update [_ _ _]
       (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (goog.style/getSize (om/get-node owner "input-width-tester")))))
+      (om/set-state! owner :input-min-width (.-width (.getBBox (om/get-node owner "text-size-helper")))))
     om/IInitState
     (init-state [_]
       {:input-min-width 0})
@@ -323,45 +323,59 @@
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             text-style {:font-size (:layer/font-size layer 20)}]
-        (dom/foreignObject #js {:width "100%"
-                                :height "100%"
-                                :x (:layer/start-x layer)
-                                ;; TODO: defaults for each layer when we create them
-                                :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
-          (dom/form #js {:className "svg-text-form"
-                         :onMouseDown #(.stopPropagation %)
-                         :onMouseUp #(.stopPropagation %)
-                         :onWheel #(.stopPropagation %)
+        (dom/g nil
+          (svg-element #{}
+                       (assoc layer
+                              :className "text-size-helper"
+                              :ref "text-size-helper"))
+          (dom/foreignObject #js {:width "100%"
+                                  :height "100%"
+                                  :x (:layer/start-x layer)
+                                  ;; TODO: defaults for each layer when we create them
+                                  :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
+            (dom/form #js {:className "svg-text-form"
+                           :onMouseDown #(.stopPropagation %)
+                           :onMouseUp #(.stopPropagation %)
+                           :onWheel #(.stopPropagation %)
 
-                         :onSubmit (fn [e]
-                                     (cast! :text-layer-finished)
-                                     (utils/stop-event e))
-                         :onKeyDown #(cond (= "Enter" (.-key %))
-                                           (do (cast! :text-layer-finished)
+                           :onSubmit (fn [e]
+                                       (let [bbox (.getBBox (om/get-node owner "text-size-helper"))]
+                                         (cast! :text-layer-finished {:bbox {:width (.-width bbox)
+                                                                             :height (.-height bbox)
+                                                                             :x (.-x bbox)
+                                                                             :y (.-y bbox)}})
+                                         (utils/stop-event e)))
+                           :onKeyDown #(cond (= "Enter" (.-key %))
+                                             (let [bbox (.getBBox (om/get-node owner "text-size-helper"))]
+                                               (cast! :text-layer-finished {:bbox {:width (.-width bbox)
+                                                                                   :height (.-height bbox)
+                                                                                   :x (.-x bbox)
+                                                                                   :y (.-y bbox)}})
                                                (utils/stop-event %))
 
-                                           (= "Escape" (.-key %))
-                                           (do (cast! :cancel-drawing)
-                                               (utils/stop-event %))
+                                             (= "Escape" (.-key %))
+                                             (do (cast! :cancel-drawing)
+                                                 (utils/stop-event %))
 
-                                           :else nil)}
-                    ;; TODO: experiment with a contentEditable div
-                    (dom/input #js {:type "text"
-                                    :placeholder "Type something..."
-                                    :value (or (:layer/text layer) "")
-                                    ;; TODO: defaults for each layer when we create them
-                                    :style (clj->js (merge text-style
-                                                           {:width (+ 256 (om/get-state owner :input-min-width))}))
-                                    :ref "input"
-                                    :onChange #(cast! :text-layer-edited {:value (.. % -target -value)})})
-                    (dom/div #js {:style (clj->js (merge {:visibility "hidden"
-                                                          :position "fixed"
-                                                          :top "-100px"
-                                                          :left "0"
-                                                          :display "inline-block"}
-                                                         text-style))
-                                  :ref "input-width-tester"}
-                      (:layer/text layer))))))))
+                                             :else nil)}
+                      ;; TODO: experiment with a contentEditable div
+                      (dom/input #js {:type "text"
+                                      :placeholder "Type something..."
+                                      :value (or (:layer/text layer) "")
+                                      ;; TODO: defaults for each layer when we create them
+                                      :style (clj->js (merge text-style
+                                                             {:width (+ 50 (max 160 (om/get-state owner :input-min-width)))}))
+                                      :ref "input"
+                                      :onChange #(let [bbox (.getBBox (om/get-node owner "text-size-helper"))]
+                                                   ;; this will always be a letter behind, but we sometimes
+                                                   ;; call text-layer-finished from a place that doesn't
+                                                   ;; have access to the DOM
+                                                   ;; TODO: can we save on focus-out instead?
+                                                   (cast! :text-layer-edited {:value (.. % -target -value)
+                                                                              :bbox {:width (.-width bbox)
+                                                                                     :height (.-height bbox)
+                                                                                     :x (.-x bbox)
+                                                                                     :y (.-y bbox)}}))}))))))))
 
 (defn subscriber-layers [{:keys [layers]} owner]
   (reify
