@@ -48,6 +48,7 @@
     [:meta {:name       "twitter:image"       :content ""}] ; TODO
     [:meta {:name       "twitter:url"         :content "https://prcrsr.com/"}]
 
+    [:link {:rel "icon" :href "/favicon.ico" :type "image/ico"}]
     [:link {:rel        "apple-touch-icon"    :href    "/apple-touch-icon.png"}]
     [:link {:rel        "stylesheet"          :href    (pc.assets/asset-path "/css/app.css")}]
     [:link {:rel        "stylesheet"          :href    "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
