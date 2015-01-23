@@ -311,11 +311,11 @@
     om/IDidMount
     (did-mount [_]
       (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (.getBBox (om/get-node owner "text-size-helper")))))
+      (om/set-state! owner :input-min-width (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper")))))
     om/IDidUpdate
     (did-update [_ _ _]
       (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (.getBBox (om/get-node owner "text-size-helper")))))
+      (om/set-state! owner :input-min-width (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper")))))
     om/IInitState
     (init-state [_]
       {:input-min-width 0})
@@ -339,18 +339,14 @@
                            :onWheel #(.stopPropagation %)
 
                            :onSubmit (fn [e]
-                                       (let [bbox (.getBBox (om/get-node owner "text-size-helper"))]
+                                       (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
                                          (cast! :text-layer-finished {:bbox {:width (.-width bbox)
-                                                                             :height (.-height bbox)
-                                                                             :x (.-x bbox)
-                                                                             :y (.-y bbox)}})
+                                                                             :height (.-height bbox)}})
                                          (utils/stop-event e)))
                            :onKeyDown #(cond (= "Enter" (.-key %))
-                                             (let [bbox (.getBBox (om/get-node owner "text-size-helper"))]
+                                             (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
                                                (cast! :text-layer-finished {:bbox {:width (.-width bbox)
-                                                                                   :height (.-height bbox)
-                                                                                   :x (.-x bbox)
-                                                                                   :y (.-y bbox)}})
+                                                                                   :height (.-height bbox)}})
                                                (utils/stop-event %))
 
                                              (= "Escape" (.-key %))
@@ -366,16 +362,14 @@
                                       :style (clj->js (merge text-style
                                                              {:width (+ 50 (max 160 (om/get-state owner :input-min-width)))}))
                                       :ref "input"
-                                      :onChange #(let [bbox (.getBBox (om/get-node owner "text-size-helper"))]
+                                      :onChange #(let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
                                                    ;; this will always be a letter behind, but we sometimes
                                                    ;; call text-layer-finished from a place that doesn't
                                                    ;; have access to the DOM
                                                    ;; TODO: can we save on focus-out instead?
                                                    (cast! :text-layer-edited {:value (.. % -target -value)
                                                                               :bbox {:width (.-width bbox)
-                                                                                     :height (.-height bbox)
-                                                                                     :x (.-x bbox)
-                                                                                     :y (.-y bbox)}}))}))))))))
+                                                                                     :height (.-height bbox)}}))}))))))))
 
 (defn subscriber-layers [{:keys [layers]} owner]
   (reify

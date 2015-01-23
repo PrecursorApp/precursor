@@ -459,13 +459,9 @@
                               (when (= layer-type :layer.type/path)
                                 {:layer/path (svg/points->path (:points layer))})
                               (when (= layer-type :layer.type/text)
-                                {;:layer/start-x (get-in layer [:bbox :x])
-                                 :layer/end-x (+ 1
-                                                 (get-in layer [:layer/start-x])
+                                {:layer/end-x (+ (get-in layer [:layer/start-x])
                                                  (get-in layer [:bbox :width]))
-                                 ;:layer/start-y (get-in layer [:bbox :y])
                                  :layer/end-y (- (get-in layer [:layer/start-y])
-                                                 (- 1)
                                                  (get-in layer [:bbox :height]))}))))))
       (assoc-in [:camera :moving?] false))))
 
@@ -514,10 +510,9 @@
       ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
       (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
       (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
-      (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
 
-                                                                 (cast! :text-layer-finished)
-                                                                 (cast! :drawing-started [x y]))
+      (= (get-in current-state state/current-tool-path) :text) (cast! :drawing-started [x y])
+
       (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
       (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
       (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
