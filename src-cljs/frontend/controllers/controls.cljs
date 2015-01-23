@@ -497,11 +497,12 @@
 (defmethod post-control-event! :mouse-depressed
   [browser-state message [x y {:keys [button ctrl?]}] previous-state current-state]
   (let [cast! (fn [msg & [payload]]
-                (put! (get-in current-state [:comms :controls]) [msg payload]))]
+                (put! (get-in current-state [:comms :controls]) [msg payload]))
+        drawing-text? (and (= (get-in current-state state/current-tool-path) :text)
+                           (get-in current-state [:drawing :in-progress?]))]
     ;; If you click while writing text, you probably wanted to place it there
     ;; You also want the right-click menu to open
-    (when (and (= (get-in current-state state/current-tool-path) :text)
-               (get-in current-state [:drawing :in-progress?]))
+    (when drawing-text?
       (cast! :text-layer-finished))
     (cond
       (= button 2) (cast! :menu-opened)
@@ -511,7 +512,9 @@
       (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
       (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
 
-      (= (get-in current-state state/current-tool-path) :text) (cast! :drawing-started [x y])
+      (= (get-in current-state state/current-tool-path) :text)
+      (when-not drawing-text?
+        (cast! :drawing-started [x y]))
 
       (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
       (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
