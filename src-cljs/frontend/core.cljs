@@ -29,13 +29,12 @@
             [om.core :as om :include-macros true]
             [frontend.history :as history]
             [frontend.browser-settings :as browser-settings]
-            [frontend.utils :as utils :refer [mlog merror third]]
+            [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
             [frontend.utils.ajax :as ajax]
             [frontend.datetime :as datetime]
             [goog.labs.dom.PageVisibilityMonitor]
             [secretary.core :as sec])
-  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
-                   [frontend.utils :refer [inspect timing swallow-errors]])
+  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [cljs.core.UUID]
            [goog.events.EventType]))
 
@@ -161,7 +160,7 @@
   [value state history]
   (when (log-channels?)
     (mlog "Navigation Verbose: " value))
-  (swallow-errors
+  (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state]
        (swap! state (partial nav-con/navigated-to history (first value) (second value)))
@@ -171,7 +170,7 @@
   [value state container]
   (when (log-channels?)
     (mlog "API Verbose: " (first value) (second value) (utils/third value)))
-  (swallow-errors
+  (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state
            message (first value)
@@ -187,7 +186,7 @@
   [value state container]
   (when (log-channels?)
     (mlog "Errors Verbose: " value))
-  (swallow-errors
+  (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state]
        (swap! state (partial errors-con/error container (first value) (second value)))
@@ -270,7 +269,7 @@
 
 
     (when (and (env/development?) (= js/window.location.protocol "http:"))
-      (swallow-errors (dev/setup-figwheel {:js-callback om-setup})))
+      (utils/swallow-errors (dev/setup-figwheel {:js-callback om-setup})))
 
     (async/tap (:controls-mult comms) controls-tap)
     (async/tap (:nav-mult comms) nav-tap)
@@ -316,12 +315,12 @@
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
       (sec/dispatch! (str "/" (.getToken history-imp))))
     (when (and (env/development?) (= js/window.location.protocol "http:"))
-      (swallow-errors (dev/setup-browser-repl)))))
+      (utils/swallow-errors (dev/setup-browser-repl)))))
 
 (defn ^:export inspect-state []
   (clj->js @debug-state))
 
 (defn ^:export test-rollbar []
-  (swallow-errors (throw (js/Error. "This is an exception"))))
+  (utils/swallow-errors (throw (js/Error. "This is an exception"))))
 
 (defonce startup (setup!))
