@@ -349,9 +349,12 @@
                                              (cond-> (and (= tool :text)
                                                           (get-in state [:mouse :down]))
                                                ((fn [s]
-                                                  (-> s
-                                                    (update-in [:layer/start-x] + (:x delta))
-                                                    (update-in [:layer/start-y] + (:y delta))))))))
+                                                  (let [zoom (get-in state [:camera :zf])]
+                                                    (-> s
+                                                      (update-in [:layer/start-x] + (* (/ 1 zoom)
+                                                                                       (:x delta)))
+                                                      (update-in [:layer/start-y] + (* (/ 1 zoom)
+                                                                                       (:y delta))))))))))
         (update-in [:drawing :layers 0]
                    (fn [layer]
                      (merge
