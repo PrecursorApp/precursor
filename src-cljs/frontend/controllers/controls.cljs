@@ -204,7 +204,6 @@
                 (assoc-in [:drawing :layers] [(assoc layer
                                                 :layer/current-x snap-x
                                                 :layer/current-y snap-y)])
-                (assoc-in [:mouse :down] true)
                 (update-mouse x y)
                 (assoc-in [:selected-eids] #{entity-id})
                 (update-in [:entity-ids] disj entity-id))]
@@ -473,25 +472,11 @@
       (assoc-in [:drawing :moving?] false)
       (assoc-in [:mouse :down] false)))
 
-(defmethod control-event :mouse-released
-  [browser-state message [x y] state]
-  (if (and (not (get-in state [:drawing :moving?]))
-           (get-in state [:drawing :in-progress?])
-           (= :layer.type/text (get-in state [:drawing :layers 0 :layer/type])))
-    state
-    (-> state
-        (update-mouse x y)
-
-        (cond-> (get-in state [:drawing :in-progress?])
-                (finalize-layer)
-
-                (get-in state [:drawing :moving?])
-                (drop-layers)))))
-
 (defmethod control-event :mouse-depressed
   [browser-state message [x y {:keys [button type]}] state]
   (-> state
       (update-mouse x y)
+      (assoc-in [:mouse :down] true)
       (assoc-in [:mouse :type] (if (= type "mousedown") :mouse :touch))))
 
 (defmethod post-control-event! :mouse-depressed
@@ -529,6 +514,22 @@
             (:layer/start-x original-layer))
       (not= (:layer/start-y layer)
             (:layer/start-y original-layer))))
+
+(defmethod control-event :mouse-released
+  [browser-state message [x y] state]
+  (if (and (not (get-in state [:drawing :moving?]))
+           (get-in state [:drawing :in-progress?])
+           (= :layer.type/text (get-in state [:drawing :layers 0 :layer/type])))
+    (assoc-in state [:mouse :down] false)
+    (-> state
+      (update-mouse x y)
+      (assoc-in [:mouse :down] false)
+
+      (cond-> (get-in state [:drawing :in-progress?])
+        (finalize-layer)
+
+        (get-in state [:drawing :moving?])
+        (drop-layers)))))
 
 (defmethod post-control-event! :mouse-released
   [browser-state message [x y {:keys [button type ctrl?]}] previous-state current-state]
@@ -699,6 +700,7 @@
                                          :layer/current-y (:layer/start-y layer))])
     (assoc-in [:selected-eids] #{(:db/id layer)})
     (assoc-in [:drawing :in-progress?] true)
+    (assoc-in [:mouse :down] true)
     (assoc-in state/current-tool-path :text)))
 
 (defmethod post-control-event! :text-layer-re-edited
