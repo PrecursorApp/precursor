@@ -20,11 +20,21 @@
   {:db/id (d/tempid :db.part/user)
    :db/ident ident})
 
+;; Attributes that annotate the schema, have to be transacted first
+;; Note: metadata needs a migration for it to be removed (or it can be set to false)
+(def metadata-schema
+  [(attribute :metadata/unescaped
+              :db.type/boolean
+              :db/doc "indicates that an attribute can be changed by a user, so should be escaped")
+   ])
+
 (def schema
   [
+
    (attribute :layer/name
               :db.type/string
-              :db/doc "Layer name")
+              :db/doc "Layer name"
+              :metadata/unescaped true)
 
    (attribute :layer/uuid
               :db.type/uuid
@@ -62,13 +72,15 @@
               :db/doc "Border radius")
 
    (attribute :layer/fill
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :layer/stroke-width
               :db.type/float)
 
    (attribute :layer/stroke-color
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :layer/opacity
               :db.type/float)
@@ -90,16 +102,19 @@
               :db.type/float)
 
    (attribute :layer/font-family
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :layer/text
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :layer/font-size
               :db.type/long)
 
    (attribute :layer/path
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    ;; Wonder what happens if we make a layer a child of one of its children...
    (attribute :layer/child
@@ -109,11 +124,13 @@
 
    (attribute :layer/ui-id
               :db.type/string
-              :db/doc "User-provided identifier for layer")
+              :db/doc "User-provided identifier for layer"
+              :metadata/unescaped true)
 
    (attribute :layer/ui-target
               :db.type/string
-              :db/doc "User-provided action for layer")
+              :db/doc "User-provided action for layer"
+              :metadata/unescaped true)
 
    (attribute :layer/ancestor
               :db.type/long
@@ -126,14 +143,16 @@
               :db/index true)
 
    (attribute :session/client-id
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :document/uuid
               :db.type/uuid
               :db/index true)
 
    (attribute :document/name
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :document/creator
               :db.type/uuid
@@ -164,10 +183,12 @@
               :db/doc "invalid document/id that was migrated")
 
    (attribute :chat/body
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :chat/color
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :server/timestamp
               :db.type/instant)
@@ -178,12 +199,14 @@
    (attribute :cust/email
               :db.type/string
               :db/index true
-              :db/doc "User email")
+              :db/doc "User email"
+              :metadata/unescaped true)
 
    (attribute :cust/name
               :db.type/string
               :db/index false
-              :db/doc "User-submitted name")
+              :db/doc "User-submitted name"
+              :metadata/unescaped true)
 
    (attribute :cust/verified-email
               :db.type/boolean)
@@ -209,19 +232,23 @@
               :db/doc "Session key stored in the cookie that is used to find the user")
 
    (attribute :cust/first-name
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :cust/last-name
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :cust/birthday
               :db.type/instant)
 
    (attribute :cust/gender
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :cust/occupation
-              :db.type/string)
+              :db.type/string
+              :metadata/unescaped true)
 
    (attribute :permission/document
               :db.type/long
@@ -324,7 +351,8 @@
 
    (attribute :access-grant/email
               :db.type/string
-              :db/doc "email that was granted access")
+              :db/doc "email that was granted access"
+              :metadata/unescaped true)
 
    (attribute :access-grant/token
               :db.type/string
@@ -404,6 +432,14 @@
 (defn get-ident [a]
   (:db/ident (first (filter #(= a (:db/id %)) @schema-ents))))
 
+(defn metadata [a]
+  (let [ent (first (filter #(or (= a (:db/id %))
+                                (= a (:db/ident %))) @schema-ents))]
+    (select-keys ent (filter #(= "metadata" (namespace %)) (keys ent)))))
+
+(defn unescaped? [a]
+  (:metadata/unescaped (metadata a)))
+
 (defn get-schema-ents [db]
   (pcd/touch-all '{:find [?t]
                    :where [[?t :db/ident ?ident]]}
@@ -412,7 +448,8 @@
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))
   ([conn]
-   (let [res @(d/transact conn schema)
+   (let [meta-res @(d/transact conn metadata-schema)
+         res @(d/transact conn schema)
          ents (get-schema-ents (:db-after res))]
      (reset! schema-ents ents)
      res)))
