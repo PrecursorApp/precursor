@@ -553,7 +553,7 @@
                                  (or (not (get-in previous-state [:drawing :moving?]))
                                      (some true? (map detectable-movement? original-layers layers))))
                         (d/transact! db layers {:can-undo? true}))
-                      (cast! [:mouse-moved [x y]]))
+                      (maybe-notify-subscribers! current-state x y))
 
      :else nil)))
 
