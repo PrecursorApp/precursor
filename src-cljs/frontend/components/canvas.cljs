@@ -68,12 +68,6 @@
   [state selected-eids layer]
   (print "Nothing to do for groups, yet."))
 
-(defn state->cursor [state]
-  (case (get-in state state/current-tool-path)
-    :text "text"
-    :select "default"
-    "crosshair"))
-
 (defn handles [layer owner]
   (reify
     om/IRender
@@ -356,6 +350,7 @@
                                              :else nil)}
                       ;; TODO: experiment with a contentEditable div
                       (dom/input #js {:type "text"
+                                      :className "text-layer-input"
                                       :placeholder "Type something..."
                                       :value (or (:layer/text layer) "")
                                       ;; TODO: defaults for each layer when we create them
@@ -516,9 +511,11 @@
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
-                      :style #js {:top    0
-                                  :left   0
-                                  :cursor (state->cursor payload)}
+                      :className (str "tool-" (name (get-in payload state/current-tool-path))
+                                      (when (and (get-in payload [:mouse :down])
+                                                 (= :text (get-in payload state/current-tool-path))
+                                                 (get-in payload [:drawing :in-progress?]))
+                                        " tool-text-move"))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
                                         (cond

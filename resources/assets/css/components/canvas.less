@@ -9,6 +9,23 @@
       display: none;
     }
   }
+  top: 0;
+  left: 0;
+  cursor: crosshair;
+  &.tool-text {
+    cursor: text;
+  }
+  &.tool-select {
+    cursor: default;
+  }
+  &.tool-text-move {
+    cursor: move;
+    .text-layer-input {
+      cursor: move;
+      -webkit-user-select: none;
+      pointer-events: none;
+    }
+  }
 }
 #grid,
 #small-grid {
