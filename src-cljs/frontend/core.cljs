@@ -147,7 +147,7 @@
 
 (defn controls-handler
   [value state browser-state]
-  (when (not= :mouse-moved (first value))
+  (when-not (keyword-identical? :mouse-moved (first value))
     (mlog "Controls Verbose: " value))
   (binding [frontend.async/*uuid* (:uuid (meta value))]
     (let [previous-state @state
