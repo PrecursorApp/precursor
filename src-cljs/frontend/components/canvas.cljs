@@ -329,9 +329,7 @@
                                   :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
             (dom/form #js {:className "svg-text-form"
                            :onMouseDown #(.stopPropagation %)
-                           :onMouseUp #(.stopPropagation %)
                            :onWheel #(.stopPropagation %)
-
                            :onSubmit (fn [e]
                                        (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
                                          (cast! :text-layer-finished {:bbox {:width (.-width bbox)
@@ -351,6 +349,9 @@
                       ;; TODO: experiment with a contentEditable div
                       (dom/input #js {:type "text"
                                       :className "text-layer-input"
+                                      ;; Don't let the user accidentally select the text when they're dragging it
+                                      :disabled (and (:moving? layer)
+                                                     (seq (:layer/text layer)))
                                       :placeholder "Type something..."
                                       :value (or (:layer/text layer) "")
                                       ;; TODO: defaults for each layer when we create them
@@ -634,7 +635,8 @@
                   (om/build subscriber-layers {:layers subs-layers})
                   (when (and (settings/drawing-in-progress? payload)
                              (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
-                    (om/build text-input (get-in payload [:drawing :layers 0])))
+                    (om/build text-input (assoc (get-in payload [:drawing :layers 0])
+                                                :moving? (get-in payload [:mouse :down]))))
 
                   (when (get-in payload [:layer-properties-menu :opened?])
                     (om/build layer-properties {:layer (get-in payload [:layer-properties-menu :layer])
