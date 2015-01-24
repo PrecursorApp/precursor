@@ -317,7 +317,7 @@
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             text-style {:font-size (:layer/font-size layer 20)}]
-        (dom/g nil
+        (dom/g #js {:key "text-input-group"}
           (svg-element #{}
                        (assoc layer
                               :className "text-size-helper"
