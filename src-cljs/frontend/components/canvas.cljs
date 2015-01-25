@@ -551,7 +551,7 @@
                                                (.preventDefault event)
                                                (.stopPropagation event)
                                                (js/clearInterval (om/get-state owner :touch-timer))
-                                               ((:handle-mouse-move! handlers) (aget touches "0")))
+                                               ((:handle-mouse-move handlers) (aget touches "0")))
 
                                              (= (.-length touches) 2)
                                              (do
