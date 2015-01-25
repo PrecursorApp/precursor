@@ -29,13 +29,12 @@
             [om.core :as om :include-macros true]
             [frontend.history :as history]
             [frontend.browser-settings :as browser-settings]
-            [frontend.utils :as utils :refer [mlog merror third]]
+            [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
             [frontend.utils.ajax :as ajax]
             [frontend.datetime :as datetime]
             [goog.labs.dom.PageVisibilityMonitor]
             [secretary.core :as sec])
-  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
-                   [frontend.utils :refer [inspect timing swallow-errors]])
+  (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [cljs.core.UUID]
            [goog.events.EventType]))
 
@@ -147,7 +146,7 @@
 
 (defn controls-handler
   [value state browser-state]
-  (when (not= :mouse-moved (first value))
+  (when-not (keyword-identical? :mouse-moved (first value))
     (mlog "Controls Verbose: " value))
   (binding [frontend.async/*uuid* (:uuid (meta value))]
     (let [previous-state @state
@@ -161,7 +160,7 @@
   [value state history]
   (when (log-channels?)
     (mlog "Navigation Verbose: " value))
-  (swallow-errors
+  (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state]
        (swap! state (partial nav-con/navigated-to history (first value) (second value)))
@@ -171,7 +170,7 @@
   [value state container]
   (when (log-channels?)
     (mlog "API Verbose: " (first value) (second value) (utils/third value)))
-  (swallow-errors
+  (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state
            message (first value)
@@ -187,7 +186,7 @@
   [value state container]
   (when (log-channels?)
     (mlog "Errors Verbose: " value))
-  (swallow-errors
+  (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state]
        (swap! state (partial errors-con/error container (first value) (second value)))
@@ -236,14 +235,14 @@
                                    "shift+meta+D" "up" "down" "left" "right" "meta+G"}
         handle-key-down          (partial track-key-state cast! :down suppressed-key-combos)
         handle-key-up            (partial track-key-state cast! :up   suppressed-key-combos)
-        handle-mouse-move!       #(handle-mouse-move cast! %)
+        handle-mouse-move        #(handle-mouse-move cast! %)
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
         handle-close!            #(do (cast! :application-shutdown [@histories])
                                       nil)
         om-setup                 #(install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down
                                                                            :handle-mouse-up    handle-canvas-mouse-up
-                                                                           :handle-mouse-move! handle-mouse-move!
+                                                                           :handle-mouse-move  handle-mouse-move
                                                                            :handle-key-down    handle-key-down
                                                                            :handle-key-up      handle-key-up})]
 
@@ -251,7 +250,6 @@
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
-    (js/document.addEventListener "mousemove" handle-mouse-move! false)
     (js/window.addEventListener "mouseup"   handle-canvas-mouse-up false)
     (js/window.addEventListener "beforeunload" handle-close!)
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
@@ -270,7 +268,7 @@
 
 
     (when (and (env/development?) (= js/window.location.protocol "http:"))
-      (swallow-errors (dev/setup-figwheel {:js-callback om-setup})))
+      (utils/swallow-errors (dev/setup-figwheel {:js-callback om-setup})))
 
     (async/tap (:controls-mult comms) controls-tap)
     (async/tap (:nav-mult comms) nav-tap)
@@ -316,12 +314,12 @@
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
       (sec/dispatch! (str "/" (.getToken history-imp))))
     (when (and (env/development?) (= js/window.location.protocol "http:"))
-      (swallow-errors (dev/setup-browser-repl)))))
+      (utils/swallow-errors (dev/setup-browser-repl)))))
 
 (defn ^:export inspect-state []
   (clj->js @debug-state))
 
 (defn ^:export test-rollbar []
-  (swallow-errors (throw (js/Error. "This is an exception"))))
+  (utils/swallow-errors (throw (js/Error. "This is an exception"))))
 
 (defonce startup (setup!))

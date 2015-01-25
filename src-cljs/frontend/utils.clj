@@ -36,7 +36,7 @@
            (js/Rollbar.error e#)
            (merror e#)))
        (catch :default e2#
-         (js/Rollbar.error e#)
+         (js/Rollbar.error e2#)
          (merror e2#)))
      (catch :default e3#
        (merror e3#))))

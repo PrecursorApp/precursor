@@ -68,12 +68,6 @@
   [state selected-eids layer]
   (print "Nothing to do for groups, yet."))
 
-(defn state->cursor [state]
-  (case (get-in state state/current-tool-path)
-    :text "text"
-    :select "default"
-    "crosshair"))
-
 (defn handles [layer owner]
   (reify
     om/IRender
@@ -310,12 +304,16 @@
   (reify
     om/IDidMount
     (did-mount [_]
-      (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper")))))
+      (om/set-state! owner
+                     :input-min-width
+                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
+      (.focus (om/get-node owner "input")))
     om/IDidUpdate
     (did-update [_ _ _]
-      (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper")))))
+      (om/set-state! owner
+                     :input-min-width
+                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
+      (.focus (om/get-node owner "input")))
     om/IInitState
     (init-state [_]
       {:input-min-width 0})
@@ -323,7 +321,7 @@
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             text-style {:font-size (:layer/font-size layer 20)}]
-        (dom/g nil
+        (dom/g #js {:key "text-input-group"}
           (svg-element #{}
                        (assoc layer
                               :className "text-size-helper"
@@ -335,14 +333,14 @@
                                   :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
             (dom/form #js {:className "svg-text-form"
                            :onMouseDown #(.stopPropagation %)
-                           :onMouseUp #(.stopPropagation %)
                            :onWheel #(.stopPropagation %)
-
                            :onSubmit (fn [e]
                                        (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
                                          (cast! :text-layer-finished {:bbox {:width (.-width bbox)
                                                                              :height (.-height bbox)}})
                                          (utils/stop-event e)))
+                           :onMouseMove (when-not (:moving? layer)
+                                          #(.stopPropagation %))
                            :onKeyDown #(cond (= "Enter" (.-key %))
                                              (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
                                                (cast! :text-layer-finished {:bbox {:width (.-width bbox)
@@ -356,6 +354,8 @@
                                              :else nil)}
                       ;; TODO: experiment with a contentEditable div
                       (dom/input #js {:type "text"
+                                      :className "text-layer-input"
+                                      ;; Don't let the user accidentally select the text when they're dragging it
                                       :placeholder "Type something..."
                                       :value (or (:layer/text layer) "")
                                       ;; TODO: defaults for each layer when we create them
@@ -516,9 +516,11 @@
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
-                      :style #js {:top    0
-                                  :left   0
-                                  :cursor (state->cursor payload)}
+                      :className (str "tool-" (name (get-in payload state/current-tool-path))
+                                      (when (and (get-in payload [:mouse :down])
+                                                 (= :text (get-in payload state/current-tool-path))
+                                                 (get-in payload [:drawing :in-progress?]))
+                                        " tool-text-move"))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
                                         (cond
@@ -588,6 +590,10 @@
                       :onMouseUp (fn [event]
                                    ((:handle-mouse-up handlers) event)
                                    (.stopPropagation event))
+                      :onMouseMove (fn [event]
+                                     ((:handle-mouse-move handlers) event)
+                                     (.preventDefault event)
+                                     (.stopPropagation event))
                       :onWheel (fn [event]
                                  (let [dx (- (aget event "deltaX"))
                                        dy (aget event "deltaY")]
@@ -637,7 +643,8 @@
                   (om/build subscriber-layers {:layers subs-layers})
                   (when (and (settings/drawing-in-progress? payload)
                              (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
-                    (om/build text-input (get-in payload [:drawing :layers 0])))
+                    (om/build text-input (assoc (get-in payload [:drawing :layers 0])
+                                                :moving? (get-in payload [:mouse :down]))))
 
                   (when (get-in payload [:layer-properties-menu :opened?])
                     (om/build layer-properties {:layer (get-in payload [:layer-properties-menu :layer])
