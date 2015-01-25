@@ -235,14 +235,14 @@
                                    "shift+meta+D" "up" "down" "left" "right" "meta+G"}
         handle-key-down          (partial track-key-state cast! :down suppressed-key-combos)
         handle-key-up            (partial track-key-state cast! :up   suppressed-key-combos)
-        handle-mouse-move!       #(handle-mouse-move cast! %)
+        handle-mouse-move        #(handle-mouse-move cast! %)
         handle-canvas-mouse-down #(handle-mouse-down cast! %)
         handle-canvas-mouse-up   #(handle-mouse-up   cast! %)
         handle-close!            #(do (cast! :application-shutdown [@histories])
                                       nil)
         om-setup                 #(install-om state container comms cast! {:handle-mouse-down  handle-canvas-mouse-down
                                                                            :handle-mouse-up    handle-canvas-mouse-up
-                                                                           :handle-mouse-move! handle-mouse-move!
+                                                                           :handle-mouse-move  handle-mouse-move
                                                                            :handle-key-down    handle-key-down
                                                                            :handle-key-up      handle-key-up})]
 
@@ -250,7 +250,6 @@
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
-    (js/document.addEventListener "mousemove" handle-mouse-move! false)
     (js/window.addEventListener "mouseup"   handle-canvas-mouse-up false)
     (js/window.addEventListener "beforeunload" handle-close!)
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)

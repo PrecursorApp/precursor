@@ -304,12 +304,16 @@
   (reify
     om/IDidMount
     (did-mount [_]
-      (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper")))))
+      (om/set-state! owner
+                     :input-min-width
+                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
+      (.focus (om/get-node owner "input")))
     om/IDidUpdate
     (did-update [_ _ _]
-      (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper")))))
+      (om/set-state! owner
+                     :input-min-width
+                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
+      (.focus (om/get-node owner "input")))
     om/IInitState
     (init-state [_]
       {:input-min-width 0})
@@ -335,6 +339,8 @@
                                          (cast! :text-layer-finished {:bbox {:width (.-width bbox)
                                                                              :height (.-height bbox)}})
                                          (utils/stop-event e)))
+                           :onMouseMove (when-not (:moving? layer)
+                                          #(.stopPropagation %))
                            :onKeyDown #(cond (= "Enter" (.-key %))
                                              (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
                                                (cast! :text-layer-finished {:bbox {:width (.-width bbox)
@@ -350,8 +356,6 @@
                       (dom/input #js {:type "text"
                                       :className "text-layer-input"
                                       ;; Don't let the user accidentally select the text when they're dragging it
-                                      :disabled (and (:moving? layer)
-                                                     (seq (:layer/text layer)))
                                       :placeholder "Type something..."
                                       :value (or (:layer/text layer) "")
                                       ;; TODO: defaults for each layer when we create them
@@ -586,6 +590,10 @@
                       :onMouseUp (fn [event]
                                    ((:handle-mouse-up handlers) event)
                                    (.stopPropagation event))
+                      :onMouseMove (fn [event]
+                                     ((:handle-mouse-move handlers) event)
+                                     (.preventDefault event)
+                                     (.stopPropagation event))
                       :onWheel (fn [event]
                                  (let [dx (- (aget event "deltaX"))
                                        dy (aget event "deltaY")]
