@@ -6,6 +6,8 @@
   overflow: hidden;
   transition: @speed @bezier_transform;
   // transition-timing-function: @bezier_bounce;
+  .user-select(none);
+  &:hover { .user-select(auto);}
   .mq_640({
     .flex-direction(row);
     position: relative;
