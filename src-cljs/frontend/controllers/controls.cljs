@@ -318,14 +318,86 @@
         x1 (max start-x end-x)
         y0 (min start-y end-y)
         y1 (max start-y end-y)
-        has-x0 (set (map :e (d/index-range db :layer/start-x x0 x1)))
-        has-x1 (set (map :e (d/index-range db :layer/end-x x0 x1)))
-        has-y0 (set (map :e (d/index-range db :layer/start-y y0 y1)))
-        has-y1 (set (map :e (d/index-range db :layer/end-y y0 y1)))]
-    (set/union (set/intersection has-x0 has-y0)
-               (set/intersection has-x0 has-y1)
-               (set/intersection has-x1 has-y0)
-               (set/intersection has-x1 has-y1))))
+
+        above-x0-start (d/index-range db :layer/start-x x0 nil)
+        above-x0-start-e (set (map :e above-x0-start))
+
+        above-x0-end (d/index-range db :layer/end-x x0 nil)
+        above-x0-end-e (set (map :e above-x0-end))
+
+        below-x1-start (d/index-range db :layer/start-x nil x1)
+        below-x1-start-e (set (map :e below-x1-start))
+
+        below-x1-end (d/index-range db :layer/end-x nil x1)
+        below-x1-end-e (set (map :e below-x1-end))
+
+        above-y0-start (d/index-range db :layer/start-y y0 nil)
+        above-y0-start-e (set (map :e above-y0-start))
+
+        above-y0-end (d/index-range db :layer/end-y y0 nil)
+        above-y0-end-e (set (map :e above-y0-end))
+
+        below-y1-start (d/index-range db :layer/start-y nil y1)
+        below-y1-start-e (set (map :e below-y1-start))
+
+        below-y1-end (d/index-range db :layer/end-y nil y1)
+        below-y1-end-e (set (map :e below-y1-end))
+
+        overlapping (set/intersection
+                     (set/union above-x0-start-e
+                                above-x0-end-e)
+
+                     (set/union below-x1-start-e
+                                below-x1-end-e)
+
+                     (set/union above-y0-start-e
+                                above-y0-end-e)
+
+                     (set/union below-y1-start-e
+                                below-y1-end-e))]
+    (set (filter (fn [eid]
+                   ;; TODO: optimize by looking up start-x, end-x, etc. from the index ranges
+                   ;;       we've already created
+                   (let [layer (d/entity db eid)
+                         det (fn [[ax ay] [bx by] [x y]]
+                               (Math/sign (- (* (- bx ax)
+                                                (- y ay))
+                                             (* (- by ay)
+                                                (- x ax)))))]
+                     (if (keyword-identical? (:layer/type layer) :layer.type/line)
+                       (or
+                        ;; has an endpoint
+                        (and (contains? above-x0-start-e eid)
+                             (contains? below-x1-start-e eid)
+                             (contains? above-y0-start-e eid)
+                             (contains? below-y1-start-e eid))
+                        ;; has an endpoint
+                        (and (contains? above-x0-end-e eid)
+                             (contains? below-x1-end-e eid)
+                             (contains? above-y0-end-e eid)
+                             (contains? below-y1-end-e eid))
+                        ;; all points aren't on one side of the line
+                        (not= 4 (Math/abs
+                                 (reduce + (map (partial det
+                                                         [(:layer/start-x layer)
+                                                          (:layer/start-y layer)]
+                                                         [(:layer/end-x layer)
+                                                          (:layer/end-y layer)])
+                                                [[x0 y0] [x0 y1] [x1 y0] [x1 y1]])))))
+                       (let [sx (min (:layer/start-x layer)
+                                     (:layer/end-x layer))
+                             ex (max (:layer/start-x layer)
+                                     (:layer/end-x layer))
+                             sy (min (:layer/start-y layer)
+                                     (:layer/end-y layer))
+                             ey (max (:layer/start-y layer)
+                                     (:layer/end-y layer))]
+                         ;; don't count a layer as selected if it fully contains the selected region
+                         (or (< ex x1)
+                             (< ey y1)
+                             (> sx x0)
+                             (> sy y0))))))
+                 overlapping))))
 
 (defn draw-in-progress-drawing [state x y {:keys [force-even? delta]}]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
@@ -468,7 +540,13 @@
                                  :layer/ry (Math/abs (- (:layer/start-y %)
                                                         (:layer/end-y %)))})
                               (when (= layer-type :layer.type/path)
-                                {:layer/path (svg/points->path (:points layer))})
+                                (let [xs (map :rx (:points layer))
+                                      ys (map :ry (:points layer))]
+                                  {:layer/path (svg/points->path (:points layer))
+                                   :layer/start-x (apply min xs)
+                                   :layer/end-x (apply max xs)
+                                   :layer/start-y (apply min ys)
+                                   :layer/end-y (apply max ys)}))
                               (when (= layer-type :layer.type/text)
                                 {:layer/end-x (+ (get-in layer [:layer/start-x])
                                                  (get-in layer [:bbox :width]))
