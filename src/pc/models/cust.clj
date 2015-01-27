@@ -85,3 +85,7 @@
 (defn turn-on-private-docs [db email]
   (let [cust (find-by-email db email)]
     (flag-model/add-flag cust :flags/private-docs)))
+
+(defn read-api [cust]
+  (select-keys cust
+               [:cust/email :cust/uuid :cust/name :flags]))

@@ -1,6 +1,7 @@
 (ns frontend.core
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [frontend.async :refer [put!]]
+            [cljs.reader :as reader]
             [clojure.string :as string]
             [datascript :as d]
             [goog.dom]
@@ -109,9 +110,10 @@
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
-        cust (-> (aget js/window "Precursor" "cust")
-               (js->clj :keywordize-keys true)
-               (utils/update-when-in [:flags] #(set (map keyword %))))
+        cust (some-> (aget js/window "Precursor" "cust")
+               (reader/read-string))
+        initial-entities (some-> (aget js/window "Precursor" "initial-entities")
+                           (reader/read-string))
         tab-id (utils/uuid)
         sente-id (aget js/window "Precursor" "sente-id")]
     (atom (-> (assoc initial-state
@@ -119,7 +121,9 @@
                      :tab-id tab-id
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
-                     :db  (db/make-initial-db)
+                     :db (db/make-initial-db initial-entities)
+                     ;; Communicate to nav channel that we shouldn't reset db
+                     :initial-state true
                      :cust cust
                      :comms {:controls      controls-ch
                              :api           api-ch

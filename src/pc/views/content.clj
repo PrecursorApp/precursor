@@ -2,6 +2,8 @@
   (:require [cheshire.core :as json]
             [hiccup.core :as h]
             [pc.assets]
+            [pc.datomic.schema :as schema]
+            [pc.utils :as utils]
             [pc.views.scripts :as scripts]
             [pc.views.email-landing :as email-landing]
             [pc.profile :refer (prod-assets?)])
@@ -23,6 +25,16 @@
       (format "%s = JSON.parse(document.getElementById('%s').content);"
               variable-name
               id)])))
+
+(defn escape-entity [entity]
+  (reduce (fn [entity [k v]]
+            (assoc entity k (if (schema/unescaped? k)
+                              (h/h v)
+                              v)))
+          entity entity))
+
+(defn serialize-entities [entities]
+  (pr-str (mapv escape-entity entities)))
 
 (defn layout [view-data & content]
   [:html
@@ -72,7 +84,10 @@
 
     [:style "html{-webkit-text-size-adjust:100%}"] ; prevents resizing when launching from ios home screen
 
-    (embed-json-in-head "window.Precursor" (json/encode view-data))
+    (embed-json-in-head "window.Precursor"
+                        (json/encode (-> view-data
+                                       (utils/update-when-in [:initial-entities] serialize-entities)
+                                       (utils/update-when-in [:cust] #(-> % escape-entity pr-str)))))
     (when (prod-assets?)
       scripts/google-analytics)
     (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))

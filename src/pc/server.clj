@@ -122,11 +122,12 @@
             (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                                  :google-client-id (google-client-id)
                                  :sente-id (-> req :session :sente-id)}
+                                ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
+                                ;;       Also need a way to handle transactions before sente connects
+                                ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
+                                ;;   {:initial-entities (layer/find-by-document db doc)})
                                 (when-let [cust (-> req :auth :cust)]
-                                  {:cust {:email (:cust/email cust)
-                                          :uuid (:cust/uuid cust)
-                                          :name (:cust/name cust)
-                                          :flags (:flags cust)}})))
+                                  {:cust (cust/read-api cust)})))
             (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
               (redirect (str "/document/" (:db/id redirect-doc)))
               ;; TODO: this should be a 404...
