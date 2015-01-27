@@ -329,7 +329,7 @@
              (om/build public-sharing app))
 
            (when (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
-                      (auth/owner? @db doc {:cust/uuid (get-in app [:cust :uuid])}))
+                      (auth/owner? @db doc (get-in app [:cust])))
              [:div.menu-foot
               [:form.privacy-select
                [:input.privacy-radio {:type "radio"
