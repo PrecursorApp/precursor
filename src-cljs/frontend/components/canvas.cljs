@@ -483,8 +483,8 @@
         (js/Array.prototype.slice.call touches)))
 
 (defn measure [[x1 y1] [x2 y2]]
-  (Math/sqrt (+ (Math/pow (- x2 x1) 2)
-                (Math/pow (- y2 y1) 2))))
+  (js/Math.sqrt (+ (js/Math.pow (- x2 x1) 2)
+                   (js/Math.pow (- y2 y1) 2))))
 
 (defn center [[x1 y1] [x2 y2]]
   [(/ (+ x2 x1) 2)

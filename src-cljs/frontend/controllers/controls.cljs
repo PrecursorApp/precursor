@@ -360,10 +360,10 @@
                    ;;       we've already created
                    (let [layer (d/entity db eid)
                          det (fn [[ax ay] [bx by] [x y]]
-                               (Math/sign (- (* (- bx ax)
-                                                (- y ay))
-                                             (* (- by ay)
-                                                (- x ax)))))]
+                               (js/Math.sign (- (* (- bx ax)
+                                                   (- y ay))
+                                                (* (- by ay)
+                                                   (- x ax)))))]
                      (if (keyword-identical? (:layer/type layer) :layer.type/line)
                        (or
                         ;; has an endpoint
@@ -377,7 +377,7 @@
                              (contains? above-y0-end-e eid)
                              (contains? below-y1-end-e eid))
                         ;; all points aren't on one side of the line
-                        (not= 4 (Math/abs
+                        (not= 4 (js/Math.abs
                                  (reduce + (map (partial det
                                                          [(:layer/start-x layer)
                                                           (:layer/start-y layer)]
@@ -436,10 +436,10 @@
                       (when (or (= :circle tool)
                                 ;; TODO: hack to preserve border-radius for re-editing circles
                                 (layers/circle? layer))
-                        {:layer/rx (Math/abs (- (:layer/start-x layer)
-                                                (:layer/current-x layer)))
-                         :layer/ry (Math/abs (- (:layer/start-y layer)
-                                                (:layer/current-y layer)))})
+                        {:layer/rx (js/Math.abs (- (:layer/start-x layer)
+                                                   (:layer/current-x layer)))
+                         :layer/ry (js/Math.abs (- (:layer/start-y layer)
+                                                   (:layer/current-y layer)))})
                       (when (seq bounding-eids)
                         {:layer/child bounding-eids}))))
         (cond-> group?
@@ -535,10 +535,10 @@
                      (dissoc :points :force-even? :layer/current-x :layer/current-y :bbox)
                      (#(merge %
                               (when (= :circle (get-in state state/current-tool-path))
-                                {:layer/rx (Math/abs (- (:layer/start-x %)
-                                                        (:layer/end-x %)))
-                                 :layer/ry (Math/abs (- (:layer/start-y %)
-                                                        (:layer/end-y %)))})
+                                {:layer/rx (js/Math.abs (- (:layer/start-x %)
+                                                           (:layer/end-x %)))
+                                 :layer/ry (js/Math.abs (- (:layer/start-y %)
+                                                           (:layer/end-y %)))})
                               (when (= layer-type :layer.type/path)
                                 (let [xs (map :rx (:points layer))
                                       ys (map :ry (:points layer))]
