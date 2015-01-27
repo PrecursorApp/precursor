@@ -31,9 +31,13 @@
 (defn user-id-fn [req]
   ;; {:pre [(seq (get-in req [:session :sente-id]))
   ;;        (seq (get-in req [:params :tab-id]))]}
-  (when (or (empty? (get-in req [:session :sente-id]))
-            (empty? (get-in req [:params :tab-id])))
-    (let [msg (format "sente-id or tab-id is nil for %s" (get-in req [:session :http-session-key]))]
+  (when (empty? (get-in req [:session :sente-id]))
+    (let [msg "sente-id is nil for %s on %s" (:remote-addr req) (:uri req)]
+      (rollbar/report-exception (Exception. msg))
+      (log/errorf msg)))
+
+  (when (empty? (get-in req [:session :tab-id]))
+    (let [msg "tab-id is nil for %s on %s" (:remote-addr req) (:uri req)]
       (rollbar/report-exception (Exception. msg))
       (log/errorf msg)))
 
