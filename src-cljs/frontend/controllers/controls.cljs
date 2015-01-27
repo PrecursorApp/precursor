@@ -26,6 +26,7 @@
             [frontend.utils.seq :refer [dissoc-in]]
             [frontend.utils.state :as state-utils]
             [goog.dom]
+            [goog.math :as math]
             [goog.string :as gstring]
             [goog.labs.userAgent.engine :as engine]
             goog.style)
@@ -360,10 +361,10 @@
                    ;;       we've already created
                    (let [layer (d/entity db eid)
                          det (fn [[ax ay] [bx by] [x y]]
-                               (js/Math.sign (- (* (- bx ax)
-                                                   (- y ay))
-                                                (* (- by ay)
-                                                   (- x ax)))))]
+                               (math/sign (- (* (- bx ax)
+                                                (- y ay))
+                                             (* (- by ay)
+                                                (- x ax)))))]
                      (if (keyword-identical? (:layer/type layer) :layer.type/line)
                        (or
                         ;; has an endpoint
