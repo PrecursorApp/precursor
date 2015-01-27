@@ -492,8 +492,8 @@
                                        :delta {:x (- x (get-in state [:mouse :x]))
                                                :y (- y (get-in state [:mouse :y]))}})
 
-              (get-in state [:drawing :moving?])
-              (move-drawings x y))))
+        (get-in state [:drawing :moving?])
+        (move-drawings x y))))
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
@@ -788,7 +788,9 @@
   (-> state
     (assoc-in [:drawing :layers] [(assoc layer
                                          :layer/current-x (:layer/start-x layer)
-                                         :layer/current-y (:layer/start-y layer))])
+                                         :layer/current-y (:layer/start-y layer)
+                                         :bbox {:width (js/Math.abs (- (:layer/start-x layer) (:layer/end-x layer)))
+                                                :height (js/Math.abs (- (:layer/start-y layer) (:layer/end-y layer)))})])
     (assoc-in [:selected-eids] #{(:db/id layer)})
     (assoc-in [:drawing :in-progress?] true)
     (assoc-in [:mouse :down] true)
