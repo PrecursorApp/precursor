@@ -107,9 +107,6 @@
 (defn last-read-chat-time-path [doc-id]
   (conj (doc-settings-path doc-id) :last-read-chat-time))
 
-(defn doc-chat-bot-path [doc-id]
-  (conj (doc-settings-path doc-id) :chat-bot))
-
 (def keyboard-shortcuts-path [:keyboard-shortcuts])
 
 (def overlay-info-opened-path [:overlay-info-opened])

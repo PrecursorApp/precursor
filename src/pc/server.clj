@@ -23,6 +23,7 @@
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
             [pc.models.access-grant :as access-grant-model]
+            [pc.models.chat-bot :as chat-bot-model]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
@@ -135,7 +136,9 @@
 
    (GET "/" req
         (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-              doc (doc-model/create-public-doc! (when cust-uuid {:document/creator cust-uuid}))]
+              doc (doc-model/create-public-doc!
+                   (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                          (when cust-uuid {:document/creator cust-uuid})))]
           (redirect (str "/document/" (:db/id doc)))))
 
    ;; Group newcomers into buckets with bucket-count users in each bucket.
@@ -151,7 +154,7 @@
                                                           (< 0 (count subs) bucket-count)))
                                                    @sente/document-subs)))]
             (redirect (str "/document/" doc-id))
-            (let [doc (doc-model/create-public-doc! {})]
+            (let [doc (doc-model/create-public-doc! {:document/chat-bot (rand-nth chat-bot-model/chat-bots)})]
               (swap! bucket-doc-ids conj (:db/id doc))
               (redirect (str "/document/" (:db/id doc)))))))
 

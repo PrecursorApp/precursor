@@ -87,7 +87,7 @@
      (time/after? time (time/minus start-of-day (time/days 6))) (day-of-week (time/day-of-week time))
      :else (str (month-of-year (.getMonth time)) " " (.getDate time)))))
 
-(defn chat [{:keys [db chat-body sente-id client-id chat-opened chat-bot]} owner]
+(defn chat [{:keys [db chat-body sente-id client-id chat-opened]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -100,7 +100,9 @@
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
-                   (when-let [chat-datoms (seq (filter #(= :chat/body (:a %)) (:tx-data tx-report)))]
+                   (when-let [chat-datoms (seq (filter #(or (= :chat/body (:a %))
+                                                            (= :document/chat-bot (:a %)))
+                                                       (:tx-data tx-report)))]
                      (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
@@ -120,21 +122,23 @@
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
+            chat-bot (:document/chat-bot (d/entity @db (ffirst (d/q '[:find ?t :where [?t :document/name]] @db))))
             dummy-chat {:chat/body [:span
                                     "Welcome to Precursor! "
                                     "Create fast prototypes and share your url to collaborate. "
                                     "Chat "
-                                    [:a {:on-click #(cast! :chat-user-clicked {:id-str (str/lower-case chat-bot)})
+                                    [:a {:on-click #(cast! :chat-user-clicked {:id-str (:chat-bot/name chat-bot)})
                                          :role "button"}
-                                     (str "@" (str/lower-case chat-bot))]
+                                     (str "@" (:chat-bot/name chat-bot))]
                                     " for help."]
                         :chat/color "#00b233"
-                        :session/uuid chat-bot
+                        :session/uuid (:chat-bot/name chat-bot)
                         :server/timestamp (js/Date.)}]
         (html
          [:section.chat-log
           [:div.chat-messages {:ref "chat-messages"}
-           (om/build chat-item dummy-chat {:opts {:show-sender? true}})
+           (when chat-bot
+             (om/build chat-item dummy-chat {:opts {:show-sender? true}}))
            (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
              (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
                                               chat-groups)]
@@ -239,5 +243,4 @@
                           :sente-id (:sente-id app)
                           :client-id (:client-id app)
                           :chat-body (get-in app [:chat :body])
-                          :chat-bot (get-in app (state/doc-chat-bot-path document-id))
                           :chat-opened (get-in app state/chat-opened-path)})])))))

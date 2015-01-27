@@ -75,8 +75,6 @@
                :undo-state (atom {:transactions []
                                   :last-undo nil})
                :db-listener-key (utils/uuid))
-        (update-in (state/doc-chat-bot-path doc-id)
-                   #(or % (rand-nth ["daniel" "danny" "prcrsr"])))
         (dissoc :subscribers)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))

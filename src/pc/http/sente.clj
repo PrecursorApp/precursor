@@ -176,7 +176,7 @@
     (log/infof "sending document for %s to %s" document-id client-id)
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
-                         :entities [(pcd/touch+ (doc-model/find-by-id (:db req) document-id))]
+                         :entities [(doc-model/read-api (doc-model/find-by-id (:db req) document-id))]
                          :entity-type :document}])
 
     (log/infof "sending layers for %s to %s" document-id client-id)

@@ -16,9 +16,10 @@
           :db/fn fn}
          opts))
 
-(defn enum [ident]
-  {:db/id (d/tempid :db.part/user)
-   :db/ident ident})
+(defn enum [ident & {:as fields}]
+  (merge {:db/id (d/tempid :db.part/user)
+          :db/ident ident}
+         fields))
 
 ;; Attributes that annotate the schema, have to be transacted first
 ;; Note: metadata needs a migration for it to be removed (or it can be set to false)
@@ -164,13 +165,16 @@
    (enum :document.privacy/public)
    (enum :document.privacy/private)
 
-   (attribute :document.collaborators
-              :db.type/uuid
-              :db/doc "cust/uuid of any users that were invited")
-
    (attribute :dummy
               :db.type/ref)
    (enum :dummy/dummy)
+
+   (attribute :document/chat-bot
+              :db.type/ref)
+
+   (attribute :chat-bot/name
+              :db.type/string
+              :db/unique :db.unique/identity)
 
    (attribute :document/id
               :db.type/long

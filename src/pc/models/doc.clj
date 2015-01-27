@@ -1,5 +1,6 @@
 (ns pc.models.doc
   (:require [pc.datomic :as pcd]
+            [pc.models.chat-bot :as chat-bot-model]
             [datomic.api :refer [db q] :as d]))
 
 (defn create! [doc-attrs]
@@ -60,3 +61,16 @@
                  :where [[_ :document/id ?doc-id ?tx]
                          [?tx :db/txInstant ?i]]}
                db doc-id)))
+
+(defn read-api [doc]
+  (-> doc
+    (select-keys [:db/id
+                  :document/invalid-id
+                  :document/privacy
+                  :document/creator
+                  :document/uuid
+                  :document/name
+                  :document/chat-bot])
+    (update-in [:document/chat-bot] (fn [cb]
+                                      (chat-bot-model/read-api
+                                       (or cb (rand-nth chat-bot-model/chat-bots)))))))
