@@ -158,9 +158,8 @@
     (log/infof "uploading %s to %s" full-path key)
     (s3/put-object :bucket-name cdn-bucket
                    :key key
-                   :input-stream (gzip/gzip full-path)
+                   :file full-path
                    :metadata {:content-type (mime-type-of full-path)
-                              :content-encoding "gzip"
                               :cache-control "max-age=3155692"})))
 
 (defn upload-manifest [sha1]
@@ -177,9 +176,8 @@
                              (log/infof "pushing %s to %s" file-path key)
                              (s3/put-object :bucket-name cdn-bucket
                                             :key key
-                                            :input-stream (gzip/gzip file-path)
+                                            :file file-path
                                             :metadata {:content-type (mime-type-of file-path)
-                                                       :content-encoding "gzip"
                                                        :cache-control "max-age=3155692"})
                              (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))
                          {} manifest-paths)
