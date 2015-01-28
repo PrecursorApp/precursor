@@ -10,6 +10,7 @@
             [clojure.tools.reader.edn :as edn]
             [fs]
             [pantomime.mime :refer [mime-type-of]]
+            [pc.gzip :as gzip]
             [pc.profile]
             [pc.rollbar :as rollbar])
   (:import java.security.MessageDigest
@@ -155,8 +156,11 @@
                 full-path (fs/join "resources/public" dir file)]
           :when (fs/file? full-path)]
     (log/infof "uploading %s to %s" full-path key)
-    (s3/put-object :bucket-name cdn-bucket :key key :file full-path
+    (s3/put-object :bucket-name cdn-bucket
+                   :key key
+                   :input-stream (gzip/gzip full-path)
                    :metadata {:content-type (mime-type-of full-path)
+                              :content-encoding "gzip"
                               :cache-control "max-age=3155692"})))
 
 (defn upload-manifest [sha1]
@@ -171,8 +175,11 @@
                                  ;; TODO: figure out a better way to handle leading slashes
                                  key (assetify (subs path 1) md5)]
                              (log/infof "pushing %s to %s" file-path key)
-                             (s3/put-object :bucket-name cdn-bucket :key key :file file-path
+                             (s3/put-object :bucket-name cdn-bucket
+                                            :key key
+                                            :input-stream (gzip/gzip file-path)
                                             :metadata {:content-type (mime-type-of file-path)
+                                                       :content-encoding "gzip"
                                                        :cache-control "max-age=3155692"})
                              (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))
                          {} manifest-paths)
