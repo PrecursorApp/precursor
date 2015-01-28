@@ -21,7 +21,7 @@
      [:p "Elon Musk wrote that on "
          [:a {:href "http://www.teslamotors.com/blog/all-our-patent-are-belong-you"} "Telsa's blog"]
          " last year.
-         Tesla’s blue ocean was made of gasoline, Precursor’s is ink.
+         We're lucky enough to stand on the shores of a similar ocean.
          For every single designer or developer using an app to prototype their product, there's at least a thousand using pen and paper."]]
 
     [:article
