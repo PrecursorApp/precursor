@@ -12,7 +12,7 @@
          ", we've been receiving a lot of feedback.
          When it's positive I'm inspired, and when it's critical I'm motivated.
          We've even received encouragement from founders of more popular prototyping tools.
-         This type of praise often brings up the question, \"Aren't they competition?\""]]
+         This type of praise often brings up the question, “Aren't they competition?”"]]
 
     [:article
      [:blockquote "Our true competition is not the small trickle of non-Tesla electric cars being produced, but rather the enormous flood of gasoline cars pouring out of the world's factories every day."]]
