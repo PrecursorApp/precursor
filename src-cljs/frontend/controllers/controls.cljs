@@ -26,6 +26,7 @@
             [frontend.utils.seq :refer [dissoc-in]]
             [frontend.utils.state :as state-utils]
             [goog.dom]
+            [goog.math :as math]
             [goog.string :as gstring]
             [goog.labs.userAgent.engine :as engine]
             goog.style)
@@ -360,7 +361,7 @@
                    ;;       we've already created
                    (let [layer (d/entity db eid)
                          det (fn [[ax ay] [bx by] [x y]]
-                               (Math/sign (- (* (- bx ax)
+                               (math/sign (- (* (- bx ax)
                                                 (- y ay))
                                              (* (- by ay)
                                                 (- x ax)))))]
@@ -377,7 +378,7 @@
                              (contains? above-y0-end-e eid)
                              (contains? below-y1-end-e eid))
                         ;; all points aren't on one side of the line
-                        (not= 4 (Math/abs
+                        (not= 4 (js/Math.abs
                                  (reduce + (map (partial det
                                                          [(:layer/start-x layer)
                                                           (:layer/start-y layer)]
@@ -436,10 +437,10 @@
                       (when (or (= :circle tool)
                                 ;; TODO: hack to preserve border-radius for re-editing circles
                                 (layers/circle? layer))
-                        {:layer/rx (Math/abs (- (:layer/start-x layer)
-                                                (:layer/current-x layer)))
-                         :layer/ry (Math/abs (- (:layer/start-y layer)
-                                                (:layer/current-y layer)))})
+                        {:layer/rx (js/Math.abs (- (:layer/start-x layer)
+                                                   (:layer/current-x layer)))
+                         :layer/ry (js/Math.abs (- (:layer/start-y layer)
+                                                   (:layer/current-y layer)))})
                       (when (seq bounding-eids)
                         {:layer/child bounding-eids}))))
         (cond-> group?
@@ -491,8 +492,8 @@
                                        :delta {:x (- x (get-in state [:mouse :x]))
                                                :y (- y (get-in state [:mouse :y]))}})
 
-              (get-in state [:drawing :moving?])
-              (move-drawings x y))))
+        (get-in state [:drawing :moving?])
+        (move-drawings x y))))
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
@@ -535,10 +536,10 @@
                      (dissoc :points :force-even? :layer/current-x :layer/current-y :bbox)
                      (#(merge %
                               (when (= :circle (get-in state state/current-tool-path))
-                                {:layer/rx (Math/abs (- (:layer/start-x %)
-                                                        (:layer/end-x %)))
-                                 :layer/ry (Math/abs (- (:layer/start-y %)
-                                                        (:layer/end-y %)))})
+                                {:layer/rx (js/Math.abs (- (:layer/start-x %)
+                                                           (:layer/end-x %)))
+                                 :layer/ry (js/Math.abs (- (:layer/start-y %)
+                                                           (:layer/end-y %)))})
                               (when (= layer-type :layer.type/path)
                                 (let [xs (map :rx (:points layer))
                                       ys (map :ry (:points layer))]
@@ -787,7 +788,9 @@
   (-> state
     (assoc-in [:drawing :layers] [(assoc layer
                                          :layer/current-x (:layer/start-x layer)
-                                         :layer/current-y (:layer/start-y layer))])
+                                         :layer/current-y (:layer/start-y layer)
+                                         :bbox {:width (js/Math.abs (- (:layer/start-x layer) (:layer/end-x layer)))
+                                                :height (js/Math.abs (- (:layer/start-y layer) (:layer/end-y layer)))})])
     (assoc-in [:selected-eids] #{(:db/id layer)})
     (assoc-in [:drawing :in-progress?] true)
     (assoc-in [:mouse :down] true)

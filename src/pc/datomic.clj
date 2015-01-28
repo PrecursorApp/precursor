@@ -77,14 +77,20 @@
                      reverse)] ; reverse order of inverted datoms.
     @(d/transact conn newdata)))  ; commit new datoms.
 
-;; TODO: This really needs a test
-(defn unique-conflict? [ex]
+(defn datomic-error? [ex db-error]
   (loop [ex ex]
     (if (:db/error (ex-data ex))
-      (= (:db/error (ex-data ex)) :db.error/unique-conflict)
+      (= (:db/error (ex-data ex)) db-error)
       (if (.getCause ex)
         (recur (.getCause ex))
         false))))
+
+;; TODO: This really needs a test
+(defn unique-conflict? [ex]
+  (datomic-error? ex :db.error/unique-conflict))
+
+(defn cas-failed? [ex]
+  (datomic-error? ex :db.error/cas-failed))
 
 (defonce tx-report-ch (async/chan (async/sliding-buffer 1024)))
 

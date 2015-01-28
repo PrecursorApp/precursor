@@ -10,6 +10,7 @@
             [clojure.tools.reader.edn :as edn]
             [fs]
             [pantomime.mime :refer [mime-type-of]]
+            [pc.gzip :as gzip]
             [pc.profile]
             [pc.rollbar :as rollbar])
   (:import java.security.MessageDigest
@@ -135,7 +136,7 @@
   (let [source-map "resources/public/cljs/production/sourcemap-frontend.map"
         sources (-> source-map slurp json/decode (get "sources"))]
     (http/post "https://api.rollbar.com/api/1/sourcemap"
-               {:multipart (concat [{:name "access_token" :content (rollbar/token)}
+               {:multipart (concat [{:name "access_token" :content rollbar/rollbar-prod-token}
                                     {:name "version" :content sha1}
                                     {:name "minified_url" :content (manifest-asset-path manifest "/cljs/production/frontend.js")}
                                     {:name "source_map" :content (clojure.java.io/file source-map)}]
@@ -155,7 +156,9 @@
                 full-path (fs/join "resources/public" dir file)]
           :when (fs/file? full-path)]
     (log/infof "uploading %s to %s" full-path key)
-    (s3/put-object :bucket-name cdn-bucket :key key :file full-path
+    (s3/put-object :bucket-name cdn-bucket
+                   :key key
+                   :file full-path
                    :metadata {:content-type (mime-type-of full-path)
                               :cache-control "max-age=3155692"})))
 
@@ -171,7 +174,9 @@
                                  ;; TODO: figure out a better way to handle leading slashes
                                  key (assetify (subs path 1) md5)]
                              (log/infof "pushing %s to %s" file-path key)
-                             (s3/put-object :bucket-name cdn-bucket :key key :file file-path
+                             (s3/put-object :bucket-name cdn-bucket
+                                            :key key
+                                            :file file-path
                                             :metadata {:content-type (mime-type-of file-path)
                                                        :cache-control "max-age=3155692"})
                              (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))

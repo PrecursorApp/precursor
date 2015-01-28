@@ -3,7 +3,8 @@
             [clojure.string]
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
-            [pc.models.doc :as doc-model]))
+            [pc.models.doc :as doc-model]
+            [slingshot.slingshot :refer (try+ throw+)]))
 
 (defn migration-entity
   "Finds the entity that keeps track of the migration version, there should
@@ -154,6 +155,74 @@
                       (change-document-id conn db invalid-id (:db/id new-doc))))
                   doc-ids))))
 
+(defn fix-text-bounding-boxes [db conn]
+  (let [tx-count (atom 0)]
+    (doseq [e (map first (d/q '[:find ?t
+                                :where [?t :layer/type :layer.type/text]]
+                              db))
+            :let [layer (d/entity db e)]
+            ;; These have the right height, so we'll assume they're already correct
+            :when (not= -23.5 (- (:layer/end-y layer) (:layer/start-y layer)))]
+      (let [new-end-x (+ (:layer/start-x layer) (* 11 (count (:layer/text layer))))
+            new-end-y (+ (:layer/start-y layer) -23.5)]
+        (try+
+         @(d/transact conn [[:db.fn/cas e :layer/end-x (:layer/end-x layer) new-end-x]
+                            [:db.fn/cas e :layer/end-y (:layer/end-y layer) new-end-y]])
+         (swap! tx-count inc)
+         (when (zero? (mod @tx-count 10000))
+           (log/infof "sleeping for 30 seconds to give the transactor a rest (%s transactions)" @tx-count)
+           (Thread/sleep (* 30 1000)))
+         (catch Object t
+           (if (pcd/cas-failed? t)
+             (let [msg (format "cas failed for text layer with id %s" e)]
+               (println msg)
+               (log/error msg))
+             (throw+))))))))
+
+(defn parse-points [path]
+  (partition-all 2 (map #(Float/parseFloat %) (re-seq #"[\d\.]+" path))))
+
+(defn fix-pen-bounding-boxes [db conn]
+  (let [tx-count (atom 0)]
+    (doseq [e (map first (d/q '[:find ?t
+                                :where [?t :layer/type :layer.type/path]]
+                              db))
+            :let [layer (d/entity db e)
+                  points (some-> layer :layer/path parse-points)]
+            :when (seq points)]
+      (let [new-start-x (apply min (map first points))
+            new-end-x (apply max (map first points))
+            new-start-y (apply min (map second points))
+            new-end-y (apply max (map last points))]
+        (when-not (and (= new-start-x (:layer/start-x layer))
+                       (= new-end-x (:layer/end-x layer))
+                       (= new-start-y (:layer/start-y layer))
+                       (= new-end-y (:layer/end-y layer)))
+          (try+
+           @(d/transact conn [[:db.fn/cas e :layer/start-x (:layer/start-x layer) new-start-x]
+                              [:db.fn/cas e :layer/end-x (:layer/end-x layer) new-end-x]
+                              [:db.fn/cas e :layer/start-y (:layer/start-y layer) new-start-y]
+                              [:db.fn/cas e :layer/end-y (:layer/end-y layer) new-end-y]])
+           (swap! tx-count inc)
+           (when (zero? (mod @tx-count 10000))
+             (log/infof "sleeping for 30 seconds to give the transactor a rest (%s transactions)" @tx-count)
+             (Thread/sleep (* 30 1000)))
+           (catch Object t
+             (if (pcd/cas-failed? t)
+               (let [msg (format "cas failed for pen layer with id %s" e)]
+                 (println msg)
+                 (log/error msg))
+               (throw+)))))))))
+
+(defn fix-bounding-boxes
+  "Fixes bounding boxes for text and pen drawings"
+  [conn]
+  (time
+   (let [db (db conn)]
+     (log/info "fixing text bounding boxes")
+     (fix-text-bounding-boxes db conn)
+     (log/info "fixing pen bounding boxes")
+     (fix-pen-bounding-boxes db conn))))
 
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
@@ -164,7 +233,8 @@
    2 #'layer-child-uuid->long
    3 #'add-prcrsr-bot
    4 #'make-existing-documents-public
-   5 #'migrate-fake-documents))
+   5 #'migrate-fake-documents
+   6 #'fix-bounding-boxes))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"
