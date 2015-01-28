@@ -9,13 +9,13 @@
     [:article
      [:p "Following our unexpected "
          [:a {:href "/blog/product-hunt-wake-up-call"} "Product Hunt launch"]
-         ", we’ve been receiving a lot of feedback.
-         When it’s positive I’m inspired, and when it’s critical I’m motivated.
-         We’ve even received encouragement from founders of more popular prototyping tools.
+         ", we've been receiving a lot of feedback.
+         When it's positive I'm inspired, and when it's critical I'm motivated.
+         We've even received encouragement from founders of more popular prototyping tools.
          This type of praise often brings up the question, \"Aren't they competition?\""]]
 
     [:article
-     [:blockquote "Our true competition is not the small trickle of non-Tesla electric cars being produced, but rather the enormous flood of gasoline cars pouring out of the world’s factories every day."]]
+     [:blockquote "Our true competition is not the small trickle of non-Tesla electric cars being produced, but rather the enormous flood of gasoline cars pouring out of the world's factories every day."]]
 
     [:article
      [:p "Elon Musk wrote that on "
@@ -26,7 +26,7 @@
 
     [:article
      [:h3 "How do we compete with paper?"]
-     [:p "I don’t handwrite letters, I won't pay bills with checks, and I never unfold maps to get around.
+     [:p "I don't handwrite letters, I won't pay bills with checks, and I never unfold maps to get around.
          So why is pen and paper still so ingrained in the prototyping process?
          In my experience prototyping designs on paper is often based on a desire for more discipline—and this is where Precursor will compete.
          The inherent discipline with pen and paper makes it simple, efficient, and accessible."]]
@@ -43,10 +43,10 @@
     [:article
      [:h3 "Efficiency—almost there."]
      [:p "This could be pen and paper's greatest strength.
-         I’ve always returned to paper after finding that other prototyping tools are too slow.
-         By contrast, I've been using Precursor in my normal workflow for months and I can’t remember when I last reached for a pen.
-         I save time that’s better spent polishing designs in production.
-         I’m close to eliminating pen and paper from my own process entirely."]]
+         I've always returned to paper after finding that other prototyping tools are too slow.
+         By contrast, I've been using Precursor in my normal workflow for months and I can't remember when I last reached for a pen.
+         I save time that's better spent polishing designs in production.
+         I'm close to eliminating pen and paper from my own process entirely."]]
 
     [:article
      [:h3 "Accessibility—done."]
