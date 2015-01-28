@@ -7,7 +7,10 @@
 
 (def browser-settings-key "circle-browser-settings")
 
+
 (def db-setting->app-state-setting
+  "Translates db setting key that is stored on the cust to the key
+   that is stored in app-state (at state/browser-settings-path)"
   {:browser-setting/tool :current-tool
    :browser-setting/chat-opened :chat-opened
    :browser-setting/chat-mobile-toggled :chat-mobile-toggled
@@ -24,22 +27,29 @@
    :browser-setting/chat-menu-learned :chat-menu-learned})
 
 (def app-state-setting->db-setting
+  "Translates browser settings key that is stored in app-state (at state/browser-settings-path)
+   to the one that is stored on the cust"
   (set/map-invert db-setting->app-state-setting))
 
-(defn merged-settings [app-state-settings db-settings local-settings]
+(defn merged-settings
+  "Merges settings from defaults, localstorage, and cust, in that order"
+  [app-state-settings local-settings db-settings]
   (utils/deep-merge app-state-settings
                     local-settings
                     db-settings))
 
-(defn restore-browser-settings [state cust]
+(defn restore-browser-settings
+  [state cust]
   (let [localstorage-imp (localstorage/new-localstorage-imp)
         local-settings (localstorage/read localstorage-imp browser-settings-key)
         db-settings (-> cust
                       (select-keys (keys db-setting->app-state-setting))
                       (set/rename-keys db-setting->app-state-setting))]
-    (update-in state state/browser-settings-path merged-settings db-settings local-settings)))
+    (update-in state state/browser-settings-path merged-settings local-settings db-settings)))
 
-(defn diff-from-db-settings [cust settings]
+(defn diff-from-db-settings
+  "Returns settings that have changed in db format"
+  [cust settings]
   (reduce (fn [acc [k v]]
             (let [db-key (get app-state-setting->db-setting k)]
               (if (and (not= v (get state/initial-browser-settings k))
@@ -48,7 +58,9 @@
                 acc)))
           {} settings))
 
-(defn diff [before after]
+(defn new-fields
+  "Generic diff algorithm, returns a new map with just the new fields"
+  [before after]
   (reduce (fn [acc [k v]]
             (if (not= v (get before k))
               (assoc acc k v)
@@ -59,8 +71,8 @@
   (when (not (identical? (get-in old-data state/browser-settings-path)
                          (get-in new-data state/browser-settings-path)))
     (localstorage/save! localstorage-imp browser-settings-key (get-in new-data state/browser-settings-path))
-    (let [changes (utils/inspect (diff (get-in old-data state/browser-settings-path)
-                                       (get-in new-data state/browser-settings-path)))]
+    (let [changes (new-fields (get-in old-data state/browser-settings-path)
+                              (get-in new-data state/browser-settings-path))]
       (let [db-changes (select-keys changes (keys app-state-setting->db-setting))]
         (when (seq db-changes)
           (sente/send-msg (:sente @ref)

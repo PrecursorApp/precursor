@@ -1,5 +1,8 @@
 (ns frontend.state)
 
+;; If you want a browser setting to be persisted to the backend,
+;; be sure to add it to the schema (pc.datomic.schema/shema) and
+;; add the translation to frontend.browser-settings/db-setting->app-state-setting
 (def initial-browser-settings
   {:current-tool :pen
    :chat-opened false
