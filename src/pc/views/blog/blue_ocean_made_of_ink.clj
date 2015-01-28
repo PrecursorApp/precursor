@@ -25,14 +25,14 @@
          For every single designer or developer using an app to prototype their product, there's at least a thousand using pen and paper."]]
 
     [:article
-     [:h3 "How do we compete with paper?"]
+     [:h3 "Can we compete with paper?"]
      [:p "I don't handwrite letters, I won't pay bills with checks, and I never unfold maps to get around.
          So why is pen and paper still so ingrained in the prototyping process?
          In my experience prototyping designs on paper is often based on a desire for more discipline—and this is where Precursor will compete.
          The inherent discipline with pen and paper makes it simple, efficient, and accessible."]]
 
     [:article
-     [:h3 "Simplicity—good start."]
+     [:h3 "Simplicity—a good start."]
      [:p "No tool is simpler than pen and paper.
          It requires almost no conscious effort.
          Competing here means creating a minimum level of cognitive load.
@@ -56,7 +56,7 @@
          Within seconds an entire product team can be communicating and designing the same wireframe in real time."]]
 
     [:article
-     [:h3 "Let's be more productive."]
+     [:h3 "We're more productive without pen and paper."]
      [:p "Paper is inevitably going to be lost, damaged, or forgotten.
          I justified this to myself by assuming my prototypes were disposable, but I've never actually found this to be true.
          Every time I look back through my early prototypes on Precursor, I learn something new about my process.
