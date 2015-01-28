@@ -3,6 +3,7 @@
    Clojure has already taken the name user in the repl"
   (:require [clojure.tools.logging :as log]
             [pc.datomic :as pcd]
+            [pc.datomic.schema :as schema]
             [pc.models.flag :as flag-model]
             [datomic.api :refer [db q] :as d]))
 
@@ -87,4 +88,6 @@
 
 (defn read-api [cust]
   (select-keys cust
-               [:cust/email :cust/uuid :cust/name :flags]))
+               (concat
+                (schema/browser-setting-idents)
+                [:cust/email :cust/uuid :cust/name :flags])))

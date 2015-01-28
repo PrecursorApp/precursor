@@ -254,6 +254,54 @@
               :db.type/string
               :metadata/unescaped true)
 
+   (attribute :browser-setting/tool
+              :db.type/ref)
+   (enum :circle)
+   (enum :rect)
+   (enum :line)
+   (enum :pen)
+   (enum :text)
+   (enum :select)
+
+   (attribute :browser-setting/chat-opened
+              :db.type/boolean)
+
+   (attribute :browser-setting/chat-mobile-toggled
+              :db.type/boolean)
+
+   (attribute :browser-setting/right-click-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/menu-button-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/info-button-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/newdoc-button-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/login-button-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/your-docs-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/main-menu-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/invite-menu-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/sharing-menu-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/shortcuts-menu-learned
+              :db.type/boolean)
+
+   (attribute :browser-setting/chat-menu-learned
+              :db.type/boolean)
+
    (attribute :permission/document
               :db.type/long
               :db/index true
@@ -448,6 +496,13 @@
   (pcd/touch-all '{:find [?t]
                    :where [[?t :db/ident ?ident]]}
                  db))
+
+(defn browser-setting-idents []
+  (reduce (fn [acc ent]
+            (if (= "browser-setting" (namespace (:db/ident ent)))
+              (conj acc (:db/ident ent))
+              acc))
+          [] @schema-ents))
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))
