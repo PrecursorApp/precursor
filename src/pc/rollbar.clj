@@ -64,23 +64,12 @@
   (str/replace (str/capitalize s) #"-(.)"
                (fn [[_ char]] (str "-" (str/capitalize char)))))
 
-(defn headers-for
-  [{:keys [headers] :as request}]
-  (into {} (for [[k v] headers]
-             [(to-http-case k) v])))
-
 (defn request-data
-  [{method :request-method client :remote-addr qstr :query-string body :body
-    :as request} user-id]
-  (let [body (if (string? body)
-               body
-               (try (slurp body) (catch Throwable e "")))
-        rollbar-obj {:url (url-for request)
-                     :method (str/upper-case (name method))
-                     :headers (headers-for request)
-                     :query_string (or qstr "")
-                     :user_ip client
-                     :body body}
+  [{:keys [request-method remote-addr query-string] :as request} user-id]
+  (let [rollbar-obj {:url (url-for request)
+                     :method (str/upper-case (name request-method))
+                     :query_string (or query-string "")
+                     :user_ip remote-addr}
         rollbar-obj (if user-id
                       (assoc rollbar-obj :person {:id (str user-id)})
                       rollbar-obj)]
