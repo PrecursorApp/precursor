@@ -262,7 +262,7 @@
       (try
         (log-request req resp (time/in-millis (time/interval start stop)))
         (catch Exception e
-          (rollbar/report-exception e :request req)
+          (rollbar/report-exception e :request req :user-id (get-in req [:auth :cust :cust/uuid]))
           (log/error e)))
       resp)))
 
