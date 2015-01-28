@@ -139,7 +139,7 @@
                                              :mult (async/mult mouse-down-ch)}
                              :mouse-up      {:ch mouse-up-ch
                                              :mult (async/mult mouse-up-ch)}})
-            (browser-settings/restore-browser-settings)))))
+            (browser-settings/restore-browser-settings cust)))))
 
 (defn log-channels?
   "Log channels in development, can be overridden by the log-channels query param"
@@ -307,11 +307,11 @@
         history-imp (history/new-history-imp)]
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
+    (sente/init state)
     (browser-settings/setup! state)
     (main state history-imp)
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
-    (sente/init state)
     (setup-entity-id-fetcher state)
     (if-let [error-status (get-in @state [:render-context :status])]
       ;; error codes from the server get passed as :status in the render-context

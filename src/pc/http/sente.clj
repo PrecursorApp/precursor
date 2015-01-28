@@ -6,6 +6,7 @@
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
             [pc.datomic :as pcd]
+            [pc.datomic.schema :as schema]
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
             [pc.models.access-grant :as access-grant-model]
@@ -32,12 +33,12 @@
   ;; {:pre [(seq (get-in req [:session :sente-id]))
   ;;        (seq (get-in req [:params :tab-id]))]}
   (when (empty? (get-in req [:session :sente-id]))
-    (let [msg "sente-id is nil for %s on %s" (:remote-addr req) (:uri req)]
+    (let [msg (format "sente-id is nil for %s on %s" (:remote-addr req) (:uri req))]
       (rollbar/report-exception (Exception. msg))
       (log/errorf msg)))
 
-  (when (empty? (get-in req [:session :tab-id]))
-    (let [msg "tab-id is nil for %s on %s" (:remote-addr req) (:uri req)]
+  (when (empty? (get-in req [:params :tab-id]))
+    (let [msg (format "tab-id is nil for %s on %s" (:remote-addr req) (:uri req))]
       (rollbar/report-exception (Exception. msg))
       (log/errorf msg)))
 
@@ -407,6 +408,16 @@
                                                                 (access-request-model/find-by-doc-and-cust db-after doc cust))
                                                  :entity-type :access-request}]))))
       (comment (notify-invite "Please sign up to send an invite.")))))
+
+(defmethod ws-handler :frontend/save-browser-settings [{:keys [client-id ?data ?reply-fn] :as req}]
+  (if-let [cust (-> req :ring-req :auth :cust)]
+    (let [settings (-> ?data :settings)]
+      (log/infof "saving browser settings for %s" (:cust/email cust))
+      @(d/transact (pcd/conn) [(merge {:db/id (:db/id cust)}
+                                      (select-keys settings (schema/browser-setting-idents)))]))
+    (let [msg (format "no cust for %s" (:remote-addr (:ring-req req)))]
+      (rollbar/report-exception (Exception. msg))
+      (log/errorf msg))))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
