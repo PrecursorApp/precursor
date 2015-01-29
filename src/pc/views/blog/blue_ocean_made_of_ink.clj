@@ -2,7 +2,7 @@
 
 (defn blue-ocean-made-of-ink []
   {:title "Our blue ocean is made of ink."
-   :blurb "For every single designer or developer using an app to prototype their product, there's a thousand using pen and paper..."
+   :blurb "For every single designer or developer using an app to prototype their product, there are hundreds using pen and paper."
    :author "Danny"
    :body
    (list
@@ -21,7 +21,7 @@
      [:p [:a {:href "http://www.teslamotors.com/blog/all-our-patent-are-belong-you"} "Elon Musk"]
          " said that about Telsa last year.
          Prototyping stands on similar shores.
-         For every single designer or developer using an app to prototype their product, there's a thousand using pen and paper."]]
+         For every single designer or developer using an app to prototype their product, there are hundreds using pen and paper."]]
 
     [:article
      [:h3 "Can we compete with paper?"]
