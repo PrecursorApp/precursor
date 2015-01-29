@@ -35,8 +35,8 @@
      [:h3 "Simplicity—a good start."]
      [:p "Pen and paper demands no conscious effort.
          So competing here requires a minimum level of cognitive load.
-         This is why we only interface sparingly and omit common customization options.
-         Our constraints focus effort on productive behaviors.
+         This should explain our lean interface and modest amount of customization options.
+         Our constraints help us design productive behaviors.
          E.g., monotone shapes make emphasizing collaborator activity simple with color."]]
 
     [:article
@@ -50,13 +50,13 @@
      [:h3 "Accessibility—done."]
      [:p "Collaboration is the Precursor flagship.
          Handing someone a notebook is easy, but no easier than handing them a phone or a tablet.
-         Precursor takes it even further by connecting collaborators around the world.
+         Precursor takes the advantage by connecting collaborators around the world.
          Entire product teams can be communicating and designing concepts together in real time, within seconds."]]
 
     [:article
      [:h3 "We're more productive without pen and paper."]
      [:p "Paper inevitably gets damaged or forgotten.
-         I justified that to myself by looking at my sketches disposable, but I haven't actually found this to be true.
+         I tried justifying that to myself by looking at my sketches disposable, but I'm starting to realize this isn't true.
          Whenever I scroll through past prototypes on Precursor, I learn something new about my process.
          Consider the implications of a system like that for a moment.
          Imagine recalling every drawing or doodle you ever scratched on a piece of paper.
