@@ -1,7 +1,9 @@
 (ns pc.repl
   "Utility functions to make repl access more convenient.
    Also serves as a guide for how nses should be aliased"
-  (:require [clojure.java.javadoc :refer (javadoc)]
+  (:require [cheshire.core :as json]
+            [clj-http.client :as http]
+            [clojure.java.javadoc :refer (javadoc)]
             [clojure.repl :refer :all]
             [datomic.api :as d]
             [pc.datomic :as pcd]

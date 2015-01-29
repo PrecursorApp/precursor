@@ -68,21 +68,23 @@
 
 (defmethod navigated-to :document
   [history-imp navigation-point args state]
-  (let [doc-id (:document/id args)]
+  (let [doc-id (:document/id args)
+        initial-entities []]
     (-> (navigated-default navigation-point args state)
         (assoc :document/id doc-id
                :undo-state (atom {:transactions []
                                   :last-undo nil})
                :db-listener-key (utils/uuid))
-        (update-in (state/doc-chat-bot-path doc-id)
-                   #(or % (rand-nth ["daniel" "danny" "prcrsr"])))
         (dissoc :subscribers)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
             %))
+        (assoc :initial-state false)
         ;; TODO: at some point we'll only want to get rid of the layers. Maybe have multiple dbs or
         ;;       find them by doc-id? Will still need a way to clean out old docs.
-        (update-in [:db] db/reset-db!))))
+        (update-in [:db] (fn [db] (if (:initial-state state)
+                                    db
+                                    (db/reset-db! db initial-entities)))))))
 
 (defmethod post-navigated-to! :document
   [history-imp navigation-point _ previous-state current-state]

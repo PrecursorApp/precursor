@@ -887,9 +887,9 @@
         color (get-in previous-state [:subscribers client-id :color])]
     (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
                       :chat/color color
-                      :cust/uuid (get-in current-state [:cust :uuid])
+                      :cust/uuid (get-in current-state [:cust :cust/uuid])
                       ;; TODO: teach frontend to lookup cust/name from cust/uuid
-                      :chat/cust-name (get-in current-state [:cust :name])
+                      :chat/cust-name (get-in current-state [:cust :cust/name])
                       :db/id (get-in previous-state [:chat :entity-id])
                       :session/uuid (:sente-id previous-state)
                       :document/id (:document/id previous-state)
@@ -993,7 +993,7 @@
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
   (-> state
-    (assoc-in [:cust :name] name)))
+    (assoc-in [:cust :cust/name] name)))
 
 (defmethod post-control-event! :self-updated
   [browser-state message {:keys [name]} previous-state current-state]

@@ -4,6 +4,7 @@
             [clojure.tools.logging :as log]
             [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.models.chat-bot :as chat-bot-model]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model])
   (:import [java.io PushbackReader]))
@@ -15,7 +16,8 @@
   {"interactive-demo" (read-doc "interactive-demo")})
 
 (defn duplicate-doc [document-name cust]
-  (let [doc (doc-model/create-public-doc! (merge {:document/name (str "Copy of " document-name)}
+  (let [doc (doc-model/create-public-doc! (merge {:document/name (str "Copy of " document-name)
+                                                  :document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                                                  (when (:cust/uuid cust) {:document/creator (:cust/uuid cust)})))]
     (if-let [layers (get docs document-name)]
       @(d/transact (pcd/conn) (conj (map #(assoc %
