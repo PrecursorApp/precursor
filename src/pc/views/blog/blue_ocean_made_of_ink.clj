@@ -18,9 +18,8 @@
      [:blockquote "Our true competition is not the small trickle of non-Tesla electric cars being produced, but rather the enormous flood of gasoline cars pouring out of the world's factories every day."]]
 
     [:article
-     [:p "Elon Musk "
-         [:a {:href "http://www.teslamotors.com/blog/all-our-patent-are-belong-you"} "said that about Telsa"]
-         " last year.
+     [:p [:a {:href "http://www.teslamotors.com/blog/all-our-patent-are-belong-you"} "Elon Musk"]
+         " said that about Telsa last year.
          Prototyping stands on similar shores.
          For every single designer or developer using an app to prototype their product, there's a thousand using pen and paper."]]
 
