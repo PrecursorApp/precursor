@@ -71,13 +71,14 @@
   (when (not (identical? (get-in old-data state/browser-settings-path)
                          (get-in new-data state/browser-settings-path)))
     (localstorage/save! localstorage-imp browser-settings-key (get-in new-data state/browser-settings-path))
-    (let [changes (new-fields (get-in old-data state/browser-settings-path)
-                              (get-in new-data state/browser-settings-path))]
-      (let [db-changes (select-keys changes (keys app-state-setting->db-setting))]
-        (when (seq db-changes)
-          (sente/send-msg (:sente @ref)
-                          [:frontend/save-browser-settings
-                           {:settings (set/rename-keys db-changes app-state-setting->db-setting)}]))))))
+    (when (:cust @ref)
+      (let [changes (new-fields (get-in old-data state/browser-settings-path)
+                                (get-in new-data state/browser-settings-path))]
+        (let [db-changes (select-keys changes (keys app-state-setting->db-setting))]
+          (when (seq db-changes)
+            (sente/send-msg (:sente @ref)
+                            [:frontend/save-browser-settings
+                             {:settings (set/rename-keys db-changes app-state-setting->db-setting)}])))))))
 
 (defn add-browser-settings-watcher [localstorage-imp state-atom]
   (add-watch state-atom browser-settings-key (partial browser-settings-watcher localstorage-imp)))
