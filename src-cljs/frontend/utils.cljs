@@ -195,3 +195,8 @@
 (defn stop-event [e]
   (.stopPropagation e)
   (.preventDefault e))
+
+(defn gravatar-url [email & {:keys [default]
+                             :or {default "blank"}}]
+  (str "https://www.gravatar.com/avatar/" (md5 (string/lower-case email))
+       "?d=" (js/encodeURIComponent default)))

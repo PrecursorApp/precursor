@@ -1,7 +1,9 @@
 (ns pc.models.cust
   "cust is what would usually be called user, we call it cust b/c
    Clojure has already taken the name user in the repl"
-  (:require [pc.datomic :as pcd]
+  (:require [clojure.tools.logging :as log]
+            [pc.datomic :as pcd]
+            [pc.models.flag :as flag-model]
             [datomic.api :refer [db q] :as d]))
 
 
@@ -36,6 +38,13 @@
   (pcd/touch-one '{:find [?e] :in [$ ?email]
                    :where [[?e :cust/email ?email]]}
                  db email))
+
+(defn find-by-uuid [db uuid]
+  (pcd/touch-one '{:find [?e] :in [$ ?uuid]
+                   :where [[?e :cust/uuid ?uuid]
+                           [?e :cust/email]]}
+                 db uuid))
+
 
 (defn find-by-http-session-key [db http-session-key]
   (pcd/touch-one '{:find [?e] :in [$ ?key]
@@ -72,3 +81,7 @@
                  :where [[_ :google-account/sub ?sub ?tx]
                          [?tx :db/txInstant ?i]]}
                db (:google-account/sub cust))))
+
+(defn turn-on-private-docs [db email]
+  (let [cust (find-by-email db email)]
+    (flag-model/add-flag cust :flags/private-docs)))

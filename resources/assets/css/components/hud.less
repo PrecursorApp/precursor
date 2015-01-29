@@ -1,0 +1,168 @@
+@radial_tools:
+  ellipse,   159.01px,  49.71px,
+  rectangle, 199.00px, 119.00px,
+  line,      159.01px, 188.29px,
+  pencil,     79.00px, 188.29px,
+  text,       39.00px, 119.52px,
+  select,     82.66px,  49.71px;
+.shape_position(@array; @count: length(@array); @name_value: -2; @x_value: -1; @y_value: 0; @icon_scale: .2) when (@count > (length(@array) / 3)) {
+  .shape_position(@array; (@count - 2); (@name_value - 1); (@x_value - 1); (@y_value - 1); @icon_scale);    // <-- Loop to next iteration until count is 0
+  @name:     extract(@array, (@count + @name_value));                                                       //
+  @x_offset: extract(@array, (@count + @x_value)) * (1 / @icon_scale);                                      //
+  @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
+  &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
+}
+.app-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  a {
+    pointer-events: auto;
+  }
+}
+.radial-menu {
+  position: fixed;
+  width: @radial_menu_size;
+  height: @radial_menu_size;
+  z-index: @zindex_radial_menu;
+}
+.radial-buttons {
+  width: @radial_menu_size + 2;
+  height: @radial_menu_size + 2;
+  margin-left: -1em;
+  margin-top: -1em;
+  padding: 1rem;
+  overflow: visible;
+}
+.radial-button {
+  cursor: pointer;
+  transition: @speed @bezier_transform;
+  &:hover {
+    .transform(translate3d(-13px, -13px, 0); scale3d(1.1, 1.1, 1));
+    transition-duration: @speed_fast;
+    .radial-pie {
+      fill: @gray_dark;
+      transition-duration: @speed_fast;
+    }
+    .radial-icon {
+      stroke: @white;
+      transition-duration: @speed_fast;
+    }
+  }
+  &:active {
+    .radial-pie {
+      fill: @gray_darker;
+    }
+  }
+}
+.radial-pie {
+  fill: @gray_darker;
+  stroke: @gray_dark;
+  transition: @speed @bezier_transform;
+}
+.radial-icon {
+  .shape_position(@radial_tools);
+  fill: none;
+  stroke: @gray_light;
+  stroke-width: 8;
+  pointer-events: none;
+  transition: @speed @bezier_fadein;
+}
+.radial-point {
+  fill: @gray_dark;
+}
+.radial-hint {
+  .user-select(none);
+  position: absolute;
+  top: -@tile;
+  left: -@tile;
+  white-space: nowrap;
+  .mq_640({
+    display: none;
+  });
+}
+
+.main-menu-button {
+  .flexy(center, center);
+  .icon_stroke(@gray);
+  position: absolute;
+  font-size: 1.5rem;
+  top: 0;
+  left: 0;
+  width: @tile;
+  height: @tile;
+  transition: @speed;
+  z-index: @zindex_main_menu;
+  &:hover {
+    .icon_stroke(@white);
+    &.bkg-light {
+      .icon_stroke(@gray_darkest);
+    }
+  }
+  path {
+    -webkit-transition-property: -webkit-transform, opacity, stroke;
+    transition-property: transform, opacity, stroke;
+    transition-duration: @speed_slow, @speed, @speed_fast;
+    transition-timing-function: @bezier_transform, @bezier_fadein, @bezier_fadein;
+  }
+  &.close,
+  &.back {
+    font-size: 1rem;
+    path {
+      transition-timing-function: @bezier_bounce, @bezier_fadein, @bezier_fadein;
+    }
+  }
+  &.close {
+    path {
+      &[class*="top"] {
+        .transform(translate3d(32.32px, -3.03px, 0) rotate3d(0, 0, 1, 45deg));
+      }
+      &[class*="btm"] {
+        .transform(translate3d(-38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));
+      }
+    }
+    .menu-mid-stroke {
+      opacity: 0;
+      .transform(translate3d(-20.71px, 50px, 0) rotate3d(0, 0, 1, -45deg));
+    }
+  }
+  &.back {
+    path {
+      &:not(.menu-mid-stroke) {
+        &[class*="left"] {
+          opacity: 0;
+        }
+        &[class*="right"] {
+          stroke-linecap: square;
+        }
+      }
+      &[class*="top"] {
+        .transform(translate3d(-12.68px, -3.03px, 0) rotate3d(0, 0, 1, 45deg));
+      }
+      &[class*="btm"] {
+        .transform(translate3d(-83.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));
+      }
+    }
+  }
+}
+
+.mouse-stats {
+  .user-select(none);
+  position: absolute;
+  color: @gray;
+  font-family: @font_mono;
+  font-size: 0.625rem;
+  line-height: 1em;
+  text-align: center;
+  bottom: 0;
+  width: 100%;
+  left: 0;
+  padding: .5em;
+  transition: @speed @bezier_fadein;
+  .mq_640({
+    opacity: 0;
+  });
+}

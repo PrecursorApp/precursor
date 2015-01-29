@@ -6,6 +6,8 @@
   overflow: hidden;
   transition: @speed @bezier_transform;
   // transition-timing-function: @bezier_bounce;
+  .user-select(none);
+  &:hover { .user-select(auto);}
   .mq_640({
     .flex-direction(row);
     position: relative;
@@ -174,6 +176,26 @@
   word-spacing: -.1875rem;
   margin-left: .5rem;
 }
+.unseen-eids {
+  .animation(in-bounce (@speed * 2));
+  .user-select(none);
+  position: absolute;
+  font-family: @font_mono;
+  font-size: 0.625rem;
+  line-height: 1em;
+  bottom: 3.2em;
+  right: 3.2em;
+  height: 1.6em;
+  min-width: 1.6em;
+  padding: 2px 3px;
+  color: @red;
+  background: @gray_darker;
+  border: 2px solid @red;
+  border-radius: 2rem;
+  box-shadow: 0 2px @gray_darker, 2px 0 @gray_darker, 2px 2px @gray_darker;
+  pointer-events: none;
+  transition: @speed @bezier_transform;
+}
 .chat-button {
   .icon_stroke(@gray);
   .flexy(center, center);
@@ -186,9 +208,9 @@
   &:hover {
     .icon_stroke(@white);
     .unseen-eids {
-      background: lighten(#c0392b, 10);
+      background: @red;
       color: @white;
-      border-color: lighten(#c0392b, 10);
+      border-color: @red;
       height: 1.8em;
       min-width: 1.8em;
       padding: 2px 4px;

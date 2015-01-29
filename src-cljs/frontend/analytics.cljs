@@ -4,7 +4,6 @@
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]))
 
-
 (defn init-user [cust]
   (utils/swallow-errors
    (rollbar/init (:uuid cust) (:email cust)))

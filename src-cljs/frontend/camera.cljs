@@ -2,13 +2,24 @@
 
 (def max-zoom 5)
 (def min-zoom 0.1)
-(def zoom-increment 0.1)
+(def zoom-increment 0.05)
 
 (defn camera [state]
   (:camera state))
 
+(defn position [camera]
+  (select-keys camera [:x :y :zf :z-exact]))
+
 (defn reset [camera]
-  (assoc camera :x 0 :y 0 :zf 1 :z-exact 1))
+  (let [new-camera (assoc camera :x 0 :y 0 :zf 1 :z-exact 1)]
+    (if (and (:previous camera) (= (position new-camera) (position camera)))
+      new-camera
+      (assoc new-camera :previous camera))))
+
+(defn previous [camera]
+  (if (:previous camera)
+    (:previous camera)
+    camera))
 
 (defn snap [increment value]
   (js/parseFloat (.toFixed (* increment (js/Math.round (/ value increment))) 2)))
@@ -31,22 +42,22 @@
 (defn bounded [lower-bound upper-bound value]
   (max lower-bound (min upper-bound value)))
 
-(defn set-zoom [state f]
+(defn set-zoom [state screen-center f]
   (let [old-z-exact (get-in state [:camera :z-exact])
-        new-z-exact (bounded min-zoom max-zoom (f old-z-exact))]
+        new-z-exact (bounded min-zoom max-zoom (f old-z-exact))
+        [x_s y_s] screen-center
+        old-zf (get-in state [:camera :zf])
+        new-zf (snap zoom-increment new-z-exact)]
     (-> state
         (assoc-in [:camera :z-exact] new-z-exact)
-        (assoc-in [:camera :zf] (snap zoom-increment new-z-exact)))))
+        (assoc-in [:camera :zf] new-zf)
+        (update-in [:camera :x] (fn [x] (+ x (* (- x_s x) (- 1 (/ new-zf old-zf))))))
+        (update-in [:camera :y] (fn [y] (+ y (* (- y_s y) (- 1 (/ new-zf old-zf)))))))))
 
 (defn move-camera [state dx dy]
   (-> state
    (update-in [:camera :x] + dx)
    (update-in [:camera :y] + dy)))
-
-(defn camera-mouse-mode [state]
-  (cond
-   (get-in state [:keyboard :alt?]) :zoom
-   :else :pan))
 
 (defn screen-event-coords [event]
   [(.. event -pageX)

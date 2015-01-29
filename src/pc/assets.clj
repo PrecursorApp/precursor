@@ -10,6 +10,7 @@
             [clojure.tools.reader.edn :as edn]
             [fs]
             [pantomime.mime :refer [mime-type-of]]
+            [pc.gzip :as gzip]
             [pc.profile]
             [pc.rollbar :as rollbar])
   (:import java.security.MessageDigest
@@ -55,17 +56,20 @@
 (def cdn-base-url "https://dtwdl3ecuoduc.cloudfront.net")
 
 (defonce asset-manifest (atom {}))
-(defn asset-manifest-version [] (get @asset-manifest :version))
+(defn asset-manifest-version [] (get @asset-manifest :code-version))
 
 (defn cdn-url [manifest-value]
   (str cdn-base-url "/" (:s3-key manifest-value)))
 
+(defn manifest-asset-path [manifest path]
+  (let [manifest-value (get-in manifest [:assets path])]
+    (assert manifest-value)
+    (cdn-url manifest-value)))
+
 (defn asset-path [path & {:keys [manifest]
                           :or {manifest @asset-manifest}}]
   (if (pc.profile/prod-assets?)
-    (let [manifest-value (get-in manifest [:assets path])]
-      (assert manifest-value)
-      (cdn-url manifest-value))
+    (manifest-asset-path manifest path)
     path))
 
 ;; TODO: make the caller set credentials
@@ -132,9 +136,9 @@
   (let [source-map "resources/public/cljs/production/sourcemap-frontend.map"
         sources (-> source-map slurp json/decode (get "sources"))]
     (http/post "https://api.rollbar.com/api/1/sourcemap"
-               {:multipart (concat [{:name "access_token" :content rollbar/token}
+               {:multipart (concat [{:name "access_token" :content rollbar/rollbar-prod-token}
                                     {:name "version" :content sha1}
-                                    {:name "minified_url" :content (asset-path "/cljs/production/frontend.js" :manifest manifest)}
+                                    {:name "minified_url" :content (manifest-asset-path manifest "/cljs/production/frontend.js")}
                                     {:name "source_map" :content (clojure.java.io/file source-map)}]
                                    (for [source sources]
                                      (do (println source)
@@ -143,10 +147,26 @@
 (defn make-manifest-key [sha1]
   (str "releases/" sha1))
 
+(defn upload-public []
+  ;; TODO: traverse subdirectories
+  ;; TODO: detect if we've already uploaded an asset and invalidate it
+  (doseq [dir ["img"]
+          file (fs/listdir (fs/join "resources/public" dir))
+          :let [key (fs/join dir file)
+                full-path (fs/join "resources/public" dir file)]
+          :when (fs/file? full-path)]
+    (log/infof "uploading %s to %s" full-path key)
+    (s3/put-object :bucket-name cdn-bucket
+                   :key key
+                   :file full-path
+                   :metadata {:content-type (mime-type-of full-path)
+                              :cache-control "max-age=3155692"})))
+
 (defn upload-manifest [sha1]
   ;; TODO: this is dumb, we shouldn't write to the file
   (update-sourcemap-url assets-directory "/cljs/production/frontend.js")
   (amazonica.core/with-credential [aws-access-key aws-secret-key]
+    (upload-public)
     (let [manifest-key (make-manifest-key sha1)
           assets (reduce (fn [acc path]
                            (let [file-path (str assets-directory path)
@@ -154,7 +174,9 @@
                                  ;; TODO: figure out a better way to handle leading slashes
                                  key (assetify (subs path 1) md5)]
                              (log/infof "pushing %s to %s" file-path key)
-                             (s3/put-object :bucket-name cdn-bucket :key key :file file-path
+                             (s3/put-object :bucket-name cdn-bucket
+                                            :key key
+                                            :file file-path
                                             :metadata {:content-type (mime-type-of file-path)
                                                        :cache-control "max-age=3155692"})
                              (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))

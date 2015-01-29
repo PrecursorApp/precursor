@@ -27,7 +27,9 @@
 (def slugs
   "Sorted array of slugs, assumes the post content can be found in the
    function returned by post-fn"
-  [{:slug "product-hunt-wake-up-call"
+  [{:slug "private-docs-early-access"
+    :display-in-overview false}
+   {:slug "product-hunt-wake-up-call"
     :display-in-overview true}
    {:slug "interactive-layers"
     :display-in-overview true}

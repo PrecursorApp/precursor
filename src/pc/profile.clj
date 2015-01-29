@@ -4,6 +4,9 @@
 (defn prod? []
   (= "true" (System/getenv "PRODUCTION")))
 
+(defn compile-less? []
+  (not (prod?)))
+
 (defn prod-assets? []
   (prod?))
 

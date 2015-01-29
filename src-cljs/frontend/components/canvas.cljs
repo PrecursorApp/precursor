@@ -68,12 +68,6 @@
   [state selected-eids layer]
   (print "Nothing to do for groups, yet."))
 
-(defn state->cursor [state]
-  (case (get-in state state/current-tool-path)
-    :text "text"
-    :select "default"
-    "crosshair"))
-
 (defn handles [layer owner]
   (reify
     om/IRender
@@ -310,12 +304,16 @@
   (reify
     om/IDidMount
     (did-mount [_]
-      (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (goog.style/getSize (om/get-node owner "input-width-tester")))))
+      (om/set-state! owner
+                     :input-min-width
+                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
+      (.focus (om/get-node owner "input")))
     om/IDidUpdate
     (did-update [_ _ _]
-      (.focus (om/get-node owner "input"))
-      (om/set-state! owner :input-min-width (.-width (goog.style/getSize (om/get-node owner "input-width-tester")))))
+      (om/set-state! owner
+                     :input-min-width
+                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
+      (.focus (om/get-node owner "input")))
     om/IInitState
     (init-state [_]
       {:input-min-width 0})
@@ -323,45 +321,55 @@
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             text-style {:font-size (:layer/font-size layer 20)}]
-        (dom/foreignObject #js {:width "100%"
-                                :height "100%"
-                                :x (:layer/start-x layer)
-                                ;; TODO: defaults for each layer when we create them
-                                :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
-          (dom/form #js {:className "svg-text-form"
-                         :onMouseDown #(.stopPropagation %)
-                         :onMouseUp #(.stopPropagation %)
-                         :onWheel #(.stopPropagation %)
-
-                         :onSubmit (fn [e]
-                                     (cast! :text-layer-finished)
-                                     (utils/stop-event e))
-                         :onKeyDown #(cond (= "Enter" (.-key %))
-                                           (do (cast! :text-layer-finished)
+        (dom/g #js {:key "text-input-group"}
+          (svg-element #{}
+                       (assoc layer
+                              :className "text-size-helper"
+                              :ref "text-size-helper"))
+          (dom/foreignObject #js {:width "100%"
+                                  :height "100%"
+                                  :x (:layer/start-x layer)
+                                  ;; TODO: defaults for each layer when we create them
+                                  :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
+            (dom/form #js {:className "svg-text-form"
+                           :onMouseDown #(.stopPropagation %)
+                           :onWheel #(.stopPropagation %)
+                           :onSubmit (fn [e]
+                                       (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
+                                         (cast! :text-layer-finished {:bbox {:width (.-width bbox)
+                                                                             :height (.-height bbox)}})
+                                         (utils/stop-event e)))
+                           :onMouseMove (when-not (:moving? layer)
+                                          #(.stopPropagation %))
+                           :onKeyDown #(cond (= "Enter" (.-key %))
+                                             (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
+                                               (cast! :text-layer-finished {:bbox {:width (.-width bbox)
+                                                                                   :height (.-height bbox)}})
                                                (utils/stop-event %))
 
-                                           (= "Escape" (.-key %))
-                                           (do (cast! :cancel-drawing)
-                                               (utils/stop-event %))
+                                             (= "Escape" (.-key %))
+                                             (do (cast! :cancel-drawing)
+                                                 (utils/stop-event %))
 
-                                           :else nil)}
-                    ;; TODO: experiment with a contentEditable div
-                    (dom/input #js {:type "text"
-                                    :placeholder "Type something..."
-                                    :value (or (:layer/text layer) "")
-                                    ;; TODO: defaults for each layer when we create them
-                                    :style (clj->js (merge text-style
-                                                           {:width (+ 256 (om/get-state owner :input-min-width))}))
-                                    :ref "input"
-                                    :onChange #(cast! :text-layer-edited {:value (.. % -target -value)})})
-                    (dom/div #js {:style (clj->js (merge {:visibility "hidden"
-                                                          :position "fixed"
-                                                          :top "-100px"
-                                                          :left "0"
-                                                          :display "inline-block"}
-                                                         text-style))
-                                  :ref "input-width-tester"}
-                      (:layer/text layer))))))))
+                                             :else nil)}
+                      ;; TODO: experiment with a contentEditable div
+                      (dom/input #js {:type "text"
+                                      :className "text-layer-input"
+                                      ;; Don't let the user accidentally select the text when they're dragging it
+                                      :placeholder "Type something..."
+                                      :value (or (:layer/text layer) "")
+                                      ;; TODO: defaults for each layer when we create them
+                                      :style (clj->js (merge text-style
+                                                             {:width (+ 50 (max 160 (om/get-state owner :input-min-width)))}))
+                                      :ref "input"
+                                      :onChange #(let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
+                                                   ;; this will always be a letter behind, but we sometimes
+                                                   ;; call text-layer-finished from a place that doesn't
+                                                   ;; have access to the DOM
+                                                   ;; TODO: can we save on focus-out instead?
+                                                   (cast! :text-layer-edited {:value (.. % -target -value)
+                                                                              :bbox {:width (.-width bbox)
+                                                                                     :height (.-height bbox)}}))}))))))))
 
 (defn subscriber-layers [{:keys [layers]} owner]
   (reify
@@ -462,22 +470,45 @@
                                          :onClick #(do (cast! :layer-ui-target-edited {:value target})
                                                        (om/set-state! owner :input-expanded false)
                                                        (.focus (om/get-node owner "target-input")))}
-                               target)))))))))
+                                    target)))))))))
+
+(defn touches->clj [touches]
+  (mapv (fn [t]
+          {:client-x (aget t "clientX")
+           :client-y (aget t "clientY")
+           :page-x (aget t "pageX")
+           :page-y (aget t "pageY")
+           :identifier (aget t "identifier")})
+        ;; touches aren't seqable
+        (js/Array.prototype.slice.call touches)))
+
+(defn measure [[x1 y1] [x2 y2]]
+  (js/Math.sqrt (+ (js/Math.pow (- x2 x1) 2)
+                   (js/Math.pow (- y2 y1) 2))))
+
+(defn center [[x1 y1] [x2 y2]]
+  [(/ (+ x2 x1) 2)
+   (/ (+ y2 y1) 2)])
 
 (defn svg-canvas [payload owner opts]
   (reify
+    om/IInitState (init-state [_]
+                    ;; use an atom for performance, don't want to constantly
+                    ;; re-render when we set-state!
+                    {:touches (atom nil)})
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             camera (:camera payload)
+            in-progress? (settings/drawing-in-progress? payload)
             subs-layers (reduce (fn [acc [id subscriber]]
                                   (if-let [layers (seq (:layers subscriber))]
                                     (concat acc (map (fn [layer]
                                                        (assoc layer
-                                                         :layer/end-x (:layer/current-x layer)
-                                                         :layer/end-y (:layer/current-y layer)
-                                                         :subscriber-color (:color subscriber)
-                                                         :layer/stroke (apply str "#" (take 6 id))))
+                                                              :layer/end-x (:layer/current-x layer)
+                                                              :layer/end-y (:layer/current-y layer)
+                                                              :subscriber-color (:color subscriber)
+                                                              :layer/stroke (apply str "#" (take 6 id))))
                                                      layers))
                                     acc))
                                 [] (:subscribers payload))]
@@ -485,49 +516,91 @@
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
-                      :style #js {:top    0
-                                  :left   0
-                                  :cursor (state->cursor payload)}
+                      :className (str "tool-" (name (get-in payload state/current-tool-path))
+                                      (when (and (get-in payload [:mouse :down])
+                                                 (= :text (get-in payload state/current-tool-path))
+                                                 (get-in payload [:drawing :in-progress?]))
+                                        " tool-text-move"))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
-                                        (when (= (.-length touches) 1)
-                                          (.preventDefault event)
-                                          ;; This was keeping app-main's touch event from working
-                                          ;; (.stopPropagation event)
-                                          (js/console.log event)
-                                          (om/set-state! owner :touch-timer (js/setTimeout #(cast! :menu-opened) 500))
-                                          ((:handle-mouse-down handlers) (aget touches "0")))))
+                                        (cond
+                                          (= (.-length touches) 1)
+                                          (do
+                                            (.preventDefault event)
+                                            (js/clearInterval (om/get-state owner :touch-timer))
+                                            (om/set-state! owner :touch-timer (js/setTimeout #(cast! :menu-opened) 500))
+                                            ((:handle-mouse-down handlers) (aget touches "0")))
+
+                                          (= (.-length touches) 2)
+                                          (do
+                                            (js/clearInterval (om/get-state owner :touch-timer))
+                                            (cast! :cancel-drawing)
+                                            (reset! (om/get-state owner :touches) (touches->clj touches)))
+
+                                          :else (js/clearInterval (om/get-state owner :touch-timer)))))
                       :onTouchEnd (fn [event]
                                     (.preventDefault event)
-                                        ; (.stopPropagation event)
-                                    (js/console.log event)
                                     (js/clearInterval (om/get-state owner :touch-timer))
-                                    ((:handle-mouse-up handlers) event))
+                                    (if (= (.-length (aget event "changedTouches")) 1)
+                                      ((:handle-mouse-up handlers) event)
+                                      (cast! :cancel-drawing)))
                       :onTouchMove (fn [event]
                                      (let [touches (.-touches event)]
-                                       (when (= (.-length touches) 1)
-                                         (.preventDefault event)
-                                         (.stopPropagation event)
-                                         (js/console.log event)
-                                         (js/clearInterval (om/get-state owner :touch-timer))
-                                         ((:handle-mouse-move! handlers) (aget touches "0")))))
+                                       (cond (= (.-length touches) 1)
+                                             (do
+                                               (.preventDefault event)
+                                               (.stopPropagation event)
+                                               (js/clearInterval (om/get-state owner :touch-timer))
+                                               ((:handle-mouse-move handlers) (aget touches "0")))
+
+                                             (= (.-length touches) 2)
+                                             (do
+                                               (.preventDefault event)
+                                               (.stopPropagation event)
+                                               (js/clearInterval (om/get-state owner :touch-timer))
+                                               (when in-progress?
+                                                 (cast! :cancel-drawing))
+                                               (let [touches-atom (om/get-state owner :touches)
+                                                     [p-a p-b :as previous-touches] @touches-atom
+                                                     [c-a c-b :as current-touches] (touches->clj touches)
+
+                                                     p-center (center [(:page-x p-a) (:page-y p-a)]
+                                                                      [(:page-x p-b) (:page-y p-b)])
+
+                                                     c-center (center [(:page-x c-a) (:page-y c-a)]
+                                                                      [(:page-x c-b) (:page-y c-b)])
+
+                                                     drift-x (- (first c-center) (first p-center))
+                                                     drift-y (- (second c-center) (second p-center))
+
+                                                     spread (- (measure [(:page-x p-a) (:page-y p-a)]
+                                                                        [(:page-x p-b) (:page-y p-b)])
+                                                               (measure [(:page-x c-a) (:page-y c-a)]
+                                                                        [(:page-x c-b) (:page-y c-b)]))]
+                                                 (reset! touches-atom current-touches)
+                                                 (om/transact! payload (fn [state]
+                                                                         (-> state
+                                                                           (cameras/set-zoom c-center
+                                                                                             (partial + (* -0.004 spread)))
+                                                                           (cameras/move-camera drift-x drift-y))))))
+                                             :else nil)))
                       :onMouseDown (fn [event]
                                      ((:handle-mouse-down handlers) event)
-                                     ;;(.preventDefault event)
-                                     (.stopPropagation event)
-                                     )
+                                     (.stopPropagation event))
                       :onMouseUp (fn [event]
                                    ((:handle-mouse-up handlers) event)
-                                   ;(.preventDefault event)
                                    (.stopPropagation event))
+                      :onMouseMove (fn [event]
+                                     ((:handle-mouse-move handlers) event)
+                                     (.preventDefault event)
+                                     (.stopPropagation event))
                       :onWheel (fn [event]
-                                 (let [dx     (- (aget event "deltaX"))
-                                       dy     (aget event "deltaY")]
+                                 (let [dx (- (aget event "deltaX"))
+                                       dy (aget event "deltaY")]
                                    (om/transact! payload (fn [state]
-                                                           (let [camera (cameras/camera state)
-                                                                 mode   (cameras/camera-mouse-mode state)]
-                                                             (if (= mode :zoom)
-                                                               (cameras/set-zoom state (partial + (* -0.002 dy)))
+                                                           (let [camera (cameras/camera state)]
+                                                             (if (aget event "altKey")
+                                                               (cameras/set-zoom state (cameras/screen-event-coords event) (partial + (* -0.002 dy)))
                                                                (cameras/move-camera state dx (- dy)))))))
                                  (utils/stop-event event))}
                  (dom/defs nil
@@ -561,16 +634,17 @@
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-id]))
                   (om/build svg-layers (assoc (select-keys payload [:selected-eids :document/id])
-                                         :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
-                                                                              (settings/moving-drawing? payload))
-                                                                      (concat [(:db/id (settings/drawing payload))]
-                                                                              (map :db/id (get-in payload [:drawing :layers]))))
-                                                                    (remove nil? (map :db/id subs-layers))))
-                                         :tool (get-in payload state/current-tool-path)))
+                                              :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
+                                                                                   (settings/moving-drawing? payload))
+                                                                           (concat [(:db/id (settings/drawing payload))]
+                                                                                   (map :db/id (get-in payload [:drawing :layers]))))
+                                                                         (remove nil? (map :db/id subs-layers))))
+                                              :tool (get-in payload state/current-tool-path)))
                   (om/build subscriber-layers {:layers subs-layers})
                   (when (and (settings/drawing-in-progress? payload)
                              (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
-                    (om/build text-input (get-in payload [:drawing :layers 0])))
+                    (om/build text-input (assoc (get-in payload [:drawing :layers 0])
+                                                :moving? (get-in payload [:mouse :down]))))
 
                   (when (get-in payload [:layer-properties-menu :opened?])
                     (om/build layer-properties {:layer (get-in payload [:layer-properties-menu :layer])
@@ -578,11 +652,11 @@
                                                 :y (get-in payload [:layer-properties-menu :y])}))
 
                   (when-let [sels (cond
-                                   (settings/moving-drawing? payload) (remove #(= :layer.type/group (:layer/type %))
-                                                                              (settings/drawing payload))
-                                   (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])) nil
-                                   (settings/drawing-in-progress? payload) (settings/drawing payload)
-                                   :else nil)]
+                                    (settings/moving-drawing? payload) (remove #(= :layer.type/group (:layer/type %))
+                                                                               (settings/drawing payload))
+                                    (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])) nil
+                                    (settings/drawing-in-progress? payload) (settings/drawing payload)
+                                    :else nil)]
                     (apply dom/g #js {:className "layers"}
                            (map (fn [sel]
                                   (let [sel (if (:force-even? sel)

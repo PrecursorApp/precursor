@@ -21,16 +21,17 @@
                                         :main-menu-learned false
                                         :chat-button-learned false
                                         :login-button-learned false}}
-   :keyboard-shortcuts {:select #{"s"}
-                        :circle #{"c"}
-                        :rect #{"r"}
-                        :line #{"l"}
-                        :pen #{"p"}
+   :keyboard-shortcuts {:select #{"v"}
+                        :circle #{"l"}
+                        :rect #{"m"}
+                        :line #{"\\"}
+                        :pen #{"n"}
                         :text #{"t"}
                         :undo #{"meta+z" "ctrl+z"}
                         :shortcuts-menu #{"shift+/"}
                         :escape-interaction #{"esc"}
-                        :reset-canvas-position #{"home" "1"}}
+                        :reset-canvas-position #{"home" "1"}
+                        :return-from-origin #{"2"}}
    :current-user    nil
    :instrumentation []
    :entity-ids      #{}
@@ -93,6 +94,8 @@
 (def main-menu-learned-path (conj browser-settings-path :main-menu-learned))
 
 (def invite-menu-learned-path (conj browser-settings-path :invite-menu-learned))
+
+(def sharing-menu-learned-path (conj browser-settings-path :sharing-menu-learned))
 
 (def shortcuts-menu-learned-path (conj browser-settings-path :shortcuts-menu-learned))
 

@@ -7,11 +7,20 @@
   (-> permission
     (select-keys [:access-request/document
                   :access-request/cust
+                  :access-request/create-date
+                  :access-request/deny-date
                   ;; TODO: different read api based on permissions
                   :access-request/status
                   :db/id])
     (#(into {} %))
     (update-in [:access-request/cust] #(:cust/email (d/entity db %)))))
+
+(defn requester-read-api [db permission]
+  (-> (read-api db permission)
+    (select-keys [:access-request/document
+                  :access-request/cust
+                  :access-request/create-date
+                  :db/id])))
 
 (defn find-by-id [db id]
   (let [candidate (d/entity db id)]
@@ -37,13 +46,18 @@
     (map #(d/entity db %))))
 
 (defn create-request [doc cust annotations]
-  (let [txid (d/tempid :db.part/tx)]
+  (let [txid (d/tempid :db.part/tx)
+        create-date (java.util.Date.)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:pc.models.access-request/create-request (:db/id doc) (:db/id cust) [:needs-email :email/access-request-created]]])))
+                  [:pc.models.access-request/create-request (:db/id doc) (:db/id cust) create-date [:needs-email :email/access-request-created]]])))
 
 (defn deny-request [request annotations]
-  (let [txid (d/tempid :db.part/tx)]
+  (let [txid (d/tempid :db.part/tx)
+        deny-date (java.util.Date.)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:db/add (:db/id request) :access-request/status :access-request.status/denied]])))
+                  ;; TODO: need a way to let the frontend perform history queries
+                  {:db/id (:db/id request)
+                   :access-request/status :access-request.status/denied
+                   :access-request/deny-date deny-date}])))
