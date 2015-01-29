@@ -124,6 +124,17 @@
                                    :d (get common/icon-paths (:icon template))}]])
             [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
 
+(defn landing-button [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            info-button-learned? (get-in app state/info-button-learned-path)]
+        (html
+          [:a.landing-button {:on-click #(cast! :landing-opened)
+                              :role "button"}
+           (common/icon :info)])))))
+
 (defn hud [app owner]
   (reify
     om/IRender
@@ -140,5 +151,7 @@
             (om/build info-button app))
           (when (get-in app [:menu :open?])
             (om/build radial-menu app))
+          (when-not (:cust app)
+            (om/build landing-button app))
           ])))))
 

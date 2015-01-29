@@ -141,6 +141,23 @@
     }
   }
 }
+// TODO fix this
+.landing-button {
+  .flexy(center, center);
+  position: absolute;
+  top: @tile;
+  right: 0;
+  width: @tile;
+  height: @tile;
+  &:not(:hover) {
+    .icon_stroke(@gray);
+  }
+  i {
+    svg {
+      font-size: 1.5em;
+    }
+  }
+}
 .action-info {
   margin-top: auto;
 }

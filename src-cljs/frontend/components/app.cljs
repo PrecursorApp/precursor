@@ -12,6 +12,7 @@
             [frontend.components.key-queue :as keyq]
             [frontend.components.canvas :as canvas]
             [frontend.components.common :as common]
+            [frontend.components.landing :as landing]
             [frontend.components.overlay :as overlay]
             [frontend.favicon :as favicon]
             [frontend.overlay :refer [overlay-visible?]]
@@ -51,6 +52,8 @@
           (om/build overlay/main-menu-button (select-in app [state/overlays-path state/main-menu-learned-path]))
           (when (overlay-visible? app)
             (om/build overlay/overlay app))
+          (when (:show-landing? app)
+            (om/build landing/landing app))
           (om/build app* app)
           (dom/div #js {:className "app-main-outline"}))
 

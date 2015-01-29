@@ -1228,3 +1228,15 @@
   (sente/send-msg (:sente current-state) [:frontend/deny-access-request {:document/id doc-id
                                                                          :request-id request-id
                                                                          :invite-loc :overlay}]))
+
+(defmethod control-event :landing-opened
+  [target message _ state]
+  (-> state
+    (assoc :show-landing? true)
+    (overlay/clear-overlays)))
+
+(defmethod control-event :landing-closed
+  [target message _ state]
+  (-> state
+    (assoc :show-landing? false)
+    (overlay/clear-overlays)))
