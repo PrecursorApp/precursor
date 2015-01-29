@@ -2,65 +2,64 @@
 
 (defn blue-ocean-made-of-ink []
   {:title "Our blue ocean is made of ink."
-   :blurb "For every single designer or developer using an app to prototype their product, there's at least a thousand using pen and paper..."
+   :blurb "For every single designer or developer using an app to prototype their product, there's a thousand using pen and paper..."
    :author "Danny"
    :body
    (list
     [:article
      [:p "Following our unexpected "
          [:a {:href "/blog/product-hunt-wake-up-call"} "Product Hunt launch"]
-         ", we've been receiving a lot of feedback.
-         When it's positive I'm inspired, and when it's critical I'm motivated.
-         We've even received encouragement from founders of more popular prototyping tools.
-         This type of praise often brings up the question, “Aren't they competition?”"]]
+         ", we've received a lot of feedback from users.
+         I've found the positive comments to be inspiring, and critical ones motivating.
+         We've even been receiving encouragement from founders of more popular prototyping apps.
+         This type of praise begs the question, “Aren't they competition?”"]]
 
     [:article
      [:blockquote "Our true competition is not the small trickle of non-Tesla electric cars being produced, but rather the enormous flood of gasoline cars pouring out of the world's factories every day."]]
 
     [:article
-     [:p "Elon Musk wrote that on "
-         [:a {:href "http://www.teslamotors.com/blog/all-our-patent-are-belong-you"} "Telsa's blog"]
+     [:p "Elon Musk "
+         [:a {:href "http://www.teslamotors.com/blog/all-our-patent-are-belong-you"} "said that about Telsa"]
          " last year.
-         We're lucky enough to stand on the shores of a similar ocean.
-         For every single designer or developer using an app to prototype their product, there's at least a thousand using pen and paper."]]
+         Prototyping stands on similar shores.
+         For every single designer or developer using an app to prototype their product, there's a thousand using pen and paper."]]
 
     [:article
      [:h3 "Can we compete with paper?"]
      [:p "I don't handwrite letters, I won't pay bills with checks, and I never unfold maps to get around.
-         So why is pen and paper still so ingrained in the prototyping process?
-         In my experience prototyping designs on paper is often based on a desire for more discipline—and this is where Precursor will compete.
-         The inherent discipline with pen and paper makes it simple, efficient, and accessible."]]
+         So why is pen and paper still so utterly ingrained in the traditional design process?
+         In my case, it's often tied to a desire for more discipline.
+         Its constraints make pen and paper simple, efficient, and accessible.
+         So that's where we'll start."]]
 
     [:article
      [:h3 "Simplicity—a good start."]
-     [:p "No tool is simpler than pen and paper.
-         It requires almost no conscious effort.
-         Competing here means creating a minimum level of cognitive load.
-         To avoid gratuity we interface only when necessary and omit common customization options.
-         These constraints help us focus on productive interactions.
-         E.g., when all shapes are white we can colorize collaborators and create instant recognition."]]
+     [:p "Pen and paper demands no conscious effort.
+         So competing here requires a minimum level of cognitive load.
+         This is why we only interface sparingly and omit common customization options.
+         Our constraints focus effort on productive behaviors.
+         E.g., monotone shapes make emphasizing collaborator activity simple with color."]]
 
     [:article
      [:h3 "Efficiency—almost there."]
-     [:p "This could be pen and paper's greatest strength.
-         I've always returned to paper after finding that other prototyping tools are too slow.
-         By contrast, I've been using Precursor in my normal workflow for months and I can't remember when I last reached for a pen.
-         I save time that's better spent polishing designs in production.
-         I'm close to eliminating pen and paper from my own process entirely."]]
+    [:p "I often retreat to pen and paper after finding other prototyping tools to be unwieldy.
+        By contrast, Precursor's agility has kept me from reaching for a pen for months.
+        Its precision helps me review old prototypes even after I've forgotten the context.
+        I save time early in my design process so I can polish more in production."]]
 
     [:article
      [:h3 "Accessibility—done."]
      [:p "Collaboration is the Precursor flagship.
          Handing someone a notebook is easy, but no easier than handing them a phone or a tablet.
-         Precursor can even connect collaborators all over the world.
-         Within seconds an entire product team can be communicating and designing the same wireframe in real time."]]
+         Precursor takes it even further by connecting collaborators around the world.
+         Entire product teams can be communicating and designing concepts together in real time, within seconds."]]
 
     [:article
      [:h3 "We're more productive without pen and paper."]
-     [:p "Paper is inevitably going to be lost, damaged, or forgotten.
-         I justified this to myself by assuming my prototypes were disposable, but I've never actually found this to be true.
-         Every time I look back through my early prototypes on Precursor, I learn something new about my process.
+     [:p "Paper inevitably gets damaged or forgotten.
+         I justified that to myself by looking at my sketches disposable, but I haven't actually found this to be true.
+         Whenever I scroll through past prototypes on Precursor, I learn something new about my process.
          Consider the implications of a system like that for a moment.
-         Imagine being able to recall every drawing, sketch, or doodle you ever scratched on a piece of paper.
+         Imagine recalling every drawing or doodle you ever scratched on a piece of paper.
          How amazing would that be?"]]
     )})
