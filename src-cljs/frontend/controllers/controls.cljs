@@ -1076,11 +1076,15 @@
   [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
   (let [layer-ids (take (count layers) (:entity-ids state))
         doc-id (:document/id state)
-        new-x (- (/ (- (:width canvas-size) width) 2)
-                 (:x (:camera state)))
-        new-y (- (/ (- (:height canvas-size) height) 2)
-                 (:y (:camera state)))
-        [move-x move-y] [(- new-x min-x) (- new-y min-y)]
+        camera (:camera state)
+        zoom (:zf camera)
+        center-x (+ min-x (/ width 2))
+        center-y (+ min-y (/ height 2))
+        new-x (+ (* (- center-x) zoom)
+                 (/ (:width canvas-size) 2))
+        new-y (+ (* (- center-y) zoom)
+                 (/ (:height canvas-size) 2))
+        [move-x move-y] (cameras/screen->point camera new-x new-y)
         [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)]
     (-> state
         (assoc-in [:clipboard :layers] (mapv (fn [l eid]
