@@ -29,7 +29,7 @@
    function returned by post-fn"
   [
    {:slug "blue-ocean-made-of-ink"
-    :display-in-overview true}
+    :display-in-overview false}
    {:slug "private-docs-early-access"
     :display-in-overview false}
    {:slug "product-hunt-wake-up-call"
