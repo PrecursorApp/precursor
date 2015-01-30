@@ -21,7 +21,7 @@
      [:p [:a {:href "http://www.teslamotors.com/blog/all-our-patent-are-belong-you"} "Elon Musk"]
          " said that about Telsa last year.
          Prototyping stands on similar shores.
-         For every single designer or developer using an app to prototype their product, there are hundreds using pen and paper."]]
+         For every single designer or developer using an app to prototype their product, there are hundreds more using paper."]]
 
     [:article
      [:h3 "Can we compete with paper?"]
