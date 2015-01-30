@@ -2,7 +2,7 @@
 
 (defn blue-ocean-made-of-ink []
   {:title "Our blue ocean is made of ink."
-   :blurb "For every single designer or developer using an app to prototype their product, there are hundreds using pen and paper."
+   :blurb "For every single designer or developer using an app to prototype their product, there are hundreds more using paper..."
    :author "Danny"
    :body
    (list
