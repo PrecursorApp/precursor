@@ -93,6 +93,66 @@
                           {:db/id (ident->float ident)
                            :db/ident ident})))))
 
+;; TODO: need to re-run the conversion to double for any layers that transacted while we
+;;       were moving properties back and forth. Can look at the tx-log for that.
+;;       Run it twice, once before we move ident-double to ident and once after.
+(defn layer-floats->doubles
+  "Converts the attributes on the layer that should have been doubles, but were stupidly
+   specified as floats (after converting from longs :()."
+  [conn]
+  (let [layer-attrs #{:start-x :start-y :end-x :end-y :stroke-width :opacity}
+        idents (set (map (fn [a] (keyword "layer" (name a))) layer-attrs))
+        layer-schemas (filter #(contains? idents (:db/ident %))
+                              (pcd/touch-all '{:find [?t]
+                                               :where [[?t :db/ident]]}
+                                             (db conn)))
+        ident->float (fn [ident]
+                       (keyword "layer" (str (name ident) "-float")))
+        ident->double (fn [ident]
+                        (keyword "layer" (str (name ident) "-double")))
+        temp-schemas (for [s layer-schemas]
+                       (-> s
+                         (update-in [:db/ident] ident->double)
+                         (merge {:db/valueType :db.type/double
+                                 :db/id (d/tempid :db.part/db)
+                                 :db.install/_attribute :db.part/db})))
+        new-schemas (for [s layer-schemas]
+                      (merge s {:db/valueType :db.type/double
+                                :db/id (d/tempid :db.part/db)
+                                :db.install/_attribute :db.part/db}))
+        db (db conn)]
+    (when (seq layer-schemas) ;; don't try to migrate on a fresh db
+
+      (log/info "creating temporary schema with :layer/attr-float for each attr")
+      (println "creating temporary schema with :layer/attr-float for each attr")
+      (time @(d/transact conn temp-schemas))
+
+      (log/info "migrating float properties to the new double properties")
+      (println "migrating float properties to the new double properties")
+      (time (doseq [ident idents
+                    :let [double-ident (ident->double ident)]]
+              (println "converting" ident "to" double-ident)
+              (dorun (map (fn [group]
+                            @(d/transact conn (mapv (fn [[e v]]
+                                                      [:db/add e double-ident (double v)])
+                                                    group)))
+                          (partition-all 1000
+                                         (q '{:find [?t ?v] :in [$ ?ident]
+                                              :where [[?t ?ident ?v]]}
+                                            db ident))))))
+
+      (log/info "renaming float attrs to new name")
+      (println  "renaming float attrs to new name")
+      (time @(d/transact conn (for [ident idents]
+                               {:db/id ident
+                                :db/ident (ident->float ident)})))
+
+      (log/info "rename the double attrs to normal attrs")
+      (println "rename the double attrs to normal attrs")
+      (time @(d/transact conn (for [ident idents]
+                               {:db/id (ident->double ident)
+                                :db/ident ident}))))))
+
 
 (defn layer-child-uuid->long
   "Converts the child type from uuids to long"

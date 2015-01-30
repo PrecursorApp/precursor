@@ -53,23 +53,23 @@
    (enum :layer.type/path)
 
    (attribute :layer/start-x
-              :db.type/float)
+              :db.type/double)
 
    (attribute :layer/start-y
-              :db.type/float)
+              :db.type/double)
 
    (attribute :layer/end-x
-              :db.type/float)
+              :db.type/double)
 
    (attribute :layer/end-y
-              :db.type/float)
+              :db.type/double)
 
    (attribute :layer/rx
-              :db.type/float
+              :db.type/double
               :db/doc "Border radius")
 
    (attribute :layer/ry
-              :db.type/float
+              :db.type/double
               :db/doc "Border radius")
 
    (attribute :layer/fill
@@ -77,30 +77,18 @@
               :metadata/unescaped true)
 
    (attribute :layer/stroke-width
-              :db.type/float)
+              :db.type/double)
 
    (attribute :layer/stroke-color
               :db.type/string
               :metadata/unescaped true)
 
    (attribute :layer/opacity
-              :db.type/float)
+              :db.type/double)
 
    (attribute :entity/type
               :db.type/ref)
    (enum :layer)
-
-   (attribute :layer/start-sx
-              :db.type/float)
-
-   (attribute :layer/start-sy
-              :db.type/float)
-
-   (attribute :layer/current-sx
-              :db.type/float)
-
-   (attribute :layer/current-sy
-              :db.type/float)
 
    (attribute :layer/font-family
               :db.type/string
