@@ -3,6 +3,7 @@
    Also serves as a guide for how nses should be aliased"
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
+            [clj-time.core :as time]
             [clojure.java.javadoc :refer (javadoc)]
             [clojure.repl :refer :all]
             [datomic.api :as d]
