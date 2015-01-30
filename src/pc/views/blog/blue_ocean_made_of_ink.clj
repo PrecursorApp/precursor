@@ -56,7 +56,7 @@
     [:article
      [:h3 "We're more productive without pen and paper."]
      [:p "Paper inevitably gets damaged or forgotten.
-         I tried justifying that to myself by looking at my sketches disposable, but I'm starting to realize this isn't true.
+         I tried justifying that by looking at my sketches as disposable, but now I'm starting to realize this isn't true.
          Whenever I scroll through past prototypes on Precursor, I learn something new about my process.
          Consider the implications of a system like that for a moment.
          Imagine recalling every drawing or doodle you ever scratched on a piece of paper.
