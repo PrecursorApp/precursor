@@ -9,6 +9,7 @@
   width: 100%;
   min-height: 100%;
   color: @gray_dark;
+  overflow-x: hidden;
   overflow-y: auto;
   a {
     color: @gray_darker;
@@ -28,7 +29,7 @@
     }
   }
   + .app-main {
-    .scale3d(.79);
+    .transform(translate3d(@tile_xl,0,0); scale3d(.9,.9,1));
     pointer-events: none;
     background: @overlay_background;
     box-shadow: 0 8px 21px 0 fade(@black, 21), 0 -1px fade(@black,08);
@@ -71,11 +72,13 @@
   }
 }
 .menu-to-canvas {
+  .transform(translate3d(@tile_xl,0,0); scale3d(.9,.9,1));
+  .transform-origin(90% 50%);
   position: absolute;
-  top: 10.5%;
-  right: 1%;
-  width: 79%;
-  height: 79%;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
   cursor: pointer;
   box-shadow: 0 8px 17px 0 fade(@black, 0);
   transition: @speed_slow @speed_fast @bezier_fadein;
@@ -115,6 +118,9 @@
 .menu-body {
   .flex(1);
   position: relative;
+  min-width: @menu_width_min;
+  width: @menu_width;
+  max-width: @menu_width_max;
   min-height: 100%;
 }
 .menu-view {
@@ -122,8 +128,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 20vw;
-  max-width: @tile * 6;
+  width: 100%;
   min-height: 100%;
   transition: @speed_slow @bezier_transform;
   &:not(:last-of-type) {
@@ -416,7 +421,7 @@ img.loading-image {
 .access-card {
   .flexy(center);
   position: relative;
-  max-width: @menu_width;
+  // max-width: @menu_width; // TODO fix this
   padding: .5rem 1.5rem;
   cursor: default;
   transition: @speed;

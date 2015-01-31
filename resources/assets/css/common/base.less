@@ -22,11 +22,13 @@ body {
 }
 .app-main {
   .flexy();
-  .transform-origin(95% 50%);
-  height: 100vh;
+  .transform-origin(90% 50%);
   .outline(@gray_lightest);
+  width: 100%;
+  height: 100%;
+  margin-left: auto;
   overflow: hidden;
-  transition: all @speed_fast 0ms @bezier_transform;
+  transition: all @speed 0ms @bezier_transform;
 }
 .app-main-outline {
   .user-select(none);
