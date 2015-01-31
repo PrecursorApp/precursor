@@ -1,13 +1,16 @@
 .app-chat {
   .flexy(column);
+  .user-select(none);
+  position: relative;
   width: 20vw;
   min-width: @tile_chat;
   box-shadow: -1px 0 @gray_dark;
   overflow: hidden;
-  transition: @speed @bezier_transform;
-  // transition-timing-function: @bezier_bounce;
-  .user-select(none);
-  &:hover { .user-select(auto);}
+  transition+: all @speed_fast @bezier_transform;
+  transition+: opacity @speed @speed @bezier_fadein;
+  &:hover {
+    .user-select(auto);
+  }
   .mq_640({
     .flex-direction(row);
     position: relative;

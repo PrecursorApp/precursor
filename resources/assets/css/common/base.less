@@ -9,6 +9,7 @@ html {
 }
 body {
   margin: 0;
+  overflow: hidden;
 }
 #om-app {
   min-height: 100%;
@@ -16,15 +17,16 @@ body {
 }
 .app {
   .flexy(column);
-  background: darken(@app_background, 2);
+  background: @overlay_background;
   overflow: hidden;
 }
 .app-main {
   .flexy();
+  .transform-origin(95% 50%);
   height: 100vh;
-  background: @app_background;
+  .outline(@gray_lightest);
   overflow: hidden;
-  transition: @speed_fast @bezier_transform;
+  transition: all @speed_fast 0ms @bezier_transform;
 }
 .app-main-outline {
   .user-select(none);

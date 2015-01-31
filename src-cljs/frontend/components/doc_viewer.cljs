@@ -23,21 +23,20 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view {:class (str "menu-prompt-" "username")}
-          [:div.menu-view-frame
-           [:article
-            [:h2 "Remember that one idea?"]
-            [:p "Neither do we—well, not yet at least.
-                Sign up and we'll remember your ideas for you.
-                Never lose a great idea again!"]
-            [:a.menu-button {:href (auth/auth-url)
-                             :role "button"
-                             :on-click #(do
-                                          (.preventDefault %)
-                                          (cast! :track-external-link-clicked
-                                                 {:path (auth/auth-url)
-                                                  :event "Signup Clicked"
-                                                  :properties {:source "your-docs-overlay"}}))}
-             "Sign Up"]]]])))))
+          [:article
+           [:h2 "Remember that one idea?"]
+           [:p "Neither do we—well, not yet at least.
+               Sign up and we'll remember your ideas for you.
+               Never lose a great idea again!"]
+           [:a.menu-button {:href (auth/auth-url)
+                            :role "button"
+                            :on-click #(do
+                                         (.preventDefault %)
+                                         (cast! :track-external-link-clicked
+                                                {:path (auth/auth-url)
+                                                 :event "Signup Clicked"
+                                                 :properties {:source "your-docs-overlay"}}))}
+            "Sign Up"]]])))))
 
 (defn docs-list [docs owner]
   (reify
@@ -49,12 +48,12 @@
               (reverse (sort-by #(:last-updated-instant (first (last %)))
                                 (group-by #(date->bucket (:last-updated-instant %)) docs)))]
           (list*
-           (html [:div.recent-time-group
+           (html [:div.recent-time-group.menu-item
                   [:h2 time-bucket]])
 
            (for [doc bucket-docs]
              (html
-              [:div.recent-doc
+              [:div.recent-doc.menu-item
                [:a.recent-doc-thumb {:href (str "/document/" (:db/id doc))}
                 [:img {:src (str "/document/" (:db/id doc) ".svg")}]
                 [:img.loading-image]
@@ -86,12 +85,11 @@
                        (reverse)
                        (take 100)))]
         (html
-         [:div.menu-view
-          [:div.menu-view-frame {:class (when (nil? touched-docs)
+         [:div.menu-view {:class (when (nil? touched-docs)
                                               "loading")}
-           [:article
-            (if (seq docs)
-              (om/build docs-list docs))]]])))))
+          [:article
+           (if (seq docs)
+             (om/build docs-list docs))]])))))
 
 ;; Four states
 ;; 1. Logged out

@@ -1,3 +1,13 @@
+.canvas-background {
+  // .transform-origin(right); // center looks good, hold off on this for now
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: @app_background;
+  transition: @speed @bezier_transform;
+}
 .app-canvas {
   .flex(1);
   position: relative;
@@ -24,6 +34,9 @@
       cursor: move;
     }
   }
+}
+#background-grid {
+  transition: opacity @speed_slow @speed_fast @bezier_fadein;
 }
 #grid,
 #small-grid {

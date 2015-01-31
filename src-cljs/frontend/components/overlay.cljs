@@ -97,45 +97,44 @@
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:div.menu-view
-          [:div.menu-view-frame
-           [:a.menu-item {:on-click #(cast! :overlay-info-toggled)
-                          :role "button"}
-            (common/icon :info)
-            [:span "About"]]
-           [:a.menu-item {:on-click #(cast! :newdoc-button-clicked)
-                          :href "/"
-                          :target "_self"
-                          :role "button"}
-            (common/icon :newdoc)
-            [:span "New Document"]]
-           [:a.menu-item {:on-click #(cast! :your-docs-opened)
-                          :role "button"}
-            (common/icon :clock)
-            [:span "Your Documents"]]
-           ;; TODO: should this use the permissions model? Would have to send some
-           ;;       info about the document
-           (if (auth/has-document-access? app (:document/id app))
-             [:a.menu-item {:on-click #(cast! :sharing-menu-opened)
-                            :role "button"}
-              (common/icon :users)
-              [:span "Sharing"]]
+          [:a.menu-item {:on-click #(cast! :overlay-info-toggled)
+                         :role "button"}
+           (common/icon :info)
+           [:span "About"]]
+          [:a.menu-item {:on-click #(cast! :newdoc-button-clicked)
+                         :href "/"
+                         :target "_self"
+                         :role "button"}
+           (common/icon :newdoc)
+           [:span "New Document"]]
+          [:a.menu-item {:on-click #(cast! :your-docs-opened)
+                         :role "button"}
+           (common/icon :clock)
+           [:span "Your Documents"]]
+          ;; TODO: should this use the permissions model? Would have to send some
+          ;;       info about the document
+          (if (auth/has-document-access? app (:document/id app))
+            [:a.menu-item {:on-click #(cast! :sharing-menu-opened)
+                           :role "button"}
+             (common/icon :users)
+             [:span "Sharing"]]
 
-             [:a.menu-item {:on-click #(cast! :document-permissions-opened)
-                            :role "button"}
-              (common/icon :users)
-              [:span "Request Access"]])
+            [:a.menu-item {:on-click #(cast! :document-permissions-opened)
+                           :role "button"}
+             (common/icon :users)
+             [:span "Request Access"]])
 
-           [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
-                          :class "mobile-hidden"
-                          :role "button"}
-            (common/icon :command)
-            [:span "Shortcuts"]]
-           [:a.menu-item {:href "/blog"
-                          :target "_blank"
-                          :role "button"}
-            (common/icon :blog)
-            [:span "Blog"]]
-           (om/build auth-link app)]])))))
+          [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
+                         :class "mobile-hidden"
+                         :role "button"}
+           (common/icon :command)
+           [:span "Shortcuts"]]
+          [:a.menu-item {:href "/blog"
+                         :target "_blank"
+                         :role "button"}
+           (common/icon :blog)
+           [:span "Blog"]]
+          (om/build auth-link app)])))))
 
 (defn format-access-date [date]
   (date->bucket date :sentence? true))
@@ -235,12 +234,12 @@
         (html
          [:div ; TODO make this a list, or at least get rid of div somehow
           [:article
-           [:h2
+           [:h2.menu-item
             [:span "This document is "]
             [:span.privacy-private-word "private."]]
-           [:p.privacy-private-words "It's only visible to users with access."
+           [:p.menu-item "It's only visible to users with access."
             " Email a teammate and notify them to request access."]
-           [:form.menu-invite-form {:on-submit #(do (cast! :permission-grant-submitted)
+           [:form.menu-invite-form.menu-item {:on-submit #(do (cast! :permission-grant-submitted)
                                                     false)
                                     :on-key-down #(when (= "Enter" (.-key %))
                                                     (cast! :permission-grant-submitted)
@@ -267,13 +266,13 @@
         (html
           [:article
            ; [:h2 "This document is public."]
-           [:h2
+           [:h2.menu-item
             [:span "This document is "]
             [:span.privacy-public-word "public."]]
-           [:p.privacy-public-words "It's visible to anyone with the url.
+           [:p.menu-item "It's visible to anyone with the url.
                                     Email a friend to invite them to collaborate."]
            (if-not (:cust app)
-             [:a.menu-button {:href (auth/auth-url)
+             [:a.menu-button.menu-item {:href (auth/auth-url)
                               :on-click #(do
                                            (.preventDefault %)
                                            (cast! :track-external-link-clicked
@@ -283,7 +282,7 @@
                               :role "button"}
               "Sign Up"]
 
-             [:form.menu-invite-form {:on-submit #(do (cast! :invite-submitted)
+             [:form.menu-invite-form.menu-item {:on-submit #(do (cast! :invite-submitted)
                                                       false)
                                       :on-key-down #(when (= "Enter" (.-key %))
                                                       (cast! :email-invite-submitted)
@@ -325,37 +324,36 @@
             private? (= :document.privacy/private (:document/privacy doc))]
         (html
          [:div.menu-view
-          [:div.menu-view-frame.foot {:class (when private? "private")}
-           (if private?
-             (om/build private-sharing app)
-             (om/build public-sharing app))
+          (if private?
+            (om/build private-sharing app)
+            (om/build public-sharing app))
 
-           (when (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
-                      (auth/owner? @db doc {:cust/uuid (get-in app [:cust :uuid])}))
-             [:div.menu-foot
-              [:form.privacy-select
-               [:input.privacy-radio {:type "radio"
-                                      :hidden "true"
-                                      :id "privacy-public"
-                                      :name "privacy"
-                                      :checked (not private?)
-                                      :onChange #(cast! :document-privacy-changed
-                                                        {:doc-id doc-id
-                                                         :setting :document.privacy/public})}]
-               [:label.privacy-label {:for "privacy-public" :role "button"}
-                (common/icon :globe)
-                [:span "Public"]]
-               [:input.privacy-radio {:type "radio"
-                                      :hidden "true"
-                                      :id "privacy-private"
-                                      :name "privacy"
-                                      :checked private?
-                                      :onChange #(cast! :document-privacy-changed
-                                                        {:doc-id doc-id
-                                                         :setting :document.privacy/private})}]
-               [:label.privacy-label {:for "privacy-private" :role "button"}
-                (common/icon :lock)
-                [:span "Private"]]]])]])))))
+          (when (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
+                     (auth/owner? @db doc {:cust/uuid (get-in app [:cust :uuid])}))
+            [:div.menu-foot
+             [:form.privacy-select
+              [:input.privacy-radio {:type "radio"
+                                     :hidden "true"
+                                     :id "privacy-public"
+                                     :name "privacy"
+                                     :checked (not private?)
+                                     :onChange #(cast! :document-privacy-changed
+                                                       {:doc-id doc-id
+                                                        :setting :document.privacy/public})}]
+              [:label.privacy-label {:for "privacy-public" :role "button"}
+               (common/icon :globe)
+               [:span "Public"]]
+              [:input.privacy-radio {:type "radio"
+                                     :hidden "true"
+                                     :id "privacy-private"
+                                     :name "privacy"
+                                     :checked private?
+                                     :onChange #(cast! :document-privacy-changed
+                                                       {:doc-id doc-id
+                                                        :setting :document.privacy/private})}]
+              [:label.privacy-label {:for "privacy-private" :role "button"}
+               (common/icon :lock)
+               [:span "Private"]]]])])))))
 
 (defn info [app owner]
   (reify
@@ -364,47 +362,46 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.menu-view
-           [:div.menu-view-frame
-            [:article
-             [:h2 "What is Precursor?"]
-             [:p "Precursor is a no-nonsense prototyping tool.
-                 Use it for wireframing, sketching, and brainstorming. "
-                 ;; TODO finish wiring up invite stuff -dk (12/09/14)
-                 ;; [:a {:on-click #(cast! :invite-menu-opened)
-                 ;;      :role "button"}
-                 ;;  "Invite"]
-                 [:a {:on-click #(cast! :invite-link-clicked)
-                      :role "button"
-                      :title "In chat, type \"/invite their@email.com\""}
-                  "Invite"]
-                 " your team to collaborate instantly.
-                 Have feedback or a great idea?
-                 Say "
-                 [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback" :title "We love feedback, good or bad."}
-                  "hi@prcrsr.com"]
-                 " or on "
-                 [:a {:href "https://twitter.com/prcrsr_app"
-                      :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-                      :title "@prcrsr_app"
-                      :target "_blank"}
-                  "Twitter"]
-                 "."]
-             (if (:cust app)
-               [:a.menu-button {:on-click #(cast! :overlay-menu-closed) :role "button"} "Okay"]
-               (list
-                 [:p "Sign up and we'll even keep track of all your docs.
-                     Never lose a great idea again!"]
-                 [:a.menu-button {:href (auth/auth-url)
-                                  :on-click #(do
-                                               (.preventDefault %)
-                                               (cast! :track-external-link-clicked
-                                                      {:path (auth/auth-url)
-                                                       :event "Signup Clicked"
-                                                       :properties {:source "username-overlay"}}))
-                                  :role "button"}
-                  "Sign Up"]))]
-            [:div.menu-foot {:class "mobile-hidden"}
-             (common/mixpanel-badge)]]])))))
+           [:article
+            [:h2.menu-item "What is Precursor?"]
+            [:p.menu-item "Precursor is a no-nonsense prototyping tool.
+                Use it for wireframing, sketching, and brainstorming. "
+                ;; TODO finish wiring up invite stuff -dk (12/09/14)
+                ;; [:a {:on-click #(cast! :invite-menu-opened)
+                ;;      :role "button"}
+                ;;  "Invite"]
+                [:a {:on-click #(cast! :invite-link-clicked)
+                     :role "button"
+                     :title "In chat, type \"/invite their@email.com\""}
+                 "Invite"]
+                " your team to collaborate instantly.
+                Have feedback or a great idea?
+                Say "
+                [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback" :title "We love feedback, good or bad."}
+                 "hi@prcrsr.com"]
+                " or on "
+                [:a {:href "https://twitter.com/prcrsr_app"
+                     :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+                     :title "@prcrsr_app"
+                     :target "_blank"}
+                 "Twitter"]
+                "."]
+            (if (:cust app)
+              [:a.menu-button.menu-item {:on-click #(cast! :overlay-menu-closed) :role "button"} "Okay"]
+              (list
+                [:p.menu-item "Sign up and we'll even keep track of all your docs.
+                    Never lose a great idea again!"]
+                [:a.menu-button.menu-item {:href (auth/auth-url)
+                                 :on-click #(do
+                                              (.preventDefault %)
+                                              (cast! :track-external-link-clicked
+                                                     {:path (auth/auth-url)
+                                                      :event "Signup Clicked"
+                                                      :properties {:source "username-overlay"}}))
+                                 :role "button"}
+                 "Sign Up"]))]
+           [:div.menu-foot {:class "mobile-hidden"}
+            (common/mixpanel-badge)]])))))
 
 (defn shortcuts [app owner]
   (reify
@@ -414,103 +411,105 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          [:div.menu-view-frame
-           [:article
-            [:table.shortcuts-items
-             [:tbody
-              [:tr
-               [:td [:div.shortcuts-key {:title "V Key"} "V"]]
-               [:td [:div.shortcuts-result {:title "Switch to Select Tool."} "Select"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "M Key"} "M"]]
-               [:td [:div.shortcuts-result {:title "Switch to Rectangle Tool."} "Rectangle"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "L Key"} "L"]]
-               [:td [:div.shortcuts-result {:title "Switch to Circle Tool."} "Circle"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "Backslash Key"} "\\"]]
-               [:td [:div.shortcuts-result {:title "Switch to Line Tool."} "Line"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "N Key"} "N"]]
-               [:td [:div.shortcuts-result {:title "Switch to Pen Tool."} "Pen"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "T Key"} "T"]]
-               [:td [:div.shortcuts-result {:title "Switch to Text Tool."} "Text"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "1 Key"} "1"]]
-               [:td [:div.shortcuts-result {:title "Initial view when entering doc."} "Origin"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "2 Key"} "2"]]
-               [:td [:div.shortcuts-result {:title "Return to previous view after jumping to origin."} "Return"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "? Key"} "?"]]
-               [:td [:div.shortcuts-result {:title "Hold shift, press \"/\"."} "Shortcuts"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "Delete Key"} (common/icon :delete)]]
-               [:td [:div.shortcuts-result {:title "Delete selected shape(s)."} "Delete"]]]
-              [:tr
-               [:td [:div.shortcuts-key {:title "Escape Key"} (common/icon :esc)]]
-               [:td [:div.shortcuts-result {:title "Cancel action or close menu."} "Cancel"]]]
-              ;;
-              ;; keystrokes beginning with "command"
-              ;;
-              [:tr
-               [:td {:col-span "2"}]]
-              (when (om/get-state owner [:copy-paste-works?])
-                (list
-                 [:tr
-                  [:td
-                   [:div.shortcuts-keys
-                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                    [:div.shortcuts-key {:title "C Key"} "C"]]]
-                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
-                 [:tr
-                  [:td
-                   [:div.shortcuts-keys
-                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                    [:div.shortcuts-key {:title "V Key"} "V"]]]
-                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]))
-              [:tr
-               [:td
-                [:div.shortcuts-keys
-                 [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                 [:div.shortcuts-key {:title "Z Key"} "Z"]]]
-               [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
-              ;;
-              ;; keystrokes beginning with "option"
-              ;;
-              [:tr
-               [:td {:col-span "2"}]]
-              [:tr
-               [:td
-                [:div.shortcuts-keys
-                 [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
-                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-               [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
-              [:tr
-               [:td
-                [:div.shortcuts-keys
-                 [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
-                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-               [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
-              ;;
-              ;; keystrokes beginning with "shift"
-              ;;
-              [:tr
-               [:td {:col-span "2"}]]
-              [:tr
-               [:td
-                [:div.shortcuts-keys
-                 [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
-                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-               [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
-              [:tr
-               [:td
-                [:div.shortcuts-keys
-                 [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
-                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-               [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
-              ]]]]])))))
+          [:article
+           [:table.shortcuts-items
+            [:tbody
+             ;;
+             ;; keystrokes beginning with "option"
+             ;;
+             [:tr.menu-item
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+              [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
+             [:tr.menu-item
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+              [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
+             ;;
+             ;; keystrokes beginning with "shift"
+             ;;
+             [:tr.menu-item
+              [:td {:col-span "2"}]]
+             [:tr.menu-item
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+              [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
+             [:tr.menu-item
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+              [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
+             ;;
+             ;; keystrokes beginning with "command"
+             ;;
+             [:tr.menu-item
+              [:td {:col-span "2"}]]
+             (when (om/get-state owner [:copy-paste-works?])
+               (list
+                [:tr.menu-item
+                 [:td
+                  [:div.shortcuts-keys
+                   [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                   [:div.shortcuts-key {:title "C Key"} "C"]]]
+                 [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
+                [:tr.menu-item
+                 [:td
+                  [:div.shortcuts-keys
+                   [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                   [:div.shortcuts-key {:title "V Key"} "V"]]]
+                 [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]))
+             [:tr.menu-item
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                [:div.shortcuts-key {:title "Z Key"} "Z"]]]
+              [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
+             ;;
+             ;; single keystrokes
+             ;;
+             [:tr.menu-item
+              [:td {:col-span "2"}]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "V Key"} "V"]]
+              [:td [:div.shortcuts-result {:title "Switch to Select Tool."} "Select"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "M Key"} "M"]]
+              [:td [:div.shortcuts-result {:title "Switch to Rectangle Tool."} "Rectangle"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "L Key"} "L"]]
+              [:td [:div.shortcuts-result {:title "Switch to Circle Tool."} "Circle"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "Backslash Key"} "\\"]]
+              [:td [:div.shortcuts-result {:title "Switch to Line Tool."} "Line"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "N Key"} "N"]]
+              [:td [:div.shortcuts-result {:title "Switch to Pen Tool."} "Pen"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "T Key"} "T"]]
+              [:td [:div.shortcuts-result {:title "Switch to Text Tool."} "Text"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "1 Key"} "1"]]
+              [:td [:div.shortcuts-result {:title "Initial view when entering doc."} "Origin"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "2 Key"} "2"]]
+              [:td [:div.shortcuts-result {:title "Return to previous view after jumping to origin."} "Return"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "? Key"} "?"]]
+              [:td [:div.shortcuts-result {:title "Hold shift, press \"/\"."} "Shortcuts"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "Delete Key"} (common/icon :delete)]]
+              [:td [:div.shortcuts-result {:title "Delete selected shape(s)."} "Delete"]]]
+             [:tr.menu-item
+              [:td [:div.shortcuts-key {:title "Escape Key"} (common/icon :esc)]]
+              [:td [:div.shortcuts-result {:title "Cancel action or close menu."} "Cancel"]]]
+             ]]]])))))
 
 (defn username [app owner]
   (reify
@@ -519,20 +518,19 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          [:div.menu-view-frame
-           [:article
-            [:h2 "Let's change that name."]
-            [:p "Sign up to change how your name appears in chat.
-                Let your team know who you are while you collaborate together."]
-            [:a.menu-button {:href (auth/auth-url)
-                             :on-click #(do
-                                          (.preventDefault %)
-                                          (cast! :track-external-link-clicked
-                                                 {:path (auth/auth-url)
-                                                  :event "Signup Clicked"
-                                                  :properties {:source "username-overlay"}}))
-                             :role "button"}
-             "Sign Up"]]]])))))
+          [:article
+           [:h2 "Let's change that name."]
+           [:p "Sign up to change how your name appears in chat.
+               Let your team know who you are while you collaborate together."]
+           [:a.menu-button {:href (auth/auth-url)
+                            :on-click #(do
+                                         (.preventDefault %)
+                                         (cast! :track-external-link-clicked
+                                                {:path (auth/auth-url)
+                                                 :event "Signup Clicked"
+                                                 :properties {:source "username-overlay"}}))
+                            :role "button"}
+            "Sign Up"]]])))))
 
 (def overlay-components
   {:info {:title "About"
@@ -559,13 +557,12 @@
             overlay-components (map #(get overlay-components %) (get-in app state/overlays-path))
             title (:title (last overlay-components))]
         (html
-         [:div.app-overlay {:on-click #(cast! :overlay-closed)}
-           [:div.app-overlay-background]
+         [:div.app-overlay
+          [:div.menu-header
+           (for [component overlay-components]
+            [:h4 {:title title} (:title component)])]
+          [:div.menu-body
+           (for [component overlay-components]
+            (om/build (:component component) app))]
 
-           [:div.app-overlay-menu {:on-click #(.stopPropagation %)}
-            [:div.menu-header
-             (for [component overlay-components]
-              [:h4 {:title title} (:title component)])]
-            [:div.menu-body
-             (for [component overlay-components]
-              (om/build (:component component) app))]]])))))
+          [:div.menu-to-canvas {:on-click #(cast! :overlay-closed)}]])))))
