@@ -472,6 +472,38 @@
                                                        (.focus (om/get-node owner "target-input")))}
                                     target)))))))))
 
+(defn background [camera owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/g nil
+        (dom/defs nil
+          (dom/pattern #js {:id           "small-grid"
+                            :width        (str (cameras/grid-width camera))
+                            :height       (str (cameras/grid-height camera))
+                            :patternUnits "userSpaceOnUse"}
+                       (dom/path #js {:d           (str "M " (cameras/grid-width camera) " 0 L 0 0 0 " (cameras/grid-width camera))
+                                      :fill        "none"
+                                      :stroke      "gray"
+                                      :strokeWidth "0.5"}))
+          (dom/pattern #js {:id               "grid"
+                            :width            (str (* 10 (cameras/grid-width camera)))
+                            :height           (str (* 10 (cameras/grid-height camera)))
+                            :patternUnits     "userSpaceOnUse"
+                            :patternTransform (str "translate(" (:x camera) "," (:y camera) ")")}
+                       (dom/rect #js {:width  (str (* 10 (cameras/grid-width camera)))
+                                      :height (str (* 10 (cameras/grid-height camera)))
+                                      :fill   "url(#small-grid)"})
+                       (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
+                                      :fill        "none"
+                                      :stroke      "gray"
+                                      :strokeWidth "1"})))
+        (when (:show-grid? camera)
+          (dom/rect #js {:id     "background-grid"
+                         :width  "100%"
+                         :height "100%"
+                         :fill   "url(#grid)"}))))))
+
 (defn touches->clj [touches]
   (mapv (fn [t]
           {:client-x (aget t "clientX")
@@ -603,32 +635,7 @@
                                                                (cameras/set-zoom state (cameras/screen-event-coords event) (partial + (* -0.002 dy)))
                                                                (cameras/move-camera state dx (- dy)))))))
                                  (utils/stop-event event))}
-                 (dom/defs nil
-                   (dom/pattern #js {:id           "small-grid"
-                                     :width        (str (cameras/grid-width camera))
-                                     :height       (str (cameras/grid-height camera))
-                                     :patternUnits "userSpaceOnUse"}
-                                (dom/path #js {:d           (str "M " (cameras/grid-width camera) " 0 L 0 0 0 " (cameras/grid-width camera))
-                                               :fill        "none"
-                                               :stroke      "gray"
-                                               :strokeWidth "0.5"}))
-                   (dom/pattern #js {:id               "grid"
-                                     :width            (str (* 10 (cameras/grid-width camera)))
-                                     :height           (str (* 10 (cameras/grid-height camera)))
-                                     :patternUnits     "userSpaceOnUse"
-                                     :patternTransform (str "translate(" (:x camera) "," (:y camera) ")")}
-                                (dom/rect #js {:width  (str (* 10 (cameras/grid-width camera)))
-                                               :height (str (* 10 (cameras/grid-height camera)))
-                                               :fill   "url(#small-grid)"})
-                                (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
-                                               :fill        "none"
-                                               :stroke      "gray"
-                                               :strokeWidth "1"})))
-                 (when (cameras/show-grid? payload)
-                   (dom/rect #js {:id     "background-grid"
-                                  :width  "100%"
-                                  :height "100%"
-                                  :fill   "url(#grid)"}))
+                 (om/build background camera)
 
                  (dom/g
                   #js {:transform (cameras/->svg-transform camera)}
