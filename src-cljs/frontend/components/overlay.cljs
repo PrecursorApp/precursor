@@ -54,27 +54,25 @@
             login-button-learned? (get-in app state/login-button-learned-path)]
         (html
          (if (:cust app)
-           [:div.menu-foot
-            [:form.menu-item {:method "post" :action "/logout" :ref "logout-form" :role "button"}
-             [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
-             [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
-                                                                    (.-href)
-                                                                    (url/url)
-                                                                    :path)}]
-             [:a.menu-item {:on-click #(.submit (om/get-node owner "logout-form"))
-                            :role "button"}
-              (common/icon :logout)
-              [:span "Log out"]]]]
-           [:div.menu-foot
-            [:a.menu-item  {:href (auth/auth-url)
-                            :role "button"
-                            :on-click #(do
-                                         (.preventDefault %)
-                                         (cast! :login-button-clicked)
-                                         (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                              :event "Signup Clicked"}))}
-             (common/icon :login)
-             [:span "Log in"]]]))))))
+           [:form.menu-item.push-down {:method "post" :action "/logout" :ref "logout-form" :role "button"}
+            [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
+            [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
+                                                                   (.-href)
+                                                                   (url/url)
+                                                                   :path)}]
+            [:a.menu-item {:on-click #(.submit (om/get-node owner "logout-form"))
+                           :role "button"}
+             (common/icon :logout)
+             [:span "Log out"]]]
+           [:a.menu-item.push-down  {:href (auth/auth-url)
+                           :role "button"
+                           :on-click #(do
+                                        (.preventDefault %)
+                                        (cast! :login-button-clicked)
+                                        (cast! :track-external-link-clicked {:path (auth/auth-url)
+                                                                             :event "Signup Clicked"}))}
+            (common/icon :login)
+            [:span "Log in"]]))))))
 
 (defn start [app owner]
   (reify
