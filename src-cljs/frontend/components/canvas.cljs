@@ -683,3 +683,72 @@
                                                       :strokeDasharray "2,3"}))]
                                     (svg-element #{} (assoc sel :key (str (:db/id sel) "-in-progress")))))
                                 sels)))))))))
+
+(defn simple-canvas [payload owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [camera (:camera payload)
+            in-progress? (settings/drawing-in-progress? payload)
+            subs-layers (reduce (fn [acc [id subscriber]]
+                                  (if-let [layers (seq (:layers subscriber))]
+                                    (concat acc (map (fn [layer]
+                                                       (assoc layer
+                                                              :layer/end-x (:layer/current-x layer)
+                                                              :layer/end-y (:layer/current-y layer)
+                                                              :subscriber-color (:color subscriber)
+                                                              :layer/stroke (apply str "#" (take 6 id))))
+                                                     layers))
+                                    acc))
+                                [] (:subscribers payload))]
+        (dom/svg #js {:width "100%"
+                      :height "100%"
+                      :xmlns "http://www.w3.org/2000/svg"
+                      :className (str "tool-" (name (get-in payload state/current-tool-path))
+                                      (when (and (get-in payload [:mouse :down])
+                                                 (= :text (get-in payload state/current-tool-path))
+                                                 (get-in payload [:drawing :in-progress?]))
+                                        " tool-text-move"))}
+                 (om/build background camera)
+
+                 (dom/g
+                   #js {:transform (cameras/->svg-transform camera)}
+                   (om/build cursors (select-keys payload [:subscribers :client-id]))
+                   (om/build svg-layers
+                             (assoc (select-keys payload [:selected-eids :document/id])
+                                    :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
+                                                                         (settings/moving-drawing? payload))
+                                                                 (concat [(:db/id (settings/drawing payload))]
+                                                                         (map :db/id (get-in payload [:drawing :layers]))))
+                                                               (remove nil? (map :db/id subs-layers))))
+                                    :tool (get-in payload state/current-tool-path)
+                                    :db (:db payload)))
+                   (om/build subscriber-layers {:layers subs-layers})
+                   (when (and (settings/drawing-in-progress? payload)
+                              (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
+                     (om/build text-input (assoc (get-in payload [:drawing :layers 0])
+                                                 :moving? (get-in payload [:mouse :down]))))
+
+                   (when-let [sels (cond
+                                     (settings/moving-drawing? payload) (remove #(= :layer.type/group (:layer/type %))
+                                                                                (settings/drawing payload))
+                                     (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])) nil
+                                     (settings/drawing-in-progress? payload) (settings/drawing payload)
+                                     :else nil)]
+                     (apply dom/g #js {:className "layers"}
+                            (map (fn [sel]
+                                   (let [sel (if (:force-even? sel)
+                                               (layers/force-even sel)
+                                               sel)
+                                         sel (merge sel
+                                                    {:layer/end-x (:layer/current-x sel)
+                                                     :layer/end-y (:layer/current-y sel)}
+                                                    (when (or (settings/moving-drawing? payload)
+                                                              (not= :layer.type/text (:layer/type sel)))
+                                                      {:className "layer-in-progress"})
+                                                    (when (= :layer.type/group (:layer/type sel))
+                                                      {:layer/type :layer.type/rect
+                                                       :className "layer-in-progress selection"
+                                                       :strokeDasharray "2,3"}))]
+                                     (svg-element #{} (assoc sel :key (str (:db/id sel) "-in-progress")))))
+                                 sels)))))))))
