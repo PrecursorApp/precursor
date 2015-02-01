@@ -223,14 +223,14 @@
                                                    "invalid"))
                                  :key (str "action-" (:db/id layer))))))))
 
-(defn svg-layers [{:keys [editing-eids selected-eids tool] :as data} owner]
+(defn svg-layers [{:keys [editing-eids selected-eids tool db] :as data} owner]
   (reify
     om/IInitState
     (init-state [_]
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
-      (d/listen! (om/get-shared owner :db)
+      (d/listen! db
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
@@ -238,10 +238,10 @@
                      (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
-      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
+      (d/unlisten! db (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [{:keys [cast! db]} (om/get-shared owner)
+      (let [{:keys [cast!]} (om/get-shared owner)
             selected-eids (or selected-eids #{})
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)
             renderable-layers (remove #(or (= :layer.type/group (:layer/type %))
@@ -640,13 +640,15 @@
                  (dom/g
                   #js {:transform (cameras/->svg-transform camera)}
                   (om/build cursors (select-keys payload [:subscribers :client-id]))
-                  (om/build svg-layers (assoc (select-keys payload [:selected-eids :document/id])
-                                              :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
-                                                                                   (settings/moving-drawing? payload))
-                                                                           (concat [(:db/id (settings/drawing payload))]
-                                                                                   (map :db/id (get-in payload [:drawing :layers]))))
-                                                                         (remove nil? (map :db/id subs-layers))))
-                                              :tool (get-in payload state/current-tool-path)))
+                  (om/build svg-layers
+                            (assoc (select-keys payload [:selected-eids :document/id])
+                                   :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
+                                                                        (settings/moving-drawing? payload))
+                                                                (concat [(:db/id (settings/drawing payload))]
+                                                                        (map :db/id (get-in payload [:drawing :layers]))))
+                                                              (remove nil? (map :db/id subs-layers))))
+                                   :tool (get-in payload state/current-tool-path)
+                                   :db (om/get-shared owner :db)))
                   (om/build subscriber-layers {:layers subs-layers})
                   (when (and (settings/drawing-in-progress? payload)
                              (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
