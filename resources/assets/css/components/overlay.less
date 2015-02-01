@@ -28,14 +28,16 @@
     cursor: pointer;
     background: @overlay_background;
     box-shadow: 0 8px 21px 0 fade(@black, 21);
-    transition+: box-shadow @speed @speed @bezier_fadein;
-    transition+: -webkit-transform @speed_slower 0ms @bezier_transform;
-    transition+:         transform @speed_slower 0ms @bezier_transform;
+    transition+: -webkit-transform @speed_slower @bezier_transform;
+    transition+:         transform @speed_slower @bezier_transform;
+    transition+:        box-shadow @speed_slower @bezier_fadein;
     &:hover {
-      .app-canvas {
-        box-shadow: 0 21px 34px 0 fade(@black, 13);
-        transition: box-shadow @speed @bezier_fadein;
-      }
+      box-shadow: 0 21px 34px 0 fade(@black, 21);
+      transition-duration: @speed;
+    }
+    &:active {
+      box-shadow: 0 13px 34px 0 fade(@black, 21);
+      transition-duration: @cascade;
     }
     a {
       text-shadow: none;
