@@ -9,38 +9,25 @@ html {
 }
 body {
   margin: 0;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 #om-app {
   min-height: 100%;
   background: @app_background;
 }
 .app {
-  .flexy(column);
+  min-height: 100%;
   background: @overlay_background;
-  overflow: hidden;
 }
 .app-main {
   .flexy();
-  .transform-origin(90% 50%);
-  .outline(@gray_lightest);
-  width: 100%;
-  height: 100%;
-  margin-left: auto;
-  overflow: hidden;
-  transition: all @speed 0ms @bezier_transform;
-}
-.app-main-outline {
-  .user-select(none);
-  position: absolute;
+  .transform-origin(right);
+  position: fixed;
   top: 0;
-  left: 0;
+  right: 0;
   width: 100%;
   height: 100%;
-  border: 1px solid transparent;
-  pointer-events: none;
-  transition+: all @speed_fast @bezier_transform;
-  transition+: box-shadow @speed @bezier_transform;
+  transition: all @speed 0ms @bezier_transform;
 }
 a {
   background: transparent;

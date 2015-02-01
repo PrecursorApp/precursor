@@ -3,14 +3,9 @@
   .flexy(column);
   .icon_stroke(@gray_dark);
   .icon_fill(@gray_dark);
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   min-height: 100%;
   color: @gray_dark;
-  overflow-x: hidden;
-  overflow-y: auto;
   a {
     color: @gray_darker;
     .icon_stroke(@gray_darker);
@@ -29,13 +24,19 @@
     }
   }
   + .app-main {
-    .transform(translate3d(@tile_xl,0,0); scale3d(.9,.9,1));
-    pointer-events: none;
+    .scale3d(.8);
+    cursor: pointer;
     background: @overlay_background;
-    box-shadow: 0 8px 21px 0 fade(@black, 21), 0 -1px fade(@black,08);
+    box-shadow: 0 8px 21px 0 fade(@black, 21);
     transition+: box-shadow @speed @speed @bezier_fadein;
     transition+: -webkit-transform @speed_slower 0ms @bezier_transform;
     transition+:         transform @speed_slower 0ms @bezier_transform;
+    &:hover {
+      .app-canvas {
+        box-shadow: 0 21px 34px 0 fade(@black, 13);
+        transition: box-shadow @speed @bezier_fadein;
+      }
+    }
     a {
       text-shadow: none;
     }
@@ -55,6 +56,9 @@
       opacity: 0;
       transition: 0;
     }
+    .app-canvas {
+      pointer-events: none;
+    }
     .app-chat {
       width: 0;
       min-width: 0;
@@ -69,22 +73,6 @@
         opacity: 0;
       }
     }
-  }
-}
-.menu-to-canvas {
-  .transform(translate3d(@tile_xl,0,0); scale3d(.9,.9,1));
-  .transform-origin(90% 50%);
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  box-shadow: 0 8px 17px 0 fade(@black, 0);
-  transition: @speed_slow @speed_fast @bezier_fadein;
-  &:hover {
-    box-shadow: 0 21px 34px 0 fade(@black, 13);
-    transition-delay: 0ms;
   }
 }
 .menu-header {
@@ -117,20 +105,23 @@
 }
 .menu-body {
   .flex(1);
+  .flexy();
   position: relative;
   min-width: @menu_width_min;
   width: @menu_width;
   max-width: @menu_width_max;
-  min-height: 100%;
 }
 .menu-view {
+  .flex(0,0,100%);
   .flexy(flex-start, flex-start, column);
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
   width: 100%;
-  min-height: 100%;
   transition: @speed_slow @bezier_transform;
+  &:not(:first-child) {
+    margin-left: -100%;
+  }
   &:not(:last-of-type) {
     .translate3d(-100%,0,0);
   }

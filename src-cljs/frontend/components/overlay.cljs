@@ -563,6 +563,4 @@
             [:h4 {:title title} (:title component)])]
           [:div.menu-body
            (for [component overlay-components]
-            (om/build (:component component) app))]
-
-          [:div.menu-to-canvas {:on-click #(cast! :overlay-closed)}]])))))
+            (om/build (:component component) app))]])))))
