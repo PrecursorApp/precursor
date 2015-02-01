@@ -61,91 +61,89 @@
         (html
          [:div.app-landing {:on-scroll #(maybe-set-state! owner [:past-center-featurettes]
                                                           (set (filter (partial past-center? owner) ["1" "2" "3" "4" "5"])))}
-           [:div.app-overlay-background]
-           [:div.app-overlay-home
-            [:nav.home-nav
-             [:div.content
-              [:a.nav-item {:role "button"} "Precursor"]
-              [:a.nav-item {:role "button"} "Pricing"]
-              [:a.nav-item {:role "button"} "Blog"]
-              [:a.nav-item.google-login {:role "button"}
+           [:nav.home-nav
+            [:div.content
+             [:a.nav-item {:role "button"} "Precursor"]
+             [:a.nav-item {:role "button"} "Pricing"]
+             [:a.nav-item {:role "button"} "Blog"]
+             [:a.nav-item.google-login {:role "button"}
+              [:span.google-login-icon
+               (common/icon :google)]
+              [:span.google-login-body "Sign in"]]]]
+           [:div.jumbotron
+            [:div.content
+             [:h1 "Collaborate on every idea with your entire team."]
+             [:h4 "Productive prototyping without all the nonsense."]
+             [:button {:on-click #(cast! :landing-closed)}
+              "Launch Precursor"]]]
+           [:div.home-body
+            [:article.featurette {:ref "1"
+                                  :class (when (contains? past-center-featurettes "1") "active")}
+             [:div.featurette-story
+              [:h2 "Sharing prototypes should be simple."]
+              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+             [:div.featurette-media screen]]
+            [:article.featurette.featurette-how  {:ref "2"
+                                                  :class (when (contains? past-center-featurettes "2") "active")}
+             [:div.featurette-story
+              [:h2 "Express your ideas efficiently with simple tools."]
+              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+             [:div.featurette-media screen]]
+            [:article.featurette.featurette-how {:ref "3"
+                                                 :class (when (contains? past-center-featurettes "3") "active")}
+             [:div.featurette-story
+              [:h2 "Interact with your idea before developing it."]
+              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+             [:div.featurette-media screen]]
+            [:article.featurette.featurette-how {:ref "4"
+                                                 :class (when (contains? past-center-featurettes "4") "active")}
+             [:div.featurette-story
+              [:h2 "Share your ideas faster without forgetting them."]
+              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+             [:div.featurette-media screen]]
+            [:article.featurette {:ref "5"
+                                  :class (when (contains? past-center-featurettes "5") "active")}
+             [:div.featurette-story
+              [:h2 "Pure prototyping, just focus on the idea."]
+              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+             [:div.featurette-media screen]]]
+           [:div.jumbotron
+            [:div.content
+             [:h1 "Collaborate on every idea with your entire team."]
+             [:h4 "Productive prototyping without all the nonsense."]
+             ; [:div.jumbotron-buttons
+             ;  [:a.google-login {:role "button"}
+             ;   [:span.google-login-icon
+             ;    (common/icon :google)]
+             ;   [:span.google-login-body "Sign in with Google"]]
+             ;  [:button "Try it first"]]
+
+             [:div.jumbotron-buttons
+              [:a.google-login {:role "button"}
                [:span.google-login-icon
                 (common/icon :google)]
-               [:span.google-login-body "Sign in"]]]]
-            [:div.jumbotron
-             [:div.content
-              [:h1 "Collaborate on every idea with your entire team."]
-              [:h4 "Productive prototyping without all the nonsense."]
-              [:button {:on-click #(cast! :landing-closed)}
-               "Launch Precursor"]]]
-            [:div.home-body
-             [:article.featurette {:ref "1"
-                                   :class (when (contains? past-center-featurettes "1") "active")}
-              [:div.featurette-story
-               [:h2 "Sharing prototypes should be simple."]
-               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-              [:div.featurette-media screen]]
-             [:article.featurette.featurette-how  {:ref "2"
-                                                   :class (when (contains? past-center-featurettes "2") "active")}
-              [:div.featurette-story
-               [:h2 "Express your ideas efficiently with simple tools."]
-               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-              [:div.featurette-media screen]]
-             [:article.featurette.featurette-how {:ref "3"
-                                                  :class (when (contains? past-center-featurettes "3") "active")}
-              [:div.featurette-story
-               [:h2 "Interact with your idea before developing it."]
-               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-              [:div.featurette-media screen]]
-             [:article.featurette.featurette-how {:ref "4"
-                                                  :class (when (contains? past-center-featurettes "4") "active")}
-              [:div.featurette-story
-               [:h2 "Share your ideas faster without forgetting them."]
-               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-              [:div.featurette-media screen]]
-             [:article.featurette {:ref "5"
-                                   :class (when (contains? past-center-featurettes "5") "active")}
-              [:div.featurette-story
-               [:h2 "Pure prototyping, just focus on the idea."]
-               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-              [:div.featurette-media screen]]]
-            [:div.jumbotron
-             [:div.content
-              [:h1 "Collaborate on every idea with your entire team."]
-              [:h4 "Productive prototyping without all the nonsense."]
-              ; [:div.jumbotron-buttons
-              ;  [:a.google-login {:role "button"}
-              ;   [:span.google-login-icon
-              ;    (common/icon :google)]
-              ;   [:span.google-login-body "Sign in with Google"]]
-              ;  [:button "Try it first"]]
+               [:span.google-login-body "Sign in with Google"]]
+              [:a {:role "button"} "Or Try It First"]]
 
-              [:div.jumbotron-buttons
-               [:a.google-login {:role "button"}
-                [:span.google-login-icon
-                 (common/icon :google)]
-                [:span.google-login-body "Sign in with Google"]]
-               [:a {:role "button"} "Or Try It First"]]
+             ; [:a.google-login {:role "button"}
+             ;  [:span.google-login-icon
+             ;   (common/icon :google)]
+             ;  [:span.google-login-body "Sign in with Google"]]
+             ; [:a {:role "button"} "Or try it first"]
 
-              ; [:a.google-login {:role "button"}
-              ;  [:span.google-login-icon
-              ;   (common/icon :google)]
-              ;  [:span.google-login-body "Sign in with Google"]]
-              ; [:a {:role "button"} "Or try it first"]
-
-              ]]
-            [:nav.home-foot
-             [:div.content
-              [:a.nav-item {:role "button"} "Precursor"]
-              [:a.nav-item {:role "button"} "Pricing"]
-              [:a.nav-item {:role "button"} "Blog"]]]]])))))
+             ]]
+           [:nav.home-foot
+            [:div.content
+             [:a.nav-item {:role "button"} "Precursor"]
+             [:a.nav-item {:role "button"} "Pricing"]
+             [:a.nav-item {:role "button"} "Blog"]]]])))))

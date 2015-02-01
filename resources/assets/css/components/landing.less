@@ -1,11 +1,26 @@
-.app-overlay-home {
+.app-landing {
   position: absolute;
+  z-index: @zindex_landing;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  // background: #333;
-  overflow-y: auto;
+  ~ .app-main {
+    #background-grid {
+      opacity: 0;
+      transition: opacity @speed_slow @bezier_fadein;
+    }
+    .app-hud {
+      opacity: 0;
+      transition: opacity @speed_slow @bezier_fadein;
+    }
+  }
+  ~ .main-menu-button {
+    .icon-menu {
+      opacity: 0;
+      transition: opacity @speed_slow @bezier_fadein;
+    }
+  }
   nav {
     .flexy();
     height: @tile;
@@ -28,6 +43,7 @@
   }
 }
 .home-nav {
+  .animation(in-fade-top @speed_slower);
   position: absolute;
   top: 0;
   left: 0;
@@ -120,6 +136,7 @@
   padding-right: 1rem;
 }
 .home-body {
+  .animation(in-fade-bottom @speed_slower);
   background: @overlay_background;
 }
 .featurette {
