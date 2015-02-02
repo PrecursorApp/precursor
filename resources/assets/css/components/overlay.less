@@ -24,13 +24,18 @@
     }
   }
   + .app-main {
+    // @min: @menu_width_max * 1.25;
+    @max: @menu_width_min * 1.25;
     .scale3d(.8);
     cursor: pointer;
     background: @overlay_background;
+    // min-width: ~"calc(125% - @{min})";
+    max-width: ~"calc(125% - @{max})";
+    // These align top/bottom to menu header/footer (not sure if they're a good idea yet)
+    // min-height: ~"calc(100% + 8rem)";
+    // margin-top: -4rem;
     box-shadow: 0 8px 21px 0 fade(@black, 21);
-    transition+: -webkit-transform @speed_slower @bezier_transform;
-    transition+:         transform @speed_slower @bezier_transform;
-    transition+:        box-shadow @speed_slower @bezier_fadein;
+    transition: @speed_slower @bezier_transform;
     &:hover {
       box-shadow: 0 21px 34px 0 fade(@black, 21);
       transition-duration: @speed;
