@@ -133,7 +133,9 @@
                [:span.google-login-icon
                 (common/icon :google)]
                [:span.google-login-body "Sign in with Google"]]
-              [:a {:role "button"} "Or Try It First"]]
+              [:a {:on-click #(cast! :landing-closed)
+                   :role "button"}
+               "Or Try It First"]]
 
              ; [:a.google-login {:role "button"}
              ;  [:span.google-login-icon
