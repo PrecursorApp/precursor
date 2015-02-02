@@ -24,11 +24,11 @@
         (html
          [:div.menu-view {:class (str "menu-prompt-" "username")}
           [:article
-           [:h2 "Remember that one idea?"]
-           [:p "Neither do we—well, not yet at least.
+           [:h2.menu-item "Remember that one idea?"]
+           [:p.menu-item "Neither do we—well, not yet at least.
                Sign up and we'll remember your ideas for you.
                Never lose a great idea again!"]
-           [:a.menu-button {:href (auth/auth-url)
+           [:a.menu-button.menu-item {:href (auth/auth-url)
                             :role "button"
                             :on-click #(do
                                          (.preventDefault %)
