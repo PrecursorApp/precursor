@@ -24,18 +24,17 @@
     }
   }
   + .app-main {
-    // @min: @menu_width_max * 1.25;
-    @max: @menu_width_min * 1.25;
-    .scale3d(.8);
+    .scale(.8);
     cursor: pointer;
     background: @overlay_background;
-    // min-width: ~"calc(125% - @{min})";
-    max-width: ~"calc(125% - @{max})";
-    // These align top/bottom to menu header/footer (not sure if they're a good idea yet)
-    // min-height: ~"calc(100% + 8rem)";
-    // margin-top: -4rem;
     box-shadow: 0 8px 21px 0 fade(@black, 21);
     transition: @speed_slower @bezier_transform;
+    .mq_1920({
+      .transform(translate(@tile * 2,0); scale(.8));
+    });
+    .mq_1280({
+      .transform(translate(@tile * 4,0); scale(.8));
+    });
     &:hover {
       box-shadow: 0 21px 34px 0 fade(@black, 21);
       transition-duration: @speed;
@@ -117,9 +116,10 @@
   .flex(1);
   .flexy();
   position: relative;
-  min-width: @menu_width_min;
-  width: @menu_width;
-  max-width: @menu_width_max;
+  width: @tile * 6;
+  .mq_640({
+    width: @tile * 5;
+  });
 }
 .menu-view {
   .flex(0,0,100%);
