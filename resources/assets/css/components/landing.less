@@ -20,7 +20,7 @@
     }
     .app-canvas {
       .scale3d(.8);
-      transition: @speed_slower @cascade @bezier_transform;
+      transition: @speed_slower @bezier_transform;
     }
     #svg-canvas {
       width: 125%;
@@ -30,7 +30,6 @@
     #grid {
       path {
         stroke-width: 0;
-        transition: @speed_fast @now @bezier_fadein;
       }
     }
     #small-grid {
@@ -38,7 +37,6 @@
         stroke: darken(@app_background, 5);
         stroke-width: 3;
         stroke-dasharray: 2 20;
-        transition: @speed @speed_fast @bezier_fadein;
       }
     }
     .layer-outline {
