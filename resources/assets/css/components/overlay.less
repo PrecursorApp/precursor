@@ -59,11 +59,11 @@
     }
     .app-hud {
       opacity: 0;
-      transition: 0;
+      transition: @now;
     }
     #background-grid {
       opacity: 0;
-      transition: 0;
+      transition: @now;
     }
     .app-canvas {
       pointer-events: none;
@@ -72,7 +72,7 @@
       width: 0;
       min-width: 0;
       opacity: 0;
-      transition: 0;
+      transition: @now;
     }
     .chat-log {
       form {
@@ -183,7 +183,7 @@
       .icon_stroke(@black);
       .icon_fill(@black);
       color: @black;
-      transition-duration: @speed_fast, 0ms;
+      transition-duration: @speed_fast, @now;
     }
     &.push-down {
       margin-top: auto;

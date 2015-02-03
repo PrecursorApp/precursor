@@ -37,11 +37,12 @@
 
 // Animation
 
-@speed: 250ms;
-@speed_faster: (@speed /  10);
-@speed_fast:   (@speed / 2.5);
-@speed_slow:   (@speed * 1.5);
-@speed_slower: (@speed *   2);
+@now: 0.0ms;
+@run: 250ms;
+@run_faster: @run / 10.0;
+@run_fast:   @run / 2.50;
+@run_slow:   @run * 1.50;
+@run_slower: @run * 2.00;
 
 @bezier_fadein: cubic-bezier(0.445, 0.05, 0.55, 0.95);
 @bezier_bounce: cubic-bezier(.55,0,.55,1.44);
@@ -83,3 +84,9 @@
 
 @cascade: @speed_faster;
 @bezier_transform: @bezier_deform;
+
+@speed: @run;
+@speed_faster: @run_faster;
+@speed_fast: @run_fast;
+@speed_slow: @run_slow;
+@speed_slower: @run_slower;
