@@ -10,11 +10,14 @@
 }
 .app-canvas {
   .flex(1);
+  .transform-origin(0 0);
   position: relative;
-  transition: box-shadow @speed_slow @bezier_fadein;
+  transition: @speed_slow @bezier_transform;
+  will-change: transform;
 }
 #svg-canvas {
   .user-select(none);
+  transition: 0ms @speed_slower;
   &:not(:hover) {
     ~ .radial-tip {
       display: none;
@@ -43,6 +46,7 @@
 #small-grid {
   path {
     stroke: @gray_dark;
+    transition: stroke @speed_fast 0ms @bezier_fadein;
   }
 }
 .layers {
@@ -104,6 +108,7 @@
 .text-layer {
   .user-select(none);
   fill: @gray_light;
+  transition: @speed @bezier_transform;
   &.editable {
     &:hover {
       fill: @color_select_hover;

@@ -75,7 +75,8 @@
              [:h1 "Collaborate on every idea with your entire team."]
              [:h4 "Productive prototyping without all the nonsense."]
              [:button {:on-click #(cast! :landing-closed)}
-              "Launch Precursor"]]]
+              "Launch Precursor"]]
+            [:div.trusted-by]]
            [:div.home-body
             [:article.featurette {:ref "1"
                                   :class (when (contains? past-center-featurettes "1") "active")}

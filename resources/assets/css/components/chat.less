@@ -200,6 +200,7 @@
   transition: @speed @bezier_transform;
 }
 .chat-button {
+  .animation(in-fade-right @speed_slower @speed_slower @bezier_fadein backwards);
   .icon_stroke(@gray);
   .flexy(center, center);
   position: absolute;

@@ -6,19 +6,55 @@
   width: 100%;
   height: 100%;
   ~ .app-main {
-    #background-grid {
+    .canvas-background {
+      &:after {
+        .animation(in-fade @speed @speed_fast @bezier_fadein backwards);
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        .gradient(to bottom; @app_background 25%; darken(@app_background, 2) 75%);
+      }
+    }
+    .app-canvas {
+      .scale3d(.8);
+      transition: @speed_slower @cascade @bezier_transform;
+    }
+    #svg-canvas {
+      width: 125%;
+      height: 125%;
+      transition: 0ms;
+    }
+    #grid,
+    #small-grid {
+      path {
+        stroke: @app_background;
+        transition: @speed @speed_fast @bezier_fadein;
+      }
+    }
+    .layer-outline {
+      stroke: lighten(@app_background, 3);
+      transition-duration: @speed_slow;
+    }
+    .text-layer {
+      fill: lighten(@app_background, 3);
+      transition-duration: @speed_slow;
+    }
+    .mouse-stats {
       opacity: 0;
-      transition: opacity @speed_slow @bezier_fadein;
+      transition: 0ms;
     }
     .app-hud {
       opacity: 0;
-      transition: opacity @speed_slow @bezier_fadein;
+      transition: 0ms;
     }
   }
   ~ .main-menu-button {
     .icon-menu {
       opacity: 0;
-      transition: opacity @speed_slow @bezier_fadein;
+      transition: 0ms;
     }
   }
   nav {
@@ -29,7 +65,9 @@
       .flexy(center);
     }
     .nav-item {
-      color: @gray;
+      &:not(:hover) {
+        color: @gray;
+      }
       &:first-of-type {
         margin-right: auto;
       }
@@ -39,19 +77,23 @@
     }
   }
   .jumbotron {
-    color: @gray_light;
+    color: @white;
   }
 }
 .home-nav {
-  .animation(in-fade-top @speed_slower);
+  .animation(in-fade-top @speed @speed @bezier_transform backwards);
   position: absolute;
+  z-index: @zindex_landing;
   top: 0;
   left: 0;
   width: 100%;
-  border-bottom: 1px solid fade(@black, 13);
+  border-bottom: 1px solid fade(@black, 21);
+  box-shadow: 0 1px fade(@white, 05);
 }
 .home-foot {
-  border-top: 1px solid fade(@black, 13);
+  background-color: fade(@app_background, 97);
+  border-top: 1px solid fade(@black, 21);
+  box-shadow: 0 1px fade(@white, 05) inset;
 }
 .google-login {
   @color: #3A7AF3;
@@ -86,15 +128,15 @@
   }
 }
 .jumbotron-buttons {
-  .flexy(flex-start, flex-end, column);
+  .flexy(center);
+  margin: 2em 0 1em;
   a {
-    &:not(:hover) {
-      color: @white;
+    &:not(:first-of-type) {
+      margin-left: 1em;
     }
   }
   .google-login {
     height: @tile;
-    margin: @tile 0 1rem;
     span {
       padding: 1.5em;
     }
@@ -108,22 +150,36 @@
 }
 .jumbotron {
   .flexy(center);
-  min-height: 90vh;
-  padding-top: @tile;
+  position: relative;
+  min-height: 100%;
+  &:first-of-type {
+    padding-top: @tile;
+    padding: @tile 0 (@tile * 2);
+  }
   &:last-of-type {
     min-height: 100vh;
+  }
+  .content {
+    .animation(jumbotron-content @speed_slower @bezier_transform);
+    .transform-origin(0 0);
+  }
+  h1 {
+    margin-left: -0.0625em; // better aligns h1 (big font size wastes space)
   }
   button {
     .flexy(center, center);
     height: @tile;
     padding: 0 (@tile / 2);
-    margin-top: @tile;
-    transition: @speed_fast @bezier_fadein;
+    margin-top: 2em;
+    transition: @speed @bezier_fadein;
     border: 2px solid @gray_lighter;
-    &:hover {
-      color: @gray_darker;
+    &:hover,
+    &:focus,
+    &:active {
+      color: @black;
       background: @white;
       border-color: @white;
+      transition-duration: 0ms;
     }
   }
 }
@@ -135,8 +191,17 @@
   padding-left: 1rem;
   padding-right: 1rem;
 }
+.trusted-by {
+  .animation(in-fade-bottom @speed @speed_fast @bezier_transform backwards);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: @tile * 2;
+  background: @overlay_background;
+  box-shadow: 0 -8px 13px fade(@black,21);
+}
 .home-body {
-  .animation(in-fade-bottom @speed_slower);
   background: @overlay_background;
 }
 .featurette {
@@ -188,9 +253,6 @@
 //
 // TODO all below for dev only!
 //
-// .main-menu-button {
-//   display: none !important;
-// }
 .featurette {
   svg {
     max-width: 100%;

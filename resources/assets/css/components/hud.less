@@ -19,7 +19,7 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  transition: opacity @speed_fast @speed @bezier_fadein;
+  transition: opacity @speed_slow @speed @bezier_fadein;
   a {
     pointer-events: auto;
   }
@@ -87,6 +87,7 @@
 }
 
 .main-menu-button {
+  .animation(in-fade-lef @speed_slower @speed_slower @bezier_fadein backwards);
   .flexy(center, center);
   .icon_stroke(@gray);
   position: absolute;
