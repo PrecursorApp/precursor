@@ -16,7 +16,8 @@ body {
   background: @app_background;
 }
 .app {
-  .animation(in-fade @speed_slower @speed_slower @bezier_fadein backwards);
+  // hold off on intro fadein until app loads faster
+  // .animation(in-fade @speed_slower @speed_slower @bezier_fadein backwards);
   min-height: 100%;
   background: @overlay_background;
 }
