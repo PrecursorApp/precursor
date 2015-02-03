@@ -38,15 +38,14 @@
 // Animation
 
 @speed: 250ms;
-@speed_fast: (@speed * 0.4);
-@speed_slow: (@speed * 1.5);
-@speed_slower: (@speed * 2);
+@speed_faster: (@speed /  10);
+@speed_fast:   (@speed / 2.5);
+@speed_slow:   (@speed * 1.5);
+@speed_slower: (@speed *   2);
 
 @bezier_fadein: cubic-bezier(0.445, 0.05, 0.55, 0.95);
 @bezier_bounce: cubic-bezier(.55,0,.55,1.44);
-@bezier_transform: cubic-bezier(0.39, 0.575, 0.565, 1);
-
-@cascade: 25ms;
+@bezier_deform: cubic-bezier(0.39, 0.575, 0.565, 1);
 
 // Components
 
@@ -79,3 +78,8 @@
 @zindex_radial_menu: 11;
 @zindex_main_menu: 10;
 @zindex_landing: 20;
+
+// AKAs // TODO replace all of these with their respective synonyms
+
+@cascade: @speed_faster;
+@bezier_transform: @bezier_deform;
