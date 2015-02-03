@@ -15,7 +15,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        .gradient(to bottom; @app_background 25%; darken(@app_background, 2) 75%);
+        .gradient(to bottom; lighten(@app_background, 0) 25%; darken(@app_background, 3) 75%);
       }
     }
     .app-canvas {
@@ -27,20 +27,27 @@
       height: 125%;
       transition: 0ms;
     }
-    #grid,
+    #grid {
+      path {
+        stroke-width: 0;
+        transition: @speed_fast 0ms @bezier_fadein;
+      }
+    }
     #small-grid {
       path {
-        stroke: @app_background;
+        stroke: darken(@app_background, 5);
+        stroke-width: 3;
+        stroke-dasharray: 2 20;
         transition: @speed @speed_fast @bezier_fadein;
       }
     }
     .layer-outline {
-      stroke: lighten(@app_background, 3);
-      transition-duration: @speed_slow;
+      stroke: darken(@app_background, 5);
+      transition-duration: @speed;
     }
     .text-layer {
-      fill: lighten(@app_background, 3);
-      transition-duration: @speed_slow;
+      fill: darken(@app_background, 5);
+      transition-duration: @speed;
     }
     .mouse-stats {
       opacity: 0;
@@ -81,7 +88,7 @@
   }
 }
 .home-nav {
-  .animation(in-fade-top @speed @speed @bezier_transform backwards);
+  .animation(in-fade-top @speed @speed_slower @bezier_transform backwards);
   position: absolute;
   z-index: @zindex_landing;
   top: 0;
@@ -160,7 +167,7 @@
     min-height: 100vh;
   }
   .content {
-    .animation(jumbotron-content @speed_slower @bezier_transform);
+    .animation(jumbotron-content @speed @speed @bezier_transform backwards);
     .transform-origin(0 0);
   }
   h1 {
