@@ -180,25 +180,3 @@
   pointer-events: none;
   transition: @speed @bezier_transform;
 }
-.chat-button {
-  .animation(in-fade-right @speed_slower @speed_slower @bezier_fadein backwards);
-  .flexy(center, center);
-  position: absolute;
-  font-size: 1.5em;
-  bottom: 0;
-  right: 0;
-  width: @tile;
-  height: @tile;
-  &:hover {
-    .unseen-eids {
-      background: @red;
-      color: @white;
-      border-color: @red;
-      height: 1.8em;
-      min-width: 1.8em;
-      padding: 2px 4px;
-      bottom: 3.1em;
-      right: 3.1em;
-    }
-  }
-}

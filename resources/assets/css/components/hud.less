@@ -85,9 +85,8 @@
     display: none;
   });
 }
-
 .main-menu-button {
-  .animation(in-fade-lef @speed_slower @speed_slower @bezier_fadein backwards);
+  .animation(in-fade-top @speed_slower @speed_slower @bezier_fadein backwards);
   .flexy(center, center);
   .icon(stroke; @gray);
   position: absolute;
@@ -155,7 +154,55 @@
     }
   }
 }
-
+.chat-button {
+  .animation(in-fade-bottom @speed_slower @speed_slower @bezier_fadein backwards);
+  .flexy(center, center);
+  position: absolute;
+  font-size: 1.5em;
+  bottom: 0;
+  right: 0;
+  width: @tile;
+  height: @tile;
+  &:hover {
+    .unseen-eids {
+      background: @red;
+      color: @white;
+      border-color: @red;
+      height: 1.8em;
+      min-width: 1.8em;
+      padding: 2px 4px;
+      bottom: 3.1em;
+      right: 3.1em;
+    }
+  }
+}
+.info-button {
+  .flexy(center, center);
+  position: absolute;
+  top: @tile;
+  left: 0;
+  width: @tile;
+  height: @tile;
+  i {
+    svg {
+      font-size: 1.5em;
+    }
+  }
+}
+// TODO fix this
+.landing-button {
+  .flexy(center, center);
+  position: absolute;
+  top: @tile;
+  right: 0;
+  width: @tile;
+  height: @tile;
+  i {
+    svg {
+      font-size: 1.5em;
+    }
+  }
+}
 .mouse-stats {
   .user-select(none);
   position: absolute;
