@@ -135,6 +135,71 @@
                               :role "button"}
            (common/icon :info)])))))
 
+(defn viewers [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+        (let [client-id (:client-id app)]
+
+          ;; [:section.chat-people
+          ;;  (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+          ;;    [:a.people-you {:key client-id
+          ;;                    :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
+          ;;                    :role "button"
+          ;;                    :on-click #(if can-edit?
+          ;;                                 (om/set-state! owner :editing-name? true)
+          ;;                                 (cast! :overlay-username-toggled))}
+          ;;     (common/icon :user (when show-mouse? {:path-props
+          ;;                                           {:style
+          ;;                                            {:stroke (get-in app [:subscribers client-id :color])}}}))
+
+          ;;     (if editing-name?
+          ;;       [:form {:on-submit #(do (when-not (str/blank? new-name)
+          ;;                                 (cast! :self-updated {:name new-name}))
+          ;;                               (om/set-state! owner :editing-name? false)
+          ;;                               (om/set-state! owner :new-name "")
+          ;;                               (utils/stop-event %))
+          ;;               :on-blur #(do (when-not (str/blank? new-name)
+          ;;                               (cast! :self-updated {:name new-name}))
+          ;;                             (om/set-state! owner :editing-name? false)
+          ;;                             (om/set-state! owner :new-name "")
+          ;;                             (utils/stop-event %))
+          ;;               :on-key-down #(when (= "Escape" (.-key %))
+          ;;                               (om/set-state! owner :editing-name? false)
+          ;;                               (om/set-state! owner :new-name "")
+          ;;                               (utils/stop-event %))}
+          ;;        [:input {:type "text"
+          ;;                 :ref "name-edit"
+          ;;                 :tab-index 1
+          ;;                 ;; TODO: figure out why we need value here
+          ;;                 :value new-name
+          ;;                 :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
+          ;;       [:span (or (get-in app [:cust :name]) "You")])])
+          ;;  (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
+          ;;        :let [id-str (or cust-name (apply str (take 6 id)))]]
+          ;;    [:a {:title "Ping this person in chat."
+          ;;         :role "button"
+          ;;         :key id
+          ;;         :on-click #(cast! :chat-user-clicked {:id-str id-str})}
+          ;;     (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
+          ;;     [:span id-str]])]
+
+          [:section.chat-people
+           (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+             [:a.people-you
+              (common/icon :user (when show-mouse? {:path-props
+                                                    {:style
+                                                     {:stroke (get-in app [:subscribers client-id :color])}}}))
+              [:span (or (get-in app [:cust :name]) "You")]])
+           (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
+                 :let [id-str (or cust-name (apply str (take 6 id)))]]
+             [:a {:title ""
+                  :role "button"
+                  :key id}
+              (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
+              [:span id-str]])])))))
+
 (defn hud [app owner]
   (reify
     om/IRender
@@ -143,6 +208,7 @@
         (let [right-click-learned? (get-in app state/right-click-learned-path)]
          [:div.app-hud
           (om/build chat-button app)
+          (om/build viewers app)
           (when (and (:mouse app) (not= :touch (:type (:mouse app))))
             (om/build mouse-stats app))
           (when (and (not right-click-learned?) (:mouse app))

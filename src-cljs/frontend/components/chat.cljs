@@ -87,7 +87,32 @@
      (time/after? time (time/minus start-of-day (time/days 6))) (day-of-week (time/day-of-week time))
      :else (str (month-of-year (.getMonth time)) " " (.getDate time)))))
 
-(defn chat [{:keys [db chat-body sente-id client-id chat-opened chat-bot]} owner]
+(defn input [{:keys [chat-body]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [cast!]} (om/get-shared owner)]
+        (html
+          [:div.chat-box
+           [:form {:class "chat-form"
+                   :on-submit #(do (cast! :chat-submitted)
+                                   false)
+                   :on-key-down #(when (and (= "Enter" (.-key %))
+                                            (not (.-shiftKey %))
+                                            (not (.-ctrlKey %))
+                                            (not (.-metaKey %))
+                                            (not (.-altKey %)))
+                                   (cast! :chat-submitted)
+                                   false)}
+            [:textarea {:class "chat-input"
+                        :id "chat-box"
+                        :tab-index "1"
+                        :type "text"
+                        :value (or chat-body "")
+                        :placeholder "Send a message..."
+                        :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]])))))
+
+(defn log [{:keys [db chat-body sente-id client-id chat-opened chat-bot]} owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -132,39 +157,23 @@
                         :session/uuid chat-bot
                         :server/timestamp (js/Date.)}]
         (html
-         [:section.chat-log
-          [:div.chat-messages {:ref "chat-messages"}
-           (om/build chat-item dummy-chat {:opts {:show-sender? true}})
-           (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
-             (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
-                                              chat-groups)]
+         [:div.chat-log {:ref "chat-messages"}
+          (om/build chat-item dummy-chat {:opts {:show-sender? true}})
+          (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
+            (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
+                                             chat-groups)]
 
-               (list (when (or (not= 1 (count chat-groups))
-                               (not= #{"Today"} (set (keys chat-groups))))
-                       [:h2.chat-date time])
-                     (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
-                       (om/build chat-item chat
-                                 {:key :db/id
-                                  :opts {:sente-id sente-id
-                                         :show-sender? (not= (chat-model/display-name prev-chat sente-id)
-                                                             (chat-model/display-name chat sente-id))}})))))]
-          [:form {:on-submit #(do (cast! :chat-submitted)
-                                  false)
-                  :on-key-down #(when (and (= "Enter" (.-key %))
-                                           (not (.-shiftKey %))
-                                           (not (.-ctrlKey %))
-                                           (not (.-metaKey %))
-                                           (not (.-altKey %)))
-                                  (cast! :chat-submitted)
-                                  false)}
-           [:textarea {:id "chat-box"
-                       :tab-index "1"
-                       :type "text"
-                       :value (or chat-body "")
-                       :placeholder "Send a message..."
-                       :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]])))))
+              (list (when (or (not= 1 (count chat-groups))
+                              (not= #{"Today"} (set (keys chat-groups))))
+                      [:h2.chat-date time])
+                    (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
+                      (om/build chat-item chat
+                                {:key :db/id
+                                 :opts {:sente-id sente-id
+                                        :show-sender? (not= (chat-model/display-name prev-chat sente-id)
+                                                            (chat-model/display-name chat sente-id))}})))))])))))
 
-(defn menu [app owner]
+(defn chat [app owner]
   (reify
     om/IInitState (init-state [_] {:editing-name? false
                                    :new-name ""})
@@ -183,61 +192,13 @@
             document-id (get-in app [:document/id])
             can-edit? (not (empty? (:cust app)))]
         (html
-         [:div.app-chat {:class (concat
-                                 (when-not chat-opened? ["closed"])
-                                 (if chat-mobile-open? ["show-chat-on-mobile"] ["show-people-on-mobile"]))}
-          [:button.chat-switcher {:on-click #(cast! :chat-mobile-toggled)
-                                  ;; :class (if chat-mobile-open? "chat-mobile" "people-mobile")
-                                  }
-           [:span.chat-switcher-option {:class (when-not chat-mobile-open? "toggled")} "People"]
-           [:span.chat-switcher-option {:class (when     chat-mobile-open? "toggled")} "Chat"]]
-          [:section.chat-people
-           (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-             [:a.people-you {:key client-id
-                             :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
-                             :role "button"
-                             :on-click #(if can-edit?
-                                          (om/set-state! owner :editing-name? true)
-                                          (cast! :overlay-username-toggled))}
-              (common/icon :user (when show-mouse? {:path-props
-                                                    {:style
-                                                     {:stroke (get-in app [:subscribers client-id :color])}}}))
-
-              (if editing-name?
-                [:form {:on-submit #(do (when-not (str/blank? new-name)
-                                          (cast! :self-updated {:name new-name}))
-                                        (om/set-state! owner :editing-name? false)
-                                        (om/set-state! owner :new-name "")
-                                        (utils/stop-event %))
-                        :on-blur #(do (when-not (str/blank? new-name)
-                                        (cast! :self-updated {:name new-name}))
-                                      (om/set-state! owner :editing-name? false)
-                                      (om/set-state! owner :new-name "")
-                                      (utils/stop-event %))
-                        :on-key-down #(when (= "Escape" (.-key %))
-                                        (om/set-state! owner :editing-name? false)
-                                        (om/set-state! owner :new-name "")
-                                        (utils/stop-event %))}
-                 [:input {:type "text"
-                          :ref "name-edit"
-                          :tab-index 1
-                          ;; TODO: figure out why we need value here
-                          :value new-name
-                          :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
-                [:span (or (get-in app [:cust :name]) "You")])])
-           (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
-                 :let [id-str (or cust-name (apply str (take 6 id)))]]
-             [:a {:title "Ping this person in chat."
-                  :role "button"
-                  :key id
-                  :on-click #(cast! :chat-user-clicked {:id-str id-str})}
-              (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
-              [:span id-str]])]
-          ;; XXX better name here
-          (om/build chat {:db (:db app)
+          [:div.app-chat {:class (when-not chat-opened? ["closed"])}
+           [:div.chat-background]
+           (om/build log {:db (:db app)
                           :document/id (:document/id app)
                           :sente-id (:sente-id app)
                           :client-id (:client-id app)
                           :chat-body (get-in app [:chat :body])
                           :chat-bot (get-in app (state/doc-chat-bot-path document-id))
-                          :chat-opened (get-in app state/chat-opened-path)})])))))
+                          :chat-opened (get-in app state/chat-opened-path)})
+           (om/build input {:chat-body (get-in app [:chat :body])})])))))

@@ -43,7 +43,7 @@
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)
                 (om/build hud/hud app)]
-               (om/build chat/menu app)])))))
+               (om/build chat/chat app)])))))
 
 (defn app [app owner]
   (reify
