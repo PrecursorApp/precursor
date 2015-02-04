@@ -51,6 +51,15 @@
       opacity: 0;
       transition: @now;
     }
+    .app-chat {
+      .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));
+      opacity: 0;
+      transition: @now;
+    }
+    .chat-input {
+      visibility: hidden;
+      transition+: visibility @now @speed_slow @bezier_fadein;
+    }
     .app-hud {
       opacity: 0;
       transition: @now;

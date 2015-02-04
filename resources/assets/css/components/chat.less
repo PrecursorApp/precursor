@@ -1,111 +1,68 @@
 .app-chat {
-  .flexy(column);
-  .user-select(none);
-  position: relative;
-  width: 20vw;
-  min-width: @tile_chat;
-  box-shadow: -1px 0 @gray_dark;
-  overflow: hidden;
-  transition+: all @speed_fast @bezier_transform;
-  transition+: opacity @speed @speed @bezier_fadein;
-  &:hover {
-    .user-select(auto);
-  }
-  .mq_640({
-    .flex-direction(row);
-    position: relative;
-    padding-top: @tile;
-  });
+  .flexy(stretch; flex-end; column);
+  .transform-origin(right center);
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20%;
+  min-width: @menu_width_min;
+  height: 100%;
+  background: @overlay_background;
+  box-shadow: -1px 0 @gray_light;
+  will-change: transform;
+  transition: @speed @now @bezier_fadein;
   &.closed {
-    width: 0;
-    min-width: 0;
-    transition-timing-function: @bezier_transform;
-    .icon-user {
-      margin: 0 .5em;
-      transition-delay: @speed_slow;
+    .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));
+    transition-duration: @speed_slow;
+    .chat-input {
+      visibility: hidden;
+      transition+: visibility @now @speed_slow @bezier_fadein;
     }
-    .chat-log {
-      textarea {
-        padding-left: 0;
-        opacity: 0;
-        transition-delay: @speed_slow;
-      }
-    }
-  }
-  &.show-chat-on-mobile {
-    .mq_640({
-      .chat-people {
-        margin-left: -100%;
-      }
-    });
-  }
-  section {
-    .flex(1 1 auto);
-    .flexy(column);
-    width: 20vw;
-    min-width: 16rem;
-    min-height: @tile_chat;
-    .mq_640({
-      .flex(0 0 100%);
-      transition: @speed;
-    });
   }
 }
-.chat-switcher {
-  display: none;
+.chat-background {
+  .transform-origin(left);
   position: absolute;
-  color: @white;
+  z-index: -1;
   top: 0;
   left: 0;
-  width: @tile_chat;
-  .mq_640({
-    .flexy();
-  });
-}
-.chat-switcher-option {
-  .flex(0 0 50%);
-  .flexy(center, center);
-  height: @tile;
-  &:not(.toggled) {
-    color: @gray;
-    background: fade(@black, 13);
-  }
-}
+  width: 100%;
+  height: 100%;
+  background: @app_background;
+  box-shadow: -1px 0 @gray_dark;
+  will-change: transform;
+  transition: @speed @bezier_transform;
 }
 .chat-log {
-  .justify-content(flex-end);
-  form {
-    .flex(0 0 auto);
-    .flexy();
-    margin: 0;
-    box-shadow: 0 1px @gray_dark inset;
-  }
-  textarea {
-    .flex(1);
-    .placeholder_style(color; @gray_dark);
-    height: @tile;
-    max-height: (@tile * 2);
-    background: none;
-    padding: 1.25em 1.25em 0;
-    border: none;
-    outline: 0;
-    resize: none;
-    transition+: padding @speed @bezier_transform 0ms;
-    transition+: opacity @speed @bezier_fadein    0ms;
-    &:focus {
-      .placeholder_style(color; fade(@gray_dark, 0));
-    }
-  }
-}
-.chat-messages {
-  .scrollbar_hide(); // TODO we should calculate to get this effect in the dom
+  .scrollbar_hide();
   padding: 1em 0;
   overflow-y: auto;
-  .mq_640({
-    width: @tile_chat;
-  });
+  transition: @speed_fast @speed @bezier_fadein;
   span {
     word-break: break-word;
+  }
+}
+.chat-box {
+  .box-sizing(content-box);
+  height: @tile;
+  min-height: @tile;
+}
+.chat-input {
+  .placeholder_style(color; @gray_dark);
+  .placeholder_style(transition; @speed_fast @speed @bezier_fadein);
+  width: 100%;
+  height: 100%;
+  background: none;
+  padding: 1.25em 1.25em 0;
+  border: none;
+  border-top: 1px solid @gray_dark;
+  outline: 0;
+  resize: none;
+  transition+: all @speed_fast @speed_fast @bezier_fadein;
+  transition+: visibility @now @now @bezier_fadein;
+  &:focus {
+    .placeholder_style(color; fade(@gray_dark, 0));
+    .placeholder_style(transition; @now);
   }
 }
 .chat-date {

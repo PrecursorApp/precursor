@@ -1,11 +1,11 @@
 .canvas-background {
-  // .transform-origin(right); // center looks good, hold off on this for now
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background: @app_background;
+  will-change: transform;
   transition: @speed @bezier_transform;
 }
 .app-canvas {
@@ -14,6 +14,17 @@
   position: relative;
   transition: @speed_slow @bezier_transform;
   will-change: transform;
+  &:active {
+    + .app-chat {
+      .user-select(none);
+      pointer-events: none;
+    }
+  }
+  &:not(:active) {
+    &:not(:hover) {
+      .user-select(none);
+    }
+  }
 }
 #svg-canvas {
   .user-select(none);
