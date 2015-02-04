@@ -12,27 +12,27 @@
   {:circle {:type "ellipse"
             :path "M128,0v128l110.9-64C216.7,25.7,175.4,0,128,0z"
             :hint "Ellipse Tool (L)"
-            :icon :ellipse-stroke}
+            :icon :stroke-ellipse}
    :rect   {:type "rectangle"
             :path "M238.9,192c10.9-18.8,17.1-40.7,17.1-64s-6.2-45.2-17.1-64 L128,128L238.9,192z"
             :hint "Rectangle Tool (M)"
-            :icon :rectangle-stroke}
+            :icon :stroke-rectangle}
    :line   {:type "line"
             :path "M238.9,192L128,128v128C175.4,256,216.7,230.3,238.9,192z"
             :hint "Line Tool (\\)"
-            :icon :line-stroke}
+            :icon :stroke-line}
    :pen    {:type "pencil"
             :path "M17.1,192c22.1,38.3,63.5,64,110.9,64V128L17.1,192z"
             :hint "Pencil Tool (N)"
-            :icon :pencil-stroke}
+            :icon :stroke-pencil}
    :text   {:type "text"
             :path "M17.1,64C6.2,82.8,0,104.7,0,128s6.2,45.2,17.1,64L128,128 L17.1,64z"
             :hint "Text Tool (T)"
-            :icon :text-stroke}
+            :icon :stroke-text}
    :select {:type "select"
             :path "M128,0C80.6,0,39.3,25.7,17.1,64L128,128V0z"
             :hint "Select Tool (V)"
-            :icon :cursor-stroke}})
+            :icon :stroke-cursor}})
 
 (defn chat-button [app owner]
   (reify
