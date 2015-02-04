@@ -33,32 +33,21 @@
     width: 0; // we should calculate to get this effect in the dom
   }
 }
-.icon_stroke(...) {
-  .icon_stroke_any(@a) when not (iscolor(@a)) {
-    @p: extract(@a, 1);
-    @v: extract(@a, 2);
-    i {
-      [class*="stroke"] {
-        @{p}: @v;
+.icon(@type; @value) {
+  .iconpile {
+    .stroke(@type; @value) when (@type = stroke) {
+      [class|="stroke"] {
+        .width(@value) when (isnumber(@value)){stroke-width:@value;}.width(@value);
+        .color(@value) when  (iscolor(@value)){stroke:      @value;}.color(@value);
       }
-    }
-  }.icon_stroke_any(@arguments);
-  .icon_stroke_color(@a) when (iscolor(@a)) {
-    i {
-      [class*="stroke"] {
-        stroke: @arguments;
+    }.stroke(@type; @value);
+    .fill(@type; @value) when (@type = fill) {
+      [class|="fill"] {
+        // .width(@value) when (isnumber(@a)) { stroke-width: @value; }.width(@value);
+        .color(@value) when (iscolor(@value))  { fill: @value; }.color(@value);
       }
-    }
-  }.icon_stroke_color(@arguments);
-}
-.icon_fill(...) {
-  .icon_fill_color(@a) when (iscolor(@a)) {
-    i {
-      [class*="fill"] {
-        fill: @arguments;
-      }
-    }
-  }.icon_fill_color(@arguments);
+    }.fill(@type; @value);
+  }
 }
 .box-sizing(...) {
   .prefixer(box-sizing, @arguments, webkit moz);

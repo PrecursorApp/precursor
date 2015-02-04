@@ -70,7 +70,7 @@
     [:link {:rel "stylesheet"       :href (pc.assets/asset-path "/css/app.css")}]
     [:link {:rel "stylesheet"       :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
 
-    [:style "html{-webkit-text-size-adjust:100%}"] ; prevents resizing when launching from ios home screen
+    [:style "html{-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;}"] ; prevents resizing when launching from ios home screen
 
     (embed-json-in-head "window.Precursor" (json/encode view-data))
     (when (prod-assets?)

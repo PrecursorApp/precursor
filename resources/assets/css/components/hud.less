@@ -89,7 +89,7 @@
 .main-menu-button {
   .animation(in-fade-lef @speed_slower @speed_slower @bezier_fadein backwards);
   .flexy(center, center);
-  .icon_stroke(@gray);
+  .icon(stroke; @gray);
   position: absolute;
   font-size: 1.5rem;
   top: 0;
@@ -99,9 +99,11 @@
   transition: @speed;
   z-index: @zindex_main_menu;
   &:hover {
-    .icon_stroke(@white);
     &.bkg-light {
-      .icon_stroke(@gray_darkest);
+      .icon(stroke; @gray_darkest);
+    }
+    &:not(.bkg-light) {
+      .icon(stroke; @white);
     }
   }
   .icon-menu {

@@ -1,28 +1,8 @@
 @margin_featurette: 30vh;
 .app-overlay {
   .flexy(column);
-  .icon_stroke(@gray_dark);
-  .icon_fill(@gray_dark);
   width: 100%;
   min-height: 100%;
-  color: @gray_dark;
-  a {
-    color: @gray_darker;
-    .icon_stroke(@gray_darker);
-    .icon_fill(@gray_darker);
-    &:hover {
-      .icon_stroke(@color_link_hover);
-      .icon_fill(@color_link_hover);
-      color: @color_link_hover;
-    }
-  }
-  p {
-    a {
-      &:not(:hover) {
-        border-bottom: 1px dotted @gray_light;
-      }
-    }
-  }
   + .app-main {
     .scale(.8);
     cursor: pointer;
@@ -92,9 +72,6 @@
     width: @tile;
     height: @tile;
     transition: @speed @bezier_fadein;
-    &:not(:hover) {
-      .icon_stroke(@gray_dark);
-    }
     &:only-child {
       margin-left: auto;
     }
@@ -172,16 +149,12 @@
   .animation_cascade(25);
   &[role="button"] {
     .flexy(center);
-    .icon_stroke(@gray);
-    .icon_fill(@gray);
     width: 100%;
     color: @gray;
     transition+: color @speed_fast @bezier_fadein;
     transition+: height @speed_fast @bezier_fadein;
     overflow: hidden;
     &:hover {
-      .icon_stroke(@black);
-      .icon_fill(@black);
       color: @black;
       transition-duration: @speed_fast, @now;
     }
@@ -300,7 +273,7 @@
   }
 }
 .shortcuts-misc {
-  .icon_stroke(stroke-width; 4);
+  .icon(stroke; 4);
   i {
     font-size: 1.9em;
   }
@@ -545,18 +518,18 @@ img.loading-image {
     }
   }
   &.positive {
-    .icon_stroke(@blue);
+    .icon(stroke; @blue);
     border-color: @blue;
     &:hover {
-      .icon_stroke(@white);
+      .icon(stroke; @white);
       background: @blue;
     }
   }
   &.negative {
-    .icon_stroke(@gray);
+    .icon(stroke; @gray);
     border-color: @gray;
     &:hover {
-      .icon_stroke(@white);
+      .icon(stroke; @white);
       background: @gray;
     }
   }

@@ -79,15 +79,11 @@
       .flex(0 0 @tile);
       .flexy(center);
       .button_icon_cascade(32);
-      .icon_stroke(@gray_lighter);
       min-height: (@tile / 2);
       color: @gray_light;
       &:hover,
       &:active {
-        .icon_stroke(@gray_lightest);
-        cursor: pointer;
-        color: @gray_lighter;
-        background: @gray_dark;
+        color: @white;
       }
       &.people-you {
         cursor: text;
@@ -152,21 +148,6 @@
 }
 .chat-message {
   padding: 0 .125rem 0 1rem;
-  a {
-    transition: @speed_fast @bezier_fadein;
-    &:not(:hover) {
-      color: inherit;
-      // TODO make a function for this thing (also used in blog.less)
-      box-shadow+:   0  -1px @gray_darker inset;
-      box-shadow+:   0  -2px @gray_light  inset;
-      text-shadow+:  1px 0   @gray_darker;
-      text-shadow+:  2px 0   @gray_darker;
-      text-shadow+:  3px 0   @gray_darker;
-      text-shadow+: -1px 0   @gray_darker;
-      text-shadow+: -2px 0   @gray_darker;
-      text-shadow+: -3px 0   @gray_darker;
-    }
-  }
 }
 .message-head {
   .flexy();
@@ -201,7 +182,6 @@
 }
 .chat-button {
   .animation(in-fade-right @speed_slower @speed_slower @bezier_fadein backwards);
-  .icon_stroke(@gray);
   .flexy(center, center);
   position: absolute;
   font-size: 1.5em;
@@ -210,7 +190,6 @@
   width: @tile;
   height: @tile;
   &:hover {
-    .icon_stroke(@white);
     .unseen-eids {
       background: @red;
       color: @white;
