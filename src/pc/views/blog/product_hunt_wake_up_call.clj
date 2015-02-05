@@ -1,5 +1,6 @@
 (ns pc.views.blog.product-hunt-wake-up-call
   (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
+            [pc.views.common :refer (cdn-path)]
             [pc.views.blog.common :as common]))
 
 (defn product-hunt-wake-up-call []
