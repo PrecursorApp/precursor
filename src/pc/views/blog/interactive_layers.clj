@@ -1,5 +1,6 @@
 (ns pc.views.blog.interactive-layers
-  (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]))
+  (:require [pc.content.common :refer (cdn-path)]
+            [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]))
 
 (defn interactive-layers []
   {:title "Introduction to Interactive Layers"
@@ -19,26 +20,26 @@
         "follow along on Precursor"]
        "  with your own copy of the document we created for this tutorial."]]]
 
-    [:figure [:img {:src "/email/interactive-demo.gif"}]]
+    [:figure [:img {:src (cdn-path "/email/interactive-demo.gif")}]]
 
     [:article
      [:h3 "Name Shapes"]
      [:p "We'll start by drawing out three static views of our iPhone game."]]
 
-    [:figure [:img {:src "/blog/interactive-layers/static-view.png"}]]
+    [:figure [:img {:src (cdn-path "/blog/interactive-layers/static-view.png")}]]
 
     [:article
      [:p "We can right-click on the phone outline to open the properties menu and give each of our views a name. "
       "We'll name the first view \"Overview\", the second view \"Expanded Game\", and the third view \"Game main menu\". "]]
 
-    [:figure [:img {:src "/blog/interactive-layers/name-layer.png"}]]
+    [:figure [:img {:src (cdn-path "/blog/interactive-layers/name-layer.png")}]]
 
 
     [:article
      [:h3 "Define Targets"]
      [:p "Now that we've named our main views, we can right-click on a shape to select one of the views to target from the drop-down menu."]]
 
-    [:figure [:img {:src "/blog/interactive-layers/select-target.png"}]]
+    [:figure [:img {:src (cdn-path "/blog/interactive-layers/select-target.png")}]]
 
     [:article
      [:p "After we've defined a target, clicking on the shape with the select tool will center its target on the canvas. "
@@ -52,7 +53,7 @@
       "alt or option key and scroll down. Then select each shape and space them out. "
       "You can get back to the default view by pressing the \"1\" key."]]
 
-    [:figure [:img {:src "/blog/interactive-layers/space-layers.png"}]]
+    [:figure [:img {:src (cdn-path "/blog/interactive-layers/space-layers.png")}]]
 
     [:article.cta
      [:form {:method "post" :action "/duplicate/interactive-demo" :target "_blank"}
