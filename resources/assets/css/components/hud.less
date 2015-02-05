@@ -91,7 +91,7 @@
     display: none;
   });
 }
-.excess-toggle {
+.hud-excess {
   transition: visibility @now @now @bezier_fadein;
 }
 .menu-toggle {
@@ -181,18 +181,18 @@
 }
 .mouse-stats {
   .user-select(none);
-  position: absolute;
+  position: fixed;
   color: @gray;
   font-family: @font_mono;
   font-size: 0.625rem;
   line-height: 1em;
   text-align: center;
   bottom: 0;
-  width: 100%;
   left: 0;
-  padding: .5em;
+  width: 100%;
+  padding: 2em;
   pointer-events: none;
-  transition: @speed @bezier_fadein;
+  transition: @speed @speed @bezier_fadein;
   .mq_640({
     opacity: 0;
   });

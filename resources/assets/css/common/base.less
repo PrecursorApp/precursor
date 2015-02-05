@@ -27,7 +27,7 @@ body {
   transition: @speed @bezier_transform;
   will-change: transform;
   &:active {
-    + .app-hud {
+    ~ .app-hud {
       .user-select(none);
       pointer-events: none;
     }

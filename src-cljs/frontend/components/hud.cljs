@@ -68,7 +68,7 @@
           [:a.info-toggle {:on-click #(cast! :overlay-info-toggled)
                            :role "button"
                            :class (concat
-                                    ["excess-toggle"]
+                                    ["hud-excess"]
                                     (when-not info-button-learned? ["hover"]))
                            :data-right (when-not info-button-learned? "What is Precursor?")
                            :title (when info-button-learned? "What is Precursor?")}
@@ -81,7 +81,7 @@
       (let [cast! (om/get-shared owner :cast!)
             info-button-learned? (get-in app state/info-button-learned-path)]
         (html
-          [:a.landing-toggle {:class "excess-toggle"
+          [:a.landing-toggle {:class "hud-excess"
                               :on-click #(cast! :landing-opened)
                               :role "button"}
            (common/icon :info)])))))
@@ -113,7 +113,7 @@
                                 ;; add one for the dummy message
                                 (inc unread-chat-count))]
         (html
-          [:a.chat-toggle {:class "excess-toggle"
+          [:a.chat-toggle {:class "hud-excess"
                            :on-click #(cast! :chat-toggled)
                            :role "button"
                            :data-left (when-not chat-button-learned?
@@ -129,8 +129,10 @@
     om/IRender
     (render [_]
       (html
-        [:div.mouse-stats
-         (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))]))))
+        [:div.mouse-stats {:class "hud-excess"}
+         (if (:mouse app)
+           (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))
+           "{:x 0, :y 0, :rx 0, :ry 0}")]))))
 
 (defn radial-hint [app owner]
   (reify
@@ -215,7 +217,7 @@
           ;;     [:span id-str]])]
 
           [:div.viewers {:class (concat
-                                  ["excess-toggle"]
+                                  ["hud-excess"]
                                   (when (< 4 (count (:subscribers app))) ["overflowing"]))}
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
              [:div.viewer.viewer-self
@@ -241,13 +243,11 @@
           (om/build viewers app)
           (om/build menu-toggle app)
           (om/build chat-toggle app)
+          (om/build landing-toggle app)
+          (om/build mouse-stats app)
           ;; deciding whether to get rid of this
           ;; (when-not (:cust app)
           ;;   (om/build info-toggle app))
-          (when-not (:cust app)
-            (om/build landing-toggle app))
-          (when (and (:mouse app) (not= :touch (:type (:mouse app))))
-            (om/build mouse-stats app))
           (when (and (not right-click-learned?) (:mouse app))
             (om/build radial-hint app))
           (when (get-in app [:menu :open?])
