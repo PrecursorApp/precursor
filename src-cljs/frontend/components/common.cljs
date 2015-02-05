@@ -91,11 +91,9 @@
   :stroke-arrow-down "M50,95V5 M14,59l36,36l36-36"
   :stroke-arrow-right "M95,50H5 M59,86l36-36L59,14"
   :stroke-arrow-left "M95,50H5 M41,14L5,50l36,36"
+  :stroke-menu-top "M5,25h90"
   :stroke-menu-mid "M5,50h90"
-  :stroke-menu-top-left "M5,25h45"
-  :stroke-menu-top-right "M50,25h45"
-  :stroke-menu-btm-left "M5,75h45"
-  :stroke-menu-btm-right "M50,75h45"
+  :stroke-menu-btm "M5,75h90"
   :stroke-lock-top "M75,45V30C75,16.2,63.8,5,50,5S25,16.2,25,30v15"
 
   :fill-twitter "M100,19c-3.7,1.6-7.6,2.7-11.8,3.2c4.2-2.5,7.5-6.6,9-11.4c-4,2.4-8.4,4.1-13,5c-3.7-4-9.1-6.5-15-6.5 c-11.3,0-20.5,9.2-20.5,20.5c0,1.6,0.2,3.2,0.5,4.7c-17.1-0.9-32.2-9-42.3-21.4c-1.8,3-2.8,6.6-2.8,10.3c0,7.1,3.6,13.4,9.1,17.1 c-3.4-0.1-6.5-1-9.3-2.6c0,0.1,0,0.2,0,0.3c0,9.9,7.1,18.2,16.5,20.1c-1.7,0.5-3.5,0.7-5.4,0.7c-1.3,0-2.6-0.1-3.9-0.4 c2.6,8.2,10.2,14.1,19.2,14.2c-7,5.5-15.9,8.8-25.5,8.8c-1.7,0-3.3-0.1-4.9-0.3c9.1,5.8,19.9,9.2,31.4,9.2 c37.7,0,58.4-31.3,58.4-58.4c0-0.9,0-1.8-0.1-2.7C93.8,26.7,97.2,23.1,100,19z"
@@ -147,11 +145,9 @@
   :arrow-right {:paths [:stroke-arrow-right]}
   :settings    {:paths [:stroke-dot
                         :stroke-cog]}
-  :menu        {:paths [:stroke-menu-top-left
-                        :stroke-menu-top-right
+  :menu        {:paths [:stroke-menu-top
                         :stroke-menu-mid
-                        :stroke-menu-btm-left
-                        :stroke-menu-btm-right]}
+                        :stroke-menu-btm]}
 
   :lock        {:paths [:stroke-lock-top
                         :fill-lock-bottom]}
