@@ -1,5 +1,6 @@
 (ns pc.assets
   (:require [amazonica.aws.s3 :as s3]
+            [amazonica.aws.cloudfront :as cloudfront]
             [amazonica.core]
             [cemerick.url :as url]
             [cheshire.core :as json]
@@ -12,10 +13,13 @@
             [pantomime.mime :refer [mime-type-of]]
             [pc.gzip :as gzip]
             [pc.profile]
-            [pc.rollbar :as rollbar])
+            [pc.rollbar :as rollbar]
+            [slingshot.slingshot :refer (try+ throw+)])
   (:import java.security.MessageDigest
+           java.util.UUID
            org.apache.commons.codec.binary.Hex
-           org.apache.commons.io.IOUtils))
+           org.apache.commons.io.IOUtils
+           com.amazonaws.services.s3.model.AmazonS3Exception))
 
 ;; TODO: upload and assetify all of the sourcemap sources
 ;;       equivalent to a source-code dump, so give it some thought first
@@ -54,6 +58,7 @@
 (def cdn-bucket "prcrsr-cdn")
 (def manifest-pointer-key "manifest-pointer")
 (def cdn-base-url "https://dtwdl3ecuoduc.cloudfront.net")
+(def cdn-distribution-id "E2IH3R3S5KPXM6")
 
 (defonce asset-manifest (atom {}))
 (defn asset-manifest-version [] (get @asset-manifest :code-version))
@@ -147,20 +152,47 @@
 (defn make-manifest-key [sha1]
   (str "releases/" sha1))
 
+(defn public-files []
+  (remove #(.isDirectory %)
+          (tree-seq (fn [f] (and (.isDirectory f)
+                                 (not= f (io/file "resources/public/cljs"))))
+                    (fn [f] (seq (.listFiles f)))
+                    (io/file "resources/public"))))
+
 (defn upload-public []
   ;; TODO: traverse subdirectories
   ;; TODO: detect if we've already uploaded an asset and invalidate it
-  (doseq [dir ["img"]
-          file (fs/listdir (fs/join "resources/public" dir))
-          :let [key (fs/join dir file)
-                full-path (fs/join "resources/public" dir file)]
-          :when (fs/file? full-path)]
-    (log/infof "uploading %s to %s" full-path key)
-    (s3/put-object :bucket-name cdn-bucket
-                   :key key
-                   :file full-path
-                   :metadata {:content-type (mime-type-of full-path)
-                              :cache-control "max-age=3155692"})))
+  (let [invalidations (atom [])]
+    (doseq [file (public-files)
+            :when (not= \. (first (.getName file)))
+            :let [key (str/replace-first (str file) "resources/public/" "")
+                  tag (md5 file)]]
+      (let [existing (try+
+                      (s3/get-object-metadata :bucket-name cdn-bucket :key key)
+                      (catch AmazonS3Exception e
+                        (if (-> e amazonica.core/ex->map :status-code (= 403))
+                          nil
+                          (throw+))))]
+        (if (= tag (:etag existing))
+          (log/infof "already uploaded %s to %s" (str file) key)
+          (let [_ (log/infof "uploading %s to %s" (str file) key)
+                res (s3/put-object :bucket-name cdn-bucket
+                                   :key key
+                                   :file file
+                                   :metadata {:content-type (mime-type-of file)
+                                              :cache-control "max-age=3155692"})]
+            (log/infof "uploaded %s" res)
+            (assert (= tag (:etag res)))
+            (when existing
+              (swap! invalidations conj key))))))
+    (when (seq @invalidations)
+      (log/infof "invalidationg %s" @invalidations)
+      (let [items (mapv #(str "/" %) @invalidations)
+            res (cloudfront/create-invalidation :distribution-id cdn-distribution-id
+                                                :invalidation-batch {:paths {:items items
+                                                                             :quantity (count items)}
+                                                                     :caller-reference (str (UUID/randomUUID))})]
+        (log/infof "created invalidation %s" res)))))
 
 (defn upload-manifest [sha1]
   ;; TODO: this is dumb, we shouldn't write to the file
