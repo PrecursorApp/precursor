@@ -8,34 +8,43 @@
 
                  [datascript "0.7.1"]
 
-                 [compojure "1.1.8"]
+                 [compojure "1.3.1"]
                  [cheshire "5.4.0"]
                  [clj-time "0.6.0"]
                  [org.clojure/tools.nrepl "0.2.3"]
                  [javax.servlet/servlet-api "2.5"]
                  [slingshot "0.10.3"]
                  [hiccup "1.0.4"]
-                 [org.clojure/tools.logging "0.2.6"]
-                 [log4j "1.2.16"]
+                 [org.clojure/tools.logging "0.3.1"]
+                 [log4j "1.2.17"]
                  [log4j/apache-log4j-extras "1.1"]
-                 [org.slf4j/slf4j-api "1.6.2"]
-                 [org.slf4j/slf4j-log4j12 "1.6.2"]
-                 [cider/cider-nrepl "0.8.1"]
+                 [org.slf4j/slf4j-api "1.7.10"]
+                 [org.slf4j/slf4j-log4j12 "1.7.10" :exclusions [log4j]]
+                 [cider/cider-nrepl "0.8.2"]
                  [clj-http "1.0.1"]
-                 [com.datomic/datomic-free "0.9.4899" :exclusions [[org.slf4j/slf4j-nop]
-                                                                   [com.amazonaws/aws-java-sdk]]]
+                 [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop
+                                                                   org.slf4j/slf4j-api
+                                                                   com.amazonaws/aws-java-sdk]]
                  [amazonica "0.3.12"]
 
-                 [ring/ring "1.2.2"]
-                 [ring/ring-anti-forgery "1.0.0"]
-                 [http-kit "2.1.18"]
-                 [com.taoensso/sente "1.3.0-RC1"]
+                 [ring/ring "1.3.2" :exclusions [hiccup
+                                                 org.clojure/java.classpath]]
+                 [ring/ring-anti-forgery "1.0.0" :exclusions [hiccup]]
+                 [http-kit "2.1.19"]
+                 [com.taoensso/sente "1.3.0-RC1" :exclusions [http-kit]]
                  [clj-stacktrace "0.2.8"]
+
+                 [org.clojure/tools.reader "0.8.13"]
+                 [com.google.guava/guava "17.0"]
 
                  [schejulure "1.0.1"]
 
                  [org.clojars.pallix/batik "1.7.0"]
-                 [com.cemerick/pomegranate "0.3.0"]
+
+                 ;; needed to make lein pedantic happy
+                 [org.codehaus.plexus/plexus-utils "2.0.6"]
+                 [com.cemerick/pomegranate "0.3.0"  :exclusions [org.codehaus.plexus/plexus-utils]]
+
                  [com.novemberain/pantomime "2.3.0"]
 
                  [crypto-equality "1.0.0"]
@@ -59,7 +68,7 @@
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 
-                 [weasel "0.4.2"] ;; repl
+                 [weasel "0.4.2"]            ;; repl
                  [figwheel "0.2.1-SNAPSHOT"] ;; hate using snapshots :/
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
