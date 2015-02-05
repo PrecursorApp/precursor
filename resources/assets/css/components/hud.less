@@ -262,6 +262,17 @@
         }
       }
     }
+    &:not(:hover) {
+      &:not(:active) {
+        .viewer-self {
+          &:only-child {
+            path {
+              stroke: fade(@white,50) !important;
+            }
+          }
+        }
+      }
+    }
     .viewer-self {
       &:only-child {
         .viewer-name {
