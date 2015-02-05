@@ -85,8 +85,7 @@
                [org.clojure/clojurescript]
                [org.slf4j/log4j-over-slf4j]]
 
-  ;; TODO: Fix the warnings, then uncomment this
-  ;; :pedantic? :abort
+  :pedantic? :abort
 
   :main pc.init
 
