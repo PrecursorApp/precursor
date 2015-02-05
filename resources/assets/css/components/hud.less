@@ -145,6 +145,26 @@
     }
   }
 }
+.unseen-eids {
+  .animation(in-bounce @speed_slower);
+  .user-select(none);
+  position: absolute;
+  font-family: @font_mono;
+  font-size: 0.625rem;
+  line-height: 1em;
+  bottom: 3.2em;
+  right: 3.2em;
+  height: 1.6em;
+  min-width: 1.6em;
+  padding: 2px 3px;
+  color: @red;
+  background: @gray_darker;
+  border: 2px solid @red;
+  border-radius: 2rem;
+  box-shadow: 0 2px @gray_darker, 2px 0 @gray_darker, 2px 2px @gray_darker;
+  pointer-events: none;
+  transition: @speed @bezier_transform;
+}
 .info-toggle {
   top: @tile;
   left: 0;
