@@ -1,5 +1,5 @@
 (ns pc.views.blog.interactive-layers
-  (:require [pc.content.common :refer (cdn-path)]
+  (:require [pc.views.common :refer (cdn-path)]
             [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]))
 
 (defn interactive-layers []
