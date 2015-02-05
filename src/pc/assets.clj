@@ -168,7 +168,8 @@
     (doseq [file (public-files)
             :when (not= \. (first (.getName file)))
             :let [key (str/replace-first (str file) "resources/public/" "")
-                  tag (md5 file)]]
+                  gzipped-bytes (gzip/gzip file)
+                  tag (byte-array->md5 gzipped-bytes)]]
       (let [existing (try+
                       (s3/get-object-metadata :bucket-name cdn-bucket :key key)
                       (catch AmazonS3Exception e
@@ -180,8 +181,11 @@
           (let [_ (log/infof "uploading %s to %s" (str file) key)
                 res (s3/put-object :bucket-name cdn-bucket
                                    :key key
-                                   :file file
+                                   :input-stream (java.io.ByteArrayInputStream. gzipped-bytes)
                                    :metadata {:content-type (mime-type-of file)
+                                              :content-md5 tag
+                                              :content-encoding "gzip"
+                                              :content-length (count gzipped-bytes)
                                               :cache-control "max-age=3155692"})]
             (log/infof "uploaded %s" res)
             (assert (= tag (:etag res)))
@@ -205,13 +209,16 @@
           assets (reduce (fn [acc path]
                            (let [file-path (str assets-directory path)
                                  md5 (md5 file-path)
+                                 gzipped-bytes (gzip/gzip file-path)
                                  ;; TODO: figure out a better way to handle leading slashes
                                  key (assetify (subs path 1) md5)]
                              (log/infof "pushing %s to %s" file-path key)
                              (s3/put-object :bucket-name cdn-bucket
                                             :key key
-                                            :input-stream (gzip/gzip file-path)
+                                            :input-stream (java.io.ByteArrayInputStream. gzipped-bytes)
                                             :metadata {:content-type (mime-type-of file-path)
+                                                       :content-length (count gzipped-bytes)
+                                                       :content-md5 (byte-array->md5 gzipped-bytes)
                                                        :content-encoding "gzip"
                                                        :cache-control "max-age=3155692"})
                              (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))
