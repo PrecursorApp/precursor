@@ -87,7 +87,7 @@
 
   :pedantic? :abort
 
-  :main pc.init
+  :main ^:skip-aot pc.init
 
   :jvm-opts ["-Djava.net.preferIPv4Stack=true"
              "-server"
