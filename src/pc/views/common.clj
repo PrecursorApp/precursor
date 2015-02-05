@@ -2,7 +2,10 @@
   (:require [pc.assets]
             [pc.profile :refer (prod-assets?)]))
 
-(defn cdn-path [path]
+(defn cdn-base-url []
   (if (prod-assets?)
-    (str pc.assets/cdn-base-url path)
-    path))
+    pc.assets/cdn-base-url
+    ""))
+
+(defn cdn-path [path]
+  (str (cdn-base-url) path))

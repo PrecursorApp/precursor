@@ -4,7 +4,7 @@
             [pc.assets]
             [pc.datomic.schema :as schema]
             [pc.utils :as utils]
-            [pc.views.common :refer (cdn-path)]
+            [pc.views.common :as common :refer (cdn-path)]
             [pc.views.scripts :as scripts]
             [pc.views.email-landing :as email-landing]
             [pc.profile :refer (prod-assets?)])
@@ -88,7 +88,8 @@
     (embed-json-in-head "window.Precursor"
                         (json/encode (-> view-data
                                        (utils/update-when-in [:initial-entities] serialize-entities)
-                                       (utils/update-when-in [:cust] #(-> % escape-entity pr-str)))))
+                                       (utils/update-when-in [:cust] #(-> % escape-entity pr-str))
+                                       (assoc :cdn-base-url (common/cdn-base-url)))))
     (when (prod-assets?)
       scripts/google-analytics)
     (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))
