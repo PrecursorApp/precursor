@@ -44,16 +44,18 @@
 (def aws-access-key "AKIAJ6CLYJYRMXJGMMEQ")
 (def aws-secret-key "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")
 
+(defn byte-array->md5 [ba]
+  {:post [(not= "d41d8cd98f00b204e9800998ecf8427e" %)]}
+  (Hex/encodeHexString (.digest (MessageDigest/getInstance "MD5") ba)))
+
 (defn md5
   "Takes a file-name and returns the MD5 encoded as a hex string
    Will throw an exception if asked to encode an empty file."
   [file-name]
-  {:post [(not= "d41d8cd98f00b204e9800998ecf8427e" %)]}
   (->> file-name
     io/input-stream
     IOUtils/toByteArray
-    (.digest (MessageDigest/getInstance "MD5"))
-    Hex/encodeHexString))
+    byte-array->md5))
 
 (def cdn-bucket "prcrsr-cdn")
 (def manifest-pointer-key "manifest-pointer")
