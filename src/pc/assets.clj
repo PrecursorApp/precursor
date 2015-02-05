@@ -157,7 +157,9 @@
 (defn public-files []
   (remove #(.isDirectory %)
           (tree-seq (fn [f] (and (.isDirectory f)
-                                 (not= f (io/file "resources/public/cljs"))))
+                                 (not= f (io/file "resources/public/cljs"))
+                                 ;; css gets assetified and uploaded separately
+                                 (not= f (io/file "resources/public/css"))))
                     (fn [f] (seq (.listFiles f)))
                     (io/file "resources/public"))))
 
