@@ -28,6 +28,16 @@
   &:-moz-placeholder           {@{property}: @value;}
   &::-moz-placeholder          {@{property}: @value;}
 }
+.scrollbar(@property; @value) {
+  &::-webkit-scrollbar {
+    @{property}: @value;
+  }
+}
+.scrollbar_thumb(@property; @value) {
+  &::-webkit-scrollbar-thumb {
+    @{property}: @value;
+  }
+}
 .scrollbar_hide() {
   &::-webkit-scrollbar {
     width: 0; // we should calculate to get this effect in the dom
@@ -80,6 +90,12 @@
     object {
       transition-delay: (@cascade * 5) + (@cascade * @c);
     }
+  }
+}
+.transition_cascade(@c) when (@c > 0) {
+  .transition_cascade((@c - 1));
+  &:nth-child(@{c}) {
+    transition-delay: @cascade * @c;
   }
 }
 .animation_cascade(@c) when (@c > 0) {
@@ -189,6 +205,30 @@
   60%  { -webkit-transform: scale3d(1.05,1.05,1.05); }
   80%  { -webkit-transform: scale3d(.95,.95,.95); }
   100% { -webkit-transform: scale3d(1,1,1); opacity: 1;}
+}
+@keyframes viewer {
+  0%, 100%, 20%, 40%, 60%, 80% {
+    transition-timing-function: cubic-bezier(0.215,.61,.355,1);
+    transform-origin: center;
+  }
+  0%   { transform: scale3d(.3,.3,.3); opacity: 0; }
+  20%  { transform: scale3d(1.13,1.13,1.13); }
+  40%  { transform: scale3d(.87,.87,.87); opacity: 1;}
+  60%  { transform: scale3d(1.55,1.55,1.55); }
+  80%  { transform: scale3d(1.45,1.45,1.45); }
+  100% { transform: scale3d(1.5,1.5,1.5); opacity: 1;}
+}
+@-webkit-keyframes viewer {
+  0%, 100%, 20%, 40%, 60%, 80% {
+    -webkit-transition-timing-function: cubic-bezier(0.215,.61,.355,1);
+    -webkit-transform-origin: center;
+  }
+  0%   { -webkit-transform: scale3d(.3,.3,.3); opacity: 0; }
+  20%  { -webkit-transform: scale3d(1.13,1.13,1.13); }
+  40%  { -webkit-transform: scale3d(.87,.87,.87); opacity: 1;}
+  60%  { -webkit-transform: scale3d(1.55,1.55,1.55); }
+  80%  { -webkit-transform: scale3d(1.45,1.45,1.45); }
+  100% { -webkit-transform: scale3d(1.5,1.5,1.5); opacity: 1;}
 }
 
 @keyframes in-fade {

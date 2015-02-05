@@ -3,7 +3,7 @@
   .flexy(column);
   width: 100%;
   min-height: 100%;
-  + .app-main {
+  ~ .app-main {
     .scale(.8);
     cursor: pointer;
     background: @overlay_background;
@@ -32,11 +32,7 @@
       transition-duration: @speed_slow;
     }
     .app-canvas {
-      box-shadow: 0 1px @gray_lightest inset;
-    }
-    .app-hud {
-      opacity: 0;
-      transition: @now;
+      box-shadow: 0 -1px @gray_lightest;
     }
     #background-grid {
       opacity: 0;
@@ -56,10 +52,16 @@
       transition: @speed_fast @now @bezier_fadein;
     }
     .chat-input {
-      border-top: 1px solid @gray_light;
       .placeholder_style(opacity; 0);
       .placeholder_style(transition; @now @now @bezier_fadein);
-      transition: @now @speed_fast @bezier_fadein;
+      border-top: 1px solid @gray_lighter;
+      transition: border-top @now @speed_fast @bezier_fadein;
+    }
+  }
+  ~ .app-hud {
+    .excess-toggle {
+      visibility: hidden;
+      transition: @now;
     }
   }
 }
@@ -132,6 +134,19 @@
   article {
     padding: @menu_padding;
     width: 100%;
+    a {
+      &[role="button"] {
+        .flexy(center, center);
+        height: @tile;
+        margin-bottom: @tile;
+        transition: @speed_fast @bezier_fadein;
+        border: 1px solid @font_color;
+        &:hover {
+          color: @white;
+          background: @font_color;
+        }
+      }
+    }
   }
 }
 .menu-foot {
@@ -220,19 +235,6 @@
   overflow-y: auto;
   &:last-of-type {
     padding-bottom: @tile;
-  }
-}
-.menu-button {
-  &[role="button"] {
-    .flexy(center, center);
-    height: @tile;
-    margin-bottom: @tile;
-    transition: @speed_fast @bezier_fadein;
-    border: 1px solid @font_color;
-    &:hover {
-      color: @white;
-      background: @font_color;
-    }
   }
 }
 .shortcuts-items {

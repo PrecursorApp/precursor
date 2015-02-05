@@ -8,7 +8,7 @@
   min-width: @menu_width_min;
   height: 100%;
   background: @overlay_background;
-  box-shadow: -1px 0 @gray_light;
+  box-shadow: -1px 0 @gray_lighter;
   will-change: transform;
   transition: @speed @now @bezier_fadein;
   &.closed {
@@ -16,7 +16,7 @@
     transition-duration: @speed_slow;
     .chat-input {
       visibility: hidden;
-      transition+: visibility @now @speed_slow @bezier_fadein;
+      transition: visibility @now @speed_slow @bezier_fadein;
     }
   }
 }
@@ -58,8 +58,7 @@
   border-top: 1px solid @gray_dark;
   outline: 0;
   resize: none;
-  transition+: all @speed_fast @speed_fast @bezier_fadein;
-  transition+: visibility @now @now @bezier_fadein;
+  transition+: border-top @speed_fast @speed_fast @bezier_fadein;
   &:focus {
     .placeholder_style(color; fade(@gray_dark, 0));
     .placeholder_style(transition; @now);
@@ -86,7 +85,7 @@
   margin-left: .5rem;
 }
 .unseen-eids {
-  .animation(in-bounce (@speed * 2));
+  .animation(in-bounce @speed_slower);
   .user-select(none);
   position: absolute;
   font-family: @font_mono;

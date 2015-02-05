@@ -109,7 +109,7 @@
                         :tab-index "1"
                         :type "text"
                         :value (or chat-body "")
-                        :placeholder "Send a message..."
+                        :placeholder "Chat..."
                         :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]])))))
 
 (defn log [{:keys [db chat-body sente-id client-id chat-opened chat-bot]} owner]

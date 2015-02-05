@@ -58,18 +58,12 @@
     }
     .chat-input {
       visibility: hidden;
-      transition+: visibility @now @speed_slow @bezier_fadein;
-    }
-    .app-hud {
-      opacity: 0;
-      transition: @now;
+      transition: visibility @now @speed_slow @bezier_fadein;
     }
   }
-  ~ .main-menu-button {
-    .icon-menu {
-      opacity: 0;
-      transition: @now;
-    }
+  ~ .app-hud {
+    opacity: 0;
+    transition: @now;
   }
   nav {
     .flexy();

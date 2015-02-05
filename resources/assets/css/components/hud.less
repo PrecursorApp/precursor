@@ -13,15 +13,21 @@
   &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
 }
 .app-hud {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  transition: opacity @speed_slow @speed @bezier_fadein;
-  a {
-    pointer-events: auto;
+  > a {
+    &[role="button"] {
+      .animation(in-bounce @speed_slower backwards);
+      .flexy(center, center);
+      .icon(stroke; @white);
+      position: fixed;
+      font-size: 1.5em;
+      width: @tile;
+      height: @tile;
+      &:not(:hover) {
+        [class|="icon"] {
+          opacity: .5;
+        }
+      }
+    }
   }
 }
 .radial-menu {
@@ -85,24 +91,18 @@
     display: none;
   });
 }
-.main-menu-button {
+.excess-toggle {
+  transition: visibility @now @now @bezier_fadein;
+}
+.menu-toggle {
   .animation(in-fade-top @speed_slower @speed_slower @bezier_fadein backwards);
-  .flexy(center, center);
-  .icon(stroke; @gray);
-  position: absolute;
-  font-size: 1.5rem;
   top: 0;
   left: 0;
-  width: @tile;
-  height: @tile;
-  transition: @speed;
-  z-index: @zindex_main_menu;
-  &:hover {
-    &.bkg-light {
-      .icon(stroke; @gray_darkest);
-    }
-    &:not(.bkg-light) {
-      .icon(stroke; @white);
+  transition+: -webkit-transform @speed @bezier_deform;
+  transition+:         transform @speed @bezier_deform;
+  &.bkg-light {
+    &[role="button"] {
+      .icon(stroke; @black);
     }
   }
   .icon-menu {
@@ -116,7 +116,7 @@
   }
   &.close,
   &.back {
-    font-size: 1rem;
+    .scale3d(.75);
     path {
       transition-timing-function: @bezier_bounce, @bezier_fadein, @bezier_fadein;
     }
@@ -154,15 +154,10 @@
     }
   }
 }
-.chat-button {
+.chat-toggle {
   .animation(in-fade-bottom @speed_slower @speed_slower @bezier_fadein backwards);
-  .flexy(center, center);
-  position: absolute;
-  font-size: 1.5em;
   bottom: 0;
   right: 0;
-  width: @tile;
-  height: @tile;
   &:hover {
     .unseen-eids {
       background: @red;
@@ -176,32 +171,13 @@
     }
   }
 }
-.info-button {
-  .flexy(center, center);
-  position: absolute;
+.info-toggle {
   top: @tile;
   left: 0;
-  width: @tile;
-  height: @tile;
-  i {
-    svg {
-      font-size: 1.5em;
-    }
-  }
 }
-// TODO fix this
-.landing-button {
-  .flexy(center, center);
-  position: absolute;
-  top: @tile;
+.landing-toggle {
+  top: 0;
   right: 0;
-  width: @tile;
-  height: @tile;
-  i {
-    svg {
-      font-size: 1.5em;
-    }
-  }
 }
 .mouse-stats {
   .user-select(none);
@@ -215,42 +191,149 @@
   width: 100%;
   left: 0;
   padding: .5em;
+  pointer-events: none;
   transition: @speed @bezier_fadein;
   .mq_640({
     opacity: 0;
   });
 }
-// viewers stuff
-.chat-people {
-  .scrollbar_hide(); // we should calculate to get this effect in the dom
-  overflow-y: auto;
-  a {
-    &[role="button"] {
-      .flex(0 0 @tile);
-      .flexy(center);
-      .button_icon_cascade(32);
-      min-height: (@tile / 2);
-      color: @gray_light;
-      &:hover,
-      &:active {
-        color: @white;
+.viewers {
+  .flexy(column);
+  position: fixed;
+  color: @white;
+  bottom: 0;
+  left: 0;
+  min-width: @menu_width_min;
+  max-width: @menu_width_max;
+  max-height: 4 * 2.5em; // first value is number visible upon opening
+  padding: 1em 1.5em;
+  transition+: all @speed;
+  transition+: bottom @now;
+  &.overflowing {
+    .scrollbar(width; .25em;);
+    .scrollbar_thumb(border-radius; .25em);
+    overflow-y: auto;
+    will-change: transform, bottom;
+    &:hover {
+      .scrollbar_thumb(background; fade(@black, 25));
+      .viewer-self {
+        .viewer-name {
+          &:before {
+            .translate3d(0,100%,0);
+            opacity: 0;
+          }
+          &:after {
+            .animation(in-fade-top @speed_slower @bezier_fadein);
+            content: attr(data-name);
+          }
+        }
       }
-      &.people-you {
-        cursor: text;
+    }
+    &:not(:hover) {
+      &:not(:active) {
+        .user-select(none);
+        .translate3d(0,100%,0);
+        bottom: @tile;
+        .viewer-self {
+          ~ .viewer {
+            .translate3d(0,100%,0);
+          }
+          .icon-user {
+            .scale3d(1.5);
+            transition: @speed @speed @bezier_deform;
+          }
+        }
+      }
+    }
+    .viewer-self {
+      .viewer-name {
+        &:before {
+          content: attr(data-count);
+          transition: @speed_slower @bezier_fadein;
+        }
       }
     }
   }
+  &:not(.overflowing) {
+    &:hover {
+      .viewer-self {
+        &:only-child {
+          .viewer-name {
+            &:after {
+              .animation(in-fade-top @speed_slower @bezier_fadein);
+              content: attr(data-name);
+            }
+          }
+        }
+      }
+    }
+    .viewer-self {
+      &:only-child {
+        .viewer-name {
+          opacity: 1;
+        }
+        .icon-user {
+          .scale3d(1.5);
+          transition: @speed @speed @bezier_deform;
+        }
+      }
+      &:not(:only-child) {
+        .viewer-name {
+          &:after {
+            .animation(in-fade-top @speed_slower @bezier_fadein);
+            content: attr(data-name);
+          }
+        }
+      }
+    }
+  }
+  // TODO deciding whether to edit name inline or not...
+  // input {
+  //   height: @tile;
+  //   max-height: (@tile * 2);
+  //   background: none;
+  //   border: none;
+  //   outline: 0;
+  //   color: @white;
+  // }
+}
+.viewer-self {
   .icon-user {
-    .flex(0 0 auto);
-    margin: 0 1em;
-    transition: margin @speed @bezier_transform 0ms;
+    .animation(viewer @speed_slower backwards);
+    transition: @speed @now @bezier_deform;
+    path {
+      stroke: fade(@white,50);
+      transition: stroke @speed_slower @bezier_fadein;
+    }
   }
-  input {
-    height: @tile;
-    max-height: (@tile * 2);
-    background: none;
-    border: none;
-    outline: 0;
-    color: @white;
+  .viewer-name {
+    position: relative;
+    min-height: 1em * @line_height;
+    &:before,
+    &:after {
+      position: absolute;
+      top: 0;
+      left: 0;
+      white-space: nowrap;
+    }
   }
+}
+.viewer {
+  .flexy(center);
+  .transition_cascade(10);
+  height: @tile / 2;
+  min-height: @tile / 2;
+  transition: @speed @bezier_deform;
+  &:not(:hover) {
+    .viewer-name {
+      opacity: .25;
+    }
+  }
+  &:not(.viewer-self) {
+    .animation(in-fade-bottom @speed_slower @bezier_fadein);
+  }
+}
+.viewer-name {
+  margin-left: 1em;
+  cursor: default;
 }

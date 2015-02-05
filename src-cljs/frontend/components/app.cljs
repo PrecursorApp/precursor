@@ -41,8 +41,7 @@
                [:div.app-canvas {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
-                (om/build canvas/svg-canvas app)
-                (om/build hud/hud app)]
+                (om/build canvas/svg-canvas app)]
                (om/build chat/chat app)])))))
 
 (defn app [app owner]
@@ -51,23 +50,10 @@
     (render [_]
       (if (:navigation-point app)
         (dom/div #js {:id "app" :className "app"}
-
-          ;; Pseudo-homepage and outer
           (when (:show-landing? app)
             (om/build landing/landing app))
-
-          ;; Main menu and settings
           (when (overlay-visible? app)
             (om/build overlay/overlay app))
-
-          ;; Canvas and chat
           (om/build app* app)
-
-          ; ;; Hack to give app depth when out of focus
-          ; (dom/div #js {:className "app-main-outline"})
-
-          ;; Hack to keep menu button above menu itself
-          (om/build overlay/main-menu-button (select-in app [state/overlays-path
-                                                             state/main-menu-learned-path])))
-
+          (om/build hud/hud app))
         (html [:div#app])))))

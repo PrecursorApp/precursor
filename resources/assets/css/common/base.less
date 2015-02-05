@@ -26,6 +26,12 @@ body {
   height: 100%;
   transition: @speed @bezier_transform;
   will-change: transform;
+  &:active {
+    + .app-hud {
+      .user-select(none);
+      pointer-events: none;
+    }
+  }
   a {
     color: darken(@link_hover, 13);
     &:hover,

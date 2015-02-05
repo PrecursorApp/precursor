@@ -11,7 +11,6 @@
             [frontend.components.document-access :as document-access]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
-            [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.scroll :as scroll]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
@@ -22,29 +21,6 @@
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
-
-(defn main-menu-button [data owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            main-menu-learned? (get-in data state/main-menu-learned-path)]
-        (html
-          [:a.main-menu-button {:on-click (if (overlay-visible? data)
-                                            #(cast! :overlay-menu-closed)
-                                            #(cast! :main-menu-opened))
-                                :role "button"
-                                :class (when (overlay-visible? data)
-                                         (concat
-                                           ["bkg-light"]
-                                           (if (< 1 (overlay-count data))
-                                             ["back"]
-                                             ["close"])))
-                                :data-right (when-not main-menu-learned?
-                                              (if (overlay-visible? data) "Close Menu" "Open Menu"))
-                                :title (when main-menu-learned?
-                                         (if (overlay-visible? data) "Close Menu" "Open Menu"))}
-           (common/icon :menu)])))))
 
 (defn auth-link [app owner]
   (reify
@@ -263,14 +239,13 @@
             invite-email (get-in app state/invite-email-path)]
         (html
           [:article
-           ; [:h2 "This document is public."]
            [:h2.menu-item
             [:span "This document is "]
             [:span.privacy-public-word "public."]]
            [:p.menu-item "It's visible to anyone with the url.
-                                    Email a friend to invite them to collaborate."]
+                         Email a friend to invite them to collaborate."]
            (if-not (:cust app)
-             [:a.menu-button.menu-item {:href (auth/auth-url)
+             [:a.menu-item {:href (auth/auth-url)
                               :on-click #(do
                                            (.preventDefault %)
                                            (cast! :track-external-link-clicked
@@ -363,19 +338,12 @@
            [:article
             [:h2.menu-item "What is Precursor?"]
             [:p.menu-item "Precursor is a no-nonsense prototyping tool.
-                Use it for wireframing, sketching, and brainstorming. "
-                ;; TODO finish wiring up invite stuff -dk (12/09/14)
-                ;; [:a {:on-click #(cast! :invite-menu-opened)
-                ;;      :role "button"}
-                ;;  "Invite"]
-                [:a {:on-click #(cast! :invite-link-clicked)
-                     :role "button"
-                     :title "In chat, type \"/invite their@email.com\""}
-                 "Invite"]
-                " your team to collaborate instantly.
+                Use it for wireframing, sketching, and brainstorming.
+                Invite your team to collaborate instantly.
                 Have feedback or a great idea?
                 Say "
-                [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback" :title "We love feedback, good or bad."}
+                [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
+                     :title "We love feedback, good or bad."}
                  "hi@prcrsr.com"]
                 " or on "
                 [:a {:href "https://twitter.com/prcrsr_app"
@@ -385,11 +353,11 @@
                  "Twitter"]
                 "."]
             (if (:cust app)
-              [:a.menu-button.menu-item {:on-click #(cast! :overlay-menu-closed) :role "button"} "Okay"]
+              [:a.menu-item {:on-click #(cast! :overlay-menu-closed) :role "button"} "Okay"]
               (list
                 [:p.menu-item "Sign up and we'll even keep track of all your docs.
-                    Never lose a great idea again!"]
-                [:a.menu-button.menu-item {:href (auth/auth-url)
+                              Never lose a great idea again!"]
+                [:a.menu-item {:href (auth/auth-url)
                                  :on-click #(do
                                               (.preventDefault %)
                                               (cast! :track-external-link-clicked
@@ -517,17 +485,17 @@
         (html
          [:div.menu-view
           [:article
-           [:h2 "Let's change that name."]
-           [:p "Sign up to change how your name appears in chat.
+           [:h2.menu-item "Let's change that name."]
+           [:p.menu-item "Sign up to change how your name appears in chat.
                Let your team know who you are while you collaborate together."]
-           [:a.menu-button {:href (auth/auth-url)
-                            :on-click #(do
-                                         (.preventDefault %)
-                                         (cast! :track-external-link-clicked
-                                                {:path (auth/auth-url)
-                                                 :event "Signup Clicked"
-                                                 :properties {:source "username-overlay"}}))
-                            :role "button"}
+           [:a.menu-item {:href (auth/auth-url)
+                          :on-click #(do
+                                       (.preventDefault %)
+                                       (cast! :track-external-link-clicked
+                                              {:path (auth/auth-url)
+                                               :event "Signup Clicked"
+                                               :properties {:source "username-overlay"}}))
+                          :role "button"}
             "Sign Up"]]])))))
 
 (def overlay-components
@@ -537,8 +505,6 @@
                :component shortcuts}
    :start {:title "Precursor"
            :component start}
-   ; :invite {:title "Invite Collaborators"
-   ;          :component invite}
    :sharing {:title "Sharing"
              :component sharing}
    :username {:component username}

@@ -2,6 +2,7 @@
   (:require [datascript :as d]
             [frontend.components.common :as common]
             [frontend.models.chat :as chat-model]
+            [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -34,7 +35,58 @@
             :hint "Select Tool (V)"
             :icon :stroke-cursor}})
 
-(defn chat-button [app owner]
+(defn menu-toggle [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            main-menu-learned? (get-in app state/main-menu-learned-path)]
+        (html
+          [:a.menu-toggle {:on-click (if (overlay-visible? app)
+                                       #(cast! :overlay-menu-closed)
+                                       #(cast! :main-menu-opened))
+                           :role "button"
+                           :class (when (overlay-visible? app)
+                                    (concat
+                                      ["bkg-light"]
+                                      (if (< 1 (overlay-count app))
+                                        ["back"]
+                                        ["close"])))
+                           :data-right (when-not main-menu-learned?
+                                         (if (overlay-visible? app) "Close Menu" "Open Menu"))
+                           :title (when main-menu-learned?
+                                    (if (overlay-visible? app) "Close Menu" "Open Menu"))}
+           (common/icon :menu)])))))
+
+(defn info-toggle [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            info-button-learned? (get-in app state/info-button-learned-path)]
+        (html
+          [:a.info-toggle {:on-click #(cast! :overlay-info-toggled)
+                           :role "button"
+                           :class (concat
+                                    ["excess-toggle"]
+                                    (when-not info-button-learned? ["hover"]))
+                           :data-right (when-not info-button-learned? "What is Precursor?")
+                           :title (when info-button-learned? "What is Precursor?")}
+           (common/icon :info)])))))
+
+(defn landing-toggle [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            info-button-learned? (get-in app state/info-button-learned-path)]
+        (html
+          [:a.landing-toggle {:class "excess-toggle"
+                              :on-click #(cast! :landing-opened)
+                              :role "button"}
+           (common/icon :info)])))))
+
+(defn chat-toggle [app owner]
   (reify
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -61,15 +113,16 @@
                                 ;; add one for the dummy message
                                 (inc unread-chat-count))]
         (html
-          [:a.chat-button {:on-click #(cast! :chat-toggled)
+          [:a.chat-toggle {:class "excess-toggle"
+                           :on-click #(cast! :chat-toggled)
                            :role "button"
                            :data-left (when-not chat-button-learned?
                                         (if chat-opened? "Close Chat" "Open Chat"))
                            :title (when chat-button-learned?
                                     (if chat-opened? "Close Chat" "Open Chat"))}
+           (common/icon :chat)
            (when (and (not chat-opened?) (pos? unread-chat-count))
-             [:i.unseen-eids (str unread-chat-count)])
-           (common/icon :chat)])))))
+             [:i.unseen-eids (str unread-chat-count)])])))))
 
 (defn mouse-stats [app owner]
   (reify
@@ -89,20 +142,6 @@
          (if (= :touch (get-in app [:mouse :type]))
            "Tap and hold to select tool"
            "Right-click.")]))))
-
-(defn info-button [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            info-button-learned? (get-in app state/info-button-learned-path)]
-        (html
-          [:a.info-button {:on-click #(cast! :overlay-info-toggled)
-                           :role "button"
-                           :class (when-not info-button-learned? "hover")
-                           :data-right (when-not info-button-learned? "What is Precursor?")
-                           :title (when info-button-learned? "What is Precursor?")}
-           (common/icon :info)])))))
 
 (defn radial-menu [app owner]
   (reify
@@ -124,17 +163,6 @@
                                    :d (get common/icon-paths (:icon template))}]])
             [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
 
-(defn landing-button [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            info-button-learned? (get-in app state/info-button-learned-path)]
-        (html
-          [:a.landing-button {:on-click #(cast! :landing-opened)
-                              :role "button"}
-           (common/icon :info)])))))
-
 (defn viewers [app owner]
   (reify
     om/IRender
@@ -142,6 +170,7 @@
       (html
         (let [client-id (:client-id app)]
 
+          ;; TODO deciding whether to edit name inline or not...
           ;; [:section.chat-people
           ;;  (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
           ;;    [:a.people-you {:key client-id
@@ -185,20 +214,22 @@
           ;;     (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
           ;;     [:span id-str]])]
 
-          [:section.chat-people
+          [:div.viewers {:class (concat
+                                  ["excess-toggle"]
+                                  (when (< 4 (count (:subscribers app))) ["overflowing"]))}
            (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-             [:a.people-you
+             [:div.viewer.viewer-self
               (common/icon :user (when show-mouse? {:path-props
                                                     {:style
                                                      {:stroke (get-in app [:subscribers client-id :color])}}}))
-              [:span (or (get-in app [:cust :name]) "You")]])
+              [:div.viewer-name {:title "X and X others are viewing this doc."
+                                 :data-name (or (get-in app [:cust :name]) "You")
+                                 :data-count (count (:subscribers app))}]])
            (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
                  :let [id-str (or cust-name (apply str (take 6 id)))]]
-             [:a {:title ""
-                  :role "button"
-                  :key id}
+             [:div.viewer {:key id}
               (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
-              [:span id-str]])])))))
+              [:div.viewer-name id-str]])])))))
 
 (defn hud [app owner]
   (reify
@@ -207,17 +238,19 @@
       (html
         (let [right-click-learned? (get-in app state/right-click-learned-path)]
          [:div.app-hud
-          (om/build chat-button app)
           (om/build viewers app)
+          (om/build menu-toggle app)
+          (om/build chat-toggle app)
+          ;; deciding whether to get rid of this
+          ;; (when-not (:cust app)
+          ;;   (om/build info-toggle app))
+          (when-not (:cust app)
+            (om/build landing-toggle app))
           (when (and (:mouse app) (not= :touch (:type (:mouse app))))
             (om/build mouse-stats app))
           (when (and (not right-click-learned?) (:mouse app))
             (om/build radial-hint app))
-          (when-not (:cust app)
-            (om/build info-button app))
           (when (get-in app [:menu :open?])
             (om/build radial-menu app))
-          (when-not (:cust app)
-            (om/build landing-button app))
           ])))))
 
