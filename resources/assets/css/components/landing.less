@@ -143,11 +143,10 @@
 .jumbotron-buttons {
   .flexy(center);
   margin: 2em 0 1em;
-  a {
-    &:not(:first-of-type) {
-      margin-left: 1em;
-    }
-  }
+  .mq_640({
+    .flex-direction(column);
+    .align-items(flex-start);
+  });
   .google-login {
     height: @tile;
     span {
@@ -165,19 +164,23 @@
   .flexy(center);
   position: relative;
   min-height: 100%;
-  &:first-of-type {
-    padding-top: @tile;
-    padding: @tile 0 (@tile * 2);
-  }
-  &:last-of-type {
-    min-height: 100vh;
-  }
+  .mq_640({
+    min-height: @tile_xxl;
+  });
   .content {
     .animation(jumbotron-content @speed @speed @bezier_transform backwards);
     .transform-origin(0 0);
   }
   h1 {
     margin-left: -0.0625em; // better aligns h1 (big font size wastes space)
+    .mq_640({
+      font-size: 3em;
+    });
+  }
+  h4 {
+    .mq_640({
+      font-size: 1em;
+    });
   }
   button {
     .flexy(center, center);
@@ -195,6 +198,19 @@
       transition-duration: @now;
     }
   }
+}
+.prolog {
+  padding-top: @tile;
+  padding: @tile 0 (@tile * 2);
+}
+.epilog-cta-2nd {
+  margin-left: 1em;
+  .mq_640({
+    .flexy(center, center);
+    height: @tile;
+    margin: 0;
+    padding-right: @tile * 2;
+  });
 }
 .content {
   .box-sizing(content-box);
@@ -222,30 +238,40 @@
   .flexy();
   max-width: @tile_content;
   margin: @margin_featurette auto;
-  .mq_640({
+  .mq_960({
     .flex-direction(column);
+    margin: 20vh auto;
   });
-  &:first-of-type {
-    margin-top: 0;
-    padding-top: @margin_featurette;
-  }
-  &:last-of-type {
-    margin-bottom: 0;
-    padding-bottom: @margin_featurette;
-  }
+  .mq_640({
+    margin: 10vh auto;
+  });
   &:nth-of-type(even) {
     .featurette-media {
       .order(1);
-      .mq_640({
+      .mq_960({
         .order(3);
       });
     }
   }
 }
+.featurette-why {
+  margin-top: 0;
+  padding-top: (@margin_featurette * (3 / 3));
+  .mq_960({
+    padding-top: (@margin_featurette * (2 / 3));
+  });
+  .mq_640({
+    padding-top: (@margin_featurette * (1 / 3));
+  });
+}
 .featurette-how {
   .featurette-story {
     .flex(2);
   }
+}
+.featurette-what {
+  margin-bottom: 0;
+  padding-bottom: @margin_featurette;
 }
 .featurette-story,
 .featurette-media {
@@ -261,8 +287,13 @@
 }
 .featurette-media {
   .order(3);
+  .mq_960({
+    margin-right: 30vw;
+  });
+  .mq_640({
+    margin-right: 0;
+  });
 }
-
 //
 // TODO all below for dev only!
 //

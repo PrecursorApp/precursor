@@ -66,20 +66,20 @@
              [:a.nav-item {:role "button"} "Precursor"]
              [:a.nav-item {:role "button"} "Pricing"]
              [:a.nav-item {:role "button"} "Blog"]
-             [:a.nav-item.google-login {:role "button"}
+             [:a.nav-item.google-login.mobile-hidden {:role "button"}
               [:span.google-login-icon
                (common/icon :google)]
               [:span.google-login-body "Sign in"]]]]
-           [:div.jumbotron
+           [:div.prolog.jumbotron
             [:div.content
              [:h1 "Collaborate on every idea with your entire team."]
              [:h4 "Productive prototyping without all the nonsense."]
-             [:button {:on-click #(cast! :landing-closed)}
+             [:button.prolog-cta {:on-click #(cast! :landing-closed)}
               "Launch Precursor"]]
             [:div.trusted-by]]
            [:div.home-body
-            [:article.featurette {:ref "1"
-                                  :class (when (contains? past-center-featurettes "1") "active")}
+            [:article.featurette.featurette-why {:ref "1"
+                                                 :class (when (contains? past-center-featurettes "1") "active")}
              [:div.featurette-story
               [:h2 "Sharing prototypes should be simple."]
               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
@@ -110,15 +110,15 @@
                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
              [:div.featurette-media screen]]
-            [:article.featurette {:ref "5"
-                                  :class (when (contains? past-center-featurettes "5") "active")}
+            [:article.featurette.featurette-what {:ref "5"
+                                                  :class (when (contains? past-center-featurettes "5") "active")}
              [:div.featurette-story
               [:h2 "Pure prototyping, just focus on the idea."]
               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
              [:div.featurette-media screen]]]
-           [:div.jumbotron
+           [:div.epilog.jumbotron
             [:div.content
              [:h1 "Collaborate on every idea with your entire team."]
              [:h4 "Productive prototyping without all the nonsense."]
@@ -130,12 +130,12 @@
              ;  [:button "Try it first"]]
 
              [:div.jumbotron-buttons
-              [:a.google-login {:role "button"}
+              [:a.google-login.epilog-cta {:role "button"}
                [:span.google-login-icon
                 (common/icon :google)]
                [:span.google-login-body "Sign in with Google"]]
-              [:a {:on-click #(cast! :landing-closed)
-                   :role "button"}
+              [:a.epilog-cta-2nd {:on-click #(cast! :landing-closed)
+                                  :role "button"}
                "Or Try It First"]]
 
              ; [:a.google-login {:role "button"}

@@ -4,6 +4,7 @@
             [frontend.models.chat :as chat-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
+            [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [frontend.utils :refer [html]])
