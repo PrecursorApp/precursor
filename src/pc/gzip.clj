@@ -9,4 +9,4 @@
       (with-open [os (java.io.ByteArrayOutputStream.)]
         (with-open [zipped-os (GZIPOutputStream. os)]
           (IOUtils/copy (java.io.ByteArrayInputStream. data-to-compress) zipped-os))
-        (java.io.ByteArrayInputStream. (.toByteArray os))))))
+        (.toByteArray os)))))
