@@ -176,8 +176,9 @@
                              (log/infof "pushing %s to %s" file-path key)
                              (s3/put-object :bucket-name cdn-bucket
                                             :key key
-                                            :file file-path
+                                            :input-stream (gzip/gzip file-path)
                                             :metadata {:content-type (mime-type-of file-path)
+                                                       :content-encoding "gzip"
                                                        :cache-control "max-age=3155692"})
                              (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))
                          {} manifest-paths)
