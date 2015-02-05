@@ -198,6 +198,7 @@
   });
 }
 .viewers {
+  @max_height: 4 * 2.5em; // first value is number visible upon opening
   .flexy(column);
   position: fixed;
   color: @white;
@@ -205,13 +206,14 @@
   left: 0;
   min-width: @menu_width_min;
   max-width: @menu_width_max;
-  max-height: 4 * 2.5em; // first value is number visible upon opening
+  max-height: @max_height;
   padding: 1em 1.5em;
   transition+: all @speed;
   transition+: bottom @now;
   &.overflowing {
     .scrollbar(width; .25em;);
     .scrollbar_thumb(border-radius; .25em);
+    max-height: @max_height - 1;
     overflow-y: auto;
     will-change: transform, bottom;
     &:hover {
@@ -219,11 +221,11 @@
       .viewer-self {
         .viewer-name {
           &:before {
-            .translate3d(0,100%,0);
+            .translate3d(0,-100%,0);
             opacity: 0;
           }
           &:after {
-            .animation(in-fade-top @speed_slower @bezier_fadein);
+            .animation(in-fade-bottom @speed_slower @bezier_fadein);
             content: attr(data-name);
           }
         }
@@ -237,10 +239,6 @@
         .viewer-self {
           ~ .viewer {
             .translate3d(0,100%,0);
-          }
-          .icon-user {
-            .scale3d(1.5);
-            transition: @speed @speed @bezier_deform;
           }
         }
       }
@@ -260,7 +258,7 @@
         &:only-child {
           .viewer-name {
             &:after {
-              .animation(in-fade-top @speed_slower @bezier_fadein);
+              .animation(in-fade-bottom @speed_slower @bezier_fadein);
               content: attr(data-name);
             }
           }
@@ -278,9 +276,12 @@
         }
       }
       &:not(:only-child) {
+        .icon-user {
+          .animation(in-fade-bottom @speed_slow @speed backwards);
+        }
         .viewer-name {
           &:after {
-            .animation(in-fade-top @speed_slower @bezier_fadein);
+            .animation(in-fade-bottom @speed_slower @bezier_fadein);
             content: attr(data-name);
           }
         }
@@ -299,7 +300,6 @@
 }
 .viewer-self {
   .icon-user {
-    .animation(viewer @speed_slower backwards);
     transition: @speed @now @bezier_deform;
     path {
       stroke: fade(@white,50);
