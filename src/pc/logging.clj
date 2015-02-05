@@ -11,7 +11,8 @@
            (org.apache.log4j.rolling TimeBasedRollingPolicy
                                      RollingFileAppender)))
 
-(def layout (EnhancedPatternLayout. "%d{MMM d HH:mm:ssZ} %p %c %m%n"))
+(defn layout []
+  (EnhancedPatternLayout. "%d{MMM d HH:mm:ssZ} %p %c %m%n"))
 
 (defn init []
   (let [rolling-policy (doto (TimeBasedRollingPolicy.)
@@ -20,12 +21,12 @@
                          (.activateOptions))
         log-appender (doto (RollingFileAppender.)
                        (.setRollingPolicy rolling-policy)
-                       (.setLayout layout)
+                       (.setLayout (layout))
                        (.activateOptions))
         root-logger (Logger/getRootLogger)]
 
     (.removeAllAppenders root-logger)
     (.addAppender root-logger log-appender)
-    (.addAppender root-logger (ConsoleAppender. layout))
+    (.addAppender root-logger (ConsoleAppender. (layout)))
     (.setLevel root-logger Level/INFO)
     (.setLevel (Logger/getLogger "com.amazonaws") Level/WARN)))

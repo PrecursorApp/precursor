@@ -29,7 +29,7 @@
        " --source-map-basepath=" output-dir
        " --source-map-less-inline"))
 
-(def watch-opts-cdm
+(defn watch-opts-cdm []
   (into-array WatchEvent$Kind [StandardWatchEventKinds/ENTRY_CREATE
                                StandardWatchEventKinds/ENTRY_DELETE
                                StandardWatchEventKinds/ENTRY_MODIFY]))
@@ -73,8 +73,9 @@
     (.register ^Path (->path d) watcher watch-opts (into-array [SensitivityWatchEventModifier/HIGH]))))
 
 (defn watch-files [dir callback-fn]
-  (let [^WatchService watcher (.newWatchService (FileSystems/getDefault))]
-    (register-watcher dir watcher watch-opts-cdm)
+  (let [^WatchService watcher (.newWatchService (FileSystems/getDefault))
+        watch-opts (watch-opts-cdm)]
+    (register-watcher dir watcher watch-opts)
     (future
       (try
         (loop []
@@ -83,7 +84,7 @@
             (callback-fn unix-files)
             ;; Figuring out if a new directory has been added is annoying, so
             ;; we'll just walk the tree and re-register watchers again for now
-            (register-watcher dir watcher watch-opts-cdm)
+            (register-watcher dir watcher watch-opts)
             (.pollEvents key)
             (.reset key)
             (recur)))
