@@ -114,7 +114,9 @@
                                 ;; add one for the dummy message
                                 (inc unread-chat-count))]
         (html
-          [:a.chat-toggle {:class "hud-excess"
+          [:a.chat-toggle {:class (concat
+                                    ["hud-excess"]
+                                    (when-not chat-opened? ["open"]))
                            :on-click #(cast! :chat-toggled)
                            :role "button"
                            :data-left (when-not chat-button-learned?
