@@ -113,6 +113,9 @@
   .mq_640({
     width: @tile * 5;
   });
+  .make {
+    .animation_cascade(25);
+  }
 }
 .menu-view {
   .flex(0,0,100%);
@@ -130,7 +133,7 @@
   }
   &:last-child {
     &:only-child {
-      .menu-item {
+      .make {
         .animation-name(in-fade-left);
         .animation-duration(@speed_slow);
         .animation-fill-mode(both);
@@ -139,7 +142,7 @@
   }
   &:not(:only-child) {
     &:not(:first-child) {
-      .menu-item {
+      .make {
         .animation-name(in-fade-right);
         .animation-duration(@speed_slow);
         .animation-fill-mode(both);
@@ -174,28 +177,25 @@
     min-width: 100vw;
   });
 }
-.menu-item {
-  .animation_cascade(25);
-  &[role="button"] {
-    .flexy(center);
-    width: 100%;
-    color: @gray;
-    transition+: color @speed_fast @bezier_fadein;
-    transition+: height @speed_fast @bezier_fadein;
-    overflow: hidden;
-    &:hover {
-      color: @black;
-      transition-duration: @speed_fast, @now;
-    }
-    &.push-down {
-      margin-top: auto;
-    }
-    i {
-      padding: @menu_padding;
-    }
-    path {
-      transition: @speed_fast @bezier_fadein;
-    }
+.vein {
+  .flexy(center);
+  width: 100%;
+  color: @gray;
+  transition+: color @speed_fast @bezier_fadein;
+  transition+: height @speed_fast @bezier_fadein;
+  overflow: hidden;
+  &:hover {
+    color: @black;
+    transition-duration: @speed_fast, @now;
+  }
+  &.push-down {
+    margin-top: auto;
+  }
+  i {
+    padding: @menu_padding;
+  }
+  path {
+    transition: @speed_fast @bezier_fadein;
   }
 }
 .menu-invite-form {

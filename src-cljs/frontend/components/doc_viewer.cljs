@@ -22,20 +22,24 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.menu-view {:class (str "menu-prompt-" "username")}
+         [:div.menu-view
+          {:class (str "menu-prompt-" "username")}
           [:article
-           [:h2.menu-item "Remember that one idea?"]
-           [:p.menu-item "Neither do we—well, not yet at least.
-               Sign up and we'll remember your ideas for you.
-               Never lose a great idea again!"]
-           [:a.menu-button.menu-item {:href (auth/auth-url)
-                            :role "button"
-                            :on-click #(do
-                                         (.preventDefault %)
-                                         (cast! :track-external-link-clicked
-                                                {:path (auth/auth-url)
-                                                 :event "Signup Clicked"
-                                                 :properties {:source "your-docs-overlay"}}))}
+           [:h2.make
+            "Remember that one idea?"]
+           [:p.make
+            "Neither do we—well, not yet at least.
+            Sign up and we'll remember your ideas for you.
+            Never lose a great idea again!"]
+           [:a.menu-button.make
+            {:href (auth/auth-url)
+             :role "button"
+             :on-click #(do
+                          (.preventDefault %)
+                          (cast! :track-external-link-clicked
+                                 {:path (auth/auth-url)
+                                  :event "Signup Clicked"
+                                  :properties {:source "your-docs-overlay"}}))}
             "Sign Up"]]])))))
 
 (defn docs-list [docs owner]
@@ -48,18 +52,25 @@
               (reverse (sort-by #(:last-updated-instant (first (last %)))
                                 (group-by #(date->bucket (:last-updated-instant %)) docs)))]
           (list*
-           (html [:div.recent-time-group.menu-item
-                  [:h2 time-bucket]])
+           (html [:div.recent-time-group.make
+                  [:h2
+                   time-bucket]])
 
            (for [doc bucket-docs]
              (html
-              [:div.recent-doc.menu-item
-               [:a.recent-doc-thumb {:href (str "/document/" (:db/id doc))}
-                [:img {:src (str "/document/" (:db/id doc) ".svg")}]
+              [:div.recent-doc.make
+               [:a.recent-doc-thumb
+                {:href (str "/document/" (:db/id doc))}
+                [:img
+                 {:src (str "/document/" (:db/id doc) ".svg")}]
                 [:img.loading-image]
-                [:i.loading-ellipses [:i "."] [:i "."] [:i "."]]]
+                [:i.loading-ellipses
+                 [:i "."]
+                 [:i "."]
+                 [:i "."]]]
                [:div.recent-doc-title
-                [:a {:href (str "/document/" (:db/id doc))}
+                [:a
+                 {:href (str "/document/" (:db/id doc))}
                  (str (:db/id doc))]]]))))]))))
 
 (defn dummy-docs [current-doc-id doc-count]
@@ -85,8 +96,8 @@
                        (reverse)
                        (take 100)))]
         (html
-         [:div.menu-view {:class (when (nil? touched-docs)
-                                              "loading")}
+         [:div.menu-view
+          {:class (when (nil? touched-docs)"loading")}
           [:article
            (if (seq docs)
              (om/build docs-list docs))]])))))

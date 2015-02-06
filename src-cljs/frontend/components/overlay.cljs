@@ -30,23 +30,36 @@
             login-button-learned? (get-in app state/login-button-learned-path)]
         (html
          (if (:cust app)
-           [:form.menu-item.push-down {:method "post" :action "/logout" :ref "logout-form" :role "button"}
-            [:input {:type "hidden" :name "__anti-forgery-token" :value (utils/csrf-token)}]
-            [:input {:type "hidden" :name "redirect-to" :value (-> (.-location js/window)
-                                                                   (.-href)
-                                                                   (url/url)
-                                                                   :path)}]
-            [:a.menu-item {:on-click #(.submit (om/get-node owner "logout-form"))
-                           :role "button"}
+           [:form.vein.make.push-down
+            {:method "post"
+             :action "/logout"
+             :ref "logout-form"
+             :role "button"}
+            [:input
+             {:type "hidden"
+              :name "__anti-forgery-token"
+              :value (utils/csrf-token)}]
+            [:input
+             {:type "hidden"
+              :name "redirect-to"
+              :value (-> (.-location js/window)
+                         (.-href)
+                         (url/url)
+                         :path)}]
+            [:a.vein.make
+             {:on-click #(.submit (om/get-node owner "logout-form"))
+              :role "button"}
              (common/icon :logout)
              [:span "Log out"]]]
-           [:a.menu-item.push-down  {:href (auth/auth-url)
-                           :role "button"
-                           :on-click #(do
-                                        (.preventDefault %)
-                                        (cast! :login-button-clicked)
-                                        (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                             :event "Signup Clicked"}))}
+
+           [:a.vein.make.push-down
+            {:href (auth/auth-url)
+             :role "button"
+             :on-click #(do
+                          (.preventDefault %)
+                          (cast! :login-button-clicked)
+                          (cast! :track-external-link-clicked {:path (auth/auth-url)
+                                                               :event "Signup Clicked"}))}
             (common/icon :login)
             [:span "Log in"]]))))))
 
@@ -71,41 +84,48 @@
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:div.menu-view
-          [:a.menu-item {:on-click #(cast! :overlay-info-toggled)
-                         :role "button"}
+          [:a.vein.make
+           {:on-click #(cast! :overlay-info-toggled)
+            :role "button"}
            (common/icon :info)
            [:span "About"]]
-          [:a.menu-item {:on-click #(cast! :newdoc-button-clicked)
-                         :href "/"
-                         :target "_self"
-                         :role "button"}
+          [:a.vein.make
+           {:on-click #(cast! :newdoc-button-clicked)
+            :href "/"
+            :target "_self"
+            :role "button"}
            (common/icon :newdoc)
            [:span "New Document"]]
-          [:a.menu-item {:on-click #(cast! :your-docs-opened)
-                         :role "button"}
+          [:a.vein.make
+           {:on-click #(cast! :your-docs-opened)
+            :role "button"}
            (common/icon :clock)
            [:span "Your Documents"]]
           ;; TODO: should this use the permissions model? Would have to send some
           ;;       info about the document
           (if (auth/has-document-access? app (:document/id app))
-            [:a.menu-item {:on-click #(cast! :sharing-menu-opened)
-                           :role "button"}
+            [:a.vein.make
+             {:on-click #(cast! :sharing-menu-opened)
+              :role "button"}
              (common/icon :users)
              [:span "Sharing"]]
 
-            [:a.menu-item {:on-click #(cast! :document-permissions-opened)
-                           :role "button"}
+            [:a.vein.make
+             {:on-click #(cast! :document-permissions-opened)
+              :role "button"}
              (common/icon :users)
              [:span "Request Access"]])
 
-          [:a.menu-item {:on-click #(cast! :shortcuts-menu-opened)
-                         :class "mobile-hidden"
-                         :role "button"}
+          [:a.vein.make
+           {:on-click #(cast! :shortcuts-menu-opened)
+            :class "mobile-hidden"
+            :role "button"}
            (common/icon :command)
            [:span "Shortcuts"]]
-          [:a.menu-item {:href "/blog"
-                         :target "_blank"
-                         :role "button"}
+          [:a.vein.make
+           {:href "/blog"
+            :target "_blank"
+            :role "button"}
            (common/icon :blog)
            [:span "Blog"]]
           (om/build auth-link app)])))))
@@ -134,25 +154,32 @@
   [entity cast!]
   [:div.access-card
    [:div.access-avatar
-    [:img {:src (utils/gravatar-url (:permission/cust entity))}]]
+    [:img
+     {:src (utils/gravatar-url (:permission/cust entity))}]]
    [:div.access-details
-    [:span {:title (:permission/cust entity)} (:permission/cust entity)]
-    [:span.access-status (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]])
+    [:span
+     {:title (:permission/cust entity)} (:permission/cust entity)]
+    [:span.access-status
+     (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]])
 
 (defmethod render-access-entity :access-grant
   [entity cast!]
   [:div.access-card
    [:div.access-avatar
-    [:img {:src (utils/gravatar-url (:access-grant/email entity))}]]
+    [:img
+     {:src (utils/gravatar-url (:access-grant/email entity))}]]
    [:div.access-details
-    [:span {:title (:access-grant/email entity)} (:access-grant/email entity)]
-    [:span.access-status (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]])
+    [:span
+     {:title (:access-grant/email entity)} (:access-grant/email entity)]
+    [:span.access-status
+     (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]])
 
 (defmethod render-access-entity :access-request
   [entity cast!]
-  [:div.access-card {:class (if (= :access-request.status/denied (:access-request/status entity))
-                              "denied"
-                              "requesting")}
+  [:div.access-card
+   {:class (if (= :access-request.status/denied (:access-request/status entity))
+             "denied"
+             "requesting")}
    [:div.access-avatar
     [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
    [:div.access-details
@@ -163,17 +190,19 @@
        (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
    [:div.access-options
     (when-not (= :access-request.status/denied (:access-request/status entity))
-      [:a.access-option {:role "button"
-                         :class "negative"
-                         :title "Decline"
-                         :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
-                                                                   :doc-id (:access-request/document entity)})}
+      [:a.access-option
+       {:role "button"
+        :class "negative"
+        :title "Decline"
+        :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
+                                                  :doc-id (:access-request/document entity)})}
        (common/icon :times)])
-    [:a.access-option {:role "button"
-                       :class "positive"
-                       :title "Approve"
-                       :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
-                                                                  :doc-id (:access-request/document entity)})}
+    [:a.access-option
+     {:role "button"
+      :class "positive"
+      :title "Approve"
+      :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
+                                                 :doc-id (:access-request/document entity)})}
      (common/icon :check)]]])
 
 (defn private-sharing [app owner]
@@ -195,7 +224,6 @@
     om/IWillUnmount
     (will-unmount [_]
       (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
-
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -208,24 +236,30 @@
         (html
          [:div ; TODO make this a list, or at least get rid of div somehow
           [:article
-           [:h2.menu-item
-            [:span "This document is "]
-            [:span.privacy-private-word "private."]]
-           [:p.menu-item "It's only visible to users with access."
+           [:h2.make
+            [:span
+             "This document is "]
+            [:span.privacy-private-word
+             "private."]]
+           [:p.make
+            "It's only visible to users with access."
             " Email a teammate and notify them to request access."]
-           [:form.menu-invite-form.menu-item {:on-submit #(do (cast! :permission-grant-submitted)
-                                                    false)
-                                    :on-key-down #(when (= "Enter" (.-key %))
-                                                    (cast! :permission-grant-submitted)
-                                                    false)}
-            [:input {:type "text"
-                     :required "true"
-                     :data-adaptive ""
-                     :value (or permission-grant-email "")
-                     :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
-            [:label {:data-placeholder "Teammate's email"
-                     :data-placeholder-nil "What's your teammate's email?"
-                     :data-placeholder-forgot "Don't forget to submit!"}]]]
+           [:form.menu-invite-form.make
+            {:on-submit #(do (cast! :permission-grant-submitted)
+                           false)
+             :on-key-down #(when (= "Enter" (.-key %))
+                             (cast! :permission-grant-submitted)
+                             false)}
+            [:input
+             {:type "text"
+              :required "true"
+              :data-adaptive ""
+              :value (or permission-grant-email "")
+              :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
+            [:label
+             {:data-placeholder "Teammate's email"
+              :data-placeholder-nil "What's your teammate's email?"
+              :data-placeholder-forgot "Don't forget to submit!"}]]]
 
           [:div.access-list
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
@@ -239,35 +273,42 @@
             invite-email (get-in app state/invite-email-path)]
         (html
           [:article
-           [:h2.menu-item
-            [:span "This document is "]
-            [:span.privacy-public-word "public."]]
-           [:p.menu-item "It's visible to anyone with the url.
-                         Email a friend to invite them to collaborate."]
+           [:h2.make
+            [:span
+             "This document is "]
+            [:span.privacy-public-word
+             "public."]]
+           [:p.make
+            "It's visible to anyone with the url.
+            Email a friend to invite them to collaborate."]
            (if-not (:cust app)
-             [:a.menu-item {:href (auth/auth-url)
-                              :on-click #(do
-                                           (.preventDefault %)
-                                           (cast! :track-external-link-clicked
-                                                  {:path (auth/auth-url)
-                                                   :event "Signup Clicked"
-                                                   :properties {:source "username-overlay"}}))
-                              :role "button"}
+             [:a.make
+              {:href (auth/auth-url)
+               :role "button"
+               :on-click #(do
+                            (.preventDefault %)
+                            (cast! :track-external-link-clicked
+                                   {:path (auth/auth-url)
+                                    :event "Signup Clicked"
+                                    :properties {:source "username-overlay"}}))}
               "Sign Up"]
 
-             [:form.menu-invite-form.menu-item {:on-submit #(do (cast! :invite-submitted)
-                                                      false)
-                                      :on-key-down #(when (= "Enter" (.-key %))
-                                                      (cast! :email-invite-submitted)
-                                                      false)}
-              [:input {:type "text"
-                       :required "true"
-                       :data-adaptive ""
-                       :value (or invite-email "")
-                       :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
-              [:label {:data-placeholder "Collaborator's email"
-                       :data-placeholder-nil "What's your collaborator's email?"
-                       :data-placeholder-forgot "Don't forget to submit!"}]])
+             [:form.menu-invite-form.make
+              {:on-submit #(do (cast! :invite-submitted)
+                             false)
+               :on-key-down #(when (= "Enter" (.-key %))
+                               (cast! :email-invite-submitted)
+                               false)}
+              [:input
+               {:type "text"
+                :required "true"
+                :data-adaptive ""
+                :value (or invite-email "")
+                :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+              [:label
+               {:data-placeholder "Collaborator's email"
+                :data-placeholder-nil "What's your collaborator's email?"
+                :data-placeholder-forgot "Don't forget to submit!"}]])
            (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
              [:div response])
            ;; TODO: keep track of invites
@@ -305,26 +346,32 @@
                      (auth/owner? @db doc {:cust/uuid (get-in app [:cust :uuid])}))
             [:div.menu-foot
              [:form.privacy-select
-              [:input.privacy-radio {:type "radio"
-                                     :hidden "true"
-                                     :id "privacy-public"
-                                     :name "privacy"
-                                     :checked (not private?)
-                                     :onChange #(cast! :document-privacy-changed
-                                                       {:doc-id doc-id
-                                                        :setting :document.privacy/public})}]
-              [:label.privacy-label {:for "privacy-public" :role "button"}
+              [:input.privacy-radio
+               {:type "radio"
+                :hidden "true"
+                :id "privacy-public"
+                :name "privacy"
+                :checked (not private?)
+                :onChange #(cast! :document-privacy-changed
+                                  {:doc-id doc-id
+                                   :setting :document.privacy/public})}]
+              [:label.privacy-label
+               {:for "privacy-public"
+                :role "button"}
                (common/icon :globe)
                [:span "Public"]]
-              [:input.privacy-radio {:type "radio"
-                                     :hidden "true"
-                                     :id "privacy-private"
-                                     :name "privacy"
-                                     :checked private?
-                                     :onChange #(cast! :document-privacy-changed
-                                                       {:doc-id doc-id
-                                                        :setting :document.privacy/private})}]
-              [:label.privacy-label {:for "privacy-private" :role "button"}
+              [:input.privacy-radio
+               {:type "radio"
+                :hidden "true"
+                :id "privacy-private"
+                :name "privacy"
+                :checked private?
+                :onChange #(cast! :document-privacy-changed
+                                  {:doc-id doc-id
+                                   :setting :document.privacy/private})}]
+              [:label.privacy-label
+               {:for "privacy-private"
+                :role "button"}
                (common/icon :lock)
                [:span "Private"]]]])])))))
 
@@ -336,35 +383,43 @@
         (html
           [:div.menu-view
            [:article
-            [:h2.menu-item "What is Precursor?"]
-            [:p.menu-item "Precursor is a no-nonsense prototyping tool.
-                Use it for wireframing, sketching, and brainstorming.
-                Invite your team to collaborate instantly.
-                Have feedback or a great idea?
-                Say "
-                [:a {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
-                     :title "We love feedback, good or bad."}
-                 "hi@prcrsr.com"]
-                " or on "
-                [:a {:href "https://twitter.com/prcrsr_app"
-                     :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-                     :title "@prcrsr_app"
-                     :target "_blank"}
-                 "Twitter"]
-                "."]
+            [:h2.make
+             "What is Precursor?"]
+            [:p.make
+             "Precursor is a no-nonsense prototyping tool.
+             Use it for wireframing, sketching, and brainstorming.
+             Invite your team to collaborate instantly.
+             Have feedback or a great idea?
+             Say "
+             [:a
+              {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
+               :title "We love feedback, good or bad."}
+              "hi@prcrsr.com"]
+             " or on "
+             [:a
+              {:href "https://twitter.com/prcrsr_app"
+               :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+               :title "@prcrsr_app"
+               :target "_blank"}
+              "Twitter"]
+             "."]
             (if (:cust app)
-              [:a.menu-item {:on-click #(cast! :overlay-menu-closed) :role "button"} "Okay"]
+              [:a.make
+               {:on-click #(cast! :overlay-menu-closed)
+                :role "button"} "Okay"]
               (list
-                [:p.menu-item "Sign up and we'll even keep track of all your docs.
-                              Never lose a great idea again!"]
-                [:a.menu-item {:href (auth/auth-url)
-                                 :on-click #(do
-                                              (.preventDefault %)
-                                              (cast! :track-external-link-clicked
-                                                     {:path (auth/auth-url)
-                                                      :event "Signup Clicked"
-                                                      :properties {:source "username-overlay"}}))
-                                 :role "button"}
+                [:p.make
+                 "Sign up and we'll even keep track of all your docs.
+                 Never lose a great idea again!"]
+                [:a.make
+                 {:href (auth/auth-url)
+                  :role "button"
+                  :on-click #(do
+                               (.preventDefault %)
+                               (cast! :track-external-link-clicked
+                                      {:path (auth/auth-url)
+                                       :event "Signup Clicked"
+                                       :properties {:source "username-overlay"}}))}
                  "Sign Up"]))]
            (common/mixpanel-badge)])))))
 
@@ -382,13 +437,13 @@
              ;;
              ;; keystrokes beginning with "option"
              ;;
-             [:tr.menu-item
+             [:tr.make
               [:td
                [:div.shortcuts-keys
                 [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
               [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td
                [:div.shortcuts-keys
                 [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
@@ -397,40 +452,40 @@
              ;;
              ;; keystrokes beginning with "shift"
              ;;
-             [:tr.menu-item
+             [:tr.make
               [:td {:col-span "2"}]]
-             [:tr.menu-item
+             [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
                 [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
               [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
               [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
              ;;
              ;; keystrokes beginning with "command"
              ;;
-             [:tr.menu-item
+             [:tr.make
               [:td {:col-span "2"}]]
              (when (om/get-state owner [:copy-paste-works?])
                (list
-                [:tr.menu-item
+                [:tr.make
                  [:td
                   [:div.shortcuts-keys
                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
                    [:div.shortcuts-key {:title "C Key"} "C"]]]
                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
-                [:tr.menu-item
+                [:tr.make
                  [:td
                   [:div.shortcuts-keys
                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
                    [:div.shortcuts-key {:title "V Key"} "V"]]]
                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]))
-             [:tr.menu-item
+             [:tr.make
               [:td
                [:div.shortcuts-keys
                 [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
@@ -439,39 +494,39 @@
              ;;
              ;; single keystrokes
              ;;
-             [:tr.menu-item
+             [:tr.make
               [:td {:col-span "2"}]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "V Key"} "V"]]
               [:td [:div.shortcuts-result {:title "Switch to Select Tool."} "Select"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "M Key"} "M"]]
               [:td [:div.shortcuts-result {:title "Switch to Rectangle Tool."} "Rectangle"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "L Key"} "L"]]
               [:td [:div.shortcuts-result {:title "Switch to Circle Tool."} "Circle"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "Backslash Key"} "\\"]]
               [:td [:div.shortcuts-result {:title "Switch to Line Tool."} "Line"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "N Key"} "N"]]
               [:td [:div.shortcuts-result {:title "Switch to Pen Tool."} "Pen"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "T Key"} "T"]]
               [:td [:div.shortcuts-result {:title "Switch to Text Tool."} "Text"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "1 Key"} "1"]]
               [:td [:div.shortcuts-result {:title "Initial view when entering doc."} "Origin"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "2 Key"} "2"]]
               [:td [:div.shortcuts-result {:title "Return to previous view after jumping to origin."} "Return"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "? Key"} "?"]]
               [:td [:div.shortcuts-result {:title "Hold shift, press \"/\"."} "Shortcuts"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "Delete Key"} (common/icon :delete)]]
               [:td [:div.shortcuts-result {:title "Delete selected shape(s)."} "Delete"]]]
-             [:tr.menu-item
+             [:tr.make
               [:td [:div.shortcuts-key {:title "Escape Key"} (common/icon :esc)]]
               [:td [:div.shortcuts-result {:title "Cancel action or close menu."} "Cancel"]]]
              ]]]])))))
@@ -484,17 +539,20 @@
         (html
          [:div.menu-view
           [:article
-           [:h2.menu-item "Let's change that name."]
-           [:p.menu-item "Sign up to change how your name appears in chat.
-               Let your team know who you are while you collaborate together."]
-           [:a.menu-item {:href (auth/auth-url)
-                          :on-click #(do
-                                       (.preventDefault %)
-                                       (cast! :track-external-link-clicked
-                                              {:path (auth/auth-url)
-                                               :event "Signup Clicked"
-                                               :properties {:source "username-overlay"}}))
-                          :role "button"}
+           [:h2.make
+            "Let's change that name."]
+           [:p.make
+            "Sign up to change how your name appears in chat.
+            Let your team know who you are while you collaborate together."]
+           [:a.make
+            {:href (auth/auth-url)
+             :role "button"
+             :on-click #(do
+                          (.preventDefault %)
+                          (cast! :track-external-link-clicked
+                                 {:path (auth/auth-url)
+                                  :event "Signup Clicked"
+                                  :properties {:source "username-overlay"}}))}
             "Sign Up"]]])))))
 
 (def overlay-components
@@ -523,7 +581,9 @@
          [:div.app-overlay
           [:div.menu-header
            (for [component overlay-components]
-            [:h4 {:title title} (:title component)])]
+            [:h4
+             {:title title}
+             (:title component)])]
           [:div.menu-body
            (for [component overlay-components]
             (om/build (:component component) app))]])))))
