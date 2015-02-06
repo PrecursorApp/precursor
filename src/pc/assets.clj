@@ -170,7 +170,7 @@
                                    :key key
                                    :input-stream (java.io.ByteArrayInputStream. gzipped-bytes)
                                    :metadata {:content-type (mime-type-of file)
-                                              :content-md5 tag
+                                              :content-md5 (md5/hex->base64 tag)
                                               :content-encoding "gzip"
                                               :content-length (count gzipped-bytes)
                                               :cache-control "max-age=3155692"})]
@@ -205,7 +205,7 @@
                                             :input-stream (java.io.ByteArrayInputStream. gzipped-bytes)
                                             :metadata {:content-type (mime-type-of file-path)
                                                        :content-length (count gzipped-bytes)
-                                                       :content-md5 (md5/byte-array->md5 gzipped-bytes)
+                                                       :content-md5 (md5/hex->base64 (md5/byte-array->md5 gzipped-bytes))
                                                        :content-encoding "gzip"
                                                        :cache-control "max-age=3155692"})
                              (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))
