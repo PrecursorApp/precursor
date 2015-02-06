@@ -12,8 +12,10 @@
 (defn read-doc [doc]
   (edn/read (PushbackReader. (io/reader (io/resource (format "docs/%s.edn" doc))))))
 
-(def docs
+(defn docs* []
   {"interactive-demo" (read-doc "interactive-demo")})
+
+(def docs (memoize docs*))
 
 (defn duplicate-doc [document-name cust]
   (let [doc (doc-model/create-public-doc! (merge {:document/name (str "Copy of " document-name)

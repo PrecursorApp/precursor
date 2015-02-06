@@ -8,9 +8,9 @@
     6005))
 
 ;; see cider.nrepl/cider-nrepl-handler
-(def cider-middleware (map resolve cider.nrepl/cider-middleware))
+(defn cider-middleware [] (map resolve cider.nrepl/cider-middleware))
 
 (defn init []
   (let [port (port)]
     (println "Starting nrepl on port" port)
-    (def server (start-server :port port :handler (apply default-handler cider-middleware)))))
+    (def server (start-server :port port :handler (apply default-handler (cider-middleware))))))
