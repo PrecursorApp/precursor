@@ -121,10 +121,10 @@
     .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
   }
   path {
-    transition+: opacity @speed @bezier_fadein;
-    transition+: stroke @speed_fast @bezier_fadein;
-    transition+: -webkit-transform @speed_slow @bezier_deform;
-    transition+:         transform @speed_slow @bezier_deform;
+    transition+: opacity @speed @now @bezier_fadein;
+    transition+: stroke @speed_fast @speed_fast @bezier_fadein;
+    transition+: -webkit-transform @speed_slow @now @bezier_deform;
+    transition+:         transform @speed_slow @now @bezier_deform;
   }
 }
 .chat-toggle {
