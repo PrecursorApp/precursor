@@ -15,7 +15,7 @@
    :chat-button-learned false
    :login-button-learned false})
 
-(def prcrsr-subscriber-bot
+(def subscriber-bot
   {"prcrsr-subscriber-bot" {:color "#00b233"
                             :cust-name "prcrsr"
                             :show-mouse? true
@@ -48,7 +48,7 @@
    :instrumentation []
    :entity-ids      #{}
    :document/id     nil
-   :subscribers     prcrsr-subscriber-bot
+   :subscribers     subscriber-bot
    :inputs          nil})
 
 (def user-path [:current-user])

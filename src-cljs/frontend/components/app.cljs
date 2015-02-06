@@ -12,6 +12,7 @@
             [frontend.components.key-queue :as keyq]
             [frontend.components.canvas :as canvas]
             [frontend.components.common :as common]
+            [frontend.components.drawing :as drawing]
             [frontend.components.overlay :as overlay]
             [frontend.favicon :as favicon]
             [frontend.overlay :refer [overlay-visible?]]
@@ -48,6 +49,7 @@
     (render [_]
       (if (:navigation-point app)
         (dom/div #js {:id "app" :className "app"}
+          (om/build drawing/signup-button {})
           (om/build overlay/main-menu-button (select-in app [state/overlays-path state/main-menu-learned-path]))
           (when (overlay-visible? app)
             (om/build overlay/overlay app))
