@@ -97,7 +97,8 @@
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
-                   (when-let [chat-datoms (seq (filter #(= :chat/body (:a %)) (:tx-data tx-report)))]
+                   (when-let [chat-datoms (seq (filter #(or (= :chat/body (:a %))
+                                                            (= :document/chat-bot (:a %))) (:tx-data tx-report)))]
                      (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
@@ -108,11 +109,12 @@
             chat-opened? (get-in app state/chat-opened-path)
             chat-button-learned? (get-in app state/chat-button-learned-path)
             last-read-time (get-in app (state/last-read-chat-time-path (:document/id app)))
+            dummy-chat? (seq (d/datoms @db :aevt :document/chat-bot))
             unread-chat-count (chat-model/compute-unread-chat-count @db last-read-time)
             unread-chat-count (if last-read-time
                                 unread-chat-count
                                 ;; add one for the dummy message
-                                (inc unread-chat-count))]
+                                (+ (if dummy-chat? 1 0) unread-chat-count))]
         (html
           [:a.chat-toggle {:class (concat
                                     ["hud-excess"]
@@ -254,6 +256,4 @@
           (when (and (not right-click-learned?) (:mouse app))
             (om/build radial-hint app))
           (when (get-in app [:menu :open?])
-            (om/build radial-menu app))
-          ])))))
-
+            (om/build radial-menu app))])))))

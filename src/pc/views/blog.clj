@@ -1,5 +1,7 @@
 (ns pc.views.blog
   (:require [hiccup.core :refer [html]]
+            [clj-time.core :as time]
+            [clj-time.format]
             [pc.profile :as profile]
             [pc.views.content]
             [pc.util.http :as http-util]))
@@ -24,15 +26,32 @@
 (defn post-url [slug]
   (str "/blog/" slug))
 
+(defn display-in-overview? [{:keys [display-in-overview scheduled-time] :as slug-map}]
+  (and display-in-overview
+       (or (not scheduled-time)
+           (time/after? (time/now) scheduled-time))))
+
 (def slugs
   "Sorted array of slugs, assumes the post content can be found in the
-   function returned by post-fn"
-  [{:slug "private-docs-early-access"
+   function returned by post-fn
+   Add a :scheduled-time key to prevent the post from showing up in the
+   overview until after the scheduled time. Posts will still be accessible
+   to anyone with the direct URL. Time should be in the format Fri, 30 Jan 2015 01:12:00 -0800
+   Be careful for daylight savings time!"
+  [
+   {:slug "blue-ocean-made-of-ink"
+    :display-in-overview true
+    :scheduled-time (clj-time.format/parse "Fri, 30 Jan 2015 04:59:00 -0800")}
+   {:slug "private-docs-early-access"
     :display-in-overview false}
    {:slug "product-hunt-wake-up-call"
     :display-in-overview true}
    {:slug "interactive-layers"
     :display-in-overview true}
+   ;; scheduled time example
+   ;; {:slug "scheduled-time-example"
+   ;;  :display-in-overview true
+   ;;  :scheduled-time (clj-time.format/parse "Fri, 30 Jan 2015 01:12:00 -0800")}
    ;; "instrumenting-om-components"
    ;; "lets-replace-pen-and-paper"
    ])
@@ -73,7 +92,7 @@
   [:div.blogroll
    (blog-head)
    [:article
-    (for [slug (->> slugs (filter :display-in-overview) (map :slug))
+    (for [slug (->> slugs (filter display-in-overview?) (map :slug))
           :let [{:keys [title blurb author] :as content} ((post-fn slug))]]
       [:div.blogroll-post
        [:a.blogroll-post-title {:href (post-url slug)}

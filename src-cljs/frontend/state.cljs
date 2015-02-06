@@ -1,5 +1,20 @@
 (ns frontend.state)
 
+;; If you want a browser setting to be persisted to the backend,
+;; be sure to add it to the schema (pc.datomic.schema/shema) and
+;; add the translation to frontend.browser-settings/db-setting->app-state-setting
+(def initial-browser-settings
+  {:current-tool :pen
+   :chat-opened false
+   :chat-mobile-opened true
+   :right-click-learned false
+   :menu-button-learned false
+   :info-button-learned false
+   :newdoc-button-learned false
+   :main-menu-learned false
+   :chat-button-learned false
+   :login-button-learned false})
+
 (defn initial-state []
   {:camera          {:x          0
                      :y          0
@@ -11,16 +26,7 @@
    :error-message   nil
    :changelog       nil
    :environment     "development"
-   :settings        {:browser-settings {:current-tool :pen
-                                        :chat-opened false
-                                        :chat-mobile-opened true
-                                        :right-click-learned false
-                                        :menu-button-learned false
-                                        :info-button-learned false
-                                        :newdoc-button-learned false
-                                        :main-menu-learned false
-                                        :chat-button-learned false
-                                        :login-button-learned false}}
+   :settings        {:browser-settings initial-browser-settings}
    :keyboard-shortcuts {:select #{"v"}
                         :circle #{"l"}
                         :rect #{"m"}
@@ -106,9 +112,6 @@
 
 (defn last-read-chat-time-path [doc-id]
   (conj (doc-settings-path doc-id) :last-read-chat-time))
-
-(defn doc-chat-bot-path [doc-id]
-  (conj (doc-settings-path doc-id) :chat-bot))
 
 (def keyboard-shortcuts-path [:keyboard-shortcuts])
 

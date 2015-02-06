@@ -19,3 +19,4 @@ pom.xml.asc
 /resources/public/css/app.css.map
 /production.sh
 /datomic-free*/
+/figwheel_server.log

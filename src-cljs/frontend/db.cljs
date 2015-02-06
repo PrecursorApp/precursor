@@ -1,15 +1,18 @@
 (ns frontend.db
   (:require [datascript :as d]
             [frontend.datascript :as ds]
-            [frontend.sente :as sente]))
+            [frontend.sente :as sente]
+            [frontend.utils :as utils :include-macros true]))
 
 (def schema {:layer/child {:db/cardinality :db.cardinality/many}})
 
-(defn make-initial-db []
-  (d/create-conn schema))
+(defn make-initial-db [initial-entities]
+  (let [conn (d/create-conn schema)]
+    (d/transact! conn initial-entities)
+    conn))
 
-(defn reset-db! [db-atom]
-  (reset! db-atom @(make-initial-db))
+(defn reset-db! [db-atom initial-entities]
+  (reset! db-atom @(make-initial-db initial-entities))
   db-atom)
 
 (defn setup-listener! [db key cast! document-id undo-state sente-state]

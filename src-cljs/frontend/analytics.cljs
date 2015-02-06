@@ -6,11 +6,11 @@
 
 (defn init-user [cust]
   (utils/swallow-errors
-   (rollbar/init (:uuid cust) (:email cust)))
+   (rollbar/init (:cust/uuid cust) (:cust/email cust)))
   (utils/swallow-errors
-   (mixpanel/identify (:uuid cust))
-   (mixpanel/name-tag (:email cust))
-   (mixpanel/set-people-props {:$email (:email cust)
+   (mixpanel/identify (:cust/uuid cust))
+   (mixpanel/name-tag (:cust/email cust))
+   (mixpanel/set-people-props {:$email (:cust/email cust)
                                :$last_login (js/Date.)})))
 
 (defn track-path [path]

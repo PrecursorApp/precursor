@@ -23,6 +23,7 @@
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
             [pc.models.access-grant :as access-grant-model]
+            [pc.models.chat-bot :as chat-bot-model]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
@@ -122,11 +123,12 @@
             (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                                  :google-client-id (google-client-id)
                                  :sente-id (-> req :session :sente-id)}
+                                ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
+                                ;;       Also need a way to handle transactions before sente connects
+                                ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
+                                ;;   {:initial-entities (layer/find-by-document db doc)})
                                 (when-let [cust (-> req :auth :cust)]
-                                  {:cust {:email (:cust/email cust)
-                                          :uuid (:cust/uuid cust)
-                                          :name (:cust/name cust)
-                                          :flags (:flags cust)}})))
+                                  {:cust (cust/read-api cust)})))
             (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
               (redirect (str "/document/" (:db/id redirect-doc)))
               ;; TODO: this should be a 404...
@@ -134,7 +136,9 @@
 
    (GET "/" req
         (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-              doc (doc-model/create-public-doc! (when cust-uuid {:document/creator cust-uuid}))]
+              doc (doc-model/create-public-doc!
+                   (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                          (when cust-uuid {:document/creator cust-uuid})))]
           (redirect (str "/document/" (:db/id doc)))))
 
    ;; Group newcomers into buckets with bucket-count users in each bucket.
@@ -150,7 +154,7 @@
                                                           (< 0 (count subs) bucket-count)))
                                                    @sente/document-subs)))]
             (redirect (str "/document/" doc-id))
-            (let [doc (doc-model/create-public-doc! {})]
+            (let [doc (doc-model/create-public-doc! {:document/chat-bot (rand-nth chat-bot-model/chat-bots)})]
               (swap! bucket-doc-ids conj (:db/id doc))
               (redirect (str "/document/" (:db/id doc)))))))
 
@@ -258,7 +262,7 @@
       (try
         (log-request req resp (time/in-millis (time/interval start stop)))
         (catch Exception e
-          (rollbar/report-exception e :request req)
+          (rollbar/report-exception e :request req :user-id (get-in req [:auth :cust :cust/uuid]))
           (log/error e)))
       resp)))
 

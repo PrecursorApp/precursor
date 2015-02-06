@@ -104,11 +104,9 @@
   "Returns path of asset in CDN"
   [path]
   (-> js/window
-      (aget "renderContext")
-      (aget "assetsRoot")
-      (str (if (= \/ (first path))
-             path
-             (str "/" path)))))
+      (aget "Precursor")
+      (aget "cdn-base-url")
+      (str path)))
 
 (defn edit-input
   "Meant to be used in a react event handler, usually for the :on-change event on input.

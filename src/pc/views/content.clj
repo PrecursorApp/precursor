@@ -2,6 +2,9 @@
   (:require [cheshire.core :as json]
             [hiccup.core :as h]
             [pc.assets]
+            [pc.datomic.schema :as schema]
+            [pc.utils :as utils]
+            [pc.views.common :as common :refer (cdn-path)]
             [pc.views.scripts :as scripts]
             [pc.views.email-landing :as email-landing]
             [pc.profile :refer (prod-assets?)])
@@ -24,6 +27,16 @@
               variable-name
               id)])))
 
+(defn escape-entity [entity]
+  (reduce (fn [entity [k v]]
+            (assoc entity k (if (schema/unescaped? k)
+                              (h/h v)
+                              v)))
+          entity entity))
+
+(defn serialize-entities [entities]
+  (pr-str (mapv escape-entity entities)))
+
 (defn layout [view-data & content]
   [:html
    [:head
@@ -41,13 +54,13 @@
     [:meta {:name "format-detection"                      :content "telephone=no"}]
 
     ;; TODO make the rest of these startup images
-    [:link {:href  "/img/750x1294.png" :rel "apple-touch-startup-image" :media "(device-width: 375px) and (device-height: 667px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 2)"}]
-    [:link {:href "/img/1242x2148.png" :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 3)"}]
-    [:link {:href "/img/2208x1182.png" :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
+    [:link {:href (cdn-path "/img/750x1294.png") :rel "apple-touch-startup-image" :media "(device-width: 375px) and (device-height: 667px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 2)"}]
+    [:link {:href (cdn-path "/img/1242x2148.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 3)"}]
+    [:link {:href (cdn-path "/img/2208x1182.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
 
     [:meta {:name "og:card"         :content "summary"}]
     [:meta {:name "og:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
-    [:meta {:name "og:image"        :content "/img/precursor-logo.png"}]
+    [:meta {:name "og:image"        :content (cdn-path "/img/precursor-logo.png")}]
     [:meta {:name "og:image:width"  :content "1200"}]
     [:meta {:name "og:image:height" :content "1200"}]
     [:meta {:name "og:site_name"    :content "Precursor"}]
@@ -57,7 +70,7 @@
 
     [:meta {:name "twitter:card"         :content "summary_large_image"}]
     [:meta {:name "twitter:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
-    [:meta {:name "twitter:image:src"    :content "/img/precursor-logo.png"}]
+    [:meta {:name "twitter:image:src"    :content (cdn-path "/img/precursor-logo.png")}]
     [:meta {:name "twitter:image:width"  :content "1200"}]
     [:meta {:name "twitter:image:height" :content "1200"}]
     [:meta {:name "twitter:site"         :content "@prcrsr_app"}]
@@ -65,14 +78,18 @@
     [:meta {:name "twitter:title"        :content "Fast prototyping web app, makes collaboration easy."}]
     [:meta {:name "twitter:url"          :content "https://prcrsr.com/"}]
 
-    [:link {:rel "icon"             :href "/favicon.ico"}]
-    [:link {:rel "apple-touch-icon" :href "/img/apple-touch-icon.png"}]
+    [:link {:rel "icon"             :href (cdn-path "/favicon.ico")}]
+    [:link {:rel "apple-touch-icon" :href (cdn-path "/img/apple-touch-icon.png")}]
     [:link {:rel "stylesheet"       :href (pc.assets/asset-path "/css/app.css")}]
     [:link {:rel "stylesheet"       :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
 
     [:style "html{-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;}"] ; prevents resizing when launching from ios home screen
 
-    (embed-json-in-head "window.Precursor" (json/encode view-data))
+    (embed-json-in-head "window.Precursor"
+                        (json/encode (-> view-data
+                                       (utils/update-when-in [:initial-entities] serialize-entities)
+                                       (utils/update-when-in [:cust] #(-> % escape-entity pr-str))
+                                       (assoc :cdn-base-url (common/cdn-base-url)))))
     (when (prod-assets?)
       scripts/google-analytics)
     (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))
