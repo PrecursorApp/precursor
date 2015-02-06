@@ -6,8 +6,6 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [inflections "0.8.2"]
 
-                 [datascript "0.8.1"]
-
                  [compojure "1.3.1"]
                  [cheshire "5.4.0"]
                  [clj-time "0.6.0"]
@@ -52,6 +50,8 @@
 
                  [fs "0.11.1"]
 
+                 [datascript "0.8.1"]
+
                  [ankha "0.1.4"]
                  [org.clojure/clojurescript "0.0-2760"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
@@ -61,15 +61,19 @@
                  ;; but not Om yet)
                  ;;[om "0.6.4"]
 
-                 [com.facebook/react "0.12.2.1"] ;; include for externs
-                 [sablono "0.3.1"]
+                 [com.facebook/react "0.12.2.4"] ;; include for externs
+                 [sablono "0.3.1" :exclusions [cljsjs/react]]
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 
                  [weasel "0.5.0"] ;; repl
-                 [figwheel "0.2.2-SNAPSHOT"] ;; hate using snapshots :/
+
+                 ;; needed to make lein pedantic happy
+                 [commons-codec "1.6"]
+                 [figwheel "0.2.3-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
+                                                         commons-codec]]
 
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
@@ -80,7 +84,8 @@
 
   :plugins [[lein-cljsbuild "1.0.4"]
             [com.cemerick/austin "0.1.6"]
-            [lein-figwheel "0.2.2-SNAPSHOT"]]
+            [lein-figwheel "0.2.3-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
+                                                         commons-codec]]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]
