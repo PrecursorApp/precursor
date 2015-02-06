@@ -366,8 +366,7 @@
                                                       :properties {:source "username-overlay"}}))
                                  :role "button"}
                  "Sign Up"]))]
-           [:div.menu-foot {:class "mobile-hidden"}
-            (common/mixpanel-badge)]])))))
+           (common/mixpanel-badge)])))))
 
 (defn shortcuts [app owner]
   (reify

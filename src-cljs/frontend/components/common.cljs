@@ -206,6 +206,7 @@
 
 (defn mixpanel-badge []
   [:a.mixpanel-badge {:href "https://mixpanel.com/f/partner"
+                      :class "mobile-hidden"
                       :on-click #(.stopPropagation %)
                       :alt "Mobile Analytics"
                       :target "_blank"}

@@ -299,11 +299,10 @@
   cursor: default;
 }
 .mixpanel-badge {
-  display: block;
-  margin: auto auto 0;
-  .mq_640({
-    display: none;
-  });
+  .animation(in-fade-bottom @speed_slow);
+  position: fixed;
+  bottom: 0;
+  right: 0;
   svg {
     fill: @gray_mixpanel;
   }
