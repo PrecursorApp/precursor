@@ -9,7 +9,7 @@
   (ws-repl/connect "ws://localhost:9001" :verbose true)
   ;; the repl tries to take over *out*, workaround for
   ;; https://github.com/cemerick/austin/issues/49
-  (js/setInterval #(enable-console-print!) 1000))
+  (js/setInterval #(cljs.core/enable-console-print!) 1000))
 
 (defn setup-figwheel [{:keys [js-callback]}]
   (figwheel/start {:on-jsload js-callback
