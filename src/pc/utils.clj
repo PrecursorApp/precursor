@@ -6,20 +6,15 @@
             [slingshot.slingshot :refer (try+)]))
 
 (defmacro inspect
-    "prints the expression '<name> is <value>', and returns the value"
-    [value]
-    `(do
-       (let [value# (quote ~value)
-             result# ~value]
-         (when (= java.io.PrintWriter (type *out*))
-           (println value# "is" (with-out-str (clojure.pprint/pprint result#))))
-         (log/infof "%s is %s" value# result#)
-         result#)))
-
-(defmacro connect-browser-weasel []
+  "prints the expression '<name> is <value>', and returns the value"
+  [value]
   `(do
-     (require 'weasel.repl.websocket)
-     (cemerick.piggieback/cljs-repl :repl-env (weasel.repl.websocket/repl-env :ip "0.0.0.0" :port 9001))))
+     (let [value# (quote ~value)
+           result# ~value]
+       (when (= java.io.PrintWriter (type *out*))
+         (println value# "is" (with-out-str (clojure.pprint/pprint result#))))
+       (log/infof "%s is %s" value# result#)
+       result#)))
 
 (defn remove-map-nils [unnested-map]
   (into {} (remove (comp nil? last) unnested-map)))
