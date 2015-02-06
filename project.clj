@@ -20,7 +20,7 @@
                  [org.slf4j/slf4j-log4j12 "1.7.10" :exclusions [log4j]]
 
                  [cider/cider-nrepl "0.8.2"]
-                 [clj-http "1.0.1"]
+                 [clj-http "1.0.1" :exclusions [commons-codec]]
                  [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop
                                                                    org.slf4j/slf4j-api
                                                                    com.amazonaws/aws-java-sdk]]
