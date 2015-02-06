@@ -181,7 +181,7 @@
           ;; [:section.chat-people
           ;;  (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
           ;;    [:a.people-you {:key client-id
-          ;;                    :data-bottom (when-not (get-in app [:cust :name]) "Click to edit")
+          ;;                    :data-bottom (when-not (get-in app [:cust :cust/name]) "Click to edit")
           ;;                    :role "button"
           ;;                    :on-click #(if can-edit?
           ;;                                 (om/set-state! owner :editing-name? true)
@@ -211,7 +211,7 @@
           ;;                 ;; TODO: figure out why we need value here
           ;;                 :value new-name
           ;;                 :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
-          ;;       [:span (or (get-in app [:cust :name]) "You")])])
+          ;;       [:span (or (get-in app [:cust :cust/name]) "You")])])
           ;;  (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
           ;;        :let [id-str (or cust-name (apply str (take 6 id)))]]
           ;;    [:a {:title "Ping this person in chat."

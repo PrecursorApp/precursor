@@ -203,6 +203,5 @@
                           :sente-id (:sente-id app)
                           :client-id (:client-id app)
                           :chat-body (get-in app [:chat :body])
-                          :chat-bot (get-in app (state/doc-chat-bot-path document-id))
                           :chat-opened (get-in app state/chat-opened-path)})
-           (om/build input {:chat-body (get-in app [:chat :body])})])))))})])))))
+           (om/build input {:chat-body (get-in app [:chat :body])})])))))
