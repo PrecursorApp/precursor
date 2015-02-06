@@ -51,11 +51,17 @@
       opacity: .5;
       transition: @speed_fast @now @bezier_fadein;
     }
+    .chat-box {
+      border-top: 1px solid @gray_lighter;
+      transition: border-top @now @speed_faster @bezier_fadein;
+      &:after {
+        opacity: 0;
+        transition: @now;
+      }
+    }
     .chat-input {
       .placeholder_style(opacity; 0);
       .placeholder_style(transition; @now @now @bezier_fadein);
-      border-top: 1px solid @gray_lighter;
-      transition: border-top @now @speed_fast @bezier_fadein;
     }
   }
   ~ .app-hud {

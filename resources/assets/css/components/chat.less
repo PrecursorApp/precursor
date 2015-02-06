@@ -35,7 +35,7 @@
 }
 .chat-log {
   .scrollbar_hide();
-  padding: 1em 0;
+  padding: 1em 0 1.25em;
   overflow-y: auto;
   transition: @speed_fast @speed @bezier_fadein;
   span {
@@ -44,21 +44,40 @@
 }
 .chat-box {
   .box-sizing(content-box);
+  position: relative;
   height: @tile;
   min-height: @tile;
+  border-top: 1px solid @gray_dark;
+  transition: border-top @speed_fast @speed_fast @bezier_fadein;
+  &:after {
+    .gradient(to bottom; @app_background; fade(@app_background, 0));
+    .gradient(to bottom; @app_background; fade(@app_background, 0));
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 33%;
+    pointer-events: none;
+    transition: @speed_fast @speed;
+  }
 }
 .chat-input {
   .placeholder_style(color; @gray_dark);
   .placeholder_style(transition; @speed_fast @speed @bezier_fadein);
+  .scrollbar(width; .5em;);
+  .scrollbar_thumb(border-radius; .25em);
   width: 100%;
-  height: 100%;
+  height: 80%;
+  padding: 1.375em 1rem 0;
+  padding-right: 2.5rem; // kill this is stationary chat toggle gets killed
   background: none;
-  padding: 1.25em 1.25em 0;
   border: none;
-  border-top: 1px solid @gray_dark;
   outline: 0;
   resize: none;
-  transition+: border-top @speed_fast @speed_fast @bezier_fadein;
+  &:hover {
+    .scrollbar_thumb(background; fade(@white, 25));
+  }
   &:focus {
     .placeholder_style(color; fade(@gray_dark, 0));
     .placeholder_style(transition; @now);
