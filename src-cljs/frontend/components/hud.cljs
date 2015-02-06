@@ -248,7 +248,8 @@
           (om/build viewers app)
           (om/build menu-toggle app)
           (om/build chat-toggle app)
-          (om/build landing-toggle app)
+          ;; TODO finish this button once landing and outer are done
+          ;; (om/build landing-toggle app)
           (om/build mouse-stats app)
           ;; deciding whether to get rid of this
           ;; (when-not (:cust app)
