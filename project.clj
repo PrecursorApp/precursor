@@ -114,6 +114,7 @@
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src-cljs"
+                                       "dev-cljs"
                                        "yaks/om/src"]
                         :compiler {:output-to "resources/public/cljs/out/frontend-dev.js"
                                    :output-dir "resources/public/cljs/out"
