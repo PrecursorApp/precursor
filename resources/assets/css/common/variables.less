@@ -35,6 +35,9 @@
 @color_select: @blue;
 @color_select_hover: lighten(@color_select, 13);
 
+@dye_inner: @gray_darker;
+@dye_outer: @white;
+
 // Animation
 
 @now: 0.0ms;
@@ -54,20 +57,15 @@
 @tile_xl: pow(@tile, 2);
 @tile_xxl: pow(@tile, 3);
 
+@tile_menu_min: @tile_xl;
+@tile_menu: 20vw;
+@tile_menu_max: @tile_xl * 1.5;
 
-@tile_chat: @tile_xl;
-@radial_menu_size: @tile_chat;
-
-@menu_width_min: @tile_xl;
-@menu_width: 20vw;
-@menu_width_max: @tile_xl * 1.5;
+@tile_radial: @tile_menu_min;
+@tile_content: @tile_xxl;
 
 @tooltip_color: @gray_dark;
-@tile_content: @tile_xxl;
 @menu_padding: 1.5rem;
-
-@dye_inner: @gray_darker;
-@dye_outer: @white;
 
 // z-index index
 

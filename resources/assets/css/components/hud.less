@@ -33,13 +33,13 @@
 }
 .radial-menu {
   position: fixed;
-  width: @radial_menu_size;
-  height: @radial_menu_size;
+  width: @tile_radial;
+  height: @tile_radial;
   z-index: @zindex_radial_menu;
 }
 .radial-buttons {
-  width: @radial_menu_size + 2;
-  height: @radial_menu_size + 2;
+  width: @tile_radial + 2;
+  height: @tile_radial + 2;
   margin-left: -1em;
   margin-top: -1em;
   padding: 1rem;
@@ -222,8 +222,8 @@
   color: @white;
   bottom: 0;
   left: 0;
-  min-width: @menu_width_min;
-  max-width: @menu_width_max;
+  min-width: @tile_menu_min;
+  max-width: @tile_menu_max;
   max-height: @max_height;
   padding: 1em 1.5em;
   transition+: all @speed;
