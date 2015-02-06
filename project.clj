@@ -6,20 +6,21 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [inflections "0.8.2"]
 
-                 [datascript "0.7.1"]
+                 [datascript "0.8.1"]
 
                  [compojure "1.3.1"]
                  [cheshire "5.4.0"]
                  [clj-time "0.6.0"]
-                 [org.clojure/tools.nrepl "0.2.3"]
+                 [org.clojure/tools.nrepl "0.2.7"]
                  [javax.servlet/servlet-api "2.5"]
-                 [slingshot "0.10.3"]
+                 [slingshot "0.12.1"]
                  [hiccup "1.0.4"]
                  [org.clojure/tools.logging "0.3.1"]
                  [log4j "1.2.17"]
                  [log4j/apache-log4j-extras "1.1"]
                  [org.slf4j/slf4j-api "1.7.10"]
                  [org.slf4j/slf4j-log4j12 "1.7.10" :exclusions [log4j]]
+
                  [cider/cider-nrepl "0.8.2"]
                  [clj-http "1.0.1"]
                  [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop
@@ -52,7 +53,7 @@
                  [fs "0.11.1"]
 
                  [ankha "0.1.4"]
-                 [org.clojure/clojurescript "0.0-2665"]
+                 [org.clojure/clojurescript "0.0-2760"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [cljs-ajax "0.2.6"]
 
@@ -61,15 +62,15 @@
                  ;;[om "0.6.4"]
 
                  [com.facebook/react "0.12.2.1"] ;; include for externs
-                 ;; TODO: revert back to sablono once new release is cut
-                 [dwwoelfel/sablono "0.3.0-9aace24eaa377c4199f7335bc7dfd3218e391ebf"]
+                 [sablono "0.3.1"]
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 
-                 [weasel "0.4.2"]            ;; repl
-                 [figwheel "0.2.1-SNAPSHOT"] ;; hate using snapshots :/
+                 [weasel "0.5.0"] ;; repl
+                 [figwheel "0.2.2-SNAPSHOT"] ;; hate using snapshots :/
+
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
 
@@ -79,7 +80,7 @@
 
   :plugins [[lein-cljsbuild "1.0.4"]
             [com.cemerick/austin "0.1.6"]
-            [lein-figwheel "0.2.1-SNAPSHOT"]]
+            [lein-figwheel "0.2.2-SNAPSHOT"]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]
