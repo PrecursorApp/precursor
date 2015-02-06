@@ -89,6 +89,9 @@
 
   :main ^:skip-aot pc.init
 
+  :jar-name "pc.jar"
+  :uberjar-name "pc-standalone.jar"
+
   :jvm-opts ["-Djava.net.preferIPv4Stack=true"
              "-server"
              "-XX:MaxPermSize=256m"
