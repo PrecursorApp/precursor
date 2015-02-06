@@ -1,5 +1,7 @@
 dependencies:
   post:
+    - echo ${CIRCLE_SHA1} > resources/version
+    - lein uberjar
     - git submodule update --init
     - lein cljsbuild once production
     - lein run -m pc.tasks/compile-less
