@@ -4,7 +4,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: @app_background;
+  background: @dye_inner;
   will-change: transform;
   transition: @speed @bezier_transform;
 }
@@ -178,14 +178,14 @@
   width: @tile_chat;
   padding-top: 5px; // keeps adaptive placeholder from getting cut off
   .layer-property-id {
-    background: @app_background;
+    background: @dye_inner;
     &:not(:focus) {
       box-shadow: 0 -1px @gray_dark inset;
       border-bottom-width: 0;
     }
   }
   .layer-property-target {
-    background: @app_background;
+    background: @dye_inner;
     &:focus {
       border-top-color: transparent !important;
       box-shadow: 0 -1px @blue;

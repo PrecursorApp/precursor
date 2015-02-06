@@ -15,7 +15,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        .gradient(to bottom; lighten(@app_background, 0) 25%; darken(@app_background, 3) 75%);
+        .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
       }
     }
     .app-canvas {
@@ -34,17 +34,17 @@
     }
     #small-grid {
       path {
-        stroke: darken(@app_background, 5);
+        stroke: darken(@dye_inner, 5);
         stroke-width: 3;
         stroke-dasharray: 2 20;
       }
     }
     .layer-outline {
-      stroke: darken(@app_background, 5);
+      stroke: darken(@dye_inner, 5);
       transition-duration: @speed;
     }
     .text-layer {
-      fill: darken(@app_background, 5);
+      fill: darken(@dye_inner, 5);
       transition-duration: @speed;
     }
     .mouse-stats {
@@ -104,7 +104,7 @@
   box-shadow: 0 1px fade(@white, 05);
 }
 .home-foot {
-  background-color: fade(@app_background, 97);
+  background-color: fade(@dye_inner, 97);
   border-top: 1px solid fade(@black, 21);
   box-shadow: 0 1px fade(@white, 05) inset;
 }
@@ -227,11 +227,11 @@
   left: 0;
   width: 100%;
   height: @tile * 2;
-  background: @overlay_background;
+  background: @dye_outer;
   box-shadow: 0 -8px 13px fade(@black,21);
 }
 .home-body {
-  background: @overlay_background;
+  background: @dye_outer;
 }
 .featurette {
   .box-sizing(content-box);

@@ -96,7 +96,7 @@ input {
           margin: 1rem;
           padding: 0 3px;
           transition: @speed_slow @bezier_transform;
-          background-image: linear-gradient(to bottom, @app_background, @app_background);
+          background-image: linear-gradient(to bottom, @dye_inner, @dye_inner);
           background-size: 100% 0;
           background-repeat: no-repeat;
           background-position: center;
@@ -117,7 +117,7 @@ input {
         &[data-placeholder] {
           &:before {
             color: @gray_light;
-            background-image: linear-gradient(to bottom, @overlay_background, @overlay_background);
+            background-image: linear-gradient(to bottom, @dye_outer, @dye_outer);
           }
         }
       }

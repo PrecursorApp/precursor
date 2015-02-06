@@ -6,7 +6,7 @@
   ~ .app-main {
     .scale(.8);
     cursor: pointer;
-    background: @overlay_background;
+    background: @dye_outer;
     box-shadow: 0 8px 21px 0 fade(@black, 21);
     transition: @speed_slower @bezier_transform;
     .mq_1920({
@@ -168,7 +168,7 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  background: @overlay_background;
+  background: @dye_outer;
   .mq_640({
     width: 100vw;
     min-width: 100vw;
@@ -506,11 +506,11 @@ img.loading-image {
   right: 0;
   height: 100%;
   padding: @menu_padding;
-  background: @overlay_background;
+  background: @dye_outer;
   transition+: right @speed_fast @bezier_transform;
   transition+: padding @speed_fast @bezier_transform;
   &:before {
-    .gradient(to right; fade(@overlay_background, 0) @overlay_background);
+    .gradient(to right; fade(@dye_outer, 0) @dye_outer);
     content: "";
     position: absolute;
     top: 0;

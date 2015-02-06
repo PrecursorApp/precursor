@@ -7,7 +7,7 @@
   width: 20%;
   min-width: @menu_width_min;
   height: 100%;
-  background: @overlay_background;
+  background: @dye_outer;
   box-shadow: -1px 0 @gray_lighter;
   will-change: transform;
   transition: @speed @now @bezier_fadein;
@@ -28,7 +28,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: @app_background;
+  background: @dye_inner;
   box-shadow: -1px 0 @gray_dark;
   will-change: transform;
   transition: @speed @bezier_transform;
@@ -50,8 +50,8 @@
   border-top: 1px solid @gray_dark;
   transition: border-top @speed_fast @speed_fast @bezier_fadein;
   &:after {
-    .gradient(to bottom; @app_background; fade(@app_background, 0));
-    .gradient(to bottom; @app_background; fade(@app_background, 0));
+    .gradient(to bottom; @dye_inner; fade(@dye_inner, 0));
+    .gradient(to bottom; @dye_inner; fade(@dye_inner, 0));
     content: "";
     position: absolute;
     top: 0;
