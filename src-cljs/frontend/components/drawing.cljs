@@ -11,6 +11,14 @@
                                                 (when f (f owner))
                                                 (tick-fn owner)))))
 
+(defn clear-subscriber [tick-state tick]
+  (add-tick tick-state tick (fn [owner]
+                              ((om/get-shared owner :cast!)
+                               :subscriber-updated {:client-id (ffirst state/subscriber-bot)
+                                                    :fields {:mouse-position nil
+                                                             :tool nil
+                                                             :show-mouse? false}}))))
+
 (defn move-mouse [tick-state {:keys [start-tick end-tick start-x end-x start-y end-y tool]
                               :or {tool :rect}}]
   (reduce (fn [tick-state relative-tick]
@@ -26,6 +34,7 @@
                           ((om/get-shared owner :cast!)
                            :subscriber-updated {:client-id (ffirst state/subscriber-bot)
                                                 :fields {:mouse-position [ex ey]
+                                                         :show-mouse? true
                                                          :tool tool}})))))
           tick-state
           (range 0 (inc (- end-tick start-tick)))))
@@ -59,6 +68,7 @@
                                 ((om/get-shared owner :cast!)
                                  :subscriber-updated {:client-id (ffirst state/subscriber-bot)
                                                       :fields {:mouse-position [ex ey]
+                                                               :show-mouse? true
                                                                :layers [(assoc base-layer
                                                                                :layer/current-x ex
                                                                                :layer/current-y ey)]
@@ -101,6 +111,7 @@
                                 ((om/get-shared owner :cast!)
                                  :subscriber-updated {:client-id (ffirst state/subscriber-bot)
                                                       :fields {:mouse-position [start-x (- start-y (/ text-height 2))]
+                                                               :show-mouse? true
                                                                :layers [(assoc base-layer
                                                                                :layer/text (apply str (take letter-count text))
                                                                                :layer/current-x end-x
@@ -175,7 +186,8 @@
                   :end-y (- text-start-y text-height)
                   :props {;; look into this later, right now it interfers with signup action
                           ;;:layer/ui-target "/signup"
-                          :layer/signup-button true}}))))
+                          :layer/signup-button true}})
+      (clear-subscriber 201))))
 
 (defn run-animation* [owner tick-state max-tick current-tick]
   (when (and (om/mounted? owner)
