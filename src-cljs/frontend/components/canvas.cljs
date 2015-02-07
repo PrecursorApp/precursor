@@ -2,6 +2,7 @@
   (:require [datascript :as d]
             [cljs.core.async :refer [put!]]
             [clojure.string :as str]
+            [frontend.auth :as auth]
             [frontend.camera :as cameras]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
@@ -39,21 +40,7 @@
       (clj->js)
       (dom/rect)))
 
-(defmethod svg-element :layer.type/signup-button
-  [selected-eids layer]
-  (-> (svg/layer->svg-rect layer)
-      (maybe-add-selected layer selected-eids)
-      (clj->js)
-      (dom/rect)))
-
 (defmethod svg-element :layer.type/text
-  [selected-eids layer]
-  (-> (svg/layer->svg-text layer)
-    (maybe-add-selected layer selected-eids)
-    (clj->js)
-    (dom/text (:layer/text layer))))
-
-(defmethod svg-element :layer.type/signup-text
   [selected-eids layer]
   (-> (svg/layer->svg-text layer)
     (maybe-add-selected layer selected-eids)
@@ -142,10 +129,16 @@
                                :className (str "selectable-layer layer-handle "
                                                (when (and (= :layer.type/text (:layer/type layer))
                                                           (= :text tool)) "editable ")
-                                               (when (or (= :layer.type/signup-button (:layer/type layer))
-                                                         (= :layer.type/signup-text (:layer/type layer)))
+                                               (when (:layer/signup-button layer)
                                                  " signup-layer"))
                                :key (str "selectable-" (:db/id layer))
+                               :onClick (when (:layer/signup-button layer)
+                                          #(do
+                                             (.preventDefault %)
+                                             (cast! :track-external-link-clicked
+                                                    {:path (auth/auth-url)
+                                                     :event "Signup Clicked"
+                                                     :properties {:source "username-overlay"}})))
                                :onMouseDown
                                #(do
                                   (.stopPropagation %)

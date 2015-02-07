@@ -31,18 +31,19 @@
           (range 0 (inc (- end-tick start-tick)))))
 
 (defn draw-shape [tick-state {:keys [start-tick end-tick start-x end-x
-                                     start-y end-y type tool doc-id]
+                                     start-y end-y type tool doc-id props]
                               :or {type :rect
                                    tool :rect}}]
-  (let [base-layer {:layer/start-x start-x
-                    :layer/start-y start-y
-                    :layer/end-x end-x
-                    :layer/end-y end-y
-                    :layer/type (keyword "layer.type" (name type))
-                    :layer/name "placeholder"
-                    :layer/stroke-width 1
-                    :document/id doc-id
-                    :db/id (inc (rand-int 1000))}
+  (let [base-layer (merge {:layer/start-x start-x
+                           :layer/start-y start-y
+                           :layer/end-x end-x
+                           :layer/end-y end-y
+                           :layer/type (keyword "layer.type" (name type))
+                           :layer/name "placeholder"
+                           :layer/stroke-width 1
+                           :document/id doc-id
+                           :db/id (inc (rand-int 1000))}
+                          props)
         ;; number of ticks to pause before saving layer
         pause-ticks 2]
     (-> (reduce (fn [tick-state relative-tick]
@@ -76,17 +77,18 @@
 (def text-height 14)
 
 (defn draw-text [tick-state {:keys [start-tick end-tick start-x end-x
-                                    start-y end-y doc-id text]}]
-  (let [base-layer {:layer/start-x start-x
-                    :layer/start-y start-y
-                    :layer/end-x end-x
-                    :layer/end-y end-y
-                    :layer/type :layer.type/text
-                    :layer/name "placeholder"
-                    :layer/text text
-                    :layer/stroke-width 1
-                    :document/id doc-id
-                    :db/id (inc (rand-int 1000))}
+                                    start-y end-y doc-id text props]}]
+  (let [base-layer (merge {:layer/start-x start-x
+                           :layer/start-y start-y
+                           :layer/end-x end-x
+                           :layer/end-y end-y
+                           :layer/type :layer.type/text
+                           :layer/name "placeholder"
+                           :layer/text text
+                           :layer/stroke-width 1
+                           :document/id doc-id
+                           :db/id (inc (rand-int 1000))}
+                          props)
         ;; number of ticks to pause before saving layer
         pause-ticks 2]
     (-> (reduce (fn [tick-state relative-tick]
@@ -144,7 +146,7 @@
                    :end-x rect-start-x
                    :start-y 0
                    :end-y rect-start-y})
-      (draw-shape {:type :signup-button
+      (draw-shape {:type :rect
                    :doc-id (:db/id document)
                    :tool :rect
                    :start-tick 50
@@ -152,7 +154,10 @@
                    :start-x rect-start-x
                    :end-x rect-end-x
                    :start-y rect-start-y
-                   :end-y rect-end-y})
+                   :end-y rect-end-y
+                   :props {;; look into this later, right now it interfers with signup action
+                           ;; :layer/ui-target "/signup"
+                           :layer/signup-button true}})
       (move-mouse {:tool :text
                    :start-tick 100
                    :end-tick 120
@@ -167,7 +172,10 @@
                   :start-x text-start-x
                   :end-x (+ text-start-x text-width)
                   :start-y text-start-y
-                  :end-y (- text-start-y text-height)}))))
+                  :end-y (- text-start-y text-height)
+                  :props {;; look into this later, right now it interfers with signup action
+                          ;;:layer/ui-target "/signup"
+                          :layer/signup-button true}}))))
 
 (defn run-animation* [owner tick-state max-tick current-tick]
   (when (and (om/mounted? owner)
