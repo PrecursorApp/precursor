@@ -140,51 +140,52 @@
                                                      :event "Signup Clicked"
                                                      :properties {:source "username-overlay"}})))
                                :onMouseDown
-                               #(do
-                                  (.stopPropagation %)
-                                  (let [group? (and (< 1 (count selected-eids))
-                                                    (contains? selected-eids (:db/id layer)))]
+                               (when-not (:layer/signup-button layer)
+                                 #(do
+                                    (.stopPropagation %)
+                                    (let [group? (and (< 1 (count selected-eids))
+                                                      (contains? selected-eids (:db/id layer)))]
 
-                                    (cond
-                                      (and (= :text tool)
-                                           (= :layer.type/text (:layer/type layer)))
-                                      (cast! :text-layer-re-edited layer)
+                                      (cond
+                                        (and (= :text tool)
+                                             (= :layer.type/text (:layer/type layer)))
+                                        (cast! :text-layer-re-edited layer)
 
-                                      (not= :select tool) nil
+                                        (not= :select tool) nil
 
-                                      (or (= (.-button %) 2)
-                                          (and (= (.-button %) 0) (.-ctrlKey %)))
-                                      (cast! :layer-properties-opened {:layer layer
-                                                                       :x (first (cameras/screen-event-coords %))
-                                                                       :y (second (cameras/screen-event-coords %))})
-
-
-                                      (and (.-altKey %) group?)
-                                      (cast! :group-duplicated
-                                             {:layer-eids selected-eids
-                                              :x (first (cameras/screen-event-coords %))
-                                              :y (second (cameras/screen-event-coords %))})
-
-                                      (and (.-altKey %) (not group?))
-                                      (cast! :layer-duplicated
-                                             {:layer layer
-                                              :x (first (cameras/screen-event-coords %))
-                                              :y (second (cameras/screen-event-coords %))})
-
-                                      (and (.-shiftKey %) (contains? selected-eids (:db/id layer)))
-                                      (cast! :layer-deselected {:layer layer})
+                                        (or (= (.-button %) 2)
+                                            (and (= (.-button %) 0) (.-ctrlKey %)))
+                                        (cast! :layer-properties-opened {:layer layer
+                                                                         :x (first (cameras/screen-event-coords %))
+                                                                         :y (second (cameras/screen-event-coords %))})
 
 
-                                      group?
-                                      (cast! :group-selected {:x (first (cameras/screen-event-coords %))
-                                                              :y (second (cameras/screen-event-coords %))
-                                                              :layer-eids selected-eids})
+                                        (and (.-altKey %) group?)
+                                        (cast! :group-duplicated
+                                               {:layer-eids selected-eids
+                                                :x (first (cameras/screen-event-coords %))
+                                                :y (second (cameras/screen-event-coords %))})
 
-                                      :else
-                                      (cast! :layer-selected {:layer layer
-                                                              :x (first (cameras/screen-event-coords %))
-                                                              :y (second (cameras/screen-event-coords %))
-                                                              :append? (.-shiftKey %)}))))))
+                                        (and (.-altKey %) (not group?))
+                                        (cast! :layer-duplicated
+                                               {:layer layer
+                                                :x (first (cameras/screen-event-coords %))
+                                                :y (second (cameras/screen-event-coords %))})
+
+                                        (and (.-shiftKey %) (contains? selected-eids (:db/id layer)))
+                                        (cast! :layer-deselected {:layer layer})
+
+
+                                        group?
+                                        (cast! :group-selected {:x (first (cameras/screen-event-coords %))
+                                                                :y (second (cameras/screen-event-coords %))
+                                                                :layer-eids selected-eids})
+
+                                        :else
+                                        (cast! :layer-selected {:layer layer
+                                                                :x (first (cameras/screen-event-coords %))
+                                                                :y (second (cameras/screen-event-coords %))
+                                                                :append? (.-shiftKey %)})))))))
            (when-not (= :layer.type/text (:layer/type layer))
              (svg-element selected-eids (assoc layer
                                                :className (str "layer-outline ")
