@@ -109,13 +109,14 @@
    (if (prod-assets?)
      [:script {:type "text/javascript" :crossorigin "anonymous" :src (pc.assets/asset-path "/cljs/production/frontend.js")}]
      (if false
-       [:script {:type "text/javascript" :src "/js/bin-debug/main.js"}]
+       [:script {:type "text/javascript" :src "/cljs/production/frontend.js"}]
        (list
         [:script {:type "text/javascript" :src "/js/vendor/react-0.12.2.js"}]
         [:script {:type "text/javascript" :src "/cljs/out/goog/base.js"}]
         [:script {:type "text/javascript" :src "/cljs/out/frontend-dev.js"}]
         [:script {:type "text/javascript"}
-         "goog.require(\"frontend.core\");"])))))
+         "goog.require(\"frontend.core\");"
+         "goog.require(\"frontend.dev\");"])))))
 
 (defn app [view-data]
   (h/html (app* view-data)))

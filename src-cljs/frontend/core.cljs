@@ -16,7 +16,6 @@
             [frontend.components.key-queue :as keyq]
             [frontend.datascript :as ds]
             [frontend.db :as db]
-            [frontend.dev :as dev]
             [frontend.routes :as routes]
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
@@ -220,6 +219,8 @@
 (defn find-app-container []
   (goog.dom/getElement "om-app"))
 
+(def om-setup-debug (constantly false))
+
 (defn main [state history-imp]
   (let [comms                    (:comms @state)
         cast!                    (fn [message data & [transient?]]
@@ -250,6 +251,9 @@
                                                                            :handle-key-down    handle-key-down
                                                                            :handle-key-up      handle-key-up})]
 
+    ;; allow figwheel in dev-cljs access to this function
+    (def om-setup-debug om-setup)
+
     (swap! state assoc :undo-state undo-state)
 
     (js/document.addEventListener "keydown" handle-key-down false)
@@ -269,10 +273,6 @@
 
     (routes/define-routes! state)
     (om-setup)
-
-
-    (when (and (env/development?) (= js/window.location.protocol "http:"))
-      (utils/swallow-errors (dev/setup-figwheel {:js-callback om-setup})))
 
     (async/tap (:controls-mult comms) controls-tap)
     (async/tap (:nav-mult comms) nav-tap)
@@ -316,9 +316,7 @@
     (if-let [error-status (get-in @state [:render-context :status])]
       ;; error codes from the server get passed as :status in the render-context
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
-      (sec/dispatch! (str "/" (.getToken history-imp))))
-    (when (and (env/development?) (= js/window.location.protocol "http:"))
-      (utils/swallow-errors (dev/setup-browser-repl)))))
+      (sec/dispatch! (str "/" (.getToken history-imp))))))
 
 (defn ^:export inspect-state []
   (clj->js @debug-state))

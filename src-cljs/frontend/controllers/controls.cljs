@@ -1228,3 +1228,7 @@
   (sente/send-msg (:sente current-state) [:frontend/deny-access-request {:document/id doc-id
                                                                          :request-id request-id
                                                                          :invite-loc :overlay}]))
+
+(defmethod control-event :subscriber-updated
+  [browser-state message {:keys [client-id fields]} state]
+  (update-in state [:subscribers client-id] merge fields))
