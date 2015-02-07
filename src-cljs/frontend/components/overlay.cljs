@@ -129,7 +129,7 @@
             (common/icon :command)
             [:span "Shortcuts"]]
            [:a.menu-item {:href "/blog"
-                          :target "_blank"
+                          :target "_self"
                           :role "button"}
             (common/icon :blog)
             [:span "Blog"]]
