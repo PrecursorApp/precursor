@@ -37,7 +37,8 @@
                           :camera-nudged-up
                           :text-layer-edited
                           :layer-ui-id-edited
-                          :layer-ui-target-edited})
+                          :layer-ui-target-edited
+                          :subscriber-updated})
 
 (defn track-control [event state]
   (when-not (contains? controls-blacklist event)

@@ -49,7 +49,8 @@
     (render [_]
       (if (:navigation-point app)
         (dom/div #js {:id "app" :className "app"}
-          (om/build drawing/signup-button {})
+          (when (:document/id app)
+            (om/build drawing/signup-button {:db/id (:document/id app)}))
           (om/build overlay/main-menu-button (select-in app [state/overlays-path state/main-menu-learned-path]))
           (when (overlay-visible? app)
             (om/build overlay/overlay app))

@@ -39,12 +39,26 @@
       (clj->js)
       (dom/rect)))
 
+(defmethod svg-element :layer.type/signup-button
+  [selected-eids layer]
+  (-> (svg/layer->svg-rect layer)
+      (maybe-add-selected layer selected-eids)
+      (clj->js)
+      (dom/rect)))
+
 (defmethod svg-element :layer.type/text
   [selected-eids layer]
   (-> (svg/layer->svg-text layer)
-      (maybe-add-selected layer selected-eids)
-      (clj->js)
-      (dom/text (:layer/text layer))))
+    (maybe-add-selected layer selected-eids)
+    (clj->js)
+    (dom/text (:layer/text layer))))
+
+(defmethod svg-element :layer.type/signup-text
+  [selected-eids layer]
+  (-> (svg/layer->svg-text layer)
+    (maybe-add-selected layer selected-eids)
+    (clj->js)
+    (dom/text (:layer/text layer))))
 
 (defmethod svg-element :layer.type/line
   [selected-eids layer]
@@ -127,7 +141,10 @@
                         (assoc layer
                                :className (str "selectable-layer layer-handle "
                                                (when (and (= :layer.type/text (:layer/type layer))
-                                                          (= :text tool)) "editable "))
+                                                          (= :text tool)) "editable ")
+                                               (when (or (= :layer.type/signup-button (:layer/type layer))
+                                                         (= :layer.type/signup-text (:layer/type layer)))
+                                                 " signup-layer"))
                                :key (str "selectable-" (:db/id layer))
                                :onMouseDown
                                #(do
