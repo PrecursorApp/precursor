@@ -11,14 +11,12 @@
             [clojure.tools.reader.edn :as edn]
             [fs]
             [pantomime.mime :refer [mime-type-of]]
+            [pc.util.md5 :as md5]
             [pc.gzip :as gzip]
             [pc.profile]
             [pc.rollbar :as rollbar]
             [slingshot.slingshot :refer (try+ throw+)])
-  (:import java.security.MessageDigest
-           java.util.UUID
-           org.apache.commons.codec.binary.Hex
-           org.apache.commons.io.IOUtils
+  (:import java.util.UUID
            com.amazonaws.services.s3.model.AmazonS3Exception))
 
 ;; TODO: upload and assetify all of the sourcemap sources
@@ -43,19 +41,6 @@
 
 (def aws-access-key "AKIAJ6CLYJYRMXJGMMEQ")
 (def aws-secret-key "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")
-
-(defn byte-array->md5 [ba]
-  {:post [(not= "d41d8cd98f00b204e9800998ecf8427e" %)]}
-  (Hex/encodeHexString (.digest (MessageDigest/getInstance "MD5") ba)))
-
-(defn md5
-  "Takes a file-name and returns the MD5 encoded as a hex string
-   Will throw an exception if asked to encode an empty file."
-  [file-name]
-  (->> file-name
-    io/input-stream
-    IOUtils/toByteArray
-    byte-array->md5))
 
 (def cdn-bucket "prcrsr-cdn")
 (def manifest-pointer-key "manifest-pointer")
@@ -135,7 +120,7 @@
         file-string (slurp js-full-path)
         mapping-re #"(\/\/# sourceMappingURL=)(.+)"
         map-path (last (re-find mapping-re file-string))
-        md5 (md5 (str (fs/dirname js-full-path) "/" map-path))]
+        md5 (md5/md5 (str (fs/dirname js-full-path) "/" map-path))]
     (spit js-full-path (str/replace file-string mapping-re (fn [[_ start _]]
                                                              (str start (assetify map-path md5)))))))
 
@@ -146,10 +131,10 @@
                {:multipart (concat [{:name "access_token" :content rollbar/rollbar-prod-token}
                                     {:name "version" :content sha1}
                                     {:name "minified_url" :content (manifest-asset-path manifest "/cljs/production/frontend.js")}
-                                    {:name "source_map" :content (clojure.java.io/file source-map)}]
+                                    {:name "source_map" :content (io/file source-map)}]
                                    (for [source sources]
                                      (do (println source)
-                                         {:name source :content (clojure.java.io/file (fs/join (fs/dirname source-map) source))})))})))
+                                         {:name source :content (io/file (fs/join (fs/dirname source-map) source))})))})))
 
 (defn make-manifest-key [sha1]
   (str "releases/" sha1))
@@ -171,7 +156,7 @@
             :when (not= \. (first (.getName file)))
             :let [key (str/replace-first (str file) "resources/public/" "")
                   gzipped-bytes (gzip/gzip file)
-                  tag (byte-array->md5 gzipped-bytes)]]
+                  tag (md5/byte-array->md5 gzipped-bytes)]]
       (let [existing (try+
                       (s3/get-object-metadata :bucket-name cdn-bucket :key key)
                       (catch AmazonS3Exception e
@@ -185,7 +170,7 @@
                                    :key key
                                    :input-stream (java.io.ByteArrayInputStream. gzipped-bytes)
                                    :metadata {:content-type (mime-type-of file)
-                                              :content-md5 tag
+                                              :content-md5 (md5/hex->base64 tag)
                                               :content-encoding "gzip"
                                               :content-length (count gzipped-bytes)
                                               :cache-control "max-age=3155692"})]
@@ -210,7 +195,7 @@
     (let [manifest-key (make-manifest-key sha1)
           assets (reduce (fn [acc path]
                            (let [file-path (str assets-directory path)
-                                 md5 (md5 file-path)
+                                 md5 (md5/md5 file-path)
                                  gzipped-bytes (gzip/gzip file-path)
                                  ;; TODO: figure out a better way to handle leading slashes
                                  key (assetify (subs path 1) md5)]
@@ -220,7 +205,7 @@
                                             :input-stream (java.io.ByteArrayInputStream. gzipped-bytes)
                                             :metadata {:content-type (mime-type-of file-path)
                                                        :content-length (count gzipped-bytes)
-                                                       :content-md5 (byte-array->md5 gzipped-bytes)
+                                                       :content-md5 (md5/hex->base64 (md5/byte-array->md5 gzipped-bytes))
                                                        :content-encoding "gzip"
                                                        :cache-control "max-age=3155692"})
                              (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))
