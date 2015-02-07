@@ -3,6 +3,7 @@
             [frontend.state :as state]
             [frontend.utils :as utils]
             [goog.dom]
+            [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 
@@ -221,7 +222,8 @@
   (reify
     om/IDidMount
     (did-mount [_]
-      (let [vw (.-width (goog.dom/getViewportSize))]
+      ;; TODO: would be nice to get this a different way :(
+      (let [vw (.-width (goog.style/getSize (goog.dom/getElement "svg-canvas")))]
         (run-animation owner (signup-animation document vw))))
     om/IWillUnmount
     (will-unmount [_]
