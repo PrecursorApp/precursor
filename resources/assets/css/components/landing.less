@@ -5,7 +5,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  ~ .app-main {
+  ~ .inner {
     .canvas-background {
       &:after {
         .animation(in-fade @speed @speed_fast @bezier_fadein backwards);
@@ -18,21 +18,21 @@
         .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
       }
     }
-    .app-canvas {
+    .canvas {
       .scale3d(.8);
       transition: @speed_slower @bezier_transform;
     }
-    #svg-canvas {
+    .canvas-frame {
       width: 125%;
       height: 125%;
       transition: @now;
     }
-    #grid {
+    .grid-big {
       path {
         stroke-width: 0;
       }
     }
-    #small-grid {
+    .grid-small {
       path {
         stroke: darken(@dye_inner, 5);
         stroke-width: 3;
@@ -51,7 +51,7 @@
       opacity: 0;
       transition: @now;
     }
-    .app-chat {
+    .chat {
       .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));
       opacity: 0;
       transition: @now;
@@ -61,7 +61,7 @@
       transition: visibility @now @speed_slow @bezier_fadein;
     }
   }
-  ~ .app-hud {
+  ~ .hud {
     opacity: 0;
     transition: @now;
   }
@@ -297,20 +297,20 @@
 //
 // TODO all below for dev only!
 //
-.featurette {
+.svg-featurette {
   svg {
     max-width: 100%;
     overflow: visible;
   }
-  .actions {
+  .svg-actions {
     fill: #fff;
   }
-  .menu {
+  .svg-menu {
     stroke-width: 4;
     stroke: #ccc;
     fill: #ccc;
   }
-  .in-progress {
+  .svg-in-progress {
     line,
     circle {
       fill: none;
@@ -318,22 +318,22 @@
       stroke: #bf5bff;
     }
   }
-  .cursor {
+  .svg-cursor {
     stroke: #bf5bff;
     fill: none;
     stroke-width: 4;
   }
-  .border,
-  .chat,
-  .shape-layers {
+  .svg-border,
+  .svg-chat,
+  .svg-shape-layers {
     fill: none;
     stroke-width: 4;
   }
-  .border,
-  .chat {
+  .svg-border,
+  .svg-chat {
     stroke: #ccc;
   }
-  .shape-layers {
+  .svg-shape-layers {
     // stroke: #888;
     stroke: #ccc;
   }

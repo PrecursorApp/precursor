@@ -578,7 +578,7 @@
             overlay-components (map #(get overlay-components %) (get-in app state/overlays-path))
             title (:title (last overlay-components))]
         (html
-         [:div.app-overlay
+         [:div.menu
           [:div.menu-header
            (for [component overlay-components]
             [:h4

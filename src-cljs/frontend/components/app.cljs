@@ -35,10 +35,10 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             chat-opened? (get-in app state/chat-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
-        (html [:div.app-main {:on-click (when (overlay-visible? app)
+        (html [:div.inner {:on-click (when (overlay-visible? app)
                                           #(cast! :overlay-closed))}
                [:div.canvas-background]
-               [:div.app-canvas {:onContextMenu (fn [e]
+               [:div.canvas {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}
                 (om/build canvas/svg-canvas app)]

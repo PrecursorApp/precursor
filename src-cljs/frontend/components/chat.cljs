@@ -196,7 +196,7 @@
             document-id (get-in app [:document/id])
             can-edit? (not (empty? (:cust app)))]
         (html
-          [:div.app-chat {:class (when-not chat-opened? ["closed"])}
+          [:div.chat {:class (when-not chat-opened? ["closed"])}
            [:div.chat-background]
            (om/build log {:db (:db app)
                           :document/id (:document/id app)

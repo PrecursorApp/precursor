@@ -1,21 +1,11 @@
-.canvas-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: @dye_inner;
-  will-change: transform;
-  transition: @speed @bezier_transform;
-}
-.app-canvas {
+.canvas {
   .flex(1);
   .transform-origin(0 0);
   position: relative;
   transition: @speed_slow @bezier_transform;
   will-change: transform;
   &:active {
-    + .app-chat {
+    + .chat {
       .user-select(none);
       pointer-events: none;
     }
@@ -26,7 +16,17 @@
     }
   }
 }
-#svg-canvas {
+.canvas-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: @dye_inner;
+  will-change: transform;
+  transition: @speed @bezier_transform;
+}
+.canvas-frame {
   .user-select(none);
   transition: @now @speed_slower;
   &:not(:hover) {
@@ -50,11 +50,11 @@
     }
   }
 }
-#background-grid {
+.grid-background {
   transition: opacity @speed_slow @speed_fast @bezier_fadein;
 }
-#grid,
-#small-grid {
+.grid-big,
+.grid-small {
   path {
     stroke: @gray_dark;
     transition: stroke @speed_fast @now @bezier_fadein;

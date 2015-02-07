@@ -516,11 +516,11 @@
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
-                      :className (str "tool-" (name (get-in payload state/current-tool-path))
-                                      (when (and (get-in payload [:mouse :down])
-                                                 (= :text (get-in payload state/current-tool-path))
-                                                 (get-in payload [:drawing :in-progress?]))
-                                        " tool-text-move"))
+                      :className (str "canvas-frame " (str "tool-" (name (get-in payload state/current-tool-path))
+                                                        (when (and (get-in payload [:mouse :down])
+                                                                   (= :text (get-in payload state/current-tool-path))
+                                                                   (get-in payload [:drawing :in-progress?]))
+                                                          " tool-text-move")))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
                                         (cond
@@ -605,6 +605,7 @@
                                  (utils/stop-event event))}
                  (dom/defs nil
                    (dom/pattern #js {:id           "small-grid"
+                                     :className    "grid-small"
                                      :width        (str (cameras/grid-width camera))
                                      :height       (str (cameras/grid-height camera))
                                      :patternUnits "userSpaceOnUse"}
@@ -613,6 +614,7 @@
                                                :stroke      "gray"
                                                :strokeWidth "0.5"}))
                    (dom/pattern #js {:id               "grid"
+                                     :className        "grid-big"
                                      :width            (str (* 10 (cameras/grid-width camera)))
                                      :height           (str (* 10 (cameras/grid-height camera)))
                                      :patternUnits     "userSpaceOnUse"
@@ -625,10 +627,11 @@
                                                :stroke      "gray"
                                                :strokeWidth "1"})))
                  (when (cameras/show-grid? payload)
-                   (dom/rect #js {:id     "background-grid"
-                                  :width  "100%"
-                                  :height "100%"
-                                  :fill   "url(#grid)"}))
+                   (dom/rect #js {:id        "background-grid"
+                                  :className "grid-background"
+                                  :width     "100%"
+                                  :height    "100%"
+                                  :fill      "url(#grid)"}))
 
                  (dom/g
                   #js {:transform (cameras/->svg-transform camera)}

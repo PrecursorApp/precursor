@@ -1,9 +1,9 @@
 @margin_featurette: 30vh;
-.app-overlay {
+.menu {
   .flexy(column);
   width: 100%;
   min-height: 100%;
-  ~ .app-main {
+  ~ .inner {
     .scale(.8);
     cursor: pointer;
     background: @dye_outer;
@@ -31,15 +31,13 @@
       background: @gray_dark; // softer contrast w/o opacity
       transition-duration: @speed_slow;
     }
-    .app-canvas {
+    .canvas {
       box-shadow: 0 -1px @gray_lightest;
+      pointer-events: none;
     }
-    #background-grid {
+    .grid-background {
       opacity: 0;
       transition: @now;
-    }
-    .app-canvas {
-      pointer-events: none;
     }
     .chat-background {
       .scale3d(0,0,1);
@@ -64,7 +62,7 @@
       .placeholder_style(transition; @now @now @bezier_fadein);
     }
   }
-  ~ .app-hud {
+  ~ .hud {
     .hud-excess {
       opacity: 0;
       visibility: hidden;

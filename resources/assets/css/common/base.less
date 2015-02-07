@@ -15,7 +15,7 @@ body {
   min-height: 100%;
   background: @dye_outer;
 }
-.app-main {
+.inner {
   .flexy();
   .transform-origin(right);
   position: fixed;
@@ -27,7 +27,7 @@ body {
   transition: @speed @bezier_transform;
   will-change: transform;
   &:active {
-    ~ .app-hud {
+    ~ .hud {
       .user-select(none);
       pointer-events: none;
     }

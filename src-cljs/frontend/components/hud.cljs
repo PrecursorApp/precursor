@@ -244,7 +244,7 @@
     (render [_]
       (html
         (let [right-click-learned? (get-in app state/right-click-learned-path)]
-         [:div.app-hud
+         [:div.hud
           (om/build viewers app)
           (om/build menu-toggle app)
           (om/build chat-toggle app)

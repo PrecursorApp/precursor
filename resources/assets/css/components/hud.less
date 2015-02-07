@@ -12,7 +12,7 @@
   @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
   &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
 }
-.app-hud {
+.hud {
   > a {
     &[role="button"] {
       .animation(in-bounce @speed_slower backwards);
