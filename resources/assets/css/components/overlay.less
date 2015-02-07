@@ -20,8 +20,8 @@
       transition-duration: @speed;
     }
     &:active {
-      box-shadow: 0 13px 34px 0 fade(@black, 21);
-      transition-duration: @cascade;
+      box-shadow: 0 5px 13px 0 fade(@black, 21);
+      transition-duration: @speed_fast;
     }
     a {
       text-shadow: none;
@@ -100,6 +100,7 @@
     margin: 0;
     padding: 0 1rem 0 @tile;
     overflow: hidden;
+    cursor: default;
     &:not(:last-of-type) {
       display: none;
     }
