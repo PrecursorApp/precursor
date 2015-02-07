@@ -36,6 +36,7 @@
             chat-opened? (get-in app state/chat-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div.app-main
+               [:style "#om-app:active {cursor: default;}"]
                [:div.app-canvas {:onContextMenu (fn [e]
                                                  (.preventDefault e)
                                                  (.stopPropagation e))}

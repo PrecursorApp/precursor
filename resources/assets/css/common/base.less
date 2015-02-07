@@ -10,11 +10,8 @@ html {
 body {
   margin: 0;
 }
-#om-app {
-  min-height: 100%;
-  background: @app_background;
-}
 .app {
+  .animation(in-fade 500ms);
   .flexy(column);
   background: darken(@app_background, 2);
   overflow: hidden;
