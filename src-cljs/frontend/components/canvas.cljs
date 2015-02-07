@@ -138,7 +138,7 @@
                                              (cast! :track-external-link-clicked
                                                     {:path (auth/auth-url)
                                                      :event "Signup Clicked"
-                                                     :properties {:source "username-overlay"}})))
+                                                     :properties {:source "prcrsr-bot-drawing"}})))
                                :onMouseDown
                                (when-not (:layer/signup-button layer)
                                  #(do
