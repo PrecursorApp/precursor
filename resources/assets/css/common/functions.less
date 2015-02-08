@@ -73,14 +73,14 @@
   .random_cascade((@c - 1));
   @random: `Math.random()`;
   &:nth-of-type(@{c}) {
-    transition-delay: round(@cascade * (@random * 10));
+    transition-delay: round(@run_faster * (@random * 10));
   }
 }
 .button_icon_cascade(@c) when (@c > 0) {
   .button_icon_cascade((@c - 1));
   &:nth-of-type(@{c}) {
     i {
-      transition-delay: (@cascade * @c);
+      transition-delay: (@run_faster * @c);
     }
   }
 }
@@ -88,20 +88,20 @@
   .button_fade_cascade((@c - 1));
   &:nth-of-type(@{c}) {
     object {
-      transition-delay: (@cascade * 5) + (@cascade * @c);
+      transition-delay: (@run_faster * 5) + (@run_faster * @c);
     }
   }
 }
 .transition_cascade(@c) when (@c > 0) {
   .transition_cascade((@c - 1));
   &:nth-child(@{c}) {
-    transition-delay: @cascade * @c;
+    transition-delay: @run_faster * @c;
   }
 }
 .animation_cascade(@c) when (@c > 0) {
   .animation_cascade((@c - 1));
   &:nth-child(@{c}) {
-    .animation-delay((@cascade * @c));
+    .animation-delay((@run_faster * @c));
   }
 }
 .outline(@color: @gray_lighter) {
