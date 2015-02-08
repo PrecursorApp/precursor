@@ -688,3 +688,15 @@
                                                       :strokeDasharray "2,3"}))]
                                     (svg-element #{} (assoc sel :key (str (:db/id sel) "-in-progress")))))
                                 sels)))))))))
+
+(defn canvas [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+        [:div.canvas
+         {:onContextMenu (fn [e]
+                           (.preventDefault e)
+                           (.stopPropagation e))}
+         [:div.canvas-background]
+         (om/build svg-canvas app)]))))

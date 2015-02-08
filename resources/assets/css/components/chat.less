@@ -23,7 +23,6 @@
 .chat-background {
   .transform-origin(left);
   position: absolute;
-  z-index: -1;
   top: 0;
   left: 0;
   width: 100%;
@@ -35,6 +34,7 @@
 }
 .chat-log {
   .scrollbar_hide();
+  position: relative;
   padding: 1em 0 1.25em;
   overflow-y: auto;
   transition: @speed_fast @speed @bezier_fadein;

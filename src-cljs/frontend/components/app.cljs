@@ -39,11 +39,7 @@
         (html [:div.inner {:on-click (when (overlay-visible? app)
                                           #(cast! :overlay-closed))}
                [:style "#om-app:active{cursor:auto}"]
-               [:div.canvas-background]
-               [:div.canvas {:onContextMenu (fn [e]
-                                                 (.preventDefault e)
-                                                 (.stopPropagation e))}
-                (om/build canvas/svg-canvas app)]
+               (om/build canvas/canvas app)
                (om/build chat/chat app)])))))
 
 (defn app [app owner]
