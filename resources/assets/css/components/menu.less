@@ -70,10 +70,8 @@
     }
     .menu-toggle {
       path {
-        transition+: opacity @run @now @bezier_fadein;
+        transition+: all @run_slow @now @bezier_bounce;
         transition+: stroke @now @now @bezier_fadein;
-        transition+: -webkit-transform @run_slow @now @bezier_bounce;
-        transition+:         transform @run_slow @now @bezier_bounce;
       }
     }
   }
