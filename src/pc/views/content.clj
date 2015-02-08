@@ -84,6 +84,18 @@
     [:link {:rel "stylesheet"       :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
 
     [:style "html{-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;}"] ; prevents resizing when launching from ios home screen
+    [:style "
+      html {-webkit-text-size-adjust:100%}
+      #om-app:active {cursor: wait;}
+      #om-app {
+        min-height:       100%;
+        background-size:  10 10,10 10,100 100,100 100;
+        background-color: rgba(51,51,51,1);
+        background-image: linear-gradient(to bottom,rgba(85,85,85,.25)10%,rgba(85,85,85,0)10%),
+                          linear-gradient(to right, rgba(85,85,85,.25)10%,rgba(85,85,85,0)10%),
+                          linear-gradient(to bottom,rgba(85,85,85,.57) 1%,rgba(85,85,85,0) 1%),
+                          linear-gradient(to right, rgba(85,85,85,.57) 1%,rgba(85,85,85,0) 1%);
+    }"]
 
     (embed-json-in-head "window.Precursor"
                         (json/encode (-> view-data
@@ -109,13 +121,14 @@
    (if (prod-assets?)
      [:script {:type "text/javascript" :crossorigin "anonymous" :src (pc.assets/asset-path "/cljs/production/frontend.js")}]
      (if false
-       [:script {:type "text/javascript" :src "/js/bin-debug/main.js"}]
+       [:script {:type "text/javascript" :src "/cljs/production/frontend.js"}]
        (list
         [:script {:type "text/javascript" :src "/js/vendor/react-0.12.2.js"}]
         [:script {:type "text/javascript" :src "/cljs/out/goog/base.js"}]
         [:script {:type "text/javascript" :src "/cljs/out/frontend-dev.js"}]
         [:script {:type "text/javascript"}
-         "goog.require(\"frontend.core\");"])))))
+         "goog.require(\"frontend.core\");"
+         "goog.require(\"frontend.dev\");"])))))
 
 (defn app [view-data]
   (h/html (app* view-data)))

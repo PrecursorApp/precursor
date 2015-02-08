@@ -1240,3 +1240,7 @@
   (-> state
     (assoc :show-landing? false)
     (overlay/clear-overlays)))
+
+(defmethod control-event :subscriber-updated
+  [browser-state message {:keys [client-id fields]} state]
+  (update-in state [:subscribers client-id] merge fields))

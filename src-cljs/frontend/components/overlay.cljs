@@ -124,7 +124,7 @@
            [:span "Shortcuts"]]
           [:a.vein.make
            {:href "/blog"
-            :target "_blank"
+            :target "_self"
             :role "button"}
            (common/icon :blog)
            [:span "Blog"]]

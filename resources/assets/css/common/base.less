@@ -5,13 +5,8 @@ html {
 body {
   margin: 0;
 }
-#om-app {
-  min-height: 100%;
-  background: @dye_inner;
-}
 .app {
-  // hold off on intro fadein until app loads faster
-  // .animation(in-fade @speed_slower @speed_slower @bezier_fadein backwards);
+  .animation(in-fade @speed_slower);
   min-height: 100%;
   background: @dye_outer;
 }

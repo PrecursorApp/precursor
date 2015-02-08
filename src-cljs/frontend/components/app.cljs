@@ -13,6 +13,7 @@
             [frontend.components.canvas :as canvas]
             [frontend.components.common :as common]
             [frontend.components.landing :as landing]
+            [frontend.components.drawing :as drawing]
             [frontend.components.overlay :as overlay]
             [frontend.favicon :as favicon]
             [frontend.overlay :refer [overlay-visible?]]
@@ -37,6 +38,7 @@
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div.inner {:on-click (when (overlay-visible? app)
                                           #(cast! :overlay-closed))}
+               [:style "#om-app:active {cursor: default;}"]
                [:div.canvas-background]
                [:div.canvas {:onContextMenu (fn [e]
                                                  (.preventDefault e)
@@ -52,6 +54,11 @@
         (dom/div #js {:id "app" :className "app"}
           (when (:show-landing? app)
             (om/build landing/landing app))
+
+          (when (and (:document/id app)
+                     (not (:cust app)))
+            (om/build drawing/signup-button {:db/id (:document/id app)}))
+
           (when (overlay-visible? app)
             (om/build overlay/overlay app))
           (om/build app* app)

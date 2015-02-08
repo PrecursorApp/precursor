@@ -212,7 +212,8 @@
           ;;                 :value new-name
           ;;                 :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
           ;;       [:span (or (get-in app [:cust :cust/name]) "You")])])
-          ;;  (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
+          ;;  (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
+          ;;        :when (not hide-in-list?)
           ;;        :let [id-str (or cust-name (apply str (take 6 id)))]]
           ;;    [:a {:title "Ping this person in chat."
           ;;         :role "button"
@@ -232,7 +233,8 @@
               [:div.viewer-name {:title "X and X others are viewing this doc."
                                  :data-name (or (get-in app [:cust :name]) "You")
                                  :data-count (count (:subscribers app))}]])
-           (for [[id {:keys [show-mouse? color cust-name]}] (dissoc (:subscribers app) client-id)
+           (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
+                 :when (not hide-in-list?)
                  :let [id-str (or cust-name (apply str (take 6 id)))]]
              [:div.viewer {:key id}
               (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
