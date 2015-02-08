@@ -38,7 +38,7 @@
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div.inner {:on-click (when (overlay-visible? app)
                                           #(cast! :overlay-closed))}
-               [:style "#om-app:active {cursor: default;}"]
+               [:style "#om-app:active{cursor:auto}"]
                [:div.canvas-background]
                [:div.canvas {:onContextMenu (fn [e]
                                                  (.preventDefault e)
