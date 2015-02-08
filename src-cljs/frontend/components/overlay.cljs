@@ -30,7 +30,7 @@
             login-button-learned? (get-in app state/login-button-learned-path)]
         (html
          (if (:cust app)
-           [:form.vein.make.push-down
+           [:form.vein.make.stick
             {:method "post"
              :action "/logout"
              :ref "logout-form"
@@ -52,7 +52,7 @@
              (common/icon :logout)
              [:span "Log out"]]]
 
-           [:a.vein.make.push-down
+           [:a.vein.make.stick
             {:href (auth/auth-url)
              :role "button"
              :on-click #(do
