@@ -113,3 +113,11 @@
   80%  { -webkit-transform: scale3d(1.45,1.45,1.45); }
   100% { -webkit-transform: scale3d(1.5,1.5,1.5); opacity: 1;}
 }
+@keyframes chat {
+  0%   { opacity: 0; transform: translate3d(115%, 0, 0) scale3d(1.1, 1.1, 1);}
+  100% { opacity: 1; transform: none;}
+}
+@-webkit-keyframes chat {
+  0%   { opacity: 0; -webkit-transform: translate3d(115%, 0, 0) scale3d(1.1, 1.1, 1);}
+  100% { opacity: 1; -webkit-transform: none;}
+}
