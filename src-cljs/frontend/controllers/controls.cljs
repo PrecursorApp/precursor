@@ -885,17 +885,17 @@
   (let [db (:db current-state)
         client-id (:client-id previous-state)
         color (get-in previous-state [:subscribers client-id :color])]
-    (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
-                      :chat/color color
-                      :cust/uuid (get-in current-state [:cust :cust/uuid])
-                      ;; TODO: teach frontend to lookup cust/name from cust/uuid
-                      :chat/cust-name (get-in current-state [:cust :cust/name])
-                      :db/id (get-in previous-state [:chat :entity-id])
-                      :session/uuid (:sente-id previous-state)
-                      :document/id (:document/id previous-state)
-                      :client/timestamp (js/Date.)
-                      ;; server will overwrite this
-                      :server/timestamp (js/Date.)}])
+    (d/transact! db [(utils/remove-map-nils {:chat/body (get-in previous-state [:chat :body])
+                                             :chat/color color
+                                             :cust/uuid (get-in current-state [:cust :cust/uuid])
+                                             ;; TODO: teach frontend to lookup cust/name from cust/uuid
+                                             :chat/cust-name (get-in current-state [:cust :cust/name])
+                                             :db/id (get-in previous-state [:chat :entity-id])
+                                             :session/uuid (:sente-id previous-state)
+                                             :document/id (:document/id previous-state)
+                                             :client/timestamp (js/Date.)
+                                             ;; server will overwrite this
+                                             :server/timestamp (js/Date.)})])
     (when-let [cmd (chat-cmd (get-in previous-state [:chat :body]))]
       (post-handle-cmd-chat current-state cmd (get-in previous-state [:chat :body])))))
 
