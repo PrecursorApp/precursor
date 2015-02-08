@@ -103,15 +103,6 @@
 
     })
 
-;; TODO: teach the frontend how to lookup name from cust/uuid
-;;       this will break if something else is associating cust/uuids
-(defn maybe-replace-cust-uuid [db {:keys [a] :as d}]
-  (if (= a :cust/uuid)
-    (assoc d
-      :a :chat/cust-name
-      :v (chat-model/find-chat-name db (:v d)))
-    d))
-
 (defn translate-datom-dispatch-fn [db d] (:a d))
 
 (defmulti translate-datom translate-datom-dispatch-fn)
@@ -119,11 +110,14 @@
 (defmethod translate-datom :default [db d]
   d)
 
+;; TODO: teach the frontend how to lookup name from cust/uuid
+;;       this will break if something else is associating cust/uuids
 (defmethod translate-datom :cust/uuid [db d]
   (if (:chat/body (d/entity db (:e d)))
     (assoc d
            :a :chat/cust-name
-           :v (chat-model/find-chat-name db (:v d)))
+           :v (or (chat-model/find-chat-name db (:v d))
+                  (subs (str (:v d)) 0 6)))
     d))
 
 (defmethod translate-datom :permission/cust [db d]
