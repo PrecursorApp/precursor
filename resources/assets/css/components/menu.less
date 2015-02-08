@@ -8,7 +8,7 @@
     cursor: pointer;
     background: @dye_outer;
     box-shadow: 0 8px 21px 0 fade(@black, 21);
-    transition: @run_slower @bezier_transform;
+    transition: @run_slower @bezier_deform;
     .mq_1920({
       .transform(translate(@tile * 2,0); scale(.8));
     });
@@ -124,7 +124,7 @@
   left: 0;
   width: 100%;
   padding-bottom: @tile;
-  transition: @run_slow @bezier_transform;
+  transition: @run_slow @bezier_deform;
   &:not(:first-child) {
     margin-left: -100%;
   }
@@ -508,8 +508,8 @@ img.loading-image {
   height: 100%;
   padding: @menu_padding;
   background: @dye_outer;
-  transition+: right @run_fast @bezier_transform;
-  transition+: padding @run_fast @bezier_transform;
+  transition+: right @run_fast @bezier_deform;
+  transition+: padding @run_fast @bezier_deform;
   &:before {
     .gradient(to right; fade(@dye_outer, 0) @dye_outer);
     content: "";
@@ -518,7 +518,7 @@ img.loading-image {
     right: 100%;
     width: @menu_padding;
     height: 100%;
-    transition: width @run @bezier_transform;
+    transition: width @run @bezier_deform;
   }
 }
 .access-option {
@@ -528,7 +528,7 @@ img.loading-image {
   border: 1px solid @gray;
   border-radius: @tile;
   transition+: opacity @run_fast @bezier_fadein;
-  transition+: margin @run_slow @bezier_transform;
+  transition+: margin @run_slow @bezier_deform;
   &:first-child {
     &:not(:only-child) {
       margin-right: 1rem;

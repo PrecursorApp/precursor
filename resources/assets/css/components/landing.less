@@ -20,7 +20,7 @@
     }
     .canvas {
       .scale3d(.8);
-      transition: @run_slower @bezier_transform;
+      transition: @run_slower @bezier_deform;
     }
     .canvas-frame {
       width: 125%;
@@ -94,7 +94,7 @@
   }
 }
 .home-nav {
-  .animation(in-fade-top @run @run_slower @bezier_transform backwards);
+  .animation(in-fade-top @run @run_slower @bezier_deform backwards);
   position: absolute;
   z-index: @zindex_landing;
   top: 0;
@@ -168,7 +168,7 @@
     min-height: @tile_xxl;
   });
   .content {
-    .animation(jumbotron-content @run @run @bezier_transform backwards);
+    .animation(jumbotron-content @run @run @bezier_deform backwards);
     .transform-origin(0 0);
   }
   h1 {
@@ -221,7 +221,7 @@
   padding-right: 1rem;
 }
 .trusted-by {
-  .animation(in-fade-bottom @run @run_fast @bezier_transform backwards);
+  .animation(in-fade-bottom @run @run_fast @bezier_deform backwards);
   position: absolute;
   bottom: 0;
   left: 0;

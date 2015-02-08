@@ -2,7 +2,7 @@
   .flex(1);
   .transform-origin(0 0);
   position: relative;
-  transition: @run_slow @bezier_transform;
+  transition: @run_slow @bezier_deform;
   will-change: transform;
   &:active {
     + .chat {
@@ -24,7 +24,7 @@
   height: 100%;
   background: @dye_inner;
   will-change: transform;
-  transition: @run @bezier_transform;
+  transition: @run @bezier_deform;
 }
 .canvas-frame {
   .user-select(none);
@@ -114,7 +114,7 @@
     stroke: @gray_light;
     stroke-width: 2;
     pointer-events: none;
-    transition: @run @bezier_transform;
+    transition: @run @bezier_deform;
     &.selected {
       stroke-width: 2;
       stroke: @color_select;
@@ -124,7 +124,7 @@
 .text-layer {
   .user-select(none);
   fill: @gray_light;
-  transition: @run @bezier_transform;
+  transition: @run @bezier_deform;
   &.editable {
     &:hover {
       fill: @color_select_hover;
@@ -232,7 +232,7 @@
   border: 1px solid @gray_dark;
   border-top: none;
   overflow-y: auto;
-  transition: max-height @run_slow @bezier_transform;
+  transition: max-height @run_slow @bezier_deform;
   &:not(.expanded) {
     display: none;
     // transition keeps making the dropdown clip out of place :(
@@ -251,7 +251,7 @@
   text-overflow: ellipsis;
   transition+: color @run_fast @bezier_fadein;
   transition+: border @run_fast @bezier_fadein;
-  transition+: text-indent @run @bezier_transform;
+  transition+: text-indent @run @bezier_deform;
   &:hover {
     text-indent: 3px;
     border-color: @gray_lighter;

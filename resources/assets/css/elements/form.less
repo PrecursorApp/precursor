@@ -86,7 +86,7 @@ input {
         margin-bottom: 1em;
         white-space: nowrap;
         pointer-events: none;
-        transition: @run_slow @bezier_transform;
+        transition: @run_slow @bezier_deform;
         &:before {
           .user-select(none);
           content: attr(data-placeholder);
@@ -95,7 +95,7 @@ input {
           line-height: 1rem;
           margin: 1rem;
           padding: 0 3px;
-          transition: @run_slow @bezier_transform;
+          transition: @run_slow @bezier_deform;
           background-image: linear-gradient(to bottom, @dye_inner, @dye_inner);
           background-size: 100% 0;
           background-repeat: no-repeat;

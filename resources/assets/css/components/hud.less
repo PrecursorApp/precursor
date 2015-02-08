@@ -47,7 +47,7 @@
 }
 .radial-button {
   cursor: pointer;
-  transition: @run @bezier_transform;
+  transition: @run @bezier_deform;
   &:hover {
     .transform(translate3d(-13px, -13px, 0); scale3d(1.1, 1.1, 1));
     transition-duration: @run_fast;
@@ -69,7 +69,7 @@
 .radial-pie {
   fill: @gray_darker;
   stroke: @gray_dark;
-  transition: @run @bezier_transform;
+  transition: @run @bezier_deform;
 }
 .radial-icon {
   .shape_position(@radial_tools);
@@ -184,7 +184,7 @@
   border-radius: 2rem;
   box-shadow: 0 2px @gray_darker, 2px 0 @gray_darker, 2px 2px @gray_darker;
   pointer-events: none;
-  transition: @run @bezier_transform;
+  transition: @run @bezier_deform;
 }
 .info-toggle {
   top: @tile;

@@ -14,8 +14,8 @@
     height: 100%;
     transition+: opacity   @run @bezier_fadein 0ms;
     transition+: color     @run @bezier_fadein    @run_fast;
-    transition+: padding   @run @bezier_transform @run_fast;
-    transition+: font-size @run @bezier_transform @run_fast;
+    transition+: padding   @run @bezier_deform @run_fast;
+    transition+: font-size @run @bezier_deform @run_fast;
   }
   &:hover {
     &:after {
@@ -24,8 +24,8 @@
       padding: 1rem;
       transition+: opacity   @run @bezier_fadein 0ms;
       transition+: color     @run_fast @bezier_fadein    @run_fast;
-      transition+: padding   @run_fast @bezier_transform @run_fast;
-      transition+: font-size @run_fast @bezier_transform @run_fast;
+      transition+: padding   @run_fast @bezier_deform @run_fast;
+      transition+: font-size @run_fast @bezier_deform @run_fast;
     }
   }
 }
