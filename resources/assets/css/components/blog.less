@@ -40,7 +40,7 @@
   line-height: 1em;
   padding: 1em 2em;
   border: 1px solid @font_color;
-  transition: @speed_fast @bezier_fadein;
+  transition: @run_fast @bezier_fadein;
   .mq_640({
     width: 100%;
   });
@@ -88,10 +88,10 @@
 .blogroll-post-title {
   .flexy();
   padding: 1em 0;
-  transition: color @speed_fast @bezier_fadein;
+  transition: color @run_fast @bezier_fadein;
   &:not(:hover) {
     color: inherit;
-    transition-duration: @speed;
+    transition-duration: @run;
   }
 }
 .blogroll-post-author {
@@ -112,11 +112,11 @@
   p,
   li {
     a {
-      transition: @speed_fast @bezier_fadein;
+      transition: @run_fast @bezier_fadein;
       &:not(:hover) {
         box-shadow: 0 -1px @white inset, 0 -2px @gray_light inset;
         text-shadow: 1px 0 @white, 2px 0 @white, 3px 0 @white, -1px 0 @white, -2px 0 @white, -3px 0 @white;
-        transition-duration: @speed;
+        transition-duration: @run;
       }
     }
   }
@@ -151,12 +151,12 @@
     padding: 1em 2em;
     .logomark-fill {
       fill: @gray_light;
-      transition: @speed_slow @bezier_fadein;
+      transition: @run_slow @bezier_fadein;
     }
     &:hover {
       .logomark-fill {
         fill: darken(@gray_light, 8);
-        transition-duration: @speed_fast;
+        transition-duration: @run_fast;
       }
     }
   }
@@ -173,10 +173,10 @@
         opacity: 1;
         font-size: 0.750rem;
         padding: 1rem;
-        transition+: opacity   @speed @bezier_fadein 0ms;
-        transition+: color     @speed_fast @bezier_fadein    @speed_fast;
-        transition+: padding   @speed_fast @bezier_transform @speed_fast;
-        transition+: font-size @speed_fast @bezier_transform @speed_fast;
+        transition+: opacity   @run @bezier_fadein 0ms;
+        transition+: color     @run_fast @bezier_fadein    @run_fast;
+        transition+: padding   @run_fast @bezier_transform @run_fast;
+        transition+: font-size @run_fast @bezier_transform @run_fast;
       }
     }
     [data-caption-white] {

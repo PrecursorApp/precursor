@@ -10,13 +10,13 @@
   background: @dye_outer;
   box-shadow: -1px 0 @gray_lighter;
   will-change: transform;
-  transition: @speed @now @bezier_fadein;
+  transition: @run @now @bezier_fadein;
   &.closed {
     .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));
-    transition-duration: @speed_slow;
+    transition-duration: @run_slow;
     .chat-input {
       visibility: hidden;
-      transition: visibility @now @speed_slow @bezier_fadein;
+      transition: visibility @now @run_slow @bezier_fadein;
     }
   }
 }
@@ -30,14 +30,14 @@
   background: @dye_inner;
   box-shadow: -1px 0 @gray_dark;
   will-change: transform;
-  transition: @speed @bezier_transform;
+  transition: @run @bezier_transform;
 }
 .chat-log {
   .scrollbar_hide();
   position: relative;
   padding: 1em 0 1.25em;
   overflow-y: auto;
-  transition: @speed_fast @speed @bezier_fadein;
+  transition: @run_fast @run @bezier_fadein;
   span {
     word-break: break-word;
   }
@@ -48,7 +48,7 @@
   height: @tile;
   min-height: @tile;
   border-top: 1px solid @gray_dark;
-  transition: border-top @speed_fast @speed_fast @bezier_fadein;
+  transition: border-top @run_fast @run_fast @bezier_fadein;
   &:after {
     .gradient(to bottom; @dye_inner; fade(@dye_inner, 0));
     .gradient(to bottom; @dye_inner; fade(@dye_inner, 0));
@@ -59,12 +59,12 @@
     width: 100%;
     height: 33%;
     pointer-events: none;
-    transition: @speed_fast @speed;
+    transition: @run_fast @run;
   }
 }
 .chat-input {
   .placeholder_style(color; @gray_dark);
-  .placeholder_style(transition; @speed_fast @speed @bezier_fadein);
+  .placeholder_style(transition; @run_fast @run @bezier_fadein);
   .scrollbar(width; .5em;);
   .scrollbar_thumb(border-radius; .25em);
   width: 100%;

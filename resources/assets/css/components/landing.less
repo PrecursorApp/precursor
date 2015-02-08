@@ -8,7 +8,7 @@
   ~ .inner {
     .canvas-background {
       &:after {
-        .animation(in-fade @speed @speed_fast @bezier_fadein backwards);
+        .animation(in-fade @run @run_fast @bezier_fadein backwards);
         content: "";
         position: absolute;
         top: 0;
@@ -20,7 +20,7 @@
     }
     .canvas {
       .scale3d(.8);
-      transition: @speed_slower @bezier_transform;
+      transition: @run_slower @bezier_transform;
     }
     .canvas-frame {
       width: 125%;
@@ -41,11 +41,11 @@
     }
     .layer-outline {
       stroke: darken(@dye_inner, 5);
-      transition-duration: @speed;
+      transition-duration: @run;
     }
     .text-layer {
       fill: darken(@dye_inner, 5);
-      transition-duration: @speed;
+      transition-duration: @run;
     }
     .mouse-stats {
       opacity: 0;
@@ -58,7 +58,7 @@
     }
     .chat-input {
       visibility: hidden;
-      transition: visibility @now @speed_slow @bezier_fadein;
+      transition: visibility @now @run_slow @bezier_fadein;
     }
   }
   ~ .hud {
@@ -94,7 +94,7 @@
   }
 }
 .home-nav {
-  .animation(in-fade-top @speed @speed_slower @bezier_transform backwards);
+  .animation(in-fade-top @run @run_slower @bezier_transform backwards);
   position: absolute;
   z-index: @zindex_landing;
   top: 0;
@@ -168,7 +168,7 @@
     min-height: @tile_xxl;
   });
   .content {
-    .animation(jumbotron-content @speed @speed @bezier_transform backwards);
+    .animation(jumbotron-content @run @run @bezier_transform backwards);
     .transform-origin(0 0);
   }
   h1 {
@@ -187,7 +187,7 @@
     height: @tile;
     padding: 0 (@tile / 2);
     margin-top: 2em;
-    transition: @speed @bezier_fadein;
+    transition: @run @bezier_fadein;
     border: 2px solid @gray_lighter;
     &:hover,
     &:focus,
@@ -221,7 +221,7 @@
   padding-right: 1rem;
 }
 .trusted-by {
-  .animation(in-fade-bottom @speed @speed_fast @bezier_transform backwards);
+  .animation(in-fade-bottom @run @run_fast @bezier_transform backwards);
   position: absolute;
   bottom: 0;
   left: 0;

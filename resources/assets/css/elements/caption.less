@@ -12,20 +12,20 @@
     left: 0;
     width: 100%;
     height: 100%;
-    transition+: opacity   @speed @bezier_fadein 0ms;
-    transition+: color     @speed @bezier_fadein    @speed_fast;
-    transition+: padding   @speed @bezier_transform @speed_fast;
-    transition+: font-size @speed @bezier_transform @speed_fast;
+    transition+: opacity   @run @bezier_fadein 0ms;
+    transition+: color     @run @bezier_fadein    @run_fast;
+    transition+: padding   @run @bezier_transform @run_fast;
+    transition+: font-size @run @bezier_transform @run_fast;
   }
   &:hover {
     &:after {
       opacity: 1;
       font-size: 0.750rem;
       padding: 1rem;
-      transition+: opacity   @speed @bezier_fadein 0ms;
-      transition+: color     @speed_fast @bezier_fadein    @speed_fast;
-      transition+: padding   @speed_fast @bezier_transform @speed_fast;
-      transition+: font-size @speed_fast @bezier_transform @speed_fast;
+      transition+: opacity   @run @bezier_fadein 0ms;
+      transition+: color     @run_fast @bezier_fadein    @run_fast;
+      transition+: padding   @run_fast @bezier_transform @run_fast;
+      transition+: font-size @run_fast @bezier_transform @run_fast;
     }
   }
 }

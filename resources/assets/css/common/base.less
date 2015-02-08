@@ -9,7 +9,7 @@ body {
   margin: 0;
 }
 .app {
-  .animation(in-fade @speed_slower);
+  .animation(in-fade @run_slower);
   min-height: 100vh;
   background: @dye_outer;
 }
@@ -22,7 +22,7 @@ body {
   right: 0;
   width: 100%;
   height: 100%;
-  transition: @speed @bezier_transform;
+  transition: @run @bezier_transform;
   will-change: transform;
   &:active {
     ~ .hud {

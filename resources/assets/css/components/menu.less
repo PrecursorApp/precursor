@@ -8,7 +8,7 @@
     cursor: pointer;
     background: @dye_outer;
     box-shadow: 0 8px 21px 0 fade(@black, 21);
-    transition: @speed_slower @bezier_transform;
+    transition: @run_slower @bezier_transform;
     .mq_1920({
       .transform(translate(@tile * 2,0); scale(.8));
     });
@@ -17,11 +17,11 @@
     });
     &:hover {
       box-shadow: 0 21px 34px 0 fade(@black, 21);
-      transition-duration: @speed;
+      transition-duration: @run;
     }
     &:active {
       box-shadow: 0 5px 13px 0 fade(@black, 21);
-      transition-duration: @speed_fast;
+      transition-duration: @run_fast;
     }
     a {
       text-shadow: none;
@@ -29,7 +29,7 @@
     .canvas-background {
       .scale3d(.6,0,1);
       background: @gray_dark; // softer contrast w/o opacity
-      transition-duration: @speed_slow;
+      transition-duration: @run_slow;
     }
     .canvas {
       box-shadow: 0 -1px @gray_lightest;
@@ -42,16 +42,16 @@
     .chat-background {
       .scale3d(0,0,1);
       background: @gray_dark; // softer contrast w/o opacity
-      transition-duration: @speed_slow;
+      transition-duration: @run_slow;
     }
     .chat-log {
       .filter(grayscale(1));
       opacity: .5;
-      transition: @speed_fast @now @bezier_fadein;
+      transition: @run_fast @now @bezier_fadein;
     }
     .chat-box {
       border-top: 1px solid @gray_lighter;
-      transition: border-top @now @speed_faster @bezier_fadein;
+      transition: border-top @now @run_faster @bezier_fadein;
       &:after {
         opacity: 0;
         transition: @now;
@@ -70,10 +70,10 @@
     }
     .menu-toggle {
       path {
-        transition+: opacity @speed @now @bezier_fadein;
+        transition+: opacity @run @now @bezier_fadein;
         transition+: stroke @now @now @bezier_fadein;
-        transition+: -webkit-transform @speed_slow @now @bezier_bounce;
-        transition+:         transform @speed_slow @now @bezier_bounce;
+        transition+: -webkit-transform @run_slow @now @bezier_bounce;
+        transition+:         transform @run_slow @now @bezier_bounce;
       }
     }
   }
@@ -85,14 +85,14 @@
     .flexy(center, center);
     width: @tile;
     height: @tile;
-    transition: @speed @bezier_fadein;
+    transition: @run @bezier_fadein;
     &:only-child {
       margin-left: auto;
     }
   }
   h4 {
     .flex(0 1 100%);
-    .animation(in-fade-top (@speed * 3));
+    .animation(in-fade-top (@run * 3));
     text-overflow: ellipsis;
     white-space: nowrap;
     margin: 0;
@@ -124,7 +124,7 @@
   left: 0;
   width: 100%;
   padding-bottom: @tile;
-  transition: @speed_slow @bezier_transform;
+  transition: @run_slow @bezier_transform;
   &:not(:first-child) {
     margin-left: -100%;
   }
@@ -135,7 +135,7 @@
     &:only-child {
       .make {
         .animation-name(in-fade-left);
-        .animation-duration(@speed_slow);
+        .animation-duration(@run_slow);
         .animation-fill-mode(both);
       }
     }
@@ -144,7 +144,7 @@
     &:not(:first-child) {
       .make {
         .animation-name(in-fade-right);
-        .animation-duration(@speed_slow);
+        .animation-duration(@run_slow);
         .animation-fill-mode(both);
       }
     }
@@ -157,7 +157,7 @@
         .flexy(center, center);
         height: @tile;
         margin-bottom: @tile;
-        transition: @speed_fast @bezier_fadein;
+        transition: @run_fast @bezier_fadein;
         border: 1px solid @font_color;
         &:hover {
           color: @white;
@@ -181,12 +181,12 @@
   .flexy(center);
   width: 100%;
   color: @gray;
-  transition+: color @speed_fast @bezier_fadein;
-  transition+: height @speed_fast @bezier_fadein;
+  transition+: color @run_fast @bezier_fadein;
+  transition+: height @run_fast @bezier_fadein;
   overflow: hidden;
   &:hover {
     color: @black;
-    transition-duration: @speed_fast, @now;
+    transition-duration: @run_fast, @now;
   }
   &.stick {
     position: absolute;
@@ -197,7 +197,7 @@
     padding: @menu_padding;
   }
   path {
-    transition: @speed_fast @bezier_fadein;
+    transition: @run_fast @bezier_fadein;
   }
 }
 .menu-invite-form {
@@ -301,7 +301,7 @@
   cursor: default;
 }
 .mixpanel-badge {
-  .animation(in-fade-bottom @speed_slow);
+  .animation(in-fade-bottom @run_slow);
   position: fixed;
   bottom: 0;
   right: 0;
@@ -332,10 +332,10 @@
   height: 15rem;
   border: 1px solid @gray_lighter;
   overflow: hidden;
-  transition: @speed @bezier_fadein;
+  transition: @run @bezier_fadein;
   &:hover {
     border-color: @gray;
-    transition-duration: @speed_fast;
+    transition-duration: @run_fast;
   }
   img {
     width: 100%;
@@ -403,7 +403,7 @@ img.loading-image {
   height: @tile;
   cursor: pointer;
   overflow: hidden;
-  transition: @speed;
+  transition: @run;
   i {
     margin: @menu_padding;
     margin-right: 1rem;
@@ -418,7 +418,7 @@ img.loading-image {
   // max-width: @tile_menu; // TODO fix this
   padding: .5rem 1.5rem;
   cursor: default;
-  transition: @speed;
+  transition: @run;
   &:not(:hover) {
     .access-options {
       right: -@tile * 2;
@@ -437,15 +437,15 @@ img.loading-image {
       .access-avatar,
       .access-details {
         opacity: .8;
-        transition: @speed_fast @bezier_fadein;
+        transition: @run_fast @bezier_fadein;
       }
       .access-avatar {
         .filter(grayscale(1));
-        transition: @speed_fast @bezier_fadein;
+        transition: @run_fast @bezier_fadein;
       }
       .access-status {
         color: @font_color;
-        transition: @speed_fast @bezier_fadein;
+        transition: @run_fast @bezier_fadein;
       }
     }
     .access-status {
@@ -473,7 +473,7 @@ img.loading-image {
   .flex(0 0 @size);
   height: @size;
   border-radius: @size;
-  transition: @speed @bezier_fadein;
+  transition: @run @bezier_fadein;
   img {
     width: @size;
     height: @size;
@@ -508,8 +508,8 @@ img.loading-image {
   height: 100%;
   padding: @menu_padding;
   background: @dye_outer;
-  transition+: right @speed_fast @bezier_transform;
-  transition+: padding @speed_fast @bezier_transform;
+  transition+: right @run_fast @bezier_transform;
+  transition+: padding @run_fast @bezier_transform;
   &:before {
     .gradient(to right; fade(@dye_outer, 0) @dye_outer);
     content: "";
@@ -518,7 +518,7 @@ img.loading-image {
     right: 100%;
     width: @menu_padding;
     height: 100%;
-    transition: width @speed @bezier_transform;
+    transition: width @run @bezier_transform;
   }
 }
 .access-option {
@@ -527,8 +527,8 @@ img.loading-image {
   height: @tile / 2;
   border: 1px solid @gray;
   border-radius: @tile;
-  transition+: opacity @speed_fast @bezier_fadein;
-  transition+: margin @speed_slow @bezier_transform;
+  transition+: opacity @run_fast @bezier_fadein;
+  transition+: margin @run_slow @bezier_transform;
   &:first-child {
     &:not(:only-child) {
       margin-right: 1rem;
@@ -553,6 +553,6 @@ img.loading-image {
 }
 .privacy-public-word,
 .privacy-private-word {
-  .animation(in-fade-top @speed_slow);
+  .animation(in-fade-top @run_slow);
   display: inline-block;
 }

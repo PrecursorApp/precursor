@@ -2,7 +2,7 @@
   .flex(1);
   .transform-origin(0 0);
   position: relative;
-  transition: @speed_slow @bezier_transform;
+  transition: @run_slow @bezier_transform;
   will-change: transform;
   &:active {
     + .chat {
@@ -24,12 +24,12 @@
   height: 100%;
   background: @dye_inner;
   will-change: transform;
-  transition: @speed @bezier_transform;
+  transition: @run @bezier_transform;
 }
 .canvas-frame {
   .user-select(none);
   position: relative;
-  transition: @now @speed_slower;
+  transition: @now @run_slower;
   &:not(:hover) {
     ~ .radial-tip {
       display: none;
@@ -52,20 +52,20 @@
   }
 }
 .grid-background {
-  transition: opacity @speed_slow @speed_fast @bezier_fadein;
+  transition: opacity @run_slow @run_fast @bezier_fadein;
 }
 .grid-big,
 .grid-small {
   path {
     stroke: @gray_dark;
-    transition: stroke @speed_fast @now @bezier_fadein;
+    transition: stroke @run_fast @now @bezier_fadein;
   }
 }
 .layers {
   &.live {
     &.layer-handle {
       ~ .layer-outline {
-        transition-delay: @speed_fast;
+        transition-delay: @run_fast;
       }
     }
   }
@@ -82,7 +82,7 @@
       ~ .layer-outline {
         stroke: @white;
         stroke-width: 4;
-        transition-duration: @speed_fast;
+        transition-duration: @run_fast;
         &.selected {
           stroke: @color_select_hover;
         }
@@ -114,7 +114,7 @@
     stroke: @gray_light;
     stroke-width: 2;
     pointer-events: none;
-    transition: @speed @bezier_transform;
+    transition: @run @bezier_transform;
     &.selected {
       stroke-width: 2;
       stroke: @color_select;
@@ -124,7 +124,7 @@
 .text-layer {
   .user-select(none);
   fill: @gray_light;
-  transition: @speed @bezier_transform;
+  transition: @run @bezier_transform;
   &.editable {
     &:hover {
       fill: @color_select_hover;
@@ -232,7 +232,7 @@
   border: 1px solid @gray_dark;
   border-top: none;
   overflow-y: auto;
-  transition: max-height @speed_slow @bezier_transform;
+  transition: max-height @run_slow @bezier_transform;
   &:not(.expanded) {
     display: none;
     // transition keeps making the dropdown clip out of place :(
@@ -249,15 +249,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition+: color @speed_fast @bezier_fadein;
-  transition+: border @speed_fast @bezier_fadein;
-  transition+: text-indent @speed @bezier_transform;
+  transition+: color @run_fast @bezier_fadein;
+  transition+: border @run_fast @bezier_fadein;
+  transition+: text-indent @run @bezier_transform;
   &:hover {
     text-indent: 3px;
     border-color: @gray_lighter;
     transition-duration+: @now;
     transition-duration+: @now;
-    transition-duration+: @speed;
+    transition-duration+: @run;
   }
 }
 .edit-handles {
