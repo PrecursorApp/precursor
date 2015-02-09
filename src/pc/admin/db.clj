@@ -33,18 +33,6 @@
                                                  0)))
                         doc-ids))))
 
-(defn populate-user-info-from-sub []
-  (let [db (pcd/default-db)]
-    (doseq [[eid] (d/q '{:find [?t]
-                         :where [[?t :google-account/sub]]}
-                       db)
-            :let [cust (d/entity db eid)]]
-      (try+
-        (println "adding" (:cust/email cust))
-        (pc.auth/update-user-from-sub cust)
-        (catch :status t
-          (println "error updating" (d/touch cust)))))))
-
 (defn copy-document
   "Creates a copy of the document, without any of the document's history"
   [db doc]
@@ -55,15 +43,3 @@
                                           :document/id (:db/id new-doc)))
                                 layers))
     new-doc))
-
-(defn populate-first-newsletter [emails]
-  (let [db (pcd/default-db)]
-    (doseq [[eid] (d/q '{:find [?t]
-                         :in [$ ?emails]
-                         :where [[?t :cust/email ?e]
-                                 [(contains? ?emails ?e)]]}
-                       db
-                       (set emails))
-            :let [cust (d/entity db eid)]]
-      (println "populating" (:cust/email cust))
-      (mixpanel/engage (:cust/uuid cust) {:$set {:sent-first-newsletter true}}))))
