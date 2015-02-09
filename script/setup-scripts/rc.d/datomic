@@ -1,0 +1,78 @@
+#!/bin/sh
+
+# PROVIDE: datomic
+# REQUIRE: DAEMON LOGIN NETWORKING
+# KEYWORD: nojail shutdown
+
+. /etc/rc.subr
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/root/bin
+
+name="datomic"
+start_cmd="${name}_start"
+stop_cmd="${name}_stop"
+restart_cmd="${name}_restart"
+status_cmd="#{name}_status"
+rcvar=datomic_enable
+
+pidfile="/var/run/${name}.pid"
+procname="java"
+command="java"
+supervisor_pidfile="/var/run/${name}-supervisor.pid"
+
+datomic_start()
+{
+    if [ -z $(check_pidfile $pidfile java) ]; then
+        daemon -p $pidfile -P $supervisor_pidfile -r /usr/local/datomic/bin/transactor -Xmx4g -Xms4g config/transactor.properties
+    else
+        err 1 "Already running at $(check_pidfile $pidfile java)"
+    fi
+}
+
+datomic_stop()
+{
+    _sup=$(check_pidfile $supervisor_pidfile daemon)
+    _d=$(check_pidfile $pidfile $procname)
+
+    if [ -z "$_sup" ]; then
+        warn "Daemon supervisor isn't running"
+    else
+        kill $_sup
+    fi
+
+    if [ -z "$_d" ]; then
+        warn "Datomic isn't running"
+        return 1
+    else
+        kill $_d
+    fi
+
+}
+
+datomic_restart()
+{
+    datomic_stop
+    datomic_start
+}
+
+datomic_status()
+{
+    _sup=$(check_pidfile $supervisor_pidfile daemon)
+    _d=$(check_pidfile $pidfile java)
+
+    if [ -z "$_sup" ]; then
+        warn "Daemon supervisor isn't running"
+    else
+        info "Daemon supervisor running at $_sup"
+    fi
+
+    if [ -z "$_d" ]; then
+        warn "Datomic isn't running"
+        return 1
+    else
+        info "Datomic running at $_d"
+    fi
+}
+
+load_rc_config $name
+run_rc_command "$@"
