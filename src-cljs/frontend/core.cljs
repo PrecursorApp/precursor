@@ -151,13 +151,14 @@
   [value state browser-state]
   (when-not (keyword-identical? :mouse-moved (first value))
     (mlog "Controls Verbose: " value))
-  (binding [frontend.async/*uuid* (:uuid (meta value))]
-    (let [previous-state @state
-          ;; TODO: control-event probably shouldn't get browser-state
-          current-state (swap! state (partial controls-con/control-event browser-state (first value) (second value)))]
-      (controls-con/post-control-event! browser-state (first value) (second value) previous-state current-state)
-      ;; TODO: enable a way to set the event separate from the control event
-      (analytics/track-control (first value) current-state))))
+  (utils/swallow-errors
+   (binding [frontend.async/*uuid* (:uuid (meta value))]
+     (let [previous-state @state
+           ;; TODO: control-event probably shouldn't get browser-state
+           current-state (swap! state (partial controls-con/control-event browser-state (first value) (second value)))]
+       (controls-con/post-control-event! browser-state (first value) (second value) previous-state current-state)
+       ;; TODO: enable a way to set the event separate from the control event
+       (analytics/track-control (first value) current-state)))))
 
 (defn nav-handler
   [value state history]
