@@ -1,5 +1,7 @@
 (ns pc.admin.db
   (:require [datomic.api :refer [db q] :as d]
+            [clojure.tools.logging :as log]
+            [clojure.core.async :as async]
             [clj-time.core :as time]
             [clj-time.coerce :refer [to-date]]
             [pc.auth]
@@ -43,3 +45,74 @@
                                           :document/id (:db/id new-doc)))
                                 layers))
     new-doc))
+
+(defonce transaction-queue (atom (clojure.lang.PersistentQueue/EMPTY)))
+(defonce transaction-tap (async/chan (async/sliding-buffer 1024)))
+
+(defn setup-transaction-queue []
+  (async/tap (async/mult pcd/tx-report-ch) transaction-tap)
+  (async/go-loop []
+    (when-let [transaction (async/<! transaction-tap)]
+      (swap! transaction-queue conj transaction)
+      (recur))))
+
+(defonce original-tempid (deref #'d/tempid))
+(defonce original-resolve-tempid (deref #'d/resolve-tempid))
+
+(defonce pre-made-ids (atom []))
+(defonce used-pre-made-ids (atom #{}))
+
+(defn pop-id []
+  (loop [val @pre-made-ids]
+    (if (compare-and-set! pre-made-ids val (rest val))
+      (first val)
+      (recur @pre-made-ids))))
+
+(defn generate-pre-made-ids [id-count]
+  (let [tempids (repeatedly id-count #(d/tempid :db.part/user))
+        t (d/transact (pcd/conn) (mapv (fn [tempid]
+                                         {:db/id tempid :pre-made :pre-made/free-to-postgres})
+                                       tempids))]
+    (mapv (fn [tempid] (d/resolve-tempid (:db-after @t) (:tempids @t) tempid)) tempids)))
+
+(defn maybe-get-premade-id [part]
+  (if (= :db.part/user part)
+    (if-let [id (pop-id)]
+      (do (swap! used-pre-made-ids conj id)
+          id)
+      (do (println "Out of premade ids!")
+          (log/warn "Out of premade ids!")
+          (original-tempid part)))
+    (original-tempid part)))
+
+(defn maybe-resolve-premade-id [db tempids tempid]
+  (if (contains? @used-pre-made-ids tempid)
+    tempid
+    (original-resolve-tempid db tempids tempid)))
+
+(defn startup-pre-made-ids []
+  (reset! pre-made-ids (generate-pre-made-ids 5000))
+  (alter-var-root (var d/resolve-tempid) (fn [_] maybe-resolve-premade-id))
+  (alter-var-root (var d/tempid) (fn [_] maybe-get-premade-id)))
+
+(defn reset-tempid []
+  (alter-var-root (var d/tempid) (fn [_] original-tempid)))
+
+(defn reset-resolve-tempid []
+  (alter-var-root (var d/resolve-tempid) (fn [_] original-resolve-tempid)))
+
+(defn reset-vars []
+  (reset-tempid)
+  ;; give it twice the tx timeout for transactions to complete
+  (Thread/sleep (* 1000 10 2))
+  (reset-resolve-tempid))
+
+(defn start-transaction-queue-consumer [])
+
+;; sequence of events:
+;; (startup-premade-ids)
+;; (setup-transaction-queue)
+;; run backup and restore
+;; (start-transaction-queue-consumer)
+;; wait for queue to clear
+;; switch connections, set up datomic listener for new connection

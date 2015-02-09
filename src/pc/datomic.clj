@@ -5,6 +5,7 @@
   (:import java.util.UUID))
 
 (def default-uri "datomic:free://localhost:4334/pc2")
+(def prod-uri "datomic:sql://prcrsr?jdbc:postgresql://10.99.0.101:5432/datomic?user=datomic&password=datomic")
 
 (defn conn [& {:keys [uri]}]
   (d/connect (or uri default-uri)))
