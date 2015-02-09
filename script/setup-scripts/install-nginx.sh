@@ -36,7 +36,7 @@ service ntpd start
 dd if=/dev/zero of=/usr/swap0 bs=1m count=2048
 chmod 600 /usr/swap0
 echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
-swapon -aq
+swapon -aqL
 
 # freebsd-update
 freebsd-update fetch
