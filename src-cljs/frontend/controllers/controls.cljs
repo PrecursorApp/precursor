@@ -629,7 +629,10 @@
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
                          (get-in previous-state [:drawing :moving?]))
         original-layers (get-in previous-state [:drawing :original-layers])
-        layers        (mapv #(dissoc % :points) (get-in current-state [:drawing :layers]))]
+        layers        (mapv #(-> %
+                               (dissoc :points)
+                               (utils/remove-map-nils))
+                            (get-in current-state [:drawing :layers]))]
     (cond
      (and (not= type "touchend")
           (not= button 2)
@@ -659,7 +662,7 @@
   [browser-state message _ previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
-        layer        (get-in current-state [:drawing :layers 0])]
+        layer        (utils/remove-map-nils (get-in current-state [:drawing :layers 0]))]
     (when (layer-model/detectable? layer)
       (d/transact! db [layer] {:can-undo? true}))
     (maybe-notify-subscribers! current-state nil nil)))
@@ -802,7 +805,7 @@
     (let [layers (get-in (finalize-layer previous-state) [:drawing :layers])]
       (when (some layer-model/detectable? layers)
         (d/transact! (:db current-state)
-                     layers
+                     (mapv utils/remove-map-nils layers)
                      {:can-undo? true}))))
   (maybe-notify-subscribers! current-state nil nil))
 
@@ -1053,8 +1056,9 @@
 (defmethod post-control-event! :layer-properties-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)]
-    (d/transact! db [(select-keys (get-in current-state [:layer-properties-menu :layer])
-                                  [:db/id :layer/ui-id :layer/ui-target])])))
+    (d/transact! db [(utils/remove-map-nils
+                      (select-keys (get-in current-state [:layer-properties-menu :layer])
+                                   [:db/id :layer/ui-id :layer/ui-target]))])))
 
 (defn empty-str->nil [s]
   (if (str/blank? s)
@@ -1104,7 +1108,7 @@
 (defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
-        layers (get-in current-state [:clipboard :layers])]
+        layers (mapv utils/remove-map-nils (get-in current-state [:clipboard :layers]))]
     (d/transact! db layers {:can-undo? true})))
 
 (defmethod post-control-event! :created-fetched
