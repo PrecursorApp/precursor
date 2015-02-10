@@ -79,14 +79,7 @@ a {
     outline: 0;
   }
   &[role="button"] {
-    .icon(stroke; @gray);
-    .icon(fill; @gray);
     cursor: pointer;
-    &:hover,
-    &:active {
-      .icon(stroke; @black);
-      .icon(fill; @black);
-    }
   }
 }
 i {
@@ -138,4 +131,8 @@ p {
 .divider-small {
   font-size: 0.75rem;
   line-height: ~"@{line_height}rem";
+}
+.noninteractive {
+  .user-select(none);
+  pointer-events: none;
 }

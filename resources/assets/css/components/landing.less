@@ -6,6 +6,10 @@
   width: 100%;
   height: 100%;
   ~ .inner {
+    .canvas {
+      .scale3d(.8);
+      transition: @run_slower @bezier_deform;
+    }
     .canvas-background {
       &:after {
         .animation(in-fade @run @run_fast @bezier_fadein backwards);
@@ -17,10 +21,6 @@
         height: 100%;
         .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
       }
-    }
-    .canvas {
-      .scale3d(.8);
-      transition: @run_slower @bezier_deform;
     }
     .canvas-frame {
       width: 125%;
@@ -46,10 +46,6 @@
     .text-layer {
       fill: darken(@dye_inner, 5);
       transition-duration: @run;
-    }
-    .mouse-stats {
-      opacity: 0;
-      transition: @now;
     }
     .chat {
       .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));

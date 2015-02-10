@@ -19,6 +19,63 @@
   (:require-macros [frontend.utils :refer [html]])
   (:import [goog.ui IdGenerator]))
 
+(def tools-templates
+  {:circle {:type "ellipse"
+            :path "M128,0v128l110.9-64C216.7,25.7,175.4,0,128,0z"
+            :hint "Ellipse Tool (L)"
+            :icon :stroke-ellipse}
+   :rect   {:type "rectangle"
+            :path "M238.9,192c10.9-18.8,17.1-40.7,17.1-64s-6.2-45.2-17.1-64 L128,128L238.9,192z"
+            :hint "Rectangle Tool (M)"
+            :icon :stroke-rectangle}
+   :line   {:type "line"
+            :path "M238.9,192L128,128v128C175.4,256,216.7,230.3,238.9,192z"
+            :hint "Line Tool (\\)"
+            :icon :stroke-line}
+   :pen    {:type "pencil"
+            :path "M17.1,192c22.1,38.3,63.5,64,110.9,64V128L17.1,192z"
+            :hint "Pencil Tool (N)"
+            :icon :stroke-pencil}
+   :text   {:type "text"
+            :path "M17.1,64C6.2,82.8,0,104.7,0,128s6.2,45.2,17.1,64L128,128 L17.1,64z"
+            :hint "Text Tool (T)"
+            :icon :stroke-text}
+   :select {:type "select"
+            :path "M128,0C80.6,0,39.3,25.7,17.1,64L128,128V0z"
+            :hint "Select Tool (V)"
+            :icon :stroke-cursor}})
+
+(defn radial-menu [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)]
+        (html
+          [:a.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
+                                     :left (- (get-in app [:menu :x]) 128)}}
+           [:svg.radial-buttons {:width "256" :height "256"}
+            (for [[tool template] tools-templates]
+              [:g.radial-button {:class (str "tool-" (:type template))}
+               [:title (:hint template)]
+               [:path.radial-pie {:d (:path template)
+                                  :key tool
+                                  :on-mouse-up #(do (cast! :tool-selected [tool]))
+                                  :on-touch-end #(do (cast! :tool-selected [tool]))}]
+               [:path.radial-icon {:class (str "shape-" (:type template))
+                                   :d (get common/icon-paths (:icon template))}]])
+            [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
+
+(defn radial-hint [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+        [:div.radial-hint {:style {:top  (+ (get-in app [:mouse :y]) 16)
+                                   :left (+ (get-in app [:mouse :x]) 16)}}
+         (if (= :touch (get-in app [:mouse :type]))
+           "Tap and hold to select tool"
+           "Right-click.")]))))
+
 ;; layers are always denominated in absolute coordinates
 ;; transforms are applied to handle panning and zooming
 
@@ -694,9 +751,14 @@
     om/IRender
     (render [_]
       (html
-        [:div.canvas
-         {:onContextMenu (fn [e]
-                           (.preventDefault e)
-                           (.stopPropagation e))}
-         [:div.canvas-background]
-         (om/build svg-canvas app)]))))
+        (let [right-click-learned? (get-in app state/right-click-learned-path)]
+          [:div.canvas
+           {:onContextMenu (fn [e]
+                             (.preventDefault e)
+                             (.stopPropagation e))}
+           [:div.canvas-background]
+           (om/build svg-canvas app)
+           (when (and (not right-click-learned?) (:mouse app))
+             (om/build radial-hint app))
+           (when (get-in app [:menu :open?])
+             (om/build radial-menu app))])))))

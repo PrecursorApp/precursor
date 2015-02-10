@@ -26,14 +26,14 @@
     a {
       text-shadow: none;
     }
+    .canvas {
+      box-shadow: 0 -1px @gray_lightest;
+      pointer-events: none;
+    }
     .canvas-background {
       .scale3d(.6,0,1);
       background: @gray_dark; // softer contrast w/o opacity
       transition-duration: @run_slow;
-    }
-    .canvas {
-      box-shadow: 0 -1px @gray_lightest;
-      pointer-events: none;
     }
     .grid-background {
       opacity: 0;
@@ -63,10 +63,12 @@
     }
   }
   ~ .hud {
-    .hud-excess {
-      opacity: 0;
-      visibility: hidden;
-      transition: @now;
+    .hud-item {
+      &:not(.menu-needed) {
+        opacity: 0;
+        visibility: hidden;
+        transition: @now;
+      }
     }
     .menu-toggle {
       path {

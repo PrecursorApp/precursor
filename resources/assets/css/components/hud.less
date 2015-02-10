@@ -1,98 +1,22 @@
-@radial_tools:
-  ellipse,   159.01px,  49.71px,
-  rectangle, 199.00px, 119.00px,
-  line,      159.01px, 188.29px,
-  pencil,     79.00px, 188.29px,
-  text,       39.00px, 119.52px,
-  select,     82.66px,  49.71px;
-.shape_position(@array; @count: length(@array); @name_value: -2; @x_value: -1; @y_value: 0; @icon_scale: .2) when (@count > (length(@array) / 3)) {
-  .shape_position(@array; (@count - 2); (@name_value - 1); (@x_value - 1); (@y_value - 1); @icon_scale);    // <-- Loop to next iteration until count is 0
-  @name:     extract(@array, (@count + @name_value));                                                       //
-  @x_offset: extract(@array, (@count + @x_value)) * (1 / @icon_scale);                                      //
-  @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
-  &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
-}
 .hud {
-  > a {
-    &[role="button"] {
-      .animation(in-bounce @run_slower backwards);
-      .flexy(center, center);
-      .icon(stroke; @white);
-      .icon(fill; @white);
-      position: fixed;
-      font-size: 1.5em;
-      width: @tile;
-      height: @tile;
-      &:not(:hover) {
-        [class|="icon"] {
-          opacity: .5;
-        }
-      }
-    }
+  a {
+    .icon(stroke; @white);
+    .icon(fill; @white);
   }
 }
-.radial-menu {
+.hud-item {
   position: fixed;
-  width: @tile_radial;
-  height: @tile_radial;
-  z-index: @zindex_radial_menu;
 }
-.radial-buttons {
-  width: @tile_radial + 2;
-  height: @tile_radial + 2;
-  margin-left: -1em;
-  margin-top: -1em;
-  padding: 1rem;
-  overflow: visible;
-}
-.radial-button {
-  cursor: pointer;
-  transition: @run @bezier_deform;
-  &:hover {
-    .transform(translate3d(-13px, -13px, 0); scale3d(1.1, 1.1, 1));
-    transition-duration: @run_fast;
-    .radial-pie {
-      fill: @gray_dark;
-      transition-duration: @run_fast;
-    }
-    .radial-icon {
-      stroke: @white;
-      transition-duration: @run_fast;
-    }
-  }
-  &:active {
-    .radial-pie {
-      fill: @gray_darker;
-    }
+.hud-toggle {
+  .flexy(center; center);
+  font-size: 1.5em;
+  width: @tile;
+  height: @tile;
+  &:not(:hover) {
+    opacity: .5;
   }
 }
-.radial-pie {
-  fill: @gray_darker;
-  stroke: @gray_dark;
-  transition: @run @bezier_deform;
-}
-.radial-icon {
-  .shape_position(@radial_tools);
-  fill: none;
-  stroke: @gray;
-  stroke-width: 8;
-  pointer-events: none;
-  transition: @run @bezier_fadein;
-}
-.radial-point {
-  fill: @gray_dark;
-}
-.radial-hint {
-  .user-select(none);
-  position: absolute;
-  top: -@tile;
-  left: -@tile;
-  white-space: nowrap;
-  .mq_640({
-    display: none;
-  });
-}
-.menu-toggle {
+.hud-menu {
   .animation(in-fade-top @run_slower @run_slower @bezier_fadein backwards);
   top: 0;
   left: 0;
@@ -122,7 +46,7 @@
     transition+: stroke @run_fast @run_fast @bezier_fadein;
   }
 }
-.chat-toggle {
+.hud-chat {
   .animation(in-fade-bottom @run_slower @run_slower @bezier_fadein backwards);
   bottom: 0;
   right: 0;
@@ -183,17 +107,17 @@
   pointer-events: none;
   transition: @run @bezier_deform;
 }
-.info-toggle {
+.hud-info {
   top: @tile;
   left: 0;
 }
-.landing-toggle {
+.hud-landing {
   top: 0;
   right: 0;
 }
 .mouse-stats {
-  .user-select(none);
-  position: fixed;
+  // .user-select(none);
+  // position: fixed;
   color: @gray;
   font-family: @font_mono;
   font-size: 0.625rem;
@@ -203,160 +127,160 @@
   left: 0;
   width: 100%;
   padding: .25rem;
-  pointer-events: none;
-  transition: @run @run @bezier_fadein;
+  // pointer-events: none;
+  // transition: @run @run @bezier_fadein;
   .mq_640({
     opacity: 0;
   });
 }
-.viewers {
-  @max_height: 4 * 2.5em; // first value is number visible upon opening
-  .flexy(column);
-  position: fixed;
-  color: @white;
-  bottom: 0;
-  left: 0;
-  min-width: @tile_menu_min;
-  max-width: @tile_menu_max;
-  max-height: @max_height;
-  padding: 1em 1.5em;
-  transition+: all @run;
-  transition+: bottom @now;
-  &.overflowing {
-    .scrollbar(width; .25em;);
-    .scrollbar_thumb(border-radius; .25em);
-    max-height: @max_height - 1;
-    overflow-y: auto;
-    will-change: transform, bottom;
-    &:hover {
-      .scrollbar_thumb(background; fade(@black, 25));
-      .viewer-self {
-        .viewer-name {
-          &:before {
-            .translate3d(0,-100%,0);
-            opacity: 0;
-          }
-          &:after {
-            .animation(in-fade-bottom @run_slower @bezier_fadein);
-            content: attr(data-name);
-          }
-        }
-      }
-    }
-    &:not(:hover) {
-      &:not(:active) {
-        .user-select(none);
-        .translate3d(0,100%,0);
-        bottom: @tile;
-        .viewer-self {
-          ~ .viewer {
-            .translate3d(0,100%,0);
-          }
-        }
-      }
-    }
-    .viewer-self {
-      .viewer-name {
-        &:before {
-          content: attr(data-count);
-          transition: @run_slower @bezier_fadein;
-        }
-      }
-    }
-  }
-  &:not(.overflowing) {
-    &:hover {
-      .viewer-self {
-        &:only-child {
-          .viewer-name {
-            &:after {
-              .animation(in-fade-bottom @run_slower @bezier_fadein);
-              content: attr(data-name);
-            }
-          }
-        }
-      }
-    }
-    &:not(:hover) {
-      &:not(:active) {
-        .viewer-self {
-          &:only-child {
-            path {
-              stroke: fade(@white,50) !important;
-            }
-          }
-        }
-      }
-    }
-    .viewer-self {
-      &:only-child {
-        .viewer-name {
-          opacity: 1;
-        }
-        .icon-user {
-          .scale3d(1.5);
-          transition: @run @run @bezier_deform;
-        }
-      }
-      &:not(:only-child) {
-        .icon-user {
-          .animation(in-fade-bottom @run_slow @run backwards);
-        }
-        .viewer-name {
-          &:after {
-            .animation(in-fade-bottom @run_slower @bezier_fadein);
-            content: attr(data-name);
-          }
-        }
-      }
-    }
-  }
-  // TODO deciding whether to edit name inline or not...
-  // input {
-  //   height: @tile;
-  //   max-height: (@tile * 2);
-  //   background: none;
-  //   border: none;
-  //   outline: 0;
-  //   color: @white;
-  // }
-}
-.viewer-self {
-  .icon-user {
-    transition: @run @now @bezier_deform;
-    path {
-      stroke: fade(@white,50);
-      transition: stroke @run_slower @bezier_fadein;
-    }
-  }
-  .viewer-name {
-    position: relative;
-    min-height: 1em * @line_height;
-    &:before,
-    &:after {
-      position: absolute;
-      top: 0;
-      left: 0;
-      white-space: nowrap;
-    }
-  }
-}
-.viewer {
-  .flexy(center);
-  .transition_cascade(10);
-  height: @tile / 2;
-  min-height: @tile / 2;
-  transition: @run @bezier_deform;
-  &:not(:hover) {
-    .viewer-name {
-      opacity: .25;
-    }
-  }
-  &:not(.viewer-self) {
-    .animation(in-fade-bottom @run_slower @bezier_fadein);
-  }
-}
-.viewer-name {
-  margin-left: 1em;
-  cursor: default;
-}
+// .viewers {
+//   @max_height: 4 * 2.5em; // first value is number visible upon opening
+//   .flexy(column);
+//   position: fixed;
+//   color: @white;
+//   bottom: 0;
+//   left: 0;
+//   min-width: @tile_menu_min;
+//   max-width: @tile_menu_max;
+//   max-height: @max_height;
+//   padding: 1em 1.5em;
+//   transition+: all @run;
+//   transition+: bottom @now;
+//   &.overflowing {
+//     .scrollbar(width; .25em;);
+//     .scrollbar_thumb(border-radius; .25em);
+//     max-height: @max_height - 1;
+//     overflow-y: auto;
+//     will-change: transform, bottom;
+//     &:hover {
+//       .scrollbar_thumb(background; fade(@black, 25));
+//       .viewer-self {
+//         .viewer-name {
+//           &:before {
+//             .translate3d(0,-100%,0);
+//             opacity: 0;
+//           }
+//           &:after {
+//             .animation(in-fade-bottom @run_slower @bezier_fadein);
+//             content: attr(data-name);
+//           }
+//         }
+//       }
+//     }
+//     &:not(:hover) {
+//       &:not(:active) {
+//         .user-select(none);
+//         .translate3d(0,100%,0);
+//         bottom: @tile;
+//         .viewer-self {
+//           ~ .viewer {
+//             .translate3d(0,100%,0);
+//           }
+//         }
+//       }
+//     }
+//     .viewer-self {
+//       .viewer-name {
+//         &:before {
+//           content: attr(data-count);
+//           transition: @run_slower @bezier_fadein;
+//         }
+//       }
+//     }
+//   }
+//   &:not(.overflowing) {
+//     &:hover {
+//       .viewer-self {
+//         &:only-child {
+//           .viewer-name {
+//             &:after {
+//               .animation(in-fade-bottom @run_slower @bezier_fadein);
+//               content: attr(data-name);
+//             }
+//           }
+//         }
+//       }
+//     }
+//     &:not(:hover) {
+//       &:not(:active) {
+//         .viewer-self {
+//           &:only-child {
+//             path {
+//               stroke: fade(@white,50) !important;
+//             }
+//           }
+//         }
+//       }
+//     }
+//     .viewer-self {
+//       &:only-child {
+//         .viewer-name {
+//           opacity: 1;
+//         }
+//         .icon-user {
+//           .scale3d(1.5);
+//           transition: @run @run @bezier_deform;
+//         }
+//       }
+//       &:not(:only-child) {
+//         .icon-user {
+//           .animation(in-fade-bottom @run_slow @run backwards);
+//         }
+//         .viewer-name {
+//           &:after {
+//             .animation(in-fade-bottom @run_slower @bezier_fadein);
+//             content: attr(data-name);
+//           }
+//         }
+//       }
+//     }
+//   }
+//   // TODO deciding whether to edit name inline or not...
+//   // input {
+//   //   height: @tile;
+//   //   max-height: (@tile * 2);
+//   //   background: none;
+//   //   border: none;
+//   //   outline: 0;
+//   //   color: @white;
+//   // }
+// }
+// .viewer-self {
+//   .icon-user {
+//     transition: @run @now @bezier_deform;
+//     path {
+//       stroke: fade(@white,50);
+//       transition: stroke @run_slower @bezier_fadein;
+//     }
+//   }
+//   .viewer-name {
+//     position: relative;
+//     min-height: 1em * @line_height;
+//     &:before,
+//     &:after {
+//       position: absolute;
+//       top: 0;
+//       left: 0;
+//       white-space: nowrap;
+//     }
+//   }
+// }
+// .viewer {
+//   .flexy(center);
+//   .transition_cascade(10);
+//   height: @tile / 2;
+//   min-height: @tile / 2;
+//   transition: @run @bezier_deform;
+//   &:not(:hover) {
+//     .viewer-name {
+//       opacity: .25;
+//     }
+//   }
+//   &:not(.viewer-self) {
+//     .animation(in-fade-bottom @run_slower @bezier_fadein);
+//   }
+// }
+// .viewer-name {
+//   margin-left: 1em;
+//   cursor: default;
+// }
