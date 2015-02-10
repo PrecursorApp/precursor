@@ -179,12 +179,16 @@
 }
 .vein {
   .flexy(center);
+  .icon(stroke; @gray);
+  .icon(fill; @gray);
   width: 100%;
   color: @gray;
   transition+: color @run_fast @bezier_fadein;
   transition+: height @run_fast @bezier_fadein;
   overflow: hidden;
   &:hover {
+    .icon(stroke; @black);
+    .icon(fill; @black);
     color: @black;
     transition-duration: @run_fast, @now;
   }
