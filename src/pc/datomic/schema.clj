@@ -1,6 +1,7 @@
 (ns pc.datomic.schema
   (:require [pc.datomic :as pcd]
-            [datomic.api :refer [db q] :as d]))
+            [datomic.api :refer [db q] :as d]
+            [pc.profile]))
 
 (defn attribute [ident type & {:as opts}]
   (merge {:db/id (d/tempid :db.part/db)
@@ -519,4 +520,6 @@
      res)))
 
 (defn init []
-  (ensure-schema))
+  ;; TODO: remove migrating check after migration
+  (when-not (pc.profile/migrating-to-new-storage?)
+    (ensure-schema)))
