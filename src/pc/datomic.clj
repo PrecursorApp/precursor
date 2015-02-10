@@ -97,6 +97,7 @@
   (datomic-error? ex :db.error/cas-failed))
 
 (defonce tx-report-ch (async/chan (async/sliding-buffer 1024)))
+(defonce tx-report-mult (async/mult tx-report-ch))
 
 (defn setup-tx-report-ch [conn]
   (let [queue (d/tx-report-queue conn)]
