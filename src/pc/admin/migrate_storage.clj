@@ -42,7 +42,7 @@
                                   {:port 8067})))
 
 (defn setup-transaction-queue []
-  (async/tap (async/mult pcd/tx-report-mult) transaction-tap)
+  (async/tap pcd/tx-report-mult transaction-tap)
   (async/go-loop []
     (when-let [transaction (async/<! transaction-tap)]
       (swap! transaction-queue conj transaction)
