@@ -79,6 +79,7 @@ sed s/license-key=// config/samples/sql-transactor-template.properties > config/
 sed -i "" "s/localhost:5432/$postgres_ip:5432/" config/transactor.properties
 sed -i "" "s/memory-index-max=256m/memory-index-max=512m/" config/transactor.properties
 sed -i "" "s/object-cache-max=128m/object-cache-max=1g/" config/transactor.properties
+sed -i "" "s/host=localhost/host=$private_ip/" config/transactor.properties
 echo "license-key=$license_key" >> config/transactor.properties
 
 safe-curl "${datomic_bucket_url}/conf/logback.xml" > /usr/local/datomic/bin/logback.xml
