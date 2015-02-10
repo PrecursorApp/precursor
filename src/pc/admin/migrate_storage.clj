@@ -117,15 +117,14 @@
 (defn start-transaction-queue-consumer []
   (reset! queue-consumer-interrupt false)
   (future (while (not @queue-consumer-interrupt)
-            (log/info "starting transaction loop")
+            ;(log/info "starting transaction loop")
             (loop [t (fetch-transaction)]
               (when (seq t)
-                (log/infof "transacting %s" t)
                 (swap! popped-transactions conj t)
-                @(d/transact (pcd/conn) t)
+                (log/infof "transacted %s" @(d/transact (pcd/conn) t))
                 (when-not @queue-consumer-interrupt
                   (recur (fetch-transaction)))))
-            (log/info "no more transactions, sleeping for 100 ms")
+            ;(log/info "no more transactions, sleeping for 100 ms")
             (Thread/sleep 100))))
 
 ;; sequence of events:
