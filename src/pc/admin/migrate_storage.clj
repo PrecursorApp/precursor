@@ -42,7 +42,7 @@
                                   {:port 8067})))
 
 (defn setup-transaction-queue []
-  (async/tap (async/mult pcd/tx-report-ch) transaction-tap)
+  (async/tap (async/mult pcd/tx-report-mult) transaction-tap)
   (async/go-loop []
     (when-let [transaction (async/<! transaction-tap)]
       (swap! transaction-queue conj transaction)
@@ -135,3 +135,31 @@
 ;; wait for queue to clear
 ;; make the old instance unhealthy
 ;; shut down the old instance
+
+(defmacro with-ns
+  "Evaluates body in another namespace.  ns is either a namespace
+  object or a symbol.  This makes it possible to define functions in
+  namespaces other than the current one."
+  [ns & body]
+  `(do
+     (create-ns ~ns)
+     (binding [*ns* (the-ns ~ns)]
+       (refer 'clojure.core)
+       ~@(map (fn [form] `(eval '~form)) body))))
+
+(defn replace-tx-report-chan []
+  (with-ns 'pc.datomic
+    (async/close! tx-report-ch)
+    (def tx-report-ch (async/chan (async/sliding-buffer 1024)))
+    (def tx-report-mult (async/mult tx-report-ch)))
+  (with-ns 'pc.http.datomic
+    (defn init []
+      (let [conn (pcd/conn)
+            tap (async/chan (async/sliding-buffer 1024))]
+        (async/tap pcd/tx-report-mult tap)
+        (async/go-loop []
+          (when-let [transaction (async/<! tap)]
+            (utils/with-report-exceptions
+              (handle-transaction transaction))
+            (recur)))))
+    (init)))
