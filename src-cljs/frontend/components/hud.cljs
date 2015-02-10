@@ -125,14 +125,15 @@
     (render-state [_ {:keys [editing-name? new-name]}]
         (let [{:keys [cast! db]} (om/get-shared owner)
               client-id (:client-id app)
-              viewers (count (:subscribers app))
+              viewers-count (count (remove (comp :hide-in-list? last) (:subscribers app)))
               can-edit? (not (empty? (:cust app)))
-              viewers-buried? (< 4 viewers)]
+              viewers-buried? (< 4 viewers-count)]
           (html
             [:div.viewers.hud-item
              {:class (concat
                        (when viewers-buried? ["buried"])
-                       (when (:expand-viewers? app) ["expanded"]))}
+                       (when (or (:expand-viewers? app (< 1 viewers-count 5)))
+                         ["expanded"]))}
              [:div.viewers-frame.viewers-others
               (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
                     :when (not hide-in-list?)
@@ -185,7 +186,8 @@
                       :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
 
                    [:div.viewer-name
-                    {:data-count (when viewers viewers)
+                    {:data-count (when (> viewers-count 1)
+                                   viewers-count)
                      :data-name (or (get-in app [:cust :cust/name]) "You")}])
                  [:div.viewer-toggles
                   [:a
