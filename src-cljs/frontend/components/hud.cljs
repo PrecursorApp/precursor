@@ -1,5 +1,6 @@
 (ns frontend.components.hud
-  (:require [datascript :as d]
+  (:require [clojure.string :as str]
+            [datascript :as d]
             [frontend.components.common :as common]
             [frontend.models.chat :as chat-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
@@ -106,81 +107,97 @@
             :role "button"
             :data-left (when-not chat-button-learned? (if chat-opened? "Close Chat" "Open Chat"))
             :title     (when     chat-button-learned? (if chat-opened? "Close Chat" "Open Chat"))}
-           (common/icon :chat)
+           (common/icon :chat-morph)
            (when (and (not chat-opened?) (pos? unread-chat-count))
              [:i.unseen-eids
               (str unread-chat-count)])])))))
 
 (defn viewers [app owner]
   (reify
-    om/IRender
-    (render [_]
-      (html
-        (let [client-id (:client-id app)]
+    om/IInitState (init-state [_] {:editing-name? false
+                                   :new-name ""})
+    om/IDidUpdate
+    (did-update [_ _ _]
+      (when (and (om/get-state owner :editing-name?)
+                 (om/get-node owner "name-edit"))
+        (.focus (om/get-node owner "name-edit"))))
+    om/IRenderState
+    (render-state [_ {:keys [editing-name? new-name]}]
+        (let [{:keys [cast! db]} (om/get-shared owner)
+              client-id (:client-id app)
+              viewers (count (:subscribers app))
+              can-edit? (not (empty? (:cust app)))
+              viewers-buried? (< 4 viewers)]
+          (html
+            [:div.viewers.hud-item
+             {:class (concat
+                       (when viewers-buried? ["buried"])
+                       (when (:expand-viewers? app) ["expanded"]))}
+             [:div.viewers-frame.viewers-others
+              (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
+                    :when (not hide-in-list?)
+                    :let [id-str (or cust-name (apply str (take 6 id)))]]
+                [:div.viewer
+                 [:div.viewer-avatar
+                  (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))]
+                 [:div.viewer-name id-str]
+                 [:div.viewer-toggles
+                  [:a
+                   {:key id
+                    :on-click #(cast! :chat-user-clicked {:id-str id-str})
+                    :role "button"
+                    :title "Ping this viewer in chat."}
+                   (common/icon :chat)]]])]
 
-          ;; TODO deciding whether to edit name inline or not...
-          ;; [:section.chat-people
-          ;;  (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-          ;;    [:a.people-you {:key client-id
-          ;;                    :data-bottom (when-not (get-in app [:cust :cust/name]) "Click to edit")
-          ;;                    :role "button"
-          ;;                    :on-click #(if can-edit?
-          ;;                                 (om/set-state! owner :editing-name? true)
-          ;;                                 (cast! :overlay-username-toggled))}
-          ;;     (common/icon :user (when show-mouse? {:path-props
-          ;;                                           {:style
-          ;;                                            {:stroke (get-in app [:subscribers client-id :color])}}}))
+             (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+               [:div.viewers-frame.viewers-self
+                [:div.viewer
+                 {:on-click (if (:expand-viewers? app)
+                              #(cast! :viewers-collapsed)
+                              #(cast! :viewers-expanded))}
+                 [:div.viewer-avatar
+                  (common/icon :user (when show-mouse? {:path-props
+                                                        {:style
+                                                         {:stroke (get-in app [:subscribers client-id :color])}}}))]
 
-          ;;     (if editing-name?
-          ;;       [:form {:on-submit #(do (when-not (str/blank? new-name)
-          ;;                                 (cast! :self-updated {:name new-name}))
-          ;;                               (om/set-state! owner :editing-name? false)
-          ;;                               (om/set-state! owner :new-name "")
-          ;;                               (utils/stop-event %))
-          ;;               :on-blur #(do (when-not (str/blank? new-name)
-          ;;                               (cast! :self-updated {:name new-name}))
-          ;;                             (om/set-state! owner :editing-name? false)
-          ;;                             (om/set-state! owner :new-name "")
-          ;;                             (utils/stop-event %))
-          ;;               :on-key-down #(when (= "Escape" (.-key %))
-          ;;                               (om/set-state! owner :editing-name? false)
-          ;;                               (om/set-state! owner :new-name "")
-          ;;                               (utils/stop-event %))}
-          ;;        [:input {:type "text"
-          ;;                 :ref "name-edit"
-          ;;                 :tab-index 1
-          ;;                 ;; TODO: figure out why we need value here
-          ;;                 :value new-name
-          ;;                 :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
-          ;;       [:span (or (get-in app [:cust :cust/name]) "You")])])
-          ;;  (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
-          ;;        :when (not hide-in-list?)
-          ;;        :let [id-str (or cust-name (apply str (take 6 id)))]]
-          ;;    [:a {:title "Ping this person in chat."
-          ;;         :role "button"
-          ;;         :key id
-          ;;         :on-click #(cast! :chat-user-clicked {:id-str id-str})}
-          ;;     (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
-          ;;     [:span id-str]])]
+                 (if editing-name?
+                   [:form
+                    {:on-submit #(do (when-not (str/blank? new-name)
+                                       (cast! :self-updated {:name new-name}))
+                                     (om/set-state! owner :editing-name? false)
+                                     (om/set-state! owner :new-name "")
+                                     (utils/stop-event %))
+                     :on-blur #(do (when-not (str/blank? new-name)
+                                     (cast! :self-updated {:name new-name}))
+                                   (om/set-state! owner :editing-name? false)
+                                   (om/set-state! owner :new-name "")
+                                   (utils/stop-event %))
+                     :on-key-down #(when (= "Escape" (.-key %))
+                                     (om/set-state! owner :editing-name? false)
+                                     (om/set-state! owner :new-name "")
+                                     (utils/stop-event %))}
+                    [:input.viewer-edit-name
+                     {:type "text"
+                      :ref "name-edit"
+                      :tab-index 1
+                      ;; TODO: figure out why we need value here
+                      :value new-name
+                      :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
 
-          [:div.viewers {:class (when (< 4 (count (:subscribers app))) "overflowing")}
-           (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-             [:div.viewer.viewer-self
-              (common/icon :user (when show-mouse? {:path-props
-                                                    {:style
-                                                     {:stroke (get-in app [:subscribers client-id :color])}}}))
-              [:div.viewer-name
-               {:data-count (count (:subscribers app))
-                ;:title "X and X others are viewing this doc."
-                ; :data-name (or (get-in app [:cust :name]) "You")
-                }
-               (or (get-in app [:cust :name]) "You")]])
-           (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
-                 :when (not hide-in-list?)
-                 :let [id-str (or cust-name (apply str (take 6 id)))]]
-             [:div.viewer {:key id}
-              (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))
-              [:div.viewer-name id-str]])])))))
+                   [:div.viewer-name
+                    {:data-count (when viewers viewers)
+                     :data-name (or (get-in app [:cust :cust/name]) "You")}])
+                 [:div.viewer-toggles
+                  [:a
+                   {:key client-id
+                    :on-click #(do
+                                 (if can-edit?
+                                   (om/set-state! owner :editing-name? true)
+                                   (cast! :overlay-username-toggled))
+                                 (.stopPropagation %))
+                    :role "button"
+                    :title "Edit your display name."}
+                   (common/icon :pencil)]]]])])))))
 
 (defn hud [app owner]
   (reify

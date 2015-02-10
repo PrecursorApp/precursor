@@ -127,154 +127,168 @@
     opacity: 0;
   });
 }
-// .viewers {
-//   @max_height: 4 * 2.5em; // first value is number visible upon opening
-//   .flexy(column);
-//   position: fixed;
-//   color: @white;
-//   bottom: 0;
-//   left: 0;
-//   min-width: @tile_menu_min;
-//   max-width: @tile_menu_max;
-//   max-height: @max_height;
-//   padding: 1em 1.5em;
-//   transition+: all @run;
-//   transition+: bottom @now;
-//   &.overflowing {
-//     .scrollbar(width; .25em;);
-//     .scrollbar_thumb(border-radius; .25em);
-//     max-height: @max_height - 1;
-//     overflow-y: auto;
-//     will-change: transform, bottom;
-//     &:hover {
-//       .scrollbar_thumb(background; fade(@black, 25));
-//       .viewer-self {
-//         .viewer-name {
-//           &:before {
-//             .translate3d(0,-100%,0);
-//             opacity: 0;
-//           }
-//           &:after {
-//             .animation(in-fade-bottom @run_slower @bezier_fadein);
-//             content: attr(data-name);
-//           }
-//         }
-//       }
-//     }
-//     &:not(:hover) {
-//       &:not(:active) {
-//         .user-select(none);
-//         .translate3d(0,100%,0);
-//         bottom: @tile;
-//         .viewer-self {
-//           ~ .viewer {
-//             .translate3d(0,100%,0);
-//           }
-//         }
-//       }
-//     }
-//     .viewer-self {
-//       .viewer-name {
-//         &:before {
-//           content: attr(data-count);
-//           transition: @run_slower @bezier_fadein;
-//         }
-//       }
-//     }
-//   }
-//   &:not(.overflowing) {
-//     &:hover {
-//       .viewer-self {
-//         &:only-child {
-//           .viewer-name {
-//             &:after {
-//               .animation(in-fade-bottom @run_slower @bezier_fadein);
-//               content: attr(data-name);
-//             }
-//           }
-//         }
-//       }
-//     }
-//     &:not(:hover) {
-//       &:not(:active) {
-//         .viewer-self {
-//           &:only-child {
-//             path {
-//               stroke: fade(@white,50) !important;
-//             }
-//           }
-//         }
-//       }
-//     }
-//     .viewer-self {
-//       &:only-child {
-//         .viewer-name {
-//           opacity: 1;
-//         }
-//         .icon-user {
-//           .scale3d(1.5);
-//           transition: @run @run @bezier_deform;
-//         }
-//       }
-//       &:not(:only-child) {
-//         .icon-user {
-//           .animation(in-fade-bottom @run_slow @run backwards);
-//         }
-//         .viewer-name {
-//           &:after {
-//             .animation(in-fade-bottom @run_slower @bezier_fadein);
-//             content: attr(data-name);
-//           }
-//         }
-//       }
-//     }
-//   }
-//   // TODO deciding whether to edit name inline or not...
-//   // input {
-//   //   height: @tile;
-//   //   max-height: (@tile * 2);
-//   //   background: none;
-//   //   border: none;
-//   //   outline: 0;
-//   //   color: @white;
-//   // }
-// }
-// .viewer-self {
-//   .icon-user {
-//     transition: @run @now @bezier_deform;
-//     path {
-//       stroke: fade(@white,50);
-//       transition: stroke @run_slower @bezier_fadein;
-//     }
-//   }
-//   .viewer-name {
-//     position: relative;
-//     min-height: 1em * @line_height;
-//     &:before,
-//     &:after {
-//       position: absolute;
-//       top: 0;
-//       left: 0;
-//       white-space: nowrap;
-//     }
-//   }
-// }
-// .viewer {
-//   .flexy(center);
-//   .transition_cascade(10);
-//   height: @tile / 2;
-//   min-height: @tile / 2;
-//   transition: @run @bezier_deform;
-//   &:not(:hover) {
-//     .viewer-name {
-//       opacity: .25;
-//     }
-//   }
-//   &:not(.viewer-self) {
-//     .animation(in-fade-bottom @run_slower @bezier_fadein);
-//   }
-// }
-// .viewer-name {
-//   margin-left: 1em;
-//   cursor: default;
-// }
+.viewers {
+  bottom: 0;
+  left: 0;
+  width: @tile_viewers;
+  overflow: hidden;
+  &.expanded {
+    .viewers-self {
+      .viewer {
+        height: @tile_viewers_height * 1.5;
+        padding-bottom: (@tile_viewers_height * 1.5) - @tile_viewers_height;
+      }
+      .viewer-name {
+        &:before {
+          .translate3d(0,-100%,0);
+          opacity: 0;
+        }
+        &:after {
+          content: attr(data-name);
+        }
+      }
+    }
+  }
+  &:not(.expanded) {
+    .viewers-others {
+      .viewer {
+        display: none;
+      }
+    }
+    .viewers-self {
+      .viewer {
+        width: @tile;
+        height: @tile;
+      }
+      .viewer-toggles {
+        display: none;
+      }
+    }
+    .viewer-avatar {
+      .scale3d(1.5);
+    }
+  }
+  &:not(.buried) {
+    .viewers-self {
+      .viewer {
+        height: @tile_viewers_height * 1.5;
+        padding-bottom: (@tile_viewers_height * 1.5) - @tile_viewers_height;
+      }
+    }
+    .viewer-name {
+      &:before {
+        content: attr(data-count);
+      }
+    }
+  }
+  &.buried {
+    .viewer-name {
+      &:before {
+        content: attr(data-count);
+        transition: @run_slower @bezier_deform;
+      }
+    }
+  }
+}
+.viewers-frame {
+  width: 200%;
+  max-height: @tile_viewers_height * 4;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  &:not(.viewers-self) {
+    .viewer {
+      &:not(:hover) {
+        .viewer-avatar,
+        .viewer-name {
+          opacity: .25;
+          transition: opacity @run @now @bezier_fadein;
+        }
+      }
+    }
+  }
+}
+.viewers-others {
+  &:hover {
+    + .viewers-self {
+      .viewer {
+        .viewer-avatar,
+        .viewer-name {
+          opacity: .25;
+          transition: opacity @now @now @bezier_fadein;
+        }
+      }
+    }
+  }
+  .viewer-name {
+    cursor: default;
+  }
+}
+.viewers-self {
+  .viewer {
+    cursor: pointer;
+    transition: height @now @now;
+    &:not(:hover) {
+      .viewer-avatar,
+      .viewer-name {
+        transition: opacity @run @run @bezier_fadein;
+      }
+    }
+    .viewer-toggles {
+      .animation(in-fade-bottom @run_slower @bezier_deform);
+    }
+  }
+}
+.viewer {
+  .animation_cascade(10);
+  .animation(in-fade-left @run_slower @bezier_deform backwards);
+  .flexy(center);
+  position: relative;
+  color: fade(@white, 50);
+  width: @tile_viewers;
+  height: @tile_viewers_height;
+  transition: height @run_slower @bezier_deform;
+  &:not(:hover) {
+    .viewer-toggles {
+      .iconpile {
+        .translate3d(100%,0,0);
+        opacity: 0;
+        transition-duration: @run;
+      }
+    }
+  }
+}
+.viewer-avatar {
+  margin-left: 1.25rem;
+  margin-right: .5rem;
+  transition: @run;
+}
+.viewer-name {
+  position: relative;
+  min-height: 1em * @line_height;
+  &:before,
+  &:after {
+    .animation(in-fade-bottom @run_slower @bezier_deform);
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: @run_slower @bezier_deform;
+  }
+}
+.viewer-toggles {
+  .flexy();
+  position: absolute;
+  top: 0;
+  right: 0;
+  a {
+    padding: ((@tile_viewers_height - 1) / 2);
+  }
+  .iconpile {
+    transition: @run_fast @bezier_deform;
+  }
+}
+.viewer-edit-name {
+  background: none;
+  border: none;
+  outline: 0;
+  color: @white;
+}

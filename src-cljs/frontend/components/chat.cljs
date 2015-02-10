@@ -105,7 +105,7 @@
                                    (cast! :chat-submitted)
                                    false)}
             [:textarea {:class "chat-input"
-                        :id "chat-box"
+                        :id "chat-input"
                         :tab-index "1"
                         :type "text"
                         :value (or chat-body "")
@@ -179,22 +179,14 @@
 
 (defn chat [app owner]
   (reify
-    om/IInitState (init-state [_] {:editing-name? false
-                                   :new-name ""})
-    om/IDidUpdate
-    (did-update [_ _ _]
-      (when (and (om/get-state owner :editing-name?)
-                 (om/get-node owner "name-edit"))
-        (.focus (om/get-node owner "name-edit"))))
-    om/IRenderState
-    (render-state [_ {:keys [editing-name? new-name]}]
+    om/IRender
+    (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
             controls-ch (om/get-shared owner [:comms :controls])
             client-id (:client-id app)
             chat-opened? (get-in app state/chat-opened-path)
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
-            document-id (get-in app [:document/id])
-            can-edit? (not (empty? (:cust app)))]
+            document-id (get-in app [:document/id])]
         (html
           [:div.chat {:class (when-not chat-opened? ["closed"])}
            [:div.chat-background]

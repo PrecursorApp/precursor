@@ -962,7 +962,7 @@
 
 (defmethod post-control-event! :chat-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-box")))
+  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :invite-link-clicked
   [browser-state message _ state]
@@ -974,11 +974,12 @@
 
 (defmethod post-control-event! :invite-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-box")))
+  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :chat-user-clicked
   [browser-state message {:keys [id-str]} state]
    (-> state
+     (assoc-in state/chat-opened-path true)
      (assoc-in state/chat-mobile-opened-path true)
      (update-in [:chat :body] (fn [s]
                                 (str (when (seq s)
@@ -988,7 +989,7 @@
 
 (defmethod post-control-event! :chat-user-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-box")))
+  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
@@ -1244,3 +1245,13 @@
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]
   (update-in state [:subscribers client-id] merge fields))
+
+(defmethod control-event :viewers-expanded
+  [target message _ state]
+  (-> state
+    (assoc :expand-viewers? true)))
+
+(defmethod control-event :viewers-collapsed
+  [target message _ state]
+  (-> state
+    (assoc :expand-viewers? false)))
