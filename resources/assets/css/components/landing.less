@@ -6,10 +6,6 @@
   width: 100%;
   height: 100%;
   ~ .inner {
-    .canvas {
-      .scale3d(.8);
-      transition: @run_slower @bezier_deform;
-    }
     .canvas-background {
       &:after {
         .animation(in-fade @run @run_fast @bezier_fadein backwards);
@@ -23,9 +19,12 @@
       }
     }
     .canvas-frame {
+      .scale3d(.8);
       width: 125%;
       height: 125%;
-      transition: @now;
+      transition+: all @run_slower @bezier_deform;
+      transition+: width @now @bezier_deform;
+      transition+: height @now @bezier_deform;
     }
     .grid-big {
       path {
@@ -293,7 +292,7 @@
 //
 // TODO all below for dev only!
 //
-.svg-featurette {
+.featurette {
   svg {
     max-width: 100%;
     overflow: visible;

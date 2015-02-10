@@ -1,9 +1,6 @@
 .canvas {
   .flex(1);
-  .transform-origin(0 0);
   position: relative;
-  transition: @run_slow @bezier_deform;
-  will-change: transform;
   &:active {
     + .chat {
       .user-select(none);
@@ -28,8 +25,12 @@
 }
 .canvas-frame {
   .user-select(none);
+  .transform-origin(0 0);
   position: relative;
-  transition: @now @run_slower;
+  transition+: all @run_slow @now @bezier_deform;
+  transition+: width @now @run_slower @bezier_deform;
+  transition+: height @now @run_slower @bezier_deform;
+  will-change: transform;
   &:not(:hover) {
     ~ .radial-tip {
       display: none;
