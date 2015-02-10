@@ -1,14 +1,20 @@
 (ns pc.datomic
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :refer (infof)]
-            [datomic.api :refer [db q] :as d])
+            [datomic.api :refer [db q] :as d]
+            [pc.profile])
   (:import java.util.UUID))
 
-(def default-uri "datomic:free://localhost:4334/pc2")
-(def prod-uri "datomic:sql://prcrsr?jdbc:postgresql://10.99.0.101:5432/datomic?user=datomic&password=datomic")
+(defn default-uri []
+  (if (pc.profile/prod?)
+    "datomic:sql://prcrsr?jdbc:postgresql://10.99.0.101:5432/datomic?user=datomic&password=datomic"
+    "datomic:free://localhost:4334/pc2"))
 
 (defn conn [& {:keys [uri]}]
-  (d/connect (or uri default-uri)))
+  (d/connect (or uri (default-uri))))
+
+(defn prod-conn []
+  (d/connect prod-uri))
 
 (defn default-db []
   (db (conn)))
@@ -103,7 +109,7 @@
 
 (defn init []
   (infof "Creating default database if it doesn't exist: %s"
-         (d/create-database default-uri))
+         (d/create-database (default-uri)))
   (infof "Ensuring connection to default database")
   (infof "Connected to: %s" (conn))
   (infof "forwarding report-queue to tx-report-ch")
