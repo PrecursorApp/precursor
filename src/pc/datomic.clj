@@ -13,9 +13,6 @@
 (defn conn [& {:keys [uri]}]
   (d/connect (or uri (default-uri))))
 
-(defn prod-conn []
-  (d/connect prod-uri))
-
 (defn default-db []
   (db (conn)))
 
