@@ -21,9 +21,11 @@
 
                  [cider/cider-nrepl "0.8.2"]
                  [clj-http "1.0.1" :exclusions [commons-codec]]
-                 [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop
-                                                                   org.slf4j/slf4j-api
-                                                                   com.amazonaws/aws-java-sdk]]
+                 [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
+                                                                  org.slf4j/slf4j-api
+                                                                  com.amazonaws/aws-java-sdk]]
+                 [org.postgresql/postgresql "9.4-1200-jdbc41"]
+
                  [amazonica "0.3.12"]
 
                  [ring/ring "1.3.2" :exclusions [hiccup
@@ -34,7 +36,7 @@
                  [clj-stacktrace "0.2.8"]
 
                  [org.clojure/tools.reader "0.8.13"]
-                 [com.google.guava/guava "17.0"]
+                 [com.google.guava/guava "18.0"]
 
                  [schejulure "1.0.1"]
 
