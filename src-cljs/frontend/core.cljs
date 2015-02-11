@@ -124,6 +124,7 @@
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
                      :cust cust
+                     :show-landing? (:show-landing? utils/initial-query-map)
                      :comms {:controls      controls-ch
                              :api           api-ch
                              :errors        errors-ch

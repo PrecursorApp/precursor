@@ -33,7 +33,8 @@
 
 (def initial-query-map
   {:restore-state? (parse-uri-bool (.getParameterValue parsed-uri "restore-state"))
-   :inspector? (parse-uri-bool (.getParameterValue parsed-uri "inspector"))})
+   :inspector? (parse-uri-bool (.getParameterValue parsed-uri "inspector"))
+   :show-landing? (parse-uri-bool (.getParameterValue parsed-uri "show-landing"))})
 
 (defn logging-enabled? []
   (aget js/window "Precursor" "logging-enabled"))
