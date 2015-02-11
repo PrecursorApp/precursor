@@ -102,7 +102,9 @@
                                        (utils/update-when-in [:cust] #(-> % escape-entity pr-str))
                                        (assoc :cdn-base-url (common/cdn-base-url)))))
     (when (prod-assets?)
-      scripts/google-analytics)
+      ;; turn off while we figure out why this is breaking
+      nil;scripts/google-analytics
+      )
     (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))
     (scripts/mixpanel)]
    [:body
