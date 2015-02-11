@@ -24,12 +24,11 @@
 
 (defn datoms->transaction [t]
   (let [datoms (:tx-data t)
-        new-txid (d/tempid :db.part/tx)
         old-txid (-> datoms first :e)]
     (->> datoms
       (mapv pcd/datom->transaction)
       (mapv (fn [d] (update-in d [1] #(if (= % old-txid)
-                                        new-txid
+                                        :tempid
                                         %)))))))
 
 (def random-uri "/F4WAmHkFNzEPZ9izhuikzT7hUOw")
@@ -99,18 +98,7 @@
   (Thread/sleep (* 1000 10 2))
   (reset-resolve-tempid))
 
-(defn ensure-premade-schema []
-  @(d/transact (pcd/conn) [{:db/doc "dummy attribute so that we can pre-generate entity ids for a migration"
-                            :db/cardinality :db.cardinality/one
-                            :db/id (d/tempid :db.part/db)
-                            :db/ident :pre-made
-                            :db/valueType :db.type/ref
-                            :db.install/_attribute :db.part/db}
-                           {:db/id (d/tempid :db.part/db)
-                            :db/ident :pre-made/free-to-postgres}]))
-
 (defn setup-old-server []
-  (ensure-premade-schema)
   (startup-premade-ids)
   (setup-transaction-queue)
   (setup-transaction-server))
@@ -119,11 +107,20 @@
 (defonce popped-transactions (atom []))
 
 (def transaction-url (str "http://104.156.231.173:8067" random-uri))
+
+(defn replace-tempid [txdata]
+  (mapv (fn [d] (update-in d [1] #(if (= :tempid %)
+                                    (d/tempid :db.part/tx)
+                                    %)))
+        txdata))
+
 (defn fetch-transaction []
   (-> (http/get transaction-url)
     :body
     read-string
-    :data))
+    :data
+    replace-tempid))
+
 
 (defn start-transaction-queue-consumer []
   (reset! queue-consumer-interrupt false)
