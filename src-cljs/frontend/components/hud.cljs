@@ -219,18 +219,17 @@
     om/IRender
     (render [_]
       (html
-        (let []
-         [:div.hud
-          (om/build viewers app)
-          (om/build menu app)
-          (om/build chat app)
-          (om/build mouse app)
+        [:div.hud
+         (om/build viewers app)
+         (om/build menu app)
+         (om/build chat app)
+         (om/build mouse app)
 
-          ;; TODO finish this button once landing and outer are done
-          ;; (om/build landing app)
+         ;; TODO finish this button once landing and outer are done
+         ;; (om/build landing app)
 
-          ;; deciding whether to get rid of this
-          ;; (when-not (:cust app)
-          ;;   (om/build info app))
+         ;; deciding whether to get rid of this
+         ;; (when-not (:cust app)
+         ;;   (om/build info app))
 
-          ])))))
+         ]))))

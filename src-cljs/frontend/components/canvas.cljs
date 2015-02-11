@@ -750,15 +750,15 @@
   (reify
     om/IRender
     (render [_]
-      (html
-        (let [right-click-learned? (get-in app state/right-click-learned-path)]
-          [:div.canvas
-           {:onContextMenu (fn [e]
-                             (.preventDefault e)
-                             (.stopPropagation e))}
-           [:div.canvas-background]
-           (om/build svg-canvas app)
-           (when (and (not right-click-learned?) (:mouse app))
-             (om/build radial-hint app))
-           (when (get-in app [:menu :open?])
-             (om/build radial-menu app))])))))
+      (let [right-click-learned? (get-in app state/right-click-learned-path)]
+        (html
+         [:div.canvas
+          {:onContextMenu (fn [e]
+                            (.preventDefault e)
+                            (.stopPropagation e))}
+          [:div.canvas-background]
+          (om/build svg-canvas app)
+          (when (and (not right-click-learned?) (:mouse app))
+            (om/build radial-hint app))
+          (when (get-in app [:menu :open?])
+            (om/build radial-menu app))])))))
