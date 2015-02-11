@@ -19,7 +19,7 @@
   }
 }
 .hud-menu {
-  .animation(in-fade-top @run_slower @run_slower @bezier_fadein backwards);
+  .hud_toggle_animation(left);
   top: 0;
   left: 0;
   transition: @run @bezier_deform;
@@ -49,7 +49,7 @@
   }
 }
 .hud-chat {
-  .animation(in-fade-bottom @run_slower @run_slower @bezier_fadein backwards);
+  .hud_toggle_animation(right);
   bottom: 0;
   right: 0;
   font-size: 1.1rem;
@@ -158,6 +158,7 @@
   }
 }
 .hud-viewers {
+  .hud_toggle_animation(bottom);
   bottom: 0;
   left: 0;
   &:after {
