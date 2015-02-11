@@ -107,7 +107,7 @@
 (defonce queue-consumer-interrupt (atom nil))
 (defonce popped-transactions (atom []))
 
-(def transaction-url (str "http://localhost:8067" random-uri))
+(def transaction-url (str "http://104.156.231.173:8067" random-uri))
 (defn fetch-transaction []
   (-> (http/get transaction-url)
     :body
