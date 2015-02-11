@@ -197,7 +197,7 @@
                        :on-click #(cast! :chat-user-clicked {:id-str id-str})
                        :role "button"
                        :title "Ping this viewer in chat."}
-                      (common/icon :chat)]]])]])
+                      (common/icon :at)]]])]])
              [:a.hud-viewers.hud-item.hud-toggle
               {:on-click (if show-viewers?
                            #(cast! :viewers-closed)
