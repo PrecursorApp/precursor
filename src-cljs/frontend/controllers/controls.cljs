@@ -1246,12 +1246,12 @@
   [browser-state message {:keys [client-id fields]} state]
   (update-in state [:subscribers client-id] merge fields))
 
-(defmethod control-event :viewers-expanded
+(defmethod control-event :viewers-opened
   [target message _ state]
   (-> state
-    (assoc :expand-viewers? true)))
+    (assoc :show-viewers? true)))
 
-(defmethod control-event :viewers-collapsed
+(defmethod control-event :viewers-closed
   [target message _ state]
   (-> state
-    (assoc :expand-viewers? false)))
+    (assoc :show-viewers? false)))

@@ -127,79 +127,78 @@
               client-id (:client-id app)
               viewers-count (count (remove (comp :hide-in-list? last) (:subscribers app)))
               can-edit? (not (empty? (:cust app)))
-              viewers-buried? (< 4 viewers-count)]
+              viewers-truncated? (< 4 viewers-count)
+              show-viewers? (when-not (overlay-visible? app) (or (:show-viewers? app (< 1 viewers-count 5))))]
           (html
             [:div.viewers.hud-item
-             {:class (concat
-                       (when viewers-buried? ["buried"])
-                       (when (or (:expand-viewers? app (< 1 viewers-count 5)))
-                         ["expanded"]))}
-             [:div.viewers-frame.viewers-others
-              (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
-                    :when (not hide-in-list?)
-                    :let [id-str (or cust-name (apply str (take 6 id)))]]
-                [:div.viewer
-                 [:div.viewer-avatar
-                  (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))]
-                 [:div.viewer-name id-str]
-                 [:div.viewer-toggles
-                  [:a
-                   {:key id
-                    :on-click #(cast! :chat-user-clicked {:id-str id-str})
-                    :role "button"
-                    :title "Ping this viewer in chat."}
-                   (common/icon :chat)]]])]
+             {:class (when viewers-truncated? ["truncated"])}
+             (when show-viewers?
+               [:div.viewers-list
+                [:div.viewers-list-frame
+                 (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+                   [:div.viewer.viewer-self
+                    [:div.viewer-avatar.viewer-tag
+                     (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers client-id :color])}}}))]
+                    (if editing-name?
+                      [:form.viewer-name-form
+                       {:on-submit #(do (when-not (str/blank? new-name)
+                                          (cast! :self-updated {:name new-name}))
+                                        (om/set-state! owner :editing-name? false)
+                                        (om/set-state! owner :new-name "")
+                                        (utils/stop-event %))
+                        :on-blur #(do (when-not (str/blank? new-name)
+                                        (cast! :self-updated {:name new-name}))
+                                      (om/set-state! owner :editing-name? false)
+                                      (om/set-state! owner :new-name "")
+                                      (utils/stop-event %))
+                        :on-key-down #(when (= "Escape" (.-key %))
+                                        (om/set-state! owner :editing-name? false)
+                                        (om/set-state! owner :new-name "")
+                                        (utils/stop-event %))}
+                       [:input.viewer-name-input
+                        {:type "text"
+                         :ref "name-edit"
+                         :tab-index 1
+                         ;; TODO: figure out why we need value here
+                         :value new-name
+                         :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
 
-             (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
-               [:div.viewers-frame.viewers-self
-                [:div.viewer
-                 {:on-click (if (:expand-viewers? app)
-                              #(cast! :viewers-collapsed)
-                              #(cast! :viewers-expanded))}
-                 [:div.viewer-avatar
-                  (common/icon :user (when show-mouse? {:path-props
-                                                        {:style
-                                                         {:stroke (get-in app [:subscribers client-id :color])}}}))]
-
-                 (if editing-name?
-                   [:form
-                    {:on-submit #(do (when-not (str/blank? new-name)
-                                       (cast! :self-updated {:name new-name}))
-                                     (om/set-state! owner :editing-name? false)
-                                     (om/set-state! owner :new-name "")
-                                     (utils/stop-event %))
-                     :on-blur #(do (when-not (str/blank? new-name)
-                                     (cast! :self-updated {:name new-name}))
-                                   (om/set-state! owner :editing-name? false)
-                                   (om/set-state! owner :new-name "")
-                                   (utils/stop-event %))
-                     :on-key-down #(when (= "Escape" (.-key %))
-                                     (om/set-state! owner :editing-name? false)
-                                     (om/set-state! owner :new-name "")
-                                     (utils/stop-event %))}
-                    [:input.viewer-edit-name
-                     {:type "text"
-                      :ref "name-edit"
-                      :tab-index 1
-                      ;; TODO: figure out why we need value here
-                      :value new-name
-                      :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
-
-                   [:div.viewer-name
-                    {:data-count (when (> viewers-count 1)
-                                   viewers-count)
-                     :data-name (or (get-in app [:cust :cust/name]) "You")}])
-                 [:div.viewer-toggles
-                  [:a
-                   {:key client-id
-                    :on-click #(do
-                                 (if can-edit?
-                                   (om/set-state! owner :editing-name? true)
-                                   (cast! :overlay-username-toggled))
-                                 (.stopPropagation %))
-                    :role "button"
-                    :title "Edit your display name."}
-                   (common/icon :pencil)]]]])])))))
+                      [:div.viewer-name.viewer-tag (or (get-in app [:cust :cust/name]) "You")])
+                    [:div.viewer-knobs
+                     [:a.viewer-knob
+                      {:key client-id
+                       :on-click #(do
+                                    (if can-edit?
+                                      (om/set-state! owner :editing-name? true)
+                                      (cast! :overlay-username-toggled))
+                                    (.stopPropagation %))
+                       :role "button"
+                       :title "Edit your display name."}
+                      (common/icon :pencil)]]])
+                 (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
+                       :when (not hide-in-list?)
+                       :let [id-str (or cust-name (apply str (take 6 id)))]]
+                   [:div.viewer
+                    [:div.viewer-avatar.viewer-tag
+                     (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))]
+                    [:div.viewer-name.viewer-tag
+                     id-str]
+                    [:div.viewer-knobs
+                     [:a.viewer-knob
+                      {:key id
+                       :on-click #(cast! :chat-user-clicked {:id-str id-str})
+                       :role "button"
+                       :title "Ping this viewer in chat."}
+                      (common/icon :chat)]]])]])
+             [:a.hud-viewers.hud-item.hud-toggle
+              {:on-click (if show-viewers?
+                           #(cast! :viewers-closed)
+                           #(cast! :viewers-opened))
+               :class (when show-viewers? "close")
+               :data-count (when (< 1 viewers-count) viewers-count)
+               :role "button"}
+              (common/icon :times)
+              (common/icon :users)]])))))
 
 (defn hud [app owner]
   (reify
