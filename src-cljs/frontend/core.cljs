@@ -327,6 +327,8 @@
                 (js/Rollbar.error "entity ids request failed :(")))))))
 
 (defn ^:export setup! []
+  (when-not (utils/logging-enabled?)
+    (println "To enable logging, set Precursor['logging-enabled'] = true"))
   (js/React.initializeTouchEvents true)
   (let [state (app-state)
         history-imp (history/new-history-imp)]
