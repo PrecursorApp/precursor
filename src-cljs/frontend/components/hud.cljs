@@ -136,7 +136,8 @@
               viewers-count (count (remove (comp :hide-in-list? last) (:subscribers app)))
               can-edit? (not (empty? (:cust app)))
               viewers-truncated? (< 4 viewers-count)
-              show-viewers? (when-not (overlay-visible? app) (or (:show-viewers? app (< 1 viewers-count 5))))]
+              show-viewers? (and (not (overlay-visible? app))
+                                 (get app :show-viewers? (< 1 viewers-count 5)))]
           (html
             [:div.viewers.hud-item
              {:class (when viewers-truncated? ["truncated"])}
