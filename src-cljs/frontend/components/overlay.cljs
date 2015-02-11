@@ -86,11 +86,13 @@
          [:div.menu-view
           [:a.vein.make
            {:on-click #(cast! :overlay-info-toggled)
+            :on-touch-end #(cast! :overlay-info-toggled)
             :role "button"}
            (common/icon :info)
            [:span "About"]]
           [:a.vein.make
            {:on-click #(cast! :newdoc-button-clicked)
+            :on-touch-end #(cast! :newdoc-button-clicked)
             :href "/"
             :target "_self"
             :role "button"}
@@ -98,6 +100,7 @@
            [:span "New Document"]]
           [:a.vein.make
            {:on-click #(cast! :your-docs-opened)
+            :on-touch-end #(cast! :your-docs-opened)
             :role "button"}
            (common/icon :clock)
            [:span "Your Documents"]]
@@ -106,18 +109,21 @@
           (if (auth/has-document-access? app (:document/id app))
             [:a.vein.make
              {:on-click #(cast! :sharing-menu-opened)
+              :on-touch-end #(cast! :sharing-menu-opened)
               :role "button"}
              (common/icon :users)
              [:span "Sharing"]]
 
             [:a.vein.make
              {:on-click #(cast! :document-permissions-opened)
+              :on-touch-end #(cast! :document-permissions-opened)
               :role "button"}
              (common/icon :users)
              [:span "Request Access"]])
 
           [:a.vein.make
            {:on-click #(cast! :shortcuts-menu-opened)
+            :on-touch-end #(cast! :shortcuts-menu-opened)
             :class "mobile-hidden"
             :role "button"}
            (common/icon :command)

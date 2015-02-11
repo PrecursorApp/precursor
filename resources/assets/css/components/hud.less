@@ -198,6 +198,11 @@
   .animation(in-fade-bottom @run_slow @run_fast @bezier_deform backwards);
   width: @tile_viewers;
   overflow: hidden;
+  .mq_640({
+    width: 100vw;
+    background: @dye_inner;
+    border-top: 1px solid @gray_dark;
+  });
   &:hover {
     .viewer {
       .animation-duration(@now);
@@ -226,6 +231,10 @@
   .flexy(center);
   width: @tile_viewers;
   padding-left: @tile;
+  .mq_640({
+    padding-top: @tile_viewers_height / 2;
+    padding-bottom: @tile_viewers_height / 2;
+  });
   &:not(:hover) {
     &:not(.viewer-self) {
       .viewer-tag {

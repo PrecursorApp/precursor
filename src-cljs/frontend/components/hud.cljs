@@ -32,6 +32,11 @@
            {:on-click (if (overlay-visible? app)
                         #(cast! :overlay-menu-closed)
                         #(cast! :main-menu-opened))
+            :on-touch-end #(do
+                             (.preventDefault %)
+                             (if (overlay-visible? app)
+                               (cast! :overlay-menu-closed)
+                               (cast! :main-menu-opened)))
             :role "button"
             :class (when (overlay-visible? app)
                      (concat
@@ -103,6 +108,9 @@
         (html
           [:a.hud-chat.hud-item.hud-toggle
            {:on-click #(cast! :chat-toggled)
+            :on-touch-end #(do
+                             (.preventDefault %)
+                             (cast! :chat-toggled))
             :class (when-not chat-opened? "open")
             :role "button"
             :data-left (when-not chat-button-learned? (if chat-opened? "Close Chat" "Open Chat"))
@@ -194,6 +202,11 @@
               {:on-click (if show-viewers?
                            #(cast! :viewers-closed)
                            #(cast! :viewers-opened))
+               :on-touch-end #(do
+                                (.preventDefault %)
+                                (if show-viewers?
+                                  (cast! :viewers-closed)
+                                  (cast! :viewers-opened)))
                :class (when show-viewers? "close")
                :data-count (when (< 1 viewers-count) viewers-count)
                :role "button"}
