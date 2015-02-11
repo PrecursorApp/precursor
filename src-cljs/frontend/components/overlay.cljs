@@ -158,7 +158,7 @@
 
 (defmethod render-access-entity :permission
   [entity cast!]
-  [:div.access-card
+  [:div.access-card.make
    [:div.access-avatar
     [:img
      {:src (utils/gravatar-url (:permission/cust entity))}]]
@@ -170,7 +170,7 @@
 
 (defmethod render-access-entity :access-grant
   [entity cast!]
-  [:div.access-card
+  [:div.access-card.make
    [:div.access-avatar
     [:img
      {:src (utils/gravatar-url (:access-grant/email entity))}]]
@@ -182,7 +182,7 @@
 
 (defmethod render-access-entity :access-request
   [entity cast!]
-  [:div.access-card
+  [:div.access-card.make
    {:class (if (= :access-request.status/denied (:access-request/status entity))
              "denied"
              "requesting")}
@@ -243,10 +243,7 @@
          [:div ; TODO make this a list, or at least get rid of div somehow
           [:article
            [:h2.make
-            [:span
-             "This document is "]
-            [:span.privacy-private-word
-             "private."]]
+            "This document is private."]
            [:p.make
             "It's only visible to users with access."
             " Email a teammate and notify them to request access."]
@@ -265,9 +262,7 @@
             [:label
              {:data-placeholder "Teammate's email"
               :data-placeholder-nil "What's your teammate's email?"
-              :data-placeholder-forgot "Don't forget to submit!"}]]]
-
-          [:div.access-list
+              :data-placeholder-forgot "Don't forget to submit!"}]]
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
              (render-access-entity access-entity cast!))]])))))
 
@@ -280,10 +275,7 @@
         (html
           [:article
            [:h2.make
-            [:span
-             "This document is "]
-            [:span.privacy-public-word
-             "public."]]
+            "This document is public."]
            [:p.make
             "It's visible to anyone with the url.
             Email a friend to invite them to collaborate."]
@@ -350,36 +342,35 @@
 
           (when (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
                      (auth/owner? @db doc (get-in app [:cust])))
-            [:div.menu-foot
-             [:form.privacy-select
-              [:input.privacy-radio
-               {:type "radio"
-                :hidden "true"
-                :id "privacy-public"
-                :name "privacy"
-                :checked (not private?)
-                :onChange #(cast! :document-privacy-changed
-                                  {:doc-id doc-id
-                                   :setting :document.privacy/public})}]
-              [:label.privacy-label
-               {:for "privacy-public"
-                :role "button"}
-               (common/icon :globe)
-               [:span "Public"]]
-              [:input.privacy-radio
-               {:type "radio"
-                :hidden "true"
-                :id "privacy-private"
-                :name "privacy"
-                :checked private?
-                :onChange #(cast! :document-privacy-changed
-                                  {:doc-id doc-id
-                                   :setting :document.privacy/private})}]
-              [:label.privacy-label
-               {:for "privacy-private"
-                :role "button"}
-               (common/icon :lock)
-               [:span "Private"]]]])])))))
+            [:form.privacy-select.vein.make.stick
+             [:input.privacy-radio
+              {:type "radio"
+               :hidden "true"
+               :id "privacy-public"
+               :name "privacy"
+               :checked (not private?)
+               :onChange #(cast! :document-privacy-changed
+                                 {:doc-id doc-id
+                                  :setting :document.privacy/public})}]
+             [:label.privacy-label
+              {:for "privacy-public"
+               :role "button"}
+              (common/icon :globe)
+              [:span "Public"]]
+             [:input.privacy-radio
+              {:type "radio"
+               :hidden "true"
+               :id "privacy-private"
+               :name "privacy"
+               :checked private?
+               :onChange #(cast! :document-privacy-changed
+                                 {:doc-id doc-id
+                                  :setting :document.privacy/private})}]
+             [:label.privacy-label
+              {:for "privacy-private"
+               :role "button"}
+              (common/icon :lock)
+              [:span "Private"]]])])))))
 
 (defn info [app owner]
   (reify

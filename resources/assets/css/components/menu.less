@@ -183,14 +183,11 @@
   .icon(fill; @gray);
   width: 100%;
   color: @gray;
-  transition+: color @run_fast @bezier_fadein;
-  transition+: height @run_fast @bezier_fadein;
   overflow: hidden;
   &:hover {
     .icon(stroke; @black);
     .icon(fill; @black);
     color: @black;
-    transition-duration: @run_fast, @now;
   }
   &.stick {
     position: absolute;
@@ -200,13 +197,10 @@
   i {
     padding: @menu_padding;
   }
-  path {
-    transition: @run_fast @bezier_fadein;
-  }
 }
 .menu-invite-form {
   .flexy(column);
-  margin-bottom: auto;
+  margin: @menu_padding 0;
 }
 .invite-recipient {
   .flexy();
@@ -383,7 +377,8 @@ img.loading-image {
   .animation(dot 1.3s 0.3s infinite);
 }
 .privacy-select {
-  .flexy(column);
+  .flex-direction(column);
+  .align-items(stretch);
   &:hover {
     .privacy-label {
       &:not(:hover) {
@@ -408,19 +403,12 @@ img.loading-image {
   cursor: pointer;
   overflow: hidden;
   transition: @run;
-  i {
-    margin: @menu_padding;
-    margin-right: 1rem;
-  }
-}
-.access-list {
-  margin-top: @tile / 2;
 }
 .access-card {
   .flexy(center);
   position: relative;
   // max-width: @tile_menu; // TODO fix this
-  padding: .5rem 1.5rem;
+  margin: @menu_padding 0;
   cursor: default;
   transition: @run;
   &:not(:hover) {
