@@ -836,15 +836,6 @@
              (get-in current-state state/chat-opened-path))
     (favicon/set-normal!)))
 
-(defmethod control-event :chat-body-changed
-  [browser-state message {:keys [value]} state]
-  (let [entity-id (or (get-in state [:chat :entity-id])
-                      (-> state :entity-ids first))]
-    (-> state
-        (assoc-in [:chat :body] value)
-        (assoc-in [:chat :entity-id] entity-id)
-        (update-in [:entity-ids] disj entity-id))))
-
 (defn chat-cmd [body]
   (when (seq body)
     (last (re-find #"^/([^\s]+)" body))))
@@ -863,10 +854,9 @@
   (update-in state [:camera :show-grid?] not))
 
 (defmethod control-event :chat-submitted
-  [browser-state message _ state]
+  [browser-state message {:keys [chat-body]} state]
   (-> state
-      (handle-cmd-chat (chat-cmd (get-in state [:chat :body])) (get-in state [:chat :body]))
-      (assoc-in [:chat :body] nil)
+      (handle-cmd-chat (chat-cmd chat-body) chat-body)
       (assoc-in [:chat :entity-id] nil)))
 
 (defmulti post-handle-cmd-chat (fn [state cmd]
@@ -884,11 +874,11 @@
     (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
                                                            :email email}])))
 (defmethod post-control-event! :chat-submitted
-  [browser-state message _ previous-state current-state]
+  [browser-state message {:keys [chat-body]} previous-state current-state]
   (let [db (:db current-state)
         client-id (:client-id previous-state)
         color (get-in previous-state [:subscribers client-id :color])]
-    (d/transact! db [(utils/remove-map-nils {:chat/body (get-in previous-state [:chat :body])
+    (d/transact! db [(utils/remove-map-nils {:chat/body chat-body
                                              :chat/color color
                                              :cust/uuid (get-in current-state [:cust :cust/uuid])
                                              ;; TODO: teach frontend to lookup cust/name from cust/uuid

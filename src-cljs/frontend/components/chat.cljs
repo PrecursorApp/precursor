@@ -91,28 +91,34 @@
 
 (defn input [{:keys [chat-body]} owner]
   (reify
+    om/IInitState (init-state [_] {:chat-body (atom "")})
     om/IRender
     (render [_]
-      (let [{:keys [cast!]} (om/get-shared owner)]
+      (let [{:keys [cast!]} (om/get-shared owner)
+            submit-chat (fn [e]
+                          (cast! :chat-submitted {:chat-body @(om/get-state owner :chat-body)})
+                          (reset! (om/get-state owner :chat-body) "")
+                          (om/refresh! owner)
+                          (utils/stop-event e))]
         (html
           [:div.chat-box
            [:form {:class "chat-form"
-                   :on-submit #(do (cast! :chat-submitted)
-                                   false)
+                   :on-submit submit-chat
                    :on-key-down #(when (and (= "Enter" (.-key %))
                                             (not (.-shiftKey %))
                                             (not (.-ctrlKey %))
                                             (not (.-metaKey %))
                                             (not (.-altKey %)))
-                                   (cast! :chat-submitted)
-                                   false)}
+
+                                   (submit-chat %))}
             [:textarea {:class "chat-input"
                         :id "chat-input"
                         :tab-index "1"
                         :type "text"
-                        :value (or chat-body "")
+                        :value @(om/get-state owner :chat-body)
                         :placeholder "Chat..."
-                        :on-change #(cast! :chat-body-changed {:value (.. % -target -value)})}]]])))))
+                        :on-change #(reset! (om/get-state owner :chat-body)
+                                            (.. % -target -value))}]]])))))
 
 (defn log [{:keys [db chat-body sente-id client-id chat-opened]} owner]
   (reify
