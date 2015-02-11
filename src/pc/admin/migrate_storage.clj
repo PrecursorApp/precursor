@@ -99,7 +99,18 @@
   (Thread/sleep (* 1000 10 2))
   (reset-resolve-tempid))
 
+(defn ensure-premade-schema []
+  @(d/transact (pcd/conn) [{:db/doc "dummy attribute so that we can pre-generate entity ids for a migration"
+                            :db/cardinality :db.cardinality/one
+                            :db/id (d/tempid :db.part/db)
+                            :db/ident :pre-made
+                            :db/valueType :db.type/ref
+                            :db.install/_attribute :db.part/db}
+                           {:db/id (d/tempid :db.part/db)
+                            :db/ident :pre-made/free-to-postgres}]))
+
 (defn setup-old-server []
+  (ensure-premade-schema)
   (startup-premade-ids)
   (setup-transaction-queue)
   (setup-transaction-server))
