@@ -91,15 +91,28 @@
 }
 .chat-message {
   padding: 0 .125rem 0 1rem;
+  &:not(:first-child) {
+    .message-head {
+      margin-top: .5rem;
+    }
+  }
 }
 .message-head {
   .flexy();
 }
+.message-sender {
+  .icon(stroke; 12);
+  font-weight: 500;
+  .icon-user {
+    font-size: 0.75rem;
+    margin-right: .25rem;
+  }
+}
 .message-time {
   color: @gray_dark;
-  font-size: 0.75rem;
+  font-size: .75rem;
   line-height: ~"@{line_height}rem";
   text-transform: lowercase;
   word-spacing: -.1875rem;
-  margin-left: .5rem;
+  margin-left: .25rem;
 }

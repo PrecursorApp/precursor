@@ -43,11 +43,13 @@
                         (:chat/body chat))
             short-time (datetime/short-time (js/Date.parse (:server/timestamp chat)))]
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
-               [:div.message-head
-                (when show-sender?
+               (when show-sender?
+                 [:div.message-head
                   (list
-                   [:div.message-sender {:style {:color (or (:chat/color chat) (str "#" id))}} name]
-                   [:div.message-time short-time]))]
+                   [:div.message-sender
+                    (common/icon :user {:path-props {:style {:stroke (or (:chat/color chat) (str "#" id))}}})
+                    name]
+                   [:div.message-time short-time])])
                [:div.message-body
                 [:div.message-content chat-body]]])))))
 
