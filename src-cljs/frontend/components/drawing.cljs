@@ -104,11 +104,11 @@
         pause-ticks 2]
     (-> (reduce (fn [tick-state relative-tick]
                   (add-tick tick-state
-                            (utils/inspect (+ start-tick relative-tick))
+                            (+ start-tick relative-tick)
                             (fn [owner]
-                              (let [letter-count (utils/inspect (int (/ (count text)
-                                                                        (/ (- end-tick start-tick pause-ticks)
-                                                                           relative-tick))))]
+                              (let [letter-count (int (/ (count text)
+                                                         (/ (- end-tick start-tick pause-ticks)
+                                                            relative-tick)))]
                                 ((om/get-shared owner :cast!)
                                  :subscriber-updated {:client-id (ffirst state/subscriber-bot)
                                                       :fields {:mouse-position [start-x (- start-y (/ text-height 2))]
