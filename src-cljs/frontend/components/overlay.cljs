@@ -47,7 +47,8 @@
                          (url/url)
                          :path)}]
             [:a.vein.make
-             {:on-click #(.submit (om/get-node owner "logout-form"))
+             {:on-click         #(.submit (om/get-node owner "logout-form"))
+              :on-touch-end #(do (.submit (om/get-node owner "logout-form")) (.preventDefault %))
               :role "button"}
              (common/icon :logout)
              [:span "Log out"]]]
@@ -59,7 +60,12 @@
                           (.preventDefault %)
                           (cast! :login-button-clicked)
                           (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                               :event "Signup Clicked"}))}
+                                                               :event "Signup Clicked"}))
+             :on-touch-end #(do
+                              (.preventDefault %)
+                              (cast! :login-button-clicked)
+                              (cast! :track-external-link-clicked {:path (auth/auth-url)
+                                                                   :event "Signup Clicked"}))}
             (common/icon :login)
             [:span "Log in"]]))))))
 
@@ -85,22 +91,22 @@
         (html
          [:div.menu-view
           [:a.vein.make
-           {:on-click #(cast! :overlay-info-toggled)
-            :on-touch-end #(cast! :overlay-info-toggled)
+           {:on-click         #(cast! :overlay-info-toggled)
+            :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
             :role "button"}
            (common/icon :info)
            [:span "About"]]
           [:a.vein.make
-           {:on-click #(cast! :newdoc-button-clicked)
-            :on-touch-end #(cast! :newdoc-button-clicked)
+           {:on-click         #(cast! :newdoc-button-clicked)
+            :on-touch-end #(do (cast! :newdoc-button-clicked) (.preventDefault %))
             :href "/"
             :target "_self"
             :role "button"}
            (common/icon :newdoc)
            [:span "New Document"]]
           [:a.vein.make
-           {:on-click #(cast! :your-docs-opened)
-            :on-touch-end #(cast! :your-docs-opened)
+           {:on-click         #(cast! :your-docs-opened)
+            :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
             :role "button"}
            (common/icon :clock)
            [:span "Your Documents"]]
@@ -108,22 +114,21 @@
           ;;       info about the document
           (if (auth/has-document-access? app (:document/id app))
             [:a.vein.make
-             {:on-click #(cast! :sharing-menu-opened)
-              :on-touch-end #(cast! :sharing-menu-opened)
+             {:on-click         #(cast! :sharing-menu-opened)
+              :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
               :role "button"}
              (common/icon :users)
              [:span "Sharing"]]
 
             [:a.vein.make
-             {:on-click #(cast! :document-permissions-opened)
-              :on-touch-end #(cast! :document-permissions-opened)
+             {:on-click         #(cast! :document-permissions-opened)
+              :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
               :role "button"}
              (common/icon :users)
              [:span "Request Access"]])
-
           [:a.vein.make
-           {:on-click #(cast! :shortcuts-menu-opened)
-            :on-touch-end #(cast! :shortcuts-menu-opened)
+           {:on-click         #(cast! :shortcuts-menu-opened)
+            :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
             :class "mobile-hidden"
             :role "button"}
            (common/icon :command)
@@ -134,6 +139,7 @@
             :role "button"}
            (common/icon :blog)
            [:span "Blog"]]
+
           (om/build auth-link app)])))))
 
 (defn format-access-date [date]
@@ -402,7 +408,8 @@
              "."]
             (if (:cust app)
               [:a.make
-               {:on-click #(cast! :overlay-menu-closed)
+               {:on-click         #(cast! :overlay-menu-closed)
+                :on-touch-end #(do (cast! :overlay-menu-closed) (.preventDefault %))
                 :role "button"} "Okay"]
               (list
                 [:p.make
@@ -416,7 +423,13 @@
                                (cast! :track-external-link-clicked
                                       {:path (auth/auth-url)
                                        :event "Signup Clicked"
-                                       :properties {:source "username-overlay"}}))}
+                                       :properties {:source "username-overlay"}}))
+                  :on-touch-end #(do
+                                   (.preventDefault %)
+                                   (cast! :track-external-link-clicked
+                                          {:path (auth/auth-url)
+                                           :event "Signup Clicked"
+                                           :properties {:source "username-overlay"}}))}
                  "Sign Up"]))]
            (common/mixpanel-badge)])))))
 
