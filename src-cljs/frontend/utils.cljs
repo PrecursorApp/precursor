@@ -190,6 +190,9 @@
       (apply update-in m ks f args)
       m)))
 
+(defn remove-map-nils [unnested-map]
+  (into {} (remove (comp nil? last) unnested-map)))
+
 (defn stop-event [e]
   (.stopPropagation e)
   (.preventDefault e))

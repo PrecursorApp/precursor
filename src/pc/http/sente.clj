@@ -206,8 +206,9 @@
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
                          :entities (map (partial permission-model/read-api (:db req))
-                                        (permission-model/find-by-document (:db req)
-                                                                           {:db/id document-id}))
+                                        (filter :permission/cust
+                                                (permission-model/find-by-document (:db req)
+                                                                                   {:db/id document-id})))
                          :entity-type :permission}])
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
