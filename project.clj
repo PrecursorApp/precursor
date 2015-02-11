@@ -21,9 +21,11 @@
 
                  [cider/cider-nrepl "0.8.2"]
                  [clj-http "1.0.1" :exclusions [commons-codec]]
-                 [com.datomic/datomic-free "0.9.4899" :exclusions [org.slf4j/slf4j-nop
-                                                                   org.slf4j/slf4j-api
-                                                                   com.amazonaws/aws-java-sdk]]
+                 [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
+                                                                  org.slf4j/slf4j-api
+                                                                  com.amazonaws/aws-java-sdk]]
+                 [org.postgresql/postgresql "9.4-1200-jdbc41"]
+
                  [amazonica "0.3.12"]
 
                  [ring/ring "1.3.2" :exclusions [hiccup
@@ -34,7 +36,7 @@
                  [clj-stacktrace "0.2.8"]
 
                  [org.clojure/tools.reader "0.8.13"]
-                 [com.google.guava/guava "17.0"]
+                 [com.google.guava/guava "18.0"]
 
                  [schejulure "1.0.1"]
 
@@ -78,6 +80,28 @@
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
 
+  :repositories ^:replace [["prcrsr-s3-releases" {:url "s3p://prcrsr-jars/releases"
+                                                  :sign-releases false ;; TODO put a gpg key on CI
+                                                  :username [:gpg
+                                                             :env/prcrsr_jars_username
+                                                             "AKIAIQXSSVZAOLOC5KZA"]
+                                                  :passphrase [:gpg
+                                                               :env/prcrsr_jars_password
+                                                               "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
+                                                  :snapshots false}]
+
+                           ["prcrsr-s3-snapshots" {:url "s3p://prcrsr-jars/snapshots"
+                                                   :sign-releases false ;; TODO put a gpg key on CI
+                                                   :username [:gpg
+                                                              :env/prcrsr_jars_username
+                                                              "AKIAIQXSSVZAOLOC5KZA"]
+                                                   :passphrase [:gpg
+                                                                :env/prcrsr_jars_password
+                                                                "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
+                                                   :snapshots true}]
+                           ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
+                           ["clojars" {:url "https://clojars.org/repo/"}]]
+
   :figwheel {:http-server-root "public"
              :server-port 3448
              :css-dirs ["resources/public/css"]}
@@ -85,7 +109,9 @@
   :plugins [[lein-cljsbuild "1.0.4"]
             [com.cemerick/austin "0.1.6"]
             [lein-figwheel "0.2.3-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
-                                                         commons-codec]]]
+                                                         commons-codec]]
+            [circle/lein-deploy-deps "0.1.3"]
+            [circle/s3-wagon-private "1.2.2" :exclusions [commons-codec org.apache.httpcomponents/httpclient]]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]

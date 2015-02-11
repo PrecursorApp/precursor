@@ -1,6 +1,7 @@
 (ns pc.datomic.schema
   (:require [pc.datomic :as pcd]
-            [datomic.api :refer [db q] :as d]))
+            [datomic.api :refer [db q] :as d]
+            [pc.profile]))
 
 (defn attribute [ident type & {:as opts}]
   (merge {:db/id (d/tempid :db.part/db)
@@ -473,7 +474,12 @@
               :db.type/ref
               :db/cardinality :db.cardinality/many
               :db/doc "Annotate an entity with feature flags")
-   (enum :flags/private-docs)])
+   (enum :flags/private-docs)
+
+   (attribute :pre-made
+              :db.type/ref
+              :db/doc "dummy attribute so that we can pre-generate entity ids for a migration")
+   (enum :pre-made/free-to-postgres)])
 
 (defonce schema-ents (atom nil))
 
@@ -514,4 +520,7 @@
      res)))
 
 (defn init []
-  (ensure-schema))
+  ;; TODO: remove migrating check after migration
+  (if (pc.profile/migrating-to-new-storage?)
+    (reset! schema-ents (get-schema-ents (pcd/default-db)))
+    (ensure-schema)))
