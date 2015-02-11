@@ -51,6 +51,7 @@
   .animation(in-fade-bottom @run_slower @run_slower @bezier_fadein backwards);
   bottom: 0;
   right: 0;
+  font-size: 1.1rem;
   &:hover {
     .unseen-eids {
       background: @red;
@@ -63,15 +64,10 @@
       right: 3.1em;
     }
   }
-  &:not(.open) {
-    width: 3rem !important;
-    right: .5rem;
-    .stroke-chat {
-      .transform(translate3d(0,100%,0) scale3d(0,0,1));
-      transition-delay: @now;
-    }
-  }
   &.open {
+    .icon-chat-morph {
+      .scale3d(1.5);
+    }
     .fill-x1 { .translate3d(    25px,    25px, 0); opacity: 0;}
     .fill-x2 { .translate3d(       0,    25px, 0);}
     .fill-x3 { .translate3d( -12.5px,  12.5px, 0); opacity: 0;}
@@ -81,6 +77,20 @@
     .fill-x7 { .translate3d(  12.5px, -12.5px, 0); opacity: 0;}
     .fill-x8 { .translate3d(       0,   -25px, 0);}
     .fill-x9 { .translate3d(   -25px,   -25px, 0); opacity: 0;}
+  }
+  &:not(.open) {
+    width: 3rem !important;
+    right: .5rem;
+    .stroke-chat {
+      .transform(translate3d(0,100%,0) scale3d(0,0,1));
+      transition-delay: @run_fast;
+    }
+  }
+  .icon-chat-morph {
+    transition: @run @bezier_deform;
+  }
+  .stroke-chat {
+    transition-delay: @now;
   }
   path {
     .random_cascade(9);
