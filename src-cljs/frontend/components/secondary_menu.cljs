@@ -1,7 +1,7 @@
 (ns frontend.components.secondary-menu
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [frontend.utils :refer [html]]))
+  (:require-macros [sablono.core :refer (html)]))
 
 (defn menu-item [cast! text msg class svg-source]
   (dom/li #js {:style #js {:marginTop 4

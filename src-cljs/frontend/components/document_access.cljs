@@ -11,7 +11,7 @@
             [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [frontend.utils :refer [html]])
+  (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
 (defn permission-denied-overlay [app owner]
