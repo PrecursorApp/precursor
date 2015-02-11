@@ -7,7 +7,7 @@
             [goog.dom.DomHelper]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [frontend.utils :refer [html]]))
+  (:require-macros [sablono.core :refer [html]]))
 
 (defn contact-us-inner [controls-ch]
   [:a {:on-click #(put! controls-ch [:intercom-dialog-raised])}

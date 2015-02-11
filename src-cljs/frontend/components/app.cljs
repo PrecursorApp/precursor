@@ -23,7 +23,7 @@
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [ankha.core :as ankha])
-  (:require-macros [frontend.utils :refer [html]]))
+  (:require-macros [sablono.core :refer (html)]))
 
 (def keymap
   (atom nil))
