@@ -41,7 +41,3 @@
   (if (prod?)
     "production"
     "development"))
-
-;; TODO: remove migrating check after migration
-(defn migrating-to-new-storage? []
-  (= "true" (System/getenv "STORAGE_MIGRATION")))

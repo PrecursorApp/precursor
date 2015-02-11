@@ -520,7 +520,4 @@
      res)))
 
 (defn init []
-  ;; TODO: remove migrating check after migration
-  (if (pc.profile/migrating-to-new-storage?)
-    (reset! schema-ents (get-schema-ents (pcd/default-db)))
-    (ensure-schema)))
+  (ensure-schema))

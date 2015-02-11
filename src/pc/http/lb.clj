@@ -1,10 +1,8 @@
 (ns pc.http.lb
   (:require [pc.profile]))
 
-;; TODO: remove migrating check after migration
-(defonce health-status (atom {:status (if (pc.profile/migrating-to-new-storage?)
-                                        :down
-                                        :up)}))
+;; TODO: this should do a self-check, then change its status to :up
+(defonce health-status (atom {:status :up}))
 
 (defn healthy? []
   (= :up (:status @health-status)))
