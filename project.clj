@@ -80,6 +80,26 @@
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
 
+  :repositories  [["prcrsr-s3-releases" {:url "s3p://prcrsr-jars/releases"
+                                         :sign-releases false ;; TODO put a gpg key on CI
+                                         :username [:gpg
+                                                    :env/prcrsr_jars_username
+                                                    "AKIAIQXSSVZAOLOC5KZA"]
+                                         :passphrase [:gpg
+                                                      :env/prcrsr_jars_password
+                                                      "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
+                                         :snapshots false}]
+
+                  ["prcrsr-s3-snapshots" {:url "s3p://prcrsr-jars/snapshots"
+                                          :sign-releases false ;; TODO put a gpg key on CI
+                                          :username [:gpg
+                                                     :env/prcrsr_jars_username
+                                                     "AKIAIQXSSVZAOLOC5KZA"]
+                                          :passphrase [:gpg
+                                                       :env/prcrsr_jars_password
+                                                       "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
+                                          :snapshots true}]]
+
   :figwheel {:http-server-root "public"
              :server-port 3448
              :css-dirs ["resources/public/css"]}
@@ -87,7 +107,9 @@
   :plugins [[lein-cljsbuild "1.0.4"]
             [com.cemerick/austin "0.1.6"]
             [lein-figwheel "0.2.3-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
-                                                         commons-codec]]]
+                                                         commons-codec]]
+            [circle/lein-deploy-deps "0.1.3"]
+            [circle/s3-wagon-private "1.2.2" :exclusions [commons-codec org.apache.httpcomponents/httpclient]]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]
