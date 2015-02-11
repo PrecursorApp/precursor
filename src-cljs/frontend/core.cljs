@@ -320,7 +320,7 @@
               (put! api-ch [:entity-ids :success {:resp resp :status :success}])
               (add-watch state :entity-id-fetcher (fn [key ref old new]
                                                     (when (> 35 (-> new :entity-ids count))
-                                                      (println "fetching more entity ids")
+                                                      (utils/mlog "fetching more entity ids")
                                                       (fetch-entity-ids api-ch (- 40
                                                                                   (-> new :entity-ids count)))))))
             (do (notify-error state)
