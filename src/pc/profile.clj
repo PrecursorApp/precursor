@@ -41,3 +41,6 @@
   (if (prod?)
     "production"
     "development"))
+
+(defn datomic-uri []
+  (System/getenv "DATOMIC_URI"))

@@ -40,21 +40,19 @@
    :render-colors? (parse-uri-bool (.getParameterValue parsed-uri "render-colors"))
    :invited-by (.getParameterValue parsed-uri "invited-by")})
 
-(def logging-enabled?
-  (if (nil? (:logging-enabled? initial-query-map))
-    (env/development?)
-    (:logging-enabled? initial-query-map)))
+(defn logging-enabled? []
+  (aget js/window "Precursor" "logging-enabled"))
 
 (defn mlog [& messages]
-  (when logging-enabled?
+  (when (logging-enabled?)
     (.apply (.-log js/console) js/console (clj->js messages))))
 
 (defn mwarn [& messages]
-  (when logging-enabled?
+  (when (logging-enabled?)
     (.apply (.-warn js/console) js/console (clj->js messages))))
 
 (defn merror [& messages]
-  (when logging-enabled?
+  (when (logging-enabled?)
     (.apply (.-error js/console) js/console (clj->js messages))))
 
 (defn log-pr [& args]

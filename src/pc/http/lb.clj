@@ -1,5 +1,7 @@
-(ns pc.http.lb)
+(ns pc.http.lb
+  (:require [pc.profile]))
 
+;; TODO: this should do a self-check, then change its status to :up
 (defonce health-status (atom {:status :up}))
 
 (defn healthy? []

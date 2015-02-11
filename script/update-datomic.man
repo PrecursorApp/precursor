@@ -1,0 +1,4 @@
+Update project.clj with new version
+Download datomic zip from my.datomic.com and unzip
+On local machine, from project dir:
+  ./script/deploy-datomic.sh :datomic-directory

@@ -1017,7 +1017,7 @@
   [browser-state message {:keys [ui-id canvas-size]} state]
   ;; TODO: how to handle no layer for ui-id
   (if-let [layer (layer-model/find-by-ui-id @(:db state) ui-id)]
-    (let [zoom (utils/inspect (:zf (:camera state)))
+    (let [zoom (:zf (:camera state))
           layer-width (js/Math.abs (- (:layer/start-x layer)
                                       (:layer/end-x layer)))
           layer-height (js/Math.abs (- (:layer/start-y layer)

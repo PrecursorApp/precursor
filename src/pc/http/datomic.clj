@@ -172,7 +172,7 @@
 (defn init []
   (let [conn (pcd/conn)
         tap (async/chan (async/sliding-buffer 1024))]
-    (async/tap (async/mult pcd/tx-report-ch) tap)
+    (async/tap pcd/tx-report-mult tap)
     (async/go-loop []
                    (when-let [transaction (async/<! tap)]
                      (utils/with-report-exceptions

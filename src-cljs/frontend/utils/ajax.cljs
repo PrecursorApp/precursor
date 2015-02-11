@@ -90,30 +90,29 @@
                            (clj-ajax/transform-opts format-opts))))
 
 ;; This is all very mess, it should be cleaned up at some point
-(defn managed-ajax [method url & {:keys [params keywords? headers format response-format]
+(defn managed-ajax [method url & {:keys [params keywords? headers format]
                                   :or {keywords? true
-                                       response-format :json
                                        format :edn}}]
   (let [channel (chan)
-        format (get {:xml (xml-request-response)
-                     :json (merge (clj-ajax/json-request-format)
-                                  (json-response-format {:keywords? keywords? :url url :method method}))
-                     :edn (clj-ajax/edn-format)}
-                    format)
+        opt-format (get {:xml (xml-request-response)
+                         :json (merge (clj-ajax/json-request-format)
+                                      (json-response-format {:keywords? keywords? :url url :method method}))
+                         :edn (clj-ajax/edn-format)}
+                        format)
         accept-header (get {:xml "application/xml"
                             :json "application/json"
                             :edn "application/edn"}
-                           response-format)]
+                           format)]
     (clj-ajax/ajax-request url method
                            (clj-ajax/transform-opts
-                            {:format format
-                             :response-format response-format
+                            {:format opt-format
+                             :response-format opt-format
                              :keywords? keywords?
                              :params params
                              :headers (merge (when accept-header
                                                {:Accept accept-header})
                                              (when (re-find #"^/" url)
-                                               {:X-CSRFToken (utils/csrf-token)})
+                                               {:X-CSRF-Token (utils/csrf-token)})
                                              headers)
                              :handler #(put! channel (assoc % :status :success))
                              ;; TODO: clean this up
