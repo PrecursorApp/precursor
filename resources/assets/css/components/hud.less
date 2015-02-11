@@ -1,168 +1,293 @@
-@radial_tools:
-  ellipse,   159.01px,  49.71px,
-  rectangle, 199.00px, 119.00px,
-  line,      159.01px, 188.29px,
-  pencil,     79.00px, 188.29px,
-  text,       39.00px, 119.52px,
-  select,     82.66px,  49.71px;
-.shape_position(@array; @count: length(@array); @name_value: -2; @x_value: -1; @y_value: 0; @icon_scale: .2) when (@count > (length(@array) / 3)) {
-  .shape_position(@array; (@count - 2); (@name_value - 1); (@x_value - 1); (@y_value - 1); @icon_scale);    // <-- Loop to next iteration until count is 0
-  @name:     extract(@array, (@count + @name_value));                                                       //
-  @x_offset: extract(@array, (@count + @x_value)) * (1 / @icon_scale);                                      //
-  @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
-  &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
-}
-.app-hud {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+.hud {
   a {
-    pointer-events: auto;
+    .icon(stroke; @white);
+    .icon(fill; @white);
   }
 }
-.radial-menu {
+.hud-item {
   position: fixed;
-  width: @radial_menu_size;
-  height: @radial_menu_size;
-  z-index: @zindex_radial_menu;
 }
-.radial-buttons {
-  width: @radial_menu_size + 2;
-  height: @radial_menu_size + 2;
-  margin-left: -1em;
-  margin-top: -1em;
-  padding: 1rem;
-  overflow: visible;
-}
-.radial-button {
-  cursor: pointer;
-  transition: @speed @bezier_transform;
-  &:hover {
-    .transform(translate3d(-13px, -13px, 0); scale3d(1.1, 1.1, 1));
-    transition-duration: @speed_fast;
-    .radial-pie {
-      fill: @gray_dark;
-      transition-duration: @speed_fast;
-    }
-    .radial-icon {
-      stroke: @white;
-      transition-duration: @speed_fast;
-    }
-  }
-  &:active {
-    .radial-pie {
-      fill: @gray_darker;
-    }
-  }
-}
-.radial-pie {
-  fill: @gray_darker;
-  stroke: @gray_dark;
-  transition: @speed @bezier_transform;
-}
-.radial-icon {
-  .shape_position(@radial_tools);
-  fill: none;
-  stroke: @gray_light;
-  stroke-width: 8;
-  pointer-events: none;
-  transition: @speed @bezier_fadein;
-}
-.radial-point {
-  fill: @gray_dark;
-}
-.radial-hint {
-  .user-select(none);
-  position: absolute;
-  top: -@tile;
-  left: -@tile;
-  white-space: nowrap;
-  .mq_640({
-    display: none;
-  });
-}
-
-.main-menu-button {
-  .flexy(center, center);
-  .icon_stroke(@gray);
-  position: absolute;
-  font-size: 1.5rem;
-  top: 0;
-  left: 0;
+.hud-toggle {
+  .flexy(center; center);
+  font-size: 1.5em;
   width: @tile;
   height: @tile;
-  transition: @speed;
-  z-index: @zindex_main_menu;
-  &:hover {
-    .icon_stroke(@white);
-    &.bkg-light {
-      .icon_stroke(@gray_darkest);
+  &:not(:hover) {
+    .iconpile {
+      opacity: .5;
     }
   }
-  path {
-    -webkit-transition-property: -webkit-transform, opacity, stroke;
-    transition-property: transform, opacity, stroke;
-    transition-duration: @speed_slow, @speed, @speed_fast;
-    transition-timing-function: @bezier_transform, @bezier_fadein, @bezier_fadein;
+}
+.hud-menu {
+  .hud_toggle_animation(left);
+  top: 0;
+  left: 0;
+  transition: @run @bezier_deform;
+  &.bkg-light {
+    .icon-menu {
+      .icon(stroke; @black);
+    }
   }
   &.close,
   &.back {
-    font-size: 1rem;
-    path {
-      transition-timing-function: @bezier_bounce, @bezier_fadein, @bezier_fadein;
-    }
+    .scale3d(.75);
   }
   &.close {
-    path {
-      &[class*="top"] {
-        .transform(translate3d(32.32px, -3.03px, 0) rotate3d(0, 0, 1, 45deg));
-      }
-      &[class*="btm"] {
-        .transform(translate3d(-38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));
-      }
-    }
-    .menu-mid-stroke {
-      opacity: 0;
-      .transform(translate3d(-20.71px, 50px, 0) rotate3d(0, 0, 1, -45deg));
-    }
+    .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
+    .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
+    .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
   }
   &.back {
-    path {
-      &:not(.menu-mid-stroke) {
-        &[class*="left"] {
-          opacity: 0;
-        }
-        &[class*="right"] {
-          stroke-linecap: square;
-        }
+    .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
+    .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
+    .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
+  }
+  path {
+    .transform(translate3d(0,0,0));
+    transition+: all @run_slow @now @bezier_deform;
+    transition+: stroke @run_fast @run_fast @bezier_fadein;
+  }
+}
+.hud-chat {
+  .hud_toggle_animation(right);
+  bottom: 0;
+  right: 0;
+  font-size: 1.1rem;
+  &:hover {
+    .unseen-eids {
+      background: @red;
+      color: @white;
+      border-color: @red;
+      height: 1.8em;
+      min-width: 1.8em;
+      padding: 2px 4px;
+      bottom: 3.1em;
+      right: 3.1em;
+    }
+  }
+  &.open {
+    .icon-chat-morph {
+      .scale3d(1.325);
+    }
+    .fill-x1 { .translate3d(    25px,    25px, 0); opacity: 0;}
+    .fill-x2 { .translate3d(       0,    25px, 0);}
+    .fill-x3 { .translate3d( -12.5px,  12.5px, 0); opacity: 0;}
+    .fill-x4 { .translate3d( -12.5px,  12.5px, 0); opacity: 0;}
+    .fill-x5 { .translate3d(       0,       0, 0);}
+    .fill-x6 { .translate3d(  12.5px, -12.5px, 0); opacity: 0;}
+    .fill-x7 { .translate3d(  12.5px, -12.5px, 0); opacity: 0;}
+    .fill-x8 { .translate3d(       0,   -25px, 0);}
+    .fill-x9 { .translate3d(   -25px,   -25px, 0); opacity: 0;}
+  }
+  &:not(.open) {
+    width: 3rem !important;
+    right: .5rem;
+    .stroke-chat {
+      .transform(translate3d(0,100%,0) scale3d(0,0,1));
+      transition-delay: @run_fast;
+    }
+  }
+  .icon-chat-morph {
+    transition: @run @bezier_deform;
+  }
+  .stroke-chat {
+    transition-delay: @now;
+  }
+  path {
+    .random_cascade(9);
+    transition+: all @run_slow @bezier_deform;
+    transition+: opacity @run @bezier_fadein;
+  }
+}
+.unseen-eids {
+  .animation(in-bounce @run_slower);
+  .user-select(none);
+  position: absolute;
+  font-family: @font_mono;
+  font-size: 0.625rem;
+  line-height: 1em;
+  bottom: 3.2em;
+  right: 3.2em;
+  height: 1.6em;
+  min-width: 1.6em;
+  padding: 2px 3px;
+  color: @red;
+  background: @gray_darker;
+  border: 2px solid @red;
+  border-radius: 2rem;
+  box-shadow: 0 2px @gray_darker, 2px 0 @gray_darker, 2px 2px @gray_darker;
+  pointer-events: none;
+  transition: @run @bezier_deform;
+}
+.hud-info {
+  top: @tile;
+  left: 0;
+}
+.hud-landing {
+  top: 0;
+  right: 0;
+}
+.mouse-stats {
+  font-family: @font_mono;
+  font-size: 0.625rem;
+  line-height: 1rem;
+  text-align: center;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  .mq_640({
+    opacity: 0;
+  });
+}
+.viewers {
+  .flexy();
+  bottom: 0;
+  left: 0;
+  color: @white;
+  &:not(:hover) {
+    .viewer {
+      &:nth-of-type(n+5) {
+        display: none;
       }
-      &[class*="top"] {
-        .transform(translate3d(-12.68px, -3.03px, 0) rotate3d(0, 0, 1, 45deg));
-      }
-      &[class*="btm"] {
-        .transform(translate3d(-83.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));
+    }
+  }
+  &.truncated {
+    .viewers-list {
+      -webkit-mask-box-image: -webkit-linear-gradient(black 80%, transparent 100%);
+    }
+  }
+}
+.hud-viewers {
+  .hud_toggle_animation(bottom);
+  bottom: 0;
+  left: 0;
+  &:after {
+    .flexy(center);
+    content: attr(data-count);
+    font-size: 1rem;
+    color: @white;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    height: 100%;
+    transition: @run_fast @bezier_deform;
+  }
+  .icon-times {
+    .animation(viewers-close @run_fast);
+  }
+  .icon-users {
+    .animation(viewers-users @run_fast);
+  }
+  &.close {
+    font-size: 1rem;
+    .icon(stroke; 10);
+    &:after {
+      .translate3d(-1rem, 0, 0);
+    }
+    .icon-users {
+      display: none;
+    }
+  }
+  &:not(.close) {
+    .icon-times {
+      display: none;
+    }
+  }
+}
+.viewers-list {
+  .animation(in-fade-bottom @run_slow @run_fast @bezier_deform backwards);
+  width: @tile_viewers;
+  overflow: hidden;
+  .mq_640({
+    width: 100vw;
+    background: @dye_inner;
+    border-top: 1px solid @gray_dark;
+  });
+  &:hover {
+    .viewer {
+      .animation-duration(@now);
+    }
+  }
+}
+.viewers-list-frame {
+  width: 200%;
+  min-width: 200%;
+  max-height: @tile_viewers_height * 4;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  &:hover {
+    .viewer-self {
+      &:not(:hover) {
+        .viewer-tag {
+          opacity: .25;
+        }
       }
     }
   }
 }
-
-.mouse-stats {
-  .user-select(none);
-  position: absolute;
-  color: @gray;
-  font-family: @font_mono;
-  font-size: 0.625rem;
-  line-height: 1em;
-  text-align: center;
-  bottom: 0;
-  width: 100%;
-  left: 0;
-  padding: .5em;
-  transition: @speed @bezier_fadein;
+.viewer {
+  .animation_cascade(10);
+  .animation(in-fade-bottom @run_fast @bezier_deform backwards);
+  .flexy(center);
+  width: @tile_viewers;
+  padding-left: @tile;
   .mq_640({
-    opacity: 0;
+    padding-top: @tile_viewers_height / 2;
+    padding-bottom: @tile_viewers_height / 2;
   });
+  &:not(:hover) {
+    &:not(.viewer-self) {
+      .viewer-tag {
+        opacity: .25;
+      }
+    }
+    .viewer-knobs {
+      width: 0;
+      .iconpile {
+        display: none;
+      }
+    }
+  }
+  &:last-child {
+    padding-bottom: @tile_viewers_height / 2;
+  }
+}
+.viewer-avatar {
+  .flexy(center; center);
+  width: @tile_viewers_height;
+  height: @tile_viewers_height;
+}
+.viewer-name {
+  .flex(1);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  cursor: default;
+}
+.viewer-name-form {
+  .flex(1);
+}
+.viewer-name-input {
+  background: none;
+  border: none;
+  outline: 0;
+  color: @white;
+}
+.viewer-knobs {
+  .flexy();
+  .iconpile {
+    .animation(in-fade-bottom @run_fast @bezier_deform backwards);
+  }
+}
+.viewer-knob {
+  .flexy(center; center);
+  width: 1.5em;
+  min-width: 1.5em;
+  height: @tile_viewers_height;
+  &:not(:hover) {
+    opacity: .5;
+  }
+  &:nth-child(1) { .iconpile { .animation-delay(@run + (@run_faster * 1))}}
+  &:nth-child(2) { .iconpile { .animation-delay(@run + (@run_faster * 3))}}
+  &:nth-child(3) { .iconpile { .animation-delay(@run + (@run_faster * 5))}}
 }

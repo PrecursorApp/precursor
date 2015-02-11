@@ -1,12 +1,15 @@
+.mq_1920(@rules) {
+  @media screen and (max-width: 1920px) { @rules(); }
+}
+.mq_1280(@rules) {
+  @media screen and (max-width: 1280px) { @rules(); }
+}
+.mq_960(@rules) {
+  @media screen and (max-width: 960px) { @rules(); }
+}
 .mq_640(@rules) {
   @media screen and (max-width: 640px) { @rules(); }
 }
 @-moz-document url-prefix() {
-  .app-overlay {
-    + .app-main {
-      + .app-main-outline {
-        background: fade(@gray_darker, 50);
-      }
-    }
-  }
+  // Firefox Only Stuff
 }

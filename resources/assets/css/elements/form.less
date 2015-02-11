@@ -23,11 +23,11 @@ input {
           &[data-placeholder] {
             margin-top: -3.5em;
             margin-bottom: 2.5em;
-            transition-duration: @speed;
+            transition-duration: @run;
             &:before {
               font-size: 0.75em;
               background-size: 100% 5px;
-              transition-duration: @speed;
+              transition-duration: @run;
             }
           }
         }
@@ -86,7 +86,7 @@ input {
         margin-bottom: 1em;
         white-space: nowrap;
         pointer-events: none;
-        transition: @speed_slow @bezier_transform;
+        transition: @run_slow @bezier_deform;
         &:before {
           .user-select(none);
           content: attr(data-placeholder);
@@ -95,8 +95,8 @@ input {
           line-height: 1rem;
           margin: 1rem;
           padding: 0 3px;
-          transition: @speed_slow @bezier_transform;
-          background-image: linear-gradient(to bottom, @app_background, @app_background);
+          transition: @run_slow @bezier_deform;
+          background-image: linear-gradient(to bottom, @dye_inner, @dye_inner);
           background-size: 100% 0;
           background-repeat: no-repeat;
           background-position: center;
@@ -105,7 +105,7 @@ input {
     }
   }
 }
-.app-overlay {
+.menu {
   input {
     &[data-adaptive] {
       &[required] {
@@ -117,7 +117,7 @@ input {
         &[data-placeholder] {
           &:before {
             color: @gray_light;
-            background-image: linear-gradient(to bottom, @overlay_background, @overlay_background);
+            background-image: linear-gradient(to bottom, @dye_outer, @dye_outer);
           }
         }
       }

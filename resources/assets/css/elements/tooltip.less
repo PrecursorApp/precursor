@@ -16,10 +16,10 @@
   &:after {
     position: absolute;
     font-size: 1rem;
-    transition+: margin @speed_fast (@speed * 4);
-    transition+: opacity @speed (@speed * 4);
+    transition+: margin @run_fast (@run * 4);
+    transition+: opacity @run (@run * 4);
     transition+: visibility 0ms 0ms;
-    transition+: padding @speed_fast (@speed * 4);
+    transition+: padding @run_fast (@run * 4);
     z-index: @zindex_tooltip;
     pointer-events: none;
     .mq_640({
@@ -49,7 +49,7 @@
       padding: 0;
       border: 0;
       overflow: hidden;
-      transition: visibility 0ms @speed;
+      transition: visibility 0ms @run;
     }
   }
 }

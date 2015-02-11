@@ -12,6 +12,7 @@
             [frontend.components.key-queue :as keyq]
             [frontend.components.canvas :as canvas]
             [frontend.components.common :as common]
+            [frontend.components.landing :as landing]
             [frontend.components.drawing :as drawing]
             [frontend.components.overlay :as overlay]
             [frontend.favicon :as favicon]
@@ -35,14 +36,11 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             chat-opened? (get-in app state/chat-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
-        (html [:div.app-main
-               [:style "#om-app:active {cursor: default;}"]
-               [:div.app-canvas {:onContextMenu (fn [e]
-                                                 (.preventDefault e)
-                                                 (.stopPropagation e))}
-                (om/build canvas/svg-canvas app)
-                (om/build hud/hud app)]
-               (om/build chat/menu app)])))))
+        (html [:div.inner {:on-click (when (overlay-visible? app)
+                                          #(cast! :overlay-closed))}
+               [:style "#om-app:active{cursor:auto}"]
+               (om/build canvas/canvas app)
+               (om/build chat/chat app)])))))
 
 (defn app [app owner]
   (reify
@@ -50,13 +48,15 @@
     (render [_]
       (if (:navigation-point app)
         (dom/div #js {:id "app" :className "app"}
+          (when (:show-landing? app)
+            (om/build landing/landing app))
+
           (when (and (:document/id app)
                      (not (:cust app)))
             (om/build drawing/signup-button {:db/id (:document/id app)}))
-          (om/build overlay/main-menu-button (select-in app [state/overlays-path state/main-menu-learned-path]))
+
           (when (overlay-visible? app)
             (om/build overlay/overlay app))
           (om/build app* app)
-          (dom/div #js {:className "app-main-outline"}))
-
+          (om/build hud/hud app))
         (html [:div#app])))))
