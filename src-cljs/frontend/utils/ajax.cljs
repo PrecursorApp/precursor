@@ -99,10 +99,10 @@
                                       (json-response-format {:keywords? keywords? :url url :method method}))
                          :edn (clj-ajax/edn-format)}
                         format)
-        accept-header (utils/inspect (get {:xml "application/xml"
-                                           :json "application/json"
-                                           :edn "application/edn"}
-                                          (utils/inspect format)))]
+        accept-header (get {:xml "application/xml"
+                            :json "application/json"
+                            :edn "application/edn"}
+                           format)]
     (clj-ajax/ajax-request url method
                            (clj-ajax/transform-opts
                             {:format opt-format
