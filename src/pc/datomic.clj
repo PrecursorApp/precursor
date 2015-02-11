@@ -6,9 +6,11 @@
   (:import java.util.UUID))
 
 (defn default-uri []
-  (if (pc.profile/prod?)
-    "datomic:sql://prcrsr?jdbc:postgresql://10.99.0.101:5432/datomic?user=datomic&password=datomic"
-    "datomic:free://localhost:4334/pc2"))
+  (or
+   (pc.profile/datomic-uri)
+   (if (pc.profile/prod?)
+     "datomic:sql://prcrsr?jdbc:postgresql://10.99.0.101:5432/datomic?user=datomic&password=datomic"
+     "datomic:free://localhost:4334/pc2")))
 
 (defn conn [& {:keys [uri]}]
   (d/connect (or uri (default-uri))))
