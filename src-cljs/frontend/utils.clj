@@ -24,8 +24,7 @@
      ret#))
 
 (defmacro swallow-errors
-  "wraps errors in a try/catch statement, logging issues to the console
-   and optionally rethrowing them if configured to do so."
+  "wraps errors in a try/catch statement, logging issues to the console"
   [& action]
   `(try
      (try

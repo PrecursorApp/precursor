@@ -140,13 +140,6 @@
                                              :mult (async/mult mouse-up-ch)}})
             (browser-settings/restore-browser-settings cust)))))
 
-(defn log-channels?
-  "Log channels in development, can be overridden by the log-channels query param"
-  []
-  (if (nil? (:log-channels? utils/initial-query-map))
-    (env/development?)
-    (:log-channels? utils/initial-query-map)))
-
 (defn controls-handler
   [value state browser-state]
   (when-not (keyword-identical? :mouse-moved (first value))
@@ -162,8 +155,7 @@
 
 (defn nav-handler
   [value state history]
-  (when (log-channels?)
-    (mlog "Navigation Verbose: " value))
+  (mlog "Navigation Verbose: " value)
   (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state]
@@ -172,8 +164,7 @@
 
 (defn api-handler
   [value state container]
-  (when (log-channels?)
-    (mlog "API Verbose: " (first value) (second value) (utils/third value)))
+  (mlog "API Verbose: " (first value) (second value) (utils/third value))
   (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state
@@ -188,8 +179,7 @@
 
 (defn errors-handler
   [value state container]
-  (when (log-channels?)
-    (mlog "Errors Verbose: " value))
+  (mlog "Errors Verbose: " value)
   (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state]

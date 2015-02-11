@@ -32,13 +32,8 @@
     nil))
 
 (def initial-query-map
-  {:log-channels? (parse-uri-bool (.getParameterValue parsed-uri "log-channels"))
-   :logging-enabled? (parse-uri-bool (.getParameterValue parsed-uri "logging-enabled"))
-   :restore-state? (parse-uri-bool (.getParameterValue parsed-uri "restore-state"))
-   :rethrow-errors? (parse-uri-bool (.getParameterValue parsed-uri "rethrow-errors"))
-   :inspector? (parse-uri-bool (.getParameterValue parsed-uri "inspector"))
-   :render-colors? (parse-uri-bool (.getParameterValue parsed-uri "render-colors"))
-   :invited-by (.getParameterValue parsed-uri "invited-by")})
+  {:restore-state? (parse-uri-bool (.getParameterValue parsed-uri "restore-state"))
+   :inspector? (parse-uri-bool (.getParameterValue parsed-uri "inspector"))})
 
 (defn logging-enabled? []
   (aget js/window "Precursor" "logging-enabled"))
