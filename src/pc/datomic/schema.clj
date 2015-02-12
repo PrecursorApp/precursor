@@ -441,6 +441,11 @@
    (enum :transaction.source/unmark-sent-email)
    (enum :transaction.source/mark-sent-email)
 
+   (attribute :migration
+              :db.type/ref
+              :db/doc "Annotates transaction with migration")
+   (enum :migration/layer-floats->doubles)
+
    ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
    (attribute :needs-email
               :db.type/ref
