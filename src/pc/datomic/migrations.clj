@@ -2,7 +2,7 @@
   (:require [pc.datomic :as pcd]
             [clojure.string]
             [clojure.tools.logging :as log]
-            [datomic.api :refer [db q] :as d]
+            [datomic.api :refer [q] :as d]
             [pc.models.doc :as doc-model]
             [pc.datomic.migrations-archive :as archive]
             [slingshot.slingshot :refer (try+ throw+)]))
@@ -35,13 +35,13 @@
   "Updates the migration version, throwing an exception if the version does not increase
    the previous version by 1."
   [conn version]
-  (let [e (migration-entity (db conn))]
+  (let [e (migration-entity (d/db conn))]
     @(d/transact conn [[:db.fn/cas (:db/id e) :migration/version (dec version) version]])))
 
 (defn add-migrations-entity
   "First migration, adds the entity that keep track of the migration version."
   [conn]
-  (assert (= -1 (migration-version (db conn))))
+  (assert (= -1 (migration-version (d/db conn))))
   @(d/transact conn [{:db/id (d/tempid :db.part/user) :migration/version 0}]))
 
 (defn add-prcrsr-bot
@@ -59,12 +59,22 @@
   "Converts the attributes on the layer that should have been doubles, but were stupidly
    specified as floats (after converting from longs :()."
   [conn]
-  (let [layer-attrs #{:start-x :start-y :end-x :end-y :stroke-width :opacity}
+  ;; add migration metadata to transaction
+  @(d/transact conn
+               [{:db/doc "Annotates transaction with migration",
+                 :db/cardinality :db.cardinality/one,
+                 :db/id (d/tempid :db.part/db),
+                 :db/ident :migration,
+                 :db/valueType :db.type/ref,
+                 :db.install/_attribute :db.part/db}
+                {:db/id (d/tempid :db.part/user)
+                 :db/ident :migration/layer-floats->doubles}])
+  (let [layer-attrs #{:start-x :start-y :end-x :end-y :stroke-width :opacity :rx :ry}
         idents (set (map (fn [a] (keyword "layer" (name a))) layer-attrs))
         layer-schemas (filter #(contains? idents (:db/ident %))
                               (pcd/touch-all '{:find [?t]
                                                :where [[?t :db/ident]]}
-                                             (db conn)))
+                                             (d/db conn)))
         ident->float (fn [ident]
                        (keyword "layer" (str (name ident) "-float")))
         ident->double (fn [ident]
@@ -75,7 +85,21 @@
                          (merge {:db/valueType :db.type/double
                                  :db/id (d/tempid :db.part/db)
                                  :db.install/_attribute :db.part/db})))
-        db (db conn)]
+        db (d/db conn)
+
+        convert-in-progress (fn [start-db end-db]
+                              (let [h (d/history (d/since end-db (d/basis-t start-db)))
+                                    datoms (apply concat (map (partial d/datoms h :aevt) idents))
+                                    ident (memoize (fn [a] (:db/ident (d/entity start-db a))))]
+                                (doseq [[txid tx-data] (sort (group-by :tx datoms))]
+                                  @(d/transact conn (conj (map (fn [d]
+                                                                 [(if (:added d) :db/add :db/remove)
+                                                                  (:e d)
+                                                                  (ident->double (ident (:a d)))
+                                                                  (double (:v d))])
+                                                               tx-data)
+                                                          {:db/id (d/tempid :db.part/tx)
+                                                           :migration :migration/layer-floats->doubles})))))]
 
     (log/info "creating temporary schema with :layer/attr-float for each attr")
     (println "creating temporary schema with :layer/attr-float for each attr")
@@ -93,26 +117,43 @@
                                 :layer/end-x 98.3
                                 :layer/start-y 82.3
                                 :layer/end-y 92.3}])
-            (dorun (map (fn [group]
-                          @(d/transact conn (mapv (fn [[e v]]
-                                                    [:db/add e double-ident (double v)])
-                                                  group)))
-                        (partition-all 1000
-                                       (q '{:find [?t ?v] :in [$ ?ident]
-                                            :where [[?t ?ident ?v]]}
-                                          db ident))))))
+            (dorun (pmap (fn [group]
+                           @(d/transact-async conn
+                                              (conj (map (fn [[e v]]
+                                                           [:db/add e double-ident (double v)])
+                                                         group)
+                                                    {:db/id (d/tempid :db.part/tx)
+                                                     :migration :migration/layer-floats->doubles})))
+                         (partition-all 100
+                                        (q '{:find [?t ?v] :in [$ ?ident]
+                                             :where [[?t ?ident ?v]]}
+                                           db ident))))))
 
-    (log/info "renaming float attrs to new name")
-    (println  "renaming float attrs to new name")
-    (time @(d/transact conn (for [ident idents]
-                              {:db/id ident
-                               :db/ident (ident->float ident)})))
+    (log/info "converting transacted while we were migrating")
+    (let [next-db (d/db conn)]
+      (convert-in-progress db next-db)
+      (let [nnext-db (d/db conn)]
+        (convert-in-progress next-db nnext-db)
 
-    (log/info "rename the double attrs to normal attrs")
-    (println "rename the double attrs to normal attrs")
-    (time @(d/transact conn (for [ident idents]
-                              {:db/id (ident->double ident)
-                               :db/ident ident})))))
+
+        (log/info "renaming float attrs to new name")
+        (println  "renaming float attrs to new name")
+        (time @(d/transact conn (conj
+                                 (for [ident idents]
+                                   {:db/id ident
+                                    :db/ident (ident->float ident)})
+                                 {:db/id (d/tempid :db.part/tx)
+                                  :migration :migration/layer-floats->doubles})))
+
+        (log/info "rename the double attrs to normal attrs")
+        (println "rename the double attrs to normal attrs")
+        (let [t (time @(d/transact conn (conj
+                                         (for [ident idents]
+                                           {:db/id (ident->double ident)
+                                            :db/ident ident})
+                                         {:db/id (d/tempid :db.part/tx)
+                                          :migration :migration/layer-floats->doubles})))]
+          (convert-in-progress nnext-db (:db-before t)))))))
 
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
@@ -130,7 +171,7 @@
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"
   [conn]
   (ensure-migration-schema conn)
-  (drop (inc (migration-version (db conn))) migrations))
+  (drop (inc (migration-version (d/db conn))) migrations))
 
 (defn run-necessary-migrations [conn]
   (doseq [[version migration] (necessary-migrations conn)]
