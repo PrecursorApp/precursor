@@ -486,6 +486,22 @@
 (defn unescaped? [a]
   (:metadata/unescaped (metadata a)))
 
+(defn attrs-of-type [type]
+  (reduce (fn [acc ent]
+            (if (= type (:db/valueType ent))
+              (conj acc (:db/ident ent))
+              acc))
+          #{} @schema-ents))
+
+(defn float-attrs []
+  (attrs-of-type :db.type/float))
+
+(defn double-attrs []
+  (attrs-of-type :db.type/double))
+
+(defn uuid-attrs []
+  (attrs-of-type :db.type/uuid))
+
 (defn get-schema-ents [db]
   (pcd/touch-all '{:find [?t]
                    :where [[?t :db/ident ?ident]]}
