@@ -104,6 +104,7 @@ chmod +x /usr/local/sbin/s3-dl.sh
 
 prcrsr_dir="/usr/local/precursor"
 mkdir -p $prcrsr_dir
+mkdir -p "${prcrsr_dir}/log"
 
 cd $prcrsr_dir
 
