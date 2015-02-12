@@ -23,9 +23,6 @@
       box-shadow: 0 5px 13px 0 fade(@black, 21);
       transition-duration: @run_fast;
     }
-    a {
-      text-shadow: none;
-    }
     .canvas {
       box-shadow: 0 -1px @gray_lightest;
       pointer-events: none;
@@ -45,10 +42,24 @@
       transition-duration: @run_slow;
     }
     .chat-log {
-      // TODO replace this filter by styling text/links/icons/etc with lighter color
-      .filter(grayscale(1));
       opacity: .5;
       transition: @run_fast @now @bezier_fadein;
+      h2 {
+        color: inherit;
+        transition: color @now @run_fast;
+      }
+      a {
+        color: inherit;
+        transition: color @now @run_fast;
+      }
+    }
+    .stroke-user {
+      stroke: @gray_light !important;
+      transition: stroke @now @run_fast;
+    }
+    .message-time {
+      color: inherit;
+      transition: color @now @run_fast;
     }
     .chat-box {
       border-top: 1px solid @gray_lighter;

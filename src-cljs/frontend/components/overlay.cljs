@@ -117,7 +117,7 @@
              {:on-click         #(cast! :sharing-menu-opened)
               :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
               :role "button"}
-             (common/icon :users)
+             (common/icon :share)
              [:span "Sharing"]]
 
             [:a.vein.make
