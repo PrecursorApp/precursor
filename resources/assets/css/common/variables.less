@@ -25,51 +25,63 @@
 @font_size: 16px;
 @line_height: 1.5;
 @font_color: @gray_dark;
-@font_sans: "Roboto";
-@font_mono: "Monaco";
+@font_sans: Roboto;
+@font_mono: Monaco;
 @font_family: @font_sans;
 
-@color_link: @white;
-@color_link_hover: @blue;
+@link: darken(@blue, 13);
+@link_hover: @blue;
 
 @color_select: @blue;
 @color_select_hover: lighten(@color_select, 13);
 
+@dye_inner: @gray_darker;
+@dye_outer: @white;
+
 // Animation
 
-@speed: 250ms;
-@speed_fast: (@speed * 0.4);
-@speed_slow: (@speed * 1.5);
+@now: 0.0ms;
+@run: 250ms;
+@run_faster: @run / 10.0;
+@run_fast:   @run / 2.50;
+@run_slow:   @run * 1.50;
+@run_slower: @run * 2.00;
 
 @bezier_fadein: cubic-bezier(0.445, 0.05, 0.55, 0.95);
 @bezier_bounce: cubic-bezier(.55,0,.55,1.44);
-@bezier_transform: cubic-bezier(0.39, 0.575, 0.565, 1);
-
-@cascade: 10ms;
+@bezier_deform: cubic-bezier(0.39, 0.575, 0.565, 1);
 
 // Components
 
 @tile: (1rem * 4);
-@tile_chat: (@tile * 4);
-@menu_width: (@tile * 6);
-@radial_menu_size: @tile_chat;
+@tile_xl: pow(@tile, 2);
+@tile_xxl: pow(@tile, 3);
 
-@app_background: @gray_darker;
+@tile_menu_min: @tile_xl;
+@tile_menu: 20vw;
+@tile_menu_max: @tile_xl * 1.5;
+
+@tile_viewers: @tile_menu_min;
+@tile_viewers_height: ((2 / 4) * @tile);
+
+@tile_radial: @tile_menu_min;
+@tile_content: @tile_xxl;
+
 @tooltip_color: @gray_dark;
-
-// Overlay
-
-@overlay_background: @white;
 @menu_padding: 1.5rem;
 
 // z-index index
 
-@zindex_info_background: 2;
-@zindex_info_article: 3;
-@zindex_info_close: 4;
-@zindex_info_mixpanel: 5;
 @zindex_tooltip: 1;
-
 @zindex_radial_menu: 11;
+@zindex_landing: 20;
 
-@zindex_main_menu: 10;
+// ad hoc
+
+@radial_tools:
+  ellipse,   159.01px,  49.71px,
+  rectangle, 199.00px, 119.00px,
+  line,      159.01px, 188.29px,
+  pencil,     79.00px, 188.29px,
+  text,       39.00px, 119.52px,
+  select,     82.66px,  49.71px;

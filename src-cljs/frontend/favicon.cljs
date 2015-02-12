@@ -10,7 +10,7 @@
    (.setAttribute (js/document.querySelector favicon-query) "href" (str path "?v=" version))))
 
 (defn set-unread! []
-  (set-favicon! "/favicon-notification.ico"))
+  (set-favicon! (utils/cdn-path "/favicon-notification.ico")))
 
 (defn set-normal! []
-  (set-favicon! "/favicon.ico"))
+  (set-favicon! (utils/cdn-path "/favicon.ico")))

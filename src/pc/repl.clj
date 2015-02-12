@@ -3,6 +3,7 @@
    Also serves as a guide for how nses should be aliased"
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
+            [clj-time.core :as time]
             [clojure.java.javadoc :refer (javadoc)]
             [clojure.repl :refer :all]
             [datomic.api :as d]
@@ -19,3 +20,8 @@
      (cemerick.pomegranate/add-dependencies
       :coordinates '[~artifact]
       :repositories (merge cemerick.pomegranate.aether/maven-central {"clojars" "http://clojars.org/repo"}))))
+
+(defmacro browser-repl []
+  `(do
+     (require 'weasel.repl.websocket)
+     (cemerick.piggieback/cljs-repl :repl-env (weasel.repl.websocket/repl-env :ip "0.0.0.0" :port 9001))))

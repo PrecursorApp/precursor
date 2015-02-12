@@ -2,6 +2,7 @@
   (:require [datascript :as d]
             [cljs.core.async :refer [put!]]
             [clojure.string :as str]
+            [frontend.auth :as auth]
             [frontend.camera :as cameras]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
@@ -15,8 +16,65 @@
             [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [frontend.utils :refer [html]])
+  (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
+
+(def tools-templates
+  {:circle {:type "ellipse"
+            :path "M128,0v128l110.9-64C216.7,25.7,175.4,0,128,0z"
+            :hint "Ellipse Tool (L)"
+            :icon :stroke-ellipse}
+   :rect   {:type "rectangle"
+            :path "M238.9,192c10.9-18.8,17.1-40.7,17.1-64s-6.2-45.2-17.1-64 L128,128L238.9,192z"
+            :hint "Rectangle Tool (M)"
+            :icon :stroke-rectangle}
+   :line   {:type "line"
+            :path "M238.9,192L128,128v128C175.4,256,216.7,230.3,238.9,192z"
+            :hint "Line Tool (\\)"
+            :icon :stroke-line}
+   :pen    {:type "pencil"
+            :path "M17.1,192c22.1,38.3,63.5,64,110.9,64V128L17.1,192z"
+            :hint "Pencil Tool (N)"
+            :icon :stroke-pencil}
+   :text   {:type "text"
+            :path "M17.1,64C6.2,82.8,0,104.7,0,128s6.2,45.2,17.1,64L128,128 L17.1,64z"
+            :hint "Text Tool (T)"
+            :icon :stroke-text}
+   :select {:type "select"
+            :path "M128,0C80.6,0,39.3,25.7,17.1,64L128,128V0z"
+            :hint "Select Tool (V)"
+            :icon :stroke-cursor}})
+
+(defn radial-menu [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)]
+        (html
+          [:a.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
+                                     :left (- (get-in app [:menu :x]) 128)}}
+           [:svg.radial-buttons {:width "256" :height "256"}
+            (for [[tool template] tools-templates]
+              [:g.radial-button {:class (str "tool-" (:type template))}
+               [:title (:hint template)]
+               [:path.radial-pie {:d (:path template)
+                                  :key tool
+                                  :on-mouse-up #(do (cast! :tool-selected [tool]))
+                                  :on-touch-end #(do (cast! :tool-selected [tool]))}]
+               [:path.radial-icon {:class (str "shape-" (:type template))
+                                   :d (get common/icon-paths (:icon template))}]])
+            [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
+
+(defn radial-hint [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+        [:div.radial-hint {:style {:top  (+ (get-in app [:mouse :y]) 16)
+                                   :left (+ (get-in app [:mouse :x]) 16)}}
+         (if (= :touch (get-in app [:mouse :type]))
+           "Tap and hold to select tool"
+           "Right-click.")]))))
 
 ;; layers are always denominated in absolute coordinates
 ;; transforms are applied to handle panning and zooming
@@ -42,9 +100,9 @@
 (defmethod svg-element :layer.type/text
   [selected-eids layer]
   (-> (svg/layer->svg-text layer)
-      (maybe-add-selected layer selected-eids)
-      (clj->js)
-      (dom/text (:layer/text layer))))
+    (maybe-add-selected layer selected-eids)
+    (clj->js)
+    (dom/text (:layer/text layer))))
 
 (defmethod svg-element :layer.type/line
   [selected-eids layer]
@@ -127,54 +185,64 @@
                         (assoc layer
                                :className (str "selectable-layer layer-handle "
                                                (when (and (= :layer.type/text (:layer/type layer))
-                                                          (= :text tool)) "editable "))
+                                                          (= :text tool)) "editable ")
+                                               (when (:layer/signup-button layer)
+                                                 " signup-layer"))
                                :key (str "selectable-" (:db/id layer))
+                               :onClick (when (:layer/signup-button layer)
+                                          #(do
+                                             (.preventDefault %)
+                                             (cast! :track-external-link-clicked
+                                                    {:path (auth/auth-url)
+                                                     :event "Signup Clicked"
+                                                     :properties {:source "prcrsr-bot-drawing"}})))
                                :onMouseDown
-                               #(do
-                                  (.stopPropagation %)
-                                  (let [group? (and (< 1 (count selected-eids))
-                                                    (contains? selected-eids (:db/id layer)))]
+                               (when-not (:layer/signup-button layer)
+                                 #(do
+                                    (.stopPropagation %)
+                                    (let [group? (and (< 1 (count selected-eids))
+                                                      (contains? selected-eids (:db/id layer)))]
 
-                                    (cond
-                                      (and (= :text tool)
-                                           (= :layer.type/text (:layer/type layer)))
-                                      (cast! :text-layer-re-edited layer)
+                                      (cond
+                                        (and (= :text tool)
+                                             (= :layer.type/text (:layer/type layer)))
+                                        (cast! :text-layer-re-edited layer)
 
-                                      (not= :select tool) nil
+                                        (not= :select tool) nil
 
-                                      (or (= (.-button %) 2)
-                                          (and (= (.-button %) 0) (.-ctrlKey %)))
-                                      (cast! :layer-properties-opened {:layer layer
-                                                                       :x (first (cameras/screen-event-coords %))
-                                                                       :y (second (cameras/screen-event-coords %))})
-
-
-                                      (and (.-altKey %) group?)
-                                      (cast! :group-duplicated
-                                             {:layer-eids selected-eids
-                                              :x (first (cameras/screen-event-coords %))
-                                              :y (second (cameras/screen-event-coords %))})
-
-                                      (and (.-altKey %) (not group?))
-                                      (cast! :layer-duplicated
-                                             {:layer layer
-                                              :x (first (cameras/screen-event-coords %))
-                                              :y (second (cameras/screen-event-coords %))})
-
-                                      (and (.-shiftKey %) (contains? selected-eids (:db/id layer)))
-                                      (cast! :layer-deselected {:layer layer})
+                                        (or (= (.-button %) 2)
+                                            (and (= (.-button %) 0) (.-ctrlKey %)))
+                                        (cast! :layer-properties-opened {:layer layer
+                                                                         :x (first (cameras/screen-event-coords %))
+                                                                         :y (second (cameras/screen-event-coords %))})
 
 
-                                      group?
-                                      (cast! :group-selected {:x (first (cameras/screen-event-coords %))
-                                                              :y (second (cameras/screen-event-coords %))
-                                                              :layer-eids selected-eids})
+                                        (and (.-altKey %) group?)
+                                        (cast! :group-duplicated
+                                               {:layer-eids selected-eids
+                                                :x (first (cameras/screen-event-coords %))
+                                                :y (second (cameras/screen-event-coords %))})
 
-                                      :else
-                                      (cast! :layer-selected {:layer layer
-                                                              :x (first (cameras/screen-event-coords %))
-                                                              :y (second (cameras/screen-event-coords %))
-                                                              :append? (.-shiftKey %)}))))))
+                                        (and (.-altKey %) (not group?))
+                                        (cast! :layer-duplicated
+                                               {:layer layer
+                                                :x (first (cameras/screen-event-coords %))
+                                                :y (second (cameras/screen-event-coords %))})
+
+                                        (and (.-shiftKey %) (contains? selected-eids (:db/id layer)))
+                                        (cast! :layer-deselected {:layer layer})
+
+
+                                        group?
+                                        (cast! :group-selected {:x (first (cameras/screen-event-coords %))
+                                                                :y (second (cameras/screen-event-coords %))
+                                                                :layer-eids selected-eids})
+
+                                        :else
+                                        (cast! :layer-selected {:layer layer
+                                                                :x (first (cameras/screen-event-coords %))
+                                                                :y (second (cameras/screen-event-coords %))
+                                                                :append? (.-shiftKey %)})))))))
            (when-not (= :layer.type/text (:layer/type layer))
              (svg-element selected-eids (assoc layer
                                                :className (str "layer-outline ")
@@ -516,11 +584,11 @@
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
-                      :className (str "tool-" (name (get-in payload state/current-tool-path))
-                                      (when (and (get-in payload [:mouse :down])
-                                                 (= :text (get-in payload state/current-tool-path))
-                                                 (get-in payload [:drawing :in-progress?]))
-                                        " tool-text-move"))
+                      :className (str "canvas-frame " (str "tool-" (name (get-in payload state/current-tool-path))
+                                                        (when (and (get-in payload [:mouse :down])
+                                                                   (= :text (get-in payload state/current-tool-path))
+                                                                   (get-in payload [:drawing :in-progress?]))
+                                                          " tool-text-move")))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
                                         (cond
@@ -605,6 +673,7 @@
                                  (utils/stop-event event))}
                  (dom/defs nil
                    (dom/pattern #js {:id           "small-grid"
+                                     :className    "grid-small"
                                      :width        (str (cameras/grid-width camera))
                                      :height       (str (cameras/grid-height camera))
                                      :patternUnits "userSpaceOnUse"}
@@ -613,6 +682,7 @@
                                                :stroke      "gray"
                                                :strokeWidth "0.5"}))
                    (dom/pattern #js {:id               "grid"
+                                     :className        "grid-big"
                                      :width            (str (* 10 (cameras/grid-width camera)))
                                      :height           (str (* 10 (cameras/grid-height camera)))
                                      :patternUnits     "userSpaceOnUse"
@@ -625,10 +695,11 @@
                                                :stroke      "gray"
                                                :strokeWidth "1"})))
                  (when (cameras/show-grid? payload)
-                   (dom/rect #js {:id     "background-grid"
-                                  :width  "100%"
-                                  :height "100%"
-                                  :fill   "url(#grid)"}))
+                   (dom/rect #js {:id        "background-grid"
+                                  :className "grid-background"
+                                  :width     "100%"
+                                  :height    "100%"
+                                  :fill      "url(#grid)"}))
 
                  (dom/g
                   #js {:transform (cameras/->svg-transform camera)}
@@ -674,3 +745,20 @@
                                                       :strokeDasharray "2,3"}))]
                                     (svg-element #{} (assoc sel :key (str (:db/id sel) "-in-progress")))))
                                 sels)))))))))
+
+(defn canvas [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [right-click-learned? (get-in app state/right-click-learned-path)]
+        (html
+         [:div.canvas
+          {:onContextMenu (fn [e]
+                            (.preventDefault e)
+                            (.stopPropagation e))}
+          [:div.canvas-background]
+          (om/build svg-canvas app)
+          (when (and (not right-click-learned?) (:mouse app))
+            (om/build radial-hint app))
+          (when (get-in app [:menu :open?])
+            (om/build radial-menu app))])))))

@@ -32,29 +32,23 @@
     nil))
 
 (def initial-query-map
-  {:log-channels? (parse-uri-bool (.getParameterValue parsed-uri "log-channels"))
-   :logging-enabled? (parse-uri-bool (.getParameterValue parsed-uri "logging-enabled"))
-   :restore-state? (parse-uri-bool (.getParameterValue parsed-uri "restore-state"))
-   :rethrow-errors? (parse-uri-bool (.getParameterValue parsed-uri "rethrow-errors"))
+  {:restore-state? (parse-uri-bool (.getParameterValue parsed-uri "restore-state"))
    :inspector? (parse-uri-bool (.getParameterValue parsed-uri "inspector"))
-   :render-colors? (parse-uri-bool (.getParameterValue parsed-uri "render-colors"))
-   :invited-by (.getParameterValue parsed-uri "invited-by")})
+   :show-landing? (parse-uri-bool (.getParameterValue parsed-uri "show-landing"))})
 
-(def logging-enabled?
-  (if (nil? (:logging-enabled? initial-query-map))
-    (env/development?)
-    (:logging-enabled? initial-query-map)))
+(defn logging-enabled? []
+  (aget js/window "Precursor" "logging-enabled"))
 
 (defn mlog [& messages]
-  (when logging-enabled?
+  (when (logging-enabled?)
     (.apply (.-log js/console) js/console (clj->js messages))))
 
 (defn mwarn [& messages]
-  (when logging-enabled?
+  (when (logging-enabled?)
     (.apply (.-warn js/console) js/console (clj->js messages))))
 
 (defn merror [& messages]
-  (when logging-enabled?
+  (when (logging-enabled?)
     (.apply (.-error js/console) js/console (clj->js messages))))
 
 (defn log-pr [& args]
@@ -104,11 +98,9 @@
   "Returns path of asset in CDN"
   [path]
   (-> js/window
-      (aget "renderContext")
-      (aget "assetsRoot")
-      (str (if (= \/ (first path))
-             path
-             (str "/" path)))))
+      (aget "Precursor")
+      (aget "cdn-base-url")
+      (str path)))
 
 (defn edit-input
   "Meant to be used in a react event handler, usually for the :on-change event on input.
@@ -191,6 +183,9 @@
     (if-not (identical? sentinel (get-in m ks sentinel))
       (apply update-in m ks f args)
       m)))
+
+(defn remove-map-nils [unnested-map]
+  (into {} (remove (comp nil? last) unnested-map)))
 
 (defn stop-event [e]
   (.stopPropagation e)

@@ -75,7 +75,7 @@
                :undo-state (atom {:transactions []
                                   :last-undo nil})
                :db-listener-key (utils/uuid))
-        (dissoc :subscribers)
+        (assoc :subscribers state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
             %))

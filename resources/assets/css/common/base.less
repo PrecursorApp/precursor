@@ -1,49 +1,49 @@
 html {
-  color: @gray_light;
-  font-family: @font_family;
-  font-size: @font_size;
-  line-height: @line_height;
+  font: @font_size/@line_height @font_family, sans-serif;
+  color: @gray_dark;
+  -webkit-text-size-adjust:100%;
   -webkit-font-smoothing: antialiased;
-  -ms-text-size-adjust: 100%;
-  -webkit-text-size-adjust: 100%;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: fade(@black, 0);
 }
 body {
   margin: 0;
 }
-#om-app {
-  min-height: 100%;
-  background: @app_background;
-}
 .app {
-  .flexy(column);
-  background: darken(@app_background, 2);
-  overflow: hidden;
+  .animation(in-fade @run_slower);
+  min-height: 100vh;
+  background: @dye_outer;
 }
-.app-main {
+.inner {
   .flexy();
-  height: 100vh;
-  background: @app_background;
-  overflow: hidden;
-  transition: @speed_fast @bezier_transform;
-}
-.app-main-outline {
-  .user-select(none);
-  position: absolute;
+  .transform-origin(right);
+  position: fixed;
+  color: @gray_light;
   top: 0;
-  left: 0;
+  right: 0;
   width: 100%;
   height: 100%;
-  border: 1px solid transparent;
-  pointer-events: none;
-  transition+: all @speed_fast @bezier_transform;
-  transition+: box-shadow @speed @bezier_transform;
-}
-a {
-  background: transparent;
-  text-decoration: none;
-  &:active,
-  &:hover {
-    outline: 0;
+  transition: @run @bezier_deform;
+  will-change: transform;
+  &:active {
+    ~ .hud {
+      .user-select(none);
+      pointer-events: none;
+    }
+  }
+  a {
+    color: darken(@link_hover, 13);
+    &:hover,
+    &:active {
+      color: @link_hover;
+    }
+    &[role="button"] {
+      &:hover,
+      &:active {
+        .icon(stroke; @white);
+        .icon(fill; @white);
+      }
+    }
   }
 }
 button {
@@ -64,12 +64,20 @@ img {
   max-width: 100%;
 }
 a {
-  .icon_fill(@color_link);
-  color: @color_link;
+  .icon(stroke; @link);
+  .icon(fill; @link_hover);
+  color: @black;
+  background: transparent;
   text-decoration: none;
-  &:hover {
-    .icon_fill(@color_link_hover);
-    color: @color_link_hover;
+  &:hover,
+  &:focus {
+    .icon(stroke; @link_hover);
+    .icon(fill; @link_hover);
+    color: @link_hover;
+    outline: 0;
+  }
+  &:active {
+    outline: 0;
   }
   &[role="button"] {
     cursor: pointer;
@@ -124,4 +132,8 @@ p {
 .divider-small {
   font-size: 0.75rem;
   line-height: ~"@{line_height}rem";
+}
+.noninteractive {
+  .user-select(none);
+  pointer-events: none;
 }

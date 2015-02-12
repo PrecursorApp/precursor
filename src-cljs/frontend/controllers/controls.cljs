@@ -629,7 +629,10 @@
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
                          (get-in previous-state [:drawing :moving?]))
         original-layers (get-in previous-state [:drawing :original-layers])
-        layers        (mapv #(dissoc % :points) (get-in current-state [:drawing :layers]))]
+        layers        (mapv #(-> %
+                               (dissoc :points)
+                               (utils/remove-map-nils))
+                            (get-in current-state [:drawing :layers]))]
     (cond
      (and (not= type "touchend")
           (not= button 2)
@@ -659,7 +662,7 @@
   [browser-state message _ previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
-        layer        (get-in current-state [:drawing :layers 0])]
+        layer        (utils/remove-map-nils (get-in current-state [:drawing :layers 0]))]
     (when (layer-model/detectable? layer)
       (d/transact! db [layer] {:can-undo? true}))
     (maybe-notify-subscribers! current-state nil nil)))
@@ -802,7 +805,7 @@
     (let [layers (get-in (finalize-layer previous-state) [:drawing :layers])]
       (when (some layer-model/detectable? layers)
         (d/transact! (:db current-state)
-                     layers
+                     (mapv utils/remove-map-nils layers)
                      {:can-undo? true}))))
   (maybe-notify-subscribers! current-state nil nil))
 
@@ -833,15 +836,6 @@
              (get-in current-state state/chat-opened-path))
     (favicon/set-normal!)))
 
-(defmethod control-event :chat-body-changed
-  [browser-state message {:keys [value]} state]
-  (let [entity-id (or (get-in state [:chat :entity-id])
-                      (-> state :entity-ids first))]
-    (-> state
-        (assoc-in [:chat :body] value)
-        (assoc-in [:chat :entity-id] entity-id)
-        (update-in [:entity-ids] disj entity-id))))
-
 (defn chat-cmd [body]
   (when (seq body)
     (last (re-find #"^/([^\s]+)" body))))
@@ -860,11 +854,12 @@
   (update-in state [:camera :show-grid?] not))
 
 (defmethod control-event :chat-submitted
-  [browser-state message _ state]
-  (-> state
-      (handle-cmd-chat (chat-cmd (get-in state [:chat :body])) (get-in state [:chat :body]))
-      (assoc-in [:chat :body] nil)
-      (assoc-in [:chat :entity-id] nil)))
+  [browser-state message {:keys [chat-body]} state]
+  (let [eid (-> state :entity-ids first)]
+    (-> state
+      (handle-cmd-chat (chat-cmd chat-body) chat-body)
+      (assoc-in [:chat :entity-id] eid)
+      (update-in [:entity-ids] disj eid))))
 
 (defmulti post-handle-cmd-chat (fn [state cmd]
                                  (utils/mlog "post-handling chat command:" cmd)
@@ -881,21 +876,21 @@
     (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
                                                            :email email}])))
 (defmethod post-control-event! :chat-submitted
-  [browser-state message _ previous-state current-state]
+  [browser-state message {:keys [chat-body]} previous-state current-state]
   (let [db (:db current-state)
         client-id (:client-id previous-state)
         color (get-in previous-state [:subscribers client-id :color])]
-    (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
-                      :chat/color color
-                      :cust/uuid (get-in current-state [:cust :cust/uuid])
-                      ;; TODO: teach frontend to lookup cust/name from cust/uuid
-                      :chat/cust-name (get-in current-state [:cust :cust/name])
-                      :db/id (get-in previous-state [:chat :entity-id])
-                      :session/uuid (:sente-id previous-state)
-                      :document/id (:document/id previous-state)
-                      :client/timestamp (js/Date.)
-                      ;; server will overwrite this
-                      :server/timestamp (js/Date.)}])
+    (d/transact! db [(utils/remove-map-nils {:chat/body chat-body
+                                             :chat/color color
+                                             :cust/uuid (get-in current-state [:cust :cust/uuid])
+                                             ;; TODO: teach frontend to lookup cust/name from cust/uuid
+                                             :chat/cust-name (get-in current-state [:cust :cust/name])
+                                             :db/id (get-in current-state [:chat :entity-id])
+                                             :session/uuid (:sente-id previous-state)
+                                             :document/id (:document/id previous-state)
+                                             :client/timestamp (js/Date.)
+                                             ;; server will overwrite this
+                                             :server/timestamp (js/Date.)})])
     (when-let [cmd (chat-cmd (get-in previous-state [:chat :body]))]
       (post-handle-cmd-chat current-state cmd (get-in previous-state [:chat :body])))))
 
@@ -962,7 +957,7 @@
 
 (defmethod post-control-event! :chat-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-box")))
+  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :invite-link-clicked
   [browser-state message _ state]
@@ -974,11 +969,12 @@
 
 (defmethod post-control-event! :invite-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-box")))
+  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :chat-user-clicked
   [browser-state message {:keys [id-str]} state]
    (-> state
+     (assoc-in state/chat-opened-path true)
      (assoc-in state/chat-mobile-opened-path true)
      (update-in [:chat :body] (fn [s]
                                 (str (when (seq s)
@@ -988,7 +984,7 @@
 
 (defmethod post-control-event! :chat-user-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-box")))
+  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
@@ -1013,7 +1009,7 @@
   [browser-state message {:keys [ui-id canvas-size]} state]
   ;; TODO: how to handle no layer for ui-id
   (if-let [layer (layer-model/find-by-ui-id @(:db state) ui-id)]
-    (let [zoom (utils/inspect (:zf (:camera state)))
+    (let [zoom (:zf (:camera state))
           layer-width (js/Math.abs (- (:layer/start-x layer)
                                       (:layer/end-x layer)))
           layer-height (js/Math.abs (- (:layer/start-y layer)
@@ -1053,8 +1049,9 @@
 (defmethod post-control-event! :layer-properties-submitted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)]
-    (d/transact! db [(select-keys (get-in current-state [:layer-properties-menu :layer])
-                                  [:db/id :layer/ui-id :layer/ui-target])])))
+    (d/transact! db [(utils/remove-map-nils
+                      (select-keys (get-in current-state [:layer-properties-menu :layer])
+                                   [:db/id :layer/ui-id :layer/ui-target]))])))
 
 (defn empty-str->nil [s]
   (if (str/blank? s)
@@ -1104,7 +1101,7 @@
 (defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
-        layers (get-in current-state [:clipboard :layers])]
+        layers (mapv utils/remove-map-nils (get-in current-state [:clipboard :layers]))]
     (d/transact! db layers {:can-undo? true})))
 
 (defmethod post-control-event! :created-fetched
@@ -1228,3 +1225,29 @@
   (sente/send-msg (:sente current-state) [:frontend/deny-access-request {:document/id doc-id
                                                                          :request-id request-id
                                                                          :invite-loc :overlay}]))
+
+(defmethod control-event :landing-opened
+  [target message _ state]
+  (-> state
+    (assoc :show-landing? true)
+    (overlay/clear-overlays)))
+
+(defmethod control-event :landing-closed
+  [target message _ state]
+  (-> state
+    (assoc :show-landing? false)
+    (overlay/clear-overlays)))
+
+(defmethod control-event :subscriber-updated
+  [browser-state message {:keys [client-id fields]} state]
+  (update-in state [:subscribers client-id] merge fields))
+
+(defmethod control-event :viewers-opened
+  [target message _ state]
+  (-> state
+    (assoc :show-viewers? true)))
+
+(defmethod control-event :viewers-closed
+  [target message _ state]
+  (-> state
+    (assoc :show-viewers? false)))

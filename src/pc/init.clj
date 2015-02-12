@@ -9,24 +9,26 @@
             pc.models.chat-bot
             pc.nrepl
             pc.server
-            pc.repl))
+            pc.repl)
+  (:gen-class))
 
-(def init-fns [#'pc.logging/init
-               #'pc.nrepl/init
-               #'pc.less/init
-               #'pc.datomic/init
-               #'pc.datomic.schema/init
-               #'pc.datomic.migrations/init
-               #'pc.models.chat-bot/init
-               #'pc.assets/init
-               #'pc.email/init
-               #'pc.server/init])
+(defn init-fns []
+  [#'pc.logging/init
+   #'pc.nrepl/init
+   #'pc.less/init
+   #'pc.datomic/init
+   #'pc.datomic.schema/init
+   #'pc.datomic.migrations/init
+   #'pc.models.chat-bot/init
+   #'pc.assets/init
+   #'pc.email/init
+   #'pc.server/init])
 
 (defn pretty-now []
   (.toLocaleString (java.util.Date.)))
 
 (defn init []
-  (doseq [f init-fns]
+  (doseq [f (init-fns)]
     (println (pretty-now) f)
     (f)))
 

@@ -33,7 +33,7 @@
                            message))
 
 (defmethod handle-message :default [app-state message data]
-  (println "ws message" (pr-str message) (pr-str data)))
+  (utils/mlog "ws message" (pr-str message) (pr-str data)))
 
 (defmethod handle-message :datomic/transaction [app-state message data]
   (let [datoms (:tx-data data)]

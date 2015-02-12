@@ -20,8 +20,11 @@
      (fn [[chat-id]]
        (let [e (pcd/touch+ (d/entity db chat-id))]
          ;; TODO: teach the frontend how to lookup cust/name
-         (assoc e :chat/cust-name (when-let [uuid (:cust/uuid e)]
-                                    (memo-find-name db uuid)))))
+         (let [name (when-let [uuid (:cust/uuid e)]
+                      (memo-find-name db uuid))]
+           (if name
+             (assoc e :chat/cust-name name)
+             e))))
      (d/q '{:find [?t] :in [$ ?document-id]
             :where [[?t :document/id ?document-id]
                     [?t :chat/body]]}

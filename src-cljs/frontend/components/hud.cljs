@@ -1,41 +1,83 @@
 (ns frontend.components.hud
-  (:require [datascript :as d]
+  (:require [clojure.string :as str]
+            [datascript :as d]
             [frontend.components.common :as common]
             [frontend.models.chat :as chat-model]
+            [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [frontend.utils :refer [html]])
+  (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(def tools-templates
-  {:circle {:type "ellipse"
-            :path "M128,0v128l110.9-64C216.7,25.7,175.4,0,128,0z"
-            :hint "Ellipse Tool (L)"
-            :icon :ellipse-stroke}
-   :rect   {:type "rectangle"
-            :path "M238.9,192c10.9-18.8,17.1-40.7,17.1-64s-6.2-45.2-17.1-64 L128,128L238.9,192z"
-            :hint "Rectangle Tool (M)"
-            :icon :rectangle-stroke}
-   :line   {:type "line"
-            :path "M238.9,192L128,128v128C175.4,256,216.7,230.3,238.9,192z"
-            :hint "Line Tool (\\)"
-            :icon :line-stroke}
-   :pen    {:type "pencil"
-            :path "M17.1,192c22.1,38.3,63.5,64,110.9,64V128L17.1,192z"
-            :hint "Pencil Tool (N)"
-            :icon :pencil-stroke}
-   :text   {:type "text"
-            :path "M17.1,64C6.2,82.8,0,104.7,0,128s6.2,45.2,17.1,64L128,128 L17.1,64z"
-            :hint "Text Tool (T)"
-            :icon :text-stroke}
-   :select {:type "select"
-            :path "M128,0C80.6,0,39.3,25.7,17.1,64L128,128V0z"
-            :hint "Select Tool (V)"
-            :icon :cursor-stroke}})
+(defn mouse [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+        [:div.mouse-stats.hud-item.noninteractive
+         (if (:mouse app)
+           (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))
+           "{:x 0, :y 0, :rx 0, :ry 0}")]))))
 
-(defn chat-button [app owner]
+(defn menu [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            main-menu-learned? (get-in app state/main-menu-learned-path)]
+        (html
+          [:a.hud-menu.hud-item.hud-toggle.menu-needed
+           {:on-click (if (overlay-visible? app)
+                        #(cast! :overlay-menu-closed)
+                        #(cast! :main-menu-opened))
+            :on-touch-end #(do
+                             (.preventDefault %)
+                             (if (overlay-visible? app)
+                               (cast! :overlay-menu-closed)
+                               (cast! :main-menu-opened)))
+            :role "button"
+            :class (when (overlay-visible? app)
+                     (concat
+                       ["bkg-light"]
+                       (if (< 1 (overlay-count app))
+                         ["back"]
+                         ["close"])))
+            :data-right (when-not main-menu-learned?
+                          (if (overlay-visible? app) "Close Menu" "Open Menu"))
+            :title (when main-menu-learned?
+                     (if (overlay-visible? app) "Close Menu" "Open Menu"))}
+           (common/icon :menu)])))))
+
+(defn info [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            info-button-learned? (get-in app state/info-button-learned-path)]
+        (html
+          [:a.hud-info.hud-item.hud-toggle
+           {:on-click #(cast! :overlay-info-toggled)
+            :role "button"
+            :class (when-not info-button-learned? "hover")
+            :data-right (when-not info-button-learned? "What is Precursor?")
+            :title (when info-button-learned? "What is Precursor?")}
+           (common/icon :info)])))))
+
+(defn landing [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            info-button-learned? (get-in app state/info-button-learned-path)]
+        (html
+          [:a.hud-landing.hud-item.hud-toggle
+           {:on-click #(cast! :landing-opened)
+            :role "button"}
+           (common/icon :info)])))))
+
+(defn chat [app owner]
   (reify
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -64,82 +106,130 @@
                                 ;; add one for the dummy message
                                 (+ (if dummy-chat? 1 0) unread-chat-count))]
         (html
-          [:a.chat-button {:on-click #(cast! :chat-toggled)
-                           :role "button"
-                           :data-left (when-not chat-button-learned?
-                                        (if chat-opened? "Close Chat" "Open Chat"))
-                           :title (when chat-button-learned?
-                                    (if chat-opened? "Close Chat" "Open Chat"))}
+          [:a.hud-chat.hud-item.hud-toggle
+           {:on-click #(cast! :chat-toggled)
+            :on-touch-end #(do
+                             (.preventDefault %)
+                             (cast! :chat-toggled))
+            :class (when-not chat-opened? "open")
+            :role "button"
+            :data-left (when-not chat-button-learned? (if chat-opened? "Close Chat" "Open Chat"))
+            :title     (when     chat-button-learned? (if chat-opened? "Close Chat" "Open Chat"))}
+           (common/icon :chat-morph)
            (when (and (not chat-opened?) (pos? unread-chat-count))
-             [:i.unseen-eids (str unread-chat-count)])
-           (common/icon :chat)])))))
+             [:i.unseen-eids
+              (str unread-chat-count)])])))))
 
-(defn mouse-stats [app owner]
+(defn viewers [app owner]
   (reify
-    om/IRender
-    (render [_]
-      (html
-        [:div.mouse-stats
-         (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))]))))
+    om/IInitState (init-state [_] {:editing-name? false
+                                   :new-name ""})
+    om/IDidUpdate
+    (did-update [_ _ _]
+      (when (and (om/get-state owner :editing-name?)
+                 (om/get-node owner "name-edit"))
+        (.focus (om/get-node owner "name-edit"))))
+    om/IRenderState
+    (render-state [_ {:keys [editing-name? new-name]}]
+        (let [{:keys [cast! db]} (om/get-shared owner)
+              client-id (:client-id app)
+              viewers-count (count (remove (comp :hide-in-list? last) (:subscribers app)))
+              can-edit? (not (empty? (:cust app)))
+              viewers-truncated? (< 4 viewers-count)
+              show-viewers? (and (not (overlay-visible? app))
+                                 (get app :show-viewers? (< 1 viewers-count 5)))]
+          (html
+            [:div.viewers.hud-item
+             {:class (when viewers-truncated? ["truncated"])}
+             (when show-viewers?
+               [:div.viewers-list
+                [:div.viewers-list-frame
+                 (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+                   [:div.viewer.viewer-self
+                    [:div.viewer-avatar.viewer-tag
+                     (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers client-id :color])}}}))]
+                    (if editing-name?
+                      [:form.viewer-name-form
+                       {:on-submit #(do (when-not (str/blank? new-name)
+                                          (cast! :self-updated {:name new-name}))
+                                        (om/set-state! owner :editing-name? false)
+                                        (om/set-state! owner :new-name "")
+                                        (utils/stop-event %))
+                        :on-blur #(do (when-not (str/blank? new-name)
+                                        (cast! :self-updated {:name new-name}))
+                                      (om/set-state! owner :editing-name? false)
+                                      (om/set-state! owner :new-name "")
+                                      (utils/stop-event %))
+                        :on-key-down #(when (= "Escape" (.-key %))
+                                        (om/set-state! owner :editing-name? false)
+                                        (om/set-state! owner :new-name "")
+                                        (utils/stop-event %))}
+                       [:input.viewer-name-input
+                        {:type "text"
+                         :ref "name-edit"
+                         :tab-index 1
+                         ;; TODO: figure out why we need value here
+                         :value new-name
+                         :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
 
-(defn radial-hint [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (html
-        [:div.radial-hint {:style {:top  (+ (get-in app [:mouse :y]) 16)
-                                   :left (+ (get-in app [:mouse :x]) 16)}}
-         (if (= :touch (get-in app [:mouse :type]))
-           "Tap and hold to select tool"
-           "Right-click.")]))))
-
-(defn info-button [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            info-button-learned? (get-in app state/info-button-learned-path)]
-        (html
-          [:a.info-button {:on-click #(cast! :overlay-info-toggled)
-                           :role "button"
-                           :class (when-not info-button-learned? "hover")
-                           :data-right (when-not info-button-learned? "What is Precursor?")
-                           :title (when info-button-learned? "What is Precursor?")}
-           (common/icon :info)])))))
-
-(defn radial-menu [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! handlers]} (om/get-shared owner)]
-        (html
-          [:a.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
-                                     :left (- (get-in app [:menu :x]) 128)}}
-           [:svg.radial-buttons {:width "256" :height "256"}
-            (for [[tool template] tools-templates]
-              [:g.radial-button {:class (str "tool-" (:type template))}
-               [:title (:hint template)]
-               [:path.radial-pie {:d (:path template)
-                                  :key tool
-                                  :on-mouse-up #(do (cast! :tool-selected [tool]))
-                                  :on-touch-end #(do (cast! :tool-selected [tool]))}]
-               [:path.radial-icon {:class (str "shape-" (:type template))
-                                   :d (get common/icon-paths (:icon template))}]])
-            [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
+                      [:div.viewer-name.viewer-tag (or (get-in app [:cust :cust/name]) "You")])
+                    [:div.viewer-knobs
+                     [:a.viewer-knob
+                      {:key client-id
+                       :on-click #(do
+                                    (if can-edit?
+                                      (om/set-state! owner :editing-name? true)
+                                      (cast! :overlay-username-toggled))
+                                    (.stopPropagation %))
+                       :role "button"
+                       :title "Edit your display name."}
+                      (common/icon :pencil)]]])
+                 (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
+                       :when (not hide-in-list?)
+                       :let [id-str (or cust-name (apply str (take 6 id)))]]
+                   [:div.viewer
+                    [:div.viewer-avatar.viewer-tag
+                     (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))]
+                    [:div.viewer-name.viewer-tag
+                     id-str]
+                    [:div.viewer-knobs
+                     [:a.viewer-knob
+                      {:key id
+                       :on-click #(cast! :chat-user-clicked {:id-str id-str})
+                       :role "button"
+                       :title "Ping this viewer in chat."}
+                      (common/icon :at)]]])]])
+             [:a.hud-viewers.hud-item.hud-toggle
+              {:on-click (if show-viewers?
+                           #(cast! :viewers-closed)
+                           #(cast! :viewers-opened))
+               :on-touch-end #(do
+                                (.preventDefault %)
+                                (if show-viewers?
+                                  (cast! :viewers-closed)
+                                  (cast! :viewers-opened)))
+               :class (when show-viewers? "close")
+               :data-count (when (< 1 viewers-count) viewers-count)
+               :role "button"}
+              (common/icon :times)
+              (common/icon :users)]])))))
 
 (defn hud [app owner]
   (reify
     om/IRender
     (render [_]
       (html
-        (let [right-click-learned? (get-in app state/right-click-learned-path)]
-         [:div.app-hud
-          (om/build chat-button app)
-          (when (and (:mouse app) (not= :touch (:type (:mouse app))))
-            (om/build mouse-stats app))
-          (when (and (not right-click-learned?) (:mouse app))
-            (om/build radial-hint app))
-          (when-not (:cust app)
-            (om/build info-button app))
-          (when (get-in app [:menu :open?])
-            (om/build radial-menu app))])))))
+        [:div.hud
+         (om/build viewers app)
+         (om/build menu app)
+         (om/build chat app)
+         (om/build mouse app)
+
+         ;; TODO finish this button once landing and outer are done
+         ;; (om/build landing app)
+
+         ;; deciding whether to get rid of this
+         ;; (when-not (:cust app)
+         ;;   (om/build info app))
+
+         ]))))

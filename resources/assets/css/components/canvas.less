@@ -1,9 +1,36 @@
-.app-canvas {
+.canvas {
   .flex(1);
   position: relative;
+  &:active {
+    + .chat {
+      .user-select(none);
+      pointer-events: none;
+    }
+  }
+  &:not(:active) {
+    &:not(:hover) {
+      .user-select(none);
+    }
+  }
 }
-#svg-canvas {
+.canvas-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: @dye_inner;
+  will-change: transform;
+  transition: @run @bezier_deform;
+}
+.canvas-frame {
   .user-select(none);
+  .transform-origin(0 0);
+  position: relative;
+  transition+: all @run_slow @now @bezier_deform;
+  transition+: width @now @run_slower @bezier_deform;
+  transition+: height @now @run_slower @bezier_deform;
+  will-change: transform;
   &:not(:hover) {
     ~ .radial-tip {
       display: none;
@@ -25,20 +52,28 @@
     }
   }
 }
-#grid,
-#small-grid {
+.grid-background {
+  transition: opacity @run_slow @run_fast @bezier_fadein;
+}
+.grid-big,
+.grid-small {
   path {
     stroke: @gray_dark;
+    transition: stroke @run_fast @now @bezier_fadein;
   }
 }
 .layers {
   &.live {
     &.layer-handle {
       ~ .layer-outline {
-        transition-delay: @speed_fast;
+        transition-delay: @run_fast;
       }
     }
   }
+}
+.signup-layer {
+  cursor: pointer;
+  fill: transparent;
 }
 .selectable-group {
   .layer-handle {
@@ -48,7 +83,7 @@
       ~ .layer-outline {
         stroke: @white;
         stroke-width: 4;
-        transition-duration: @speed_fast;
+        transition-duration: @run_fast;
         &.selected {
           stroke: @color_select_hover;
         }
@@ -80,7 +115,7 @@
     stroke: @gray_light;
     stroke-width: 2;
     pointer-events: none;
-    transition: @speed @bezier_transform;
+    transition: @run @bezier_deform;
     &.selected {
       stroke-width: 2;
       stroke: @color_select;
@@ -90,6 +125,7 @@
 .text-layer {
   .user-select(none);
   fill: @gray_light;
+  transition: @run @bezier_deform;
   &.editable {
     &:hover {
       fill: @color_select_hover;
@@ -125,22 +161,6 @@
   fill: none;
   stroke-width: 8;
 }
-.info-button {
-  .flexy(center, center);
-  position: absolute;
-  top: @tile;
-  left: 0;
-  width: @tile;
-  height: @tile;
-  &:not(:hover) {
-    .icon_stroke(@gray);
-  }
-  i {
-    svg {
-      font-size: 1.5em;
-    }
-  }
-}
 .action-info {
   margin-top: auto;
 }
@@ -156,22 +176,19 @@
 .text-size-helper {
   fill: transparent;
 }
-  //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾//
- //  Layer Properties Right-Click Menu  //
-//_____________________________________//
 .layer-properties {
   .flexy(column);
-  width: @tile_chat;
+  width: @tile_menu_min;
   padding-top: 5px; // keeps adaptive placeholder from getting cut off
   .layer-property-id {
-    background: @app_background;
+    background: @dye_inner;
     &:not(:focus) {
       box-shadow: 0 -1px @gray_dark inset;
       border-bottom-width: 0;
     }
   }
   .layer-property-target {
-    background: @app_background;
+    background: @dye_inner;
     &:focus {
       border-top-color: transparent !important;
       box-shadow: 0 -1px @blue;
@@ -213,7 +230,7 @@
   border: 1px solid @gray_dark;
   border-top: none;
   overflow-y: auto;
-  transition: max-height @speed_slow @bezier_transform;
+  transition: max-height @run_slow @bezier_deform;
   &:not(.expanded) {
     display: none;
     // transition keeps making the dropdown clip out of place :(
@@ -230,15 +247,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition+: color @speed_fast @bezier_fadein;
-  transition+: border @speed_fast @bezier_fadein;
-  transition+: text-indent @speed @bezier_transform;
+  transition+: color @run_fast @bezier_fadein;
+  transition+: border @run_fast @bezier_fadein;
+  transition+: text-indent @run @bezier_deform;
   &:hover {
     text-indent: 3px;
     border-color: @gray_lighter;
-    transition-duration+: 0ms;
-    transition-duration+: 0ms;
-    transition-duration+: @speed;
+    transition-duration+: @now;
+    transition-duration+: @now;
+    transition-duration+: @run;
   }
 }
 .edit-handles {
@@ -261,4 +278,65 @@
 .handle-outline {
   stroke: @color_select;
   stroke-dasharray: 1,1;
+}
+.radial-menu {
+  position: fixed;
+  width: @tile_radial;
+  height: @tile_radial;
+  z-index: @zindex_radial_menu;
+}
+.radial-buttons {
+  width: @tile_radial + 2;
+  height: @tile_radial + 2;
+  margin-left: -1em;
+  margin-top: -1em;
+  padding: 1rem;
+  overflow: visible;
+}
+.radial-button {
+  cursor: pointer;
+  transition: @run @bezier_deform;
+  &:hover {
+    .transform(translate3d(-13px, -13px, 0); scale3d(1.1, 1.1, 1));
+    transition-duration: @run_fast;
+    .radial-pie {
+      fill: @gray_dark;
+      transition-duration: @run_fast;
+    }
+    .radial-icon {
+      stroke: @white;
+      transition-duration: @run_fast;
+    }
+  }
+  &:active {
+    .radial-pie {
+      fill: @gray_darker;
+    }
+  }
+}
+.radial-pie {
+  fill: @gray_darker;
+  stroke: @gray_dark;
+  transition: @run @bezier_deform;
+}
+.radial-icon {
+  .shape_position(@radial_tools);
+  fill: none;
+  stroke: @gray;
+  stroke-width: 8;
+  pointer-events: none;
+  transition: @run @bezier_fadein;
+}
+.radial-point {
+  fill: @gray_dark;
+}
+.radial-hint {
+  .user-select(none);
+  position: absolute;
+  top: -@tile;
+  left: -@tile;
+  white-space: nowrap;
+  .mq_640({
+    display: none;
+  });
 }

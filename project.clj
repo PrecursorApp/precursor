@@ -6,44 +6,56 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [inflections "0.8.2"]
 
-                 [datascript "0.7.1"]
-
-                 [compojure "1.1.8"]
+                 [compojure "1.3.1"]
                  [cheshire "5.4.0"]
                  [clj-time "0.6.0"]
-                 [org.clojure/tools.nrepl "0.2.3"]
+                 [org.clojure/tools.nrepl "0.2.7"]
                  [javax.servlet/servlet-api "2.5"]
-                 [slingshot "0.10.3"]
+                 [slingshot "0.12.1"]
                  [hiccup "1.0.4"]
-                 [org.clojure/tools.logging "0.2.6"]
-                 [log4j "1.2.16"]
+                 [org.clojure/tools.logging "0.3.1"]
+                 [log4j "1.2.17"]
                  [log4j/apache-log4j-extras "1.1"]
-                 [org.slf4j/slf4j-api "1.6.2"]
-                 [org.slf4j/slf4j-log4j12 "1.6.2"]
-                 [cider/cider-nrepl "0.8.1"]
-                 [clj-http "1.0.1"]
-                 [com.datomic/datomic-free "0.9.4899" :exclusions [[org.slf4j/slf4j-nop]
-                                                                   [com.amazonaws/aws-java-sdk]]]
+                 [org.slf4j/slf4j-api "1.7.10"]
+                 [org.slf4j/slf4j-log4j12 "1.7.10" :exclusions [log4j]]
+
+                 [cider/cider-nrepl "0.8.2"]
+                 [clj-http "1.0.1" :exclusions [commons-codec]]
+                 [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
+                                                                  org.slf4j/slf4j-api
+                                                                  com.amazonaws/aws-java-sdk]]
+                 [org.postgresql/postgresql "9.4-1200-jdbc41"]
+
                  [amazonica "0.3.12"]
 
-                 [ring/ring "1.2.2"]
-                 [ring/ring-anti-forgery "1.0.0"]
-                 [http-kit "2.1.18"]
-                 [com.taoensso/sente "1.3.0-RC1"]
+                 [ring/ring "1.3.2" :exclusions [hiccup
+                                                 org.clojure/java.classpath]]
+                 [ring/ring-anti-forgery "1.0.0" :exclusions [hiccup]]
+                 [http-kit "2.1.19"]
+                 [com.taoensso/sente "1.3.0-RC1" :exclusions [http-kit]]
                  [clj-stacktrace "0.2.8"]
+
+                 [org.clojure/tools.reader "0.8.13"]
+                 [com.google.guava/guava "18.0"]
 
                  [schejulure "1.0.1"]
 
                  [org.clojars.pallix/batik "1.7.0"]
-                 [com.cemerick/pomegranate "0.3.0"]
+
+                 ;; needed to make lein pedantic happy
+                 [org.codehaus.plexus/plexus-utils "2.0.6"]
+                 [com.cemerick/pomegranate "0.3.0"  :exclusions [org.codehaus.plexus/plexus-utils]]
+
                  [com.novemberain/pantomime "2.3.0"]
 
                  [crypto-equality "1.0.0"]
 
                  [fs "0.11.1"]
 
+                 [datascript "0.8.1"]
+
                  [ankha "0.1.4"]
-                 [org.clojure/clojurescript "0.0-2665"]
+                 [org.clojure/clojurescript "0.0-2760"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [cljs-ajax "0.2.6"]
 
@@ -51,18 +63,44 @@
                  ;; but not Om yet)
                  ;;[om "0.6.4"]
 
-                 [com.facebook/react "0.12.2.1"] ;; include for externs
-                 ;; TODO: revert back to sablono once new release is cut
-                 [dwwoelfel/sablono "0.3.0-9aace24eaa377c4199f7335bc7dfd3218e391ebf"]
+                 [com.facebook/react "0.12.2.4"] ;; include for externs
+                 [sablono "0.3.1" :exclusions [cljsjs/react]]
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 
-                 [weasel "0.4.2"] ;; repl
-                 [figwheel "0.2.1-SNAPSHOT"] ;; hate using snapshots :/
+                 [weasel "0.5.0"] ;; repl
+
+                 ;; needed to make lein pedantic happy
+                 [commons-codec "1.6"]
+                 [figwheel "0.2.3-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
+                                                         commons-codec]]
+
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
+
+  :repositories ^:replace [["prcrsr-s3-releases" {:url "s3p://prcrsr-jars/releases"
+                                                  :sign-releases false ;; TODO put a gpg key on CI
+                                                  :username [:gpg
+                                                             :env/prcrsr_jars_username
+                                                             "AKIAIQXSSVZAOLOC5KZA"]
+                                                  :passphrase [:gpg
+                                                               :env/prcrsr_jars_password
+                                                               "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
+                                                  :snapshots false}]
+
+                           ["prcrsr-s3-snapshots" {:url "s3p://prcrsr-jars/snapshots"
+                                                   :sign-releases false ;; TODO put a gpg key on CI
+                                                   :username [:gpg
+                                                              :env/prcrsr_jars_username
+                                                              "AKIAIQXSSVZAOLOC5KZA"]
+                                                   :passphrase [:gpg
+                                                                :env/prcrsr_jars_password
+                                                                "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
+                                                   :snapshots true}]
+                           ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
+                           ["clojars" {:url "https://clojars.org/repo/"}]]
 
   :figwheel {:http-server-root "public"
              :server-port 3448
@@ -70,16 +108,21 @@
 
   :plugins [[lein-cljsbuild "1.0.4"]
             [com.cemerick/austin "0.1.6"]
-            [lein-figwheel "0.2.1-SNAPSHOT"]]
+            [lein-figwheel "0.2.3-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
+                                                         commons-codec]]
+            [circle/lein-deploy-deps "0.1.3"]
+            [circle/s3-wagon-private "1.2.2" :exclusions [commons-codec org.apache.httpcomponents/httpclient]]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]
                [org.slf4j/log4j-over-slf4j]]
 
-  ;; TODO: Fix the warnings, then uncomment this
-  ;; :pedantic? :abort
+  :pedantic? :abort
 
-  :main pc.init
+  :main ^:skip-aot pc.init
+
+  :jar-name "pc.jar"
+  :uberjar-name "pc-standalone.jar"
 
   :jvm-opts ["-Djava.net.preferIPv4Stack=true"
              "-server"
@@ -97,6 +140,7 @@
 
   :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src-cljs"
+                                       "dev-cljs"
                                        "yaks/om/src"]
                         :compiler {:output-to "resources/public/cljs/out/frontend-dev.js"
                                    :output-dir "resources/public/cljs/out"

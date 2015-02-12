@@ -28,7 +28,8 @@
        (swap! undo-state update-in [:transactions] conj tx-report)
        (when-not (-> tx-report :tx-meta :undo)
          (swap! undo-state assoc-in [:last-undo] nil)))
-     (when-not (-> tx-report :tx-meta :server-update)
+     (when-not (or (-> tx-report :tx-meta :server-update)
+                   (-> tx-report :tx-meta :bot-layer))
        (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
          (doseq [datom-group (partition-all 500 datoms)]
            (sente/send-msg sente-state [:frontend/transaction {:datoms datom-group

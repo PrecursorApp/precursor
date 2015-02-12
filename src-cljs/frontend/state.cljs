@@ -15,6 +15,12 @@
    :chat-button-learned false
    :login-button-learned false})
 
+(def subscriber-bot
+  {"prcrsr-subscriber-bot" {:color "#00b233"
+                            :cust-name "prcrsr"
+                            :show-mouse? true
+                            :hide-in-list? true}})
+
 (defn initial-state []
   {:camera          {:x          0
                      :y          0
@@ -42,7 +48,7 @@
    :instrumentation []
    :entity-ids      #{}
    :document/id     nil
-   :subscribers     {}
+   :subscribers     subscriber-bot
    :inputs          nil})
 
 (def user-path [:current-user])
