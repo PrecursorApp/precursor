@@ -17,8 +17,8 @@
    #'pc.nrepl/init
    #'pc.less/init
    #'pc.datomic/init
-   #'pc.datomic.schema/init
    #'pc.datomic.migrations/init
+   #'pc.datomic.schema/init
    #'pc.models.chat-bot/init
    #'pc.assets/init
    #'pc.email/init
