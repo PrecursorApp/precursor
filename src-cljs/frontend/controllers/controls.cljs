@@ -855,9 +855,11 @@
 
 (defmethod control-event :chat-submitted
   [browser-state message {:keys [chat-body]} state]
-  (-> state
+  (let [eid (-> state :entity-ids first)]
+    (-> state
       (handle-cmd-chat (chat-cmd chat-body) chat-body)
-      (assoc-in [:chat :entity-id] nil)))
+      (assoc-in [:chat :entity-id] eid)
+      (update-in [:entity-ids] disj eid))))
 
 (defmulti post-handle-cmd-chat (fn [state cmd]
                                  (utils/mlog "post-handling chat command:" cmd)
@@ -883,7 +885,7 @@
                                              :cust/uuid (get-in current-state [:cust :cust/uuid])
                                              ;; TODO: teach frontend to lookup cust/name from cust/uuid
                                              :chat/cust-name (get-in current-state [:cust :cust/name])
-                                             :db/id (get-in previous-state [:chat :entity-id])
+                                             :db/id (get-in current-state [:chat :entity-id])
                                              :session/uuid (:sente-id previous-state)
                                              :document/id (:document/id previous-state)
                                              :client/timestamp (js/Date.)
