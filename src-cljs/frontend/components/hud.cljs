@@ -132,15 +132,17 @@
     om/IRenderState
     (render-state [_ {:keys [editing-name? new-name]}]
         (let [{:keys [cast! db]} (om/get-shared owner)
+              chat-opened? (get-in app state/chat-opened-path)
               client-id (:client-id app)
               viewers-count (count (remove (comp :hide-in-list? last) (:subscribers app)))
               can-edit? (not (empty? (:cust app)))
-              viewers-truncated? (< 4 viewers-count)
               show-viewers? (and (not (overlay-visible? app))
                                  (get app :show-viewers? (< 1 viewers-count 6)))]
           (html
-            [:div.viewers.hud-item
-             {:class (when viewers-truncated? ["truncated"])}
+            [:div.viewers
+             {:class (concat
+                       (when chat-opened? ["chat-open"])
+                       [(str "atleast" viewers-count)])}
              (when show-viewers?
                [:div.viewers-list
                 [:div.viewers-list-frame
