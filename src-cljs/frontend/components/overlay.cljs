@@ -246,7 +246,6 @@
             access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
-         [:div ; TODO make this a list, or at least get rid of div somehow
           [:article
            [:h2.make
             "This document is private."]
@@ -270,7 +269,7 @@
               :data-placeholder-nil "What's your teammate's email?"
               :data-placeholder-forgot "Don't forget to submit!"}]]
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
-             (render-access-entity access-entity cast!))]])))))
+             (render-access-entity access-entity cast!))])))))
 
 (defn public-sharing [app owner]
   (reify
