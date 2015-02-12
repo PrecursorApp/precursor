@@ -244,8 +244,12 @@
     .viewer-knobs {
       width: 0;
       .iconpile {
-        display: none;
+        .translate3d(0,100%,0);
+        opacity: 0;
       }
+    }
+    .icon-pencil {
+      box-shadow: 0 1px fade(@white, 0);
     }
   }
   &:last-child {
@@ -275,8 +279,14 @@
 }
 .viewer-knobs {
   .flexy();
+  .icon-pencil {
+    box-shadow: 0 1px @white;
+  }
+  .icon-pencil {
+    transition: box-shadow @run @bezier_fadein;
+  }
   .iconpile {
-    .animation(in-fade-bottom @run_fast @bezier_deform backwards);
+    transition: @run_fast @bezier_deform;
   }
 }
 .viewer-knob {
@@ -284,6 +294,13 @@
   width: 1.5em;
   min-width: 1.5em;
   height: @tile_viewers_height;
+  &:hover {
+    .icon-pencil {
+      .iconpile {
+        .animation(pencil-edit (@run_slower + @run) @bezier_deform forwards);
+      }
+    }
+  }
   &:not(:hover) {
     opacity: .5;
   }
