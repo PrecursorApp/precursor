@@ -208,6 +208,9 @@
   max-height: ((@tile_viewers_height * 5) - (@tile_viewers_height / 2));
   overflow-y: scroll;
   overflow-x: hidden;
+  .mq_640({
+    max-height: @tile * 4;
+  });
   &:hover {
     .viewer-self {
       &:not(:hover) {
