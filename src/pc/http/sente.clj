@@ -189,7 +189,7 @@
     (log/infof "sending layers for %s to %s" document-id client-id)
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
-                         :entities (layer/find-by-document (:db req) {:db/id document-id})
+                         :entities (map layer/read-api (layer/find-by-document (:db req) {:db/id document-id}))
                          :entity-type :layer}])
     (log/infof "sending chats %s to %s" document-id client-id)
     (send-fn client-id [:frontend/db-entities
