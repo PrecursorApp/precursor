@@ -195,12 +195,14 @@
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])]
         (html
-          [:div.chat {:class (when-not chat-opened? ["closed"])}
-           [:div.chat-background]
-           (om/build log {:db (:db app)
-                          :document/id (:document/id app)
-                          :sente-id (:sente-id app)
-                          :client-id (:client-id app)
-                          :chat-body (get-in app [:chat :body])
-                          :chat-opened (get-in app state/chat-opened-path)})
-           (om/build input {:chat-body (get-in app [:chat :body])})])))))
+          [:div.chat
+           [:div.canvas-offset]
+           [:div.chat-window {:class (when-not chat-opened? ["closed"])}
+            [:div.chat-background]
+            (om/build log {:db (:db app)
+                           :document/id (:document/id app)
+                           :sente-id (:sente-id app)
+                           :client-id (:client-id app)
+                           :chat-body (get-in app [:chat :body])
+                           :chat-opened (get-in app state/chat-opened-path)})
+            (om/build input {:chat-body (get-in app [:chat :body])})]])))))
