@@ -5,6 +5,15 @@
   left: 0;
   width: 100%;
   height: 100%;
+  &.landed {
+    .canvas-background:after,
+    .trusted-by,
+    .home-nav,
+    .jumbotron .content {
+      .animation-duration(@now);
+      .animation-delay(@now);
+    }
+  }
   ~ .inner {
     .canvas-background {
       &:after {

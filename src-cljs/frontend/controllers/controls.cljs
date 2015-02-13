@@ -1229,6 +1229,7 @@
 (defmethod control-event :landing-opened
   [target message _ state]
   (-> state
+    (assoc :not-landing?  true)
     (assoc :show-landing? true)
     (overlay/clear-overlays)))
 

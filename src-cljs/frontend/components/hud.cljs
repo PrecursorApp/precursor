@@ -230,7 +230,7 @@
          (om/build mouse app)
 
          ;; TODO finish this button once landing and outer are done
-         ;; (om/build landing app)
+         (om/build landing app)
 
          ;; deciding whether to get rid of this
          ;; (when-not (:cust app)
