@@ -45,13 +45,12 @@
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head
-                  (list
-                   [:div.message-sender
-                    (common/icon :user {:path-props {:style {:stroke (or (:chat/color chat) (str "#" id))}}})
-                    name]
-                   [:div.message-time short-time])])
+                  [:span
+                   (common/icon :user {:path-props {:style {:stroke (or (:chat/color chat) (str "#" id))}}})]
+                  [:span (str " " name)]
+                  [:span.time (str " " short-time)]])
                [:div.message-body
-                [:div.message-content chat-body]]])))))
+                chat-body]])))))
 
 (def day-of-week
   {1 "Monday"

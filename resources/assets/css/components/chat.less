@@ -33,13 +33,15 @@
   transition: @run @bezier_deform;
 }
 .chat-log {
+  .user-select(none); // so you only select text and not entire chat menu
   .scrollbar_hide();
   position: relative;
   padding: 1em 0 1.25em;
   overflow-y: auto;
   transition: @run_fast @run @bezier_fadein;
   span {
-    word-break: break-word;
+    .user-select(auto); // so you only select text and not entire chat menu
+    white-space: pre-line; // honors new line (shift + enter)
   }
 }
 .chat-box {
@@ -98,21 +100,10 @@
   }
 }
 .message-head {
-  .flexy();
-}
-.message-sender {
-  .icon(stroke; 12);
-  font-weight: 500;
-  .icon-user {
-    font-size: 0.75rem;
-    margin-right: .25rem;
+  color: white;
+  .time {
+    color: @gray_dark;
+    font-size: .75rem;
+    text-transform: lowercase;
   }
-}
-.message-time {
-  color: @gray_dark;
-  font-size: .75rem;
-  line-height: ~"@{line_height}rem";
-  text-transform: lowercase;
-  word-spacing: -.1875rem;
-  margin-left: .25rem;
 }
