@@ -137,21 +137,27 @@
   0%   { -webkit-transform: scale3d(.5, .5, 1);}
   100% { -webkit-transform: none;}
 }
-@keyframes pencil-edit {
-  0%   { transform: rotate3d(0,0,1,  0deg) translate3d(   0,0,0);}
-  40%  { transform: rotate3d(0,0,1,180deg) translate3d(   0,0,0);}
-  50%  { transform: rotate3d(0,0,1,180deg) translate3d(-40%,0,0);}
-  60%  { transform: rotate3d(0,0,1,180deg) translate3d( 20%,0,0);}
-  70%  { transform: rotate3d(0,0,1,180deg) translate3d(-10%,0,0);}
-  85%  { transform: rotate3d(0,0,1,180deg) translate3d(  5%,0,0);}
+@keyframes pencil-rotate {
+  0%   { transform: rotate3d(0,0,1,  0deg) translate3d(0,0,0);}
+  100% { transform: rotate3d(0,0,1,180deg) translate3d(0,0,0);}
+}
+@-webkit-keyframes pencil-rotate {
+  0%   { -webkit-transform: rotate3d(0,0,1,  0deg) translate3d(0,0,0);}
+  100% { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(0,0,0);}
+}
+@keyframes pencil-erase {
+  0%   { transform: rotate3d(0,0,1,180deg) translate3d(   0,0,0);}
+  20%  { transform: rotate3d(0,0,1,180deg) translate3d(-40%,0,0);}
+  40%  { transform: rotate3d(0,0,1,180deg) translate3d( 20%,0,0);}
+  60%  { transform: rotate3d(0,0,1,180deg) translate3d(-10%,0,0);}
+  80%  { transform: rotate3d(0,0,1,180deg) translate3d(  5%,0,0);}
   100% { transform: rotate3d(0,0,1,180deg) translate3d(   0,0,0);}
 }
-@-webkit-keyframes pencil-edit {
-  0%   { -webkit-transform: rotate3d(0,0,1,  0deg) translate3d(   0,0,0);}
-  40%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(   0,0,0);}
-  50%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(-40%,0,0);}
-  60%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d( 20%,0,0);}
-  70%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(-10%,0,0);}
-  85%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(  5%,0,0);}
+@-webkit-keyframes pencil-erase {
+  0%   { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(   0,0,0);}
+  20%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(-40%,0,0);}
+  40%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d( 20%,0,0);}
+  60%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(-10%,0,0);}
+  80%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(  5%,0,0);}
   100% { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(   0,0,0);}
 }
