@@ -75,6 +75,14 @@
 (defn whitelisted? [[type e a v :as transaction]]
   (contains? incoming-whitelist a))
 
+(defn remove-float-conflicts [txes]
+  (vals (reduce (fn [tx-index [type e a v :as tx]]
+                  (let [index-key [e a v]]
+                    (if (and (float? v) (contains? tx-index index-key))
+                      (dissoc tx-index index-key)
+                      (assoc tx-index index-key tx))))
+                {} txes)))
+
 ;; TODO: only let creators mark things as private
 ;; TODO: only let people on the white list make things as private
 
@@ -105,6 +113,7 @@
                             (map (partial coerce-server-timestamp server-timestamp))
                             (map (partial coerce-session-uuid session-uuid))
                             (filter whitelisted?)
+                            (remove-float-conflicts)
                             (concat [(merge {:db/id txid
                                              :document/id document-id
                                              :session/uuid session-uuid
