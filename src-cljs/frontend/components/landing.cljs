@@ -59,7 +59,7 @@
     (render-state [_ {:keys [past-center-featurettes]}]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.app-landing
+         [:div.outer
           {:on-scroll #(maybe-set-state! owner [:past-center-featurettes]
                                          (set (filter (partial past-center? owner) ["1" "2" "3" "4" "5"])))
            :class (when-not (get app :not-landing?) "landed")}
