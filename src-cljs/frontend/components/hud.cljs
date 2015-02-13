@@ -142,7 +142,7 @@
             [:div.viewers
              {:class (concat
                        (when chat-opened? ["chat-open"])
-                       [(str "atleast" viewers-count)])}
+                       [(str "atleast" viewers-count)])} ; TODO use this to clean up messy nth-childs in hud.less
              (when show-viewers?
                [:div.viewers-list
                 [:div.viewers-list-frame
