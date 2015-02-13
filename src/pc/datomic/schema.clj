@@ -479,7 +479,12 @@
    (attribute :pre-made
               :db.type/ref
               :db/doc "dummy attribute so that we can pre-generate entity ids for a migration")
-   (enum :pre-made/free-to-postgres)])
+   (enum :pre-made/free-to-postgres)
+
+   (attribute :frontend/id
+              :db.type/uuid
+              :db/unique :db.unique/value
+              :db/doc "Squuuid that can be created on the frontend. Frontend uses this as a stable id for every entity")])
 
 (defonce schema-ents (atom nil))
 
