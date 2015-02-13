@@ -147,19 +147,21 @@
     ;;"#bdc3c7"
     })
 
+(defn choose-color [subs client-id requested-color]
+  (let [available-colors (or (seq (apply disj colors (map :color (vals subs))))
+                             (seq colors))]
+    (or (get-in subs [client-id :color])
+        (when (not= -1 (.indexOf available-colors requested-color))
+          requested-color)
+        (rand-nth available-colors))))
+
 (defn subscribe-to-doc [document-id uuid cust-name & {:keys [requested-color]}]
   (swap! document-subs update-in [document-id]
          (fn [subs]
-           (let [available-colors (or (seq (apply disj colors (map :color (vals subs))))
-                                      (seq colors))
-                 color (or (get-in subs [uuid :color])
-                           (when (not= -1 (.indexOf available-colors requested-color))
-                             requested-color)
-                           (rand-nth available-colors))]
-             (-> subs
-                 (assoc-in [uuid :color] color)
-                 (assoc-in [uuid :cust-name] cust-name)
-                 (assoc-in [uuid :show-mouse?] true))))))
+           (-> subs
+             (assoc-in [uuid :color] (choose-color subs uuid requested-color))
+             (assoc-in [uuid :cust-name] cust-name)
+             (assoc-in [uuid :show-mouse?] true)))))
 
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
