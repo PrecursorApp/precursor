@@ -3,6 +3,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [clj-statsd :as statsd]
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
             [pc.datomic :as pcd]
@@ -426,12 +427,14 @@
 
 (defn handle-req [req]
   (utils/with-report-exceptions
-    (let [client-id (user-id-fn (:ring-req req))]
+    (let [client-id (user-id-fn (:ring-req req))
+          event (ws-handler-dispatch-fn req)]
       (try+
-       (ws-handler (assoc req
-                          :db (pcd/default-db)
-                          ;; TODO: Have to kill sente
-                          :client-id client-id))
+       (statsd/with-timing (str "ws." (namespace event) "." (name event))
+         (ws-handler (assoc req
+                            :db (pcd/default-db)
+                            ;; TODO: Have to kill sente
+                            :client-id client-id)))
        (catch :status t
          (let [send-fn (:send-fn @sente-state)]
            (log/error t)
