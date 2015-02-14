@@ -27,11 +27,13 @@
   });
 }
 .chat-window {
+  @width: 25%;
+  @x: 3.125;
   .animation(in-fade-right @run_slow @bezier_fadein);
   .flexy(stretch; flex-end; column);
   .user-select(auto); // VETO
   position: relative;
-  width: 25%;
+  width: @width;
   min-width: @tile;
   max-width: ~"calc(100% - @{tile})";
   height: 100%;
@@ -41,11 +43,11 @@
   will-change: transform;
   top: 0;
   right: 0;
-  .mq_1920({ width: 30%;});
-  .mq_1600({ width: 35%;});
-  .mq_1280({ width: 50%;});
-  .mq_960({  width: 66%;});
-  .mq_640({  width: 80%; });
+  .mq_1920({ width: (@width + (@x * 1));});
+  .mq_1600({ width: (@width + (@x * 2));});
+  .mq_1280({ width: (@width + (@x * 3));});
+  .mq_960({  width: 50%;});
+  .mq_640({  width: 80%;});
   &.closed {
     .animation-name(none);
     .translate3d(100%, 0, 0);
