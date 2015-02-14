@@ -10,6 +10,21 @@
 }
 .chat-offset {
   .flex(1);
+  position: relative;
+}
+.mouse-stats {
+  position: absolute;
+  font-family: @font_mono;
+  font-size: .625rem;
+  line-height: 1rem;
+  text-align: center;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  opacity: .25;
+  .mq_960({
+    display: none;
+  });
 }
 .chat-window {
   .animation(in-fade-right @run_slow @bezier_fadein);

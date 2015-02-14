@@ -184,6 +184,16 @@
                                         :show-sender? (not= (chat-model/display-name prev-chat sente-id)
                                                             (chat-model/display-name chat sente-id))}})))))])))))
 
+(defn mouse-stats [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+        [:div.mouse-stats.noninteractive
+         (if (:mouse app)
+           (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))
+           "{:x 0, :y 0, :rx 0, :ry 0}")]))))
+
 (defn chat [app owner]
   (reify
     om/IRender
@@ -196,7 +206,8 @@
             document-id (get-in app [:document/id])]
         (html
           [:div.chat
-           [:div#canvas-size.chat-offset]
+           [:div#canvas-size.chat-offset
+            (om/build mouse-stats app)]
            [:div.chat-window {:class (when-not chat-opened? ["closed"])}
             [:div.chat-background]
             (om/build log {:db (:db app)
