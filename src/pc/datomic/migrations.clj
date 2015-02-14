@@ -52,6 +52,18 @@
                       :cust/name "prcrsr"
                       :cust/uuid (d/squuid)}]))
 
+(defn add-frontend-ids
+  "Adds frontend ids to entities that need one"
+  [conn]
+  ;; assuming that only entities with document-ids need one. May
+  ;; require another migration later if that's false.
+  (let [db (d/db conn)]
+    (dorun (pmap (fn [datoms]
+                   @(d/transact-async conn
+                                      (for [[doc-id datom-group] (group-by :v datoms)]
+                                        [:temporary/assign-frontend-id (map :e datom-group) doc-id])))
+                 (partition-all 100 (d/datoms db :aevt :document/id))))))
+
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
