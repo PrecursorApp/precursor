@@ -1,19 +1,30 @@
 .chat {
-  .flexy(stretch; flex-end; column);
-  .transform-origin(right center);
+  .flexy();
+  .user-select(none);
   position: absolute;
   top: 0;
-  right: 0;
-  width: 20%;
-  min-width: @tile_menu_min;
+  left: 0;
+  width: 100%;
   height: 100%;
+  pointer-events: none;
+}
+.chat-offset {
+  .flex(1);
+}
+.chat-window {
+  .flex(0 0 @size_chat);
+  .flexy(stretch; flex-end; column);
+  .transform-origin(right center);
+  .transition_transform(@run @now @bezier_fadein);
+  .user-select(auto); // VETO
   background: @dye_outer;
   box-shadow: -1px 0 @gray_lighter;
+  pointer-events: auto; // VETO
   will-change: transform;
-  transition: @run @now @bezier_fadein;
   &.closed {
     .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));
-    transition-duration: @run_slow;
+    .transition_transform(@run_slow @now @bezier_fadein);
+    margin-left: -@size_chat;
     .chat-input {
       visibility: hidden;
       transition: visibility @now @run_slow @bezier_fadein;
@@ -33,13 +44,15 @@
   transition: @run @bezier_deform;
 }
 .chat-log {
+  .user-select(none); // so you only select text and not entire chat menu
   .scrollbar_hide();
   position: relative;
   padding: 1em 0 1.25em;
   overflow-y: auto;
   transition: @run_fast @run @bezier_fadein;
   span {
-    word-break: break-word;
+    .user-select(auto); // so you only select text and not entire chat menu
+    white-space: pre-line; // honors new line (shift + enter)
   }
 }
 .chat-box {
@@ -98,21 +111,10 @@
   }
 }
 .message-head {
-  .flexy();
-}
-.message-sender {
-  .icon(stroke; 12);
-  font-weight: 500;
-  .icon-user {
-    font-size: 0.75rem;
-    margin-right: .25rem;
+  color: white;
+  .time {
+    color: @gray_dark;
+    font-size: .75rem;
+    text-transform: lowercase;
   }
-}
-.message-time {
-  color: @gray_dark;
-  font-size: .75rem;
-  line-height: ~"@{line_height}rem";
-  text-transform: lowercase;
-  word-spacing: -.1875rem;
-  margin-left: .25rem;
 }

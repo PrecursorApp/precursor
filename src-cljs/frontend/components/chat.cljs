@@ -45,13 +45,12 @@
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head
-                  (list
-                   [:div.message-sender
-                    (common/icon :user {:path-props {:style {:stroke (or (:chat/color chat) (str "#" id))}}})
-                    name]
-                   [:div.message-time short-time])])
+                  [:span
+                   (common/icon :user {:path-props {:style {:stroke (or (:chat/color chat) (str "#" id))}}})]
+                  [:span (str " " name)]
+                  [:span.time (str " " short-time)]])
                [:div.message-body
-                [:div.message-content chat-body]]])))))
+                chat-body]])))))
 
 (def day-of-week
   {1 "Monday"
@@ -196,12 +195,14 @@
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])]
         (html
-          [:div.chat {:class (when-not chat-opened? ["closed"])}
-           [:div.chat-background]
-           (om/build log {:db (:db app)
-                          :document/id (:document/id app)
-                          :sente-id (:sente-id app)
-                          :client-id (:client-id app)
-                          :chat-body (get-in app [:chat :body])
-                          :chat-opened (get-in app state/chat-opened-path)})
-           (om/build input {:chat-body (get-in app [:chat :body])})])))))
+          [:div.chat
+           [:div#chat-offset.chat-offset]
+           [:div.chat-window {:class (when-not chat-opened? ["closed"])}
+            [:div.chat-background]
+            (om/build log {:db (:db app)
+                           :document/id (:document/id app)
+                           :sente-id (:sente-id app)
+                           :client-id (:client-id app)
+                           :chat-body (get-in app [:chat :body])
+                           :chat-opened (get-in app state/chat-opened-path)})
+            (om/build input {:chat-body (get-in app [:chat :body])})]])))))

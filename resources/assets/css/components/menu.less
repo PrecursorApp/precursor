@@ -42,22 +42,18 @@
     .chat-log {
       opacity: .5;
       transition: @run_fast @now @bezier_fadein;
-      h2 {
-        color: inherit;
-        transition: color @now @run_fast;
-      }
+      color: @color_menu_faded;
+      // TODO this can be cleaner
+      .message-head,
+      .stroke-user,
+      .time,
+      h2,
       a {
-        color: inherit;
-        transition: color @now @run_fast;
+        color: @color_menu_faded;
+        stroke: @color_menu_faded !important;
+        transition+: color @now @run_fast;
+        transition+: stroke @now @run_fast;
       }
-    }
-    .stroke-user {
-      stroke: @gray_light !important;
-      transition: stroke @now @run_fast;
-    }
-    .message-time {
-      color: inherit;
-      transition: color @now @run_fast;
     }
     .chat-box {
       border-top: 1px solid @gray_lighter;

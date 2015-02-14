@@ -3,8 +3,10 @@
   position: relative;
   &:active {
     + .chat {
-      .user-select(none);
-      pointer-events: none;
+      .chat-window {
+        .user-select(none);
+        pointer-events: none;
+      }
     }
   }
   &:not(:active) {
