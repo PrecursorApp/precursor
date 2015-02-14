@@ -9,12 +9,14 @@
             pc.models.chat-bot
             pc.nrepl
             pc.server
+            pc.statsd
             pc.repl)
   (:gen-class))
 
 (defn init-fns []
   [#'pc.logging/init
    #'pc.nrepl/init
+   #'pc.statsd/init
    #'pc.less/init
    #'pc.datomic/init
    #'pc.datomic.schema/init

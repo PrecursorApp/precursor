@@ -44,3 +44,7 @@
 
 (defn datomic-uri []
   (System/getenv "DATOMIC_URI"))
+
+(defn statsd-host []
+  ;; goes to localhost if it can't resolve
+  "10.99.0.104")
