@@ -192,7 +192,5 @@
                                  (re-find #"<metadata>(.+)</metadata>")
                                  last
                                  reader/read-string)]
-    (let [size (goog.style/getSize (goog.dom/getElement "svg-canvas"))
-          canvas-size {:width (.-width size)
-                       :height (.-height size)}]
+    (let [canvas-size (utils/canvas-size)]
       (put! (get-in app-state [:comms :controls]) [:layers-pasted (assoc layer-data :canvas-size canvas-size)]))))

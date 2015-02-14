@@ -223,7 +223,7 @@
     om/IDidMount
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(
-      (let [vw (.-width (goog.style/getSize (goog.dom/getElement "svg-canvas")))]
+      (let [vw (:width (utils/canvas-size))]
         (when (< 640 vw) ;; only if not on mobile
           (run-animation owner (signup-animation document vw)))))
     om/IWillUnmount

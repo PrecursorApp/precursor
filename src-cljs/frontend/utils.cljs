@@ -9,6 +9,8 @@
             [goog.async.AnimationDelay]
             [goog.crypt :as crypt]
             [goog.crypt.Md5 :as md5]
+            [goog.dom]
+            [goog.style]
             [goog.Uri]
             [goog.events :as ge]
             [goog.net.EventType :as gevt]
@@ -195,3 +197,11 @@
                              :or {default "blank"}}]
   (str "https://www.gravatar.com/avatar/" (md5 (string/lower-case email))
        "?d=" (js/encodeURIComponent default)))
+
+(defn canvas-size []
+  (let [node (goog.dom/getElement "canvas-size")]
+    (let [size (if node
+                 (goog.style/getSize node)
+                 (goog.dom/getViewportSize))]
+      {:width (.-width size)
+       :height (.-height size)})))
