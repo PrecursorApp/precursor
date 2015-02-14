@@ -126,6 +126,10 @@
   @colors: ~`"@{rest}".slice(1,-1)`;
   background-image+: linear-gradient(@type, @colors);
 }
+.transition_transform(...) {
+  -webkit-transition+: -webkit-transform @arguments;
+          transition+:         transform @arguments;
+}
 .rotate(...) {
   .prefixer(transform; ~"rotate(@{arguments}deg)"; webkit);
 }

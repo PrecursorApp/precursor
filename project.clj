@@ -19,6 +19,8 @@
                  [org.slf4j/slf4j-api "1.7.10"]
                  [org.slf4j/slf4j-log4j12 "1.7.10" :exclusions [log4j]]
 
+                 [clj-statsd "0.3.10"]
+
                  [cider/cider-nrepl "0.8.2"]
                  [clj-http "1.0.1" :exclusions [commons-codec]]
                  [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
