@@ -1,0 +1,24 @@
+10.99.0.101 postgres
+10.99.0.102 datomic
+10.99.0.103 nginx
+10.99.0.104 stasd
+
+10.99.0.110-119 web
+
+{
+  port: 8125,
+  backends: ["statsd-librato-backend"],
+  librato: {
+    email: "daniel+start-trial@prcrsr.com",
+    token: "74eac6aae0737ba2d3770832038c93ac2b7673609b27e710c002212c1a4633b3",
+    source: "10.99.0.104",
+    includeMetrics: [/.*/],
+  },
+  deleteIdleStats: true,
+  debug: true,
+  log: {
+    backend: "syslog",
+    application: "statsd",
+    level: "LOG_INFO",
+  },
+}
