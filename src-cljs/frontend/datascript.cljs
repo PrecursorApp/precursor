@@ -92,3 +92,20 @@
                  (mapv datom->reverse-transaction datoms)
                  {:undo true
                   :can-undo? true})))
+(defn id-generator
+  "Returns a function that generates unique ids. Only 1 generator per connection!
+   Assumes that each client has a different remainder and that all clients have
+   the same multiple.
+   Takes a connection to guard against duplicate ids, but is not meant to be a protection
+   against races. Only guards against a previous client with the same remainder skipping
+   ids (probably due to an error)."
+  [conn multiple remainder]
+  ;; TODO efficient algorithm for finding first next-id
+  (let [next-id (atom remainder)]
+    (fn []
+      (loop [res @next-id]
+        (if (first (d/datoms @conn :eavt res))
+          (recur (+ res remainder))
+          (do
+            (reset! next-id (+ res remainder))
+            res))))))
