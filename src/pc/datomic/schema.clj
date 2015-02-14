@@ -483,8 +483,30 @@
 
    (attribute :frontend/id
               :db.type/uuid
-              :db/unique :db.unique/value
-              :db/doc "Squuuid that can be created on the frontend. Frontend uses this as a stable id for every entity")])
+              :db/unique :db.unique/identity
+              :db/doc (str "UUID whose least significant bits can be created on the frontend. "
+                           "Most significant bits are a namespace, like the document id."))
+
+   (function :temporary/assign-frontend-id
+             '{:lang :clojure
+               :params [db eids namespace-part]
+               :code (let [max-client-part 0x2000000
+                           client-part (inc (apply max (concat [0]
+                                                               (map #(.getLeastSignificantBits (:v %))
+                                                                    (d/index-range db
+                                                                                   :frontend/id
+                                                                                   (java.util.UUID. namespace-part 0)
+                                                                                   (java.util.UUID. namespace-part (inc max-client-part)))))))]
+                       (loop [eids eids
+                              client-part client-part
+                              txes []]
+                         (if-let [e (first eids)]
+                           (recur (rest eids)
+                                  (inc client-part)
+                                  (concat txes (when-not (:frontend/id (d/entity db e))
+                                                 [[:db/add e :frontend/id (java.util.UUID. namespace-part client-part)]])))
+                           txes)))}
+             :db/doc "Assigns a frontend-id to the entity, incrementing the largest client-part in the namespace")])
 
 (defonce schema-ents (atom nil))
 

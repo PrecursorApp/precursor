@@ -83,6 +83,12 @@
                       (assoc tx-index index-key tx))))
                 {} txes)))
 
+(defn add-frontend-ids [document-id txes]
+  (let [entity-ids (reduce (fn [acc tx]
+                             (conj acc (second tx)))
+                           #{} txes)]
+    (conj txes [:temporary/assign-frontend-id entity-ids document-id])))
+
 ;; TODO: only let creators mark things as private
 ;; TODO: only let people on the white list make things as private
 
@@ -114,6 +120,7 @@
                             (map (partial coerce-session-uuid session-uuid))
                             (filter whitelisted?)
                             (remove-float-conflicts)
+                            (add-frontend-ids document-id)
                             (concat [(merge {:db/id txid
                                              :document/id document-id
                                              :session/uuid session-uuid
