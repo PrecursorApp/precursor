@@ -196,7 +196,7 @@
             document-id (get-in app [:document/id])]
         (html
           [:div.chat
-           [:div.canvas-offset]
+           [:div#chat-offset.chat-offset]
            [:div.chat-window {:class (when-not chat-opened? ["closed"])}
             [:div.chat-background]
             (om/build log {:db (:db app)
