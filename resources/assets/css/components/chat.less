@@ -47,7 +47,9 @@
   .mq_960({  width: 66%;});
   .mq_640({  width: 80%; });
   &.closed {
-    .animation(out-fade-right @run_slow @bezier_fadein both);
+    .animation-name(none);
+    .translate3d(100%, 0, 0);
+    .transition_transform(@run_slow @bezier_fadein);
     position: absolute;
     .chat-input {
       visibility: hidden;
