@@ -12,21 +12,28 @@
   .flex(1);
 }
 .chat-window {
-  .flex(0 0 @size_chat);
   .flexy(stretch; flex-end; column);
   .transform-origin(right center);
   .transition_transform(@run @now @bezier_fadein);
   .user-select(auto); // VETO
-  position: relative; // TODO
+  position: relative;
   min-width: @tile_chat_min;
+  width: @tile_chat;
+  max-width: @tile_chat_max;
+  height: 100%;
   background: @dye_outer;
   box-shadow: -1px 0 @gray_lighter;
   pointer-events: auto; // VETO
   will-change: transform;
+  .mq_640({
+    max-width: @tile_chat_min;
+  });
   &.closed {
-    .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));
+    .translate3d(100%, 0, 0);
     .transition_transform(@run_slow @now @bezier_fadein);
-    margin-left: -@size_chat;
+    position: absolute;
+    top: 0;
+    right: 0;
     .chat-input {
       visibility: hidden;
       transition: visibility @now @run_slow @bezier_fadein;
