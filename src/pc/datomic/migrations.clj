@@ -60,8 +60,12 @@
   (let [db (d/db conn)]
     (dorun (pmap (fn [datoms]
                    @(d/transact-async conn
-                                      (for [[doc-id datom-group] (group-by :v datoms)]
-                                        [:temporary/assign-frontend-id (map :e datom-group) doc-id])))
+                                      (conj
+                                       (for [[doc-id datom-group] (group-by :v datoms)]
+                                         [:temporary/assign-frontend-id (map :e datom-group) doc-id])
+                                       {:db/id (d/tempid :db.part/tx)
+                                        :transaction/source :transaction.source/migration
+                                        :migration :migration/add-frontend-ids})))
                  (partition-all 100 (d/datoms db :aevt :document/id))))))
 
 (def migrations
