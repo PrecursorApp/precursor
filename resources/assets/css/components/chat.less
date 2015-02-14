@@ -24,9 +24,13 @@
   box-shadow: -1px 0 @gray_lighter;
   pointer-events: auto; // VETO
   will-change: transform;
-  .mq_640({
-    max-width: @tile_chat_min;
-  });
+  top: 0;
+  right: 0;
+  .mq_1920({ width: 30%;});
+  .mq_1600({ width: 35%;});
+  .mq_1280({ width: 40%;});
+  .mq_960({  width: 50%;});
+  .mq_640({  width: 75%; });
   &.closed {
     .animation(out-fade-right @run_slow @bezier_fadein both);
     position: absolute;
