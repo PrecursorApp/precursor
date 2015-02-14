@@ -1,9 +1,8 @@
 html {
+  .font-smoothing();
   font: @font_size/@line_height @font_family, sans-serif;
   color: @gray_dark;
-  -webkit-text-size-adjust:100%;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: fade(@black, 0);
 }
 body {
@@ -113,7 +112,7 @@ h6 { font-size: .75em; }
 button,
 input,
 textarea {
-  -webkit-font-smoothing: antialiased;
+  .font-smoothing();
 }
 p {
   margin: 0 0 1em;

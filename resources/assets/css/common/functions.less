@@ -126,6 +126,12 @@
   @colors: ~`"@{rest}".slice(1,-1)`;
   background-image+: linear-gradient(@type, @colors);
 }
+.font-smoothing(@a: antialiased) {
+  .aa(@a) when (@a = antialiased) {
+    -webkit-font-smoothing: @a;
+    -moz-osx-font-smoothing: grayscale;
+  }.aa(@a);
+}
 .transition_transform(...) {
   -webkit-transition+: -webkit-transform @arguments;
           transition+:         transform @arguments;
