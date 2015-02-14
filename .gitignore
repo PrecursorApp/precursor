@@ -20,3 +20,4 @@ pom.xml.asc
 /production.sh
 /datomic-free*/
 /figwheel_server.log
+/log/
