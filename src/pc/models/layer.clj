@@ -24,6 +24,7 @@
                       [?t :layer/name]]}
             db (:db/id document))))
 
+;; TODO: can use pull API here
 (defn read-api [layer]
   (select-keys layer [:layer/name
                       :layer/uuid
