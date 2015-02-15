@@ -69,8 +69,19 @@
               (common/google-login :small)]]
             [:div.our-philosphy-wrap.content
              [:div.our-philosphy
-              [:h1 "Sharing prototypes with your team should be easy."]
-              [:p "Productive prototyping without all the nonsense."]
+              ; [:h1 "Sharing prototypes with your team should be easy."]
+              ; [:h1 "Prototyping with your team should be easy."]
+              ; [:h1 "Brainstorming should be easier."]
+              ; [:h1 "Brainstorming should be easier from anywhere."]
+              ; [:h1 "Brainstorming with your team should be easy from anywhere."]
+              [:h1 "Collaborating with your team should be easy from anywhere."]
+              ; [:p "Prototype just your ideas without all the nonsense."]
+              ; [:p "Prototype just your ideas without all the nonsense, anytime and on any device."]
+              ; [:p "Prototype your ideas anywhere, with any device, and without all the nonsense."]
+              ; [:p "Prototype your ideas anywhere, with any device, and without the nonsense."]
+              ; [:p "Prototype ideas anywhere, with any device, and without nonsense."]
+              ; [:p "Prototype ideas anywhere without all the nonsense, and on any device."]
+              [:p "Prototype ideas anywhere, with anyone, and on any device. No nonsense, it's just what you need, when you need it."]
               [:div.call-to-action
                [:button {:on-click #(cast! :landing-closed)} "Jump in and make a ________."]]]]]
            [:div.our-proof
