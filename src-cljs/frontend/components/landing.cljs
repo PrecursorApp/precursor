@@ -67,12 +67,14 @@
               [:a {:role "button"} "Pricing"]
               [:a {:role "button"} "Blog"]
               (common/google-login :small)]]
-            [:article.content
-             [:h1 "Sharing prototypes with your team should be easy."]
-             [:p "Productive prototyping without all the nonsense."]
-             [:div.call-to-action
-              [:button {:on-click #(cast! :landing-closed)} "Jump in and make a ________."]]]]
-           [:div.our-proof]])))))
+            [:div.our-philosphy-wrap.content
+             [:div.our-philosphy
+              [:h1 "Sharing prototypes with your team should be easy."]
+              [:p "Productive prototyping without all the nonsense."]
+              [:div.call-to-action
+               [:button {:on-click #(cast! :landing-closed)} "Jump in and make a ________."]]]]]
+           [:div.our-proof
+            [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]]])))))
 
 (defn the-how [app owner]
   (reify
@@ -85,7 +87,7 @@
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "1") "active") :ref "1"}
              [:div.featurette-story
-              [:h2 "Express your ideas efficiently with simple tools."]
+              [:h2 "Access your ideas on any device right in the browser."]
               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
@@ -93,7 +95,7 @@
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
              [:div.featurette-story
-              [:h2 "Interact with your idea before developing it."]
+              [:h2 "Interact with your ideas before developing them."]
               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
@@ -101,7 +103,7 @@
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
              [:div.featurette-story
-              [:h2 "Share your ideas faster without forgetting them."]
+              [:h2 "Collaborate with your entire team in real time, privately."]
               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
                   Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
@@ -117,12 +119,13 @@
           [:div.the-what
             [:div.our-proof]
             [:div.our-claim
-             [:article.content
-              [:h1 "It's pure prototyping, just focus on your ideas."]
-              [:p "Productive prototyping without all the nonsense."]
-              [:div.call-to-action
-               (common/google-login)
-               [:button {:on-click #(cast! :landing-closed)} "Or jump in first."]]]
+             [:div.our-philosphy-wrap.content
+              [:article.our-philosphy
+               [:h1 "It's pure prototyping, just focus on your ideas."]
+               [:p "Productive prototyping without all the nonsense."]
+               [:div.call-to-action
+                (common/google-login)
+                [:button {:on-click #(cast! :landing-closed)} "Or jump in first."]]]]
              [:div.navigation
               [:div.content
                [:a {:role "button"} "Precursor"]

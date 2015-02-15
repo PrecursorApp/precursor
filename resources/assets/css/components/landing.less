@@ -1,10 +1,16 @@
 .the-why,
 .the-what {
   .flexy(column);
-  color: @white;
   min-height: 100%;
-  a {
-    color: @white;
+  .navigation {
+    a {
+      color: fade(@white, 34);
+      transition: @run_fast @bezier_fadein;
+      &:hover {
+        color: @white;
+        transition: @now;
+      }
+    }
   }
 }
 .the-why {
@@ -36,6 +42,8 @@
   }
   .our-proof {
     .animation(in-fade-bottom @run @run_fast @bezier_deform backwards);
+    .flexy(center; center);
+    color: @gray_light;
     box-shadow: 0 -8px 13px fade(@black,21);
   }
 }
@@ -58,6 +66,7 @@
   .flex(1);
   .flexy(column);
   position: relative;
+  color: @white;
   .mq_640({
     min-height: 100%;
   });
@@ -68,13 +77,16 @@
       font-size: 3em;
     });
   }
-  article {
-    .flex(1);
-    .flexy(column);
-    .justify-content(center);
-    .animation(jumbotron-content @run @run @bezier_deform backwards);
-    .transform-origin(0 0);
-  }
+
+}
+.our-philosphy-wrap {
+  .flex(1);
+  .flexy(center);
+}
+.our-philosphy {
+  .flexy(column);
+  .animation(jumbotron-content @run @run @bezier_deform backwards);
+  .transform-origin(0 0);
 }
 .our-proof {
   height: 2 * @tile;

@@ -13,6 +13,7 @@
   background-color: @color_google;
   border-bottom: 1px solid @color_google_darker;
   border-radius: .25rem;
+  box-shadow: 0 0 fade(@color_google_darker, 0);
   &:not(.small) {
     .icon-google {
       padding: @menu_padding;
@@ -21,6 +22,7 @@
       padding: @menu_padding;
       &:after {
         content: " " attr(data-second-half);
+        color: @white;
       }
     }
   }
@@ -39,12 +41,14 @@
     padding: @menu_padding / 3;
     &:before {
       content: attr(data-first-half);
+      color: @white;
     }
   }
   &:hover,
   &:focus {
     .translate3d(0, -2px, 0);
     box-shadow: 0 2px @color_google_darker;
+
   }
   &:active {
     .translate3d(0, 0, 0);
