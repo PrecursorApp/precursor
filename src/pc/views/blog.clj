@@ -113,7 +113,7 @@
   (html (pc.views.content/layout
          {}
          [:div.page-blog
-          [:nav.navigation.header
+          [:nav.navigation-blog.header
            [:a.navigation-title {:href "/"
                                  :title "Make something."}
             "Precursor"]
@@ -123,7 +123,7 @@
           (if (post-exists? slug)
             (single-post slug)
             (overview))
-          [:footer.navigation.footer
+          [:footer.navigation-blog.footer
            [:a.navigation-promote {:href "https://twitter.com/prcrsr_app"
                                    :data-right "Follow our changelog."}
             twitter]]])))

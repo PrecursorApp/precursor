@@ -1,0 +1,54 @@
+.mixpanel-badge {
+  .animation(in-fade-bottom @run_slow);
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  svg {
+    fill: @gray_mixpanel;
+  }
+}
+.google-login {
+  .flexy(center);
+  .user-select(none);
+  background-color: @color_google;
+  border-bottom: 1px solid @color_google_darker;
+  border-radius: .25rem;
+  &:not(.small) {
+    .icon-google {
+      padding: @menu_padding;
+    }
+    span {
+      padding: @menu_padding;
+      &:after {
+        content: " " attr(data-second-half);
+      }
+    }
+  }
+  .icon-google {
+    padding: @menu_padding / 3;
+    border-right: 1px solid @color_google_darker;
+    .iconpile {
+      .fill-google {
+        fill: @white;
+      }
+    }
+  }
+  span {
+    line-height: 1em;
+    margin: auto;
+    padding: @menu_padding / 3;
+    &:before {
+      content: attr(data-first-half);
+    }
+  }
+  &:hover,
+  &:focus {
+    .translate3d(0, -2px, 0);
+    box-shadow: 0 2px @color_google_darker;
+  }
+  &:active {
+    .translate3d(0, 0, 0);
+    background-color: @color_google_dark;
+    box-shadow: 0 2px @color_google_dark inset;
+  }
+}

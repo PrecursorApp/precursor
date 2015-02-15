@@ -1,0 +1,106 @@
+.outer {
+  position: absolute;
+  z-index: @zindex_landing;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  &.landed {
+    .canvas-background:after,
+    .our-proof,
+    .home-nav,
+    .jumbotron .content {
+      .animation-duration(@now);
+      .animation-delay(@now);
+    }
+  }
+  ~ .inner {
+    .canvas-background {
+      &:after {
+        .animation(in-fade @run @run_fast @bezier_fadein backwards);
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
+      }
+    }
+    .canvas-frame {
+      .scale3d(.8);
+      width: 125%;
+      height: 125%;
+      transition+: all @run_slower @bezier_deform;
+      transition+: width @now @bezier_deform;
+      transition+: height @now @bezier_deform;
+    }
+    .grid-big {
+      path {
+        stroke-width: 0;
+      }
+    }
+    .grid-small {
+      path {
+        stroke: darken(@dye_inner, 5);
+        stroke-width: 3;
+        stroke-dasharray: 2 20;
+      }
+    }
+    .layer-outline {
+      stroke: darken(@dye_inner, 5);
+      transition-duration: @run;
+    }
+    .text-layer {
+      fill: darken(@dye_inner, 5);
+      transition-duration: @run;
+    }
+    .chat {
+      .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));
+      opacity: 0;
+      transition: @now;
+    }
+    .chat-input {
+      visibility: hidden;
+      transition: visibility @now @run_slow @bezier_fadein;
+    }
+  }
+  ~ .hud {
+    opacity: 0;
+    transition: @now;
+  }
+}
+.content {
+  .box-sizing(content-box);
+  max-width: @tile_content;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: @padding_outer;
+  padding-right: @padding_outer;
+}
+.navigation {
+  .flexy();
+  height: @tile;
+  .content {
+    .flex(1 1 100%);
+    .flexy(center);
+  }
+  a {
+    &:first-of-type {
+      margin-right: auto;
+    }
+    &:not(:first-of-type) {
+      margin-left: @tile / 2;
+    }
+  }
+}
+.call-to-action {
+  .flexy(wrap);
+  button {
+    height: @tile;
+    padding: 0 @padding_outer;
+    .mq_640({
+      width: 100%;
+    });
+  }
+}

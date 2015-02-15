@@ -122,6 +122,16 @@
               filter+_: @argument;
   }
 }
+.shadow_inset(@position; @black; @white) {
+  .top(@arguments) when (@position = top) {
+    box-shadow+: 0 -1px @black;
+    box-shadow+: 0  1px @white inset;
+  }.top(@arguments);
+  .btm(@arguments) when (@position = bottom) {
+    box-shadow+: 0 -1px @black inset;
+    box-shadow+: 0  1px @white;
+  }.btm(@arguments);
+}
 .gradient(@type; @rest...) {
   @colors: ~`"@{rest}".slice(1,-1)`;
   background-image+: linear-gradient(@type, @colors);

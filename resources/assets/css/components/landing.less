@@ -1,302 +1,132 @@
-.outer {
-  position: absolute;
-  z-index: @zindex_landing;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  &.landed {
-    .canvas-background:after,
-    .trusted-by,
-    .home-nav,
-    .jumbotron .content {
-      .animation-duration(@now);
-      .animation-delay(@now);
-    }
-  }
-  ~ .inner {
-    .canvas-background {
-      &:after {
-        .animation(in-fade @run @run_fast @bezier_fadein backwards);
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
-      }
-    }
-    .canvas-frame {
-      .scale3d(.8);
-      width: 125%;
-      height: 125%;
-      transition+: all @run_slower @bezier_deform;
-      transition+: width @now @bezier_deform;
-      transition+: height @now @bezier_deform;
-    }
-    .grid-big {
-      path {
-        stroke-width: 0;
-      }
-    }
-    .grid-small {
-      path {
-        stroke: darken(@dye_inner, 5);
-        stroke-width: 3;
-        stroke-dasharray: 2 20;
-      }
-    }
-    .layer-outline {
-      stroke: darken(@dye_inner, 5);
-      transition-duration: @run;
-    }
-    .text-layer {
-      fill: darken(@dye_inner, 5);
-      transition-duration: @run;
-    }
-    .chat {
-      .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));
-      opacity: 0;
-      transition: @now;
-    }
-    .chat-input {
-      visibility: hidden;
-      transition: visibility @now @run_slow @bezier_fadein;
-    }
-  }
-  ~ .hud {
-    opacity: 0;
-    transition: @now;
-  }
-  nav {
-    .flexy();
-    height: @tile;
-    .content {
-      .flex(1 1 100%);
-      .flexy(center);
-    }
-    .nav-item {
-      &:not(:hover) {
-        color: @gray;
-      }
-      &:first-of-type {
-        margin-right: auto;
-      }
-      &:not(:first-of-type) {
-        margin-left: @tile / 2;
-      }
-    }
-  }
-  .jumbotron {
-    color: @white;
-    a {
-      &:not(:hover) {
-        color: @white;
-      }
-    }
-  }
-}
-.home-nav {
-  .animation(in-fade-top @run @run_slower @bezier_deform backwards);
-  position: absolute;
-  z-index: @zindex_landing;
-  top: 0;
-  left: 0;
-  width: 100%;
-  border-bottom: 1px solid fade(@black, 21);
-  box-shadow: 0 1px fade(@white, 05);
-}
-.home-foot {
-  background-color: fade(@dye_inner, 97);
-  border-top: 1px solid fade(@black, 21);
-  box-shadow: 0 1px fade(@white, 05) inset;
-}
-.google-login {
-  @color: #3A7AF3;
-  @shadow: darken(desaturate(@color, 34), 13);
-  .flexy(center);
-  .user-select(none);
-  background-color: @color;
-  border-bottom: 1px solid @shadow;
-  border-radius: 3px;
-  span {
-    .icon(fill; @white);
-    color: @white;
-    line-height: 1em;
-    padding: .5em;
-    &:first-child {
-      border-right: 1px solid @shadow;
-    }
-  }
-  &:hover {
-    margin-bottom: 1px;
-    border-bottom-width: 2px;
-    span {
-      .icon(fill; @white);
-      color: @white;
-    }
-  }
-  &:active {
-    background-color: darken(desaturate(@color, 13), 5);
-    margin-bottom: 0;
-    border-bottom-width: 0;
-    box-shadow: 0 2px @shadow inset;
-  }
-}
-.jumbotron-buttons {
-  .flexy(center);
-  margin: 2em 0 1em;
-  .mq_640({
-    .flex-direction(column);
-    .align-items(flex-start);
-  });
-  .google-login {
-    height: @tile;
-    span {
-      padding: 1.5em;
-    }
-  }
-}
-.home-nav-items {
-  max-width: @tile_content;
-  height: @tile;
-  margin: 0 auto;
-  background: blue;
-}
-.jumbotron {
-  .flexy(center);
-  position: relative;
+.the-why,
+.the-what {
+  .flexy(column);
+  color: @white;
   min-height: 100%;
-  .mq_640({
-    min-height: @tile_xxl;
-  });
-  .content {
-    .animation(jumbotron-content @run @run @bezier_deform backwards);
-    .transform-origin(0 0);
+  a {
+    color: @white;
   }
+}
+.the-why {
+  .navigation {
+    .animation(in-fade-top @run @run_slower @bezier_deform backwards);
+    .shadow_inset(bottom; @color_inset_black; @color_inset_white);
+  }
+  .google-login {
+    &.small {
+      .mq_640({
+        display: none !important;
+      });
+    }
+  }
+  .call-to-action {
+    button {
+      color: @white;
+      transition: @run @bezier_fadein;
+      border: 2px solid @white;
+      &:hover,
+      &:focus,
+      &:active {
+        color: @black;
+        background: @white;
+        border-color: @white;
+        transition-duration: @now;
+      }
+    }
+  }
+  .our-proof {
+    .animation(in-fade-bottom @run @run_fast @bezier_deform backwards);
+    box-shadow: 0 -8px 13px fade(@black,21);
+  }
+}
+.the-what {
+  .our-proof {
+    box-shadow: 0 8px 13px fade(@black,21);
+  }
+  .google-login {
+    &:not(.small) {
+      .mq_640({
+        width: 100%;
+      });
+    }
+  }
+  .navigation {
+    .shadow_inset(top; @color_inset_black; @color_inset_white);
+  }
+}
+.our-claim {
+  .flex(1);
+  .flexy(column);
+  position: relative;
+  .mq_640({
+    min-height: 100%;
+  });
   h1 {
-    margin-left: -0.0625em; // better aligns h1 (big font size wastes space)
+    margin-bottom: .5rem;
+    margin-left: -.0625em; // better aligns h1 (big font size wastes space)
     .mq_640({
       font-size: 3em;
     });
   }
-  h4 {
+  article {
+    .flex(1);
+    .flexy(column);
+    .justify-content(center);
+    .animation(jumbotron-content @run @run @bezier_deform backwards);
+    .transform-origin(0 0);
+  }
+}
+.our-proof {
+  height: 2 * @tile;
+  background: @dye_outer;
+}
+.the-how {
+  background: @dye_outer;
+  h2 {
     .mq_640({
-      font-size: 1em;
+      font-size: 2em;
     });
   }
-  button {
-    .flexy(center, center);
-    height: @tile;
-    padding: 0 (@tile / 2);
-    margin-top: 2em;
-    transition: @run @bezier_fadein;
-    border: 2px solid @gray_lighter;
-    &:hover,
-    &:focus,
-    &:active {
-      color: @black;
-      background: @white;
-      border-color: @white;
-      transition-duration: @now;
-    }
-  }
-}
-.prolog {
-  padding-top: @tile;
-  padding: @tile 0 (@tile * 2);
-}
-.epilog-cta-2nd {
-  margin-left: 1em;
-  .mq_640({
-    .flexy(center, center);
-    height: @tile;
-    margin: 0;
-    padding-right: @tile * 2;
-  });
-}
-.content {
-  .box-sizing(content-box);
-  max-width: @tile_content;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-.trusted-by {
-  .animation(in-fade-bottom @run @run_fast @bezier_deform backwards);
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: @tile * 2;
-  background: @dye_outer;
-  box-shadow: 0 -8px 13px fade(@black,21);
-}
-.home-body {
-  background: @dye_outer;
-}
-.featurette {
-  .box-sizing(content-box);
-  .flexy();
-  max-width: @tile_content;
-  margin: @margin_featurette auto;
-  .mq_960({
-    .flex-direction(column);
-    margin: 20vh auto;
-  });
-  .mq_640({
-    margin: 10vh auto;
-  });
-  &:nth-of-type(even) {
-    .featurette-media {
-      .order(1);
-      .mq_960({
-        .order(3);
-      });
-    }
-  }
-}
-.featurette-why {
-  margin-top: 0;
-  padding-top: (@margin_featurette * (3 / 3));
-  .mq_960({
-    padding-top: (@margin_featurette * (2 / 3));
-  });
-  .mq_640({
-    padding-top: (@margin_featurette * (1 / 3));
-  });
-}
-.featurette-how {
-  .featurette-story {
-    .flex(2);
-  }
-}
-.featurette-what {
-  margin-bottom: 0;
-  padding-bottom: @margin_featurette;
-}
-.featurette-story,
-.featurette-media {
-  .flex(1);
-  margin: auto 0;
-  padding: 1rem;
-}
-.featurette-story {
-  .order(2);
   p {
     margin: 0;
   }
 }
+.featurette {
+  .flexy(wrap);
+  .align-items(center);
+  height: 50vh;
+  padding: 0; // VETO
+  .mq_640({
+    height: 200vh;
+    max-height: 175vw;
+  });
+}
+.featurette-story {
+  .order(2);
+  .flex(1 1 66%);
+  padding: @menu_padding;
+  .mq_640({
+    .flex(0 0 100%);
+    margin-bottom: auto;
+  });
+}
 .featurette-media {
   .order(3);
-  .mq_960({
-    margin-right: 30vw;
-  });
+  .flex(1 1 34%);
+  padding: @menu_padding;
   .mq_640({
-    margin-right: 0;
+    .flex(0 0 100%);
+    margin-top: auto;
+    padding-bottom: 0; // VETO
   });
+  &.reverse {
+    .order(1); // VETO
+  }
+  &:not(.reverse) {
+    .mq_640({
+      .order(1);
+    });
+  }
 }
 //
 // TODO all below for dev only!

@@ -52,6 +52,83 @@
   (when (not= (om/get-state owner korks) value)
     (om/set-state! owner korks value)))
 
+(defn the-why [app owner]
+  (reify
+    om/IInitState (init-state [_] {:past-center-featurettes #{}})
+    om/IRenderState
+    (render-state [_ {:keys [past-center-featurettes]}]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+          [:div.the-why
+           [:div.our-claim
+            [:div.navigation
+             [:div.content
+              [:a {:role "button"} "Precursor"]
+              [:a {:role "button"} "Pricing"]
+              [:a {:role "button"} "Blog"]
+              (common/google-login :small)]]
+            [:article.content
+             [:h1 "Sharing prototypes with your team should be easy."]
+             [:p "Productive prototyping without all the nonsense."]
+             [:div.call-to-action
+              [:button {:on-click #(cast! :landing-closed)} "Jump in and make a ________."]]]]
+           [:div.our-proof]])))))
+
+(defn the-how [app owner]
+  (reify
+    om/IInitState (init-state [_] {:past-center-featurettes #{}})
+    om/IRenderState
+    (render-state [_ {:keys [past-center-featurettes]}]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+          [:div.the-how
+            [:div.featurette.content
+             {:class (when (contains? past-center-featurettes "1") "active") :ref "1"}
+             [:div.featurette-story
+              [:h2 "Express your ideas efficiently with simple tools."]
+              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+             [:div.featurette-media screen]]
+            [:div.featurette.content
+             {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
+             [:div.featurette-story
+              [:h2 "Interact with your idea before developing it."]
+              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+             [:div.featurette-media.reverse screen]]
+            [:div.featurette.content
+             {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
+             [:div.featurette-story
+              [:h2 "Share your ideas faster without forgetting them."]
+              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+             [:div.featurette-media screen]]])))))
+
+(defn the-what [app owner]
+  (reify
+    om/IInitState (init-state [_] {:past-center-featurettes #{}})
+    om/IRenderState
+    (render-state [_ {:keys [past-center-featurettes]}]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+          [:div.the-what
+            [:div.our-proof]
+            [:div.our-claim
+             [:article.content
+              [:h1 "It's pure prototyping, just focus on your ideas."]
+              [:p "Productive prototyping without all the nonsense."]
+              [:div.call-to-action
+               (common/google-login)
+               [:button {:on-click #(cast! :landing-closed)} "Or jump in first."]]]
+             [:div.navigation
+              [:div.content
+               [:a {:role "button"} "Precursor"]
+               [:a {:role "button"} "Pricing"]
+               [:a {:role "button"} "Blog"]]]]])))))
+
 (defn landing [app owner]
   (reify
     om/IInitState (init-state [_] {:past-center-featurettes #{}})
@@ -60,95 +137,8 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.outer
-          {:on-scroll #(maybe-set-state! owner [:past-center-featurettes]
-                                         (set (filter (partial past-center? owner) ["1" "2" "3" "4" "5"])))
+          {:on-scroll #(maybe-set-state! owner [:past-center-featurettes] (set (filter (partial past-center? owner)["1" "2" "3"])))
            :class (when-not (get app :not-landing?) "landed")}
-           [:nav.home-nav
-            [:div.content
-             [:a.nav-item {:role "button"} "Precursor"]
-             [:a.nav-item {:role "button"} "Pricing"]
-             [:a.nav-item {:role "button"} "Blog"]
-             [:a.nav-item.google-login.mobile-hidden {:role "button"}
-              [:span.google-login-icon
-               (common/icon :google)]
-              [:span.google-login-body "Sign in"]]]]
-           [:div.prolog.jumbotron
-            [:div.content
-             [:h1 "Collaborate on every idea with your entire team."]
-             [:h4 "Productive prototyping without all the nonsense."]
-             [:button.prolog-cta {:on-click #(cast! :landing-closed)}
-              "Launch Precursor"]]
-            [:div.trusted-by]]
-           [:div.home-body
-            [:article.featurette.featurette-why {:ref "1"
-                                                 :class (when (contains? past-center-featurettes "1") "active")}
-             [:div.featurette-story
-              [:h2 "Sharing prototypes should be simple."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]
-            [:article.featurette.featurette-how  {:ref "2"
-                                                  :class (when (contains? past-center-featurettes "2") "active")}
-             [:div.featurette-story
-              [:h2 "Express your ideas efficiently with simple tools."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]
-            [:article.featurette.featurette-how {:ref "3"
-                                                 :class (when (contains? past-center-featurettes "3") "active")}
-             [:div.featurette-story
-              [:h2 "Interact with your idea before developing it."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]
-            [:article.featurette.featurette-how {:ref "4"
-                                                 :class (when (contains? past-center-featurettes "4") "active")}
-             [:div.featurette-story
-              [:h2 "Share your ideas faster without forgetting them."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]
-            [:article.featurette.featurette-what {:ref "5"
-                                                  :class (when (contains? past-center-featurettes "5") "active")}
-             [:div.featurette-story
-              [:h2 "Pure prototyping, just focus on the idea."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]]
-           [:div.epilog.jumbotron
-            [:div.content
-             [:h1 "Collaborate on every idea with your entire team."]
-             [:h4 "Productive prototyping without all the nonsense."]
-             ; [:div.jumbotron-buttons
-             ;  [:a.google-login {:role "button"}
-             ;   [:span.google-login-icon
-             ;    (common/icon :google)]
-             ;   [:span.google-login-body "Sign in with Google"]]
-             ;  [:button "Try it first"]]
-
-             [:div.jumbotron-buttons
-              [:a.google-login.epilog-cta {:role "button"}
-               [:span.google-login-icon
-                (common/icon :google)]
-               [:span.google-login-body "Sign in with Google"]]
-              [:a.epilog-cta-2nd {:on-click #(cast! :landing-closed)
-                                  :role "button"}
-               "Or Try It First"]]
-
-             ; [:a.google-login {:role "button"}
-             ;  [:span.google-login-icon
-             ;   (common/icon :google)]
-             ;  [:span.google-login-body "Sign in with Google"]]
-             ; [:a {:role "button"} "Or try it first"]
-
-             ]]
-           [:nav.home-foot
-            [:div.content
-             [:a.nav-item {:role "button"} "Precursor"]
-             [:a.nav-item {:role "button"} "Pricing"]
-             [:a.nav-item {:role "button"} "Blog"]]]])))))
+           (om/build the-why app)
+           (om/build the-how app)
+           (om/build the-what app)])))))

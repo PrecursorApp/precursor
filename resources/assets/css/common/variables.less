@@ -35,6 +35,10 @@
 @color_select: @blue;
 @color_select_hover: lighten(@color_select, 13);
 
+@color_google: #3A7AF3;
+@color_google_dark:   darken(desaturate(@color_google, 13),  5);
+@color_google_darker: darken(desaturate(@color_google, 34), 13);
+
 @dye_inner: @gray_darker;
 @dye_outer: @white;
 
@@ -52,6 +56,7 @@
 @bezier_deform: cubic-bezier(0.39, 0.575, 0.565, 1);
 
 // Components
+// TODO change "tile" to "size"
 
 @tile: (1rem * 4);
 @tile_xl: pow(@tile, 2);
@@ -68,7 +73,11 @@
 @tile_content: @tile_xxl;
 
 @tooltip_color: @gray_dark;
-@menu_padding: 1.5rem;
+@menu_padding: 1.5rem; // TODO fix naming convention here
+@padding_outer: @menu_padding;
+
+@color_inset_black: fade(@black, 34);
+@color_inset_white: fade(@white, 5);
 
 // z-index index
 
