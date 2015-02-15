@@ -11,9 +11,9 @@
   .flexy(center);
   .user-select(none);
   background-color: @color_google;
-  border-bottom: 1px solid @color_google_darker;
+  border-bottom: 1px solid @color_google_dark;
   border-radius: .25rem;
-  box-shadow: 0 0 fade(@color_google_darker, 0);
+  box-shadow: 0 0 fade(@color_google_dark, 0);
   &:not(.small) {
     .icon-google {
       padding: @menu_padding;
@@ -28,7 +28,7 @@
   }
   .icon-google {
     padding: @menu_padding / 3;
-    border-right: 1px solid @color_google_darker;
+    border-right: 1px solid @color_google_dark;
     .iconpile {
       .fill-google {
         fill: @white;
@@ -47,12 +47,13 @@
   &:hover,
   &:focus {
     .translate3d(0, -2px, 0);
-    box-shadow: 0 2px @color_google_darker;
-
+    background-color: @color_google_light;
+    box-shadow+: 0 2px @color_google_dark;
+    box-shadow+: 0 1px fade(@white, 21) inset;
   }
   &:active {
     .translate3d(0, 0, 0);
-    background-color: @color_google_dark;
-    box-shadow: 0 2px @color_google_dark inset;
+    background-color: lighten(saturate(@color_google_dark, 21), 8);
+    box-shadow: 0  2px @color_google_dark inset;
   }
 }
