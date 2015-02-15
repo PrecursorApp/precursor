@@ -4,7 +4,7 @@
   min-height: 100%;
   .navigation {
     a {
-      color: fade(@white, 34);
+      color: fade(@white, 41.75); // precise transparency makes @white appear @gray on @gray_darker background
       transition: @run_fast @bezier_fadein;
       &:hover {
         color: @white;
@@ -75,18 +75,21 @@
   .flex(1);
   .flexy(column);
   position: relative;
-  color: @white;
+  color: fade(@white, 75.75); // precise transparency makes @white appear @gray_light on @gray_darker background
   .mq_640({
     min-height: 100%;
   });
   h1 {
-    margin-bottom: .5rem;
+    line-height: 1em;
+    margin-bottom: -.5rem; // better aligns h1 (big font size wastes space)
     margin-left: -.0625em; // better aligns h1 (big font size wastes space)
     .mq_640({
       font-size: 3em;
     });
   }
-
+  p {
+    margin: @padding_outer 0;
+  }
 }
 .our-philosphy-wrap {
   .flex(1);
