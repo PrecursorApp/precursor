@@ -279,9 +279,7 @@
                                                    :else
                                                    (cast! :canvas-aligned-to-layer-center
                                                           {:ui-id (:layer/ui-target layer)
-                                                           :canvas-size (let [size (goog.style/getSize (goog.dom/getElement "svg-canvas"))]
-                                                                          {:width (.-width size)
-                                                                           :height (.-height size)})})))
+                                                           :canvas-size (utils/canvas-size)})))
 
                                  :className (str "action interactive-fill "
                                                  (when (and (< 1 (count selected-eids))

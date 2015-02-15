@@ -5,6 +5,7 @@
             [clojure.set :as set]
             [clojure.tools.logging :as log]
             [clojure.tools.reader.edn :as edn]
+            [clj-statsd :as statsd]
             [clj-time.core :as time]
             [clj-time.format :as time-format]
             [compojure.core :refer (defroutes routes GET POST ANY)]
@@ -256,15 +257,16 @@
 
 (defn logging-middleware [handler]
   (fn [req]
-    (let [start (time/now)
-          resp (handler req)
-          stop (time/now)]
-      (try
-        (log-request req resp (time/in-millis (time/interval start stop)))
-        (catch Exception e
-          (rollbar/report-exception e :request req :user-id (get-in req [:auth :cust :cust/uuid]))
-          (log/error e)))
-      resp)))
+    (statsd/with-timing :http-request
+      (let [start (time/now)
+            resp (handler req)
+            stop (time/now)]
+        (try
+          (log-request req resp (time/in-millis (time/interval start stop)))
+          (catch Exception e
+            (rollbar/report-exception e :request req :user-id (get-in req [:auth :cust :cust/uuid]))
+            (log/error e)))
+        resp))))
 
 (defn ssl-middleware [handler]
   (fn [req]

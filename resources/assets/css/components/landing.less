@@ -11,6 +11,23 @@
         transition: @now;
       }
     }
+    .layer-outline {
+      stroke: darken(@dye_inner, 5);
+      transition-duration: @run;
+    }
+    .text-layer {
+      fill: darken(@dye_inner, 5);
+      transition-duration: @run;
+    }
+    .chat-window {
+      .transform(translate3d(115%,0,0) scale3d(1.1, 1.1, 1));
+      opacity: 0;
+      transition: @now;
+    }
+    .chat-input {
+      visibility: hidden;
+      transition: visibility @now @run_slow @bezier_fadein;
+    }
   }
 }
 .the-why {

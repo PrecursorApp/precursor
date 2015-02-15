@@ -21,7 +21,7 @@
   (let [doc (doc-model/create-public-doc! (merge {:document/name (str "Copy of " document-name)
                                                   :document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                                                  (when (:cust/uuid cust) {:document/creator (:cust/uuid cust)})))]
-    (if-let [layers (get docs document-name)]
+    (if-let [layers (get (docs) document-name)]
       @(d/transact (pcd/conn) (conj (map #(assoc %
                                             :db/id (d/tempid :db.part/user)
                                             :document/id (:db/id doc))
