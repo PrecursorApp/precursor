@@ -50,6 +50,7 @@
 .the-what {
   .our-proof {
     box-shadow: 0 8px 13px fade(@black,21);
+    display: none !important; // keep bottom one empty until we good proof
   }
   .google-login {
     &:not(.small) {
@@ -89,7 +90,7 @@
   .transform-origin(0 0);
 }
 .our-proof {
-  height: 2 * @tile;
+  height: 3px;
   background: @dye_outer;
 }
 .the-how {
