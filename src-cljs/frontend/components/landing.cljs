@@ -72,7 +72,18 @@
               [:h1 "Collaborating with your team should be easy from anywhere."]
               [:p "Prototype ideas anywhere, with anyone, and on any device. No nonsense, it's just what you need, when you need it."]
               [:div.call-to-action
-               [:button {:on-click #(cast! :landing-closed)} "Jump in and make a ________."]]]]]
+               [:button.make-button
+                {:on-click #(cast! :landing-closed)}
+                ; ; "Jump in and make a ________."
+                ; ; "Jump in, make a ________."
+                ; "START BY MAKING ____________ ."
+                [:div.make-prepend   "START BY MAKING"]
+                [:div.make-something
+                 [:div.something-wheel
+                  {:data-after "test &#xa; test"}
+                  "a wireframe"]]
+                [:div.make-append    "."]
+                ]]]]]
            [:div.our-proof
             ;; Hide this until we get testimonials/stats figured out
             ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]

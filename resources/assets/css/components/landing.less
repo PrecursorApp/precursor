@@ -71,6 +71,58 @@
     }
   }
 }
+.make-button {
+  .flexy();
+  line-height: 1em;
+  &:hover {
+    .make-something {
+      box-shadow: 0 -1px @black inset;
+      transition-duration: @now;
+    }
+  }
+}
+.make-prepend {
+  margin-right: .25em;
+}
+.make-something {
+  .box-sizing(content-box);
+  position: relative;
+  width: 93px;
+  height: 1em;
+  padding-bottom: .125em;
+  margin-top: -.25em;
+  box-shadow: 0 -1px @white inset;
+  transition: @run_fast @bezier_fadein;
+}
+.something-wheel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: fade(green,10); // TODO dev
+  &:before,
+  &:after {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    white-space: pre;
+  }
+  &:before {
+    content: "";
+    bottom: 100%;
+    background: fade(red,10); // TODO dev
+  }
+  &:after {
+    content: attr(data-after);
+    top: 100%;
+    background: fade(blue,10); // TODO dev
+  }
+}
+.make-append {
+  margin-left: .25em;
+}
 .our-claim {
   .flex(1);
   .flexy(column);
