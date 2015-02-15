@@ -74,7 +74,9 @@
               [:div.call-to-action
                [:button {:on-click #(cast! :landing-closed)} "Jump in and make a ________."]]]]]
            [:div.our-proof
-            [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]]])))))
+            ;; Hide this until we get testimonials/stats figured out
+            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
+            ]])))))
 
 (defn the-how [app owner]
   (reify
