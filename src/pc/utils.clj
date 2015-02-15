@@ -89,3 +89,6 @@
         (rollbar/report-exception t#)
         (.printStackTrace t#)
         (log/error t#)))))
+
+(defmacro reporting-future [& body]
+  `(future (with-report-exceptions ~@body)))
