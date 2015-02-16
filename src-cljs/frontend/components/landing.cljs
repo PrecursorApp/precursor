@@ -117,9 +117,9 @@
               (common/google-login :small)]]
             [:div.our-philosphy-wrap
              [:div.our-philosphy.content
-              [:h1 "Collaboration should be simple."]
+              [:h1 "Collaborating should be simple."]
               [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
-              [:div.call-to-action
+              [:div.calls-to-action
                (om/build make-button app)]]]]
            [:div.our-proof
             ;; Hide this until we get testimonials/stats figured out
@@ -145,18 +145,26 @@
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
              [:div.featurette-story
-              [:h2 "Interact with your ideas before developing them."]
+              [:h2 "Interact with your ideas way before development."]
               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]
+              [:p
+               [:a
+                {:role "button"}
+                "Read the tutorial."]]]
              [:div.featurette-media.reverse screen]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
              [:div.featurette-story
-              [:h2 "Collaborate with your entire team in real time, privately."]
+              [:h2 "Collaborate with your whole team in real time."]
               [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                   Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]
+              [:p
+               [:a
+                {:role "button"}
+                "See our pricing."]]]
              [:div.featurette-media screen]]])))))
 
 (defn the-what [app owner]
@@ -171,9 +179,10 @@
             [:div.our-claim
              [:div.our-philosphy-wrap
               [:div.our-philosphy.content
-               [:h1 "It's purely productive prototyping."]
+               ; [:h1 "It's purely productive prototyping."]
+               [:h1 "What you need when you need it."]
                [:p "Precursor is the easiest way to share ideas with your teammates, fast."]
-               [:div.call-to-action
+               [:div.calls-to-action
                 (common/google-login)
                 (om/build make-button app)]]]
              [:div.navigation
