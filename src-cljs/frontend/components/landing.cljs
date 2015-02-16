@@ -67,10 +67,13 @@
               [:a {:role "button"} "Pricing"]
               [:a {:role "button"} "Blog"]
               (common/google-login :small)]]
-            [:div.our-philosphy-wrap.content
-             [:div.our-philosphy
-              [:h1 "Collaborating with your team should be easy from anywhere."]
-              [:p "Prototype ideas anywhere, with anyone, and on any device. No nonsense, it's just what you need, when you need it."]
+            [:div.our-philosphy-wrap
+             [:div.our-philosphy.content
+              ; [:h1 "Collaborating with your team should be easy from anywhere."]
+              [:h1 "Collaboration should be simple."]
+              ; [:p "Prototype ideas anywhere, with anyone, and on any device. No nonsense, it's just what you need, when you need it."]
+              ; [:p "Prototype anywhere on any device. No nonsense, it's just what you need, when you need it."]
+              [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
               [:div.call-to-action
                [:button.make-button
                 {:on-click #(cast! :landing-closed)}
@@ -132,13 +135,19 @@
           [:div.the-what
             [:div.our-proof]
             [:div.our-claim
-             [:div.our-philosphy-wrap.content
-              [:article.our-philosphy
-               [:h1 "It's pure prototyping, just focus on your ideas."]
-               [:p "Productive prototyping without all the nonsense."]
+             [:div.our-philosphy-wrap
+              [:div.our-philosphy.content
+               ; [:h1 "It's pure prototyping, just focus on your ideas."]
+               ; [:h1 "It's pure prototyping, that's it."]
+               ; [:h1 "Purely productive prototyping."]
+               [:h1 "It's purely productive prototyping."]
+               ; [:p "Productive prototyping without all the nonsense."]
+               [:p "Precursor is the easiest way to share ideas with your teammates, fast."]
                [:div.call-to-action
                 (common/google-login)
-                [:button {:on-click #(cast! :landing-closed)} "Or jump in first."]]]]
+                ; [:button {:on-click #(cast! :landing-closed)} "Or jump in first."]
+                (om/build make-button app)
+                ]]]
              [:div.navigation
               [:div.content
                [:a {:role "button"} "Precursor"]
