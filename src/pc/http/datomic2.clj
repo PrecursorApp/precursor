@@ -87,7 +87,8 @@
   (let [entity-ids (reduce (fn [acc tx]
                              (conj acc (second tx)))
                            #{} txes)]
-    (conj txes [:temporary/assign-frontend-id entity-ids document-id])))
+    (concat txes (for [eid entity-ids]
+                   [:db/add eid :frontend/id (UUID. document-id eid)]))))
 
 ;; TODO: only let creators mark things as private
 ;; TODO: only let people on the white list make things as private

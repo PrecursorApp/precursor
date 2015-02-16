@@ -5,7 +5,8 @@
             [datomic.api :refer [db q] :as d]
             [pc.models.doc :as doc-model]
             [pc.datomic.migrations-archive :as archive]
-            [slingshot.slingshot :refer (try+ throw+)]))
+            [slingshot.slingshot :refer (try+ throw+)])
+  (:import java.util.UUID))
 
 (defn migration-entity
   "Finds the entity that keeps track of the migration version, there should
@@ -61,8 +62,8 @@
     (dorun (pmap (fn [datoms]
                    @(d/transact-async conn
                                       (conj
-                                       (for [[doc-id datom-group] (group-by :v datoms)]
-                                         [:temporary/assign-frontend-id (map :e datom-group) doc-id])
+                                       (for [d datoms]
+                                         [:db/add (:e d) :frontend/id (UUID. (:v d) (:e d))])
                                        {:db/id (d/tempid :db.part/tx)
                                         :transaction/source :transaction.source/migration
                                         :migration :migration/add-frontend-ids})))
