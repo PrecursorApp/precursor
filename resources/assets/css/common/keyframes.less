@@ -161,3 +161,27 @@
   80%  { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(  5%,0,0);}
   100% { -webkit-transform: rotate3d(0,0,1,180deg) translate3d(   0,0,0);}
 }
+@keyframes something-wheel {
+  0%   { transform: translate3d(0, 5000%, 0); opacity: 0;}
+  70%  { transform: translate3d(0,  -80%, 0);}
+  80%  { transform: translate3d(0,   40%, 0); opacity: 1;}
+  90%  { transform: translate3d(0,  -20%, 0);}
+  100% { transform: none; opacity: 1;}
+}
+@-webkit-keyframes something-wheel {
+  0%   { -webkit-transform: translate3d(0, 5000%, 0); opacity: 0;}
+  70%  { -webkit-transform: translate3d(0,  -80%, 0);}
+  80%  { -webkit-transform: translate3d(0,   40%, 0); opacity: 1;}
+  90%  { -webkit-transform: translate3d(0,  -20%, 0);}
+  100% { -webkit-transform: none; opacity: 1;}
+}
+@keyframes something-wheel-list {
+  0%   {opacity: 0;}
+  50%  {opacity: 1;}
+  100% {opacity: 0;}
+}
+@-webkit-keyframes something-wheel-list {
+  0%   {opacity: 0;}
+  50%  {opacity: 1;}
+  100% {opacity: 0;}
+}

@@ -52,6 +52,53 @@
   (when (not= (om/get-state owner korks) value)
     (om/set-state! owner korks value)))
 
+(defn make-button [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            word-list (shuffle ["precursor"
+                                "prototype"
+                                "wireframe"
+                                "user flow"
+                                "diagram"
+                                "ux flow"
+                                "brainstorm"
+                                "sketch"
+                                "doodle"
+                                "drawing"
+                                "mockup"
+                                "blueprint"
+                                "masterpiece"
+                                "document"
+                                "flowchart"
+                                "design"
+                                "quick note"
+                                "teammate happy"
+                                "big square"
+                                "presentation"
+                                "giraffe"
+                                "layout"
+                                ])
+            middle-index (int (/ (count word-list) 2))
+            random-word (nth word-list (- (count word-list) 4))]
+        (html
+          [:button.make-button
+           {:on-click #(cast! :landing-closed)
+            :on-mouse-enter #(om/refresh! owner)}
+           [:div.make-prepend "Make a"]
+           ;; [:div.make-prepend "Or make a"] ;; for bottom cta
+           [:div.make-something
+            [:div.something-default
+             random-word]
+            [:div.something-wheel
+             {:data-before (str/join " " (drop-last 4 word-list))
+              :data-after  (str/join " " (take-last 3 word-list))}
+             random-word]]
+           [:div.make-append "right now."]
+           ;; [:div.make-append "first."] ;; for bottom cta
+           ])))))
+
 (defn the-why [app owner]
   (reify
     om/IInitState (init-state [_] {:past-center-featurettes #{}})
@@ -75,18 +122,7 @@
               ; [:p "Prototype anywhere on any device. No nonsense, it's just what you need, when you need it."]
               [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
               [:div.call-to-action
-               [:button.make-button
-                {:on-click #(cast! :landing-closed)}
-                ; ; "Jump in and make a ________."
-                ; ; "Jump in, make a ________."
-                ; "START BY MAKING ____________ ."
-                [:div.make-prepend   "START BY MAKING"]
-                [:div.make-something
-                 [:div.something-wheel
-                  {:data-after "test &#xa; test"}
-                  "a wireframe"]]
-                [:div.make-append    "."]
-                ]]]]]
+               (om/build make-button app)]]]]
            [:div.our-proof
             ;; Hide this until we get testimonials/stats figured out
             ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
