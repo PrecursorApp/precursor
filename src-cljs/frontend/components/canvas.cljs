@@ -99,10 +99,16 @@
 
 (defmethod svg-element :layer.type/text
   [selected-eids layer]
-  (-> (svg/layer->svg-text layer)
-    (maybe-add-selected layer selected-eids)
-    (clj->js)
-    (dom/text (:layer/text layer))))
+  (let [text-props (svg/layer->svg-text layer)]
+    (-> text-props
+      (maybe-add-selected layer selected-eids)
+      (clj->js)
+      (#(apply dom/text % (reduce (fn [tspans text]
+                                    (conj tspans (dom/tspan
+                                                   #js {:dy (if (seq tspans) "1em" "0")
+                                                        :x (:x text-props)}
+                                                   text)))
+                                  [] (str/split (:layer/text layer) #"\n")))))))
 
 (defmethod svg-element :layer.type/line
   [selected-eids layer]
