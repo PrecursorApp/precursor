@@ -7,6 +7,7 @@
             [org.httpkit.client :as http]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
+            [pc.datomic.web-peer :as web-peer]
             [pc.email :as email]
             [pc.http.datomic-common :as common]
             [pc.http.sente :as sente]
@@ -128,7 +129,8 @@
         a (schema/get-ident a)
         v (if (contains? (schema/enums) a)
             (schema/get-ident v)
-            v)]
+            v)
+        e (web-peer/client-id db e)]
     (->> {:e e :a a :v v :tx tx :added added}
       (translate-datom db))))
 
@@ -141,6 +143,7 @@
                (:transaction/broadcast annotations))
       (when-let [public-datoms (->> transaction
                                  :tx-data
+                                 (filter #(:frontend/id (d/entity (:db-after transaction) (:e %))))
                                  (map (partial datom-read-api (:db-after transaction)))
                                  (filter whitelisted?)
                                  seq)]

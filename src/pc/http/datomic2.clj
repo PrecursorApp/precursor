@@ -84,11 +84,15 @@
                 {} txes)))
 
 (defn add-frontend-ids [document-id txes]
-  (let [entity-ids (reduce (fn [acc tx]
-                             (conj acc (second tx)))
-                           #{} txes)]
-    (concat txes (for [eid entity-ids]
-                   [:db/add eid :frontend/id (UUID. document-id eid)]))))
+  (:txes (reduce (fn [{:keys [txes eid-map]} [type e a v]]
+                   (if-let [temp-id (get eid-map e)]
+                     {:txes (conj txes [type temp-id a v])
+                      :eid-map eid-map}
+                     (let [temp-id (d/tempid :db.part/user)]
+                       {:txes (concat txes [[type temp-id a v]
+                                            [:db/add temp-id :frontend/id (UUID. document-id e)]])
+                        :eid-map (assoc eid-map e temp-id)})))
+                 {:txes [] :eid-map {}} txes)))
 
 ;; TODO: only let creators mark things as private
 ;; TODO: only let people on the white list make things as private

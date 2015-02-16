@@ -30,3 +30,8 @@
 
 (def multiple 5000)
 (def remainders (set (range multiple)))
+
+(defn client-id [db e]
+  (let [frontend-id (:frontend/id (d/entity db e))]
+    (assert frontend-id (format "%s does not have a frontend/id" e))
+    (client-part frontend-id)))
