@@ -92,11 +92,9 @@
     .shadow_inset(top; @color_inset_black; @color_inset_white);
   }
 }
-.make-button {
-  .flexy();
-  line-height: 1em;
-  overflow: hidden;
+.make-button-wrap {
   &:hover {
+    .animation(make-button-wrap @run @run backwards);
     .something-default {
       opacity: 0;
     }
@@ -114,6 +112,11 @@
       display: none;
     }
   }
+}
+.make-button {
+  .flexy();
+  line-height: 1em;
+  overflow: hidden;
 }
 .make-prepend {
   margin-right: .25em;

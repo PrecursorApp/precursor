@@ -83,21 +83,22 @@
             middle-index (int (/ (count word-list) 2))
             random-word (nth word-list (- (count word-list) 4))]
         (html
-          [:button.make-button
-           {:on-click #(cast! :landing-closed)
-            :on-mouse-enter #(om/refresh! owner)}
-           [:div.make-prepend "Make a"]
-           ;; [:div.make-prepend "Or make a"] ;; for bottom cta
-           [:div.make-something
-            [:div.something-default
-             random-word]
-            [:div.something-wheel
-             {:data-before (str/join " " (drop-last 4 word-list))
-              :data-after  (str/join " " (take-last 3 word-list))}
-             random-word]]
-           [:div.make-append "right now."]
-           ;; [:div.make-append "first."] ;; for bottom cta
-           ])))))
+          [:div.make-button-wrap
+           [:button.make-button
+            {:on-click #(cast! :landing-closed)
+             :on-mouse-enter #(om/refresh! owner)}
+            [:div.make-prepend "Make a"]
+            ;; [:div.make-prepend "Or make a"] ;; for bottom cta
+            [:div.make-something
+             [:div.something-default
+              random-word]
+             [:div.something-wheel
+              {:data-before (str/join " " (drop-last 4 word-list))
+               :data-after  (str/join " " (take-last 3 word-list))}
+              random-word]]
+            [:div.make-append "right now."]
+            ;; [:div.make-append "first."] ;; for bottom cta
+            ]])))))
 
 (defn the-why [app owner]
   (reify
