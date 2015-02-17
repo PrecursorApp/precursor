@@ -138,17 +138,13 @@
              {:class (when (contains? past-center-featurettes "1") "active") :ref "1"}
              [:div.featurette-story
               [:h2 "Access your ideas on any device right in the browser."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
+              [:p "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
              [:div.featurette-media screen]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
              [:div.featurette-story
               [:h2 "Interact with your ideas way before development."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]
+              [:p "Make working demos in just minutes using our simple target linking."]
               [:p
                [:a
                 {:role "button"}
@@ -158,9 +154,8 @@
              {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
              [:div.featurette-story
               [:h2 "Collaborate with your whole team in real time."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]
+              [:p "Our new team features are optimized for efficient collaboration.
+                  You'll have all of your team's best ideas store in one secure place."]
               [:p
                [:a
                 {:role "button"}
@@ -179,8 +174,8 @@
             [:div.our-claim
              [:div.our-philosphy-wrap
               [:div.our-philosphy.content
-               ; [:h1 "It's purely productive prototyping."]
-               [:h1 "What you need when you need it."]
+               [:h1 "It's purely productive prototyping."]
+               ; [:h1 "What you need when you need it."]
                [:p "Precursor is the easiest way to share ideas with your teammates, fast."]
                [:div.calls-to-action
                 (common/google-login)
