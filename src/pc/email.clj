@@ -20,7 +20,7 @@
   ([local-part]
    (format "%s@%s" local-part (profile/prod-domain)))
   ([fancy-name local-part]
-   (format "%s <%s@%s>" fancy-name local-part (profile/prod-domain))))
+   (format "%s <%s>" fancy-name (email-address local-part))))
 
 (defn emails-to-send [db eid]
   (set (map first
