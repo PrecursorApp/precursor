@@ -40,7 +40,11 @@
                                           #(cast! :overlay-closed))}
                [:style "#om-app:active{cursor:auto}"]
                (om/build canvas/canvas app)
-               (om/build chat/chat app)])))))
+               (om/build chat/chat app)
+               [:div.mouse-stats
+                {:data-mouse (if (:mouse app)
+                               (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))
+                               "{:x 0, :y 0, :rx 0, :ry 0}")}]])))))
 
 (defn app [app owner]
   (reify
