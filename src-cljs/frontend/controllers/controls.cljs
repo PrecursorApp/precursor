@@ -9,6 +9,7 @@
             [frontend.analytics :as analytics]
             [frontend.analytics.mixpanel :as mixpanel]
             [frontend.camera :as cameras]
+            [frontend.db]
             [frontend.datascript :as ds]
             [frontend.favicon :as favicon]
             [frontend.layers :as layers]
@@ -187,27 +188,26 @@
 
 (defmethod control-event :drawing-started
   [browser-state message [x y] state]
-  (let [;{:keys [x y]} (get-in state [:mouse])
-        [rx ry]       (cameras/screen->point (:camera state) x y)
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
-        entity-id     (-> state :entity-ids first)
-        layer         (assoc (layers/make-layer entity-id (:document/id state) snap-x snap-y)
-                        :layer/type (condp = (get-in state state/current-tool-path)
-                                      :rect   :layer.type/rect
-                                      :circle :layer.type/rect
-                                      :text   :layer.type/text
-                                      :line   :layer.type/line
-                                      :select :layer.type/group
-                                      :pen    :layer.type/path
-                                      :layer.type/rect))]
+        {:keys [entity-id frontend-id-state]} (frontend.db/generate-entity-id @(:db state) (:frontend-id-state state))
+        layer (assoc (layers/make-layer entity-id (:document/id state) snap-x snap-y)
+                     :layer/type (condp = (get-in state state/current-tool-path)
+                                   :rect   :layer.type/rect
+                                   :circle :layer.type/rect
+                                   :text   :layer.type/text
+                                   :line   :layer.type/line
+                                   :select :layer.type/group
+                                   :pen    :layer.type/path
+                                   :layer.type/rect))]
     (let [r (-> state
-                (assoc-in [:drawing :in-progress?] true)
-                (assoc-in [:drawing :layers] [(assoc layer
-                                                :layer/current-x snap-x
-                                                :layer/current-y snap-y)])
-                (update-mouse x y)
-                (assoc-in [:selected-eids] #{entity-id})
-                (update-in [:entity-ids] disj entity-id))]
+              (assoc :frontend-id-state frontend-id-state)
+              (assoc-in [:drawing :in-progress?] true)
+              (assoc-in [:drawing :layers] [(assoc layer
+                                                   :layer/current-x snap-x
+                                                   :layer/current-y snap-y)])
+              (update-mouse x y)
+              (assoc-in [:selected-eids] #{entity-id}))]
       r)))
 
 (defmethod control-event :drawing-edited
@@ -262,24 +262,25 @@
 (defmethod control-event :layer-duplicated
   [browser-state message {:keys [layer x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
-        entity-id (-> state :entity-ids first)]
+        {:keys [entity-id frontend-id-state]} (frontend.db/generate-entity-id @(:db state)
+                                                                              (:frontend-id-state state))]
     (-> state
-        (assoc :selected-eids #{entity-id})
-        (assoc-in [:drawing :original-layers] [layer])
-        (assoc-in [:drawing :layers] [(assoc layer
-                                        :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
-                                        :db/id entity-id
-                                        :layer/start-x (:layer/start-x layer)
-                                        :layer/end-x (:layer/end-x layer)
-                                        :layer/current-x (:layer/end-x layer)
-                                        :layer/current-y (:layer/end-y layer)
-                                        :layer/ui-id (when (:layer/ui-id layer)
-                                                       (inc-str-id @(:db state) (:layer/ui-id layer)))
-                                        :layer/ui-target (when (:layer/ui-target layer)
-                                                           (inc-str-target @(:db state) (:layer/ui-target layer))))])
-        (assoc-in [:drawing :moving?] true)
-        (assoc-in [:drawing :starting-mouse-position] [rx ry])
-        (update-in [:entity-ids] disj entity-id))))
+      (assoc :selected-eids #{entity-id}
+             :frontend-id-state frontend-id-state)
+      (assoc-in [:drawing :original-layers] [layer])
+      (assoc-in [:drawing :layers] [(assoc layer
+                                           :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
+                                           :db/id entity-id
+                                           :layer/start-x (:layer/start-x layer)
+                                           :layer/end-x (:layer/end-x layer)
+                                           :layer/current-x (:layer/end-x layer)
+                                           :layer/current-y (:layer/end-y layer)
+                                           :layer/ui-id (when (:layer/ui-id layer)
+                                                          (inc-str-id @(:db state) (:layer/ui-id layer)))
+                                           :layer/ui-target (when (:layer/ui-target layer)
+                                                              (inc-str-target @(:db state) (:layer/ui-target layer))))])
+      (assoc-in [:drawing :moving?] true)
+      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :group-duplicated
   [browser-state message {:keys [layer-eids x y]} state]
@@ -287,26 +288,28 @@
         ;; TODO: better way to get selected layers
         db @(:db state)
         layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)
-        entity-ids (take (count layers) (:entity-ids state))]
+        {:keys [entity-ids frontend-id-state]} (frontend.db/generate-entity-ids @(:db state)
+                                                                                (count layers)
+                                                                                (:frontend-id-state state))]
     (-> state
-        (assoc :selected-eids (set entity-ids))
-        (assoc-in [:drawing :original-layers] layers)
-        (assoc-in [:drawing :layers] (mapv (fn [layer entity-id index]
-                                              (assoc layer
-                                                :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
-                                                :db/id entity-id
-                                                :layer/start-x (:layer/start-x layer)
-                                                :layer/end-x (:layer/end-x layer)
-                                                :layer/current-x (:layer/end-x layer)
-                                                :layer/current-y (:layer/end-y layer)
-                                                :layer/ui-id (when (:layer/ui-id layer)
-                                                               (inc-str-id @(:db state) (:layer/ui-id layer) :offset index))
-                                                :layer/ui-target (when (:layer/ui-target layer)
-                                                                   (inc-str-target @(:db state) (:layer/ui-target layer) :offset index))))
-                                            layers entity-ids (range)))
-        (assoc-in [:drawing :moving?] true)
-        (assoc-in [:drawing :starting-mouse-position] [rx ry])
-        (update-in [:entity-ids] (fn [eids] (apply disj eids entity-ids))))))
+      (assoc :selected-eids (set entity-ids)
+             :frontend-id-state frontend-id-state)
+      (assoc-in [:drawing :original-layers] layers)
+      (assoc-in [:drawing :layers] (mapv (fn [layer entity-id index]
+                                           (assoc layer
+                                                  :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
+                                                  :db/id entity-id
+                                                  :layer/start-x (:layer/start-x layer)
+                                                  :layer/end-x (:layer/end-x layer)
+                                                  :layer/current-x (:layer/end-x layer)
+                                                  :layer/current-y (:layer/end-y layer)
+                                                  :layer/ui-id (when (:layer/ui-id layer)
+                                                                 (inc-str-id @(:db state) (:layer/ui-id layer) :offset index))
+                                                  :layer/ui-target (when (:layer/ui-target layer)
+                                                                     (inc-str-target @(:db state) (:layer/ui-target layer) :offset index))))
+                                         layers entity-ids (range)))
+      (assoc-in [:drawing :moving?] true)
+      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :text-layer-edited
   [browser-state message {:keys [value bbox]} state]
@@ -855,11 +858,12 @@
 
 (defmethod control-event :chat-submitted
   [browser-state message {:keys [chat-body]} state]
-  (let [eid (-> state :entity-ids first)]
+  (let [{:keys [entity-id frontend-id-state]} (frontend.db/generate-entity-id @(:db state)
+                                                                              (:frontend-id-state state))]
     (-> state
+      (assoc :frontend-id-state frontend-id-state)
       (handle-cmd-chat (chat-cmd chat-body) chat-body)
-      (assoc-in [:chat :entity-id] eid)
-      (update-in [:entity-ids] disj eid))))
+      (assoc-in [:chat :entity-id] entity-id))))
 
 (defmulti post-handle-cmd-chat (fn [state cmd]
                                  (utils/mlog "post-handling chat command:" cmd)
@@ -1071,7 +1075,9 @@
 
 (defmethod control-event :layers-pasted
   [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
-  (let [layer-ids (take (count layers) (:entity-ids state))
+  (let [{:keys [entity-ids frontend-id-state]} (frontend.db/generate-entity-ids @(:db state)
+                                                                                (count layers)
+                                                                                (:frontend-id-state state))
         doc-id (:document/id state)
         camera (:camera state)
         zoom (:zf camera)
@@ -1084,19 +1090,19 @@
         [move-x move-y] (cameras/screen->point camera new-x new-y)
         [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)]
     (-> state
-        (assoc-in [:clipboard :layers] (mapv (fn [l eid]
-                                               (-> l
-                                                   (assoc :layer/ancestor (:db/id l)
-                                                          :db/id eid
-                                                          :document/id doc-id
-                                                          :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
-                                                   (#(move-layer % %
-                                                                 {:snap-x snap-move-x :snap-y snap-move-y
-                                                                  :move-x move-x :move-y move-y :snap-paths? true}))
-                                                   (dissoc :layer/current-x :layer/current-y :points)))
-                                             layers layer-ids))
-        (assoc-in [:selected-eids] (set layer-ids))
-        (update-in [:entity-ids] #(apply disj % layer-ids)))))
+      (assoc-in [:clipboard :layers] (mapv (fn [l eid]
+                                             (-> l
+                                               (assoc :layer/ancestor (:db/id l)
+                                                      :db/id eid
+                                                      :document/id doc-id
+                                                      :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
+                                               (#(move-layer % %
+                                                             {:snap-x snap-move-x :snap-y snap-move-y
+                                                              :move-x move-x :move-y move-y :snap-paths? true}))
+                                               (dissoc :layer/current-x :layer/current-y :points)))
+                                           layers entity-ids))
+      (assoc-in [:selected-eids] (set entity-ids))
+      (assoc :frontend-id-state frontend-id-state))))
 
 (defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]
