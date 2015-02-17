@@ -11,16 +11,6 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(defn mouse [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (html
-        [:div.mouse-stats.hud-item.noninteractive
-         (if (:mouse app)
-           (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))
-           "{:x 0, :y 0, :rx 0, :ry 0}")]))))
-
 (defn menu [app owner]
   (reify
     om/IRender
@@ -227,7 +217,6 @@
          (om/build viewers app)
          (om/build menu app)
          (om/build chat app)
-         (om/build mouse app)
 
          ;; TODO finish this button once landing and outer are done
          ;; (om/build landing app)

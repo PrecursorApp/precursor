@@ -10,10 +10,10 @@
     box-shadow: 0 8px 21px 0 fade(@black, 21);
     transition: @run_slower @bezier_deform;
     .mq_1920({
-      .transform(translate(@tile * 2,0); scale(.8));
+      .transform(translate3d((@tile * 2), 0, 0); scale3d(.8, .8, 1));
     });
     .mq_1280({
-      .transform(translate(@tile * 4,0); scale(.8));
+      .transform(translate3d((@tile * 4), 0, 0); scale3d(.8, .8, 1));
     });
     &:hover {
       box-shadow: 0 21px 34px 0 fade(@black, 21);
@@ -81,6 +81,9 @@
         transition+: all @run_slow @now @bezier_bounce;
         transition+: stroke @now @now @bezier_fadein;
       }
+    }
+    .unseen-eids {
+      display: none;
     }
   }
 }

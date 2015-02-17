@@ -195,7 +195,7 @@
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])]
         (html
-          [:div.chat
+          [:div.chat {:class (when chat-opened? ["opened"])}
            [:div#canvas-size.chat-offset]
            [:div.chat-window {:class (when-not chat-opened? ["closed"])}
             [:div.chat-background]
