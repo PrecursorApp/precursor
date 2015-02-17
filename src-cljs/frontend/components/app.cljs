@@ -37,7 +37,9 @@
             chat-opened? (get-in app state/chat-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div.inner {:on-click (when (overlay-visible? app)
-                                          #(cast! :overlay-closed))}
+                                       #(cast! :overlay-closed))
+                           :class (when-not (seq (:frontend-id-state app))
+                                    "loading")}
                [:style "#om-app:active{cursor:auto}"]
                (om/build canvas/canvas app)
                (om/build chat/chat app)])))))
