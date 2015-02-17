@@ -202,14 +202,14 @@
        (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
    [:div.access-options
     (when-not (= :access-request.status/denied (:access-request/status entity))
-      [:a.access-option
+      [:button.access-option
        {:role "button"
         :class "negative"
         :title "Decline"
         :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
                                                   :doc-id (:access-request/document entity)})}
        (common/icon :times)])
-    [:a.access-option
+    [:button.access-option
      {:role "button"
       :class "positive"
       :title "Approve"
