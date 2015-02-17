@@ -29,9 +29,17 @@
   (map (comp client-part :v) (datoms-for-ns db namespace-part)))
 
 (def multiple 5000)
-(def remainders (set (range multiple)))
+;; backend uses reserved-remainder to create client parts
+(def reserved-remainder 0)
+(def remainders (disj (set (range multiple)) reserved-remainder))
 
-(defn client-id [db e]
-  (let [frontend-id (:frontend/id (d/entity db e))]
-    (assert frontend-id (format "%s does not have a frontend/id" e))
-    (client-part frontend-id)))
+(defn client-id
+  ([entity]
+   (let [frontend-id (:frontend/id entity)]
+     (assert frontend-id (format "%s does not have a frontend/id" (:db/id entity)))
+     (client-part frontend-id)))
+  ([db e]
+   (client-id (d/entity db e))))
+
+(defn server-frontend-id [entity-id namespace-part]
+  [::assign-frontend-id entity-id namespace-part multiple reserved-remainder])

@@ -398,7 +398,7 @@
         ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
         ;;       Right now it's too easy to accidentally forget to check.
         (assert (= doc-id (:access-request/document request)))
-        (permission-model/convert-access-request request annotations))
+        (permission-model/convert-access-request request cust annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 (defmethod ws-handler :frontend/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
