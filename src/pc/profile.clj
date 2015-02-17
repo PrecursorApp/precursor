@@ -26,9 +26,12 @@
 (defn force-ssl? []
   (prod?))
 
+(defn prod-domain []
+  "prcrsr.com")
+
 (defn hostname []
   (if (prod?)
-    "prcrsr.com"
+    (prod-domain)
     "localhost"))
 
 ;; TODO: move to secrets

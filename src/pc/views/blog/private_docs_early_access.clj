@@ -1,5 +1,6 @@
 (ns pc.views.blog.private-docs-early-access
   (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
+            [pc.email :as email]
             [pc.views.common :refer (cdn-path)]
             [pc.views.blog.common :as common]))
 
@@ -23,11 +24,11 @@
    :author "Danny"
    :body
    (list
-     [:article
-      [:p "These are a few questions we thought users might ask while testing private docs.
+    [:article
+     [:p "These are a few questions we thought users might ask while testing private docs.
           If you think of any other questions that might be useful, "
-          [:a {:href "mailto:hi@prcrsr.com"} "let us know"]
-          " and we'll throw it in."]]
+      [:a {:href (format "mailto:%s" (email/email-address "hi"))} "let us know"]
+      " and we'll throw it in."]]
 
     [:article
      [:h3 "How do I make a doc private?"]

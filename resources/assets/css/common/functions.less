@@ -136,6 +136,12 @@
   @colors: ~`"@{rest}".slice(1,-1)`;
   background-image+: linear-gradient(@type, @colors);
 }
+.font-smoothing(@a: antialiased) {
+  .aa(@a) when (@a = antialiased) {
+    -webkit-font-smoothing: @a;
+    -moz-osx-font-smoothing: grayscale;
+  }.aa(@a);
+}
 .transition_transform(...) {
   -webkit-transition+: -webkit-transform @arguments;
           transition+:         transform @arguments;
@@ -207,4 +213,14 @@
 }
 .hud_toggle_animation(...) {
   .animation(~"in-fade-@{arguments}" @run_slow);
+}
+.chat_width() {
+  width: @size_chat;
+  min-width: @tile;
+  max-width: ~"calc(100% - @{tile})";
+  .mq_1920({ width: (@size_chat + (@size_chat_step *  1));});
+  .mq_1600({ width: (@size_chat + (@size_chat_step *  2));});
+  .mq_1280({ width: (@size_chat + (@size_chat_step *  3));});
+   .mq_960({ width: (@size_chat + (@size_chat_step *  8));});
+   .mq_640({ width: (@size_chat + (@size_chat_step * 21));});
 }

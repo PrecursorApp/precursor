@@ -59,6 +59,7 @@
             (cust/find-by-google-sub (pcd/default-db) (:sub user-info))
             (throw e)))))))
 
+;; Note: this is hardcoded to prcrsr.com for a good reason
 (def prcrsr-bot-email "prcrsr-bot@prcrsr.com")
 (defn prcrsr-bot-uuid [db]
   (ffirst (d/q '{:find [?u]
