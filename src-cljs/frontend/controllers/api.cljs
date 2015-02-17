@@ -77,3 +77,12 @@
 (defmethod api-event [:touched-docs :success]
   [target message status {:keys [docs]} state]
   (assoc-in state [:cust :touched-docs] docs))
+
+(defmethod api-event [:frontend/frontend-id-state :success]
+  [target message status {:keys [context frontend-id-state]} state]
+  (if (= (:document/id state)
+         (:document-id context))
+    (do
+      (utils/mlog "document ids don't match")
+      (assoc state :frontend-id-state frontend-id-state))
+    state))

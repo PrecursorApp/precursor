@@ -169,7 +169,7 @@
                                    (iterate (partial + web-peer/multiple) (if (zero? remainder)
                                                                             web-peer/multiple
                                                                             remainder))))]
-      {:remainder remainder :multiple web-peer/multiple :start-eid start-eid})
+      {:remainder remainder :multiple web-peer/multiple :next-id start-eid})
     (throw+ {:status 403
              :error-msg "There are too many users in the document."
              :error-key :too-many-subscribers})))
@@ -190,16 +190,18 @@
   (check-document-access (-> ?data :document-id) req :admin)
   (let [document-id (-> ?data :document-id)
         color (-> ?data :color)
-        send-fn (:send-fn @sente-state)]
-    (log/infof "subscribing %s to %s" client-id document-id)
+        send-fn (:send-fn @sente-state)
+        _ (log/infof "subscribing %s to %s" client-id document-id)
+        subs (subscribe-to-doc (:db req)
+                                 document-id
+                                 client-id
+                                 (-> req :ring-req :auth :cust :cust/name))]
 
-    (subscribe-to-doc (:db req)
-                      document-id
-                      client-id
-                      (-> req :ring-req :auth :cust :cust/name))
+    (?reply-fn [:frontend/frontend-id-state {:frontend-id-state (get-in subs [document-id client-id :frontend-id-seed])}])
+
     (doseq [[uid _] (get @document-subs document-id)]
       (send-fn uid [:frontend/subscriber-joined (merge {:client-id client-id}
-                                                       (get-in @document-subs [document-id client-id]))]))
+                                                       (get-in subs [document-id client-id]))]))
 
     ;; TODO: we'll need a read-api or something here at some point
     (log/infof "sending document for %s to %s" document-id client-id)
@@ -221,7 +223,7 @@
     (log/infof "sending subscribers for %s to %s" document-id client-id)
     (send-fn client-id [:frontend/subscribers
                         {:document/id document-id
-                         :subscribers (get @document-subs document-id)}])
+                         :subscribers (get subs document-id)}])
 
     ;; These are interesting b/c they're read-only. And by "interesting", I mean "bad"
     ;; We should find a way to let the frontend edit things

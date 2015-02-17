@@ -82,6 +82,12 @@
                         :layer/end-y 175}]
                  {:bot-layer true})))
 
+(defmethod post-error! :subscribe-to-document-error
+  [container message {:keys [document-id]} previous-state current-state]
+  (write-error-to-canvas (:db current-state)
+                         (:camera current-state)
+                         "There was an error connecting to the server.\nPlease refresh to try again.")
+  (js/Rollbar.error (str "subscribe to document failed for " document-id)))
 
 (defmethod post-error! :entity-ids-request-failed
   [container message {:keys [document-id]} previous-state current-state]
