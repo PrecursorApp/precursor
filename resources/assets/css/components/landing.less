@@ -281,3 +281,112 @@
     stroke: #ccc;
   }
 }
+
+
+@art_color: @gray_light;
+@art_black: @gray_dark;
+@art_white: @white;
+.art_both(...) {
+  fill: ;
+  stroke: ;
+}
+
+.art {
+  path {
+    fill: none;
+    stroke-width: 2;
+  }
+  .art-fill-color { fill:   @art_color; }
+  .art-fill-black { fill:   @art_black; }
+  .art-fill-white { fill:   @art_white; }
+  .art-line-color { stroke: @art_color; }
+  .art-line-black { stroke: @art_black; }
+  .art-line-white { stroke: @art_white; }
+  .art-both-color {
+    .art-fill-color();
+    .art-line-color();
+  }
+  .art-both-black {
+    .art-fill-black();
+    .art-line-black();
+  }
+  .art-both-white {
+    .art-fill-white();
+    .art-line-white();
+  }
+}
+
+
+
+
+
+
+
+
+.art-ipad {
+  @seed: @tile;
+  @width: 6 * @seed;
+  @height: 8 * @seed;
+  @screen_width: .9 * @width;
+  @screen_height: .8 * @height;
+  @button_size: 1.5 * @em;
+  @square_size: @button_size / 3;
+  @circle_size: @square_size;
+  @em: .25 * @seed;
+  @2px: .125 * @em;
+  @ipad_color: @gray_light;
+  @fill_color: @white;
+
+  .square(@size; @color: @fill_color) {
+    width: @size;
+    height: @size;
+    margin: auto;
+    border: @2px solid @color;
+  }
+  .circle(@size; @color: @fill_color) {
+    .square(@size; @color);
+    border-radius: @size;
+  }
+
+  .flexy();
+  width: @width;
+  height: @height;
+  background: @ipad_color;
+  border-radius: @button_size;
+
+  &.landscape {
+    width: @height;
+    height: @width;
+    .ipad-screen {
+      width: @screen_height;
+      height: @screen_width;
+      margin: auto 0;
+    }
+  }
+  &:not(.landscape) {
+    .flex-direction(column);
+  }
+
+  .fill {
+    background: @fill_color;
+  }
+  .center {
+    .flexy(center; center);
+  }
+
+  .ipad-camera {
+    .circle(@circle_size);
+  }
+  .ipad-screen {
+    width: @screen_width;
+    height: @screen_height;
+    margin: 0 auto;
+  }
+  .ipad-button {
+    .circle(@button_size);
+  }
+  .ipad-square {
+    .square(@square_size);
+    // margin: .375 * @em;
+  }
+}
