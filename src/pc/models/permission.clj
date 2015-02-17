@@ -75,9 +75,8 @@
     (select-keys [:permission/document
                   :permission/cust
                   :permission/permits
-                  :permission/grant-date
-                  :db/id])
-    (#(into {} %))
+                  :permission/grant-date])
+    (assoc :db/id (web-peer/client-id permission))
     (update-in [:permission/cust] #(:cust/email (d/entity db %)))))
 
 (defn find-by-document [db doc]

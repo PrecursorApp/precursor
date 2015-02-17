@@ -3,14 +3,16 @@
             [clj-time.core :as time]
             [clj-time.coerce]
             [crypto.random]
+            [pc.datomic.web-peer :as web-peer]
             [datomic.api :refer [db q] :as d]))
 
 (defn read-api [grant]
-  (select-keys grant [:access-grant/document
-                      :access-grant/email
-                      :access-grant/expiry
-                      :access-grant/grant-date
-                      :db/id]))
+  (-> grant
+    (select-keys [:access-grant/document
+                  :access-grant/email
+                  :access-grant/expiry
+                  :access-grant/grant-date])
+    (assoc :db/id (web-peer/client-id grant))))
 
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]
