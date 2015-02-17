@@ -650,7 +650,8 @@
      was-drawing? (do (when (and (some layer-model/detectable? layers)
                                  (or (not (get-in previous-state [:drawing :moving?]))
                                      (some true? (map detectable-movement? original-layers layers))))
-                        (d/transact! db layers {:can-undo? true}))
+                        (doseq [layer-group (partition-all 100 layers)]
+                          (d/transact! db layer-group {:can-undo? true})))
                       (maybe-notify-subscribers! current-state x y))
 
      :else nil)))
@@ -679,9 +680,10 @@
   (when-let [selected-eids (seq (:selected-eids previous-state))]
     (let [db (:db current-state)
           document-id (:document/id current-state)]
-      (d/transact! db (for [eid selected-eids]
-                        [:db.fn/retractEntity eid])
-                   {:can-undo? true}))))
+      (doseq [eid-group (partition-all 100 selected-eids)]
+        (d/transact! db (for [eid eid-group]
+                          [:db.fn/retractEntity eid])
+                     {:can-undo? true})))))
 
 (defn conjv [& args]
   (apply (fnil conj []) args))
@@ -1108,7 +1110,9 @@
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
         layers (mapv utils/remove-map-nils (get-in current-state [:clipboard :layers]))]
-    (d/transact! db layers {:can-undo? true})))
+    ;(println (str "count " (count layers)))
+    (doseq [layer-group (partition-all 100 layers)]
+      (d/transact! db layer-group {:can-undo? true}))))
 
 (defmethod post-control-event! :created-fetched
   [browser-state message _ previous-state current-state]

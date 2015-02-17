@@ -31,7 +31,7 @@
      (when-not (or (-> tx-report :tx-meta :server-update)
                    (-> tx-report :tx-meta :bot-layer))
        (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
-         (doseq [datom-group (partition-all 500 datoms)]
+         (doseq [datom-group (partition-all 1000 datoms)]
            (sente/send-msg sente-state [:frontend/transaction {:datoms datom-group
                                                                :document/id document-id}])))))))
 
