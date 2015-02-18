@@ -59,15 +59,17 @@
   ;; assuming that only entities with document-ids need one. May
   ;; require another migration later if that's false.
   (let [db (d/db conn)]
-    (dorun (pmap (fn [datoms]
-                   @(d/transact-async conn
-                                      (conj
-                                       (for [d datoms]
-                                         [:db/add (:e d) :frontend/id (UUID. (:v d) (:e d))])
-                                       {:db/id (d/tempid :db.part/tx)
-                                        :transaction/source :transaction.source/migration
-                                        :migration :migration/add-frontend-ids})))
-                 (partition-all 100 (d/datoms db :aevt :document/id))))))
+    (doseq [attr [:document/id :permission/document :access-grant/document :access-request/document]]
+      (dorun (pmap (fn [datoms]
+                     @(d/transact-async conn
+                                        (conj
+                                         (for [d datoms]
+                                           [:db/add (:e d) :frontend/id (UUID. (:v d) (:e d))])
+                                         {:db/id (d/tempid :db.part/tx)
+                                          :transaction/source :transaction.source/migration
+                                          :migration :migration/add-frontend-ids})))
+                   (partition-all 100 (remove #(:frontend/id (d/entity db (:e %)))
+                                              (d/datoms db :aevt attr))))))))
 
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
