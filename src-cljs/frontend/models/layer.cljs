@@ -3,6 +3,9 @@
             [datascript :as d]
             [frontend.utils :as utils :include-macros true]))
 
+(defn find-count [db]
+  (count (d/datoms db :aevt :layer/name)))
+
 (defn selected-eids
   "If the layer is a group, returns the children, else the passed in eid"
   [db selected-eid]

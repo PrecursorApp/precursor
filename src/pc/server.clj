@@ -353,15 +353,19 @@
   (def server (httpkit/run-server (handler sente-state)
                                   {:port (profile/http-port)})))
 
-(defn stop []
-  (server))
+(defn stop [& {:keys [timeout]
+               :or {timeout 0}}]
+  (server :timeout timeout))
 
 (defn restart []
   (stop)
   (start @sente/sente-state))
 
-
 (defn init []
   (let [sente-state (sente/init)]
     (start sente-state))
   (datomic/init))
+
+(defn shutdown []
+  (sente/shutdown :sleep-ms 250)
+  (stop :timeout 1000))
