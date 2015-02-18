@@ -1,5 +1,6 @@
 (ns pc.models.access-grant
   (:require [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [clj-time.core :as time]
             [clj-time.coerce]
             [crypto.random]
