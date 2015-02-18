@@ -336,25 +336,10 @@
               :db.type/instant
               :db/doc "time permission was created (or access-grant if it came first)")
 
-   ;; TODO: rename to grant-cust-permit
-   (function :pc.models.permission/grant-permit
-             '{:lang :clojure
-               :params [db doc-id cust-id permit grant-date & extra-fields]
-               :code (if-let [id (ffirst (d/q '{:find [?t]
-                                                :in [$ ?doc-id ?cust-id]
-                                                :where [[?t :permission/document ?doc-id]
-                                                        [?t :permission/cust ?cust-id]]}
-                                              db doc-id cust-id))]
-                       [[:db/add id :permission/permits permit]]
-                       (let [temp-id (d/tempid :db.part/user)]
-                         (concat
-                          [[:db/add temp-id :permission/document doc-id]
-                           [:db/add temp-id :permission/cust cust-id]
-                           [:db/add temp-id :permission/permits permit]
-                           [:db/add temp-id :permission/grant-date grant-date]]
-                          (for [[field value] extra-fields]
-                            [:db/add temp-id field value]))))}
-             :db/doc "Adds a permit, with composite uniqueness constraint on doc and cust")
+   (attribute :permission/doc-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on doc and cust.")
 
    (attribute :access-request/document
               :db.type/long
@@ -379,22 +364,10 @@
               :db.type/instant
               :db/doc "date request was denied")
 
-   (function :pc.models.access-request/create-request
-             '{:lang :clojure
-               :params [db doc-id cust-id create-date & extra-fields]
-               :code (when-not (ffirst (d/q '{:find [?t]
-                                              :in [$ ?doc-id ?cust-id]
-                                              :where [[?t :access-request/document ?doc-id]
-                                                      [?t :access-request/cust ?cust-id]]}
-                                            db doc-id cust-id))
-                       (let [temp-id (d/tempid :db.part/user)]
-                         (concat [[:db/add temp-id :access-request/document doc-id]
-                                  [:db/add temp-id :access-request/cust cust-id]
-                                  [:db/add temp-id :access-request/status :access-request.status/pending]
-                                  [:db/add temp-id :access-request/create-date create-date]]
-                                 (for [[field value] extra-fields]
-                                   [:db/add temp-id field value]))))}
-             :db/doc "Adds an access request, with composite uniqueness constraint on doc and cust")
+   (attribute :access-request/doc-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on doc and cust.")
 
    ;; used when access is granted to someone without an account
    (attribute :access-grant/document
@@ -423,26 +396,10 @@
               :db.type/instant
               :db/doc "time that the access-grant was created")
 
-   (function :pc.models.access-grant/create-grant
-             '{:lang :clojure
-               :params [db doc-id granter-id email token expiry grant-date & extra-fields]
-               :code (when-not (ffirst (d/q '{:find [?t]
-                                              :in [$ ?doc-id ?email ?now]
-                                              :where [[?t :access-grant/document ?doc-id]
-                                                      [?t :access-grant/email ?email]
-                                                      [?t :access-grant/expiry ?expiry]
-                                                      [(> ?expiry ?now)]]}
-                                            db doc-id email (java.util.Date.)))
-                       (let [temp-id (d/tempid :db.part/user)]
-                         (concat [[:db/add temp-id :access-grant/document doc-id]
-                                  [:db/add temp-id :access-grant/email email]
-                                  [:db/add temp-id :access-grant/token token]
-                                  [:db/add temp-id :access-grant/expiry expiry]
-                                  [:db/add temp-id :access-grant/grant-date grant-date]
-                                  [:db/add temp-id :access-grant/granter granter-id]]
-                                 (for [[field value] extra-fields]
-                                   [:db/add temp-id field value]))))}
-             :db/doc "Adds a grant, with composite uniqueness constraint on doc and email, accounting for expiration")
+   (attribute :access-grant/doc-email
+              :db.type/string
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on doc and email.")
 
    (attribute :transaction/broadcast
               :db.type/boolean
@@ -491,7 +448,23 @@
               :db.type/uuid
               :db/unique :db.unique/identity
               :db/doc (str "UUID whose least significant bits can be created on the frontend. "
-                           "Most significant bits are a namespace, like the document id."))])
+                           "Most significant bits are a namespace, like the document id."))
+
+   (function :pc.datomic.web-peer/assign-frontend-id
+             '{:lang :clojure
+               :params [db entity-id namespace-part multiple remainder]
+               :code (let [used-ids (map #(.getLeastSignificantBits (:v %))
+                                         (d/index-range db
+                                                        :frontend/id
+                                                        (java.util.UUID. namespace-part 0)
+                                                        (java.util.UUID. namespace-part Long/MAX_VALUE)))
+                           used-from-partition (set (filter #(= remainder (mod % multiple)) used-ids))
+                           client-part (first (remove #(contains? used-from-partition %)
+                                                      (iterate (partial + multiple) (if (zero? remainder)
+                                                                                      multiple
+                                                                                      remainder))))]
+                       [[:db/add entity-id :frontend/id (java.util.UUID. namespace-part client-part)]])}
+             :db/doc "Assigns frontend-id, meant to be used with the partition reserved for the backend")])
 
 (defonce schema-ents (atom nil))
 
