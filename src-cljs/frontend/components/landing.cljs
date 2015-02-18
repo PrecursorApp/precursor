@@ -168,21 +168,24 @@
             ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
             ]])))))
 
-(def art-tablet
-  [:div.art-ipad
-   [:div.art-ipad-camera.art-ipad-ui]
-   [:div.art-ipad-screen.art-ipad-ui
-    [:div.art-ipad-viewport
-     [:div.art-ipad-menu
-      [:h4.art-ipad-menu-head "Today"]
-      [:div.art-ipad-menu-item [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-      [:div.art-ipad-menu-item [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-      [:div.art-ipad-menu-item [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-      [:div.art-ipad-menu-item [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
-     [:div.art-ipad-canvas
-      [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
-   [:div.art-ipad-button.art-ipad-ui
-    [:div.art-ipad-square.art-ipad-ui]]])
+(def artwork-ipad
+  [:div.artwork
+   [:div.a-ipad
+    [:div.a-ipad-head
+     [:div.a-circle]]
+    [:div.a-ipad-body
+     [:div.a-screen
+      [:div.a-menu
+       [:h4 "Today"]
+       [:div.a-doc [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.a-doc [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.a-doc [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.a-doc [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+      [:div.a-canvas
+       [:img.a-canvas-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
+    [:div.a-ipad-foot
+     [:div.a-circle
+      [:div.a-square]]]]])
 
 (defn the-how [app owner]
   (reify
@@ -197,7 +200,7 @@
              [:div.featurette-story
               [:h2 "Access your ideas on any device right in the browser."]
               [:p "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
-             [:div.featurette-media art-tablet]]
+             [:div.featurette-media artwork-ipad]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
              [:div.featurette-story
