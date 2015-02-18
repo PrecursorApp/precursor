@@ -82,7 +82,7 @@
   [target message status {:keys [context frontend-id-state]} state]
   (if (= (:document/id state)
          (:document-id context))
+    (assoc state :frontend-id-state frontend-id-state)
     (do
       (utils/mlog "document ids don't match")
-      (assoc state :frontend-id-state frontend-id-state))
-    state))
+      state)))
