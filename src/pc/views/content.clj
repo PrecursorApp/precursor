@@ -90,7 +90,9 @@
                         (json/encode (-> view-data
                                        (utils/update-when-in [:initial-entities] serialize-entities)
                                        (utils/update-when-in [:cust] #(-> % escape-entity pr-str))
-                                       (assoc :cdn-base-url (common/cdn-base-url)))))
+                                       (assoc :cdn-base-url (common/cdn-base-url)
+                                              :manifest-version (pc.assets/asset-manifest-version)
+                                              :page-start (java.util.Date.)))))
     (when (prod-assets?)
       scripts/google-analytics)
     (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))

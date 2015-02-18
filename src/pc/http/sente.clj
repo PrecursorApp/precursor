@@ -3,6 +3,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [clj-time.core :as time]
             [clj-statsd :as statsd]
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
@@ -420,6 +421,22 @@
     (let [msg (format "no cust for %s" (:remote-addr (:ring-req req)))]
       (rollbar/report-exception (Exception. msg))
       (log/errorf msg))))
+
+(defn conj-limit
+  "Expects a vector, keeps the newest n items. May return a shorter vector than was passed in."
+  ([v n x]
+   (subvec (conj v x) (if (> (dec n) (count v))
+                        0
+                        (- (count v) (dec n)))))
+  ([v n x & xs]
+   (if xs
+     (recur (conj-limit v n x) n (first xs) (next xs))
+     (conj-limit v n x))))
+
+(defonce stats (atom []))
+
+(defmethod ws-handler :frontend/stats [{:keys [client-id ?data ?reply-fn] :as req}]
+  (swap! stats conj-limit 10 {:client-id client-id :stats (:stats ?data) :time (time/now)}))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log

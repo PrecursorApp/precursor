@@ -2,6 +2,9 @@
   (:require [datascript :as d]
             [frontend.utils :as utils :include-macros true]))
 
+(defn find-count [db]
+  (count (d/datoms db :aevt :chat/body)))
+
 (defn chat-timestamps-since [db time]
   (map first
        (d/q '{:find [?server-timestamp]

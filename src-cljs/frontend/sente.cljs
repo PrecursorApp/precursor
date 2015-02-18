@@ -5,6 +5,7 @@
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [taoensso.sente  :as sente :refer (cb-success?)]
+            [frontend.stats :as stats]
             [frontend.datascript :as ds]
             [datascript :as d]))
 
@@ -74,6 +75,11 @@
 (defmethod handle-message :frontend/error [app-state message data]
   (put! (get-in @app-state [:comms :errors]) [:document-permission-error data])
   (utils/inspect data))
+
+(defmethod handle-message :frontend/stats [app-state message data]
+  (send-msg (:sente @app-state)
+            [:frontend/stats
+             {:stats (stats/gather-stats @app-state)}]))
 
 (defmethod handle-message :chsk/state [app-state message data]
   (let [state @app-state]
