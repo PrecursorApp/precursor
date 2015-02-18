@@ -172,20 +172,18 @@
   [:div.artwork
    [:div.a-ipad
     [:div.a-ipad-head
-     [:div.a-circle]]
+     [:div.a-ipad-camera]]
     [:div.a-ipad-body
      [:div.a-screen
       [:div.a-menu
        [:h4 "Today"]
-       [:div.a-doc [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.a-doc [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.a-doc [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.a-doc [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
-      [:div.a-canvas
-       [:img.a-canvas-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
+       [:div.a-doc   [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.a-doc   [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.a-doc   [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.a-doc   [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+      [:div.a-canvas [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
     [:div.a-ipad-foot
-     [:div.a-circle
-      [:div.a-square]]]]])
+     [:div.a-ipad-button]]]])
 
 (defn the-how [app owner]
   (reify
