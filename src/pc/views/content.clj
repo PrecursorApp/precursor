@@ -74,7 +74,7 @@
     [:meta {:name "twitter:image:src"    :content (cdn-path "/img/precursor-logo.png")}]
     [:meta {:name "twitter:image:width"  :content "1200"}]
     [:meta {:name "twitter:image:height" :content "1200"}]
-    [:meta {:name "twitter:site"         :content "@prcrsr_app"}]
+    [:meta {:name "twitter:site"         :content "@PrecursorApp"}]
     [:meta {:name "twitter:site:id"      :content "2900854766"}]
     [:meta {:name "twitter:title"        :content "Fast prototyping web app, makes collaboration easy."}]
     [:meta {:name "twitter:url"          :content (urls/root)}]
