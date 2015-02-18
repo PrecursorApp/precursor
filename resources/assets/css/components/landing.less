@@ -212,21 +212,23 @@
 }
 .featurette-story {
   .order(2);
-  .flex(1 1 66%);
+  .flex(1);
   padding: @menu_padding;
   .mq_640({
-    .flex(0 0 100%);
     margin-bottom: auto;
   });
 }
 .featurette-media {
   .order(3);
-  .flex(1 1 34%);
+  width: 34%;
   padding: @menu_padding;
+  .mq_960({
+    width: 50%;
+  });
   .mq_640({
-    .flex(0 0 100%);
+    width: 100%;
     margin-top: auto;
-    padding-bottom: 0; // VETO
+    padding: @menu_padding 25%; // VETO
   });
   &.reverse {
     .order(1); // VETO
@@ -491,7 +493,7 @@
 }
 
 @ipad_ratio: 4 / 3;
-@ipad_width: 100%;
+// @ipad_width: 100%;
 @ipad_height: @ipad_ratio * 100%;
 
 @ipad_fill: @gray_dark;
@@ -503,32 +505,27 @@
 @ipad_padding_x: @ipad_padding_y / 3;
 
 @ipad_head_height: (100% - @ipad_body_height) / 2;
-// @ipad_body_height: 80%;
 @ipad_body_height: 100% - (@ipad_padding_y * 2);
 @ipad_foot_height: @ipad_head_height;
 
-
+.a_ipad_circle(@size: @arguments) {
+  width: 0;
+  height: 0;
+  margin+_: ((@ipad_head_height * @ipad_ratio) - @size) / 2;
+  margin+_: ((100% - @size) / 2);
+  padding: @size / 2;
+  border-radius: @tile_xxl;
+  background: @ipad_mask;
+}
 
 .a-ipad {
   position: relative;
-  width: @ipad_width;
+  width: 100%;
   height: 0;
   padding-bottom: @ipad_height;
   background: @ipad_fill;
   border-radius: (@ipad_button * @ipad_ratio) ~"/" @ipad_button;
 }
-
-
-
-// .a-circle {
-//   border-radius: @tile_xxl;
-// }
-// .a-square {
-//   //
-// }
-
-
-// @ipad_circle: 2.125%;
 .a-ipad-head {
   position: absolute;
   top: 0;
@@ -542,7 +539,6 @@
   left: 0;
   width: 100%;
   height: @ipad_body_height;
-  // background: fade(green, 20) !important; // TODO dev
 }
 .a-ipad-foot {
   position: absolute;
@@ -551,48 +547,12 @@
   width: 100%;
   height: @ipad_foot_height;
 }
-
-.a_ipad_circle(@size: @arguments) {
-  // @size: @arguments;
-  // @y: ((@ipad_head_height * @ipad_ratio) - @size) / 2;
-  // @x: ((100% - @size) / 2);
-  width: 0;
-  height: 0;
-  margin+_: ((@ipad_head_height * @ipad_ratio) - @size) / 2;
-  margin+_: ((100% - @size) / 2);
-  padding: @size / 2;
-  border-radius: @tile_xxl;
-  background: @ipad_mask;
-}
-
-
 .a-ipad-camera {
   .a_ipad_circle(@ipad_button / 3);
-  // @size: @ipad_button / 3;
-  // @y: ((@ipad_head_height * @ipad_ratio) - @size) / 2;
-  // @x: ((100% - @size) / 2);
-  // width: 0;
-  // height: 0;
-  // margin: @y @x;
-  // padding: @size / 2;
-  // border-radius: @tile_xxl;
-  // background: @ipad_mask;
 }
 .a-ipad-button {
   .a_ipad_circle(@ipad_button);
-  // @size: @ipad_button;
-  // @y: ((@ipad_head_height * @ipad_ratio) - @size) / 2;
-  // @x: ((100% - @size) / 2);
-  // width: 0;
-  // height: 0;
-  // margin: @y @x;
-  // padding: @size / 2;
-  // border-radius: @tile_xxl;
-  // background: @ipad_mask;
 }
-
-
-
 .a-screen {
   .flexy();
   width: 100% - (@ipad_padding_x * 2);
@@ -601,9 +561,6 @@
   background: @ipad_mask;
   overflow: hidden;
 }
-
-
-
 .a-menu {
   width: 50%;
   h4 {
@@ -617,6 +574,7 @@
   height: 25%;
   margin: 10%;
   border: 1px solid @gray_lighter;
+  overflow: hidden;
   &:first-of-type {
     margin-top: 0; // VETO
   }
@@ -626,16 +584,15 @@
 }
 .a-doc-img {
   max-width: none;
-  max-height: 150%;
+  max-height: 250%;
   opacity: .20;
 }
-
-
-
 .a-canvas {
   .flex(1);
   height: 66%;
   margin: auto;
   margin-left: 5%;
-  box-shadow: 0 5px 13px 0 fade(@black, 21), 0 -1px fade(@black, 3);
+  box-shadow+: 0  5px 13px fade(@black, 21);
+  box-shadow+: 0 -1px  0   fade(@black,  3);
+  overflow: hidden;
 }
