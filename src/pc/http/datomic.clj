@@ -151,7 +151,9 @@
         (sente/notify-transaction (merge {:tx-data public-datoms}
                                          annotations))
         (when (profile/prod?)
-          (handle-precursor-pings (:document/id annotations) public-datoms))))))
+          (future
+            (utils/with-report-exceptions
+              (handle-precursor-pings (:document/id annotations) public-datoms))))))))
 
 (defn send-emails [transaction]
   (let [annotations (delay (get-annotations transaction))]
