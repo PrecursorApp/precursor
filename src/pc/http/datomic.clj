@@ -63,9 +63,6 @@
 
     :entity/type
 
-    :layer/start-sx
-    :layer/start-sy
-
     :layer/font-family
     :layer/text
     :layer/font-size

@@ -2,6 +2,7 @@
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :refer (infof)]
             [datomic.api :refer [db q] :as d]
+            [pc.utils]
             [pc.profile])
   (:import java.util.UUID))
 
@@ -103,9 +104,12 @@
 
 (defn setup-tx-report-ch [conn]
   (let [queue (d/tx-report-queue conn)]
-    (future (while true
-              (let [transaction (.take queue)]
-                (async/put! tx-report-ch transaction))))))
+    (def report-future
+      (pc.utils/reporting-future
+       (while true
+         (let [transaction (.take queue)]
+           (assert (async/put! tx-report-ch transaction)
+                   "can't put transaction on tx-report-ch")))))))
 
 (defn init []
   (infof "Creating default database if it doesn't exist: %s"
