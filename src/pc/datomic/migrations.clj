@@ -69,7 +69,18 @@
                                           :transaction/source :transaction.source/migration
                                           :migration :migration/add-frontend-ids})))
                    (partition-all 100 (remove #(:frontend/id (d/entity db (:e %)))
-                                              (d/datoms db :aevt attr))))))))
+                                              (d/datoms db :aevt attr))))))
+    ;; documents are special, they get the namespace as their client part (may make this id 1 or 5000 at some point)
+    (dorun (pmap (fn [datoms]
+                   @(d/transact-async conn
+                                      (conj
+                                       (for [d datoms]
+                                         [:db/add (:e d) :frontend/id (UUID. (:e d) (:e d))])
+                                       {:db/id (d/tempid :db.part/tx)
+                                        :transaction/source :transaction.source/migration
+                                        :migration :migration/add-frontend-ids})))
+                 (partition-all 100 (remove #(:frontend/id (d/entity db (:e %)))
+                                            (d/datoms db :aevt :document/name)))))))
 
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
