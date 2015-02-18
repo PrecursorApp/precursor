@@ -471,9 +471,22 @@
                      (utils/straight-jacket (handle-req req))
                      (recur)))))
 
+(defn close-ws
+  "Closes the websocket, client should reconnect."
+  [client-id]
+  ((:send-fn @sente-state) client-id [:chsk/close]))
+
 (defn init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket! {:user-id-fn #'user-id-fn})]
     (reset! sente-state fns)
     (setup-ws-handlers fns)
     fns))
+
+(defn shutdown [& {:keys [sleep-ms]
+                            :or {sleep-ms 100}}]
+  (doseq [client-id (reduce (fn [acc [_ clients]]
+                              (apply conj acc (keys clients)))
+                            #{} @document-subs)]
+    (close-ws client-id)
+    (Thread/sleep sleep-ms)))
