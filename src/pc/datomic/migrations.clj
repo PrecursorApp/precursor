@@ -53,35 +53,6 @@
                       :cust/name "prcrsr"
                       :cust/uuid (d/squuid)}]))
 
-(defn add-frontend-ids
-  "Adds frontend ids to entities that need one"
-  [conn]
-  ;; assuming that only entities with document-ids need one. May
-  ;; require another migration later if that's false.
-  (let [db (d/db conn)]
-    (doseq [attr [:document/id :permission/document :access-grant/document :access-request/document]]
-      (dorun (pmap (fn [datoms]
-                     @(d/transact-async conn
-                                        (conj
-                                         (for [d datoms]
-                                           [:db/add (:e d) :frontend/id (UUID. (:v d) (:e d))])
-                                         {:db/id (d/tempid :db.part/tx)
-                                          :transaction/source :transaction.source/migration
-                                          :migration :migration/add-frontend-ids})))
-                   (partition-all 100 (remove #(:frontend/id (d/entity db (:e %)))
-                                              (d/datoms db :aevt attr))))))
-    ;; documents are special, they get the namespace as their client part (may make this id 1 or 5000 at some point)
-    (dorun (pmap (fn [datoms]
-                   @(d/transact-async conn
-                                      (conj
-                                       (for [d datoms]
-                                         [:db/add (:e d) :frontend/id (UUID. (:e d) (:e d))])
-                                       {:db/id (d/tempid :db.part/tx)
-                                        :transaction/source :transaction.source/migration
-                                        :migration :migration/add-frontend-ids})))
-                 (partition-all 100 (remove #(:frontend/id (d/entity db (:e %)))
-                                            (d/datoms db :aevt :document/name)))))))
-
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
@@ -92,7 +63,8 @@
    3 #'add-prcrsr-bot
    4 #'archive/make-existing-documents-public
    5 #'archive/migrate-fake-documents
-   6 #'archive/fix-bounding-boxes))
+   6 #'archive/fix-bounding-boxes
+   7 #'archive/add-frontend-ids))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"
