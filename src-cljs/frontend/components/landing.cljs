@@ -168,6 +168,22 @@
             ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
             ]])))))
 
+(def art-tablet
+  [:div.art-ipad
+   [:div.art-ipad-camera.art-ipad-ui]
+   [:div.art-ipad-screen.art-ipad-ui
+    [:div.art-ipad-viewport
+     [:div.art-ipad-menu
+      [:h4.art-ipad-menu-head "Today"]
+      [:div.art-ipad-menu-item [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+      [:div.art-ipad-menu-item [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+      [:div.art-ipad-menu-item [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+      [:div.art-ipad-menu-item [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+     [:div.art-ipad-canvas
+      [:img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
+   [:div.art-ipad-button.art-ipad-ui
+    [:div.art-ipad-square.art-ipad-ui]]])
+
 (defn the-how [app owner]
   (reify
     om/IInitState (init-state [_] {:past-center-featurettes #{}})
@@ -176,23 +192,12 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.the-how
-
-           ;; TODO dev for testing ipad illustration
-           [:div.featurette.content
-            [:div.featurette-media
-             [:div.art-ipad.landscape
-              [:div.ipad-camera.ipad-ui]
-              [:div.ipad-screen.ipad-ui]
-              [:div.ipad-button.ipad-ui
-               [:div.ipad-square.ipad-ui]]]]]
-           ;; TODO dev for testing ipad illustration
-
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "1") "active") :ref "1"}
              [:div.featurette-story
               [:h2 "Access your ideas on any device right in the browser."]
               [:p "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
-             [:div.featurette-media screen]]
+             [:div.featurette-media art-tablet]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
              [:div.featurette-story

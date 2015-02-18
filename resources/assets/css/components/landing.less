@@ -328,7 +328,7 @@
   @vw: 6 * @seed;
   @vh: 8 * @seed;
   @em: .25 * @seed; // 16px
-  @background: @gray;
+  @background: @gray_dark;
   @foreground: @white;
   @border: .125 * @em; // 2px
 
@@ -358,41 +358,108 @@
   height: @vh;
   background: @background;
   border-radius: @bw;
-  transition: (@run + @run_faster) @bezier_bounce; // device turning animation
-
-  &.landscape {
+  transition: @run @bezier_bounce; // device turning animation
+  .mq_640({
     width: @vh;
     height: @vw;
-    .ipad-camera {
-      margin: @cr @cb @cl @ct;
-    }
-    .ipad-screen {
-      width: @sh;
-      height: @sw;
-      margin: @sr @sb @sl @st;
-    }
-    .ipad-button {
-      margin: @br @bb @bl @bt;
-    }
-  }
-  .ipad-ui {
+  });
+
+  // // &.landscape {
+  // &:hover {
+  //   width: @vh;
+  //   height: @vw;
+  //   .art-ipad-camera {
+  //     margin: @cr @cb @cl @ct;
+  //   }
+  //   .art-ipad-screen {
+  //     width: @sh;
+  //     height: @sw;
+  //     margin: @sr @sb @sl @st;
+  //   }
+  //   .art-ipad-button {
+  //     margin: @br @bb @bl @bt;
+  //   }
+  //   .art-ipad-menu {
+  //     width: 40%;
+  //   }
+  // }
+
+  .art-ipad-ui {
     .position(absolute; 0; 0);
     transition: @run @bezier_bounce; // device turning animation
   }
-  .ipad-camera {
+  .art-ipad-camera {
     .art_circle(@cw; @ch; @foreground; @border; fill);
     margin: @ct @cr @cb @cl;
+    .mq_640({
+      margin: @cr @cb @cl @ct;
+    });
   }
-  .ipad-screen {
+  .art-ipad-screen {
     .art_square(@sw; @sh; @foreground; @border; fill);
     margin: @st @sr @sb @sl;
+    .mq_640({
+      width: @sh;
+      height: @sw;
+      margin: @sr @sb @sl @st;
+    });
   }
-  .ipad-button {
+  .art-ipad-button {
     .art_circle(@bw; @bh; @foreground; @border);
     margin: @bt @br @bb @bl;
+    .mq_640({
+      margin: @br @bb @bl @bt;
+    });
   }
-  .ipad-square {
+  .art-ipad-square {
     .art_square(@cw; @ch; @foreground; @border);
     margin: (((@bw - @cw) / 2) - @border);
+  }
+}
+.art-ipad-viewport {
+  .flexy();
+  width: 100%;
+  height: 100%;
+}
+.art-ipad-menu {
+  width: 50%;
+  overflow: hidden;
+  transition: @run @bezier_bounce;
+  .mq_640({
+    width: 40%;
+  });
+}
+.art-ipad-menu-head {
+  color: @gray;
+  font-weight: 300;
+  margin: 2% 10%;
+}
+.art-ipad-menu-item {
+  .flex(1);
+  height: 25%;
+  margin: 10%;
+  border: 1px solid @gray_lighter;
+  &:first-of-type {
+    margin-top: 0; // VETO
+  }
+  // &:nth-of-type(2) {
+  //   border: 2px solid @blue; // VETO
+  // }
+  img {
+    width: 100%;
+    opacity: .20;
+  }
+}
+.art-ipad-canvas {
+  .flex(1);
+  height: 66%;
+  margin: auto;
+  margin-left: 5%;
+  box-shadow: 0 5px 13px 0 fade(@black, 21), 0 -1px @gray_lightest;
+  overflow: hidden;
+  img {
+    max-width: none;
+    max-height: 150%;
+    opacity: .20;
   }
 }
