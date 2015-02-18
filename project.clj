@@ -26,7 +26,7 @@
                  [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
                                                                   org.slf4j/slf4j-api
                                                                   com.amazonaws/aws-java-sdk]]
-                 [org.postgresql/postgresql "9.4-1200-jdbc41"]
+                 [org.postgresql/postgresql "9.4-1200-jdbc41" :exclusions [org.slf4j/slf4j-simple]]
 
                  [amazonica "0.3.12"]
 

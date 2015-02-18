@@ -11,6 +11,7 @@
             [pc.email :as email]
             [pc.http.datomic-common :as common]
             [pc.http.sente :as sente]
+            [pc.http.urls :as urls]
             [pc.models.chat :as chat-model]
             [pc.profile :as profile]
             [pc.utils :as utils]
@@ -35,14 +36,14 @@
                                             (re-find #"(?i)@prcrsr|@danny|@daniel" (:v %)))
                                       datoms))]
     (doseq [datom ping-datoms
-            :let [message (format "<https://prcrsr.com/document/%s|%s>: %s"
-                                  document-id document-id (:v datom))]]
+            :let [message (format "<%s|%s>: %s"
+                                  (urls/doc document-id) document-id (:v datom))]]
       (http/post "https://hooks.slack.com/services/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"
                  {:form-params {"payload" (json/encode {:text message})}}))
     (when (and (first (filter #(= :chat/body (:a %)) datoms))
                (= 1 (count (get @sente/document-subs document-id))))
-      (let [message (format "<https://prcrsr.com/document/%s|%s> is typing messages to himself: \n %s"
-                            document-id document-id (:v (first (filter #(= :chat/body (:a %)) datoms))))]
+      (let [message (format "<%s|%s> is typing messages to himself: \n %s"
+                            (urls/doc document-id) document-id (:v (first (filter #(= :chat/body (:a %)) datoms))))]
         (http/post "https://hooks.slack.com/services/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"
                    {:form-params {"payload" (json/encode {:text message})}})))))
 
@@ -150,7 +151,9 @@
         (sente/notify-transaction (merge {:tx-data public-datoms}
                                          annotations))
         (when (profile/prod?)
-          (handle-precursor-pings (:document/id annotations) public-datoms))))))
+          (future
+            (utils/with-report-exceptions
+              (handle-precursor-pings (:document/id annotations) public-datoms))))))))
 
 (defn send-emails [transaction]
   (let [annotations (delay (get-annotations transaction))]

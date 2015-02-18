@@ -2,10 +2,14 @@
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)])
   (:require [cljs.core.async :as async :refer (<! >! put! chan)]
             [clojure.set :as set]
+            [cemerick.url :as url]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [taoensso.sente :as sente]
+            [frontend.stats :as stats]
             [frontend.datascript :as ds]
+            [frontend.models.chat :as chat-model]
+            [goog.labs.dom.PageVisibilityMonitor]
             [datascript :as d]))
 
 (defn send-msg [sente-state message & [timeout-ms callback-fn :as rest]]
@@ -80,6 +84,26 @@
 (defmethod handle-message :frontend/error [app-state message data]
   (put! (get-in @app-state [:comms :errors]) [:document-permission-error data])
   (utils/inspect data))
+
+(defmethod handle-message :frontend/stats [app-state message data]
+  (send-msg (:sente @app-state)
+            [:frontend/stats
+             {:stats (stats/gather-stats @app-state)}]))
+
+(defmethod handle-message :frontend/refresh [app-state message data]
+  (let [refresh-url (-> (url/url js/window.location)
+                      (update-in [:query] merge {"x" (get-in @app-state [:camera :x])
+                                                 "y" (get-in @app-state [:camera :y])
+                                                 "z" (get-in @app-state [:camera :zf])})
+                      str)]
+    (if (or (.isHidden (goog.labs.dom.PageVisibilityMonitor.))
+            (:force-refresh data))
+      (set! js/window.location refresh-url)
+      (chat-model/create-bot-chat (:db @app-state) @app-state [:span "We've just released some upgrades! Please "
+                                                               [:a {:href refresh-url
+                                                                    :target "_self"}
+                                                                "click to refresh"]
+                                                               " now to avoid losing any work."]))))
 
 (defmethod handle-message :chsk/state [app-state message data]
   (let [state @app-state]

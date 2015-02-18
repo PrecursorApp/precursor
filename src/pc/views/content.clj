@@ -3,6 +3,7 @@
             [hiccup.core :as h]
             [pc.assets]
             [pc.datomic.schema :as schema]
+            [pc.http.urls :as urls]
             [pc.utils :as utils]
             [pc.views.common :as common :refer (cdn-path)]
             [pc.views.scripts :as scripts]
@@ -66,17 +67,17 @@
     [:meta {:name "og:site_name"    :content "Precursor"}]
     [:meta {:name "og:title"        :content "Fast prototyping web app, makes collaboration easy."}]
     [:meta {:name "og:type"         :content "website"}]
-    [:meta {:name "og:url"          :content "https://prcrsr.com/"}]
+    [:meta {:name "og:url"          :content  (urls/root)}]
 
     [:meta {:name "twitter:card"         :content "summary_large_image"}]
     [:meta {:name "twitter:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
     [:meta {:name "twitter:image:src"    :content (cdn-path "/img/precursor-logo.png")}]
     [:meta {:name "twitter:image:width"  :content "1200"}]
     [:meta {:name "twitter:image:height" :content "1200"}]
-    [:meta {:name "twitter:site"         :content "@prcrsr_app"}]
+    [:meta {:name "twitter:site"         :content "@PrecursorApp"}]
     [:meta {:name "twitter:site:id"      :content "2900854766"}]
     [:meta {:name "twitter:title"        :content "Fast prototyping web app, makes collaboration easy."}]
-    [:meta {:name "twitter:url"          :content "https://prcrsr.com/"}]
+    [:meta {:name "twitter:url"          :content (urls/root)}]
 
     [:link {:rel "icon"             :href (cdn-path "/favicon.ico")}]
     [:link {:rel "apple-touch-icon" :href (cdn-path "/img/apple-touch-icon.png")}]
@@ -89,7 +90,9 @@
                         (json/encode (-> view-data
                                        (utils/update-when-in [:initial-entities] serialize-entities)
                                        (utils/update-when-in [:cust] #(-> % escape-entity pr-str))
-                                       (assoc :cdn-base-url (common/cdn-base-url)))))
+                                       (assoc :cdn-base-url (common/cdn-base-url)
+                                              :manifest-version (pc.assets/asset-manifest-version)
+                                              :page-start (java.util.Date.)))))
     (when (prod-assets?)
       scripts/google-analytics)
     (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))

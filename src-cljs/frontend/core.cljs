@@ -106,6 +106,14 @@
 (def navigation-ch
   (chan))
 
+(defn initial-camera []
+  (let [{:keys [x y z]} utils/initial-query-map]
+    (cond-> {}
+      x (assoc :x x)
+      y (assoc :y y)
+      ;; the zoom is zf for some reason
+      z (assoc :zf z))))
+
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
@@ -139,6 +147,7 @@
                                              :mult (async/mult mouse-down-ch)}
                              :mouse-up      {:ch mouse-up-ch
                                              :mult (async/mult mouse-up-ch)}})
+            (update-in [:camera] merge (initial-camera))
             (browser-settings/restore-browser-settings cust)))))
 
 (defn controls-handler

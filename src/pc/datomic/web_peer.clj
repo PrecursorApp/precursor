@@ -29,6 +29,7 @@
   (map (comp client-part :v) (datoms-for-ns db namespace-part)))
 
 (def multiple 5000)
+
 ;; backend uses reserved-remainder to create client parts
 (def reserved-remainder 0)
 (def remainders (disj (set (range multiple)) reserved-remainder))

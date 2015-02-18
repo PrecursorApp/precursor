@@ -37,3 +37,7 @@
 (defn -main []
   (init)
   (println (pretty-now) "done"))
+
+(defn shutdown []
+  (pc.datomic/shutdown)
+  (pc.server/shutdown))

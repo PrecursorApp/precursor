@@ -118,3 +118,6 @@
   (infof "Connected to: %s" (conn))
   (infof "forwarding report-queue to tx-report-ch")
   (setup-tx-report-ch (conn)))
+
+(defn shutdown []
+  (d/remove-tx-report-queue (conn)))

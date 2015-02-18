@@ -3,6 +3,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [clj-time.core :as time]
             [clj-statsd :as statsd]
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
@@ -446,6 +447,22 @@
       (rollbar/report-exception (Exception. msg))
       (log/errorf msg))))
 
+(defn conj-limit
+  "Expects a vector, keeps the newest n items. May return a shorter vector than was passed in."
+  ([v n x]
+   (subvec (conj v x) (if (> (dec n) (count v))
+                        0
+                        (- (count v) (dec n)))))
+  ([v n x & xs]
+   (if xs
+     (recur (conj-limit v n x) n (first xs) (next xs))
+     (conj-limit v n x))))
+
+(defonce stats (atom []))
+
+(defmethod ws-handler :frontend/stats [{:keys [client-id ?data ?reply-fn] :as req}]
+  (swap! stats conj-limit 10 {:client-id client-id :stats (:stats ?data) :time (time/now)}))
+
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
   nil)
@@ -479,6 +496,18 @@
                      (utils/straight-jacket (handle-req req))
                      (recur)))))
 
+(defn close-ws
+  "Closes the websocket, client should reconnect."
+  [client-id]
+  ((:send-fn @sente-state) client-id [:chsk/close]))
+
+(defn refresh-browser
+  "Refreshes the browser if the tab is hidden or if :force is set to true.
+   Otherwise, creates a bot chat asking the user to refresh the page."
+  [client-id & {:keys [force]
+                :or {force false}}]
+  ((:send-fn @sente-state) client-id [:frontend/refresh {:force-refresh force}]))
+
 (defn init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket!
@@ -487,3 +516,11 @@
     (reset! sente-state fns)
     (setup-ws-handlers fns)
     fns))
+
+(defn shutdown [& {:keys [sleep-ms]
+                            :or {sleep-ms 100}}]
+  (doseq [client-id (reduce (fn [acc [_ clients]]
+                              (apply conj acc (keys clients)))
+                            #{} @document-subs)]
+    (close-ws client-id)
+    (Thread/sleep sleep-ms)))

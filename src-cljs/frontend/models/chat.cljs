@@ -1,6 +1,10 @@
 (ns frontend.models.chat
   (:require [datascript :as d]
+            [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]))
+
+(defn find-count [db]
+  (count (d/datoms db :aevt :chat/body)))
 
 (defn chat-timestamps-since [db time]
   (map first
@@ -23,3 +27,13 @@
              sente-id)
         "You"
         (apply str (take 6 (str (:session/uuid chat)))))))
+
+(defn create-bot-chat [conn app-state body]
+  (d/transact! conn [{:db/id -1
+                      :chat/body body
+                      :document/id (:document/id app-state)
+                      :client/timestamp (js/Date.)
+                      :server/timestamp (js/Date.)
+                      :chat/color (:color (second (first state/subscriber-bot)))
+                      :chat/cust-name (:cust-name (second (first state/subscriber-bot)))}]
+               {:bot-layer true}))

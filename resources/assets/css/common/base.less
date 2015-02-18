@@ -1,9 +1,8 @@
 html {
+  .font-smoothing();
   font: @font_size/@line_height @font_family, sans-serif;
   color: @gray_dark;
-  -webkit-text-size-adjust:100%;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: fade(@black, 0);
 }
 body {
@@ -119,7 +118,7 @@ h6 { font-size: .75em; }
 button,
 input,
 textarea {
-  -webkit-font-smoothing: antialiased;
+  .font-smoothing();
 }
 p {
   margin: 0 0 1em;
@@ -139,7 +138,24 @@ p {
   font-size: 0.75rem;
   line-height: ~"@{line_height}rem";
 }
-.noninteractive {
+.mouse-stats {
   .user-select(none);
   pointer-events: none;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 1rem;
+  opacity: .25;
+  &:before,
+  &:after {
+    .animation(in-fade-bottom @run_slower);
+    font-family: @font_mono;
+    font-size: .625rem;
+    text-align: center;
+    position: absolute;
+    top: 0;
+    right: 100%;
+    width: ~"calc(100vw - 100%)";
+    height: 100%;
+  }
 }
