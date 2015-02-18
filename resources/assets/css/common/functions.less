@@ -23,6 +23,23 @@
   }.prefix(@property; @value; @rest);
   @{property}: @value;
 }
+.position(@p; @x; @y) {
+  position: @p;
+  .axis_y(@y) when (length(@y) = 1) {
+    top: @y;
+  }.axis_y(@y);
+  .axis_y(@y) when (length(@y) = 2) {
+    @property: extract(@y, 1);
+    @{property}: extract(@y, 2);
+  }.axis_y(@y);
+  .axis_x(@x) when (length(@x) = 1) {
+    left: @x;
+  }.axis_x(@x);
+  .axis_x(@x) when (length(@x) = 2) {
+    @property: extract(@x, 1);
+    @{property}: extract(@x, 2);
+  }.axis_x(@x);
+}
 .placeholder_style(@property; @value) {
   &::-webkit-input-placeholder {@{property}: @value;}
   &:-moz-placeholder           {@{property}: @value;}
@@ -223,4 +240,16 @@
   .mq_1280({ width: (@size_chat + (@size_chat_step *  3));});
    .mq_960({ width: (@size_chat + (@size_chat_step *  8));});
    .mq_640({ width: (@size_chat + (@size_chat_step * 21));});
+}
+.art_square(@width; @height; @color; @stroke; @rest...) {
+  .fill(@color; @rest) when (@rest = fill) {
+    background: @color;
+  }.fill(@color; @rest);
+  width: @width;
+  height: @height;
+  border: @stroke solid @color;
+}
+.art_circle(@width; @height; @color; @stroke; @rest...) {
+  .art_square(@width; @height; @color; @stroke; @rest);
+  border-radius: (@width + @height) / 2;
 }

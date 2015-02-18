@@ -181,10 +181,10 @@
            [:div.featurette.content
             [:div.featurette-media
              [:div.art-ipad.landscape
-              [:div.ipad-camera.fill]
-              [:div.ipad-screen.fill]
-              [:div.ipad-button.center
-               [:div.ipad-square]]]]]
+              [:div.ipad-camera.ipad-ui]
+              [:div.ipad-screen.ipad-ui]
+              [:div.ipad-button.ipad-ui
+               [:div.ipad-square.ipad-ui]]]]]
            ;; TODO dev for testing ipad illustration
 
             [:div.featurette.content

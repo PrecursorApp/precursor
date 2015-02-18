@@ -325,68 +325,74 @@
 
 .art-ipad {
   @seed: @tile;
-  @width: 6 * @seed;
-  @height: 8 * @seed;
-  @screen_width: .9 * @width;
-  @screen_height: .8 * @height;
-  @button_size: 1.5 * @em;
-  @square_size: @button_size / 3;
-  @circle_size: @square_size;
-  @em: .25 * @seed;
-  @2px: .125 * @em;
-  @ipad_color: @gray_light;
-  @fill_color: @white;
+  @vw: 6 * @seed;
+  @vh: 8 * @seed;
+  @em: .25 * @seed; // 16px
+  @background: @gray;
+  @foreground: @white;
+  @border: .125 * @em; // 2px
 
-  .square(@size; @color: @fill_color) {
-    width: @size;
-    height: @size;
-    margin: auto;
-    border: @2px solid @color;
-  }
-  .circle(@size; @color: @fill_color) {
-    .square(@size; @color);
-    border-radius: @size;
-  }
+  @sw: (@vw - 2);
+  @sh: (@vh - 6);
+  @st: (@vh - @sh) / 2;
+  @sr: (@vw - @sw) / 2;
+  @sb: (@vh - @sh) / 2;
+  @sl: (@vw - @sw) / 2;
 
-  .flexy();
-  width: @width;
-  height: @height;
-  background: @ipad_color;
-  border-radius: @button_size;
+  @cw: (@bw / 3);
+  @ch: (@bw / 3);
+  @ct: (@st - @cw) / 2;
+  @cr: (@vw - @cw) / 2;
+  @cb: (@vh - @cw) - @ct;
+  @cl: (@vw - @cw) / 2;
+
+  @bw: (1.5 * @em);
+  @bh: (1.5 * @em);
+  @bt: (@vh - @bw) - @bb;
+  @br: (@vw - @bw) / 2;
+  @bb: (@sb - @bw) / 2;
+  @bl: (@vw - @bw) / 2;
+
+  position: relative;
+  width: @vw;
+  height: @vh;
+  background: @background;
+  border-radius: @bw;
+  transition: (@run + @run_faster) @bezier_bounce; // device turning animation
 
   &.landscape {
-    width: @height;
-    height: @width;
+    width: @vh;
+    height: @vw;
+    .ipad-camera {
+      margin: @cr @cb @cl @ct;
+    }
     .ipad-screen {
-      width: @screen_height;
-      height: @screen_width;
-      margin: auto 0;
+      width: @sh;
+      height: @sw;
+      margin: @sr @sb @sl @st;
+    }
+    .ipad-button {
+      margin: @br @bb @bl @bt;
     }
   }
-  &:not(.landscape) {
-    .flex-direction(column);
+  .ipad-ui {
+    .position(absolute; 0; 0);
+    transition: @run @bezier_bounce; // device turning animation
   }
-
-  .fill {
-    background: @fill_color;
-  }
-  .center {
-    .flexy(center; center);
-  }
-
   .ipad-camera {
-    .circle(@circle_size);
+    .art_circle(@cw; @ch; @foreground; @border; fill);
+    margin: @ct @cr @cb @cl;
   }
   .ipad-screen {
-    width: @screen_width;
-    height: @screen_height;
-    margin: 0 auto;
+    .art_square(@sw; @sh; @foreground; @border; fill);
+    margin: @st @sr @sb @sl;
   }
   .ipad-button {
-    .circle(@button_size);
+    .art_circle(@bw; @bh; @foreground; @border);
+    margin: @bt @br @bb @bl;
   }
   .ipad-square {
-    .square(@square_size);
-    // margin: .375 * @em;
+    .art_square(@cw; @ch; @foreground; @border);
+    margin: (((@bw - @cw) / 2) - @border);
   }
 }
