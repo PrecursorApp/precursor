@@ -476,6 +476,13 @@
   [client-id]
   ((:send-fn @sente-state) client-id [:chsk/close]))
 
+(defn refresh-browser
+  "Refreshes the browser if the tab is hidden or if :force is set to true.
+   Otherwise, creates a bot chat asking the user to refresh the page."
+  [client-id & {:keys [force]
+                :or {force false}}]
+  ((:send-fn @sente-state) client-id [:frontend/refresh {:force-refresh force}]))
+
 (defn init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket! {:user-id-fn #'user-id-fn})]
