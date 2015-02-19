@@ -164,7 +164,7 @@
                                                                   (vals subs)))]
     (if-let [remainder (if (contains? available-remainders requested-remainder)
                          requested-remainder
-                         (first available-remainders ))]
+                         (first available-remainders))]
       (let [used-client-parts (web-peer/client-parts-for-ns db document-id)
             ;; do something to protect against over 100K eids
             ;; XXX should we ensure in the transactor that ids increase properly?
