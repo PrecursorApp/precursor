@@ -94,7 +94,7 @@
   (when (not= (om/get-state owner korks) value)
     (om/set-state! owner korks value)))
 
-(defn make-button [app owner]
+(defn make-button [_ owner]
   (reify
     om/IRender
     (render [_]
@@ -162,7 +162,7 @@
               [:h1 "Collaborating should be simple."]
               [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
               [:div.calls-to-action
-               (om/build make-button app)]]]]
+               (om/build make-button {})]]]]
            [:div.our-proof
             ;; Hide this until we get testimonials/stats figured out
             ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
@@ -232,7 +232,7 @@
                [:p "Precursor is the easiest way to share ideas with your teammates, fast."]
                [:div.calls-to-action
                 (common/google-login)
-                (om/build make-button app)]]]
+                (om/build make-button {})]]]
              [:div.navigation
               [:div.content
                [:a {:role "button"} "Precursor"]
