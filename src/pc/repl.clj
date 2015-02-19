@@ -8,9 +8,13 @@
             [clojure.repl :refer :all]
             [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
+            [pc.email :as email]
+            [pc.http.sente :as sente]
             [pc.models.chat :as chat-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
+            [pc.models.flag :as flag-model]
             [pc.models.layer :as layer-model]
             [pc.models.permission :as permission-model]))
 
