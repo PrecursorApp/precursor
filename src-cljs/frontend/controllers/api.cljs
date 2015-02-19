@@ -66,10 +66,6 @@
   (put! (get-in current-state [:comms :errors]) [:api-error args])
   (utils/mlog "No post-api for: " [message status]))
 
-(defmethod api-event [:entity-ids :success]
-  [target message status args state]
-  (update-in state [:entity-ids] (fnil into #{}) (get-in args [:resp :entity-ids])))
-
 (defmethod api-event [:created-docs :success]
   [target message status {:keys [docs]} state]
   (assoc-in state [:cust :created-docs] docs))

@@ -83,10 +83,9 @@
 
 (defmethod post-error! :subscribe-to-document-error
   [container message {:keys [document-id]} previous-state current-state]
-  (when (:use-frontend-ids current-state)
-    (write-error-to-canvas (:db current-state)
-                           (:camera current-state)
-                           "There was an error connecting to the server.\nPlease refresh to try again."))
+  (write-error-to-canvas (:db current-state)
+                         (:camera current-state)
+                         "There was an error connecting to the server.\nPlease refresh to try again.")
   (js/Rollbar.error (str "subscribe to document failed for " document-id)))
 
 (defmethod post-error! :entity-ids-request-failed
