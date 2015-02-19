@@ -107,12 +107,13 @@
   line-height: 1em;
   overflow: hidden;
 }
-.make-prepend {
-  margin-right: .25em;
-}
 .make-something {
   position: relative;
   height: 1em;
+}
+.something-default,
+.something-wheel {
+  white-space: pre;
 }
 .something-wheel {
   .animation(something-wheel @run_make_button);
@@ -133,7 +134,7 @@
     min-height: 100%;
     word-spacing: @tile_xl;
     white-space: pre-line;
-    padding: .25em 0;
+    padding: .25em;
   }
   &:before {
     bottom: 100%;
