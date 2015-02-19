@@ -2,6 +2,7 @@
   "Utility functions to make repl access more convenient.
    Also serves as a guide for how nses should be aliased"
   (:require [cheshire.core :as json]
+            [cemerick.url :as url]
             [clj-http.client :as http]
             [clj-time.core :as time]
             [clojure.java.javadoc :refer (javadoc)]
