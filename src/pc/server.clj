@@ -58,7 +58,7 @@
 
 ;; We'll redefine this function at run-time to test in production
 (defn use-frontend-ids? [req]
-  (pc.utils/inspect (contains? #{"dwwoelfel@gmail.com" "danny.newidea@gmail.com"} (get-in req [:auth :cust :cust/email])))
+  (contains? #{"dwwoelfel@gmail.com" "danny.newidea@gmail.com"} (get-in req [:auth :cust :cust/email]))
   false
   )
 
