@@ -103,8 +103,8 @@
   [datoms {:keys [document-id client-id session-uuid cust-uuid]}]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
-        (< 1000 (count datoms))
-        {:status 400 :body (pr-str {:error "You can only transact 1000 datoms at once"})}
+        (< 1500 (count datoms))
+        {:status 400 :body (pr-str {:error "You can only transact 1500 datoms at once"})}
         (not (number? document-id))
         {:status 400 :body (pr-str {:error "document-id is required and should be an entity id"})}
         :else
