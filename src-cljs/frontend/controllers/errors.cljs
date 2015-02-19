@@ -77,8 +77,8 @@
                         :layer/start-x start-x
                         :layer/start-y start-y
                         :db/id 1
-                        :layer/end-x 600
-                        :layer/end-y 175}]
+                        :layer/end-x (+ start-x 300)
+                        :layer/end-y (- start-y 23)}]
                  {:bot-layer true})))
 
 (defmethod post-error! :subscribe-to-document-error
