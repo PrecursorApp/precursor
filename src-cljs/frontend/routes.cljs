@@ -14,6 +14,10 @@
     (put! nav-ch [:error {:status 404}])))
 
 (defn define-user-routes! [nav-ch]
+  (defroute root "/" [{:keys [query-params]}]
+    (put! nav-ch [:root {:query-params query-params}]))
+  (defroute home "/home" [{:keys [query-params]}]
+    (put! nav-ch [:root {:query-params query-params}]))
   (defroute document #"/document/(\d+)" [doc-id {:keys [query-params]}]
     (put! nav-ch [:document {:document/id (long doc-id)
                              :query-params query-params}])))

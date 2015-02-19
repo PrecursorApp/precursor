@@ -108,7 +108,9 @@
 
 (defn app-state []
   (let [initial-state (state/initial-state)
-        document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
+        document-id (or (aget js/window "Precursor" "initial-document-id")
+                        ;; TODO: remove after be is fully deployed
+                        (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri)))))
         cust (some-> (aget js/window "Precursor" "cust")
                (reader/read-string))
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
@@ -121,6 +123,7 @@
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
                      :db (db/make-initial-db initial-entities)
+                     :document/id document-id
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
                      :cust cust
@@ -331,10 +334,7 @@
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
     (setup-entity-id-fetcher state)
-    (if-let [error-status (get-in @state [:render-context :status])]
-      ;; error codes from the server get passed as :status in the render-context
-      (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
-      (sec/dispatch! (str "/" (.getToken history-imp))))))
+    (sec/dispatch! (str "/" (.getToken history-imp)))))
 
 (defn ^:export inspect-state []
   (clj->js @debug-state))

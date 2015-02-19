@@ -123,7 +123,8 @@
           (if doc
             (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                                  :google-client-id (google-client-id)
-                                 :sente-id (-> req :session :sente-id)}
+                                 :sente-id (-> req :session :sente-id)
+                                 :initial-document-id (:db/id doc)}
                                 ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
                                 ;;       Also need a way to handle transactions before sente connects
                                 ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
@@ -140,7 +141,22 @@
               doc (doc-model/create-public-doc!
                    (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                           (when cust-uuid {:document/creator cust-uuid})))]
-          (redirect (str "/document/" (:db/id doc)))))
+          (if cust-uuid
+            (redirect (str "/document/" (:db/id doc)))
+            (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                                 :google-client-id (google-client-id)
+                                 :sente-id (-> req :session :sente-id)
+                                 :initial-document-id (:db/id doc)})))))
+
+   (GET "/home" req
+        (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+              doc (doc-model/create-public-doc!
+                   (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                          (when cust-uuid {:document/creator cust-uuid})))]
+          (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                               :google-client-id (google-client-id)
+                               :sente-id (-> req :session :sente-id)
+                               :initial-document-id (:db/id doc)}))))
 
    ;; Group newcomers into buckets with bucket-count users in each bucket.
    (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]
