@@ -48,13 +48,16 @@
         stroke-dasharray: 2 20;
       }
     }
-    .layer-outline {
-      stroke: darken(@dye_inner, 5);
-      transition-duration: @run;
-    }
-    .text-layer {
-      fill: darken(@dye_inner, 5);
-      transition-duration: @run;
+    .layer {
+      .layer-outline {
+        stroke: darken(@dye_inner, 5);
+        transition-duration: @run;
+      }
+      .text-layer,
+      .edit-handle {
+        fill: darken(@dye_inner, 5);
+        transition-duration: @run;
+      }
     }
     .chat-window {
       display: none;

@@ -35,6 +35,15 @@
       opacity: 0;
       transition: @now;
     }
+    .layer {
+      .layer-outline {
+        stroke: @gray_light;
+      }
+      .text-layer,
+      .edit-handle {
+        fill: @gray_light;
+      }
+    }
     .chat-background {
       .scale3d(0,0,1);
       transition-duration: @run_slow;
@@ -447,10 +456,10 @@ img.loading-image {
   &.denied {
     .access-avatar {
       box-shadow: 0 -1px 3px @black inset;
-      // img {
-      //   .filter(grayscale(1));
-      //   opacity: .5;
-      // }
+      img {
+        .filter(grayscale(1));
+        opacity: .5;
+      }
     }
     .access-avatar-img {
       .filter(grayscale(1));
