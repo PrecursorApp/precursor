@@ -107,6 +107,7 @@ mkdir -p $prcrsr_dir
 mkdir -p "${prcrsr_dir}/log"
 
 cd $prcrsr_dir
+touch pc.log
 
 jar_key=$(s3-dl.sh prcrsr-deploys manifest)
 s3-dl.sh prcrsr-deploys $jar_key > pc-standalone.jar
