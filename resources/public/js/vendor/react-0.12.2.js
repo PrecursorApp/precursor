@@ -9438,7 +9438,8 @@ ReactElement.createElement = function(type, config, children) {
         config.key !== null,
         'createElement(...): Encountered component with a `key` of null. In ' +
         'a future version, this will be treated as equivalent to the string ' +
-        '\'null\'; instead, provide an explicit key or use undefined.'
+          '\'null\'; instead, provide an explicit key or use undefined.',
+        config
       ) : null);
     }
     // TODO: Change this back to `config.key === undefined`
@@ -18113,7 +18114,7 @@ var emptyFunction = _dereq_("./emptyFunction");
 var warning = emptyFunction;
 
 if ("production" !== "development") {
-  warning = function(condition, format ) {for (var args=[],$__0=2,$__1=arguments.length;$__0<$__1;$__0++) args.push(arguments[$__0]);
+  warning = function(condition, format, extra ) {for (var args=[],$__0=2,$__1=arguments.length;$__0<$__1;$__0++) args.push(arguments[$__0]);
     if (format === undefined) {
       throw new Error(
         '`warning(condition, format, ...args)` requires a warning ' +
@@ -18122,6 +18123,7 @@ if ("production" !== "development") {
     }
 
     if (!condition) {
+      console.log(extra)
       var argIndex = 0;
       console.warn('Warning: ' + format.replace(/%s/g, function()  {return args[argIndex++];}));
     }
