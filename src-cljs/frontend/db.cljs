@@ -62,3 +62,23 @@
         (recur (inc i)
                (conj entity-ids (:entity-id res))
                (:frontend-id-state res))))))
+
+(defn get-entity-id
+  "Provides an app-state-aware API for generating entity ids, returns a map
+   with :entity-id and :state keys. Backwards compatible with dummy ids."
+  [app-state]
+  (if (:use-frontend-ids app-state)
+    (let [eid (first (:entity-ids app-state))]
+      {:entity-id eid :state (update-in app-state [:entity-ids] disj eid)})
+    (let [{:keys [entity-id frontend-id-state]} (generate-entity-id @(:db app-state) (:frontend-id-state app-state))]
+      {:entity-id entity-id :state (assoc app-state :frontend-id-state frontend-id-state)})))
+
+(defn get-entity-ids
+  "Provides an app-state-aware API for generating entity ids, returns a map
+   with :entity-id and :state keys. Backwards compatible with dummy ids."
+  [app-state n]
+  (if (:use-frontend-ids app-state)
+    (let [eids (take n (:entity-ids app-state))]
+      {:entity-ids eids :state (update-in app-state [:entity-ids] #(apply disj % eids))})
+    (let [{:keys [entity-ids frontend-id-state]} (generate-entity-ids @(:db app-state) n (:frontend-id-state app-state))]
+      {:entity-ids entity-ids :state (assoc app-state :frontend-id-state frontend-id-state)})))

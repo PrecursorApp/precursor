@@ -38,7 +38,8 @@
             right-click-learned? (get-in app state/right-click-learned-path)]
         (html [:div.inner {:on-click (when (overlay-visible? app)
                                        #(cast! :overlay-closed))
-                           :class (when-not (seq (:frontend-id-state app))
+                           :class (when (and (empty? (:frontend-id-state app))
+                                             (:use-frontend-ids app))
                                     "loading")}
                [:style "#om-app:active{cursor:auto}"]
                (om/build canvas/canvas app)

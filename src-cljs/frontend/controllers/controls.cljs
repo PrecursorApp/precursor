@@ -190,7 +190,7 @@
   [browser-state message [x y] state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
-        {:keys [entity-id frontend-id-state]} (frontend.db/generate-entity-id @(:db state) (:frontend-id-state state))
+        {:keys [entity-id state]} (frontend.db/get-entity-id state)
         layer (assoc (layers/make-layer entity-id (:document/id state) snap-x snap-y)
                      :layer/type (condp = (get-in state state/current-tool-path)
                                    :rect   :layer.type/rect
@@ -201,7 +201,6 @@
                                    :pen    :layer.type/path
                                    :layer.type/rect))]
     (let [r (-> state
-              (assoc :frontend-id-state frontend-id-state)
               (assoc-in [:drawing :in-progress?] true)
               (assoc-in [:drawing :layers] [(assoc layer
                                                    :layer/current-x snap-x
@@ -262,11 +261,9 @@
 (defmethod control-event :layer-duplicated
   [browser-state message {:keys [layer x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
-        {:keys [entity-id frontend-id-state]} (frontend.db/generate-entity-id @(:db state)
-                                                                              (:frontend-id-state state))]
+        {:keys [entity-id state]} (frontend.db/get-entity-id state)]
     (-> state
-      (assoc :selected-eids #{entity-id}
-             :frontend-id-state frontend-id-state)
+      (assoc :selected-eids #{entity-id})
       (assoc-in [:drawing :original-layers] [layer])
       (assoc-in [:drawing :layers] [(assoc layer
                                            :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
@@ -288,12 +285,9 @@
         ;; TODO: better way to get selected layers
         db @(:db state)
         layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)
-        {:keys [entity-ids frontend-id-state]} (frontend.db/generate-entity-ids @(:db state)
-                                                                                (count layers)
-                                                                                (:frontend-id-state state))]
+        {:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))]
     (-> state
-      (assoc :selected-eids (set entity-ids)
-             :frontend-id-state frontend-id-state)
+      (assoc :selected-eids (set entity-ids))
       (assoc-in [:drawing :original-layers] layers)
       (assoc-in [:drawing :layers] (mapv (fn [layer entity-id index]
                                            (assoc layer
@@ -860,10 +854,8 @@
 
 (defmethod control-event :chat-submitted
   [browser-state message {:keys [chat-body]} state]
-  (let [{:keys [entity-id frontend-id-state]} (frontend.db/generate-entity-id @(:db state)
-                                                                              (:frontend-id-state state))]
+  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)]
     (-> state
-      (assoc :frontend-id-state frontend-id-state)
       (handle-cmd-chat (chat-cmd chat-body) chat-body)
       (assoc-in [:chat :entity-id] entity-id))))
 
@@ -1077,9 +1069,7 @@
 
 (defmethod control-event :layers-pasted
   [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
-  (let [{:keys [entity-ids frontend-id-state]} (frontend.db/generate-entity-ids @(:db state)
-                                                                                (count layers)
-                                                                                (:frontend-id-state state))
+  (let [{:keys [entity-ids frontend]} (frontend.db/get-entity-ids state (count layers))
         doc-id (:document/id state)
         camera (:camera state)
         zoom (:zf camera)
@@ -1103,8 +1093,7 @@
                                                               :move-x move-x :move-y move-y :snap-paths? true}))
                                                (dissoc :layer/current-x :layer/current-y :points)))
                                            layers entity-ids))
-      (assoc-in [:selected-eids] (set entity-ids))
-      (assoc :frontend-id-state frontend-id-state))))
+      (assoc-in [:selected-eids] (set entity-ids)))))
 
 (defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]

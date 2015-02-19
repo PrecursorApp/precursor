@@ -122,13 +122,15 @@
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
                            (reader/read-string))
         tab-id (utils/uuid)
-        sente-id (aget js/window "Precursor" "sente-id")]
+        sente-id (aget js/window "Precursor" "sente-id")
+        use-frontend-ids (aget js/window "Precursor" "use-frontend-ids")]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
                      :tab-id tab-id
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
                      :db (db/make-initial-db initial-entities)
+                     :use-frontend-ids use-frontend-ids
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
                      :cust cust

@@ -26,7 +26,7 @@
 (defn subscribe-to-document [sente-state comms document-id & {:keys [requested-color]}]
   (send-msg sente-state [:frontend/subscribe {:document-id document-id
                                               :requested-color requested-color}]
-            1000
+            5000
             (fn [reply]
               (if (sente/cb-success? reply)
                 (put! (:api comms) [(first reply) :success (assoc (second reply)
