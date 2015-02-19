@@ -1,5 +1,6 @@
 (ns pc.models.layer
   (:require [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [datomic.api :refer [db q] :as d]))
 
 
@@ -26,26 +27,25 @@
 
 ;; TODO: can use pull API here
 (defn read-api [layer]
-  (select-keys layer [:layer/name
-                      :layer/uuid
-                      :layer/type
-                      :layer/start-x
-                      :layer/start-y
-                      :layer/end-x
-                      :layer/end-y
-                      :layer/rx
-                      :layer/ry
-                      :layer/fill
-                      :layer/stroke-width
-                      :layer/stroke-color
-                      :layer/opacity
-                      :layer/font-family
-                      :layer/text
-                      :layer/font-size
-                      :layer/path
-                      :layer/child
-                      :layer/ui-id
-                      :layer/ui-target
-                      :frontend/id
-                      :db/id ;; XXX: remove once frontend/id is finished
-                      ]))
+  (-> layer
+    (select-keys [:layer/name
+                  :layer/uuid
+                  :layer/type
+                  :layer/start-x
+                  :layer/start-y
+                  :layer/end-x
+                  :layer/end-y
+                  :layer/rx
+                  :layer/ry
+                  :layer/fill
+                  :layer/stroke-width
+                  :layer/stroke-color
+                  :layer/opacity
+                  :layer/font-family
+                  :layer/text
+                  :layer/font-size
+                  :layer/path
+                  :layer/child
+                  :layer/ui-id
+                  :layer/ui-target])
+    (assoc :db/id (web-peer/client-id layer))))

@@ -33,8 +33,8 @@
                  [ring/ring "1.3.2" :exclusions [hiccup
                                                  org.clojure/java.classpath]]
                  [ring/ring-anti-forgery "1.0.0" :exclusions [hiccup]]
-                 [http-kit "2.1.19"]
-                 [com.taoensso/sente "1.3.0-RC1" :exclusions [http-kit]]
+                 [http-kit "2.1.18-c9c0b155a4ab05630d332a7d2da0aaf433889772"]
+                 [com.taoensso/sente "1.4.0-alpha2" :exclusions [http-kit]]
                  [clj-stacktrace "0.2.8"]
 
                  [org.clojure/tools.reader "0.8.13"]

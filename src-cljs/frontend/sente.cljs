@@ -5,7 +5,7 @@
             [cemerick.url :as url]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
-            [taoensso.sente  :as sente :refer (cb-success?)]
+            [taoensso.sente :as sente]
             [frontend.stats :as stats]
             [frontend.datascript :as ds]
             [frontend.models.chat :as chat-model]
@@ -23,9 +23,16 @@
                      (apply (:send-fn sente-state) message rest)
                      (remove-watch ref watch-id)))))))
 
-(defn subscribe-to-document [sente-state document-id & {:keys [requested-color]}]
+(defn subscribe-to-document [sente-state comms document-id & {:keys [requested-color requested-remainder]}]
   (send-msg sente-state [:frontend/subscribe {:document-id document-id
-                                              :requested-color requested-color}]))
+                                              :requested-color requested-color
+                                              :requested-remainder requested-remainder}]
+            5000
+            (fn [reply]
+              (if (sente/cb-success? reply)
+                (put! (:api comms) [(first reply) :success (assoc (second reply)
+                                                                  :context {:document-id document-id})])
+                (put! (:errors comms) [:subscribe-to-document-error {:document-id document-id}])))))
 
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
@@ -107,8 +114,9 @@
       ;; TODO: This seems like a bad place for this. Can we share the same code that
       ;;       we use for subscribing from the nav channel in the first place?
       (subscribe-to-document
-       (:sente state) (:document/id state)
-       :requested-color (get-in state [:subscribers (:client-id state) :color])))))
+       (:sente state) (:comms state) (:document/id state)
+       :requested-color (get-in state [:subscribers (:client-id state) :color])
+       :requested-remainder (get-in state [:subscribers (:client-id state) :remainder])))))
 
 
 (defn do-something [app-state sente-state]

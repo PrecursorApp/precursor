@@ -44,6 +44,12 @@ body {
       }
     }
   }
+  &.loading {
+    .canvas {
+      pointer-events: none
+    }
+    cursor: wait
+  }
 }
 button {
   background: fade(@white, 0);

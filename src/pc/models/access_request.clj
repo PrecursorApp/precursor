@@ -12,9 +12,8 @@
                   :access-request/create-date
                   :access-request/deny-date
                   ;; TODO: different read api based on permissions
-                  :access-request/status
-                  :db/id])
-    (#(into {} %))
+                  :access-request/status])
+    (assoc :db/id (web-peer/client-id permission))
     (update-in [:access-request/cust] #(:cust/email (d/entity db %)))))
 
 (defn requester-read-api [db permission]

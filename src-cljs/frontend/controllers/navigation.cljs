@@ -74,7 +74,8 @@
         (assoc :document/id doc-id
                :undo-state (atom {:transactions []
                                   :last-undo nil})
-               :db-listener-key (utils/uuid))
+               :db-listener-key (utils/uuid)
+               :frontend-id-state {})
         (assoc :subscribers state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
@@ -91,8 +92,9 @@
   (let [sente-state (:sente current-state)
         doc-id (:document/id current-state)]
     (when-let [prev-doc-id (:document/id previous-state)]
-      (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}]))
-    (sente/subscribe-to-document sente-state doc-id)
+      (when (not= prev-doc-id doc-id)
+        (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}])))
+    (sente/subscribe-to-document sente-state (:comms current-state) doc-id)
     ;; TODO: probably only need one listener key here, and can write a fn replace-listener
     (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
     (db/setup-listener! (:db current-state)

@@ -53,8 +53,8 @@
 (defn uuid []
   (UUID/randomUUID))
 
+;; TODO: remove, deprecated by frontend ids
 (defn generate-eids [conn tempid-count]
-  ;; TODO: support for multiple parts
   (let [tempids (take tempid-count (repeatedly #(d/tempid :db.part/user)))
         transaction (d/transact conn (mapv (fn [tempid] {:db/id tempid :dummy :dummy/dummy}) tempids))]
     (mapv (fn [tempid] (d/resolve-tempid (:db-after @transaction) (:tempids @transaction) tempid)) tempids)))

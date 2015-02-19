@@ -30,6 +30,14 @@
                            [?email-eid :db/ident ?emails]]}
                  db eid))))
 
+(defn sent-emails [db eid]
+  (set (map first
+            (d/q '{:find [?emails]
+                   :in [$ ?e]
+                   :where [[?e :sent-email ?email-eid]
+                           [?email-eid :db/ident ?emails]]}
+                 db eid))))
+
 (defn mark-sent-email
   "Returns true if this was the first transaction to mark the email as sent. False if it wasn't."
   [eid email-enum]
@@ -38,8 +46,8 @@
                                     :transaction/source :transaction.source/mark-sent-email}
                                    [:db/retract eid :needs-email email-enum]
                                    [:db/add eid :sent-email email-enum]])]
-    (and (contains? (emails-to-send (:db-before t) eid) email-enum)
-         (not (contains? (emails-to-send (:db-after t) eid) email-enum)))))
+    (and (not (contains? (sent-emails (:db-before t) eid) email-enum))
+         (contains? (sent-emails (:db-after t) eid) email-enum))))
 
 (defn unmark-sent-email
   [eid email-enum]

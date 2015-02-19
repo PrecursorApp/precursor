@@ -84,11 +84,15 @@
                 {} txes)))
 
 (defn add-frontend-ids [document-id txes]
-  (let [entity-ids (reduce (fn [acc tx]
-                             (conj acc (second tx)))
-                           #{} txes)]
-    (concat txes (for [eid entity-ids]
-                   [:db/add eid :frontend/id (UUID. document-id eid)]))))
+  (:txes (reduce (fn [{:keys [txes eid-map]} [type e a v]]
+                   (if-let [temp-id (get eid-map e)]
+                     {:txes (conj txes [type temp-id a v])
+                      :eid-map eid-map}
+                     (let [temp-id (d/tempid :db.part/user)]
+                       {:txes (concat txes [[type temp-id a v]
+                                            [:db/add temp-id :frontend/id (UUID. document-id e)]])
+                        :eid-map (assoc eid-map e temp-id)})))
+                 {:txes [] :eid-map {}} txes)))
 
 ;; TODO: only let creators mark things as private
 ;; TODO: only let people on the white list make things as private
@@ -99,8 +103,8 @@
   [datoms {:keys [document-id client-id session-uuid cust-uuid]}]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
-        (< 1000 (count datoms))
-        {:status 400 :body (pr-str {:error "You can only transact 1000 datoms at once"})}
+        (< 1500 (count datoms))
+        {:status 400 :body (pr-str {:error "You can only transact 1500 datoms at once"})}
         (not (number? document-id))
         {:status 400 :body (pr-str {:error "document-id is required and should be an entity id"})}
         :else
@@ -112,8 +116,6 @@
                               uuid-attrs (get-uuid-attrs db)
                               server-timestamp (java.util.Date.)]
                           (->> datoms
-                            (remove #(= :dummy (:a %)))
-                            (filter (fn [datom] (common/public? db (:e datom))))
                             (map pcd/datom->transaction)
                             (map (partial coerce-floats float-attrs))
                             (map (partial coerce-uuids uuid-attrs))

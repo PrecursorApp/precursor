@@ -122,13 +122,15 @@
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
                            (reader/read-string))
         tab-id (utils/uuid)
-        sente-id (aget js/window "Precursor" "sente-id")]
+        sente-id (aget js/window "Precursor" "sente-id")
+        use-frontend-ids (aget js/window "Precursor" "use-frontend-ids")]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
                      :tab-id tab-id
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
                      :db (db/make-initial-db initial-entities)
+                     :use-frontend-ids use-frontend-ids
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
                      :cust cust
@@ -294,24 +296,6 @@
 (defn fetch-entity-ids [api-ch eid-count]
   (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
 
-(defn notify-error [state]
-  (d/transact! (:db @state) [{:layer/type :layer.type/text
-                              :layer/name "Error"
-                              :layer/text "There was an error connecting to the server."
-                              :layer/start-x 200
-                              :layer/start-y 200
-                              :db/id -1
-                              :layer/end-x 600
-                              :layer/end-y 175}
-                             {:layer/type :layer.type/text
-                              :layer/name "Error"
-                              :layer/text "Please refresh to try again."
-                              :layer/start-x 200
-                              :layer/start-y 225
-                              :db/id -2
-                              :layer/end-x 400
-                              :layer/end-y 200}]))
-
 (defn setup-entity-id-fetcher [state]
   (let [api-ch (-> state deref :comms :api)]
     (go (let [resp (<! (ajax/managed-ajax :post "/api/entity-ids" :params {:count 40}))]
@@ -323,8 +307,7 @@
                                                       (utils/mlog "fetching more entity ids")
                                                       (fetch-entity-ids api-ch (- 40
                                                                                   (-> new :entity-ids count)))))))
-            (do (notify-error state)
-                (js/Rollbar.error "entity ids request failed :(")))))))
+            (put! (get-in @state [:comms :errors]) [:entity-ids-request-failed]))))))
 
 (defn ^:export setup! []
   (when-not (utils/logging-enabled?)

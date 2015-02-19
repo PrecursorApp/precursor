@@ -6,7 +6,7 @@
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils.vcs-url :as vcs-url]
-            [frontend.utils :as utils :refer [mlog merror]]
+            [frontend.utils :as utils]
             [goog.string :as gstring])
   (:require-macros [frontend.utils :refer [inspect]]))
 
@@ -36,7 +36,7 @@
   (let [submethod (get-method api-event [:default status])]
     (if submethod
       (submethod target message status args state)
-      (do (merror "Unknown api: " message args)
+      (do (utils/merror "Unknown api: " message args)
           state))))
 
 (defmethod post-api-event! :default
@@ -45,35 +45,26 @@
   (let [submethod (get-method post-api-event! [:default status])]
     (if submethod
       (submethod target message status args previous-state current-state)
-      (merror "Unknown api: " message status args))))
+      (utils/merror "Unknown api: " message status args))))
 
 (defmethod api-event [:default :success]
   [target message status args state]
-  (mlog "No api for" [message status])
+  (utils/mlog "No api for" [message status])
   state)
 
 (defmethod post-api-event! [:default :success]
   [target message status args previous-state current-state]
-  (mlog "No post-api for: " [message status]))
+  (utils/mlog "No post-api for: " [message status]))
 
 (defmethod api-event [:default :failed]
   [target message status args state]
-  (mlog "No api for" [message status])
+  (utils/mlog "No api for" [message status])
   state)
 
 (defmethod post-api-event! [:default :failed]
   [target message status args previous-state current-state]
   (put! (get-in current-state [:comms :errors]) [:api-error args])
-  (mlog "No post-api for: " [message status]))
-
-(defmethod api-event [:default :finished]
-  [target message status args state]
-  (mlog "No api for" [message status])
-  state)
-
-(defmethod post-api-event! [:default :finished]
-  [target message status args previous-state current-state]
-  (mlog "No post-api for: " [message status]))
+  (utils/mlog "No post-api for: " [message status]))
 
 (defmethod api-event [:entity-ids :success]
   [target message status args state]
@@ -86,3 +77,12 @@
 (defmethod api-event [:touched-docs :success]
   [target message status {:keys [docs]} state]
   (assoc-in state [:cust :touched-docs] docs))
+
+(defmethod api-event [:frontend/frontend-id-state :success]
+  [target message status {:keys [context frontend-id-state]} state]
+  (if (= (:document/id state)
+         (:document-id context))
+    (assoc state :frontend-id-state frontend-id-state)
+    (do
+      (utils/mlog "document ids don't match")
+      state)))
