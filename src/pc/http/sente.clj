@@ -162,7 +162,7 @@
 (defn choose-frontend-id-seed [db document-id subs requested-remainder]
   (let [available-remainders (apply disj web-peer/remainders (map (comp :remainder :frontend-id-seed)
                                                                   (vals subs)))]
-    (if-let [remainder (if (contains? available-remainders (utils/inspect requested-remainder))
+    (if-let [remainder (if (contains? available-remainders requested-remainder)
                          requested-remainder
                          (first available-remainders ))]
       (let [used-client-parts (web-peer/client-parts-for-ns db document-id)
