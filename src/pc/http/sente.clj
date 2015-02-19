@@ -512,6 +512,11 @@
                 :or {force false}}]
   ((:send-fn @sente-state) client-id [:frontend/refresh {:force-refresh force}]))
 
+(defn fetch-stats
+  "Sends a request to the client for statistics, which is handled above in the :frontend/stats handler"
+  [client-id]
+  ((:send-fn @sente-state) client-id [:frontend/stats]))
+
 (defn init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket!
