@@ -122,15 +122,13 @@
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
                            (reader/read-string))
         tab-id (utils/uuid)
-        sente-id (aget js/window "Precursor" "sente-id")
-        use-frontend-ids (aget js/window "Precursor" "use-frontend-ids")]
+        sente-id (aget js/window "Precursor" "sente-id")]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
                      :tab-id tab-id
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
                      :db (db/make-initial-db initial-entities)
-                     :use-frontend-ids use-frontend-ids
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
                      :cust cust
@@ -293,22 +291,6 @@
             ;; of a server to store it
             (async/timeout 10000) (do #_(print "TODO: print out history: ")))))))
 
-(defn fetch-entity-ids [api-ch eid-count]
-  (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
-
-(defn setup-entity-id-fetcher [state]
-  (let [api-ch (-> state deref :comms :api)]
-    (go (let [resp (<! (ajax/managed-ajax :post "/api/entity-ids" :params {:count 40}))]
-          (if (= :success (:status resp))
-            (do
-              (put! api-ch [:entity-ids :success {:resp resp :status :success}])
-              (add-watch state :entity-id-fetcher (fn [key ref old new]
-                                                    (when (> 35 (-> new :entity-ids count))
-                                                      (utils/mlog "fetching more entity ids")
-                                                      (fetch-entity-ids api-ch (- 40
-                                                                                  (-> new :entity-ids count)))))))
-            (put! (get-in @state [:comms :errors]) [:entity-ids-request-failed]))))))
-
 (defn ^:export setup! []
   (when-not (utils/logging-enabled?)
     (println "To enable logging, set Precursor['logging-enabled'] = true"))
@@ -322,7 +304,6 @@
     (main state history-imp)
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
-    (setup-entity-id-fetcher state)
     (if-let [error-status (get-in @state [:render-context :status])]
       ;; error codes from the server get passed as :status in the render-context
       (put! (get-in @state [:comms :nav]) [:error {:status error-status}])

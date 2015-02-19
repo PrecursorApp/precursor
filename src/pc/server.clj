@@ -56,12 +56,6 @@
   (swap! bucket-doc-ids (fn [b]
                           (set/intersection b (set (keys @sente/document-subs))))))
 
-;; We'll redefine this function at run-time to test in production
-(defn use-frontend-ids? [req]
-  (contains? #{"dwwoelfel@gmail.com" "danny.newidea@gmail.com"} (get-in req [:auth :cust :cust/email]))
-  false
-  )
-
 ;; TODO: make this reloadable without reloading the server
 (defn app [sente-state]
   (routes
@@ -129,8 +123,7 @@
           (if doc
             (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                                  :google-client-id (google-client-id)
-                                 :sente-id (-> req :session :sente-id)
-                                 :use-frontend-ids (use-frontend-ids? req)}
+                                 :sente-id (-> req :session :sente-id)}
                                 ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
                                 ;;       Also need a way to handle transactions before sente connects
                                 ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
