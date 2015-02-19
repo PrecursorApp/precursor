@@ -167,16 +167,6 @@
   90%  { -webkit-transform: translate3d(0,  -20%, 0);}
   100% { -webkit-transform: none; opacity: 1;}
 }
-@keyframes something-wheel-list {
-  0%   {opacity: 0;}
-  50%  {opacity: 1;}
-  100% {opacity: 0;}
-}
-@-webkit-keyframes something-wheel-list {
-  0%   {opacity: 0;}
-  50%  {opacity: 1;}
-  100% {opacity: 0;}
-}
 @keyframes make-button-wrap {
   0%   {padding-right: @tile;}
   100% {padding-right: 0;}
@@ -184,6 +174,14 @@
 @-webkit-keyframes make-button-wrap {
   0%   {padding-right: @tile;}
   100% {padding-right: 0;}
+}
+@keyframes out-fade {
+  0%   {opacity: 1;}
+  100% {opacity: 0;}
+}
+@-webkit-keyframes out-fade {
+  0%   {opacity: 1;}
+  100% {opacity: 0;}
 }
 @keyframes out-fade-right {
   0%   { opacity: 1; transform: none;}
