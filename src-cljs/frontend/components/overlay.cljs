@@ -166,7 +166,7 @@
   [entity cast!]
   [:div.access-card.make
    [:div.access-avatar
-    [:img
+    [:img.access-avatar-img
      {:src (utils/gravatar-url (:permission/cust entity))}]]
    [:div.access-details
     [:span
@@ -178,7 +178,7 @@
   [entity cast!]
   [:div.access-card.make
    [:div.access-avatar
-    [:img
+    [:img.access-avatar-img
      {:src (utils/gravatar-url (:access-grant/email entity))}]]
    [:div.access-details
     [:span

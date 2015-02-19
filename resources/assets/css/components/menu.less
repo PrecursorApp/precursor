@@ -447,10 +447,14 @@ img.loading-image {
   &.denied {
     .access-avatar {
       box-shadow: 0 -1px 3px @black inset;
-      img {
-        .filter(grayscale(1));
-        opacity: .5;
-      }
+      // img {
+      //   .filter(grayscale(1));
+      //   opacity: .5;
+      // }
+    }
+    .access-avatar-img {
+      .filter(grayscale(1));
+      opacity: .5;
     }
     .access-details {
       opacity: .5;
@@ -466,7 +470,7 @@ img.loading-image {
   height: @size;
   border-radius: @size;
   transition: @run @bezier_fadein;
-  img {
+  .access-avatar-img {
     width: @size;
     height: @size;
     border-radius: @size;

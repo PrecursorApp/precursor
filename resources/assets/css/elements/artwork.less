@@ -1,0 +1,312 @@
+// artwork screenshot work in progress
+// .featurette {
+//   svg {
+//     max-width: 100%;
+//     overflow: visible;
+//   }
+//   .svg-actions {
+//     fill: #fff;
+//   }
+//   .svg-menu {
+//     stroke-width: 4;
+//     stroke: #ccc;
+//     fill: #ccc;
+//   }
+//   .svg-in-progress {
+//     line,
+//     circle {
+//       fill: none;
+//       stroke-width: 4;
+//       stroke: #bf5bff;
+//     }
+//   }
+//   .svg-cursor {
+//     stroke: #bf5bff;
+//     fill: none;
+//     stroke-width: 4;
+//   }
+//   .svg-border,
+//   .svg-chat,
+//   .svg-shape-layers {
+//     fill: none;
+//     stroke-width: 4;
+//   }
+//   .svg-border,
+//   .svg-chat {
+//     stroke: #ccc;
+//   }
+//   .svg-shape-layers {
+//     // stroke: #888;
+//     stroke: #ccc;
+//   }
+// }
+
+// hold off on svg ones for now, trying html
+// @art_color: @gray_light;
+// @art_black: @gray_dark;
+// @art_white: @white;
+// .art_both(...) {
+//   fill: ;
+//   stroke: ;
+// }
+
+// .art {
+//   path {
+//     fill: none;
+//     stroke-width: 2;
+//   }
+//   .art-fill-color { fill:   @art_color; }
+//   .art-fill-black { fill:   @art_black; }
+//   .art-fill-white { fill:   @art_white; }
+//   .art-line-color { stroke: @art_color; }
+//   .art-line-black { stroke: @art_black; }
+//   .art-line-white { stroke: @art_white; }
+//   .art-both-color {
+//     .art-fill-color();
+//     .art-line-color();
+//   }
+//   .art-both-black {
+//     .art-fill-black();
+//     .art-line-black();
+//   }
+//   .art-both-white {
+//     .art-fill-white();
+//     .art-line-white();
+//   }
+// }
+
+
+
+// hold off on animating for now, getting hairy with responsive stuff
+// .a-ipad,
+// .a-ipad-head,
+// .a-ipad-body,
+// .a-ipad-foot,
+// .a-ipad-camera,
+// .a-ipad-button,
+// .a-screen,
+// .a-doc {
+//   transition: 250ms;
+// }
+// .artwork {
+//   &:hover {
+//     @offset: (@ipad_height - (100% / @ipad_ratio)) / 2;
+//     padding: @offset 0;
+//     .a-ipad {
+//       padding-bottom: (100% / @ipad_ratio);
+//       border-radius: (@ipad_button / @ipad_ratio) ~"/" @ipad_button;
+//     }
+//     .a-ipad-head {
+//       width: @ipad_head_height;
+//       height: 100%;
+//     }
+//     .a-ipad-body {
+//       top: 0;
+//       left: @ipad_head_height;
+//       width: @ipad_body_height;
+//       height: 100%;
+//     }
+//     .a-ipad-foot {
+//       left: auto;
+//       right: 0;
+//       width: @ipad_foot_height;
+//       height: 100%;
+//     }
+//     .a-ipad-camera {
+//       .a_ipad_circle_reverse(@ipad_button / 3);
+//     }
+//     .a-ipad-button {
+//       .a_ipad_circle_reverse(@ipad_button);
+//     }
+//     .a-screen {
+//       width: 100%;
+//       height: 100% - (@ipad_padding_x * 2);
+//       margin: @ipad_padding_x 0;
+//     }
+//     .a-doc {
+//       height: 25% * @ipad_ratio;
+//     }
+//   }
+// }
+
+
+
+@ipad_ratio: 4 / 3;
+@ipad_height: @ipad_ratio * 100%;
+
+@ipad_fill: @gray_dark;
+@ipad_mask: @dye_outer;
+
+@ipad_button: 6%;
+
+@ipad_padding_y: 9%;
+@ipad_padding_x: @ipad_padding_y / 3;
+
+@ipad_head_height: (100% - @ipad_body_height) / 2;
+@ipad_body_height: 100% - (@ipad_padding_y * 2);
+@ipad_foot_height: @ipad_head_height;
+
+
+
+.a_ipad_circle(@size: @arguments) {
+  width: 0;
+  height: 0;
+  margin: auto;
+  padding: @size / 2;
+  border-radius: @tile_xxl;
+  background: @ipad_mask;
+}
+.a_ipad_circle_reverse(@size: @arguments) {
+  @increase: 9;
+  padding: (@size / 2) * @increase;
+}
+
+
+
+.a-ipad {
+  .user-select(none);
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: @ipad_height;
+  background: @ipad_fill;
+  border-radius: (@ipad_button * @ipad_ratio) ~"/" @ipad_button;
+}
+.a-ipad-head {
+  .flexy();
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: @ipad_head_height;
+}
+.a-ipad-body {
+  position: absolute;
+  top: @ipad_head_height;
+  left: 0;
+  width: 100%;
+  height: @ipad_body_height;
+}
+.a-ipad-foot {
+  .flexy();
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: @ipad_foot_height;
+}
+.a-ipad-camera {
+  .a_ipad_circle(@ipad_button / 3);
+}
+.a-ipad-button {
+  .a_ipad_circle(@ipad_button);
+}
+.a-screen {
+  .flexy();
+  width: 100% - (@ipad_padding_x * 2);
+  height: 100%;
+  margin: 0 @ipad_padding_x;
+  background: @ipad_mask;
+  overflow: hidden;
+}
+.a-menu {
+  width: 50%;
+  h4 {
+    color: @gray;
+    font-weight: 300;
+    margin: 2% 10%;
+  }
+}
+.a-doc {
+  .flex(1);
+  height: 25%;
+  margin: 10%;
+  border: 1px solid @gray_lighter;
+  overflow: hidden;
+  &:first-of-type {
+    margin-top: 0; // VETO
+  }
+  // &:nth-of-type(2) {
+  //   border: 2px solid @blue; // VETO
+  // }
+}
+.a-doc-img {
+  max-width: none;
+  max-height: 250%;
+  opacity: .20;
+}
+.a-canvas {
+  .flex(1);
+  height: 66%;
+  margin: auto;
+  margin-left: 5%;
+  box-shadow+: 0  5px 13px fade(@black, 21);
+  box-shadow+: 0 -1px  0   fade(@black,  3);
+  overflow: hidden;
+}
+
+
+
+.a-team {
+  .user-select(none);
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: @ipad_height;
+  overflow: hidden;
+  // background: @ipad_fill;
+  // border-radius: (@ipad_button * @ipad_ratio) ~"/" @ipad_button;
+  &:after {
+    .gradient(to bottom, @white, transparent, @white);
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    // background: red;
+    // background-image: linear-gradient(to bottom, #fff, transparent, #fff);
+  }
+}
+.a-team-list {
+  .flexy(column);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 150%;
+  margin-top: -34%;
+}
+.a-team-item {
+  .flexy();
+}
+.a-team-left {
+  //
+}
+.a-team-right {
+  //
+}
+
+
+
+.a-team-img {
+  .flexy(center; center);
+  .inline();
+  .icon(stroke; @gray_light);
+  font-size: 1.5em;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 3rem;
+  .icon-user {
+    // padding: 1.5rem;
+    // .flexy(center; center);
+    // width: @tile;
+    // height: @tile;
+  }
+}
+.a-team-name {
+  //
+}
+.a-team-status {
+  //
+}

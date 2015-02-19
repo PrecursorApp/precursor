@@ -185,6 +185,67 @@
     [:div.a-ipad-foot
      [:div.a-ipad-button]]]])
 
+(def artwork-team
+  [:div.artwork
+   [:div.a-team
+    ; [:div.a-ipad-head
+    ;  [:div.a-ipad-camera]]
+    [:div.a-team-list
+
+     [:div.access-card
+      [:div.access-avatar
+       [:div.access-avatar-img]]
+      [:div.access-details
+       [:span "danny@precursorapp.com"]
+       [:span.access-status "Was granted access today"]]]
+
+     [:div.access-card
+      [:div.access-avatar
+       [:div.access-avatar-img]]
+      [:div.access-details
+       [:span "danny@precursorapp.com"]
+       [:span.access-status "Was granted access today"]]]
+
+     [:div.access-card
+      [:div.access-avatar
+       [:div.access-avatar-img]]
+      [:div.access-details
+       [:span "danny@precursorapp.com"]
+       [:span.access-status "Was granted access today"]]]
+
+     [:div.access-card.requesting
+      [:div.access-avatar
+       [:div.access-avatar-img]]
+      [:div.access-details
+       [:span "danny@precursorapp.com"]
+       [:span.access-status "Requested access on Monday"]]]
+
+     [:div.access-card
+      [:div.access-avatar
+       [:div.access-avatar-img]]
+      [:div.access-details
+       [:span "danny@precursorapp.com"]
+       [:span.access-status "Was granted access today"]]]
+
+     [:div.access-card
+      [:div.access-avatar
+       [:div.access-avatar-img]]
+      [:div.access-details
+       [:span "danny@precursorapp.com"]
+       [:span.access-status "Was granted access today"]]]
+
+     [:div.access-card
+      [:div.access-avatar
+       [:div.access-avatar-img]]
+      [:div.access-details
+       [:span "danny@precursorapp.com"]
+       [:span.access-status "Was granted access today"]]]
+
+     ]
+    ; [:div.a-ipad-foot
+    ;  [:div.a-ipad-button]]
+    ]])
+
 (defn the-how [app owner]
   (reify
     om/IInitState (init-state [_] {:past-center-featurettes #{}})
@@ -208,7 +269,7 @@
                [:a
                 {:role "button"}
                 "Read the tutorial."]]]
-             [:div.featurette-media.reverse screen]]
+             [:div.featurette-media.reverse artwork-ipad]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
              [:div.featurette-story
@@ -219,7 +280,7 @@
                [:a
                 {:role "button"}
                 "See our pricing."]]]
-             [:div.featurette-media team-sharing]]])))))
+             [:div.featurette-media artwork-team]]])))))
 
 (defn the-what [app owner]
   (reify
