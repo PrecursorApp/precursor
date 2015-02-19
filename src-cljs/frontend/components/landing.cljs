@@ -100,6 +100,7 @@
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
+            nav-ch (om/get-shared owner [:comms :nav])
             word-list (shuffle ["precursor"
                                 "prototype"
                                 "wireframe"
@@ -127,10 +128,11 @@
             random-word (nth word-list (- (count word-list) 4))]
         (html
           [:div.make-button-wrap
-           [:a.make-button
+           [:button.make-button
             {:role "button"
-             :on-click #(cast! :landing-closed)
-             :href (str "/document/" id)
+             :on-click #(do
+                          (cast! :landing-closed)
+                          (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
              :on-mouse-enter #(om/refresh! owner)}
             [:div.make-prepend "Make a"]
             ;; [:div.make-prepend "Or make a"] ;; for bottom cta
