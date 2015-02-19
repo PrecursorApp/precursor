@@ -108,9 +108,9 @@
 
 (defn app-state []
   (let [initial-state (state/initial-state)
-        document-id (utils/inspect (or (aget js/window "Precursor" "initial-document-id")
-                                       ;; TODO: remove after be is fully deployed
-                                       (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))))
+        document-id (or (aget js/window "Precursor" "initial-document-id")
+                        ;; TODO: remove after be is fully deployed
+                        (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri)))))
         cust (some-> (aget js/window "Precursor" "cust")
                (reader/read-string))
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
