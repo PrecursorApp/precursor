@@ -1069,7 +1069,7 @@
 
 (defmethod control-event :layers-pasted
   [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
-  (let [{:keys [entity-ids frontend]} (frontend.db/get-entity-ids state (count layers))
+  (let [{:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))
         doc-id (:document/id state)
         camera (:camera state)
         zoom (:zf camera)
