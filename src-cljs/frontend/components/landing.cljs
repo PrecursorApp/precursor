@@ -199,50 +199,50 @@
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
-       [:span "danny@precursorapp.com"]
+       [:span "soren@prcr.sr"]
        [:span.access-status "Was granted access yesterday."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
-       [:span "danny@precursorapp.com"]
+       [:span "niobe@prcr.sr"]
        [:span.access-status "Was granted access yesterday."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
-       [:span "danny@precursorapp.com"]
+       [:span "ballard@prcr.sr"]
        [:span.access-status "Was granted access yesterday."]]]
 
      [:div.access-card.requesting
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
-       [:span "danny@precursorapp.com"]
-       [:span.access-status "Requested access on just now."]]]
+       [:span "anderson@prcrsr.com"]
+       [:span.access-status "Requested access yesterday."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
-       [:span "danny@precursorapp.com"]
-       [:span.access-status "Was granted access yesterday."]]]
+       [:span "smith@precursorapp.com"]
+       [:span.access-status "Was denied access yesterday."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
-       [:span "danny@precursorapp.com"]
-       [:span.access-status "Was granted access yesterday."]]]
+       [:span "roland@prcr.sr"]
+       [:span.access-status "Was granted access today."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
-       [:span "danny@precursorapp.com"]
-       [:span.access-status "Was granted access yesterday."]]]]]])
+       [:span "morpheus@prcrsr.com"]
+       [:span.access-status "Was granted access today."]]]]]])
 
 (defn the-how [app owner]
   (reify
