@@ -192,6 +192,27 @@
       margin: 0;
     }
   }
+  a {
+    position: relative;
+    border-bottom: 1px dotted @gray_light;
+    &:not(:hover) {
+      &:after {
+        width: 0;
+        left: 50%;
+        transition-duration: @run;
+      }
+    }
+    &:after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      box-shadow: 0 1px @blue;
+      transition: @run_fast @bezier_deform;
+    }
+  }
 }
 .featurette {
   .flexy(wrap);

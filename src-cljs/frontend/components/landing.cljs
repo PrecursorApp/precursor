@@ -261,7 +261,8 @@
               [:p
                [:a
                 {:role "button"}
-                "Read the tutorial."]]]
+                "Read the tutorial"]
+               "."]]
              [:div.featurette-media.reverse artwork-ipad]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
@@ -272,7 +273,8 @@
               [:p
                [:a
                 {:role "button"}
-                "See our pricing."]]]
+                "Request free trial"]
+               "."]]
              [:div.featurette-media artwork-team]]])))))
 
 (defn the-what [app owner]
