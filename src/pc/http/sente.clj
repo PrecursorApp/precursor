@@ -159,44 +159,48 @@
           requested-color)
         (rand-nth available-colors))))
 
-(defn choose-frontend-id-seed [db document-id subs]
-  (if-let [remainder (first (apply disj web-peer/remainders (map (comp :remainder :frontend-id-seed)
-                                                                 (vals subs))))]
-    (let [used-client-parts (web-peer/client-parts-for-ns db document-id)
-          ;; do something to protect against over 100K eids
-          ;; XXX should we ensure in the transactor that ids increase properly?
-          used-from-partition (set (filter #(= remainder (mod % web-peer/multiple)) used-client-parts))
-          start-eid (first (remove #(contains? used-from-partition %)
-                                   (iterate (partial + web-peer/multiple) (if (zero? remainder)
-                                                                            web-peer/multiple
-                                                                            remainder))))]
-      {:remainder remainder :multiple web-peer/multiple :next-id start-eid})
-    (throw+ {:status 403
-             :error-msg "There are too many users in the document."
-             :error-key :too-many-subscribers})))
+(defn choose-frontend-id-seed [db document-id subs requested-remainder]
+  (let [available-remainders (apply disj web-peer/remainders (map (comp :remainder :frontend-id-seed)
+                                                                  (vals subs)))]
+    (if-let [remainder (if (contains? available-remainders (utils/inspect requested-remainder))
+                         requested-remainder
+                         (first available-remainders ))]
+      (let [used-client-parts (web-peer/client-parts-for-ns db document-id)
+            ;; do something to protect against over 100K eids
+            ;; XXX should we ensure in the transactor that ids increase properly?
+            used-from-partition (set (filter #(= remainder (mod % web-peer/multiple)) used-client-parts))
+            start-eid (first (remove #(contains? used-from-partition %)
+                                     (iterate (partial + web-peer/multiple) (if (zero? remainder)
+                                                                              web-peer/multiple
+                                                                              remainder))))]
+        {:remainder remainder :multiple web-peer/multiple :next-id start-eid})
+      (throw+ {:status 403
+               :error-msg "There are too many users in the document."
+               :error-key :too-many-subscribers}))))
 
 ;; XXX need to add requested remainder also
-(defn subscribe-to-doc [db document-id uuid cust-name & {:keys [requested-color]}]
+(defn subscribe-to-doc [db document-id uuid cust-name & {:keys [requested-color requested-remainder]}]
   (swap! document-subs update-in [document-id]
          (fn [subs]
            (-> subs
              (assoc-in [uuid :color] (choose-color subs uuid requested-color))
              (assoc-in [uuid :cust-name] cust-name)
              (assoc-in [uuid :show-mouse?] true)
-             (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs))))))
+             (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
 
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
 (defmethod ws-handler :frontend/subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document-id) req :admin)
   (let [document-id (-> ?data :document-id)
-        color (-> ?data :color)
         send-fn (:send-fn @sente-state)
         _ (log/infof "subscribing %s to %s" client-id document-id)
         subs (subscribe-to-doc (:db req)
-                                 document-id
-                                 client-id
-                                 (-> req :ring-req :auth :cust :cust/name))]
+                               document-id
+                               client-id
+                               (-> req :ring-req :auth :cust :cust/name)
+                               :requested-color (:requested-color ?data)
+                               :requested-remainder (:requested-remainder ?data))]
 
     (?reply-fn [:frontend/frontend-id-state {:frontend-id-state (get-in subs [document-id client-id :frontend-id-seed])}])
 

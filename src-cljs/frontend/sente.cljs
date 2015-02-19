@@ -23,9 +23,10 @@
                      (apply (:send-fn sente-state) message rest)
                      (remove-watch ref watch-id)))))))
 
-(defn subscribe-to-document [sente-state comms document-id & {:keys [requested-color]}]
+(defn subscribe-to-document [sente-state comms document-id & {:keys [requested-color requested-remainder]}]
   (send-msg sente-state [:frontend/subscribe {:document-id document-id
-                                              :requested-color requested-color}]
+                                              :requested-color requested-color
+                                              :requested-remainder requested-remainder}]
             5000
             (fn [reply]
               (if (sente/cb-success? reply)
@@ -114,7 +115,8 @@
       ;;       we use for subscribing from the nav channel in the first place?
       (subscribe-to-document
        (:sente state) (:comms state) (:document/id state)
-       :requested-color (get-in state [:subscribers (:client-id state) :color])))))
+       :requested-color (get-in state [:subscribers (:client-id state) :color])
+       :requested-remainder (get-in state [:subscribers (:client-id state) :remainder])))))
 
 
 (defn do-something [app-state sente-state]
