@@ -66,6 +66,12 @@
       (.replaceToken history-imp path)
       (.setToken history-imp path))))
 
+(defmethod navigated-to :root
+  [history-imp navigation-point args state]
+  (let [doc-id (:document/id state)]
+    (-> (navigated-default navigation-point args state)
+        (assoc :show-landing? true))))
+
 (defmethod navigated-to :document
   [history-imp navigation-point args state]
   (let [doc-id (:document/id args)
@@ -74,7 +80,8 @@
         (assoc :document/id doc-id
                :undo-state (atom {:transactions []
                                   :last-undo nil})
-               :db-listener-key (utils/uuid))
+               :db-listener-key (utils/uuid)
+               :show-landing? false)
         (assoc :subscribers state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))

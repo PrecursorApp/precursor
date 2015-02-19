@@ -55,7 +55,7 @@
           (when (:show-landing? app)
             (om/build landing/landing app))
 
-          (when (and (:document/id app)
+          (when (and (= :document (:navigation-point app))
                      (not (:cust app)))
             (om/build drawing/signup-button {:db/id (:document/id app)}))
 

@@ -14,6 +14,7 @@
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.scroll :as scroll]
             [frontend.state :as state]
+            [frontend.routes :as routes]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
@@ -94,7 +95,7 @@
   (when (not= (om/get-state owner korks) value)
     (om/set-state! owner korks value)))
 
-(defn make-button [_ owner]
+(defn make-button [{:keys [document/id]} owner]
   (reify
     om/IRender
     (render [_]
@@ -126,8 +127,10 @@
             random-word (nth word-list (- (count word-list) 4))]
         (html
           [:div.make-button-wrap
-           [:button.make-button
-            {:on-click #(cast! :landing-closed)
+           [:a.make-button
+            {:role "button"
+             :on-click #(cast! :landing-closed)
+             :href (str "/document/" id)
              :on-mouse-enter #(om/refresh! owner)}
             [:div.make-prepend "Make a"]
             ;; [:div.make-prepend "Or make a"] ;; for bottom cta
@@ -162,7 +165,7 @@
               [:h1 "Collaborating should be simple."]
               [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
               [:div.calls-to-action
-               (om/build make-button {})]]]]
+               (om/build make-button (select-keys app [:document/id]))]]]]
            [:div.our-proof
             ;; Hide this until we get testimonials/stats figured out
             ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
@@ -232,7 +235,7 @@
                [:p "Precursor is the easiest way to share ideas with your teammates, fast."]
                [:div.calls-to-action
                 (common/google-login)
-                (om/build make-button {})]]]
+                (om/build make-button (select-keys app [:document/id]))]]]
              [:div.navigation
               [:div.content
                [:a {:role "button"} "Precursor"]
