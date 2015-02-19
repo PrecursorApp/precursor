@@ -248,14 +248,38 @@
 
 
 .a-team {
+  // >>>>>>>> TODO for dev
+  &:hover {
+    .access-card {
+      &.requesting {
+        //
+      }
+    }
+  }
+  &:not(:hover) {
+    .a-team-list {
+      // display: none;
+      .animation-name(none);
+    }
+    .access-card {
+      .animation-name(none);
+      &.requesting {
+        height: 0;
+        padding: 0;
+        padding-left: 100%;
+        overflow: hidden;
+        opacity: 0;
+        transition-delay: @now;
+      }
+    }
+  }
+  // <<<<<<<<
   .user-select(none);
   position: relative;
   width: 100%;
   height: 0;
   padding-bottom: @ipad_height;
   overflow: hidden;
-  // background: @ipad_fill;
-  // border-radius: (@ipad_button * @ipad_ratio) ~"/" @ipad_button;
   &:after {
     .gradient(to bottom, @white, transparent, @white);
     content: "";
@@ -264,11 +288,21 @@
     left: 0;
     width: 100%;
     height: 100%;
-    // background: red;
-    // background-image: linear-gradient(to bottom, #fff, transparent, #fff);
+  }
+  .access-card {
+    .animation_cascade(7);
+    .animation(in-zoom (@run_slower * 2) @bezier_deform);
+    height: @tile * 1.5;
+    margin: 0; // VETO
+    padding: @menu_padding 0;
+    transition: @run_slower (@run_slower * 1.2)  @bezier_deform;
+    &:not(.requesting) {
+      color: @gray_light; // VETO
+    }
   }
 }
 .a-team-list {
+  .animation(in-fade-bottom (@run_slower * 1.5) @bezier_deform);
   .flexy(column);
   position: absolute;
   top: 0;
@@ -276,37 +310,4 @@
   width: 100%;
   height: 150%;
   margin-top: -34%;
-}
-.a-team-item {
-  .flexy();
-}
-.a-team-left {
-  //
-}
-.a-team-right {
-  //
-}
-
-
-
-.a-team-img {
-  .flexy(center; center);
-  .inline();
-  .icon(stroke; @gray_light);
-  font-size: 1.5em;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 3rem;
-  .icon-user {
-    // padding: 1.5rem;
-    // .flexy(center; center);
-    // width: @tile;
-    // height: @tile;
-  }
-}
-.a-team-name {
-  //
-}
-.a-team-status {
-  //
 }

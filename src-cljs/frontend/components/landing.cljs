@@ -188,8 +188,6 @@
 (def artwork-team
   [:div.artwork
    [:div.a-team
-    ; [:div.a-ipad-head
-    ;  [:div.a-ipad-camera]]
     [:div.a-team-list
 
      [:div.access-card
@@ -197,54 +195,49 @@
        [:div.access-avatar-img]]
       [:div.access-details
        [:span "danny@precursorapp.com"]
-       [:span.access-status "Was granted access today"]]]
+       [:span.access-status "Was granted access yesterday."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
        [:span "danny@precursorapp.com"]
-       [:span.access-status "Was granted access today"]]]
+       [:span.access-status "Was granted access yesterday."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
        [:span "danny@precursorapp.com"]
-       [:span.access-status "Was granted access today"]]]
+       [:span.access-status "Was granted access yesterday."]]]
 
      [:div.access-card.requesting
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
        [:span "danny@precursorapp.com"]
-       [:span.access-status "Requested access on Monday"]]]
+       [:span.access-status "Requested access on just now."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
        [:span "danny@precursorapp.com"]
-       [:span.access-status "Was granted access today"]]]
+       [:span.access-status "Was granted access yesterday."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
        [:span "danny@precursorapp.com"]
-       [:span.access-status "Was granted access today"]]]
+       [:span.access-status "Was granted access yesterday."]]]
 
      [:div.access-card
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
        [:span "danny@precursorapp.com"]
-       [:span.access-status "Was granted access today"]]]
-
-     ]
-    ; [:div.a-ipad-foot
-    ;  [:div.a-ipad-button]]
-    ]])
+       [:span.access-status "Was granted access yesterday."]]]]]])
 
 (defn the-how [app owner]
   (reify
