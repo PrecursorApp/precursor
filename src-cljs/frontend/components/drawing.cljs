@@ -12,6 +12,9 @@
                                                 (when f (f owner))
                                                 (tick-fn owner)))))
 
+(defn annotate-keyframes [tick-state & ticks]
+  (update-in tick-state [:keyframes] #(apply (fnil conj #{}) % ticks)))
+
 (defn clear-subscriber [tick-state tick]
   (add-tick tick-state tick (fn [owner]
                               ((om/get-shared owner :cast!)
@@ -22,23 +25,24 @@
 
 (defn move-mouse [tick-state {:keys [start-tick end-tick start-x end-x start-y end-y tool]
                               :or {tool :rect}}]
-  (reduce (fn [tick-state relative-tick]
-            (add-tick tick-state
-                      (+ start-tick relative-tick)
-                      (fn [owner]
-                        (let [ex (+ start-x (* relative-tick
-                                               (/ (- end-x start-x)
-                                                  (- end-tick start-tick))))
-                              ey (+ start-y (* relative-tick
-                                               (/ (- end-y start-y)
-                                                  (- end-tick start-tick))))]
-                          ((om/get-shared owner :cast!)
-                           :subscriber-updated {:client-id (ffirst state/subscriber-bot)
-                                                :fields {:mouse-position [ex ey]
-                                                         :show-mouse? true
-                                                         :tool tool}})))))
-          tick-state
-          (range 0 (inc (- end-tick start-tick)))))
+  (-> (reduce (fn [tick-state relative-tick]
+                (add-tick tick-state
+                          (+ start-tick relative-tick)
+                          (fn [owner]
+                            (let [ex (+ start-x (* relative-tick
+                                                   (/ (- end-x start-x)
+                                                      (- end-tick start-tick))))
+                                  ey (+ start-y (* relative-tick
+                                                   (/ (- end-y start-y)
+                                                      (- end-tick start-tick))))]
+                              ((om/get-shared owner :cast!)
+                               :subscriber-updated {:client-id (ffirst state/subscriber-bot)
+                                                    :fields {:mouse-position [ex ey]
+                                                             :show-mouse? true
+                                                             :tool tool}})))))
+              tick-state
+              (range 0 (inc (- end-tick start-tick))))
+    (annotate-keyframes end-tick)))
 
 (defn draw-shape [tick-state {:keys [start-tick end-tick start-x end-x
                                      start-y end-y type tool doc-id props]
@@ -83,7 +87,8 @@
                                         :fields {:mouse-position nil
                                                  :layers nil
                                                  :tool tool}})
-                  (d/transact! (om/get-shared owner :db) [base-layer] {:bot-layer true}))))))
+                  (d/transact! (om/get-shared owner :db) [base-layer] {:bot-layer true})))
+      (annotate-keyframes start-tick end-tick))))
 
 (def text-height 14)
 
@@ -131,7 +136,8 @@
                                         :fields {:mouse-position nil
                                                  :layers nil
                                                  :tool :text}})
-                  (d/transact! (om/get-shared owner :db) [base-layer] {:bot-layer true}))))))
+                  (d/transact! (om/get-shared owner :db) [base-layer] {:bot-layer true})))
+      (annotate-keyframes start-tick end-tick))))
 
 (defn signup-animation [document vw]
   (let [text "Sign in with Google"
@@ -190,13 +196,28 @@
                           :layer/signup-button true}})
       (clear-subscriber 201))))
 
-(defn run-animation* [owner tick-state max-tick current-tick]
-  (when (and (om/mounted? owner)
-             (>= max-tick current-tick))
-    (when-let [tick-fn (get-in tick-state [:ticks current-tick])]
-      (tick-fn owner))
-    (js/setTimeout #(run-animation* owner tick-state max-tick (inc current-tick))
-                   (:tick-ms tick-state))))
+(defn clear-ticks [tick-state ticks]
+  (update-in tick-state [:ticks] #(apply dissoc % ticks)))
+
+(defn middle-elem [v]
+  (if (seq v)
+    (nth v (quot (count v) 2))
+    nil))
+
+(defn run-animation* [owner start-ms current-ms tick-state min-tick max-tick]
+  (if (and (om/mounted? owner)
+           (seq (:ticks tick-state)))
+    (let [latest-tick (int (/ (- current-ms start-ms)
+                              (:tick-ms tick-state)))
+          tick-range (vec (range min-tick (inc latest-tick)))
+          ticks (-> (filter #(contains? (:keyframes tick-state) %) tick-range)
+                  set
+                  (conj (middle-elem tick-range)))]
+      (doseq [tick ticks]
+        (when-let [tick-fn (get-in tick-state [:ticks tick])]
+          (tick-fn owner)))
+      (utils/rAF (fn [timestamp]
+                   (run-animation* owner start-ms timestamp (clear-ticks tick-state tick-range) latest-tick max-tick))))))
 
 (defn run-animation
   "tick-state should be a map with keys :tick-ms, whose value is the number of ms between
@@ -211,7 +232,8 @@
   Unmount the component to stop the animation."
   [owner tick-state]
   (let [max-tick (apply max (keys (:ticks tick-state)))]
-    (run-animation* owner tick-state max-tick 0)))
+    (utils/rAF (fn [timestamp]
+                 (run-animation* owner timestamp timestamp tick-state 0 max-tick)))))
 
 (defn cleanup [owner]
   ((om/get-shared owner :cast!) :subscriber-updated {:client-id (ffirst state/subscriber-bot)
