@@ -112,7 +112,7 @@
 ;; TODO: teach the frontend how to lookup name from cust/uuid
 ;;       this will break if something else is associating cust/uuids
 (defmethod translate-datom :cust/uuid [db d]
-  (if (:chat/body (d/entity db (:e d)))
+  (if (:chat/body (d/entity db (:original-e d)))
     (assoc d
            :a :chat/cust-name
            :v (or (chat-model/find-chat-name db (:v d))
@@ -131,9 +131,12 @@
         v (if (contains? (schema/enums) a)
             (schema/get-ident v)
             v)
+        ;; Temporary fix until we teach frontend how to lookup cust name
+        original-e e
         e (web-peer/client-id db e)]
-    (->> {:e e :a a :v v :tx tx :added added}
-      (translate-datom db))))
+    (->> {:e e :a a :v v :tx tx :added added :original-e original-e}
+      (translate-datom db)
+      (#(dissoc % :original-e)))))
 
 (defn whitelisted? [datom]
   (contains? outgoing-whitelist (:a datom)))
