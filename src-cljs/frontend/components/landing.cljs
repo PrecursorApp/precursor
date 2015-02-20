@@ -186,8 +186,8 @@
             ]])))))
 
 (def artwork-mobile
-  [:div.artwork
-   [:div.art-mobile
+  [:div.art-frame
+   [:div.art-mobile.artwork
     [:div.art-mobile-head
      [:div.art-mobile-camera]]
     [:div.art-mobile-body
@@ -203,17 +203,17 @@
      [:div.art-mobile-button]]]])
 
 (def artwork-interactive
-  [:div.artwork
-   [:div.art-interactive
+  [:div.art-frame
+   [:div.art-interactive.artwork
     [:div.art-interactive-button
      [:div.art-interactive-text "HOME"]
      [:div.art-interactive-cursor (common/icon :cursor)]]
     [:div.art-interactive-head
-     [:div.art-interactive-name {:data-before "link" :data-after "with"} "home button"]]
+     [:div.art-interactive-name {:data-placeholder "link"} "home button"]]
     [:div.art-interactive-body
      [:div.property-dropdown-targets
-      [:div.art-interactive-target
-       [:div.art-interactive-placeholder "|"]
+      [:div.art-interactive-target {:data-placeholder "with"}
+       [:div.art-interactive-ibeam "|"]
        [:div.art-interactive-more "..."]]
       [:div.property-dropdown-target.right "home page"]
       [:div.property-dropdown-target.wrong "blog page"]
@@ -223,8 +223,8 @@
       [:div.property-dropdown-target.wrong "team page"]]]]])
 
 (def artwork-team
-  [:div.artwork
-   [:div.art-team
+  [:div.art-frame
+   [:div.art-team.artwork
     [:div.art-team-list
 
      [:div.access-card
@@ -291,13 +291,13 @@
         (html
          [:div.the-how
           [:div.featurette.content
-           {:class (when (contains? past-center-featurettes "1") "active") :ref "1"}
+           {:class (when (contains? past-center-featurettes "1") "art-visible") :ref "1"}
            [:div.featurette-story
             [:h2 "Access your ideas on any device right in the browser."]
             [:p "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
            [:div.featurette-media artwork-mobile]]
           [:div.featurette.content
-           {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
+           {:class (when (contains? past-center-featurettes "2") "art-visible") :ref "2"}
            [:div.featurette-story.interactive-story
             [:h2 "Interact with your ideas way before development."]
             [:p "Make working demos in just minutes using our simple target linking."]
@@ -310,7 +310,7 @@
              "."]]
            [:div.featurette-media.reverse artwork-interactive]]
           [:div.featurette.content
-           {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
+           {:class (when (contains? past-center-featurettes "3") "art-visible") :ref "3"}
            [:div.featurette-story
             [:h2 "Collaborate with your whole team in real time."]
             [:p "Our new team features are optimized for efficient collaboration.

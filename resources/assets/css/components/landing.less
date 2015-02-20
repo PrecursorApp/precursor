@@ -219,6 +219,18 @@
   .flexy(wrap);
   .align-items(center);
   padding: 10% 0;
+  &:not(.art-visible) {
+    .artwork {
+      display: none;
+    }
+  }
+  .art-frame {
+    .user-select(none);
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: @art_mobile_height;
+  }
 }
 .featurette-story {
   .order(2);
