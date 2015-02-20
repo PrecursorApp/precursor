@@ -124,6 +124,6 @@
             (single-post slug)
             (overview))
           [:footer.navigation-blog.footer
-           [:a.navigation-promote {:href "https://twitter.com/prcrsr_app"
+           [:a.navigation-promote {:href "https://twitter.com/PrecursorApp"
                                    :data-right "Follow our changelog."}
             twitter]]])))

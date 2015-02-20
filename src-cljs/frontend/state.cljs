@@ -30,7 +30,6 @@
                      :offset-y   0
                      :show-grid? true}
    :error-message   nil
-   :changelog       nil
    :environment     "development"
    :settings        {:browser-settings initial-browser-settings}
    :keyboard-shortcuts {:select #{"v"}
@@ -45,7 +44,6 @@
                         :reset-canvas-position #{"home" "1"}
                         :return-from-origin #{"2"}}
    :current-user    nil
-   :instrumentation []
    :entity-ids      #{}
    :document/id     nil
    :subscribers     subscriber-bot
@@ -54,8 +52,6 @@
 (def user-path [:current-user])
 
 (def settings-path [:settings])
-
-(def instrumentation-path [:instrumentation])
 
 (def browser-settings-path [:settings :browser-settings])
 
@@ -69,8 +65,6 @@
 (def selected-home-technology-tab-path [:selected-home-technology-tab])
 
 (def language-testimonial-tab-path [:selected-language-testimonial-tab])
-
-(def changelog-path [:changelog])
 
 (def build-state-path [:build-state])
 

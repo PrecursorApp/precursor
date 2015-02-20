@@ -26,15 +26,15 @@
                  [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
                                                                   org.slf4j/slf4j-api
                                                                   com.amazonaws/aws-java-sdk]]
-                 [org.postgresql/postgresql "9.4-1200-jdbc41"]
+                 [org.postgresql/postgresql "9.4-1200-jdbc41" :exclusions [org.slf4j/slf4j-simple]]
 
                  [amazonica "0.3.12"]
 
                  [ring/ring "1.3.2" :exclusions [hiccup
                                                  org.clojure/java.classpath]]
                  [ring/ring-anti-forgery "1.0.0" :exclusions [hiccup]]
-                 [http-kit "2.1.19"]
-                 [com.taoensso/sente "1.3.0-RC1" :exclusions [http-kit]]
+                 [http-kit "2.1.18-c9c0b155a4ab05630d332a7d2da0aaf433889772"]
+                 [com.taoensso/sente "1.4.0-alpha2" :exclusions [http-kit]]
                  [clj-stacktrace "0.2.8"]
 
                  [org.clojure/tools.reader "0.8.13"]
@@ -65,7 +65,7 @@
                  ;; but not Om yet)
                  ;;[om "0.6.4"]
 
-                 [com.facebook/react "0.12.2.4"] ;; include for externs
+                 [precursorapp/react "react-0.12.2-6-new-tags"]
                  [sablono "0.3.1" :exclusions [cljsjs/react]]
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]
@@ -151,7 +151,6 @@
                        {:id "production"
                         :source-paths ["src-cljs" "yaks/om/src"]
                         :compiler {:pretty-print false
-                                   :preamble ["public/js/vendor/react-0.12.2.min.js"]
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
                                    :output-wrapper false

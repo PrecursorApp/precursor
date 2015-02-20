@@ -7,7 +7,7 @@
             [hiccup.core :as hiccup]
             [pc.datomic :as pcd]
             [pc.http.urls :as urls]
-            [pc.mailgun :as mailgun]
+            [pc.ses :as ses]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.permission :as permission-model]
             [pc.models.cust :as cust-model]
@@ -30,6 +30,14 @@
                            [?email-eid :db/ident ?emails]]}
                  db eid))))
 
+(defn sent-emails [db eid]
+  (set (map first
+            (d/q '{:find [?emails]
+                   :in [$ ?e]
+                   :where [[?e :sent-email ?email-eid]
+                           [?email-eid :db/ident ?emails]]}
+                 db eid))))
+
 (defn mark-sent-email
   "Returns true if this was the first transaction to mark the email as sent. False if it wasn't."
   [eid email-enum]
@@ -38,8 +46,8 @@
                                     :transaction/source :transaction.source/mark-sent-email}
                                    [:db/retract eid :needs-email email-enum]
                                    [:db/add eid :sent-email email-enum]])]
-    (and (contains? (emails-to-send (:db-before t) eid) email-enum)
-         (not (contains? (emails-to-send (:db-after t) eid) email-enum)))))
+    (and (not (contains? (sent-emails (:db-before t) eid) email-enum))
+         (contains? (sent-emails (:db-after t) eid) email-enum))))
 
 (defn unmark-sent-email
   [eid email-enum]
@@ -100,16 +108,16 @@
                    (when-not (str/blank? full-name) ")")))))
 
 (defn send-chat-invite [{:keys [cust to-email doc-id]}]
-  (mailgun/send-message {:from (email-address "Precursor" "joinme")
-                         :to to-email
-                         :subject (str (format-inviter cust)
-                                       " invited you to a document on Precursor")
-                         :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id))
-                         :html (chat-invite-html doc-id)
-                         :o:tracking "yes"
-                         :o:tracking-opens "yes"
-                         :o:tracking-clicks "no"
-                         :o:campaign "chat_invites"}))
+  (ses/send-message {:from (email-address "Precursor" "joinme")
+                     :to to-email
+                     :subject (str (format-inviter cust)
+                                   " invited you to a document on Precursor")
+                     :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id))
+                     :html (chat-invite-html doc-id)
+                     :o:tracking "yes"
+                     :o:tracking-opens "yes"
+                     :o:tracking-clicks "no"
+                     :o:campaign "chat_invites"}))
 
 (defn access-grant-html [doc-id access-grant image-permission]
   (let [doc-link (urls/doc doc-id :query {:access-grant-token (:access-grant/token access-grant)})
@@ -144,17 +152,17 @@
         granter (access-grant-model/get-granter db access-grant)
         token (:access-grant/token access-grant)
         image-permission (permission-model/create-document-image-permission! {:db/id doc-id})]
-    (mailgun/send-message {:from (email-address "Precursor" "joinme")
-                           :to (:access-grant/email access-grant)
-                           :subject (str (format-inviter granter)
-                                         " invited you to a document on Precursor")
-                           :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id)
-                                      "?access-grant-token=" token)
-                           :html (access-grant-html doc-id access-grant image-permission)
-                           :o:tracking "yes"
-                           :o:tracking-opens "yes"
-                           :o:tracking-clicks "no"
-                           :o:campaign "access_grant_invites"})))
+    (ses/send-message {:from (email-address "Precursor" "joinme")
+                       :to (:access-grant/email access-grant)
+                       :subject (str (format-inviter granter)
+                                     " invited you to a document on Precursor")
+                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id)
+                                  "?access-grant-token=" token)
+                       :html (access-grant-html doc-id access-grant image-permission)
+                       :o:tracking "yes"
+                       :o:tracking-opens "yes"
+                       :o:tracking-clicks "no"
+                       :o:campaign "access_grant_invites"})))
 
 (defn permission-grant-html [doc-id image-permission]
   (let [doc-link (urls/doc doc-id)
@@ -176,7 +184,7 @@
                 :alt "Images disabled? Just come and take a look."
                 :src image-link}]]]
        [:p {:style "font-size: 12px"}
-        (str "Tell us if this message was sent in error %s." (email-address "info"))
+        (format "Tell us if this message was sent in error %s." (email-address "info"))
         ;; Add some hidden text so that Google doesn't try to trim these.
         [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
          " Sent at "
@@ -189,16 +197,16 @@
         granter (permission-model/get-granter db permission)
         grantee (d/entity db (:permission/cust permission))
         image-permission (permission-model/create-document-image-permission! {:db/id doc-id})]
-    (mailgun/send-message {:from (email-address "Precursor" "joinme")
-                           :to (:cust/email grantee)
-                           :subject (str (format-inviter granter)
-                                         " gave you access to a document on Precursor")
-                           :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id))
-                           :html (permission-grant-html doc-id image-permission)
-                           :o:tracking "yes"
-                           :o:tracking-opens "yes"
-                           :o:tracking-clicks "no"
-                           :o:campaign "access_grant_invites"})))
+    (ses/send-message {:from (email-address "Precursor" "joinme")
+                       :to (:cust/email grantee)
+                       :subject (str (format-inviter granter)
+                                     " gave you access to a document on Precursor")
+                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id))
+                       :html (permission-grant-html doc-id image-permission)
+                       :o:tracking "yes"
+                       :o:tracking-opens "yes"
+                       :o:tracking-clicks "no"
+                       :o:campaign "access_grant_invites"})))
 
 
 (defn access-request-html [doc-id requester]
@@ -225,17 +233,17 @@
         doc (doc-model/find-by-id db (:access-request/document access-request))
         doc-id (:db/id doc)
         doc-owner (cust-model/find-by-uuid db (:document/creator doc))]
-    (mailgun/send-message {:from (email-address "Precursor" "joinme")
-                           :to (:cust/email doc-owner)
-                           :subject (str (format-requester requester)
-                                         " wants access to your document on Precursor")
-                           :text (str "Hey there,\nSomeone wants access to your document on Precursor: " (urls/doc doc-id)
-                                      "\nYou can grant or deny them access from the document's settings page.")
-                           :html (access-request-html doc-id requester)
-                           :o:tracking "yes"
-                           :o:tracking-opens "yes"
-                           :o:tracking-clicks "no"
-                           :o:campaign "access_request"})))
+    (ses/send-message {:from (email-address "Precursor" "joinme")
+                       :to (:cust/email doc-owner)
+                       :subject (str (format-requester requester)
+                                     " wants access to your document on Precursor")
+                       :text (str "Hey there,\nSomeone wants access to your document on Precursor: " (urls/doc doc-id)
+                                  "\nYou can grant or deny them access from the document's settings page.")
+                       :html (access-request-html doc-id requester)
+                       :o:tracking "yes"
+                       :o:tracking-opens "yes"
+                       :o:tracking-clicks "no"
+                       :o:campaign "access_request"})))
 
 (defn send-entity-email-dispatch-fn [db email-enum eid] email-enum)
 

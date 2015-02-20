@@ -3,10 +3,12 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [clj-time.core :as time]
             [clj-statsd :as statsd]
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
             [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [pc.datomic.schema :as schema]
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
@@ -20,7 +22,8 @@
             [pc.rollbar :as rollbar]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
-            [taoensso.sente :as sente])
+            [taoensso.sente :as sente]
+            [taoensso.sente.server-adapters.http-kit :refer (http-kit-adapter)])
   (:import java.util.UUID))
 
 ;; TODO: find a way to restart sente
@@ -35,12 +38,12 @@
   ;;        (seq (get-in req [:params :tab-id]))]}
   (when (empty? (get-in req [:session :sente-id]))
     (let [msg (format "sente-id is nil for %s on %s" (:remote-addr req) (:uri req))]
-      (rollbar/report-exception (Exception. msg))
+      (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg)))
 
   (when (empty? (get-in req [:params :tab-id]))
     (let [msg (format "tab-id is nil for %s on %s" (:remote-addr req) (:uri req))]
-      (rollbar/report-exception (Exception. msg))
+      (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg)))
 
   (str (get-in req [:session :sente-id])
@@ -148,35 +151,62 @@
     ;;"#bdc3c7"
     })
 
-(defn subscribe-to-doc [document-id uuid cust-name & {:keys [requested-color]}]
+(defn choose-color [subs client-id requested-color]
+  (let [available-colors (or (seq (apply disj colors (map :color (vals subs))))
+                             (seq colors))]
+    (or (get-in subs [client-id :color])
+        (when (not= -1 (.indexOf available-colors requested-color))
+          requested-color)
+        (rand-nth available-colors))))
+
+(defn choose-frontend-id-seed [db document-id subs requested-remainder]
+  (let [available-remainders (apply disj web-peer/remainders (map (comp :remainder :frontend-id-seed)
+                                                                  (vals subs)))]
+    (if-let [remainder (if (contains? available-remainders requested-remainder)
+                         requested-remainder
+                         (first available-remainders))]
+      (let [used-client-parts (web-peer/client-parts-for-ns db document-id)
+            ;; do something to protect against over 100K eids
+            ;; XXX should we ensure in the transactor that ids increase properly?
+            used-from-partition (set (filter #(= remainder (mod % web-peer/multiple)) used-client-parts))
+            start-eid (first (remove #(contains? used-from-partition %)
+                                     (iterate (partial + web-peer/multiple) (if (zero? remainder)
+                                                                              web-peer/multiple
+                                                                              remainder))))]
+        {:remainder remainder :multiple web-peer/multiple :next-id start-eid})
+      (throw+ {:status 403
+               :error-msg "There are too many users in the document."
+               :error-key :too-many-subscribers}))))
+
+;; XXX need to add requested remainder also
+(defn subscribe-to-doc [db document-id uuid cust-name & {:keys [requested-color requested-remainder]}]
   (swap! document-subs update-in [document-id]
          (fn [subs]
-           (let [available-colors (or (seq (apply disj colors (map :color (vals subs))))
-                                      (seq colors))
-                 color (or (get-in subs [uuid :color])
-                           (when (not= -1 (.indexOf available-colors requested-color))
-                             requested-color)
-                           (rand-nth available-colors))]
-             (-> subs
-                 (assoc-in [uuid :color] color)
-                 (assoc-in [uuid :cust-name] cust-name)
-                 (assoc-in [uuid :show-mouse?] true))))))
+           (-> subs
+             (assoc-in [uuid :color] (choose-color subs uuid requested-color))
+             (assoc-in [uuid :cust-name] cust-name)
+             (assoc-in [uuid :show-mouse?] true)
+             (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
 
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
 (defmethod ws-handler :frontend/subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
-  (def req req)
   (check-document-access (-> ?data :document-id) req :admin)
   (let [document-id (-> ?data :document-id)
-        color (-> ?data :color)
-        send-fn (:send-fn @sente-state)]
-    (log/infof "subscribing %s to %s" client-id document-id)
+        send-fn (:send-fn @sente-state)
+        _ (log/infof "subscribing %s to %s" client-id document-id)
+        subs (subscribe-to-doc (:db req)
+                               document-id
+                               client-id
+                               (-> req :ring-req :auth :cust :cust/name)
+                               :requested-color (:requested-color ?data)
+                               :requested-remainder (:requested-remainder ?data))]
 
-    (subscribe-to-doc document-id client-id
-                      (-> req :ring-req :auth :cust :cust/name))
+    (?reply-fn [:frontend/frontend-id-state {:frontend-id-state (get-in subs [document-id client-id :frontend-id-seed])}])
+
     (doseq [[uid _] (get @document-subs document-id)]
       (send-fn uid [:frontend/subscriber-joined (merge {:client-id client-id}
-                                                       (get-in @document-subs [document-id client-id]))]))
+                                                       (get-in subs [document-id client-id]))]))
 
     ;; TODO: we'll need a read-api or something here at some point
     (log/infof "sending document for %s to %s" document-id client-id)
@@ -188,7 +218,7 @@
     (log/infof "sending layers for %s to %s" document-id client-id)
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
-                         :entities (layer/find-by-document (:db req) {:db/id document-id})
+                         :entities (map layer/read-api (layer/find-by-document (:db req) {:db/id document-id}))
                          :entity-type :layer}])
     (log/infof "sending chats %s to %s" document-id client-id)
     (send-fn client-id [:frontend/db-entities
@@ -198,7 +228,7 @@
     (log/infof "sending subscribers for %s to %s" document-id client-id)
     (send-fn client-id [:frontend/subscribers
                         {:document/id document-id
-                         :subscribers (get @document-subs document-id)}])
+                         :subscribers (get subs document-id)}])
 
     ;; These are interesting b/c they're read-only. And by "interesting", I mean "bad"
     ;; We should find a way to let the frontend edit things
@@ -324,7 +354,7 @@
           (email/send-chat-invite {:cust cust :to-email email :doc-id doc-id})
           (notify-invite (str "Invite sent to " email))
           (catch Exception e
-            (rollbar/report-exception e)
+            (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
             (log/error e)
             (.printStackTrace e)
             (notify-invite (str "Sorry! There was a problem sending the invite to " email)))))
@@ -376,7 +406,7 @@
         ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
         ;;       Right now it's too easy to accidentally forget to check.
         (assert (= doc-id (:access-request/document request)))
-        (permission-model/convert-access-request request annotations))
+        (permission-model/convert-access-request request cust annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 (defmethod ws-handler :frontend/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
@@ -418,8 +448,24 @@
       @(d/transact (pcd/conn) [(merge {:db/id (:db/id cust)}
                                       (select-keys settings (schema/browser-setting-idents)))]))
     (let [msg (format "no cust for %s" (:remote-addr (:ring-req req)))]
-      (rollbar/report-exception (Exception. msg))
+      (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg))))
+
+(defn conj-limit
+  "Expects a vector, keeps the newest n items. May return a shorter vector than was passed in."
+  ([v n x]
+   (subvec (conj v x) (if (> (dec n) (count v))
+                        0
+                        (- (count v) (dec n)))))
+  ([v n x & xs]
+   (if xs
+     (recur (conj-limit v n x) n (first xs) (next xs))
+     (conj-limit v n x))))
+
+(defonce stats (atom []))
+
+(defmethod ws-handler :frontend/stats [{:keys [client-id ?data ?reply-fn] :as req}]
+  (swap! stats conj-limit 100 {:client-id client-id :stats (:stats ?data) :time (time/now)}))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
@@ -443,7 +489,11 @@
            (send-fn client-id [:frontend/error {:status-code (:status t)
                                                 :error-msg (:error-msg t)
                                                 :event (:event req)
-                                                :event-data (:?data req)}])))))))
+                                                :event-data (:?data req)}])))
+       (catch Object e
+         (log/error e)
+         (.printStackTrace e)
+         (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust)))))))
 
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))
@@ -454,9 +504,36 @@
                      (utils/straight-jacket (handle-req req))
                      (recur)))))
 
+(defn close-ws
+  "Closes the websocket, client should reconnect."
+  [client-id]
+  ((:send-fn @sente-state) client-id [:chsk/close]))
+
+(defn refresh-browser
+  "Refreshes the browser if the tab is hidden or if :force is set to true.
+   Otherwise, creates a bot chat asking the user to refresh the page."
+  [client-id & {:keys [force]
+                :or {force false}}]
+  ((:send-fn @sente-state) client-id [:frontend/refresh {:force-refresh force}]))
+
+(defn fetch-stats
+  "Sends a request to the client for statistics, which is handled above in the :frontend/stats handler"
+  [client-id]
+  ((:send-fn @sente-state) client-id [:frontend/stats]))
+
 (defn init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
-                ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket! {:user-id-fn #'user-id-fn})]
+                ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket!
+                                                       http-kit-adapter
+                                                       {:user-id-fn #'user-id-fn})]
     (reset! sente-state fns)
     (setup-ws-handlers fns)
     fns))
+
+(defn shutdown [& {:keys [sleep-ms]
+                            :or {sleep-ms 100}}]
+  (doseq [client-id (reduce (fn [acc [_ clients]]
+                              (apply conj acc (keys clients)))
+                            #{} @document-subs)]
+    (close-ws client-id)
+    (Thread/sleep sleep-ms)))

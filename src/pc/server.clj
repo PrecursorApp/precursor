@@ -280,7 +280,7 @@
         (try
           (log-request req resp (time/in-millis (time/interval start stop)))
           (catch Exception e
-            (rollbar/report-exception e :request req :user-id (get-in req [:auth :cust :cust/uuid]))
+            (rollbar/report-exception e :request req :cust (get-in req [:auth :cust]))
             (log/error e)))
         resp))))
 
@@ -308,7 +308,7 @@
       (catch Object e
         (log/error e)
         (.printStackTrace e)
-        (rollbar/report-exception e :request req)
+        (rollbar/report-exception e :request req :cust (some-> req :auth :cust))
         {:status 500
          :body "Sorry, something completely unexpected happened!"}))))
 
@@ -369,15 +369,19 @@
   (def server (httpkit/run-server (handler sente-state)
                                   {:port (profile/http-port)})))
 
-(defn stop []
-  (server))
+(defn stop [& {:keys [timeout]
+               :or {timeout 0}}]
+  (server :timeout timeout))
 
 (defn restart []
   (stop)
   (start @sente/sente-state))
 
-
 (defn init []
   (let [sente-state (sente/init)]
     (start sente-state))
   (datomic/init))
+
+(defn shutdown []
+  (sente/shutdown :sleep-ms 250)
+  (stop :timeout 1000))

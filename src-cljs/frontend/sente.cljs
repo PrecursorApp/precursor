@@ -2,10 +2,14 @@
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)])
   (:require [cljs.core.async :as async :refer (<! >! put! chan)]
             [clojure.set :as set]
+            [cemerick.url :as url]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
-            [taoensso.sente  :as sente :refer (cb-success?)]
+            [taoensso.sente :as sente]
+            [frontend.stats :as stats]
             [frontend.datascript :as ds]
+            [frontend.models.chat :as chat-model]
+            [goog.labs.dom.PageVisibilityMonitor]
             [datascript :as d]))
 
 (defn send-msg [sente-state message & [timeout-ms callback-fn :as rest]]
@@ -19,9 +23,16 @@
                      (apply (:send-fn sente-state) message rest)
                      (remove-watch ref watch-id)))))))
 
-(defn subscribe-to-document [sente-state document-id & {:keys [requested-color]}]
+(defn subscribe-to-document [sente-state comms document-id & {:keys [requested-color requested-remainder]}]
   (send-msg sente-state [:frontend/subscribe {:document-id document-id
-                                              :requested-color requested-color}]))
+                                              :requested-color requested-color
+                                              :requested-remainder requested-remainder}]
+            5000
+            (fn [reply]
+              (if (sente/cb-success? reply)
+                (put! (:api comms) [(first reply) :success (assoc (second reply)
+                                                                  :context {:document-id document-id})])
+                (put! (:errors comms) [:subscribe-to-document-error {:document-id document-id}])))))
 
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
@@ -75,6 +86,26 @@
   (put! (get-in @app-state [:comms :errors]) [:document-permission-error data])
   (utils/inspect data))
 
+(defmethod handle-message :frontend/stats [app-state message data]
+  (send-msg (:sente @app-state)
+            [:frontend/stats
+             {:stats (stats/gather-stats @app-state)}]))
+
+(defmethod handle-message :frontend/refresh [app-state message data]
+  (let [refresh-url (-> (url/url js/window.location)
+                      (update-in [:query] merge {"x" (get-in @app-state [:camera :x])
+                                                 "y" (get-in @app-state [:camera :y])
+                                                 "z" (get-in @app-state [:camera :zf])})
+                      str)]
+    (if (or (.isHidden (goog.labs.dom.PageVisibilityMonitor.))
+            (:force-refresh data))
+      (set! js/window.location refresh-url)
+      (chat-model/create-bot-chat (:db @app-state) @app-state [:span "We've just released some upgrades! Please "
+                                                               [:a {:href refresh-url
+                                                                    :target "_self"}
+                                                                "click to refresh"]
+                                                               " now to avoid losing any work."]))))
+
 (defmethod handle-message :chsk/state [app-state message data]
   (let [state @app-state]
     (when (and (:open? data)
@@ -83,8 +114,9 @@
       ;; TODO: This seems like a bad place for this. Can we share the same code that
       ;;       we use for subscribing from the nav channel in the first place?
       (subscribe-to-document
-       (:sente state) (:document/id state)
-       :requested-color (get-in state [:subscribers (:client-id state) :color])))))
+       (:sente state) (:comms state) (:document/id state)
+       :requested-color (get-in state [:subscribers (:client-id state) :color])
+       :requested-remainder (get-in state [:subscribers (:client-id state) :remainder])))))
 
 
 (defn do-something [app-state sente-state]

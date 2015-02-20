@@ -1,12 +1,12 @@
 (ns frontend.controllers.errors
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as str]
-            [frontend.async :refer [put!]]
+            [datascript :as d]
             [frontend.overlay :as overlay]
+            [frontend.camera :as cameras]
             [frontend.state :as state]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
-            [frontend.utils.vcs-url :as vcs-url]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
             [goog.string :as gstring]
@@ -67,3 +67,29 @@
   (-> state
       (overlay/replace-overlay :document-permissions)
       (assoc-in (state/document-access-path (:document/id state)) :none)))
+
+(defn write-error-to-canvas [conn camera error-text]
+  (let [[start-x start-y] (cameras/screen->point camera 64 (+ 16 14))]
+    (d/transact! conn [{:layer/type :layer.type/text
+                        :layer/name "Error"
+                        :layer/text error-text
+                        :layer/start-x start-x
+                        :layer/start-y start-y
+                        :db/id 1
+                        :layer/end-x (+ start-x 300)
+                        :layer/end-y (- start-y 23)}]
+                 {:bot-layer true})))
+
+(defmethod post-error! :subscribe-to-document-error
+  [container message {:keys [document-id]} previous-state current-state]
+  (write-error-to-canvas (:db current-state)
+                         (:camera current-state)
+                         "There was an error connecting to the server.\nPlease refresh to try again.")
+  (js/Rollbar.error (str "subscribe to document failed for " document-id)))
+
+(defmethod post-error! :entity-ids-request-failed
+  [container message {:keys [document-id]} previous-state current-state]
+  (write-error-to-canvas (:db current-state)
+                         (:camera current-state)
+                         "There was an error connecting to the server.\nPlease refresh to try again.")
+  (js/Rollbar.error "entity ids request failed :("))

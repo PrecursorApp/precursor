@@ -27,7 +27,7 @@
   (prod?))
 
 (defn prod-domain []
-  "prcrsr.com")
+  "precursorapp.com")
 
 (defn hostname []
   (if (prod?)

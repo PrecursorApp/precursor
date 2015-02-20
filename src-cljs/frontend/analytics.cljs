@@ -6,9 +6,9 @@
 
 (defn init-user [cust]
   (utils/swallow-errors
-   (rollbar/init (:cust/uuid cust) (:cust/email cust)))
+   (rollbar/init (str (:cust/uuid cust)) (:cust/email cust)))
   (utils/swallow-errors
-   (mixpanel/identify (:cust/uuid cust))
+   (mixpanel/identify (str (:cust/uuid cust)))
    (mixpanel/name-tag (:cust/email cust))
    (mixpanel/set-people-props {:$email (:cust/email cust)
                                :$last_login (js/Date.)})))

@@ -27,7 +27,7 @@
 ;; If they've drawn in negative directions, then we to shift the viewport in the
 ;; that direction with a transform.
 (defn render-layers [layers & {:keys [invert-colors? size-limit]}]
-  (let [layers (filter #(not= :layer.type/group (:layer/type %)) layers)
+  (let [layers (map #(into {} %) (filter #(not= :layer.type/group (:layer/type %)) layers))
         start-xs (remove #(.isNaN %) (map :layer/start-x layers))
         start-ys (remove #(.isNaN %) (map :layer/start-y layers))
         end-xs (remove #(.isNaN %) (map :layer/end-x layers))

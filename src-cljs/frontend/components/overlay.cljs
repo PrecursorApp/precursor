@@ -399,9 +399,9 @@
               "hi@prcrsr.com"]
              " or on "
              [:a
-              {:href "https://twitter.com/prcrsr_app"
+              {:href "https://twitter.com/PrecursorApp"
                :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-               :title "@prcrsr_app"
+               :title "@PrecursorApp"
                :target "_blank"}
               "Twitter"]
              "."]

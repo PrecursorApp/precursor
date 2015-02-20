@@ -124,6 +124,7 @@
     om/IInitState
     (init-state [_]
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+       :auto-scroll? true
        :touch-enabled? false})
     om/IDidMount
     (did-mount [_]
@@ -139,15 +140,17 @@
     om/IWillUnmount
     (will-unmount [_]
       (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
-    om/IWillUpdate
-    (will-update [_ _ _]
+    om/IWillReceiveProps
+    (will-receive-props [_ next-props]
       ;; check for scrolled all of the way down
-      (let [node (om/get-node owner "chat-messages")]
-        (om/set-state! owner :auto-scroll (= (- (.-scrollHeight node) (.-scrollTop node))
-                                             (.-clientHeight node)))))
+      (let [node (om/get-node owner "chat-messages")
+            auto-scroll? (= (- (.-scrollHeight node) (.-scrollTop node))
+                            (.-clientHeight node))]
+        (when (not= (om/get-state owner :auto-scroll?) auto-scroll?)
+          (om/set-state! owner :auto-scroll? auto-scroll?))))
     om/IDidUpdate
     (did-update [_ _ _]
-      (when (om/get-state owner :auto-scroll)
+      (when (om/get-state owner :auto-scroll?)
         (set! (.-scrollTop (om/get-node owner "chat-messages"))
               10000000)))
     om/IRender

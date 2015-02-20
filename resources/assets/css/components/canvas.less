@@ -73,10 +73,6 @@
     }
   }
 }
-.signup-layer {
-  cursor: pointer;
-  fill: transparent;
-}
 .selectable-group {
   .layer-handle {
     stroke: transparent;
@@ -96,6 +92,10 @@
 .shape-layer {
   stroke: none;
   fill: none;
+  &.signup-layer {
+    fill: transparent;
+    cursor: pointer;
+  }
   &.layer-in-progress {
     stroke: @color_select;
     stroke-width: 2;

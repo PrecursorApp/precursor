@@ -37,8 +37,8 @@
   [db doc]
   (let [layers (layer-model/find-by-document db doc)
         new-doc (doc-model/create-public-doc! {:document/name (str "Clone of " (:document/name doc))})]
-    (d/transact (pcd/conn) (map (fn [l] (assoc l
-                                          :db/id (d/tempid :db.part/user)
-                                          :document/id (:db/id new-doc)))
-                                layers))
+    @(d/transact (pcd/conn) (map (fn [l] (assoc (pcd/touch+ l)
+                                                :db/id (d/tempid :db.part/user)
+                                                :document/id (:db/id new-doc)))
+                                 layers))
     new-doc))

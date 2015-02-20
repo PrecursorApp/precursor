@@ -7,6 +7,7 @@
             [org.httpkit.client :as http]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
+            [pc.datomic.web-peer :as web-peer]
             [pc.email :as email]
             [pc.http.datomic-common :as common]
             [pc.http.sente :as sente]
@@ -63,9 +64,6 @@
 
     :entity/type
 
-    :layer/start-sx
-    :layer/start-sy
-
     :layer/font-family
     :layer/text
     :layer/font-size
@@ -114,7 +112,7 @@
 ;; TODO: teach the frontend how to lookup name from cust/uuid
 ;;       this will break if something else is associating cust/uuids
 (defmethod translate-datom :cust/uuid [db d]
-  (if (:chat/body (d/entity db (:e d)))
+  (if (:chat/body (d/entity db (:original-e d)))
     (assoc d
            :a :chat/cust-name
            :v (or (chat-model/find-chat-name db (:v d))
@@ -132,9 +130,13 @@
         a (schema/get-ident a)
         v (if (contains? (schema/enums) a)
             (schema/get-ident v)
-            v)]
-    (->> {:e e :a a :v v :tx tx :added added}
-      (translate-datom db))))
+            v)
+        ;; Temporary fix until we teach frontend how to lookup cust name
+        original-e e
+        e (web-peer/client-id db e)]
+    (->> {:e e :a a :v v :tx tx :added added :original-e original-e}
+      (translate-datom db)
+      (#(dissoc % :original-e)))))
 
 (defn whitelisted? [datom]
   (contains? outgoing-whitelist (:a datom)))
@@ -145,13 +147,16 @@
                (:transaction/broadcast annotations))
       (when-let [public-datoms (->> transaction
                                  :tx-data
+                                 (filter #(:frontend/id (d/entity (:db-after transaction) (:e %))))
                                  (map (partial datom-read-api (:db-after transaction)))
                                  (filter whitelisted?)
                                  seq)]
         (sente/notify-transaction (merge {:tx-data public-datoms}
                                          annotations))
         (when (profile/prod?)
-          (handle-precursor-pings (:document/id annotations) public-datoms))))))
+          (future
+            (utils/with-report-exceptions
+              (handle-precursor-pings (:document/id annotations) public-datoms))))))))
 
 (defn send-emails [transaction]
   (let [annotations (delay (get-annotations transaction))]

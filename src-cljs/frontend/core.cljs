@@ -19,8 +19,6 @@
             [frontend.routes :as routes]
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
-            [frontend.env :as env]
-            [frontend.instrumentation :refer [wrap-api-instrumentation]]
             [frontend.localstorage :as localstorage]
             [frontend.sente :as sente]
             [frontend.state :as state]
@@ -106,6 +104,14 @@
 (def navigation-ch
   (chan))
 
+(defn initial-camera []
+  (let [{:keys [x y z]} utils/initial-query-map]
+    (cond-> {}
+      x (assoc :x x)
+      y (assoc :y y)
+      ;; the zoom is zf for some reason
+      z (assoc :zf z))))
+
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (or (aget js/window "Precursor" "initial-document-id")
@@ -142,6 +148,7 @@
                                              :mult (async/mult mouse-down-ch)}
                              :mouse-up      {:ch mouse-up-ch
                                              :mult (async/mult mouse-up-ch)}})
+            (update-in [:camera] merge (initial-camera))
             (browser-settings/restore-browser-settings cust)))))
 
 (defn controls-handler
@@ -175,8 +182,7 @@
            message (first value)
            status (second value)
            api-data (utils/third value)]
-       (swap! state (wrap-api-instrumentation (partial api-con/api-event container message status api-data)
-                                              api-data))
+       (swap! state (partial api-con/api-event container message status api-data))
        (when-let [date-header (get-in api-data [:response-headers "Date"])]
          (datetime/update-server-offset date-header))
        (api-con/post-api-event! container message status api-data previous-state @state)))))
@@ -190,15 +196,6 @@
        (swap! state (partial errors-con/error container (first value) (second value)))
        (errors-con/post-error! container (first value) (second value) previous-state @state)))))
 
-(defn setup-timer-atom
-  "Sets up an atom that will keep track of the current time.
-   Used from frontend.components.common/updating-duration "
-  []
-  (let [mya (atom (datetime/server-now))]
-    (js/setInterval #(reset! mya (datetime/server-now)) 1000)
-    mya))
-
-
 (defn install-om [state container comms cast! handlers]
   (om/root
    app/app
@@ -207,7 +204,6 @@
     :shared {:comms                 comms
              :db                    (:db @state)
              :cast!                 cast!
-             :timer-atom            (setup-timer-atom)
              :_app-state-do-not-use state
              :handlers              handlers}}))
 
@@ -285,41 +281,6 @@
             ;; of a server to store it
             (async/timeout 10000) (do #_(print "TODO: print out history: ")))))))
 
-(defn fetch-entity-ids [api-ch eid-count]
-  (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
-
-(defn notify-error [state]
-  (d/transact! (:db @state) [{:layer/type :layer.type/text
-                              :layer/name "Error"
-                              :layer/text "There was an error connecting to the server."
-                              :layer/start-x 200
-                              :layer/start-y 200
-                              :db/id -1
-                              :layer/end-x 600
-                              :layer/end-y 175}
-                             {:layer/type :layer.type/text
-                              :layer/name "Error"
-                              :layer/text "Please refresh to try again."
-                              :layer/start-x 200
-                              :layer/start-y 225
-                              :db/id -2
-                              :layer/end-x 400
-                              :layer/end-y 200}]))
-
-(defn setup-entity-id-fetcher [state]
-  (let [api-ch (-> state deref :comms :api)]
-    (go (let [resp (<! (ajax/managed-ajax :post "/api/entity-ids" :params {:count 40}))]
-          (if (= :success (:status resp))
-            (do
-              (put! api-ch [:entity-ids :success {:resp resp :status :success}])
-              (add-watch state :entity-id-fetcher (fn [key ref old new]
-                                                    (when (> 35 (-> new :entity-ids count))
-                                                      (utils/mlog "fetching more entity ids")
-                                                      (fetch-entity-ids api-ch (- 40
-                                                                                  (-> new :entity-ids count)))))))
-            (do (notify-error state)
-                (js/Rollbar.error "entity ids request failed :(")))))))
-
 (defn ^:export setup! []
   (when-not (utils/logging-enabled?)
     (println "To enable logging, set Precursor['logging-enabled'] = true"))
@@ -333,7 +294,6 @@
     (main state history-imp)
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
-    (setup-entity-id-fetcher state)
     (sec/dispatch! (str "/" (.getToken history-imp)))))
 
 (defn ^:export inspect-state []
