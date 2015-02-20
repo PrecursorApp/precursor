@@ -241,16 +241,3 @@
    .mq_960({ width: (@size_chat + (@size_chat_step *  8));});
    .mq_640({ width: (@size_chat + (@size_chat_step * 21));});
 }
-.art_square(@width; @height; @color; @stroke; @rest...) {
-  .fill(@color; @rest) when (@rest = fill) {
-    background: @color;
-  }.fill(@color; @rest);
-  width: @width;
-  height: @height;
-  border: @stroke solid @color;
-  overflow: hidden;
-}
-.art_circle(@width; @height; @color; @stroke; @rest...) {
-  .art_square(@width; @height; @color; @stroke; @rest);
-  border-radius: (@width + @height) / 2;
-}

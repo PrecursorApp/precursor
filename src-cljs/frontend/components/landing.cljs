@@ -130,13 +130,12 @@
                                 " new idea"
                                 " user-experience"
                                 "n experience"
-                                "n idea"
                                 "n interactive demo"
                                 "n interface"
                                 "n interesting thing"
                                 "n invention"
                                 "n illustration"
-                                "n awesome something"
+                                "n awesome idea"
                                 ])
             middle-index (int (/ (count word-list) 2))
             random-word (nth word-list (- (count word-list) 4))]
@@ -187,27 +186,27 @@
             ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
             ]])))))
 
-(def artwork-ipad
+(def artwork-mobile
   [:div.artwork
-   [:div.a-ipad
-    [:div.a-ipad-head
-     [:div.a-ipad-camera]]
-    [:div.a-ipad-body
-     [:div.a-screen
-      [:div.a-menu
+   [:div.art-mobile
+    [:div.art-mobile-head
+     [:div.art-mobile-camera]]
+    [:div.art-mobile-body
+     [:div.art-screen
+      [:div.art-menu
        [:h4 "Today"]
-       [:div.a-doc   [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.a-doc   [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.a-doc   [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.a-doc   [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
-      [:div.a-canvas [:img.a-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
-    [:div.a-ipad-foot
-     [:div.a-ipad-button]]]])
+       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+      [:div.art-canvas [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
+    [:div.art-mobile-foot
+     [:div.art-mobile-button]]]])
 
 (def artwork-team
   [:div.artwork
-   [:div.a-team
-    [:div.a-team-list
+   [:div.art-team
+    [:div.art-team-list
 
      [:div.access-card
       [:div.access-avatar
@@ -271,7 +270,7 @@
              [:div.featurette-story
               [:h2 "Access your ideas on any device right in the browser."]
               [:p "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
-             [:div.featurette-media artwork-ipad]]
+             [:div.featurette-media artwork-mobile]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
              [:div.featurette-story
@@ -282,7 +281,7 @@
                 {:role "button"}
                 "Read the tutorial"]
                "."]]
-             [:div.featurette-media.reverse artwork-ipad]]
+             [:div.featurette-media.reverse artwork-mobile]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
              [:div.featurette-story

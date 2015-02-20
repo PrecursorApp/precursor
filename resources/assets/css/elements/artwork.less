@@ -129,87 +129,61 @@
 //   }
 // }
 
-
-
-@ipad_ratio: 4 / 3;
-@ipad_height: @ipad_ratio * 100%;
-
-@ipad_fill: @gray_dark;
-@ipad_mask: @dye_outer;
-
-@ipad_button: 6%;
-
-@ipad_padding_y: 9%;
-@ipad_padding_x: @ipad_padding_y / 3;
-
-@ipad_head_height: (100% - @ipad_body_height) / 2;
-@ipad_body_height: 100% - (@ipad_padding_y * 2);
-@ipad_foot_height: @ipad_head_height;
-
-
-
-.a_ipad_circle(@size: @arguments) {
-  width: 0;
-  height: 0;
-  margin: auto;
-  padding: @size / 2;
-  border-radius: @tile_xxl;
-  background: @ipad_mask;
-}
-.a_ipad_circle_reverse(@size: @arguments) {
-  @increase: 9;
-  padding: (@size / 2) * @increase;
-}
-
-
-
-.a-ipad {
+.art-mobile {
   .user-select(none);
   position: relative;
   width: 100%;
   height: 0;
-  padding-bottom: @ipad_height;
-  background: @ipad_fill;
-  border-radius: (@ipad_button * @ipad_ratio) ~"/" @ipad_button;
+  padding-bottom: @art_mobile_height;
+  background: @art_mobile_fill;
+  border-radius: (@art_mobile_button * @art_mobile_ratio) ~"/" @art_mobile_button;
 }
-.a-ipad-head {
+.art-mobile-head {
   .flexy();
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: @ipad_head_height;
+  height: @art_mobile_head_height;
 }
-.a-ipad-body {
+.art-mobile-body {
   position: absolute;
-  top: @ipad_head_height;
+  top: @art_mobile_head_height;
   left: 0;
   width: 100%;
-  height: @ipad_body_height;
+  height: @art_mobile_body_height;
 }
-.a-ipad-foot {
+.art-mobile-foot {
   .flexy();
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: @ipad_foot_height;
+  height: @art_mobile_head_height;
 }
-.a-ipad-camera {
-  .a_ipad_circle(@ipad_button / 3);
+.art-mobile-camera,
+.art-mobile-button {
+  width: 0;
+  height: 0;
+  margin: auto;
+  border-radius: @tile_xxl;
+  background: @art_mobile_mask;
 }
-.a-ipad-button {
-  .a_ipad_circle(@ipad_button);
+.art-mobile-camera {
+  padding: (@art_mobile_button / 3) / 2;
 }
-.a-screen {
+.art-mobile-button {
+  padding: (@art_mobile_button) / 2;
+}
+.art-screen {
   .flexy();
-  width: 100% - (@ipad_padding_x * 2);
+  width: 100% - (@art_mobile_padding_x * 2);
   height: 100%;
-  margin: 0 @ipad_padding_x;
-  background: @ipad_mask;
+  margin: 0 @art_mobile_padding_x;
+  background: @art_mobile_mask;
   overflow: hidden;
 }
-.a-menu {
+.art-menu {
   width: 50%;
   h4 {
     color: @gray;
@@ -217,7 +191,7 @@
     margin: 2% 10%;
   }
 }
-.a-doc {
+.art-doc {
   .flex(1);
   height: 25%;
   margin: 10%;
@@ -230,12 +204,12 @@
   //   border: 2px solid @blue; // VETO
   // }
 }
-.a-doc-img {
+.art-doc-img {
   max-width: none;
   max-height: 250%;
   opacity: .20;
 }
-.a-canvas {
+.art-canvas {
   .flex(1);
   height: 66%;
   margin: auto;
@@ -247,7 +221,7 @@
 
 
 
-.a-team {
+.art-team {
   // >>>>>>>> TODO for dev
   &:hover {
     .access-card {
@@ -257,7 +231,7 @@
     }
   }
   &:not(:hover) {
-    .a-team-list {
+    .art-team-list {
       // display: none;
       .animation-name(none);
     }
@@ -279,7 +253,7 @@
   position: relative;
   width: 100%;
   height: 0;
-  padding-bottom: @ipad_height;
+  padding-bottom: @art_mobile_height;
   overflow: hidden;
   &:after {
     .gradient(to bottom, @white, transparent, @white);
@@ -303,7 +277,7 @@
     }
   }
 }
-.a-team-list {
+.art-team-list {
   .animation(in-fade-bottom (@run_slower * 1.5) @bezier_deform);
   .flexy(column);
   .justify-content(center);
