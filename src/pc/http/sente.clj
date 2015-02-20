@@ -38,12 +38,12 @@
   ;;        (seq (get-in req [:params :tab-id]))]}
   (when (empty? (get-in req [:session :sente-id]))
     (let [msg (format "sente-id is nil for %s on %s" (:remote-addr req) (:uri req))]
-      (rollbar/report-exception (Exception. msg))
+      (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg)))
 
   (when (empty? (get-in req [:params :tab-id]))
     (let [msg (format "tab-id is nil for %s on %s" (:remote-addr req) (:uri req))]
-      (rollbar/report-exception (Exception. msg))
+      (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg)))
 
   (str (get-in req [:session :sente-id])
@@ -354,7 +354,7 @@
           (email/send-chat-invite {:cust cust :to-email email :doc-id doc-id})
           (notify-invite (str "Invite sent to " email))
           (catch Exception e
-            (rollbar/report-exception e)
+            (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
             (log/error e)
             (.printStackTrace e)
             (notify-invite (str "Sorry! There was a problem sending the invite to " email)))))
@@ -448,7 +448,7 @@
       @(d/transact (pcd/conn) [(merge {:db/id (:db/id cust)}
                                       (select-keys settings (schema/browser-setting-idents)))]))
     (let [msg (format "no cust for %s" (:remote-addr (:ring-req req)))]
-      (rollbar/report-exception (Exception. msg))
+      (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg))))
 
 (defn conj-limit
@@ -489,7 +489,11 @@
            (send-fn client-id [:frontend/error {:status-code (:status t)
                                                 :error-msg (:error-msg t)
                                                 :event (:event req)
-                                                :event-data (:?data req)}])))))))
+                                                :event-data (:?data req)}])))
+       (catch Object e
+         (log/error e)
+         (.printStackTrace e)
+         (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust)))))))
 
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))

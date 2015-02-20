@@ -264,7 +264,7 @@
         (try
           (log-request req resp (time/in-millis (time/interval start stop)))
           (catch Exception e
-            (rollbar/report-exception e :request req :user-id (get-in req [:auth :cust :cust/uuid]))
+            (rollbar/report-exception e :request req :cust (get-in req [:auth :cust]))
             (log/error e)))
         resp))))
 
@@ -292,7 +292,7 @@
       (catch Object e
         (log/error e)
         (.printStackTrace e)
-        (rollbar/report-exception e :request req)
+        (rollbar/report-exception e :request req :cust (some-> req :auth :cust))
         {:status 500
          :body "Sorry, something completely unexpected happened!"}))))
 

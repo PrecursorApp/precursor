@@ -65,15 +65,14 @@
                (fn [[_ char]] (str "-" (str/capitalize char)))))
 
 (defn request-data
-  [{:keys [request-method remote-addr query-string] :as request} user-id]
-  (let [rollbar-obj {:url (url-for request)
-                     :method (str/upper-case (name request-method))
-                     :query_string (or query-string "")
-                     :user_ip remote-addr}
-        rollbar-obj (if user-id
-                      (assoc rollbar-obj :person {:id (str user-id)})
-                      rollbar-obj)]
-    {:request rollbar-obj}))
+  [{:keys [request-method remote-addr query-string] :as request} cust]
+  (merge {:request {:url (url-for request)
+                    :method (str/upper-case (name request-method))
+                    :query_string (or query-string "")
+                    :user_ip remote-addr}}
+         (when (seq cust)
+           {:person {:id (str (:cust/uuid cust))
+                     :email (:cust/email cust)}})))
 
 (defn report-message
   "Reports a simple string message at the specified level"
@@ -130,10 +129,10 @@
 
 (defn report-exception
   "Reports an exception at the 'error' level"
-  [exception & {:keys [request user-id]}]
+  [exception & {:keys [request cust]}]
   (let [data-map (base-data (profile/env) "error")
         trace-map {:body {:trace (build-trace
                                   (parse-exception exception))}}
-        request-map (if request (request-data request user-id) {})
+        request-map (if request (request-data request cust) {})
         data-maps [data-map trace-map request-map]]
     (send-payload (build-payload (token) data-maps))))
