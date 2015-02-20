@@ -973,16 +973,20 @@
   [browser-state message {:keys [id-str]} state]
    (-> state
      (assoc-in state/chat-opened-path true)
-     (assoc-in state/chat-mobile-opened-path true)
-     (update-in [:chat :body] (fn [s]
-                                (str (when (seq s)
-                                       ;; maybe separate with space
-                                       (str s (when (not= " " (last s)) " ")))
-                                     "@" id-str " ")))))
+     (assoc-in state/chat-mobile-opened-path true)))
 
 (defmethod post-control-event! :chat-user-clicked
-  [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-input")))
+  [browser-state message {:keys [id-str]} previous-state current-state]
+  (let [chat-input (goog.dom/getElement "chat-input")]
+    (.focus chat-input)
+    ;; TODO: need a better way to handle this, possibly by resurrecting
+    ;;       the inputs things I built for Circle
+    (let [s (.-value chat-input)]
+      (set! (.-value chat-input)
+            (utils/inspect (str (when (seq s)
+                                  ;; maybe separate with space
+                                  (str s (when (not= " " (last s)) " ")))
+                                "@" id-str " "))))))
 
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
