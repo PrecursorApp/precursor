@@ -65,7 +65,7 @@
                  ;; but not Om yet)
                  ;;[om "0.6.4"]
 
-                 [com.facebook/react "0.12.2.4"] ;; include for externs
+                 [precursorapp/react "react-0.12.2-6-new-tags"]
                  [sablono "0.3.1" :exclusions [cljsjs/react]]
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]
@@ -151,7 +151,6 @@
                        {:id "production"
                         :source-paths ["src-cljs" "yaks/om/src"]
                         :compiler {:pretty-print false
-                                   :preamble ["public/js/vendor/react-0.12.2.min.js"]
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
                                    :output-wrapper false
