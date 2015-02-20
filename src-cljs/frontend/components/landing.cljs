@@ -90,7 +90,6 @@
         vh (.-height (goog.dom/getViewportSize))]
     (< (.-top (.getBoundingClientRect node)) (/ vh 2))))
 
-;; TODO: update to new om so that we don't need this
 (defn maybe-set-state! [owner korks value]
   (when (not= (om/get-state owner korks) value)
     (om/set-state! owner korks value)))
@@ -280,48 +279,53 @@
 (defn the-how [app owner]
   (reify
     om/IInitState (init-state [_] {:past-center-featurettes #{}})
+    om/IDidMount (did-mount [_]
+                   (scroll/register owner #(maybe-set-state! owner [:past-center-featurettes]
+                                                             (set (filter (partial past-center? owner)
+                                                                          ["1" "2" "3"])))))
+    om/IWillUnmount (will-unmount [_]
+                      (scroll/dispose owner))
     om/IRenderState
     (render-state [_ {:keys [past-center-featurettes]}]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.the-how
-            [:div.featurette.content
-             {:class (when (contains? past-center-featurettes "1") "active") :ref "1"}
-             [:div.featurette-story
-              [:h2 "Access your ideas on any device right in the browser."]
-              [:p "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
-             [:div.featurette-media artwork-mobile]]
-            [:div.featurette.content
-             {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
-             [:div.featurette-story.interactive-story
-              [:h2 "Interact with your ideas way before development."]
-              [:p "Make working demos in just minutes using our simple target linking."]
-              [:p
-               [:a
-                {:href "/blog/interactive-layers"
-                 :target "_self"
-                 :role "button"}
-                "Read the tutorial"]
-               "."]]
-             [:div.featurette-media.reverse artwork-interactive]]
-            [:div.featurette.content
-             {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
-             [:div.featurette-story
-              [:h2 "Collaborate with your whole team in real time."]
-              [:p "Our new team features are optimized for efficient collaboration.
+         [:div.the-how
+          [:div.featurette.content
+           {:class (when (contains? past-center-featurettes "1") "active") :ref "1"}
+           [:div.featurette-story
+            [:h2 "Access your ideas on any device right in the browser."]
+            [:p "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
+           [:div.featurette-media artwork-mobile]]
+          [:div.featurette.content
+           {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
+           [:div.featurette-story.interactive-story
+            [:h2 "Interact with your ideas way before development."]
+            [:p "Make working demos in just minutes using our simple target linking."]
+            [:p
+             [:a
+              {:href "/blog/interactive-layers"
+               :target "_self"
+               :role "button"}
+              "Read the tutorial"]
+             "."]]
+           [:div.featurette-media.reverse artwork-interactive]]
+          [:div.featurette.content
+           {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
+           [:div.featurette-story
+            [:h2 "Collaborate with your whole team in real time."]
+            [:p "Our new team features are optimized for efficient collaboration.
                   You'll have all of your team's best ideas store in one secure place."]
-              [:p
-               [:a
-                {:role "button"}
-                "Request free trial"]
-               "."]]
-             [:div.featurette-media artwork-team]]])))))
+            [:p
+             [:a
+              {:role "button"}
+              "Request free trial"]
+             "."]]
+           [:div.featurette-media artwork-team]]])))))
 
 (defn the-what [app owner]
   (reify
-    om/IInitState (init-state [_] {:past-center-featurettes #{}})
-    om/IRenderState
-    (render-state [_ {:keys [past-center-featurettes]}]
+    om/IRender
+    (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.the-what
@@ -343,14 +347,12 @@
 
 (defn landing [app owner]
   (reify
-    om/IInitState (init-state [_] {:past-center-featurettes #{}})
-    om/IRenderState
-    (render-state [_ {:keys [past-center-featurettes]}]
+    om/IRender
+    (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.outer
-          {:on-scroll #(maybe-set-state! owner [:past-center-featurettes] (set (filter (partial past-center? owner)["1" "2" "3"])))
-           :class (when-not (get app :not-landing?) "landed")}
-           (om/build the-why app)
-           (om/build the-how app)
-           (om/build the-what app)])))))
+          {:class (when-not (get app :not-landing?) "landed")}
+          (om/build the-why app)
+          (om/build the-how app)
+          (om/build the-what app)])))))

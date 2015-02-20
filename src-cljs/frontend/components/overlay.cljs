@@ -11,7 +11,6 @@
             [frontend.components.document-access :as document-access]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
-            [frontend.scroll :as scroll]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.date :refer (date->bucket)]
