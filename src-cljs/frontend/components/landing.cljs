@@ -171,9 +171,9 @@
            [:div.our-claim
             [:div.navigation
              [:div.content
-              [:a {:role "button"} "Precursor"]
-              [:a {:role "button"} "Pricing"]
-              [:a {:role "button"} "Blog"]
+              [:a {:href "/home" :target "_self" :role "button"} "Precursor"]
+              [:a {:href "" :role "button"} "Pricing"]
+              [:a {:href "/blog" :target "_self" :role "button"} "Blog"]
               (common/google-login :small)]]
             [:div.our-philosphy-wrap
              [:div.our-philosphy.content
@@ -298,7 +298,8 @@
               [:p "Make working demos in just minutes using our simple target linking."]
               [:p
                [:a
-                {:role "button"}
+                {:href "/blog/interactive-layers"
+                 :role "button"}
                 "Read the tutorial"]
                "."]]
              [:div.featurette-media.reverse artwork-interactive]]
@@ -335,9 +336,9 @@
                 (om/build make-button (select-keys app [:document/id]))]]]
              [:div.navigation
               [:div.content
-               [:a {:role "button"} "Precursor"]
-               [:a {:role "button"} "Pricing"]
-               [:a {:role "button"} "Blog"]]]]])))))
+               [:a {:href "/home" :target "_self" :role "button"} "Precursor"]
+               [:a {:href "" :role "button"} "Pricing"]
+               [:a {:href "/blog" :target "_self" :role "button"} "Blog"]]]]])))))
 
 (defn landing [app owner]
   (reify
