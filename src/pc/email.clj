@@ -184,7 +184,7 @@
                 :alt "Images disabled? Just come and take a look."
                 :src image-link}]]]
        [:p {:style "font-size: 12px"}
-        (str "Tell us if this message was sent in error %s." (email-address "info"))
+        (format "Tell us if this message was sent in error %s." (email-address "info"))
         ;; Add some hidden text so that Google doesn't try to trim these.
         [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
          " Sent at "
