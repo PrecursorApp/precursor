@@ -299,6 +299,7 @@
               [:p
                [:a
                 {:href "/blog/interactive-layers"
+                 :target "_self"
                  :role "button"}
                 "Read the tutorial"]
                "."]]
