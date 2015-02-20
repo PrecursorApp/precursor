@@ -983,10 +983,10 @@
     ;;       the inputs things I built for Circle
     (let [s (.-value chat-input)]
       (set! (.-value chat-input)
-            (utils/inspect (str (when (seq s)
-                                  ;; maybe separate with space
-                                  (str s (when (not= " " (last s)) " ")))
-                                "@" id-str " "))))))
+            (str (when (seq s)
+                   ;; maybe separate with space
+                   (str s (when (not= " " (last s)) " ")))
+                 "@" id-str " ")))))
 
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
