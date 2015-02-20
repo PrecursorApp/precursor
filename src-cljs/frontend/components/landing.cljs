@@ -194,9 +194,9 @@
     [:div.art-mobile-body
      [:div.art-screen
       [:div.art-menu
-       [:h4 "Today"]
+       [:div.art-heading "Today"]
        [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+       [:div.art-doc.selected [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
        [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
        [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
       [:div.art-canvas [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
