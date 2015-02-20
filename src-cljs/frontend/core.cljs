@@ -19,8 +19,6 @@
             [frontend.routes :as routes]
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
-            [frontend.env :as env]
-            [frontend.instrumentation :refer [wrap-api-instrumentation]]
             [frontend.localstorage :as localstorage]
             [frontend.sente :as sente]
             [frontend.state :as state]
@@ -181,8 +179,7 @@
            message (first value)
            status (second value)
            api-data (utils/third value)]
-       (swap! state (wrap-api-instrumentation (partial api-con/api-event container message status api-data)
-                                              api-data))
+       (swap! state (partial api-con/api-event container message status api-data))
        (when-let [date-header (get-in api-data [:response-headers "Date"])]
          (datetime/update-server-offset date-header))
        (api-con/post-api-event! container message status api-data previous-state @state)))))
@@ -196,15 +193,6 @@
        (swap! state (partial errors-con/error container (first value) (second value)))
        (errors-con/post-error! container (first value) (second value) previous-state @state)))))
 
-(defn setup-timer-atom
-  "Sets up an atom that will keep track of the current time.
-   Used from frontend.components.common/updating-duration "
-  []
-  (let [mya (atom (datetime/server-now))]
-    (js/setInterval #(reset! mya (datetime/server-now)) 1000)
-    mya))
-
-
 (defn install-om [state container comms cast! handlers]
   (om/root
    app/app
@@ -213,7 +201,6 @@
     :shared {:comms                 comms
              :db                    (:db @state)
              :cast!                 cast!
-             :timer-atom            (setup-timer-atom)
              :_app-state-do-not-use state
              :handlers              handlers}}))
 

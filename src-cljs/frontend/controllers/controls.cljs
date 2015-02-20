@@ -20,7 +20,6 @@
             [frontend.sente :as sente]
             [frontend.settings :as settings]
             [frontend.state :as state]
-            [frontend.stripe :as stripe]
             [frontend.svg :as svg]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]

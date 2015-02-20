@@ -3,56 +3,10 @@
             [frontend.async :refer [put!]]
             [frontend.datetime :as datetime]
             [frontend.utils :as utils :include-macros true]
-            [frontend.utils.github :as gh-utils]
             [goog.dom.DomHelper]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer [html]]))
-
-(defn contact-us-inner [controls-ch]
-  [:a {:on-click #(put! controls-ch [:intercom-dialog-raised])}
-   "contact us"])
-
-(defn flashes
-  "Displays common error messages (poorly named since flashes has another use in the app)."
-  [error-message owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [controls-ch (om/get-shared owner [:comms :controls])
-            ;; use error messages that have html without passing html around
-            display-message (condp = error-message
-                              :logged-out [:span "You've been logged out, " [:a {:href (gh-utils/auth-url)} "log back in"] " to continue."]
-                              error-message)]
-        (html
-         (if-not error-message
-           [:span]
-
-           [:div.flash-error-wrapper.row-fluid
-            [:div.offset1.span10
-             [:div.alert.alert-block.alert-danger
-              [:a.close {:on-click #(put! controls-ch [:clear-error-message-clicked])} "×"]
-              "Error: " display-message
-              " If we can help, " (contact-us-inner controls-ch) "."]]]))))))
-
-(defn normalize-html
-  "Creates a valid html string given a (possibly) invalid html string."
-  [html-string]
-  (let [dom-helper (goog.dom.DomHelper.)]
-    (->> html-string
-         (.htmlToDocumentFragment dom-helper)
-         (.getOuterHtml dom-helper))))
-
-(defn messages [messages]
-  [:div.row-fluid
-   (when (pos? (count messages))
-     (let [dom-helper (goog.dom.DomHelper.)]
-       [:div#build-messages.offset1.span10
-        (map (fn [message]
-               [:div.alert.alert-info
-                [:strong "Warning: "]
-                [:span {:dangerouslySetInnerHTML #js {"__html" (normalize-html (:message message))}}]])
-             messages)]))])
 
 (def icon-paths {
   :stroke-precursor "M35.7,45.3V95 M60.5,84.4C82,78.6,94.8,56.5,89,34.9C83.2,13.4,61.1,0.6,39.5,6.4S5.2,34.3,11,55.9"
@@ -224,44 +178,3 @@
                       :target "_blank"}
    [:svg {:width "114" :height "36"}
     [:path {:d "M39.2,13c0,1.1-0.8,2.1-2,2.1c-1.3,0-2-0.9-2-2.1c0-1.2,0.8-2.1,2-2.1C38.4,10.9,39.2,11.7,39.2,13z M72.5,15.4c1.2,0,2-0.9,2-2.2c0-1.2-0.8-2.2-2-2.2c-1.2,0-2,0.9-2,2.2C70.6,14.5,71.3,15.4,72.5,15.4z M76.1,24h2.2l-1.1-2.9 L76.1,24z M51.7,10.8c-1,0-1.7,0.7-1.8,1.6h3.5C53.4,11.5,52.7,10.8,51.7,10.8z M63.5,24h2.2l-1.1-2.9L63.5,24z M80.3,14.5 c0-0.5-0.3-0.8-0.9-0.8h-1.7v1.7h1.7C80,15.3,80.3,15,80.3,14.5z M30.1,10.8c-1.2,0-1.9,1-1.9,2.2c0,1.2,0.8,2.2,1.9,2.2 c1.2,0,1.9-0.9,1.9-2.2C32.1,11.7,31.3,10.8,30.1,10.8z M114,0v36H0V0H114z M84.7,16.2h3.7v-0.9h-2.6v-5.1h-1.1V16.2z M82.5,16.2 h1.1v-6h-1.1V16.2z M76.6,16.2h3c1.1,0,1.7-0.7,1.7-1.6c0-0.7-0.5-1.4-1.2-1.5c0.6-0.1,1-0.6,1-1.4c0-0.8-0.6-1.5-1.7-1.5h-3V16.2z M69.5,13.2c0,1.8,1.3,3.1,3.1,3.1c1.8,0,3.1-1.3,3.1-3.1c0-1.8-1.3-3.1-3.1-3.1C70.7,10.1,69.5,11.5,69.5,13.2z M62.2,16.2h1.1 v-4.6l1.8,4.6h0.5l1.8-4.6v4.6h1.1v-6H67l-1.6,4.1l-1.6-4.1h-1.5V16.2z M10.6,23.8c0-1.2-1-2.2-2.2-2.2s-2.2,1-2.2,2.2 c0,1.2,1,2.2,2.2,2.2S10.6,25.1,10.6,23.8z M13.7,10.9c1.1,0,1.5,0.8,1.5,1.8v2.9c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7v-3 c0-1.7-0.8-2.9-2.6-2.9c-1,0-1.8,0.4-2.4,1.3c-0.4-0.8-1.2-1.3-2.2-1.3c-0.9,0-1.6,0.4-2,1.2v-0.5c0-0.4-0.2-0.7-0.7-0.7 C6.3,9.8,6,10.1,6,10.5v5.1c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7v-2.9c0-1,0.6-1.8,1.7-1.8c1.1,0,1.6,0.8,1.6,1.8v2.9 c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7v-2.9C12,11.8,12.6,10.9,13.7,10.9z M17.9,23.9c0-0.9-0.7-1.6-1.6-1.6 c-0.9,0-1.6,0.7-1.6,1.6c0,0.9,0.7,1.6,1.6,1.6C17.2,25.4,17.9,24.7,17.9,23.9z M19.2,10.4c0-0.4-0.3-0.7-0.7-0.7 c-0.4,0-0.7,0.3-0.7,0.7v5.1c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7V10.4z M19.3,8c0-0.4-0.4-0.8-0.8-0.8 c-0.4,0-0.8,0.4-0.8,0.8c0,0.4,0.4,0.8,0.8,0.8C18.9,8.8,19.3,8.4,19.3,8z M23.6,23.9c0-0.4-0.3-0.7-0.7-0.7s-0.7,0.3-0.7,0.7 c0,0.4,0.3,0.7,0.7,0.7S23.6,24.3,23.6,23.9z M25.8,15.7c0-0.2-0.1-0.3-0.2-0.4L23.7,13l1.9-2.3c0.1-0.1,0.2-0.3,0.2-0.4 c0-0.3-0.2-0.6-0.6-0.6c-0.2,0-0.3,0.1-0.4,0.2L23,12.1L21.3,10c-0.1-0.1-0.3-0.2-0.4-0.2c-0.4,0-0.6,0.2-0.6,0.6 c0,0.1,0,0.3,0.2,0.4l1.9,2.3l-1.9,2.3c-0.1,0.1-0.2,0.2-0.2,0.4c0,0.3,0.3,0.6,0.6,0.6c0.2,0,0.4-0.1,0.5-0.2l1.7-2.1l1.7,2.1 c0.1,0.1,0.3,0.2,0.5,0.2C25.5,16.3,25.8,16,25.8,15.7z M33.4,13c0-1.9-1.4-3.3-3-3.3c-1,0-1.8,0.5-2.3,1.2v-0.5 c0-0.4-0.2-0.7-0.7-0.7s-0.6,0.3-0.6,0.7v7.8c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7v-3.2c0.5,0.7,1.3,1.2,2.2,1.2 C32.1,16.3,33.4,15,33.4,13z M40.6,13c0-1.9-1.2-3.3-3.3-3.3c-2,0-3.3,1.5-3.3,3.3c0,1.8,1.2,3.3,3.2,3.3c0.9,0,1.7-0.4,2.1-1.1v0.3 c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7h0V13z M47.7,12.7c0-1.7-1.3-3-3-3c-1.7,0-3,1.3-3,3v2.9c0,0.4,0.3,0.7,0.7,0.7 c0.4,0,0.7-0.3,0.7-0.7v-3c0-0.9,0.7-1.6,1.7-1.6c1,0,1.7,0.7,1.7,1.6v3c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7V12.7z M54.7,13c0-1.8-1.2-3.3-3-3.3c-1.9,0-3.2,1.4-3.2,3.3c0,1.8,1.1,3.3,3.3,3.3c1,0,2-0.4,2.6-1.1c0.1-0.1,0.2-0.2,0.2-0.4 c0-0.3-0.3-0.6-0.6-0.6c-0.2,0-0.3,0.1-0.4,0.2c-0.5,0.4-0.9,0.7-1.7,0.7c-1.2,0-1.9-0.8-1.9-1.7h4.3C54.6,13.5,54.7,13.3,54.7,13z M57,7.1c0-0.4-0.3-0.7-0.7-0.7c-0.4,0-0.7,0.3-0.7,0.7v8.5c0,0.4,0.3,0.7,0.7,0.7c0.4,0,0.7-0.3,0.7-0.7V7.1z M67.6,26.1l-2.4-6H64 l-2.4,6h1.2l0.4-1.2H66l0.4,1.2H67.6z M73.5,20.1h-1.1v4.2l-3.1-4.2h-1.1v6h1.1v-4.3l3.1,4.3h1V20.1z M80.2,26.1l-2.4-6h-1.3l-2.4,6 h1.2l0.4-1.2h2.8l0.4,1.2H80.2z M84.4,25.1h-2.6v-5.1h-1.1v6h3.7V25.1z M89.3,20.1h-1.2l-1.6,2.6l-1.6-2.6h-1.2l2.3,3.5v2.5H87v-2.5 L89.3,20.1z M89.3,16.2h4.1v-0.9h-3.1v-1.7h3v-0.9h-3v-1.5h3.1v-0.9h-4.1V16.2z M94.3,20.1h-4.7V21h1.8v5.1h1.1V21h1.8V20.1z M96.2,20.1h-1.1v6h1.1V20.1z M102.8,24.8l-0.9-0.5c-0.3,0.5-0.9,0.9-1.5,0.9c-1.2,0-2.1-0.9-2.1-2.2c0-1.3,0.9-2.2,2.1-2.2 c0.6,0,1.2,0.4,1.5,0.9l0.9-0.5c-0.4-0.7-1.2-1.3-2.4-1.3c-1.8,0-3.2,1.3-3.2,3.1c0,1.8,1.4,3.1,3.2,3.1 C101.6,26.2,102.3,25.5,102.8,24.8z M108,24.3c0-2.2-3.5-1.5-3.5-2.7c0-0.4,0.4-0.7,1-0.7c0.6,0,1.3,0.2,1.7,0.7l0.6-0.8 c-0.5-0.5-1.3-0.8-2.2-0.8c-1.3,0-2.2,0.8-2.2,1.8c0,2.2,3.5,1.4,3.5,2.7c0,0.4-0.3,0.8-1.2,0.8c-0.8,0-1.5-0.4-1.9-0.8l-0.6,0.8 c0.5,0.6,1.3,1,2.4,1C107.3,26.2,108,25.3,108,24.3z M80.2,11.9c0-0.4-0.3-0.8-0.8-0.8h-1.7v1.5h1.7C79.9,12.7,80.2,12.4,80.2,11.9z"}]]])
-
-(defn updating-duration
-  "Takes a :start time string and :stop time string. Updates the component every second
-   if the stop-time is nil.
-   By default, uses datetime/as-duration, but can also take a custom :formatter
-   function in opts."
-  [{:keys [start stop]} owner opts]
-  (reify
-    om/IDisplayName (display-name [_] "Updating Duration")
-    om/IInitState
-    (init-state [_]
-      {:watcher-uuid (utils/uuid)
-       :now (datetime/server-now)
-       :has-watcher? false})
-    om/IDidMount
-    (did-mount [_]
-      (when-not stop
-        (let [timer-atom (om/get-shared owner [:timer-atom])
-              uuid (om/get-state owner [:watcher-uuid])]
-          (add-watch timer-atom uuid (fn [_k _r _p t]
-                                       (om/set-state! owner [:now] t)))
-          (om/set-state! owner [:has-watcher?] true))))
-    om/IWillUnmount
-    (will-unmount [_]
-      (when (om/get-state owner [:has-watcher?])
-        (remove-watch (om/get-shared owner [:timer-atom])
-                      (om/get-state owner [:watcher-uuid]))))
-
-    om/IDidUpdate
-    (did-update [_ _ _]
-      (when (and stop (om/get-state owner [:has-watcher?]))
-        (remove-watch (om/get-shared owner [:timer-atom])
-                      (om/get-state owner [:watcher-uuid]))))
-    om/IRenderState
-    (render-state [_ {:keys [now]}]
-      (let [end-ms (if stop
-                     (.getTime (js/Date. stop))
-                     now)
-            formatter (get opts :formatter datetime/as-duration)
-            duration-ms (- end-ms (.getTime (js/Date. start)))]
-        (dom/span nil (formatter duration-ms))))))

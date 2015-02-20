@@ -7,7 +7,6 @@
             [frontend.state :as state]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
-            [frontend.utils.vcs-url :as vcs-url]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
             [goog.string :as gstring]
