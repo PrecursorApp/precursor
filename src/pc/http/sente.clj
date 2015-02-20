@@ -465,7 +465,7 @@
 (defonce stats (atom []))
 
 (defmethod ws-handler :frontend/stats [{:keys [client-id ?data ?reply-fn] :as req}]
-  (swap! stats conj-limit 10 {:client-id client-id :stats (:stats ?data) :time (time/now)}))
+  (swap! stats conj-limit 100 {:client-id client-id :stats (:stats ?data) :time (time/now)}))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log
