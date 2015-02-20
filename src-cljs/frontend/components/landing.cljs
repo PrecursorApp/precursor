@@ -216,10 +216,12 @@
       [:div.art-interactive-target
        [:div.art-interactive-placeholder "|"]
        [:div.art-interactive-more "..."]]
-      [:div.property-dropdown-target.wrong "blog page"]
       [:div.property-dropdown-target.right "home page"]
+      [:div.property-dropdown-target.wrong "blog page"]
       [:div.property-dropdown-target.wrong "about page"]
-      [:div.property-dropdown-target.wrong "contact page"]]]]])
+      [:div.property-dropdown-target.wrong "contact page"]
+      [:div.property-dropdown-target.wrong "jobs page"]
+      [:div.property-dropdown-target.wrong "team page"]]]]])
 
 (def artwork-team
   [:div.artwork
@@ -291,7 +293,7 @@
              [:div.featurette-media artwork-mobile]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "2") "active") :ref "2"}
-             [:div.featurette-story
+             [:div.featurette-story.interactive-story
               [:h2 "Interact with your ideas way before development."]
               [:p "Make working demos in just minutes using our simple target linking."]
               [:p

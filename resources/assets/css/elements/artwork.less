@@ -292,6 +292,11 @@
 
 
 .art-interactive {
+
+  width: 100%;
+  height: 0;
+  padding-bottom: @art_mobile_height;
+
   .user-select(none);
   position: relative;
   .art-interactive-body {
@@ -340,7 +345,8 @@
   padding: 1em;
   background: @dye_outer;
   border: 1px solid @art_interactive_color;
-  box-shadow: -3px 0 5px white;
+  box-shadow+:  0  -2px @white;
+  box-shadow+: -2px 0   @white;
   cursor: default;
   &:before,
   &:after {
@@ -362,6 +368,7 @@
   }
 }
 .art-interactive-target {
+  .flex(0 0 3em);
   .flexy();
   border-left: 1px solid @art_interactive_color;
   border-right: 1px solid @art_interactive_color;
@@ -386,13 +393,14 @@
 }
 .art-interactive-button {
   .flexy(center; center);
-  color: fade(@art_interactive_color, 34);
+  color: @gray_lightest;
   position: absolute;
-  top:    (@art_interactive_button  /   -2) - 1;
-  left:   (@art_interactive_button  * -1.5) - 1;
+  top: -2.25rem;
+  left: -1rem;
   width:  (@art_interactive_button) * 3;
   height: (@art_interactive_button);
-  border: 1px solid fade(@art_interactive_color, 34);
+  border: 1px solid @gray_lightest;
+  cursor: default;
 }
 .art-interactive-text {
   font-size: 20px;
@@ -400,10 +408,10 @@
 .art-interactive-cursor {
   font-size: 1.5em;
   position: absolute;
-  top: 55%;
-  left: 50%;
+  left: -.5rem;
+  top: 1rem;
   .stroke-cursor {
-    fill: @dye_outer;
-    stroke: fade(@art_interactive_color, 34);
+    fill: @gray_lightest;
+    stroke: @dye_outer;
   }
 }
