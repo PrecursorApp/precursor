@@ -127,11 +127,11 @@
   box-shadow+:  1px  0   @color;
   box-shadow+: -1px  0   @color;
 }
-.inline(@color: @gray_lighter) {
-  box-shadow+:  0    1px @color inset;
-  box-shadow+:  0   -1px @color inset;
-  box-shadow+:  1px  0   @color inset;
-  box-shadow+: -1px  0   @color inset;
+.inline(@color: @gray_lighter; @width: 1px) {
+  box-shadow+:  0    @width @color inset;
+  box-shadow+:  0   -@width @color inset;
+  box-shadow+:  @width  0   @color inset;
+  box-shadow+: -@width  0   @color inset;
 }
 .filter(...) {
   .for(@arguments); .-each(@argument) {

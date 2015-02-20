@@ -203,6 +203,24 @@
     [:div.art-mobile-foot
      [:div.art-mobile-button]]]])
 
+(def artwork-interactive
+  [:div.artwork
+   [:div.art-interactive
+    [:div.art-interactive-button
+     [:div.art-interactive-text "HOME"]
+     [:div.art-interactive-cursor (common/icon :cursor)]]
+    [:div.art-interactive-head
+     [:div.art-interactive-name {:data-before "link" :data-after "with"} "home button"]]
+    [:div.art-interactive-body
+     [:div.property-dropdown-targets
+      [:div.art-interactive-target
+       [:div.art-interactive-placeholder "|"]
+       [:div.art-interactive-more "..."]]
+      [:div.property-dropdown-target.wrong "blog page"]
+      [:div.property-dropdown-target.right "home page"]
+      [:div.property-dropdown-target.wrong "about page"]
+      [:div.property-dropdown-target.wrong "contact page"]]]]])
+
 (def artwork-team
   [:div.artwork
    [:div.art-team
@@ -281,7 +299,7 @@
                 {:role "button"}
                 "Read the tutorial"]
                "."]]
-             [:div.featurette-media.reverse artwork-mobile]]
+             [:div.featurette-media.reverse artwork-interactive]]
             [:div.featurette.content
              {:class (when (contains? past-center-featurettes "3") "active") :ref "3"}
              [:div.featurette-story
