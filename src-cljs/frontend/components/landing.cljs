@@ -202,19 +202,19 @@
     [:div.art-mobile-foot
      [:div.art-mobile-button]]]])
 
-(def artwork-interactive
+(def artwork-interact
   [:div.art-frame
-   [:div.art-interactive.artwork
-    [:div.art-interactive-button
-     [:div.art-interactive-text "HOME"]
-     [:div.art-interactive-cursor (common/icon :cursor)]]
-    [:div.art-interactive-head
-     [:div.art-interactive-name {:data-placeholder "link"} "home button"]]
-    [:div.art-interactive-body
+   [:div.art-interact.artwork
+    [:div.art-interact-button
+     [:div.art-interact-text "HOME"]
+     [:div.art-interact-cursor (common/icon :cursor)]]
+    [:div.art-interact-head
+     [:div.art-interact-name {:data-placeholder "link"} "home button"]]
+    [:div.art-interact-body
      [:div.property-dropdown-targets
-      [:div.art-interactive-target {:data-placeholder "with"}
-       [:div.art-interactive-ibeam "|"]
-       [:div.art-interactive-more "..."]]
+      [:div.art-interact-target {:data-placeholder "with"}
+       [:div.art-interact-ibeam "|"]
+       [:div.art-interact-more "..."]]
       [:div.property-dropdown-target.right "home page"]
       [:div.property-dropdown-target.wrong "blog page"]
       [:div.property-dropdown-target.wrong "about page"]
@@ -298,7 +298,7 @@
            [:div.featurette-media artwork-mobile]]
           [:div.featurette.content
            {:class (when (contains? past-center-featurettes "2") "art-visible") :ref "2"}
-           [:div.featurette-story.interactive-story
+           [:div.featurette-story.interact-story
             [:h2 "Interact with your ideas way before development."]
             [:p "Make working demos in just minutes using our simple target linking."]
             [:p
@@ -308,7 +308,7 @@
                :role "button"}
               "Read the tutorial"]
              "."]]
-           [:div.featurette-media.reverse artwork-interactive]]
+           [:div.featurette-media.reverse artwork-interact]]
           [:div.featurette.content
            {:class (when (contains? past-center-featurettes "3") "art-visible") :ref "3"}
            [:div.featurette-story

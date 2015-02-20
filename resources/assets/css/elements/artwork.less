@@ -291,20 +291,20 @@
          ((extract(@art_a8, 1) * 1.0) + extract(@art_a8, 2));
 
 
-.art-interactive {
-  .art-interactive-body {
+.art-interact {
+  .art-interact-body {
     .property-dropdown-targets {
       .flexy();
       overflow-y: visible;
       background: @dye_outer;
       border: none;
-      box-shadow+:  0  -1px @art_interactive_color inset;
-      box-shadow+: -1px 0   @art_interactive_color inset;
-      box-shadow+:  1px 0   @art_interactive_color inset;
+      box-shadow+:  0  -1px @art_interact_color inset;
+      box-shadow+: -1px 0   @art_interact_color inset;
+      box-shadow+:  1px 0   @art_interact_color inset;
     }
     .property-dropdown-target {
       .animation(in-fade-bottom @art_a8 @bezier_fadein backwards);
-      color: @art_interactive_color;
+      color: @art_interact_color;
       position: relative;
       cursor: default;
       overflow: visible;
@@ -350,19 +350,19 @@
     }
   }
 }
-.art-interactive-head {
+.art-interact-head {
   .animation(in-zoom @art_a4 @bezier_deform backwards);
 }
-.art-interactive-body {
+.art-interact-body {
   .animation(in-fade-bottom @art_a5 @bezier_deform backwards);
 }
-.art-interactive-name,
-.art-interactive-target {
+.art-interact-name,
+.art-interact-target {
   &:before {
     content: attr(data-placeholder);
     font-size: .75rem;
     line-height: 1em;
-    color: @art_interactive_color;
+    color: @art_interact_color;
     position: absolute;
     top: -.5em;
     left: 1em;
@@ -370,13 +370,13 @@
     background: @dye_outer;
   }
 }
-.art-interactive-name {
-  color: @art_interactive_color;
+.art-interact-name {
+  color: @art_interact_color;
   line-height: 1em;
   position: relative;
   padding: 1em;
   background: @dye_outer;
-  border: 1px solid @art_interactive_color;
+  border: 1px solid @art_interact_color;
   box-shadow+:  0  -2px @white;
   box-shadow+: -2px 0   @white;
   cursor: default;
@@ -384,19 +384,19 @@
     .animation(in-fade-bottom @art_a6 @bezier_fadein backwards);
   }
 }
-.art-interactive-target {
+.art-interact-target {
   .flex(0 0 3em);
   .flexy();
   position: relative;
-  border-left: 1px solid @art_interactive_color;
-  border-right: 1px solid @art_interactive_color;
+  border-left: 1px solid @art_interact_color;
+  border-right: 1px solid @art_interact_color;
   &:before {
     .animation(in-fade-bottom @art_a7 @bezier_fadein backwards);
   }
 }
-.art-interactive-ibeam {
+.art-interact-ibeam {
   .animation(in-fade-bottom @art_a8 @bezier_fadein backwards);
-  color: @art_interactive_color;
+  color: @art_interact_color;
   padding: 1rem;
   margin-right: auto;
   cursor: default;
@@ -405,25 +405,25 @@
   font-weight: 200;
   padding-left: .75rem;
 }
-.art-interactive-more {
+.art-interact-more {
   .animation(in-fade-bottom @art_a8 @bezier_fadein backwards);
   font-size: 1.5em;
-  color: @art_interactive_color;
+  color: @art_interact_color;
   text-align: center;
   width: @tile * .75;
   height: @tile * .75;
   cursor: default;
 }
-.art-interactive-button {
+.art-interact-button {
   .animation(in-zoom @art_a1 @bezier_deform backwards);
   .flexy(center; center);
-  color: @art_interactive_color;
+  color: @art_interact_color;
   position: absolute;
   top: -2.25rem;
   left: -1rem;
-  width:  (@art_interactive_button) * 3;
-  height: (@art_interactive_button);
-  border: 1px solid @art_interactive_color;
+  width:  (@art_interact_button) * 3;
+  height: (@art_interact_button);
+  border: 1px solid @art_interact_color;
   cursor: default;
   &:after {
     .animation(in-fade @art_a4 @bezier_deform backwards);
@@ -436,18 +436,18 @@
     background: fade(@white, 75);
   }
 }
-.art-interactive-text {
+.art-interact-text {
   .animation(in-zoom @art_a2 @bezier_deform backwards);
   font-size: 20px;
 }
-.art-interactive-cursor {
+.art-interact-cursor {
   .animation(in-fade-right @art_a3 @bezier_deform backwards);
   font-size: 1.5em;
   position: absolute;
   left: -.5rem;
   top: 1rem;
   .stroke-cursor {
-    fill: @art_interactive_color;
+    fill: @art_interact_color;
     stroke: @dye_outer;
   }
 }
