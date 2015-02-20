@@ -323,6 +323,23 @@
           cursor: copy;
         }
       }
+      &:last-child {
+        max-height: 2rem;
+        padding-bottom: 0;
+        overflow: hidden;
+        &:before {
+          .gradient(to bottom, transparent 66%, @dye_outer 100%);
+          background-size: 99% 100%;
+          background-repeat: no-repeat;
+          background-position: 1px -1px;
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+      }
       &.right {
         &:before {
           .animation(in-fade-bottom @run_slower @bezier_deform);
