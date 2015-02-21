@@ -171,15 +171,6 @@
   .mq_640({
     min-height: 100vh;
   });
-  h1 {
-    line-height: 1em; // VETO
-    margin-bottom: -.5rem; // better aligns h1 (big font size wastes space)
-    margin-left: -.0625em; // better aligns h1 (big font size wastes space)
-    .mq_640({
-      font-size: 3em; // VETO
-      line-height: 1.125em; // VETO
-    });
-  }
   p {
     margin: @padding_outer 0;
   }
@@ -192,6 +183,27 @@
   .flex(1);
   .flexy(column);
   .transform-origin(0 0);
+}
+.philosphy-headline {
+  line-height: 1em; // VETO
+  margin-bottom: -.5rem; // better aligns h1 (big font size wastes space)
+  margin-left: -.0625em; // better aligns h1 (big font size wastes space)
+  overflow: hidden;
+  text-overflow: ellipsis;
+  .mq_640({
+    font-size: 3em; // VETO
+    line-height: 1.125em; // VETO
+  });
+  &:first-letter {
+    .mq_640({
+      text-transform: capitalize;
+    });
+  }
+}
+.philosphy-excess {
+  .mq_640({
+    display: none;
+  });
 }
 .our-proof {
   height: 3px;
@@ -208,6 +220,22 @@
   a {
     position: relative;
     border-bottom: 1px dotted @gray_light;
+    .mq_640({
+      .flexy(center; center);
+      height: @tile;
+      border: 1px solid @gray_light;
+    });
+    &:hover {
+      .mq_640({
+        background: @gray_light;
+        color: @black;
+      });
+      &:after {
+        .mq_640({
+          display: none;
+        });
+      }
+    }
     &:not(:hover) {
       &:after {
         width: 0;
@@ -235,6 +263,16 @@
   .flexy(wrap);
   .align-items(center);
   padding: 10% 0;
+  transition: padding @run_slower;
+  .mq_1280({
+    padding: 15% 0;
+  });
+  .mq_960({
+    padding: 20% 0;
+  });
+  .mq_640({
+    padding: 25% 0;
+  });
   &:not(.art-visible) {
     .artwork {
       display: none;

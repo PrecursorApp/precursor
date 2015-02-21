@@ -180,8 +180,14 @@
             [:div.our-philosphy-wrap
              [:div.our-philosphy.content
               ; [:h1 "Collaborating should be simple."]
-              [:h1 "Sharing ideas should be simple."]
-              [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
+              ; [:h1 "Sharing ideas should be simple."]
+              [:h1.philosphy-headline
+               [:span.philosphy-excess "We believe "]
+               [:span.philosphy-needed "sharing ideas "]
+               [:span.philosphy-excess "with your team "]
+               [:span.philosphy-needed "should be simple."]]
+              ; [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
+              [:p "No nonsense—just what you need, when you need it."]
               [:div.calls-to-action
                (om/build make-button (select-keys app [:document/id]))]]]]
            [:div.our-proof
@@ -339,7 +345,7 @@
             [:div.our-claim
              [:div.our-philosphy-wrap
               [:div.our-philosphy.content
-               [:h1 "It's purely productive prototyping."]
+               [:h1.philosphy-headline "It's purely productive prototyping."]
                ; [:h1 "What you need when you need it."]
                [:p "Precursor is the easiest way to share ideas with your teammates, fast."]
                [:div.calls-to-action
