@@ -292,16 +292,17 @@
   .access-card {
     .animation_cascade(7);
     .animation(in-zoom (@run_slower * 2) @bezier_deform);
+    color: @gray_light; // VETO
     height: @tile * 1.5;
     min-height: @tile;
     margin: 0; // VETO
     padding: @menu_padding 0;
-    &.requesting {
+    &.selected {
       .animation(requesting-access @run_slower (@run_slower * 2) @bezier_deform backwards);
       overflow: hidden;
-    }
-    &:not(.requesting) {
-      color: @gray_light; // VETO
+      .access-status {
+        color: @blue;
+      }
     }
   }
 }

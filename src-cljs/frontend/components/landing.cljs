@@ -269,7 +269,7 @@
        [:span "ballard@prcr.sr"]
        [:span.access-status "Was granted access yesterday."]]]
 
-     [:div.access-card.requesting
+     [:div.access-card.selected
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
