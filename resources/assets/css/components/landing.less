@@ -2,6 +2,7 @@
 .the-what {
   .flexy(column);
   min-height: 100vh;
+  overflow: hidden;
   p {
     .mq_640({
       height: 0;
@@ -116,6 +117,7 @@
 .make-button {
   .flexy();
   .justify-content(center);
+  .user-select(none);
   line-height: 1em;
   min-width: @tile * 4;
   overflow: hidden;
@@ -173,6 +175,10 @@
     line-height: 1em; // VETO
     margin-bottom: -.5rem; // better aligns h1 (big font size wastes space)
     margin-left: -.0625em; // better aligns h1 (big font size wastes space)
+    .mq_640({
+      font-size: 3em; // VETO
+      line-height: 1.125em; // VETO
+    });
   }
   p {
     margin: @padding_outer 0;
@@ -193,6 +199,7 @@
 }
 .the-how {
   background: @dye_outer;
+  overflow: hidden;
   p {
     &:last-child {
       margin: 0;
