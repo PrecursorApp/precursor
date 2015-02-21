@@ -761,8 +761,8 @@
                             (.preventDefault e)
                             (.stopPropagation e))}
           [:div.canvas-background]
+          (when (get-in app [:menu :open?])
+            (om/build radial-menu app))
           (om/build svg-canvas app)
           (when (and (not right-click-learned?) (:mouse app))
-            (om/build radial-hint app))
-          (when (get-in app [:menu :open?])
-            (om/build radial-menu app))])))))
+            (om/build radial-hint app))])))))
