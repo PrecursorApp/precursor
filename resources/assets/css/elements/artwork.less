@@ -279,16 +279,6 @@
 
 
 .art-team {
-  overflow: hidden;
-  &:after {
-    .gradient(to bottom, @white, fade(@white, 0), @white);
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
   .access-card {
     .animation_cascade(7);
     .animation(in-zoom (@run_slower * 2) @bezier_deform);
@@ -299,9 +289,11 @@
     padding: @menu_padding 0;
     &.selected {
       .animation(requesting-access @run_slower (@run_slower * 2) @bezier_deform backwards);
-      overflow: hidden;
+      .access-name {
+        color: @gray; // VETO
+      }
       .access-status {
-        color: @blue;
+        color: @blue; // VETO
       }
     }
   }
@@ -314,8 +306,18 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 150%;
-  margin-top: -34%;
+  height: 125%;
+  margin-top: -12.5%;
+  overflow: hidden;
+  &:after {
+    .gradient(to bottom, @white 10%, fade(@white, 0), @white 90%);
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 

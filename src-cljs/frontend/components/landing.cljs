@@ -252,13 +252,6 @@
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
-       [:span "soren@prcr.sr"]
-       [:span.access-status "Was granted access yesterday."]]]
-
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
        [:span "niobe@prcr.sr"]
        [:span.access-status "Was granted access yesterday."]]]
 
@@ -273,7 +266,7 @@
       [:div.access-avatar
        [:div.access-avatar-img]]
       [:div.access-details
-       [:span "anderson@prcrsr.com"]
+       [:span.access-name "anderson@prcrsr.com"]
        [:span.access-status "Requested access yesterday."]]]
 
      [:div.access-card
@@ -288,13 +281,6 @@
        [:div.access-avatar-img]]
       [:div.access-details
        [:span "roland@prcr.sr"]
-       [:span.access-status "Was granted access today."]]]
-
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span "morpheus@prcrsr.com"]
        [:span.access-status "Was granted access today."]]]]]])
 
 (defn the-how [app owner]
@@ -319,7 +305,7 @@
            [:div.featurette-media artwork-mobile]]
           [:div.featurette.content
            {:class (when (contains? past-center-featurettes "2") "art-visible") :ref "2"}
-           [:div.featurette-story.interact-story
+           [:div.featurette-story
             [:h2 "Interact with your ideas way before development."]
             [:p "Make working demos in just minutes using our simple target linking."]
             [:p
