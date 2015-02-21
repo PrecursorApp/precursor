@@ -100,41 +100,41 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             nav-ch (om/get-shared owner [:comms :nav])
-            word-list (shuffle [" precursor"
-                                " prototype"
-                                " wireframe"
-                                " user flow"
-                                " diagram"
-                                " brainstorm"
-                                " sketch"
-                                " doodle"
-                                " drawing"
-                                " mockup"
-                                " masterpiece"
-                                " document"
-                                " flowchart"
-                                " design"
-                                " notebook"
-                                " teammate happy"
-                                " big square"
-                                " presentation"
-                                " giraffe"
-                                " layout"
-                                " project"
-                                " concept"
-                                " product idea"
-                                " feature detail"
-                                " demonstration"
-                                " walk-through"
-                                " new idea"
-                                " user-experience"
-                                "n experience"
-                                "n interactive demo"
-                                "n interface"
-                                "n interesting thing"
-                                "n invention"
-                                "n illustration"
-                                "n awesome idea"
+            word-list (shuffle [
+                                "demos"
+                                "doodles"
+                                "mockups"
+                                "designs"
+                                "layouts"
+                                "details"
+                                "diagrams"
+                                "sketches"
+                                "drawings"
+                                "giraffes"
+                                "projects"
+                                "concepts"
+                                "products"
+                                "new ideas"
+                                "documents"
+                                "notebooks"
+                                "precursors"
+                                "prototypes"
+                                "wireframes"
+                                "user flows"
+                                "flowcharts"
+                                "interfaces"
+                                "inventions"
+                                "some stuff"
+                                "experiences"
+                                "brainstorms"
+                                "big squares"
+                                "masterpieces"
+                                "presentations"
+                                "illustrations"
+                                "walk-throughs"
+                                "awesome ideas"
+                                "teammates happy"
+                                "your team happy"
                                 ])
             middle-index (int (/ (count word-list) 2))
             random-word (nth word-list (- (count word-list) 4))]
@@ -150,8 +150,8 @@
                               (cast! :landing-closed)
                               (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
              :on-mouse-enter #(om/refresh! owner)}
-            [:div.make-prepend "Make a"]
-            ;; [:div.make-prepend "Or make a"] ;; for bottom cta
+            [:div.make-prepend {:data-before "Or "}
+             "Make "]
             [:div.make-something
              [:div.something-default
               random-word]
@@ -159,10 +159,8 @@
               {:data-before (str/join " " (drop-last 4 word-list))
                :data-after  (str/join " " (take-last 3 word-list))}
               random-word]]
-            [:div.make-append "right now"]
-            "."
-            ;; [:div.make-append "first."] ;; for bottom cta
-            ]])))))
+            [:div.make-append {:data-before " first"}
+             "."]]])))))
 
 (defn the-why [app owner]
   (reify

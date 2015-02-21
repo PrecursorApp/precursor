@@ -77,11 +77,22 @@
       color: @white;
     }
   }
+  .make-prepend,
+  .make-append {
+    text-transform: lowercase;
+    &:before {
+      content: attr(data-before);
+      text-transform: none;
+    }
+  }
   .navigation {
     .shadow_inset(top; @color_inset_black; @color_inset_white);
   }
 }
 .make-button-wrap {
+  .mq_640({
+    width: 100%;
+  });
   &:hover {
     .animation(make-button-wrap @run @run backwards);
     .something-default {
@@ -104,7 +115,9 @@
 }
 .make-button {
   .flexy();
+  .justify-content(center);
   line-height: 1em;
+  min-width: @tile * 4;
   overflow: hidden;
 }
 .make-something {
@@ -143,12 +156,10 @@
     top: 100%;
   }
 }
+.make-prepend,
 .make-append {
-  margin-left: .25em;
   z-index: @zindex_make_append; // so list doesn't overlap appending text
-  .mq_640({
-    display: none;
-  });
+  white-space: pre;
 }
 .our-claim {
   .flex(1);
