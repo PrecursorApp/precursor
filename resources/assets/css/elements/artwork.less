@@ -271,15 +271,15 @@
 }
 
 
-@art_a1: (@run_slow) (@now);
-@art_a2: (@run)        ((extract(@art_a1, 1) * 2.33) + extract(@art_a1, 2));
-@art_a3: (@run_slower) ((extract(@art_a2, 1) * 1.44) + extract(@art_a2, 2));
-@art_a4: (@run_slow)   ((extract(@art_a3, 1) * 0.89) + extract(@art_a3, 2));
-@art_a5: (@run)        ((extract(@art_a4, 1) * 0.55) + extract(@art_a4, 2));
-@art_a6: (@run_fast)   ((extract(@art_a5, 1) * 0.34) + extract(@art_a5, 2));
-@art_a7: (@run_fast)   ((extract(@art_a6, 1) * 0.21) + extract(@art_a6, 2));
-@art_a8: (@run)        ((extract(@art_a7, 1) * 0.13) + extract(@art_a7, 2));
-@art_a9: (@run_slower) ((extract(@art_a8, 1) * 0.08) + extract(@art_a8, 2));
+@art_c1: (@run_slow) (@now);
+@art_c2: (@run)        ((extract(@art_c1, 1) * 2.33) + extract(@art_c1, 2));
+@art_c3: (@run_slower) ((extract(@art_c2, 1) * 1.44) + extract(@art_c2, 2));
+@art_c4: (@run_slow)   ((extract(@art_c3, 1) * 0.89) + extract(@art_c3, 2));
+@art_c5: (@run)        ((extract(@art_c4, 1) * 0.55) + extract(@art_c4, 2));
+@art_c6: (@run_fast)   ((extract(@art_c5, 1) * 0.34) + extract(@art_c5, 2));
+@art_c7: (@run_fast)   ((extract(@art_c6, 1) * 0.21) + extract(@art_c6, 2));
+@art_c8: (@run)        ((extract(@art_c7, 1) * 0.13) + extract(@art_c7, 2));
+@art_c9: (@run_slower) ((extract(@art_c8, 1) * 0.08) + extract(@art_c8, 2));
 
 
 .art-interact {
@@ -294,7 +294,7 @@
       box-shadow+:  1px 0   @art_interact_color inset;
     }
     .property-dropdown-target {
-      .animation(in-fade-bottom @art_a8 @bezier_fadein backwards);
+      .animation(in-fade-bottom @art_c8 @bezier_fadein backwards);
       color: @art_interact_color;
       position: relative;
       cursor: default;
@@ -327,7 +327,7 @@
       }
       &.right {
         &:before {
-          .animation(in-zoom @art_a9 @bezier_bounce backwards);
+          .animation(in-zoom @art_c9 @bezier_bounce backwards);
           .transform-origin(left top);
           content: "";
           position: absolute;
@@ -342,10 +342,10 @@
   }
 }
 .art-interact-head {
-  .animation(in-zoom @art_a4 @bezier_deform backwards);
+  .animation(in-zoom @art_c4 @bezier_deform backwards);
 }
 .art-interact-body {
-  .animation(in-fade-bottom @art_a5 @bezier_deform backwards);
+  .animation(in-fade-bottom @art_c5 @bezier_deform backwards);
 }
 .art-interact-name,
 .art-interact-target {
@@ -372,7 +372,7 @@
   box-shadow+: -2px 0   @white;
   cursor: default;
   &:before {
-    .animation(in-fade-bottom @art_a6 @bezier_fadein backwards);
+    .animation(in-fade-bottom @art_c6 @bezier_fadein backwards);
   }
 }
 .art-interact-target {
@@ -382,11 +382,11 @@
   border-left: 1px solid @art_interact_color;
   border-right: 1px solid @art_interact_color;
   &:before {
-    .animation(in-fade-bottom @art_a7 @bezier_fadein backwards);
+    .animation(in-fade-bottom @art_c7 @bezier_fadein backwards);
   }
 }
 .art-interact-ibeam {
-  .animation(in-fade-bottom @art_a8 @bezier_fadein backwards);
+  .animation(in-fade-bottom @art_c8 @bezier_fadein backwards);
   color: @art_interact_color;
   padding: 1rem;
   margin-right: auto;
@@ -397,7 +397,7 @@
   padding-left: .75rem;
 }
 .art-interact-more {
-  .animation(in-fade-bottom @art_a8 @bezier_fadein backwards);
+  .animation(in-fade-bottom @art_c8 @bezier_fadein backwards);
   font-size: 1.5em;
   color: @art_interact_color;
   text-align: center;
@@ -406,7 +406,7 @@
   cursor: default;
 }
 .art-interact-button {
-  .animation(in-zoom @art_a1 @bezier_deform backwards);
+  .animation(in-zoom @art_c1 @bezier_deform backwards);
   .transform-origin(left top);
   .flexy(center; center);
   color: @art_interact_color;
@@ -418,7 +418,7 @@
   border: 1px solid @art_interact_color;
   cursor: default;
   &:after {
-    .animation(in-fade @art_a4 @bezier_deform backwards);
+    .animation(in-fade @art_c4 @bezier_deform backwards);
     content: "";
     position: absolute;
     top: -5%;
@@ -429,11 +429,11 @@
   }
 }
 .art-interact-text {
-  .animation(in-zoom @art_a2 @bezier_deform backwards);
+  .animation(in-zoom @art_c2 @bezier_deform backwards);
   font-size: 20px;
 }
 .art-interact-cursor {
-  .animation(in-fade-right @art_a3 @bezier_deform backwards);
+  .animation(in-fade-right @art_c3 @bezier_deform backwards);
   font-size: 1.5em;
   position: absolute;
   left: (1 / 3) * -1rem;
