@@ -82,6 +82,11 @@
   padding-left: @padding_outer;
   padding-right: @padding_outer;
 }
+.content-copy {
+  .user-select(auto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .navigation {
   .flexy();
   height: @tile;

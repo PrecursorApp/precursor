@@ -1,3 +1,11 @@
+.landing {
+  .user-select(none);
+  &:active {
+    .make-button {
+      pointer-events: none;
+    }
+  }
+}
 .the-why,
 .the-what {
   .flexy(column);
@@ -20,6 +28,12 @@
     }
     .content {
       max-width: none; // VETO
+    }
+  }
+  .content-copy {
+    &::selection {
+      color: @white;
+      background: fade(@white, 05);
     }
   }
 }
@@ -117,7 +131,6 @@
 .make-button {
   .flexy();
   .justify-content(center);
-  .user-select(none);
   line-height: 1em;
   min-width: @tile * 4;
   overflow: hidden;
@@ -171,9 +184,6 @@
   .mq_640({
     min-height: 100vh;
   });
-  p {
-    margin: @padding_outer 0;
-  }
 }
 .our-philosphy-wrap {
   .flex(1);
@@ -188,6 +198,7 @@
   line-height: 1em; // VETO
   margin-bottom: -.5rem; // better aligns h1 (big font size wastes space)
   margin-left: -.0625em; // better aligns h1 (big font size wastes space)
+  padding: @menu_padding 0;
   overflow: hidden;
   text-overflow: ellipsis;
   .mq_640({
@@ -200,6 +211,9 @@
     });
   }
 }
+.philosphy-subtext {
+  margin-bottom: @menu_padding;
+}
 .philosphy-excess {
   .mq_640({
     display: none;
@@ -210,18 +224,12 @@
   background: @dye_outer;
 }
 .the-how {
-  .user-select(none);
   background: @dye_outer;
   overflow: hidden;
-  h2 {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
 }
 .feature {
   .flexy(wrap);
   .align-items(center);
-  .user-select(auto);
   padding: 10% 0;
   transition: padding @run_slower;
   .mq_1280({
@@ -257,6 +265,7 @@
   });
 }
 .feature-link {
+  display: inline-block;
   position: relative;
   border-bottom: 1px dotted @gray_light;
   white-space: nowrap;
@@ -288,8 +297,8 @@
   }
   &:active {
     &:after {
-      left: 25%;
-      width: 50%;
+      left: -5%;
+      width: 110%;
       transition: @now;
     }
   }
@@ -305,7 +314,6 @@
   }
 }
 .feature-media {
-  .user-select(none);
   .order(3);
   width: 34%;
   padding: @menu_padding;
