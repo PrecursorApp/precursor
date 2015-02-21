@@ -1,136 +1,3 @@
-// artwork screenshot work in progress
-// .feature {
-//   svg {
-//     max-width: 100%;
-//     overflow: visible;
-//   }
-//   .svg-actions {
-//     fill: #fff;
-//   }
-//   .svg-menu {
-//     stroke-width: 4;
-//     stroke: #ccc;
-//     fill: #ccc;
-//   }
-//   .svg-in-progress {
-//     line,
-//     circle {
-//       fill: none;
-//       stroke-width: 4;
-//       stroke: #bf5bff;
-//     }
-//   }
-//   .svg-cursor {
-//     stroke: #bf5bff;
-//     fill: none;
-//     stroke-width: 4;
-//   }
-//   .svg-border,
-//   .svg-chat,
-//   .svg-shape-layers {
-//     fill: none;
-//     stroke-width: 4;
-//   }
-//   .svg-border,
-//   .svg-chat {
-//     stroke: #ccc;
-//   }
-//   .svg-shape-layers {
-//     // stroke: #888;
-//     stroke: #ccc;
-//   }
-// }
-
-// hold off on svg ones for now, trying html
-// @art_color: @gray_light;
-// @art_black: @gray_dark;
-// @art_white: @white;
-// .art_both(...) {
-//   fill: ;
-//   stroke: ;
-// }
-
-// .art {
-//   path {
-//     fill: none;
-//     stroke-width: 2;
-//   }
-//   .art-fill-color { fill:   @art_color; }
-//   .art-fill-black { fill:   @art_black; }
-//   .art-fill-white { fill:   @art_white; }
-//   .art-line-color { stroke: @art_color; }
-//   .art-line-black { stroke: @art_black; }
-//   .art-line-white { stroke: @art_white; }
-//   .art-both-color {
-//     .art-fill-color();
-//     .art-line-color();
-//   }
-//   .art-both-black {
-//     .art-fill-black();
-//     .art-line-black();
-//   }
-//   .art-both-white {
-//     .art-fill-white();
-//     .art-line-white();
-//   }
-// }
-
-
-
-// hold off on animating for now, getting hairy with responsive stuff
-// .a-ipad,
-// .a-ipad-head,
-// .a-ipad-body,
-// .a-ipad-foot,
-// .a-ipad-camera,
-// .a-ipad-button,
-// .a-screen,
-// .a-doc {
-//   transition: 250ms;
-// }
-// .artwork {
-//   &:hover {
-//     @offset: (@ipad_height - (100% / @ipad_ratio)) / 2;
-//     padding: @offset 0;
-//     .a-ipad {
-//       padding-bottom: (100% / @ipad_ratio);
-//       border-radius: (@ipad_button / @ipad_ratio) ~"/" @ipad_button;
-//     }
-//     .a-ipad-head {
-//       width: @ipad_head_height;
-//       height: 100%;
-//     }
-//     .a-ipad-body {
-//       top: 0;
-//       left: @ipad_head_height;
-//       width: @ipad_body_height;
-//       height: 100%;
-//     }
-//     .a-ipad-foot {
-//       left: auto;
-//       right: 0;
-//       width: @ipad_foot_height;
-//       height: 100%;
-//     }
-//     .a-ipad-camera {
-//       .a_ipad_circle_reverse(@ipad_button / 3);
-//     }
-//     .a-ipad-button {
-//       .a_ipad_circle_reverse(@ipad_button);
-//     }
-//     .a-screen {
-//       width: 100%;
-//       height: 100% - (@ipad_padding_x * 2);
-//       margin: @ipad_padding_x 0;
-//     }
-//     .a-doc {
-//       height: 25% * @ipad_ratio;
-//     }
-//   }
-// }
-
-
-
 .artwork {
   position: absolute;
   top: 0;
@@ -138,10 +5,7 @@
   width: 100%;
   height: 100%;
 }
-
-
-
-@art_a1: (@run) (@now);
+@art_a1: (@run)        (@now);
 @art_a2: (@run_slow)   ((extract(@art_a1, 1) * 2.33) + extract(@art_a1, 2));
 @art_a3: (@run_slower) ((extract(@art_a2, 1) * 0.89) + extract(@art_a2, 2));
 @art_a4: (@run_slow)   ((extract(@art_a3, 1) * 2.33) + extract(@art_a3, 2));
@@ -150,9 +14,6 @@
 @art_a7: (@run_slow)   ((extract(@art_a6, 1) * 0.21) + extract(@art_a6, 2));
 @art_a8: (@run_slower) ((extract(@art_a7, 1) * 0.13) + extract(@art_a7, 2));
 @art_a9: (@run_slower) ((extract(@art_a8, 1) * 0.08) + extract(@art_a8, 2));
-
-
-
 .art-mobile {
   .animation(in-zoom @art_a1 @bezier_deform);
   .transform-origin(left top);
@@ -277,53 +138,7 @@
     .animation(in-zoom @art_a3 @bezier_deform backwards);
   }
 }
-
-
-
-.art-team {
-  .access-card {
-    .animation_cascade(7);
-    .animation(in-zoom (@run_slower * 2) @bezier_deform);
-    color: @gray_light; // VETO
-    height: @tile * 1.5;
-    min-height: @tile;
-    margin: 0; // VETO
-    padding: @menu_padding 0;
-    &.selected {
-      .animation(requesting-access @run_slower (@run_slower * 2) @bezier_deform backwards);
-      .access-name {
-        color: @gray; // VETO
-      }
-      .access-status {
-        color: @blue; // VETO
-      }
-    }
-  }
-}
-.art-team-list {
-  .animation(in-fade-bottom (@run_slower * 1.5) @bezier_deform);
-  .flexy(column);
-  .justify-content(center);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 125%;
-  margin-top: -12.5%;
-  overflow: hidden;
-  &:after {
-    .gradient(to bottom, @white 10%, fade(@white, 0), @white 90%);
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-}
-
-
-@art_b1: (@run_slow) (@now);
+@art_b1: (@run_slow)   (@now);
 @art_b2: (@run)        ((extract(@art_b1, 1) * 2.33) + extract(@art_b1, 2));
 @art_b3: (@run_slower) ((extract(@art_b2, 1) * 1.44) + extract(@art_b2, 2));
 @art_b4: (@run_slow)   ((extract(@art_b3, 1) * 0.89) + extract(@art_b3, 2));
@@ -332,8 +147,6 @@
 @art_b7: (@run_fast)   ((extract(@art_b6, 1) * 0.21) + extract(@art_b6, 2));
 @art_b8: (@run)        ((extract(@art_b7, 1) * 0.13) + extract(@art_b7, 2));
 @art_b9: (@run_slower) ((extract(@art_b8, 1) * 0.08) + extract(@art_b8, 2));
-
-
 .art-interact {
   .art-interact-body {
     .property-dropdown-targets {
@@ -490,5 +303,49 @@
   .stroke-cursor {
     fill: @dye_outer;
     stroke: @art_interact_color;
+  }
+}
+@art_c1: (@run_slower * 1.5) (@now);
+@art_c2: (@run_slower * 2)   (@now);
+@art_c3: (@run_slower)       (@run_slower * 2);
+.art-team {
+  .access-card {
+    .animation_cascade(7);
+    .animation(in-zoom @art_c2 @bezier_deform);
+    color: @gray_light; // VETO
+    height: @tile * 1.5;
+    min-height: @tile;
+    margin: 0; // VETO
+    padding: @menu_padding 0;
+    &.selected {
+      .animation(requesting-access @art_c3 @bezier_deform backwards);
+      .access-name {
+        color: @gray; // VETO
+      }
+      .access-status {
+        color: @blue; // VETO
+      }
+    }
+  }
+}
+.art-team-list {
+  .animation(in-fade-bottom @art_c1 @bezier_deform);
+  .flexy(column);
+  .justify-content(center);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 125%;
+  margin-top: -12.5%;
+  overflow: hidden;
+  &:after {
+    .gradient(to bottom, @white 10%, fade(@white, 0), @white 90%);
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
   }
 }
