@@ -164,9 +164,9 @@
 
 (defn the-why [app owner]
   (reify
-    om/IInitState (init-state [_] {:past-center-featurettes #{}})
+    om/IInitState (init-state [_] {:past-center-features #{}})
     om/IRenderState
-    (render-state [_ {:keys [past-center-featurettes]}]
+    (render-state [_ {:keys [past-center-features]}]
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.the-why
@@ -294,41 +294,41 @@
 
 (defn the-how [app owner]
   (reify
-    om/IInitState (init-state [_] {:past-center-featurettes #{}})
+    om/IInitState (init-state [_] {:past-center-features #{}})
     om/IDidMount (did-mount [_]
-                   (scroll/register owner #(maybe-set-state! owner [:past-center-featurettes]
+                   (scroll/register owner #(maybe-set-state! owner [:past-center-features]
                                                              (set (filter (partial past-center? owner)
                                                                           ["1" "2" "3"])))))
     om/IWillUnmount (will-unmount [_]
                       (scroll/dispose owner))
     om/IRenderState
-    (render-state [_ {:keys [past-center-featurettes]}]
+    (render-state [_ {:keys [past-center-features]}]
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.the-how
-          [:div.featurette.content
-           {:class (when (contains? past-center-featurettes "1") "art-visible") :ref "1"}
-           [:div.featurette-story
+          [:div.feature.content
+           {:class (when (contains? past-center-features "1") "art-visible") :ref "1"}
+           [:div.feature-story
             [:h2 "Access your ideas on any device right in the browser."]
             [:p  "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
-           [:div.featurette-media artwork-mobile]]
-          [:div.featurette.content
-           {:class (when (contains? past-center-featurettes "2") "art-visible") :ref "2"}
-           [:div.featurette-story
+           [:div.feature-media artwork-mobile]]
+          [:div.feature.content
+           {:class (when (contains? past-center-features "2") "art-visible") :ref "2"}
+           [:div.feature-story
             [:h2 "Interact with your ideas way before development."]
             [:p  "Make working demos in just minutes using our simple target linking."]
             [:a.feature-link {:href "/blog/interactive-layers" :role "button"}
              "Read the tutorial."]]
-           [:div.featurette-media.reverse artwork-interact]]
-          [:div.featurette.content
-           {:class (when (contains? past-center-featurettes "3") "art-visible") :ref "3"}
-           [:div.featurette-story
+           [:div.feature-media.reverse artwork-interact]]
+          [:div.feature.content
+           {:class (when (contains? past-center-features "3") "art-visible") :ref "3"}
+           [:div.feature-story
             [:h2 "Collaborate with your whole team in real time."]
             [:p "Our new team features are optimized for efficient collaboration.
                  You'll have all of your team's best ideas store in one secure place."]
             [:a.feature-link {:role "button"}
              "Request free trial"]]
-           [:div.featurette-media artwork-team]]])))))
+           [:div.feature-media artwork-team]]])))))
 
 (defn the-what [app owner]
   (reify
