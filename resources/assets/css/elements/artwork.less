@@ -347,14 +347,7 @@
       cursor: default;
       overflow: visible;
       border: none;
-      &:active {
-        &.wrong {
-          cursor: not-allowed;
-        }
-        &.right {
-          cursor: copy;
-        }
-      }
+      text-indent: 0;
       &:last-child {
         max-height: 2rem;
         padding-bottom: 0;
@@ -372,7 +365,7 @@
           height: 100%;
         }
       }
-      &.right {
+      &.selected {
         &:before {
           .animation(in-zoom @art_c9 @bezier_bounce backwards);
           .transform-origin(left top);

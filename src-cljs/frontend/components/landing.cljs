@@ -236,12 +236,12 @@
       [:div.art-interact-target {:data-placeholder "with"}
        [:div.art-interact-ibeam "|"]
        [:div.art-interact-more "..."]]
-      [:div.property-dropdown-target.right "home page"]
-      [:div.property-dropdown-target.wrong "blog page"]
-      [:div.property-dropdown-target.wrong "about page"]
-      [:div.property-dropdown-target.wrong "contact page"]
-      [:div.property-dropdown-target.wrong "jobs page"]
-      [:div.property-dropdown-target.wrong "team page"]]]]])
+      [:div.property-dropdown-target.selected "home page"]
+      [:div.property-dropdown-target "blog page"]
+      [:div.property-dropdown-target "about page"]
+      [:div.property-dropdown-target "contact page"]
+      [:div.property-dropdown-target "jobs page"]
+      [:div.property-dropdown-target "team page"]]]]])
 
 (def artwork-team
   [:div.art-frame
