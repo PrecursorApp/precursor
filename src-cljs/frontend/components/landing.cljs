@@ -194,11 +194,12 @@
      [:div.art-screen
       [:div.art-menu
        [:div.art-heading "Today"]
-       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.art-doc.selected [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
-      [:div.art-canvas [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
+       [:div.art-doc [:div.art-doc-frame   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+       [:div.art-doc.selected [:div.art-doc-frame [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+       [:div.art-doc   [:div.art-doc-frame [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+       [:div.art-doc   [:div.art-doc-frame [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
+      [:div.art-canvas [:div.art-doc-frame [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+      [:div.art-screen-select]]]
     [:div.art-mobile-foot
      [:div.art-mobile-button]]]])
 

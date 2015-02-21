@@ -141,7 +141,21 @@
 
 
 
+@art_a1: (@run) (@now);
+@art_a2: (@run_slow)   ((extract(@art_a1, 1) * 2.33) + extract(@art_a1, 2));
+@art_a3: (@run_slower) ((extract(@art_a2, 1) * 0.89) + extract(@art_a2, 2));
+@art_a4: (@run_slow)   ((extract(@art_a3, 1) * 2.33) + extract(@art_a3, 2));
+@art_a5: (@run_fast)   ((extract(@art_a4, 1) * 0.55) + extract(@art_a4, 2));
+@art_a6: (@run)        ((extract(@art_a5, 1) * 0.34) + extract(@art_a5, 2));
+@art_a7: (@run_slow)   ((extract(@art_a6, 1) * 0.21) + extract(@art_a6, 2));
+@art_a8: (@run_slower) ((extract(@art_a7, 1) * 0.13) + extract(@art_a7, 2));
+@art_a9: (@run_slower) ((extract(@art_a8, 1) * 0.08) + extract(@art_a8, 2));
+
+
+
 .art-mobile {
+  .animation(in-zoom @art_a1 @bezier_deform);
+  .transform-origin(left top);
   background: @dye_outer;
   border: 1px solid @art_mobile_fill;
   border-radius: (@art_mobile_button * @art_mobile_ratio) ~"/" @art_mobile_button;
@@ -178,12 +192,15 @@
   border: 1px solid @art_mobile_fill;
 }
 .art-mobile-camera {
+  .animation(in-zoom @art_a2 @bezier_deform backwards);
   padding: (@art_mobile_button / 3) / 2;
 }
 .art-mobile-button {
+  .animation(in-zoom @art_a2 @bezier_deform backwards);
   padding: (@art_mobile_button) / 2;
 }
 .art-screen {
+  .animation(in-zoom @art_a2 @bezier_deform backwards);
   .flexy();
   width: 100% - (@art_mobile_padding_x * 2);
   height: 100%;
@@ -196,12 +213,20 @@
   width: 50%;
 }
 .art-heading {
+  .animation(in-fade-left @art_a5 @bezier_deform backwards);
   font-size: 1.25em;
   color: @art_mobile_fill;
   font-weight: 300;
   margin: 2% 10%;
   + .art-doc {
     margin-top: 0; // VETO
+    .animation(in-fade-left @art_a6 @bezier_deform backwards);
+    + .art-doc {
+      .animation(in-fade-left @art_a7 @bezier_deform backwards);
+      ~ .art-doc {
+        .animation(in-fade-left @art_a8 @bezier_deform backwards);
+      }
+    }
   }
 }
 .art-doc {
@@ -209,10 +234,28 @@
   height: 25%;
   margin: 10%;
   border: 1px solid @gray_lighter;
-  overflow: hidden;
   &.selected {
-    border: 2px solid @blue; // VETO
+    position: relative;
+    &:before {
+      .animation(in-zoom @art_a9 @bezier_deform backwards);
+      .transform-origin(left top);
+      content: "";
+      position: absolute;
+      top: -12%;
+      left: -8%;
+      width: 116%;
+      height: 124%;
+      border: 2px solid @blue;
+    }
   }
+  .art-doc-img {
+    .animation(in-zoom @art_a8 @bezier_deform backwards);
+  }
+}
+.art-doc-frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 .art-doc-img {
   max-width: none;
@@ -220,6 +263,7 @@
   opacity: .20;
 }
 .art-canvas {
+  .animation(art-canvas @art_a4 @bezier_deform backwards);
   .flex(1);
   height: 66%;
   margin: auto;
@@ -227,6 +271,9 @@
   box-shadow+: 0  5px 13px fade(@black, 21);
   box-shadow+: 0 -1px  0   fade(@black,  3);
   overflow: hidden;
+  .art-doc-img {
+    .animation(in-zoom @art_a3 @bezier_deform backwards);
+  }
 }
 
 
@@ -234,7 +281,7 @@
 .art-team {
   overflow: hidden;
   &:after {
-    .gradient(to bottom, @white, transparent, @white);
+    .gradient(to bottom, @white, fade(@white, 0), @white);
     content: "";
     position: absolute;
     top: 0;
