@@ -4,10 +4,12 @@
             [clojure.tools.logging :as log]
             [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model])
-  (:import [java.io PushbackReader]))
+  (:import java.io.PushbackReader
+           java.util.UUID))
 
 (defn read-doc [doc]
   (edn/read (PushbackReader. (io/reader (io/resource (format "docs/%s.edn" doc))))))
@@ -22,10 +24,14 @@
                                                   :document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                                                  (when (:cust/uuid cust) {:document/creator (:cust/uuid cust)})))]
     (if-let [layers (get (docs) document-name)]
-      @(d/transact (pcd/conn) (conj (map #(assoc %
-                                            :db/id (d/tempid :db.part/user)
-                                            :document/id (:db/id doc))
-                                         layers)
+      @(d/transact (pcd/conn) (conj (map-indexed
+                                     (fn [i l]
+                                       (let [temp-id (d/tempid :db.part/user)]
+                                         (assoc l
+                                                :db/id temp-id
+                                                :document/id (:db/id doc)
+                                                :frontend/id (UUID. (:db/id doc) (inc i)))))
+                                     layers)
                                     (merge {:db/id (d/tempid :db.part/tx)
                                             :document/id (:db/id doc)}
                                            (when (:cust/uuid cust)
