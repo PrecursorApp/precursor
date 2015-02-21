@@ -218,6 +218,8 @@
   color: @art_mobile_fill;
   font-weight: 300;
   margin: 2% 10%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   + .art-doc {
     margin-top: 0; // VETO
     .animation(in-fade-left @art_a6 @bezier_deform backwards);
@@ -390,19 +392,15 @@
 .art-interact-body {
   .animation(in-fade-bottom @art_b5 @bezier_deform backwards);
 }
-.art-interact-name,
-.art-interact-target {
-  &:before {
-    content: attr(data-placeholder);
-    font-size: .75rem;
-    line-height: 1em;
-    color: @art_interact_color;
-    position: absolute;
-    top: -.5em;
-    left: 1em;
-    padding: 0 .25em;
-    background: @dye_outer;
-  }
+.art-interact-placeholder {
+  font-size: .75rem;
+  line-height: 1em;
+  color: @art_interact_color;
+  position: absolute;
+  top: -.5em;
+  left: 1em;
+  padding: 0 .25em;
+  background: @dye_outer;
 }
 .art-interact-name {
   color: @art_interact_color;
@@ -414,6 +412,9 @@
   box-shadow+:  0  -2px @white;
   box-shadow+: -2px 0   @white;
   cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   &:before {
     .animation(in-fade-bottom @art_b6 @bezier_fadein backwards);
   }
@@ -427,6 +428,11 @@
   &:before {
     .animation(in-fade-bottom @art_b7 @bezier_fadein backwards);
   }
+}
+.art-interact-item {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .art-interact-ibeam {
   .animation(in-fade-bottom @art_b8 @bezier_fadein backwards);

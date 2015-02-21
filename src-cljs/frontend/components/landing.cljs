@@ -235,13 +235,17 @@
      [:div.art-interact-text "HOME"]
      [:div.art-interact-cursor (common/icon :cursor)]]
     [:div.art-interact-head
-     [:div.art-interact-name {:data-placeholder "link"} "home button"]]
+     [:div.art-interact-name ; {:data-placeholder "link"}
+      "home button"]
+     [:div.art-interact-placeholder "link"]]
     [:div.art-interact-body
      [:div.property-dropdown-targets
-      [:div.art-interact-target {:data-placeholder "with"}
+      [:div.art-interact-target ; {:data-placeholder "with"}
+       [:div.art-interact-placeholder "with"]
        [:div.art-interact-ibeam "|"]
        [:div.art-interact-more "..."]]
-      [:div.property-dropdown-target.selected "home page"]
+      [:div.property-dropdown-target.selected
+       [:div.art-interact-item "home page"]]
       [:div.property-dropdown-target "blog page"]
       [:div.property-dropdown-target "about page"]
       [:div.property-dropdown-target "contact page"]
@@ -306,32 +310,24 @@
            {:class (when (contains? past-center-featurettes "1") "art-visible") :ref "1"}
            [:div.featurette-story
             [:h2 "Access your ideas on any device right in the browser."]
-            [:p "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
+            [:p  "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]
            [:div.featurette-media artwork-mobile]]
           [:div.featurette.content
            {:class (when (contains? past-center-featurettes "2") "art-visible") :ref "2"}
            [:div.featurette-story
             [:h2 "Interact with your ideas way before development."]
-            [:p "Make working demos in just minutes using our simple target linking."]
-            [:p
-             [:a
-              {:href "/blog/interactive-layers"
-               :target "_self"
-               :role "button"}
-              "Read the tutorial"]
-             "."]]
+            [:p  "Make working demos in just minutes using our simple target linking."]
+            [:a.feature-link {:href "/blog/interactive-layers" :role "button"}
+             "Read the tutorial."]]
            [:div.featurette-media.reverse artwork-interact]]
           [:div.featurette.content
            {:class (when (contains? past-center-featurettes "3") "art-visible") :ref "3"}
            [:div.featurette-story
             [:h2 "Collaborate with your whole team in real time."]
             [:p "Our new team features are optimized for efficient collaboration.
-                  You'll have all of your team's best ideas store in one secure place."]
-            [:p
-             [:a
-              {:role "button"}
-              "Request free trial"]
-             "."]]
+                 You'll have all of your team's best ideas store in one secure place."]
+            [:a.feature-link {:role "button"}
+             "Request free trial"]]
            [:div.featurette-media artwork-team]]])))))
 
 (defn the-what [app owner]

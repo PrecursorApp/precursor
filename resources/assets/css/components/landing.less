@@ -210,50 +210,9 @@
   background: @dye_outer;
 }
 .the-how {
+  .user-select(none);
   background: @dye_outer;
   overflow: hidden;
-  p {
-    &:last-child {
-      margin: 0;
-    }
-  }
-  a {
-    position: relative;
-    border-bottom: 1px dotted @gray_light;
-    .mq_640({
-      .flexy(center; center);
-      height: @tile;
-      border: 1px solid @gray_light;
-    });
-    &:hover {
-      .mq_640({
-        background: @gray_light;
-        color: @black;
-      });
-      &:after {
-        .mq_640({
-          display: none;
-        });
-      }
-    }
-    &:not(:hover) {
-      &:after {
-        width: 0;
-        left: 50%;
-        transition-duration: @run;
-      }
-    }
-    &:after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      box-shadow: 0 1px @blue;
-      transition: @run_fast @bezier_deform;
-    }
-  }
   h2 {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -262,6 +221,7 @@
 .featurette {
   .flexy(wrap);
   .align-items(center);
+  .user-select(auto);
   padding: 10% 0;
   transition: padding @run_slower;
   .mq_1280({
@@ -279,7 +239,6 @@
     }
   }
   .art-frame {
-    .user-select(none);
     position: relative;
     width: 100%;
     height: 0;
@@ -297,7 +256,56 @@
     box-shadow: 0 -5px 13px @dye_outer;
   });
 }
+.feature-link {
+  position: relative;
+  border-bottom: 1px dotted @gray_light;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  .mq_640({
+    display: block;
+    padding: 1.2rem;
+    text-align: center;
+    border: 1px solid @gray_light;
+  });
+  &:hover {
+    .mq_640({
+      background: @gray_light;
+      color: @black;
+    });
+    &:after {
+      .mq_640({
+        display: none;
+      });
+    }
+  }
+  &:not(:hover) {
+    &:after {
+      width: 0;
+      left: 50%;
+      transition-duration: @run;
+    }
+  }
+  &:active {
+    &:after {
+      left: 25%;
+      width: 50%;
+      transition: @now;
+    }
+  }
+  &:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 1px @blue;
+    transition: @run_fast @bezier_deform;
+  }
+}
 .featurette-media {
+  .user-select(none);
   .order(3);
   width: 34%;
   padding: @menu_padding;
