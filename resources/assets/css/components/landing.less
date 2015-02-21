@@ -46,7 +46,7 @@
     &:active {
       color: @black;
       background-color: @white;
-      background-image: linear-gradient(to bottom, @white, transparent, transparent, @white);
+      background-image: linear-gradient(to bottom, @white, fade(@white, 0), fade(@white, 0), @white);
       border-color: @white;
       transition-duration: @now;
     }
@@ -72,7 +72,7 @@
   }
   .make-button {
     color: fade(@white, 41.75); // precise transparency makes @white appear @gray on @gray_darker background
-    -webkit-mask-image: linear-gradient(to bottom, transparent, black, black, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
     &:hover {
       color: @white;
     }
@@ -146,6 +146,9 @@
 .make-append {
   margin-left: .25em;
   z-index: @zindex_make_append; // so list doesn't overlap appending text
+  .mq_640({
+    display: none;
+  });
 }
 .our-claim {
   .flex(1);
@@ -159,10 +162,6 @@
     line-height: 1em; // VETO
     margin-bottom: -.5rem; // better aligns h1 (big font size wastes space)
     margin-left: -.0625em; // better aligns h1 (big font size wastes space)
-    .mq_640({
-      font-size: 3em; // VETO
-      line-height: 1.125em; // VETO
-    });
   }
   p {
     margin: @padding_outer 0;
@@ -183,11 +182,6 @@
 }
 .the-how {
   background: @dye_outer;
-  h2 {
-    .mq_640({
-      font-size: 2em;
-    });
-  }
   p {
     &:last-child {
       margin: 0;

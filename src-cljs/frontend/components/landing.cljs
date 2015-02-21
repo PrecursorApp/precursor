@@ -145,6 +145,10 @@
              :on-click #(do
                           (cast! :landing-closed)
                           (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
+             :on-touch-end #(do
+                              (.preventDefault %)
+                              (cast! :landing-closed)
+                              (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
              :on-mouse-enter #(om/refresh! owner)}
             [:div.make-prepend "Make a"]
             ;; [:div.make-prepend "Or make a"] ;; for bottom cta
@@ -155,7 +159,8 @@
               {:data-before (str/join " " (drop-last 4 word-list))
                :data-after  (str/join " " (take-last 3 word-list))}
               random-word]]
-            [:div.make-append "right now."]
+            [:div.make-append "right now"]
+            "."
             ;; [:div.make-append "first."] ;; for bottom cta
             ]])))))
 
@@ -176,7 +181,8 @@
               (common/google-login :small)]]
             [:div.our-philosphy-wrap
              [:div.our-philosphy.content
-              [:h1 "Collaborating should be simple."]
+              ; [:h1 "Collaborating should be simple."]
+              [:h1 "Sharing ideas should be simple."]
               [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
               [:div.calls-to-action
                (om/build make-button (select-keys app [:document/id]))]]]]
