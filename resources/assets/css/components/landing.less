@@ -149,6 +149,12 @@
 .something-wheel {
   white-space: pre;
 }
+.something-default {
+  transition: width @run_fast @bezier_deform;
+  &:after {
+    content: ".";
+  }
+}
 .something-wheel {
   .animation(something-wheel @run_make_button);
   text-align: left;
@@ -300,6 +306,9 @@
   padding: @menu_padding 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  span {
+    .user-select(auto);
+  }
 }
 .feature-copy {
   margin: 0; // VETO

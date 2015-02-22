@@ -186,9 +186,8 @@
            "Make "]
           [:div.make-something
            [:div.something-default (when widths
-                                     {:style {:width (get widths chosen-word)
-                                              :transition "width 200ms"}})
-            (str chosen-word ".")]
+                                     {:style {:width (get widths chosen-word)}})
+            chosen-word]
            (when-not widths
              (for [word word-list]
                [:span {:style {:top "-1000px"
@@ -200,7 +199,7 @@
             (merge
              {:data-before (str/join " " before-words)
               :data-after  (str/join " " after-words)})
-            (str chosen-word ".")]]
+            chosen-word]]
           [:div.make-append
            {:data-before " first"}]])))))
 
