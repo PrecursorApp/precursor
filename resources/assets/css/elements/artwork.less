@@ -171,7 +171,7 @@
         padding-bottom: 0;
         overflow: hidden;
         &:before {
-          .gradient(to bottom, transparent 66%, @dye_outer 100%);
+          .gradient(to bottom, fade(@dye_outer, 0) 66%, @dye_outer 100%);
           background-size: 99% 100%;
           background-repeat: no-repeat;
           background-position: 1px -1px;
