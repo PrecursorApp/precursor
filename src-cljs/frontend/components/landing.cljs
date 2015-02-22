@@ -163,30 +163,29 @@
             middle-index (int (/ (count word-list) 2))
             random-word (nth word-list (- (count word-list) 4))]
         (html
-          [:div.make-button-wrap
-           [:button.make-button
-            {:role "button"
-             :on-click #(do
-                          (cast! :landing-closed)
-                          (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
-             :on-touch-end #(do
-                              (.preventDefault %)
-                              (cast! :landing-closed)
-                              (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
-             :on-mouse-enter #(om/refresh! owner)}
-            [:div.make-prepend
-             {:data-before "Or "}
-             "Make "]
-            [:div.make-something
-             [:div.something-default
-              random-word]
-             [:div.something-wheel
-              {:data-before (str/join " " (drop-last 4 word-list))
-               :data-after  (str/join " " (take-last 3 word-list))}
-              random-word]]
-            [:div.make-append
-             {:data-before " first"}
-             "."]]])))))
+          [:button.make-button
+           {:role "button"
+            :on-click #(do
+                         (cast! :landing-closed)
+                         (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
+            :on-touch-end #(do
+                             (.preventDefault %)
+                             (cast! :landing-closed)
+                             (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
+            :on-mouse-enter #(om/refresh! owner)}
+           [:div.make-prepend
+            {:data-before "or "}
+            "Make "]
+           [:div.make-something
+            [:div.something-default
+             random-word]
+            [:div.something-wheel
+             {:data-before (str/join " " (drop-last 4 word-list))
+              :data-after  (str/join " " (take-last 3 word-list))}
+             random-word]]
+           [:div.make-append
+            {:data-before " first"}
+            "."]])))))
 
 (defn the-why [app owner]
   (reify
@@ -291,7 +290,9 @@
                ; [:h1 "What you need when you need it."]
                [:p.philosphy-subtext
                 ; [:span.content-copy "Precursor is the easiest way to share ideas with your teammates, fast."]
-                [:span.philosphy-subtext "Collaborating on an idea with your whole team is simple."]
+                ; [:span.philosphy-subtext "Collaborating on ideas with your whole team is simple."]
+                ; [:span.philosphy-subtext "Real time, team collaboration that's fast & simple."]
+                [:span.philosphy-subtext "It's real time, team collaboration that lets you focus on your ideas."]
                 ; [:span.philosphy-subtext "Sharing ideas should be simple."]
                 ; [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
                 ]
