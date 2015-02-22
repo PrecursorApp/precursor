@@ -44,3 +44,7 @@
 
 (defn server-frontend-id [entity-id namespace-part]
   [::assign-frontend-id entity-id namespace-part multiple reserved-remainder])
+
+(defn retract-entity [entity-id]
+  [::retract-entity entity-id])
+
