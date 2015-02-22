@@ -16,12 +16,7 @@
   border-radius: .25rem;
   box-shadow: 0 0 fade(@color_google_dark, 0);
   white-space: nowrap;
-  &:after {
-    content: attr(data-after);
-    white-space: pre;
-    margin-right: auto;
-    padding-right: @menu_padding;
-  }
+  overflow: hidden;
   &:hover,
   &:focus {
     .translate3d(0, -2px, 0);
@@ -37,22 +32,27 @@
   }
   &.small {
     &:after {
-      display: none;
+      content: attr(data-after);
+      white-space: pre;
+      margin-right: auto;
+      padding: 0 (@menu_padding / 3);
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    span {
-      padding-left: @menu_padding / 3;
-      padding-right: @menu_padding / 3;
+    .google-text {
+      display: none;
     }
     .icon-google {
       padding: @menu_padding / 3;
     }
   }
-  span {
-    margin-left: auto;
-    padding-left: @menu_padding;
-    &:first-letter {
-      text-transform: capitalize;
-    }
+  .google-text {
+    text-align: center;
+    width: 100%;
+    margin: auto;
+    padding: 0 @menu_padding;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .icon-google {
     padding: @menu_padding;

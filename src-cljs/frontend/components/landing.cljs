@@ -282,7 +282,7 @@
              [:div.our-philosphy-wrap
               [:div.our-philosphy.content
                [:h1.philosphy-headline
-                [:span.content-copy "It's purely productive prototyping."]]
+                [:span "It's purely productive prototyping."]]
                ; [:h1 "What you need when you need it."]
                [:p.philosphy-subtext
                 [:span.content-copy "Precursor is the easiest way to share ideas with your teammates, fast."]]

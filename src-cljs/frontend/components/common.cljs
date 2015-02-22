@@ -182,6 +182,7 @@
 (defn google-login [& [size]]
   [:a.google-login
    {:class (when (= :small size) "small")
-    :data-after " with Google"}
+    :role "button"
+    :data-after "Sign in"}
    (icon :google)
-   [:span "sign in"]])
+   [:div.google-text "Sign in with Google"]])
