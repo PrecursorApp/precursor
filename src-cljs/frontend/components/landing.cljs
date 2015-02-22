@@ -233,15 +233,7 @@
                [:span.philosphy-excess " workflow"]
                [:span.philosphy-needed "."]]
               [:p.philosphy-subtext
-               ; [:span.philosphy-needed "No nonsense—just what you need"]
-               ; ; [:span.philosphy-excess ", when your team needs it"]
-               ; [:span.philosphy-excess ", only when you need it"]
-               ; [:span.philosphy-needed "."]
-               ; [:span.philosphy-needed "No nonsense—the features you need, easily accessible when you need it."]
-               ; [:span.philosphy-needed "No nonsense—exactly what you need, easily accessible when you need it."]
-               ; [:span.philosphy-needed "No nonsense, just the tools you need when you need them."]
-               [:span.philosphy-needed "No nonsense, just the tools you need when you need them."]
-               ]
+               [:span.philosphy-needed "No nonsense, just the tools you need when you need them."]]
               [:div.calls-to-action
                (om/build make-button (select-keys app [:document/id]))]]]]
            [:div.our-proof
@@ -267,11 +259,7 @@
            {:class (when (contains? past-center-features "1") "art-visible") :ref "1"}
            [:div.feature-story
             [:h2.feature-headline
-             ; [:span "Access your ideas on any device right in the browser."]
-             ; [:span "Make all of your ideas accessible in any browser."]
-             ; [:span "Keep your ideas within reach, by using any device."]
-             [:span "Make your ideas accessible anywhere, using any device."]
-             ]
+             [:span "Make your ideas accessible anywhere, using any device."]]
             [:p.feature-copy
              [:span.content-copy
               "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]]
@@ -281,12 +269,7 @@
            {:class (when (contains? past-center-features "2") "art-visible") :ref "2"}
            [:div.feature-story
             [:h2.feature-headline
-             ; [:span "Interact with your ideas way before development."]
-             ; [:span "By letting you interact with your ideas before development ..."]
-             ; [:span "Make your ideas interactive before writing code."]
-             ; [:span "Make your ideas interactive early on & prevent bugs."]
-             [:span "Make prototypes interactive & refine your user experience."]
-             ]
+             [:span "Make prototypes interactive & refine your user experience."]]
             [:p.feature-copy
              [:span.content-copy
               "Make working demos in just minutes using our simple target linking."]]
@@ -299,11 +282,7 @@
            {:class (when (contains? past-center-features "3") "art-visible") :ref "3"}
            [:div.feature-story
             [:h2.feature-headline
-             ; [:span "Collaborate with your whole team in real time."]
-             ; [:span "Make team collaboration productive & more engaging."]
-             [:span "Make team collaboration more productive & engaging."]
-             ; [:span "Make collaborating with your team more productive & engaging."]
-             ]
+             [:span "Make team collaboration more productive & engaging."]]
             [:p.feature-copy
              [:span.content-copy
               "Our new team features are optimized for efficient collaboration.
@@ -325,26 +304,11 @@
              [:div.our-philosphy-wrap
               [:div.our-philosphy.content
                [:h1.philosphy-headline
-                ; [:span "It's purely productive prototyping."]
-                [:span "Precursor is pure prototyping."]
-                ]
-               ; [:h1 "What you need when you need it."]
+                [:span "Precursor is pure prototyping."]]
                [:p.philosphy-subtext
-                ; [:span.content-copy "Precursor is the easiest way to share ideas with your teammates, fast."]
-                ; [:span.philosphy-subtext "Collaborating on ideas with your whole team is simple."]
-                ; [:span.philosphy-subtext "Real time, team collaboration that's fast & simple."]
-                ; [:span.philosphy-subtext "It's real time, team collaboration that lets you focus on your ideas."]
-                ; [:span.philosphy-subtext "It's real time collaboration that's simple enough to let you focus on your idea."]
-                ; [:span.philosphy-subtext "It's real time collaboration that makes it simple to focus on your ideas."]
-                ; [:span.philosphy-subtext "It's real-time collaboration that makes it simple to focus on your inspiration."]
-                ; [:span.philosphy-subtext "It's real-time collaboration that makes focusing on your ideas simple."]
-                ; [:span.philosphy-subtext "It's real-time collaboration that makes it easy to focus on what's important."]
                 [:span.philosphy-needed "Real-time collaboration"]
                 [:span.philosphy-excess " that makes it easy "]
-                [:span.philosphy-needed " to focus on what's important."]
-                ; [:span.philosphy-subtext "Sharing ideas should be simple."]
-                ; [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
-                ]
+                [:span.philosphy-needed " to focus on what's important."]]
                [:div.calls-to-action
                 (common/google-login)
                 (om/build make-button (select-keys app [:document/id]))]]]
