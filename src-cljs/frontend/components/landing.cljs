@@ -111,6 +111,14 @@
        [:span.access-name "roland@prcr.sr"]
        [:span.access-status "Was granted access today."]]]]]])
 
+(def navigation
+  [:div.navigation
+   [:div.content
+    [:a.navigation-link {:href "/home" :target "_self" :role "button"} "Precursor"]
+    [:a.navigation-link {:href ""      :target "_self" :role "button"} "Pricing"]
+    [:a.navigation-link {:href "/blog" :target "_self" :role "button"} "Blog"]
+    (common/google-login :small)]])
+
 (defn past-center? [owner ref]
   (let [node (om/get-node owner ref)
         vh (.-height (goog.dom/getViewportSize))]
@@ -215,12 +223,7 @@
         (html
           [:div.the-why
            [:div.our-claim
-            [:div.navigation
-             [:div.content
-              [:a.navigation-link {:href "/home" :target "_self" :role "button"} "Precursor"]
-              [:a.navigation-link {:href ""      :target "_self" :role "button"} "Pricing"]
-              [:a.navigation-link {:href "/blog" :target "_self" :role "button"} "Blog"]
-              (common/google-login :small)]]
+            navigation
             [:div.our-philosphy-wrap
              [:div.our-philosphy.content
               [:h1.philosphy-headline
@@ -318,11 +321,7 @@
                [:div.calls-to-action
                 (common/google-login)
                 (om/build make-button (select-keys app [:document/id]))]]]
-             [:div.navigation
-              [:div.content
-               [:a.navigation-link {:href "/home" :target "_self" :role "button"} "Precursor"]
-               [:a.navigation-link {:href ""      :target "_self" :role "button"} "Pricing"]
-               [:a.navigation-link {:href "/blog" :target "_self" :role "button"} "Blog"]]]]])))))
+             navigation]])))))
 
 (defn landing [app owner]
   (reify
