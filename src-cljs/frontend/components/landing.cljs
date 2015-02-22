@@ -262,16 +262,8 @@
              [:span "Make your ideas accessible anywhere, using any device."]]
             [:p.feature-copy
              [:span.content-copy
-              ; "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."
-
-              ; "All of your best ideas are easily accessible right in your browser.
-              ; No downloads or installations necessary, just pull out your tablet or phone and you're good to go."
-
               "Quickly find sketches on any tablet or phone and be ready when inspiration hits you.
-              Don't bother wasting time with a big app download—just pull up your favorite browser."
-              ; No downloads or installations necessary, just pull out your tablet or phone and you're good to go."
-
-              ]]]
+              Don't bother wasting time with a big app download—just pull up your favorite browser."]]]
            [:div.feature-media artwork-mobile]]
           [:div.feature-divider]
           [:div.feature.content
@@ -281,16 +273,8 @@
              [:span "Make prototypes interactive & refine your user experience."]]
             [:p.feature-copy
              [:span.content-copy
-              ; "Make working demos in just minutes using our simple target linking."
-              ; "Make working demos in just minutes using our simple target linking system. Save time by pinpointing areas of improvement before you go into development."
-              ; "Make working demos in just minutes using simple links.
-              ; Save time by pinpointing areas that need improvement before you go into development."
-
               "Easily link your wireframes together in minutes to create working demos of your idea.
-              You'll save time by pinpointing areas for improvement before you go into development."
-
-
-              ]]
+              You'll save time by pinpointing areas for improvement before you go into development."]]
             [:a.feature-link {:href "/blog/interactive-layers" :role "button" :title "Read the tutorial."}
              [:span.content-copy
               "Read the tutorial."]]]
@@ -303,12 +287,8 @@
              [:span "Make team collaboration more productive & engaging."]]
             [:p.feature-copy
              [:span.content-copy
-              ; "Our new team features are optimized for efficient collaboration.
-              ; You'll have all of your team's best ideas store in one secure place."
-              ; "Our team features are optimized to make collaborating in real-time easier and more efficient.
               "Our team features are optimized to make collaborating in real-time effortless.
-              Communicate and create new ideas with your teammates in one secure place."
-              ]]
+              Communicate and create new ideas with your teammates in one secure place."]]
             [:a.feature-link {:role "button" :title "Request free trial."}
              [:span.content-copy
               "Request free trial."]]]
