@@ -201,7 +201,7 @@
               :data-after  (str/join " " after-words)})
             chosen-word]]
           [:div.make-append
-           {:data-before " first"}]])))))
+           {:data-before " first."}]])))))
 
 (defn the-why [app owner]
   (reify

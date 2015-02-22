@@ -109,6 +109,11 @@
       margin-right: 0;
     });
   }
+  .something-default {
+    &:after {
+      display: none; // VETO
+    }
+  }
   .navigation {
     .shadow_inset(top; @color_inset_black; @color_inset_white);
   }
