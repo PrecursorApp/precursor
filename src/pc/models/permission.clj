@@ -38,7 +38,7 @@
         doc-id (:access-grant/document access-grant)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:db.fn/retractEntity (:db/id access-grant)]
+                  (web-peer/retract-entity (:db/id access-grant))
                   (web-peer/server-frontend-id temp-id doc-id)
                   (merge
                    {:db/id temp-id
@@ -59,7 +59,7 @@
         cust-id (:access-request/cust access-request)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
-                  [:db.fn/retractEntity (:db/id access-request)]
+                  (web-peer/retract-entity (:db/id access-request))
                   (web-peer/server-frontend-id temp-id doc-id)
                   {:db/id temp-id
                    :permission/permits :permission.permits/admin
