@@ -111,30 +111,6 @@
     .shadow_inset(top; @color_inset_black; @color_inset_white);
   }
 }
-// .make-button-wrap {
-//   .mq_640({
-//     width: 100%;
-//   });
-//   &:hover {
-//     .animation(make-button-wrap @run @run backwards);
-//     .something-default {
-//       opacity: 0;
-//     }
-//     .something-wheel {
-//       &:before {
-//         content: attr(data-before);
-//       }
-//       &:after {
-//         content: attr(data-after);
-//       }
-//     }
-//   }
-//   &:not(:hover) {
-//     .something-wheel {
-//       display: none;
-//     }
-//   }
-// }
 .make-button {
   .flexy();
   .justify-content(center);
@@ -145,7 +121,6 @@
     width: 100%;
   });
   &:hover {
-    // .animation(make-button-wrap @run @run backwards);
     .something-default {
       opacity: 0;
     }
