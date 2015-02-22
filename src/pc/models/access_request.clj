@@ -29,6 +29,12 @@
     (when (:access-request/document candidate)
       candidate)))
 
+(defn find-by-client-part [db namespace-part client-part]
+  (let [candidate (d/entity db (web-peer/find-entity-id db namespace-part client-part))]
+    ;; faster than using a datalog query
+    (when (:access-request/document candidate)
+      candidate)))
+
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]
               :in [$ ?doc-id]

@@ -48,3 +48,7 @@
 (defn retract-entity [entity-id]
   [::retract-entity entity-id])
 
+(defn find-entity-id [db namespace-part client-part]
+  (-> (d/datoms db :avet :frontend/id (UUID. namespace-part client-part))
+    first
+    :e))
