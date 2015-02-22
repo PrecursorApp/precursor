@@ -19,6 +19,7 @@
             [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
             [goog.labs.userAgent.browser :as ua]
+            [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -121,71 +122,87 @@
 
 (defn make-button [{:keys [document/id]} owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_]
+      {:word-list ["demos"
+                   "stuff"
+                   "doodles"
+                   "mockups"
+                   "designs"
+                   "layouts"
+                   "details"
+                   "diagrams"
+                   "sketches"
+                   "drawings"
+                   "giraffes"
+                   "projects"
+                   "concepts"
+                   "products"
+                   "new ideas"
+                   "documents"
+                   "notebooks"
+                   "precursors"
+                   "prototypes"
+                   "wireframes"
+                   "user flows"
+                   "flowcharts"
+                   "interfaces"
+                   "inventions"
+                   "some stuff"
+                   "experiences"
+                   "brainstorms"
+                   "big squares"
+                   "masterpieces"
+                   "presentations"
+                   "illustrations"
+                   "walk-throughs"
+                   "awesome ideas"
+                   "teammates happy"
+                   "your team happy"]})
+    om/IDidMount
+    (did-mount [_]
+      (om/set-state! owner :widths (time (reduce (fn [acc word]
+                                                   (assoc acc word (.-width (goog.style/getSize (om/get-node owner word)))))
+                                                 {} (om/get-state owner :word-list)))))
+    om/IRenderState
+    (render-state [_ {:keys [chosen-word-width word-list widths]}]
       (let [cast! (om/get-shared owner :cast!)
             nav-ch (om/get-shared owner [:comms :nav])
-            word-list (shuffle ["demos"
-                                "stuff"
-                                "doodles"
-                                "mockups"
-                                "designs"
-                                "layouts"
-                                "details"
-                                "diagrams"
-                                "sketches"
-                                "drawings"
-                                "giraffes"
-                                "projects"
-                                "concepts"
-                                "products"
-                                "new ideas"
-                                "documents"
-                                "notebooks"
-                                "precursors"
-                                "prototypes"
-                                "wireframes"
-                                "user flows"
-                                "flowcharts"
-                                "interfaces"
-                                "inventions"
-                                "some stuff"
-                                "experiences"
-                                "brainstorms"
-                                "big squares"
-                                "masterpieces"
-                                "presentations"
-                                "illustrations"
-                                "walk-throughs"
-                                "awesome ideas"
-                                "teammates happy"
-                                "your team happy"])
-            middle-index (int (/ (count word-list) 2))
-            random-word (nth word-list (- (count word-list) 4))]
+            chosen-word (first word-list)
+            [before-words after-words] (partition-all (- (count word-list) 3) (rest word-list))]
         (html
-          [:button.make-button
-           {:role "button"
-            :on-click #(do
-                         (cast! :landing-closed)
-                         (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
-            :on-touch-end #(do
-                             (.preventDefault %)
-                             (cast! :landing-closed)
-                             (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
-            :on-mouse-enter #(om/refresh! owner)}
-           [:div.make-prepend
-            {:data-before "or "}
-            "Make "]
-           [:div.make-something
-            [:div.something-default
-             random-word]
-            [:div.something-wheel
-             {:data-before (str/join " " (drop-last 4 word-list))
-              :data-after  (str/join " " (take-last 3 word-list))}
-             random-word]]
-           [:div.make-append
-            {:data-before " first"}
-            "."]])))))
+         [:button.make-button
+          {:role "button"
+           :on-click #(do
+                        (cast! :landing-closed)
+                        (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
+           :on-touch-end #(do
+                            (.preventDefault %)
+                            (cast! :landing-closed)
+                            (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
+           :on-mouse-enter #(om/set-state! owner :word-list (shuffle word-list))}
+          [:div.make-prepend
+           {:data-before "or "}
+           "Make "]
+          [:div.make-something
+           [:div.something-default (when widths
+                                     {:style {:width (get widths chosen-word)
+                                              :transition "width 200ms"}})
+            (str chosen-word ".")]
+           (when-not widths
+             (for [word word-list]
+               [:span {:style {:top "-1000px"
+                               :left "-1000px"
+                               :position "absolute"}
+                       :ref word}
+                word]))
+           [:div.something-wheel
+            (merge
+             {:data-before (str/join " " before-words)
+              :data-after  (str/join " " after-words)})
+            (str chosen-word ".")]]
+          [:div.make-append
+           {:data-before " first"}]])))))
 
 (defn the-why [app owner]
   (reify
