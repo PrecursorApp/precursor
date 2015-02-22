@@ -18,19 +18,20 @@
     });
   }
   .navigation {
-    a {
-      color: fade(@white, 41.75); // precise transparency makes @white appear @gray on @gray_darker background
-      transition: @run_fast @bezier_fadein;
-      &:hover {
-        color: @white;
-        transition: @now;
-      }
-    }
     .content {
       max-width: none; // VETO
     }
   }
-  .content-copy {
+  .navigation-link {
+    color: fade(@white, 41.75); // precise transparency makes @white appear @gray on @gray_darker background
+    transition: @run_fast @bezier_fadein;
+    &:hover {
+      color: @white;
+      transition: @now;
+    }
+  }
+  span {
+    .user-select(auto);
     &::selection {
       color: @white;
       background: fade(@white, 05);
@@ -79,11 +80,10 @@
     display: none !important; // keep bottom one empty until we good proof
   }
   .google-login {
-    &:not(.small) {
-      .mq_640({
-        width: 100%;
-      });
-    }
+    .mq_640({
+      width: 100%;
+      padding-right: 4rem;
+    });
   }
   .make-button {
     color: fade(@white, 41.75); // precise transparency makes @white appear @gray on @gray_darker background
@@ -253,6 +253,26 @@
     padding-bottom: @art_mobile_height;
   }
 }
+.feature-divider {
+  position: relative;
+  width: 100%;
+  border-bottom: 1px dashed @gray_light;
+  .mq_640({
+    border-bottom: 1px solid @gray_light; // VETO
+  });
+  &:before {
+    .gradient(to right, @white, fade(@white, 0), @white);
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    .mq_640({
+      display: none; // VETO
+    });
+  }
+}
 .feature-story {
   .order(2);
   .flex(1);
@@ -269,8 +289,6 @@
   position: relative;
   border-bottom: 1px dotted @gray_light;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   .mq_640({
     display: block;
     padding: 1.2rem;

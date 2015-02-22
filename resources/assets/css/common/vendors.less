@@ -10,43 +10,22 @@
 .google-login {
   .flexy(center);
   .user-select(none);
+  color: @white;
   background-color: @color_google;
   border-bottom: 1px solid @color_google_dark;
   border-radius: .25rem;
   box-shadow: 0 0 fade(@color_google_dark, 0);
-  &:not(.small) {
-    .icon-google {
-      padding: @menu_padding;
-    }
-    span {
-      padding: @menu_padding;
-      &:after {
-        content: " " attr(data-second-half);
-        color: @white;
-      }
-    }
-  }
-  .icon-google {
-    padding: @menu_padding / 3;
-    border-right: 1px solid @color_google_dark;
-    .iconpile {
-      .fill-google {
-        fill: @white;
-      }
-    }
-  }
-  span {
-    line-height: 1em;
-    margin: auto;
-    padding: @menu_padding / 3;
-    &:before {
-      content: attr(data-first-half);
-      color: @white;
-    }
+  white-space: nowrap;
+  &:after {
+    content: attr(data-after);
+    white-space: pre;
+    margin-right: auto;
+    padding-right: @menu_padding;
   }
   &:hover,
   &:focus {
     .translate3d(0, -2px, 0);
+    color: @white;
     background-color: @color_google_light;
     box-shadow+: 0 2px @color_google_dark;
     box-shadow+: 0 1px fade(@white, 21) inset;
@@ -55,5 +34,33 @@
     .translate3d(0, 0, 0);
     background-color: lighten(saturate(@color_google_dark, 21), 8);
     box-shadow: 0  2px @color_google_dark inset;
+  }
+  &.small {
+    &:after {
+      display: none;
+    }
+    span {
+      padding-left: @menu_padding / 3;
+      padding-right: @menu_padding / 3;
+    }
+    .icon-google {
+      padding: @menu_padding / 3;
+    }
+  }
+  span {
+    margin-left: auto;
+    padding-left: @menu_padding;
+    &:first-letter {
+      text-transform: capitalize;
+    }
+  }
+  .icon-google {
+    padding: @menu_padding;
+    border-right: 1px solid @color_google_dark;
+    .iconpile {
+      .fill-google {
+        fill: @white;
+      }
+    }
   }
 }
