@@ -11,12 +11,6 @@
   .flexy(column);
   min-height: 100vh;
   overflow: hidden;
-  p {
-    .mq_640({
-      height: 0;
-      overflow: hidden;
-    });
-  }
   .navigation {
     .content {
       max-width: none; // VETO
@@ -202,9 +196,7 @@
   .transform-origin(0 0);
 }
 .philosphy-headline {
-  line-height: 1em; // VETO
-  margin-bottom: -.5rem; // better aligns h1 (big font size wastes space)
-  margin-left: -.0625em; // better aligns h1 (big font size wastes space)
+  margin: 0;
   padding: @menu_padding 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -219,7 +211,14 @@
   }
 }
 .philosphy-subtext {
-  margin-bottom: @menu_padding;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  &:first-letter {
+    .mq_640({
+      text-transform: capitalize;
+    });
+  }
 }
 .philosphy-excess {
   .mq_640({
@@ -283,13 +282,23 @@
 .feature-story {
   .order(2);
   .flex(1);
-  padding: @menu_padding;
+  padding: 0 @menu_padding;
   .mq_640({
     margin-bottom: auto;
     z-index: 1;
     background: @dye_outer;
     box-shadow: 0 -5px 13px @dye_outer;
   });
+}
+.feature-headline {
+  margin: 0; // VETO
+  padding: @menu_padding 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.feature-copy {
+  margin: 0; // VETO
+  padding-bottom: @menu_padding;
 }
 .feature-link {
   display: inline-block;
@@ -341,7 +350,7 @@
 .feature-media {
   .order(3);
   width: 34%;
-  padding: @menu_padding;
+  padding: 0 @menu_padding;
   .mq_960({
     width: 50%;
   });

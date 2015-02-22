@@ -205,16 +205,16 @@
               (common/google-login :small)]]
             [:div.our-philosphy-wrap
              [:div.our-philosphy.content
-              ; [:h1 "Collaborating should be simple."]
-              ; [:h1 "Sharing ideas should be simple."]
               [:h1.philosphy-headline
-               [:span.philosphy-excess "We believe "]
-               [:span.philosphy-needed "sharing ideas "]
-               [:span.philosphy-excess "with your team "]
-               [:span.philosphy-needed "should be simple."]]
-              ; [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
+               [:span.philosphy-needed "Precursor wants to simplify"]
+               [:span.philosphy-excess " your"]
+               [:span.philosphy-needed " prototyping"]
+               [:span.philosphy-excess " workflow"]
+               [:span.philosphy-needed "."]]
               [:p.philosphy-subtext
-               [:span.content-copy "No nonsense—just what you need, when you need it."]]
+               [:span.philosphy-needed "No nonsense—just what you need"]
+               [:span.philosphy-excess ", when your team needs it"]
+               [:span.philosphy-needed "."]]
               [:div.calls-to-action
                (om/build make-button (select-keys app [:document/id]))]]]]
            [:div.our-proof
@@ -239,19 +239,21 @@
           [:div.feature.content
            {:class (when (contains? past-center-features "1") "art-visible") :ref "1"}
            [:div.feature-story
-            [:h2 [:span.content-copy
-                  "Access your ideas on any device right in the browser."]]
-            [:p [:span.content-copy
-                 "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]]
+            [:h2.feature-headline
+             [:span "Access your ideas on any device right in the browser."]]
+            [:p.feature-copy
+             [:span.content-copy
+              "With Precursor all of your ideas are easily accessible right from the browser, whether you're on your desktop, tablet, or phone."]]]
            [:div.feature-media artwork-mobile]]
           [:div.feature-divider]
           [:div.feature.content
            {:class (when (contains? past-center-features "2") "art-visible") :ref "2"}
            [:div.feature-story
-            [:h2 [:span.content-copy
-                  "Interact with your ideas way before development."]]
-            [:p [:span.content-copy
-                 "Make working demos in just minutes using our simple target linking."]]
+            [:h2.feature-headline
+             [:span "Interact with your ideas way before development."]]
+            [:p.feature-copy
+             [:span.content-copy
+              "Make working demos in just minutes using our simple target linking."]]
             [:a.feature-link {:href "/blog/interactive-layers" :role "button" :title "Read the tutorial."}
              [:span.content-copy
               "Read the tutorial."]]]
@@ -260,11 +262,12 @@
           [:div.feature.content
            {:class (when (contains? past-center-features "3") "art-visible") :ref "3"}
            [:div.feature-story
-            [:h2 [:span.content-copy
-                  "Collaborate with your whole team in real time."]]
-            [:p [:span.content-copy
-                 "Our new team features are optimized for efficient collaboration.
-                 You'll have all of your team's best ideas store in one secure place."]]
+            [:h2.feature-headline
+             [:span "Collaborate with your whole team in real time."]]
+            [:p.feature-copy
+             [:span.content-copy
+              "Our new team features are optimized for efficient collaboration.
+              You'll have all of your team's best ideas store in one secure place."]]
             [:a.feature-link {:role "button" :title "Request free trial."}
              [:span.content-copy
               "Request free trial."]]]
@@ -282,10 +285,16 @@
              [:div.our-philosphy-wrap
               [:div.our-philosphy.content
                [:h1.philosphy-headline
-                [:span "It's purely productive prototyping."]]
+                ; [:span "It's purely productive prototyping."]
+                [:span "Precursor is pure prototyping."]
+                ]
                ; [:h1 "What you need when you need it."]
                [:p.philosphy-subtext
-                [:span.content-copy "Precursor is the easiest way to share ideas with your teammates, fast."]]
+                ; [:span.content-copy "Precursor is the easiest way to share ideas with your teammates, fast."]
+                [:span.philosphy-subtext "Collaborating on an idea with your whole team is simple."]
+                ; [:span.philosphy-subtext "Sharing ideas should be simple."]
+                ; [:p "Prototype anywhere on any device. No nonsense, just what you need when you need it."]
+                ]
                [:div.calls-to-action
                 (common/google-login)
                 (om/build make-button (select-keys app [:document/id]))]]]
