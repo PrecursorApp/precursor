@@ -114,9 +114,9 @@
 (def navigation
   [:div.navigation
    [:div.content
-    [:a.navigation-link {:href "/home" :target "_self" :role "button"} "Precursor"]
-    [:a.navigation-link {:href ""      :target "_self" :role "button"} "Pricing"]
-    [:a.navigation-link {:href "/blog" :target "_self" :role "button"} "Blog"]
+    [:a.navigation-link {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
+    [:a.navigation-link {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
+    [:a.navigation-link {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
     (common/google-login :small)]])
 
 (defn past-center? [owner ref]
