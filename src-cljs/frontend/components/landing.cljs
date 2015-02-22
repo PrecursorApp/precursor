@@ -233,7 +233,10 @@
                [:span.philosphy-excess " workflow"]
                [:span.philosphy-needed "."]]
               [:p.philosphy-subtext
-               [:span.philosphy-needed "No nonsense, just the tools you need when you need them."]]
+               [:span.philosphy-needed "No nonsense—"]
+               [:span.philosphy-needed "exactly what you need"]
+               [:span.philosphy-excess " when you need it"]
+               [:span.philosphy-needed "."]]
               [:div.calls-to-action
                (om/build make-button (select-keys app [:document/id]))]]]]
            [:div.our-proof
@@ -306,11 +309,12 @@
              [:div.our-philosphy-wrap
               [:div.our-philosphy.content
                [:h1.philosphy-headline
-                [:span "Precursor is pure prototyping."]]
+                [:span.philosphy-needed "Precursor is pure prototyping."]]
                [:p.philosphy-subtext
                 [:span.philosphy-needed "Real-time collaboration"]
                 [:span.philosphy-excess " that makes it easy "]
-                [:span.philosphy-needed " to focus on what's important."]]
+                [:span.philosphy-excess " to focus on what's important"]
+                [:span.philosphy-needed "."]]
                [:div.calls-to-action
                 (common/google-login)
                 (om/build make-button (select-keys app [:document/id]))]]]
