@@ -1,0 +1,27 @@
+.om-instrumentation {
+  figure {
+    margin: 0;
+  }
+  .admin-stats {
+    .animation(admin-slide-down 200ms ease-in-out);
+    width: 100%;
+    color: white;
+    background-color: black;
+    z-index: 2000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    opacity: 0.7;
+    pointer-events: none;
+    user-select: none;
+  }
+  table {
+    font-family: monaco;
+    font-size: 12px;
+    width: calc(100% - 2em);
+    margin: 0 1em 1em;
+    th, td { text-align: left; }
+    tr:not(:last-child) { border-bottom: 1px dashed fade(white, 10%); }
+    .number { text-align: right; }
+  }
+}

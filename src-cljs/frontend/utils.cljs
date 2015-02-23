@@ -210,3 +210,8 @@
                  (goog.dom/getViewportSize))]
       {:width (.-width size)
        :height (.-height size)})))
+
+(defn react-id [x]
+  (let [id (aget x "_rootNodeID")]
+    (assert id)
+    id))

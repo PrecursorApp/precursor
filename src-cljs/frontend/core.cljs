@@ -20,6 +20,7 @@
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
             [frontend.localstorage :as localstorage]
+            [frontend.instrumentation :as instrumentation]
             [frontend.sente :as sente]
             [frontend.state :as state]
             [goog.events]
@@ -205,7 +206,10 @@
              :db                    (:db @state)
              :cast!                 cast!
              :_app-state-do-not-use state
-             :handlers              handlers}}))
+             :handlers              handlers
+             }
+    :instrument (fn [f cursor m]
+                  (om/build* f cursor (assoc m :descriptor instrumentation/instrumentation-methods)))}))
 
 (defn find-app-container []
   (goog.dom/getElement "om-app"))
@@ -244,6 +248,8 @@
 
     ;; allow figwheel in dev-cljs access to this function
     (def om-setup-debug om-setup)
+
+    (instrumentation/setup-component-stats!)
 
     (swap! state assoc :undo-state undo-state)
 

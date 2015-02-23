@@ -107,7 +107,7 @@
   [keymap keys]
   (->> keymap
        (keep (fn [[m c]]
-               (when (combos-match? c keys) m)))
+               (when (combos-match? m keys) c)))
        first))
 
 (defn keyboard-handler [payload owner opts]
@@ -128,29 +128,28 @@
         (om/set-state! owner :unmount-ch unmount-ch)
         (async/tap key-mult key-press-ch)
         (async/go
-         (loop [waiting-keys []
-                t-chan       nil
-                key-map      key-map]
-           (async/alt!
-            key-press-ch ([e]
+          (loop [waiting-keys []
+                 t-chan       nil
+                 key-map      key-map]
+            (async/alt!
+              key-press-ch ([e]
                             (let [all-keys (conj waiting-keys e)]
-                              (if-let [combo-message (match-keys key-map all-keys)]
-                                (do (try (apply cast! combo-message)
-                                         ;; Catch any errors to avoid breaking key loop
-                                         (catch js/Object error
-                                           (utils/log-pr "Error putting" combo-message
-                                                         "with key event" e ":")
-                                           (put! (om/get-shared owner [:comms :error]) [:keyboard-handler-error error])))
-                                    (recur [] nil key-map))
+                              (if-let [combo-fn (match-keys key-map all-keys)]
+                                (do
+                                  (try (combo-fn)
+                                       ;; Catch any errors to avoid breaking key loop
+                                       (catch js/Error error
+                                         (utils/merror error "Error handling keyboard")))
+                                  (recur [] nil key-map))
                                 ;; No match yet, but remember in case user is entering
                                 ;; a multi-key combination.
                                 (recur all-keys (async/timeout 1000) key-map))))
-            key-map-update-ch ([new-key-map]
+              key-map-update-ch ([new-key-map]
                                  (recur waiting-keys t-chan new-key-map))
-            ;; Read channel was timeout.  Forget stored keys
-            (or t-chan (async/timeout 1000))       (recur [] nil key-map)
-            (async/chan)  (recur [] nil key-map)
-            unmount-ch (print "Unmounted; destroying key-queue loop for " my-name))))))
+              ;; Read channel was timeout.  Forget stored keys
+              (or t-chan (async/timeout 1000))       (recur [] nil key-map)
+              (async/chan)  (recur [] nil key-map)
+              unmount-ch (print "Unmounted; destroying key-queue loop for " my-name))))))
     om/IWillUnmount
     (will-unmount [_]
       (async/untap key-mult (om/get-state owner :key-press-ch))
