@@ -219,16 +219,26 @@
     om/IRender
     (render [_]
       (html
-        [:div.hud
-         (om/build viewers app)
-         (om/build menu app)
-         (om/build chat app)
+       [:div.hud
+        (om/build viewers (utils/select-in app [state/chat-opened-path
+                                                state/overlays-path
+                                                [:subscribers]
+                                                [:show-viewers?]
+                                                [:client-id]
+                                                [:cust]
+                                                [:mouse-type]]))
+        (om/build menu (utils/select-in app [state/main-menu-learned-path
+                                             state/overlays-path]))
+        (om/build chat (utils/select-in app [state/chat-opened-path
+                                             state/chat-button-learned-path
+                                             state/browser-settings-path
+                                             [:document/id]]))
 
-         ;; TODO finish this button once landing and outer are done
-         (om/build landing app)
+        ;; TODO finish this button once landing and outer are done
+        (om/build landing (utils/select-in app [state/info-button-learned-path]))
 
-         ;; deciding whether to get rid of this
-         ;; (when-not (:cust app)
-         ;;   (om/build info app))
+        ;; deciding whether to get rid of this
+        ;; (when-not (:cust app)
+        ;;   (om/build info app))
 
-         ]))))
+        ]))))

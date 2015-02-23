@@ -41,8 +41,15 @@
                            :class (when (empty? (:frontend-id-state app))
                                     "loading")}
                [:style "#om-app:active{cursor:auto}"]
-               (om/build canvas/canvas app)
-               (om/build chat/chat app)
+               (om/build canvas/canvas (dissoc app :mouse))
+               (om/build chat/chat (select-in app [state/chat-opened-path
+                                                   state/chat-mobile-opened-path
+                                                   [:document/id]
+                                                   [:sente-id]
+                                                   [:client-id]]))
+               (when (and (not right-click-learned?) (:mouse app))
+                 (om/build canvas/radial-hint (select-in app [[:mouse]
+                                                              [:mouse-type]])))
                [:div.mouse-stats
                 {:data-mouse (if (:mouse app)
                                (pr-str (select-keys (:mouse app) [:x :y :rx :ry]))
@@ -56,7 +63,7 @@
       (if (:navigation-point app)
         (dom/div #js {:id "app" :className "app"}
           (when (:show-landing? app)
-            (om/build landing/landing app))
+            (om/build landing/landing (select-keys app [:show-landing? :document/id])))
 
           (when (and (= :document (:navigation-point app))
                      (not (:cust app)))
@@ -65,5 +72,15 @@
           (when (overlay-visible? app)
             (om/build overlay/overlay app))
           (om/build app* app)
-          (om/build hud/hud app))
+          (om/build hud/hud (select-in app [state/chat-opened-path
+                                            state/overlays-path
+                                            state/main-menu-learned-path
+                                            state/chat-button-learned-path
+                                            state/browser-settings-path
+                                            [:document/id]
+                                            [:subscribers]
+                                            [:show-viewers?]
+                                            [:client-id]
+                                            [:cust]
+                                            [:mouse-type]])))
         (html [:div#app])))))
