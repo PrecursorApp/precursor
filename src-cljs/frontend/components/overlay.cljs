@@ -165,58 +165,61 @@
 
 (defmethod render-access-entity :permission
   [entity cast!]
-  [:div.access-card.make
-   [:div.access-avatar
-    [:img.access-avatar-img
-     {:src (utils/gravatar-url (:permission/cust entity))}]]
-   [:div.access-details
-    [:span
-     {:title (:permission/cust entity)} (:permission/cust entity)]
-    [:span.access-status
-     (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]])
+  (html
+   [:div.access-card.make
+    [:div.access-avatar
+     [:img.access-avatar-img
+      {:src (utils/gravatar-url (:permission/cust entity))}]]
+    [:div.access-details
+     [:span
+      {:title (:permission/cust entity)} (:permission/cust entity)]
+     [:span.access-status
+      (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]]))
 
 (defmethod render-access-entity :access-grant
   [entity cast!]
-  [:div.access-card.make
-   [:div.access-avatar
-    [:img.access-avatar-img
-     {:src (utils/gravatar-url (:access-grant/email entity))}]]
-   [:div.access-details
-    [:span
-     {:title (:access-grant/email entity)} (:access-grant/email entity)]
-    [:span.access-status
-     (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]])
+  (html
+   [:div.access-card.make
+    [:div.access-avatar
+     [:img.access-avatar-img
+      {:src (utils/gravatar-url (:access-grant/email entity))}]]
+    [:div.access-details
+     [:span
+      {:title (:access-grant/email entity)} (:access-grant/email entity)]
+     [:span.access-status
+      (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]]))
 
 (defmethod render-access-entity :access-request
   [entity cast!]
-  [:div.access-card.make
-   {:class (if (= :access-request.status/denied (:access-request/status entity))
-             "denied"
-             "requesting")}
-   [:div.access-avatar
-    [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
-   [:div.access-details
-    [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
-    [:span.access-status
-     (if (= :access-request.status/denied (:access-request/status entity))
-       (str "Was denied access " (format-access-date (:access-request/deny-date entity)))
-       (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
-   [:div.access-options
-    (when-not (= :access-request.status/denied (:access-request/status entity))
-      [:button.access-option
-       {:role "button"
-        :class "negative"
-        :title "Decline"
-        :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
+  (html
+   [:div.access-card.make
+    {:class (if (= :access-request.status/denied (:access-request/status entity))
+              "denied"
+              "requesting")}
+    [:div.access-avatar
+     [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
+    [:div.access-details
+     [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
+     [:span.access-status
+      (if (= :access-request.status/denied (:access-request/status entity))
+        (str "Was denied access " (format-access-date (:access-request/deny-date entity)))
+        (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
+    [:div.access-options
+     (when-not (= :access-request.status/denied (:access-request/status entity))
+       [:button.access-option
+        {:role "button"
+         :class "negative"
+         :title "Decline"
+         :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
+                                                   :doc-id (:access-request/document entity)})}
+        (common/icon :times)])
+     [:button.access-option
+      {:role "button"
+       :class "positive"
+       :title "Approve"
+       :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
                                                   :doc-id (:access-request/document entity)})}
-       (common/icon :times)])
-    [:button.access-option
-     {:role "button"
-      :class "positive"
-      :title "Approve"
-      :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
-                                                 :doc-id (:access-request/document entity)})}
-     (common/icon :check)]]])
+      (common/icon :check)]]]))
 
 (defn private-sharing [app owner]
   (reify
@@ -488,18 +491,20 @@
               [:td {:col-span "2"}]]
              (when (om/get-state owner [:copy-paste-works?])
                (list
-                [:tr.make
-                 [:td
-                  [:div.shortcuts-keys
-                   [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                   [:div.shortcuts-key {:title "C Key"} "C"]]]
-                 [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
-                [:tr.make
-                 [:td
-                  [:div.shortcuts-keys
-                   [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                   [:div.shortcuts-key {:title "V Key"} "V"]]]
-                 [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]))
+                (html
+                 [:tr.make
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "C Key"} "C"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]])
+                (html
+                 [:tr.make
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "V Key"} "V"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]])))
              [:tr.make
               [:td
                [:div.shortcuts-keys

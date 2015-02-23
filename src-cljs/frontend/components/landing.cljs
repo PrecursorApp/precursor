@@ -25,65 +25,67 @@
   (:import [goog.ui IdGenerator]))
 
 (def team-sharing
-  [:svg.art {:view-box "0 0 1024 640"}
-   [:g
-    [:path.art-both-color {:d "M1008,8H16c-4.4,0-8,3.6-8,8v16h1008V16 C1016,11.6,1012.4,8,1008,8z"}]
-    [:path.art-fill-white {:d "M24,20c0,2.2-1.8,4-4,4s-4-1.8-4-4s1.8-4,4-4S24,17.8,24,20z M52,16c-2.2,0-4,1.8-4,4s1.8,4,4,4s4-1.8,4-4 S54.2,16,52,16z M36,16c-2.2,0-4,1.8-4,4s1.8,4,4,4s4-1.8,4-4S38.2,16,36,16z"}]
-    [:path.art-line-color {:d "M8,32v592c0,4.4,3.6,8,8,8h992c4.4,0,8-3.6,8-8V32"}]]
-   [:g
-    [:path.art-line-color {:d "M80,80c0,13.3-10.7,24-24,24S32,93.3,32,80 s10.7-24,24-24S80,66.7,80,80z M50.3,73.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7c0-3.1-2.5-5.7-5.7-5.7 C52.9,68,50.3,70.5,50.3,73.7z M62.7,78.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
-    [:text.art-fill-black {:transform "matrix(1 0 0 1 104 72)"} "email@email.com"]
-    [:text.art-fill-color {:transform "matrix(1 0 0 1 104 96)"} "Was granted access yesterday."]]
-   [:g
-    [:path.art-line-color {:d "M80,152c0,13.3-10.7,24-24,24s-24-10.7-24-24 s10.7-24,24-24S80,138.7,80,152z M50.3,145.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7S59.1,140,56,140 C52.9,140,50.3,142.5,50.3,145.7z M62.7,150.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
-    [:text.art-fill-black {:transform "matrix(1 0 0 1 104 144)"} "email@email.com"]
-    [:text.art-fill-color {:transform "matrix(1 0 0 1 104 168)"} "Was granted access yesterday."]]
-   [:g
-    [:path.art-line-color {:d "M80,224c0,13.3-10.7,24-24,24s-24-10.7-24-24 s10.7-24,24-24S80,210.7,80,224z M50.3,217.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7S59.1,212,56,212 C52.9,212,50.3,214.5,50.3,217.7z M62.7,222.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
-    [:text.art-fill-black {:transform "matrix(1 0 0 1 104 216)"} "email@email.com"]
-    [:text.art-fill-color {:transform "matrix(1 0 0 1 104 240)"} "Was granted access yesterday."]]
-   [:g
-    [:path.art-line-color {:d "M80,296c0,13.3-10.7,24-24,24s-24-10.7-24-24 s10.7-24,24-24S80,282.7,80,296z M50.3,289.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7S59.1,284,56,284 C52.9,284,50.3,286.5,50.3,289.7z M62.7,294.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
-    [:text.art-fill-black {:transform "matrix(1 0 0 1 104 288)"} "email@email.com"]
-    [:text.art-fill-color {:transform "matrix(1 0 0 1 104 312)"} "Was granted access yesterday."]]
-   [:g
-    [:path.art-line-color {:d "M80,368c0,13.3-10.7,24-24,24s-24-10.7-24-24 s10.7-24,24-24S80,354.7,80,368z M50.3,361.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7S59.1,356,56,356 C52.9,356,50.3,358.5,50.3,361.7z M62.7,366.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
-    [:text.art-fill-black {:transform "matrix(1 0 0 1 104 360)"} "email@email.com"]
-    [:text.art-fill-color {:transform "matrix(1 0 0 1 104 384)"} "Was granted access yesterday."]]
-   [:g
-    [:path.art-line-black {:d "M44.4,599.1v-2.7 c0-2.5-2-4.4-4.4-4.4s-4.4,2-4.4,4.4v2.7"}]
-    [:path.art-fill-black {:d "M46.7,608H33.3v-8.9h13.3V608z"}]
-    [:text.art-fill-black {:transform "matrix(1 0 0 1 72 608)"} "Private Document"]]
-   [:g
-    [:path.art-line-color {:d "M1016,96H392v472h624"}]
-    [:path.art-line-color {:d "M822,568V256H586v312"}]
-    [:path.art-line-color {:d "M586,471h156V353H586"}]]
-   [:g
-    [:path.art-line-color {:d "M822,504l-80-80 M586,268l85,85 M737,353l85-85 M586,504l33-33"}]
-    [:path.art-line-color {:d "M586,504h236"}]
-    [:path.art-line-color {:d "M822,268H586"}]]
-   [:g
-    [:path.art-line-color {:d "M600,425h112"}]
-    [:path.art-line-color {:d "M600,441h64"}]
-    [:path.art-line-color {:d "M600,457h96"}]]])
+  (html
+   [:svg.art {:view-box "0 0 1024 640"}
+    [:g
+     [:path.art-both-color {:d "M1008,8H16c-4.4,0-8,3.6-8,8v16h1008V16 C1016,11.6,1012.4,8,1008,8z"}]
+     [:path.art-fill-white {:d "M24,20c0,2.2-1.8,4-4,4s-4-1.8-4-4s1.8-4,4-4S24,17.8,24,20z M52,16c-2.2,0-4,1.8-4,4s1.8,4,4,4s4-1.8,4-4 S54.2,16,52,16z M36,16c-2.2,0-4,1.8-4,4s1.8,4,4,4s4-1.8,4-4S38.2,16,36,16z"}]
+     [:path.art-line-color {:d "M8,32v592c0,4.4,3.6,8,8,8h992c4.4,0,8-3.6,8-8V32"}]]
+    [:g
+     [:path.art-line-color {:d "M80,80c0,13.3-10.7,24-24,24S32,93.3,32,80 s10.7-24,24-24S80,66.7,80,80z M50.3,73.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7c0-3.1-2.5-5.7-5.7-5.7 C52.9,68,50.3,70.5,50.3,73.7z M62.7,78.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
+     [:text.art-fill-black {:transform "matrix(1 0 0 1 104 72)"} "email@email.com"]
+     [:text.art-fill-color {:transform "matrix(1 0 0 1 104 96)"} "Was granted access yesterday."]]
+    [:g
+     [:path.art-line-color {:d "M80,152c0,13.3-10.7,24-24,24s-24-10.7-24-24 s10.7-24,24-24S80,138.7,80,152z M50.3,145.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7S59.1,140,56,140 C52.9,140,50.3,142.5,50.3,145.7z M62.7,150.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
+     [:text.art-fill-black {:transform "matrix(1 0 0 1 104 144)"} "email@email.com"]
+     [:text.art-fill-color {:transform "matrix(1 0 0 1 104 168)"} "Was granted access yesterday."]]
+    [:g
+     [:path.art-line-color {:d "M80,224c0,13.3-10.7,24-24,24s-24-10.7-24-24 s10.7-24,24-24S80,210.7,80,224z M50.3,217.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7S59.1,212,56,212 C52.9,212,50.3,214.5,50.3,217.7z M62.7,222.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
+     [:text.art-fill-black {:transform "matrix(1 0 0 1 104 216)"} "email@email.com"]
+     [:text.art-fill-color {:transform "matrix(1 0 0 1 104 240)"} "Was granted access yesterday."]]
+    [:g
+     [:path.art-line-color {:d "M80,296c0,13.3-10.7,24-24,24s-24-10.7-24-24 s10.7-24,24-24S80,282.7,80,296z M50.3,289.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7S59.1,284,56,284 C52.9,284,50.3,286.5,50.3,289.7z M62.7,294.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
+     [:text.art-fill-black {:transform "matrix(1 0 0 1 104 288)"} "email@email.com"]
+     [:text.art-fill-color {:transform "matrix(1 0 0 1 104 312)"} "Was granted access yesterday."]]
+    [:g
+     [:path.art-line-color {:d "M80,368c0,13.3-10.7,24-24,24s-24-10.7-24-24 s10.7-24,24-24S80,354.7,80,368z M50.3,361.7c0,3.1,2.5,5.7,5.7,5.7c3.1,0,5.7-2.5,5.7-5.7S59.1,356,56,356 C52.9,356,50.3,358.5,50.3,361.7z M62.7,366.9c2.1,1.7,3.4,4.9,3.4,6.9c0,3.9-4.5,6.2-10.1,6.2c-5.6,0-10.1-2.3-10.1-6.2 c0-2.1,1.3-5.2,3.4-6.9"}]
+     [:text.art-fill-black {:transform "matrix(1 0 0 1 104 360)"} "email@email.com"]
+     [:text.art-fill-color {:transform "matrix(1 0 0 1 104 384)"} "Was granted access yesterday."]]
+    [:g
+     [:path.art-line-black {:d "M44.4,599.1v-2.7 c0-2.5-2-4.4-4.4-4.4s-4.4,2-4.4,4.4v2.7"}]
+     [:path.art-fill-black {:d "M46.7,608H33.3v-8.9h13.3V608z"}]
+     [:text.art-fill-black {:transform "matrix(1 0 0 1 72 608)"} "Private Document"]]
+    [:g
+     [:path.art-line-color {:d "M1016,96H392v472h624"}]
+     [:path.art-line-color {:d "M822,568V256H586v312"}]
+     [:path.art-line-color {:d "M586,471h156V353H586"}]]
+    [:g
+     [:path.art-line-color {:d "M822,504l-80-80 M586,268l85,85 M737,353l85-85 M586,504l33-33"}]
+     [:path.art-line-color {:d "M586,504h236"}]
+     [:path.art-line-color {:d "M822,268H586"}]]
+    [:g
+     [:path.art-line-color {:d "M600,425h112"}]
+     [:path.art-line-color {:d "M600,441h64"}]
+     [:path.art-line-color {:d "M600,457h96"}]]]))
 
 (def screen
-  [:svg {:view-box "0 0 1024 640"}
-   [:path.svg-shape-layers {:d "M704,576H64V88h640V576z M248,152h352 M256,184h400 M664,216H248 M240,248h408 M96,280h544 M96,312h528 M96,344h560 M96,376h512 M672,408H96v168h576V408z M96,408 l336,168 M336,576l336-168"}]
-   [:g.svg-in-progress [:circle {:stroke-dasharray "8.0417,8.0417", :cx "160", :cy "184", :r "64"}]]
-   [:g.svg-in-progress
-    [:line {:x1 "205.3", :y1 "138.7", :x2 "202.4", :y2 "141.6"}]
-    [:line {:stroke-dasharray "8,8", :x1 "196.8", :y1 "147.2", :x2 "120.4", :y2 "223.6"}]
-    [:line {:x1 "117.6", :y1 "226.4", :x2 "114.7", :y2 "229.3"}]]
-   [:g.svg-in-progress
-    [:line {:x1 "205.3", :y1 "229.3", :x2 "202.4", :y2 "226.4"}]
-    [:line {:stroke-dasharray "8,8", :x1 "196.8", :y1 "220.8", :x2 "120.4", :y2 "144.4"}]
-    [:line {:x1 "117.6", :y1 "141.6", :x2 "114.7", :y2 "138.7"}]]
-   [:path.svg-chat {:d "M768,24v616 M768,576h256 M784,592v32"}]
-   [:path.svg-cursor {:d "M183.3,256.1v-13.4l9.5,9.5h-3.8 l2.2,5.3l-2.9,1.2l-2.2-5.3L183.3,256.1z"}]
-   [:path.svg-menu {:d "M1016,0H8C3.6,0,0,3.6,0,8v16h1024V8 C1024,3.6,1020.4,0,1016,0z"}]
-   [:path.svg-border {:d "M0,24v608c0,4.4,3.6,8,8,8h1008 c4.4,0,8-3.6,8-8V24"}]
-   [:path.svg-actions {:d "M16,12c0,2.2-1.8,4-4,4s-4-1.8-4-4s1.8-4,4-4S16,9.8,16,12z M44,8c-2.2,0-4,1.8-4,4s1.8,4,4,4 c2.2,0,4-1.8,4-4S46.2,8,44,8z M28,8c-2.2,0-4,1.8-4,4s1.8,4,4,4s4-1.8,4-4S30.2,8,28,8z"}]])
+  (html
+   [:svg {:view-box "0 0 1024 640"}
+    [:path.svg-shape-layers {:d "M704,576H64V88h640V576z M248,152h352 M256,184h400 M664,216H248 M240,248h408 M96,280h544 M96,312h528 M96,344h560 M96,376h512 M672,408H96v168h576V408z M96,408 l336,168 M336,576l336-168"}]
+    [:g.svg-in-progress [:circle {:stroke-dasharray "8.0417,8.0417", :cx "160", :cy "184", :r "64"}]]
+    [:g.svg-in-progress
+     [:line {:x1 "205.3", :y1 "138.7", :x2 "202.4", :y2 "141.6"}]
+     [:line {:stroke-dasharray "8,8", :x1 "196.8", :y1 "147.2", :x2 "120.4", :y2 "223.6"}]
+     [:line {:x1 "117.6", :y1 "226.4", :x2 "114.7", :y2 "229.3"}]]
+    [:g.svg-in-progress
+     [:line {:x1 "205.3", :y1 "229.3", :x2 "202.4", :y2 "226.4"}]
+     [:line {:stroke-dasharray "8,8", :x1 "196.8", :y1 "220.8", :x2 "120.4", :y2 "144.4"}]
+     [:line {:x1 "117.6", :y1 "141.6", :x2 "114.7", :y2 "138.7"}]]
+    [:path.svg-chat {:d "M768,24v616 M768,576h256 M784,592v32"}]
+    [:path.svg-cursor {:d "M183.3,256.1v-13.4l9.5,9.5h-3.8 l2.2,5.3l-2.9,1.2l-2.2-5.3L183.3,256.1z"}]
+    [:path.svg-menu {:d "M1016,0H8C3.6,0,0,3.6,0,8v16h1024V8 C1024,3.6,1020.4,0,1016,0z"}]
+    [:path.svg-border {:d "M0,24v608c0,4.4,3.6,8,8,8h1008 c4.4,0,8-3.6,8-8V24"}]
+    [:path.svg-actions {:d "M16,12c0,2.2-1.8,4-4,4s-4-1.8-4-4s1.8-4,4-4S16,9.8,16,12z M44,8c-2.2,0-4,1.8-4,4s1.8,4,4,4 c2.2,0,4-1.8,4-4S46.2,8,44,8z M28,8c-2.2,0-4,1.8-4,4s1.8,4,4,4s4-1.8,4-4S30.2,8,28,8z"}]]))
 
 (defn past-center? [owner ref]
   (let [node (om/get-node owner ref)
@@ -188,95 +190,98 @@
             ]])))))
 
 (def artwork-mobile
-  [:div.artwork
-   [:div.art-mobile
-    [:div.art-mobile-head
-     [:div.art-mobile-camera]]
-    [:div.art-mobile-body
-     [:div.art-screen
-      [:div.art-menu
-       [:div.art-heading "Today"]
-       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.art-doc.selected [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
-       [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
-      [:div.art-canvas [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
-    [:div.art-mobile-foot
-     [:div.art-mobile-button]]]])
+  (html
+   [:div.artwork
+    [:div.art-mobile
+     [:div.art-mobile-head
+      [:div.art-mobile-camera]]
+     [:div.art-mobile-body
+      [:div.art-screen
+       [:div.art-menu
+        [:div.art-heading "Today"]
+        [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+        [:div.art-doc.selected [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+        [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]
+        [:div.art-doc   [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+       [:div.art-canvas [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
+     [:div.art-mobile-foot
+      [:div.art-mobile-button]]]]))
 
 (def artwork-interactive
-  [:div.artwork
-   [:div.art-interactive
-    [:div.art-interactive-button
-     [:div.art-interactive-text "HOME"]
-     [:div.art-interactive-cursor (common/icon :cursor)]]
-    [:div.art-interactive-head
-     [:div.art-interactive-name {:data-before "link" :data-after "with"} "home button"]]
-    [:div.art-interactive-body
-     [:div.property-dropdown-targets
-      [:div.art-interactive-target
-       [:div.art-interactive-placeholder "|"]
-       [:div.art-interactive-more "..."]]
-      [:div.property-dropdown-target.right "home page"]
-      [:div.property-dropdown-target.wrong "blog page"]
-      [:div.property-dropdown-target.wrong "about page"]
-      [:div.property-dropdown-target.wrong "contact page"]
-      [:div.property-dropdown-target.wrong "jobs page"]
-      [:div.property-dropdown-target.wrong "team page"]]]]])
+  (html
+   [:div.artwork
+    [:div.art-interactive
+     [:div.art-interactive-button
+      [:div.art-interactive-text "HOME"]
+      [:div.art-interactive-cursor (common/icon :cursor)]]
+     [:div.art-interactive-head
+      [:div.art-interactive-name {:data-before "link" :data-after "with"} "home button"]]
+     [:div.art-interactive-body
+      [:div.property-dropdown-targets
+       [:div.art-interactive-target
+        [:div.art-interactive-placeholder "|"]
+        [:div.art-interactive-more "..."]]
+       [:div.property-dropdown-target.right "home page"]
+       [:div.property-dropdown-target.wrong "blog page"]
+       [:div.property-dropdown-target.wrong "about page"]
+       [:div.property-dropdown-target.wrong "contact page"]
+       [:div.property-dropdown-target.wrong "jobs page"]
+       [:div.property-dropdown-target.wrong "team page"]]]]]))
 
 (def artwork-team
-  [:div.artwork
-   [:div.art-team
-    [:div.art-team-list
+  (html
+   [:div.artwork
+    [:div.art-team
+     [:div.art-team-list
 
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span "soren@prcr.sr"]
-       [:span.access-status "Was granted access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span "soren@prcr.sr"]
+        [:span.access-status "Was granted access yesterday."]]]
 
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span "niobe@prcr.sr"]
-       [:span.access-status "Was granted access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span "niobe@prcr.sr"]
+        [:span.access-status "Was granted access yesterday."]]]
 
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span "ballard@prcr.sr"]
-       [:span.access-status "Was granted access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span "ballard@prcr.sr"]
+        [:span.access-status "Was granted access yesterday."]]]
 
-     [:div.access-card.requesting
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span "anderson@prcrsr.com"]
-       [:span.access-status "Requested access yesterday."]]]
+      [:div.access-card.requesting
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span "anderson@prcrsr.com"]
+        [:span.access-status "Requested access yesterday."]]]
 
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span "smith@precursorapp.com"]
-       [:span.access-status "Was denied access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span "smith@precursorapp.com"]
+        [:span.access-status "Was denied access yesterday."]]]
 
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span "roland@prcr.sr"]
-       [:span.access-status "Was granted access today."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span "roland@prcr.sr"]
+        [:span.access-status "Was granted access today."]]]
 
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span "morpheus@prcrsr.com"]
-       [:span.access-status "Was granted access today."]]]]]])
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span "morpheus@prcrsr.com"]
+        [:span.access-status "Was granted access today."]]]]]]))
 
 (defn the-how [app owner]
   (reify

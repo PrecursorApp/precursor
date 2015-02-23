@@ -52,10 +52,11 @@
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)]
         (html
-          [:a.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
-                                     :left (- (get-in app [:menu :x]) 128)}}
-           [:svg.radial-buttons {:width "256" :height "256"}
-            (for [[tool template] tools-templates]
+         [:a.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
+                                  :left (- (get-in app [:menu :x]) 128)}}
+          [:svg.radial-buttons {:width "256" :height "256"}
+           (for [[tool template] tools-templates]
+             (html
               [:g.radial-button {:class (str "tool-" (:type template))}
                [:title (:hint template)]
                [:path.radial-pie {:d (:path template)
@@ -63,8 +64,8 @@
                                   :on-mouse-up #(do (cast! :tool-selected [tool]))
                                   :on-touch-end #(do (cast! :tool-selected [tool]))}]
                [:path.radial-icon {:class (str "shape-" (:type template))
-                                   :d (get common/icon-paths (:icon template))}]])
-            [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
+                                   :d (get common/icon-paths (:icon template))}]]))
+           [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
 
 (defn radial-hint [app owner]
   (reify
@@ -95,9 +96,9 @@
 (defmethod svg-element :layer.type/rect
   [selected-eids layer]
   (-> (svg/layer->svg-rect layer)
-      (maybe-add-selected layer selected-eids)
-      (clj->js)
-      (dom/rect)))
+    (maybe-add-selected layer selected-eids)
+    (clj->js)
+    (dom/rect)))
 
 (defmethod svg-element :layer.type/text
   [selected-eids layer]
