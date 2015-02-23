@@ -96,6 +96,7 @@
 
 (defn make-button [{:keys [document/id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing Make button")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -161,6 +162,7 @@
 
 (defn the-why [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing Why")
     om/IInitState (init-state [_] {:past-center-featurettes #{}})
     om/IRenderState
     (render-state [_ {:keys [past-center-featurettes]}]
@@ -278,6 +280,7 @@
 
 (defn the-how [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing How")
     om/IInitState (init-state [_] {:past-center-featurettes #{}})
     om/IDidMount (did-mount [_]
                    (scroll/register owner #(maybe-set-state! owner [:past-center-featurettes]
@@ -324,6 +327,7 @@
 
 (defn the-what [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing What")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
@@ -347,6 +351,7 @@
 
 (defn landing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]

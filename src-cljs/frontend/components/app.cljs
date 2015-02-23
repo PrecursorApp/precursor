@@ -30,7 +30,7 @@
 
 (defn app* [app owner]
   (reify
-    om/IDisplayName (display-name [_] "App")
+    om/IDisplayName (display-name [_] "App*")
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
@@ -50,6 +50,7 @@
 
 (defn app [app owner]
   (reify
+    om/IDisplayName (display-name [_] "App")
     om/IRender
     (render [_]
       (if (:navigation-point app)

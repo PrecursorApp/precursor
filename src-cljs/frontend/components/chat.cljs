@@ -34,6 +34,7 @@
 
 (defn chat-item [chat owner {:keys [sente-id show-sender?]}]
   (reify
+    om/IDisplayName (display-name [_] "Chat Item")
     om/IRender
     (render [_]
       (let [id (apply str (take 6 (str (:session/uuid chat))))
@@ -90,6 +91,7 @@
 
 (defn input [{:keys [chat-body]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Chat Input")
     om/IInitState (init-state [_] {:chat-body (atom "")})
     om/IRender
     (render [_]
@@ -121,6 +123,7 @@
 
 (defn log [{:keys [db chat-body sente-id client-id chat-opened]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Chat Log")
     om/IInitState
     (init-state [_]
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
@@ -189,6 +192,7 @@
 
 (defn chat [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Chat")
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)

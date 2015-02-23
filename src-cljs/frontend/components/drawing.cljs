@@ -242,6 +242,7 @@
 
 (defn signup-button [document owner]
   (reify
+    om/IDisplayName (display-name [_] "Signup Button Animation")
     om/IDidMount
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(

@@ -13,6 +13,7 @@
 
 (defn menu [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud Menu")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -42,6 +43,7 @@
 
 (defn info [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud Info")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -57,6 +59,7 @@
 
 (defn landing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud Landing")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -69,6 +72,7 @@
 
 (defn chat [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud Chat")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -112,6 +116,7 @@
 
 (defn viewers [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud Viewers")
     om/IInitState (init-state [_] {:editing-name? false
                                    :new-name ""})
     om/IDidUpdate
@@ -210,6 +215,7 @@
 
 (defn hud [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud")
     om/IRender
     (render [_]
       (html

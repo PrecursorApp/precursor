@@ -23,6 +23,7 @@
 
 (defn auth-link [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Auth Link")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -70,6 +71,7 @@
 
 (defn start [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Start")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -218,6 +220,7 @@
 
 (defn private-sharing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Private Sharing")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -272,6 +275,7 @@
 
 (defn public-sharing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Public Sharing")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -318,6 +322,7 @@
 
 (defn sharing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Sharing")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -378,6 +383,7 @@
 
 (defn info [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Info")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
@@ -433,6 +439,7 @@
 
 (defn shortcuts [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Shortcuts")
     om/IInitState (init-state [_] {:copy-paste-works? (ua/isChrome)})
     om/IRender
     (render [_]
@@ -541,6 +548,7 @@
 
 (defn username [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Username")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
@@ -580,6 +588,7 @@
 
 (defn overlay [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)

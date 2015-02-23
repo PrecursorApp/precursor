@@ -18,6 +18,7 @@
 
 (defn signup-prompt [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Doc Viewer Signup Prompt")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
@@ -44,6 +45,7 @@
 
 (defn docs-list [docs owner]
   (reify
+    om/IDisplayName (display-name [_] "Doc Viewer Docs List")
     om/IRender
     (render [_]
       (html
@@ -79,6 +81,7 @@
 
 (defn doc-viewer* [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Doc Viewer*")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -110,6 +113,7 @@
 
 (defn doc-viewer [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Doc Viewer")
     om/IRender
     (render [_]
       (if (:cust app)

@@ -47,6 +47,7 @@
 
 (defn radial-menu [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Radial Menu")
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)]
@@ -67,6 +68,7 @@
 
 (defn radial-hint [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Radial Hint")
     om/IRender
     (render [_]
       (html
@@ -134,6 +136,7 @@
 
 (defn handles [layer owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Handles")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner [:cast!])
@@ -297,6 +300,7 @@
 
 (defn svg-layers [{:keys [editing-eids selected-eids tool] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "SVG Layers")
     om/IInitState
     (init-state [_]
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -352,6 +356,7 @@
 
 (defn cursor [[id subscriber] owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Cursor")
     om/IRender
     (render [_]
       (if (and (:tool subscriber)
@@ -367,6 +372,7 @@
 
 (defn cursors [{:keys [subscribers client-id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Cursors")
     om/IRender
     (render [_]
       (apply dom/g nil
@@ -374,6 +380,7 @@
 
 (defn text-input [layer owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Text Input")
     om/IDidMount
     (did-mount [_]
       (om/set-state! owner
@@ -445,6 +452,7 @@
 
 (defn subscriber-layers [{:keys [layers]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Subscriber Layers")
     om/IRender
     (render [_]
       (if-not (seq layers)
@@ -461,6 +469,7 @@
 
 (defn layer-properties [{:keys [layer x y]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Layer Props")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                                    :input-expanded false})
     om/IDidMount
@@ -564,6 +573,7 @@
 
 (defn svg-canvas [payload owner opts]
   (reify
+    om/IDisplayName (display-name [_] "SVG Canvas")
     om/IInitState (init-state [_]
                     ;; use an atom for performance, don't want to constantly
                     ;; re-render when we set-state!
@@ -752,6 +762,7 @@
 
 (defn canvas [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas")
     om/IRender
     (render [_]
       (let [right-click-learned? (get-in app state/right-click-learned-path)]
