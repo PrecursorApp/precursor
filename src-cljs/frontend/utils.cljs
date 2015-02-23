@@ -13,7 +13,8 @@
             [goog.Uri]
             [goog.events :as ge]
             [goog.net.EventType :as gevt]
-            [sablono.core :as html :include-macros true])
+            [sablono.core :as html :include-macros true]
+            [frontend.utils.seq :as seq-util])
   (:require-macros [frontend.utils :refer (inspect timing defrender)])
   (:import [goog.format EmailAddress]))
 
@@ -215,3 +216,5 @@
   (let [id (aget x "_rootNodeID")]
     (assert id)
     id))
+
+(def select-in seq-util/select-in)
