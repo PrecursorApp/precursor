@@ -32,17 +32,17 @@
    :error-message   nil
    :environment     "development"
    :settings        {:browser-settings initial-browser-settings}
-   :keyboard-shortcuts {:select #{"v"}
-                        :circle #{"l"}
-                        :rect #{"m"}
-                        :line #{"\\"}
-                        :pen #{"n"}
-                        :text #{"t"}
-                        :undo #{"meta+z" "ctrl+z"}
-                        :shortcuts-menu #{"shift+/"}
-                        :escape-interaction #{"esc"}
-                        :reset-canvas-position #{"home" "1"}
-                        :return-from-origin #{"2"}}
+   :keyboard-shortcuts {:select #{#{"v"}}
+                        :circle #{#{"l"}}
+                        :rect #{#{"m"}}
+                        :line #{#{"\\"}}
+                        :pen #{#{"n"}}
+                        :text #{#{"t"}}
+                        :undo #{#{"meta" "z"} #{"ctrl" "z"}}
+                        :shortcuts-menu #{#{"shift" "/"}}
+                        :escape-interaction #{#{"esc"}}
+                        :reset-canvas-position #{#{"home"} #{"1"}}
+                        :return-from-origin #{#{"2"}}}
    :current-user    nil
    :entity-ids      #{}
    :document/id     nil

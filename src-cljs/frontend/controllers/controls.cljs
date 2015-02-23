@@ -156,21 +156,22 @@
     (update-in [:camera] cameras/previous)))
 
 (defmethod control-event :key-state-changed
-  [browser-state message [{:keys [key key-name-kw depressed?]}] state]
+  [browser-state message [{:keys [key-set depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
     (-> state
-        (assoc-in [:keyboard key-name-kw] depressed?)
-        (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key))
-                (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key))
+        (assoc-in [:keyboard keys] depressed?)
+        (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
+                (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key-set))
                                                          (keys shortcuts))))
-                (and (= "shift" key) (settings/drawing-in-progress? state))
+                (and (= #{"shift"} key-set) (settings/drawing-in-progress? state))
                 (assoc-in [:drawing :layers 0 :force-even?] depressed?)))))
 
 (defmethod post-control-event! :key-state-changed
-  [browser-state message [{:keys [key-name-kw depressed?]}] previous-state current-state]
+  [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
   ;; TODO: better way to handle this
-  (when (or (= key-name-kw :backspace?)
-            (= key-name-kw :del?))
+  (when (and depressed?
+             (or (= key-set #{"backspace"})
+                 (= key-set #{"del"})))
     (put! (get-in current-state [:comms :controls]) [:deleted-selected])))
 
 (defn update-mouse [state x y]

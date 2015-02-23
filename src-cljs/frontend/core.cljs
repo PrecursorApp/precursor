@@ -60,24 +60,14 @@
   (.stopPropagation event))
 
 (defn track-key-state [cast! direction suppressed-key-combos event]
-  (let [meta?      (when (.-metaKey event) "meta")
-        shift?     (when (.-shiftKey event) "shift")
-        ctrl?      (when (.-ctrlKey event) "ctrl")
-        alt?       (when (.-altKey event) "alt")
-        char       (or (get keyq/code->key (.-which event))
-                       (js/String.fromCharCode (.-which event)))
-        tokens     [shift? meta? ctrl? alt? char]
-        key-string (string/join "+" (filter identity tokens))]
+  (let [key-set (keyq/event->key event)]
     (when-not (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
-      (when (get suppressed-key-combos key-string)
+      (when (contains? suppressed-key-combos key-set)
         (.preventDefault event))
       (when-not (.-repeat event)
-        (let [human-name (keyq/event->key event)]
-          (let [key-name (keyword (str human-name "?"))]
-            (cast! :key-state-changed [{:key-name-kw key-name
-                                        :key         human-name
-                                        :code        (.-which event)
-                                        :depressed?  (= direction :down)}])))))))
+        (cast! :key-state-changed [{:key-set key-set
+                                    :code (.-which event)
+                                    :depressed? (= direction :down)}])))))
 
 ;; Overcome some of the browser limitations around DnD
 (def mouse-move-ch
@@ -231,8 +221,8 @@
         nav-tap                  (chan)
         api-tap                  (chan)
         errors-tap               (chan)
-        suppressed-key-combos    #{"meta+A" "meta+D" "meta+Z" "shift+meta+Z" "backspace"
-                                   "shift+meta+D" "up" "down" "left" "right" "meta+G"}
+        suppressed-key-combos    #{#{"meta" "A"} #{"meta" "D"} #{"meta" "Z"} #{"shift" "meta" "Z"} #{"backspace"}
+                                   #{"shift" "meta" "D"} #{"up"} #{"down"} #{"left"} #{"right"} #{"meta" "G"}}
         handle-key-down          (partial track-key-state cast! :down suppressed-key-combos)
         handle-key-up            (partial track-key-state cast! :up   suppressed-key-combos)
         handle-mouse-move        #(handle-mouse-move cast! %)
