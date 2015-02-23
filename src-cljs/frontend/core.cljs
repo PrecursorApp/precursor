@@ -188,6 +188,7 @@
        (errors-con/post-error! container (first value) (second value) previous-state @state)))))
 
 (defn install-om [state container comms cast! handlers]
+  (instrumentation/setup-component-stats!)
   (om/root
    app/app
    state
@@ -238,8 +239,6 @@
 
     ;; allow figwheel in dev-cljs access to this function
     (def om-setup-debug om-setup)
-
-    (instrumentation/setup-component-stats!)
 
     (swap! state assoc :undo-state undo-state)
 
