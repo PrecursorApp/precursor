@@ -565,7 +565,7 @@
   (-> state
       (update-mouse x y)
       (assoc-in [:mouse :down] true)
-      (assoc-in [:mouse :type] (if (= type "mousedown") :mouse :touch))))
+      (assoc-in [:mouse-type] (if (= type "mousedown") :mouse :touch))))
 
 (defmethod post-control-event! :mouse-depressed
   [browser-state message [x y {:keys [button ctrl?]}] previous-state current-state]

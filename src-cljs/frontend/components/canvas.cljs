@@ -74,7 +74,7 @@
       (html
         [:div.radial-hint {:style {:top  (+ (get-in app [:mouse :y]) 16)
                                    :left (+ (get-in app [:mouse :x]) 16)}}
-         (if (= :touch (get-in app [:mouse :type]))
+         (if (= :touch (get-in app [:mouse-type]))
            "Tap and hold to select tool"
            "Right-click.")]))))
 
