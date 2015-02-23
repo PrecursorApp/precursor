@@ -124,3 +124,22 @@ input {
     }
   }
 }
+input {
+  &[data-white] {
+    &[data-adaptive] {
+      &[required] {
+        &:not(:focus) {
+          border-color: @gray_light;
+        }
+      }
+      + label {
+        &[data-placeholder] {
+          &:before {
+            color: @gray_light;
+            background-image: linear-gradient(to bottom, @dye_outer, @dye_outer);
+          }
+        }
+      }
+    }
+  }
+}

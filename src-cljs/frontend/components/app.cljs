@@ -28,6 +28,66 @@
 (def keymap
   (atom nil))
 
+(defn request-access [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Request Access")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)]
+        (html
+
+          [:div.request-access
+           [:div.request-access-content
+           [:div.request-access-head
+            [:h2 "We're excited to show you our team features."]
+            [:p "To activate your early access, please sign in and let us know about the following info.
+                We'll send you an email confirmation once your account has been granted full access."]
+            [:div.calls-to-action
+              (common/google-login)]]
+           [:div.request-access-body
+            [:form.request-access-form
+             [:input
+              {:type "text"
+               :required "true"
+               :data-adaptive ""
+               :data-white ""}]
+             [:label
+              {:data-placeholder     "Your team name"
+               :data-placeholder-nil "Does your team have a name?"}]
+             [:input
+              {:type "text"
+               :required "true"
+               :data-adaptive ""
+               :data-white ""}]
+             [:label
+              {:data-placeholder     "Amount of teammates"
+               :data-placeholder-nil "How many teammates do you have?"}]
+             [:input
+              {:type "text"
+               :required "true"
+               :data-adaptive ""
+               :data-white ""}]
+             [:label
+              {:data-placeholder     "How you use Precursor"
+               :data-placeholder-nil "How are you going to use Precursor?"}]
+             [:input
+              {:type "text"
+               :required "true"
+               :data-adaptive ""
+               :data-white ""}]
+             [:label
+              {:data-placeholder     "Other tools you use"
+               :data-placeholder-nil "What other prototyping tools do you use?"}]
+             [:input
+              {:type "text"
+               :required "true"
+               :data-adaptive ""
+               :data-white ""}]
+             [:label
+              {:data-placeholder     "Some additional info"
+               :data-placeholder-nil "Anything else?"}]
+             [:button "Request Access"]]]]])))))
+
 (defn app* [app owner]
   (reify
     om/IDisplayName (display-name [_] "App")
@@ -54,6 +114,7 @@
     (render [_]
       (if (:navigation-point app)
         (dom/div #js {:id "app" :className "app"}
+          (om/build request-access app)
           (when (:show-landing? app)
             (om/build landing/landing app))
 
