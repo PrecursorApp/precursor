@@ -187,8 +187,7 @@
   (let [points (map js/parseInt (str/split (subs path 1) #" "))]
     (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
 
-(defmethod control-event :drawing-started
-  [browser-state message [x y] state]
+(defn handle-drawing-started [state x y]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
         {:keys [entity-id state]} (frontend.db/get-entity-id state)
@@ -210,6 +209,10 @@
               (assoc-in [:editing-eids :editing-eids] #{entity-id})
               (assoc-in [:selected-eids :selected-eids] #{entity-id}))]
       r)))
+
+(defmethod control-event :drawing-started
+  [browser-state message [x y] state]
+  (handle-drawing-started state x y))
 
 (defmethod control-event :drawing-edited
   [browser-state message {:keys [layer x y]} state]
@@ -572,40 +575,56 @@
       (assoc-in [:mouse-down] false)
       (assoc-in [:editing-eids :editing-eids] #{}))))
 
+(defn mouse-depressed-intents [state button ctrl?]
+  (let [tool (get-in state state/current-tool-path)
+        drawing-text? (and (keyword-identical? :text tool)
+                           (get-in state [:drawing :in-progress?]))]
+    (concat
+     ;; If you click while writing text, you probably wanted to place it there
+     ;; You also want the right-click menu to open
+     (when drawing-text? [:finish-text-layer])
+     (cond
+       (= button 2) [:open-menu]
+       (and (= button 0) ctrl?) [:open-menu]
+       (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
+       (contains? #{:pen :rect :circle :line :select} tool) [:start-drawing]
+       (and (keyword-identical? tool :text) (not drawing-text?)) [:start-drawing]
+       :else nil))))
+
+(declare handle-menu-opened)
+(declare handle-menu-opened-after)
+(declare handle-layer-properties-submitted)
+(declare handle-layer-properties-submitted-after)
+(declare handle-text-layer-finished)
+(declare handle-text-layer-finished-after)
+
 (defmethod control-event :mouse-depressed
-  [browser-state message [x y {:keys [button type]}] state]
-  (-> state
-      (update-mouse x y)
-      (assoc-in [:mouse-down] true)
-      (assoc-in [:mouse-type] (if (= type "mousedown") :mouse :touch))))
+  [browser-state message [x y {:keys [button type ctrl?]}] state]
+  (let [intents (mouse-depressed-intents state button ctrl?)
+        new-state (-> state
+                    (update-mouse x y)
+                    (assoc-in [:mouse-down] true)
+                    (assoc-in [:mouse-type] (if (= type "mousedown") :mouse :touch)))]
+    (reduce (fn [s intent]
+              (case intent
+                :finish-text-layer (handle-text-layer-finished s)
+                :open-menu (handle-menu-opened s)
+                :start-drawing (handle-drawing-started s x y)
+                :submit-layer-properties (handle-layer-properties-submitted s)
+                s))
+            new-state intents)))
 
 (defmethod post-control-event! :mouse-depressed
   [browser-state message [x y {:keys [button ctrl?]}] previous-state current-state]
-  (let [cast! (fn [msg & [payload]]
-                (put! (get-in current-state [:comms :controls]) [msg payload]))
-        drawing-text? (and (= (get-in current-state state/current-tool-path) :text)
-                           (get-in current-state [:drawing :in-progress?]))]
-    ;; If you click while writing text, you probably wanted to place it there
-    ;; You also want the right-click menu to open
-    (when drawing-text?
-      (cast! :text-layer-finished))
-    (cond
-      (= button 2) (cast! :menu-opened)
-      (and (= button 0) ctrl?) (cast! :menu-opened)
-      ;; turning off Cmd+click for opening the menu
-      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
-      (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
-      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
-
-      (= (get-in current-state state/current-tool-path) :text)
-      (when-not drawing-text?
-        (cast! :drawing-started [x y]))
-
-      (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
-      (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
-      (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
-      (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
-      :else                                             nil)))
+  ;; use previous state so that we're consistent with the control-event
+  (let [intents (mouse-depressed-intents previous-state button ctrl?)]
+    (doseq [intent intents]
+      (case intent
+        :finish-text-layer (handle-text-layer-finished-after current-state)
+        :open-menu (handle-menu-opened-after current-state previous-state)
+        :start-drawing nil
+        :submit-layer-properties (handle-layer-properties-submitted-after current-state)
+        nil))))
 
 (defn detectable-movement?
   "Checks to make sure we moved the layer from its starting position"
@@ -662,20 +681,25 @@
 
      :else nil)))
 
-(defmethod control-event :text-layer-finished
-  [browser-state message {:keys [bbox]} state]
+(defn handle-text-layer-finished [state bbox]
   (-> state
     (update-in [:drawing :layers 0 :bbox] #(or bbox %))
     (finalize-layer)))
 
-(defmethod post-control-event! :text-layer-finished
-  [browser-state message _ previous-state current-state]
-  (let [cast! #(put! (get-in current-state [:comms :controls]) %)
-        db           (:db current-state)
-        layer        (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))]
+(defmethod control-event :text-layer-finished
+  [browser-state message {:keys [bbox]} state]
+  (handle-text-layer-finished state bbox))
+
+(defn handle-text-layer-finished-after [current-state]
+  (let [db (:db current-state)
+        layer (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))]
     (when (layer-model/detectable? layer)
       (d/transact! db [layer] {:can-undo? true}))
     (maybe-notify-subscribers! current-state nil nil)))
+
+(defmethod post-control-event! :text-layer-finished
+  [browser-state message _ previous-state current-state]
+  (handle-text-layer-finished-after current-state))
 
 (defmethod control-event :deleted-selected
   [browser-state message _ state]
@@ -761,22 +785,27 @@
       (assoc-in [:drawing :moving?] true)
       (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
+(defn handle-menu-opened [state]
+  (-> state
+    (update-in [:menu] assoc
+               :open? true
+               :x (get-in state [:mouse :x])
+               :y (get-in state [:mouse :y]))
+    (assoc-in [:drawing :in-progress?] false)
+    (assoc-in state/right-click-learned-path true)))
+
 (defmethod control-event :menu-opened
   [browser-state message _ state]
-  (print "menu opened")
-  (-> state
-      (update-in [:menu] assoc
-                 :open? true
-                 :x (get-in state [:mouse :x])
-                 :y (get-in state [:mouse :y]))
-      (assoc-in [:drawing :in-progress?] false)
-      (assoc-in state/right-click-learned-path true)))
+  (handle-menu-opened state))
 
-(defmethod post-control-event! :menu-opened
-  [browser-state message _ previous-state current-state]
+(defn handle-menu-opened-after [previous-state current-state]
   (when (and (not (get-in previous-state state/right-click-learned-path))
              (get-in current-state state/right-click-learned-path))
     (analytics/track "Radial menu learned")))
+
+(defmethod post-control-event! :menu-opened
+  [browser-state message _ previous-state current-state]
+  (handle-menu-opened-after previous-state current-state))
 
 (defmethod control-event :menu-closed
   [browser-state message _ state]
@@ -1058,17 +1087,23 @@
         (assoc-in [:layer-properties-menu :x] rx)
         (assoc-in [:layer-properties-menu :y] ry))))
 
+(defn handle-layer-properties-submitted [state]
+  (-> state
+    (assoc-in [:layer-properties-menu :opened?] false)))
+
 (defmethod control-event :layer-properties-submitted
   [browser-state message _ state]
-  (-> state
-      (assoc-in [:layer-properties-menu :opened?] false)))
+  (handle-layer-properties-submitted state))
 
-(defmethod post-control-event! :layer-properties-submitted
-  [browser-state message _ previous-state current-state]
+(defn handle-layer-properties-submitted-after [current-state]
   (let [db (:db current-state)]
     (d/transact! db [(utils/remove-map-nils
                       (select-keys (get-in current-state [:layer-properties-menu :layer])
                                    [:db/id :layer/ui-id :layer/ui-target]))])))
+
+(defmethod post-control-event! :layer-properties-submitted
+  [browser-state message _ previous-state current-state]
+  (handle-layer-properties-submitted-after current-state))
 
 (defn empty-str->nil [s]
   (if (str/blank? s)

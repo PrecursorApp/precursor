@@ -226,16 +226,20 @@
                                                 [:show-viewers?]
                                                 [:client-id]
                                                 [:cust]
-                                                [:mouse-type]]))
+                                                [:mouse-type]])
+                  {:react-key "viewers"})
         (om/build menu (utils/select-in app [state/main-menu-learned-path
-                                             state/overlays-path]))
+                                             state/overlays-path])
+                  {:react-key "menu"})
         (om/build chat (utils/select-in app [state/chat-opened-path
                                              state/chat-button-learned-path
                                              state/browser-settings-path
-                                             [:document/id]]))
+                                             [:document/id]])
+                  {:react-key "chat"})
 
         ;; TODO finish this button once landing and outer are done
-        (om/build landing (utils/select-in app [state/info-button-learned-path]))
+        (om/build landing (utils/select-in app [state/info-button-learned-path])
+                  {:react-key "landing"})
 
         ;; deciding whether to get rid of this
         ;; (when-not (:cust app)

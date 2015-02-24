@@ -43,11 +43,12 @@
    ids (probably due to an error).
    Returns a map of :entity-id and new :frontend-id-state"
   [db {:keys [multiple remainder next-id] :as frontend-id-state}]
-  {:entity-id next-id
-   :frontend-id-state (assoc frontend-id-state :next-id (loop [res (+ next-id multiple)]
-                                                          (if (first (d/datoms db :eavt res))
-                                                            (recur (+ res multiple))
-                                                            res)))})
+  (let [eid (loop [res next-id]
+              (if (first (d/datoms db :eavt res))
+                (recur (+ res multiple))
+                res))]
+    {:entity-id eid
+     :frontend-id-state (assoc frontend-id-state :next-id (+ eid multiple))}))
 
 (defn generate-entity-ids
   "Same as generate-entity-id, but returns a list of :entity-ids"

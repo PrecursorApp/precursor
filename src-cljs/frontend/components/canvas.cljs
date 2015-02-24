@@ -74,12 +74,13 @@
     om/IDisplayName (display-name [_] "Radial Hint")
     om/IRender
     (render [_]
-      (html
-        [:div.radial-hint {:style {:top  (+ (get-in app [:mouse :y]) 16)
-                                   :left (+ (get-in app [:mouse :x]) 16)}}
-         (if (= :touch (get-in app [:mouse-type]))
-           "Tap and hold to select tool"
-           "Right-click.")]))))
+      (let [mouse (cursors/observe-mouse owner)]
+        (html
+         [:div.radial-hint {:style {:top  (+ (or (:y mouse) (- 1000)) 16)
+                                    :left (+ (or (:x mouse) (- 1000)) 16)}}
+          (if (= :touch (get-in app [:mouse-type]))
+            "Tap and hold to select tool"
+            "Right-click.")])))))
 
 ;; layers are always denominated in absolute coordinates
 ;; transforms are applied to handle panning and zooming

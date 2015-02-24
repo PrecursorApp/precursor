@@ -155,9 +155,9 @@
                                                  [:sente-id]
                                                  [:client-id]])
                        {:react-key "chat"})
-             (when (and (not right-click-learned?) (:mouse app))
-               (om/build canvas/radial-hint (select-in app [[:mouse]
-                                                            [:mouse-type]])
+
+             (when (not right-click-learned?)
+               (om/build canvas/radial-hint (select-in app [[:mouse-type]])
                          {:react-key "radial-hint"}))
 
              (om/build mouse-stats {} {:react-key "mouse-stats"})]
