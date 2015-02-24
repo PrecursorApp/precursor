@@ -1,0 +1,57 @@
+.early-access {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: @white;
+  z-index: 100;
+  overflow-y: scroll;
+  ~ .outer {           //
+    overflow: hidden;  // TODO for dev only
+  }                    //
+  .calls-to-action {
+    margin-bottom: @menu_padding;
+  }
+  .adaptive-placeholder {
+    margin-bottom: @menu_padding;
+  }
+}
+.early-access-content {
+  .content();
+  padding-top: 10%;
+  max-width: @tile * 10;
+}
+.early-access-heading {
+  margin-bottom: -.25em;
+  padding-bottom: @menu_padding;
+}
+.early-access-copy {
+  margin-bottom: @menu_padding;
+}
+.early-access-form {
+  &.disabled {
+    cursor: not-allowed;
+    .adaptive-placeholder,
+    .early-access-button {
+      pointer-events: none;
+    }
+    .adaptive-placeholder {
+      border: 1px dashed @gray_lighter;
+    }
+    .early-access-button {
+      color: @gray_light;
+      border: 1px dashed @gray_lighter;
+    }
+  }
+}
+.early-access-button {
+  line-height: 1;
+  height: @tile;
+  padding: @menu_padding (2 * @menu_padding);
+  border: 1px solid @gray_light;
+  &:hover,
+  &:focus {
+    background: @gray_light;
+  }
+}
