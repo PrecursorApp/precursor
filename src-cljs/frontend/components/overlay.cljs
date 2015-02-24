@@ -603,9 +603,10 @@
          [:div.menu
           [:div.menu-header
            (for [component overlay-components]
-            [:h4
-             {:title title}
-             (:title component)])]
+             (html
+              [:h4
+               {:title title}
+               (:title component)]))]
           [:div.menu-body
            (for [component overlay-components]
             (om/build (:component component) app))]])))))
