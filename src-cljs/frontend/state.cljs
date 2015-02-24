@@ -58,7 +58,8 @@
                      ;; us have multiple ref cursors in the same component
                      :entity-ids {:entity-ids #{}}}
    :selected-eids   {:selected-eids #{}}
-   :editing-eids    {:editing-eids #{}}})
+   :editing-eids    {:editing-eids #{}}
+   :mouse {}})
 
 (def user-path [:current-user])
 

@@ -7,7 +7,7 @@
   (let [ks (if (sequential? korks) korks [korks])
         root (om/root-cursor (om/get-shared owner [:_app-state-do-not-use]))
         cursor (get-in root ks)]
-    (assert (not (nil? cursor)))
+    (assert (not (nil? cursor)) ks)
     (om/observe owner (om/ref-cursor cursor))))
 
 (defn observe-mouse [owner]
