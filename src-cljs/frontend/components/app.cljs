@@ -29,18 +29,6 @@
 (def keymap
   (atom nil))
 
-(defn mouse-stats [_ owner]
-  (reify
-    om/IDisplayName (display-name [_] "Mouse Stats")
-    om/IRender
-    (render [_]
-      (let [mouse (cursors/observe-mouse owner)]
-        (html
-         [:div.mouse-stats
-          {:data-mouse (if (seq mouse)
-                         (pr-str (select-keys mouse [:x :y :rx :ry]))
-                         "{:x 0, :y 0, :rx 0, :ry 0}")}])))))
-
 (defn early-access [app owner]
   (reify
     om/IDisplayName (display-name [_] "Request Access")
@@ -125,7 +113,7 @@
         (if (:navigation-point app)
           (html
            [:div#app.app
-            (om/build early-access app)
+            ; (om/build early-access app)
             (when (:show-landing? app)
               (om/build landing/landing (select-keys app [:show-landing? :document/id])
                         {:react-key "landing"}))
@@ -158,9 +146,7 @@
 
              (when (not right-click-learned?)
                (om/build canvas/radial-hint (select-in app [[:mouse-type]])
-                         {:react-key "radial-hint"}))
-
-             (om/build mouse-stats {} {:react-key "mouse-stats"})]
+                         {:react-key "radial-hint"}))]
 
             (om/build hud/hud (select-in app [state/chat-opened-path
                                               state/overlays-path
@@ -172,6 +158,7 @@
                                               [:show-viewers?]
                                               [:client-id]
                                               [:cust]
+                                              [:mouse]
                                               [:mouse-type]])
                       {:react-key "hud"})])
           (html [:div#app]))))))

@@ -22,7 +22,7 @@
     }
   }
   .navigation-link {
-    color: fade(@white, 41.75); // precise transparency makes @white appear @gray on @gray_darker background
+    color: fade(@white, 41.75); // TODO use opacity variables here
     transition: @run_fast @bezier_fadein;
     &:hover {
       color: @white;
@@ -92,7 +92,7 @@
     });
   }
   .make-button {
-    color: fade(@white, 41.75); // precise transparency makes @white appear @gray on @gray_darker background
+    color: fade(@white, 41.75); // TODO use opacity variables here
     -webkit-mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
     &:hover {
       color: @white;
@@ -203,7 +203,7 @@
   .flex(1);
   .flexy(column);
   position: relative;
-  color: fade(@white, 75.75); // precise transparency makes @white appear @gray_light on @gray_darker background
+  color: fade(@white, 75.75); // TODO use opacity variables here
   .mq_640({
     min-height: 100vh;
   });

@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [datascript :as d]
             [frontend.components.common :as common]
+            [frontend.cursors :as cursors]
             [frontend.models.chat :as chat-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
@@ -41,34 +42,32 @@
                      (if (overlay-visible? app) "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
 
-(defn info [app owner]
+(defn tray [app owner]
   (reify
-    om/IDisplayName (display-name [_] "Hud Info")
+    om/IDisplayName (display-name [_] "Hud Tray")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            info-button-learned? (get-in app state/info-button-learned-path)]
+            new-here? (empty? (:cust app))
+            chat-opened? (get-in app state/chat-opened-path)
+            mouse (cursors/observe-mouse owner)]
         (html
-          [:a.hud-info.hud-item.hud-toggle
-           {:on-click #(cast! :overlay-info-toggled)
-            :role "button"
-            :class (when-not info-button-learned? "hover")
-            :data-right (when-not info-button-learned? "What is Precursor?")
-            :title (when info-button-learned? "What is Precursor?")}
-           (common/icon :info)])))))
-
-(defn landing [app owner]
-  (reify
-    om/IDisplayName (display-name [_] "Hud Landing")
-    om/IRender
-    (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            info-button-learned? (get-in app state/info-button-learned-path)]
-        (html
-          [:a.hud-landing.hud-item.hud-toggle
-           {:on-click #(cast! :landing-opened)
-            :role "button"}
-           (common/icon :info)])))))
+          [:div.hud-tray.hud-item {:class (when chat-opened? ["chat-opened"])}
+           [:div.tray-positive
+            (when new-here?
+              [:div.new-here
+               [:a.new-here-button {:data-text "New here?" :role "button"}]
+               [:div.new-here-items
+                [:a.new-here-item {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
+                [:a.new-here-item {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
+                [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
+                [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Sign in"]
+                [:div.new-here-ghost]]])
+            [:div.mouse-stats
+             {:data-text (if (seq mouse)
+                           (pr-str (select-keys mouse [:x :y :rx :ry]))
+                           "{:x 0, :y 0, :rx 0, :ry 0}")}]]
+           [:div.tray-negative]])))))
 
 (defn chat [app owner]
   (reify
@@ -237,12 +236,10 @@
                                              [:document/id]])
                   {:react-key "chat"})
 
-        ;; TODO finish this button once landing and outer are done
-        (om/build landing (utils/select-in app [state/info-button-learned-path])
-                  {:react-key "landing"})
-
-        ;; deciding whether to get rid of this
-        ;; (when-not (:cust app)
-        ;;   (om/build info app))
+        (om/build tray (utils/select-in app [state/chat-opened-path
+                                             state/info-button-learned-path
+                                             [:cust]
+                                             [:mouse]])
+                  {:react-key "tray"})
 
         ]))))
