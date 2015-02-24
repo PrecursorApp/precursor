@@ -44,6 +44,7 @@
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
                         :return-from-origin #{#{"2"}}}
+   :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}
    :document/id     nil
@@ -56,6 +57,8 @@
                      ;; We have to be a little silly here and below so that Om will let
                      ;; us have multiple ref cursors in the same component
                      :entity-ids {:entity-ids #{}}}
+   :selected-eids   {:selected-eids #{}}
+   :editing-eids    {:editing-eids #{}}})
 
 (def user-path [:current-user])
 
