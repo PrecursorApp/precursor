@@ -372,14 +372,13 @@
     (render [_]
       (if (and (:tool subscriber)
                (:show-mouse? subscriber))
-        (dom/g nil
-          (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
+        (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
                          {:svg-props {:height 16 :width 16
                                       :class "mouse-tool"
                                       :x (- (first (:mouse-position subscriber)) 8)
                                       :y (- (last (:mouse-position subscriber)) 8)
                                       :key id}
-                          :path-props {:style {:stroke (:color subscriber)}}}))
+                          :path-props {:style {:stroke (:color subscriber)}}})
         (dom/circle #js {:cx 0 :cy 0 :r 0})))))
 
 (defn cursors [{:keys [client-id]} owner]
