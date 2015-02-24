@@ -67,7 +67,8 @@
                        (js/String.fromCharCode (.-which event)))
         tokens     [shift? meta? ctrl? alt? char]
         key-string (string/join "+" (filter identity tokens))]
-    (when-not (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
+    (when-not (or (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
+                  (.. event -target -contentEditable))
       (when (get suppressed-key-combos key-string)
         (.preventDefault event))
       (when-not (.-repeat event)

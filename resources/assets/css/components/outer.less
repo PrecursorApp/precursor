@@ -134,40 +134,48 @@
   ~ .outer {
     overflow: hidden;
   }
+  .calls-to-action {
+    margin-bottom: @menu_padding;
+  }
+  .adaptive-placeholder {
+    margin-bottom: @menu_padding;
+  }
 }
 .request-access-content {
   .content();
-  // max-width: @tile * 10;
-  max-width: @tile_xxl / 2;
+  padding-top: 10%;
+  max-width: @tile * 10;
 }
-.request-access-head {
-  padding: 20% 0 @menu_padding;
-  h2 {
-    margin-bottom: @menu_padding;
-  }
-  p {
-    margin-bottom: @menu_padding;
-  }
+.request-access-heading {
+  margin-bottom: -.25em;
+  padding-bottom: @menu_padding;
+}
+.request-access-copy {
+  margin-bottom: @menu_padding;
 }
 .request-access-form {
-  .flexy(column);
-  // margin-top: @menu_padding;
-  input {
-    &:not(:first-child) {
-      margin-top: @menu_padding;
+  &.disabled {
+    cursor: not-allowed;
+    .adaptive-placeholder,
+    .request-access-button {
+      pointer-events: none;
+    }
+    .adaptive-placeholder {
+      border: 1px dashed @gray_lighter;
+    }
+    .request-access-button {
+      color: @gray_light;
+      border: 1px dashed @gray_lighter;
     }
   }
-  button {
-    // .flexy(center, center);
-    line-height: 1;
-    width: 50%;
-    height: @tile;
-    margin: @menu_padding auto 0 0;
-    padding: @menu_padding;
-    border: 1px solid @gray_dark;
-    &:hover {
-      color: @white;
-      background: @gray_dark;
-    }
+}
+.request-access-button {
+  line-height: 1;
+  height: @tile;
+  padding: @menu_padding (2 * @menu_padding);
+  border: 1px solid @gray_light;
+  &:hover,
+  &:focus {
+    background: @gray_light;
   }
 }
