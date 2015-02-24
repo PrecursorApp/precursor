@@ -18,10 +18,10 @@
 (defn clear-subscriber [tick-state tick]
   (add-tick tick-state tick (fn [owner]
                               ((om/get-shared owner :cast!)
-                               :subscriber-updated {:client-id (ffirst state/subscriber-bot)
-                                                    :fields {:mouse-position nil
-                                                             :tool nil
-                                                             :show-mouse? false}}))))
+                               :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                                                    :fields (merge state/subscriber-bot {:mouse-position nil
+                                                                                         :tool nil
+                                                                                         :show-mouse? false})}))))
 
 (defn move-mouse [tick-state {:keys [start-tick end-tick start-x end-x start-y end-y tool]
                               :or {tool :rect}}]
@@ -36,27 +36,31 @@
                                                    (/ (- end-y start-y)
                                                       (- end-tick start-tick))))]
                               ((om/get-shared owner :cast!)
-                               :subscriber-updated {:client-id (ffirst state/subscriber-bot)
-                                                    :fields {:mouse-position [ex ey]
-                                                             :show-mouse? true
-                                                             :tool tool}})))))
+                               :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                                                    :fields (merge state/subscriber-bot {:mouse-position [ex ey]
+                                                                                         :show-mouse? true
+                                                                                         :tool tool})})))))
               tick-state
               (range 0 (inc (- end-tick start-tick))))
     (annotate-keyframes end-tick)))
 
 (defn draw-shape [tick-state {:keys [start-tick end-tick start-x end-x
-                                     start-y end-y type tool doc-id props]
-                              :or {type :rect
-                                   tool :rect}}]
+                                     start-y end-y tool doc-id props]
+                              :or {tool :rect}}]
   (let [base-layer (merge {:layer/start-x start-x
                            :layer/start-y start-y
                            :layer/end-x end-x
                            :layer/end-y end-y
-                           :layer/type (keyword "layer.type" (name type))
+                           :layer/type (keyword "layer.type" (if (= :circle tool)
+                                                               "rect"
+                                                               (name tool)))
                            :layer/name "placeholder"
                            :layer/stroke-width 1
                            :document/id doc-id
-                           :db/id (inc (rand-int 1000))}
+                           :db/id (- (inc (rand-int 1000)))}
+                          (when (= :circle tool)
+                            {:layer/rx 1000
+                             :layer/ry 1000})
                           props)
         ;; number of ticks to pause before saving layer
         pause-ticks 2]
@@ -71,19 +75,19 @@
                                                      (/ (- end-y start-y)
                                                         (- end-tick start-tick pause-ticks))))]
                                 ((om/get-shared owner :cast!)
-                                 :subscriber-updated {:client-id (ffirst state/subscriber-bot)
-                                                      :fields {:mouse-position [ex ey]
-                                                               :show-mouse? true
-                                                               :layers [(assoc base-layer
-                                                                               :layer/current-x ex
-                                                                               :layer/current-y ey)]
-                                                               :tool tool}})))))
+                                 :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                                                      :fields (merge state/subscriber-bot {:mouse-position [ex ey]
+                                                                                           :show-mouse? true
+                                                                                           :layers [(assoc base-layer
+                                                                                                           :layer/current-x ex
+                                                                                                           :layer/current-y ey)]
+                                                                                           :tool tool})})))))
                 tick-state
                 (range 0 (inc (- end-tick start-tick pause-ticks))))
       (add-tick end-tick
                 (fn [owner]
                   ((om/get-shared owner :cast!)
-                   :subscriber-updated {:client-id (ffirst state/subscriber-bot)
+                   :subscriber-updated {:client-id (:client-id state/subscriber-bot)
                                         :fields {:mouse-position nil
                                                  :layers nil
                                                  :tool tool}})
@@ -115,14 +119,14 @@
                                                          (/ (- end-tick start-tick pause-ticks)
                                                             relative-tick)))]
                                 ((om/get-shared owner :cast!)
-                                 :subscriber-updated {:client-id (ffirst state/subscriber-bot)
-                                                      :fields {:mouse-position [start-x (- start-y (/ text-height 2))]
-                                                               :show-mouse? true
-                                                               :layers [(assoc base-layer
-                                                                               :layer/text (apply str (take letter-count text))
-                                                                               :layer/current-x end-x
-                                                                               :layer/current-y end-y)]
-                                                               :tool :text}})))))
+                                 :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                                                      :fields (merge state/subscriber-bot {:mouse-position [start-x (- start-y (/ text-height 2))]
+                                                                                           :show-mouse? true
+                                                                                           :layers [(assoc base-layer
+                                                                                                           :layer/text (apply str (take letter-count text))
+                                                                                                           :layer/current-x end-x
+                                                                                                           :layer/current-y end-y)]
+                                                                                           :tool :text})})))))
                 tick-state
                 (map int
                      (range 0
@@ -132,69 +136,12 @@
       (add-tick end-tick
                 (fn [owner]
                   ((om/get-shared owner :cast!)
-                   :subscriber-updated {:client-id (ffirst state/subscriber-bot)
-                                        :fields {:mouse-position nil
-                                                 :layers nil
-                                                 :tool :text}})
+                   :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                                        :fields (merge state/subscriber-bot {:mouse-position nil
+                                                                             :layers nil
+                                                                             :tool :text})})
                   (d/transact! (om/get-shared owner :db) [base-layer] {:bot-layer true})))
       (annotate-keyframes start-tick end-tick))))
-
-(defn signup-animation [document vw]
-  (let [text "Sign in with Google"
-        text-width 171
-
-        rect-width 208
-        rect-height 48
-
-        rect-offset-x 8
-        rect-offset-y 8
-
-        rect-start-x (- vw rect-width rect-offset-x)
-        rect-start-y (+ rect-offset-y rect-height)
-        rect-end-x (+ rect-start-x rect-width)
-        rect-end-y rect-offset-y
-
-        text-start-x (+ rect-start-x (/ (- rect-width text-width) 2))
-        text-start-y (+ rect-end-y text-height (/ (- rect-height text-height) 2))]
-    (-> {:tick-ms 16
-         :ticks {}}
-      (move-mouse {:start-tick 10
-                   :end-tick 45
-                   :start-x vw
-                   :end-x rect-start-x
-                   :start-y 0
-                   :end-y rect-start-y})
-      (draw-shape {:type :rect
-                   :doc-id (:db/id document)
-                   :tool :rect
-                   :start-tick 50
-                   :end-tick 100
-                   :start-x rect-start-x
-                   :end-x rect-end-x
-                   :start-y rect-start-y
-                   :end-y rect-end-y
-                   :props {;; look into this later, right now it interfers with signup action
-                           ;; :layer/ui-target "/signup"
-                           :layer/signup-button true}})
-      (move-mouse {:tool :text
-                   :start-tick 100
-                   :end-tick 120
-                   :start-x rect-end-x
-                   :end-x text-start-x
-                   :start-y rect-end-y
-                   :end-y (- text-start-y (/ text-height 2))})
-      (draw-text {:text text
-                  :doc-id (:db/id document)
-                  :start-tick 120
-                  :end-tick 200
-                  :start-x text-start-x
-                  :end-x (+ text-start-x text-width)
-                  :start-y text-start-y
-                  :end-y (- text-start-y text-height)
-                  :props {;; look into this later, right now it interfers with signup action
-                          ;;:layer/ui-target "/signup"
-                          :layer/signup-button true}})
-      (clear-subscriber 201))))
 
 (defn clear-ticks [tick-state ticks]
   (update-in tick-state [:ticks] #(apply dissoc % ticks)))
@@ -205,15 +152,16 @@
     nil))
 
 (defn run-animation* [owner start-ms current-ms tick-state min-tick max-tick]
-  (if (and (om/mounted? owner)
-           (seq (:ticks tick-state)))
+  (if-not (and (om/mounted? owner)
+               (seq (:ticks tick-state)))
+    nil;(js/console.profileEnd)
     (let [latest-tick (int (/ (- current-ms start-ms)
                               (:tick-ms tick-state)))
           tick-range (vec (range min-tick (inc latest-tick)))
           ticks (-> (filter #(contains? (:keyframes tick-state) %) tick-range)
                   set
                   (conj (middle-elem tick-range)))]
-      (doseq [tick ticks]
+      (doseq [tick (sort ticks)]
         (when-let [tick-fn (get-in tick-state [:ticks tick])]
           (tick-fn owner)))
       (utils/rAF (fn [timestamp]
@@ -236,9 +184,43 @@
                  (run-animation* owner timestamp timestamp tick-state 0 max-tick)))))
 
 (defn cleanup [owner]
-  ((om/get-shared owner :cast!) :subscriber-updated {:client-id (ffirst state/subscriber-bot)
-                                                     :fields {:mouse-position nil
-                                                              :layers nil}}))
+  ((om/get-shared owner :cast!) :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                                                     :fields (merge state/subscriber-bot {:mouse-position nil
+                                                                                          :layers nil})}))
+
+(defn signup-animation [document vw]
+  (let [text "Sign in with Google"
+        text-width 171
+
+        rect-width 208
+        rect-height 48
+
+        rect-offset-x 8
+        rect-offset-y 8
+
+        rect-start-x (- vw rect-width rect-offset-x)
+        rect-start-y (+ rect-offset-y rect-height)
+        rect-end-x (+ rect-start-x rect-width)
+        rect-end-y rect-offset-y
+
+        text-start-x (+ rect-start-x (/ (- rect-width text-width) 2))
+        text-start-y (+ rect-end-y text-height (/ (- rect-height text-height) 2))]
+    (-> {:tick-ms 16
+         :ticks {}}
+      (move-mouse {:start-tick 10 :end-tick 45 :start-x vw :end-x rect-start-x :start-y 0 :end-y rect-start-y})
+      (draw-shape {:doc-id (:db/id document) :tool :rect :start-tick 50 :end-tick 100 :start-x rect-start-x :end-x rect-end-x
+                   :start-y rect-start-y :end-y rect-end-y
+                   :props {;; look into this later, right now it interfers with signup action
+                           ;; :layer/ui-target "/signup"
+                           :layer/signup-button true}})
+      (move-mouse {:tool :text :start-tick 100 :end-tick 120 :start-x rect-end-x :end-x text-start-x
+                   :start-y rect-end-y :end-y (- text-start-y (/ text-height 2))})
+      (draw-text {:text text :doc-id (:db/id document) :start-tick 120 :end-tick 200 :start-x text-start-x
+                  :end-x (+ text-start-x text-width) :start-y text-start-y :end-y (- text-start-y text-height)
+                  :props {;; look into this later, right now it interfers with signup action
+                          ;;:layer/ui-target "/signup"
+                          :layer/signup-button true}})
+      (clear-subscriber 201))))
 
 (defn signup-button [document owner]
   (reify
@@ -249,6 +231,177 @@
       (let [vw (:width (utils/canvas-size))]
         (when (< 640 vw) ;; only if not on mobile
           (run-animation owner (signup-animation document vw)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (cleanup owner))
+    om/IRender
+    (render [_]
+      ;; dummy span so that the component can be mounted
+      (dom/span #js {:className "hidden"}))))
+
+(defn add-shape [tick-state tick-count props]
+  (draw-shape tick-state (merge (let [start-tick (inc (apply max (conj (keys (:ticks tick-state)) -1)))]
+                                  {:start-tick start-tick
+                                   :end-tick (+ start-tick (int (* 1.5 tick-count)))})
+                                props)))
+
+(defn add-mouse-transition [tick-state tick-count previous-shape next-shape]
+  (move-mouse tick-state (let [start-tick (inc (apply max (conj (keys (:ticks tick-state)) -1)))]
+                           {:start-tick start-tick
+                            :end-tick (+ start-tick (int (* 1.5 tick-count)))
+                            :start-x (:end-x previous-shape)
+                            :start-y (:end-y previous-shape)
+                            :tool (:tool previous-shape)
+                            :end-x (:start-x next-shape)
+                            :end-y (:start-y next-shape)})))
+
+(defn browser [document viewport]
+  (let [start-x 100
+        start-y 100
+        width (int (* (- (:width viewport) 200)
+                      0.9))
+        height (int (* (- (:height viewport) 200)
+                       0.9))]
+    {:doc-id (:db/id document) :tool :rect
+     :start-x start-x :end-x (+ start-x width)
+     :start-y start-y :end-y (+ start-y height)}))
+
+(defn menu-bar [document viewport]
+  (let [browser (browser document viewport)]
+    {:doc-id (:db/id document) :tool :line
+     :start-x (:start-x browser) :end-x (:end-x browser)
+     :start-y (+ (:start-y browser) 30) :end-y (+ (:start-y browser) 30)}))
+
+(defn close-button [document viewport]
+  (let [browser (browser document viewport)]
+    {:doc-id (:db/id document) :tool :circle
+     :start-x (+ (:start-x browser) 10) :end-x (+ (:start-x browser) 20)
+     :start-y (+ (:start-y browser) 10) :end-y (+ (:start-y browser) 20)}))
+
+(defn minimize-button [document viewport]
+  (let [browser (browser document viewport)]
+    {:doc-id (:db/id document) :tool :circle
+     :start-x (+ (:start-x browser) 25) :end-x (+ (:start-x browser) 35)
+     :start-y (+ (:start-y browser) 10) :end-y (+ (:start-y browser) 20)}))
+
+(defn expand-button [document viewport]
+  (let [browser (browser document viewport)]
+    {:doc-id (:db/id document) :tool :circle
+     :start-x (+ (:start-x browser) 40) :end-x (+ (:start-x browser) 50)
+     :start-y (+ (:start-y browser) 10) :end-y (+ (:start-y browser) 20)}))
+
+(defn search-box [document viewport]
+  (let [browser (browser document viewport)
+        width (- (:end-x browser)
+                 (:start-x browser))
+        height (- (:end-y browser)
+                  (:start-y browser))
+        box-width 540
+        start-x (int (- (+ (:start-x browser) (/ width 2))
+                        (/ box-width 2)))
+        box-height 28
+        start-y (int (- (+ (:start-y browser) (/ height 2))
+                        (* 2 box-height)))]
+    {:doc-id (:db/id document) :tool :rect
+     :start-x start-x :end-x (+ start-x box-width)
+     :start-y start-y :end-y (+ start-y box-height)}))
+
+(defn submit-button [document viewport]
+  (let [search-box (search-box document viewport)
+        width (- (:end-x search-box)
+                 (:start-x search-box))
+        height (- (:end-y search-box)
+                  (:start-y search-box))
+        start-x (int (+ (:start-x search-box)
+                        (/ width 4)))
+        start-y (int (+ (:start-y search-box)
+                        (* 1.5 height)))
+        ]
+    {:doc-id (:db/id document) :tool :rect
+     :start-x start-x :end-x (+ start-x (int (/ width 4)))
+     :start-y start-y :end-y (+ start-y height)}))
+
+(defn lucky-button [document viewport]
+  (let [submit-button (submit-button document viewport)
+        start-x (:end-x submit-button)
+        width (- (:end-x submit-button)
+                 (:start-x submit-button))]
+    {:doc-id (:db/id document) :tool :rect
+     :start-x start-x :end-x (+ start-x width)
+     :start-y (:start-y submit-button) :end-y (:end-y submit-button)}))
+
+(defn footer-1 [document viewport]
+  (let [browser (browser document viewport)
+        width (- (:end-x browser)
+                 (:start-x browser))
+        line-width 500
+        start-x (int (- (+ (:start-x browser) (/ width 2))
+                        (/ line-width 2)))
+        start-y (- (:end-y browser) 50)]
+    {:doc-id (:db/id document) :tool :line
+     :start-x start-x  :end-x (+ start-x line-width)
+     :start-y start-y :end-y start-y}))
+
+(defn footer-2 [document viewport]
+  (let [browser (browser document viewport)
+        width (- (:end-x browser)
+                 (:start-x browser))
+        line-width 400
+        start-x (int (- (+ (:start-x browser) (/ width 2))
+                        (/ line-width 2)))
+        start-y (- (:end-y browser) 25)]
+    {:doc-id (:db/id document) :tool :line
+     :start-x start-x  :end-x (+ start-x line-width)
+     :start-y start-y :end-y start-y}))
+
+(defn landing-animation [document viewport]
+  (let [browser (browser document viewport)
+        menu-bar (menu-bar document viewport)
+        close-button (close-button document viewport)
+        minimize-button (minimize-button document viewport)
+        expand-button (expand-button document viewport)
+        search-box (search-box document viewport)
+        submit-button (submit-button document viewport)
+        lucky-button (lucky-button document viewport)
+        footer-1 (footer-1 document viewport)
+        footer-2 (footer-2 document viewport)]
+    (-> {:tick-ms 16
+         :ticks {}}
+      ;; the mouse could be automatic
+      (add-mouse-transition 50
+                            {:end-x (:width viewport)
+                             :end-y 100
+                             :tool :rect}
+                            browser)
+      (add-shape 100 browser)
+      (add-mouse-transition 50 browser menu-bar)
+      (add-shape 50 menu-bar)
+      (add-mouse-transition 25 menu-bar close-button)
+      (add-shape 10 close-button)
+      (add-mouse-transition 10 close-button minimize-button)
+      (add-shape 10 minimize-button)
+      (add-mouse-transition 10 minimize-button expand-button)
+      (add-shape 10 expand-button)
+      (add-mouse-transition 30 expand-button search-box)
+      (add-shape 30  search-box)
+      (add-mouse-transition 20 search-box submit-button)
+      (add-shape 30 submit-button)
+      (add-mouse-transition 1 submit-button lucky-button)
+      (add-shape 30 lucky-button)
+      (add-mouse-transition 20 lucky-button footer-1)
+      (add-shape 20 footer-1)
+      (add-mouse-transition 10 footer-1 footer-2)
+      (add-shape 18 footer-2))))
+
+(defn landing-background [document owner]
+  (reify
+    om/IDisplayName (display-name [_] "Landing Animation")
+    om/IDidMount
+    (did-mount [_]
+      ;; TODO: would be nice to get this a different way :(
+      (let [viewport (utils/canvas-size)]
+        (when true;(< 640 (:width viewport)) ;; only if not on mobile
+          (run-animation owner (landing-animation document viewport)))))
     om/IWillUnmount
     (will-unmount [_]
       (cleanup owner))
