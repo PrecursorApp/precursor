@@ -62,7 +62,7 @@
 (defn track-key-state [cast! direction suppressed-key-combos event]
   (let [key-set (keyq/event->key event)]
     (when-not (or (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
-                  (.. event -target -contentEditable))
+                  (= "true" (.. event -target -contentEditable)))
       (when (contains? suppressed-key-combos key-set)
         (.preventDefault event))
       (when-not (.-repeat event)
