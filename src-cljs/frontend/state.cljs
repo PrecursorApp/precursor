@@ -16,10 +16,11 @@
    :login-button-learned false})
 
 (def subscriber-bot
-  {"prcrsr-subscriber-bot" {:color "#00b233"
-                            :cust-name "prcrsr"
-                            :show-mouse? true
-                            :hide-in-list? true}})
+  {:color "#00b233"
+   :cust-name "prcrsr"
+   :show-mouse? true
+   :hide-in-list? true
+   :client-id "prcrsr-subscriber-bot"})
 
 (defn initial-state []
   {:camera          {:x          0
@@ -32,22 +33,33 @@
    :error-message   nil
    :environment     "development"
    :settings        {:browser-settings initial-browser-settings}
-   :keyboard-shortcuts {:select #{"v"}
-                        :circle #{"l"}
-                        :rect #{"m"}
-                        :line #{"\\"}
-                        :pen #{"n"}
-                        :text #{"t"}
-                        :undo #{"meta+z" "ctrl+z"}
-                        :shortcuts-menu #{"shift+/"}
-                        :escape-interaction #{"esc"}
-                        :reset-canvas-position #{"home" "1"}
-                        :return-from-origin #{"2"}}
+   :keyboard-shortcuts {:select #{#{"v"}}
+                        :circle #{#{"l"}}
+                        :rect #{#{"m"}}
+                        :line #{#{"\\"}}
+                        :pen #{#{"n"}}
+                        :text #{#{"t"}}
+                        :undo #{#{"meta" "z"} #{"ctrl" "z"}}
+                        :shortcuts-menu #{#{"shift" "/"}}
+                        :escape-interaction #{#{"esc"}}
+                        :reset-canvas-position #{#{"home"} #{"1"}}
+                        :return-from-origin #{#{"2"}}}
+   :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}
    :document/id     nil
-   :subscribers     subscriber-bot
-   :inputs          nil})
+   ;; subscribers is split into many parts for perf
+   :subscribers     {:mice {}
+                     :layers {}
+                     :info {}
+                     ;; used to keep track of which entities are being edited
+                     ;; so that we can lock them
+                     ;; We have to be a little silly here and below so that Om will let
+                     ;; us have multiple ref cursors in the same component
+                     :entity-ids {:entity-ids #{}}}
+   :selected-eids   {:selected-eids #{}}
+   :editing-eids    {:editing-eids #{}}
+   :mouse {}})
 
 (def user-path [:current-user])
 

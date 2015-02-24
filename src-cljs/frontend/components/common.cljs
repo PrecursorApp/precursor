@@ -158,14 +158,14 @@
 
 (defn svg-icon [icon-name & [{:keys [path-props svg-props]}]]
   (let [template (get icon-templates icon-name)]
-    [:svg (merge {:viewBox "0 0 100 100" :class "iconpile"} svg-props)
-     (for [path (:paths template)]
-       [:path (merge {:class (name path) :d (get icon-paths path) :key (name path)} path-props)])]))
+    (apply dom/svg (clj->js (merge {:viewBox "0 0 100 100" :className "iconpile"} svg-props))
+           (for [path (:paths template)]
+             (dom/path (clj->js (merge {:className (name path) :d (get icon-paths path) :key (name path)} path-props)))))))
 
 (defn icon [icon-name & [{:keys [path-props svg-props]}]]
-  [:i {:class (str "icon-" (name icon-name))}
-   (svg-icon icon-name {:path-props path-props
-                        :svg-props svg-props})])
+  (dom/i #js {:className (str "icon-" (name icon-name))}
+         (svg-icon icon-name {:path-props path-props
+                              :svg-props svg-props})))
 
 (def spinner
   (icon :logomark-precursor))

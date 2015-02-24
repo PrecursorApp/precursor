@@ -34,6 +34,7 @@
 
 (defn chat-item [chat owner {:keys [sente-id show-sender?]}]
   (reify
+    om/IDisplayName (display-name [_] "Chat Item")
     om/IRender
     (render [_]
       (let [id (apply str (take 6 (str (:session/uuid chat))))
@@ -88,8 +89,9 @@
      (time/after? time (time/minus start-of-day (time/days 6))) (day-of-week (time/day-of-week time))
      :else (str (month-of-year (.getMonth time)) " " (.getDate time)))))
 
-(defn input [{:keys [chat-body]} owner]
+(defn input [_ owner]
   (reify
+    om/IDisplayName (display-name [_] "Chat Input")
     om/IInitState (init-state [_] {:chat-body (atom "")})
     om/IRender
     (render [_]
@@ -119,8 +121,9 @@
                         :on-change #(reset! (om/get-state owner :chat-body)
                                             (.. % -target -value))}]]])))))
 
-(defn log [{:keys [db chat-body sente-id client-id chat-opened]} owner]
+(defn log [{:keys [sente-id client-id] :as app} owner]
   (reify
+    om/IDisplayName (display-name [_] "Chat Log")
     om/IInitState
     (init-state [_]
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
@@ -155,7 +158,7 @@
               10000000)))
     om/IRender
     (render [_]
-      (let [{:keys [cast!]} (om/get-shared owner)
+      (let [{:keys [cast! db]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
             chat-bot (:document/chat-bot (d/entity @db (ffirst (d/q '[:find ?t :where [?t :document/name]] @db))))
             dummy-chat {:chat/body [:span
@@ -189,6 +192,7 @@
 
 (defn chat [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Chat")
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
@@ -198,14 +202,11 @@
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])]
         (html
-          [:div.chat {:class (when chat-opened? ["opened"])}
-           [:div#canvas-size.chat-offset]
-           [:div.chat-window {:class (when-not chat-opened? ["closed"])}
-            [:div.chat-background]
-            (om/build log {:db (:db app)
-                           :document/id (:document/id app)
-                           :sente-id (:sente-id app)
-                           :client-id (:client-id app)
-                           :chat-body (get-in app [:chat :body])
-                           :chat-opened (get-in app state/chat-opened-path)})
-            (om/build input {:chat-body (get-in app [:chat :body])})]])))))
+         [:div.chat {:class (when chat-opened? ["opened"])}
+          [:div#canvas-size.chat-offset]
+          [:div.chat-window {:class (when-not chat-opened? ["closed"])}
+           [:div.chat-background]
+           (om/build log (utils/select-in app [[:document/id]
+                                               [:sente-id]
+                                               [:client-id]]))
+           (om/build input {})]])))))

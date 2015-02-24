@@ -46,4 +46,4 @@
                                  (dissoc (get-in state state/browser-settings-path) :document-settings)
                                  (when (:document/id state)
                                    {:doc-id (:document/id state)
-                                    :subscriber-count (count (:subscribers state))})))))
+                                    :subscriber-count (count (get-in state [:subscribers :info]))})))))

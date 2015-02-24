@@ -26,98 +26,102 @@
   (:import [goog.ui IdGenerator]))
 
 (def artwork-mobile
-  [:div.art-frame
-   [:div.art-mobile.artwork
-    [:div.art-mobile-head
-     [:div.art-mobile-camera]]
-    [:div.art-mobile-body
-     [:div.art-screen
-      [:div.art-menu
-       [:div.art-heading "Today"]
-       [:div.art-doc
+  (html
+   [:div.art-frame
+    [:div.art-mobile.artwork
+     [:div.art-mobile-head
+      [:div.art-mobile-camera]]
+     [:div.art-mobile-body
+      [:div.art-screen
+       [:div.art-menu
+        [:div.art-heading "Today"]
+        [:div.art-doc
+         [:div.art-doc-frame
+          [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+        [:div.art-doc.selected
+         [:div.art-doc-frame
+          [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+        [:div.art-doc
+         [:div.art-doc-frame
+          [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+        [:div.art-doc
+         [:div.art-doc-frame
+          [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
+       [:div.art-canvas
         [:div.art-doc-frame
          [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
-       [:div.art-doc.selected
-        [:div.art-doc-frame
-         [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
-       [:div.art-doc
-        [:div.art-doc-frame
-         [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
-       [:div.art-doc
-        [:div.art-doc-frame
-         [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
-      [:div.art-canvas
-       [:div.art-doc-frame
-        [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
-      [:div.art-screen-select]]]
-    [:div.art-mobile-foot
-     [:div.art-mobile-button]]]])
+       [:div.art-screen-select]]]
+     [:div.art-mobile-foot
+      [:div.art-mobile-button]]]]))
 
 (def artwork-interact
-  [:div.art-frame
-   [:div.art-interact.artwork
-    [:div.art-interact-button
-     [:div.art-interact-text "HOME"]
-     [:div.art-interact-cursor (common/icon :cursor)]]
-    [:div.art-interact-head
-     [:div.art-interact-name "home button"]
-     [:div.art-interact-placeholder "link"]]
-    [:div.art-interact-body
-     [:div.property-dropdown-targets
-      [:div.art-interact-target
-       [:div.art-interact-placeholder "with"]
-       [:div.art-interact-ibeam "|"]
-       [:div.art-interact-more "..."]]
-      [:div.property-dropdown-target.selected
-       [:div.art-interact-item "home page"]]
-      [:div.property-dropdown-target "blog page"]
-      [:div.property-dropdown-target "about page"]
-      [:div.property-dropdown-target "contact page"]
-      [:div.property-dropdown-target "jobs page"]
-      [:div.property-dropdown-target "team page"]]]]])
+  (html
+   [:div.art-frame
+    [:div.art-interact.artwork
+     [:div.art-interact-button
+      [:div.art-interact-text "HOME"]
+      [:div.art-interact-cursor (common/icon :cursor)]]
+     [:div.art-interact-head
+      [:div.art-interact-name "home button"]
+      [:div.art-interact-placeholder "link"]]
+     [:div.art-interact-body
+      [:div.property-dropdown-targets
+       [:div.art-interact-target
+        [:div.art-interact-placeholder "with"]
+        [:div.art-interact-ibeam "|"]
+        [:div.art-interact-more "..."]]
+       [:div.property-dropdown-target.selected
+        [:div.art-interact-item "home page"]]
+       [:div.property-dropdown-target "blog page"]
+       [:div.property-dropdown-target "about page"]
+       [:div.property-dropdown-target "contact page"]
+       [:div.property-dropdown-target "jobs page"]
+       [:div.property-dropdown-target "team page"]]]]]))
 
 (def artwork-team
-  [:div.art-frame
-   [:div.art-team.artwork
-    [:div.art-team-list
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span.access-name "niobe@prcr.sr"]
-       [:span.access-status "Was granted access yesterday."]]]
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span.access-name "ballard@prcr.sr"]
-       [:span.access-status "Was granted access yesterday."]]]
-     [:div.access-card.selected
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span.access-name "anderson@prcrsr.com"]
-       [:span.access-status "Requested access yesterday."]]]
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span.access-name "smith@precursorapp.com"]
-       [:span.access-status "Was denied access yesterday."]]]
-     [:div.access-card
-      [:div.access-avatar
-       [:div.access-avatar-img]]
-      [:div.access-details
-       [:span.access-name "roland@prcr.sr"]
-       [:span.access-status "Was granted access today."]]]]]])
+  (html
+   [:div.art-frame
+    [:div.art-team.artwork
+     [:div.art-team-list
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "niobe@prcr.sr"]
+        [:span.access-status "Was granted access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "ballard@prcr.sr"]
+        [:span.access-status "Was granted access yesterday."]]]
+      [:div.access-card.selected
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "anderson@prcrsr.com"]
+        [:span.access-status "Requested access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "smith@precursorapp.com"]
+        [:span.access-status "Was denied access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "roland@prcr.sr"]
+        [:span.access-status "Was granted access today."]]]]]]))
 
 (def navigation
-  [:div.navigation
-   [:div.content
-    [:a.navigation-link {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
-    [:a.navigation-link {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
-    [:a.navigation-link {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
-    (common/google-login :small)]])
+  (html
+   [:div.navigation
+    [:div.content
+     [:a.navigation-link {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
+     [:a.navigation-link {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
+     [:a.navigation-link {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
+     (common/google-login :small)]]))
 
 (defn past-center? [owner ref]
   (let [node (om/get-node owner ref)
@@ -130,6 +134,7 @@
 
 (defn make-button [{:keys [document/id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing Make Button")
     om/IInitState
     (init-state [_]
       {:word-list ["demos"
@@ -216,43 +221,44 @@
 
 (defn the-why [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing Why")
     om/IInitState (init-state [_] {:past-center-features #{}})
     om/IRenderState
     (render-state [_ {:keys [past-center-features]}]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.the-why
-           [:div.our-claim
-            navigation
-            [:div.our-philosphy-wrap
-             [:div.our-philosphy.content
-              [:h1.philosphy-headline
-               [:span.philosphy-needed "Precursor wants to simplify"]
-               [:span.philosphy-excess " your"]
-               [:span.philosphy-needed " prototyping"]
-               [:span.philosphy-excess " workflow"]
-               [:span.philosphy-needed "."]]
-              [:p.philosphy-subtext
-               [:span.philosphy-needed "No nonsense—"]
-               [:span.philosphy-needed "exactly what you need"]
-               [:span.philosphy-excess " when you need it"]
-               [:span.philosphy-needed "."]]
-              [:div.calls-to-action
-               (om/build make-button (select-keys app [:document/id]))]]]]
-           [:div.our-proof
-            ;; Hide this until we get testimonials/stats figured out
-            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
-            ]])))))
+         [:div.the-why
+          [:div.our-claim
+           navigation
+           [:div.our-philosphy-wrap
+            [:div.our-philosphy.content
+             [:h1.philosphy-headline
+              [:span.philosphy-needed "Precursor wants to simplify"]
+              [:span.philosphy-excess " your"]
+              [:span.philosphy-needed " prototyping"]
+              [:span.philosphy-excess " workflow"]
+              [:span.philosphy-needed "."]]
+             [:p.philosphy-subtext
+              [:span.philosphy-needed "No nonsense—"]
+              [:span.philosphy-needed "exactly what you need"]
+              [:span.philosphy-excess " when you need it"]
+              [:span.philosphy-needed "."]]
+             [:div.calls-to-action
+              (om/build make-button (select-keys app [:document/id]))]]]]
+          [:div.our-proof
+           ;; Hide this until we get testimonials/stats figured out
+           ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
+           ]])))))
 
 (defn the-how [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing How")
     om/IInitState (init-state [_] {:past-center-features #{}})
     om/IDidMount (did-mount [_]
                    (scroll/register owner #(maybe-set-state! owner [:past-center-features]
                                                              (set (filter (partial past-center? owner)
                                                                           ["1" "2" "3"])))))
-    om/IWillUnmount (will-unmount [_]
-                      (scroll/dispose owner))
+    om/IWillUnmount (will-unmount [_] (scroll/dispose owner))
     om/IRenderState
     (render-state [_ {:keys [past-center-features]}]
       (let [cast! (om/get-shared owner :cast!)]
@@ -299,29 +305,31 @@
 
 (defn the-what [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing What")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.the-what
-            [:div.our-proof]
-            [:div.our-claim
-             [:div.our-philosphy-wrap
-              [:div.our-philosphy.content
-               [:h1.philosphy-headline
-                [:span.philosphy-needed "Precursor is pure prototyping."]]
-               [:p.philosphy-subtext
-                [:span.philosphy-needed "Real-time collaboration"]
-                [:span.philosphy-excess " that makes it easy "]
-                [:span.philosphy-excess " to focus on what's important"]
-                [:span.philosphy-needed "."]]
-               [:div.calls-to-action
-                (common/google-login)
-                (om/build make-button (select-keys app [:document/id]))]]]
-             navigation]])))))
+         [:div.the-what
+          [:div.our-proof]
+          [:div.our-claim
+           [:div.our-philosphy-wrap
+            [:div.our-philosphy.content
+             [:h1.philosphy-headline
+              [:span.philosphy-needed "Precursor is pure prototyping."]]
+             [:p.philosphy-subtext
+              [:span.philosphy-needed "Real-time collaboration"]
+              [:span.philosphy-excess " that makes it easy "]
+              [:span.philosphy-excess " to focus on what's important"]
+              [:span.philosphy-needed "."]]
+             [:div.calls-to-action
+              (common/google-login)
+              (om/build make-button (select-keys app [:document/id]))]]]
+           navigation]])))))
 
 (defn landing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Landing")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]

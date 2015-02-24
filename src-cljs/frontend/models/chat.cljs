@@ -34,6 +34,6 @@
                       :document/id (:document/id app-state)
                       :client/timestamp (js/Date.)
                       :server/timestamp (js/Date.)
-                      :chat/color (:color (second (first state/subscriber-bot)))
-                      :chat/cust-name (:cust-name (second (first state/subscriber-bot)))}]
+                      :chat/color (:color state/subscriber-bot)
+                      :chat/cust-name (:cust-name state/subscriber-bot)}]
                {:bot-layer true}))

@@ -23,6 +23,7 @@
 
 (defn auth-link [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Auth Link")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -70,6 +71,7 @@
 
 (defn start [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Start")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -163,61 +165,65 @@
 
 (defmethod render-access-entity :permission
   [entity cast!]
-  [:div.access-card.make
-   [:div.access-avatar
-    [:img.access-avatar-img
-     {:src (utils/gravatar-url (:permission/cust entity))}]]
-   [:div.access-details
-    [:span
-     {:title (:permission/cust entity)} (:permission/cust entity)]
-    [:span.access-status
-     (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]])
+  (html
+   [:div.access-card.make
+    [:div.access-avatar
+     [:img.access-avatar-img
+      {:src (utils/gravatar-url (:permission/cust entity))}]]
+    [:div.access-details
+     [:span
+      {:title (:permission/cust entity)} (:permission/cust entity)]
+     [:span.access-status
+      (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]]))
 
 (defmethod render-access-entity :access-grant
   [entity cast!]
-  [:div.access-card.make
-   [:div.access-avatar
-    [:img.access-avatar-img
-     {:src (utils/gravatar-url (:access-grant/email entity))}]]
-   [:div.access-details
-    [:span
-     {:title (:access-grant/email entity)} (:access-grant/email entity)]
-    [:span.access-status
-     (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]])
+  (html
+   [:div.access-card.make
+    [:div.access-avatar
+     [:img.access-avatar-img
+      {:src (utils/gravatar-url (:access-grant/email entity))}]]
+    [:div.access-details
+     [:span
+      {:title (:access-grant/email entity)} (:access-grant/email entity)]
+     [:span.access-status
+      (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]]))
 
 (defmethod render-access-entity :access-request
   [entity cast!]
-  [:div.access-card.make
-   {:class (if (= :access-request.status/denied (:access-request/status entity))
-             "denied"
-             "requesting")}
-   [:div.access-avatar
-    [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
-   [:div.access-details
-    [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
-    [:span.access-status
-     (if (= :access-request.status/denied (:access-request/status entity))
-       (str "Was denied access " (format-access-date (:access-request/deny-date entity)))
-       (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
-   [:div.access-options
-    (when-not (= :access-request.status/denied (:access-request/status entity))
-      [:button.access-option
-       {:role "button"
-        :class "negative"
-        :title "Decline"
-        :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
+  (html
+   [:div.access-card.make
+    {:class (if (= :access-request.status/denied (:access-request/status entity))
+              "denied"
+              "requesting")}
+    [:div.access-avatar
+     [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
+    [:div.access-details
+     [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
+     [:span.access-status
+      (if (= :access-request.status/denied (:access-request/status entity))
+        (str "Was denied access " (format-access-date (:access-request/deny-date entity)))
+        (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
+    [:div.access-options
+     (when-not (= :access-request.status/denied (:access-request/status entity))
+       [:button.access-option
+        {:role "button"
+         :class "negative"
+         :title "Decline"
+         :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
+                                                   :doc-id (:access-request/document entity)})}
+        (common/icon :times)])
+     [:button.access-option
+      {:role "button"
+       :class "positive"
+       :title "Approve"
+       :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
                                                   :doc-id (:access-request/document entity)})}
-       (common/icon :times)])
-    [:button.access-option
-     {:role "button"
-      :class "positive"
-      :title "Approve"
-      :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
-                                                 :doc-id (:access-request/document entity)})}
-     (common/icon :check)]]])
+      (common/icon :check)]]]))
 
 (defn private-sharing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Private Sharing")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -272,6 +278,7 @@
 
 (defn public-sharing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Public Sharing")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -318,6 +325,7 @@
 
 (defn sharing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Sharing")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -378,6 +386,7 @@
 
 (defn info [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Info")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
@@ -433,6 +442,7 @@
 
 (defn shortcuts [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Shortcuts")
     om/IInitState (init-state [_] {:copy-paste-works? (ua/isChrome)})
     om/IRender
     (render [_]
@@ -481,18 +491,20 @@
               [:td {:col-span "2"}]]
              (when (om/get-state owner [:copy-paste-works?])
                (list
-                [:tr.make
-                 [:td
-                  [:div.shortcuts-keys
-                   [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                   [:div.shortcuts-key {:title "C Key"} "C"]]]
-                 [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
-                [:tr.make
-                 [:td
-                  [:div.shortcuts-keys
-                   [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                   [:div.shortcuts-key {:title "V Key"} "V"]]]
-                 [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]))
+                (html
+                 [:tr.make
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "C Key"} "C"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]])
+                (html
+                 [:tr.make
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "V Key"} "V"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]])))
              [:tr.make
               [:td
                [:div.shortcuts-keys
@@ -541,6 +553,7 @@
 
 (defn username [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Username")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
@@ -580,6 +593,7 @@
 
 (defn overlay [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -589,9 +603,10 @@
          [:div.menu
           [:div.menu-header
            (for [component overlay-components]
-            [:h4
-             {:title title}
-             (:title component)])]
+             (html
+              [:h4
+               {:title title}
+               (:title component)]))]
           [:div.menu-body
            (for [component overlay-components]
             (om/build (:component component) app))]])))))

@@ -7,6 +7,7 @@
             [frontend.utils :as utils :include-macros true]
             [taoensso.sente :as sente]
             [frontend.stats :as stats]
+            [frontend.subscribers :as subs]
             [frontend.datascript :as ds]
             [frontend.models.chat :as chat-model]
             [goog.labs.dom.PageVisibilityMonitor]
@@ -53,16 +54,16 @@
                  {:server-update true})))
 
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
-  (swap! app-state update-in [:subscribers (:client-id data)] merge (dissoc data :client-id)))
+  (swap! app-state subs/add-subscriber-data (:client-id data) data))
 
 (defmethod handle-message :frontend/subscriber-left [app-state message data]
-  (swap! app-state update-in [:subscribers] dissoc (:client-id data)))
+  (swap! app-state subs/remove-subscriber (:client-id data)))
 
 (defmethod handle-message :frontend/mouse-move [app-state message data]
-  (swap! app-state utils/update-when-in [:subscribers (:client-id data)] merge (select-keys data [:mouse-position :tool :layers])))
+  (swap! app-state subs/maybe-add-subscriber-data (:client-id data) data))
 
 (defmethod handle-message :frontend/update-subscriber [app-state message data]
-  (swap! app-state update-in [:subscribers (:client-id data)] merge (:subscriber-data data)))
+  (swap! app-state subs/maybe-add-subscriber-data (:client-id data) data))
 
 (defmethod handle-message :frontend/db-entities [app-state message data]
   (when (= (:document/id data) (:document/id @app-state))
@@ -77,10 +78,9 @@
 
 (defmethod handle-message :frontend/subscribers [app-state message {:keys [subscribers] :as data}]
   (when (= (:document/id data) (:document/id @app-state))
-    (swap! app-state update-in [:subscribers] (fn [s]
-                                                (merge-with merge
-                                                            subscribers
-                                                            s)))))
+    (swap! app-state #(reduce (fn [state [client-id subscriber-data]]
+                                (subs/add-subscriber-data state client-id subscriber-data))
+                              % subscribers))))
 
 (defmethod handle-message :frontend/error [app-state message data]
   (put! (get-in @app-state [:comms :errors]) [:document-permission-error data])
@@ -115,8 +115,8 @@
       ;;       we use for subscribing from the nav channel in the first place?
       (subscribe-to-document
        (:sente state) (:comms state) (:document/id state)
-       :requested-color (get-in state [:subscribers (:client-id state) :color])
-       :requested-remainder (get-in state [:subscribers (:client-id state) :remainder])))))
+       :requested-color (get-in state [:subscribers :info (:client-id state) :color])
+       :requested-remainder (get-in state [:subscribers :info (:client-id state) :frontend-id-seed :remainder])))))
 
 
 (defn do-something [app-state sente-state]

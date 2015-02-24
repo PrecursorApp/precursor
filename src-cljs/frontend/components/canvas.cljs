@@ -1,10 +1,12 @@
 (ns frontend.components.canvas
   (:require [datascript :as d]
             [cljs.core.async :refer [put!]]
+            [clojure.set :as set]
             [clojure.string :as str]
             [frontend.auth :as auth]
             [frontend.camera :as cameras]
             [frontend.components.common :as common]
+            [frontend.cursors :as cursors]
             [frontend.datascript :as ds]
             [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
@@ -47,14 +49,16 @@
 
 (defn radial-menu [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Radial Menu")
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)]
         (html
-          [:a.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
-                                     :left (- (get-in app [:menu :x]) 128)}}
-           [:svg.radial-buttons {:width "256" :height "256"}
-            (for [[tool template] tools-templates]
+         [:a.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
+                                  :left (- (get-in app [:menu :x]) 128)}}
+          [:svg.radial-buttons {:width "256" :height "256"}
+           (for [[tool template] tools-templates]
+             (html
               [:g.radial-button {:class (str "tool-" (:type template))}
                [:title (:hint template)]
                [:path.radial-pie {:d (:path template)
@@ -62,17 +66,18 @@
                                   :on-mouse-up #(do (cast! :tool-selected [tool]))
                                   :on-touch-end #(do (cast! :tool-selected [tool]))}]
                [:path.radial-icon {:class (str "shape-" (:type template))
-                                   :d (get common/icon-paths (:icon template))}]])
-            [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
+                                   :d (get common/icon-paths (:icon template))}]]))
+           [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
 
 (defn radial-hint [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Radial Hint")
     om/IRender
     (render [_]
       (html
         [:div.radial-hint {:style {:top  (+ (get-in app [:mouse :y]) 16)
                                    :left (+ (get-in app [:mouse :x]) 16)}}
-         (if (= :touch (get-in app [:mouse :type]))
+         (if (= :touch (get-in app [:mouse-type]))
            "Tap and hold to select tool"
            "Right-click.")]))))
 
@@ -93,9 +98,9 @@
 (defmethod svg-element :layer.type/rect
   [selected-eids layer]
   (-> (svg/layer->svg-rect layer)
-      (maybe-add-selected layer selected-eids)
-      (clj->js)
-      (dom/rect)))
+    (maybe-add-selected layer selected-eids)
+    (clj->js)
+    (dom/rect)))
 
 (defmethod svg-element :layer.type/text
   [selected-eids layer]
@@ -134,6 +139,7 @@
 
 (defn handles [layer owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Handles")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner [:cast!])
@@ -301,8 +307,9 @@
                                                    "invalid"))
                                  :key (str "action-" (:db/id layer))))))))
 
-(defn svg-layers [{:keys [editing-eids selected-eids tool] :as data} owner]
+(defn svg-layers [{:keys [tool] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "SVG Layers")
     om/IInitState
     (init-state [_]
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -320,10 +327,12 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            selected-eids (or selected-eids #{})
+            selected-eids (:selected-eids (cursors/observe-selected-eids owner))
+            sub-eids (:entity-ids (cursors/observe-subscriber-entity-ids owner))
+            editing-eids (:editing-eids (cursors/observe-editing-eids owner))
+            editing-eids (set/union sub-eids editing-eids)
             layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)
-            renderable-layers (remove #(or (= :layer.type/group (:layer/type %))
-                                           (contains? editing-eids (:db/id %))) layers)
+            renderable-layers (remove #(contains? editing-eids (:db/id %)) layers)
             {idle-layers false live-layers true} (group-by (comp boolean :layer/ui-target)
                                                            renderable-layers)]
         ;; TODO: this should probably be split into a couple of components
@@ -358,28 +367,58 @@
 
 (defn cursor [[id subscriber] owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Cursor")
     om/IRender
     (render [_]
       (if (and (:tool subscriber)
                (:show-mouse? subscriber))
-        (html (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
-                               {:svg-props {:height 16 :width 16
-                                            :class "mouse-tool"
-                                            :x (- (first (:mouse-position subscriber)) 8)
-                                            :y (- (last (:mouse-position subscriber)) 8)
-                                            :key id}
-                                :path-props {:style {:stroke (:color subscriber)}}}))
+        (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
+                         {:svg-props {:height 16 :width 16
+                                      :class "mouse-tool"
+                                      :x (- (first (:mouse-position subscriber)) 8)
+                                      :y (- (last (:mouse-position subscriber)) 8)
+                                      :key id}
+                          :path-props {:style {:stroke (:color subscriber)}}})
         (dom/circle #js {:cx 0 :cy 0 :r 0})))))
 
-(defn cursors [{:keys [subscribers client-id]} owner]
+(defn cursors [{:keys [client-id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Cursors")
     om/IRender
     (render [_]
-      (apply dom/g nil
-             (om/build-all cursor (dissoc subscribers client-id))))))
+      (let [subscribers (cursors/observe-subscriber-mice owner)]
+        (apply dom/g nil
+               (om/build-all cursor (dissoc subscribers client-id)))))))
+
+(defn single-subscriber-layers [[client-id data] owner]
+  (reify
+    om/IDisplayName (display-name [_] "Single Subscriber Layers")
+    om/IRender
+    (render [_]
+      (apply dom/g nil (mapv (fn [l] (svg-element #{} (merge l {:layer/end-x (:layer/current-x l)
+                                                                :layer/end-y (:layer/current-y l)
+                                                                :strokeDasharray "5,5"
+                                                                :layer/fill "none"
+                                                                :style {:stroke (:color data)}
+                                                                :fillOpacity "0.5"
+                                                                :key (str (:db/id l) "-subscriber-layer-" client-id)}
+                                                             (when (= :layer.type/text (:layer/type l))
+                                                               {:layer/stroke "none"
+                                                                :style {:fill (:color data)}}))))
+                             (:layers data))))))
+
+(defn subscribers-layers [_ owner]
+  (reify
+    om/IDisplayName (display-name [_] "Subscribers Layers")
+    om/IRender
+    (render [_]
+      (let [subscribers (cursors/observe-subscriber-layers owner)]
+        (apply dom/g nil
+               (om/build-all single-subscriber-layers subscribers))))))
 
 (defn text-input [layer owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Text Input")
     om/IDidMount
     (did-mount [_]
       (om/set-state! owner
@@ -388,9 +427,8 @@
       (.focus (om/get-node owner "input")))
     om/IDidUpdate
     (did-update [_ _ _]
-      (om/set-state! owner
-                     :input-min-width
-                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
+      (utils/maybe-set-state! owner :input-min-width
+                              (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
       (.focus (om/get-node owner "input")))
     om/IInitState
     (init-state [_]
@@ -449,24 +487,9 @@
                                                                               :bbox {:width (.-width bbox)
                                                                                      :height (.-height bbox)}}))}))))))))
 
-(defn subscriber-layers [{:keys [layers]} owner]
-  (reify
-    om/IRender
-    (render [_]
-      (if-not (seq layers)
-        (dom/g nil nil)
-        (apply dom/g nil (mapv (fn [l] (svg-element #{} (merge l {:strokeDasharray "5,5"
-                                                                  :layer/fill "none"
-                                                                  :style {:stroke (:subscriber-color l)}
-                                                                  :fillOpacity "0.5"
-                                                                  :key (str (:db/id l) "-subscriber-layer")}
-                                                               (when (= :layer.type/text (:layer/type l))
-                                                                 {:layer/stroke "none"
-                                                                  :style {:fill (:subscriber-color l)}}))))
-                               layers))))))
-
 (defn layer-properties [{:keys [layer x y]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas Layer Props")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                                    :input-expanded false})
     om/IDidMount
@@ -550,6 +573,73 @@
                                                        (.focus (om/get-node owner "target-input")))}
                                     target)))))))))
 
+(defn in-progress [{:keys [layer-properties-menu mouse-down]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "In Progress Layers")
+    om/IRender
+    (render [_]
+      (let [drawing (cursors/observe-drawing owner)]
+        (dom/g nil
+          (when (and (:in-progress? drawing)
+                     (= :layer.type/text (get-in drawing [:layers 0 :layer/type])))
+            (om/build text-input (assoc (get-in drawing [:layers 0])
+                                        :moving? mouse-down)))
+
+          (when (:opened? layer-properties-menu)
+            (om/build layer-properties {:layer (:layer layer-properties-menu)
+                                        :x (:x layer-properties-menu)
+                                        :y (:y layer-properties-menu)}))
+
+          (when-let [sels (cond
+                            (:moving? drawing) (:layers drawing)
+                            (= :layer.type/text (get-in drawing [:layers 0 :layer/type])) nil
+                            (:in-progress? drawing) (:layers drawing)
+                            :else nil)]
+            (apply dom/g #js {:className "layers"}
+                   (map (fn [sel]
+                          (let [sel (if (:force-even? sel)
+                                      (layers/force-even sel)
+                                      sel)
+                                sel (merge sel
+                                           {:layer/end-x (:layer/current-x sel)
+                                            :layer/end-y (:layer/current-y sel)}
+                                           (when (or (:moving? drawing)
+                                                     (not= :layer.type/text (:layer/type sel)))
+                                             {:className "layer-in-progress"})
+                                           (when (= :layer.type/group (:layer/type sel))
+                                             {:layer/type :layer.type/rect
+                                              :className "layer-in-progress selection"
+                                              :strokeDasharray "2,3"}))]
+                            (svg-element #{} (assoc sel :key (str (:db/id sel) "-in-progress")))))
+                        sels))))))))
+
+
+
+(defn canvas-grid [camera]
+  (dom/defs nil
+    (dom/pattern #js {:id           "small-grid"
+                      :className    "grid-small"
+                      :width        (str (cameras/grid-width camera))
+                      :height       (str (cameras/grid-height camera))
+                      :patternUnits "userSpaceOnUse"}
+                 (dom/path #js {:d           (str "M " (cameras/grid-width camera) " 0 L 0 0 0 " (cameras/grid-width camera))
+                                :fill        "none"
+                                :stroke      "gray"
+                                :strokeWidth "0.5"}))
+    (dom/pattern #js {:id               "grid"
+                      :className        "grid-big"
+                      :width            (str (* 10 (cameras/grid-width camera)))
+                      :height           (str (* 10 (cameras/grid-height camera)))
+                      :patternUnits     "userSpaceOnUse"
+                      :patternTransform (str "translate(" (:x camera) "," (:y camera) ")")}
+                 (dom/rect #js {:width  (str (* 10 (cameras/grid-width camera)))
+                                :height (str (* 10 (cameras/grid-height camera)))
+                                :fill   "url(#small-grid)"})
+                 (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
+                                :fill        "none"
+                                :stroke      "gray"
+                                :strokeWidth "1"}))))
+
 (defn touches->clj [touches]
   (mapv (fn [t]
           {:client-x (aget t "clientX")
@@ -568,8 +658,9 @@
   [(/ (+ x2 x1) 2)
    (/ (+ y2 y1) 2)])
 
-(defn svg-canvas [payload owner opts]
+(defn svg-canvas [app owner]
   (reify
+    om/IDisplayName (display-name [_] "SVG Canvas")
     om/IInitState (init-state [_]
                     ;; use an atom for performance, don't want to constantly
                     ;; re-render when we set-state!
@@ -577,28 +668,19 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
-            camera (:camera payload)
-            in-progress? (settings/drawing-in-progress? payload)
-            subs-layers (reduce (fn [acc [id subscriber]]
-                                  (if-let [layers (seq (:layers subscriber))]
-                                    (concat acc (map (fn [layer]
-                                                       (assoc layer
-                                                              :layer/end-x (:layer/current-x layer)
-                                                              :layer/end-y (:layer/current-y layer)
-                                                              :subscriber-color (:color subscriber)
-                                                              :layer/stroke (apply str "#" (take 6 id))))
-                                                     layers))
-                                    acc))
-                                [] (:subscribers payload))]
+            camera (cursors/observe-camera owner)
+            in-progress? (settings/drawing-in-progress? app)
+            tool (get-in app state/current-tool-path)
+            mouse-down? (get-in app [:mouse-down])]
         (dom/svg #js {:width "100%"
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
-                      :className (str "canvas-frame " (str "tool-" (name (get-in payload state/current-tool-path))
-                                                        (when (and (get-in payload [:mouse :down])
-                                                                   (= :text (get-in payload state/current-tool-path))
-                                                                   (get-in payload [:drawing :in-progress?]))
-                                                          " tool-text-move")))
+                      :className (str "canvas-frame " (str "tool-" (name tool)
+                                                           (when (and mouse-down?
+                                                                      (keyword-identical? :text tool)
+                                                                      in-progress?)
+                                                             " tool-text-move")))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
                                         (cond
@@ -656,11 +738,11 @@
                                                                (measure [(:page-x c-a) (:page-y c-a)]
                                                                         [(:page-x c-b) (:page-y c-b)]))]
                                                  (reset! touches-atom current-touches)
-                                                 (om/transact! payload (fn [state]
-                                                                         (-> state
-                                                                           (cameras/set-zoom c-center
-                                                                                             (partial + (* -0.004 spread)))
-                                                                           (cameras/move-camera drift-x drift-y))))))
+                                                 (om/transact! camera (fn [camera]
+                                                                        (-> camera
+                                                                          (cameras/set-zoom c-center
+                                                                                            (partial + (* -0.004 spread)))
+                                                                          (cameras/move-camera drift-x drift-y))))))
                                              :else nil)))
                       :onMouseDown (fn [event]
                                      ((:handle-mouse-down handlers) event)
@@ -675,36 +757,14 @@
                       :onWheel (fn [event]
                                  (let [dx (- (aget event "deltaX"))
                                        dy (aget event "deltaY")]
-                                   (om/transact! payload (fn [state]
-                                                           (let [camera (cameras/camera state)]
-                                                             (if (aget event "altKey")
-                                                               (cameras/set-zoom state (cameras/screen-event-coords event) (partial + (* -0.002 dy)))
-                                                               (cameras/move-camera state dx (- dy)))))))
+                                   (om/transact! camera (fn [c]
+                                                          (if (aget event "altKey")
+                                                            (cameras/set-zoom c (cameras/screen-event-coords event) (partial + (* -0.002 dy)))
+                                                            (cameras/move-camera c dx (- dy))))))
                                  (utils/stop-event event))}
-                 (dom/defs nil
-                   (dom/pattern #js {:id           "small-grid"
-                                     :className    "grid-small"
-                                     :width        (str (cameras/grid-width camera))
-                                     :height       (str (cameras/grid-height camera))
-                                     :patternUnits "userSpaceOnUse"}
-                                (dom/path #js {:d           (str "M " (cameras/grid-width camera) " 0 L 0 0 0 " (cameras/grid-width camera))
-                                               :fill        "none"
-                                               :stroke      "gray"
-                                               :strokeWidth "0.5"}))
-                   (dom/pattern #js {:id               "grid"
-                                     :className        "grid-big"
-                                     :width            (str (* 10 (cameras/grid-width camera)))
-                                     :height           (str (* 10 (cameras/grid-height camera)))
-                                     :patternUnits     "userSpaceOnUse"
-                                     :patternTransform (str "translate(" (:x camera) "," (:y camera) ")")}
-                                (dom/rect #js {:width  (str (* 10 (cameras/grid-width camera)))
-                                               :height (str (* 10 (cameras/grid-height camera)))
-                                               :fill   "url(#small-grid)"})
-                                (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
-                                               :fill        "none"
-                                               :stroke      "gray"
-                                               :strokeWidth "1"})))
-                 (when (cameras/show-grid? payload)
+                 (canvas-grid camera)
+
+                 (when (cameras/show-grid? camera)
                    (dom/rect #js {:id        "background-grid"
                                   :className "grid-background"
                                   :width     "100%"
@@ -712,52 +772,18 @@
                                   :fill      "url(#grid)"}))
 
                  (dom/g
-                  #js {:transform (cameras/->svg-transform camera)}
-                  (om/build cursors (select-keys payload [:subscribers :client-id]))
-                  (om/build svg-layers (assoc (select-keys payload [:selected-eids :document/id])
-                                              :editing-eids (set (concat (when (or (settings/drawing-in-progress? payload)
-                                                                                   (settings/moving-drawing? payload))
-                                                                           (concat [(:db/id (settings/drawing payload))]
-                                                                                   (map :db/id (get-in payload [:drawing :layers]))))
-                                                                         (remove nil? (map :db/id subs-layers))))
-                                              :tool (get-in payload state/current-tool-path)))
-                  (om/build subscriber-layers {:layers subs-layers})
-                  (when (and (settings/drawing-in-progress? payload)
-                             (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])))
-                    (om/build text-input (assoc (get-in payload [:drawing :layers 0])
-                                                :moving? (get-in payload [:mouse :down]))))
+                   #js {:transform (cameras/->svg-transform camera)}
+                   (om/build cursors {})
 
-                  (when (get-in payload [:layer-properties-menu :opened?])
-                    (om/build layer-properties {:layer (get-in payload [:layer-properties-menu :layer])
-                                                :x (get-in payload [:layer-properties-menu :x])
-                                                :y (get-in payload [:layer-properties-menu :y])}))
+                   (om/build svg-layers {:tool tool})
 
-                  (when-let [sels (cond
-                                    (settings/moving-drawing? payload) (remove #(= :layer.type/group (:layer/type %))
-                                                                               (settings/drawing payload))
-                                    (= :layer.type/text (get-in payload [:drawing :layers 0 :layer/type])) nil
-                                    (settings/drawing-in-progress? payload) (settings/drawing payload)
-                                    :else nil)]
-                    (apply dom/g #js {:className "layers"}
-                           (map (fn [sel]
-                                  (let [sel (if (:force-even? sel)
-                                              (layers/force-even sel)
-                                              sel)
-                                        sel (merge sel
-                                                   {:layer/end-x (:layer/current-x sel)
-                                                    :layer/end-y (:layer/current-y sel)}
-                                                   (when (or (settings/moving-drawing? payload)
-                                                             (not= :layer.type/text (:layer/type sel)))
-                                                     {:className "layer-in-progress"})
-                                                   (when (= :layer.type/group (:layer/type sel))
-                                                     {:layer/type :layer.type/rect
-                                                      :className "layer-in-progress selection"
-                                                      :strokeDasharray "2,3"}))]
-                                    (svg-element #{} (assoc sel :key (str (:db/id sel) "-in-progress")))))
-                                sels)))))))))
+                   (om/build subscribers-layers {})
+
+                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]))))))))
 
 (defn canvas [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Canvas")
     om/IRender
     (render [_]
       (let [right-click-learned? (get-in app state/right-click-learned-path)]
@@ -767,8 +793,6 @@
                             (.preventDefault e)
                             (.stopPropagation e))}
           [:div.canvas-background]
-          (when (get-in app [:menu :open?])
-            (om/build radial-menu app))
           (om/build svg-canvas app)
-          (when (and (not right-click-learned?) (:mouse app))
-            (om/build radial-hint app))])))))
+          (when (get-in app [:menu :open?])
+            (om/build radial-menu (utils/select-in app [[:menu]])))])))))

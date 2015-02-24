@@ -36,28 +36,28 @@
 (defn guidelines-enabled? [state]
   false)
 
-(defn show-grid? [state]
-  (get-in state [:camera :show-grid?]))
+(defn show-grid? [camera]
+  (get-in camera [:show-grid?]))
 
 (defn bounded [lower-bound upper-bound value]
   (max lower-bound (min upper-bound value)))
 
-(defn set-zoom [state screen-center f]
-  (let [old-z-exact (get-in state [:camera :z-exact])
+(defn set-zoom [camera screen-center f]
+  (let [old-z-exact (get-in camera [:z-exact])
         new-z-exact (bounded min-zoom max-zoom (f old-z-exact))
         [x_s y_s] screen-center
-        old-zf (get-in state [:camera :zf])
+        old-zf (get-in camera [:zf])
         new-zf (snap zoom-increment new-z-exact)]
-    (-> state
-        (assoc-in [:camera :z-exact] new-z-exact)
-        (assoc-in [:camera :zf] new-zf)
-        (update-in [:camera :x] (fn [x] (+ x (* (- x_s x) (- 1 (/ new-zf old-zf))))))
-        (update-in [:camera :y] (fn [y] (+ y (* (- y_s y) (- 1 (/ new-zf old-zf)))))))))
+    (-> camera
+        (assoc-in [:z-exact] new-z-exact)
+        (assoc-in [:zf] new-zf)
+        (update-in [:x] (fn [x] (+ x (* (- x_s x) (- 1 (/ new-zf old-zf))))))
+        (update-in [:y] (fn [y] (+ y (* (- y_s y) (- 1 (/ new-zf old-zf)))))))))
 
-(defn move-camera [state dx dy]
-  (-> state
-   (update-in [:camera :x] + dx)
-   (update-in [:camera :y] + dy)))
+(defn move-camera [camera dx dy]
+  (-> camera
+   (update-in [:x] + dx)
+   (update-in [:y] + dy)))
 
 (defn screen-event-coords [event]
   [(.. event -pageX)

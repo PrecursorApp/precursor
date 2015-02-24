@@ -7,6 +7,7 @@
             [frontend.overlay :as overlay]
             [frontend.state :as state]
             [frontend.sente :as sente]
+            [frontend.subscribers :as subs]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils :as utils :include-macros true]
@@ -82,7 +83,7 @@
                :db-listener-key (utils/uuid)
                :show-landing? false
                :frontend-id-state {})
-        (assoc :subscribers state/subscriber-bot)
+        (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
             %))
