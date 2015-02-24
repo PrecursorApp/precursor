@@ -70,34 +70,46 @@
             [:div.pricing-blocks
              [:div.pricing-block
               [:div.pricing-head
-               [:h2.pricing-heading.content-copy "Solo"]]
+               [:h2.pricing-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
               [:div.pricing-body
-               [:h4.content-copy "$10/mo"]
-               [:p.pricing-copy.content-copy "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc sollicitudin, quam id eleifend pretium, quam arcu sodales purus."]]
+               ;; [:h4.content-copy "$10/mo"]    ; <- hold off until pricing is ready
+               [:h4.content-copy "Coming soon."] ; <- and delete this once it's ready
+               [:p.pricing-copy.content-copy
+                "Unlimited public docs, private docs, and project repos.
+                Add additional teammates at any time and take full advantage of team features."]]
               [:div.pricing-foot
-               [:button.pricing-button "Request early access."]]]
+               [:button.pricing-button
+                {:title "Try it free while we gather feedback."}
+                "Request early access."]]]
              [:div.pricing-divider
               [:div.pricing-divider-line]]
              [:div.pricing-block
               [:div.pricing-head
-               [:h2.pricing-heading.content-copy "Team"]]
+               [:h2.pricing-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
               [:div.pricing-body
-               [:h4.content-copy "$10/mo/user"]
-               [:p.pricing-copy.content-copy "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc sollicitudin, quam id eleifend pretium, quam arcu sodales purus."]]
+               ;; [:h4.content-copy "$10/mo/user"] ; <- hold off until pricing is ready
+               [:h4.content-copy "Coming soon."]   ; <- and delete this once it's ready
+               [:p.pricing-copy.content-copy
+                "Unlimited public docs, private docs, and project repos.
+                Additional access to team-wide chat, in-app notifications, and file management."]]
               [:div.pricing-foot
-               [:button.pricing-button "Request early access."]]]
+               [:button.pricing-button
+                {:title "Try it free while we gather feedback."}
+                "Request early access."]]]
              [:div.pricing-divider
               [:div.pricing-divider-line]]
              [:div.pricing-block
               [:div.pricing-head
-               [:h2.pricing-heading.content-copy "Enterprise"]]
+               [:h2.pricing-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
               [:div.pricing-body
                [:h4.content-copy "Contact us."]
-               [:p.pricing-copy.content-copy "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc sollicitudin, quam id eleifend pretium, quam arcu sodales purus."]]
+               [:p.pricing-copy.content-copy
+                "Customized solutions designed to solve specific team constraints.
+                E.g., integrations, custom servers, on-premise accommodations, etc."]]
               [:div.pricing-foot
-               [:button.pricing-button "Contact us."]]]
-
-             ]]]
+               [:button.pricing-button
+                {:title "We'll get back to you immediately."}
+                "Contact us."]]]]]]
 
           )))))
 

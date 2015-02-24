@@ -204,20 +204,36 @@
 .pricing-block {
   width: 25%;
   padding: @tile 0;
+  .mq_960({
+    width: 32%;
+  });
+  .mq_640({
+    width: 100%;
+  });
 }
 .pricing-divider {
   .flex(1);
   .flexy();
+  .mq_640({
+    display: none;
+  });
 }
 .pricing-divider-line {
   margin: 0 auto;
   border-right: 1px dashed @gray_light;
+  .mq_960({
+    display: none;
+  });
 }
 .pricing-heading {
   margin: 0;
 }
 .pricing-body {
   padding: @tile 0;
+  height: 1.25 * @tile_xl;
+  .mq_640({
+    height: auto;
+  });
 }
 .pricing-copy {
   margin: 0;
@@ -226,7 +242,7 @@
   line-height: 1;
   height: @tile;
   width: 100%;
-  padding: @menu_padding;
+  padding: @menu_padding 0;
   border: 1px solid @gray_light;
   &:hover,
   &:focus {
