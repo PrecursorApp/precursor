@@ -123,15 +123,6 @@
      [:a.navigation-link {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
      (common/google-login :small)]]))
 
-(defn past-center? [owner ref]
-  (let [node (om/get-node owner ref)
-        vh (.-height (goog.dom/getViewportSize))]
-    (< (.-top (.getBoundingClientRect node)) (/ vh 2))))
-
-(defn maybe-set-state! [owner korks value]
-  (when (not= (om/get-state owner korks) value)
-    (om/set-state! owner korks value)))
-
 (defn make-button [{:keys [document/id]} owner]
   (reify
     om/IDisplayName (display-name [_] "Landing Make Button")
@@ -222,9 +213,8 @@
 (defn the-why [app owner]
   (reify
     om/IDisplayName (display-name [_] "Landing Why")
-    om/IInitState (init-state [_] {:past-center-features #{}})
-    om/IRenderState
-    (render-state [_ {:keys [past-center-features]}]
+    om/IRender
+    (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.the-why
@@ -250,22 +240,44 @@
            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
            ]])))))
 
+(defn past-center? [owner ref]
+  (let [node (om/get-node owner ref)
+        vh (.-height (goog.dom/getViewportSize))]
+    (< (.-top (.getBoundingClientRect node)) (/ vh 2))))
+
+(defn scrolled-back-out-of-view?
+  "Checks if the user scrolled back up the page far enought that node is out of view"
+  [owner ref]
+  (let [node (om/get-node owner ref)
+        vh (.-height (goog.dom/getViewportSize))
+        rect (.getBoundingClientRect node)
+        bottom (.-bottom rect)
+        height (.-height rect)
+        wiggle-room (* 0.1 vh)]
+    (> bottom (- (+ vh height)
+                 wiggle-room))))
+
 (defn the-how [app owner]
   (reify
     om/IDisplayName (display-name [_] "Landing How")
-    om/IInitState (init-state [_] {:past-center-features #{}})
+    om/IInitState (init-state [_] {:active-features #{}})
     om/IDidMount (did-mount [_]
-                   (scroll/register owner #(maybe-set-state! owner [:past-center-features]
-                                                             (set (filter (partial past-center? owner)
-                                                                          ["1" "2" "3"])))))
+                   (scroll/register owner #(utils/maybe-set-state!
+                                            owner
+                                            [:active-features]
+                                            (let [active-features (om/get-state owner [:active-features])
+                                                  {active true inactive false} (group-by (partial contains? active-features)
+                                                                                         ["1" "2" "3"])]
+                                              (set (concat (filter (partial past-center? owner) inactive)
+                                                           (remove (partial scrolled-back-out-of-view? owner) active)))))))
     om/IWillUnmount (will-unmount [_] (scroll/dispose owner))
     om/IRenderState
-    (render-state [_ {:keys [past-center-features]}]
+    (render-state [_ {:keys [active-features]}]
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.the-how
           [:div.feature.content
-           {:class (when (contains? past-center-features "1") "art-visible") :ref "1"}
+           {:class (when (contains? active-features "1") "art-visible") :ref "1"}
            [:div.feature-story
             [:h2.feature-headline
              [:span "Make your ideas accessible anywhere, using any device."]]
@@ -276,7 +288,7 @@
            [:div.feature-media artwork-mobile]]
           [:div.feature-divider]
           [:div.feature.content
-           {:class (when (contains? past-center-features "2") "art-visible") :ref "2"}
+           {:class (when (contains? active-features "2") "art-visible") :ref "2"}
            [:div.feature-story
             [:h2.feature-headline
              [:span "Make prototypes interactive & refine your user experience."]]
@@ -290,7 +302,7 @@
            [:div.feature-media.reverse artwork-interact]]
           [:div.feature-divider]
           [:div.feature.content
-           {:class (when (contains? past-center-features "3") "art-visible") :ref "3"}
+           {:class (when (contains? active-features "3") "art-visible") :ref "3"}
            [:div.feature-story
             [:h2.feature-headline
              [:span "Make team collaboration more productive & engaging."]]
