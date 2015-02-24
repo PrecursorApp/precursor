@@ -92,10 +92,6 @@
         vh (.-height (goog.dom/getViewportSize))]
     (< (.-top (.getBoundingClientRect node)) (/ vh 2))))
 
-(defn maybe-set-state! [owner korks value]
-  (when (not= (om/get-state owner korks) value)
-    (om/set-state! owner korks value)))
-
 (defn make-button [{:keys [document/id]} owner]
   (reify
     om/IDisplayName (display-name [_] "Landing Make button")
@@ -288,9 +284,9 @@
     om/IDisplayName (display-name [_] "Landing How")
     om/IInitState (init-state [_] {:past-center-featurettes #{}})
     om/IDidMount (did-mount [_]
-                   (scroll/register owner #(maybe-set-state! owner [:past-center-featurettes]
-                                                             (set (filter (partial past-center? owner)
-                                                                          ["1" "2" "3"])))))
+                   (scroll/register owner #(utils/maybe-set-state! owner [:past-center-featurettes]
+                                                                   (set (filter (partial past-center? owner)
+                                                                                ["1" "2" "3"])))))
     om/IWillUnmount (will-unmount [_]
                       (scroll/dispose owner))
     om/IRenderState

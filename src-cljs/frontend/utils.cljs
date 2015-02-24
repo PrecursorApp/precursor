@@ -218,3 +218,7 @@
     id))
 
 (def select-in seq-util/select-in)
+
+(defn maybe-set-state! [owner korks value]
+  (when (not= (om/get-state owner korks) value)
+    (om/set-state! owner korks value)))

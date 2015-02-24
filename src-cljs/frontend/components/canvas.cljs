@@ -422,9 +422,8 @@
       (.focus (om/get-node owner "input")))
     om/IDidUpdate
     (did-update [_ _ _]
-      (om/set-state! owner
-                     :input-min-width
-                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
+      (utils/maybe-set-state! owner :input-min-width
+                              (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
       (.focus (om/get-node owner "input")))
     om/IInitState
     (init-state [_]
