@@ -158,7 +158,6 @@
                                               [:show-viewers?]
                                               [:client-id]
                                               [:cust]
-                                              [:mouse]
                                               [:mouse-type]])
                       {:react-key "hud"})])
           (html [:div#app]))))))

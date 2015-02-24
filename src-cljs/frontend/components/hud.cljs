@@ -238,8 +238,7 @@
 
         (om/build tray (utils/select-in app [state/chat-opened-path
                                              state/info-button-learned-path
-                                             [:cust]
-                                             [:mouse]])
+                                             [:cust]])
                   {:react-key "tray"})
 
         ]))))
