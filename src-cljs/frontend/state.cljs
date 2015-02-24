@@ -16,10 +16,11 @@
    :login-button-learned false})
 
 (def subscriber-bot
-  {"prcrsr-subscriber-bot" {:color "#00b233"
-                            :cust-name "prcrsr"
-                            :show-mouse? true
-                            :hide-in-list? true}})
+  {:color "#00b233"
+   :cust-name "prcrsr"
+   :show-mouse? true
+   :hide-in-list? true
+   :client-id "prcrsr-subscriber-bot"})
 
 (defn initial-state []
   {:camera          {:x          0
@@ -46,8 +47,15 @@
    :current-user    nil
    :entity-ids      #{}
    :document/id     nil
-   :subscribers     subscriber-bot
-   :inputs          nil})
+   ;; subscribers is split into many parts for perf
+   :subscribers     {:mice {}
+                     :layers {}
+                     :info {}
+                     ;; used to keep track of which entities are being edited
+                     ;; so that we can lock them
+                     ;; We have to be a little silly here and below so that Om will let
+                     ;; us have multiple ref cursors in the same component
+                     :entity-ids {:entity-ids #{}}}
 
 (def user-path [:current-user])
 

@@ -20,6 +20,7 @@
             [frontend.sente :as sente]
             [frontend.settings :as settings]
             [frontend.state :as state]
+            [frontend.subscribers :as subs]
             [frontend.svg :as svg]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]
@@ -494,7 +495,7 @@
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
-  (when (get-in current-state [:subscribers (:client-id current-state) :show-mouse?])
+  (when (get-in current-state [:subscribers :mice (:client-id current-state) :show-mouse?])
     (sente/send-msg (:sente current-state)
                     [:frontend/mouse-position (merge
                                                {:tool (get-in current-state state/current-tool-path)
@@ -877,7 +878,7 @@
   [browser-state message {:keys [chat-body]} previous-state current-state]
   (let [db (:db current-state)
         client-id (:client-id previous-state)
-        color (get-in previous-state [:subscribers client-id :color])]
+        color (get-in previous-state [:subscribers :info client-id :color])]
     (d/transact! db [(utils/remove-map-nils {:chat/body chat-body
                                              :chat/color color
                                              :cust/uuid (get-in current-state [:cust :cust/uuid])
@@ -1244,7 +1245,7 @@
 
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]
-  (update-in state [:subscribers client-id] merge fields))
+  (subs/add-subscriber-data state client-id fields))
 
 (defmethod control-event :viewers-opened
   [target message _ state]

@@ -129,7 +129,7 @@
         (let [{:keys [cast! db]} (om/get-shared owner)
               chat-opened? (get-in app state/chat-opened-path)
               client-id (:client-id app)
-              viewers-count (count (remove (comp :hide-in-list? last) (:subscribers app)))
+              viewers-count (count (remove (comp :hide-in-list? last) (get-in app [:subscribers :info])))
               can-edit? (not (empty? (:cust app)))
               show-viewers? (and (not (overlay-visible? app))
                                  (get app :show-viewers? (< 1 viewers-count 6)))]
@@ -141,12 +141,12 @@
              (when show-viewers?
                [:div.viewers-list
                 [:div.viewers-list-frame
-                 (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+                 (let [show-mouse? (get-in app [:subscribers :info client-id :show-mouse?])]
                    [:div.viewer.viewer-self
                     [:div.viewer-avatar.viewer-tag
                      (if (= :touch (get-in app [:mouse-type]))
-                       (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers client-id :color])}}}))
-                       (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers client-id :color])}}})))]
+                       (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}}}))
+                       (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}}})))]
                     (if editing-name?
                       [:form.viewer-name-form
                        {:on-submit #(do (when-not (str/blank? new-name)
@@ -183,7 +183,7 @@
                        :role "button"
                        :title "Edit your display name."}
                       (common/icon :pencil)]]])
-                 (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
+                 (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (get-in app [:subscribers :info]) client-id)
                        :when (not hide-in-list?)
                        :let [id-str (or cust-name (apply str (take 6 id)))]]
                    [:div.viewer
@@ -222,7 +222,7 @@
        [:div.hud
         (om/build viewers (utils/select-in app [state/chat-opened-path
                                                 state/overlays-path
-                                                [:subscribers]
+                                                [:subscribers :info]
                                                 [:show-viewers?]
                                                 [:client-id]
                                                 [:cust]
