@@ -65,7 +65,8 @@
                  ;; but not Om yet)
                  ;;[om "0.6.4"]
 
-                 [precursorapp/react "react-0.12.2-6-new-tags"]
+                 [precursorapp/react "0.12.2-7-new-tags"]
+
                  [sablono "0.3.1" :exclusions [cljsjs/react]]
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]

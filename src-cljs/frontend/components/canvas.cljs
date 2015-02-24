@@ -292,6 +292,12 @@
                                                    (cast! :canvas-aligned-to-layer-center
                                                           {:ui-id (:layer/ui-target layer)
                                                            :canvas-size (utils/canvas-size)})))
+                                 :onTouchStart (fn [event]
+                                                 (when (= (.-length (.-touches event)) 1)
+                                                   (utils/stop-event event)
+                                                   (cast! :canvas-aligned-to-layer-center
+                                                          {:ui-id (:layer/ui-target layer)
+                                                           :canvas-size (utils/canvas-size)})))
 
                                  :className (str "action interactive-fill "
                                                  (when (and (< 1 (count selected-eids))
