@@ -177,12 +177,10 @@
          [:div.make-button
           {:role "button"
            :on-click #(do
-                        (cast! :landing-closed)
-                        (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
+                        (cast! :landing-closed))
            :on-touch-end #(do
                             (.preventDefault %)
-                            (cast! :landing-closed)
-                            (put! nav-ch [:navigate! {:path (str "/document/" id)}]))
+                            (cast! :landing-closed))
            :on-mouse-enter #(om/set-state! owner :word-list (shuffle word-list))}
           [:div.make-prepend
            {:data-before "or "}

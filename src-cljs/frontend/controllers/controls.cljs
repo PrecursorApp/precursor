@@ -1294,6 +1294,10 @@
     (assoc :show-landing? false)
     (overlay/clear-overlays)))
 
+(defmethod post-control-event! :landing-closed
+  [target message _ previous-state current-state]
+  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
+
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]
   (subs/add-subscriber-data state client-id fields))

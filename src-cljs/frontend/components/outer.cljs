@@ -205,27 +205,32 @@
                  :role "button"}
                 "Contact us."]]]]]])))))
 
-(defn nav-head []
-  (html
-   [:div.nav
-    [:a.nav-link {:href "/"
-                  :role "button"
-                  :title "Launch"}
-     "Precursor"]
-    [:a.nav-link {:href "/home"
-                  :role "button"
-                  :title "Home"}
-     "Home"]
-    [:a.nav-link {:href "/pricing"
-                  :role "button"
-                  :title "Pricing"}
-     "Pricing"]
-    [:a.nav-link {:href "/blog"
-                  :role "button"
-                  :title "Blog"
-                  :target "_self"}
-     "Blog"]
-    (om/build common/google-login {:source "Nav" :size :small})]))
+(defn nav-head [app owner]
+  (om/component
+   (html
+    [:div.nav
+     [:a.nav-link {:href "/"
+                   :role "button"
+                   :title "Launch"}
+      "Precursor"]
+     [:a.nav-link {:href "/home"
+                   :role "button"
+                   :title "Home"}
+      "Home"]
+     [:a.nav-link {:href "/pricing"
+                   :role "button"
+                   :title "Pricing"}
+      "Pricing"]
+     [:a.nav-link {:href "/blog"
+                   :role "button"
+                   :title "Blog"
+                   :target "_self"}
+      "Blog"]
+     (if (utils/logged-in? owner)
+       [:a {:role "button"
+            :on-click #((om/get-shared owner :cast!) :landing-closed)}
+        "Go to App"]
+       (om/build common/google-login {:source "Nav" :size :small}))])))
 
 (defn nav-foot []
   (html
@@ -273,6 +278,6 @@
         (html
           [:div.outer {:class (concat [(str "page-" (name nav-point))]
                                       (when (= (:page-count app) 1) ["landed"]))}
-           [:div.outer-head (nav-head)]
+           [:div.outer-head (om/build nav-head {})]
            (om/build component app {:react-key nav-point})
            [:div.outer-foot (nav-foot)]])))))
