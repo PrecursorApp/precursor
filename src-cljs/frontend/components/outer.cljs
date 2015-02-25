@@ -213,7 +213,7 @@
                           :role "button"
                           :title "Launch"}
                          (when (utils/logged-in? owner)
-                           {:on-click #((om/get-shared owner :cast!) :launch-app-clicked)}))
+                           {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "top-left-nav"}})}))
       "Precursor"]
      [:a.nav-link {:href "/home"
                    :role "button"
@@ -231,7 +231,7 @@
      (if (utils/logged-in? owner)
        [:a.nav-link {:role "button"
                      :title "Launch Precursor"
-                     :on-click #((om/get-shared owner :cast!) :launch-app-clicked)}
+                     :on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "top-right-nav"}})}
         "App"]
        [:div.nav-link
         (om/build common/google-login {:source "Nav" :size :small})])])))
