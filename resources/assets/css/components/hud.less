@@ -402,18 +402,17 @@
 }
 .new-here-items {
   .flexy(center; center);
+  .transition_transform(@run @run_slower @bezier_deform);
   position: absolute;
   top: 100%;
   left: 0;
   width: 100vw;
   height: 100%;
   background: @dye_outer;
-  transition: @run @bezier_deform;
+  &.opened,
   &:hover {
     .translate3d(0, -100%, 0);
-    .new-here-ghost {
-      bottom: 100%;
-    }
+    transition-delay: @now;
   }
 }
 .new-here-button {
@@ -436,25 +435,9 @@
   &:not(:hover) {
     opacity: @opacity_darker_light;
   }
-  &:active {
-    ~ .new-here-items {
-      .new-here-ghost {
-        bottom: 100%;
-      }
-    }
-  }
 }
 .new-here-item {
   padding: 0 @menu_padding;
-}
-.new-here-ghost {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  margin: auto;
 }
 .mouse-stats {
   color: @white;

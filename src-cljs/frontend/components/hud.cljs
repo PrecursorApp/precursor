@@ -70,13 +70,15 @@
            (when new-here?
              (html
               [:div.new-here
-               [:a.new-here-button {:data-text "New here?" :role "button"}]
-               [:div.new-here-items
-                [:a.new-here-item {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
-                [:a.new-here-item {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
-                [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
-                [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Sign in"]
-                [:div.new-here-ghost]]]))
+               [:a.new-here-button {:on-click #(om/set-state! owner :new-here true)
+                                    :data-text "New here?"
+                                    :role "button"}]
+               [:div.new-here-items {:on-mouse-leave #(om/set-state! owner :new-here false)
+                                     :class (when (om/get-state owner :new-here) "opened")}
+                [:a.new-here-item {:href "/home"    :role "button" :title "Home"} "Precursor"]
+                [:a.new-here-item {:href "/pricing" :role "button" :title "Pricing"} "Pricing"]
+                [:a.new-here-item {:href "/blog"    :role "button" :title "Blog"} "Blog"]
+                [:a.new-here-item {:href "/blog"    :role "button" :title "Blog" :target "_self"} "Sign in"]]]))
            (om/build mouse-stats {} {:react-key "mouse-stats"})]
           [:div.tray-negative]])))))
 
