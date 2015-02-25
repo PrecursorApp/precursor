@@ -14,6 +14,7 @@
             [frontend.components.common :as common]
             [frontend.components.landing :as landing]
             [frontend.components.drawing :as drawing]
+            [frontend.components.outer :as outer]
             [frontend.components.overlay :as overlay]
             [frontend.cursors :as cursors]
             [frontend.favicon :as favicon]
@@ -115,8 +116,8 @@
            [:div#app.app
             ;; (om/build early-access app)
             (when (:show-landing? app)
-              (om/build landing/landing (select-keys app [:show-landing? :document/id])
-                        {:react-key "landing"}))
+              (om/build outer/outer (select-keys app [:show-landing? :document/id])
+                        {:react-key "outer"}))
 
             (cond (:show-landing? app)
                   (om/build drawing/landing-background {:doc-id (:document/id app)
