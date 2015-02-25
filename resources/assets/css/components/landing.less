@@ -7,6 +7,12 @@
       }
     }
   }
+  &.page {
+    padding: 0;       // VETO
+    .the-why {
+      padding-top: @tile;
+    }
+  }
   p {
     line-height: 2;
   }
@@ -16,19 +22,6 @@
   .flexy(column);
   min-height: 100vh;
   overflow: hidden;
-  .navigation {
-    .content {
-      max-width: none; // VETO
-    }
-  }
-  .navigation-link {
-    color: fade(@white, 41.75); // TODO use opacity variables here
-    transition: @run_fast @bezier_fadein;
-    &:hover {
-      color: @white;
-      transition: @now;
-    }
-  }
   span {
     .user-select(auto);
     &::selection {
@@ -38,10 +31,6 @@
   }
 }
 .the-why {
-  .navigation {
-    .animation(in-fade-top @run @run_slower @bezier_deform backwards);
-    .shadow_inset(bottom; @color_inset_black; @color_inset_white);
-  }
   .our-philosphy {
     .animation(our-philosphy @run @run @bezier_deform backwards);
   }
@@ -115,12 +104,6 @@
   .something-default {
     &:after {
       display: none; // VETO
-    }
-  }
-  .navigation {
-    .shadow_inset(top; @color_inset_black; @color_inset_white);
-    .google-login {
-      display: none;
     }
   }
 }

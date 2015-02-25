@@ -30,78 +30,6 @@
 (def keymap
   (atom nil))
 
-(defn early-access [app owner]
-  (reify
-    om/IDisplayName (display-name [_] "Request Access")
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! handlers]} (om/get-shared owner)]
-        (html
-
-          ; [:div.early-access
-          ;  [:div.early-access-content
-          ;   [:div.early-access-info
-          ;    [:h2.early-access-heading
-          ;     "We're excited to show you our team features."]
-          ;    [:p.early-access-copy
-          ;     "To activate your early access, please sign in and let us know about the following info.
-          ;     We'll send you an email confirmation once your account has been granted full access."]
-          ;    [:div.calls-to-action
-          ;      (common/google-login)]]
-          ;   [:div.early-access-form ; needs class "disabled" when user is logged out to block interaction with form
-          ;    [:div.adaptive-placeholder {:tab-index "2" :data-before "What's your company's name?" :data-after "Company Name" :content-editable ""}]
-          ;    [:div.adaptive-placeholder {:tab-index "3" :data-before "How many employees are there?" :data-after "Employee Count" :content-editable ""}]
-          ;    [:div.adaptive-placeholder {:tab-index "4" :data-before "How will you use Precursor?" :data-after "Use Case" :content-editable ""}]
-          ;    [:button.early-access-button {:tab-index "5"} "Request early access."]]]]
-
-          [:div.pricing
-           [:div.content
-            [:div.pricing-blocks
-             [:div.pricing-block
-              [:div.pricing-head
-               [:h2.pricing-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
-              [:div.pricing-body
-               ;; [:h4.content-copy "$10/mo"]    ; <- hold off until pricing is ready
-               [:h4.content-copy "Coming soon."] ; <- and delete this once it's ready
-               [:p.pricing-copy.content-copy
-                "Unlimited public docs, private docs, and project repos.
-                Add additional teammates at any time and take full advantage of team features."]]
-              [:div.pricing-foot
-               [:button.pricing-button
-                {:title "Try it free while we gather feedback."}
-                "Request early access."]]]
-             [:div.pricing-divider
-              [:div.pricing-divider-line]]
-             [:div.pricing-block
-              [:div.pricing-head
-               [:h2.pricing-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
-              [:div.pricing-body
-               ;; [:h4.content-copy "$10/mo/user"] ; <- hold off until pricing is ready
-               [:h4.content-copy "Coming soon."]   ; <- and delete this once it's ready
-               [:p.pricing-copy.content-copy
-                "Unlimited public docs, private docs, and project repos.
-                Additional access to team-wide chat, in-app notifications, and file management."]]
-              [:div.pricing-foot
-               [:button.pricing-button
-                {:title "Try it free while we gather feedback."}
-                "Request early access."]]]
-             [:div.pricing-divider
-              [:div.pricing-divider-line]]
-             [:div.pricing-block
-              [:div.pricing-head
-               [:h2.pricing-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
-              [:div.pricing-body
-               [:h4.content-copy "Contact us."]
-               [:p.pricing-copy.content-copy
-                "Customized solutions designed to solve specific team constraints.
-                E.g., integrations, custom servers, on-premise accommodations, etc."]]
-              [:div.pricing-foot
-               [:button.pricing-button
-                {:title "We'll get back to you immediately."}
-                "Contact us."]]]]]]
-
-          )))))
-
 (defn app* [app owner]
   (reify
     om/IDisplayName (display-name [_] "App*")
@@ -114,7 +42,6 @@
         (if-let [nav-point (:navigation-point app)]
           (html
            [:div#app.app
-            ;; (om/build early-access app)
             (when (:show-landing? app)
               (om/build outer/outer (select-keys app [:show-landing? :document/id])
                         {:react-key "outer"}))

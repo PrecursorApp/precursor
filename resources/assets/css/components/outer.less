@@ -4,16 +4,41 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  min-height: 100%;
+  background: @white;
   &.landed {
-    .the-why {
-      .navigation,
-      .our-philosphy,
-      .our-proof {
-        .animation-duration(@now);
-        .animation-delay(@now);
+    .navigation,
+    .our-philosphy,
+    .our-proof {
+      .animation-duration(@now);
+      .animation-delay(@now);
+    }
+  }
+  &.page-landing {
+    background: none; // VETO
+    .navigation-link {
+      color: fade(@white, 41.75); // TODO use opacity variables here
+      transition: @run_fast @bezier_fadein;
+      &:hover {
+        color: @white;
+        transition: @now;
       }
     }
+    .outer-head {
+      .navigation {
+        .animation(in-fade-top @run @run_slower @bezier_deform backwards);
+        .shadow_inset(bottom; @color_inset_black; @color_inset_white);
+      }
+    }
+    .outer-foot {
+      .navigation {
+        .shadow_inset(top; @color_inset_black; @color_inset_white);
+      }
+    }
+  }
+  .page {
+    min-height: 100%;
+    padding: @tile 0;
   }
   ~ .inner {
     .canvas-background {
@@ -74,6 +99,27 @@
     transition: @now;
   }
 }
+.outer-head,
+.outer-foot {
+  position: absolute;
+  left: 0;
+  width: 100%;
+}
+.outer-head {
+  top: 0;
+  .navigation {
+    box-shadow: 0 1px @gray_lighter;
+  }
+}
+.outer-foot {
+  bottom: 0;
+  .navigation {
+    box-shadow: 0 -1px @gray_lighter;
+    .google-login {
+      display: none;
+    }
+  }
+}
 .content {
   .box-sizing(content-box);
   max-width: @tile_content;
@@ -90,8 +136,9 @@
   text-overflow: ellipsis;
 }
 .navigation {
-  .flexy();
+  .flexy(center);
   height: @tile;
+  padding: 0 @menu_padding;
   .content {
     .flex(1 1 100%);
     .flexy(center);
@@ -108,6 +155,12 @@
 .navigation-link {
   overflow: hidden;
   text-overflow: ellipsis;
+  color: @gray;
+  transition: @run_fast @bezier_fadein;
+  &:hover {
+    color: @black;
+    transition: @now;
+  }
 }
 .calls-to-action {
   .flexy(wrap);
