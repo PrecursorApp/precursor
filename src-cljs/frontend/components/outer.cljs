@@ -101,12 +101,11 @@
                                         :data-before "What's your company's name?"
                                         :data-after "Company Name"
                                         :content-editable true
-                                        :on-input #(let [value (goog.dom/getRawTextContent (.-target %))
-                                                         stripped-value (gstring/stripNewlines value)]
-                                                     (om/set-state! owner :company-name stripped-value)
-                                                     ;; If they hit enter, send them to the next input.
-                                                     (when (not= value stripped-value)
-                                                       (.focus (om/get-node owner "employee-count"))))}
+                                        :on-key-down #(when (= "Enter" (.-key %))
+                                                        (.preventDefault %)
+                                                        ;; If they hit enter, send them to the next input.
+                                                        (.focus (om/get-node owner "employee-count")))
+                                        :on-input #(om/set-state! owner :company-name (goog.dom/getRawTextContent (.-target %)))}
 
              company-name]
             [:div.adaptive-placeholder {:tab-index "3"
@@ -114,29 +113,23 @@
                                         :data-before "How many teammates do you have?"
                                         :data-after "Team Size"
                                         :content-editable true
-                                        :on-input #(let [value (goog.dom/getRawTextContent (.-target %))
-                                                         stripped-value (gstring/stripNewlines value)]
-                                                     (om/set-state! owner :employee-count stripped-value)
-                                                     ;; If they hit enter, send them to the next input.
-                                                     (when (not= value stripped-value)
-                                                       (.focus (om/get-node owner "use-case"))))}
+                                        :on-key-down #(when (= "Enter" (.-key %))
+                                                        (.preventDefault %)
+                                                        ;; If they hit enter, send them to the next input.
+                                                        (.focus (om/get-node owner "use-case")))
+                                        :on-input #(om/set-state! owner :employee-count (goog.dom/getRawTextContent (.-target %)))}
              employee-count]
             [:div.adaptive-placeholder {:tab-index "4"
                                         :ref "use-case"
                                         :data-before "How will you use Precursor?"
                                         :data-after "Use Case"
                                         :content-editable true
-                                        :on-input #(let [value (goog.dom/getRawTextContent (.-target %))
-                                                         stripped-value (gstring/stripNewlines value)]
-                                                     (om/set-state! owner :use-case stripped-value)
-                                                     ;; If they hit enter, submit the form
-                                                     (when (not= value stripped-value)
-                                                       (.focus (om/get-node owner "submit-button"))
-                                                       (.click (om/get-node owner "submit-button"))
-                                                       #_(submit-form {:company-name company-name
-                                                                     :employee-count employee-count
-                                                                     ;; Have to make sure we get the latest value
-                                                                     :use-case stripped-value})))}
+                                        :on-key-down #(when (= "Enter" (.-key %))
+                                                        (.preventDefault %)
+                                                        ;; If they hit enter, send them to the next input.
+                                                        (.focus (om/get-node owner "submit-button"))
+                                                        (.click (om/get-node owner "submit-button")))
+                                        :on-input #(om/set-state! owner :use-case (goog.dom/getRawTextContent (.-target %)))}
              use-case]
             (when (seq error)
               [:div.error error])
