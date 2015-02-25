@@ -157,8 +157,10 @@
                 "Unlimited public docs, private docs, and project repos.
                 Add additional teammates at any time and take full advantage of team features."]]
               [:div.pricing-foot
-               [:button.pricing-button
-                {:title "Try it free while we gather feedback."}
+               [:a.pricing-button
+                {:href "/early-access/solo"
+                 :title "Try it free while we gather feedback."
+                 :role "button"}
                 "Request early access."]]]
              [:div.pricing-divider
               [:div.pricing-divider-line]]
@@ -172,8 +174,10 @@
                 "Unlimited public docs, private docs, and project repos.
                 Additional access to team-wide chat, in-app notifications, and file management."]]
               [:div.pricing-foot
-               [:button.pricing-button
-                {:title "Try it free while we gather feedback."}
+               [:a.pricing-button
+                {:href "/early-access/team"
+                 :title "Try it free while we gather feedback."
+                 :role "button"}
                 "Request early access."]]]
              [:div.pricing-divider
               [:div.pricing-divider-line]]
@@ -186,8 +190,10 @@
                 "Customized solutions designed to solve specific team constraints.
                 E.g., integrations, custom servers, on-premise accommodations, etc."]]
               [:div.pricing-foot
-               [:button.pricing-button
-                {:title "We'll get back to you immediately."}
+               [:a.pricing-button
+                {:href "mailto:enterprise@precursorapp.com?Subject=Enterprise%20Inquiry"
+                 :title "We'll get back to you immediately."
+                 :role "button"}
                 "Contact us."]]]]]])))))
 
 (defn navigation []
