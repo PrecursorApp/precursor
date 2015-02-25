@@ -426,20 +426,22 @@
         (when (and (< 640 (:width viewport)) ;; only if not on mobile
                    (< 640 (:height viewport))
                    (ds/empty-db? @(om/get-shared owner :db))
-                   (zero? (count (remove :hide-in-list? subscribers))))
-          (run-animation owner (landing-animation {:db/id doc-id} (om/get-state owner :layer-source) viewport)))))
+                   (zero? (count (remove (comp :hide-in-list? second) (utils/inspect subscribers)))))
+          (run-animation owner (landing-animation {:db/id doc-id}
+                                                  (om/get-state owner :layer-source)
+                                                  viewport)))))
     om/IWillUnmount
     (will-unmount [_]
       (cleanup owner)
       (let [conn (om/get-shared owner :db)
             source (om/get-state owner :layer-source)]
         (d/transact! conn (mapv (fn [e] [:db/add e :layer/deleted true])
-                               (map :e (d/datoms @conn :avet :layer/source source)))
+                                (map :e (d/datoms @conn :avet :layer/source source)))
                      {:bot-layer true})
         (js/setTimeout #(d/transact! conn (mapv (fn [e] [:db.fn/retractEntity e])
                                                 (map :e (d/datoms @conn :avet :layer/source source)))
                                      {:bot-layer true})
-                         1000)))
+                       1000)))
     om/IRender
     (render [_]
       ;; dummy span so that the component can be mounted

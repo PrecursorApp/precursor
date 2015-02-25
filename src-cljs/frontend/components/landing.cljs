@@ -10,6 +10,7 @@
             [frontend.components.common :as common]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.drawing :as drawing]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
@@ -163,9 +164,9 @@
                    "your team happy"]})
     om/IDidMount
     (did-mount [_]
-      (om/set-state! owner :widths (time (reduce (fn [acc word]
-                                                   (assoc acc word (.-width (goog.style/getSize (om/get-node owner word)))))
-                                                 {} (om/get-state owner :word-list)))))
+      (om/set-state! owner :widths (reduce (fn [acc word]
+                                             (assoc acc word (.-width (goog.style/getSize (om/get-node owner word)))))
+                                           {} (om/get-state owner :word-list))))
     om/IRenderState
     (render-state [_ {:keys [chosen-word-width word-list widths]}]
       (let [cast! (om/get-shared owner :cast!)
@@ -340,6 +341,9 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.landing.page
+          (om/build drawing/landing-background {:doc-id (:document/id app)
+                                                :subscribers (get-in app [:subscribers :info])}
+                    {:react-key "landing-background"})
           (om/build the-why app)
           (om/build the-how app)
           (om/build the-what app)])))))

@@ -43,24 +43,18 @@
           (html
            [:div#app.app
             (when (:show-landing? app)
-              (om/build outer/outer (select-keys app [:show-landing?
-                                                      :document/id
-                                                      :navigation-point
-                                                      :navigation-data
-                                                      :cust])
+              (om/build outer/outer (select-in app [[:show-landing?]
+                                                    [:document/id]
+                                                    [:navigation-point]
+                                                    [:navigation-data]
+                                                    [:cust]
+                                                    [:subscribers :info]])
                         {:react-key "outer"}))
 
-            (cond (:show-landing? app)
-                  (om/build drawing/landing-background {:doc-id (:document/id app)
-                                                        :subscribers (get-in app [:subscribers :info])}
-                            {:react-key "landing-background"})
-
-                  (and (keyword-identical? :document nav-point)
+            (when (and (keyword-identical? :document nav-point)
                        (empty? (:cust app)))
-                  (om/build drawing/signup-button {:db/id (:document/id app)}
-                            {:react-key "signup-animation"})
-
-                  :else nil)
+              (om/build drawing/signup-button {:db/id (:document/id app)}
+                        {:react-key "signup-animation"}))
 
             (when (overlay-visible? app)
               (om/build overlay/overlay app {:react-key "overlay"}))
