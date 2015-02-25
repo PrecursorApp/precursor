@@ -191,6 +191,14 @@
   0%   { -webkit-transform: scale3d(0,0,1);}
   100% { -webkit-transform: none;}
 }
+@keyframes in-shrink {
+  0%   { opacity: 0; transform: scale3d(1.1,1.1,1);}
+  100% { opacity: 1; transform: none;}
+}
+@-webkit-keyframes in-shrink {
+  0%   { opacity: 0; -webkit-transform: scale3d(1.1,1.1,1);}
+  100% { opacity: 1; -webkit-transform: none;}
+}
 @keyframes requesting-access {
   0% {
     height: 0;

@@ -110,14 +110,14 @@
 }
 .outer-head {
   top: 0;
-  .navigation {
-    box-shadow: 0 1px @gray_lighter;
+  .nav {
+    .shadow_inset(bottom; fade(@black, (100 * @opacity_white_lighter)); fade(@black, 0));
   }
 }
 .outer-foot {
   bottom: 0;
-  .navigation {
-    box-shadow: 0 -1px @gray_lighter;
+  .nav {
+    .shadow_inset(top; fade(@black, 0); fade(@black, (100 * @opacity_white_lighter)));
     .google-login {
       display: none;
     }
@@ -142,6 +142,7 @@
   .flexy(center);
   height: @tile;
   padding: 0 @menu_padding;
+  transition: box-shadow @run @bezier_fadein;
   .content {
     .flex(1 1 100%);
     .flexy(center);
