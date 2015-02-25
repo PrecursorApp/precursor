@@ -133,8 +133,6 @@
                                                         (.click (om/get-node owner "submit-button")))
                                         :on-input #(om/set-state! owner :use-case (goog.dom/getRawTextContent (.-target %)))}
              use-case]
-            (when (seq error)
-              [:div.error error])
             [:button.early-access-button {:tab-index "5"
                                           :ref "submit-button"
                                           :disabled (or disabled? submitted?)
@@ -151,6 +149,9 @@
 
                    submitted?
                    "Got it! We'll respond soon."
+
+                   (seq error)
+                   error
 
                    :else "Request early access.")]]]])))))
 
