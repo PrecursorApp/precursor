@@ -304,7 +304,7 @@
              [:span.content-copy
               "Our team features are optimized to make collaborating in real-time effortless.
               Communicate and create new ideas with your teammates in one secure place."]]
-            [:a.feature-link {:role "button" :title "Request early access."}
+            [:a.feature-link {:href "/early-access/team" :role "button" :title "Request early access."}
              [:span.content-copy
               "Request early access."]]]
            [:div.feature-media artwork-team]]])))))
