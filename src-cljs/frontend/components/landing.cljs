@@ -178,7 +178,7 @@
             chosen-word (first word-list)
             [before-words after-words] (partition-all (- (count word-list) 3) (rest word-list))]
         (html
-         [:button.make-button
+         [:div.make-button
           {:role "button"
            :on-click #(do
                         (cast! :landing-closed)

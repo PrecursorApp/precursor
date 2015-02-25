@@ -125,10 +125,12 @@
   }
 }
 .make-button {
-  .flexy();
-  .justify-content(center);
+  .flexy(center; center);
   line-height: 1em;
   min-width: @tile * 4;
+  height: @tile;
+  padding: 0 @padding_outer;
+  cursor: pointer;
   overflow: hidden;
   .mq_640({
     width: 100%;
@@ -138,17 +140,31 @@
       opacity: 0;
     }
     .something-wheel {
+      &:before,
+      &:after {
+        .animation(out-fade (1.5 * @run_make_button) forwards);
+        color: @gray;
+        position: absolute;
+        left: 0;
+        min-width: 100%;
+        min-height: 100%;
+        word-spacing: @tile_xl;
+        white-space: pre-line;
+        padding: .25em 0;
+      }
       &:before {
         content: "easter_egg " attr(data-before);
+        bottom: 100%;
       }
       &:after {
         content: attr(data-after);
+        top: 100%;
       }
     }
   }
   &:not(:hover) {
     .something-wheel {
-      display: none;
+      .animation-name(none);
     }
   }
 }
@@ -175,24 +191,6 @@
   width: 100%;
   height: 100%;
   padding-bottom: 1px;
-  &:before,
-  &:after {
-    .animation(out-fade (1.5 * @run_make_button) forwards);
-    color: @gray;
-    position: absolute;
-    left: 0;
-    min-width: 100%;
-    min-height: 100%;
-    word-spacing: @tile_xl;
-    white-space: pre-line;
-    padding: .25em 0;
-  }
-  &:before {
-    bottom: 100%;
-  }
-  &:after {
-    top: 100%;
-  }
 }
 .make-prepend,
 .make-append {
