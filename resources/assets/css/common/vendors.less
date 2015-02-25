@@ -10,7 +10,7 @@
 .google-login {
   .flexy(center);
   .user-select(none);
-  color: @white;
+  color: @white !important; // 3rd-party brand color, don't override
   background-color: @color_google;
   border-bottom: 1px solid @color_google_dark;
   border-radius: .25rem;
@@ -20,7 +20,6 @@
   &:hover,
   &:focus {
     .translate3d(0, -2px, 0);
-    color: @white;
     background-color: @color_google_light;
     box-shadow+: 0 2px @color_google_dark;
     box-shadow+: 0 1px fade(@white, 21) inset;
@@ -57,10 +56,8 @@
   .icon-google {
     padding: @menu_padding;
     border-right: 1px solid @color_google_dark;
-    .iconpile {
-      .fill-google {
-        fill: @white;
-      }
-    }
+  }
+  .fill-google {
+    fill: @white !important; // 3rd-party brand color, don't override
   }
 }
