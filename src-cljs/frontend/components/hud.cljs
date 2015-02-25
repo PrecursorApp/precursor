@@ -55,14 +55,15 @@
           [:div.hud-tray.hud-item {:class (when chat-opened? ["chat-opened"])}
            [:div.tray-positive
             (when new-here?
-              [:div.new-here
-               [:a.new-here-button {:data-text "New here?" :role "button"}]
-               [:div.new-here-items
-                [:a.new-here-item {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
-                [:a.new-here-item {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
-                [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
-                [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Sign in"]
-                [:div.new-here-ghost]]])
+              (html
+               [:div.new-here
+                [:a.new-here-button {:data-text "New here?" :role "button"}]
+                [:div.new-here-items
+                 [:a.new-here-item {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
+                 [:a.new-here-item {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
+                 [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
+                 [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Sign in"]
+                 [:div.new-here-ghost]]]))
             [:div.mouse-stats
              {:data-text (if (seq mouse)
                            (pr-str (select-keys mouse [:x :y :rx :ry]))
