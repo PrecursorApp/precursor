@@ -177,9 +177,11 @@
   white-space: pre;
 }
 .something-default {
+  visibility: hidden;
   transition: width @run_fast @bezier_deform;
   &:after {
     content: ".";
+    visibility: visible;
   }
 }
 .something-wheel {
