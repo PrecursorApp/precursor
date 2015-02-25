@@ -111,3 +111,16 @@
                         doc-id
                         (:undo-state current-state)
                         sente-state)))
+
+(defmethod navigated-to :new
+  [history-imp navigation-point args state]
+  (-> (navigated-default navigation-point args state)
+    state/reset-state))
+
+(defmethod post-navigated-to! :new
+  [history-imp navigation-point _ previous-state current-state]
+  (go (let [comms (:comms current-state)
+            result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
+        (if (= :success (:status result))
+          (put! (:nav comms) [:navigate! {:path (str "/document/" (get-in result [:document :db/id]))}])
+          (put! (:errors comms) [:api-error result])))))

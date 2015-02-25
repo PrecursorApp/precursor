@@ -18,6 +18,8 @@
     (put! nav-ch [:root {:query-params query-params}]))
   (defroute home "/home" [{:keys [query-params]}]
     (put! nav-ch [:root {:query-params query-params}]))
+  (defroute home "/new" [{:keys [query-params]}]
+    (put! nav-ch [:new {:query-params query-params}]))
   (defroute document #"/document/(\d+)" [doc-id {:keys [query-params]}]
     (put! nav-ch [:document {:document/id (long doc-id)
                              :query-params query-params}])))

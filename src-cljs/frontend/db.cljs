@@ -35,6 +35,9 @@
            (sente/send-msg sente-state [:frontend/transaction {:datoms datom-group
                                                                :document/id document-id}])))))))
 
+(defn empty-db? [db]
+  (empty? (d/datoms db :eavt)))
+
 (defn generate-entity-id
   "Assumes that each entity has a different remainder and that all clients have
    the same multiple.

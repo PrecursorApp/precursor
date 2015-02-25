@@ -78,6 +78,12 @@
       }
     }
   }
+  .deleted.shape-layer {
+    .user-select(none);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity @run_slower @bezier_fadein @run_slower;
+  }
 }
 .selectable-group {
   .layer-handle {

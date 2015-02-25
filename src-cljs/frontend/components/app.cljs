@@ -110,16 +110,25 @@
             chat-opened? (get-in app state/chat-opened-path)
             right-click-learned? (get-in app state/right-click-learned-path)]
 
-        (if (:navigation-point app)
+        (if-let [nav-point (:navigation-point app)]
           (html
            [:div#app.app
-            ; (om/build early-access app)
+            ;; (om/build early-access app)
             (when (:show-landing? app)
               (om/build landing/landing (select-keys app [:show-landing? :document/id])
                         {:react-key "landing"}))
 
-            (when (= :root (:navigation-point app))
-              (om/build drawing/landing-background {:db/id (:document/id app)} {:react-key "landing-background"}))
+            (cond (:show-landing? app)
+                  (om/build drawing/landing-background {:doc-id (:document/id app)
+                                                        :subscribers (get-in app [:subscribers :info])}
+                            {:react-key "landing-background"})
+
+                  (and (keyword-identical? :document nav-point)
+                       (empty? (:cust app)))
+                  (om/build drawing/signup-button {:db/id (:document/id app)}
+                            {:react-key "signup-animation"})
+
+                  :else nil)
 
             (when (overlay-visible? app)
               (om/build overlay/overlay app {:react-key "overlay"}))

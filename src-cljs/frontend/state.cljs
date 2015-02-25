@@ -31,7 +31,6 @@
                      :offset-y   0
                      :show-grid? true}
    :error-message   nil
-   :environment     "development"
    :settings        {:browser-settings initial-browser-settings}
    :keyboard-shortcuts {:select #{#{"v"}}
                         :circle #{#{"l"}}
@@ -59,7 +58,20 @@
                      :entity-ids {:entity-ids #{}}}
    :selected-eids   {:selected-eids #{}}
    :editing-eids    {:editing-eids #{}}
+   :show-landing? false
+   :overlays []
+   :frontend-id-state nil
    :mouse {}})
+
+(defn reset-state [state]
+  (-> state
+    (merge (select-keys (initial-state)
+                        [:camera :error-message
+                         :drawing :document/id
+                         :subscribers :selected-eids
+                         :editing-eids :mouse
+                         :show-landing? :overlays
+                         :frontend-id-state]))))
 
 (def user-path [:current-user])
 
@@ -67,29 +79,7 @@
 
 (def browser-settings-path [:settings :browser-settings])
 
-(def account-subpage-path [:account-settings-subpage])
-(def new-user-token-path (conj user-path :new-user-token))
-
-(def flash-path [:render-context :flash])
-
-(def error-data-path [:error-data])
-
-(def selected-home-technology-tab-path [:selected-home-technology-tab])
-
-(def language-testimonial-tab-path [:selected-language-testimonial-tab])
-
-(def build-state-path [:build-state])
-
 (def error-message-path [:error-message])
-
-(def inputs-path [:inputs])
-
-(def docs-data-path [:docs-data])
-(def docs-search-path [:docs-query])
-(def docs-articles-results-path [:docs-articles-results])
-(def docs-articles-results-query-path [:docs-articles-results-query])
-
-(def user-options-shown-path [:user-options-shown])
 
 (def current-tool-path (conj browser-settings-path :current-tool))
 

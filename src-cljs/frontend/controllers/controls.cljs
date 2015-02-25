@@ -287,10 +287,11 @@
       (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :group-duplicated
-  [browser-state message {:keys [layer-eids x y]} state]
+  [browser-state message {:keys [x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         ;; TODO: better way to get selected layers
         db @(:db state)
+        layer-eids (get-in state [:selected-eids :selected-eids])
         layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)
         {:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))]
     (-> state
@@ -360,49 +361,50 @@
                                 above-y0-end-e)
 
                      (set/union below-y1-start-e
-                                below-y1-end-e))]
+                                below-y1-end-e))
+        det (fn [[ax ay] [bx by] [x y]]
+              (math/sign (- (* (- bx ax)
+                               (- y ay))
+                            (* (- by ay)
+                               (- x ax)))))]
     (set (filter (fn [eid]
                    ;; TODO: optimize by looking up start-x, end-x, etc. from the index ranges
                    ;;       we've already created
-                   (let [layer (d/entity db eid)
-                         det (fn [[ax ay] [bx by] [x y]]
-                               (math/sign (- (* (- bx ax)
-                                                (- y ay))
-                                             (* (- by ay)
-                                                (- x ax)))))]
-                     (if (keyword-identical? (:layer/type layer) :layer.type/line)
-                       (or
-                        ;; has an endpoint
-                        (and (contains? above-x0-start-e eid)
-                             (contains? below-x1-start-e eid)
-                             (contains? above-y0-start-e eid)
-                             (contains? below-y1-start-e eid))
-                        ;; has an endpoint
-                        (and (contains? above-x0-end-e eid)
-                             (contains? below-x1-end-e eid)
-                             (contains? above-y0-end-e eid)
-                             (contains? below-y1-end-e eid))
-                        ;; all points aren't on one side of the line
-                        (not= 4 (js/Math.abs
-                                 (reduce + (map (partial det
-                                                         [(:layer/start-x layer)
-                                                          (:layer/start-y layer)]
-                                                         [(:layer/end-x layer)
-                                                          (:layer/end-y layer)])
-                                                [[x0 y0] [x0 y1] [x1 y0] [x1 y1]])))))
-                       (let [sx (min (:layer/start-x layer)
-                                     (:layer/end-x layer))
-                             ex (max (:layer/start-x layer)
-                                     (:layer/end-x layer))
-                             sy (min (:layer/start-y layer)
-                                     (:layer/end-y layer))
-                             ey (max (:layer/start-y layer)
-                                     (:layer/end-y layer))]
-                         ;; don't count a layer as selected if it fully contains the selected region
-                         (or (< ex x1)
-                             (< ey y1)
-                             (> sx x0)
-                             (> sy y0))))))
+                   (let [layer (d/entity db eid)]
+                     (and (not (:layer/deleted layer))
+                          (if (keyword-identical? (:layer/type layer) :layer.type/line)
+                            (or
+                             ;; has an endpoint
+                             (and (contains? above-x0-start-e eid)
+                                  (contains? below-x1-start-e eid)
+                                  (contains? above-y0-start-e eid)
+                                  (contains? below-y1-start-e eid))
+                             ;; has an endpoint
+                             (and (contains? above-x0-end-e eid)
+                                  (contains? below-x1-end-e eid)
+                                  (contains? above-y0-end-e eid)
+                                  (contains? below-y1-end-e eid))
+                             ;; all points aren't on one side of the line
+                             (not= 4 (js/Math.abs
+                                      (reduce + (map (partial det
+                                                              [(:layer/start-x layer)
+                                                               (:layer/start-y layer)]
+                                                              [(:layer/end-x layer)
+                                                               (:layer/end-y layer)])
+                                                     [[x0 y0] [x0 y1] [x1 y0] [x1 y1]])))))
+                            (let [sx (min (:layer/start-x layer)
+                                          (:layer/end-x layer))
+                                  ex (max (:layer/start-x layer)
+                                          (:layer/end-x layer))
+                                  sy (min (:layer/start-y layer)
+                                          (:layer/end-y layer))
+                                  ey (max (:layer/start-y layer)
+                                          (:layer/end-y layer))]
+                              ;; don't count a layer as selected if it fully contains the selected region
+                              (or (< ex x1)
+                                  (< ey y1)
+                                  (> sx x0)
+                                  (> sy y0)))))))
                  overlapping))))
 
 (defn draw-in-progress-drawing [state x y {:keys [force-even? delta]}]
@@ -768,9 +770,10 @@
       (assoc-in [:drawing :moving?] (not (empty? selected-eids))))))
 
 (defmethod control-event :group-selected
-  [browser-state message {:keys [layer-eids x y]} state]
+  [browser-state message {:keys [x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         db @(:db state)
+        layer-eids (get-in state [:selected-eids :selected-eids])
         layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)]
     (-> state
       ;; TODO: this should just read from state, I think instead of passing it in
