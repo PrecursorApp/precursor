@@ -134,6 +134,11 @@
            (common/icon :command)
            [:span "Shortcuts"]]
           [:a.vein.make
+           {:href "/home"
+            :role "button"}
+           (common/icon :home)
+           [:span "Home"]]
+          [:a.vein.make
            {:href "/blog"
             :target "_self"
             :role "button"}
