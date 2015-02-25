@@ -222,3 +222,6 @@
 (defn maybe-set-state! [owner korks value]
   (when (not= (om/get-state owner korks) value)
     (om/set-state! owner korks value)))
+
+(defn logged-in? [owner]
+  (om/get-shared owner :logged-in?))
