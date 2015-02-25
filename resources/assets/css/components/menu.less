@@ -380,18 +380,9 @@ img.loading-image {
 .loading-ellipses {
   display: none;
 }
-.loading-ellipses i {
-  opacity: 0;
-  .animation(dot 1.3s 0.0s infinite);
-}
-.loading-ellipses i+i {
-  opacity: 0;
-  .animation(dot 1.3s 0.2s infinite);
-}
-.loading-ellipses i+i+i {
-  opacity: 0;
-  .animation(dot 1.3s 0.3s infinite);
-}
+.loading-ellipses i     {.animation(dot (1.5 * @run_slower) (1.00 * @run_slower) infinite both);}
+.loading-ellipses i+i   {.animation(dot (1.5 * @run_slower) (1.25 * @run_slower) infinite both);}
+.loading-ellipses i+i+i {.animation(dot (1.5 * @run_slower) (1.50 * @run_slower) infinite both);}
 .privacy-select {
   .flex-direction(column);
   .align-items(stretch);

@@ -63,7 +63,7 @@
                                 :submitting? false
 
                                 :error
-                                [:p "There was a problem submitting the form. Please try again or "
+                                [:p "Oops, that didn't work. Here, "
                                  [:a {:href
                                       (str "mailto:hi@precursorapp.com?"
                                            (url/map->query {:subject "Early Access to Precursor"
@@ -73,8 +73,8 @@
                                                                        employee-count
                                                                        "\n\nUse case:\n"
                                                                        use-case)}))}
-                                  "send us an email"]
-                                 "."])))
+                                  "send us this email"]
+                                 " instead!"])))
                       (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))]
         (html
          [:div.early-access {:class (get-in app [:navigation-data :type] "team")}
@@ -82,10 +82,12 @@
 
            [:div.early-access-info
             [:h2.early-access-heading
-             "We're excited to show you our team features."]
+             "We're excited to show you the team features we're building."]
             [:p.early-access-copy
              "To activate your early access, please "
-             (when-not (utils/logged-in? owner) "sign in first and")
+             (if (utils/logged-in? owner)
+               "take a moment to"
+               "sign in first and")
              " fill out the following information.
               We'll send you an email confirmation once your account has been granted full access."]
             (when-not (utils/logged-in? owner)
@@ -148,14 +150,14 @@
                                                                    :use-case use-case})}
              (cond submitting?
                    (html
-                    [:span "Submitting"
+                    [:span "Request is submitting"
                      [:i.loading-ellipses
                       [:i "."]
                       [:i "."]
                       [:i "."]]])
 
                    submitted?
-                   "Thanks, we'll contact you over email."
+                   "Got it! We'll respond soon."
 
                    :else "Request early access.")]]]])))))
 

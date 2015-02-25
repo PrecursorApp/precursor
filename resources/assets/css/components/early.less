@@ -31,7 +31,7 @@
 }
 .early-access-form {
   &.disabled {
-    cursor: not-allowed;
+    cursor: default;
     .adaptive-placeholder,
     .early-access-button {
       pointer-events: none;
@@ -44,20 +44,39 @@
       border: 1px dashed @gray_lighter;
     }
   }
+  &.submitting,
+  &.submitted {
+    .early-access-button {
+      color: @blue;
+      border-color: @blue;
+      background-color: @dye_outer;
+    }
+  }
   &.submitting {
     .loading-ellipses {
       display: inline-block;
+    }
+  }
+  &.submitted {
+    .early-access-button {
+      width: 100%;
+      transition: width @run @bezier_fadein;
     }
   }
 }
 .early-access-button {
   .animation(in-fade-bottom @early_a7 backwards);
   line-height: 1;
+  width: 40%;
   height: @tile;
-  padding: @menu_padding (2 * @menu_padding);
+  padding: @menu_padding 0;
+  background-color: @dye_outer;
   border: 1px solid @gray_light;
   &:hover,
   &:focus {
     background: @gray_light;
+  }
+  &[disabled="true"] {
+    pointer-events: none;
   }
 }
