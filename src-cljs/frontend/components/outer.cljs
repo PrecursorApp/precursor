@@ -76,7 +76,7 @@
                       (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))]
         (html
          [:div.early-access {:class (get-in app [:navigation-data :type] "team")}
-          [:div.early-access-content
+          [:div.content
 
            [:div.early-access-info
             [:h2.early-access-heading
@@ -150,7 +150,7 @@
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)]
         (html
-          [:div.pricing.page
+          [:div.pricing
            [:div.content
             [:div.pricing-blocks
              [:div.pricing-block

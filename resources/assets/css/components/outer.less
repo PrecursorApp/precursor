@@ -38,9 +38,12 @@
       }
     }
   }
-  .page {
-    min-height: 100%;
+  &:not(.page-landing) {
     padding: @tile 0;
+    .content {
+      padding-top: 10%;
+      padding-bottom: @tile;
+    }
   }
   ~ .inner {
     .canvas-background {

@@ -16,12 +16,9 @@
     &:nth-of-type(2) {.animation(in-fade-bottom @early_a5 backwards);}
     &:nth-of-type(3) {.animation(in-fade-bottom @early_a6 backwards);}
   }
+  .content {
+    max-width: @tile * 10; // VETO
   }
-}
-.early-access-content {
-  .content();
-  padding-top: 10%;
-  max-width: @tile * 10;
 }
 .early-access-heading {
   .animation(in-shrink @early_a3 backwards);
