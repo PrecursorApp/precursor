@@ -227,39 +227,47 @@
                    :target "_self"}
       "Blog"]
      (if (utils/logged-in? owner)
-       [:a {:role "button"
-            :on-click #((om/get-shared owner :cast!) :landing-closed)}
-        "Go to App"]
-       (om/build common/google-login {:source "Nav" :size :small}))])))
+       [:a.nav-link {:role "button"
+                     :title "Launch Precursor"
+                     :on-click #((om/get-shared owner :cast!) :landing-closed)}
+        "App"]
+       [:div.nav-link
+        (om/build common/google-login {:source "Nav" :size :small})])])))
 
-(defn nav-foot []
-  (html
-   [:div.nav
-    [:a.nav-link {:title "Launch"
-                  :href "/"
-                  :role "button"}
-     (common/icon :logomark)]
-    [:a.nav-link {:title "Home"
-                  :href "/home"
-                  :role "button"}
-     "Home"]
-    [:a.nav-link {:title "Pricing"
-                  :href "/pricing"
-                  :role "button"}
-     "Pricing"]
-    [:a.nav-link {:title "Blog"
-                  :href "/blog"
-                  :role "button"
-                  :target "_self"}
-     "Blog"]
-    [:a.nav-link {:title "Sign in with Google"
-                  :href (auth/auth-url)
-                  :role "button"}
-     "Sign in"]
-    [:a.nav-link {:title "Home"
-                  :href "/home"
-                  :role "button"}
-     (common/icon :twitter)]]))
+(defn nav-foot [app owner]
+  (om/component
+    (html
+     [:div.nav
+      [:a.nav-link {:title "Launch Precursor"
+                    :href "/"
+                    :role "button"}
+       (common/icon :logomark)]
+      [:a.nav-link {:title "Home"
+                    :href "/home"
+                    :role "button"}
+       "Home"]
+      [:a.nav-link {:title "Pricing"
+                    :href "/pricing"
+                    :role "button"}
+       "Pricing"]
+      [:a.nav-link {:title "Blog"
+                    :href "/blog"
+                    :role "button"
+                    :target "_self"}
+       "Blog"]
+      (if (utils/logged-in? owner)
+        [:a.nav-link {:title "Launch Precursor"
+                      :on-click #((om/get-shared owner :cast!) :landing-closed)
+                      :role "button"}
+         "App"]
+        [:a.nav-link {:title "Sign in with Google"
+                      :href (auth/auth-url)
+                      :role "button"}
+         "Sign in"])
+      [:a.nav-link {:title "Home"
+                    :href "/home"
+                    :role "button"}
+       (common/icon :twitter)]])))
 
 (def outer-components
   {:landing landing/landing
@@ -280,4 +288,4 @@
                                       (when (= (:page-count app) 1) ["landed"]))}
            [:div.outer-head (om/build nav-head {})]
            (om/build component app {:react-key nav-point})
-           [:div.outer-foot (nav-foot)]])))))
+           [:div.outer-foot (om/build nav-foot {})]])))))
