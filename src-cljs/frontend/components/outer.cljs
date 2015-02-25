@@ -83,8 +83,8 @@
              "We're excited to show you our team features."]
             [:p.early-access-copy
              "To activate your early access, please "
-             (when-not (utils/logged-in? owner) "sign in and ")
-             "let us know about the following info.
+             (when-not (utils/logged-in? owner) "sign in first and")
+             " fill out the following information.
               We'll send you an email confirmation once your account has been granted full access."]
             (when-not (utils/logged-in? owner)
               [:div.calls-to-action
@@ -109,8 +109,8 @@
              company-name]
             [:div.adaptive-placeholder {:tab-index "3"
                                         :ref "employee-count"
-                                        :data-before "How many employees are there?"
-                                        :data-after "Employee Count"
+                                        :data-before "How many teammates do you have?"
+                                        :data-after "Team Size"
                                         :content-editable true
                                         :on-input #(let [value (goog.dom/getRawTextContent (.-target %))
                                                          stripped-value (gstring/stripNewlines value)]
