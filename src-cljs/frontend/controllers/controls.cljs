@@ -848,7 +848,7 @@
 (defmethod post-control-event! :text-layer-re-edited
   [browser-state message layer previous-state current-state]
   (when (get-in previous-state [:drawing :in-progress?])
-    (let [layers (get-in (finalize-layer previous-state) [:drawing :layers])]
+    (let [layers (get-in (finalize-layer previous-state) [:drawing :finished-layers])]
       (when (some layer-model/detectable? layers)
         (d/transact! (:db current-state)
                      (mapv utils/remove-map-nils layers)
