@@ -210,7 +210,7 @@
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            nav-point :landing
+            nav-point (:navigation-point app)
             component (get outer-components nav-point)]
         (html
           [:div.outer.page-landing

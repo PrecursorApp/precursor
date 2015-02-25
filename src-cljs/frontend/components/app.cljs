@@ -43,7 +43,9 @@
           (html
            [:div#app.app
             (when (:show-landing? app)
-              (om/build outer/outer (select-keys app [:show-landing? :document/id])
+              (om/build outer/outer (select-keys app [:show-landing?
+                                                      :document/id
+                                                      :navigation-point])
                         {:react-key "outer"}))
 
             (cond (:show-landing? app)
