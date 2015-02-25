@@ -174,7 +174,7 @@
                [:h2.pricing-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
               [:div.pricing-body
                ;; [:h4.content-copy "$10/mo"]    ; <- hold off until pricing is ready
-               [:h4.content-copy "Coming soon."] ; <- and delete this once it's ready
+               [:h4.content-copy "Pricing soon."] ; <- and delete this once it's ready
                [:p.pricing-copy.content-copy
                 "Unlimited public docs, private docs, and project repos.
                 Add additional teammates at any time and take full advantage of team features."]]
@@ -191,7 +191,7 @@
                [:h2.pricing-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
               [:div.pricing-body
                ;; [:h4.content-copy "$10/mo/user"] ; <- hold off until pricing is ready
-               [:h4.content-copy "Coming soon."]   ; <- and delete this once it's ready
+               [:h4.content-copy "Pricing soon."]   ; <- and delete this once it's ready
                [:p.pricing-copy.content-copy
                 "Unlimited public docs, private docs, and project repos.
                 Additional access to team-wide chat, in-app notifications, and file management."]]
