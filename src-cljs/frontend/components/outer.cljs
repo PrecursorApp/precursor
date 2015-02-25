@@ -30,7 +30,9 @@
     om/IInitState (init-state [_] {:company-name ""
                                    :employee-count ""
                                    :use-case ""
-                                   :error nil})
+                                   :error nil
+                                   :submitting? false
+                                   :submitted? false})
     om/IDisplayName (display-name [_] "Early Access")
     om/IRenderState
     (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted?]}]
@@ -140,11 +142,22 @@
               [:div.error error])
             [:button.early-access-button {:tab-index "5"
                                           :ref "submit-button"
-                                          :disabled disabled?
+                                          :disabled (or disabled? submitted?)
                                           :on-click #(submit-form {:company-name company-name
                                                                    :employee-count employee-count
                                                                    :use-case use-case})}
-             "Request early access."]]]])))))
+             (cond submitting?
+                   (html
+                    [:span "Submitting"
+                     [:i.loading-ellipses
+                      [:i "."]
+                      [:i "."]
+                      [:i "."]]])
+
+                   submitted?
+                   "Thanks, we'll contact you over email."
+
+                   :else "Request early access.")]]]])))))
 
 (defn pricing [app owner]
   (reify

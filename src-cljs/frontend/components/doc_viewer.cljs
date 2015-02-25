@@ -100,7 +100,7 @@
                        (take 100)))]
         (html
          [:div.menu-view
-          {:class (when (nil? touched-docs)"loading")}
+          {:class (when (nil? touched-docs) "loading")}
           [:article
            (if (seq docs)
              (om/build docs-list docs))]])))))
