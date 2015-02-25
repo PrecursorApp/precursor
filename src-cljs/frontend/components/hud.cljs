@@ -42,6 +42,20 @@
                      (if (overlay-visible? app) "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
 
+(defn mouse-stats [_ owner]
+  (reify
+    om/IDisplayName (display-name [_] "Mouse Stats")
+    om/IRender
+    (render [_]
+      (let [mouse (cursors/observe-mouse owner)]
+        (html
+         [:div.mouse-stats
+          {:data-text (str "{:x " (:x mouse 0)
+                           ", :y " (:y mouse 0)
+                           ", :rx " (:rx mouse 0)
+                           ", :ry " (:ry mouse 0)
+                           "}")}])))))
+
 (defn tray [app owner]
   (reify
     om/IDisplayName (display-name [_] "Hud Tray")
@@ -49,26 +63,22 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             new-here? (empty? (:cust app))
-            chat-opened? (get-in app state/chat-opened-path)
-            mouse (cursors/observe-mouse owner)]
+            chat-opened? (get-in app state/chat-opened-path)]
         (html
-          [:div.hud-tray.hud-item {:class (when chat-opened? ["chat-opened"])}
-           [:div.tray-positive
-            (when new-here?
-              (html
-               [:div.new-here
-                [:a.new-here-button {:data-text "New here?" :role "button"}]
-                [:div.new-here-items
-                 [:a.new-here-item {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
-                 [:a.new-here-item {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
-                 [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
-                 [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Sign in"]
-                 [:div.new-here-ghost]]]))
-            [:div.mouse-stats
-             {:data-text (if (seq mouse)
-                           (pr-str (select-keys mouse [:x :y :rx :ry]))
-                           "{:x 0, :y 0, :rx 0, :ry 0}")}]]
-           [:div.tray-negative]])))))
+         [:div.hud-tray.hud-item {:class (when chat-opened? ["chat-opened"])}
+          [:div.tray-positive
+           (when new-here?
+             (html
+              [:div.new-here
+               [:a.new-here-button {:data-text "New here?" :role "button"}]
+               [:div.new-here-items
+                [:a.new-here-item {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
+                [:a.new-here-item {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
+                [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
+                [:a.new-here-item {:href "/blog" :target "_self" :role "button" :title "Blog"} "Sign in"]
+                [:div.new-here-ghost]]]))
+           (om/build mouse-stats {} {:react-key "mouse-stats"})]
+          [:div.tray-negative]])))))
 
 (defn chat [app owner]
   (reify
