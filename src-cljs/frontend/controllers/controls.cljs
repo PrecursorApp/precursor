@@ -287,10 +287,11 @@
       (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :group-duplicated
-  [browser-state message {:keys [layer-eids x y]} state]
+  [browser-state message {:keys [x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         ;; TODO: better way to get selected layers
         db @(:db state)
+        layer-eids (get-in state [:selected-eids :selected-eids])
         layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)
         {:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))]
     (-> state
@@ -768,9 +769,10 @@
       (assoc-in [:drawing :moving?] (not (empty? selected-eids))))))
 
 (defmethod control-event :group-selected
-  [browser-state message {:keys [layer-eids x y]} state]
+  [browser-state message {:keys [x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         db @(:db state)
+        layer-eids (get-in state [:selected-eids :selected-eids])
         layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)]
     (-> state
       ;; TODO: this should just read from state, I think instead of passing it in

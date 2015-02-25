@@ -85,29 +85,29 @@
 ;; layers are always denominated in absolute coordinates
 ;; transforms are applied to handle panning and zooming
 
-(defmulti svg-element (fn [selected-eids layer] (:layer/type layer)))
+(defmulti svg-element (fn [layer] (:layer/type layer)))
 
 (defmethod svg-element :default
-  [selected-eids layer]
+  [layer]
   (print "No svg element for " layer))
 
-(defn maybe-add-selected [svg-layer layer selected-eids]
-  (if (contains? selected-eids (:db/id layer))
+(defn maybe-add-selected [svg-layer layer]
+  (if (:selected? layer)
     (update-in svg-layer [:className] #(str % " selected"))
     svg-layer))
 
 (defmethod svg-element :layer.type/rect
-  [selected-eids layer]
+  [layer]
   (-> (svg/layer->svg-rect layer)
-    (maybe-add-selected layer selected-eids)
+    (maybe-add-selected layer)
     (clj->js)
     (dom/rect)))
 
 (defmethod svg-element :layer.type/text
-  [selected-eids layer]
+  [layer]
   (let [text-props (svg/layer->svg-text layer)]
     (-> text-props
-      (maybe-add-selected layer selected-eids)
+      (maybe-add-selected layer)
       (clj->js)
       (#(apply dom/text % (reduce (fn [tspans text]
                                     (conj tspans (dom/tspan
@@ -117,25 +117,25 @@
                                   [] (str/split (:layer/text layer) #"\n")))))))
 
 (defmethod svg-element :layer.type/line
-  [selected-eids layer]
+  [layer]
   (dom/line (clj->js (merge
                       layer
-                      (if (contains? selected-eids (:db/id layer))
+                      (if (:selected? layer)
                         {:className (str (:className layer) " selected shape-layer")}
                         {:className (str (:className layer) " shape-layer")})
                       (svg/layer->svg-line layer)))))
 
 (defmethod svg-element :layer.type/path
-  [selected-eids layer]
+  [layer]
   (dom/path
    (clj->js (merge (dissoc layer :points)
                    (svg/layer->svg-path layer)
                    {:className (str (:className layer)
                                     " shape-layer "
-                                    (when (contains? selected-eids (:db/id layer)) " selected"))}))))
+                                    (when (:selected? layer) " selected"))}))))
 
 (defmethod svg-element :layer.type/group
-  [state selected-eids layer]
+  [layer]
   (print "Nothing to do for groups, yet."))
 
 (defn handles [layer owner]
@@ -169,144 +169,144 @@
                                                                           :y y}))
                                 :key (str "edit-handle-" x "-" y)})))))))
 
-(defn layer-group [layer {:keys [tool selected-eids cast! db live?]}]
-  (let [invalid? (and (:layer/ui-target layer)
-                      (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-target layer)))))
-        show-handles? (and (= 1 (count selected-eids))
-                           (contains? selected-eids (:db/id layer))
-                           (contains? #{:layer.type/rect :layer.type/line} (:layer/type layer))
-                           (or (= :select tool)
-                               (and (= :circle tool) (layers/circle? layer))
-                               (and (= :line tool) (= :layer.type/line (:layer/type layer)))
-                               (and (= :rect tool) (not (layers/circle? layer)))))]
-    (dom/g #js {:className (str "layer "
-                                (when (= :select tool) "selectable-group ")
-                                (when invalid? "invalid "))
-                :key (str (:db/id layer) live?)}
+(defn layer-group [{:keys [layer tool selected? part-of-group? cast! db live?]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Layer Group")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            invalid? (and (:layer/ui-target layer)
+                          (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-target layer)))))
+            show-handles? (and (not part-of-group?)
+                               selected?
+                               (contains? #{:layer.type/rect :layer.type/line} (:layer/type layer))
+                               (or (= :select tool)
+                                   (and (= :circle tool) (layers/circle? layer))
+                                   (and (= :line tool) (= :layer.type/line (:layer/type layer)))
+                                   (and (= :rect tool) (not (layers/circle? layer)))))]
+        (dom/g #js {:className (str "layer "
+                                    (when (= :select tool) "selectable-group ")
+                                    (when invalid? "invalid "))
+                    :key (str (:db/id layer) live?)}
 
-           (when (and show-handles? (layers/circle? layer))
-             (let [layer (layers/normalized-abs-coords layer)]
-               (dom/rect #js {:className "handle-outline"
-                              :x (:layer/start-x layer)
-                              :y (:layer/start-y layer)
-                              :width (- (:layer/end-x layer) (:layer/start-x layer))
-                              :height (- (:layer/end-y layer) (:layer/start-y layer))
-                              :fill "none"
-                              :strokeWidth 1})))
+          (when (and show-handles? (layers/circle? layer))
+            (let [layer (layers/normalized-abs-coords layer)]
+              (dom/rect #js {:className "handle-outline"
+                             :x (:layer/start-x layer)
+                             :y (:layer/start-y layer)
+                             :width (- (:layer/end-x layer) (:layer/start-x layer))
+                             :height (- (:layer/end-y layer) (:layer/start-y layer))
+                             :fill "none"
+                             :strokeWidth 1})))
 
-           (svg-element selected-eids
-                        (assoc layer
-                               :className (str "selectable-layer layer-handle "
-                                               (when (and (= :layer.type/text (:layer/type layer))
-                                                          (= :text tool)) "editable ")
-                                               (when (:layer/signup-button layer)
-                                                 " signup-layer"))
-                               :key (str "selectable-" (:db/id layer))
-                               :onClick (when (:layer/signup-button layer)
-                                          #(do
-                                             (.preventDefault %)
-                                             (cast! :track-external-link-clicked
-                                                    {:path (auth/auth-url)
-                                                     :event "Signup Clicked"
-                                                     :properties {:source "prcrsr-bot-drawing"}})))
-                               :onMouseDown
-                               (when-not (:layer/signup-button layer)
-                                 #(do
-                                    (.stopPropagation %)
-                                    (let [group? (and (< 1 (count selected-eids))
-                                                      (contains? selected-eids (:db/id layer)))]
+          (svg-element (assoc layer
+                              :selected? selected?
+                              :className (str "selectable-layer layer-handle "
+                                              (when (and (= :layer.type/text (:layer/type layer))
+                                                         (= :text tool)) "editable ")
+                                              (when (:layer/signup-button layer)
+                                                " signup-layer"))
+                              :key (str "selectable-" (:db/id layer))
+                              :onClick (when (:layer/signup-button layer)
+                                         #(do
+                                            (.preventDefault %)
+                                            (cast! :track-external-link-clicked
+                                                   {:path (auth/auth-url)
+                                                    :event "Signup Clicked"
+                                                    :properties {:source "prcrsr-bot-drawing"}})))
+                              :onMouseDown
+                              (when-not (:layer/signup-button layer)
+                                #(do
+                                   (.stopPropagation %)
+                                   (let [group? part-of-group?]
 
-                                      (cond
-                                        (and (= :text tool)
-                                             (= :layer.type/text (:layer/type layer)))
-                                        (cast! :text-layer-re-edited layer)
+                                     (cond
+                                       (and (= :text tool)
+                                            (= :layer.type/text (:layer/type layer)))
+                                       (cast! :text-layer-re-edited layer)
 
-                                        (not= :select tool) nil
+                                       (not= :select tool) nil
 
-                                        (or (= (.-button %) 2)
-                                            (and (= (.-button %) 0) (.-ctrlKey %)))
-                                        (cast! :layer-properties-opened {:layer layer
-                                                                         :x (first (cameras/screen-event-coords %))
-                                                                         :y (second (cameras/screen-event-coords %))})
-
-
-                                        (and (.-altKey %) group?)
-                                        (cast! :group-duplicated
-                                               {:layer-eids selected-eids
-                                                :x (first (cameras/screen-event-coords %))
-                                                :y (second (cameras/screen-event-coords %))})
-
-                                        (and (.-altKey %) (not group?))
-                                        (cast! :layer-duplicated
-                                               {:layer layer
-                                                :x (first (cameras/screen-event-coords %))
-                                                :y (second (cameras/screen-event-coords %))})
-
-                                        (and (.-shiftKey %) (contains? selected-eids (:db/id layer)))
-                                        (cast! :layer-deselected {:layer layer})
+                                       (or (= (.-button %) 2)
+                                           (and (= (.-button %) 0) (.-ctrlKey %)))
+                                       (cast! :layer-properties-opened {:layer layer
+                                                                        :x (first (cameras/screen-event-coords %))
+                                                                        :y (second (cameras/screen-event-coords %))})
 
 
-                                        group?
-                                        (cast! :group-selected {:x (first (cameras/screen-event-coords %))
-                                                                :y (second (cameras/screen-event-coords %))
-                                                                :layer-eids selected-eids})
+                                       (and (.-altKey %) group?)
+                                       (cast! :group-duplicated
+                                              {:x (first (cameras/screen-event-coords %))
+                                               :y (second (cameras/screen-event-coords %))})
 
-                                        :else
-                                        (cast! :layer-selected {:layer layer
-                                                                :x (first (cameras/screen-event-coords %))
-                                                                :y (second (cameras/screen-event-coords %))
-                                                                :append? (.-shiftKey %)})))))))
-           (when-not (= :layer.type/text (:layer/type layer))
-             (svg-element selected-eids (assoc layer
-                                               :className (str "layer-outline ")
-                                               :key (:db/id layer))))
-           ;; TODO: figure out what to do with this title
-           ;; (when invalid?
-           ;;   (dom/title nil
-           ;;              (str "This action links to \""  (:layer/ui-target layer) "\", but no shapes have that name."
-           ;;                   " Right-click on a shape's border to name it " (:layer/ui-target layer))))
+                                       (and (.-altKey %) (not group?))
+                                       (cast! :layer-duplicated
+                                              {:layer layer
+                                               :x (first (cameras/screen-event-coords %))
+                                               :y (second (cameras/screen-event-coords %))})
 
-           (when show-handles?
-             (om/build handles layer))
+                                       (and (.-shiftKey %) selected?)
+                                       (cast! :layer-deselected {:layer layer})
 
-           (when (:layer/ui-target layer)
-             (svg-element selected-eids
-                          (assoc layer
-                                 :padding 4 ;; only works for rects right now
-                                 :onMouseDown #(when (= tool :select)
-                                                 (.stopPropagation %)
-                                                 (cond
-                                                   (or (= (.-button %) 2)
-                                                       (and (= (.-button %) 0) (.-ctrlKey %)))
-                                                   (cast! :layer-properties-opened {:layer layer
-                                                                                    :x (first (cameras/screen-event-coords %))
-                                                                                    :y (second (cameras/screen-event-coords %))})
 
-                                                   (and (< 1 (count selected-eids))
-                                                        (contains? selected-eids (:db/id layer)))
-                                                   (cast! :group-selected
-                                                          {:x (first (cameras/screen-event-coords %))
-                                                           :y (second (cameras/screen-event-coords %))
-                                                           :layer-eids selected-eids})
+                                       group?
+                                       (cast! :group-selected {:x (first (cameras/screen-event-coords %))
+                                                               :y (second (cameras/screen-event-coords %))})
 
-                                                   :else
-                                                   (cast! :canvas-aligned-to-layer-center
-                                                          {:ui-id (:layer/ui-target layer)
-                                                           :canvas-size (utils/canvas-size)})))
-                                 :onTouchStart (fn [event]
-                                                 (when (= (.-length (.-touches event)) 1)
-                                                   (utils/stop-event event)
-                                                   (cast! :canvas-aligned-to-layer-center
-                                                          {:ui-id (:layer/ui-target layer)
-                                                           :canvas-size (utils/canvas-size)})))
+                                       :else
+                                       (cast! :layer-selected {:layer layer
+                                                               :x (first (cameras/screen-event-coords %))
+                                                               :y (second (cameras/screen-event-coords %))
+                                                               :append? (.-shiftKey %)})))))))
+          (when-not (= :layer.type/text (:layer/type layer))
+            (svg-element (assoc layer
+                                :selected? selected?
+                                :className (str "layer-outline ")
+                                :key (:db/id layer))))
+          ;; TODO: figure out what to do with this title
+          ;; (when invalid?
+          ;;   (dom/title nil
+          ;;              (str "This action links to \""  (:layer/ui-target layer) "\", but no shapes have that name."
+          ;;                   " Right-click on a shape's border to name it " (:layer/ui-target layer))))
 
-                                 :className (str "action interactive-fill "
-                                                 (when (and (< 1 (count selected-eids))
-                                                            (contains? selected-eids (:db/id layer)))
-                                                   "selected-group ")
-                                                 (when invalid?
-                                                   "invalid"))
-                                 :key (str "action-" (:db/id layer))))))))
+          (when show-handles?
+            (om/build handles layer))
+
+          (when (:layer/ui-target layer)
+            (svg-element (assoc layer
+                                :selected? selected?
+                                :padding 4 ;; only works for rects right now
+                                :onMouseDown #(when (= tool :select)
+                                                (.stopPropagation %)
+                                                (cond
+                                                  (or (= (.-button %) 2)
+                                                      (and (= (.-button %) 0) (.-ctrlKey %)))
+                                                  (cast! :layer-properties-opened {:layer layer
+                                                                                   :x (first (cameras/screen-event-coords %))
+                                                                                   :y (second (cameras/screen-event-coords %))})
+
+                                                  part-of-group?
+                                                  (cast! :group-selected
+                                                         {:x (first (cameras/screen-event-coords %))
+                                                          :y (second (cameras/screen-event-coords %))})
+
+                                                  :else
+                                                  (cast! :canvas-aligned-to-layer-center
+                                                         {:ui-id (:layer/ui-target layer)
+                                                          :canvas-size (utils/canvas-size)})))
+                                :onTouchStart (fn [event]
+                                                (when (= (.-length (.-touches event)) 1)
+                                                  (utils/stop-event event)
+                                                  (cast! :canvas-aligned-to-layer-center
+                                                         {:ui-id (:layer/ui-target layer)
+                                                          :canvas-size (utils/canvas-size)})))
+
+                                :className (str "action interactive-fill "
+                                                (when part-of-group?
+                                                  "selected-group ")
+                                                (when invalid?
+                                                  "invalid"))
+                                :key (str "action-" (:db/id layer))))))))))
 
 (defn svg-layers [{:keys [tool] :as data} owner]
   (reify
@@ -329,6 +329,7 @@
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
             selected-eids (:selected-eids (cursors/observe-selected-eids owner))
+            selected-group? (< 1 (count selected-eids))
             sub-eids (:entity-ids (cursors/observe-subscriber-entity-ids owner))
             editing-eids (:editing-eids (cursors/observe-editing-eids owner))
             editing-eids (set/union sub-eids editing-eids)
@@ -340,20 +341,26 @@
         (dom/g #js {:className (if (= :select tool)
                                  "interactive"
                                  "static")}
-               (apply dom/g #js {:className "layers idle"}
-                      (mapv #(layer-group % {:live? false
-                                             :cast! cast!
-                                             :tool tool
-                                             :selected-eids selected-eids
-                                             :db db})
-                            idle-layers))
-               (apply dom/g #js {:className "layers live"}
-                      (mapv #(layer-group % {:live? true
-                                             :cast! cast!
-                                             :tool tool
-                                             :selected-eids selected-eids
-                                             :db db})
-                            live-layers)))))))
+          (apply dom/g #js {:className "layers idle"}
+                 (om/build-all layer-group (mapv (fn [l]
+                                                   (let [selected? (contains? selected-eids (:db/id l))
+                                                         part-of-group? (and selected? selected-group?)]
+                                                     {:live? false
+                                                      :tool tool
+                                                      :selected? selected?
+                                                      :part-of-group? part-of-group?
+                                                      :layer l}))
+                                                 idle-layers)))
+          (apply dom/g #js {:className "layers live"}
+                 (om/build-all layer-group (mapv (fn [l]
+                                                   (let [selected? (contains? selected-eids (:db/id l))
+                                                         part-of-group? (and selected? selected-group?)]
+                                                     {:live? true
+                                                      :tool tool
+                                                      :selected? selected?
+                                                      :part-of-group? part-of-group?
+                                                      :layer l}))
+                                                 live-layers))))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
@@ -396,7 +403,7 @@
     om/IDisplayName (display-name [_] "Single Subscriber Layers")
     om/IRender
     (render [_]
-      (apply dom/g nil (mapv (fn [l] (svg-element #{} (merge l {:layer/end-x (:layer/current-x l)
+      (apply dom/g nil (mapv (fn [l] (svg-element (merge l {:layer/end-x (:layer/current-x l)
                                                                 :layer/end-y (:layer/current-y l)
                                                                 :strokeDasharray "5,5"
                                                                 :layer/fill "none"
@@ -439,8 +446,7 @@
       (let [{:keys [cast!]} (om/get-shared owner)
             text-style {:font-size (:layer/font-size layer 20)}]
         (dom/g #js {:key "text-input-group"}
-          (svg-element #{}
-                       (assoc layer
+          (svg-element (assoc layer
                               :className "text-size-helper"
                               :ref "text-size-helper"))
           (dom/foreignObject #js {:width "100%"
@@ -611,7 +617,7 @@
                                              {:layer/type :layer.type/rect
                                               :className "layer-in-progress selection"
                                               :strokeDasharray "2,3"}))]
-                            (svg-element #{} (assoc sel :key (str (:db/id sel) "-in-progress")))))
+                            (svg-element (assoc sel :key (str (:db/id sel) "-in-progress")))))
                         sels))))))))
 
 
