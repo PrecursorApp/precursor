@@ -66,6 +66,21 @@
                       (when-let [cust (-> req :auth :cust)]
                         {:cust (cust/read-api cust)}))))
 
+(defn outer-page
+  "Response to send for requests that need a document-id that the frontend will route"
+  [req]
+  (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+        ;; TODO: Have to figure out a way to create outer pages without creating extraneous entity-ids
+        doc (doc-model/create-public-doc!
+             (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                    (when cust-uuid {:document/creator cust-uuid})))]
+    (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                         :google-client-id (google-client-id)
+                         :sente-id (-> req :session :sente-id)
+                         :initial-document-id (:db/id doc)}
+                        (when-let [cust (-> req :auth :cust)]
+                          {:cust (cust/read-api cust)})))))
+
 ;; TODO: make this reloadable without reloading the server
 (defn app [sente-state]
   (routes
@@ -175,17 +190,14 @@
                                  :sente-id (-> req :session :sente-id)
                                  :initial-document-id (:db/id doc)})))))
 
+   (GET "/pricing" req
+        (outer-page req))
+
+   (GET "/early-access" req
+        (outer-page req))
+
    (GET "/home" req
-        (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-              doc (doc-model/create-public-doc!
-                   (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                          (when cust-uuid {:document/creator cust-uuid})))]
-          (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                               :google-client-id (google-client-id)
-                               :sente-id (-> req :session :sente-id)
-                               :initial-document-id (:db/id doc)}
-                              (when-let [cust (-> req :auth :cust)]
-                                {:cust (cust/read-api cust)})))))
+        (outer-page req))
 
    ;; Group newcomers into buckets with bucket-count users in each bucket.
    (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]

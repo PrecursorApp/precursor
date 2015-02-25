@@ -66,11 +66,22 @@
       (.replaceToken history-imp path)
       (.setToken history-imp path))))
 
-(defmethod navigated-to :root
+(defn handle-outer [navigation-point args state]
+  (-> (navigated-default navigation-point args state)
+    (assoc :overlays [])
+    (assoc :show-landing? true)))
+
+(defmethod navigated-to :landing
   [history-imp navigation-point args state]
-  (let [doc-id (:document/id state)]
-    (-> (navigated-default navigation-point args state)
-        (assoc :show-landing? true))))
+  (handle-outer navigation-point args state))
+
+(defmethod navigated-to :pricing
+  [history-imp navigation-point args state]
+  (handle-outer navigation-point args state))
+
+(defmethod navigated-to :early-access
+  [history-imp navigation-point args state]
+  (handle-outer navigation-point args state))
 
 (defmethod navigated-to :document
   [history-imp navigation-point args state]
