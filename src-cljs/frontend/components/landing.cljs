@@ -114,14 +114,14 @@
         [:span.access-name "roland@prcr.sr"]
         [:span.access-status "Was granted access today."]]]]]]))
 
-(def navigation
+(defn navigation []
   (html
    [:div.navigation
     [:div.content
      [:a.navigation-link {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
      [:a.navigation-link {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
      [:a.navigation-link {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
-     (common/google-login :small)]]))
+     (om/build common/google-login {:source "Nav" :size :small})]]))
 
 (defn make-button [{:keys [document/id]} owner]
   (reify
@@ -219,7 +219,7 @@
         (html
          [:div.the-why
           [:div.our-claim
-           navigation
+           (navigation)
            [:div.our-philosphy-wrap
             [:div.our-philosphy.content
              [:h1.philosphy-headline
@@ -335,7 +335,7 @@
               [:span.philosphy-excess " to focus on what's important"]
               [:span.philosphy-needed "."]]
              [:div.calls-to-action
-              (common/google-login)
+              (om/build common/google-login {:source "Landing What"})
               (om/build make-button (select-keys app [:document/id]))]]]
            navigation]])))))
 
