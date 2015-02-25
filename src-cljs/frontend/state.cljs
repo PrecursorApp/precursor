@@ -61,7 +61,8 @@
    :show-landing? false
    :overlays []
    :frontend-id-state nil
-   :mouse {}})
+   :mouse {}
+   :page-count 0})
 
 (defn reset-state [state]
   (-> state

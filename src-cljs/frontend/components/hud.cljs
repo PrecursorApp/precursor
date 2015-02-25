@@ -1,6 +1,7 @@
 (ns frontend.components.hud
   (:require [clojure.string :as str]
             [datascript :as d]
+            [frontend.auth :as auth]
             [frontend.components.common :as common]
             [frontend.cursors :as cursors]
             [frontend.models.chat :as chat-model]
@@ -73,12 +74,13 @@
                [:a.new-here-button {:on-click #(om/set-state! owner :new-here true)
                                     :data-text "New here?"
                                     :role "button"}]
+               ;; TODO just make this thing call outer/nav-foot
                [:div.new-here-items {:on-mouse-leave #(om/set-state! owner :new-here false)
                                      :class (when (om/get-state owner :new-here) "opened")}
-                [:a.new-here-item {:href "/home"    :role "button" :title "Home"} "Precursor"]
-                [:a.new-here-item {:href "/pricing" :role "button" :title "Pricing"} "Pricing"]
-                [:a.new-here-item {:href "/blog"    :role "button" :title "Blog"} "Blog"]
-                [:a.new-here-item {:href "/blog"    :role "button" :title "Blog" :target "_self"} "Sign in"]]]))
+                [:a.new-here-item {:href "/home"         :role "button" :title "Home"} "Home"]
+                [:a.new-here-item {:href "/pricing"      :role "button" :title "Pricing"} "Pricing"]
+                [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
+                [:a.new-here-item {:href (auth/auth-url) :role "button" :title "Sign in with Google"} "Sign in"]]]))
            (om/build mouse-stats {} {:react-key "mouse-stats"})]
           [:div.tray-negative]])))))
 

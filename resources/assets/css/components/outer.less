@@ -5,33 +5,35 @@
   left: 0;
   width: 100%;
   min-height: 100%;
-  background: @white;
-  &.landed {
-    .navigation,
-    .our-philosphy,
-    .our-proof {
-      .animation-duration(@now);
-      .animation-delay(@now);
-    }
-  }
+  background-color: @dye_outer;
+  transition: background-color @run @bezier_fadein;
   &.page-landing {
-    background: none; // VETO
-    .navigation-link {
-      color: fade(@white, 41.75); // TODO use opacity variables here
+    background-color: fade(@dye_outer, 0); // VETO
+    &.landed {
+      .outer-head .nav,
+      .our-philosphy,
+      .our-proof {
+        .animation-duration(@now);
+        .animation-delay(@now);
+      }
+    }
+    .nav-link {
+      .icon(fill; fade(@white, 41.75)); // TODO use opacity variables here
+      color: fade(@white, 41.75);       // TODO use opacity variables here
       transition: @run_fast @bezier_fadein;
       &:hover {
+        .icon(fill; @white);
         color: @white;
         transition: @now;
       }
     }
     .outer-head {
-      .navigation {
-        .animation(in-fade-top @run @run_slower @bezier_deform backwards);
+      .nav {
         .shadow_inset(bottom; @color_inset_black; @color_inset_white);
       }
     }
     .outer-foot {
-      .navigation {
+      .nav {
         .shadow_inset(top; @color_inset_black; @color_inset_white);
       }
     }
@@ -112,14 +114,18 @@
   top: 0;
   .nav {
     .shadow_inset(bottom; fade(@black, (100 * @opacity_white_lighter)); fade(@black, 0));
+    .animation(in-fade-top @run @run_slower @bezier_deform backwards);
   }
 }
 .outer-foot {
   bottom: 0;
   .nav {
     .shadow_inset(top; fade(@black, 0); fade(@black, (100 * @opacity_white_lighter)));
-    .google-login {
-      display: none;
+    .google-login {display: none;}
+  }
+  .nav-link {
+    &:last-child {
+      margin-left: auto;
     }
   }
 }
@@ -138,7 +144,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.navigation {
+.nav {
   .flexy(center);
   height: @tile;
   padding: 0 @menu_padding;
@@ -147,23 +153,25 @@
     .flex(1 1 100%);
     .flexy(center);
   }
-  a {
-    &:first-of-type {
-      margin-right: auto;
-    }
-    &:not(:first-of-type) {
-      margin-left: @tile / 2;
-    }
-  }
 }
-.navigation-link {
+.nav-link {
+  .icon(fill; @gray);
   overflow: hidden;
   text-overflow: ellipsis;
   color: @gray;
   transition: @run_fast @bezier_fadein;
   &:hover {
+    .icon(fill; @black);
     color: @black;
     transition: @now;
+  }
+  &:first-child {
+    margin-right: auto;
+  }
+  &:not(:first-child) {
+    &:not(:last-child) {
+      margin: 0 @menu_padding;
+    }
   }
 }
 .calls-to-action {

@@ -42,7 +42,8 @@
 (defn navigated-default [navigation-point args state]
   (-> state
       (assoc :navigation-point navigation-point
-             :navigation-data args)))
+             :navigation-data args)
+      (update-in [:page-count] inc)))
 
 (defmethod navigated-to :default
   [history-imp navigation-point args state]

@@ -48,7 +48,8 @@
                                                     [:navigation-point]
                                                     [:navigation-data]
                                                     [:cust]
-                                                    [:subscribers :info]])
+                                                    [:subscribers :info]
+                                                    [:page-count]])
                         {:react-key "outer"}))
 
             (when (and (keyword-identical? :document nav-point)

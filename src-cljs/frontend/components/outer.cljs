@@ -168,7 +168,7 @@
                  :title "Try it free while we gather feedback."
                  :role "button"}
                 "Request early access."]]]
-             [:div.pricing-divider
+             [:section.pricing-divider
               [:div.pricing-divider-line]]
              [:div.pricing-block
               [:div.pricing-head
@@ -185,7 +185,7 @@
                  :title "Try it free while we gather feedback."
                  :role "button"}
                 "Request early access."]]]
-             [:div.pricing-divider
+             [:section.pricing-divider
               [:div.pricing-divider-line]]
              [:div.pricing-block
               [:div.pricing-head
@@ -202,13 +202,56 @@
                  :role "button"}
                 "Contact us."]]]]]])))))
 
-(defn navigation []
+(defn nav-head []
   (html
-   [:div.navigation
-     [:a.navigation-link {:href "/home"    :role "button" :title "Home"} "Precursor"]
-     [:a.navigation-link {:href "/pricing" :role "button" :title "Pricing"} "Pricing"]
-     [:a.navigation-link {:href "/blog"    :role "button" :title "Blog" :target "_self"} "Blog"]
-     (om/build common/google-login {:source "Nav" :size :small})]))
+   [:div.nav
+    [:a.nav-link {:href "/"
+                  :role "button"
+                  :title "Launch"}
+     "Precursor"]
+    [:a.nav-link {:href "/home"
+                  :role "button"
+                  :title "Home"}
+     "Home"]
+    [:a.nav-link {:href "/pricing"
+                  :role "button"
+                  :title "Pricing"}
+     "Pricing"]
+    [:a.nav-link {:href "/blog"
+                  :role "button"
+                  :title "Blog"
+                  :target "_self"}
+     "Blog"]
+    (om/build common/google-login {:source "Nav" :size :small})]))
+
+(defn nav-foot []
+  (html
+   [:div.nav
+    [:a.nav-link {:title "Launch"
+                  :href "/"
+                  :role "button"}
+     (common/icon :logomark)]
+    [:a.nav-link {:title "Home"
+                  :href "/home"
+                  :role "button"}
+     "Home"]
+    [:a.nav-link {:title "Pricing"
+                  :href "/pricing"
+                  :role "button"}
+     "Pricing"]
+    [:a.nav-link {:title "Blog"
+                  :href "/blog"
+                  :role "button"
+                  :target "_self"}
+     "Blog"]
+    [:a.nav-link {:title "Sign in with Google"
+                  :href (auth/auth-url)
+                  :role "button"}
+     "Sign in"]
+    [:a.nav-link {:title "Home"
+                  :href "/home"
+                  :role "button"}
+     (common/icon :twitter)]]))
 
 (def outer-components
   {:landing landing/landing
@@ -226,7 +269,7 @@
             component (get outer-components nav-point)]
         (html
           [:div.outer {:class (concat [(str "page-" (name nav-point))]
-                                      (when-not (get app :not-landing?) ["landed"]))}
-           [:div.outer-head (navigation)]
+                                      (when (= (:page-count app) 1) ["landed"]))}
+           [:div.outer-head (nav-head)]
            (om/build component app {:react-key nav-point})
-           [:div.outer-foot (navigation)]])))))
+           [:div.outer-foot (nav-foot)]])))))
