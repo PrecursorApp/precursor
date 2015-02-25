@@ -46,6 +46,7 @@
               (om/build outer/outer (select-keys app [:show-landing?
                                                       :document/id
                                                       :navigation-point
+                                                      :navigation-data
                                                       :cust])
                         {:react-key "outer"}))
 

@@ -22,6 +22,9 @@
     (put! nav-ch [:pricing {:query-params query-params}]))
   (defroute home "/early-access" [{:keys [query-params]}]
     (put! nav-ch [:early-access {:query-params query-params}]))
+  (defroute home "/early-access/:type" [type {:keys [query-params]}]
+    (put! nav-ch [:early-access {:query-params query-params
+                                 :type type}]))
 
   (defroute home "/new" [{:keys [query-params]}]
     (put! nav-ch [:new {:query-params query-params}]))

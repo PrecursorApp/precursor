@@ -196,6 +196,9 @@
    (GET "/early-access" req
         (outer-page req))
 
+   (GET "/early-access/:type" req
+        (outer-page req))
+
    (GET "/home" req
         (outer-page req))
 

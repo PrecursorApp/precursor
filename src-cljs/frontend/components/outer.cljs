@@ -36,40 +36,46 @@
     (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted?]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             disabled? (or submitting? (empty? (:cust app)))
-            submit-form (fn [args]
-                          (go
-                            (om/update-state! owner (fn [s]
-                                                      (assoc s :submitting? true :error nil)))
-                            ;; we wouldn't typically use ajax in a component--it's not advisable in
-                            ;; this case, but we're short on time
-                            (let [res (<! (ajax/managed-ajax :post "/api/v1/early-access"))]
-                              (if (= :success (:status (utils/inspect res)))
-                                (om/update-state! owner (fn [s]
-                                                          (assoc s
-                                                                 :submitting? false
-                                                                 :submitted? true
-                                                                 :error nil
-                                                                 :company-name ""
-                                                                 :employee-count ""
-                                                                 :use-case "")))
-                                (do
-                                  (om/update-state! owner (fn [s]
-                                                            (assoc s
-                                                                   :submitting? false
-                                                                   :error [:p "There was a problem submitting the form. Please try again or "
-                                                                           [:a {:href (str "mailto:hi@precursorapp.com?"
-                                                                                           (url/map->query {:subject "Early Access to Precursor"
-                                                                                                            :body (str "Company name:\n"
-                                                                                                                       company-name
-                                                                                                                       "\n\nEmployee count:\n"
-                                                                                                                       employee-count
-                                                                                                                       "\n\nUse case:\n"
-                                                                                                                       use-case)}))}
-                                                                            "send us an email"]
-                                                                           "."])))
-                                  (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))]
+            submit-form
+            (fn [args]
+              (go
+                (om/update-state! owner (fn [s]
+                                          (assoc s :submitting? true :error nil)))
+                ;; we wouldn't typically use ajax in a component--it's not advisable in
+                ;; this case, but we're short on time
+                (let [res (<! (ajax/managed-ajax :post "/api/v1/early-access"))]
+                  (if (= :success (:status (utils/inspect res)))
+                    (om/update-state! owner (fn [s]
+                                              (assoc s
+                                                     :submitting? false
+                                                     :submitted? true
+                                                     :error nil
+                                                     :company-name ""
+                                                     :employee-count ""
+                                                     :use-case "")))
+                    (do
+                      (om/update-state!
+                       owner
+                       (fn [s]
+                         (assoc s
+                                :submitting? false
+
+                                :error
+                                [:p "There was a problem submitting the form. Please try again or "
+                                 [:a {:href
+                                      (str "mailto:hi@precursorapp.com?"
+                                           (url/map->query {:subject "Early Access to Precursor"
+                                                            :body (str "Company name:\n"
+                                                                       company-name
+                                                                       "\n\nEmployee count:\n"
+                                                                       employee-count
+                                                                       "\n\nUse case:\n"
+                                                                       use-case)}))}
+                                  "send us an email"]
+                                 "."])))
+                      (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))]
         (html
-         [:div.early-access
+         [:div.early-access {:class (get-in app [:navigation-data :type] "team")}
           [:div.early-access-content
 
            [:div.early-access-info
