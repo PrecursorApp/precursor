@@ -289,7 +289,7 @@
              [:span.content-copy
               "Easily link your wireframes together in minutes to create working demos of your idea.
               You'll save time by pinpointing areas for improvement before you go into development."]]
-            [:a.feature-link {:href "/blog/interactive-layers" :role "button" :title "Read the tutorial."}
+            [:a.feature-link {:href "/blog/interactive-layers" :target "_self" :role "button" :title "Read the tutorial."}
              [:span.content-copy
               "Read the tutorial."]]]
            [:div.feature-media.reverse artwork-interact]]
