@@ -60,6 +60,7 @@
    :editing-eids    {:editing-eids #{}}
    :show-landing? false
    :overlays []
+   :frontend-id-state nil
    :mouse {}})
 
 (defn reset-state [state]
@@ -69,7 +70,8 @@
                          :drawing :document/id
                          :subscribers :selected-eids
                          :editing-eids :mouse
-                         :show-landing? :overlays]))))
+                         :show-landing? :overlays
+                         :frontend-id-state]))))
 
 (def user-path [:current-user])
 
