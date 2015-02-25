@@ -155,7 +155,7 @@
            current-state (swap! state (partial controls-con/control-event browser-state msg data))]
        (controls-con/post-control-event! browser-state msg data previous-state current-state)
        ;; TODO: enable a way to set the event separate from the control event
-       (analytics/track-control msg current-state)))))
+       (analytics/track-control msg data current-state)))))
 
 (defn nav-handler
   [value state history]

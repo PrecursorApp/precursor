@@ -1281,20 +1281,11 @@
                                                                          :request-id request-id
                                                                          :invite-loc :overlay}]))
 
-(defmethod control-event :landing-opened
-  [target message _ state]
-  (-> state
-    (assoc :not-landing?  true)
-    (assoc :show-landing? true)
-    (overlay/clear-overlays)))
+(defmethod post-control-event! :make-button-clicked
+  [target message _ previous-state current-state]
+  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
 
-(defmethod control-event :landing-closed
-  [target message _ state]
-  (-> state
-    (assoc :show-landing? false)
-    (overlay/clear-overlays)))
-
-(defmethod post-control-event! :landing-closed
+(defmethod post-control-event! :launch-app-clicked
   [target message _ previous-state current-state]
   (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
 
