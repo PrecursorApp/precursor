@@ -214,15 +214,20 @@
     (-> {:tick-ms 16
          :ticks {}}
       (move-mouse {:start-tick 10 :end-tick 45 :start-x vw :end-x rect-start-x :start-y 0 :end-y rect-start-y})
-      (draw-shape {:doc-id (:db/id document) :tool :rect :start-tick 50 :end-tick 100 :start-x rect-start-x :end-x rect-end-x
+      (draw-shape {:doc-id (:db/id document) :tool :rect :start-tick 50 :end-tick 100
+                   :start-x rect-start-x :end-x rect-end-x
                    :start-y rect-start-y :end-y rect-end-y
+                   :source "signup-animation"
                    :props {;; look into this later, right now it interfers with signup action
                            ;; :layer/ui-target "/signup"
                            :layer/signup-button true}})
-      (move-mouse {:tool :text :start-tick 100 :end-tick 120 :start-x rect-end-x :end-x text-start-x
+      (move-mouse {:tool :text :start-tick 100 :end-tick 120
+                   :start-x rect-end-x :end-x text-start-x
                    :start-y rect-end-y :end-y (- text-start-y (/ text-height 2))})
-      (draw-text {:text text :doc-id (:db/id document) :start-tick 120 :end-tick 200 :start-x text-start-x
-                  :end-x (+ text-start-x text-width) :start-y text-start-y :end-y (- text-start-y text-height)
+      (draw-text {:text text :doc-id (:db/id document) :start-tick 120 :end-tick 200
+                  :start-x text-start-x :end-x (+ text-start-x text-width)
+                  :start-y text-start-y :end-y (- text-start-y text-height)
+                  :source "signup-animation"
                   :props {;; look into this later, right now it interfers with signup action
                           ;;:layer/ui-target "/signup"
                           :layer/signup-button true}})
@@ -235,7 +240,8 @@
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(
       (let [vw (:width (utils/canvas-size))]
-        (when (< 640 vw) ;; only if not on mobile
+        (when (and (< 640 vw) ;; only if not on mobile
+                   (empty? (d/datoms @(om/get-shared owner :db) :avet :layer/source "signup-animation")))
           (run-animation owner (signup-animation document vw)))))
     om/IWillUnmount
     (will-unmount [_]
