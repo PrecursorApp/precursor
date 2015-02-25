@@ -193,9 +193,9 @@
 (defn navigation []
   (html
    [:div.navigation
-     [:a.navigation-link {:href "/home" :target "_self" :role "button" :title "Home"} "Precursor"]
-     [:a.navigation-link {:href ""      :target "_self" :role "button" :title "Pricing"} "Pricing"]
-     [:a.navigation-link {:href "/blog" :target "_self" :role "button" :title "Blog"} "Blog"]
+     [:a.navigation-link {:href "/home"    :role "button" :title "Home"} "Precursor"]
+     [:a.navigation-link {:href "/pricing" :role "button" :title "Pricing"} "Pricing"]
+     [:a.navigation-link {:href "/blog"    :role "button" :title "Blog"} "Blog"]
      (om/build common/google-login {:source "Nav" :size :small})]))
 
 (def outer-components
@@ -213,8 +213,8 @@
             nav-point (:navigation-point app)
             component (get outer-components nav-point)]
         (html
-          [:div.outer.page-landing
-           {:class (when-not (get app :not-landing?) "landed")}
+          [:div.outer {:class (concat [(str "page-" (name nav-point))]
+                                      (when-not (get app :not-landing?) ["landed"]))}
            [:div.outer-head (navigation)]
            (om/build component app {:react-key nav-point})
            [:div.outer-foot (navigation)]])))))
