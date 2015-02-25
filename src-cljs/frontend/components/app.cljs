@@ -118,8 +118,12 @@
               (om/build landing/landing (select-keys app [:show-landing? :document/id])
                         {:react-key "landing"}))
 
-            (when (= :root (:navigation-point app))
-              (om/build drawing/landing-background {:db/id (:document/id app)} {:react-key "landing-background"}))
+            (cond (:show-landing? app)
+                  (om/build drawing/landing-background {:doc-id (:document/id app)
+                                                        :subscribers (get-in app [:subscribers :info])}
+                            {:react-key "landing-background"})
+
+                  :else nil)
 
             (when (overlay-visible? app)
               (om/build overlay/overlay app {:react-key "overlay"}))

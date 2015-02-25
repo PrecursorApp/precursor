@@ -1,5 +1,6 @@
 (ns frontend.components.drawing
   (:require [datascript :as d]
+            [frontend.db :as ds]
             [frontend.state :as state]
             [frontend.utils :as utils]
             [goog.dom]
@@ -408,7 +409,7 @@
       (add-mouse-transition 10 footer-1 footer-2)
       (add-shape 18 footer-2))))
 
-(defn landing-background [document owner]
+(defn landing-background [{:keys [doc-id subscribers]} owner]
   (reify
     om/IInitState (init-state [_] {:layer-source (utils/uuid)})
     om/IDisplayName (display-name [_] "Landing Animation")
@@ -416,8 +417,11 @@
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(
       (let [viewport (utils/canvas-size)]
-        (when true ;(< 640 (:width viewport)) ;; only if not on mobile
-          (run-animation owner (landing-animation document (om/get-state owner :layer-source) viewport)))))
+        (when (and (< 640 (:width viewport)) ;; only if not on mobile
+                   (< 640 (:height viewport))
+                   (ds/empty-db? @(om/get-shared owner :db))
+                   (zero? (count (remove :hide-in-list? subscribers))))
+          (run-animation owner (landing-animation {:db/id doc-id} (om/get-state owner :layer-source) viewport)))))
     om/IWillUnmount
     (will-unmount [_]
       (cleanup owner)
