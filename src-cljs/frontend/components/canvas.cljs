@@ -96,10 +96,16 @@
     (update-in svg-layer [:className] #(str % " selected"))
     svg-layer))
 
+(defn maybe-add-deleted [svg-layer layer]
+  (if (:layer/deleted layer)
+    (update-in svg-layer [:className] #(str % " deleted"))
+    svg-layer))
+
 (defmethod svg-element :layer.type/rect
   [layer]
   (-> (svg/layer->svg-rect layer)
     (maybe-add-selected layer)
+    (maybe-add-deleted layer)
     (clj->js)
     (dom/rect)))
 
@@ -108,31 +114,33 @@
   (let [text-props (svg/layer->svg-text layer)]
     (-> text-props
       (maybe-add-selected layer)
+      (maybe-add-deleted layer)
       (clj->js)
       (#(apply dom/text % (reduce (fn [tspans text]
                                     (conj tspans (dom/tspan
-                                                   #js {:dy (if (seq tspans) "1em" "0")
-                                                        :x (:x text-props)}
-                                                   text)))
+                                                  #js {:dy (if (seq tspans) "1em" "0")
+                                                       :x (:x text-props)}
+                                                  text)))
                                   [] (str/split (:layer/text layer) #"\n")))))))
 
 (defmethod svg-element :layer.type/line
   [layer]
-  (dom/line (clj->js (merge
-                      layer
-                      (if (:selected? layer)
-                        {:className (str (:className layer) " selected shape-layer")}
-                        {:className (str (:className layer) " shape-layer")})
-                      (svg/layer->svg-line layer)))))
+  (-> (svg/layer->svg-line layer)
+    (merge layer)
+    (update-in [:className] #(str % " shape-layer"))
+    (maybe-add-selected layer)
+    (maybe-add-deleted layer)
+    (clj->js)
+    (dom/line)))
 
 (defmethod svg-element :layer.type/path
   [layer]
-  (dom/path
-   (clj->js (merge (dissoc layer :points)
-                   (svg/layer->svg-path layer)
-                   {:className (str (:className layer)
-                                    " shape-layer "
-                                    (when (:selected? layer) " selected"))}))))
+  (-> (merge (dissoc layer :points) (svg/layer->svg-path layer))
+    (update-in [:className] #(str % " shape-layer"))
+    (maybe-add-selected layer)
+    (maybe-add-deleted layer)
+    (clj->js)
+    (dom/path)))
 
 (defmethod svg-element :layer.type/group
   [layer]
