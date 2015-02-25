@@ -113,7 +113,8 @@
 (defn stats-view [data owner]
   (reify
     om/IInitState (init-state [_] {:shown? false
-                                   :sort-orders (cycle [:last-update :display-name])})
+                                   :sort-orders (cycle [:last-update :display-name
+                                                        :mount-count :render-count])})
     om/IRenderState
     (render-state [_ {:keys [shown? sort-orders]}]
       (dom/figure nil
@@ -123,9 +124,10 @@
 
         (when shown?
           (let [sort-order (first sort-orders)
-                stats-compare (if (= sort-order :display-name)
-                                compare-display-name
-                                compare-last-update)
+                stats-compare (case sort-order
+                                :last-update compare-last-update
+                                :display-name compare-display-name
+                                (fn [x y] (compare (sort-order x) (sort-order y))))
                 stats (map (fn [[display-name renders]]
                              (let [render-times (filter identity (mapcat :render-ms renders))
                                    mount-times (filter identity (mapcat :mount-ms renders))]
