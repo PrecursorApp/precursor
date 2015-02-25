@@ -26,7 +26,7 @@
 (defn lessc-options [output-file output-dir]
   (str "-x"
        " --source-map=" output-file ".map"
-       " --source-map-basepath=" output-dir
+       " --source-map-url=" "/css/app.css.map"
        " --source-map-less-inline"))
 
 (defn watch-opts-cdm []
