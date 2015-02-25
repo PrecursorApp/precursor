@@ -195,7 +195,7 @@
    [:div.navigation
      [:a.navigation-link {:href "/home"    :role "button" :title "Home"} "Precursor"]
      [:a.navigation-link {:href "/pricing" :role "button" :title "Pricing"} "Pricing"]
-     [:a.navigation-link {:href "/blog"    :role "button" :title "Blog"} "Blog"]
+     [:a.navigation-link {:href "/blog"    :role "button" :title "Blog" :target "_self"} "Blog"]
      (om/build common/google-login {:source "Nav" :size :small})]))
 
 (def outer-components
