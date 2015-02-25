@@ -28,6 +28,7 @@
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
+            [pc.models.flag :as flag-model]
             [pc.models.permission :as permission-model]
             [pc.rollbar :as rollbar]
             [pc.profile :as profile]
@@ -154,6 +155,13 @@
                     (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                            (when cust-uuid {:document/creator cust-uuid})))]
            {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})}))
+
+   (POST "/api/v1/early-access" req
+         (if-let [cust (get-in req [:auth :cust])]
+           (do (flag-model/add-flag cust :flags/requested-early-access)
+               {:status 200 :body (pr-str {:msg "Thanks!"})})
+           {:status 401 :body (pr-str {:error :not-logged-in
+                                       :msg "Please log in to request early access."})}))
 
    (GET "/" req
         (let [cust-uuid (get-in req [:auth :cust :cust/uuid])

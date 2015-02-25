@@ -438,6 +438,7 @@
               :db/cardinality :db.cardinality/many
               :db/doc "Annotate an entity with feature flags")
    (enum :flags/private-docs)
+   (enum :flags/requested-early-access)
 
    (attribute :pre-made
               :db.type/ref
