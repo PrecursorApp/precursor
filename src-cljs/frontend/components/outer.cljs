@@ -35,7 +35,7 @@
     om/IRenderState
     (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted?]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
-            disabled? (or submitting? (empty? (:cust app)))
+            disabled? (or submitting? (not (utils/logged-in? owner)))
             submit-form
             (fn [args]
               (go
@@ -82,10 +82,13 @@
             [:h2.early-access-heading
              "We're excited to show you our team features."]
             [:p.early-access-copy
-             "To activate your early access, please sign in and let us know about the following info.
+             "To activate your early access, please "
+             (when-not (utils/logged-in? owner) "sign in and ")
+             "let us know about the following info.
               We'll send you an email confirmation once your account has been granted full access."]
-            [:div.calls-to-action
-             (om/build common/google-login {:source "Early Access Form"})]]
+            (when-not (utils/logged-in? owner)
+              [:div.calls-to-action
+               (om/build common/google-login {:source "Early Access Form"})])]
 
            ;; need to hook up disabled class
            [:div.early-access-form {:class (str (when disabled? "disabled ")
