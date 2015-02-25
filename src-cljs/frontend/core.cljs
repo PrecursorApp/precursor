@@ -108,7 +108,8 @@
   (let [initial-state (state/initial-state)
         document-id (or (aget js/window "Precursor" "initial-document-id")
                         ;; TODO: remove after be is fully deployed
-                        (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri)))))
+                        (when-let [id (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri)))]
+                          (long id)))
         cust (some-> (aget js/window "Precursor" "cust")
                (reader/read-string))
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")

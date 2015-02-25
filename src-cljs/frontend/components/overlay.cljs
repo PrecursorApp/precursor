@@ -100,8 +100,7 @@
           [:a.vein.make
            {:on-click         #(cast! :newdoc-button-clicked)
             :on-touch-end #(do (cast! :newdoc-button-clicked) (.preventDefault %))
-            :href "/"
-            :target "_self"
+            :href "/new"
             :role "button"}
            (common/icon :newdoc)
            [:span "New Document"]]

@@ -56,6 +56,15 @@
   (swap! bucket-doc-ids (fn [b]
                           (set/intersection b (set (keys @sente/document-subs))))))
 
+(defn frontend-response
+  "Response to send for requests that the frontend will route"
+  [req]
+  (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                       :google-client-id (google-client-id)
+                       :sente-id (-> req :session :sente-id)}
+                      (when-let [cust (-> req :auth :cust)]
+                        {:cust (cust/read-api cust)}))))
+
 ;; TODO: make this reloadable without reloading the server
 (defn app [sente-state]
   (routes
@@ -136,6 +145,16 @@
               ;; TODO: this should be a 404...
               (redirect "/")))))
 
+   (GET "/new" req
+        (frontend-response req))
+
+   (POST "/api/v1/document/new" req
+         (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+               doc (doc-model/create-public-doc!
+                    (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                           (when cust-uuid {:document/creator cust-uuid})))]
+           {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})}))
+
    (GET "/" req
         (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
               doc (doc-model/create-public-doc!
@@ -156,7 +175,9 @@
           (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                                :google-client-id (google-client-id)
                                :sente-id (-> req :session :sente-id)
-                               :initial-document-id (:db/id doc)}))))
+                               :initial-document-id (:db/id doc)}
+                              (when-let [cust (-> req :auth :cust)]
+                                {:cust (cust/read-api cust)})))))
 
    ;; Group newcomers into buckets with bucket-count users in each bucket.
    (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]
