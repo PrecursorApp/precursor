@@ -98,7 +98,7 @@
 
 (defn maybe-add-deleted [svg-layer layer]
   (if (:layer/deleted layer)
-    (update-in svg-layer [:className] #(str % " deleted"))
+    (update-in svg-layer [:className] #(str % " layer-deleted"))
     svg-layer))
 
 (defmethod svg-element :layer.type/rect
