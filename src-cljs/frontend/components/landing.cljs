@@ -177,10 +177,10 @@
          [:div.make-button
           {:role "button"
            :on-click #(do
-                        (cast! :landing-closed))
+                        (cast! :make-button-clicked))
            :on-touch-end #(do
                             (.preventDefault %)
-                            (cast! :landing-closed))
+                            (cast! :make-button-clicked))
            :on-mouse-enter #(om/set-state! owner :word-list (shuffle word-list))}
           [:div.make-prepend
            {:data-before "or "}

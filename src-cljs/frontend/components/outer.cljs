@@ -209,9 +209,11 @@
   (om/component
    (html
     [:div.nav
-     [:a.nav-link {:href "/"
-                   :role "button"
-                   :title "Launch"}
+     [:a.nav-link (merge {:href "/"
+                          :role "button"
+                          :title "Launch"}
+                         (when (utils/logged-in? owner)
+                           {:on-click #((om/get-shared owner :cast!) :launch-app-clicked)}))
       "Precursor"]
      [:a.nav-link {:href "/home"
                    :role "button"
@@ -229,7 +231,7 @@
      (if (utils/logged-in? owner)
        [:a.nav-link {:role "button"
                      :title "Launch Precursor"
-                     :on-click #((om/get-shared owner :cast!) :landing-closed)}
+                     :on-click #((om/get-shared owner :cast!) :launch-app-clicked)}
         "App"]
        [:div.nav-link
         (om/build common/google-login {:source "Nav" :size :small})])])))
