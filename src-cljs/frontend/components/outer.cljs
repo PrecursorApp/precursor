@@ -287,9 +287,8 @@
                      :role "button"}
         "Sign in"])
      [:a.nav-link.nav-twitter
-      {:title "Home"
-       :href "/home"
-       :role "button"}
+      {:title "@PrecursorApp"
+       :href "https://twitter.com/PrecursorApp"}
       (common/icon :twitter)]])))
 
 (def outer-components

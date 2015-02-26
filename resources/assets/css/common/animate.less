@@ -1,3 +1,23 @@
+.animate_nav() {
+  .nav-head {
+    .animation(in-fade-top @run @run_slower @bezier_deform backwards);
+  }
+}
+.animate_the_why() {
+  .our-philosphy {
+    .animation(our-philosphy @run @run @bezier_deform backwards);
+    .transform-origin(0 0);
+  }
+  .our-proof {
+    .animation(in-fade-bottom @run @run_fast @bezier_deform backwards);
+  }
+}
+// TODO move artwork animations in here from landing.less
+// .animate_landing() {
+//   &.page-landing {
+//     //
+//   }
+// }
 .animate_pricing() {
   &.page-pricing {
     @run1: (@run)      (@now);

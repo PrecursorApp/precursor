@@ -7,19 +7,14 @@
   min-height: 100%;
   background-color: @dye_outer;
   &:not(.entry) {
+    .animate_nav();
+    .animate_the_why();
+    .animate_landing();
     .animate_pricing();
     .animate_early_access();
   }
   &.page-landing {
     background-color: fade(@dye_outer, 0); // VETO
-    &.entry {
-      .outer-head .nav,
-      .our-philosphy,
-      .our-proof {
-        .animation-duration(@now);
-        .animation-delay(@now);
-      }
-    }
     .nav-link {
       .icon(fill; fade(@white, 41.75)); // TODO use opacity variables here
       color: fade(@white, 41.75);       // TODO use opacity variables here
@@ -118,9 +113,6 @@
 }
 .outer-head {
   top: 0;
-  .nav {
-    .animation(in-fade-top @run @run_slower @bezier_deform backwards);
-  }
 }
 .outer-foot {
   bottom: 0;

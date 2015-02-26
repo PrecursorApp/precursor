@@ -31,16 +31,6 @@
   }
 }
 .the-why {
-  .our-philosphy {
-    .animation(our-philosphy @run @run @bezier_deform backwards);
-  }
-  .google-login {
-    &.small {
-      .mq_640({
-        display: none !important;
-      });
-    }
-  }
   .make-button {
     color: @white;
     transition: @run @bezier_fadein;
@@ -56,7 +46,6 @@
     }
   }
   .our-proof {
-    .animation(in-fade-bottom @run @run_fast @bezier_deform backwards);
     .flexy(center; center);
     color: @gray_light;
     box-shadow: 0 -8px 13px fade(@black,21);
@@ -198,7 +187,6 @@
 .our-philosphy {
   .flex(1);
   .flexy(column);
-  .transform-origin(0 0);
 }
 .philosphy-headline {
   margin: 0;
