@@ -396,7 +396,7 @@
 (defmethod ws-handler :frontend/grant-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)]
-    (if-let [request (some->> ?data :request-id (access-request-model/find-by-id (:db req)))]
+    (if-let [request (some->> ?data :request-id (access-request-model/find-by-client-part (:db req) doc-id))]
       (let [cust (-> req :ring-req :auth :cust)
             annotations {:document/id doc-id
                          :cust/uuid (:cust/uuid cust)
@@ -410,7 +410,7 @@
 (defmethod ws-handler :frontend/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)]
-    (if-let [request (some->> ?data :request-id (access-request-model/find-by-id (:db req)))]
+    (if-let [request (some->> ?data :request-id (access-request-model/find-by-client-part (:db req) doc-id))]
       (let [cust (-> req :ring-req :auth :cust)
             annotations {:document/id doc-id
                          :cust/uuid (:cust/uuid cust)
@@ -490,7 +490,8 @@
                                                 :event-data (:?data req)}])))
        (catch Object e
          (log/error e)
-         (.printStackTrace e)
+
+         (.printStackTrace (:throwable &throw-context))
          (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust)))))))
 
 (defn setup-ws-handlers [sente-state]

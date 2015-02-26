@@ -477,7 +477,16 @@
 
    (attribute :early-access-request/use-case
               :db.type/string
-              :db/doc "Early access request form field.")])
+              :db/doc "Early access request form field.")
+
+   (function :pc.datomic.web-peer/retract-entity
+             '{:lang :clojure
+               :params [db entity-id]
+               :code (let [frontend-id-e (d/entid db :frontend/id)
+                           txes (datomic.builtins/build-retract-args db entity-id)]
+                       (remove #(= (nth % 2) frontend-id-e) txes))}
+             :db/doc "Like db.fn/retractEntity, but preserves frontend ids")])
+
 
 (defonce schema-ents (atom nil))
 
