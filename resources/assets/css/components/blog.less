@@ -52,18 +52,6 @@
     color: @gray_dark;
   }
 }
-
-.navigation {
-  .flex(0 0 @tile);
-  .flexy(center, space-between);
-  padding: 0 1.5em;
-  &.header {
-    border-bottom: 1px solid @gray_lighter;
-  }
-  &.footer {
-    border-top: 1px solid @gray_lighter;
-  }
-}
 .blogroll-post {
   color: @gray_dark;
   padding: 1em 0;
@@ -149,12 +137,12 @@
     text-align: center;
     margin: 1.5em auto;
     padding: 1em 2em;
-    .logomark-fill {
+    .fill-logomark {
       fill: @gray_light;
       transition: @run_slow @bezier_fadein;
     }
     &:hover {
-      .logomark-fill {
+      .fill-logomark {
         fill: darken(@gray_light, 8);
         transition-duration: @run_fast;
       }

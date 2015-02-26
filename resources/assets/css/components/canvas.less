@@ -64,12 +64,24 @@
     transition: stroke @run_fast @now @bezier_fadein;
   }
 }
+.grid-small {
+  path {
+    stroke-width: .5;
+    stroke-dasharray: 0;
+  }
+}
 .layers {
   &.live {
     &.layer-handle {
       ~ .layer-outline {
         transition-delay: @run_fast;
       }
+    }
+  }
+  .layer-deleted {
+    &.layer-outline {
+      .animation(layer-deleted (2 * @run_slower) @run_slower @bezier_deform);
+      pointer-events: none;
     }
   }
 }
@@ -286,6 +298,11 @@
   width: @tile_radial;
   height: @tile_radial;
   z-index: @zindex_radial_menu;
+  + .canvas-frame {
+    .layer-properties {
+      display: none;
+    }
+  }
 }
 .radial-buttons {
   width: @tile_radial + 2;

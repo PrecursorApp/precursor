@@ -1,4 +1,3 @@
-@margin_featurette: 30vh;
 .menu {
   .flexy(column);
   width: 100%;
@@ -34,6 +33,21 @@
     .grid-background {
       opacity: 0;
       transition: @now;
+    }
+    .layer {
+      .layer-outline {
+        stroke: @gray_light;
+      }
+      .text-layer,
+      .edit-handle {
+        fill: @gray_light;
+      }
+    }
+    .layer-properties {
+      display: none;
+    }
+    .radial-hint {
+      display: none;
     }
     .chat-background {
       .scale3d(0,0,1);
@@ -307,15 +321,6 @@
   margin: 0 1em;
   cursor: default;
 }
-.mixpanel-badge {
-  .animation(in-fade-bottom @run_slow);
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  svg {
-    fill: @gray_mixpanel;
-  }
-}
 .recent-time-group {
   text-transform: capitalize;
   margin-bottom: 2em;
@@ -348,6 +353,11 @@
     width: 100%;
     opacity: .5;
   }
+  .loading-ellipses {
+    position: absolute;
+    bottom: 0.5em;
+    right: 1em;
+  }
 }
 // TODO come back to cleanup loading styles here -dk (12/09/14)
 .loading {
@@ -368,23 +378,11 @@ img.loading-image {
   display: none;
 }
 .loading-ellipses {
-  position: absolute;
-  bottom: 0.5em;
-  right: 1em;
   display: none;
 }
-.loading-ellipses i {
-  opacity: 0;
-  .animation(dot 1.3s 0.0s infinite);
-}
-.loading-ellipses i+i {
-  opacity: 0;
-  .animation(dot 1.3s 0.2s infinite);
-}
-.loading-ellipses i+i+i {
-  opacity: 0;
-  .animation(dot 1.3s 0.3s infinite);
-}
+.loading-ellipses i     {.animation(dot (1.5 * @run_slower) (1.00 * @run_slower) infinite both);}
+.loading-ellipses i+i   {.animation(dot (1.5 * @run_slower) (1.25 * @run_slower) infinite both);}
+.loading-ellipses i+i+i {.animation(dot (1.5 * @run_slower) (1.50 * @run_slower) infinite both);}
 .privacy-select {
   .flex-direction(column);
   .align-items(stretch);
@@ -461,6 +459,10 @@ img.loading-image {
         opacity: .5;
       }
     }
+    .access-avatar-img {
+      .filter(grayscale(1));
+      opacity: .5;
+    }
     .access-details {
       opacity: .5;
     }
@@ -475,7 +477,7 @@ img.loading-image {
   height: @size;
   border-radius: @size;
   transition: @run @bezier_fadein;
-  img {
+  .access-avatar-img {
     width: @size;
     height: @size;
     border-radius: @size;

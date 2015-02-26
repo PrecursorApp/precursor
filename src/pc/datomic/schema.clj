@@ -438,6 +438,7 @@
               :db/cardinality :db.cardinality/many
               :db/doc "Annotate an entity with feature flags")
    (enum :flags/private-docs)
+   (enum :flags/requested-early-access)
 
    (attribute :pre-made
               :db.type/ref
@@ -466,6 +467,18 @@
                        [[:db/add entity-id :frontend/id (java.util.UUID. namespace-part client-part)]])}
              :db/doc "Assigns frontend-id, meant to be used with the partition reserved for the backend")
 
+   (attribute :early-access-request/company-name
+              :db.type/string
+              :db/doc "Early access request form field.")
+
+   (attribute :early-access-request/employee-count
+              :db.type/string
+              :db/doc "Early access request form field.")
+
+   (attribute :early-access-request/use-case
+              :db.type/string
+              :db/doc "Early access request form field.")
+
    (function :pc.datomic.web-peer/retract-entity
              '{:lang :clojure
                :params [db entity-id]
@@ -473,6 +486,7 @@
                            txes (datomic.builtins/build-retract-args db entity-id)]
                        (remove #(= (nth % 2) frontend-id-e) txes))}
              :db/doc "Like db.fn/retractEntity, but preserves frontend ids")])
+
 
 (defonce schema-ents (atom nil))
 

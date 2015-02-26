@@ -19,6 +19,13 @@
 @blue:               #299ADE;
 @red:   lighten(#c0392b, 10);
 
+// Opacity
+
+@opacity_darker_dark:  .1675;
+@opacity_darker_gray:  .4175;
+@opacity_darker_light: .7575;
+
+@opacity_white_lighter: .13;
 
 // Typography
 
@@ -35,6 +42,12 @@
 @color_select: @blue;
 @color_select_hover: lighten(@color_select, 13);
 
+@color_google: #3A7AF3;
+@color_google_light: lighten(  saturate(@color_google,  5),  2);
+@color_google_dark:   darken(desaturate(@color_google, 34), 13);
+
+@color_bot: #00b233;
+
 @color_menu_faded: @gray_light;
 
 @dye_inner: @gray_darker;
@@ -49,11 +62,14 @@
 @run_slow:   @run * 1.50;
 @run_slower: @run * 2.00;
 
+@run_make_button: @run_slower * 1.5;
+
 @bezier_fadein: cubic-bezier(0.445, 0.05, 0.55, 0.95);
 @bezier_bounce: cubic-bezier(.55,0,.55,1.44);
 @bezier_deform: cubic-bezier(0.39, 0.575, 0.565, 1);
 
 // Components
+// TODO change "tile" to "size"
 
 @tile: (1rem * 4);
 @tile_xl: pow(@tile, 2);
@@ -70,13 +86,33 @@
 @tile_content: @tile_xxl;
 
 @tooltip_color: @gray_dark;
-@menu_padding: 1.5rem;
+@menu_padding: 1.5rem; // TODO fix naming convention here
+@padding_outer: @menu_padding;
+
+@color_inset_black: fade(@black, 34);
+@color_inset_white: fade(@white, 5);
+
+// artwork
+
+@art_mobile_fill: @gray_light;
+@art_mobile_mask: @dye_outer;
+@art_mobile_ratio: 4 / 3;
+@art_mobile_height: @art_mobile_ratio * 100%;
+@art_mobile_button: 6%;
+@art_mobile_padding_y: 9%;
+@art_mobile_padding_x: @art_mobile_padding_y / 3;
+@art_mobile_head_height: (100% - @art_mobile_body_height) / 2;
+@art_mobile_body_height: 100% - (@art_mobile_padding_y * 2);
+
+@art_interact_color: @gray_light;
+@art_interact_button: @tile;
 
 // z-index index
 
 @zindex_tooltip: 1;
 @zindex_radial_menu: 11;
 @zindex_landing: 20;
+@zindex_make_append: 1;
 
 // ad hoc
 

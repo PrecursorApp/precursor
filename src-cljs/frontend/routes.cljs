@@ -14,6 +14,20 @@
     (put! nav-ch [:error {:status 404}])))
 
 (defn define-user-routes! [nav-ch]
+  (defroute root "/" [{:keys [query-params]}]
+    (put! nav-ch [:landing {:query-params query-params}]))
+  (defroute home "/home" [{:keys [query-params]}]
+    (put! nav-ch [:landing {:query-params query-params}]))
+  (defroute home "/pricing" [{:keys [query-params]}]
+    (put! nav-ch [:pricing {:query-params query-params}]))
+  (defroute home "/early-access" [{:keys [query-params]}]
+    (put! nav-ch [:early-access {:query-params query-params}]))
+  (defroute home "/early-access/:type" [type {:keys [query-params]}]
+    (put! nav-ch [:early-access {:query-params query-params
+                                 :type type}]))
+
+  (defroute home "/new" [{:keys [query-params]}]
+    (put! nav-ch [:new {:query-params query-params}]))
   (defroute document #"/document/(\d+)" [doc-id {:keys [query-params]}]
     (put! nav-ch [:document {:document/id (long doc-id)
                              :query-params query-params}])))

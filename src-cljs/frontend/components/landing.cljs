@@ -2,6 +2,7 @@
   (:require [cemerick.url :as url]
             [clojure.set :as set]
             [clojure.string :as str]
+            [cemerick.url :as url]
             [datascript :as d]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
@@ -9,144 +10,344 @@
             [frontend.components.common :as common]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.drawing :as drawing]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.scroll :as scroll]
             [frontend.state :as state]
+            [frontend.routes :as routes]
             [frontend.utils :as utils :include-macros true]
+            [frontend.utils.ajax :as ajax]
             [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
             [goog.labs.userAgent.browser :as ua]
+            [goog.style]
+            [goog.string :as gstring]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
-  (:require-macros [sablono.core :refer (html)])
+  (:require-macros [sablono.core :refer (html)]
+                   [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.ui IdGenerator]))
 
+(def artwork-mobile
+  (html
+   [:div.art-frame
+    [:div.art-mobile.artwork
+     [:div.art-mobile-head
+      [:div.art-mobile-camera]]
+     [:div.art-mobile-body
+      [:div.art-screen
+       [:div.art-menu
+        [:div.art-heading "Today"]
+        [:div.art-doc
+         [:div.art-doc-frame
+          [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+        [:div.art-doc.selected
+         [:div.art-doc-frame
+          [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+        [:div.art-doc
+         [:div.art-doc-frame
+          [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+        [:div.art-doc
+         [:div.art-doc-frame
+          [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]]
+       [:div.art-canvas
+        [:div.art-doc-frame
+         [:img.art-doc-img {:src "https://prcrsr.com/document/17592196129062.svg"}]]]
+       [:div.art-screen-select]]]
+     [:div.art-mobile-foot
+      [:div.art-mobile-button]]]]))
 
-(def screen
-  [:svg {:view-box "0 0 1024 640"}
-   [:path.svg-shape-layers {:d "M704,576H64V88h640V576z M248,152h352 M256,184h400 M664,216H248 M240,248h408 M96,280h544 M96,312h528 M96,344h560 M96,376h512 M672,408H96v168h576V408z M96,408 l336,168 M336,576l336-168"}]
-   [:g.svg-in-progress [:circle {:stroke-dasharray "8.0417,8.0417", :cx "160", :cy "184", :r "64"}]]
-   [:g.svg-in-progress
-    [:line {:x1 "205.3", :y1 "138.7", :x2 "202.4", :y2 "141.6"}]
-    [:line {:stroke-dasharray "8,8", :x1 "196.8", :y1 "147.2", :x2 "120.4", :y2 "223.6"}]
-    [:line {:x1 "117.6", :y1 "226.4", :x2 "114.7", :y2 "229.3"}]]
-   [:g.svg-in-progress
-    [:line {:x1 "205.3", :y1 "229.3", :x2 "202.4", :y2 "226.4"}]
-    [:line {:stroke-dasharray "8,8", :x1 "196.8", :y1 "220.8", :x2 "120.4", :y2 "144.4"}]
-    [:line {:x1 "117.6", :y1 "141.6", :x2 "114.7", :y2 "138.7"}]]
-   [:path.svg-chat {:d "M768,24v616 M768,576h256 M784,592v32"}]
-   [:path.svg-cursor {:d "M183.3,256.1v-13.4l9.5,9.5h-3.8 l2.2,5.3l-2.9,1.2l-2.2-5.3L183.3,256.1z"}]
-   [:path.svg-menu {:d "M1016,0H8C3.6,0,0,3.6,0,8v16h1024V8 C1024,3.6,1020.4,0,1016,0z"}]
-   [:path.svg-border {:d "M0,24v608c0,4.4,3.6,8,8,8h1008 c4.4,0,8-3.6,8-8V24"}]
-   [:path.svg-actions {:d "M16,12c0,2.2-1.8,4-4,4s-4-1.8-4-4s1.8-4,4-4S16,9.8,16,12z M44,8c-2.2,0-4,1.8-4,4s1.8,4,4,4 c2.2,0,4-1.8,4-4S46.2,8,44,8z M28,8c-2.2,0-4,1.8-4,4s1.8,4,4,4s4-1.8,4-4S30.2,8,28,8z"}]])
+(def artwork-interact
+  (html
+   [:div.art-frame
+    [:div.art-interact.artwork
+     [:div.art-interact-button
+      [:div.art-interact-text "HOME"]
+      [:div.art-interact-cursor (common/icon :cursor)]]
+     [:div.art-interact-head
+      [:div.art-interact-name "home button"]
+      [:div.art-interact-placeholder "link"]]
+     [:div.art-interact-body
+      [:div.property-dropdown-targets
+       [:div.art-interact-target
+        [:div.art-interact-placeholder "with"]
+        [:div.art-interact-ibeam "|"]
+        [:div.art-interact-more "..."]]
+       [:div.property-dropdown-target.selected
+        [:div.art-interact-item "home page"]]
+       [:div.property-dropdown-target "blog page"]
+       [:div.property-dropdown-target "about page"]
+       [:div.property-dropdown-target "contact page"]
+       [:div.property-dropdown-target "jobs page"]
+       [:div.property-dropdown-target "team page"]]]]]))
+
+(def artwork-team
+  (html
+   [:div.art-frame
+    [:div.art-team.artwork
+     [:div.art-team-list
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "niobe@prcr.sr"]
+        [:span.access-status "Was granted access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "ballard@prcr.sr"]
+        [:span.access-status "Was granted access yesterday."]]]
+      [:div.access-card.selected
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "anderson@prcrsr.com"]
+        [:span.access-status "Requested access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "smith@precursorapp.com"]
+        [:span.access-status "Was denied access yesterday."]]]
+      [:div.access-card
+       [:div.access-avatar
+        [:div.access-avatar-img]]
+       [:div.access-details
+        [:span.access-name "roland@prcr.sr"]
+        [:span.access-status "Was granted access today."]]]]]]))
+
+(defn make-button [{:keys [document/id]} owner {:keys [alt]}]
+  (reify
+    om/IDisplayName (display-name [_] "Landing Make Button")
+    om/IInitState
+    (init-state [_]
+      {:word-list ["demos"
+                   "stuff"
+                   "lines"
+                   "squares"
+                   "circles"
+                   "doodles"
+                   "mockups"
+                   "designs"
+                   "layouts"
+                   "details"
+                   "diagrams"
+                   "sketches"
+                   "drawings"
+                   "giraffes"
+                   "projects"
+                   "concepts"
+                   "products"
+                   "new ideas"
+                   "documents"
+                   "precursors"
+                   "prototypes"
+                   "wireframes"
+                   "user flows"
+                   "flowcharts"
+                   "interfaces"
+                   "inventions"
+                   "some stuff"
+                   "life easier"
+                   "experiences"
+                   "brainstorms"
+                   "masterpieces"
+                   "collaboration"
+                   "presentations"
+                   "illustrations"
+                   "walk-throughs"
+                   "awesome ideas"
+                   "teammates happy"
+                   "your team happy"]})
+    om/IDidMount
+    (did-mount [_]
+      (om/set-state! owner :widths (reduce (fn [acc word]
+                                             (assoc acc word (.-width (goog.style/getSize (om/get-node owner word)))))
+                                           {} (om/get-state owner :word-list))))
+    om/IRenderState
+    (render-state [_ {:keys [chosen-word-width word-list widths]}]
+      (let [cast! (om/get-shared owner :cast!)
+            nav-ch (om/get-shared owner [:comms :nav])
+            chosen-word (first word-list)
+            [before-words after-words] (partition-all (- (count word-list) 3) (rest word-list))]
+        (html
+         [:div.make-button
+          {:class (when alt "alt")
+           :role "button"
+           :on-click #(do
+                        (cast! :make-button-clicked))
+           :on-touch-end #(do
+                            (.preventDefault %)
+                            (cast! :make-button-clicked))
+           :on-mouse-enter #(om/set-state! owner :word-list (shuffle word-list))}
+          [:div.make-prepend
+           {:data-before "or "}
+           "Make "]
+          [:div.make-something
+           [:div.something-default (when widths
+                                     {:style {:width (get widths chosen-word)}})
+            chosen-word]
+           (when-not widths
+             (for [word word-list]
+               [:span {:style {:top "-1000px"
+                               :left "-1000px"
+                               :position "absolute"}
+                       :ref word}
+                word]))
+           [:div.something-wheel
+            (merge
+             {:data-before (str/join " " before-words)
+              :data-after  (str/join " " after-words)})
+            chosen-word]]
+          [:div.make-append
+           {:data-before " first."}]])))))
+
+(defn the-why [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Landing Why")
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+         [:div.the-why
+          [:div.our-claim
+           [:div.our-philosphy-wrap
+            [:div.our-philosphy.content
+             [:h1.philosphy-headline
+              [:span.philosphy-needed "Precursor wants to simplify"]
+              [:span.philosphy-excess " your"]
+              [:span.philosphy-needed " prototyping"]
+              [:span.philosphy-excess " workflow"]
+              [:span.philosphy-needed "."]]
+             [:p.philosphy-subtext
+              [:span.philosphy-needed "No nonsense—"]
+              [:span.philosphy-needed "exactly what you need"]
+              [:span.philosphy-excess " when you need it"]
+              [:span.philosphy-needed "."]]
+             [:div.calls-to-action
+              (om/build make-button (select-keys app [:document/id]))]]]]
+          [:div.our-proof
+           ;; Hide this until we get testimonials/stats figured out
+           ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
+           ]])))))
 
 (defn past-center? [owner ref]
   (let [node (om/get-node owner ref)
         vh (.-height (goog.dom/getViewportSize))]
     (< (.-top (.getBoundingClientRect node)) (/ vh 2))))
 
-;; TODO: update to new om so that we don't need this
-(defn maybe-set-state! [owner korks value]
-  (when (not= (om/get-state owner korks) value)
-    (om/set-state! owner korks value)))
+(defn scrolled-back-out-of-view?
+  "Checks if the user scrolled back up the page far enought that node is out of view"
+  [owner ref]
+  (let [node (om/get-node owner ref)
+        vh (.-height (goog.dom/getViewportSize))
+        rect (.getBoundingClientRect node)
+        bottom (.-bottom rect)
+        height (.-height rect)
+        wiggle-room (* 0.1 vh)]
+    (> bottom (- (+ vh height)
+                 wiggle-room))))
+
+(defn the-how [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Landing How")
+    om/IInitState (init-state [_] {:active-features #{}})
+    om/IDidMount (did-mount [_]
+                   (scroll/register owner #(utils/maybe-set-state!
+                                            owner
+                                            [:active-features]
+                                            (let [active-features (om/get-state owner [:active-features])
+                                                  {active true inactive false} (group-by (partial contains? active-features)
+                                                                                         ["1" "2" "3"])]
+                                              (set (concat (filter (partial past-center? owner) inactive)
+                                                           (remove (partial scrolled-back-out-of-view? owner) active)))))))
+    om/IWillUnmount (will-unmount [_] (scroll/dispose owner))
+    om/IRenderState
+    (render-state [_ {:keys [active-features]}]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+         [:div.the-how
+          [:div.feature.content
+           {:class (when (contains? active-features "1") "art-visible") :ref "1"}
+           [:div.feature-story
+            [:h2.feature-headline
+             [:span "Make your ideas accessible anywhere, using any device."]]
+            [:p.feature-copy
+             [:span.content-copy
+              "Quickly find sketches on any tablet or phone and be ready when inspiration hits you.
+              Don't bother wasting time with a big app download—just pull up your favorite browser."]]]
+           [:div.feature-media artwork-mobile]]
+          [:div.feature-divider]
+          [:div.feature.content
+           {:class (when (contains? active-features "2") "art-visible") :ref "2"}
+           [:div.feature-story
+            [:h2.feature-headline
+             [:span "Make prototypes interactive & refine your user experience."]]
+            [:p.feature-copy
+             [:span.content-copy
+              "Easily link your wireframes together in minutes to create working demos of your idea.
+              You'll save time by pinpointing areas for improvement before you go into development."]]
+            [:a.feature-link {:href "/blog/interactive-layers" :target "_self" :role "button" :title "Read the tutorial."}
+             [:span.content-copy
+              "Read the tutorial."]]]
+           [:div.feature-media.reverse artwork-interact]]
+          [:div.feature-divider]
+          [:div.feature.content
+           {:class (when (contains? active-features "3") "art-visible") :ref "3"}
+           [:div.feature-story
+            [:h2.feature-headline
+             [:span "Make team collaboration more productive & engaging."]]
+            [:p.feature-copy
+             [:span.content-copy
+              "Our team features are optimized to make collaborating in real-time effortless.
+              Communicate and create new ideas with your teammates in one secure place."]]
+            [:a.feature-link {:href "/early-access/team" :role "button" :title "Request early access."}
+             [:span.content-copy
+              "Request early access."]]]
+           [:div.feature-media artwork-team]]])))))
+
+(defn the-what [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Landing What")
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+         [:div.the-what
+          [:div.our-proof]
+          [:div.our-claim
+           [:div.our-philosphy-wrap
+            [:div.our-philosphy.content
+             [:h1.philosphy-headline
+              [:span.philosphy-needed "Precursor is pure prototyping."]]
+             [:p.philosphy-subtext
+              [:span.philosphy-needed "Real-time collaboration"]
+              [:span.philosphy-excess " that makes it easy "]
+              [:span.philosphy-excess " to focus on what's important"]
+              [:span.philosphy-needed "."]]
+             (if (utils/logged-in? owner)
+               [:div.calls-to-action
+                (om/build make-button (select-keys app [:document/id]))]
+
+               [:div.calls-to-action
+                (om/build common/google-login {:source "Landing What"})
+                (om/build make-button (select-keys app [:document/id])
+                          {:opts {:alt "alt"}})])]]]])))))
 
 (defn landing [app owner]
   (reify
-    om/IInitState (init-state [_] {:past-center-featurettes #{}})
-    om/IRenderState
-    (render-state [_ {:keys [past-center-featurettes]}]
+    om/IDisplayName (display-name [_] "Landing")
+    om/IRender
+    (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.app-landing {:on-scroll #(maybe-set-state! owner [:past-center-featurettes]
-                                                          (set (filter (partial past-center? owner) ["1" "2" "3" "4" "5"])))}
-           [:nav.home-nav
-            [:div.content
-             [:a.nav-item {:role "button"} "Precursor"]
-             [:a.nav-item {:role "button"} "Pricing"]
-             [:a.nav-item {:role "button"} "Blog"]
-             [:a.nav-item.google-login.mobile-hidden {:role "button"}
-              [:span.google-login-icon
-               (common/icon :google)]
-              [:span.google-login-body "Sign in"]]]]
-           [:div.prolog.jumbotron
-            [:div.content
-             [:h1 "Collaborate on every idea with your entire team."]
-             [:h4 "Productive prototyping without all the nonsense."]
-             [:button.prolog-cta {:on-click #(cast! :landing-closed)}
-              "Launch Precursor"]]
-            [:div.trusted-by]]
-           [:div.home-body
-            [:article.featurette.featurette-why {:ref "1"
-                                                 :class (when (contains? past-center-featurettes "1") "active")}
-             [:div.featurette-story
-              [:h2 "Sharing prototypes should be simple."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]
-            [:article.featurette.featurette-how  {:ref "2"
-                                                  :class (when (contains? past-center-featurettes "2") "active")}
-             [:div.featurette-story
-              [:h2 "Express your ideas efficiently with simple tools."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]
-            [:article.featurette.featurette-how {:ref "3"
-                                                 :class (when (contains? past-center-featurettes "3") "active")}
-             [:div.featurette-story
-              [:h2 "Interact with your idea before developing it."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]
-            [:article.featurette.featurette-how {:ref "4"
-                                                 :class (when (contains? past-center-featurettes "4") "active")}
-             [:div.featurette-story
-              [:h2 "Share your ideas faster without forgetting them."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]
-            [:article.featurette.featurette-what {:ref "5"
-                                                  :class (when (contains? past-center-featurettes "5") "active")}
-             [:div.featurette-story
-              [:h2 "Pure prototyping, just focus on the idea."]
-              [:p "Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                  Sed felis enim, rhoncus a lobortis at, porttitor nec tellus.
-                  Aliquam gravida consequat velit, ultrices porttitor turpis sagittis et."]]
-             [:div.featurette-media screen]]]
-           [:div.epilog.jumbotron
-            [:div.content
-             [:h1 "Collaborate on every idea with your entire team."]
-             [:h4 "Productive prototyping without all the nonsense."]
-             ; [:div.jumbotron-buttons
-             ;  [:a.google-login {:role "button"}
-             ;   [:span.google-login-icon
-             ;    (common/icon :google)]
-             ;   [:span.google-login-body "Sign in with Google"]]
-             ;  [:button "Try it first"]]
-
-             [:div.jumbotron-buttons
-              [:a.google-login.epilog-cta {:role "button"}
-               [:span.google-login-icon
-                (common/icon :google)]
-               [:span.google-login-body "Sign in with Google"]]
-              [:a.epilog-cta-2nd {:on-click #(cast! :landing-closed)
-                                  :role "button"}
-               "Or Try It First"]]
-
-             ; [:a.google-login {:role "button"}
-             ;  [:span.google-login-icon
-             ;   (common/icon :google)]
-             ;  [:span.google-login-body "Sign in with Google"]]
-             ; [:a {:role "button"} "Or try it first"]
-
-             ]]
-           [:nav.home-foot
-            [:div.content
-             [:a.nav-item {:role "button"} "Precursor"]
-             [:a.nav-item {:role "button"} "Pricing"]
-             [:a.nav-item {:role "button"} "Blog"]]]])))))
+         [:div.landing.page
+          (om/build drawing/landing-background {:doc-id (:document/id app)
+                                                :subscribers (get-in app [:subscribers :info])}
+                    {:react-key "landing-background"})
+          (om/build the-why app)
+          (om/build the-how app)
+          (om/build the-what app)])))))

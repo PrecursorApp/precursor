@@ -23,6 +23,23 @@
   }.prefix(@property; @value; @rest);
   @{property}: @value;
 }
+.position(@p; @x; @y) {
+  position: @p;
+  .axis_y(@y) when (length(@y) = 1) {
+    top: @y;
+  }.axis_y(@y);
+  .axis_y(@y) when (length(@y) = 2) {
+    @property: extract(@y, 1);
+    @{property}: extract(@y, 2);
+  }.axis_y(@y);
+  .axis_x(@x) when (length(@x) = 1) {
+    left: @x;
+  }.axis_x(@x);
+  .axis_x(@x) when (length(@x) = 2) {
+    @property: extract(@x, 1);
+    @{property}: extract(@x, 2);
+  }.axis_x(@x);
+}
 .placeholder_style(@property; @value) {
   &::-webkit-input-placeholder {@{property}: @value;}
   &:-moz-placeholder           {@{property}: @value;}
@@ -110,17 +127,27 @@
   box-shadow+:  1px  0   @color;
   box-shadow+: -1px  0   @color;
 }
-.inline(@color: @gray_lighter) {
-  box-shadow+:  0    1px @color inset;
-  box-shadow+:  0   -1px @color inset;
-  box-shadow+:  1px  0   @color inset;
-  box-shadow+: -1px  0   @color inset;
+.inline(@color: @gray_lighter; @width: 1px) {
+  box-shadow+:  0    @width @color inset;
+  box-shadow+:  0   -@width @color inset;
+  box-shadow+:  @width  0   @color inset;
+  box-shadow+: -@width  0   @color inset;
 }
 .filter(...) {
   .for(@arguments); .-each(@argument) {
       -webkit-filter+_: @argument;
               filter+_: @argument;
   }
+}
+.shadow_inset(@position; @black; @white) {
+  .top(@arguments) when (@position = top) {
+    box-shadow+: 0 -1px @black;
+    box-shadow+: 0  1px @white inset;
+  }.top(@arguments);
+  .btm(@arguments) when (@position = bottom) {
+    box-shadow+: 0 -1px @black inset;
+    box-shadow+: 0  1px @white;
+  }.btm(@arguments);
 }
 .gradient(@type; @rest...) {
   @colors: ~`"@{rest}".slice(1,-1)`;

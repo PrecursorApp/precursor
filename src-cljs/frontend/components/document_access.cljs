@@ -16,6 +16,7 @@
 
 (defn permission-denied-overlay [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Permission Denied Overlay")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -73,6 +74,7 @@
 
 (defn manage-permissions-overlay [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Manage Permissions Overlay")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]

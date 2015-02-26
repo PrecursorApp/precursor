@@ -20,6 +20,7 @@
             [frontend.controllers.api :as api-con]
             [frontend.controllers.errors :as errors-con]
             [frontend.localstorage :as localstorage]
+            [frontend.instrumentation :as instrumentation]
             [frontend.sente :as sente]
             [frontend.state :as state]
             [goog.events]
@@ -59,24 +60,15 @@
   (.stopPropagation event))
 
 (defn track-key-state [cast! direction suppressed-key-combos event]
-  (let [meta?      (when (.-metaKey event) "meta")
-        shift?     (when (.-shiftKey event) "shift")
-        ctrl?      (when (.-ctrlKey event) "ctrl")
-        alt?       (when (.-altKey event) "alt")
-        char       (or (get keyq/code->key (.-which event))
-                       (js/String.fromCharCode (.-which event)))
-        tokens     [shift? meta? ctrl? alt? char]
-        key-string (string/join "+" (filter identity tokens))]
-    (when-not (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
-      (when (get suppressed-key-combos key-string)
+  (let [key-set (keyq/event->key event)]
+    (when-not (or (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
+                  (= "true" (.. event -target -contentEditable)))
+      (when (contains? suppressed-key-combos key-set)
         (.preventDefault event))
       (when-not (.-repeat event)
-        (let [human-name (keyq/event->key event)]
-          (let [key-name (keyword (str human-name "?"))]
-            (cast! :key-state-changed [{:key-name-kw key-name
-                                        :key         human-name
-                                        :code        (.-which event)
-                                        :depressed?  (= direction :down)}])))))))
+        (cast! :key-state-changed [{:key-set key-set
+                                    :code (.-which event)
+                                    :depressed? (= direction :down)}])))))
 
 ;; Overcome some of the browser limitations around DnD
 (def mouse-move-ch
@@ -114,7 +106,10 @@
 
 (defn app-state []
   (let [initial-state (state/initial-state)
-        document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
+        document-id (or (aget js/window "Precursor" "initial-document-id")
+                        ;; TODO: remove after be is fully deployed
+                        (when-let [id (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri)))]
+                          (long id)))
         cust (some-> (aget js/window "Precursor" "cust")
                (reader/read-string))
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
@@ -127,6 +122,7 @@
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
                      :db (db/make-initial-db initial-entities)
+                     :document/id document-id
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
                      :cust cust
@@ -149,17 +145,17 @@
             (browser-settings/restore-browser-settings cust)))))
 
 (defn controls-handler
-  [value state browser-state]
-  (when-not (keyword-identical? :mouse-moved (first value))
+  [[msg data :as value] state browser-state]
+  (when-not (keyword-identical? :mouse-moved msg)
     (mlog "Controls Verbose: " value))
   (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state
            ;; TODO: control-event probably shouldn't get browser-state
-           current-state (swap! state (partial controls-con/control-event browser-state (first value) (second value)))]
-       (controls-con/post-control-event! browser-state (first value) (second value) previous-state current-state)
+           current-state (swap! state (partial controls-con/control-event browser-state msg data))]
+       (controls-con/post-control-event! browser-state msg data previous-state current-state)
        ;; TODO: enable a way to set the event separate from the control event
-       (analytics/track-control (first value) current-state)))))
+       (analytics/track-control msg data current-state)))))
 
 (defn nav-handler
   [value state history]
@@ -194,6 +190,7 @@
        (errors-con/post-error! container (first value) (second value) previous-state @state)))))
 
 (defn install-om [state container comms cast! handlers]
+  (instrumentation/setup-component-stats!)
   (om/root
    app/app
    state
@@ -202,7 +199,13 @@
              :db                    (:db @state)
              :cast!                 cast!
              :_app-state-do-not-use state
-             :handlers              handlers}}))
+             :handlers              handlers
+             ;; Can't log in without a page refresh, have to re-evaluate this if
+             ;; that ever changes.
+             :logged-in?            (boolean (seq (:cust @state)))
+             }
+    :instrument (fn [f cursor m]
+                  (om/build* f cursor (assoc m :descriptor instrumentation/instrumentation-methods)))}))
 
 (defn find-app-container []
   (goog.dom/getElement "om-app"))
@@ -224,8 +227,8 @@
         nav-tap                  (chan)
         api-tap                  (chan)
         errors-tap               (chan)
-        suppressed-key-combos    #{"meta+A" "meta+D" "meta+Z" "shift+meta+Z" "backspace"
-                                   "shift+meta+D" "up" "down" "left" "right" "meta+G"}
+        suppressed-key-combos    #{#{"meta" "A"} #{"meta" "D"} #{"meta" "Z"} #{"shift" "meta" "Z"} #{"backspace"}
+                                   #{"shift" "meta" "D"} #{"up"} #{"down"} #{"left"} #{"right"} #{"meta" "G"}}
         handle-key-down          (partial track-key-state cast! :down suppressed-key-combos)
         handle-key-up            (partial track-key-state cast! :up   suppressed-key-combos)
         handle-mouse-move        #(handle-mouse-move cast! %)
@@ -291,10 +294,7 @@
     (main state history-imp)
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
-    (if-let [error-status (get-in @state [:render-context :status])]
-      ;; error codes from the server get passed as :status in the render-context
-      (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
-      (sec/dispatch! (str "/" (.getToken history-imp))))))
+    (sec/dispatch! (str "/" (.getToken history-imp)))))
 
 (defn ^:export inspect-state []
   (clj->js @debug-state))

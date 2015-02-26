@@ -40,10 +40,11 @@
                           :layer-ui-target-edited
                           :subscriber-updated})
 
-(defn track-control [event state]
+(defn track-control [event data state]
   (when-not (contains? controls-blacklist event)
     (mixpanel/track (str event) (merge
+                                 (:analytics-data data)
                                  (dissoc (get-in state state/browser-settings-path) :document-settings)
                                  (when (:document/id state)
                                    {:doc-id (:document/id state)
-                                    :subscriber-count (count (:subscribers state))})))))
+                                    :subscriber-count (count (get-in state [:subscribers :info]))})))))

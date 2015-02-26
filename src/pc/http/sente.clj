@@ -170,9 +170,7 @@
             ;; XXX should we ensure in the transactor that ids increase properly?
             used-from-partition (set (filter #(= remainder (mod % web-peer/multiple)) used-client-parts))
             start-eid (first (remove #(contains? used-from-partition %)
-                                     (iterate (partial + web-peer/multiple) (if (zero? remainder)
-                                                                              web-peer/multiple
-                                                                              remainder))))]
+                                     (iterate (partial + web-peer/multiple) (+ web-peer/multiple remainder))))]
         {:remainder remainder :multiple web-peer/multiple :next-id start-eid})
       (throw+ {:status 403
                :error-msg "There are too many users in the document."

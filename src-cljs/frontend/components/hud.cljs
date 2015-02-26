@@ -1,7 +1,9 @@
 (ns frontend.components.hud
   (:require [clojure.string :as str]
             [datascript :as d]
+            [frontend.auth :as auth]
             [frontend.components.common :as common]
+            [frontend.cursors :as cursors]
             [frontend.models.chat :as chat-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
@@ -13,6 +15,7 @@
 
 (defn menu [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud Menu")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -40,35 +43,50 @@
                      (if (overlay-visible? app) "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
 
-(defn info [app owner]
+(defn mouse-stats [_ owner]
   (reify
+    om/IDisplayName (display-name [_] "Mouse Stats")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            info-button-learned? (get-in app state/info-button-learned-path)]
+      (let [mouse (cursors/observe-mouse owner)]
         (html
-          [:a.hud-info.hud-item.hud-toggle
-           {:on-click #(cast! :overlay-info-toggled)
-            :role "button"
-            :class (when-not info-button-learned? "hover")
-            :data-right (when-not info-button-learned? "What is Precursor?")
-            :title (when info-button-learned? "What is Precursor?")}
-           (common/icon :info)])))))
+         [:div.mouse-stats
+          {:data-text (str "{:x " (:x mouse 0)
+                           ", :y " (:y mouse 0)
+                           ", :rx " (:rx mouse 0)
+                           ", :ry " (:ry mouse 0)
+                           "}")}])))))
 
-(defn landing [app owner]
+(defn tray [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud Tray")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            info-button-learned? (get-in app state/info-button-learned-path)]
+            new-here? (empty? (:cust app))
+            chat-opened? (get-in app state/chat-opened-path)]
         (html
-          [:a.hud-landing.hud-item.hud-toggle
-           {:on-click #(cast! :landing-opened)
-            :role "button"}
-           (common/icon :info)])))))
+         [:div.hud-tray.hud-item {:class (when chat-opened? ["chat-opened"])}
+          [:div.tray-positive
+           (when new-here?
+             (html
+              [:div.new-here
+               [:a.new-here-button {:on-click #(om/set-state! owner :new-here true)
+                                    :data-text "New here?"
+                                    :role "button"}]
+               ;; TODO just make this thing call outer/nav-foot
+               [:div.new-here-items {:on-mouse-leave #(om/set-state! owner :new-here false)
+                                     :class (when (om/get-state owner :new-here) "opened")}
+                [:a.new-here-item {:href "/home"         :role "button" :title "Home"} "Home"]
+                [:a.new-here-item {:href "/pricing"      :role "button" :title "Pricing"} "Pricing"]
+                [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
+                [:a.new-here-item {:href (auth/auth-url) :role "button" :title "Sign in with Google"} "Sign in"]]]))
+           (om/build mouse-stats {} {:react-key "mouse-stats"})]
+          [:div.tray-negative]])))))
 
 (defn chat [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud Chat")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -112,6 +130,7 @@
 
 (defn viewers [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud Viewers")
     om/IInitState (init-state [_] {:editing-name? false
                                    :new-name ""})
     om/IDidUpdate
@@ -124,7 +143,7 @@
         (let [{:keys [cast! db]} (om/get-shared owner)
               chat-opened? (get-in app state/chat-opened-path)
               client-id (:client-id app)
-              viewers-count (count (remove (comp :hide-in-list? last) (:subscribers app)))
+              viewers-count (count (remove (comp :hide-in-list? last) (get-in app [:subscribers :info])))
               can-edit? (not (empty? (:cust app)))
               show-viewers? (and (not (overlay-visible? app))
                                  (get app :show-viewers? (< 1 viewers-count 6)))]
@@ -136,12 +155,12 @@
              (when show-viewers?
                [:div.viewers-list
                 [:div.viewers-list-frame
-                 (let [show-mouse? (get-in app [:subscribers client-id :show-mouse?])]
+                 (let [show-mouse? (get-in app [:subscribers :info client-id :show-mouse?])]
                    [:div.viewer.viewer-self
                     [:div.viewer-avatar.viewer-tag
-                     (if (= :touch (get-in app [:mouse :type]))
-                       (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers client-id :color])}}}))
-                       (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers client-id :color])}}})))]
+                     (if (= :touch (get-in app [:mouse-type]))
+                       (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}}}))
+                       (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}}})))]
                     (if editing-name?
                       [:form.viewer-name-form
                        {:on-submit #(do (when-not (str/blank? new-name)
@@ -178,7 +197,7 @@
                        :role "button"
                        :title "Edit your display name."}
                       (common/icon :pencil)]]])
-                 (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (:subscribers app) client-id)
+                 (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (get-in app [:subscribers :info]) client-id)
                        :when (not hide-in-list?)
                        :let [id-str (or cust-name (apply str (take 6 id)))]]
                    [:div.viewer
@@ -210,19 +229,31 @@
 
 (defn hud [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Hud")
     om/IRender
     (render [_]
       (html
-        [:div.hud
-         (om/build viewers app)
-         (om/build menu app)
-         (om/build chat app)
+       [:div.hud
+        (om/build viewers (utils/select-in app [state/chat-opened-path
+                                                state/overlays-path
+                                                [:subscribers :info]
+                                                [:show-viewers?]
+                                                [:client-id]
+                                                [:cust]
+                                                [:mouse-type]])
+                  {:react-key "viewers"})
+        (om/build menu (utils/select-in app [state/main-menu-learned-path
+                                             state/overlays-path])
+                  {:react-key "menu"})
+        (om/build chat (utils/select-in app [state/chat-opened-path
+                                             state/chat-button-learned-path
+                                             state/browser-settings-path
+                                             [:document/id]])
+                  {:react-key "chat"})
 
-         ;; TODO finish this button once landing and outer are done
-         ;; (om/build landing app)
+        (om/build tray (utils/select-in app [state/chat-opened-path
+                                             state/info-button-learned-path
+                                             [:cust]])
+                  {:react-key "tray"})
 
-         ;; deciding whether to get rid of this
-         ;; (when-not (:cust app)
-         ;;   (om/build info app))
-
-         ]))))
+        ]))))

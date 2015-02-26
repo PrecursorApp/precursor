@@ -7,6 +7,7 @@
             [frontend.overlay :as overlay]
             [frontend.state :as state]
             [frontend.sente :as sente]
+            [frontend.subscribers :as subs]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils :as utils :include-macros true]
@@ -41,7 +42,8 @@
 (defn navigated-default [navigation-point args state]
   (-> state
       (assoc :navigation-point navigation-point
-             :navigation-data args)))
+             :navigation-data args)
+      (update-in [:page-count] inc)))
 
 (defmethod navigated-to :default
   [history-imp navigation-point args state]
@@ -65,6 +67,23 @@
       (.replaceToken history-imp path)
       (.setToken history-imp path))))
 
+(defn handle-outer [navigation-point args state]
+  (-> (navigated-default navigation-point args state)
+    (assoc :overlays [])
+    (assoc :show-landing? true)))
+
+(defmethod navigated-to :landing
+  [history-imp navigation-point args state]
+  (handle-outer navigation-point args state))
+
+(defmethod navigated-to :pricing
+  [history-imp navigation-point args state]
+  (handle-outer navigation-point args state))
+
+(defmethod navigated-to :early-access
+  [history-imp navigation-point args state]
+  (handle-outer navigation-point args state))
+
 (defmethod navigated-to :document
   [history-imp navigation-point args state]
   (let [doc-id (:document/id args)
@@ -74,8 +93,9 @@
                :undo-state (atom {:transactions []
                                   :last-undo nil})
                :db-listener-key (utils/uuid)
+               :show-landing? false
                :frontend-id-state {})
-        (assoc :subscribers state/subscriber-bot)
+        (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
             %))
@@ -103,3 +123,16 @@
                         doc-id
                         (:undo-state current-state)
                         sente-state)))
+
+(defmethod navigated-to :new
+  [history-imp navigation-point args state]
+  (-> (navigated-default navigation-point args state)
+    state/reset-state))
+
+(defmethod post-navigated-to! :new
+  [history-imp navigation-point _ previous-state current-state]
+  (go (let [comms (:comms current-state)
+            result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
+        (if (= :success (:status result))
+          (put! (:nav comms) [:navigate! {:path (str "/document/" (get-in result [:document :db/id]))}])
+          (put! (:errors comms) [:api-error result])))))

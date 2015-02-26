@@ -14,7 +14,7 @@
   height: @tile;
   &:not(:hover) {
     .iconpile {
-      opacity: .5;
+      opacity: @opacity_darker_gray;
     }
   }
 }
@@ -344,4 +344,115 @@
   &:nth-child(1) { .iconpile { .animation-delay(@run + (@run_faster * 1))}}
   &:nth-child(2) { .iconpile { .animation-delay(@run + (@run_faster * 3))}}
   &:nth-child(3) { .iconpile { .animation-delay(@run + (@run_faster * 5))}}
+}
+.hud-tray {
+  .flexy();
+  .user-select(none);
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: @tile;
+  pointer-events: none;
+  &.chat-opened {
+    .tray-negative {
+      .chat_width();
+      .mq_640({
+        display: none;
+      });
+    }
+    .mouse-stats,
+    .new-here-button {
+      &:before {
+        content: attr(data-text);
+      }
+    }
+  }
+  &:not(.chat-opened) {
+    .mouse-stats,
+    .new-here-button {
+      &:after {
+        content: attr(data-text);
+      }
+    }
+  }
+}
+.tray-positive {
+  .flex(1);
+  position: relative;
+}
+.tray-negative {
+  width: 0;
+}
+.new-here {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: @tile;
+  &:hover {
+    ~ .mouse-stats {
+      opacity: 0;
+      transition-duration: @run;
+    }
+  }
+}
+.new-here-items,
+.new-here-button {
+  pointer-events: auto;
+}
+.new-here-items {
+  .flexy(center; center);
+  .transition_transform(@run @run_slower @bezier_deform);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100vw;
+  height: 100%;
+  background: @dye_outer;
+  &.opened,
+  &:hover {
+    .translate3d(0, -100%, 0);
+    transition-delay: @now;
+  }
+}
+.new-here-button {
+  .flexy(center; center);
+  color: @white;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 2 * @tile;
+  height: 100%;
+  margin: auto;
+  &:before,
+  &:after {
+    .animation(in-fade-bottom @run_slower @bezier_deform);
+  }
+  &:hover {
+    color: @white;
+  }
+  &:not(:hover) {
+    opacity: @opacity_darker_light;
+  }
+}
+.new-here-item {
+  padding: 0 @menu_padding;
+}
+.mouse-stats {
+  color: @white;
+  font-family: @font_mono;
+  font-size: .625rem;
+  text-align: center;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1.125rem;
+  opacity: @opacity_darker_dark;
+  transition: opacity @run_slower @bezier_fadein;
+  &:before,
+  &:after {
+    .animation(in-fade-bottom @run_slower @run_fast @bezier_deform backwards);
+  }
 }

@@ -49,7 +49,8 @@
 (defmethod post-error! :api-error
   [container message args previous-state current-state]
   (when (get-in current-state state/error-message-path)
-    (set! (.-scrollTop js/document.body) 0)))
+    (set! (.-scrollTop js/document.body) 0))
+  (js/Rollbar.error (clj->js args)))
 
 (defmethod error :error-triggered
   [container message error state]

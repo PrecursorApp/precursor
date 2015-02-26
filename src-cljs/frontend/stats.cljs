@@ -27,7 +27,7 @@
      :layer-count (layer-model/find-count db)
      :chat-count (chat-model/find-count db)
      :transaction-count (-> app-state :undo-state deref :transactions count)
-     :subscriber-count (->> app-state :subscribers (remove (comp :hide-in-list? second)) count)
+     :subscriber-count (->> app-state :subscribers :info (remove (comp :hide-in-list? second)) count)
      :camera (select-keys (:camera app-state) [:x :y :zf])
      :mouse (:mouse app-state)
      :logged-in? (boolean (seq (:cust app-state)))

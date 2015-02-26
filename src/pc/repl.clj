@@ -5,6 +5,7 @@
             [cemerick.url :as url]
             [clj-http.client :as http]
             [clj-time.core :as time]
+            [clojure.core.async :as async]
             [clojure.java.javadoc :refer (javadoc)]
             [clojure.repl :refer :all]
             [datomic.api :as d]
@@ -17,7 +18,8 @@
             [pc.models.doc :as doc-model]
             [pc.models.flag :as flag-model]
             [pc.models.layer :as layer-model]
-            [pc.models.permission :as permission-model]))
+            [pc.models.permission :as permission-model]
+            [slingshot.slingshot :refer (try+ throw+)]))
 
 (defmacro pomegranate-load [artifact]
   `(do

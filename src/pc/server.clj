@@ -23,11 +23,13 @@
             [pc.assets]
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
+            [pc.early-access]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
+            [pc.models.flag :as flag-model]
             [pc.models.permission :as permission-model]
             [pc.rollbar :as rollbar]
             [pc.profile :as profile]
@@ -55,6 +57,30 @@
 (defn clean-bucket-doc-ids []
   (swap! bucket-doc-ids (fn [b]
                           (set/intersection b (set (keys @sente/document-subs))))))
+
+(defn frontend-response
+  "Response to send for requests that the frontend will route"
+  [req]
+  (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                       :google-client-id (google-client-id)
+                       :sente-id (-> req :session :sente-id)}
+                      (when-let [cust (-> req :auth :cust)]
+                        {:cust (cust/read-api cust)}))))
+
+(defn outer-page
+  "Response to send for requests that need a document-id that the frontend will route"
+  [req]
+  (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+        ;; TODO: Have to figure out a way to create outer pages without creating extraneous entity-ids
+        doc (doc-model/create-public-doc!
+             (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                    (when cust-uuid {:document/creator cust-uuid})))]
+    (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                         :google-client-id (google-client-id)
+                         :sente-id (-> req :session :sente-id)
+                         :initial-document-id (:db/id doc)}
+                        (when-let [cust (-> req :auth :cust)]
+                          {:cust (cust/read-api cust)})))))
 
 ;; TODO: make this reloadable without reloading the server
 (defn app [sente-state]
@@ -123,7 +149,8 @@
           (if doc
             (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                                  :google-client-id (google-client-id)
-                                 :sente-id (-> req :session :sente-id)}
+                                 :sente-id (-> req :session :sente-id)
+                                 :initial-document-id (:db/id doc)}
                                 ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
                                 ;;       Also need a way to handle transactions before sente connects
                                 ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
@@ -135,12 +162,48 @@
               ;; TODO: this should be a 404...
               (redirect "/")))))
 
+   (GET "/new" req
+        (frontend-response req))
+
+   (POST "/api/v1/document/new" req
+         (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+               doc (doc-model/create-public-doc!
+                    (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                           (when cust-uuid {:document/creator cust-uuid})))]
+           {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})}))
+
+   (POST "/api/v1/early-access" req
+         (if-let [cust (get-in req [:auth :cust])]
+           (do
+             (pc.early-access/create-request cust (edn/read-string (slurp (:body req))))
+             {:status 200 :body (pr-str {:msg "Thanks!"})})
+           {:status 401 :body (pr-str {:error :not-logged-in
+                                       :msg "Please log in to request early access."})}))
+
    (GET "/" req
         (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
               doc (doc-model/create-public-doc!
                    (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                           (when cust-uuid {:document/creator cust-uuid})))]
-          (redirect (str "/document/" (:db/id doc)))))
+          (if (or (not (profile/serve-homepage-backend?))
+                  cust-uuid)
+            (redirect (str "/document/" (:db/id doc)))
+            (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+                                 :google-client-id (google-client-id)
+                                 :sente-id (-> req :session :sente-id)
+                                 :initial-document-id (:db/id doc)})))))
+
+   (GET "/pricing" req
+        (outer-page req))
+
+   (GET "/early-access" req
+        (outer-page req))
+
+   (GET "/early-access/:type" req
+        (outer-page req))
+
+   (GET "/home" req
+        (outer-page req))
 
    ;; Group newcomers into buckets with bucket-count users in each bucket.
    (GET ["/bucket/:bucket-count" :bucket-count #"[0-9]+"] [bucket-count]
