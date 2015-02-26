@@ -52,21 +52,21 @@
     @run6: (@run) ((extract(@run5, 1) * 0.34) + extract(@run5, 2));
     @run7: (@run) ((extract(@run6, 1) * 0.21) + extract(@run6, 2));
     &.logged-in {
-      .early-access-heading                {.animation(in-shrink      @run1 backwards);}
-      .early-access-copy                   {.animation(in-shrink      @run2 backwards);}
-      .adaptive-placeholder:nth-of-type(1) {.animation(in-fade-bottom @run4 backwards);}
-      .adaptive-placeholder:nth-of-type(2) {.animation(in-fade-bottom @run5 backwards);}
-      .adaptive-placeholder:nth-of-type(3) {.animation(in-fade-bottom @run6 backwards);}
-      .early-access-button                 {.animation(in-fade-bottom @run7 backwards);}
+      .early-access-heading {.animation(in-shrink      @run1 backwards);}
+      .early-access-copy    {.animation(in-shrink      @run2 backwards);}
+      .early-access-name    {.animation(in-fade-bottom @run4 backwards);}
+      .early-access-size    {.animation(in-fade-bottom @run5 backwards);}
+      .early-access-uses    {.animation(in-fade-bottom @run6 backwards);}
+      .early-access-button  {.animation(in-fade-bottom @run7 backwards);}
     }
     &:not(.logged-in) {
-      .calls-to-action                     {.animation(in-shrink      @run1 backwards);}
-      .early-access-copy                   {.animation(in-shrink      @run2 backwards);}
-      .early-access-heading                {.animation(in-shrink      @run3 backwards);}
-      .adaptive-placeholder:nth-of-type(1) {.animation(in-fade-bottom @run4 backwards);}
-      .adaptive-placeholder:nth-of-type(2) {.animation(in-fade-bottom @run5 backwards);}
-      .adaptive-placeholder:nth-of-type(3) {.animation(in-fade-bottom @run6 backwards);}
-      .early-access-button                 {.animation(in-fade-bottom @run7 backwards);}
+      .early-access-heading {.animation(in-shrink      @run3 backwards);}
+      .early-access-copy    {.animation(in-shrink      @run2 backwards);}
+      .early-access-sign    {.animation(in-shrink      @run1 backwards);}
+      .early-access-name    {.animation(in-fade-bottom @run4 backwards);}
+      .early-access-size    {.animation(in-fade-bottom @run5 backwards);}
+      .early-access-uses    {.animation(in-fade-bottom @run6 backwards);}
+      .early-access-button  {.animation(in-fade-bottom @run7 backwards);}
     }
   }
 }

@@ -80,7 +80,6 @@
         (html
          [:div.early-access {:class (get-in app [:navigation-data :type] "team")}
           [:div.content
-
            [:div.early-access-info
             [:h2.early-access-heading
              "We're excited to show you the team features we're building."]
@@ -92,48 +91,49 @@
              " fill out the following information.
               We'll send you an email confirmation once your account has been granted full access."]
             (when-not (utils/logged-in? owner)
-              [:div.calls-to-action
+              [:div.early-access-sign
                (om/build common/google-login {:source "Early Access Form"})])]
-
            ;; need to hook up disabled class
            [:div.early-access-form {:class (str (when disabled? "disabled ")
                                                 (when submitting? "submitting ")
                                                 (when submitted? "submitted ")
                                                 (when error "error "))}
-            [:div.adaptive-placeholder {:tab-index "2"
-                                        :ref "company-name"
-                                        :data-before "What's your company's name?"
-                                        :data-after "Company Name"
-                                        :content-editable true
-                                        :on-key-down #(when (= "Enter" (.-key %))
-                                                        (.preventDefault %)
-                                                        ;; If they hit enter, send them to the next input.
-                                                        (.focus (om/get-node owner "employee-count")))
-                                        :on-input #(om/set-state! owner :company-name (goog.dom/getRawTextContent (.-target %)))}
-
+            [:div.adaptive-placeholder.early-access-name
+             {:tab-index "2"
+              :ref "company-name"
+              :data-before "What's your company's name?"
+              :data-after "Company Name"
+              :content-editable true
+              :on-key-down #(when (= "Enter" (.-key %))
+                              (.preventDefault %)
+                              ;; If they hit enter, send them to the next input.
+                              (.focus (om/get-node owner "employee-count")))
+              :on-input #(om/set-state! owner :company-name (goog.dom/getRawTextContent (.-target %)))}
              company-name]
-            [:div.adaptive-placeholder {:tab-index "3"
-                                        :ref "employee-count"
-                                        :data-before "How many teammates do you have?"
-                                        :data-after "Team Size"
-                                        :content-editable true
-                                        :on-key-down #(when (= "Enter" (.-key %))
-                                                        (.preventDefault %)
-                                                        ;; If they hit enter, send them to the next input.
-                                                        (.focus (om/get-node owner "use-case")))
-                                        :on-input #(om/set-state! owner :employee-count (goog.dom/getRawTextContent (.-target %)))}
+            [:div.adaptive-placeholder.early-access-size
+             {:tab-index "3"
+              :ref "employee-count"
+              :data-before "How many teammates do you have?"
+              :data-after "Team Size"
+              :content-editable true
+              :on-key-down #(when (= "Enter" (.-key %))
+                              (.preventDefault %)
+                              ;; If they hit enter, send them to the next input.
+                              (.focus (om/get-node owner "use-case")))
+              :on-input #(om/set-state! owner :employee-count (goog.dom/getRawTextContent (.-target %)))}
              employee-count]
-            [:div.adaptive-placeholder {:tab-index "4"
-                                        :ref "use-case"
-                                        :data-before "How will you use Precursor?"
-                                        :data-after "Use Case"
-                                        :content-editable true
-                                        :on-key-down #(when (= "Enter" (.-key %))
-                                                        (.preventDefault %)
-                                                        ;; If they hit enter, send them to the next input.
-                                                        (.focus (om/get-node owner "submit-button"))
-                                                        (.click (om/get-node owner "submit-button")))
-                                        :on-input #(om/set-state! owner :use-case (goog.dom/getRawTextContent (.-target %)))}
+            [:div.adaptive-placeholder.early-access-uses
+             {:tab-index "4"
+              :ref "use-case"
+              :data-before "How will you use Precursor?"
+              :data-after "Use Case"
+              :content-editable true
+              :on-key-down #(when (= "Enter" (.-key %))
+                              (.preventDefault %)
+                              ;; If they hit enter, send them to the next input.
+                              (.focus (om/get-node owner "submit-button"))
+                              (.click (om/get-node owner "submit-button")))
+              :on-input #(om/set-state! owner :use-case (goog.dom/getRawTextContent (.-target %)))}
              use-case]
             [:button.early-access-button {:tab-index "5"
                                           :ref "submit-button"
