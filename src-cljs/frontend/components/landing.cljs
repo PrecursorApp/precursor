@@ -119,7 +119,7 @@
         [:span.access-name "roland@prcr.sr"]
         [:span.access-status "Was granted access today."]]]]]]))
 
-(defn make-button [{:keys [document/id]} owner {:keys [my-special-value]}]
+(defn make-button [{:keys [document/id]} owner {:keys [alt]}]
   (reify
     om/IDisplayName (display-name [_] "Landing Make Button")
     om/IInitState
@@ -175,7 +175,8 @@
             [before-words after-words] (partition-all (- (count word-list) 3) (rest word-list))]
         (html
          [:div.make-button
-          {:role "button"
+          {:class (when alt "alt")
+           :role "button"
            :on-click #(do
                         (cast! :make-button-clicked))
            :on-touch-end #(do
@@ -227,8 +228,7 @@
               [:span.philosphy-excess " when you need it"]
               [:span.philosphy-needed "."]]
              [:div.calls-to-action
-              (om/build make-button (select-keys app [:document/id])
-                        {:opts {:special-key-name "special-value"}})]]]]
+              (om/build make-button (select-keys app [:document/id]))]]]]
           [:div.our-proof
            ;; Hide this until we get testimonials/stats figured out
            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
@@ -328,9 +328,14 @@
               [:span.philosphy-excess " that makes it easy "]
               [:span.philosphy-excess " to focus on what's important"]
               [:span.philosphy-needed "."]]
-             [:div.calls-to-action
-              (om/build common/google-login {:source "Landing What"})
-              (om/build make-button (select-keys app [:document/id]))]]]]])))))
+             (if (utils/logged-in? owner)
+               [:div.calls-to-action
+                (om/build make-button (select-keys app [:document/id]))]
+
+               [:div.calls-to-action
+                (om/build common/google-login {:source "Landing What"})
+                (om/build make-button (select-keys app [:document/id])
+                          {:opts {:alt "alt"}})])]]]])))))
 
 (defn landing [app owner]
   (reify

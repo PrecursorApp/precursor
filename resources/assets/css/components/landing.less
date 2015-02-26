@@ -31,22 +31,6 @@
   }
 }
 .the-why {
-  .make-button {
-    color: @white;
-    transition: @run @bezier_fadein;
-    border: 2px solid @white;
-    &:hover,
-    &:focus,
-    &:active {
-      color: @black;
-      background-color: @white;
-      border-color: @white;
-      transition-duration: @now;
-      &:after {
-        opacity: 1;
-      }
-    }
-  }
   .our-proof {
     .flexy(center; center);
     color: @gray_light;
@@ -70,38 +54,6 @@
       margin: 0 @tile 0 0;
       padding: 1.125rem 0;
     });
-  }
-  .make-button {
-    color: fade(@white, 41.75); // TODO use opacity variables here
-    -webkit-mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
-    &:hover {
-      color: @white;
-      .something-wheel {
-        &:before,
-        &:after {
-          color: fade(@white, 41.75); // TODO use opacity variables here
-        }
-      }
-    }
-  }
-  .make-prepend,
-  .make-append {
-    text-transform: lowercase;
-    &:before {
-      content: attr(data-before);
-      text-transform: none;
-    }
-  }
-  .make-append {
-    margin-right: auto;
-    .mq_640({
-      margin-right: 0;
-    });
-  }
-  .something-default {
-    &:after {
-      display: none; // VETO
-    }
   }
 }
 .make-button {
@@ -156,6 +108,54 @@
   &:not(:hover) {
     .something-wheel {
       .animation-name(none);
+    }
+  }
+  &.alt {
+    color: fade(@white, 41.75); // TODO use opacity variables here
+    -webkit-mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
+    &:hover {
+      color: @white;
+      .something-wheel {
+        &:before,
+        &:after {
+          color: fade(@white, 41.75); // TODO use opacity variables here
+        }
+      }
+    }
+    .make-prepend,
+    .make-append {
+      text-transform: lowercase;
+      &:before {
+        content: attr(data-before);
+        text-transform: none;
+      }
+    }
+    .make-append {
+      margin-right: auto;
+      .mq_640({
+        margin-right: 0;
+      });
+    }
+    .something-default {
+      &:after {
+        display: none; // VETO
+      }
+    }
+  }
+  &:not(.alt) {
+    color: @white;
+    transition: @run @bezier_fadein;
+    border: 2px solid @white;
+    &:hover,
+    &:focus,
+    &:active {
+      color: @black;
+      background-color: @white;
+      border-color: @white;
+      transition-duration: @now;
+      &:after {
+        opacity: 1;
+      }
     }
   }
 }
