@@ -40,9 +40,11 @@
     &:active {
       color: @black;
       background-color: @white;
-      background-image: linear-gradient(to bottom, @white, fade(@white, 0), fade(@white, 0), @white);
       border-color: @white;
       transition-duration: @now;
+      &:after {
+        opacity: 1;
+      }
     }
   }
   .our-proof {
@@ -74,6 +76,12 @@
     -webkit-mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
     &:hover {
       color: @white;
+      .something-wheel {
+        &:before,
+        &:after {
+          color: fade(@white, 41.75); // TODO use opacity variables here
+        }
+      }
     }
   }
   .make-prepend,
@@ -98,6 +106,7 @@
 }
 .make-button {
   .flexy(center; center);
+  position: relative;
   line-height: 1em;
   min-width: @tile * 4;
   height: @tile;
@@ -107,6 +116,16 @@
   .mq_640({
     width: 100%;
   });
+  &:after {
+    .gradient(to bottom, @white 0%, fade(@white, 0) 15%, fade(@white, 0) 85%, @white 100%);
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
   &:hover {
     .something-default {
       opacity: 0;
@@ -115,7 +134,7 @@
       &:before,
       &:after {
         .animation(out-fade (1.5 * @run_make_button) forwards);
-        color: @gray;
+        color: @gray_dark;
         position: absolute;
         left: 0;
         min-width: 100%;
