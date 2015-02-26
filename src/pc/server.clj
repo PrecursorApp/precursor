@@ -185,7 +185,8 @@
               doc (doc-model/create-public-doc!
                    (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                           (when cust-uuid {:document/creator cust-uuid})))]
-          (if cust-uuid
+          (if (or (not (profile/serve-homepage-backend?))
+                  cust-uuid)
             (redirect (str "/document/" (:db/id doc)))
             (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                                  :google-client-id (google-client-id)

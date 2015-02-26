@@ -51,3 +51,6 @@
 (defn statsd-host []
   ;; goes to localhost if it can't resolve
   "10.99.0.104")
+
+(defn serve-homepage-backend? []
+  (not (prod?)))
