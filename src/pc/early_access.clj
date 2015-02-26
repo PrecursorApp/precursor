@@ -12,9 +12,9 @@
   @(d/transact (pcd/conn) [(flag-model/add-flag-tx cust :flags/requested-early-access)
                            {:db/id (d/tempid :db.part/user)
                             :cust/uuid (:cust/uuid cust)
-                            :early-access-request/company-name (get data :company-name "Not provided")
-                            :early-access-request/employee-count (get data :employee-count "Not provided")
-                            :early-access-request/use-case (get data :use-case "Not provided")}]))
+                            :early-access-request/company-name (or (:company-name data) "Not provided")
+                            :early-access-request/employee-count (or (:employee-count data) "Not provided")
+                            :early-access-request/use-case (or (:use-case data) "Not provided")}]))
 
 (defn find-by-cust [db cust]
   (map (partial d/entity db)
@@ -23,11 +23,6 @@
               :where [[?t :cust/uuid ?cust-uuid]
                       [?t :early-access-request/company-name]]}
             db (:cust/uuid cust))))
-
-(defn notify-us [db cust-eid]
-  (let [cust (cust-model/find-by-id db cust-eid)
-        requests (find-by-cust db cust)]
-    (log/info (map d/touch requests))))
 
 (defn handle-early-access-requests [transaction]
   (let [db (:db-after transaction)

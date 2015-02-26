@@ -46,7 +46,7 @@
                 ;; we wouldn't typically use ajax in a component--it's not advisable in
                 ;; this case, but we're short on time
                 (let [res (<! (ajax/managed-ajax :post "/api/v1/early-access" :params params))]
-                  (if (= :success (:status (utils/inspect res)))
+                  (if (= :success (:status res))
                     (om/update-state! owner (fn [s]
                                               (assoc s
                                                      :submitting? false
@@ -74,8 +74,8 @@
                                                                        employee-count
                                                                        "\n\nUse Case\n"
                                                                        use-case)}))}
-                                  "Try this email."]
-                                 ""])))
+                                  "Try this email"]
+                                 "."])))
                       (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))]
         (html
          [:div.early-access {:class (get-in app [:navigation-data :type] "team")}
