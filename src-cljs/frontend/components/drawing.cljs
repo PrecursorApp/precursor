@@ -157,9 +157,8 @@
     nil))
 
 (defn run-animation* [owner start-ms current-ms tick-state min-tick max-tick]
-  (if-not (and (om/mounted? owner)
-               (seq (:ticks tick-state)))
-    nil;(js/console.profileEnd)
+  (when (and (om/mounted? owner)
+             (seq (:ticks tick-state)))
     (let [latest-tick (int (/ (- current-ms start-ms)
                               (:tick-ms tick-state)))
           tick-range (vec (range min-tick (inc latest-tick)))
@@ -252,13 +251,15 @@
       (dom/span #js {:className "hidden"}))))
 
 (defn add-shape [tick-state tick-count props]
-  (draw-shape tick-state (merge (let [start-tick (inc (apply max (conj (keys (:ticks tick-state)) -1)))]
+  (draw-shape tick-state (merge (let [pause (+ 3 (inc (rand-int 5)))
+                                      start-tick (+ pause (apply max (conj (keys (:ticks tick-state)) -1)))]
                                   {:start-tick start-tick
                                    :end-tick (+ start-tick (int (* 1.5 tick-count)))})
                                 props)))
 
 (defn add-mouse-transition [tick-state tick-count previous-shape next-shape]
-  (move-mouse tick-state (let [start-tick (inc (apply max (conj (keys (:ticks tick-state)) -1)))]
+  (move-mouse tick-state (let [pause (+ 6 (inc (rand-int 4)))
+                               start-tick (+ pause (apply max (conj (keys (:ticks tick-state)) -1)))]
                            {:start-tick start-tick
                             :end-tick (+ start-tick (int (* 1.5 tick-count)))
                             :start-x (:end-x previous-shape)
@@ -400,15 +401,15 @@
       (add-shape 50 menu-bar)
       (add-mouse-transition 25 menu-bar close-button)
       (add-shape 10 close-button)
-      (add-mouse-transition 10 close-button minimize-button)
+      (add-mouse-transition 12 close-button minimize-button)
       (add-shape 10 minimize-button)
-      (add-mouse-transition 10 minimize-button expand-button)
+      (add-mouse-transition 8 minimize-button expand-button)
       (add-shape 10 expand-button)
       (add-mouse-transition 30 expand-button search-box)
       (add-shape 30  search-box)
       (add-mouse-transition 20 search-box submit-button)
       (add-shape 30 submit-button)
-      (add-mouse-transition 1 submit-button lucky-button)
+      (add-mouse-transition 12 submit-button lucky-button)
       (add-shape 30 lucky-button)
       (add-mouse-transition 20 lucky-button footer-1)
       (add-shape 20 footer-1)

@@ -25,6 +25,49 @@
                    [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.ui IdGenerator]))
 
+(defn submit-early-access-form [owner]
+  (go
+    (om/update-state! owner (fn [s]
+                              (assoc s :submitting? true :error nil)))
+    ;; we wouldn't typically use ajax in a component--it's not advisable in
+    ;; this case, but we're short on time
+    ;; important to get the state out of owner since we're not re-rendering on update
+    (let [{:keys [company-name employee-count use-case]} (om/get-state owner)
+          res (<! (ajax/managed-ajax :post "/api/v1/early-access" :params {:company-name company-name
+                                                                           :employee-count employee-count
+                                                                           :use-case use-case}))]
+      (if (= :success (:status res))
+        (om/update-state! owner (fn [s]
+                                  (assoc s
+                                         :submitting? false
+                                         :submitted? true
+                                         :error nil
+                                         :company-name ""
+                                         :employee-count ""
+                                         :use-case "")))
+        (do
+          (om/update-state!
+           owner
+           (fn [s]
+             (assoc s
+                    :submitting? false
+
+                    :error
+                    [:p "Oops that didn't work! "
+                     [:a {:on-click #(.stopPropagation %)
+                          :href
+                          (str "mailto:hi@precursorapp.com?"
+                               (url/map->query {:subject "Early Access to Precursor"
+                                                :body (str "Company Name\n"
+                                                           company-name
+                                                           "\n\nTeam Size\n"
+                                                           employee-count
+                                                           "\n\nUse Case\n"
+                                                           use-case)}))}
+                      "Try this email"]
+                     "."])))
+          (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))
+
 (defn early-access [app owner]
   (reify
     om/IInitState (init-state [_] {:company-name ""
@@ -37,46 +80,7 @@
     om/IRenderState
     (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted?]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
-            disabled? (or submitting? (not (utils/logged-in? owner)))
-            submit-form
-            (fn [params]
-              (go
-                (om/update-state! owner (fn [s]
-                                          (assoc s :submitting? true :error nil)))
-                ;; we wouldn't typically use ajax in a component--it's not advisable in
-                ;; this case, but we're short on time
-                (let [res (<! (ajax/managed-ajax :post "/api/v1/early-access" :params params))]
-                  (if (= :success (:status (utils/inspect res)))
-                    (om/update-state! owner (fn [s]
-                                              (assoc s
-                                                     :submitting? false
-                                                     :submitted? true
-                                                     :error nil
-                                                     :company-name ""
-                                                     :employee-count ""
-                                                     :use-case "")))
-                    (do
-                      (om/update-state!
-                       owner
-                       (fn [s]
-                         (assoc s
-                                :submitting? false
-
-                                :error
-                                [:p "Oops that didn't work! "
-                                 [:a {:on-click #(.stopPropagation %)
-                                      :href
-                                      (str "mailto:hi@precursorapp.com?"
-                                           (url/map->query {:subject "Early Access to Precursor"
-                                                            :body (str "Company Name\n"
-                                                                       company-name
-                                                                       "\n\nTeam Size\n"
-                                                                       employee-count
-                                                                       "\n\nUse Case\n"
-                                                                       use-case)}))}
-                                  "Try this email."]
-                                 ""])))
-                      (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))]
+            disabled? (or submitting? (not (utils/logged-in? owner)))]
         (html
          [:div.early-access {:class (get-in app [:navigation-data :type] "team")}
           [:div.content
@@ -108,7 +112,7 @@
                               (.preventDefault %)
                               ;; If they hit enter, send them to the next input.
                               (.focus (om/get-node owner "employee-count")))
-              :on-input #(om/set-state! owner :company-name (goog.dom/getRawTextContent (.-target %)))}
+              :on-input #(om/set-state-nr! owner :company-name (goog.dom/getRawTextContent (.-target %)))}
              company-name]
             [:div.adaptive-placeholder.early-access-size
              {:tab-index "3"
@@ -120,7 +124,7 @@
                               (.preventDefault %)
                               ;; If they hit enter, send them to the next input.
                               (.focus (om/get-node owner "use-case")))
-              :on-input #(om/set-state! owner :employee-count (goog.dom/getRawTextContent (.-target %)))}
+              :on-input #(om/set-state-nr! owner :employee-count (goog.dom/getRawTextContent (.-target %)))}
              employee-count]
             [:div.adaptive-placeholder.early-access-uses
              {:tab-index "4"
@@ -133,14 +137,12 @@
                               ;; If they hit enter, send them to the next input.
                               (.focus (om/get-node owner "submit-button"))
                               (.click (om/get-node owner "submit-button")))
-              :on-input #(om/set-state! owner :use-case (goog.dom/getRawTextContent (.-target %)))}
+              :on-input #(om/set-state-nr! owner :use-case (goog.dom/getRawTextContent (.-target %)))}
              use-case]
             [:button.early-access-button {:tab-index "5"
                                           :ref "submit-button"
                                           :disabled (or disabled? submitted?)
-                                          :on-click #(submit-form {:company-name company-name
-                                                                   :employee-count employee-count
-                                                                   :use-case use-case})}
+                                          :on-click #(submit-early-access-form owner)}
              (cond submitting?
                    (html
                     [:span "Request is submitting"

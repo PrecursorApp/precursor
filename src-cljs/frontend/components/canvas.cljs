@@ -177,7 +177,7 @@
                                                                           :y y}))
                                 :key (str "edit-handle-" x "-" y)})))))))
 
-(defn layer-group [{:keys [layer tool selected? part-of-group? cast! db live?]} owner]
+(defn layer-group [{:keys [layer tool selected? part-of-group? live?]} owner]
   (reify
     om/IDisplayName (display-name [_] "Layer Group")
     om/IRender
@@ -404,24 +404,25 @@
     (render [_]
       (let [subscribers (cursors/observe-subscriber-mice owner)]
         (apply dom/g nil
-               (om/build-all cursor (dissoc subscribers client-id)))))))
+               (om/build-all cursor (dissoc subscribers client-id) {:key-fn first}))))))
 
 (defn single-subscriber-layers [[client-id data] owner]
   (reify
     om/IDisplayName (display-name [_] "Single Subscriber Layers")
     om/IRender
     (render [_]
-      (apply dom/g nil (mapv (fn [l] (svg-element (merge l {:layer/end-x (:layer/current-x l)
-                                                                :layer/end-y (:layer/current-y l)
-                                                                :strokeDasharray "5,5"
-                                                                :layer/fill "none"
-                                                                :style {:stroke (:color data)}
-                                                                :fillOpacity "0.5"
-                                                                :key (str (:db/id l) "-subscriber-layer-" client-id)}
-                                                             (when (= :layer.type/text (:layer/type l))
-                                                               {:layer/stroke "none"
-                                                                :style {:fill (:color data)}}))))
-                             (:layers data))))))
+      (apply dom/g nil
+             (mapv (fn [l] (svg-element (merge l {:layer/end-x (:layer/current-x l)
+                                                  :layer/end-y (:layer/current-y l)
+                                                  :strokeDasharray "5,5"
+                                                  :layer/fill "none"
+                                                  :style {:stroke (:color data)}
+                                                  :fillOpacity "0.5"
+                                                  :key (str (:db/id l) "-subscriber-layer-" client-id)}
+                                               (when (= :layer.type/text (:layer/type l))
+                                                 {:layer/stroke "none"
+                                                  :style {:fill (:color data)}}))))
+                   (:layers data))))))
 
 (defn subscribers-layers [_ owner]
   (reify
@@ -430,7 +431,7 @@
     (render [_]
       (let [subscribers (cursors/observe-subscriber-layers owner)]
         (apply dom/g nil
-               (om/build-all single-subscriber-layers subscribers))))))
+               (om/build-all single-subscriber-layers subscribers {:key-fn first}))))))
 
 (defn text-input [layer owner]
   (reify
@@ -788,13 +789,13 @@
 
                  (dom/g
                    #js {:transform (cameras/->svg-transform camera)}
-                   (om/build cursors {})
+                   (om/build cursors {} {:react-key "cursors"})
 
-                   (om/build svg-layers {:tool tool})
+                   (om/build svg-layers {:tool tool} {:react-key "svg-layers"})
 
-                   (om/build subscribers-layers {})
+                   (om/build subscribers-layers {} {:react-key "subscribers-layers"})
 
-                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]))))))))
+                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})))))))
 
 (defn canvas [app owner]
   (reify
