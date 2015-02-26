@@ -6,9 +6,13 @@
   width: 100%;
   min-height: 100%;
   background-color: @dye_outer;
+  &:not(.entry) {
+    .animate_pricing();
+    .animate_early_access();
+  }
   &.page-landing {
     background-color: fade(@dye_outer, 0); // VETO
-    &.landed {
+    &.entry {
       .outer-head .nav,
       .our-philosphy,
       .our-proof {

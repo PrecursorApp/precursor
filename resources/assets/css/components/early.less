@@ -1,32 +1,19 @@
-@early_a1: (@run) (@now);
-@early_a2: (@run) ((extract(@early_a1, 1) * 0.89) + extract(@early_a1, 2));
-@early_a3: (@run) ((extract(@early_a2, 1) * 0.55) + extract(@early_a2, 2));
-@early_a4: (@run) ((extract(@early_a3, 1) * 1.44) + extract(@early_a3, 2));
-@early_a5: (@run) ((extract(@early_a4, 1) * 0.55) + extract(@early_a4, 2));
-@early_a6: (@run) ((extract(@early_a5, 1) * 0.34) + extract(@early_a5, 2));
-@early_a7: (@run) ((extract(@early_a6, 1) * 0.21) + extract(@early_a6, 2));
 .early-access {
   .calls-to-action {
-    .animation(in-shrink @early_a1 backwards);
     margin-bottom: @menu_padding;
   }
   .adaptive-placeholder {
     margin-bottom: @menu_padding;
-    &:nth-of-type(1) {.animation(in-fade-bottom @early_a4 backwards);}
-    &:nth-of-type(2) {.animation(in-fade-bottom @early_a5 backwards);}
-    &:nth-of-type(3) {.animation(in-fade-bottom @early_a6 backwards);}
   }
   .content {
     max-width: @tile * 10; // VETO
   }
 }
 .early-access-heading {
-  .animation(in-shrink @early_a3 backwards);
   margin-bottom: -.25em;
   padding-bottom: @menu_padding;
 }
 .early-access-copy {
-  .animation(in-shrink @early_a2 backwards);
   margin-bottom: @menu_padding;
 }
 .early-access-form {
@@ -85,7 +72,6 @@
   }
 }
 .early-access-button {
-  .animation(in-fade-bottom @early_a7 backwards);
   line-height: 1;
   width: 40%;
   height: @tile;

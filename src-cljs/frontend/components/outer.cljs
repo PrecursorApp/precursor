@@ -166,51 +166,51 @@
         (html
           [:div.pricing
            [:div.content
-            [:div.pricing-blocks
-             [:div.pricing-block
-              [:div.pricing-head
-               [:h2.pricing-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
-              [:div.pricing-body
+            [:div.price-blocks
+             [:div.price-block.price-solo
+              [:div.price-head
+               [:h2.price-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
+              [:div.price-body
                ;; [:h4.content-copy "$10/mo"]    ; <- hold off until pricing is ready
                [:h4.content-copy "Pricing soon."] ; <- and delete this once it's ready
-               [:p.pricing-copy.content-copy
+               [:p.price-copy.content-copy
                 "Unlimited public docs, private docs, and project repos.
                 Add additional teammates at any time and take full advantage of team features."]]
-              [:div.pricing-foot
-               [:a.pricing-button
+              [:div.price-foot
+               [:a.price-button
                 {:href "/early-access/solo"
                  :title "Try it free while we gather feedback."
                  :role "button"}
                 "Request early access."]]]
-             [:section.pricing-divider
-              [:div.pricing-divider-line]]
-             [:div.pricing-block
-              [:div.pricing-head
-               [:h2.pricing-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
-              [:div.pricing-body
+             [:section.price-divide.left
+              [:div.price-divide-line]]
+             [:div.price-block.price-team
+              [:div.price-head
+               [:h2.price-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
+              [:div.price-body
                ;; [:h4.content-copy "$10/mo/user"] ; <- hold off until pricing is ready
                [:h4.content-copy "Pricing soon."]   ; <- and delete this once it's ready
-               [:p.pricing-copy.content-copy
+               [:p.price-copy.content-copy
                 "Unlimited public docs, private docs, and project repos.
                 Additional access to team-wide chat, in-app notifications, and file management."]]
-              [:div.pricing-foot
-               [:a.pricing-button
+              [:div.price-foot
+               [:a.price-button
                 {:href "/early-access/team"
                  :title "Try it free while we gather feedback."
                  :role "button"}
                 "Request early access."]]]
-             [:section.pricing-divider
-              [:div.pricing-divider-line]]
-             [:div.pricing-block
-              [:div.pricing-head
-               [:h2.pricing-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
-              [:div.pricing-body
+             [:section.price-divide.right
+              [:div.price-divide-line]]
+             [:div.price-block.price-corp
+              [:div.price-head
+               [:h2.price-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
+              [:div.price-body
                [:h4.content-copy "Contact us."]
-               [:p.pricing-copy.content-copy
+               [:p.price-copy.content-copy
                 "Customized solutions designed to solve specific team constraints.
                 E.g., integrations, custom servers, on-premise accommodations, etc."]]
-              [:div.pricing-foot
-               [:a.pricing-button
+              [:div.price-foot
+               [:a.price-button
                 {:href "mailto:enterprise@precursorapp.com?Subject=Enterprise%20Inquiry"
                  :title "We'll get back to you immediately."
                  :role "button"}
@@ -305,7 +305,8 @@
             component (get outer-components nav-point)]
         (html
           [:div.outer {:class (concat [(str "page-" (name nav-point))]
-                                      (when (= (:page-count app) 1) ["landed"]))}
+                                      (when (= (:page-count app) 1) ["entry"])
+                                      (when (utils/logged-in? owner) ["logged-in"]))}
            [:div.outer-head (om/build nav-head {})]
            (om/build component app {:react-key nav-point})
            [:div.outer-foot (om/build nav-foot {})]])))))

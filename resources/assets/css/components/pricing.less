@@ -1,38 +1,14 @@
-@pricing_a1: (@run)        (@now);
-@pricing_a2: (@run_slower) ((extract(@pricing_a1, 1) * 0.89) + extract(@pricing_a1, 2));
-@pricing_a3: (@run_slower) ((extract(@pricing_a2, 1) * 0.55) + extract(@pricing_a2, 2));
-@pricing_a4: (@run_slower) ((extract(@pricing_a3, 1) * 0.34) + extract(@pricing_a3, 2));
-@pricing_a5: (@run_slower) ((extract(@pricing_a4, 1) * 0.21) + extract(@pricing_a4, 2));
-@pricing_a6: (@run_slower) ((extract(@pricing_a5, 1) * 0.13) + extract(@pricing_a5, 2));
-@pricing_a7: (@run_slower) ((extract(@pricing_a6, 1) * 0.08) + extract(@pricing_a6, 2));
-@pricing_a8: (@run_slower) ((extract(@pricing_a7, 1) * 0.05) + extract(@pricing_a7, 2));
-@pricing_a9: (@run_slower) ((extract(@pricing_a8, 1) * 0.03) + extract(@pricing_a8, 2));
 .pricing {
   .content {
     padding-top: 10%;
   }
 }
-.pricing-blocks {
+.price-blocks {
   .flexy(wrap);
 }
-.pricing-block {
+.price-block {
   width: 25%;
   padding: @tile 0;
-  &:nth-of-type(1) {
-    .pricing-head {.animation(in-fade-top    @pricing_a4 backwards);}
-    .pricing-body {.animation(in-fade        @pricing_a6 backwards);}
-    .pricing-foot {.animation(in-fade-bottom @pricing_a8 backwards);}
-  }
-  &:nth-of-type(2) {
-    .pricing-head {.animation(in-shrink @pricing_a1 backwards);}
-    .pricing-body {.animation(in-shrink @pricing_a2 backwards);}
-    .pricing-foot {.animation(in-shrink @pricing_a3 backwards);}
-  }
-  &:nth-of-type(3) {
-    .pricing-head {.animation(in-fade-top    @pricing_a5 backwards);}
-    .pricing-body {.animation(in-fade        @pricing_a7 backwards);}
-    .pricing-foot {.animation(in-fade-bottom @pricing_a9 backwards);}
-  }
   .mq_960({
     width: 32%;
   });
@@ -40,36 +16,34 @@
     width: 100%;
   });
 }
-.pricing-divider {
+.price-divide {
   .flex(1);
   .flexy();
-  &:nth-of-type(1) {.animation(in-fade-left  @pricing_a3 backwards);}
-  &:nth-of-type(2) {.animation(in-fade-right @pricing_a4 backwards);}
   .mq_640({
     display: none;
   });
 }
-.pricing-divider-line {
+.price-divide-line {
   margin: 0 auto;
   border-right: 1px dashed @gray_light;
   .mq_960({
     display: none;
   });
 }
-.pricing-heading {
+.price-heading {
   margin: 0;
 }
-.pricing-body {
+.price-body {
   padding: @tile 0;
   height: 1.25 * @tile_xl;
   .mq_640({
     height: auto;
   });
 }
-.pricing-copy {
+.price-copy {
   margin: 0;
 }
-.pricing-button {
+.price-button {
   .flexy(center; center);
   line-height: 1;
   height: @tile;
