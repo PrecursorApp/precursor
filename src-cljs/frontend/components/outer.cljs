@@ -63,18 +63,19 @@
                                 :submitting? false
 
                                 :error
-                                [:p "Oops, that didn't work. Here, "
-                                 [:a {:href
+                                [:p "Oops that didn't work! "
+                                 [:a {:on-click #(.stopPropagation %)
+                                      :href
                                       (str "mailto:hi@precursorapp.com?"
                                            (url/map->query {:subject "Early Access to Precursor"
-                                                            :body (str "Company name:\n"
+                                                            :body (str "Company Name\n"
                                                                        company-name
-                                                                       "\n\nEmployee count:\n"
+                                                                       "\n\nTeam Size\n"
                                                                        employee-count
-                                                                       "\n\nUse case:\n"
+                                                                       "\n\nUse Case\n"
                                                                        use-case)}))}
-                                  "send us this email"]
-                                 " instead!"])))
+                                  "Try this email."]
+                                 ""])))
                       (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))]
         (html
          [:div.early-access {:class (get-in app [:navigation-data :type] "team")}
@@ -97,7 +98,8 @@
            ;; need to hook up disabled class
            [:div.early-access-form {:class (str (when disabled? "disabled ")
                                                 (when submitting? "submitting ")
-                                                (when submitted? "submitted "))}
+                                                (when submitted? "submitted ")
+                                                (when error "error "))}
             [:div.adaptive-placeholder {:tab-index "2"
                                         :ref "company-name"
                                         :data-before "What's your company's name?"
