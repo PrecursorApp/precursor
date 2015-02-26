@@ -249,38 +249,45 @@
 
 (defn nav-foot [app owner]
   (om/component
-    (html
-     [:div.nav
-      [:a.nav-link {:title "Launch Precursor"
-                    :href "/"
-                    :role "button"}
-       (common/icon :logomark)]
-      [:a.nav-link {:title "Home"
-                    :href "/home"
-                    :role "button"}
-       "Home"]
-      [:a.nav-link {:title "Pricing"
-                    :href "/pricing"
-                    :role "button"}
-       "Pricing"]
-      [:a.nav-link {:title "Blog"
-                    :href "/blog"
-                    :role "button"
-                    :target "_self"}
-       "Blog"]
-      (if (utils/logged-in? owner)
-        [:a.nav-link {:title "Launch Precursor"
-                      :on-click #((om/get-shared owner :cast!) :landing-closed)
-                      :role "button"}
-         "App"]
-        [:a.nav-link {:title "Sign in with Google"
-                      :href (auth/auth-url)
-                      :role "button"}
-         "Sign in"])
-      [:a.nav-link {:title "Home"
-                    :href "/home"
-                    :role "button"}
-       (common/icon :twitter)]])))
+   (html
+    [:div.nav
+     [:a.nav-link (merge {:title "Launch Precursor"
+                          :href "/"
+                          :role "button"}
+                         (when (utils/logged-in? owner)
+                           {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "bottom-nav-logo"}})}))
+      (common/icon :logomark)]
+     [:a.nav-link {:title "Home"
+                   :href "/home"
+                   :role "button"}
+      "Home"]
+     [:a.nav-link {:title "Pricing"
+                   :href "/pricing"
+                   :role "button"}
+      "Pricing"]
+     [:a.nav-link {:title "Blog"
+                   :href "/blog"
+                   :role "button"
+                   :target "_self"}
+      "Blog"]
+     (if (utils/logged-in? owner)
+       [:a.nav-link {:title "Launch Precursor"
+                     :on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "bottom-nav"}})
+                     :role "button"}
+        "App"]
+       [:a.nav-link {:title "Sign in with Google"
+                     :href (auth/auth-url)
+                     :on-click #(do (.preventDefault %)
+                                    ((om/get-shared owner :cast!) :track-external-link-clicked
+                                     {:path (auth/auth-url)
+                                      :event "Signup Clicked"
+                                      :properties {:source "bottom-nav"}}))
+                     :role "button"}
+        "Sign in"])
+     [:a.nav-link {:title "Home"
+                   :href "/home"
+                   :role "button"}
+      (common/icon :twitter)]])))
 
 (def outer-components
   {:landing landing/landing
