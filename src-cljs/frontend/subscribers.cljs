@@ -23,7 +23,7 @@
 (defn maybe-add-subscriber-data [app-state client-id subscriber-data]
   (if (get-in app-state [:subscribers :info client-id])
     (add-subscriber-data app-state client-id subscriber-data)
-    subscriber-data))
+    app-state))
 
 
 
