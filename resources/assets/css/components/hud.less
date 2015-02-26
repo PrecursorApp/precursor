@@ -353,6 +353,9 @@
   width: 100%;
   height: @tile;
   pointer-events: none;
+  .mq_640({
+    display: none;
+  });
   &.chat-opened {
     .tray-negative {
       .chat_width();
