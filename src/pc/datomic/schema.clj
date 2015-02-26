@@ -465,7 +465,19 @@
                                                                                       multiple
                                                                                       remainder))))]
                        [[:db/add entity-id :frontend/id (java.util.UUID. namespace-part client-part)]])}
-             :db/doc "Assigns frontend-id, meant to be used with the partition reserved for the backend")])
+             :db/doc "Assigns frontend-id, meant to be used with the partition reserved for the backend")
+
+   (attribute :early-access-request/company-name
+              :db.type/string
+              :db/doc "Early access request form field.")
+
+   (attribute :early-access-request/employee-count
+              :db.type/string
+              :db/doc "Early access request form field.")
+
+   (attribute :early-access-request/use-case
+              :db.type/string
+              :db/doc "Early access request form field.")])
 
 (defonce schema-ents (atom nil))
 

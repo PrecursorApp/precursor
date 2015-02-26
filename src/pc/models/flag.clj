@@ -4,8 +4,11 @@
   (:require [pc.datomic :as pcd]
             [datomic.api :refer [db q] :as d]))
 
+(defn add-flag-tx [ent flag]
+  [:db/add (:db/id ent) :flags flag])
+
 (defn add-flag [ent flag]
-  @(d/transact (pcd/conn) [[:db/add (:db/id ent) :flags flag]]))
+  @(d/transact (pcd/conn) [(add-flag-tx ent flag)]))
 
 (defn remove-flag [ent flag]
   @(d/transact (pcd/conn) [[:db/retract (:db/id ent) :flags flag]]))
