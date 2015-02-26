@@ -119,7 +119,7 @@
         [:span.access-name "roland@prcr.sr"]
         [:span.access-status "Was granted access today."]]]]]]))
 
-(defn make-button [{:keys [document/id]} owner]
+(defn make-button [{:keys [document/id]} owner {:keys [my-special-value]}]
   (reify
     om/IDisplayName (display-name [_] "Landing Make Button")
     om/IInitState
@@ -227,7 +227,8 @@
               [:span.philosphy-excess " when you need it"]
               [:span.philosphy-needed "."]]
              [:div.calls-to-action
-              (om/build make-button (select-keys app [:document/id]))]]]]
+              (om/build make-button (select-keys app [:document/id])
+                        {:opts {:special-key-name "special-value"}})]]]]
           [:div.our-proof
            ;; Hide this until we get testimonials/stats figured out
            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
