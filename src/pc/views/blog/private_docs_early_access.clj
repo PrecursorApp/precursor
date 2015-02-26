@@ -80,6 +80,8 @@
      [:h3 "How will team features work going forward?"]
      [:p "Soon we'll be offering these features to teams using a premium subscription model.
          Precursor provides simplicity to an otherwise complicated market, and we want our pricing model to reflect that.
-         We're aiming to start these plans at $10 per user, per month.
-         Please let us know how you feel about this price, we're excited to hear your feedback!"]]
+         The plan is to charge one simple rate, per user, per month based on feedback.
+         Our instincts say $10-15 is suitable for this type of product but we want to know what you think! "
+         [:a {:href (format "mailto:%s" (email/email-address "hi"))} "Email us"]
+         " with your thoughts."]]
     )})
