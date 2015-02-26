@@ -89,7 +89,7 @@
 
 (defn cancel-drawing [state]
   (-> state
-    (assoc :drawing nil)
+    (assoc :drawing {:layers []})
     (assoc-in [:mouse-down] false)))
 
 (defmethod control-event :cancel-drawing
