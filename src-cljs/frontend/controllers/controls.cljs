@@ -1287,7 +1287,8 @@
 
 (defmethod post-control-event! :launch-app-clicked
   [target message _ previous-state current-state]
-  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
+  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))
+                                                          :replace-token? true}]))
 
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]
