@@ -62,12 +62,12 @@
 (def logomark
   [:i {:class "icon-logomark"}
    [:svg {:class "iconpile" :viewBox "0 0 100 100"}
-    [:path {:class "logomark-fill" :d "M43,100H29.5V39H43V100z M94,33.8C90.9,22,83.3,12.2,72.8,6.1C62.2,0,50-1.6,38.2,1.6 C26.5,4.7,16.6,12.3,10.6,22.8C4.5,33.3,2.9,45.6,6,57.4l1.7,6.4l12.7-3.4l-1.7-6.4c-4.6-17.2,5.6-35,22.9-39.6 c8.3-2.2,17.1-1.1,24.6,3.2c7.5,4.3,12.8,11.3,15.1,19.7c4.6,17.2-5.6,35-22.9,39.6L52,78.5l3.4,12.7l6.4-1.7 C86.1,83.1,100.5,58,94,33.8z"}]]])
+    [:path {:class "fill-logomark" :d "M43,100H29.5V39H43V100z M94,33.8C90.9,22,83.3,12.2,72.8,6.1C62.2,0,50-1.6,38.2,1.6 C26.5,4.7,16.6,12.3,10.6,22.8C4.5,33.3,2.9,45.6,6,57.4l1.7,6.4l12.7-3.4l-1.7-6.4c-4.6-17.2,5.6-35,22.9-39.6 c8.3-2.2,17.1-1.1,24.6,3.2c7.5,4.3,12.8,11.3,15.1,19.7c4.6,17.2-5.6,35-22.9,39.6L52,78.5l3.4,12.7l6.4-1.7 C86.1,83.1,100.5,58,94,33.8z"}]]])
 
 (def twitter
   [:i {:class "icon-twitter"}
    [:svg {:class "iconpile" :viewBox "0 0 100 100"}
-    [:path {:class "twitter-fill" :d "M100,19c-3.7,1.6-7.6,2.7-11.8,3.2c4.2-2.5,7.5-6.6,9-11.4c-4,2.4-8.4,4.1-13,5c-3.7-4-9.1-6.5-15-6.5 c-11.3,0-20.5,9.2-20.5,20.5c0,1.6,0.2,3.2,0.5,4.7c-17.1-0.9-32.2-9-42.3-21.4c-1.8,3-2.8,6.6-2.8,10.3c0,7.1,3.6,13.4,9.1,17.1 c-3.4-0.1-6.5-1-9.3-2.6c0,0.1,0,0.2,0,0.3c0,9.9,7.1,18.2,16.5,20.1c-1.7,0.5-3.5,0.7-5.4,0.7c-1.3,0-2.6-0.1-3.9-0.4 c2.6,8.2,10.2,14.1,19.2,14.2c-7,5.5-15.9,8.8-25.5,8.8c-1.7,0-3.3-0.1-4.9-0.3c9.1,5.8,19.9,9.2,31.4,9.2 c37.7,0,58.4-31.3,58.4-58.4c0-0.9,0-1.8-0.1-2.7C93.8,26.7,97.2,23.1,100,19z"}]]])
+    [:path {:class "fill-twitter" :d "M100,19c-3.7,1.6-7.6,2.7-11.8,3.2c4.2-2.5,7.5-6.6,9-11.4c-4,2.4-8.4,4.1-13,5c-3.7-4-9.1-6.5-15-6.5 c-11.3,0-20.5,9.2-20.5,20.5c0,1.6,0.2,3.2,0.5,4.7c-17.1-0.9-32.2-9-42.3-21.4c-1.8,3-2.8,6.6-2.8,10.3c0,7.1,3.6,13.4,9.1,17.1 c-3.4-0.1-6.5-1-9.3-2.6c0,0.1,0,0.2,0,0.3c0,9.9,7.1,18.2,16.5,20.1c-1.7,0.5-3.5,0.7-5.4,0.7c-1.3,0-2.6-0.1-3.9-0.4 c2.6,8.2,10.2,14.1,19.2,14.2c-7,5.5-15.9,8.8-25.5,8.8c-1.7,0-3.3-0.1-4.9-0.3c9.1,5.8,19.9,9.2,31.4,9.2 c37.7,0,58.4-31.3,58.4-58.4c0-0.9,0-1.8-0.1-2.7C93.8,26.7,97.2,23.1,100,19z"}]]])
 
 (def authors
   [{:name "Danny"
@@ -113,17 +113,19 @@
   (html (pc.views.content/layout
          {}
          [:div.page-blog
-          [:nav.navigation-blog.header
-           [:a.navigation-title {:href "/"
-                                 :title "Make something."}
-            "Precursor"]
-           [:a.navigation-promote {:href "/"
-                                   :title "Try it out."}
-            "Prototyping for teams."]]
+          [:div.nav.nav-head ; keep up to date with outer/nav-head
+           [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} "Precursor"]
+           [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
+           [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
+           [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
+           [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]]
           (if (post-exists? slug)
             (single-post slug)
             (overview))
-          [:footer.navigation-blog.footer
-           [:a.navigation-promote {:href "https://twitter.com/PrecursorApp"
-                                   :data-right "Follow our changelog."}
-            twitter]]])))
+          [:div.nav.nav-foot ; keep up to date with outer/nav-foot
+           [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} logomark]
+           [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
+           [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
+           [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
+           [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]
+           [:a.nav-link.nav-twitter {:href "https://twitter.com/PrecursorApp" :title "@PrecursorApp"} twitter]]])))

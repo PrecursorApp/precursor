@@ -219,61 +219,63 @@
 (defn nav-head [app owner]
   (om/component
    (html
-    [:div.nav
-     [:a.nav-link (merge {:href "/"
-                          :role "button"
-                          :title "Launch Precursor"}
-                         (when (utils/logged-in? owner)
-                           {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "top-left-nav"}})}))
+    [:div.nav.nav-head
+     [:a.nav-link.nav-logo
+      (merge {:href "/"
+              :title "Precursor"}
+             (when (utils/logged-in? owner)
+               {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "top-left-nav"}})}))
       "Precursor"]
-     [:a.nav-link {:href "/home"
-                   :role "button"
-                   :title "Home"}
+     [:a.nav-link.nav-home
+      {:href "/home"
+       :title "Home"}
       "Home"]
-     [:a.nav-link {:href "/pricing"
-                   :role "button"
-                   :title "Pricing"}
+     [:a.nav-link.nav-pricing
+      {:href "/pricing"
+       :title "Pricing"}
       "Pricing"]
-     [:a.nav-link {:href "/blog"
-                   :role "button"
-                   :title "Blog"
-                   :target "_self"}
+     [:a.nav-link.nav-blog
+      {:href "/blog"
+       :title "Blog"
+       :target "_self"}
       "Blog"]
      (if (utils/logged-in? owner)
-       [:a.nav-link {:role "button"
-                     :title "Launch Precursor"
-                     :on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "top-right-nav"}})}
+       [:a.nav-link.nav-app
+        {:role "button"
+         :title "Launch Precursor"
+         :on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "top-right-nav"}})}
         "App"]
-       [:div.nav-link
+       [:div.nav-link.nav-google
         (om/build common/google-login {:source "Nav" :size :small})])])))
 
 (defn nav-foot [app owner]
   (om/component
    (html
-    [:div.nav
-     [:a.nav-link (merge {:title "Launch Precursor"
-                          :href "/"
-                          :role "button"}
-                         (when (utils/logged-in? owner)
-                           {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "bottom-nav-logo"}})}))
+    [:div.nav.nav-foot
+     [:a.nav-link.nav-logo
+      (merge {:title "Precursor"
+              :href "/"}
+             (when (utils/logged-in? owner)
+               {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "bottom-nav-logo"}})}))
       (common/icon :logomark)]
-     [:a.nav-link {:title "Home"
-                   :href "/home"
-                   :role "button"}
+     [:a.nav-link.nav-home
+      {:title "Home"
+       :href "/home"}
       "Home"]
-     [:a.nav-link {:title "Pricing"
-                   :href "/pricing"
-                   :role "button"}
+     [:a.nav-link.nav-pricing
+      {:title "Pricing"
+       :href "/pricing"}
       "Pricing"]
-     [:a.nav-link {:title "Blog"
-                   :href "/blog"
-                   :role "button"
-                   :target "_self"}
+     [:a.nav-link.nav-blog
+      {:title "Blog"
+       :href "/blog"
+       :target "_self"}
       "Blog"]
      (if (utils/logged-in? owner)
-       [:a.nav-link {:title "Launch Precursor"
-                     :on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "bottom-nav"}})
-                     :role "button"}
+       [:a.nav-link.nav-app
+        {:title "Launch Precursor"
+         :on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "bottom-nav"}})
+         :role "button"}
         "App"]
        [:a.nav-link {:title "Sign in with Google"
                      :href (auth/auth-url)
@@ -284,9 +286,10 @@
                                       :properties {:source "bottom-nav"}}))
                      :role "button"}
         "Sign in"])
-     [:a.nav-link {:title "Home"
-                   :href "/home"
-                   :role "button"}
+     [:a.nav-link.nav-twitter
+      {:title "Home"
+       :href "/home"
+       :role "button"}
       (common/icon :twitter)]])))
 
 (def outer-components
