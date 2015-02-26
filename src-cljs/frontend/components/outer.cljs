@@ -222,7 +222,7 @@
     [:div.nav
      [:a.nav-link (merge {:href "/"
                           :role "button"
-                          :title "Launch"}
+                          :title "Launch Precursor"}
                          (when (utils/logged-in? owner)
                            {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "top-left-nav"}})}))
       "Precursor"]
