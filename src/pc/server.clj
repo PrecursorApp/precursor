@@ -23,6 +23,7 @@
             [pc.assets]
             [pc.auth :as auth]
             [pc.auth.google :refer (google-client-id)]
+            [pc.early-access]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.cust :as cust]
@@ -173,8 +174,9 @@
 
    (POST "/api/v1/early-access" req
          (if-let [cust (get-in req [:auth :cust])]
-           (do (flag-model/add-flag cust :flags/requested-early-access)
-               {:status 200 :body (pr-str {:msg "Thanks!"})})
+           (do
+             (pc.early-access/create-request cust (edn/read-string (slurp (:body req))))
+             {:status 200 :body (pr-str {:msg "Thanks!"})})
            {:status 401 :body (pr-str {:error :not-logged-in
                                        :msg "Please log in to request early access."})}))
 

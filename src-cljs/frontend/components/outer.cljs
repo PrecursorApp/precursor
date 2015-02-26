@@ -39,13 +39,13 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             disabled? (or submitting? (not (utils/logged-in? owner)))
             submit-form
-            (fn [args]
+            (fn [params]
               (go
                 (om/update-state! owner (fn [s]
                                           (assoc s :submitting? true :error nil)))
                 ;; we wouldn't typically use ajax in a component--it's not advisable in
                 ;; this case, but we're short on time
-                (let [res (<! (ajax/managed-ajax :post "/api/v1/early-access"))]
+                (let [res (<! (ajax/managed-ajax :post "/api/v1/early-access" :params params))]
                   (if (= :success (:status (utils/inspect res)))
                     (om/update-state! owner (fn [s]
                                               (assoc s

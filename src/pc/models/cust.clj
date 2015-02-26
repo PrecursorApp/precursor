@@ -18,6 +18,8 @@
                                      ;; probably a uuid type
                                      :cust/http-sesion-key String}))
 
+(def admin-emails #{"dwwoelfel@gmail.com" "danny.newidea@gmail.com"})
+
 (defn all [db]
   (pcd/touch-all '{:find [?e]
                    :where [[?e :google-account/sub]]}
