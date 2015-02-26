@@ -634,16 +634,12 @@
 (defn canvas-grid [camera]
   (dom/defs nil
     (dom/pattern #js {:id           "small-grid"
-                      :className    "grid-small"
                       :width        (str (cameras/grid-width camera))
                       :height       (str (cameras/grid-height camera))
                       :patternUnits "userSpaceOnUse"}
                  (dom/path #js {:d           (str "M " (cameras/grid-width camera) " 0 L 0 0 0 " (cameras/grid-width camera))
-                                :fill        "none"
-                                :stroke      "gray"
-                                :strokeWidth "0.5"}))
+                                :className   "grid-lines grid-lines-small"}))
     (dom/pattern #js {:id               "grid"
-                      :className        "grid-big"
                       :width            (str (* 10 (cameras/grid-width camera)))
                       :height           (str (* 10 (cameras/grid-height camera)))
                       :patternUnits     "userSpaceOnUse"
@@ -652,9 +648,7 @@
                                 :height (str (* 10 (cameras/grid-height camera)))
                                 :fill   "url(#small-grid)"})
                  (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
-                                :fill        "none"
-                                :stroke      "gray"
-                                :strokeWidth "1"}))))
+                                :className   "grid-lines grid-lines-big"}))))
 
 (defn touches->clj [touches]
   (mapv (fn [t]
@@ -782,7 +776,7 @@
 
                  (when (cameras/show-grid? camera)
                    (dom/rect #js {:id        "background-grid"
-                                  :className "grid-background"
+                                  :className "grid-lines-pattern"
                                   :width     "100%"
                                   :height    "100%"
                                   :fill      "url(#grid)"}))

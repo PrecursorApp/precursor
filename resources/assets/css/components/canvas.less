@@ -54,21 +54,19 @@
     }
   }
 }
-.grid-background {
-  transition: opacity @run_slow @run_fast @bezier_fadein;
+.grid-lines {
+  fill: none;
+  stroke: @white;
+  stroke-dasharray: 0 0;
+  visibility: visible;
 }
-.grid-big,
-.grid-small {
-  path {
-    stroke: @gray_dark;
-    transition: stroke @run_fast @now @bezier_fadein;
-  }
+.grid-lines-big {
+  stroke-width: 1;
+  opacity: (.75 * @opacity_darker_dark);
 }
-.grid-small {
-  path {
-    stroke-width: .5;
-    stroke-dasharray: 0;
-  }
+.grid-lines-small {
+  stroke-width: .5;
+  opacity: @opacity_darker_dark;
 }
 .layers {
   &.live {
