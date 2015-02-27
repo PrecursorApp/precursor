@@ -57,12 +57,10 @@
 .grid-lines {
   fill: none;
   stroke: @white;
-  stroke-dasharray: 0 0;
-  visibility: visible;
 }
-.grid-lines-big {
+.grid-lines-large {
   stroke-width: 1;
-  opacity: (.75 * @opacity_darker_dark);
+  opacity: @opacity_darker_dark * .75;
 }
 .grid-lines-small {
   stroke-width: .5;

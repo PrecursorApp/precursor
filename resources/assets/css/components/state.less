@@ -124,14 +124,14 @@
     transition+: width @now @bezier_deform;
     transition+: height @now @bezier_deform;
   }
-  .grid-lines-big {
-    visibility: hidden;
+  .grid-lines-large {
+    display: none;
   }
   .grid-lines-small {
-    stroke: darken(@dye_inner, 5);
-    stroke-width: 3;
-    stroke-dasharray: 2 20;
-    opacity: 1;
+    stroke: @black;
+    stroke-width: 2;
+    stroke-dasharray: 1,7,3,0;
+    transition: stroke @run_fast @run_fast;
   }
   .layer {
     .layer-outline,
@@ -152,7 +152,8 @@
     display: none;
   }
   .chat {
-    display: none;
+    opacity: 0; // doing `display:none` here breaks grid in firefox, use opacity to hide
+    transition: opacity @now @now;
   }
   .hud {
     display: none;

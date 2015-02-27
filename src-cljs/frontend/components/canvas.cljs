@@ -648,7 +648,7 @@
                                 :height (str (* 10 (cameras/grid-height camera)))
                                 :fill   "url(#small-grid)"})
                  (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
-                                :className   "grid-lines grid-lines-big"}))))
+                                :className   "grid-lines grid-lines-large"}))))
 
 (defn touches->clj [touches]
   (mapv (fn [t]
