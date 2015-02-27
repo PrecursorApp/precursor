@@ -5,7 +5,6 @@
             [clojure.set :as set]
             [clojure.tools.logging :as log]
             [clojure.tools.reader.edn :as edn]
-            [clj-statsd :as statsd]
             [clj-time.core :as time]
             [clj-time.format :as time-format]
             [compojure.core :refer (defroutes routes GET POST ANY)]
@@ -19,6 +18,9 @@
             [pc.http.datomic :as datomic]
             [pc.http.doc :refer (duplicate-doc)]
             [pc.http.lb :as lb]
+            [pc.http.handlers.logging :as logging-handler]
+            [pc.http.handlers.errors :as errors-handler]
+            [pc.http.handlers.ssl :as ssl-handler]
             [pc.http.sente :as sente]
             [pc.assets]
             [pc.auth :as auth]
@@ -43,14 +45,8 @@
             [ring.middleware.reload :refer (wrap-reload)]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]
-            [ring.util.response :refer (redirect)]
-            [slingshot.slingshot :refer (try+ throw+)])
+            [ring.util.response :refer (redirect)])
   (:import java.util.UUID))
-
-(defn ssl? [req]
-  (or (= :https (:scheme req))
-      (= "https" (get-in req [:headers "x-forwarded-proto"]))
-      (seq (get-in req [:headers "x-haproxy-server-state"]))))
 
 (def bucket-doc-ids (atom #{}))
 
@@ -259,25 +255,16 @@
                :body ""
                :session (assoc (:session req)
                                :http-session-key (:cust/http-session-key cust))
-               :headers {"Location" (str (url/map->URL {:host (profile/hostname)
-                                                        :protocol (if (ssl? req) "https" "http")
-                                                        :port (if (ssl? req)
-                                                                (profile/https-port)
-                                                                (profile/http-port))
-                                                        :path (or (get parsed-state "redirect-path") "/")
-                                                        :query (get parsed-state "redirect-query")}))}}))))
+               :headers {"Location" (str (or (get parsed-state "redirect-path") "/")
+                                         (when-let [query (get parsed-state "redirect-query")]
+                                           (str "?" (url/map->query query))))}}))))
 
    (POST "/logout" {{redirect-to :redirect-to} :params :as req}
          (when-let [cust (-> req :auth :cust)]
            (cust/retract-session-key! cust))
          {:status 302
           :body ""
-          :headers {"Location" (str (url/map->URL {:host (profile/hostname)
-                                                   :protocol (if (ssl? req) "https" "http")
-                                                   :port (if (ssl? req)
-                                                           (profile/https-port)
-                                                           (profile/http-port))
-                                                   :path redirect-to}))}
+          :headers {"Location" (str redirect-to)}
           :session nil})
 
    (GET "/email/welcome/:template.gif" [template]
@@ -305,58 +292,6 @@
         (lb/health-check-response req))
 
    (ANY "*" [] {:status 404 :body "Page not found."})))
-
-(defn log-request [req resp ms]
-  (when-not (or (re-find #"^/cljs" (:uri req))
-                (and (= 200 (:status resp))
-                     (= "/health-check" (:uri req))))
-    (let [cust (-> req :auth :cust)
-          cust-str (when cust (str (:db/id cust) " (" (:cust/email cust) ")"))]
-      ;; log haproxy status if health check is down
-      (when (= "/health-check" (:uri req))
-        (log/info (:headers req)))
-      (log/infof "%s: %s %s for %s %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) cust-str ms))))
-
-(defn logging-middleware [handler]
-  (fn [req]
-    (statsd/with-timing :http-request
-      (let [start (time/now)
-            resp (handler req)
-            stop (time/now)]
-        (try
-          (log-request req resp (time/in-millis (time/interval start stop)))
-          (catch Exception e
-            (rollbar/report-exception e :request req :cust (get-in req [:auth :cust]))
-            (log/error e)))
-        resp))))
-
-(defn ssl-middleware [handler]
-  (fn [req]
-    (if (or (not (profile/force-ssl?))
-            (ssl? req))
-      (handler req)
-      {:status 301
-       :headers {"Location" (str (url/map->URL {:host (profile/hostname)
-                                                :protocol "https"
-                                                :port (profile/https-port)
-                                                :path (:uri req)
-                                                :query (:query-string req)}))}
-       :body ""})))
-
-(defn exception-middleware [handler]
-  (fn [req]
-    (try+
-      (handler req)
-      (catch :status t
-        (log/error t)
-        {:status (:status t)
-         :body (:public-message t)})
-      (catch Object e
-        (log/error e)
-        (.printStackTrace e)
-        (rollbar/report-exception e :request req :cust (some-> req :auth :cust))
-        {:status 500
-         :body "Sorry, something completely unexpected happened!"}))))
 
 (defn auth-middleware [handler]
   (fn [req]
@@ -395,21 +330,22 @@
         (assoc-sente-id req response sente-id)))))
 
 (defn handler [sente-state]
-  (->
-   (app sente-state)
-   (auth-middleware)
-   (wrap-anti-forgery)
-   (wrap-sente-id)
-   (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
-                  :cookie-attrs {:http-only true
-                                 :expires (time-format/unparse (:rfc822 time-format/formatters) (time/from-now (time/years 1))) ;; expire one year after the server starts up
-                                 :max-age (* 60 60 24 365)
-                                 :secure (profile/force-ssl?)}})
-   (ssl-middleware)
-   (wrap-wrap-reload)
-   (exception-middleware)
-   (logging-middleware)
-   (site)))
+  (-> (app sente-state)
+    (auth-middleware)
+    (wrap-anti-forgery)
+    (wrap-sente-id)
+    (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
+                   :cookie-attrs {:http-only true
+                                  :expires (time-format/unparse (:rfc822 time-format/formatters) (time/from-now (time/years 1))) ;; expire one year after the server starts up
+                                  :max-age (* 60 60 24 365)
+                                  :secure (profile/force-ssl?)}})
+    (ssl-handler/wrap-force-ssl {:host (profile/hostname)
+                                 :https-port (profile/https-port)
+                                 :force-ssl? (profile/force-ssl?)})
+    (wrap-wrap-reload)
+    (errors-handler/wrap-errors)
+    (logging-handler/wrap-logging)
+    (site)))
 
 (defn start [sente-state]
   (def server (httpkit/run-server (handler sente-state)

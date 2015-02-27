@@ -56,6 +56,8 @@ mv /prcrsr.com.crt /usr/local/etc/nginx/certs
 mv /prcrsr.com.key /usr/local/etc/nginx/certs
 mv /precursorapp.com.crt /usr/local/etc/nginx/certs
 mv /precursorapp.com.key /usr/local/etc/nginx/certs
+mv /star.precursorapp.com.crt /usr/local/etc/nginx/certs
+mv /star.precursorapp.com.key /usr/local/etc/nginx/certs
 
 mkdir /var/log/nginx
 touch /var/log/nginx/access.log

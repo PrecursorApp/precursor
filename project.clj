@@ -6,6 +6,9 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [inflections "0.8.2"]
 
+                 [defpage "0.1.3" :exclusions [ring
+                                               clout
+                                               compojure]]
                  [compojure "1.3.1"]
                  [cheshire "5.4.0"]
                  [clj-time "0.6.0"]
@@ -32,7 +35,8 @@
 
                  [ring/ring "1.3.2" :exclusions [hiccup
                                                  org.clojure/java.classpath]]
-                 [ring/ring-anti-forgery "1.0.0" :exclusions [hiccup]]
+                 ;; uses a url-safe token
+                 [dwwoelfel/ring-anti-forgery "1.0.0-cbd219138abf4e9916a51caa7629c357b5d164af" :exclusions [hiccup]]
                  [http-kit "2.1.18-c9c0b155a4ab05630d332a7d2da0aaf433889772"]
                  [com.taoensso/sente "1.4.0-alpha2" :exclusions [http-kit]]
                  [clj-stacktrace "0.2.8"]

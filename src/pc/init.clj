@@ -10,7 +10,9 @@
             pc.nrepl
             pc.server
             pc.statsd
-            pc.repl)
+            pc.repl
+            pc.datomic.admin-db
+            pc.http.admin)
   (:gen-class))
 
 (defn init-fns []
@@ -24,7 +26,9 @@
    #'pc.models.chat-bot/init
    #'pc.assets/init
    #'pc.email/init
-   #'pc.server/init])
+   #'pc.server/init
+   #'pc.datomic.admin-db/init
+   #'pc.http.admin/init])
 
 (defn pretty-now []
   (.toLocaleString (java.util.Date.)))
