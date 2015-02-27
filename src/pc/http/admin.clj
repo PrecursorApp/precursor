@@ -16,27 +16,9 @@
             [pc.profile :as profile]
             [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
             [ring.middleware.params :refer (wrap-params)]
+            [ring.middleware.reload :refer (wrap-reload)]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]))
-
-(declare restart)
-(defn wrap-reload
-  "Reload namespaces of modified files before the request is passed to the
-  supplied handler.
-
-  Accepts the following options:
-
-  :dirs - A list of directories that contain the source files.
-  Defaults to [\"src\"]."
-  {:arglists '([handler] [handler options])}
-  [handler & [options]]
-  (let [source-dirs (:dirs options ["src"])
-        modified-namespaces (ns-tracker source-dirs)]
-    (fn [request]
-      (let [ns-syms (modified-namespaces)]
-        (doseq [ns-sym ns-syms]
-          (require ns-sym :reload)))
-      (handler request))))
 
 (defn wrap-wrap-reload
   "Only applies wrap-reload middleware in development"
