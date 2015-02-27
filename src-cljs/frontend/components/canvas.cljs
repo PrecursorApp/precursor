@@ -638,7 +638,7 @@
                       :height       (str (cameras/grid-height camera))
                       :patternUnits "userSpaceOnUse"}
                  (dom/path #js {:d           (str "M " (cameras/grid-width camera) " 0 L 0 0 0 " (cameras/grid-width camera))
-                                :className   "grid-lines grid-lines-small"}))
+                                :className   "grid-lines-small"}))
     (dom/pattern #js {:id               "grid"
                       :width            (str (* 10 (cameras/grid-width camera)))
                       :height           (str (* 10 (cameras/grid-height camera)))
@@ -648,7 +648,7 @@
                                 :height (str (* 10 (cameras/grid-height camera)))
                                 :fill   "url(#small-grid)"})
                  (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
-                                :className   "grid-lines grid-lines-large"}))))
+                                :className   "grid-lines-large"}))))
 
 (defn touches->clj [touches]
   (mapv (fn [t]
