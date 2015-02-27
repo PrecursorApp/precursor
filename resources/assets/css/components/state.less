@@ -1,0 +1,161 @@
+.state-menu { // IMPORTANT VISUAL CHANGES WHILE MENU IS ACTIVE
+  .inner {
+    .scale(.8);
+    cursor: pointer;
+    background: @dye_outer;
+    box-shadow: 0 8px 21px 0 fade(@black, 21);
+    transition: @run_slower @bezier_deform;
+    .mq_1920({.transform(translate3d((@tile * 2), 0, 0); scale3d(.8, .8, 1));});
+    .mq_1280({.transform(translate3d((@tile * 4), 0, 0); scale3d(.8, .8, 1));});
+    &:hover {
+      box-shadow: 0 21px 34px 0 fade(@black, 21);
+      transition-duration: @run;
+    }
+    &:active {
+      box-shadow: 0 5px 13px 0 fade(@black, 21);
+      transition-duration: @run_fast;
+    }
+  }
+  .canvas {
+    box-shadow: 0 -1px @gray_lightest;
+    pointer-events: none;
+  }
+  .canvas-background {
+    .scale3d(.6,0,1);
+    transition-duration: @run_slow;
+  }
+  .layer {
+    .layer-outline,
+    .handle-outline {
+      stroke: @gray_light;
+    }
+    .text-layer,
+    .edit-handle {
+      fill: @gray_light;
+    }
+  }
+  .layer-properties {
+    display: none;
+  }
+  .radial-hint {
+    display: none;
+  }
+  .chat-background {
+    .scale3d(0,0,1);
+    transition-duration: @run_slow;
+  }
+  .chat-log {
+    opacity: .5;
+    transition: @run_fast @now @bezier_fadein;
+    color: @color_menu_faded;
+    .message-head, // TODO this can be cleaner
+    .stroke-user,
+    .time,
+    h2,
+    a {
+      color: @color_menu_faded;
+      stroke: @color_menu_faded !important;
+      transition+: color @now @run_fast;
+      transition+: stroke @now @run_fast;
+    }
+  }
+  .chat-box {
+    border-top: 1px solid @gray_lighter;
+    transition: border-top @now @run_faster @bezier_fadein;
+    &:after {
+      opacity: 0;
+      transition: @now;
+    }
+  }
+  .chat-input {
+    .placeholder_style(opacity; 0);
+    .placeholder_style(transition; @now @now @bezier_fadein);
+  }
+  .hud-item {
+    &:not(.menu-needed) {
+      opacity: 0;
+      visibility: hidden;
+      transition: @now;
+    }
+  }
+  .hud-menu {
+    .icon(stroke; @black);
+    &.close,
+    &.back {
+      .scale3d(.75);
+    }
+    &.close {
+      .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
+      .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
+      .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
+    }
+    &.back {
+      .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
+      .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
+      .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
+    }
+    path {
+      transition+: all @run_slow @now @bezier_bounce;
+      transition+: stroke @now @now @bezier_fadein;
+    }
+  }
+  .unseen-eids {
+    display: none;
+  }
+}
+.state-outer { // IMPORTANT VISUAL CHANGES WHILE OUTER IS ACTIVE
+  .canvas-background {
+    &:after {
+      .animation(in-fade @run @run_fast @bezier_fadein backwards);
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
+    }
+  }
+  .canvas-frame {
+    .scale3d(.8);
+    width: 125%;
+    height: 125%;
+    transition+: all @run_slower @bezier_deform;
+    transition+: width @now @bezier_deform;
+    transition+: height @now @bezier_deform;
+  }
+  .grid-lines-large {
+    display: none;
+  }
+  .grid-lines-small {
+    stroke: @black;
+    stroke-width: 2;
+    stroke-dasharray: 1,7,3,0;
+    transition: stroke @run_fast;
+  }
+  .layer {
+    .layer-outline,
+    .handle-outline {
+      stroke: darken(@dye_inner, 5);
+      transition-duration: @run;
+    }
+    .text-layer,
+    .edit-handle {
+      fill: darken(@dye_inner, 5);
+      transition-duration: @run;
+    }
+  }
+  .layer-properties {
+    display: none;
+  }
+  .radial-hint {
+    display: none;
+  }
+  .chat {
+    opacity: 0; // doing `display:none` here breaks grid in firefox, use opacity to hide
+    transition: opacity @now @now;
+  }
+  .hud {
+    display: none;
+  }
+}

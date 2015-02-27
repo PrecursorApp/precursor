@@ -41,7 +41,8 @@
 
         (if-let [nav-point (:navigation-point app)]
           (html
-           [:div#app.app
+           [:div#app.app {:class (str (when (overlay-visible? app) " state-menu ")
+                                      (when (:show-landing? app) " state-outer "))}
             (when (:show-landing? app)
               (om/build outer/outer (select-in app [[:show-landing?]
                                                     [:document/id]

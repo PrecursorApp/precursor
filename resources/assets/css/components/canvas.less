@@ -54,21 +54,17 @@
     }
   }
 }
-.grid-background {
-  transition: opacity @run_slow @run_fast @bezier_fadein;
+.grid-lines-large {
+  fill: none;
+  stroke: @white;
+  stroke-width: 1;
+  opacity: @opacity_darker_dark * .75;
 }
-.grid-big,
-.grid-small {
-  path {
-    stroke: @gray_dark;
-    transition: stroke @run_fast @now @bezier_fadein;
-  }
-}
-.grid-small {
-  path {
-    stroke-width: .5;
-    stroke-dasharray: 0;
-  }
+.grid-lines-small {
+  fill: none;
+  stroke: @white;
+  stroke-width: .5;
+  opacity: @opacity_darker_dark;
 }
 .layers {
   &.live {
@@ -275,6 +271,7 @@
 .edit-handles {
   .edit-handle {
     fill: @color_select;
+    transition: @run;
     &.bottom.right {
       cursor: nwse-resize;
     }
