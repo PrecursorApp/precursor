@@ -317,7 +317,7 @@
         box-width 540
         start-x (int (- (+ (:start-x browser) (/ width 2))
                         (/ box-width 2)))
-        box-height 50
+        box-height 40
         start-y (int (- (+ (:start-y browser) (/ height 2))
                         (* 2 box-height)))]
     {:doc-id (:db/id document) :tool :rect
@@ -358,7 +358,7 @@
         line-width 500
         start-x (int (- (+ (:start-x browser) (/ width 2))
                         (/ line-width 2)))
-        start-y (- (:end-y browser) 50)]
+        start-y (- (:end-y browser) 60)]
     {:doc-id (:db/id document) :tool :line
      :start-x start-x  :end-x (+ start-x line-width)
      :start-y start-y :end-y start-y
@@ -371,7 +371,7 @@
         line-width 400
         start-x (int (- (+ (:start-x browser) (/ width 2))
                         (/ line-width 2)))
-        start-y (- (:end-y browser) 37.5)]
+        start-y (- (:end-y browser) 40)]
     {:doc-id (:db/id document) :tool :line
      :start-x start-x  :end-x (+ start-x line-width)
      :start-y start-y :end-y start-y
