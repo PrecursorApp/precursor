@@ -2,6 +2,7 @@
   (:require [clj-time.core :as time]
             [clj-time.format :as time-format]
             [compojure.core]
+            [compojure.route]
             [ns-tracker.core :refer (ns-tracker)]
             [org.httpkit.server :as httpkit]
             [pc.datomic.admin-db :as admin-db]
@@ -50,6 +51,8 @@
 (defn handler []
   (-> (compojure.core/routes #'outer/app
                              #'inner/app
+                             (compojure.route/resources "/" {:root "public"
+                                                             :mime-types {:svg "image/svg"}})
                              #'catch-all)
     (auth/wrap-auth)
     (wrap-anti-forgery)
