@@ -7,7 +7,6 @@
 
 (defn admin-uri []
   (or
-   "datomic:sql://prcrsr-admin?jdbc:postgresql://localhost:5432/datomic?user=datomic&password=datomic"
    (pc.profile/admin-datomic-uri)
    (if (pc.profile/prod?)
      "datomic:sql://prcrsr-admin?jdbc:postgresql://10.99.0.101:5432/datomic?user=datomic&password=datomic"
