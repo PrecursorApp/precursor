@@ -1,5 +1,6 @@
 (ns pc.models.chat
   (:require [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [datomic.api :refer [db q] :as d]))
 
 
@@ -29,3 +30,16 @@
             :where [[?t :document/id ?document-id]
                     [?t :chat/body]]}
           db (:db/id document)))))
+
+;; TODO: move cust-name lookup into here
+(defn read-api [chat]
+  (-> chat
+    (select-keys [:document/id
+                  :server/timestamp
+                  :client/timestamp
+                  ;; TODO: teach frontend to lookup cust/name
+                  :cust/cust-name
+                  :chat/body
+                  :chat/color
+                  :chat/cust-name])
+    (assoc :db/id (web-peer/client-id chat))))

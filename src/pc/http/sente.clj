@@ -221,7 +221,7 @@
     (log/infof "sending chats %s to %s" document-id client-id)
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
-                         :entities (chat/find-by-document (:db req) {:db/id document-id})
+                         :entities (map chat/read-api (chat/find-by-document (:db req) {:db/id document-id}))
                          :entity-type :chat}])
     (log/infof "sending subscribers for %s to %s" document-id client-id)
     (send-fn client-id [:frontend/subscribers
