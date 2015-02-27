@@ -6,6 +6,9 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [inflections "0.8.2"]
 
+                 [defpage "0.1.3" :exclusions [ring
+                                               clout
+                                               compojure]]
                  [compojure "1.3.1"]
                  [cheshire "5.4.0"]
                  [clj-time "0.6.0"]
