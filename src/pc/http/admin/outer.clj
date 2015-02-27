@@ -15,7 +15,7 @@
                                            "Please log in with Google"]
                                      "."]))))
 
-(defpage root "/health-check" [req]
+(defpage health-check "/health-check" [req]
   {:status 200 :body ":up"})
 
 (defpage google-auth "/auth/google" [req]
