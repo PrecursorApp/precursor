@@ -317,7 +317,7 @@
         box-width 540
         start-x (int (- (+ (:start-x browser) (/ width 2))
                         (/ box-width 2)))
-        box-height 28
+        box-height 50
         start-y (int (- (+ (:start-y browser) (/ height 2))
                         (* 2 box-height)))]
     {:doc-id (:db/id document) :tool :rect
@@ -338,7 +338,7 @@
         ]
     {:doc-id (:db/id document) :tool :rect
      :start-x start-x :end-x (+ start-x (int (/ width 4)))
-     :start-y start-y :end-y (+ start-y height)
+     :start-y start-y :end-y (+ start-y (int (* height .80)))
      :source layer-source}))
 
 (defn lucky-button [document layer-source viewport]
@@ -371,7 +371,7 @@
         line-width 400
         start-x (int (- (+ (:start-x browser) (/ width 2))
                         (/ line-width 2)))
-        start-y (- (:end-y browser) 25)]
+        start-y (- (:end-y browser) 37.5)]
     {:doc-id (:db/id document) :tool :line
      :start-x start-x  :end-x (+ start-x line-width)
      :start-y start-y :end-y start-y
