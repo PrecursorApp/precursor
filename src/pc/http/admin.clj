@@ -15,6 +15,7 @@
             [pc.models.admin :as admin-model]
             [pc.profile :as profile]
             [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
+            [ring.middleware.params :refer (wrap-params)]
             [ring.middleware.session :refer (wrap-session)]
             [ring.middleware.session.cookie :refer (cookie-store)]))
 
@@ -56,6 +57,7 @@
                              #'catch-all)
     (auth/wrap-auth)
     (wrap-anti-forgery)
+    (wrap-params)
     (wrap-session {:store (cookie-store {:key (profile/admin-http-session-key)})
                    :cookie-attrs {:http-only true
                                   ;; expire one year after the server starts up

@@ -2,7 +2,10 @@
   (:require [clj-time.core :as time]
             [datomic.api :as d]
             [hiccup.core :as h]
-            [pc.datomic :as pcd]))
+            [pc.datomic :as pcd]
+            [pc.early-access]
+            [pc.models.cust :as cust-model]
+            [ring.util.anti-forgery :as anti-forgery]))
 
 (defn users-graph []
   (let [db (pcd/default-db)
@@ -32,7 +35,51 @@
                   times)]))
 
 (defn early-access-users []
-  (let [db (pcd/default-db)]
-    [:p (str (d/q '{:find [?t]
-                    :where [[?t :flags :flags/requested-early-access]]}
-                  db))]))
+  (let [db (pcd/default-db)
+        requested (d/q '{:find [[?t ...]]
+                         :where [[?t :flags :flags/requested-early-access]]}
+                       db)
+        granted (d/q '{:find [[?t ...]]
+                       :where [[?t :flags :flags/private-docs]]}
+                     db)
+        not-granted (remove #(contains? (set granted) %) requested)]
+    (list
+     [:style "td, th { padding: 5px; text-align: left }"]
+     (if-not (seq not-granted)
+       [:h4 "No users that requested early access, but don't have it."]
+       (list
+        [:p "Pending:"
+         [:table {:border 1}
+          [:tr
+           [:th "User"]
+           [:th "Company"]
+           [:th "Employee Count"]
+           [:th "Use Case"]
+           [:th "Grant Access (can't be undone without a repl!)"]]
+          (for [cust-id not-granted
+                :let [cust (cust-model/find-by-id db cust-id)
+                      req (first (pc.early-access/find-by-cust db cust))]]
+            [:tr
+             [:td (:cust/email cust)]
+             [:td (:early-access-request/company-name req)]
+             [:td (:early-access-request/employee-count req)]
+             [:td (:early-access-request/use-case req)]
+             [:td [:form {:action "/grant-early-access" :method "post"}
+                   (anti-forgery/anti-forgery-field)
+                   [:input {:type "hidden" :name "cust-uuid" :value (str (:cust/uuid cust))}]
+                   [:input {:type "submit" :value "Grant early access"}]]]])]]))
+     [:p "Granted:"
+      [:table {:border 1}
+       [:tr
+        [:th "User"]
+        [:th "Company"]
+        [:th "Employee Count"]
+        [:th "Use Case"]]
+       (for [cust-id granted
+             :let [cust (cust-model/find-by-id db cust-id)
+                   req (first (pc.early-access/find-by-cust db cust))]]
+         [:tr
+          [:td (:cust/email cust)]
+          [:td (:early-access-request/company-name req)]
+          [:td (:early-access-request/employee-count req)]
+          [:td (:early-access-request/use-case req)]])]])))
