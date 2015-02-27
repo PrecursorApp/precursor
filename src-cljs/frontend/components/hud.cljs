@@ -33,8 +33,8 @@
             :role "button"
             :class (when (overlay-visible? app)
                      (if (< 1 (overlay-count app))
-                       ["back"]
-                       ["close"]))
+                       "back"
+                       "close"))
             :data-right (when-not main-menu-learned?
                           (if (overlay-visible? app) "Close Menu" "Open Menu"))
             :title (when main-menu-learned?
