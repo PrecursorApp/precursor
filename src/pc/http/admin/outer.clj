@@ -15,6 +15,9 @@
                                            "Please log in with Google"]
                                      "."]))))
 
+(defpage root "/health-check" [req]
+  {:status 200 :body ":up"})
+
 (defpage google-auth "/auth/google" [req]
   (let [{:strs [code state]} (-> req :query-string url/query->map pc.utils/inspect)
         parsed-state (-> state url/url-decode json/decode pc.utils/inspect)]
