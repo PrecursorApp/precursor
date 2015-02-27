@@ -5,14 +5,16 @@
             [om.core :as om :include-macros true]
             [ajax.core :as ajax]
             [cljs-time.core :as time]
-            [frontend.env :as env]
             [goog.async.AnimationDelay]
             [goog.crypt :as crypt]
             [goog.crypt.Md5 :as md5]
+            [goog.dom]
+            [goog.style]
             [goog.Uri]
             [goog.events :as ge]
             [goog.net.EventType :as gevt]
-            [sablono.core :as html :include-macros true])
+            [sablono.core :as html :include-macros true]
+            [frontend.utils.seq :as seq-util])
   (:require-macros [frontend.utils :refer (inspect timing defrender)])
   (:import [goog.format EmailAddress]))
 
@@ -32,29 +34,29 @@
     nil))
 
 (def initial-query-map
-  {:log-channels? (parse-uri-bool (.getParameterValue parsed-uri "log-channels"))
-   :logging-enabled? (parse-uri-bool (.getParameterValue parsed-uri "logging-enabled"))
-   :restore-state? (parse-uri-bool (.getParameterValue parsed-uri "restore-state"))
-   :rethrow-errors? (parse-uri-bool (.getParameterValue parsed-uri "rethrow-errors"))
+  {:restore-state? (parse-uri-bool (.getParameterValue parsed-uri "restore-state"))
    :inspector? (parse-uri-bool (.getParameterValue parsed-uri "inspector"))
-   :render-colors? (parse-uri-bool (.getParameterValue parsed-uri "render-colors"))
-   :invited-by (.getParameterValue parsed-uri "invited-by")})
+   :show-landing? (parse-uri-bool (.getParameterValue parsed-uri "show-landing"))
+   :x (when-let [x (js/parseFloat (.getParameterValue parsed-uri "x"))]
+        (when-not (js/isNaN x) x))
+   :y (when-let [y (js/parseFloat (.getParameterValue parsed-uri "y"))]
+        (when-not (js/isNaN y) y))
+   :z (when-let [z (js/parseFloat (.getParameterValue parsed-uri "z"))]
+        (when-not (js/isNaN z) z))})
 
-(def logging-enabled?
-  (if (nil? (:logging-enabled? initial-query-map))
-    (env/development?)
-    (:logging-enabled? initial-query-map)))
+(defn logging-enabled? []
+  (aget js/window "Precursor" "logging-enabled"))
 
 (defn mlog [& messages]
-  (when logging-enabled?
+  (when (logging-enabled?)
     (.apply (.-log js/console) js/console (clj->js messages))))
 
 (defn mwarn [& messages]
-  (when logging-enabled?
+  (when (logging-enabled?)
     (.apply (.-warn js/console) js/console (clj->js messages))))
 
 (defn merror [& messages]
-  (when logging-enabled?
+  (when (logging-enabled?)
     (.apply (.-error js/console) js/console (clj->js messages))))
 
 (defn log-pr [& args]
@@ -104,11 +106,9 @@
   "Returns path of asset in CDN"
   [path]
   (-> js/window
-      (aget "renderContext")
-      (aget "assetsRoot")
-      (str (if (= \/ (first path))
-             path
-             (str "/" path)))))
+      (aget "Precursor")
+      (aget "cdn-base-url")
+      (str path)))
 
 (defn edit-input
   "Meant to be used in a react event handler, usually for the :on-change event on input.
@@ -192,6 +192,36 @@
       (apply update-in m ks f args)
       m)))
 
+(defn remove-map-nils [unnested-map]
+  (into {} (remove (comp nil? last) unnested-map)))
+
 (defn stop-event [e]
   (.stopPropagation e)
   (.preventDefault e))
+
+(defn gravatar-url [email & {:keys [default]
+                             :or {default "blank"}}]
+  (str "https://www.gravatar.com/avatar/" (md5 (string/lower-case email))
+       "?d=" (js/encodeURIComponent default)))
+
+(defn canvas-size []
+  (let [node (goog.dom/getElement "canvas-size")]
+    (let [size (if node
+                 (goog.style/getSize node)
+                 (goog.dom/getViewportSize))]
+      {:width (.-width size)
+       :height (.-height size)})))
+
+(defn react-id [x]
+  (let [id (aget x "_rootNodeID")]
+    (assert id)
+    id))
+
+(def select-in seq-util/select-in)
+
+(defn maybe-set-state! [owner korks value]
+  (when (not= (om/get-state owner korks) value)
+    (om/set-state! owner korks value)))
+
+(defn logged-in? [owner]
+  (om/get-shared owner :logged-in?))

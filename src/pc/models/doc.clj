@@ -1,22 +1,25 @@
 (ns pc.models.doc
   (:require [pc.datomic :as pcd]
-            [datomic.api :refer [db q] :as d]))
+            [pc.models.chat-bot :as chat-bot-model]
+            [datomic.api :refer [db q] :as d])
+  (:import java.util.UUID))
 
 (defn create! [doc-attrs]
   (let [temp-id (d/tempid :db.part/user)
         {:keys [tempids db-after]} @(d/transact (pcd/conn)
                                                 [(assoc doc-attrs :db/id temp-id)])]
-    (->> (d/resolve-tempid db-after
+    (let [eid (d/resolve-tempid db-after
                            tempids
-                           temp-id)
-         (d/entity db-after)
-         pcd/touch+)))
+                           temp-id)]
+      (-> (d/transact (pcd/conn) [[:db/add eid :frontend/id (UUID. eid eid)]])
+        deref
+        :db-after
+        (d/entity eid)))))
 
 (def default-name "Untitled")
 
 (defn create-public-doc! [doc-attrs]
-  (create! (merge {:dummy :dummy/dummy
-                   :document/name "Untitled"
+  (create! (merge {:document/name "Untitled"
                    :document/privacy :document.privacy/public}
                   doc-attrs)))
 
@@ -60,3 +63,16 @@
                  :where [[_ :document/id ?doc-id ?tx]
                          [?tx :db/txInstant ?i]]}
                db doc-id)))
+
+(defn read-api [doc]
+  (-> doc
+    (select-keys [:db/id
+                  :document/invalid-id
+                  :document/privacy
+                  :document/creator
+                  :document/uuid
+                  :document/name
+                  :document/chat-bot])
+    (update-in [:document/chat-bot] (fn [cb]
+                                      (chat-bot-model/read-api
+                                       (or cb (rand-nth chat-bot-model/chat-bots)))))))

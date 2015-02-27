@@ -17,58 +17,112 @@
 @gray_mixpanel: #aaa; // TODO: clean this up, maybe mix it with less to get this value from palette?
 
 @blue:               #299ADE;
-@red: #ff5823;
+@red:   lighten(#c0392b, 10);
 
+// Opacity
+
+@opacity_darker_dark:  .1675;
+@opacity_darker_gray:  .4175;
+@opacity_darker_light: .7575;
+
+@opacity_white_lighter: .13;
 
 // Typography
 
 @font_size: 16px;
 @line_height: 1.5;
 @font_color: @gray_dark;
-@font_sans: "Roboto";
-@font_mono: "Monaco";
+@font_sans: Roboto;
+@font_mono: Monaco;
 @font_family: @font_sans;
 
-@color_link: @white;
-@color_link_hover: @blue;
+@link: darken(@blue, 13);
+@link_hover: @blue;
 
 @color_select: @blue;
 @color_select_hover: lighten(@color_select, 13);
 
+@color_google: #3A7AF3;
+@color_google_light: lighten(  saturate(@color_google,  5),  2);
+@color_google_dark:   darken(desaturate(@color_google, 34), 13);
+
+@color_bot: #00b233;
+
+@color_menu_faded: @gray_light;
+
+@dye_inner: @gray_darker;
+@dye_outer: @white;
+
 // Animation
 
-@speed: 250ms;
-@speed_fast: (@speed * 0.4);
-@speed_slow: (@speed * 1.5);
+@now: 0.0ms;
+@run: 250ms;
+@run_faster: @run / 10.0;
+@run_fast:   @run / 2.50;
+@run_slow:   @run * 1.50;
+@run_slower: @run * 2.00;
+
+@run_make_button: @run_slower * 1.5;
 
 @bezier_fadein: cubic-bezier(0.445, 0.05, 0.55, 0.95);
 @bezier_bounce: cubic-bezier(.55,0,.55,1.44);
-@bezier_transform: cubic-bezier(0.39, 0.575, 0.565, 1);
-
-@cascade: 10ms;
+@bezier_deform: cubic-bezier(0.39, 0.575, 0.565, 1);
 
 // Components
+// TODO change "tile" to "size"
 
 @tile: (1rem * 4);
-@tile_chat: (@tile * 4);
-@menu_width: (@tile * 6);
-@radial_menu_size: @tile_chat;
+@tile_xl: pow(@tile, 2);
+@tile_xxl: pow(@tile, 3);
 
-@app_background: @gray_darker;
+@tile_menu_min: @tile_xl;
+@tile_menu: 20vw;
+@tile_menu_max: @tile_xl * 1.5;
+
+@tile_viewers: @tile_menu_min;
+@tile_viewers_height: ((2 / 4) * @tile);
+
+@tile_radial: @tile_menu_min;
+@tile_content: @tile_xxl;
+
 @tooltip_color: @gray_dark;
+@menu_padding: 1.5rem; // TODO fix naming convention here
+@padding_outer: @menu_padding;
 
-// Overlay
+@color_inset_black: fade(@black, 34);
+@color_inset_white: fade(@white, 5);
 
-@overlay_background: @white;
+// artwork
+
+@art_mobile_fill: @gray_light;
+@art_mobile_mask: @dye_outer;
+@art_mobile_ratio: 4 / 3;
+@art_mobile_height: @art_mobile_ratio * 100%;
+@art_mobile_button: 6%;
+@art_mobile_padding_y: 9%;
+@art_mobile_padding_x: @art_mobile_padding_y / 3;
+@art_mobile_head_height: (100% - @art_mobile_body_height) / 2;
+@art_mobile_body_height: 100% - (@art_mobile_padding_y * 2);
+
+@art_interact_color: @gray_light;
+@art_interact_button: @tile;
 
 // z-index index
 
-@zindex_info_background: 2;
-@zindex_info_article: 3;
-@zindex_info_close: 4;
-@zindex_info_mixpanel: 5;
 @zindex_tooltip: 1;
-
 @zindex_radial_menu: 11;
+@zindex_landing: 20;
+@zindex_make_append: 1;
 
-@zindex_main_menu: 10;
+// ad hoc
+
+@radial_tools:
+  ellipse,   159.01px,  49.71px,
+  rectangle, 199.00px, 119.00px,
+  line,      159.01px, 188.29px,
+  pencil,     79.00px, 188.29px,
+  text,       39.00px, 119.52px,
+  select,     82.66px,  49.71px;
+
+@size_chat: 25%;
+@size_chat_step: 3.125%;

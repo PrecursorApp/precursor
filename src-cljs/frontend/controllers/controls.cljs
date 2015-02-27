@@ -9,6 +9,7 @@
             [frontend.analytics :as analytics]
             [frontend.analytics.mixpanel :as mixpanel]
             [frontend.camera :as cameras]
+            [frontend.db]
             [frontend.datascript :as ds]
             [frontend.favicon :as favicon]
             [frontend.layers :as layers]
@@ -19,13 +20,14 @@
             [frontend.sente :as sente]
             [frontend.settings :as settings]
             [frontend.state :as state]
-            [frontend.stripe :as stripe]
+            [frontend.subscribers :as subs]
             [frontend.svg :as svg]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
             [frontend.utils.state :as state-utils]
             [goog.dom]
+            [goog.math :as math]
             [goog.string :as gstring]
             [goog.labs.userAgent.engine :as engine]
             goog.style)
@@ -87,8 +89,8 @@
 
 (defn cancel-drawing [state]
   (-> state
-    (assoc :drawing nil)
-    (assoc-in [:mouse :down] false)))
+    (assoc :drawing {:layers []})
+    (assoc-in [:mouse-down] false)))
 
 (defmethod control-event :cancel-drawing
   [browser-state message _ state]
@@ -130,7 +132,9 @@
 
 (defmethod handle-keyboard-shortcut :shortcuts-menu
   [state shortcut-name]
-  (overlay/replace-overlay state :shortcuts))
+  (if (= :shortcuts (overlay/current-overlay state))
+    (overlay/clear-overlays state)
+    (overlay/replace-overlay state :shortcuts)))
 
 (defn close-menu [state]
   (assoc-in state [:menu :open?] false))
@@ -145,24 +149,30 @@
 (defmethod handle-keyboard-shortcut :reset-canvas-position
   [state shortcut-name]
   (-> state
-      (update-in [:camera] cameras/reset)))
+    (update-in [:camera] cameras/reset)))
+
+(defmethod handle-keyboard-shortcut :return-from-origin
+  [state shortcut-name]
+  (-> state
+    (update-in [:camera] cameras/previous)))
 
 (defmethod control-event :key-state-changed
-  [browser-state message [{:keys [key key-name-kw depressed?]}] state]
+  [browser-state message [{:keys [key-set depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
     (-> state
-        (assoc-in [:keyboard key-name-kw] depressed?)
-        (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key))
-                (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key))
+        (assoc-in [:keyboard keys] depressed?)
+        (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
+                (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key-set))
                                                          (keys shortcuts))))
-                (and (= "shift" key) (settings/drawing-in-progress? state))
+                (and (= #{"shift"} key-set) (settings/drawing-in-progress? state))
                 (assoc-in [:drawing :layers 0 :force-even?] depressed?)))))
 
 (defmethod post-control-event! :key-state-changed
-  [browser-state message [{:keys [key-name-kw depressed?]}] previous-state current-state]
+  [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
   ;; TODO: better way to handle this
-  (when (or (= key-name-kw :backspace?)
-            (= key-name-kw :del?))
+  (when (and depressed?
+             (or (= key-set #{"backspace"})
+                 (= key-set #{"del"})))
     (put! (get-in current-state [:comms :controls]) [:deleted-selected])))
 
 (defn update-mouse [state x y]
@@ -177,31 +187,32 @@
   (let [points (map js/parseInt (str/split (subs path 1) #" "))]
     (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
 
+(defn handle-drawing-started [state x y]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)
+        [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
+        {:keys [entity-id state]} (frontend.db/get-entity-id state)
+        layer (assoc (layers/make-layer entity-id (:document/id state) snap-x snap-y)
+                     :layer/type (condp = (get-in state state/current-tool-path)
+                                   :rect   :layer.type/rect
+                                   :circle :layer.type/rect
+                                   :text   :layer.type/text
+                                   :line   :layer.type/line
+                                   :select :layer.type/group
+                                   :pen    :layer.type/path
+                                   :layer.type/rect))]
+    (let [r (-> state
+              (assoc-in [:drawing :in-progress?] true)
+              (assoc-in [:drawing :layers] [(assoc layer
+                                                   :layer/current-x snap-x
+                                                   :layer/current-y snap-y)])
+              (update-mouse x y)
+              (assoc-in [:editing-eids :editing-eids] #{entity-id})
+              (assoc-in [:selected-eids :selected-eids] #{entity-id}))]
+      r)))
+
 (defmethod control-event :drawing-started
   [browser-state message [x y] state]
-  (let [;{:keys [x y]} (get-in state [:mouse])
-        [rx ry]       (cameras/screen->point (:camera state) x y)
-        [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
-        entity-id     (-> state :entity-ids first)
-        layer         (assoc (layers/make-layer entity-id (:document/id state) snap-x snap-y)
-                        :layer/type (condp = (get-in state state/current-tool-path)
-                                      :rect   :layer.type/rect
-                                      :circle :layer.type/rect
-                                      :text   :layer.type/text
-                                      :line   :layer.type/line
-                                      :select :layer.type/group
-                                      :pen    :layer.type/path
-                                      :layer.type/rect))]
-    (let [r (-> state
-                (assoc-in [:drawing :in-progress?] true)
-                (assoc-in [:drawing :layers] [(assoc layer
-                                                :layer/current-x snap-x
-                                                :layer/current-y snap-y)])
-                (assoc-in [:mouse :down] true)
-                (update-mouse x y)
-                (assoc-in [:selected-eids] #{entity-id})
-                (update-in [:entity-ids] disj entity-id))]
-      r)))
+  (handle-drawing-started state x y))
 
 (defmethod control-event :drawing-edited
   [browser-state message {:keys [layer x y]} state]
@@ -217,10 +228,11 @@
                                     (dissoc :layer/end-x :layer/end-y)
                                     (assoc :layer/current-x x
                                            :layer/current-y y))])
-    (assoc-in [:mouse :down] true)
+    (assoc-in [:mouse-down] true)
     ;; TODO: do we need to update mouse?
     ;; (update-mouse x y)
-    (assoc-in [:selected-eids] #{(:db/id layer)})))
+    (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)})
+    (assoc-in [:editing-eids :editing-eids] #{(:db/id layer)})))
 
 ;; These are used to globally increment names for layer targets and ids
 ;; There is definitely a better to do this, but not sure what it is at the moment.
@@ -255,79 +267,152 @@
 (defmethod control-event :layer-duplicated
   [browser-state message {:keys [layer x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
-        entity-id (-> state :entity-ids first)]
+        {:keys [entity-id state]} (frontend.db/get-entity-id state)]
     (-> state
-        (assoc :selected-eids #{entity-id})
-        (assoc-in [:drawing :original-layers] [layer])
-        (assoc-in [:drawing :layers] [(assoc layer
-                                        :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
-                                        :db/id entity-id
-                                        :layer/start-x (:layer/start-x layer)
-                                        :layer/end-x (:layer/end-x layer)
-                                        :layer/current-x (:layer/end-x layer)
-                                        :layer/current-y (:layer/end-y layer)
-                                        :layer/ui-id (when (:layer/ui-id layer)
-                                                       (inc-str-id @(:db state) (:layer/ui-id layer)))
-                                        :layer/ui-target (when (:layer/ui-target layer)
-                                                           (inc-str-target @(:db state) (:layer/ui-target layer))))])
-        (assoc-in [:drawing :moving?] true)
-        (assoc-in [:drawing :starting-mouse-position] [rx ry])
-        (update-in [:entity-ids] disj entity-id))))
+      (assoc-in [:selected-eids :selected-eids] #{entity-id})
+      (assoc-in [:editing-eids :editing-eids] #{entity-id})
+      (assoc-in [:drawing :original-layers] [layer])
+      (assoc-in [:drawing :layers] [(assoc layer
+                                           :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
+                                           :db/id entity-id
+                                           :layer/start-x (:layer/start-x layer)
+                                           :layer/end-x (:layer/end-x layer)
+                                           :layer/current-x (:layer/end-x layer)
+                                           :layer/current-y (:layer/end-y layer)
+                                           :layer/ui-id (when (:layer/ui-id layer)
+                                                          (inc-str-id @(:db state) (:layer/ui-id layer)))
+                                           :layer/ui-target (when (:layer/ui-target layer)
+                                                              (inc-str-target @(:db state) (:layer/ui-target layer))))])
+      (assoc-in [:drawing :moving?] true)
+      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :group-duplicated
-  [browser-state message {:keys [layer-eids x y]} state]
+  [browser-state message {:keys [x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         ;; TODO: better way to get selected layers
         db @(:db state)
+        layer-eids (get-in state [:selected-eids :selected-eids])
         layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)
-        entity-ids (take (count layers) (:entity-ids state))]
+        {:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))]
     (-> state
-        (assoc :selected-eids (set entity-ids))
-        (assoc-in [:drawing :original-layers] layers)
-        (assoc-in [:drawing :layers] (mapv (fn [layer entity-id index]
-                                              (assoc layer
-                                                :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
-                                                :db/id entity-id
-                                                :layer/start-x (:layer/start-x layer)
-                                                :layer/end-x (:layer/end-x layer)
-                                                :layer/current-x (:layer/end-x layer)
-                                                :layer/current-y (:layer/end-y layer)
-                                                :layer/ui-id (when (:layer/ui-id layer)
-                                                               (inc-str-id @(:db state) (:layer/ui-id layer) :offset index))
-                                                :layer/ui-target (when (:layer/ui-target layer)
-                                                                   (inc-str-target @(:db state) (:layer/ui-target layer) :offset index))))
-                                            layers entity-ids (range)))
-        (assoc-in [:drawing :moving?] true)
-        (assoc-in [:drawing :starting-mouse-position] [rx ry])
-        (update-in [:entity-ids] (fn [eids] (apply disj eids entity-ids))))))
+      (assoc-in [:selected-eids :selected-eids] (set entity-ids))
+      (assoc-in [:editing-eids :editing-eids] (set entity-ids))
+      (assoc-in [:drawing :original-layers] layers)
+      (assoc-in [:drawing :layers] (mapv (fn [layer entity-id index]
+                                           (assoc layer
+                                                  :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
+                                                  :db/id entity-id
+                                                  :layer/start-x (:layer/start-x layer)
+                                                  :layer/end-x (:layer/end-x layer)
+                                                  :layer/current-x (:layer/end-x layer)
+                                                  :layer/current-y (:layer/end-y layer)
+                                                  :layer/ui-id (when (:layer/ui-id layer)
+                                                                 (inc-str-id @(:db state) (:layer/ui-id layer) :offset index))
+                                                  :layer/ui-target (when (:layer/ui-target layer)
+                                                                     (inc-str-target @(:db state) (:layer/ui-target layer) :offset index))))
+                                         layers entity-ids (range)))
+      (assoc-in [:drawing :moving?] true)
+      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :text-layer-edited
-  [browser-state message {:keys [value]} state]
+  [browser-state message {:keys [value bbox]} state]
   (-> state
-      (assoc-in [:drawing :layers 0 :layer/text] value)))
-
-(defn selectable? [db e]
-  (not= :layer.type/group (:layer/type (d/entity db e))))
+    (assoc-in [:drawing :layers 0 :layer/text] value)
+    (assoc-in [:drawing :layers 0 :bbox] bbox)))
 
 (defn eids-in-bounding-box [db {:keys [start-x end-x start-y end-y] :as box}]
   (let [x0 (min start-x end-x)
         x1 (max start-x end-x)
         y0 (min start-y end-y)
         y1 (max start-y end-y)
-        has-x0 (set (map :e (d/index-range db :layer/start-x x0 x1)))
-        has-x1 (set (map :e (d/index-range db :layer/end-x x0 x1)))
-        has-y0 (set (map :e (d/index-range db :layer/start-y y0 y1)))
-        has-y1 (set (map :e (d/index-range db :layer/end-y y0 y1)))]
-    (set (filter (partial selectable? db)
-                 (set/union (set/intersection has-x0 has-y0)
-                            (set/intersection has-x0 has-y1)
-                            (set/intersection has-x1 has-y0)
-                            (set/intersection has-x1 has-y1))))))
 
-(defn draw-in-progress-drawing [state x y {:keys [force-even?]}]
+        above-x0-start (d/index-range db :layer/start-x x0 nil)
+        above-x0-start-e (set (map :e above-x0-start))
+
+        above-x0-end (d/index-range db :layer/end-x x0 nil)
+        above-x0-end-e (set (map :e above-x0-end))
+
+        below-x1-start (d/index-range db :layer/start-x nil x1)
+        below-x1-start-e (set (map :e below-x1-start))
+
+        below-x1-end (d/index-range db :layer/end-x nil x1)
+        below-x1-end-e (set (map :e below-x1-end))
+
+        above-y0-start (d/index-range db :layer/start-y y0 nil)
+        above-y0-start-e (set (map :e above-y0-start))
+
+        above-y0-end (d/index-range db :layer/end-y y0 nil)
+        above-y0-end-e (set (map :e above-y0-end))
+
+        below-y1-start (d/index-range db :layer/start-y nil y1)
+        below-y1-start-e (set (map :e below-y1-start))
+
+        below-y1-end (d/index-range db :layer/end-y nil y1)
+        below-y1-end-e (set (map :e below-y1-end))
+
+        overlapping (set/intersection
+                     (set/union above-x0-start-e
+                                above-x0-end-e)
+
+                     (set/union below-x1-start-e
+                                below-x1-end-e)
+
+                     (set/union above-y0-start-e
+                                above-y0-end-e)
+
+                     (set/union below-y1-start-e
+                                below-y1-end-e))
+        det (fn [[ax ay] [bx by] [x y]]
+              (math/sign (- (* (- bx ax)
+                               (- y ay))
+                            (* (- by ay)
+                               (- x ax)))))]
+    (set (filter (fn [eid]
+                   ;; TODO: optimize by looking up start-x, end-x, etc. from the index ranges
+                   ;;       we've already created
+                   (let [layer (d/entity db eid)]
+                     (and (not (:layer/deleted layer))
+                          (if (keyword-identical? (:layer/type layer) :layer.type/line)
+                            (or
+                             ;; has an endpoint
+                             (and (contains? above-x0-start-e eid)
+                                  (contains? below-x1-start-e eid)
+                                  (contains? above-y0-start-e eid)
+                                  (contains? below-y1-start-e eid))
+                             ;; has an endpoint
+                             (and (contains? above-x0-end-e eid)
+                                  (contains? below-x1-end-e eid)
+                                  (contains? above-y0-end-e eid)
+                                  (contains? below-y1-end-e eid))
+                             ;; all points aren't on one side of the line
+                             (not= 4 (js/Math.abs
+                                      (reduce + (map (partial det
+                                                              [(:layer/start-x layer)
+                                                               (:layer/start-y layer)]
+                                                              [(:layer/end-x layer)
+                                                               (:layer/end-y layer)])
+                                                     [[x0 y0] [x0 y1] [x1 y0] [x1 y1]])))))
+                            (let [sx (min (:layer/start-x layer)
+                                          (:layer/end-x layer))
+                                  ex (max (:layer/start-x layer)
+                                          (:layer/end-x layer))
+                                  sy (min (:layer/start-y layer)
+                                          (:layer/end-y layer))
+                                  ey (max (:layer/start-y layer)
+                                          (:layer/end-y layer))]
+                              ;; don't count a layer as selected if it fully contains the selected region
+                              (or (< ex x1)
+                                  (< ey y1)
+                                  (> sx x0)
+                                  (> sy y0)))))))
+                 overlapping))))
+
+(defn draw-in-progress-drawing [state x y {:keys [force-even? delta]}]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
-        points ((fnil conj []) (get-in state [:drawing :layers 0 :points]) {:x x :y x :rx rx :ry ry})
+        tool (get-in state state/current-tool-path)
+        points (when (= :pen tool)
+                 ((fnil conj []) (get-in state [:drawing :layers 0 :points]) {:x x :y x :rx rx :ry ry}))
         group? (= (get-in state [:drawing :layers 0 :layer/type]) :layer.type/group)
         bounding-eids (when group?
                         (eids-in-bounding-box (-> state :db deref)
@@ -340,24 +425,34 @@
                                              (assoc :points points
                                                     :force-even? force-even?
                                                     :layer/current-x snap-x
-                                                    :layer/current-y snap-y)))
+                                                    :layer/current-y snap-y)
+                                             (cond-> (and (= tool :text)
+                                                          (get-in state [:mouse-down]))
+                                               ((fn [s]
+                                                  (let [zoom (get-in state [:camera :zf])]
+                                                    (-> s
+                                                      (update-in [:layer/start-x] + (* (/ 1 zoom)
+                                                                                       (:x delta)))
+                                                      (update-in [:layer/start-y] + (* (/ 1 zoom)
+                                                                                       (:y delta))))))))))
         (update-in [:drawing :layers 0]
                    (fn [layer]
                      (merge
                       layer
-                      (when (= :pen (get-in state state/current-tool-path))
+                      (when (= :pen tool)
                         {:layer/path (svg/points->path points)})
-                      (when (or (= :circle (get-in state state/current-tool-path))
+                      (when (or (= :circle tool)
                                 ;; TODO: hack to preserve border-radius for re-editing circles
                                 (layers/circle? layer))
-                        {:layer/rx (Math/abs (- (:layer/start-x layer)
-                                                (:layer/current-x layer)))
-                         :layer/ry (Math/abs (- (:layer/start-y layer)
-                                                (:layer/current-y layer)))})
+                        {:layer/rx (js/Math.abs (- (:layer/start-x layer)
+                                                   (:layer/current-x layer)))
+                         :layer/ry (js/Math.abs (- (:layer/start-y layer)
+                                                   (:layer/current-y layer)))})
                       (when (seq bounding-eids)
                         {:layer/child bounding-eids}))))
+        (assoc-in [:editing-eids :editing-eids] #{(get-in state [:drawing :layers 0 :db/id])})
         (cond-> group?
-                (assoc-in [:selected-eids] bounding-eids)))))
+          (assoc-in [:selected-eids :selected-eids] (set bounding-eids))))))
 
 (defn move-points [points move-x move-y]
   (map (fn [{:keys [rx ry]}]
@@ -393,7 +488,9 @@
                        (move-layer layer original {:snap-x snap-move-x :snap-y snap-move-y :x move-x :y move-y :snap-paths? snap-paths?}))
                      layers
                      (get-in state [:drawing :original-layers]))]
-    (assoc-in state [:drawing :layers] layers)))
+    (-> state
+      (assoc-in [:drawing :layers] layers)
+      (assoc-in [:editing-eids :editing-eids] (set (map :db/id layers))))))
 
 (defmethod control-event :mouse-moved
   [browser-state message [x y {:keys [shift?]}] state]
@@ -401,14 +498,16 @@
 
       (update-mouse x y)
       (cond-> (get-in state [:drawing :in-progress?])
-              (draw-in-progress-drawing x y {:force-even? shift?})
+        (draw-in-progress-drawing x y {:force-even? shift?
+                                       :delta {:x (- x (get-in state [:mouse :x]))
+                                               :y (- y (get-in state [:mouse :y]))}})
 
-              (get-in state [:drawing :moving?])
-              (move-drawings x y))))
+        (get-in state [:drawing :moving?])
+        (move-drawings x y))))
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [current-state x y]
-  (when (get-in current-state [:subscribers (str (:client-uuid current-state)) :show-mouse?])
+  (when (get-in current-state [:subscribers :mice (:client-id current-state) :show-mouse?])
     (sente/send-msg (:sente current-state)
                     [:frontend/mouse-position (merge
                                                {:tool (get-in current-state state/current-tool-path)
@@ -420,114 +519,114 @@
                                                  {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
 
 (defmethod post-control-event! :text-layer-edited
-  [browser-state message _ current-state previous-state]
+  [browser-state message _ previous-state current-state]
   (maybe-notify-subscribers! current-state nil nil))
 
 (defmethod post-control-event! :mouse-moved
-  [browser-state message [x y] current-state previous-state]
+  [browser-state message [x y] previous-state current-state]
   (maybe-notify-subscribers! current-state x y))
-
-(defmethod post-control-event! :show-mouse-toggled
-  [browser-state message {:keys [client-uuid show-mouse?]} current-state previous-state]
-  (sente/send-msg (:sente current-state)
-                  [:frontend/share-mouse {:document/id (:document/id current-state)
-                                          :show-mouse? show-mouse?
-                                          :mouse-owner-uuid client-uuid}]))
-
 
 (defn finalize-layer [state]
   (let [{:keys [x y]} (get-in state [:mouse])
         [rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
-        layer-type (get-in state [:drawing :layers 0 :layer/type])
-        group? (= layer-type :layer.type/group)
-        bounding-eids (when group?
-                        (eids-in-bounding-box (-> state :db deref)
-                                              {:start-x (get-in state [:drawing :layers 0 :layer/start-x])
-                                               :end-x snap-x
-                                               :start-y (get-in state [:drawing :layers 0 :layer/start-y])
-                                               :end-y snap-y}))]
+        layer (get-in state [:drawing :layers 0])
+        layer-type (:layer/type layer)]
     (-> state
-        (update-in [:drawing] assoc :in-progress? false)
-        (assoc-in [:mouse :down] false)
-        ;; TODO: get rid of nils (datomic doesn't like them)
-        (update-in [:drawing :layers 0]
-                   (fn [layer]
-                     (-> layer
-                         (assoc :layer/end-x snap-x
-                                :layer/end-y snap-y)
-                         (#(if (:force-even? layer)
-                             (layers/force-even %)
-                             %))
-                         (dissoc :points :force-even? :layer/current-x :layer/current-y)
-                         (#(merge %
-                            (when (= :circle (get-in state state/current-tool-path))
-                              {:layer/rx (Math/abs (- (:layer/start-x %)
-                                                      (:layer/end-x %)))
-                               :layer/ry (Math/abs (- (:layer/start-y %)
-                                                      (:layer/end-y %)))})
-                            (when (= layer-type :layer.type/path)
-                              {:layer/path (svg/points->path (:points layer))})
-                            (when (seq bounding-eids)
-                              {:layer/child bounding-eids}))))))
-        (assoc-in [:camera :moving?] false)
-        (cond-> group?
-                (assoc-in [:selected-eids] bounding-eids)))))
+      (update-in [:drawing] assoc :in-progress? false)
+      (assoc-in [:mouse-down] false)
+      (assoc-in [:drawing :layers] [])
+      (assoc-in [:editing-eids :editing-eids] #{})
+      ;; TODO: get rid of nils (datomic doesn't like them)
+      (assoc-in [:drawing :finished-layers] [(-> layer
+                                                (assoc :layer/end-x snap-x
+                                                       :layer/end-y snap-y)
+                                                (#(if (:force-even? layer)
+                                                    (layers/force-even %)
+                                                    %))
+                                                (dissoc :points :force-even? :layer/current-x :layer/current-y :bbox)
+                                                (#(merge %
+                                                         (when (= :circle (get-in state state/current-tool-path))
+                                                           {:layer/rx (js/Math.abs (- (:layer/start-x %)
+                                                                                      (:layer/end-x %)))
+                                                            :layer/ry (js/Math.abs (- (:layer/start-y %)
+                                                                                      (:layer/end-y %)))})
+                                                         (when (= layer-type :layer.type/path)
+                                                           (let [xs (map :rx (:points layer))
+                                                                 ys (map :ry (:points layer))]
+                                                             {:layer/path (svg/points->path (:points layer))
+                                                              :layer/start-x (apply min xs)
+                                                              :layer/end-x (apply max xs)
+                                                              :layer/start-y (apply min ys)
+                                                              :layer/end-y (apply max ys)}))
+                                                         (when (= layer-type :layer.type/text)
+                                                           {:layer/end-x (+ (get-in layer [:layer/start-x])
+                                                                            (get-in layer [:bbox :width]))
+                                                            :layer/end-y (- (get-in layer [:layer/start-y])
+                                                                            (get-in layer [:bbox :height]))}))))])
+      (assoc-in [:camera :moving?] false))))
 
 (defn drop-layers
   "Finalizes layer translation"
   [state]
-  (-> state
-      (update-in [:drawing :layers] (fn [layers] (mapv #(dissoc % :layer/current-x :layer/current-y) layers)))
-      (assoc-in [:drawing :moving?] false)
-      (assoc-in [:mouse :down] false)))
-
-(defmethod control-event :mouse-released
-  [browser-state message [x y] state]
-  (if (and (not (get-in state [:drawing :moving?]))
-           (get-in state [:drawing :in-progress?])
-           (= :layer.type/text (get-in state [:drawing :layers 0 :layer/type])))
-    state
+  (let [layers (get-in state [:drawing :layers])]
     (-> state
-        (update-mouse x y)
+      (assoc-in [:drawing :finished-layers] (mapv #(dissoc % :layer/current-x :layer/current-y) layers))
+      (assoc-in [:drawing :layers] [])
+      (assoc-in [:drawing :moving?] false)
+      (assoc-in [:mouse-down] false)
+      (assoc-in [:editing-eids :editing-eids] #{}))))
 
-        (cond-> (get-in state [:drawing :in-progress?])
-                (finalize-layer)
+(defn mouse-depressed-intents [state button ctrl?]
+  (let [tool (get-in state state/current-tool-path)
+        drawing-text? (and (keyword-identical? :text tool)
+                           (get-in state [:drawing :in-progress?]))]
+    (concat
+     ;; If you click while writing text, you probably wanted to place it there
+     ;; You also want the right-click menu to open
+     (when drawing-text? [:finish-text-layer])
+     (cond
+       (= button 2) [:open-menu]
+       (and (= button 0) ctrl?) [:open-menu]
+       (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
+       (contains? #{:pen :rect :circle :line :select} tool) [:start-drawing]
+       (and (keyword-identical? tool :text) (not drawing-text?)) [:start-drawing]
+       :else nil))))
 
-                (get-in state [:drawing :moving?])
-                (drop-layers)))))
+(declare handle-menu-opened)
+(declare handle-menu-opened-after)
+(declare handle-layer-properties-submitted)
+(declare handle-layer-properties-submitted-after)
+(declare handle-text-layer-finished)
+(declare handle-text-layer-finished-after)
 
 (defmethod control-event :mouse-depressed
-  [browser-state message [x y {:keys [button type]}] state]
-  (-> state
-      (update-mouse x y)
-      (assoc-in [:mouse :type] (if (= type "mousedown") :mouse :touch))))
+  [browser-state message [x y {:keys [button type ctrl?]}] state]
+  (let [intents (mouse-depressed-intents state button ctrl?)
+        new-state (-> state
+                    (update-mouse x y)
+                    (assoc-in [:mouse-down] true)
+                    (assoc-in [:mouse-type] (if (= type "mousedown") :mouse :touch)))]
+    (reduce (fn [s intent]
+              (case intent
+                :finish-text-layer (handle-text-layer-finished s)
+                :open-menu (handle-menu-opened s)
+                :start-drawing (handle-drawing-started s x y)
+                :submit-layer-properties (handle-layer-properties-submitted s)
+                s))
+            new-state intents)))
 
 (defmethod post-control-event! :mouse-depressed
   [browser-state message [x y {:keys [button ctrl?]}] previous-state current-state]
-  (let [cast! (fn [msg & [payload]]
-                (put! (get-in current-state [:comms :controls]) [msg payload]))]
-    ;; If you click while writing text, you probably wanted to place it there
-    ;; You also want the right-click menu to open
-    (when (and (= (get-in current-state state/current-tool-path) :text)
-               (get-in current-state [:drawing :in-progress?]))
-      (cast! :text-layer-finished [x y]))
-    (cond
-      (= button 2) (cast! :menu-opened)
-      (and (= button 0) ctrl?) (cast! :menu-opened)
-      ;; turning off Cmd+click for opening the menu
-      ;; (get-in current-state [:keyboard :meta?]) (cast! :menu-opened)
-      (get-in current-state [:layer-properties-menu :opened?]) (cast! :layer-properties-submitted)
-      (= (get-in current-state state/current-tool-path) :pen) (cast! :drawing-started [x y])
-      (= (get-in current-state state/current-tool-path) :text) (if (get-in current-state [:drawing :in-progress?])
-
-                                                                 (cast! :text-layer-finished [x y])
-                                                                 (cast! :drawing-started [x y]))
-      (= (get-in current-state state/current-tool-path) :rect) (cast! :drawing-started [x y])
-      (= (get-in current-state state/current-tool-path) :circle) (cast! :drawing-started [x y])
-      (= (get-in current-state state/current-tool-path) :line)  (cast! :drawing-started [x y])
-      (= (get-in current-state state/current-tool-path) :select)  (cast! :drawing-started [x y])
-      :else                                             nil)))
+  ;; use previous state so that we're consistent with the control-event
+  (let [intents (mouse-depressed-intents previous-state button ctrl?)]
+    (doseq [intent intents]
+      (case intent
+        :finish-text-layer (handle-text-layer-finished-after current-state)
+        :open-menu (handle-menu-opened-after current-state previous-state)
+        :start-drawing nil
+        :submit-layer-properties (handle-layer-properties-submitted-after current-state)
+        nil))))
 
 (defn detectable-movement?
   "Checks to make sure we moved the layer from its starting position"
@@ -537,6 +636,22 @@
       (not= (:layer/start-y layer)
             (:layer/start-y original-layer))))
 
+(defmethod control-event :mouse-released
+  [browser-state message [x y] state]
+  (if (and (not (get-in state [:drawing :moving?]))
+           (get-in state [:drawing :in-progress?])
+           (= :layer.type/text (get-in state [:drawing :layers 0 :layer/type])))
+    (assoc-in state [:mouse-down] false)
+    (-> state
+      (update-mouse x y)
+      (assoc-in [:mouse-down] false)
+
+      (cond-> (get-in state [:drawing :in-progress?])
+        (finalize-layer)
+
+        (get-in state [:drawing :moving?])
+        (drop-layers)))))
+
 (defmethod post-control-event! :mouse-released
   [browser-state message [x y {:keys [button type ctrl?]}] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
@@ -544,7 +659,10 @@
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
                          (get-in previous-state [:drawing :moving?]))
         original-layers (get-in previous-state [:drawing :original-layers])
-        layers        (mapv #(dissoc % :points) (get-in current-state [:drawing :layers]))]
+        layers        (mapv #(-> %
+                               (dissoc :points)
+                               (utils/remove-map-nils))
+                            (get-in current-state [:drawing :finished-layers]))]
     (cond
      (and (not= type "touchend")
           (not= button 2)
@@ -559,36 +677,47 @@
      was-drawing? (do (when (and (some layer-model/detectable? layers)
                                  (or (not (get-in previous-state [:drawing :moving?]))
                                      (some true? (map detectable-movement? original-layers layers))))
-                        (d/transact! db layers {:can-undo? true}))
-                      (cast! [:mouse-moved [x y]]))
+                        (doseq [layer-group (partition-all 100 layers)]
+                          (d/transact! db layer-group {:can-undo? true})))
+                      (maybe-notify-subscribers! current-state x y))
 
      :else nil)))
 
-(defmethod control-event :text-layer-finished
-  [browser-state message [x y] state]
-  (finalize-layer state))
+(defn handle-text-layer-finished [state bbox]
+  (-> state
+    (update-in [:drawing :layers 0 :bbox] #(or bbox %))
+    (finalize-layer)))
 
-(defmethod post-control-event! :text-layer-finished
-  [browser-state message [x y] previous-state current-state]
-  (let [cast! #(put! (get-in current-state [:comms :controls]) %)
-        db           (:db current-state)
-        layer        (get-in current-state [:drawing :layers 0])]
+(defmethod control-event :text-layer-finished
+  [browser-state message {:keys [bbox]} state]
+  (handle-text-layer-finished state bbox))
+
+(defn handle-text-layer-finished-after [current-state]
+  (let [db (:db current-state)
+        layer (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))]
     (when (layer-model/detectable? layer)
       (d/transact! db [layer] {:can-undo? true}))
-    (cast! [:mouse-moved [x y]])))
+    (maybe-notify-subscribers! current-state nil nil)))
+
+(defmethod post-control-event! :text-layer-finished
+  [browser-state message _ previous-state current-state]
+  (handle-text-layer-finished-after current-state))
 
 (defmethod control-event :deleted-selected
   [browser-state message _ state]
-  (dissoc state :selected-eids))
+  (-> state
+    (assoc-in [:selected-eids :selected-eids] #{})
+    (assoc-in [:editing-eids :editing-eids] #{})))
 
 (defmethod post-control-event! :deleted-selected
   [browser-state message _ previous-state current-state]
-  (when-let [selected-eids (seq (:selected-eids previous-state))]
+  (when-let [selected-eids (seq (get-in previous-state [:selected-eids :selected-eids]))]
     (let [db (:db current-state)
           document-id (:document/id current-state)]
-      (d/transact! db (for [eid selected-eids]
-                        [:db.fn/retractEntity eid])
-                   {:can-undo? true}))))
+      (doseq [eid-group (partition-all 100 selected-eids)]
+        (d/transact! db (for [eid eid-group]
+                          [:db.fn/retractEntity eid])
+                     {:can-undo? true})))))
 
 (defn conjv [& args]
   (apply (fnil conj []) args))
@@ -597,83 +726,89 @@
   [browser-state message {:keys [layer x y append?]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)]
     (-> state
-        (update-in [:selected-eids] (fn [eids]
-                                      ((fnil conj #{}) (if append? eids #{}) (:db/id layer))))
-        (update-in [:drawing :layers]
-                   (fn [layers]
-                     (conjv (if append? layers []) layer)))
-        (update-in [:drawing :layers]
-                   (fn [layers]
-                     ;; TODO: handle this better, should probably dissoc just before saving
-                     (mapv (fn [layer]
-                             (assoc layer
-                               :layer/current-x (:layer/end-x layer)
-                               :layer/current-y (:layer/end-y layer)
-                               :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
-                           layers)))
-        (update-in [:drawing :original-layers] (fn [layers]
-                                                 (conjv (if append? layers [])
-                                                        layer)))
-        (assoc-in [:drawing :moving?] true)
-        (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
+      (update-in [:selected-eids :selected-eids] (fn [eids]
+                                                   (conj (if append? eids #{}) (:db/id layer))))
+      (update-in [:drawing :layers]
+                 (fn [layers]
+                   (conjv (if append? layers []) layer)))
+      (update-in [:drawing :layers]
+                 (fn [layers]
+                   ;; TODO: handle this better, should probably dissoc just before saving
+                   (mapv (fn [layer]
+                           (assoc layer
+                                  :layer/current-x (:layer/end-x layer)
+                                  :layer/current-y (:layer/end-y layer)
+                                  :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
+                         layers)))
+      (update-in [:drawing :original-layers] (fn [layers]
+                                               (conjv (if append? layers [])
+                                                      layer)))
+      (assoc-in [:drawing :moving?] true)
+      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 ;; TODO: hook this up. Unsure how to tell the difference between layer deselected and group-selected
 (defmethod control-event :layer-deselected
   [browser-state message {:keys [layer]} state]
-  (let [selected-eids (disj (:selected-eids state) (:db/id layer))]
+  (let [selected-eids (remove #{(:db/id layer)} (get-in state [:selected-eids :selected-eids]))]
     (-> state
-        (assoc-in [:selected-eids] selected-eids)
-        (update-in [:drawing :layers]
-                   (fn [layers]
-                     (filterv #(not= (:db/id layer) (:db/id %)) layers)))
-        (update-in [:drawing :original-layers]
-                   (fn [layers]
-                     (filterv #(not= (:db/id layer) (:db/id %)) layers)))
-        (update-in [:drawing :layers]
-                   (fn [layers]
-                     ;; TODO: handle this better, should probably dissoc just before saving
-                     (mapv (fn [layer]
-                             (assoc layer
-                               :layer/current-x (:layer/end-x layer)
-                               :layer/current-y (:layer/end-y layer)
-                               :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
-                           layers)))
-        (assoc-in [:drawing :moving?] (not (empty? selected-eids))))))
+      (assoc-in [:selected-eids :selected-eids] (set selected-eids))
+      (update-in [:drawing :layers]
+                 (fn [layers]
+                   (filterv #(not= (:db/id layer) (:db/id %)) layers)))
+      (update-in [:drawing :original-layers]
+                 (fn [layers]
+                   (filterv #(not= (:db/id layer) (:db/id %)) layers)))
+      (update-in [:drawing :layers]
+                 (fn [layers]
+                   ;; TODO: handle this better, should probably dissoc just before saving
+                   (mapv (fn [layer]
+                           (assoc layer
+                                  :layer/current-x (:layer/end-x layer)
+                                  :layer/current-y (:layer/end-y layer)
+                                  :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
+                         layers)))
+      (assoc-in [:drawing :moving?] (not (empty? selected-eids))))))
 
 (defmethod control-event :group-selected
-  [browser-state message {:keys [layer-eids x y]} state]
+  [browser-state message {:keys [x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         db @(:db state)
+        layer-eids (get-in state [:selected-eids :selected-eids])
         layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)]
     (-> state
-        ;; TODO: this should just read from state, I think instead of passing it in
-        (assoc :selected-eids (set layer-eids))
-        (assoc-in [:drawing :layers] (mapv (fn [layer]
-                                             (assoc layer
-                                               :layer/current-x (:layer/end-x layer)
-                                               :layer/current-y (:layer/end-y layer)
-                                               :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
-                                           layers))
-        (assoc-in [:drawing :original-layers] layers)
-        (assoc-in [:drawing :moving?] true)
-        (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
+      ;; TODO: this should just read from state, I think instead of passing it in
+      (assoc-in [:selected-eids :selected-eids] (set layer-eids))
+      (assoc-in [:drawing :layers] (mapv (fn [layer]
+                                           (assoc layer
+                                                  :layer/current-x (:layer/end-x layer)
+                                                  :layer/current-y (:layer/end-y layer)
+                                                  :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))))
+                                         layers))
+      (assoc-in [:drawing :original-layers] layers)
+      (assoc-in [:drawing :moving?] true)
+      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
+
+(defn handle-menu-opened [state]
+  (-> state
+    (update-in [:menu] assoc
+               :open? true
+               :x (get-in state [:mouse :x])
+               :y (get-in state [:mouse :y]))
+    (assoc-in [:drawing :in-progress?] false)
+    (assoc-in state/right-click-learned-path true)))
 
 (defmethod control-event :menu-opened
   [browser-state message _ state]
-  (print "menu opened")
-  (-> state
-      (update-in [:menu] assoc
-                 :open? true
-                 :x (get-in state [:mouse :x])
-                 :y (get-in state [:mouse :y]))
-      (assoc-in [:drawing :in-progress?] false)
-      (assoc-in state/right-click-learned-path true)))
+  (handle-menu-opened state))
 
-(defmethod post-control-event! :menu-opened
-  [browser-state message _ previous-state current-state]
+(defn handle-menu-opened-after [previous-state current-state]
   (when (and (not (get-in previous-state state/right-click-learned-path))
              (get-in current-state state/right-click-learned-path))
     (analytics/track "Radial menu learned")))
+
+(defmethod post-control-event! :menu-opened
+  [browser-state message _ previous-state current-state]
+  (handle-menu-opened-after previous-state current-state))
 
 (defmethod control-event :menu-closed
   [browser-state message _ state]
@@ -699,14 +834,25 @@
 (defmethod control-event :text-layer-re-edited
   [browser-state message layer state]
   (-> state
-      (assoc-in [:drawing :layers] [(assoc layer
-                                      :layer/current-x (:layer/start-x layer)
-                                      :layer/current-y (:layer/start-y layer))])
-      (assoc-in [:drawing :in-progress?] true)
-      (assoc-in state/current-tool-path :text)))
+    (assoc-in [:drawing :layers] [(assoc layer
+                                         :layer/current-x (:layer/start-x layer)
+                                         :layer/current-y (:layer/start-y layer)
+                                         :bbox {:width (js/Math.abs (- (:layer/start-x layer) (:layer/end-x layer)))
+                                                :height (js/Math.abs (- (:layer/start-y layer) (:layer/end-y layer)))})])
+    (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)})
+    (assoc-in [:editing-eids :editing-eids] #{(:db/id layer)})
+    (assoc-in [:drawing :in-progress?] true)
+    (assoc-in [:mouse-down] true)
+    (assoc-in state/current-tool-path :text)))
 
 (defmethod post-control-event! :text-layer-re-edited
   [browser-state message layer previous-state current-state]
+  (when (get-in previous-state [:drawing :in-progress?])
+    (let [layers (get-in (finalize-layer previous-state) [:drawing :finished-layers])]
+      (when (some layer-model/detectable? layers)
+        (d/transact! (:db current-state)
+                     (mapv utils/remove-map-nils layers)
+                     {:can-undo? true}))))
   (maybe-notify-subscribers! current-state nil nil))
 
 (defmethod control-event :chat-db-updated
@@ -736,15 +882,6 @@
              (get-in current-state state/chat-opened-path))
     (favicon/set-normal!)))
 
-(defmethod control-event :chat-body-changed
-  [browser-state message {:keys [value]} state]
-  (let [entity-id (or (get-in state [:chat :entity-id])
-                      (-> state :entity-ids first))]
-    (-> state
-        (assoc-in [:chat :body] value)
-        (assoc-in [:chat :entity-id] entity-id)
-        (update-in [:entity-ids] disj entity-id))))
-
 (defn chat-cmd [body]
   (when (seq body)
     (last (re-find #"^/([^\s]+)" body))))
@@ -763,11 +900,11 @@
   (update-in state [:camera :show-grid?] not))
 
 (defmethod control-event :chat-submitted
-  [browser-state message _ state]
-  (-> state
-      (handle-cmd-chat (chat-cmd (get-in state [:chat :body])) (get-in state [:chat :body]))
-      (assoc-in [:chat :body] nil)
-      (assoc-in [:chat :entity-id] nil)))
+  [browser-state message {:keys [chat-body]} state]
+  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)]
+    (-> state
+      (handle-cmd-chat (chat-cmd chat-body) chat-body)
+      (assoc-in [:chat :entity-id] entity-id))))
 
 (defmulti post-handle-cmd-chat (fn [state cmd]
                                  (utils/mlog "post-handling chat command:" cmd)
@@ -784,21 +921,21 @@
     (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
                                                            :email email}])))
 (defmethod post-control-event! :chat-submitted
-  [browser-state message _ previous-state current-state]
+  [browser-state message {:keys [chat-body]} previous-state current-state]
   (let [db (:db current-state)
-        client-uuid (str (:client-uuid previous-state))
-        color (get-in previous-state [:subscribers client-uuid :color])]
-    (d/transact! db [{:chat/body (get-in previous-state [:chat :body])
-                      :chat/color color
-                      :cust/uuid (get-in current-state [:cust :uuid])
-                      ;; TODO: teach frontend to lookup cust/name from cust/uuid
-                      :chat/cust-name (get-in current-state [:cust :name])
-                      :db/id (get-in previous-state [:chat :entity-id])
-                      :session/uuid client-uuid
-                      :document/id (:document/id previous-state)
-                      :client/timestamp (js/Date.)
-                      ;; server will overwrite this
-                      :server/timestamp (js/Date.)}])
+        client-id (:client-id previous-state)
+        color (get-in previous-state [:subscribers :info client-id :color])]
+    (d/transact! db [(utils/remove-map-nils {:chat/body chat-body
+                                             :chat/color color
+                                             :cust/uuid (get-in current-state [:cust :cust/uuid])
+                                             ;; TODO: teach frontend to lookup cust/name from cust/uuid
+                                             :chat/cust-name (get-in current-state [:cust :cust/name])
+                                             :db/id (get-in current-state [:chat :entity-id])
+                                             :session/uuid (:sente-id previous-state)
+                                             :document/id (:document/id previous-state)
+                                             :client/timestamp (js/Date.)
+                                             ;; server will overwrite this
+                                             :server/timestamp (js/Date.)})])
     (when-let [cmd (chat-cmd (get-in previous-state [:chat :body]))]
       (post-handle-cmd-chat current-state cmd (get-in previous-state [:chat :body])))))
 
@@ -865,7 +1002,7 @@
 
 (defmethod post-control-event! :chat-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-box")))
+  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :invite-link-clicked
   [browser-state message _ state]
@@ -877,26 +1014,31 @@
 
 (defmethod post-control-event! :invite-link-clicked
   [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-box")))
+  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :chat-user-clicked
   [browser-state message {:keys [id-str]} state]
    (-> state
-     (assoc-in state/chat-mobile-opened-path true)
-     (update-in [:chat :body] (fn [s]
-                                (str (when (seq s)
-                                       ;; maybe separate with space
-                                       (str s (when (not= " " (last s)) " ")))
-                                     "@" id-str " ")))))
+     (assoc-in state/chat-opened-path true)
+     (assoc-in state/chat-mobile-opened-path true)))
 
 (defmethod post-control-event! :chat-user-clicked
-  [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-box")))
+  [browser-state message {:keys [id-str]} previous-state current-state]
+  (let [chat-input (goog.dom/getElement "chat-input")]
+    (.focus chat-input)
+    ;; TODO: need a better way to handle this, possibly by resurrecting
+    ;;       the inputs things I built for Circle
+    (let [s (.-value chat-input)]
+      (set! (.-value chat-input)
+            (str (when (seq s)
+                   ;; maybe separate with space
+                   (str s (when (not= " " (last s)) " ")))
+                 "@" id-str " ")))))
 
 (defmethod control-event :self-updated
   [browser-state message {:keys [name]} state]
   (-> state
-    (assoc-in [:cust :name] name)))
+    (assoc-in [:cust :cust/name] name)))
 
 (defmethod post-control-event! :self-updated
   [browser-state message {:keys [name]} previous-state current-state]
@@ -916,23 +1058,26 @@
   [browser-state message {:keys [ui-id canvas-size]} state]
   ;; TODO: how to handle no layer for ui-id
   (if-let [layer (layer-model/find-by-ui-id @(:db state) ui-id)]
-    (let [layer-width (js/Math.abs (- (:layer/start-x layer)
+    (let [zoom (:zf (:camera state))
+          layer-width (js/Math.abs (- (:layer/start-x layer)
                                       (:layer/end-x layer)))
           layer-height (js/Math.abs (- (:layer/start-y layer)
                                        (:layer/end-y layer)))
           layer-start-x (min (:layer/start-x layer)
                              (:layer/end-x layer))
           layer-start-y (min (:layer/start-y layer)
-                             (:layer/end-y layer))]
+                             (:layer/end-y layer))
+          center-x (+ layer-start-x (/ layer-width 2))
+          center-y (+ layer-start-y (/ layer-height 2))
+          new-x (+ (* (- center-x) zoom)
+                   (/ (:width canvas-size) 2))
+          new-y (+ (* (- center-y) zoom)
+                   (/ (:height canvas-size) 2))]
       (-> state
-          (assoc-in [:camera :x] (+ (/ (:width canvas-size) 2)
-                                    (- (+ layer-start-x
-                                          (/ layer-width 2)))))
-          (assoc-in [:camera :y] (+ (/ (:height canvas-size) 2)
-                                    (- (+ layer-start-y
-                                          (/ layer-height 2)))))
-          (assoc-in [:drawing :in-progress?] false)
-          (assoc-in [:drawing :moving?] false)))
+        (assoc-in [:camera :x] new-x)
+        (assoc-in [:camera :y] new-y)
+        (assoc-in [:drawing :in-progress?] false)
+        (assoc-in [:drawing :moving?] false)))
     state))
 
 (defmethod control-event :layer-properties-opened
@@ -945,16 +1090,23 @@
         (assoc-in [:layer-properties-menu :x] rx)
         (assoc-in [:layer-properties-menu :y] ry))))
 
+(defn handle-layer-properties-submitted [state]
+  (-> state
+    (assoc-in [:layer-properties-menu :opened?] false)))
+
 (defmethod control-event :layer-properties-submitted
   [browser-state message _ state]
-  (-> state
-      (assoc-in [:layer-properties-menu :opened?] false)))
+  (handle-layer-properties-submitted state))
+
+(defn handle-layer-properties-submitted-after [current-state]
+  (let [db (:db current-state)]
+    (d/transact! db [(utils/remove-map-nils
+                      (select-keys (get-in current-state [:layer-properties-menu :layer])
+                                   [:db/id :layer/ui-id :layer/ui-target]))])))
 
 (defmethod post-control-event! :layer-properties-submitted
   [browser-state message _ previous-state current-state]
-  (let [db (:db current-state)]
-    (d/transact! db [(select-keys (get-in current-state [:layer-properties-menu :layer])
-                                  [:db/id :layer/ui-id :layer/ui-target])])))
+  (handle-layer-properties-submitted-after current-state))
 
 (defn empty-str->nil [s]
   (if (str/blank? s)
@@ -974,34 +1126,38 @@
 
 (defmethod control-event :layers-pasted
   [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
-  (let [layer-ids (take (count layers) (:entity-ids state))
+  (let [{:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))
         doc-id (:document/id state)
-        new-x (- (/ (- (:width canvas-size) width) 2)
-                 (:x (:camera state)))
-        new-y (- (/ (- (:height canvas-size) height) 2)
-                 (:y (:camera state)))
-        [move-x move-y] [(- new-x min-x) (- new-y min-y)]
+        camera (:camera state)
+        zoom (:zf camera)
+        center-x (+ min-x (/ width 2))
+        center-y (+ min-y (/ height 2))
+        new-x (+ (* (- center-x) zoom)
+                 (/ (:width canvas-size) 2))
+        new-y (+ (* (- center-y) zoom)
+                 (/ (:height canvas-size) 2))
+        [move-x move-y] (cameras/screen->point camera new-x new-y)
         [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)]
     (-> state
-        (assoc-in [:clipboard :layers] (mapv (fn [l eid]
-                                               (-> l
-                                                   (assoc :layer/ancestor (:db/id l)
-                                                          :db/id eid
-                                                          :document/id doc-id
-                                                          :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
-                                                   (#(move-layer % %
-                                                                 {:snap-x snap-move-x :snap-y snap-move-y
-                                                                  :move-x move-x :move-y move-y :snap-paths? true}))
-                                                   (dissoc :layer/current-x :layer/current-y :points)))
-                                             layers layer-ids))
-        (assoc-in [:selected-eids] (set layer-ids))
-        (update-in [:entity-ids] #(apply disj % layer-ids)))))
+      (assoc-in [:clipboard :layers] (mapv (fn [l eid]
+                                             (-> l
+                                               (assoc :layer/ancestor (:db/id l)
+                                                      :db/id eid
+                                                      :document/id doc-id
+                                                      :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
+                                               (#(move-layer % %
+                                                             {:snap-x snap-move-x :snap-y snap-move-y
+                                                              :move-x move-x :move-y move-y :snap-paths? true}))
+                                               (dissoc :layer/current-x :layer/current-y :points)))
+                                           layers entity-ids))
+      (assoc-in [:selected-eids :selected-eids] (set entity-ids)))))
 
 (defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
-        layers (get-in current-state [:clipboard :layers])]
-    (d/transact! db layers {:can-undo? true})))
+        layers (mapv utils/remove-map-nils (get-in current-state [:clipboard :layers]))]
+    (doseq [layer-group (partition-all 100 layers)]
+      (d/transact! db layer-group {:can-undo? true}))))
 
 (defmethod post-control-event! :created-fetched
   [browser-state message _ previous-state current-state]
@@ -1035,11 +1191,17 @@
       (overlay/replace-overlay :start)
       (assoc-in state/main-menu-learned-path true)))
 
-(defmethod control-event :invite-menu-opened
+; (defmethod control-event :invite-menu-opened
+;   [browser-state message _ state]
+;   (-> state
+;       (overlay/add-overlay :invite)
+;       (assoc-in state/invite-menu-learned-path true)))
+
+(defmethod control-event :sharing-menu-opened
   [browser-state message _ state]
   (-> state
-      (overlay/add-overlay :invite)
-      (assoc-in state/invite-menu-learned-path true)))
+      (overlay/add-overlay :sharing)
+      (assoc-in state/sharing-menu-learned-path true)))
 
 (defmethod control-event :shortcuts-menu-opened
   [browser-state message _ state]
@@ -1118,3 +1280,26 @@
   (sente/send-msg (:sente current-state) [:frontend/deny-access-request {:document/id doc-id
                                                                          :request-id request-id
                                                                          :invite-loc :overlay}]))
+
+(defmethod post-control-event! :make-button-clicked
+  [target message _ previous-state current-state]
+  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
+
+(defmethod post-control-event! :launch-app-clicked
+  [target message _ previous-state current-state]
+  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))
+                                                          :replace-token? true}]))
+
+(defmethod control-event :subscriber-updated
+  [browser-state message {:keys [client-id fields]} state]
+  (subs/add-subscriber-data state client-id fields))
+
+(defmethod control-event :viewers-opened
+  [target message _ state]
+  (-> state
+    (assoc :show-viewers? true)))
+
+(defmethod control-event :viewers-closed
+  [target message _ state]
+  (-> state
+    (assoc :show-viewers? false)))

@@ -1,6 +1,7 @@
 (ns pc.views.email-landing
   (:require [cheshire.core :as json]
             [hiccup.core :as h]
+            [pc.views.common :refer (cdn-path)]
             [pc.views.scripts :as scripts]
             [pc.profile :refer (prod-assets?)]))
 
@@ -21,7 +22,7 @@
   [:div.email-landing
    [:a {:href "/"
         :title "Make something."}
-    [:img {:src (get-gif-url template-name)}]]
+    [:img {:src (cdn-path (get-gif-url template-name))}]]
    [:form {:method "post" :action (str "/duplicate/" template-name)}
     [:input {:type "hidden" :name "__anti-forgery-token" :value CSRFToken}]
     [:button.email-landing-button {:href "/"

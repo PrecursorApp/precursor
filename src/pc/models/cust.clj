@@ -1,7 +1,10 @@
 (ns pc.models.cust
   "cust is what would usually be called user, we call it cust b/c
    Clojure has already taken the name user in the repl"
-  (:require [pc.datomic :as pcd]
+  (:require [clojure.tools.logging :as log]
+            [pc.datomic :as pcd]
+            [pc.datomic.schema :as schema]
+            [pc.models.flag :as flag-model]
             [datomic.api :refer [db q] :as d]))
 
 
@@ -14,6 +17,8 @@
                           :optional {:cust/name String
                                      ;; probably a uuid type
                                      :cust/http-sesion-key String}))
+
+(def admin-emails #{"dwwoelfel@gmail.com" "danny.newidea@gmail.com"})
 
 (defn all [db]
   (pcd/touch-all '{:find [?e]
@@ -28,19 +33,26 @@
 
 ;; TODO: maybe these should return an entity instead of touching?
 (defn find-by-google-sub [db google-sub]
-  (pcd/touch-one '{:find [?e] :in [$ ?sub]
-                   :where [[?e :google-account/sub ?sub]]}
-                 db google-sub))
+  (d/entity db (ffirst (d/q '{:find [?e] :in [$ ?sub]
+                              :where [[?e :google-account/sub ?sub]]}
+                            db google-sub))))
 
 (defn find-by-email [db email]
-  (pcd/touch-one '{:find [?e] :in [$ ?email]
-                   :where [[?e :cust/email ?email]]}
-                 db email))
+  (d/entity db (ffirst (d/q '{:find [?e] :in [$ ?email]
+                              :where [[?e :cust/email ?email]]}
+                            db email))))
+
+(defn find-by-uuid [db uuid]
+  (d/entity db (ffirst (d/q '{:find [?e] :in [$ ?uuid]
+                              :where [[?e :cust/uuid ?uuid]
+                                      [?e :cust/email]]}
+                            db uuid))))
+
 
 (defn find-by-http-session-key [db http-session-key]
-  (pcd/touch-one '{:find [?e] :in [$ ?key]
-                   :where [[?e :cust/http-session-key ?key]]}
-                 db http-session-key))
+  (d/entity db (ffirst (d/q '{:find [?e] :in [$ ?key]
+                              :where [[?e :cust/http-session-key ?key]]}
+                            db http-session-key))))
 
 (defn retract-session-key! [cust]
   @(d/transact (pcd/conn) [[:db/retract (:db/id cust) :cust/http-session-key (:cust/http-session-key cust)]]))
@@ -52,14 +64,13 @@
     (->> (d/resolve-tempid db-after
                            tempids
                            temp-id)
-         (d/entity db-after)
-         pcd/touch+)))
+         (d/entity db-after))))
 
 (defn update! [cust new-attrs]
   (let [{:keys [db-after]} @(d/transact (pcd/conn) (map (fn [[a v]]
                                                           [:db/add (:db/id cust) a v])
                                                         new-attrs))]
-    (pcd/touch+ (d/entity db-after (:db/id cust)))))
+    (d/entity db-after (:db/id cust))))
 
 (defn cust-count [db]
   (ffirst (q '{:find [(count ?t)]
@@ -72,3 +83,13 @@
                  :where [[_ :google-account/sub ?sub ?tx]
                          [?tx :db/txInstant ?i]]}
                db (:google-account/sub cust))))
+
+(defn turn-on-private-docs [db email]
+  (let [cust (find-by-email db email)]
+    (flag-model/add-flag cust :flags/private-docs)))
+
+(defn read-api [cust]
+  (select-keys cust
+               (concat
+                (schema/browser-setting-idents)
+                [:cust/email :cust/uuid :cust/name :flags])))

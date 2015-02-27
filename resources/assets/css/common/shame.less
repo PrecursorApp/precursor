@@ -26,7 +26,7 @@
         content: attr(data-loading-tweet);
       }
       &:after {
-        .animation(tweet-load @speed_slow @bezier_fadein 3s both);
+        .animation(tweet-load @run_slow @bezier_fadein 3s both);
         content: attr(data-failed-tweet);
       }
     }
@@ -39,4 +39,15 @@
 @-webkit-keyframes tweet-load {
   0%   {opacity: 0;}
   100% {opacity: 1;}
+}
+span {
+  > i {
+    > .iconpile {
+      height: .75em;
+      width: .75em;
+      [class|="stroke"] {
+        stroke-width: 12;
+      }
+    }
+  }
 }

@@ -1,13 +1,20 @@
 (ns pc.datomic
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :refer (infof)]
-            [datomic.api :refer [db q] :as d])
+            [datomic.api :refer [db q] :as d]
+            [pc.utils]
+            [pc.profile])
   (:import java.util.UUID))
 
-(def default-uri "datomic:free://localhost:4334/pc2")
+(defn default-uri []
+  (or
+   (pc.profile/datomic-uri)
+   (if (pc.profile/prod?)
+     "datomic:sql://prcrsr?jdbc:postgresql://10.99.0.101:5432/datomic?user=datomic&password=datomic"
+     "datomic:free://localhost:4334/pc2")))
 
 (defn conn [& {:keys [uri]}]
-  (d/connect (or uri default-uri)))
+  (d/connect (or uri (default-uri))))
 
 (defn default-db []
   (db (conn)))
@@ -46,8 +53,8 @@
 (defn uuid []
   (UUID/randomUUID))
 
+;; TODO: remove, deprecated by frontend ids
 (defn generate-eids [conn tempid-count]
-  ;; TODO: support for multiple parts
   (let [tempids (take tempid-count (repeatedly #(d/tempid :db.part/user)))
         transaction (d/transact conn (mapv (fn [tempid] {:db/id tempid :dummy :dummy/dummy}) tempids))]
     (mapv (fn [tempid] (d/resolve-tempid (:db-after @transaction) (:tempids @transaction) tempid)) tempids)))
@@ -77,27 +84,40 @@
                      reverse)] ; reverse order of inverted datoms.
     @(d/transact conn newdata)))  ; commit new datoms.
 
-;; TODO: This really needs a test
-(defn unique-conflict? [ex]
+(defn datomic-error? [ex db-error]
   (loop [ex ex]
     (if (:db/error (ex-data ex))
-      (= (:db/error (ex-data ex)) :db.error/unique-conflict)
+      (= (:db/error (ex-data ex)) db-error)
       (if (.getCause ex)
         (recur (.getCause ex))
         false))))
 
+;; TODO: This really needs a test
+(defn unique-conflict? [ex]
+  (datomic-error? ex :db.error/unique-conflict))
+
+(defn cas-failed? [ex]
+  (datomic-error? ex :db.error/cas-failed))
+
 (defonce tx-report-ch (async/chan (async/sliding-buffer 1024)))
+(defonce tx-report-mult (async/mult tx-report-ch))
 
 (defn setup-tx-report-ch [conn]
   (let [queue (d/tx-report-queue conn)]
-    (future (while true
-              (let [transaction (.take queue)]
-                (async/put! tx-report-ch transaction))))))
+    (def report-future
+      (pc.utils/reporting-future
+       (while true
+         (let [transaction (.take queue)]
+           (assert (async/put! tx-report-ch transaction)
+                   "can't put transaction on tx-report-ch")))))))
 
 (defn init []
   (infof "Creating default database if it doesn't exist: %s"
-         (d/create-database default-uri))
+         (d/create-database (default-uri)))
   (infof "Ensuring connection to default database")
   (infof "Connected to: %s" (conn))
   (infof "forwarding report-queue to tx-report-ch")
   (setup-tx-report-ch (conn)))
+
+(defn shutdown []
+  (d/remove-tx-report-queue (conn)))

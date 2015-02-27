@@ -1,5 +1,9 @@
 (ns pc.views.blog.product-hunt-wake-up-call
   (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
+            [pc.http.urls :as urls]
+            [pc.email :as email]
+            [pc.profile :as profile]
+            [pc.views.common :refer (cdn-path)]
             [pc.views.blog.common :as common]))
 
 (defn product-hunt-wake-up-call []
@@ -25,14 +29,14 @@
 
     [:figure
      [:a.img {:href "http://www.producthunt.com/posts/precursor" :data-caption-white "Thanks, Julie!"}
-      [:img {:src "/blog/product-hunt-wake-up-call/julie-post.png"}]]]
+      [:img {:src (cdn-path "/blog/product-hunt-wake-up-call/julie-post.png")}]]]
 
     [:article
      [:h3 "The product is called Precursor."]
      [:p "Precursor is no-nonsense prototyping tool designed around team workflows.
          To start prototyping, go to "
-         [:a {:href "/"} "prcrsr.com"]
-         ", select a tool with right-click, and then draw.
+      [:a {:href "/"} (profile/prod-domain)]
+      ", select a tool with right-click, and then draw.
          That's it--there's no software to install or sign up required.
          If you want to show your prototypes to a teammate, just send them a link; you'll instantly be able to collaborate in real-time.
          There's no jumping through hoops just to share your idea."]
@@ -46,7 +50,7 @@
 
     [:figure
      [:a.img {:href "/" :data-caption-black "It's faster than even we expected."}
-      [:img {:src "/email/collaboration-demo.gif"}]]]
+      [:img {:src (cdn-path "/email/collaboration-demo.gif")}]]]
 
     [:article
      [:h3 "Product Hunt loved Precursor, and we loved the feedback."]
@@ -70,7 +74,7 @@
      [:p "Our most requested feature is a way to share ideas privately, so we're making private docs our top priority.
          In fact, we're nearly done with an early build of private docs.
          If your team is interested in early access, say "
-         [:a {:href "mailto:hi@prcrsr.com?Subject=I%20am%20interested%20in%20private%20docs"} "hi@prcrsr.com"]]]
+      [:a {:href (str "mailto:" (email/email-address "hi") "?Subject=I%20am%20interested%20in%20private%20docs")} (email/email-address "hi")]]]
 
     [:article
      [:h3 "All of this happened in one weekend."]
@@ -87,11 +91,11 @@
     [:figure
      [:a {:data-caption-white "This is what our traffic looked like before and after the Product Hunt post.
                               That dip on the 16th was actually our server crashing :("}
-      [:img {:src "/blog/product-hunt-wake-up-call/traffic-spike.png"}]]
+      [:img {:src (cdn-path "/blog/product-hunt-wake-up-call/traffic-spike.png")}]]
      [:a {:data-caption-white "Here's an hourly overview of the same data.
                               We think the server crashed under the load but we're not sure since we were asleep.
                               We've upgraded our hardware since then."}
-      [:img {:src "/blog/product-hunt-wake-up-call/server-crash.png"}]]
+      [:img {:src (cdn-path "/blog/product-hunt-wake-up-call/server-crash.png")}]]
      (common/tweet "benarent" "534592531917312000")
      (common/tweet "fotosdelviaje" "534070940120780801")
      (common/tweet "magmip" "534074309191688192" :no-parent true)

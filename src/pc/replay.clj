@@ -9,6 +9,8 @@
             [pc.models.layer :as layer-model]
             [pc.render :as render]
             [pc.utils :as utils]))
+            [pc.datomic.web-peer :as web-peer])
+  (:import java.util.UUID))
 
 (defn get-document-transactions
   "Gets the broadcasted transactions for a document"
@@ -32,6 +34,16 @@
     (map ->datom)
     set))
 
+(defn replace-frontend-ids [db doc-id txes]
+  (let [a (d/entid db :frontend/id)]
+    (map (fn [tx]
+           (if (= (:a tx) a)
+             (assoc tx
+                    :v (UUID. doc-id (web-peer/client-part (:v tx)))
+                    :a (d/entid (pcd/default-db) :frontend/id))
+             tx))
+         txes)))
+
 (defn copy-transactions [db doc new-doc & {:keys [sleep-ms]
                                            :or {sleep-ms 1000}}]
   (let [conn (pcd/conn)
@@ -42,7 +54,8 @@
                             (remove #(= (:e %) (:db/id t)))
                             (map #(if (= (:v %) (:db/id doc))
                                     (assoc % :v (:db/id new-doc))
-                                    %))))))
+                                    %))
+                            (replace-frontend-ids db (:db/id new-doc))))))
         eid-translations (-> (apply concat (map #(map :e %) tx-datas))
                            set
                            (disj (:db/id doc))

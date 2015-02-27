@@ -1,0 +1,561 @@
+.menu {
+  .flexy(column);
+  width: 100%;
+  min-height: 100vh;
+  ~ .inner {
+    .scale(.8);
+    cursor: pointer;
+    background: @dye_outer;
+    box-shadow: 0 8px 21px 0 fade(@black, 21);
+    transition: @run_slower @bezier_deform;
+    .mq_1920({
+      .transform(translate3d((@tile * 2), 0, 0); scale3d(.8, .8, 1));
+    });
+    .mq_1280({
+      .transform(translate3d((@tile * 4), 0, 0); scale3d(.8, .8, 1));
+    });
+    &:hover {
+      box-shadow: 0 21px 34px 0 fade(@black, 21);
+      transition-duration: @run;
+    }
+    &:active {
+      box-shadow: 0 5px 13px 0 fade(@black, 21);
+      transition-duration: @run_fast;
+    }
+    .canvas {
+      box-shadow: 0 -1px @gray_lightest;
+      pointer-events: none;
+    }
+    .canvas-background {
+      .scale3d(.6,0,1);
+      transition-duration: @run_slow;
+    }
+    .grid-background {
+      opacity: 0;
+      transition: @now;
+    }
+    .layer {
+      .layer-outline {
+        stroke: @gray_light;
+      }
+      .text-layer,
+      .edit-handle {
+        fill: @gray_light;
+      }
+    }
+    .layer-properties {
+      display: none;
+    }
+    .radial-hint {
+      display: none;
+    }
+    .chat-background {
+      .scale3d(0,0,1);
+      transition-duration: @run_slow;
+    }
+    .chat-log {
+      opacity: .5;
+      transition: @run_fast @now @bezier_fadein;
+      color: @color_menu_faded;
+      // TODO this can be cleaner
+      .message-head,
+      .stroke-user,
+      .time,
+      h2,
+      a {
+        color: @color_menu_faded;
+        stroke: @color_menu_faded !important;
+        transition+: color @now @run_fast;
+        transition+: stroke @now @run_fast;
+      }
+    }
+    .chat-box {
+      border-top: 1px solid @gray_lighter;
+      transition: border-top @now @run_faster @bezier_fadein;
+      &:after {
+        opacity: 0;
+        transition: @now;
+      }
+    }
+    .chat-input {
+      .placeholder_style(opacity; 0);
+      .placeholder_style(transition; @now @now @bezier_fadein);
+    }
+  }
+  ~ .hud {
+    .hud-item {
+      &:not(.menu-needed) {
+        opacity: 0;
+        visibility: hidden;
+        transition: @now;
+      }
+    }
+    .hud-menu {
+      path {
+        transition+: all @run_slow @now @bezier_bounce;
+        transition+: stroke @now @now @bezier_fadein;
+      }
+    }
+    .unseen-eids {
+      display: none;
+    }
+  }
+}
+.menu-header {
+  .flex(0 0 @tile);
+  .flexy(center);
+  a {
+    .flexy(center, center);
+    width: @tile;
+    height: @tile;
+    transition: @run @bezier_fadein;
+    &:only-child {
+      margin-left: auto;
+    }
+  }
+  h4 {
+    .flex(0 1 100%);
+    .animation(in-fade-top (@run * 3));
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+    padding: 0 1rem 0 @tile;
+    overflow: hidden;
+    cursor: default;
+    &:not(:last-of-type) {
+      display: none;
+    }
+  }
+}
+.menu-body {
+  .flex(1);
+  .flexy();
+  position: relative;
+  width: @tile * 6;
+  .mq_640({
+    width: @tile * 5;
+  });
+  .make {
+    .animation_cascade(25);
+  }
+}
+.menu-view {
+  .flex(0,0,100%);
+  .flexy(flex-start, flex-start, column);
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding-bottom: @tile;
+  transition: @run_slow @bezier_deform;
+  &:not(:first-child) {
+    margin-left: -100%;
+  }
+  &:not(:last-of-type) {
+    .translate3d(-100%,0,0);
+  }
+  &:last-child {
+    &:only-child {
+      .make {
+        .animation-name(in-fade-left);
+        .animation-duration(@run_slow);
+        .animation-fill-mode(both);
+      }
+    }
+  }
+  &:not(:only-child) {
+    &:not(:first-child) {
+      .make {
+        .animation-name(in-fade-right);
+        .animation-duration(@run_slow);
+        .animation-fill-mode(both);
+      }
+    }
+  }
+  article {
+    padding: @menu_padding;
+    width: 100%;
+    a {
+      &[role="button"] {
+        .flexy(center, center);
+        height: @tile;
+        margin-bottom: @tile;
+        transition: @run_fast @bezier_fadein;
+        border: 1px solid @font_color;
+        &:hover {
+          color: @white;
+          background: @font_color;
+        }
+      }
+    }
+  }
+}
+.menu-foot {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: @dye_outer;
+  .mq_640({
+    width: 100vw;
+    min-width: 100vw;
+  });
+}
+.vein {
+  .flexy(center);
+  .icon(stroke; @gray);
+  .icon(fill; @gray);
+  width: 100%;
+  color: @gray;
+  overflow: hidden;
+  &:hover {
+    .icon(stroke; @black);
+    .icon(fill; @black);
+    color: @black;
+  }
+  &.stick {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+  i {
+    padding: @menu_padding;
+  }
+}
+.menu-invite-form {
+  .flexy(column);
+  margin: @menu_padding 0;
+}
+.invite-recipient {
+  .flexy();
+  &:hover {
+    a {
+      opacity: 1;
+    }
+    ~ .invite-recipient {
+      a {
+        opacity: 0;
+      }
+    }
+  }
+  &:not(:hover) {
+    color: @gray_light;
+  }
+  &:last-of-type {
+    a {
+      opacity: 1;
+    }
+  }
+  a {
+    opacity: 0;
+    margin-left: .5em;
+    &:not(:hover) {
+      &:after {
+        content: "?";
+        pointer-events: none;
+      }
+    }
+  }
+}
+.invite-recipient-email {
+  max-width: 80%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.menu-prompt {
+  .flex(1 0 100%);
+  .flexy(column);
+}
+.menu-prompt-body {
+  .flex(1 1 100%);
+  .scrollbar_hide();
+  padding: 0 2rem;
+  overflow-y: auto;
+  &:last-of-type {
+    padding-bottom: @tile;
+  }
+}
+.shortcuts-items {
+  td {
+    padding: .5em 0;
+  }
+}
+.shortcuts-keys {
+  .flexy(center);
+}
+.shortcuts-key,
+.shortcuts-misc {
+  .flexy(center, center);
+  width: 2rem;
+  height: 2rem;
+  margin-left: auto;
+  cursor: default;
+  + .shortcuts-key,
+  + .shortcuts-misc {
+    position: relative;
+    margin-left: 1.5em;
+    &:before {
+      .flexy(center, center);
+      content: "+";
+      position: absolute;
+      right: 100%;
+      width: 1.5em;
+      margin-top: .25em;
+    }
+  }
+}
+.shortcuts-key {
+  .inline(@gray_light);
+  border-radius: .5em;
+  &.no-symbol {
+    font-size: 0.750em;
+  }
+}
+.shortcuts-misc {
+  .icon(stroke; 4);
+  i {
+    font-size: 1.9em;
+  }
+}
+.shortcuts-result {
+  margin: 0 1em;
+  cursor: default;
+}
+.recent-time-group {
+  text-transform: capitalize;
+  margin-bottom: 2em;
+  &:not(:first-child) {
+    margin-top: 5em;
+  }
+}
+.recent-doc-title {
+  display: block;
+  line-height: 1em;
+  margin: 1em 0;
+  a {
+    &:not(:hover) {
+      color: @gray;
+    }
+  }
+}
+.recent-doc-thumb {
+  display: block;
+  position: relative;
+  height: 15rem;
+  border: 1px solid @gray_lighter;
+  overflow: hidden;
+  transition: @run @bezier_fadein;
+  &:hover {
+    border-color: @gray;
+    transition-duration: @run_fast;
+  }
+  img {
+    width: 100%;
+    opacity: .5;
+  }
+  .loading-ellipses {
+    position: absolute;
+    bottom: 0.5em;
+    right: 1em;
+  }
+}
+// TODO come back to cleanup loading styles here -dk (12/09/14)
+.loading {
+  .loading-ellipses {
+    display: block;
+  }
+  .recent-doc-title {
+    visibility: hidden;
+  }
+  img {
+    display: none;
+  }
+  img.loading-image {
+    display: block;
+  }
+}
+img.loading-image {
+  display: none;
+}
+.loading-ellipses {
+  display: none;
+}
+.loading-ellipses i     {.animation(dot (1.5 * @run_slower) (1.00 * @run_slower) infinite both);}
+.loading-ellipses i+i   {.animation(dot (1.5 * @run_slower) (1.25 * @run_slower) infinite both);}
+.loading-ellipses i+i+i {.animation(dot (1.5 * @run_slower) (1.50 * @run_slower) infinite both);}
+.privacy-select {
+  .flex-direction(column);
+  .align-items(stretch);
+  &:hover {
+    .privacy-label {
+      &:not(:hover) {
+        opacity: .34;
+      }
+    }
+  }
+  &:not(:hover) {
+    .privacy-radio {
+      &:not(:checked) {
+        + .privacy-label {
+          height: 0;
+          opacity: 0;
+        }
+      }
+    }
+  }
+}
+.privacy-label {
+  .flexy(center);
+  height: @tile;
+  cursor: pointer;
+  overflow: hidden;
+  transition: @run;
+}
+.access-card {
+  .flexy(center);
+  position: relative;
+  // max-width: @tile_menu; // TODO fix this
+  margin: @menu_padding 0;
+  cursor: default;
+  transition: @run;
+  &:not(:hover) {
+    .access-options {
+      right: -@tile * 2;
+      padding: 1.5rem 0;
+      &:before {
+        width: 0;
+      }
+    }
+    .access-option {
+      margin: 0;
+      opacity: 0;
+    }
+  }
+  &.requesting {
+    &:hover {
+      .access-avatar,
+      .access-details {
+        opacity: .8;
+        transition: @run_fast @bezier_fadein;
+      }
+      .access-avatar {
+        .filter(grayscale(1));
+        transition: @run_fast @bezier_fadein;
+      }
+      .access-status {
+        color: @font_color;
+        transition: @run_fast @bezier_fadein;
+      }
+    }
+    .access-status {
+      color: @blue;
+    }
+  }
+  &.denied {
+    .access-avatar {
+      box-shadow: 0 -1px 3px @black inset;
+      img {
+        .filter(grayscale(1));
+        opacity: .5;
+      }
+    }
+    .access-avatar-img {
+      .filter(grayscale(1));
+      opacity: .5;
+    }
+    .access-details {
+      opacity: .5;
+    }
+    .access-status {
+      color: @font_color;
+    }
+  }
+}
+.access-avatar {
+  @size: 3rem;
+  .flex(0 0 @size);
+  height: @size;
+  border-radius: @size;
+  transition: @run @bezier_fadein;
+  .access-avatar-img {
+    width: @size;
+    height: @size;
+    border-radius: @size;
+    background-image: url("/img/avatar.svg");
+    box-shadow+:  0    1px @gray_light inset;
+    box-shadow+:  0   -1px @gray_light inset;
+    box-shadow+:  1px  0   @gray_light inset;
+    box-shadow+: -1px  0   @gray_light inset;
+  }
+}
+.access-details {
+  .flexy(flex-start, center, column);
+  &:not(:only-child) {
+    margin-left: 1rem;
+  }
+  span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+.access-status {
+  color: @gray_light;
+}
+.access-options {
+  .flexy(center);
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  padding: @menu_padding;
+  background: @dye_outer;
+  transition+: right @run_fast @bezier_deform;
+  transition+: padding @run_fast @bezier_deform;
+  &:before {
+    .gradient(to right; fade(@dye_outer, 0) @dye_outer);
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 100%;
+    width: @menu_padding;
+    height: 100%;
+    transition: width @run @bezier_deform;
+  }
+}
+.access-option {
+  .flexy(center, center);
+  width: @tile / 2;
+  height: @tile / 2;
+  border: 1px solid @gray;
+  border-radius: @tile;
+  transition+: opacity @run_fast @bezier_fadein;
+  transition+: margin @run_slow @bezier_deform;
+  &:first-child {
+    &:not(:only-child) {
+      margin-right: 1rem;
+    }
+  }
+  &.positive {
+    .icon(stroke; @blue);
+    border-color: @blue;
+    &:hover {
+      .icon(stroke; @white);
+      background: @blue;
+    }
+  }
+  &.negative {
+    .icon(stroke; @gray);
+    border-color: @gray;
+    &:hover {
+      .icon(stroke; @white);
+      background: @gray;
+    }
+  }
+}
+.privacy-public-word,
+.privacy-private-word {
+  .animation(in-fade-top @run_slow);
+  display: inline-block;
+}

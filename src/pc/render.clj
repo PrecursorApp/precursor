@@ -23,6 +23,9 @@
   [layer opts]
   [:path (svg/layer->svg-path layer opts)])
 
+(defn nan? [thing]
+  (or (not thing) (.isNaN thing)))
+
 ;; Getting placement here is a bit tricky.
 ;; Goal is to reproduce the canvas exactly as it is in the app, except in
 ;; black-and-white so they can print it.
@@ -30,11 +33,13 @@
 ;; If they've drawn in negative directions, then we to shift the viewport in the
 ;; that direction with a transform.
 (defn render-layers [layers & {:keys [invert-colors? size-limit]}]
-  (let [layers (filter #(not= :layer.type/group (:layer/type %)) layers)
-        start-xs (remove #(.isNaN %) (map :layer/start-x layers))
-        start-ys (remove #(.isNaN %) (map :layer/start-y layers))
-        end-xs (remove #(.isNaN %) (map :layer/end-x layers))
-        end-ys (remove #(.isNaN %) (map :layer/end-y layers))
+  (def mylayers layers)
+  (let [layers (map #(into {} %) (filter #(and (:layer/type %)
+                                               (not= :layer.type/group (:layer/type %))) layers))
+        start-xs (remove nan? (map :layer/start-x layers))
+        start-ys (remove nan? (map :layer/start-y layers))
+        end-xs (remove nan? (map :layer/end-x layers))
+        end-ys (remove nan? (map :layer/end-y layers))
         xs (or (seq (concat start-xs end-xs)) [0])
         ys (or (seq (concat start-ys end-ys)) [0])
         min-x (apply min xs)

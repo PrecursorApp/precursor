@@ -13,7 +13,19 @@
   "Rollbar API endpoint base URL"
   "https://api.rollbar.com/api/1/item/")
 
-(def token "cca6d7468e71428fb656f573e5012eaf")
+(def rollbar-prod-token "cca6d7468e71428fb656f573e5012eaf")
+(def rollbar-dev-token "cac8b256153f4485938751ec3731c9e2")
+(defn token []
+  (if (profile/prod?)
+    rollbar-prod-token
+    rollbar-dev-token))
+
+(def rollbar-prod-client-token "744b16251ecf48d285e4f5e9470bf32f")
+(def rollbar-dev-client-token "2eaa2b1406d945edaddad08619bbe1ac")
+(defn rollbar-client-token []
+  (if (profile/prod?)
+    rollbar-prod-client-token
+    rollbar-dev-client-token))
 
 (defn build-payload
   [access-token data-maps]
@@ -52,27 +64,15 @@
   (str/replace (str/capitalize s) #"-(.)"
                (fn [[_ char]] (str "-" (str/capitalize char)))))
 
-(defn headers-for
-  [{:keys [headers] :as request}]
-  (into {} (for [[k v] headers]
-             [(to-http-case k) v])))
-
 (defn request-data
-  [{method :request-method client :remote-addr qstr :query-string body :body
-    :as request} user-id]
-  (let [body (if (string? body)
-               body
-               (try (slurp body) (catch Throwable e "")))
-        rollbar-obj {:url (url-for request)
-                     :method (str/upper-case (name method))
-                     :headers (headers-for request)
-                     :query_string (or qstr "")
-                     :user_ip client
-                     :body body}
-        rollbar-obj (if user-id
-                      (assoc rollbar-obj :person {:id (str user-id)})
-                      rollbar-obj)]
-    {:request rollbar-obj}))
+  [{:keys [request-method remote-addr query-string] :as request} cust]
+  (merge {:request {:url (url-for request)
+                    :method (str/upper-case (name request-method))
+                    :query_string (or query-string "")
+                    :user_ip remote-addr}}
+         (when (seq cust)
+           {:person {:id (str (:cust/uuid cust))
+                     :email (:cust/email cust)}})))
 
 (defn report-message
   "Reports a simple string message at the specified level"
@@ -129,10 +129,10 @@
 
 (defn report-exception
   "Reports an exception at the 'error' level"
-  [exception & {:keys [request user-id]}]
+  [exception & {:keys [request cust]}]
   (let [data-map (base-data (profile/env) "error")
         trace-map {:body {:trace (build-trace
                                   (parse-exception exception))}}
-        request-map (if request (request-data request user-id) {})
+        request-map (if request (request-data request cust) {})
         data-maps [data-map trace-map request-map]]
-    (send-payload (build-payload token data-maps))))
+    (send-payload (build-payload (token) data-maps))))

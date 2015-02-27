@@ -20,27 +20,12 @@
      (fn [[chat-id]]
        (let [e (pcd/touch+ (d/entity db chat-id))]
          ;; TODO: teach the frontend how to lookup cust/name
-         (assoc e :chat/cust-name (when-let [uuid (:cust/uuid e)]
-                                    (memo-find-name db uuid)))))
+         (let [name (when-let [uuid (:cust/uuid e)]
+                      (memo-find-name db uuid))]
+           (if name
+             (assoc e :chat/cust-name name)
+             e))))
      (d/q '{:find [?t] :in [$ ?document-id]
             :where [[?t :document/id ?document-id]
                     [?t :chat/body]]}
           db (:db/id document)))))
-
-(comment
-  (let [[doc-id & layer-ids] (pcd/generate-eids (pcd/conn) 4)]
-    (d/transact (pcd/conn)
-                [{:db/id doc-id
-                  :document/name "Test Document 1"}
-                 {:db/id (first layer-ids)
-                  :document/id doc-id
-                  :layer/name "Test Layer 1"
-                  :layer/fill "red"}
-                 {:db/id (second layer-ids)
-                  :document/id doc-id
-                  :layer/name "Test Layer 2"
-                  :layer/fill "blue"}
-                 {:db/id (last layer-ids)
-                  :document/id doc-id
-                  :layer/name "Test Layer 3"
-                  :layer/fill "green"}])))

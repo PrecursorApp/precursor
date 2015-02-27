@@ -4,8 +4,14 @@
 (defn prod? []
   (= "true" (System/getenv "PRODUCTION")))
 
+(defn compile-less? []
+  (not (prod?)))
+
 (defn prod-assets? []
   (prod?))
+
+(defn log-to-console? []
+  (not (prod?)))
 
 (defn http-port []
   (if (System/getenv "HTTP_PORT")
@@ -20,9 +26,12 @@
 (defn force-ssl? []
   (prod?))
 
+(defn prod-domain []
+  "precursorapp.com")
+
 (defn hostname []
   (if (prod?)
-    "prcrsr.com"
+    (prod-domain)
     "localhost"))
 
 ;; TODO: move to secrets
@@ -35,3 +44,10 @@
   (if (prod?)
     "production"
     "development"))
+
+(defn datomic-uri []
+  (System/getenv "DATOMIC_URI"))
+
+(defn statsd-host []
+  ;; goes to localhost if it can't resolve
+  "10.99.0.104")

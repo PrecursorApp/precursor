@@ -1,142 +1,104 @@
-.app-chat {
-  .flexy(column);
-  width: 20vw;
-  min-width: @tile_chat;
-  box-shadow: -1px 0 @gray_dark;
-  overflow: hidden;
-  transition: @speed @bezier_transform;
-  // transition-timing-function: @bezier_bounce;
-  .mq_640({
-    .flex-direction(row);
-    position: relative;
-    padding-top: @tile;
-  });
-  &.closed {
-    width: 0;
-    min-width: 0;
-    transition-timing-function: @bezier_transform;
-    .icon-user {
-      margin: 0 .5em;
-      transition-delay: @speed_slow;
-    }
-    .chat-log {
-      textarea {
-        padding-left: 0;
-        opacity: 0;
-        transition-delay: @speed_slow;
-      }
-    }
-  }
-  &.show-chat-on-mobile {
-    .mq_640({
-      .chat-people {
-        margin-left: -100%;
-      }
-    });
-  }
-  section {
-    .flex(1 1 auto);
-    .flexy(column);
-    width: 20vw;
-    min-width: 16rem;
-    min-height: @tile_chat;
-    .mq_640({
-      .flex(0 0 100%);
-      transition: @speed;
-    });
-  }
-}
-.chat-switcher {
-  display: none;
+.chat {
+  .flexy();
+  .user-select(none);
   position: absolute;
-  color: @white;
   top: 0;
   left: 0;
-  width: @tile_chat;
-  .mq_640({
-    .flexy();
-  });
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
-.chat-switcher-option {
-  .flex(0 0 50%);
-  .flexy(center, center);
-  height: @tile;
-  &:not(.toggled) {
-    color: @gray;
-    background: fade(@black, 13);
-  }
+.chat-offset {
+  .flex(1);
+  position: relative;
 }
-.chat-people {
-  .scrollbar_hide(); // we should calculate to get this effect in the dom
-  overflow-y: auto;
-  a {
-    &[role="button"] {
-      .flex(0 0 @tile);
-      .flexy(center);
-      .button_icon_cascade(32);
-      .icon_stroke(@gray_lighter);
-      min-height: (@tile / 2);
-      color: @gray_light;
-      &:hover,
-      &:active {
-        .icon_stroke(@gray_lightest);
-        cursor: pointer;
-        color: @gray_lighter;
-        background: @gray_dark;
-      }
-      &.people-you {
-        cursor: text;
-      }
+.chat-window {
+  .chat_width();
+  .animation(in-fade-right @run_slow @bezier_fadein);
+  .flexy(stretch; flex-end; column);
+  .user-select(auto); // VETO
+  position: relative;
+  height: 100%;
+  background: @dye_outer;
+  box-shadow: -1px 0 @gray_lighter;
+  pointer-events: auto; // VETO
+  will-change: transform;
+  top: 0;
+  right: 0;
+  &.closed {
+    .animation-name(none);
+    .translate3d(100%, 0, 0);
+    .transition_transform(@run_slow @bezier_fadein);
+    position: absolute;
+    .chat-input {
+      visibility: hidden;
+      transition: visibility @now @run_slow @bezier_fadein;
     }
   }
-  .icon-user {
-    .flex(0 0 auto);
-    margin: 0 1em;
-    transition: margin @speed @bezier_transform 0ms;
-  }
-  input {
-    height: @tile;
-    max-height: (@tile * 2);
-    background: none;
-    border: none;
-    outline: 0;
-    color: @white;
-  }
+}
+.chat-background {
+  .transform-origin(left);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: @dye_inner;
+  box-shadow: -1px 0 @gray_dark;
+  will-change: transform;
+  transition: @run @bezier_deform;
 }
 .chat-log {
-  .justify-content(flex-end);
-  form {
-    .flex(0 0 auto);
-    .flexy();
-    margin: 0;
-    box-shadow: 0 1px @gray_dark inset;
-  }
-  textarea {
-    .flex(1);
-    .placeholder_style(color; @gray_dark);
-    height: @tile;
-    max-height: (@tile * 2);
-    background: none;
-    padding: 1.25em 1.25em 0;
-    border: none;
-    outline: 0;
-    resize: none;
-    transition+: padding @speed @bezier_transform 0ms;
-    transition+: opacity @speed @bezier_fadein    0ms;
-    &:focus {
-      .placeholder_style(color; fade(@gray_dark, 0));
-    }
+  .user-select(none); // so you only select text and not entire chat menu
+  .scrollbar_hide();
+  position: relative;
+  padding: 1em 0 1.25em;
+  overflow-y: auto;
+  transition: @run_fast @run @bezier_fadein;
+  span {
+    .user-select(auto); // so you only select text and not entire chat menu
+    white-space: pre-line; // honors new line (shift + enter)
   }
 }
-.chat-messages {
-  .scrollbar_hide(); // TODO we should calculate to get this effect in the dom
-  padding: 1em 0;
-  overflow-y: auto;
-  .mq_640({
-    width: @tile_chat;
-  });
-  span {
-    word-break: break-word;
+.chat-box {
+  .box-sizing(content-box);
+  position: relative;
+  height: @tile;
+  min-height: @tile;
+  border-top: 1px solid @gray_dark;
+  transition: border-top @run_fast @run_fast @bezier_fadein;
+  &:after {
+    .gradient(to bottom; @dye_inner; fade(@dye_inner, 0));
+    .gradient(to bottom; @dye_inner; fade(@dye_inner, 0));
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 33%;
+    pointer-events: none;
+    transition: @run_fast @run;
+  }
+}
+.chat-input {
+  .placeholder_style(color; @gray_dark);
+  .placeholder_style(transition; @run_fast @run @bezier_fadein);
+  .scrollbar(width; .5em;);
+  .scrollbar_thumb(border-radius; .25em);
+  width: 100%;
+  height: 80%;
+  padding: 1.375em 1rem 0;
+  padding-right: 2.5rem; // kill this is stationary chat toggle gets killed
+  background: none;
+  border: none;
+  outline: 0;
+  resize: none;
+  &:hover {
+    .scrollbar_thumb(background; fade(@white, 25));
+  }
+  &:focus {
+    .placeholder_style(color; fade(@gray_dark, 0));
+    .placeholder_style(transition; @now);
   }
 }
 .chat-date {
@@ -147,53 +109,17 @@
 }
 .chat-message {
   padding: 0 .125rem 0 1rem;
-  a {
-    transition: @speed_fast @bezier_fadein;
-    &:not(:hover) {
-      color: inherit;
-      // TODO make a function for this thing (also used in blog.less)
-      box-shadow+:   0  -1px @gray_darker inset;
-      box-shadow+:   0  -2px @gray_light  inset;
-      text-shadow+:  1px 0   @gray_darker;
-      text-shadow+:  2px 0   @gray_darker;
-      text-shadow+:  3px 0   @gray_darker;
-      text-shadow+: -1px 0   @gray_darker;
-      text-shadow+: -2px 0   @gray_darker;
-      text-shadow+: -3px 0   @gray_darker;
+  &:not(:first-child) {
+    .message-head {
+      margin-top: .5rem;
     }
   }
 }
 .message-head {
-  .flexy();
-}
-.message-time {
-  color: @gray_dark;
-  font-size: 0.75rem;
-  line-height: ~"@{line_height}rem";
-  text-transform: lowercase;
-  word-spacing: -.1875rem;
-  margin-left: .5rem;
-}
-.chat-button {
-  .icon_stroke(@gray);
-  .flexy(center, center);
-  position: absolute;
-  font-size: 1.5em;
-  bottom: 0;
-  right: 0;
-  width: @tile;
-  height: @tile;
-  &:hover {
-    .icon_stroke(@white);
-    .unseen-eids {
-      background: lighten(#c0392b, 10);
-      color: @white;
-      border-color: lighten(#c0392b, 10);
-      height: 1.8em;
-      min-width: 1.8em;
-      padding: 2px 4px;
-      bottom: 3.1em;
-      right: 3.1em;
-    }
+  color: white;
+  .time {
+    color: @gray_dark;
+    font-size: .75rem;
+    text-transform: lowercase;
   }
 }

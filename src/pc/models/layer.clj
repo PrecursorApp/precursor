@@ -1,5 +1,6 @@
 (ns pc.models.layer
   (:require [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [datomic.api :refer [db q] :as d]))
 
 
@@ -17,26 +18,34 @@
                  db))
 
 (defn find-by-document [db document]
-  (pcd/touch-all '{:find [?t] :in [$ ?document-id]
-                   :where [[?t :document/id ?document-id]
-                           [?t :layer/name]]}
-                 db (:db/id document)))
+  (map (partial d/entity db)
+       (d/q '{:find [[?t ...]]
+              :in [$ ?document-id]
+              :where [[?t :document/id ?document-id]
+                      [?t :layer/name]]}
+            db (:db/id document))))
 
-
-(comment
-  (let [[doc-id & layer-ids] (pcd/generate-eids (pcd/conn) 4)]
-    (d/transact (pcd/conn)
-                [{:db/id doc-id
-                  :document/name "Test Document 1"}
-                 {:db/id (first layer-ids)
-                  :document/id doc-id
-                  :layer/name "Test Layer 1"
-                  :layer/fill "red"}
-                 {:db/id (second layer-ids)
-                  :document/id doc-id
-                  :layer/name "Test Layer 2"
-                  :layer/fill "blue"}
-                 {:db/id (last layer-ids)
-                  :document/id doc-id
-                  :layer/name "Test Layer 3"
-                  :layer/fill "green"}])))
+;; TODO: can use pull API here
+(defn read-api [layer]
+  (-> layer
+    (select-keys [:layer/name
+                  :layer/uuid
+                  :layer/type
+                  :layer/start-x
+                  :layer/start-y
+                  :layer/end-x
+                  :layer/end-y
+                  :layer/rx
+                  :layer/ry
+                  :layer/fill
+                  :layer/stroke-width
+                  :layer/stroke-color
+                  :layer/opacity
+                  :layer/font-family
+                  :layer/text
+                  :layer/font-size
+                  :layer/path
+                  :layer/child
+                  :layer/ui-id
+                  :layer/ui-target])
+    (assoc :db/id (web-peer/client-id layer))))

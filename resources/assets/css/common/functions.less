@@ -23,33 +23,58 @@
   }.prefix(@property; @value; @rest);
   @{property}: @value;
 }
+.position(@p; @x; @y) {
+  position: @p;
+  .axis_y(@y) when (length(@y) = 1) {
+    top: @y;
+  }.axis_y(@y);
+  .axis_y(@y) when (length(@y) = 2) {
+    @property: extract(@y, 1);
+    @{property}: extract(@y, 2);
+  }.axis_y(@y);
+  .axis_x(@x) when (length(@x) = 1) {
+    left: @x;
+  }.axis_x(@x);
+  .axis_x(@x) when (length(@x) = 2) {
+    @property: extract(@x, 1);
+    @{property}: extract(@x, 2);
+  }.axis_x(@x);
+}
 .placeholder_style(@property; @value) {
   &::-webkit-input-placeholder {@{property}: @value;}
   &:-moz-placeholder           {@{property}: @value;}
   &::-moz-placeholder          {@{property}: @value;}
+}
+.scrollbar(@property; @value) {
+  &::-webkit-scrollbar {
+    @{property}: @value;
+  }
+}
+.scrollbar_thumb(@property; @value) {
+  &::-webkit-scrollbar-thumb {
+    @{property}: @value;
+  }
 }
 .scrollbar_hide() {
   &::-webkit-scrollbar {
     width: 0; // we should calculate to get this effect in the dom
   }
 }
-.icon_stroke(...) {
-  .icon_stroke_color(@a) when (iscolor(@a)) {
-    i {
-      [class*="stroke"] {
-        stroke: @arguments;
+.icon(@type; @value) {
+  .iconpile {
+    .stroke(@type; @value) when (@type = stroke) {
+      [class|="stroke"] {
+        .width(@value) when (isnumber(@value)){stroke-width:@value;}.width(@value);
+        .color(@value) when  (iscolor(@value)){stroke:      @value;}.color(@value);
       }
-    }
-  }.icon_stroke_color(@arguments);
-}
-.icon_fill(...) {
-  .icon_fill_color(@a) when (iscolor(@a)) {
-    i {
-      [class*="fill"] {
-        fill: @arguments;
+    }.stroke(@type; @value);
+    .fill(@type; @value) when (@type = fill) {
+      [class|="fill"] {
+        // .width(@value) when (isnumber(@a)) { stroke-width: @value; }.width(@value);
+        .color(@value) when (iscolor(@value))  { fill: @value; }.color(@value);
       }
-    }
-  }.icon_fill_color(@arguments);
+    }.fill(@type; @value);
+  }
 }
 .box-sizing(...) {
   .prefixer(box-sizing, @arguments, webkit moz);
@@ -65,14 +90,14 @@
   .random_cascade((@c - 1));
   @random: `Math.random()`;
   &:nth-of-type(@{c}) {
-    transition-delay: round(@cascade * (@random * 10));
+    transition-delay: round(@run_faster * (@random * 10));
   }
 }
 .button_icon_cascade(@c) when (@c > 0) {
   .button_icon_cascade((@c - 1));
   &:nth-of-type(@{c}) {
     i {
-      transition-delay: (@cascade * @c);
+      transition-delay: (@run_faster * @c);
     }
   }
 }
@@ -80,8 +105,20 @@
   .button_fade_cascade((@c - 1));
   &:nth-of-type(@{c}) {
     object {
-      transition-delay: (@cascade * 5) + (@cascade * @c);
+      transition-delay: (@run_faster * 5) + (@run_faster * @c);
     }
+  }
+}
+.transition_cascade(@c) when (@c > 0) {
+  .transition_cascade((@c - 1));
+  &:nth-child(@{c}) {
+    transition-delay: @run_faster * @c;
+  }
+}
+.animation_cascade(@c) when (@c > 0) {
+  .animation_cascade((@c - 1));
+  &:nth-child(@{c}) {
+    .animation-delay((@run_faster * @c));
   }
 }
 .outline(@color: @gray_lighter) {
@@ -90,15 +127,41 @@
   box-shadow+:  1px  0   @color;
   box-shadow+: -1px  0   @color;
 }
+.inline(@color: @gray_lighter; @width: 1px) {
+  box-shadow+:  0    @width @color inset;
+  box-shadow+:  0   -@width @color inset;
+  box-shadow+:  @width  0   @color inset;
+  box-shadow+: -@width  0   @color inset;
+}
 .filter(...) {
   .for(@arguments); .-each(@argument) {
       -webkit-filter+_: @argument;
               filter+_: @argument;
   }
 }
+.shadow_inset(@position; @black; @white) {
+  .top(@arguments) when (@position = top) {
+    box-shadow+: 0 -1px @black;
+    box-shadow+: 0  1px @white inset;
+  }.top(@arguments);
+  .btm(@arguments) when (@position = bottom) {
+    box-shadow+: 0 -1px @black inset;
+    box-shadow+: 0  1px @white;
+  }.btm(@arguments);
+}
 .gradient(@type; @rest...) {
   @colors: ~`"@{rest}".slice(1,-1)`;
-  background-image: linear-gradient(@type, @colors);
+  background-image+: linear-gradient(@type, @colors);
+}
+.font-smoothing(@a: antialiased) {
+  .aa(@a) when (@a = antialiased) {
+    -webkit-font-smoothing: @a;
+    -moz-osx-font-smoothing: grayscale;
+  }.aa(@a);
+}
+.transition_transform(...) {
+  -webkit-transition+: -webkit-transform @arguments;
+          transition+:         transform @arguments;
 }
 .rotate(...) {
   .prefixer(transform; ~"rotate(@{arguments}deg)"; webkit);
@@ -131,69 +194,50 @@
   -webkit-animation: @arguments;
           animation: @arguments;
 }
+.animation-name(...) {
+  -webkit-animation-name: @arguments;
+          animation-name: @arguments;
+}
+.animation-duration(...) {
+  -webkit-animation-duration: @arguments;
+          animation-duration: @arguments;
+}
+.animation-delay(...) {
+  -webkit-animation-delay: @arguments;
+          animation-delay: @arguments;
+}
+.animation-fill-mode(...) {
+  -webkit-animation-fill-mode: @arguments;
+          animation-fill-mode: @arguments;
+}
+.animation-timing-function(...) {
+  -webkit-animation-timing-function: @arguments;
+          animation-timing-function: @arguments;
+}
 .animation-bezier(...) {
   -webkit-animation-timing-function: @arguments;
           animation-timing-function: @arguments;
 }
 
-@keyframes in-bounce {
-  0%, 100%, 20%, 40%, 60%, 80% {
-    transition-timing-function: cubic-bezier(0.215,.61,.355,1);
-    transform-origin: center;
-  }
-  0%   { transform: scale3d(.3,.3,.3); opacity: 0; }
-  20%  { transform: scale3d(1.13,1.13,1.13); }
-  40%  { transform: scale3d(.87,.87,.87); opacity: 1;}
-  60%  { transform: scale3d(1.05,1.05,1.05); }
-  80%  { transform: scale3d(.95,.95,.95); }
-  100% { transform: scale3d(1,1,1); opacity: 1;}
-}
-@-webkit-keyframes in-bounce {
-  0%, 100%, 20%, 40%, 60%, 80% {
-    -webkit-transition-timing-function: cubic-bezier(0.215,.61,.355,1);
-    -webkit-transform-origin: center;
-  }
-  0%   { -webkit-transform: scale3d(.3,.3,.3); opacity: 0; }
-  20%  { -webkit-transform: scale3d(1.13,1.13,1.13); }
-  40%  { -webkit-transform: scale3d(.87,.87,.87); opacity: 1;}
-  60%  { -webkit-transform: scale3d(1.05,1.05,1.05); }
-  80%  { -webkit-transform: scale3d(.95,.95,.95); }
-  100% { -webkit-transform: scale3d(1,1,1); opacity: 1;}
-}
+// ad hoc
 
-@keyframes in-fade {
-  0%   {opacity: 0;}
-  100% {opacity: 1;}
+.shape_position(@array; @count: length(@array); @name_value: -2; @x_value: -1; @y_value: 0; @icon_scale: .2) when (@count > (length(@array) / 3)) {
+  .shape_position(@array; (@count - 2); (@name_value - 1); (@x_value - 1); (@y_value - 1); @icon_scale);    // <-- Loop to next iteration until count is 0
+  @name:     extract(@array, (@count + @name_value));                                                       //
+  @x_offset: extract(@array, (@count + @x_value)) * (1 / @icon_scale);                                      //
+  @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
+  &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
 }
-@-webkit-keyframes in-fade {
-  0%   {opacity: 0;}
-  100% {opacity: 1;}
+.hud_toggle_animation(...) {
+  .animation(~"in-fade-@{arguments}" @run_slow);
 }
-
-@keyframes in-fade-left {
-  0%   { opacity: 0; transform: translate3d(-50%, 0, 0);}
-  100% { opacity: 1; transform: none;}
-}
-@-webkit-keyframes in-fade-left {
-  0%   { opacity: 0; -webkit-transform: translate3d(-50%, 0, 0);}
-  100% { opacity: 1; -webkit-transform: none;}
-}
-@keyframes in-fade-top {
-  0%   { opacity: 0; transform: translate3d(0, -33%, 0);}
-  100% { opacity: 1; transform: none;}
-}
-@-webkit-keyframes in-fade-top {
-  0%   { opacity: 0; -webkit-transform: translate3d(0, -33%, 0);}
-  100% { opacity: 1; -webkit-transform: none;}
-}
-
-@keyframes dot {
-  0%   {opacity: 0;}
-  50%   {opacity: 0;}
-  100% {opacity: 1;}
-}
-@-webkit-keyframes dot {
-      0% { opacity: 0; }
-     50% { opacity: 0; }
-    100% { opacity: 1; }
+.chat_width() {
+  width: @size_chat;
+  min-width: @tile;
+  max-width: ~"calc(100% - @{tile})";
+  .mq_1920({ width: (@size_chat + (@size_chat_step *  1));});
+  .mq_1600({ width: (@size_chat + (@size_chat_step *  2));});
+  .mq_1280({ width: (@size_chat + (@size_chat_step *  3));});
+   .mq_960({ width: (@size_chat + (@size_chat_step *  8));});
+   .mq_640({ width: (@size_chat + (@size_chat_step * 21));});
 }

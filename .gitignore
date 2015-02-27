@@ -16,5 +16,8 @@ pom.xml.asc
 /out/*
 /.repl/*
 /resources/public/css/app.css
+/resources/public/css/app.css.map
 /production.sh
 /datomic-free*/
+/figwheel_server.log
+/log/

@@ -5,7 +5,7 @@
             [frontend.utils :as utils :include-macros true]
             [om.core :as om :include-macros true])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]
-                   [frontend.utils :refer [html]]))
+                   [sablono.core :refer (html)]))
 
 
 ;; Version 2 of the stateful button follows. New code should prefer this version, managed-button, over the old version, stateful-button.

@@ -59,6 +59,7 @@
             (cust/find-by-google-sub (pcd/default-db) (:sub user-info))
             (throw e)))))))
 
+;; Note: this is hardcoded to prcrsr.com for a good reason
 (def prcrsr-bot-email "prcrsr-bot@prcrsr.com")
 (defn prcrsr-bot-uuid [db]
   (ffirst (d/q '{:find [?u]
@@ -86,9 +87,28 @@
                 (:access-grant/document access-grant)))
     :read))
 
+(defn permission-permission [db doc permission]
+  (when (and permission
+             (:db/id doc)
+             (:permission/document permission)
+             (= (:db/id doc) (:permission/document permission))
+             (not (permission-model/expired? permission)))
+    (cond (contains? (:permission/permits permission) :permission.permits/admin)
+          :admin
+          (contains? (:permission/permits permission) :permission.permits/read)
+          :read
+          :else nil)))
+
+;; TODO: unify these so that there is only 1 permission type
+;;       Could still have multiple permissions for a doc, but want
+;;       to have 1 type. Owner would automatically get the owner permission
+;; TODO: this should return a :permission/permits type of thing
 (defn document-permission [db doc auth]
   (or (cust-permission db doc (:cust auth))
-      (access-grant-permission db doc (:access-grant auth))))
+      ;; TODO: stop using access grant tokens as permissions
+      ;;       Can remove once all of the tokens expire
+      (access-grant-permission db doc (:access-grant auth))
+      (permission-permission db doc (:permission auth))))
 
 (def scope-heirarchy [:read :admin :owner])
 

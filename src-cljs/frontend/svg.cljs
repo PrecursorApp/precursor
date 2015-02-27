@@ -28,11 +28,11 @@
 
 (defn layer->svg-text [layer]
   (merge
+   {:key (:db/id layer)}
    layer
    {:className (str (:className layer) " text-layer")
     :x (+ 1 (:layer/start-x layer))
     :y (:layer/start-y layer)
-    :key (:layer/id layer)
     ;; TODO: defaults for each layer when we create them
     :fontSize   (:layer/font-size layer 20)}))
 

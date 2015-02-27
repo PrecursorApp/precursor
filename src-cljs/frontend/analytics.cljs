@@ -1,14 +1,16 @@
 (ns frontend.analytics
   (:require [frontend.analytics.mixpanel :as mixpanel]
+            [frontend.analytics.rollbar :as rollbar]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]))
 
-
 (defn init-user [cust]
   (utils/swallow-errors
-   (mixpanel/identify (:uuid cust))
-   (mixpanel/name-tag (:email cust))
-   (mixpanel/set-people-props {:$email (:email cust)
+   (rollbar/init (str (:cust/uuid cust)) (:cust/email cust)))
+  (utils/swallow-errors
+   (mixpanel/identify (str (:cust/uuid cust)))
+   (mixpanel/name-tag (:cust/email cust))
+   (mixpanel/set-people-props {:$email (:cust/email cust)
                                :$last_login (js/Date.)})))
 
 (defn track-path [path]
@@ -35,12 +37,14 @@
                           :camera-nudged-up
                           :text-layer-edited
                           :layer-ui-id-edited
-                          :layer-ui-target-edited})
+                          :layer-ui-target-edited
+                          :subscriber-updated})
 
-(defn track-control [event state]
+(defn track-control [event data state]
   (when-not (contains? controls-blacklist event)
     (mixpanel/track (str event) (merge
+                                 (:analytics-data data)
                                  (dissoc (get-in state state/browser-settings-path) :document-settings)
                                  (when (:document/id state)
                                    {:doc-id (:document/id state)
-                                    :subscriber-count (count (:subscribers state))})))))
+                                    :subscriber-count (count (get-in state [:subscribers :info]))})))))
