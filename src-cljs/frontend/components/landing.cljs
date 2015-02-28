@@ -229,7 +229,7 @@
               [:span.philosphy-needed "."]]
              [:div.calls-to-action
               (om/build make-button (select-keys app [:document/id]))]]]]
-          [:div.our-proof {:class (when (:show-scroll-to-arrow app))}
+          [:div.our-proof {:class (when (:show-scroll-to-arrow app) "extend")}
            ;; probably kill this when customers are ready
            (when (:show-scroll-to-arrow app)
              [:a {:role "button"
