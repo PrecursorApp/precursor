@@ -420,6 +420,7 @@
   (let [max-tick (apply max (keys (:ticks tick-state)))]
     (-> tick-state
       (add-tick (inc max-tick) (fn [owner]
+                                 (cleanup owner)
                                  ((om/get-shared owner :cast!) :landing-animation-completed)))
       (annotate-keyframes (inc max-tick)))))
 
