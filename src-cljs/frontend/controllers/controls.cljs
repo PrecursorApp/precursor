@@ -1319,4 +1319,4 @@
     (.play (goog.fx.dom.Scroll. body
                                 #js [(.-scrollLeft body) (.-scrollTop body)]
                                 #js [(.-scrollLeft body) vh]
-                                250))))
+                                375))))

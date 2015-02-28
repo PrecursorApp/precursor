@@ -240,10 +240,10 @@
 .our-proof {
   height: 3px;
   background: @dye_outer;
+  transition: height @run_slow;
+  transition-timing-function: @bezier_bounce;
   &.extend {
     height: @tile;
-    transition: height @run_slower;
-    transition-timing-function: @bezier_bounce;
     overflow: hidden;
     .icon-arrow-down {
       opacity: 1;
