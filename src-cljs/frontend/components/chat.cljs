@@ -204,7 +204,8 @@
         (html
          [:div.chat
           [:div#canvas-size.chat-offset]
-          [:div.chat-window {:class (when-not chat-opened? ["closed"])}
+          [:div.chat-window {:class (when (or (not chat-opened?)
+                                              (:show-landing? app)) ["closed"])}
            [:div.chat-background]
            (om/build log (utils/select-in app [[:document/id]
                                                [:sente-id]
