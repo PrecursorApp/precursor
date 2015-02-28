@@ -416,6 +416,13 @@
       (add-mouse-transition 10 footer-1 footer-2)
       (add-shape 18 footer-2))))
 
+(defn add-landing-cleanup [tick-state]
+  (let [max-tick (apply max (keys (:ticks tick-state)))]
+    (-> tick-state
+      (add-tick (inc max-tick) (fn [owner]
+                                 ((om/get-shared owner :cast!) :landing-animation-completed)))
+      (annotate-keyframes (inc max-tick)))))
+
 (defn landing-background [{:keys [doc-id subscribers]} owner]
   (reify
     om/IInitState (init-state [_] {:layer-source (utils/uuid)})
@@ -427,10 +434,10 @@
         (when (and (< 640 (:width viewport)) ;; only if not on mobile
                    (< 640 (:height viewport))
                    (ds/empty-db? @(om/get-shared owner :db))
-                   (zero? (count (remove (comp :hide-in-list? second) (utils/inspect subscribers)))))
-          (run-animation owner (landing-animation {:db/id doc-id}
-                                                  (om/get-state owner :layer-source)
-                                                  viewport)))))
+                   (zero? (count (remove (comp :hide-in-list? second) subscribers))))
+          (run-animation owner (add-landing-cleanup (landing-animation {:db/id doc-id}
+                                                                       (om/get-state owner :layer-source)
+                                                                       viewport))))))
     om/IWillUnmount
     (will-unmount [_]
       (cleanup owner)

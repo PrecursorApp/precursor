@@ -50,7 +50,8 @@
                                                     [:navigation-data]
                                                     [:cust]
                                                     [:subscribers :info]
-                                                    [:page-count]])
+                                                    [:page-count]
+                                                    [:show-scroll-to-arrow]])
                         {:react-key "outer"}))
 
             (when (and (keyword-identical? :document nav-point)

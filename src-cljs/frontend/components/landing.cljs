@@ -229,7 +229,12 @@
               [:span.philosphy-needed "."]]
              [:div.calls-to-action
               (om/build make-button (select-keys app [:document/id]))]]]]
-          [:div.our-proof
+          [:div.our-proof {:class (when (:show-scroll-to-arrow app) "extend")}
+           ;; probably kill this when customers are ready
+           (when (:show-scroll-to-arrow app)
+             [:a {:role "button"
+                  :on-click #(cast! :scroll-to-arrow-clicked)}
+              (common/icon :arrow-down)])
            ;; Hide this until we get testimonials/stats figured out
            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
            ]])))))

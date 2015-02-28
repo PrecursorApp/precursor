@@ -32,7 +32,7 @@
             [goog.labs.userAgent.engine :as engine]
             goog.style)
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
-  (:import [goog.fx.dom.Scroll]))
+  (:import goog.fx.dom.Scroll))
 
 ;; --- Navigation Multimethod Declarations ---
 
@@ -1303,3 +1303,20 @@
   [target message _ state]
   (-> state
     (assoc :show-viewers? false)))
+
+(defmethod control-event :landing-animation-completed
+  [target message _ state]
+  (assoc state :show-scroll-to-arrow true))
+
+(defmethod control-event :scroll-to-arrow-clicked
+  [target message _ state]
+  (assoc state :show-scroll-to-arrow false))
+
+(defmethod post-control-event! :scroll-to-arrow-clicked
+  [target message _ previous-state current-state]
+  (let [body (.-body js/document)
+        vh (.-height (goog.dom/getViewportSize))]
+    (.play (goog.fx.dom.Scroll. body
+                                #js [(.-scrollLeft body) (.-scrollTop body)]
+                                #js [(.-scrollLeft body) vh]
+                                375))))
