@@ -240,6 +240,24 @@
 .our-proof {
   height: 3px;
   background: @dye_outer;
+  &.extend {
+    height: @tile;
+    transition: height @run_slower;
+    transition-timing-function: @bezier_bounce;
+    overflow: hidden;
+    .icon-arrow-down {
+      opacity: 1;
+    }
+  }
+  .icon-arrow-down {
+    .icon(stroke; @gray);
+    padding: @menu_padding;
+    opacity: 0;
+    transition: opacity @run_slow @run_fast @bezier_fadein;
+    &:hover {
+      .icon(stroke; @black);
+    }
+  }
 }
 .the-how {
   background: @dye_outer;
