@@ -19,15 +19,12 @@
 }
 .the-why,
 .the-what {
+  .selection(@white; 08);
   .flexy(column);
   min-height: 100vh;
   overflow: hidden;
   span {
     .user-select(auto);
-    &::selection {
-      color: @white;
-      background: fade(@white, 08);
-    }
   }
 }
 .the-why {

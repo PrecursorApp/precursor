@@ -1,9 +1,5 @@
-::selection {
-  color: @blue;
-  background: fade(@blue, 08);
-  text-shadow: none;
-}
 html {
+  .selection(@blue; 08);
   .font-smoothing();
   font: @font_size/@line_height @font_family, sans-serif;
   color: @gray_dark;
@@ -19,6 +15,7 @@ body {
   background: @dye_outer;
 }
 .inner {
+  .selection(@white; (100 * @opacity_darker_dark));
   .flexy();
   .transform-origin(right);
   position: fixed;

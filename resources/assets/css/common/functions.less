@@ -241,3 +241,15 @@
    .mq_960({ width: (@size_chat + (@size_chat_step *  8));});
    .mq_640({ width: (@size_chat + (@size_chat_step * 21));});
 }
+.selection(@color, @opacity) {
+  ::-moz-selection {
+    color: @color;
+    background: fade(@color, @opacity);
+    text-shadow: none;
+  }
+  ::selection {
+    color: @color;
+    background: fade(@color, @opacity);
+    text-shadow: none;
+  }
+}
