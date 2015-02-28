@@ -79,7 +79,8 @@
                                                  state/chat-mobile-opened-path
                                                  [:document/id]
                                                  [:sente-id]
-                                                 [:client-id]])
+                                                 [:client-id]
+                                                 [:show-landing?]])
                        {:react-key "chat"})
 
              (when (not right-click-learned?)
