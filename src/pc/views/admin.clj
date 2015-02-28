@@ -20,6 +20,7 @@
         times (take-while #(time/before? % (time/plus now (time/days 1)))
                           (iterate #(clj-time.core/plus % (clj-time.core/days 1))
                                    earliest))
+
         user-counts (map (partial count-users db) times)
         users-per-day (map (fn [a b] (- b a)) (cons 0 user-counts) user-counts)
         width 1000
@@ -27,10 +28,10 @@
         x-tick-width (/ 1000 (count times))
 
         max-users-per-day (apply max users-per-day)
-        y-tick-width (/ 500 (+ max-users-per-day (* 0.10 max-users-per-day)))
+        y-tick-width (/ 500 max-users-per-day)
 
         max-users (apply max user-counts)
-        y-cumulative-tick-width (/ 500 (+ max-users (* 0.10 max-users)))
+        y-cumulative-tick-width (/ 500 max-users)
         padding 20]
     (list
      [:svg {:width 1200 :height 600}
