@@ -229,12 +229,12 @@
               [:span.philosphy-needed "."]]
              [:div.calls-to-action
               (om/build make-button (select-keys app [:document/id]))]]]]
-          [:div.our-proof {:class (and (when :background-bot-finished)
-                                       (when-not (:call-to-scroll-clicked app)))}
-           [:a {:role "button"
-                :on-click (when-not (:call-to-scroll-clicked app)
-                            #(cast! :call-to-scroll-clicked))}
-            (common/icon :arrow-down)] ; probably kill this when customers below are ready
+          [:div.our-proof {:class (when (:show-scroll-to-arrow app))}
+           ;; probably kill this when customers are ready
+           (when (:show-scroll-to-arrow app)
+             [:a {:role "button"
+                  :on-click #(cast! :scroll-to-arrow-clicked)}
+              (common/icon :arrow-down)])
            ;; Hide this until we get testimonials/stats figured out
            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
            ]])))))
