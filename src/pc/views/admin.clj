@@ -39,28 +39,31 @@
         requested (d/q '{:find [[?t ...]]
                          :where [[?t :flags :flags/requested-early-access]]}
                        db)
-        granted (d/q '{:find [[?t ...]]
-                       :where [[?t :flags :flags/private-docs]]}
-                     db)
-        not-granted (remove #(contains? (set granted) %) requested)]
+        granted (set (d/q '{:find [[?t ...]]
+                            :where [[?t :flags :flags/private-docs]]}
+                          db))
+        not-granted (remove #(contains? granted %) requested)]
     (list
      [:style "td, th { padding: 5px; text-align: left }"]
      (if-not (seq not-granted)
        [:h4 "No users that requested early access, but don't have it."]
        (list
-        [:p "Pending:"
+        [:p (str (count not-granted) " pending:")
          [:table {:border 1}
           [:tr
-           [:th "User"]
+           [:th "Email"]
+           [:th "Name"]
            [:th "Company"]
            [:th "Employee Count"]
            [:th "Use Case"]
            [:th "Grant Access (can't be undone without a repl!)"]]
-          (for [cust-id not-granted
+          (for [cust-id (sort not-granted)
                 :let [cust (cust-model/find-by-id db cust-id)
                       req (first (pc.early-access/find-by-cust db cust))]]
             [:tr
              [:td (:cust/email cust)]
+             [:td (or (:cust/name cust)
+                      (:cust/first-name cust))]
              [:td (:early-access-request/company-name req)]
              [:td (:early-access-request/employee-count req)]
              [:td (:early-access-request/use-case req)]
@@ -68,18 +71,21 @@
                    (anti-forgery/anti-forgery-field)
                    [:input {:type "hidden" :name "cust-uuid" :value (str (:cust/uuid cust))}]
                    [:input {:type "submit" :value "Grant early access"}]]]])]]))
-     [:p "Granted:"
+     [:p (str (count granted) " granted:")
       [:table {:border 1}
        [:tr
-        [:th "User"]
+        [:th "Email"]
+        [:th "Name"]
         [:th "Company"]
         [:th "Employee Count"]
         [:th "Use Case"]]
-       (for [cust-id granted
+       (for [cust-id (sort granted)
              :let [cust (cust-model/find-by-id db cust-id)
                    req (first (pc.early-access/find-by-cust db cust))]]
          [:tr
           [:td (:cust/email cust)]
+          [:td (or (:cust/name cust)
+                   (:cust/first-name cust))]
           [:td (:early-access-request/company-name req)]
           [:td (:early-access-request/employee-count req)]
           [:td (:early-access-request/use-case req)]])]])))
