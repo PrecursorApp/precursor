@@ -41,7 +41,7 @@
          [:line {:x1 padding :y1 (+ padding i)
                  :x2 (+ padding 1000) :y2 (+ padding i)
                  :strokeWidth 1 :stroke "black"}]
-         [:text {:x 0 :y (+ padding i)}
+         [:text {:x (+ (* 1.5 padding) 1000) :y (+ padding i)}
           (- max-users-per-day (int (* i (/ max-users-per-day 500))))]))
       (map-indexed (fn [i user-count]
                      [:circle {:cx (+ padding (* x-tick-width i))
@@ -57,7 +57,7 @@
          [:line {:x1 padding :y1 (+ padding i)
                  :x2 (+ padding 1000) :y2 (+ padding i)
                  :strokeWidth 1 :stroke "black"}]
-         [:text {:x 0 :y (+ padding i)}
+         [:text {:x (+ (* 1.5 padding) 1000) :y (+ padding i)}
           (- max-users (int (* i (/ max-users 500))))]))
       (map-indexed (fn [i user-count]
                      [:circle {:cx (+ padding (* x-tick-width i))
