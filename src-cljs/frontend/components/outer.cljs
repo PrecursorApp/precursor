@@ -163,8 +163,10 @@
                    :else "Request early access.")]
             (when access-request-granted?
              [:div.early-access-granted
-              [:p "You can now create private documents and control who has access to them.
-                  Give your team access by having them click the request access button and filling out the same form you did."]
+              [:p
+               "You can now create private documents and control who has access to them. "
+               "The rest of your team can create private docs by clicking the request access "
+               "button and filling out the same form you did."]
 
               [:p "You'll have two weeks of free, unlimited early access, and then we'll follow up with you to see how things are going."]
 

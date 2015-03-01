@@ -17,7 +17,8 @@
                             :early-access-request/use-case (or (:use-case data) "Not provided")}]))
 
 (defn approve-request [cust]
-  @(d/transact (pcd/conn) [(flag-model/add-flag-tx cust :flags/private-docs)]))
+  @(d/transact (pcd/conn) [(flag-model/add-flag-tx cust :flags/private-docs)
+                           [:db/add (:db/id cust) :needs-email :email/early-access-granted]]))
 
 (defn find-by-cust [db cust]
   (map (partial d/entity db)
