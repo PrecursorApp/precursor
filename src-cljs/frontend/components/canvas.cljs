@@ -152,12 +152,13 @@
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner [:cast!])
+            width (js/Math.abs (- (:layer/start-x layer) (:layer/end-x layer)))
+            height (js/Math.abs (- (:layer/start-y layer) (:layer/end-y layer)))
             ;; easier than calcing width, b/c we can just multiply by 2
             handle-offset (max 1
                                (min 4
-                                    (int (/ (min (js/Math.abs (- (:layer/start-x layer) (:layer/end-x layer)))
-                                                 (js/Math.abs (- (:layer/start-y layer) (:layer/end-y layer))))
-                                            4))))]
+                                    (int (/ (Math/sqrt (+ (* width width) (* height height)))
+                                            6))))]
         (apply dom/g #js {:className "edit-handles"}
                (for [[x y] (layers/endpoints layer)]
                  (dom/rect #js {:className (str "edit-handle "
