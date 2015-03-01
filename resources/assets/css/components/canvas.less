@@ -149,7 +149,9 @@
     stroke-opacity: 1;
   }
   &.interactive-fill {
-    cursor: pointer;
+    &:not(.invalid) {
+      cursor: pointer;
+    }
   }
   &.selected {
     cursor: move;
