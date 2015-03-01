@@ -38,6 +38,7 @@
                   :server/timestamp
                   :client/timestamp
                   ;; TODO: teach frontend to lookup cust/name
+                  :session/uuid
                   :cust/cust-name
                   :chat/body
                   :chat/color
