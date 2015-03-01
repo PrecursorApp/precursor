@@ -16,6 +16,9 @@
                             :early-access-request/employee-count (or (:employee-count data) "Not provided")
                             :early-access-request/use-case (or (:use-case data) "Not provided")}]))
 
+(defn approve-request [cust]
+  @(d/transact (pcd/conn) [(flag-model/add-flag-tx cust :flags/private-docs)]))
+
 (defn find-by-cust [db cust]
   (map (partial d/entity db)
        (d/q '{:find [[?t ...]]
