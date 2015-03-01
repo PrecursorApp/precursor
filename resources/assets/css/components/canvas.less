@@ -117,7 +117,7 @@
       fill: transparent;
       cursor: pointer;
     }
-    &.selected-group {
+    &.selected {
       cursor: move;
     }
   }
@@ -149,7 +149,12 @@
     stroke-opacity: 1;
   }
   &.interactive-fill {
-    cursor: pointer;
+    &:not(.invalid) {
+      cursor: pointer;
+    }
+  }
+  &.selected {
+    cursor: move;
   }
 }
 .static {
