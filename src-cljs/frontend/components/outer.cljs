@@ -84,38 +84,26 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             disabled? (or submitting? (not (utils/logged-in? owner)))]
         (html
-         [:div.early-access {:class (get-in app [:navigation-data :type] "team")}
+         [:div.early-access {:class (str (get-in app [:navigation-data :type] " team ")
+                                         (when access-request-granted? " granted "))}
           [:div.content
            [:div.early-access-info
             [:h2.early-access-heading
              "We're excited to show you the team features we're building."]
-            (if access-request-granted?
-              [:div.early-access-copy
-               [:p "You can now create private documents and control who has access to them."]
-               [:p "If the rest of your team wants to be able to create private docs, just have them click the request access button like you did."]
-               [:p "We put up a "
-                [:a {:href "/blog/private-docs-early-access" :target "_self"}
-                 "quick post"]
-                " that explains how to use private docs and outlines the kind of feedback we're looking for."]
-               [:p "We'll be in touch over email with more information."]
-               [:p [:a {:role "button"
-                        :on-click #(cast! :launch-app-clicked {:analytics-data {:source "early-access-granted"}})}
-                    "Launch Precursor"]]]
-              [:p.early-access-copy
-               "To activate your early access, please "
-               (if (utils/logged-in? owner)
-                 "take a moment to"
-                 "sign in first and")
-               " fill out the following information.
-              We'll send you an email confirmation once your account has been granted full access."])
+            [:p.early-access-copy
+             "To activate your early access, please "
+             (if (utils/logged-in? owner)
+               "take a moment to"
+               "sign in first and")
+             " fill out the following information.
+            We'll send you an email confirmation once your account has been granted full access."]
             (when-not (utils/logged-in? owner)
               [:div.early-access-sign
                (om/build common/google-login {:source "Early Access Form"})])]
            [:div.early-access-form {:class (str (when disabled? "disabled ")
                                                 (when submitting? "submitting ")
                                                 (when submitted? "submitted ")
-                                                (when error "error ")
-                                                (when access-request-granted? " request-granted "))}
+                                                (when error "error "))}
             [:div.adaptive-placeholder.early-access-name
              {:tab-index "2"
               :ref "company-name"
@@ -172,7 +160,25 @@
                    (seq error)
                    error
 
-                   :else "Request early access.")]]
+                   :else "Request early access.")]
+            (when access-request-granted?
+             [:div.early-access-granted
+              [:p "You can now create private documents and control who has access to them.
+                  Give your team access by having them click the request access button and filling out the same form you did."]
+
+              [:p "You'll have two weeks of free, unlimited early access, and then we'll follow up with you to see how things are going."]
+
+              [:p
+               "Next, "
+               [:a.feature-link {:title "Private docs early access"
+                                 :href "/blog/private-docs-early-access"}
+                "learn to use private docs"]
+               " or "
+               [:a.feature-link {:title "Launch Precursor"
+                                 :role "button"
+                                 :on-click #(cast! :launch-app-clicked {:analytics-data {:source "early-access-granted"}})}
+                "launch Precursor"]
+               "."]])]
            ]])))))
 
 (defn pricing [app owner]
