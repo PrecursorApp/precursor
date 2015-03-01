@@ -90,6 +90,8 @@
 (defn cancel-drawing [state]
   (-> state
     (assoc :drawing {:layers []})
+    (assoc-in [:editing-eids :editing-eids] #{})
+    (assoc-in [:selected-eids :selected-eids] #{})
     (assoc-in [:mouse-down] false)))
 
 (defmethod control-event :cancel-drawing
