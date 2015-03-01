@@ -44,7 +44,8 @@
                                          :error nil
                                          :company-name ""
                                          :employee-count ""
-                                         :use-case "")))
+                                         :use-case ""
+                                         :access-request-granted? (:access-request-granted? res))))
         (do
           (om/update-state!
            owner
@@ -75,10 +76,11 @@
                                    :use-case ""
                                    :error nil
                                    :submitting? false
-                                   :submitted? false})
+                                   :submitted? false
+                                   :access-request-granted? false})
     om/IDisplayName (display-name [_] "Early Access")
     om/IRenderState
-    (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted?]}]
+    (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted? access-request-granted?]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             disabled? (or submitting? (not (utils/logged-in? owner)))]
         (html
@@ -87,21 +89,33 @@
            [:div.early-access-info
             [:h2.early-access-heading
              "We're excited to show you the team features we're building."]
-            [:p.early-access-copy
-             "To activate your early access, please "
-             (if (utils/logged-in? owner)
-               "take a moment to"
-               "sign in first and")
-             " fill out the following information.
-              We'll send you an email confirmation once your account has been granted full access."]
+            (if access-request-granted?
+              [:div.early-access-copy
+               [:p "You can now create private documents and control who has access to them."]
+               [:p "If the rest of your team wants to be able to create private docs, just have them click the request access button like you did."]
+               [:p "We put up a "
+                [:a {:href "/blog/private-docs-early-access" :target "_self"}
+                 "quick post"]
+                " that explains how to use private docs and outlines the kind of feedback we're looking for."]
+               [:p "We'll be in touch over email with more information."]
+               [:p [:a {:role "button"
+                        :on-click #(cast! :launch-app-clicked {:analytics-data {:source "early-access-granted"}})}
+                    "Launch Precursor"]]]
+              [:p.early-access-copy
+               "To activate your early access, please "
+               (if (utils/logged-in? owner)
+                 "take a moment to"
+                 "sign in first and")
+               " fill out the following information.
+              We'll send you an email confirmation once your account has been granted full access."])
             (when-not (utils/logged-in? owner)
               [:div.early-access-sign
                (om/build common/google-login {:source "Early Access Form"})])]
-           ;; need to hook up disabled class
            [:div.early-access-form {:class (str (when disabled? "disabled ")
                                                 (when submitting? "submitting ")
                                                 (when submitted? "submitted ")
-                                                (when error "error "))}
+                                                (when error "error ")
+                                                (when access-request-granted? " request-granted "))}
             [:div.adaptive-placeholder.early-access-name
              {:tab-index "2"
               :ref "company-name"
@@ -151,13 +165,15 @@
                       [:i "."]
                       [:i "."]]])
 
-                   submitted?
-                   "Got it! We'll respond soon."
+                   submitted? (if access-request-granted?
+                                "Thanks, you've been granted early access!"
+                                "Got it! We'll respond soon.")
 
                    (seq error)
                    error
 
-                   :else "Request early access.")]]]])))))
+                   :else "Request early access.")]]
+           ]])))))
 
 (defn pricing [app owner]
   (reify
