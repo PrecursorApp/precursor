@@ -254,6 +254,8 @@
        (when (seq cust-name)
          [:p (format "Hi %s," cust-name)])
        [:p
+        "You've been granted early access to Precursor's paid features."]
+       [:p
         "You can now create private documents and control who has access to them. "
         "Let the rest of your team create private docs by having them click the request "
         "access button and filling out the same form you did."]
