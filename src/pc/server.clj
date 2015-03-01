@@ -172,7 +172,8 @@
          (if-let [cust (get-in req [:auth :cust])]
            (do
              (pc.early-access/create-request cust (edn/read-string (slurp (:body req))))
-             {:status 200 :body (pr-str {:msg "Thanks!"})})
+             (pc.early-access/approve-request cust)
+             {:status 200 :body (pr-str {:msg "Thanks!" :access-request-granted? true})})
            {:status 401 :body (pr-str {:error :not-logged-in
                                        :msg "Please log in to request early access."})}))
 

@@ -245,6 +245,51 @@
                        :o:tracking-clicks "no"
                        :o:campaign "access_request"})))
 
+(defn early-access-html [cust]
+  (let [cust-name (or (:cust/name cust)
+                      (:cust/first-name cust))]
+    (hiccup/html
+     [:html
+      [:body
+       (when (seq cust-name)
+         [:p (format "Hi %s," cust-name)])
+       [:p
+        "You've been granted early access to Precursor's paid features."]
+       [:p
+        "You can now create private documents and control who has access to them. "
+        "Let the rest of your team create private docs by having them click the request "
+        "access button and filling out the same form you did."]
+
+       [:p
+        "You'll have two weeks of free, unlimited early access, and then we'll follow "
+        "up with you to see how things are going."]
+
+       [:p
+        "Next, "
+        [:a {:title "Private docs early access"
+             :href (urls/blog-url "private-docs-early-access")}
+         "learn to use private docs"]
+        " or "
+        [:a {:title "Launch Precursor"
+             :href (urls/root)}
+         "make something on Precursor"]
+        "."]
+       [:p {:style "font-size: 12px"}
+        (format "Tell us if this message was sent in error %s." (email-address "info"))
+        ;; Add some hidden text so that Google doesn't try to trim these.
+        [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
+         " Sent at " (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now)) "."]]]])))
+
+
+(defn send-early-access-granted-email [db cust-eid]
+  (let [cust (cust-model/find-by-id db cust-eid)
+        email-addresss (:cust/email cust)]
+    (ses/send-message {:from (email-address "Precursor" "early-access")
+                       :to (:cust/email cust)
+                       :subject "Early access to Precursor"
+                       :text (str "You've been granted early access to precursor's paid feaures: https://precursorapp.com")
+                       :html (early-access-html cust)})))
+
 (defn send-entity-email-dispatch-fn [db email-enum eid] email-enum)
 
 (defmulti send-entity-email send-entity-email-dispatch-fn)
@@ -288,6 +333,18 @@
         (unmark-sent-email eid :email/document-permission-for-customer-granted)
         (throw+ t)))
     (log/infof "not re-sending access-request email for %s" eid)))
+
+(defmethod send-entity-email :email/early-access-granted
+  [db email-enum eid]
+  (if (mark-sent-email eid :email/early-access-granted)
+    (try+
+      (log/infof "sending early access email for %s" eid)
+      (send-early-access-granted-email db eid)
+      (catch Object t
+        (.printStackTrace (:throwable &throw-context))
+        (unmark-sent-email eid :email/early-access-granted)
+        (throw+ t)))
+    (log/infof "not re-sending early-access-granted email for %s" eid)))
 
 
 (defn send-missed-entity-emails-cron

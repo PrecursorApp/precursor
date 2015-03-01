@@ -1049,7 +1049,7 @@
 
 (defmethod post-control-event! :track-external-link-clicked
   [target message {:keys [path event properties]} previous-state current-state]
-  (let [redirect #(js/window.location.replace path)]
+  (let [redirect #(set! js/window.location path)]
     (go (alt!
          (mixpanel/managed-track event properties) ([v] (do (utils/mlog "tracked" v "... redirecting")
                                                             (redirect)))

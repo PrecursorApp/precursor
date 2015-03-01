@@ -44,7 +44,8 @@
                                          :error nil
                                          :company-name ""
                                          :employee-count ""
-                                         :use-case "")))
+                                         :use-case ""
+                                         :access-request-granted? (:access-request-granted? res))))
         (do
           (om/update-state!
            owner
@@ -75,14 +76,16 @@
                                    :use-case ""
                                    :error nil
                                    :submitting? false
-                                   :submitted? false})
+                                   :submitted? false
+                                   :access-request-granted? false})
     om/IDisplayName (display-name [_] "Early Access")
     om/IRenderState
-    (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted?]}]
+    (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted? access-request-granted?]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             disabled? (or submitting? (not (utils/logged-in? owner)))]
         (html
-         [:div.early-access {:class (get-in app [:navigation-data :type] "team")}
+         [:div.early-access {:class (str (get-in app [:navigation-data :type] " team ")
+                                         (when access-request-granted? " granted "))}
           [:div.content
            [:div.early-access-info
             [:h2.early-access-heading
@@ -93,11 +96,10 @@
                "take a moment to"
                "sign in first and")
              " fill out the following information.
-              We'll send you an email confirmation once your account has been granted full access."]
+            We'll send you an email confirmation once your account has been granted full access."]
             (when-not (utils/logged-in? owner)
               [:div.early-access-sign
                (om/build common/google-login {:source "Early Access Form"})])]
-           ;; need to hook up disabled class
            [:div.early-access-form {:class (str (when disabled? "disabled ")
                                                 (when submitting? "submitting ")
                                                 (when submitted? "submitted ")
@@ -151,13 +153,35 @@
                       [:i "."]
                       [:i "."]]])
 
-                   submitted?
-                   "Got it! We'll respond soon."
+                   submitted? (if access-request-granted?
+                                "Thanks, you've been granted early access!"
+                                "Got it! We'll respond soon.")
 
                    (seq error)
                    error
 
-                   :else "Request early access.")]]]])))))
+                   :else "Request early access.")]
+            (when access-request-granted?
+             [:div.early-access-granted
+              [:p
+               "You can now create private documents and control who has access to them. "
+               "The rest of your team can create private docs by clicking the request access "
+               "button and filling out the same form you did."]
+
+              [:p "You'll have two weeks of free, unlimited early access, and then we'll follow up with you to see how things are going."]
+
+              [:p
+               "Next, "
+               [:a.feature-link {:title "Private docs early access"
+                                 :href "/blog/private-docs-early-access"}
+                "learn to use private docs"]
+               " or "
+               [:a.feature-link {:title "Launch Precursor"
+                                 :role "button"
+                                 :on-click #(cast! :launch-app-clicked {:analytics-data {:source "early-access-granted"}})}
+                "launch Precursor"]
+               "."]])]
+           ]])))))
 
 (defn pricing [app owner]
   (reify
