@@ -294,7 +294,7 @@
                                                                                    :x (first (cameras/screen-event-coords %))
                                                                                    :y (second (cameras/screen-event-coords %))})
 
-                                                  part-of-group?
+                                                  selected?
                                                   (cast! :group-selected
                                                          {:x (first (cameras/screen-event-coords %))
                                                           :y (second (cameras/screen-event-coords %))})
