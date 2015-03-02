@@ -47,7 +47,7 @@
      [:p "Performance is very important for a prototyping tool, particularly one built on the web. This forces me to spend a lot of time thinking about browser performance for "
       [:a {:href "https://precursorapp.com"} "Precursor"]
       ". Our goal at Precursor is to make collaborating on ideas effortless. If things don't behave the way users expect, there's a risk of pushing them backwards—retreating towards alternatives that are more familiar, like pen and paper or whiteboards."]
-     [:p "Our front end is build with "
+     [:p "Our front end is built with "
       [:a {:href "https://github.com/omcljs/om"} "Om"]
       " and "
       [:a {:href "https://github.com/facebook/react"} "React"]
