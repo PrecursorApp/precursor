@@ -53,8 +53,6 @@
    ;; {:slug "scheduled-time-example"
    ;;  :display-in-overview true
    ;;  :scheduled-time (clj-time.format/parse "Fri, 30 Jan 2015 01:12:00 -0800")}
-   ;; "instrumenting-om-components"
-   ;; "lets-replace-pen-and-paper"
    ])
 
 (defn post-exists? [slug]
