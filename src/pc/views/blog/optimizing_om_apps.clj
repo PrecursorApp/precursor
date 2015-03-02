@@ -86,12 +86,13 @@
       [:span did-mount-code-block]]
      [:p "Every mount and update gets stored to keep track of average and maximum render times."]]
 
-    [:article
+    [:article.blogpost-footnote
      [:p
-      "This library was based on previous work, "
-      [:a {:href "https://dwwoelfel.github.io/instrumenting-om-components.html"} "Instrumenting Om Components"]
-      "."]
-     [:p "Thanks to "
+      "Thanks to "
       [:a {:href "https://twitter.com/sgrove"}
        "Sean Grove"]
-      " for reading drafts of this."]])})
+      " for reading drafts of this."]
+     [:p
+      "Based on previous work, "
+      [:a {:href "https://dwwoelfel.github.io/instrumenting-om-components.html"} "Instrumenting Om Components"]
+      "."]])})
