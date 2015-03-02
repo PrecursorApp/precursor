@@ -258,7 +258,7 @@
                                :http-session-key (:cust/http-session-key cust))
                :headers {"Location" (str (or (get parsed-state "redirect-path") "/")
                                          (when-let [query (get parsed-state "redirect-query")]
-                                           (str "?" (url/map->query query))))}}))))
+                                           (str "?" query)))}}))))
 
    (POST "/logout" {{redirect-to :redirect-to} :params :as req}
          (when-let [cust (-> req :auth :cust)]
