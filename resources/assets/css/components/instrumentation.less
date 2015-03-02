@@ -7,9 +7,12 @@
   top: 0;
   left: 0;
   width: 100%;
-  background-color: fade(@black, 60);
 }
 .instrumentation-table {
+  .animation(in-fade-top-soft @run_slower);
+
+  background-color: fade(@black, 60);
+
   font-family: @font_mono;
   font-size: .75rem;
   line-height: 2;
