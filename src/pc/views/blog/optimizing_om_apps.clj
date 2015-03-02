@@ -76,7 +76,8 @@
       " by hitting Ctrl+Shift+Alt+J."]]
 
     ;; n.b. this image is only stored in the CDN, it's not available locally
-    (common/demo (cdn-path "/blog/optimizing-om-apps/instrumentation-frame.png") "https://dtwdl3ecuoduc.cloudfront.net/om-i/instrumentation.gif")
+    (common/demo (cdn-path "/blog/optimizing-om-apps/instrumentation-frame.png") "https://dtwdl3ecuoduc.cloudfront.net/om-i/instrumentation.gif"
+                 :caption "Ctrl+Shift+Alt+J = Oh, my!")
 
     [:article
      [:h3 "How it works"]

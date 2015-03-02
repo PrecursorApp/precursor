@@ -1,3 +1,4 @@
+[data-caption],
 [data-caption-white],
 [data-caption-black] {
   display: block;
@@ -26,6 +27,16 @@
       transition+: color     @run_fast @bezier_fadein    @run_fast;
       transition+: padding   @run_fast @bezier_deform @run_fast;
       transition+: font-size @run_fast @bezier_deform @run_fast;
+    }
+  }
+}
+[data-caption] {
+  &:after {
+    content: attr(data-caption);
+  }
+  &:hover {
+    &:after {
+      color: @blue;
     }
   }
 }

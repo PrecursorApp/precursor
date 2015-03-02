@@ -155,6 +155,7 @@
     &:after {
       opacity: 0;
     }
+    [data-caption],
     [data-caption-white],
     [data-caption-black] {
       &:after {
@@ -165,6 +166,11 @@
         transition+: color     @run_fast @bezier_fadein    @run_fast;
         transition+: padding   @run_fast @bezier_deform @run_fast;
         transition+: font-size @run_fast @bezier_deform @run_fast;
+      }
+    }
+    [data-caption] {
+      &:after {
+        color: @blue;
       }
     }
     [data-caption-white] {

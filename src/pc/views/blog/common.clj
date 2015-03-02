@@ -16,7 +16,7 @@
                      :onmouseout (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)
                      :ontouchend (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)}
    [:a (when caption
-         {:data-caption-black caption})
+         {:data-caption caption})
     [:img {:src placeholder}]]])
 
 (defn demo-with-blank-canvas [gif caption]
