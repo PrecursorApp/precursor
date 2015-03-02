@@ -120,6 +120,11 @@
 
 (defmulti svg-element (fn [layer opts] (:layer/type layer)))
 
+(defmethod svg-element :default
+  [layer opts]
+  (js/Rollbar.error "Called clipboard/svg-element for non-drawing" layer)
+  nil)
+
 (defmethod svg-element :layer.type/rect
   [layer opts]
   [:rect (layer->svg-rect layer opts)])
