@@ -6,6 +6,7 @@
             [hiccup.core :as hiccup]
             [pc.datomic :as pcd]
             [pc.http.admin.auth :as auth]
+            [pc.http.sente :as sente]
             [pc.models.cust :as cust-model]
             [pc.models.flag :as flag-model]
             [pc.views.admin :as admin-content]
@@ -37,6 +38,18 @@
                                        [:a {:href "/admin"}
                                         "Go back to the admin page"]
                                        "."])})))
+
+(defpage clients "/clients" [req]
+  {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})
+
+(defpage refresh-client [:post "/refresh-client-stats"] [req]
+  (println req)
+  (if-let [client-id (get-in req [:params "client-id"])]
+    (sente/fetch-stats client-id)
+    (when (get-in req [:params "refresh-all"])
+      (doseq [[client-id _] @sente/client-stats]
+        (sente/fetch-stats client-id))))
+  {:status 302 :headers {"Location" "/clients"} :body ""})
 
 (defn wrap-require-login [handler]
   (fn [req]

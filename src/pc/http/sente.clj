@@ -56,6 +56,8 @@
 ;; e.g {:12345 {:uuid-1 {show-mouse?: true} :uuid-1 {:show-mouse? false}}}
 (defonce document-subs (atom {}))
 
+(defonce client-stats (atom {}))
+
 (defn notify-transaction [data]
   (doseq [[uid _] (dissoc (get @document-subs (:document/id data)) (str (:session/uuid data)))]
     (log/infof "notifying %s about new transactions for %s" uid (:document/id data))
@@ -105,7 +107,8 @@
                                        (if (empty? new-client-ids)
                                          (dissoc acc document-id)
                                          (assoc acc document-id new-client-ids)))))
-                                 ds ds))))
+                                 ds ds)))
+  (swap! client-stats dissoc client-id))
 
 (defn close-connection [client-id]
   (log/infof "closing connection for %s" client-id)
@@ -178,6 +181,7 @@
 
 ;; XXX need to add requested remainder also
 (defn subscribe-to-doc [db document-id uuid cust-name & {:keys [requested-color requested-remainder]}]
+  (swap! client-stats assoc uuid {:document {:db/id document-id}})
   (swap! document-subs update-in [document-id]
          (fn [subs]
            (-> subs
@@ -460,10 +464,10 @@
      (recur (conj-limit v n x) n (first xs) (next xs))
      (conj-limit v n x))))
 
-(defonce stats (atom []))
-
 (defmethod ws-handler :frontend/stats [{:keys [client-id ?data ?reply-fn] :as req}]
-  (swap! stats conj-limit 100 {:client-id client-id :stats (:stats ?data) :time (time/now)}))
+  (swap! client-stats utils/update-when-in [client-id] merge {:stats (:stats ?data)
+                                                              :last-update (time/now)
+                                                              :cust (get-in req [:ring-req :auth :cust])}))
 
 (defmethod ws-handler :chsk/ws-ping [req]
   ;; don't log

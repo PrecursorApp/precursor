@@ -122,3 +122,49 @@
           [:td (:early-access-request/company-name req)]
           [:td (:early-access-request/employee-count req)]
           [:td (:early-access-request/use-case req)]])]])))
+
+(defn format-runtime [ms]
+  (let [h (int (Math/floor (/ ms (* 1000 60 60))))
+        m (int (Math/floor (mod (/ ms 1000 60) 60)))
+        s (int (Math/floor (mod (/ ms 1000) 60)))]
+    (format "%s:%s:%s" h m s)))
+
+(defn clients [client-stats document-subs]
+  [:div
+   [:form {:action "/refresh-client-stats" :method "post"}
+    (anti-forgery/anti-forgery-field)
+    [:input {:type "hidden" :name "refresh-all" :value true}]
+    [:input {:type "submit" :value "Refresh all (don't do this too often)"}]]
+   [:style "td, th { padding: 5px; text-align: left }"]
+   [:table {:border 1}
+    [:tr
+     [:th "Document"]
+     [:th "User"]
+     [:th "Action"]
+     [:th "Code version"]
+     [:th "Chat #"]
+     [:th "unread-chat #"]
+     [:th "TX #"]
+     [:th "layer count"]
+     [:th "logged-in?"]
+     [:th "run-time (h:m:s)"]
+     [:th "subscriber-count"]
+     [:th "visibility"]]
+    (for [[client-id stats] (sort-by (comp :db/id :document second) client-stats)
+          :let [doc-id (get-in stats [:document :db/id])]]
+      [:tr
+       [:td (str doc-id " (" (count (get document-subs doc-id)) ")")]
+       [:td (get-in stats [:cust :cust/email])]
+       [:td [:form {:action "/refresh-client-stats" :method "post"}
+             (anti-forgery/anti-forgery-field)
+             [:input {:type "hidden" :name "client-id" :value client-id}]
+             [:input {:type "submit" :value "refresh"}]]]
+       [:td (get-in stats [:stats :code-version])]
+       [:td (get-in stats [:stats :chat-count])]
+       [:td (get-in stats [:stats :unread-chat-count])]
+       [:td (get-in stats [:stats :transaction-count])]
+       [:td (get-in stats [:stats :layer-count])]
+       [:td (get-in stats [:stats :logged-in?])]
+       [:td (some-> (get-in stats [:stats :run-time-millis]) format-runtime)]
+       [:td (get-in stats [:stats :subscriber-count])]
+       [:td (get-in stats [:stats :visibility])]])]])
