@@ -1,4 +1,4 @@
-(ns pc.views.blog.optimizing-om-applications)
+(ns pc.views.blog.optimizing-om-apps)
 
 (def will-mount-code-block
 "(defn wrap-will-mount
@@ -35,8 +35,8 @@
                                 0))))))
       (.call f this))))")
 
-(defn optimizing-om-applications []
-  {:title "Optimizing Om applications"
+(defn optimizing-om-apps []
+  {:title "Optimizing Om apps"
    :blurb "We've released a new library for Om that we use to optimize Precursor."
    :author "Daniel"
    :body
