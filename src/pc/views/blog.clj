@@ -40,7 +40,7 @@
    Be careful for daylight savings time!"
   [
    {:slug "optimizing-om-apps"
-    :display-in-overview false}
+    :display-in-overview true}
    {:slug "blue-ocean-made-of-ink"
     :display-in-overview true}
    {:slug "private-docs-early-access"
