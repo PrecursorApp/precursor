@@ -173,7 +173,8 @@
               [:p
                "Next, "
                [:a.feature-link {:title "Private docs early access"
-                                 :href "/blog/private-docs-early-access"}
+                                 :href "/blog/private-docs-early-access"
+                                 :target "_self"}
                 "learn to use private docs"]
                " or "
                [:a.feature-link {:title "Launch Precursor"
