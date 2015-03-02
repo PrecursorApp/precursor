@@ -38,7 +38,7 @@
       (.call f this))))")
 
 (defn optimizing-om-apps []
-  {:title "Optimizing Om apps"
+  {:title "Optimizing Om Apps"
    :blurb "We've released a new library for Om that we use to optimize Precursor."
    :author "Daniel"
    :body
