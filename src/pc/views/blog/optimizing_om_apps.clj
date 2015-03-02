@@ -39,7 +39,7 @@
 
 (defn optimizing-om-apps []
   {:title "Optimizing Om Apps"
-   :blurb "We've released a new library for Om that we use to optimize Precursor."
+   :blurb "Our front end is built with Om and React. Both have excellent performance right out of the box, but we needed more insight."
    :author "Daniel"
    :body
    (list
