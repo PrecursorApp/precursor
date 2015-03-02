@@ -72,7 +72,7 @@
      [:p "Every mount and update gets stored to keep track of average and maximum render times."]]
 
     ;; n.b. that this image is only stored in the CDN, it's not available locally
-    [:figure [:img {:src "http://dtwdl3ecuoduc.cloudfront.net/om-i/om-i-demo.gif"}]]
+    [:figure [:img {:src "https://dtwdl3ecuoduc.cloudfront.net/om-i/om-i-demo.gif"}]]
 
     [:article
      [:p
