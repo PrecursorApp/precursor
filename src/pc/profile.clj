@@ -79,3 +79,8 @@
 (defn statsd-host []
   ;; goes to localhost if it can't resolve
   "10.99.0.104")
+
+(defn use-email-whitelist?
+  "Used to guard against sending emails to customers from dev-mode"
+  []
+  (not (prod?)))
