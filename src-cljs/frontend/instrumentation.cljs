@@ -155,37 +155,46 @@
                            (reduce (fn [acc [react-id data]]
                                      (update-in acc [(:display-name data)] (fnil conj []) data))
                                    {} data))]
-            (dom/div #js {:className "admin-stats"}
-              (dom/table nil
-                (dom/caption nil (gstring/format "Component render stats, sorted by %s (Ctrl+Alt+Shift+s). Clicks go through. Ctrl+Alt+Shift+j to toggle, Ctrl+Alt+Shift+k to clear."
-                                                 sort-order))
-                (dom/thead nil
-                  (dom/tr nil
-                    (dom/th nil "component")
-                    (dom/th #js {:className "number"} "count (mount|render)")
-                    (dom/th #js {:className "number"} "last-ms")
-                    (dom/th #js {:className "number"} "average-ms")
-                    (dom/th #js {:className "number"} "max-ms")
-                    (dom/th #js {:className "number"} "min-ms")
-                    (dom/th #js {:className "number"} "std-ms")))
-                (apply dom/tbody nil
-                       (for [{:keys [display-name
-                                     last-will-update last-will-mount
-                                     average-render-ms average-mount-ms
-                                     max-render-ms max-mount-ms
-                                     min-render-ms min-mount-ms
-                                     render-std-dev mount-std-dev
-                                     render-count mount-count
-                                     last-render-ms last-mount-ms] :as stat}
-                             (reverse (sort stats-compare stats))]
-                         (dom/tr nil
-                           (dom/td nil display-name)
-                           (dom/td #js {:className "number" } (format-stat mount-count render-count))
-                           (dom/td #js {:className "number" } (format-stat last-mount-ms last-render-ms))
-                           (dom/td #js {:className "number" } (format-stat average-mount-ms average-render-ms))
-                           (dom/td #js {:className "number" } (format-stat max-mount-ms max-render-ms))
-                           (dom/td #js {:className "number" } (format-stat min-mount-ms min-render-ms))
-                           (dom/td #js {:className "number" } (format-stat mount-std-dev render-std-dev)))))))))))))
+            (dom/table #js {:className "instrumentation-table"}
+              (dom/thead nil
+                (dom/tr nil
+                  (dom/th nil "component")
+                  (dom/th #js {:className "number right"} "render ")
+                  (dom/th #js {:className "number left"} "/ mount")
+                  (dom/th #js {:className "number" :colSpan "2"} "last-ms")
+                  (dom/th #js {:className "number" :colSpan "2"} "average-ms")
+                  (dom/th #js {:className "number" :colSpan "2"} "max-ms")
+                  (dom/th #js {:className "number" :colSpan "2"} "min-ms")
+                  (dom/th #js {:className "number" :colSpan "2"} "std-ms")))
+              (apply dom/tbody nil
+                     (for [{:keys [display-name
+                                   last-will-update last-will-mount
+                                   average-render-ms average-mount-ms
+                                   max-render-ms max-mount-ms
+                                   min-render-ms min-mount-ms
+                                   render-std-dev mount-std-dev
+                                   render-count mount-count
+                                   last-render-ms last-mount-ms] :as stat}
+                           (reverse (sort stats-compare stats))]
+                       (dom/tr nil
+                         (dom/td nil display-name)
+                         (dom/td #js {:className "number" } render-count)
+                         (dom/td #js {:className "number" } (when mount-count (gstring/format "%2d" mount-count)))
+                         (dom/td #js {:className "number" } last-mount-ms)
+                         (dom/td #js {:className "number" } (when last-render-ms (gstring/format "%2d" last-render-ms)))
+                         (dom/td #js {:className "number" } average-mount-ms)
+                         (dom/td #js {:className "number" } (when average-render-ms (gstring/format "%2d" average-render-ms)))
+                         (dom/td #js {:className "number" } max-mount-ms)
+                         (dom/td #js {:className "number" } (when max-render-ms (gstring/format "%2d" max-render-ms)))
+                         (dom/td #js {:className "number" } min-mount-ms)
+                         (dom/td #js {:className "number" } (when min-render-ms (gstring/format "%2d" min-render-ms)))
+                         (dom/td #js {:className "number" } mount-std-dev)
+                         (dom/td #js {:className "number" } (when render-std-dev (gstring/format "%2d" render-std-dev))) )))
+              (dom/tfoot nil
+                (dom/tr nil
+                  (dom/td #js {:className "instrumentation-info" :colSpan "13"}
+                          (gstring/format "Component render stats, sorted by %s (Ctrl+Alt+Shift+s). Clicks go through. Ctrl+Alt+Shift+j to toggle, Ctrl+Alt+Shift+k to clear."
+                                                                           sort-order)))))))))))
 
 (defn prepend-stats-node []
   (let [node (goog.dom/htmlToDocumentFragment "<div class='om-instrumentation'></div>")

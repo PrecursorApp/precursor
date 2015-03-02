@@ -1,30 +1,72 @@
 .om-instrumentation {
-  figure {
-    margin: 0;
-  }
-  .admin-stats {
-    .animation(admin-slide-down 200ms ease-in-out);
-    width: 100%;
-    color: white;
-    background-color: black;
-    z-index: 2000;
-    position: fixed;
-    top: 0;
-    left: 0;
-    opacity: 0.7;
-    pointer-events: none;
-    user-select: none;
-  }
-  table {
-    font-family: monaco;
-    font-size: 12px;
-    width: calc(100% - 2em);
-    margin: 0 1em 1em;
-    th, td {
-      text-align: left;
-      white-space: pre;
+  .user-select(none);
+  pointer-events: none;
+  color: @gray;
+  position: fixed;
+  z-index: @zindex_instrumentation;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: fade(@black, 60);
+}
+.instrumentation-table {
+  font-family: @font_mono;
+  font-size: .75rem;
+  line-height: 2;
+  width: 100%;
+  th {
+    color: @white;
+    line-height: 1rem;
+    padding: @menu_padding 0;
+    text-transform: uppercase;
+    text-align: left;
+    &:not(:first-child) {
+      text-align: center;
     }
-    tr:not(:last-child) { border-bottom: 1px dashed fade(white, 10%); }
-    .number { text-align: right; }
+    &.left {
+      text-align: left;
+    }
+    &.right {
+      text-align: right;
+    }
+  }
+  th,
+  td {
+    white-space: pre;
+    &:first-child {
+      padding-left: @menu_padding;
+    }
+  }
+  tbody {
+    tr {
+      &:nth-child(odd) {
+        background-color: fade(@black, 40);
+      }
+    }
+    td {
+      &:nth-child(even) {
+        text-align: right;
+        border-right: 1px dashed;
+        padding-right: .5em;
+      }
+      &:nth-child(odd) {
+        text-align: left;
+        padding-left: .5em;
+      }
+      &:first-child {
+        padding-left: @menu_padding;
+      }
+    }
+  }
+  tfoot {
+    td {
+      line-height: 1rem;
+      text-align: center;
+      padding: @menu_padding 0;
+    }
+  }
+  small {
+    font-size: 1em;
+    opacity: .5;
   }
 }
