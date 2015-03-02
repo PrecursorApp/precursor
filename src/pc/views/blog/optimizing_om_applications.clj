@@ -13,7 +13,9 @@
       (.call f this))))")
 
 (def did-mount-code-block
-"(defn wrap-did-mount
+"
+
+(defn wrap-did-mount
   \"Tracks last call time of componentDidMount for each component and updates
    the render times (using start time provided by wrap-will-mount), then
    calls the original componentDidMount.\"
@@ -66,9 +68,9 @@
     [:article
      [:h3 "How it works"]
      [:p "Om lets you specify custom handlers for React's component lifecycle methods. First, we track mount times by wrapping Om's default componentWillMount and componentDidMount methods. Then in componentWillMount, we associate the start time with the component's React id, and calculate the mount time when componentDidMount fires. We also do the same with the update lifecycle methods to get render times."]
-     [:p
-      [:code [:pre will-mount-code-block]]
-      [:code [:pre did-mount-code-block]]]
+     [:code.block
+      [:span will-mount-code-block]
+      [:span did-mount-code-block]]
      [:p "Every mount and update gets stored to keep track of average and maximum render times."]]
 
     ;; n.b. that this image is only stored in the CDN, it's not available locally

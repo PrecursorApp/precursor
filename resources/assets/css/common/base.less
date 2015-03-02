@@ -129,6 +129,22 @@ textarea {
 p {
   margin: 0 0 1em;
 }
+code {
+  white-space: pre;
+  border: 1px solid @gray_lighter;
+  &.block {
+    .gradient(to bottom, fade(@black, 0) 50%, fade(@black, 02) 50%);
+    display: block;
+    font-size: 11px;
+    line-height: 2em;
+    margin: 2em 0;
+    padding: 2em 1em;
+    background-repeat: repeat-y;
+    background-size: 100% 4em;
+    background-position: center top;
+    overflow-x: auto;
+  }
+}
 .divider,
 .divider-small {
   .flexy(center, center);
