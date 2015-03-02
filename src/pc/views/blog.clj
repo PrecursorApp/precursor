@@ -39,9 +39,10 @@
    to anyone with the direct URL. Time should be in the format Fri, 30 Jan 2015 01:12:00 -0800
    Be careful for daylight savings time!"
   [
+   {:slug "optimizing-om-applications"
+    :display-in-overview false}
    {:slug "blue-ocean-made-of-ink"
-    :display-in-overview true
-    :scheduled-time (clj-time.format/parse "Fri, 30 Jan 2015 04:59:00 -0800")}
+    :display-in-overview true}
    {:slug "private-docs-early-access"
     :display-in-overview false}
    {:slug "product-hunt-wake-up-call"
