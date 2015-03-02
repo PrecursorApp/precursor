@@ -43,13 +43,20 @@
   {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})
 
 (defpage refresh-client [:post "/refresh-client-stats"] [req]
-  (println req)
   (if-let [client-id (get-in req [:params "client-id"])]
     (sente/fetch-stats client-id)
     (when (get-in req [:params "refresh-all"])
       (doseq [[client-id _] @sente/client-stats]
         (sente/fetch-stats client-id))))
+  (Thread/sleep 500)
   {:status 302 :headers {"Location" "/clients"} :body ""})
+
+(defpage refresh-browser [:post "/refresh-client-browser"] [req]
+  (when-let [client-id (get-in req [:params "client-id"])]
+    (sente/refresh-browser client-id))
+  (Thread/sleep 500)
+  {:status 302 :headers {"Location" "/clients"} :body ""})
+
 
 (defn wrap-require-login [handler]
   (fn [req]

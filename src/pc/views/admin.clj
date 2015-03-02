@@ -4,6 +4,7 @@
             [hiccup.core :as h]
             [pc.datomic :as pcd]
             [pc.early-access]
+            [pc.http.urls :as urls]
             [pc.models.cust :as cust-model]
             [ring.util.anti-forgery :as anti-forgery]))
 
@@ -138,7 +139,7 @@
    [:style "td, th { padding: 5px; text-align: left }"]
    [:table {:border 1}
     [:tr
-     [:th "Document"]
+     [:th "Document (subs)"]
      [:th "User"]
      [:th "Action"]
      [:th "Code version"]
@@ -150,10 +151,13 @@
      [:th "run-time (h:m:s)"]
      [:th "subscriber-count"]
      [:th "visibility"]]
-    (for [[client-id stats] (sort-by (comp :db/id :document second) client-stats)
+    (for [[client-id stats] (reverse (sort-by (comp :last-update second) client-stats))
           :let [doc-id (get-in stats [:document :db/id])]]
       [:tr
-       [:td (str doc-id " (" (count (get document-subs doc-id)) ")")]
+       [:td
+        [:a {:href (urls/doc-svg doc-id)}
+         [:img {:style "width:100;height:100;"
+                :src (urls/doc-svg doc-id)}]]]
        [:td (get-in stats [:cust :cust/email])]
        [:td [:form {:action "/refresh-client-stats" :method "post"}
              (anti-forgery/anti-forgery-field)
@@ -166,5 +170,11 @@
        [:td (get-in stats [:stats :layer-count])]
        [:td (get-in stats [:stats :logged-in?])]
        [:td (some-> (get-in stats [:stats :run-time-millis]) format-runtime)]
-       [:td (get-in stats [:stats :subscriber-count])]
-       [:td (get-in stats [:stats :visibility])]])]])
+       [:td (count (get document-subs doc-id))]
+       [:td (let [visibility (get-in stats [:stats :visibility])]
+              (list visibility
+                    (when (= "hidden" visibility)
+                      [:form {:action "/refresh-client-browser" :method "post"}
+                       (anti-forgery/anti-forgery-field)
+                       [:input {:type "hidden" :name "client-id" :value client-id}]
+                       [:input {:type "submit" :value "refresh browser"}]])))]])]])
