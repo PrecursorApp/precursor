@@ -1,12 +1,14 @@
 (ns pc.auth.google
-  (:require [pc.profile :as profile]
-            [pc.util.base64 :as base64]
-            [pc.util.jwt :as jwt]
-            [cemerick.url :as url]
+  (:require [cemerick.url :as url]
             [cheshire.core :as json]
             [clj-http.client :as http]
+            [clj-time.coerce]
             [clj-time.format]
-            [clj-time.coerce]))
+            [clojure.tools.logging :as log]
+            [pc.profile :as profile]
+            [pc.util.base64 :as base64]
+            [pc.util.jwt :as jwt]
+            [slingshot.slingshot :refer (try+ throw+)]))
 
 (def dev-google-client-secret "r5t9LYCCJA3SaHnsDNg-dRsF")
 (defn google-client-secret []
@@ -53,17 +55,22 @@
       (select-keys [:email :email_verified :sub])))
 
 (defn user-info-from-sub [sub]
-  (let [resp (-> (http/get (format "https://www.googleapis.com/plus/v1/people/%s" sub)
-                           {:query-params {:key (google-api-key)}})
+  (try+
+    (let [resp (-> (http/get (format "https://www.googleapis.com/plus/v1/people/%s" sub)
+                             {:query-params {:key (google-api-key)}})
                  :body
                  json/decode)]
-    {:first-name (get-in resp ["name" "givenName"])
-     :last-name (get-in resp ["name" "familyName"])
-     :birthday (some-> resp (get "birthday") clj-time.format/parse clj-time.coerce/to-date)
-     :gender (get resp "gender")
-     :occupation (get resp "occupation")
-     :avatar-url (some-> (get-in resp ["image" "url"])
-                   url/url
-                   (assoc :query {})
-                   str
-                   (java.net.URI.))}))
+      {:first-name (get-in resp ["name" "givenName"])
+       :last-name (get-in resp ["name" "familyName"])
+       :birthday (some-> resp (get "birthday") clj-time.format/parse clj-time.coerce/to-date)
+       :gender (get resp "gender")
+       :occupation (get resp "occupation")
+       :avatar-url (some-> (get-in resp ["image" "url"])
+                     url/url
+                     (assoc :query {})
+                     str
+                     (java.net.URI.))})
+    ;; some users don't have a google plus account
+    (catch [:status 404] t
+      (log/infof "No google plus info for %s" sub)
+      {})))
