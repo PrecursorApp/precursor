@@ -47,10 +47,14 @@
          [:text {:x (+ (* 1.5 padding) 1000) :y (+ padding i)}
           (- max-users-per-day (int (* i (/ max-users-per-day 500))))]))
       (map-indexed (fn [i user-count]
-                     [:circle {:cx (+ padding (* x-tick-width i))
-                               :cy (+ padding (- 500 (* y-tick-width user-count)))
-                               :r 5
-                               :fill "blue"}])
+                     [:g
+                      [:circle {:cx (+ padding (* x-tick-width i))
+                                :cy (+ padding (- 500 (* y-tick-width user-count)))
+                                :r 5
+                                :fill "blue"
+                                }]
+                      [:title user-count]])
+
                    users-per-day)]
      [:svg {:width 1200 :height 600}
       [:rect {:x 20 :y 20 :width 1000 :height 500
@@ -63,10 +67,12 @@
          [:text {:x (+ (* 1.5 padding) 1000) :y (+ padding i)}
           (- max-users (int (* i (/ max-users 500))))]))
       (map-indexed (fn [i user-count]
-                     [:circle {:cx (+ padding (* x-tick-width i))
-                               :cy (+ padding (- 500 (* y-cumulative-tick-width user-count)))
-                               :r 5
-                               :fill "blue"}])
+                     [:g
+                      [:circle {:cx (+ padding (* x-tick-width i))
+                                :cy (+ padding (- 500 (* y-cumulative-tick-width user-count)))
+                                :r 5
+                                :fill "blue"}]
+                      [:title user-count]])
                    user-counts)])))
 
 (defn early-access-users []
