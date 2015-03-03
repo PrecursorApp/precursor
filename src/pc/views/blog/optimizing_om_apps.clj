@@ -85,7 +85,13 @@
      [:code.block
       [:span will-mount-code-block]
       [:span did-mount-code-block]]
-     [:p "Every mount and update gets stored to keep track of average and maximum render times."]]
+     [:p "Every mount and update gets stored to keep track of average and maximum render times."]
+
+     [:p
+      [:a {:href "https://github.com/PrecursorApp/om-i"} "Check it out on GitHub"]
+      "."]]
+
+
 
     [:article.blogpost-footnote
      [:p
