@@ -127,7 +127,7 @@
                    :headers {"Content-Type" "image/png"}
                    :body (svg->png (render-layers layers
                                                   :invert-colors? (-> req :params :printer-friendly (= "false"))
-                                                  :size-limit 2000))})
+                                                  :size-limit 800))})
 
                 (auth/logged-in? req)
                 {:status 403
