@@ -96,7 +96,7 @@
                 [:cust/email :cust/uuid :cust/name :flags])))
 
 (defn public-read-api [cust]
-  (select-keys cust [:cust/uuid :cust/name :cust/chosen-color]))
+  (select-keys cust [:cust/uuid :cust/name :cust/color-name]))
 
 (defn public-read-api-per-uuids
   "Returns hashmap of uuid to cust-map, e.g. {#uuid '123' {:cust/uuid '123' :cust/name 'd'}}"

@@ -187,7 +187,7 @@
            (-> subs
              (assoc-in [uuid :color] (choose-color subs uuid requested-color))
              (assoc-in [uuid :client-id] uuid)
-             (update-in [uuid] merge (cust/public-read-api cust))
+             (update-in [uuid] merge (select-keys cust [:cust/uuid]))
              (assoc-in [uuid :show-mouse?] true)
              (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
 
@@ -229,6 +229,9 @@
                         {:document/id document-id
                          :uuid->cust (->> document-id
                                        (cust/cust-uuids-for-doc (:db req))
+                                       set
+                                       (set/union (disj (set (map :cust/uuid (vals (get subs document-id))))
+                                                        nil))
                                        (cust/public-read-api-per-uuids (:db req)))}])
 
     (log/infof "sending chats %s to %s" document-id client-id)
@@ -329,14 +332,16 @@
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [doc-id (-> ?data :document/id)]
       (log/infof "updating self for %s" (:cust/uuid cust))
-      (let [new-cust (cust/update! cust {:cust/name (:cust/name ?data)})]
-        ;; TODO: name shouldn't be stored here, it should be in the client-side db
-        (swap! document-subs utils/update-when-in [doc-id client-id] assoc :cust-name (:cust/name new-cust))
-        (doseq [[uid _] (get @document-subs doc-id)]
+      (let [new-cust (cust/update! cust (select-keys ?data [:cust/name :cust/color-name]))]
+        ;; XXX: do this cross-document
+        (doseq [uid (reduce (fn [acc subs]
+                              (if (first (filter #(= (:cust/uuid (second %)) (:cust/uuid new-cust))
+                                                 subs))
+                                (concat acc (keys subs))
+                                acc))
+                            () (vals @document-subs))]
           ;; TODO: use update-subscriber for everything
-          ((:send-fn @sente-state) uid [:frontend/update-subscriber
-                                        {:client-id client-id
-                                         :subscriber-data {:cust-name (:cust/name new-cust)}}]))))))
+          ((:send-fn @sente-state) uid [:frontend/custs {:uuid->cust {(:cust/uuid new-cust) (cust/public-read-api new-cust)}}]))))))
 
 (defmethod ws-handler :frontend/send-invite [{:keys [client-id ?data ?reply-fn] :as req}]
   ;; This may turn out to be a bad idea, but error handling is done through creating chats

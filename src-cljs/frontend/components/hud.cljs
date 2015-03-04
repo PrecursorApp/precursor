@@ -139,99 +139,100 @@
         (.focus (om/get-node owner "name-edit"))))
     om/IRenderState
     (render-state [_ {:keys [editing-name? new-name]}]
-        (let [{:keys [cast! db]} (om/get-shared owner)
-              chat-opened? (get-in app state/chat-opened-path)
-              client-id (:client-id app)
-              viewers-count (count (remove (comp :hide-in-list? last) (get-in app [:subscribers :info])))
-              can-edit? (not (empty? (:cust app)))
-              show-viewers? (and (not (overlay-visible? app))
-                                 (get app :show-viewers? (< 1 viewers-count 6)))
-              self-color (colors/color-class (get-in app [:cust-data :uuid->cust]) (om/get-shared owner [:cust :cust/uuid]) client-id)]
-          (html
-            [:div.viewers
-             {:class (concat
-                       (when chat-opened? ["chat-open"])
-                       [(str "atleast" viewers-count)])} ; TODO use this to clean up messy nth-childs in hud.less
-             (when show-viewers?
-               [:div.viewers-list
-                [:div.viewers-list-frame
-                 (let [show-mouse? (get-in app [:subscribers :info client-id :show-mouse?])]
-                   [:div.viewer.viewer-self
-                    [:div.viewer-avatar.viewer-tag
-                     (if (= :touch (get-in app [:mouse-type]))
-                       (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}
-                                                                           :className self-color}}))
-                       (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}
-                                                                          :className self-color}})))]
-                    (if editing-name?
-                      [:form.viewer-name-form
-                       {:on-submit #(do (when-not (str/blank? new-name)
-                                          (cast! :self-updated {:name new-name}))
-                                        (om/set-state! owner :editing-name? false)
-                                        (om/set-state! owner :new-name "")
-                                        (utils/stop-event %))
-                        :on-blur #(do (when-not (str/blank? new-name)
-                                        (cast! :self-updated {:name new-name}))
-                                      (om/set-state! owner :editing-name? false)
-                                      (om/set-state! owner :new-name "")
-                                      (utils/stop-event %))
-                        :on-key-down #(when (= "Escape" (.-key %))
-                                        (om/set-state! owner :editing-name? false)
-                                        (om/set-state! owner :new-name "")
-                                        (utils/stop-event %))}
-                       [:input.viewer-name-input
-                        {:type "text"
-                         :ref "name-edit"
-                         :tab-index 1
-                         ;; TODO: figure out why we need value here
-                         :value new-name
-                         :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            chat-opened? (get-in app state/chat-opened-path)
+            client-id (:client-id app)
+            viewers-count (count (remove (comp :hide-in-list? last) (get-in app [:subscribers :info])))
+            can-edit? (not (empty? (:cust app)))
+            show-viewers? (and (not (overlay-visible? app))
+                               (get app :show-viewers? (< 1 viewers-count 6)))
+            self-color (colors/find-color (get-in app [:cust-data :uuid->cust]) (get-in app [:cust :cust/uuid]) client-id)
+            self-name (get-in app [:cust-data :uuid->cust (get-in app [:cust :cust/uuid]) :cust/name])]
+        (html
+         [:div.viewers
+          {:class (concat
+                   (when chat-opened? ["chat-open"])
+                   [(str "atleast" viewers-count)])} ; TODO use this to clean up messy nth-childs in hud.less
+          (when show-viewers?
+            [:div.viewers-list
+             [:div.viewers-list-frame
+              (let [show-mouse? (get-in app [:subscribers :info client-id :show-mouse?])]
+                [:div.viewer.viewer-self
+                 [:div.viewer-avatar.viewer-tag {:on-click #(cast! :self-updated {:color (colors/next-color colors/color-idents self-color)})}
+                  (if (= :touch (get-in app [:mouse-type]))
+                    (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}
+                                                                        :className (name self-color)}}))
+                    (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}
+                                                                       :className (name self-color)}})))]
+                 (if editing-name?
+                   [:form.viewer-name-form
+                    {:on-submit #(do (when-not (str/blank? new-name)
+                                       (cast! :self-updated {:name new-name}))
+                                     (om/set-state! owner :editing-name? false)
+                                     (om/set-state! owner :new-name "")
+                                     (utils/stop-event %))
+                     :on-blur #(do (when-not (str/blank? new-name)
+                                     (cast! :self-updated {:name new-name}))
+                                   (om/set-state! owner :editing-name? false)
+                                   (om/set-state! owner :new-name "")
+                                   (utils/stop-event %))
+                     :on-key-down #(when (= "Escape" (.-key %))
+                                     (om/set-state! owner :editing-name? false)
+                                     (om/set-state! owner :new-name "")
+                                     (utils/stop-event %))}
+                    [:input.viewer-name-input
+                     {:type "text"
+                      :ref "name-edit"
+                      :tab-index 1
+                      ;; TODO: figure out why we need value here
+                      :value new-name
+                      :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
 
-                      [:div.viewer-name.viewer-tag (or (get-in app [:cust :cust/name]) "You")])
-                    [:div.viewer-knobs
-                     [:a.viewer-knob
-                      {:key client-id
-                       :on-click #(do
-                                    (if can-edit?
-                                      (om/set-state! owner :editing-name? true)
-                                      (cast! :overlay-username-toggled))
-                                    (.stopPropagation %))
-                       :role "button"
-                       :title "Edit your display name."}
-                      (common/icon :pencil)]]])
-                 (for [[id {:keys [show-mouse? color cust-name hide-in-list?] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
-                       :when (not hide-in-list?)
-                       :let [id-str (get-in app [:cust-data :uuid->cust (:cust/uuid sub) :cust/name] (apply str (take 6 id)))
-                             color-class (colors/color-class (get-in app [:cust-data :uuid->cust])
-                                                             (:cust/uuid sub)
-                                                             (:client-id sub))]]
-                   [:div.viewer
-                    [:div.viewer-avatar.viewer-tag
-                     (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}
-                                                                        :className color-class}}))]
-                    [:div.viewer-name.viewer-tag
-                     id-str]
-                    [:div.viewer-knobs
-                     [:a.viewer-knob
-                      {:key id
-                       :on-click #(cast! :chat-user-clicked {:id-str id-str})
-                       :role "button"
-                       :title "Ping this viewer in chat."}
-                      (common/icon :at)]]])]])
-             [:a.hud-viewers.hud-item.hud-toggle
-              {:on-click (if show-viewers?
-                           #(cast! :viewers-closed)
-                           #(cast! :viewers-opened))
-               :on-touch-end #(do
-                                (.preventDefault %)
-                                (if show-viewers?
-                                  (cast! :viewers-closed)
-                                  (cast! :viewers-opened)))
-               :class (when show-viewers? "close")
-               :data-count (when (< 1 viewers-count) viewers-count)
-               :role "button"}
-              (common/icon :times)
-              (common/icon :users)]])))))
+                   [:div.viewer-name.viewer-tag (or self-name "You")])
+                 [:div.viewer-knobs
+                  [:a.viewer-knob
+                   {:key client-id
+                    :on-click #(do
+                                 (if can-edit?
+                                   (om/set-state! owner :editing-name? true)
+                                   (cast! :overlay-username-toggled))
+                                 (.stopPropagation %))
+                    :role "button"
+                    :title "Edit your display name."}
+                   (common/icon :pencil)]]])
+              (for [[id {:keys [show-mouse? color cust-name hide-in-list?] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
+                    :when (not hide-in-list?)
+                    :let [id-str (get-in app [:cust-data :uuid->cust (:cust/uuid sub) :cust/name] (apply str (take 6 id)))
+                          color-class (name (colors/find-color (get-in app [:cust-data :uuid->cust])
+                                                               (:cust/uuid sub)
+                                                               (:client-id sub)))]]
+                [:div.viewer
+                 [:div.viewer-avatar.viewer-tag
+                  (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}
+                                                                     :className color-class}}))]
+                 [:div.viewer-name.viewer-tag
+                  id-str]
+                 [:div.viewer-knobs
+                  [:a.viewer-knob
+                   {:key id
+                    :on-click #(cast! :chat-user-clicked {:id-str id-str})
+                    :role "button"
+                    :title "Ping this viewer in chat."}
+                   (common/icon :at)]]])]])
+          [:a.hud-viewers.hud-item.hud-toggle
+           {:on-click (if show-viewers?
+                        #(cast! :viewers-closed)
+                        #(cast! :viewers-opened))
+            :on-touch-end #(do
+                             (.preventDefault %)
+                             (if show-viewers?
+                               (cast! :viewers-closed)
+                               (cast! :viewers-opened)))
+            :class (when show-viewers? "close")
+            :data-count (when (< 1 viewers-count) viewers-count)
+            :role "button"}
+           (common/icon :times)
+           (common/icon :users)]])))))
 
 (defn hud [app owner]
   (reify

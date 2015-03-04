@@ -62,7 +62,7 @@
 (defmethod handle-message :frontend/mouse-move [app-state message data]
   (swap! app-state subs/maybe-add-subscriber-data (:client-id data) data))
 
-(defmethod handle-message :frontend/update-subscriber [app-state message data]
+(defmethod handle-message :frontend/update-cust [app-state message data]
   (swap! app-state subs/maybe-add-subscriber-data (:client-id data) data))
 
 (defmethod handle-message :frontend/db-entities [app-state message data]
@@ -72,8 +72,7 @@
                  {:server-update true})))
 
 (defmethod handle-message :frontend/custs [app-state message data]
-  (when (= (:document/id data) (:document/id @app-state))
-    (swap! app-state update-in [:cust-data :uuid->cust] merge (:uuid->cust data))))
+  (swap! app-state update-in [:cust-data :uuid->cust] merge (:uuid->cust data)))
 
 (defmethod handle-message :frontend/invite-response [app-state message data]
   (let [doc-id (:document/id data)

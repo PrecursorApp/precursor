@@ -47,7 +47,7 @@
                         (:chat/body chat))
             short-time (datetime/short-time (js/Date.parse (:server/timestamp chat)))
             color-class (or (:chat-color-override chat)
-                            (colors/color-class uuid->cust (:cust/uuid chat) (:session/uuid chat)))]
+                            (name (colors/find-color uuid->cust (:cust/uuid chat) (:session/uuid chat))))]
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head

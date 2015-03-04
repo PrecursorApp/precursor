@@ -422,7 +422,7 @@
                                                   :layer/fill "none"
                                                   :style {:stroke (:color subscriber)}
                                                   :fillOpacity "0.5"
-                                                  :className (colors/color-class uuid->cust (:cust/uuid subscriber) (:client-id subscriber))
+                                                  :className (name (colors/find-color uuid->cust (:cust/uuid subscriber) (:client-id subscriber)))
                                                   :key (str (:db/id l) "-subscriber-layer-" (:client-id subscriber))}
                                                (when (= :layer.type/text (:layer/type l))
                                                  {:layer/stroke "none"

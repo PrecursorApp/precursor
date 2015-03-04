@@ -69,6 +69,7 @@
     :chat/color
     :chat/cust-name
     :cust/uuid
+    :cust/color-name
     :client/timestamp
     :server/timestamp
 
