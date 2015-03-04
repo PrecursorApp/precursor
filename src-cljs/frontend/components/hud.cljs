@@ -158,7 +158,14 @@
              [:div.viewers-list-frame
               (let [show-mouse? (get-in app [:subscribers :info client-id :show-mouse?])]
                 [:div.viewer.viewer-self
-                 [:div.viewer-avatar.viewer-tag {:on-click #(cast! :self-updated {:color (colors/next-color colors/color-idents self-color)})}
+                 [:div.viewer-avatar.viewer-tag
+                  {:on-mouse-down #(let [color (colors/next-color colors/color-idents self-color)]
+                                     (when (utils/logged-in? owner)
+                                       (cast! :self-updated {:color color})
+                                       (utils/stop-event %)))
+                   :title (if (utils/logged-in? owner)
+                            "Click to change your color"
+                            "Login to change your color")}
                   (if (= :touch (get-in app [:mouse-type]))
                     (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}
                                                                         :className (name self-color)}}))
