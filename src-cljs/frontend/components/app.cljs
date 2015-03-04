@@ -73,7 +73,8 @@
                                                      [:mouse-down]
                                                      [:layer-properties-menu]
                                                      [:menu]
-                                                     [:client-id]])
+                                                     [:client-id]
+                                                     [:cust-data]])
                        {:react-key "canvas"})
 
              (om/build chat/chat (select-in app [state/chat-opened-path
