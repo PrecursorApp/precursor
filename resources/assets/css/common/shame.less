@@ -35,23 +35,24 @@
   }
 }
 @keyframes tweet-load {
-  0%   {opacity: 0;}
-  100% {opacity: 1;}
+ 0%   {opacity: 0;}
+ 100% {opacity: 1;}
 }
 @-webkit-keyframes tweet-load {
-  0%   {opacity: 0;}
-  100% {opacity: 1;}
+ 0%   {opacity: 0;}
+ 100% {opacity: 1;}
 }
 span {
-  > i {
-    > .iconpile {
-      height: .75em;
-      width: .75em;
-      [class|="stroke"] {
-        stroke-width: 12;
-      }
-    }
-  }
+ > i {
+   > .iconpile {
+     height: .75em;
+     width: .75em;
+     [class|="stroke"] {
+       stroke-width: 12;
+     }
+   }
+ }
+}
 
 // Palette Settings //
 @sections:     20;  // Evenly distributed hues, should be a divisor of spectrum
@@ -112,6 +113,39 @@ span {
 @blue_deep:   overlay( darken(@blue,   @deepness), fade(@white, @liteness));
 @purple_deep: overlay( darken(@purple, @deepness), fade(@white, @liteness));
 @pink_deep:   overlay( darken(@pink,   @deepness), fade(@white, @liteness));
+
+.red {
+  color: @red !important;
+  stroke: @red !important;
+}
+.orange {
+  color: @orange !important;
+  stroke: @orange !important;
+}
+.yellow {
+  color: @yellow !important;
+  stroke: @yellow !important;
+}
+.green  {
+  color: @green !important;
+  stroke: @green !important;
+}
+.cyan {
+  color: @cyan !important;
+  stroke: @cyan !important;
+}
+.blue {
+  color: @blue !important;
+  stroke: @blue !important;
+}
+.purple {
+  color: @purple !important;
+  stroke: @purple !important;
+}
+.pink {
+  color: @pink !important;
+  stroke: @pink !important;
+}
 
 .message { // only for testings colors in order
   &:nth-child(01)>span:first-child{color: @red_soft !important;}

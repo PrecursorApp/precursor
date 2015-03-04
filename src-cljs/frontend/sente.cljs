@@ -71,6 +71,10 @@
                  (:entities data)
                  {:server-update true})))
 
+(defmethod handle-message :frontend/custs [app-state message data]
+  (when (= (:document/id data) (:document/id @app-state))
+    (swap! app-state update-in [:cust-data :uuid->cust] merge (:uuid->cust data))))
+
 (defmethod handle-message :frontend/invite-response [app-state message data]
   (let [doc-id (:document/id data)
         response (:response data)]

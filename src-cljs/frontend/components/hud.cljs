@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [datascript :as d]
             [frontend.auth :as auth]
+            [frontend.colors :as colors]
             [frontend.components.common :as common]
             [frontend.cursors :as cursors]
             [frontend.models.chat :as chat-model]
@@ -144,7 +145,8 @@
               viewers-count (count (remove (comp :hide-in-list? last) (get-in app [:subscribers :info])))
               can-edit? (not (empty? (:cust app)))
               show-viewers? (and (not (overlay-visible? app))
-                                 (get app :show-viewers? (< 1 viewers-count 6)))]
+                                 (get app :show-viewers? (< 1 viewers-count 6)))
+              self-color (colors/color-class (get-in app [:cust-data :uuid->cust]) (om/get-shared owner [:cust :cust/uuid]) client-id)]
           (html
             [:div.viewers
              {:class (concat
@@ -157,8 +159,10 @@
                    [:div.viewer.viewer-self
                     [:div.viewer-avatar.viewer-tag
                      (if (= :touch (get-in app [:mouse-type]))
-                       (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}}}))
-                       (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}}})))]
+                       (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}
+                                                                           :className self-color}}))
+                       (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}
+                                                                          :className self-color}})))]
                     (if editing-name?
                       [:form.viewer-name-form
                        {:on-submit #(do (when-not (str/blank? new-name)
@@ -195,12 +199,16 @@
                        :role "button"
                        :title "Edit your display name."}
                       (common/icon :pencil)]]])
-                 (for [[id {:keys [show-mouse? color cust-name hide-in-list?]}] (dissoc (get-in app [:subscribers :info]) client-id)
+                 (for [[id {:keys [show-mouse? color cust-name hide-in-list?] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
                        :when (not hide-in-list?)
-                       :let [id-str (or cust-name (apply str (take 6 id)))]]
+                       :let [id-str (get-in app [:cust-data :uuid->cust (:cust/uuid sub) :cust/name] (apply str (take 6 id)))
+                             color-class (colors/color-class (get-in app [:cust-data :uuid->cust])
+                                                             (:cust/uuid sub)
+                                                             (:client-id sub))]]
                    [:div.viewer
                     [:div.viewer-avatar.viewer-tag
-                     (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}}}))]
+                     (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}
+                                                                        :className color-class}}))]
                     [:div.viewer-name.viewer-tag
                      id-str]
                     [:div.viewer-knobs
@@ -235,10 +243,12 @@
         (om/build viewers (utils/select-in app [state/chat-opened-path
                                                 state/overlays-path
                                                 [:subscribers :info]
+                                                [:cust-data]
                                                 [:show-viewers?]
                                                 [:client-id]
                                                 [:cust]
-                                                [:mouse-type]])
+                                                [:mouse-type]
+                                                [:cust-data]])
                   {:react-key "viewers"})
         (om/build menu (utils/select-in app [state/main-menu-learned-path
                                              state/overlays-path])

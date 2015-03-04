@@ -1,9 +1,10 @@
 (ns frontend.components.chat
-  (:require [clojure.set :as set]
-            [clojure.string :as str]
-            [cljs-time.core :as time]
+  (:require [cljs-time.core :as time]
             [cljs-time.format :as time-format]
+            [clojure.set :as set]
+            [clojure.string :as str]
             [datascript :as d]
+            [frontend.colors :as colors]
             [frontend.async :refer [put!]]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
@@ -32,23 +33,28 @@
                                                [(last parts)]))))))
 
 
-(defn chat-item [chat owner {:keys [sente-id show-sender?]}]
+(defn chat-item [{:keys [chat uuid->cust]} owner {:keys [sente-id show-sender?]}]
   (reify
     om/IDisplayName (display-name [_] "Chat Item")
     om/IRender
     (render [_]
       (let [id (apply str (take 6 (str (:session/uuid chat))))
-            name (chat-model/display-name chat sente-id)
+            cust-name (or (:chat-name-override chat)
+                          (utils/inspect (get-in uuid->cust [(:cust/uuid chat) :cust/name]))
+                          (chat-model/display-name chat sente-id))
             chat-body (if (string? (:chat/body chat))
                         (linkify (:chat/body chat))
                         (:chat/body chat))
-            short-time (datetime/short-time (js/Date.parse (:server/timestamp chat)))]
+            short-time (datetime/short-time (js/Date.parse (:server/timestamp chat)))
+            color-class (or (:chat-color-override chat)
+                            (colors/color-class uuid->cust (:cust/uuid chat) (:session/uuid chat)))]
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head
-                  [:span
-                   (common/icon :user {:path-props {:style {:stroke (or (:chat/color chat) (str "#" id))}}})]
-                  [:span (str " " name)]
+                  [:span {:class color-class}
+                   (common/icon :user {:path-props {:style {:stroke (or (:chat/color chat) (str "#" id))}
+                                                    :className color-class}})]
+                  [:span (str " " cust-name)]
                   [:span.time (str " " short-time)]])
                [:div.message-body
                 chat-body]])))))
@@ -169,13 +175,13 @@
                                          :role "button"}
                                      (str "@" (:chat-bot/name chat-bot))]
                                     " for help."]
-                        :chat/color "#00b233"
-                        :session/uuid (:chat-bot/name chat-bot)
+                        :chat-color-override "green"
+                        :chat-name-override (:chat-bot/name chat-bot)
                         :server/timestamp (js/Date.)}]
         (html
          [:div.chat-log {:ref "chat-messages"}
           (when chat-bot
-            (om/build chat-item dummy-chat {:opts {:show-sender? true}}))
+            (om/build chat-item {:chat dummy-chat} {:opts {:show-sender? true}}))
           (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
             (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
                                              chat-groups)]
@@ -184,8 +190,9 @@
                               (not= #{"Today"} (set (keys chat-groups))))
                       [:h2.chat-date time])
                     (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
-                      (om/build chat-item chat
-                                {:key :db/id
+                      (om/build chat-item {:chat chat
+                                           :uuid->cust (get-in app [:cust-data :uuid->cust])}
+                                {:key-fn #(str (:server/timestamp (:chat %)) "-" (:db/id (:chat %)))
                                  :opts {:sente-id sente-id
                                         :show-sender? (not= (chat-model/display-name prev-chat sente-id)
                                                             (chat-model/display-name chat sente-id))}})))))])))))
@@ -209,5 +216,6 @@
            [:div.chat-background]
            (om/build log (utils/select-in app [[:document/id]
                                                [:sente-id]
-                                               [:client-id]]))
+                                               [:client-id]
+                                               [:cust-data]]))
            (om/build input {})]])))))

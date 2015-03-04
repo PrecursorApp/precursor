@@ -72,7 +72,8 @@
                                                      [:drawing :in-progress?]
                                                      [:mouse-down]
                                                      [:layer-properties-menu]
-                                                     [:menu]])
+                                                     [:menu]
+                                                     [:client-id]])
                        {:react-key "canvas"})
 
              (om/build chat/chat (select-in app [state/chat-opened-path
@@ -80,7 +81,8 @@
                                                  [:document/id]
                                                  [:sente-id]
                                                  [:client-id]
-                                                 [:show-landing?]])
+                                                 [:show-landing?]
+                                                 [:cust-data]])
                        {:react-key "chat"})
 
              (when (not right-click-learned?)
@@ -97,7 +99,8 @@
                                               [:show-viewers?]
                                               [:client-id]
                                               [:cust]
-                                              [:mouse-type]])
+                                              [:mouse-type]
+                                              [:cust-data]])
                       {:react-key "hud"})])
           (html [:div#app]))))))
 

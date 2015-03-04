@@ -20,6 +20,8 @@
    :cust-name "prcrsr"
    :show-mouse? true
    :hide-in-list? true
+   :cust/uuid "prcrsr-subscriber-bot"
+   :cust/color-name :color.name/green
    :client-id "prcrsr-subscriber-bot"})
 
 (defn initial-state []
@@ -58,6 +60,9 @@
                      :entity-ids {:entity-ids #{}}}
    :selected-eids   {:selected-eids #{}}
    :editing-eids    {:editing-eids #{}}
+   ;; Info about contributors to the doc
+   ;; Combines sessions with custs, which might turn out to be a bad idea
+   :cust-data {:uuid->cust {(:cust/uuid subscriber-bot) (select-keys subscriber-bot [:cust/uuid :cust/name :cust/color-name])}}
    :show-landing? false
    :overlays []
    :frontend-id-state nil
