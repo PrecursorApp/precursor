@@ -3,6 +3,7 @@
             [clojure.string]
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
+            [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.datomic.migrations-archive :as archive]
             [slingshot.slingshot :refer (try+ throw+)])
@@ -52,6 +53,20 @@
                       :cust/email "prcrsr-bot@prcrsr.com"
                       :cust/name "prcrsr"
                       :cust/uuid (d/squuid)}]))
+
+(defn choose-colors-for-custs
+  "Chooses colors for every cust"
+  [conn]
+  (let [db (d/db conn)]
+    (doseq [e (cust-model/all db)
+            :let [uuid (:v (first (d/datoms db :eavt e :cust/uuid)))
+                  txid (d/tempid :db.part/tx)]
+            :when (and uuid (not (:v (first (d/datoms db :eavt e :cust/color-name)))))]
+      @(d/transact conn [{:db/id txid
+                          :transaction/source :transaction.source/migration
+                          :migration :migration/choose-colors-for-custs}
+                         ;; make sure we get the new db so that we can have the history
+                         [:db/add e :cust/color-name (cust-model/choose-color (d/db conn) uuid)]]))))
 
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.

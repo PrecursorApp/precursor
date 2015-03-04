@@ -46,11 +46,13 @@
                                   (when-not (:cust/http-session-key cust)
                                     {:cust/http-session-key (UUID/randomUUID)}))))
       (try
-        (let [user (cust/create! {:cust/email (:email user-info)
+        (let [color (cust/choose-color db (get-in ring-req [:session :sente-id]))
+              user (cust/create! {:cust/email (:email user-info)
                                   :cust/verified-email (:email_verified user-info)
                                   :cust/http-session-key (UUID/randomUUID)
                                   :google-account/sub (:sub user-info)
-                                  :cust/uuid (UUID/randomUUID)})]
+                                  :cust/uuid (d/squuid)
+                                  :cust/color-name color})]
           (analytics/track-signup user ring-req)
           (future (utils/with-report-exceptions (update-user-from-sub user)))
           user)

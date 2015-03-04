@@ -255,6 +255,17 @@
               :db.type/string
               :metadata/unescaped true)
 
+   (attribute :cust/color-name
+              :db.type/ref)
+   (enum :color.name/red)
+   (enum :color.name/orange)
+   (enum :color.name/yellow)
+   (enum :color.name/green)
+   (enum :color.name/cyan)
+   (enum :color.name/blue)
+   (enum :color.name/purple)
+   (enum :color.name/pink)
+
    (attribute :browser-setting/tool
               :db.type/ref)
    (enum :circle)
@@ -415,6 +426,7 @@
               :db.type/ref
               :db/doc "Annotates transaction with migration")
    (enum :migration/add-frontend-ids)
+   (enum :migration/choose-colors-for-custs)
 
    ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
    (attribute :needs-email
@@ -493,6 +505,10 @@
 
 (defn enums []
   (set (map :db/ident (filter #(= :db.type/ref (:db/valueType %))
+                              @schema-ents))))
+
+(defn color-enums []
+  (set (map :db/ident (filter #(= "color.name" (namespace (:db/ident %)))
                               @schema-ents))))
 
 (defn get-ident [a]
