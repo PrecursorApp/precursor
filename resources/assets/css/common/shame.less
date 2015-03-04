@@ -114,38 +114,23 @@ span {
 @purple_deep: overlay( darken(@purple, @deepness), fade(@white, @liteness));
 @pink_deep:   overlay( darken(@pink,   @deepness), fade(@white, @liteness));
 
-.red {
-  color: @red !important;
-  stroke: @red !important;
+.define-color-class(color) {
+  color: color !important;
+  path, path&, rect, rect&, line, line& {
+    stroke: color !important;
+  }
+  text, text& {
+    fill: color !important;
+  }
 }
-.orange {
-  color: @orange !important;
-  stroke: @orange !important;
-}
-.yellow {
-  color: @yellow !important;
-  stroke: @yellow !important;
-}
-.green  {
-  color: @green !important;
-  stroke: @green !important;
-}
-.cyan {
-  color: @cyan !important;
-  stroke: @cyan !important;
-}
-.blue {
-  color: @blue !important;
-  stroke: @blue !important;
-}
-.purple {
-  color: @purple !important;
-  stroke: @purple !important;
-}
-.pink {
-  color: @pink !important;
-  stroke: @pink !important;
-}
+.define-color-class(@red);
+.define-color-class(@orange);
+.define-color-class(@yellow);
+.define-color-class(@green);
+.define-color-class(@cyan);
+.define-color-class(@blue);
+.define-color-class(@purple);
+.define-color-class(@pink);
 
 .message { // only for testings colors in order
   &:nth-child(01)>span:first-child{color: @red_soft !important;}
