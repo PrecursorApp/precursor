@@ -180,13 +180,14 @@
                :error-key :too-many-subscribers}))))
 
 ;; XXX need to add requested remainder also
-(defn subscribe-to-doc [db document-id uuid cust-name & {:keys [requested-color requested-remainder]}]
+(defn subscribe-to-doc [db document-id uuid cust & {:keys [requested-color requested-remainder]}]
   (swap! client-stats assoc uuid {:document {:db/id document-id}})
   (swap! document-subs update-in [document-id]
          (fn [subs]
            (-> subs
              (assoc-in [uuid :color] (choose-color subs uuid requested-color))
-             (assoc-in [uuid :cust-name] cust-name)
+             (assoc-in [uuid :client-id] uuid)
+             (update-in [uuid] merge (cust/public-read-api cust))
              (assoc-in [uuid :show-mouse?] true)
              (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
 
@@ -200,7 +201,7 @@
         subs (subscribe-to-doc (:db req)
                                document-id
                                client-id
-                               (-> req :ring-req :auth :cust :cust/name)
+                               (-> req :ring-req :auth :cust)
                                :requested-color (:requested-color ?data)
                                :requested-remainder (:requested-remainder ?data))]
 
@@ -222,6 +223,14 @@
                         {:document/id document-id
                          :entities (map layer/read-api (layer/find-by-document (:db req) {:db/id document-id}))
                          :entity-type :layer}])
+
+    (log/infof "sending custs for %s to %s" document-id client-id)
+    (send-fn client-id [:frontend/custs
+                        {:document/id document-id
+                         :uuid->cust (->> document-id
+                                       (cust/cust-uuids-for-doc (:db req))
+                                       (cust/public-read-api-per-uuids (:db req)))}])
+
     (log/infof "sending chats %s to %s" document-id client-id)
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id

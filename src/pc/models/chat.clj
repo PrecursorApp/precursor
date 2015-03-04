@@ -42,5 +42,6 @@
                   :cust/cust-name
                   :chat/body
                   :chat/color
-                  :chat/cust-name])
+                  :chat/cust-name
+                  :cust/uuid])
     (assoc :db/id (web-peer/client-id chat))))
