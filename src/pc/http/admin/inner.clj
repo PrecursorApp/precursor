@@ -22,8 +22,13 @@
                                 [:h2 "Early access"]
                                 (admin-content/early-access-users)
                                 [:h2 "User Growth"]
-                                [:p "Here's a cumulative graph of users. It needs some work."
-                                 (admin-content/users-graph)]])))
+                                (admin-content/users-graph)])))
+
+(defpage base "/graphs" [req]
+  (hiccup/html (content/layout {}
+                               [:div {:style "padding: 40px"}
+                                [:h2 "User Growth"]
+                                (admin-content/users-graph)])))
 
 (defpage grant-early-access [:post "/grant-early-access"] [req]
   (let [uuid (some-> req :params (get "cust-uuid") (UUID/fromString))]
