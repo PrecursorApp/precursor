@@ -1,15 +1,17 @@
 (ns frontend.colors
   (:require [clojure.string :as str]))
 
+;; nb these are ordered so that next-color will choose a
+;;    something that has high contrast with the previous
 (def color-idents
   [:color.name/red
-   :color.name/orange
-   :color.name/yellow
-   :color.name/green
    :color.name/cyan
-   :color.name/blue
    :color.name/purple
-   :color.name/pink])
+   :color.name/orange
+   :color.name/blue
+   :color.name/yellow
+   :color.name/pink
+   :color.name/green])
 
 (defn next-color [choices current-color]
   (let [n (inc (count (take-while #(not= current-color %) choices)))]
