@@ -187,7 +187,7 @@
            (-> subs
              (assoc-in [uuid :color] (choose-color subs uuid requested-color))
              (assoc-in [uuid :client-id] uuid)
-             (update-in [uuid] merge (select-keys cust [:cust/uuid]))
+             (update-in [uuid] merge (select-keys cust [:cust/uuid :cust/color-name :cust/name]))
              (assoc-in [uuid :show-mouse?] true)
              (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
 
