@@ -114,49 +114,22 @@ span {
 @purple_deep: overlay( darken(@purple, @deepness), fade(@white, @liteness));
 @pink_deep:   overlay( darken(@pink,   @deepness), fade(@white, @liteness));
 
-.define-color-class(color) {
-  color: color !important;
-  path, path&, rect, rect&, line, line& {
-    stroke: color !important;
+@palette_colors:
+  ~"red",    @red,
+  ~"orange", @orange,
+  ~"yellow", @yellow,
+  ~"green",  @green,
+  ~"cyan",   @cyan,
+  ~"blue",   @blue,
+  ~"purple", @purple,
+  ~"pink",   @pink;
+
+.palette(@a; @c: length(@a); @x: -1; @y: 0) when (@c > (length(@a) / 2)) {
+  .palette(@a; (@c - 1); (@x - 1); (@y - 1));
+  @n: extract(@a, (@c + @x));
+  .@{n} {
+    color: extract(@a, (@c + @y));
+    [class|="stroke"]{stroke: extract(@a, (@c + @y));}
+    [class|="fill"]  {fill:   extract(@a, (@c + @y));}
   }
-  text, text& {
-    fill: color !important;
-  }
-}
-.define-color-class(@red);
-.define-color-class(@orange);
-.define-color-class(@yellow);
-.define-color-class(@green);
-.define-color-class(@cyan);
-.define-color-class(@blue);
-.define-color-class(@purple);
-.define-color-class(@pink);
-
-.message { // only for testings colors in order
-  &:nth-child(01)>span:first-child{color: @red_soft !important;}
-  &:nth-child(02)>span:first-child{color: @orange_soft !important;}
-  &:nth-child(03)>span:first-child{color: @yellow_soft !important;}
-  &:nth-child(04)>span:first-child{color: @green_soft !important;}
-  &:nth-child(05)>span:first-child{color: @cyan_soft !important;}
-  &:nth-child(06)>span:first-child{color: @blue_soft !important;}
-  &:nth-child(07)>span:first-child{color: @purple_soft !important;}
-  &:nth-child(08)>span:first-child{color: @pink_soft !important;}
-
-  &:nth-child(09)>span:first-child{color: @red !important;}
-  &:nth-child(10)>span:first-child{color: @orange !important;}
-  &:nth-child(11)>span:first-child{color: @yellow !important;}
-  &:nth-child(12)>span:first-child{color: @green !important;}
-  &:nth-child(13)>span:first-child{color: @cyan !important;}
-  &:nth-child(14)>span:first-child{color: @blue !important;}
-  &:nth-child(15)>span:first-child{color: @purple !important;}
-  &:nth-child(16)>span:first-child{color: @pink !important;}
-
-  &:nth-child(17)>span:first-child{color: @red_deep !important;}
-  &:nth-child(18)>span:first-child{color: @orange_deep !important;}
-  &:nth-child(19)>span:first-child{color: @yellow_deep !important;}
-  &:nth-child(20)>span:first-child{color: @green_deep !important;}
-  &:nth-child(21)>span:first-child{color: @cyan_deep !important;}
-  &:nth-child(22)>span:first-child{color: @blue_deep !important;}
-  &:nth-child(23)>span:first-child{color: @purple_deep !important;}
-  &:nth-child(24)>span:first-child{color: @pink_deep !important;}
-}
+}.palette(@palette_colors);
