@@ -57,3 +57,18 @@
 @blue_deep:   overlay( darken(@blue,   @deepness), fade(@white, @liteness));
 @purple_deep: overlay( darken(@purple, @deepness), fade(@white, @liteness));
 @pink_deep:   overlay( darken(@pink,   @deepness), fade(@white, @liteness));
+
+.iconpile {
+  [class|="stroke"] {
+    .palette(stroke);
+  }
+  [class|="fill"] {
+    .palette(fill);
+  }
+}
+.shape-layer {
+  .palette(stroke);
+}
+.text-layer {
+  .palette(fill);
+}
