@@ -1,10 +1,11 @@
 (ns frontend.components.canvas
-  (:require [datascript :as d]
-            [cljs.core.async :refer [put!]]
+  (:require [cljs.core.async :refer [put!]]
             [clojure.set :as set]
             [clojure.string :as str]
+            [datascript :as d]
             [frontend.auth :as auth]
             [frontend.camera :as cameras]
+            [frontend.colors :as colors]
             [frontend.components.common :as common]
             [frontend.cursors :as cursors]
             [frontend.datascript :as ds]
@@ -382,32 +383,40 @@
 
     "select" :cursor))
 
-(defn cursor [[id subscriber] owner]
+(defn cursor [{:keys [subscriber uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Canvas Cursor")
     om/IRender
+
     (render [_]
       (if (and (:tool subscriber)
                (:show-mouse? subscriber))
         (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
                          {:svg-props {:height 16 :width 16
-                                      :class "mouse-tool"
+                                      :className "mouse-tool"
                                       :x (- (first (:mouse-position subscriber)) 8)
                                       :y (- (last (:mouse-position subscriber)) 8)
-                                      :key id}
-                          :path-props {:style {:stroke (:color subscriber)}}})
+                                      :key (:client-id subscriber)}
+                          :path-props {:className (name
+                                                   (colors/find-color
+                                                    uuid->cust
+                                                    (:cust/uuid subscriber)
+                                                    (:client-id subscriber)))}})
         (dom/circle #js {:cx 0 :cy 0 :r 0})))))
 
-(defn cursors [{:keys [client-id]} owner]
+(defn cursors [{:keys [client-id uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Canvas Cursors")
     om/IRender
     (render [_]
       (let [subscribers (cursors/observe-subscriber-mice owner)]
         (apply dom/g nil
-               (om/build-all cursor (dissoc subscribers client-id) {:key-fn first}))))))
+               (for [subscriber (vals (dissoc subscribers client-id))]
+                 (om/build cursor {:subscriber subscriber
+                                   :uuid->cust uuid->cust}
+                           {:react-key (:client-id subscriber)})))))))
 
-(defn single-subscriber-layers [[client-id data] owner]
+(defn single-subscriber-layers [{:keys [subscriber uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Single Subscriber Layers")
     om/IRender
@@ -417,22 +426,23 @@
                                                   :layer/end-y (:layer/current-y l)
                                                   :strokeDasharray "5,5"
                                                   :layer/fill "none"
-                                                  :style {:stroke (:color data)}
                                                   :fillOpacity "0.5"
-                                                  :key (str (:db/id l) "-subscriber-layer-" client-id)}
+                                                  :className (name (colors/find-color uuid->cust (:cust/uuid subscriber) (:client-id subscriber)))
+                                                  :key (str (:db/id l) "-subscriber-layer-" (:client-id subscriber))}
                                                (when (= :layer.type/text (:layer/type l))
-                                                 {:layer/stroke "none"
-                                                  :style {:fill (:color data)}}))))
-                   (:layers data))))))
+                                                 {:layer/stroke "none"}))))
+                   (:layers subscriber))))))
 
-(defn subscribers-layers [_ owner]
+(defn subscribers-layers [{:keys [client-id uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Subscribers Layers")
     om/IRender
     (render [_]
       (let [subscribers (cursors/observe-subscriber-layers owner)]
         (apply dom/g nil
-               (om/build-all single-subscriber-layers subscribers {:key-fn first}))))))
+               (for [subscriber (vals (dissoc subscribers client-id))]
+                 (om/build single-subscriber-layers {:subscriber subscriber
+                                                     :uuid->cust uuid->cust} {:react-key (:client-id subscriber)})))))))
 
 (defn text-input [layer owner]
   (reify
@@ -784,11 +794,15 @@
 
                  (dom/g
                    #js {:transform (cameras/->svg-transform camera)}
-                   (om/build cursors {} {:react-key "cursors"})
+                   (om/build cursors {:client-id (:client-id app)
+                                      :uuid->cust (get-in app [:cust-data :uuid->cust])}
+                             {:react-key "cursors"})
 
                    (om/build svg-layers {:tool tool} {:react-key "svg-layers"})
 
-                   (om/build subscribers-layers {} {:react-key "subscribers-layers"})
+                   (om/build subscribers-layers {:client-id (:client-id app)
+                                                 :uuid->cust (get-in app [:cust-data :uuid->cust])}
+                             {:react-key "subscribers-layers"})
 
                    (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})))))))
 

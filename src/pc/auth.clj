@@ -50,7 +50,7 @@
                                   :cust/verified-email (:email_verified user-info)
                                   :cust/http-session-key (UUID/randomUUID)
                                   :google-account/sub (:sub user-info)
-                                  :cust/uuid (UUID/randomUUID)})]
+                                  :cust/uuid (d/squuid)})]
           (analytics/track-signup user ring-req)
           (future (utils/with-report-exceptions (update-user-from-sub user)))
           user)

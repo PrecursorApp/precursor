@@ -1,4 +1,5 @@
 .inner {
+  .selection(@white; (100 * @opacity_darker_dark));
   .flexy();
   .transform-origin(right);
   position: fixed;
@@ -13,13 +14,17 @@
     ~ .hud {
       .user-select(none);
       pointer-events: none;
+      .new-here-items,
+      .new-here-button {
+        pointer-events: none;
+      }
     }
   }
   a {
-    color: darken(@link_hover, 13);
+    color: @color_select;
     &:hover,
     &:active {
-      color: @link_hover;
+      color: @color_select_hover;
     }
     &[role="button"] {
       &:hover,
@@ -28,5 +33,11 @@
         .icon(fill; @white);
       }
     }
+  }
+  &.loading {
+    .canvas {
+      pointer-events: none
+    }
+    cursor: wait
   }
 }

@@ -164,9 +164,13 @@
 
 (defn svg-icon [icon-name & [{:keys [path-props svg-props]}]]
   (let [template (get icon-templates icon-name)]
-    (apply dom/svg (clj->js (merge {:viewBox "0 0 100 100" :className "iconpile"} svg-props))
+    (apply dom/svg (clj->js (merge {:viewBox "0 0 100 100" :className (str "iconpile " (:className svg-props))}
+                                   (dissoc svg-props :className)))
            (for [path (:paths template)]
-             (dom/path (clj->js (merge {:className (name path) :d (get icon-paths path) :key (name path)} path-props)))))))
+             (dom/path (clj->js (merge {:className (str (name path) " " (:className path-props))
+                                        :d (get icon-paths path)
+                                        :key (name path)}
+                                       (dissoc path-props :className))))))))
 
 (defn icon [icon-name & [{:keys [path-props svg-props]}]]
   (dom/i #js {:className (str "icon-" (name icon-name))}

@@ -180,13 +180,14 @@
                :error-key :too-many-subscribers}))))
 
 ;; XXX need to add requested remainder also
-(defn subscribe-to-doc [db document-id uuid cust-name & {:keys [requested-color requested-remainder]}]
+(defn subscribe-to-doc [db document-id uuid cust & {:keys [requested-color requested-remainder]}]
   (swap! client-stats assoc uuid {:document {:db/id document-id}})
   (swap! document-subs update-in [document-id]
          (fn [subs]
            (-> subs
              (assoc-in [uuid :color] (choose-color subs uuid requested-color))
-             (assoc-in [uuid :cust-name] cust-name)
+             (assoc-in [uuid :client-id] uuid)
+             (update-in [uuid] merge (select-keys cust [:cust/uuid :cust/color-name :cust/name]))
              (assoc-in [uuid :show-mouse?] true)
              (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
 
@@ -200,7 +201,7 @@
         subs (subscribe-to-doc (:db req)
                                document-id
                                client-id
-                               (-> req :ring-req :auth :cust :cust/name)
+                               (-> req :ring-req :auth :cust)
                                :requested-color (:requested-color ?data)
                                :requested-remainder (:requested-remainder ?data))]
 
@@ -222,6 +223,17 @@
                         {:document/id document-id
                          :entities (map layer/read-api (layer/find-by-document (:db req) {:db/id document-id}))
                          :entity-type :layer}])
+
+    (log/infof "sending custs for %s to %s" document-id client-id)
+    (send-fn client-id [:frontend/custs
+                        {:document/id document-id
+                         :uuid->cust (->> document-id
+                                       (cust/cust-uuids-for-doc (:db req))
+                                       set
+                                       (set/union (disj (set (map :cust/uuid (vals (get subs document-id))))
+                                                        nil))
+                                       (cust/public-read-api-per-uuids (:db req)))}])
+
     (log/infof "sending chats %s to %s" document-id client-id)
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
@@ -320,14 +332,18 @@
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [doc-id (-> ?data :document/id)]
       (log/infof "updating self for %s" (:cust/uuid cust))
-      (let [new-cust (cust/update! cust {:cust/name (:cust/name ?data)})]
-        ;; TODO: name shouldn't be stored here, it should be in the client-side db
-        (swap! document-subs utils/update-when-in [doc-id client-id] assoc :cust-name (:cust/name new-cust))
-        (doseq [[uid _] (get @document-subs doc-id)]
+      (when (:cust/color-name ?data)
+        (assert (contains? (schema/color-enums) (:cust/color-name ?data))))
+      (let [new-cust (cust/update! cust (select-keys ?data [:cust/name :cust/color-name]))]
+        ;; XXX: do this cross-document
+        (doseq [uid (reduce (fn [acc subs]
+                              (if (first (filter #(= (:cust/uuid (second %)) (:cust/uuid new-cust))
+                                                 subs))
+                                (concat acc (keys subs))
+                                acc))
+                            () (vals @document-subs))]
           ;; TODO: use update-subscriber for everything
-          ((:send-fn @sente-state) uid [:frontend/update-subscriber
-                                        {:client-id client-id
-                                         :subscriber-data {:cust-name (:cust/name new-cust)}}]))))))
+          ((:send-fn @sente-state) uid [:frontend/custs {:uuid->cust {(:cust/uuid new-cust) (cust/public-read-api new-cust)}}]))))))
 
 (defmethod ws-handler :frontend/send-invite [{:keys [client-id ?data ?reply-fn] :as req}]
   ;; This may turn out to be a bad idea, but error handling is done through creating chats

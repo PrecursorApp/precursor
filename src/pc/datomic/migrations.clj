@@ -3,6 +3,7 @@
             [clojure.string]
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
+            [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.datomic.migrations-archive :as archive]
             [slingshot.slingshot :refer (try+ throw+)])

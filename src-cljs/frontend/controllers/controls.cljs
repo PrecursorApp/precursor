@@ -1037,14 +1037,18 @@
                  "@" id-str " ")))))
 
 (defmethod control-event :self-updated
-  [browser-state message {:keys [name]} state]
-  (-> state
-    (assoc-in [:cust :cust/name] name)))
+  [browser-state message {:keys [name color]} state]
+  (cond-> state
+    name (-> (assoc-in [:cust :cust/name] name)
+           (assoc-in [:cust-data :uuid->cust (get-in state [:cust :cust/uuid]) :cust/name] name))
+    color (-> (assoc-in [:cust :cust/color-name] color)
+           (assoc-in [:cust-data :uuid->cust (get-in state [:cust :cust/uuid]) :cust/color-name] color))))
 
 (defmethod post-control-event! :self-updated
-  [browser-state message {:keys [name]} previous-state current-state]
-  (sente/send-msg (:sente current-state) [:frontend/update-self {:document/id (:document/id current-state)
-                                                                 :cust/name name}]))
+  [browser-state message {:keys [name color]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:frontend/update-self (merge {:document/id (:document/id current-state)}
+                                                                       (when name {:cust/name name})
+                                                                       (when color {:cust/color-name color}))]))
 
 
 (defmethod post-control-event! :track-external-link-clicked
