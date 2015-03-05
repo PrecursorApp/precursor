@@ -1,8 +1,8 @@
 (ns frontend.colors
   (:require [clojure.string :as str]))
 
-;; nb these are ordered so that next-color will choose a
-;;    something that has high contrast with the previous
+;; Note that these are ordered so that next-color will choose
+;; a color with high contrast to the previous color
 (def color-idents
   [:color.name/red
    :color.name/cyan
