@@ -332,16 +332,21 @@
 (defmethod ws-handler :frontend/send-invite [{:keys [client-id ?data ?reply-fn] :as req}]
   ;; This may turn out to be a bad idea, but error handling is done through creating chats
   (check-document-access (-> ?data :document/id) req :admin)
-  (let [[chat-id] (pcd/generate-eids (pcd/conn) 1)
-        doc-id (-> ?data :document/id)
+  (let [doc-id (-> ?data :document/id)
         invite-loc (-> ?data :invite-loc)
+        chat-id (d/tempid :db.part/user)
+        cust (-> req :ring-req :auth :cust)
         notify-invite (fn [body]
                         (if (= :overlay invite-loc)
                           ((:send-fn @sente-state) client-id
                            [:frontend/invite-response {:document/id doc-id
                                                        :response body}])
-                          @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
-                                                    :document/id doc-id}
+                          @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)
+                                                           :document/id doc-id
+                                                           :transaction/broadcast true}
+                                                          (when cust
+                                                            {:cust/uuid (:cust/uuid cust)}))
+                                                   (web-peer/server-frontend-id chat-id doc-id)
                                                    {:chat/body body
                                                     :server/timestamp (java.util.Date.)
                                                     :document/id doc-id

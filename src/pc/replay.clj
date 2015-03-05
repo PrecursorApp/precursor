@@ -52,7 +52,7 @@
         eid-translations (-> (apply concat (map #(map :e %) tx-datas))
                            set
                            (disj (:db/id doc))
-                           (zipmap (repeatedly #(first (pcd/generate-eids conn 1))))
+                           (zipmap (repeatedly #(d/tempid :db.part/user)))
                            (assoc (:db/id doc) (:db/id new-doc)))]
     (doseq [tx-data tx-datas]
       (def my-tx-data tx-data)

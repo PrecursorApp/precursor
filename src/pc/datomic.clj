@@ -53,12 +53,6 @@
 (defn uuid []
   (UUID/randomUUID))
 
-;; TODO: remove, deprecated by frontend ids
-(defn generate-eids [conn tempid-count]
-  (let [tempids (take tempid-count (repeatedly #(d/tempid :db.part/user)))
-        transaction (d/transact conn (mapv (fn [tempid] {:db/id tempid :dummy :dummy/dummy}) tempids))]
-    (mapv (fn [tempid] (d/resolve-tempid (:db-after @transaction) (:tempids @transaction) tempid)) tempids)))
-
 ;; should we convert a to its name (it's currently using its eid)?
 ;; Would require a reference to the db
 (defn datom->transaction [datom]

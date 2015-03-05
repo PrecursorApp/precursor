@@ -2,7 +2,6 @@
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [pc.datomic :as pcd]
-            [pc.http.datomic-common :as common]
             [datomic.api :refer [db q] :as d])
   (:import java.util.UUID))
 
