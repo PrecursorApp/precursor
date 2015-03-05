@@ -199,7 +199,7 @@
               "denied"
               "requesting")}
     [:div.access-avatar
-     [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
+     [:img.access-avatar-img {:src (utils/gravatar-url (:access-request/cust entity))}]]
     [:div.access-details
      [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
      [:span.access-status

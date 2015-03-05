@@ -166,10 +166,6 @@
    (enum :document.privacy/public)
    (enum :document.privacy/private)
 
-   (attribute :dummy
-              :db.type/ref)
-   (enum :dummy/dummy)
-
    (attribute :document/chat-bot
               :db.type/ref)
 
