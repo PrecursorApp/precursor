@@ -39,15 +39,13 @@
     om/IRender
     (render [_]
       (let [id (apply str (take 6 (str (:session/uuid chat))))
-            cust-name (or (:chat-name-override chat)
-                          (utils/inspect (get-in uuid->cust [(:cust/uuid chat) :cust/name]))
+            cust-name (or (get-in uuid->cust [(:cust/uuid chat) :cust/name])
                           (chat-model/display-name chat sente-id))
             chat-body (if (string? (:chat/body chat))
                         (linkify (:chat/body chat))
                         (:chat/body chat))
             short-time (datetime/short-time (js/Date.parse (:server/timestamp chat)))
-            color-class (or (:chat-color-override chat)
-                            (name (colors/find-color uuid->cust (:cust/uuid chat) (:session/uuid chat))))]
+            color-class (name (colors/find-color uuid->cust (:cust/uuid chat) (:session/uuid chat)))]
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head
@@ -174,13 +172,16 @@
                                          :role "button"}
                                      (str "@" (:chat-bot/name chat-bot))]
                                     " for help."]
-                        :chat-color-override "green"
-                        :chat-name-override (:chat-bot/name chat-bot)
+                        :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html
          [:div.chat-log {:ref "chat-messages"}
           (when chat-bot
-            (om/build chat-item {:chat dummy-chat} {:opts {:show-sender? true}}))
+            (om/build chat-item {:chat dummy-chat :uuid->cust {(:cust/uuid state/subscriber-bot)
+                                                               (merge
+                                                                (select-keys state/subscriber-bot [:cust/color-name :cust/uuid])
+                                                                {:cust/name (:chat-bot/name chat-bot)})}}
+                      {:opts {:show-sender? true}}))
           (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
             (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
                                              chat-groups)]

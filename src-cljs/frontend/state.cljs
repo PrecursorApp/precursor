@@ -18,6 +18,7 @@
 (def subscriber-bot
   {:color "#00b233"
    :cust-name "prcrsr"
+   :cust/name "prcrsr"
    :show-mouse? true
    :hide-in-list? true
    :cust/uuid "prcrsr-subscriber-bot"
