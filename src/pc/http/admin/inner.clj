@@ -4,6 +4,7 @@
             [crypto.equality :as crypto]
             [defpage.core :as defpage :refer (defpage)]
             [hiccup.core :as hiccup]
+            [pc.admin.db :as db-admin]
             [pc.datomic :as pcd]
             [pc.http.admin.auth :as auth]
             [pc.http.sente :as sente]
@@ -46,6 +47,30 @@
 
 (defpage clients "/clients" [req]
   {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})
+
+(defpage interesting "/interesting" [req]
+  (content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))
+
+(defpage interesting-count [:get "/interesting/:layer-count" {:layer-count #"[0-9]+"}] [layer-count]
+  (content/interesting (db-admin/interesting-doc-ids {:layer-threshold (Integer/parseInt layer-count)})))
+
+(defpage occupied "/occupied" [req]
+  ;; TODO: fix whatever is causing this :(
+  (swap! sente/document-subs (fn [ds]
+                               (reduce (fn [acc1 [k s]]
+                                         (assoc acc1 k (dissoc s "dummy-ajax-post-fn")))
+                                       {} ds)))
+  {:status 200
+   :body (str
+          "<html></body>"
+          (clojure.string/join
+           " "
+           (or (seq (for [[doc-id subs] (sort-by first @sente/document-subs)]
+                      (format "<p><a href=\"/document/%s\">%s</a> with %s users</p>" doc-id doc-id (count subs))))
+               ["Nothing occupied right now :("]))
+          "</body></html")})
+
+
 
 (defpage refresh-client [:post "/refresh-client-stats"] [req]
   (if-let [client-id (get-in req [:params "client-id"])]
