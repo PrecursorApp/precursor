@@ -62,9 +62,6 @@
 (defmethod handle-message :frontend/mouse-move [app-state message data]
   (swap! app-state subs/maybe-add-subscriber-data (:client-id data) data))
 
-(defmethod handle-message :frontend/update-cust [app-state message data]
-  (swap! app-state subs/maybe-add-subscriber-data (:client-id data) data))
-
 (defmethod handle-message :frontend/db-entities [app-state message data]
   (when (= (:document/id data) (:document/id @app-state))
     (d/transact! (:db @app-state)
