@@ -81,9 +81,6 @@
 ;; TODO: make this reloadable without reloading the server
 (defn app [sente-state]
   (routes
-   (POST "/api/entity-ids" request
-         (datomic/entity-id-request (-> request :body slurp edn/read-string :count)))
-
    (GET "/document/:document-id.svg" [document-id :as req]
         (let [db (pcd/default-db)
               doc (doc-model/find-by-id db (Long/parseLong document-id))]

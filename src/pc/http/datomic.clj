@@ -10,7 +10,6 @@
             [pc.datomic.web-peer :as web-peer]
             [pc.early-access]
             [pc.email :as email]
-            [pc.http.datomic-common :as common]
             [pc.http.sente :as sente]
             [pc.http.urls :as urls]
             [pc.models.chat :as chat-model]
@@ -20,14 +19,6 @@
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)])
   (:import java.util.UUID))
-
-(defn entity-id-request [eid-count]
-  (cond (not (number? eid-count))
-        {:status 400 :body (pr-str {:error "count is required and should be a number"})}
-        (< 100 eid-count)
-        {:status 400 :body (pr-str {:error "You can only ask for 100 entity ids"})}
-        :else
-        {:status 200 :body (pr-str {:entity-ids (pcd/generate-eids (pcd/conn) eid-count)})}))
 
 ;; TODO: is the transaction guaranteed to be the first? Can there be multiple?
 (defn get-annotations [transaction]
