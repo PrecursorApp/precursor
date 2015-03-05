@@ -40,7 +40,7 @@
         doc (doc-model/find-by-id db (Long/parseLong document-id))]
     (if doc
       (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                           :google-client-id (google-client-id)
+                           :google-client-id (google-auth/google-client-id)
                            :sente-id (-> req :session :sente-id)
                            :initial-document-id (:db/id doc)}
                           ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
@@ -116,7 +116,7 @@
   "Response to send for requests that the frontend will route"
   [req]
   (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                       :google-client-id (google-client-id)
+                       :google-client-id (google-auth/google-client-id)
                        :sente-id (-> req :session :sente-id)}
                       (when-let [cust (-> req :auth :cust)]
                         {:cust (cust-model/read-api cust)}))))
@@ -133,7 +133,7 @@
              (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                     (when cust-uuid {:document/creator cust-uuid})))]
     (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                         :google-client-id (google-client-id)
+                         :google-client-id (google-auth/google-client-id)
                          :sente-id (-> req :session :sente-id)
                          :initial-document-id (:db/id doc)}
                         (when-let [cust (-> req :auth :cust)]
