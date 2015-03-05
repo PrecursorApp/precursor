@@ -2,8 +2,10 @@
   (:require [cemerick.url :as url]
             [pc.profile :as profile]))
 
-(defn make-url [path & {:keys [query]}]
-  (str (url/map->URL (merge {:host (profile/hostname)
+(defn make-url [path & {:keys [query subdomain]}]
+  (str (url/map->URL (merge {:host (str (when subdomain
+                                          (str subdomain "."))
+                                        (profile/hostname))
                              :protocol (if (profile/force-ssl?)
                                          "https"
                                          "http")

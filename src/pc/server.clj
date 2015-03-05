@@ -11,6 +11,7 @@
             [pc.http.handlers.errors :as errors-handler]
             [pc.http.handlers.logging :as logging-handler]
             [pc.http.handlers.ssl :as ssl-handler]
+            [pc.http.handlers.custom-domain :as custom-domains]
             [pc.http.routes.api :as api]
             [pc.http.routes :as routes]
             [pc.http.routes.blog :as blog]
@@ -75,6 +76,7 @@
                              (compojure.route/resources "/" {:root "public"
                                                              :mime-types {:svg "image/svg"}})
                              #'catch-all)
+    (custom-domains/wrap-custom-domains)
     (auth-middleware)
     (wrap-anti-forgery)
     (wrap-sente-id)

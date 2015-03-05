@@ -6,7 +6,7 @@
             [defpage.core :as defpage :refer (defpage)]
             [pc.assets]
             [pc.auth :as auth]
-            [pc.auth.google :refer (google-client-id)]
+            [pc.auth.google :as google-auth]
             [pc.convert :as convert]
             [pc.datomic :as pcd]
             [pc.http.doc :as doc-http]
@@ -17,6 +17,7 @@
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model]
             [pc.render :as render]
+            [pc.http.urls :as urls]
             [pc.views.content :as content]
             [ring.middleware.anti-forgery]
             [ring.util.response :refer (redirect)]))
@@ -29,7 +30,7 @@
     (if cust-uuid
       (redirect (str "/document/" (:db/id doc)))
       (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                           :google-client-id (google-client-id)
+                           :google-client-id (google-auth/google-client-id)
                            :sente-id (-> req :session :sente-id)
                            :initial-document-id (:db/id doc)})))))
 
@@ -186,14 +187,32 @@
       {:status 400
        :body "There was a problem logging you in."}
 
-      (let [cust (auth/cust-from-google-oauth-code code req)]
+      (if-let [subdomain (get parsed-state "redirect-subdomain")]
         {:status 302
          :body ""
-         :session (assoc (:session req)
-                         :http-session-key (:cust/http-session-key cust))
-         :headers {"Location" (str (or (get parsed-state "redirect-path") "/")
-                                   (when-let [query (get parsed-state "redirect-query")]
-                                     (str "?" query)))}}))))
+         :headers {"Location" (urls/make-url "/auth/google"
+                                             :subdomain subdomain
+                                             :query {:code code
+                                                     :state (-> parsed-state
+                                                              (dissoc "redirect-subdomain" "redirect-csrf-token")
+                                                              (assoc "csrf-token" (get parsed-state "redirect-csrf-token"))
+                                                              json/encode
+                                                              url/url-encode)})}}
+        (let [cust (auth/cust-from-google-oauth-code code req)
+              query (get parsed-state "redirect-query")]
+          {:status 302
+           :body ""
+           :session (assoc (:session req)
+                           :http-session-key (:cust/http-session-key cust))
+           :headers {"Location" (str (or (get parsed-state "redirect-path") "/")
+                                     (when query (str "?" query)))}})))))
+
+(defpage login "/login" [req]
+  (redirect (google-auth/oauth-uri ring.middleware.anti-forgery/*anti-forgery-token*
+                                   :redirect-path (get-in req [:params :redirect-path] "/")
+                                   :redirect-query (get-in req [:params :redirect-query])
+                                   :redirect-subdomain (get-in req [:params :redirect-subdomain])
+                                   :redirect-csrf-token (get-in req [:params :redirect-csrf-token]))))
 
 (defpage logout [:post "/logout"] [{{redirect-to :redirect-to} :params :as req}]
   (when-let [cust (-> req :auth :cust)]
