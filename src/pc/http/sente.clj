@@ -332,6 +332,8 @@
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [doc-id (-> ?data :document/id)]
       (log/infof "updating self for %s" (:cust/uuid cust))
+      (when (:cust/color-name ?data)
+        (assert (contains? (schema/color-enums) (:cust/color-name ?data))))
       (let [new-cust (cust/update! cust (select-keys ?data [:cust/name :cust/color-name]))]
         ;; XXX: do this cross-document
         (doseq [uid (reduce (fn [acc subs]
