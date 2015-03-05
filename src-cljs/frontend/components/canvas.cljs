@@ -401,8 +401,7 @@
                                                    (colors/find-color
                                                     uuid->cust
                                                     (:cust/uuid subscriber)
-                                                    (:client-id subscriber)))
-                                       :style {:stroke (:color subscriber)}}})
+                                                    (:client-id subscriber)))}})
         (dom/circle #js {:cx 0 :cy 0 :r 0})))))
 
 (defn cursors [{:keys [client-id uuid->cust]} owner]
@@ -427,13 +426,11 @@
                                                   :layer/end-y (:layer/current-y l)
                                                   :strokeDasharray "5,5"
                                                   :layer/fill "none"
-                                                  :style {:stroke (:color subscriber)}
                                                   :fillOpacity "0.5"
                                                   :className (name (colors/find-color uuid->cust (:cust/uuid subscriber) (:client-id subscriber)))
                                                   :key (str (:db/id l) "-subscriber-layer-" (:client-id subscriber))}
                                                (when (= :layer.type/text (:layer/type l))
-                                                 {:layer/stroke "none"
-                                                  :style {:fill (:color subscriber)}}))))
+                                                 {:layer/stroke "none"}))))
                    (:layers subscriber))))))
 
 (defn subscribers-layers [{:keys [client-id uuid->cust]} owner]
@@ -639,7 +636,6 @@
                                            (when (= :layer.type/group (:layer/type sel))
                                              {:layer/type :layer.type/rect
                                               :className "layer-in-progress selection"
-                                              :style {:stroke "#299ade"}
                                               :strokeDasharray "2,3"}))]
                             (svg-element (assoc sel :key (str (:db/id sel) "-in-progress")))))
                         sels))))))))

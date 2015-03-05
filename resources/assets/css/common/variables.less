@@ -16,8 +16,6 @@
 
 @gray_mixpanel: #aaa; // TODO: clean this up, maybe mix it with less to get this value from palette?
 
-@blue:               #299ADE;
-@red:   lighten(#c0392b, 10);
 @tinge: #ff9900;
 
 // Opacity
@@ -37,11 +35,8 @@
 @font_mono: Monaco;
 @font_family: @font_sans;
 
-@link: darken(@blue, 13);
-@link_hover: @blue;
-
-@color_select: @blue;
-@color_select_hover: lighten(@color_select, 13);
+@color_select: @blue_deep;
+@color_select_hover: @blue;
 
 @color_google: #3A7AF3;
 @color_google_light: lighten(  saturate(@color_google,  5),  2);
@@ -119,12 +114,22 @@
 // ad hoc
 
 @radial_tools:
-  ellipse,   159.01px,  49.71px,
-  rectangle, 199.00px, 119.00px,
-  line,      159.01px, 188.29px,
-  pencil,     79.00px, 188.29px,
-  text,       39.00px, 119.52px,
-  select,     82.66px,  49.71px;
+ellipse,   159.01px,  49.71px,
+rectangle, 199.00px, 119.00px,
+line,      159.01px, 188.29px,
+pencil,     79.00px, 188.29px,
+text,       39.00px, 119.52px,
+select,     82.66px,  49.71px;
+
+@palette_colors:
+~"red",    @red,
+~"orange", @orange,
+~"yellow", @yellow,
+~"green",  @green,
+~"cyan",   @cyan,
+~"blue",   @blue,
+~"purple", @purple,
+~"pink",   @pink;
 
 @size_chat: 25%;
 @size_chat_step: 3.125%;

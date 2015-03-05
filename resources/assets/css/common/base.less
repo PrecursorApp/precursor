@@ -14,49 +14,6 @@ body {
   min-height: 100vh;
   background: @dye_outer;
 }
-.inner {
-  .selection(@white; (100 * @opacity_darker_dark));
-  .flexy();
-  .transform-origin(right);
-  position: fixed;
-  color: @gray_light;
-  top: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  transition: @run @bezier_deform;
-  will-change: transform;
-  &:active {
-    ~ .hud {
-      .user-select(none);
-      pointer-events: none;
-      .new-here-items,
-      .new-here-button {
-        pointer-events: none;
-      }
-    }
-  }
-  a {
-    color: darken(@link_hover, 13);
-    &:hover,
-    &:active {
-      color: @link_hover;
-    }
-    &[role="button"] {
-      &:hover,
-      &:active {
-        .icon(stroke; @white);
-        .icon(fill; @white);
-      }
-    }
-  }
-  &.loading {
-    .canvas {
-      pointer-events: none
-    }
-    cursor: wait
-  }
-}
 button {
   background: fade(@white, 0);
   padding: 0;
@@ -75,16 +32,16 @@ img {
   max-width: 100%;
 }
 a {
-  .icon(stroke; @link);
-  .icon(fill; @link_hover);
+  .icon(stroke; @black);
+  .icon(fill; @black);
   color: @black;
   background: transparent;
   text-decoration: none;
   &:hover,
   &:focus {
-    .icon(stroke; @link_hover);
-    .icon(fill; @link_hover);
-    color: @link_hover;
+    .icon(stroke; @color_select);
+    .icon(fill; @color_select);
+    color: @color_select;
     outline: 0;
   }
   &:active {

@@ -52,8 +52,7 @@
                (when show-sender?
                  [:div.message-head
                   [:span {:class color-class}
-                   (common/icon :user {:path-props {:style {:stroke (or (:chat/color chat) (str "#" id))}
-                                                    :className color-class}})]
+                   (common/icon :user {:path-props {:className color-class}})]
                   [:span (str " " cust-name)]
                   [:span.time (str " " short-time)]])
                [:div.message-body

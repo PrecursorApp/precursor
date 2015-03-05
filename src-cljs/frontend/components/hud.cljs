@@ -167,10 +167,8 @@
                             "Click to change your color"
                             "Login to change your color")}
                   (if (= :touch (get-in app [:mouse-type]))
-                    (common/icon :phone (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}
-                                                                        :className (name self-color)}}))
-                    (common/icon :user (when show-mouse? {:path-props {:style {:stroke (get-in app [:subscribers :info client-id :color])}
-                                                                       :className (name self-color)}})))]
+                    (common/icon :phone (when show-mouse? {:path-props {:className (name self-color)}}))
+                    (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}})))]
                  (if editing-name?
                    [:form.viewer-name-form
                     {:on-submit #(do (when-not (str/blank? new-name)
@@ -215,8 +213,7 @@
                                                                (:client-id sub)))]]
                 [:div.viewer
                  [:div.viewer-avatar.viewer-tag
-                  (common/icon :user (when show-mouse? {:path-props {:style {:stroke color}
-                                                                     :className color-class}}))]
+                  (common/icon :user (when show-mouse? {:path-props {:className color-class}}))]
                  [:div.viewer-name.viewer-tag
                   id-str]
                  [:div.viewer-knobs
