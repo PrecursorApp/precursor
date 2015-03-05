@@ -49,19 +49,20 @@
         height (if (pos? min-y)
                  max-y
                  (- max-y min-y))
+        padding 100
+        scale-factor (if size-limit
+                       (let [max-dim (+ padding (max width height))]
+                         (min 1 (/ size-limit max-dim)))
+                       1)
         offset-top (if (neg? min-y)
-                     (+ 250 (- min-y))
+                     (+ (/ padding 2) (- min-y))
                      0)
         offset-left (if (neg? min-x)
-                      (+ 250 (- min-x))
+                      (+ (/ padding 2) (- min-x))
                       0)]
     (html [:svg (merge
-                 {:width (apply min (concat [(+ width 500)]
-                                            (when size-limit
-                                              [size-limit])))
-                  :height (apply min (concat [(+ height 500)]
-                                             (when size-limit
-                                               [size-limit])))
+                 {:width (* scale-factor (+ width padding))
+                  :height (* scale-factor (+ height padding))
                   :xmlns "http://www.w3.org/2000/svg"
                   :xmlns:xlink "http://www.w3.org/1999/xlink"
                   :version "1.1"}
@@ -70,5 +71,8 @@
            ;; hack to make pngs work
            (when invert-colors?
              [:rect {:width "100%" :height "100%" :fill "#333"}])
-           [:g {:transform (format "translate(%s, %s)" offset-left offset-top)}
+           [:g {:transform (format "translate(%s, %s) scale(%s)"
+                                   (* scale-factor offset-left)
+                                   (* scale-factor offset-top)
+                                   scale-factor)}
             (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))

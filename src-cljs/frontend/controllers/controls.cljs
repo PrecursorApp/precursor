@@ -937,8 +937,8 @@
                                              :client/timestamp (js/Date.)
                                              ;; server will overwrite this
                                              :server/timestamp (js/Date.)})])
-    (when-let [cmd (chat-cmd (get-in previous-state [:chat :body]))]
-      (post-handle-cmd-chat current-state cmd (get-in previous-state [:chat :body])))))
+    (when-let [cmd (chat-cmd chat-body)]
+      (post-handle-cmd-chat current-state cmd chat-body))))
 
 (defmethod control-event :chat-toggled
   [browser-state message _ state]
