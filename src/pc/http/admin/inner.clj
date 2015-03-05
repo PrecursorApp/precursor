@@ -19,31 +19,23 @@
 (defpage base "/admin" [req]
   (hiccup/html (content/layout {}
                                [:div {:style "padding: 40px"}
-                                [:p "Congratulations on logging in!"]
-                                [:h2 "Early access"]
-                                (admin-content/early-access-users)
-                                [:h2 "User Growth"]
-                                (admin-content/users-graph)])))
+                                [:div [:a {:href "/early-access"} "Early Access"]]
+                                [:div [:a {:href "/graphs"} "User Graphs"]]
+                                [:div [:a {:href "/clients"} "Clients"]]
+                                [:div [:a {:href "/occupied"} "Occupied"]]
+                                [:div [:a {:href "/interesting"} "Interesting"]]])))
 
-(defpage base "/graphs" [req]
+(defpage early-access "/early-access" [req]
+  (hiccup/html (content/layout {}
+                               [:div {:style "padding: 40px"}
+                                [:h2 "Early access"]
+                                (admin-content/early-access-users)])))
+
+(defpage graphs "/graphs" [req]
   (hiccup/html (content/layout {}
                                [:div {:style "padding: 40px"}
                                 [:h2 "User Growth"]
                                 (admin-content/users-graph)])))
-
-(defpage grant-early-access [:post "/grant-early-access"] [req]
-  (let [uuid (some-> req :params (get "cust-uuid") (UUID/fromString))]
-    (when (empty? (str uuid))
-      (throw+ {:status 400 :public-message "No customer specified"}))
-    (let [cust (cust-model/find-by-uuid (pcd/default-db) uuid)]
-      (when (empty? cust)
-        (throw+ {:status 400 :public-message "No customer found"}))
-      (flag-model/add-flag cust :flags/private-docs)
-      {:status 200 :body (hiccup/html [:div
-                                       [:p "All right, granted access to " (:cust/email cust) "."]
-                                       [:a {:href "/admin"}
-                                        "Go back to the admin page"]
-                                       "."])})))
 
 (defpage clients "/clients" [req]
   {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})
@@ -87,6 +79,19 @@
   (Thread/sleep 500)
   {:status 302 :headers {"Location" "/clients"} :body ""})
 
+(defpage grant-early-access [:post "/grant-early-access"] [req]
+  (let [uuid (some-> req :params (get "cust-uuid") (UUID/fromString))]
+    (when (empty? (str uuid))
+      (throw+ {:status 400 :public-message "No customer specified"}))
+    (let [cust (cust-model/find-by-uuid (pcd/default-db) uuid)]
+      (when (empty? cust)
+        (throw+ {:status 400 :public-message "No customer found"}))
+      (flag-model/add-flag cust :flags/private-docs)
+      {:status 200 :body (hiccup/html [:div
+                                       [:p "All right, granted access to " (:cust/email cust) "."]
+                                       [:a {:href "/admin"}
+                                        "Go back to the admin page"]
+                                       "."])})))
 
 (defn wrap-require-login [handler]
   (fn [req]
