@@ -153,7 +153,7 @@
 (defn handle-precursor-pings [transaction]
   (let [db (:db-after transaction)
         datoms (:tx-data transaction)
-        document-id (delay (:layer/document (get-annotations transaction)))
+        document-id (delay (:transaction/document (get-annotations transaction)))
         chat-body-eid (d/entid db :chat/body)]
     (when-let [chat-datom (first (filter #(= chat-body-eid (:a %)) datoms))]
       (let [slack-url (if (profile/prod?)
