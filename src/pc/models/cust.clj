@@ -116,7 +116,7 @@
 (defn cust-uuids-for-doc [db doc-id]
   (d/q '{:find [[?uuid ...]]
          :in [$ ?doc-id]
-         :where [[?t :document/id ?doc-id]
+         :where [[?t :transaction/document ?doc-id]
                  [?t :cust/uuid ?uuid]]}
        db doc-id))
 
@@ -128,11 +128,11 @@
                        :in [$ ?uuid]
                        :where [(or [?t :cust/uuid ?uuid]
                                    [?t :session/uuid ?uuid])
-                               [?t :document/id ?doc-id]]}
+                               [?t :transaction/document ?doc-id]]}
                      db uuid)
         cust-uuids (mapcat #(d/q '{:find [[?cust-uuid ...]]
                                    :in [$ ?doc-id]
-                                   :where [[?t :document/id ?doc-id]
+                                   :where [[?t :transaction/document ?doc-id]
                                            [?t :cust/uuid ?cust-uuid]]}
                                  db %)
                            doc-ids)

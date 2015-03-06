@@ -84,14 +84,14 @@
   (when (and access-grant
              (:db/id doc)
              (= (:db/id doc)
-                (:access-grant/document access-grant)))
+                (:db/id (:access-grant/document-ref access-grant))))
     :read))
 
 (defn permission-permission [db doc permission]
   (when (and permission
              (:db/id doc)
-             (:permission/document permission)
-             (= (:db/id doc) (:permission/document permission))
+             (:permission/document-ref permission)
+             (= (:db/id doc) (:db/id (:permission/document-ref permission)))
              (not (permission-model/expired? permission)))
     (cond (contains? (:permission/permits permission) :permission.permits/admin)
           :admin

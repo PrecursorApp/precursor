@@ -54,14 +54,15 @@
        (d/q '{:find [?doc-id]
               :in [$ ?uuid]
               :where [[?t :cust/uuid ?uuid]
-                      [?t :document/id ?doc-id]]}
+                      [?t :transaction/document ?doc-id]]}
             db (:cust/uuid cust))))
 
 (defn last-updated-time [db doc-id]
   (ffirst (d/q '{:find [(max ?i)]
                  :in [$ ?doc-id]
-                 :where [[_ :document/id ?doc-id ?tx]
-                         [?tx :db/txInstant ?i]]}
+                 :where [[?t :transaction/document ?doc-id]
+                         [?t :transaction/broadcast]
+                         [?t :db/txInstant ?i]]}
                db doc-id)))
 
 (defn read-api [doc]

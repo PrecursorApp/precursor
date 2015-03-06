@@ -168,7 +168,7 @@
 (defmethod render-access-entity :permission
   [entity cast!]
   (html
-   [:div.access-card.make
+   [:div.access-card.make {:key (:db/id entity)}
     [:div.access-avatar
      [:img.access-avatar-img
       {:src (utils/gravatar-url (:permission/cust entity))}]]
@@ -181,7 +181,7 @@
 (defmethod render-access-entity :access-grant
   [entity cast!]
   (html
-   [:div.access-card.make
+   [:div.access-card.make {:key (:db/id entity)}
     [:div.access-avatar
      [:img.access-avatar-img
       {:src (utils/gravatar-url (:access-grant/email entity))}]]
@@ -194,7 +194,7 @@
 (defmethod render-access-entity :access-request
   [entity cast!]
   (html
-   [:div.access-card.make
+   [:div.access-card.make {:key (:db/id entity)}
     {:class (if (= :access-request.status/denied (:access-request/status entity))
               "denied"
               "requesting")}

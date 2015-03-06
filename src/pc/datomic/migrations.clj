@@ -75,8 +75,11 @@
 
 (defn document-ids->document-refs [db conn]
   (log/infof "converting document-ids to document-refs")
-  (doseq [datom-group (partition-all 1000 (filter (partial have-document-ref? db) (d/datoms db :avet :document/id)))]
-    @(d/transact-async conn (mapv #(doc-id-datom->ref-transaction db %) datom-group))))
+  (doseq [datom-group (partition-all 1000 (remove (partial have-document-ref? db) (d/datoms db :avet :document/id)))]
+    @(d/transact-async conn (conj (mapv #(doc-id-datom->ref-transaction db %) datom-group)
+                                  {:db/id (d/tempid :db.part/tx)
+                                   :transaction/source :transaction.source/migration
+                                   :migration :migration/longs->refs}))))
 
 (defn have-ref-attr? [db ref-attr {:keys [e] :as datom}]
   (let [ent (d/entity db e)]
@@ -88,10 +91,13 @@
                 :access-grant/document :access-grant/granter]
           :let [ref-attr (keyword (namespace attr) (str (name attr) "-ref"))]]
     (log/infof "converting %s to %s" attr ref-attr)
-    (doseq [datom-group (partition-all 1000 (filter (partial have-ref-attr? db ref-attr) (d/datoms db :aevt attr)))]
-      @(d/transact-async conn (mapv (fn [{:keys [e v] :as datom}]
-                                      [:db/add e ref-attr v])
-                                    datom-group)))))
+    (doseq [datom-group (partition-all 1000 (remove (partial have-ref-attr? db ref-attr) (d/datoms db :aevt attr)))]
+      @(d/transact-async conn (conj (mapv (fn [{:keys [e v] :as datom}]
+                                            [:db/add e ref-attr v])
+                                          datom-group)
+                                    {:db/id (d/tempid :db.part/tx)
+                                     :transaction/source :transaction.source/migration
+                                     :migration :migration/longs->refs})))))
 
 
 (defn longs->refs
@@ -112,7 +118,8 @@
    4 #'archive/make-existing-documents-public
    5 #'archive/migrate-fake-documents
    6 #'archive/fix-bounding-boxes
-   7 #'archive/add-frontend-ids))
+   7 #'archive/add-frontend-ids
+   8 #'longs->refs))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"

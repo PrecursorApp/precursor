@@ -61,6 +61,7 @@
     :layer/child
     :layer/ui-id
     :layer/ui-target
+
     :session/uuid
     :document/id ;; TODO: for layers use layer/document
     :layer/document
@@ -126,7 +127,6 @@
                             (remove-float-conflicts)
                             (add-frontend-ids document-id)
                             (concat [(merge {:db/id txid
-                                             :document/id document-id
                                              :session/uuid session-uuid
                                              :session/client-id client-id
                                              :transaction/broadcast true

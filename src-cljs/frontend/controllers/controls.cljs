@@ -933,7 +933,7 @@
                                              :chat/cust-name (get-in current-state [:cust :cust/name])
                                              :db/id (get-in current-state [:chat :entity-id])
                                              :session/uuid (:sente-id previous-state)
-                                             :document/id (:document/id previous-state)
+                                             :chat/document (:document/id previous-state)
                                              :client/timestamp (js/Date.)
                                              ;; server will overwrite this
                                              :server/timestamp (js/Date.)})])
@@ -1148,7 +1148,7 @@
                                              (-> l
                                                (assoc :layer/ancestor (:db/id l)
                                                       :db/id eid
-                                                      :document/id doc-id
+                                                      :layer/document doc-id
                                                       :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
                                                (#(move-layer % %
                                                              {:snap-x snap-move-x :snap-y snap-move-y

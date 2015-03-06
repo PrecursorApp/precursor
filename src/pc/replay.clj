@@ -11,8 +11,7 @@
   (map #(d/entity db (first %))
        (d/q '{:find [?t]
               :in [$ ?doc-id]
-              :where [[?t :document/id ?doc-id]
-                      [?t :db/txInstant]]}
+              :where [[?t :transaction/document ?doc-id]]}
             db (:db/id doc))))
 
 (defn- ->datom
@@ -62,7 +61,6 @@
                                         pcd/datom->transaction)
                                      tx-data)
                                 {:db/id txid
-                                 :document/id (:db/id new-doc)
                                  :transaction/document (:db/id new-doc)
                                  :transaction/broadcast true}))
         (Thread/sleep sleep-ms)))))

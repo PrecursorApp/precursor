@@ -472,6 +472,7 @@
               :db/doc "Annotates transaction with migration")
    (enum :migration/add-frontend-ids)
    (enum :migration/choose-colors-for-custs)
+   (enum :migration/longs->refs)
 
    ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
    (attribute :needs-email

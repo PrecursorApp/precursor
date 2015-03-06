@@ -6,19 +6,20 @@
   (:import java.util.UUID))
 
 ;; TODO: figure out how to have only 1 read-api (maybe only send datoms?)
-(defn read-api [db permission]
-  (-> permission
-    (select-keys [:access-request/document
-                  :access-request/cust
-                  :access-request/create-date
-                  :access-request/deny-date
-                  ;; TODO: different read api based on permissions
-                  :access-request/status])
-    (assoc :db/id (web-peer/client-id permission))
-    (utils/update-when-in [:access-request/cust] #(:cust/email (d/entity db %)))))
+(defn read-api [db request]
+  (let [doc-id (:db/id (:access-request/document-ref request))
+        cust-email (:cust/email (:access-request/cust-ref request))]
+    (-> request
+      (select-keys [:access-request/create-date
+                    :access-request/deny-date
+                    ;; TODO: different read api based on permissions
+                    :access-request/status])
+      (assoc :db/id (web-peer/client-id request))
+      (cond-> doc-id (assoc :access-request/document doc-id)
+              cust-email (assoc :access-request/cust cust-email)))))
 
-(defn requester-read-api [db permission]
-  (-> (read-api db permission)
+(defn requester-read-api [db request]
+  (-> (read-api db request)
     (select-keys [:access-request/document
                   :access-request/cust
                   :access-request/create-date
@@ -27,19 +28,19 @@
 (defn find-by-id [db id]
   (let [candidate (d/entity db id)]
     ;; faster than using a datalog query
-    (when (:access-request/document candidate)
+    (when (:access-request/document-ref candidate)
       candidate)))
 
 (defn find-by-client-part [db namespace-part client-part]
   (let [candidate (d/entity db (web-peer/find-entity-id db namespace-part client-part))]
     ;; faster than using a datalog query
-    (when (:access-request/document candidate)
+    (when (:access-request/document-ref candidate)
       candidate)))
 
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]
               :in [$ ?doc-id]
-              :where [[?t :access-request/document ?doc-id]]}
+              :where [[?t :access-request/document-ref ?doc-id]]}
             db (:db/id doc))
     (map first)
     (map #(d/entity db %))))
@@ -47,8 +48,8 @@
 (defn find-by-doc-and-cust [db doc cust]
   (->> (d/q '{:find [?t]
               :in [$ ?doc-id ?cust-id]
-              :where [[?t :access-request/document ?doc-id]
-                      [?t :access-request/cust ?cust-id]]}
+              :where [[?t :access-request/document-ref ?doc-id]
+                      [?t :access-request/cust-ref ?cust-id]]}
             db (:db/id doc) (:db/id cust))
     (map first)
     (map #(d/entity db %))))
@@ -60,9 +61,7 @@
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
                   {:db/id temp-id
-                   :access-request/document (:db/id doc)
                    :access-request/document-ref (:db/id doc)
-                   :access-request/cust (:db/id cust)
                    :access-request/cust-ref (:db/id cust)
                    :access-request/status :access-request.status/pending
                    :access-request/create-date create-date
