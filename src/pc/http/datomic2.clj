@@ -61,7 +61,7 @@
     :layer/child
     :layer/ui-id
     :layer/ui-target
-    :layer/document
+
     :session/uuid
     :document/id ;; TODO: for layers use layer/document
     :layer/document
