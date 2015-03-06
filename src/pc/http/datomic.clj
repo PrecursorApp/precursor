@@ -67,21 +67,16 @@
     :server/timestamp
 
     :permission/document
-    :permission/document-ref
     :permission/cust ;; translated
-    :permission/cust-ref ;; translated
     :permission/permits
     :permission/grant-date
 
     :access-grant/document
-    :access-grant/document-ref
     :access-grant/email
     :access-grant/grant-date
 
     :access-request/document
-    :access-request/document-ref
     :access-request/cust ;; translated
-    :access-request/cust-ref ;; translated
     :access-request/status
     :access-request/create-date
     :access-request/deny-date
@@ -100,14 +95,8 @@
 (defmethod translate-datom :permission/cust [db d]
   (update-in d [:v] #(:cust/email (d/entity db %))))
 
-(defmethod translate-datom :permission/cust-ref [db d]
-  (update-in d [:v] #(:cust/uuid (d/entity db %))))
-
 (defmethod translate-datom :access-request/cust [db d]
   (update-in d [:v] #(:cust/email (d/entity db %))))
-
-(defmethod translate-datom :access-request/cust-ref [db d]
-  (update-in d [:v] #(:cust/uuid (d/entity db %))))
 
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom

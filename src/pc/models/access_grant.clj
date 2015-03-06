@@ -10,7 +10,6 @@
 (defn read-api [grant]
   (-> grant
     (select-keys [:access-grant/document
-                  :accces-grant/document-ref
                   :access-grant/email
                   :access-grant/expiry
                   :access-grant/grant-date])

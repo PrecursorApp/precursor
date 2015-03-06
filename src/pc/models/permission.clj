@@ -1,10 +1,11 @@
 (ns pc.models.permission
-  (:require [pc.datomic :as pcd]
-            [pc.datomic.web-peer :as web-peer]
-            [clj-time.coerce]
+  (:require [clj-time.coerce]
             [clj-time.core :as time]
             [crypto.random]
-            [datomic.api :refer [db q] :as d])
+            [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
+            [pc.utils :as utils])
   (:import java.util.UUID))
 
 (defn permits [db doc cust]
@@ -82,14 +83,11 @@
 (defn read-api [db permission]
   (-> permission
     (select-keys [:permission/document
-                  :permission/document-ref
                   :permission/cust
-                  :permission/cust-ref
                   :permission/permits
                   :permission/grant-date])
     (assoc :db/id (web-peer/client-id permission))
-    (update-in [:permission/cust] #(:cust/email (d/entity db %)))
-    (update-in [:permission/cust-ref] #(:cust/uuid (d/entity db %)))))
+    (utils/update-when-in [:permission/cust] #(:cust/email (d/entity db %)))))
 
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]
