@@ -9,6 +9,7 @@
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [goog.dom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -170,28 +171,49 @@
                     (common/icon :phone (when show-mouse? {:path-props {:className (name self-color)}}))
                     (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}})))]
                  (if editing-name?
-                   [:form.viewer-name-form
-                    {:on-submit #(do (when-not (str/blank? new-name)
-                                       (cast! :self-updated {:name new-name}))
-                                     (om/set-state! owner :editing-name? false)
-                                     (om/set-state! owner :new-name "")
-                                     (utils/stop-event %))
-                     :on-blur #(do (when-not (str/blank? new-name)
-                                     (cast! :self-updated {:name new-name}))
-                                   (om/set-state! owner :editing-name? false)
-                                   (om/set-state! owner :new-name "")
-                                   (utils/stop-event %))
-                     :on-key-down #(when (= "Escape" (.-key %))
-                                     (om/set-state! owner :editing-name? false)
-                                     (om/set-state! owner :new-name "")
-                                     (utils/stop-event %))}
-                    [:input.viewer-name-input
-                     {:type "text"
-                      :ref "name-edit"
-                      :tab-index 1
-                      ;; TODO: figure out why we need value here
-                      :value new-name
-                      :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
+                   ; [:form.viewer-name-form
+                   ;  {:on-submit #(do (when-not (str/blank? new-name)
+                   ;                     (cast! :self-updated {:name new-name}))
+                   ;                   (om/set-state! owner :editing-name? false)
+                   ;                   (om/set-state! owner :new-name "")
+                   ;                   (utils/stop-event %))
+                   ;   :on-blur #(do (when-not (str/blank? new-name)
+                   ;                   (cast! :self-updated {:name new-name}))
+                   ;                 (om/set-state! owner :editing-name? false)
+                   ;                 (om/set-state! owner :new-name "")
+                   ;                 (utils/stop-event %))
+                     ; :on-key-down #(when (= "Escape" (.-key %))
+                     ;                 (om/set-state! owner :editing-name? false)
+                     ;                 (om/set-state! owner :new-name "")
+                     ;                 (utils/stop-event %))}
+                   ;  [:input.viewer-name-input
+                   ;   {:type "text"
+                   ;    :ref "name-edit"
+                   ;    :tab-index 1
+                   ;    ;; TODO: figure out why we need value here
+                   ;    :value new-name
+                   ;    :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
+
+                   [:div.viewer-name-input
+                    {:ref "name-change"
+                     :content-editable true
+                     ; :on-input #(do (when-not (str/blank? new-name)
+                     ;                   (cast! :self-updated {:name new-name}))
+                     ;                 (om/set-state! owner :editing-name? false)
+                     ;                 (om/set-state! owner :new-name "")
+                     ;                 (utils/stop-event %))
+                     :on-key-down #(do
+                                     (when (= "Enter" (.-key %))
+                                       (.preventDefault %)
+                                       ;; If they hit enter, send them to the next input.
+                                       (.focus (om/get-node owner "name-change")))
+                                     (when (= "Escape" (.-key %))
+                                       (om/set-state! owner :editing-name? false)
+                                       (om/set-state! owner :new-name "")
+                                       (utils/stop-event %)))
+                     :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))
+
+                     }]
 
                    [:div.viewer-name.viewer-tag (or self-name "You")])
                  [:div.viewer-knobs
