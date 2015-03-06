@@ -140,6 +140,7 @@
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
                    (when-let [chat-datoms (seq (filter #(or (= :chat/body (:a %))
+                                                            (= :server/timestamp (:a %))
                                                             (= :document/chat-bot (:a %)))
                                                        (:tx-data tx-report)))]
                      (om/refresh! owner)))))
