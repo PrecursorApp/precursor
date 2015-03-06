@@ -47,6 +47,8 @@
                   :layer/child
                   :layer/ui-id
                   :layer/ui-target
-                  :layer/document])
+                  :layer/document
+                  ;; TODO: remove when frontend is deployed
+                  :document/id])
     (update-in [:layer/document] :db/id)
     (assoc :db/id (web-peer/client-id layer))))

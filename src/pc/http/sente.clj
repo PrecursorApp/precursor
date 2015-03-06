@@ -293,6 +293,17 @@
                                            :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
                              doc-ids)}))))
 
+(defn determine-type [datom datoms]
+  (let [e (:e datom)
+        attr-nses (map (comp namespace :a) (filter #(= (:e %) (:e datom)) datoms))]
+    (cond (first (filter #(= "layer" %) attr-nses))
+          :layer/document
+
+          (first (filter #(= "chat" %) attr-nses))
+          :chat/document
+
+          :else (throw+ {:error :invalid-type-fordocument-id :datom datom}))))
+
 (defmethod ws-handler :frontend/transaction [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
   (def mydata ?data)
@@ -301,9 +312,17 @@
                  :datoms
                  (remove (comp nil? :v))
                  ;; Don't let people sneak layers into other documents
-                 (map (fn [d] (if (= "document" (name (:a d)))
-                                (assoc d :v document-id)
-                                d))))
+                 (reduce (fn [acc d]
+                           (cond (= "document" (name (:a d)))
+                                 (conj acc
+                                       (assoc d :v document-id)
+                                       (assoc d :a :document/id :v document-id))
+                                 (= :document/id (:a d))
+                                 (conj acc
+                                       (assoc d :v document-id)
+                                       (assoc d :a (determine-type d datoms) :v document-id))
+                                 :else (conj acc d)))
+                         []))
         _ (def mydatoms datoms)
         cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
     (log/infof "transacting %s on %s for %s" datoms document-id client-id)

@@ -32,6 +32,8 @@
                   :chat/body
                   :chat/color
                   :chat/document
+                  ;; TODO: remove when frontend is deployed
+                  :document/id
                   :cust/uuid])
     (update-in [:chat/document] :db/id)
     (assoc :db/id (web-peer/client-id chat))))

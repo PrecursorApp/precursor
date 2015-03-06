@@ -82,6 +82,8 @@
 
     :transaction/document
 
+    ;; TODO: remove when fully deployed
+    :document/id
     })
 
 (defn translate-datom-dispatch-fn [db d] (:a d))
