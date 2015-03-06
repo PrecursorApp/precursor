@@ -63,6 +63,8 @@
     :layer/ui-target
     :session/uuid
     :document/id ;; TODO: for layers use layer/document
+    :layer/document
+    :chat/document
     :document/name
     :chat/body
     :chat/color
