@@ -289,7 +289,7 @@
           ;; limit (get ?data :limit 100)
           ;; offset (get ?data :offset 0)
           doc-ids (doc-model/find-touched-by-cust (:db req) cust)]
-      (log/infof "fetching touched for %s" client-id)
+      (log/infof "fetched %s touched for %s" (count doc-ids) client-id)
       (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
                                            :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
                              doc-ids)}))))
