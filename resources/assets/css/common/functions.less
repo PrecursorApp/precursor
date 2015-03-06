@@ -228,15 +228,6 @@
   @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
   &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
 }
-.palette(@p; @a: @palette_colors; @c: length(@a); @x: -1; @y: 0) when (@c > (length(@a) / 2)) {
-  .palette(@p; @a; (@c - 1); (@x - 1); (@y - 1));
-  @n: extract(@a, (@c + @x));
-  &:not(.desaturate) {
-    &.@{n}{
-      @{p}: extract(@a, (@c + @y));
-    }
-  }
-}
 .hud_toggle_animation(...) {
   .animation(~"in-fade-@{arguments}" @run_slow);
 }
