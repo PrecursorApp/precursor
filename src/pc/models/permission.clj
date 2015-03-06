@@ -73,13 +73,13 @@
 ;; TODO: figure out how to have only 1 read-api (maybe only send datoms?)
 (defn read-api [db permission]
   (let [doc-id (:db/id (:permission/document-ref permission))
-        cust-email (:cust/email (:permission/cust-ref permission))])
-  (-> permission
-    (select-keys [:permission/permits
-                  :permission/grant-date])
-    (assoc :db/id (web-peer/client-id permission))
-    (cond-> doc-id (assoc :permission/document doc-id)
-            cust-email (assoc :permission/cust cust-email))))
+        cust-email (:cust/email (:permission/cust-ref permission))]
+    (-> permission
+      (select-keys [:permission/permits
+                    :permission/grant-date])
+      (assoc :db/id (web-peer/client-id permission))
+      (cond-> doc-id (assoc :permission/document doc-id)
+              cust-email (assoc :permission/cust cust-email)))))
 
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]
