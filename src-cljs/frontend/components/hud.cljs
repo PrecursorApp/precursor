@@ -158,7 +158,7 @@
             [:div.viewers-list
              [:div.viewers-list-frame
               (let [show-mouse? (get-in app [:subscribers :info client-id :show-mouse?])]
-                [:div.viewer.viewer-self
+                [:div.viewer.viewer-self {:class (when editing-name? "busy")}
                  [:div.viewer-avatar.viewer-tag
                   {:on-mouse-down #(let [color (colors/next-color colors/color-idents self-color)]
                                      (when (utils/logged-in? owner)
@@ -171,49 +171,27 @@
                     (common/icon :phone (when show-mouse? {:path-props {:className (name self-color)}}))
                     (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}})))]
                  (if editing-name?
-                   ; [:form.viewer-name-form
-                   ;  {:on-submit #(do (when-not (str/blank? new-name)
-                   ;                     (cast! :self-updated {:name new-name}))
-                   ;                   (om/set-state! owner :editing-name? false)
-                   ;                   (om/set-state! owner :new-name "")
-                   ;                   (utils/stop-event %))
-                   ;   :on-blur #(do (when-not (str/blank? new-name)
-                   ;                   (cast! :self-updated {:name new-name}))
-                   ;                 (om/set-state! owner :editing-name? false)
-                   ;                 (om/set-state! owner :new-name "")
-                   ;                 (utils/stop-event %))
-                     ; :on-key-down #(when (= "Escape" (.-key %))
-                     ;                 (om/set-state! owner :editing-name? false)
-                     ;                 (om/set-state! owner :new-name "")
-                     ;                 (utils/stop-event %))}
-                   ;  [:input.viewer-name-input
-                   ;   {:type "text"
-                   ;    :ref "name-edit"
-                   ;    :tab-index 1
-                   ;    ;; TODO: figure out why we need value here
-                   ;    :value new-name
-                   ;    :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
-
                    [:div.viewer-name-input
-                    {:ref "name-change"
+                    {:ref "name-edit"
                      :content-editable true
-                     ; :on-input #(do (when-not (str/blank? new-name)
-                     ;                   (cast! :self-updated {:name new-name}))
-                     ;                 (om/set-state! owner :editing-name? false)
-                     ;                 (om/set-state! owner :new-name "")
-                     ;                 (utils/stop-event %))
                      :on-key-down #(do
                                      (when (= "Enter" (.-key %))
                                        (.preventDefault %)
-                                       ;; If they hit enter, send them to the next input.
-                                       (.focus (om/get-node owner "name-change")))
+                                       (when-not (str/blank? new-name)
+                                         (cast! :self-updated {:name new-name}))
+                                       (om/set-state! owner :editing-name? false)
+                                       (om/set-state! owner :new-name "")
+                                       (utils/stop-event %))
                                      (when (= "Escape" (.-key %))
                                        (om/set-state! owner :editing-name? false)
                                        (om/set-state! owner :new-name "")
                                        (utils/stop-event %)))
-                     :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))
-
-                     }]
+                     :on-blur #(do (when-not (str/blank? new-name)
+                                     (cast! :self-updated {:name new-name}))
+                                   (om/set-state! owner :editing-name? false)
+                                   (om/set-state! owner :new-name "")
+                                   (utils/stop-event %))
+                     :on-input #(om/set-state! owner :new-name (goog.dom/getRawTextContent (.-target %)))}]
 
                    [:div.viewer-name.viewer-tag (or self-name "You")])
                  [:div.viewer-knobs
