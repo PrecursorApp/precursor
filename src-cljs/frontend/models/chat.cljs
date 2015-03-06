@@ -31,7 +31,7 @@
 (defn create-bot-chat [conn app-state body]
   (d/transact! conn [{:db/id -1
                       :chat/body body
-                      :document/id (:document/id app-state)
+                      :chat/document (:document/id app-state)
                       :client/timestamp (js/Date.)
                       :server/timestamp (js/Date.)
                       :cust/uuid (:cust/uuid state/subscriber-bot)

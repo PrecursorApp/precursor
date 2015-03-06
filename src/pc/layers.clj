@@ -48,7 +48,7 @@
 
 (defn make-layer [entity-id document-id x y]
   {:db/id              entity-id
-   :document/id        document-id
+   :layer/document     document-id
    :layer/type         :layer.type/rect
    :layer/start-x      x
    :layer/start-y      y

@@ -1,17 +1,18 @@
 (ns frontend.sente
-  (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)])
-  (:require [cljs.core.async :as async :refer (<! >! put! chan)]
+  (:require [cemerick.url :as url]
+            [cljs.core.async :as async :refer (<! >! put! chan)]
             [clojure.set :as set]
-            [cemerick.url :as url]
+            [datascript :as d]
+            [frontend.datascript :as ds]
+            [frontend.datetime :as datetime]
+            [frontend.models.chat :as chat-model]
             [frontend.state :as state]
-            [frontend.utils :as utils :include-macros true]
-            [taoensso.sente :as sente]
             [frontend.stats :as stats]
             [frontend.subscribers :as subs]
-            [frontend.datascript :as ds]
-            [frontend.models.chat :as chat-model]
+            [frontend.utils :as utils :include-macros true]
             [goog.labs.dom.PageVisibilityMonitor]
-            [datascript :as d]))
+            [taoensso.sente :as sente])
+  (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)]))
 
 (defn send-msg [sente-state message & [timeout-ms callback-fn :as rest]]
   (if (-> sente-state :state deref :open?)
@@ -23,6 +24,13 @@
                    (when (:open? new)
                      (apply (:send-fn sente-state) message rest)
                      (remove-watch ref watch-id)))))))
+
+(defn update-server-offset [sente-state]
+  (let [start (goog/now)]
+    (send-msg sente-state [:server/timestamp] 1000 (fn [reply]
+                                                     (when (sente/cb-success? reply)
+                                                       (let [latency (- (goog/now) start)]
+                                                         (datetime/update-server-offset (:date (second reply)) latency)))))))
 
 (defn subscribe-to-document [sente-state comms document-id & {:keys [requested-color requested-remainder]}]
   (send-msg sente-state [:frontend/subscribe {:document-id document-id

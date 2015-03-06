@@ -122,7 +122,8 @@
                           (put! (get-in current-state [:comms :controls]) [message data transient?]))
                         doc-id
                         (:undo-state current-state)
-                        sente-state)))
+                        sente-state)
+    (sente/update-server-offset sente-state)))
 
 (defmethod navigated-to :new
   [history-imp navigation-point args state]

@@ -109,7 +109,7 @@
                            :layer/name "placeholder"
                            :layer/text text
                            :layer/stroke-width 1
-                           :document/id doc-id
+                           :layer/document doc-id
                            :db/id (inc (rand-int 1000))}
                           (when source
                             {:layer/source source})

@@ -1,11 +1,12 @@
 (ns pc.models.layer
-  (:require [pc.datomic :as pcd]
+  (:require [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
-            [datomic.api :refer [db q] :as d]))
+            [pc.utils :as utils]))
 
 
 ;; We'll pretend we have a type here
-#_(t/def-alias Layer (HMap :mandatory {:document/id Long
+#_(t/def-alias Layer (HMap :mandatory {:layer/document Doc
                                        :db/id Long
                                        :layer/name String}
                            :optional {:layer/type Keyword
@@ -21,8 +22,7 @@
   (map (partial d/entity db)
        (d/q '{:find [[?t ...]]
               :in [$ ?document-id]
-              :where [[?t :document/id ?document-id]
-                      [?t :layer/name]]}
+              :where [[?t :layer/document ?document-id]]}
             db (:db/id document))))
 
 ;; TODO: can use pull API here
@@ -47,5 +47,9 @@
                   :layer/path
                   :layer/child
                   :layer/ui-id
-                  :layer/ui-target])
+                  :layer/ui-target
+                  :layer/document
+                  ;; TODO: remove when frontend is deployed
+                  :document/id])
+    (utils/update-when-in [:layer/document] :db/id)
     (assoc :db/id (web-peer/client-id layer))))
