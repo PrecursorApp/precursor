@@ -112,7 +112,8 @@
    4 #'archive/make-existing-documents-public
    5 #'archive/migrate-fake-documents
    6 #'archive/fix-bounding-boxes
-   7 #'archive/add-frontend-ids))
+   7 #'archive/add-frontend-ids
+   8 #'longs->refs))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"
