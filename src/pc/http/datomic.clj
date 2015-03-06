@@ -99,7 +99,7 @@
 (defmethod translate-datom :access-request/cust-ref [db d]
   (-> d
     (assoc :a :access-request/cust)
-    (update-in d [:v] #(:cust/email (d/entity db %)))))
+    (update-in [:v] #(:cust/email (d/entity db %)))))
 
 (defmethod translate-datom :permission/document-ref [db d]
   (-> d
