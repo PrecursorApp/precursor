@@ -49,6 +49,7 @@
     :layer/child
     :layer/ui-id
     :layer/ui-target
+    :layer/document
     :session/uuid
     :document/id ;; TODO: for layers use layer/document
     :document/uuid
@@ -59,6 +60,7 @@
     :chat/body
     :chat/color
     :chat/cust-name
+    :chat/document
     :cust/uuid
     :cust/color-name
     :client/timestamp
@@ -78,7 +80,6 @@
     :access-request/status
     :access-request/create-date
     :access-request/deny-date
-
     })
 
 (defn translate-datom-dispatch-fn [db d] (:a d))
@@ -97,7 +98,7 @@
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
         a (schema/get-ident a)
-        v (if (contains? (schema/enums) a)
+        v (if (contains? (schema/ident-ids) v)
             (schema/get-ident v)
             v)
         ;; Temporary fix until we teach frontend how to lookup cust name

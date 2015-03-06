@@ -63,6 +63,8 @@
     :layer/ui-target
     :session/uuid
     :document/id ;; TODO: for layers use layer/document
+    :layer/document
+    :chat/document
     :document/name
     :chat/body
     :chat/color
@@ -127,7 +129,8 @@
                                              :document/id document-id
                                              :session/uuid session-uuid
                                              :session/client-id client-id
-                                             :transaction/broadcast true}
+                                             :transaction/broadcast true
+                                             :transaction/document document-id}
                                             (when cust-uuid {:cust/uuid cust-uuid}))])
                             (d/transact conn)
                             deref))}}))

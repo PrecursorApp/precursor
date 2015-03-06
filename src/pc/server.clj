@@ -36,6 +36,7 @@
           permission (some->> req :params :auth-token (permission-model/find-by-token db))]
       (when (and cust access-grant)
         (permission-model/convert-access-grant access-grant cust {:document/id (:access-grant/document access-grant)
+                                                                  :transaction/document (:access-grant/document access-grant)
                                                                   :cust/uuid (:cust/uuid cust)
                                                                   :transaction/broadcast true}))
       (handler (-> (cond cust (assoc-in req [:auth :cust] cust)

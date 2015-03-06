@@ -138,6 +138,10 @@
               :db.type/long
               :db/doc "db/id of this layer's parent. Could be called \"parent\", but want to avoid confusion with \"child\", which is taken.")
 
+   (attribute :layer/document
+              :db.type/ref
+              :db/doc "Document that the layer belongs to")
+
    ;; No logins at the moment, so we'll use this to identify users
    ;; chats rely on this, is it a good idea? Nice to have something stable across tabs
    (attribute :session/uuid
@@ -190,6 +194,10 @@
    (attribute :chat/color
               :db.type/string
               :metadata/unescaped true)
+
+   (attribute :chat/document
+              :db.type/ref
+              :db/doc "Document that the chat belongs to")
 
    (attribute :server/timestamp
               :db.type/instant)
@@ -315,9 +323,20 @@
               :db/index true
               :db/doc "db/id of the document")
 
+   ;; TODO: rename document to document-id and document-ref to document,
+   ;;       then get rid of document-id
+   (attribute :permission/document-ref
+              :db.type/ref
+              :db/doc "Document that the permission belongs to")
+
    (attribute :permission/cust
               :db.type/long
               :db/doc "db/id of the user")
+
+   ;; TODO: switch cust-ref with cust, get rid of cust-id
+   (attribute :permission/cust-ref
+              :db.type/ref
+              :db/doc "cust that the permission belongs to")
 
    (attribute :permission/permits
               :db.type/ref
@@ -339,6 +358,11 @@
               :db.type/long ;; TODO: make this a ref!
               :db/doc "user that granted the permission")
 
+   ;; TODO: switch granter to granter-ref
+   (attribute :permission/granter-ref
+              :db.type/ref ;; TODO: make this a ref!
+              :db/doc "cust that granted the permission")
+
    (attribute :permission/grant-date
               :db.type/instant
               :db/doc "time permission was created (or access-grant if it came first)")
@@ -352,6 +376,12 @@
               :db.type/long
               :db/index true
               :db/doc "db/id of the document")
+
+   ;; TODO: switch document-ref to document
+   (attribute :access-request/document-ref
+              :db.type/ref
+              :db/doc "document that this request belongs to")
+
    (attribute :access-request/status
               :db.type/ref)
    ;; no granted status, b/c those are just permissions
@@ -361,6 +391,11 @@
    (attribute :access-request/cust
               :db.type/long
               :db/doc "db/id of the user")
+
+   ;; TODO: switch cust-ref to cust
+   (attribute :access-request/cust-ref
+              :db.type/ref
+              :db/doc "cust that this request belongs to")
 
    (attribute :access-request/create-date
               :db.type/instant
@@ -382,6 +417,11 @@
               :db/index true
               :db/doc "db/id of the document")
 
+   ;; TODO: switch document-ref to document
+   (attribute :access-grant/document-ref
+              :db.type/ref
+              :db/doc "document that this grant belongs to")
+
    (attribute :access-grant/email
               :db.type/string
               :db/doc "email that was granted access"
@@ -398,6 +438,11 @@
    (attribute :access-grant/granter
               :db.type/long ;; TODO: make this a ref!
               :db/doc "user that granted the permission")
+
+   ;; TODO: switch granter-ref to granter
+   (attribute :access-grant/granter-ref
+              :db.type/ref
+              :db/doc "cust that granted the permission")
 
    (attribute :access-grant/grant-date
               :db.type/instant
@@ -417,6 +462,10 @@
    (enum :transaction.source/unmark-sent-email)
    (enum :transaction.source/mark-sent-email)
    (enum :transaction.source/migration)
+
+   (attribute :transaction/document
+              :db.type/ref
+              :db/doc "Annotates transaction with document it belongs to")
 
    (attribute :migration
               :db.type/ref
@@ -502,6 +551,9 @@
 (defn enums []
   (set (map :db/ident (filter #(= :db.type/ref (:db/valueType %))
                               @schema-ents))))
+
+(defn ident-ids []
+  (set (map :db/id @schema-ents)))
 
 (defn color-enums []
   (set (map :db/ident (filter #(= "color.name" (namespace (:db/ident %)))

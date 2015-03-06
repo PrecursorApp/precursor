@@ -1,7 +1,8 @@
 (ns pc.models.layer
-  (:require [pc.datomic :as pcd]
+  (:require [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
-            [datomic.api :refer [db q] :as d]))
+            [pc.utils :as utils]))
 
 
 ;; We'll pretend we have a type here
@@ -47,5 +48,7 @@
                   :layer/path
                   :layer/child
                   :layer/ui-id
-                  :layer/ui-target])
+                  :layer/ui-target
+                  :layer/document])
+    (utils/update-when-in [:layer/document] :db/id)
     (assoc :db/id (web-peer/client-id layer))))

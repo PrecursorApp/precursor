@@ -63,5 +63,6 @@
                                      tx-data)
                                 {:db/id txid
                                  :document/id (:db/id new-doc)
+                                 :transaction/document (:db/id new-doc)
                                  :transaction/broadcast true}))
         (Thread/sleep sleep-ms)))))
