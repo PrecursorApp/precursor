@@ -1,10 +1,11 @@
 (ns pc.models.permission
-  (:require [pc.datomic :as pcd]
-            [pc.datomic.web-peer :as web-peer]
-            [clj-time.coerce]
+  (:require [clj-time.coerce]
             [clj-time.core :as time]
             [crypto.random]
-            [datomic.api :refer [db q] :as d])
+            [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
+            [pc.utils :as utils])
   (:import java.util.UUID))
 
 (defn permits [db doc cust]
@@ -71,12 +72,14 @@
 
 ;; TODO: figure out how to have only 1 read-api (maybe only send datoms?)
 (defn read-api [db permission]
+  (let [doc-id (:db/id (:permission/document-ref permission))
+        cust-email (:cust/email (:permission/cust-ref permission))])
   (-> permission
-    (select-keys [:permission/document-ref
-                  :permission/permits
+    (select-keys [:permission/permits
                   :permission/grant-date])
     (assoc :db/id (web-peer/client-id permission))
-    (assoc :permission/cust (:cust/email (:permission/cust-ref permission)))))
+    (cond-> doc-id (assoc :permission/document doc-id)
+            cust-email (assoc :permission/cust cust-email))))
 
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]

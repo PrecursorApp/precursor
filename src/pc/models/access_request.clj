@@ -1,19 +1,22 @@
 (ns pc.models.access-request
-  (:require [pc.datomic :as pcd]
+  (:require [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
-            [datomic.api :refer [db q] :as d])
+            [pc.utils :as utils])
   (:import java.util.UUID))
 
 ;; TODO: figure out how to have only 1 read-api (maybe only send datoms?)
 (defn read-api [db request]
-  (-> request
-    (select-keys [:access-request/create-date
-                  :access-request/deny-date
-                  ;; TODO: different read api based on permissions
-                  :access-request/status])
-    (assoc :db/id (web-peer/client-id request))
-    (assoc :access-request/document (:db/id (:access-request/document-ref request)))
-    (assoc :access-request/cust (:cust/email (:access-request/cust-ref request)))))
+  (let [doc-id (:db/id (:access-request/document-ref request))
+        cust-email (:cust/email (:access-request/cust-ref request))]
+    (-> request
+      (select-keys [:access-request/create-date
+                    :access-request/deny-date
+                    ;; TODO: different read api based on permissions
+                    :access-request/status])
+      (assoc :db/id (web-peer/client-id request))
+      (cond-> doc-id (assoc :access-request/document doc-id)
+              cust-email (assoc :access-request/cust cust-email)))))
 
 (defn requester-read-api [db request]
   (-> (read-api db request)

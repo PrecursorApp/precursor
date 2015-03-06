@@ -98,7 +98,7 @@
   "Converts attributes that store ids to refs, e.g. layers go from :document/id to :layer/document"
   [conn]
   (let [db (d/db conn)]
-    ;(document-ids->document-refs db conn)
+    (document-ids->document-refs db conn)
     (access-entities-ids->refs db conn)))
 
 (def migrations

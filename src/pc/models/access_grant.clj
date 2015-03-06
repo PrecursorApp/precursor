@@ -8,12 +8,13 @@
             [datomic.api :refer [db q] :as d]))
 
 (defn read-api [grant]
-  (-> grant
-    (select-keys [:accces-grant/document-ref
-                  :access-grant/email
-                  :access-grant/expiry
-                  :access-grant/grant-date])
-    (assoc :db/id (web-peer/client-id grant))))
+  (let [doc-id (:db/id (:access-grant/document-ref grant))]
+    (-> grant
+      (select-keys [:access-grant/email
+                    :access-grant/expiry
+                    :access-grant/grant-date])
+      (assoc :db/id (web-peer/client-id grant))
+      (cond-> doc-id (assoc :access-grant/document doc-id)))))
 
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]
