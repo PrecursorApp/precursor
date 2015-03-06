@@ -51,7 +51,6 @@
     :layer/ui-target
     :layer/document
     :session/uuid
-    :document/id ;; TODO: for layers use layer/document
     :document/uuid
     :document/name
     :document/creator
@@ -67,21 +66,16 @@
     :server/timestamp
 
     :permission/document
-    :permission/document-ref
     :permission/cust ;; translated
-    :permission/cust-ref ;; translated
     :permission/permits
     :permission/grant-date
 
     :access-grant/document
-    :access-grant/document-ref
     :access-grant/email
     :access-grant/grant-date
 
     :access-request/document
-    :access-request/document-ref
     :access-request/cust ;; translated
-    :access-request/cust-ref ;; translated
     :access-request/status
     :access-request/create-date
     :access-request/deny-date
@@ -97,17 +91,27 @@
 (defmethod translate-datom :default [db d]
   d)
 
-(defmethod translate-datom :permission/cust [db d]
-  (update-in d [:v] #(:cust/email (d/entity db %))))
-
 (defmethod translate-datom :permission/cust-ref [db d]
-  (update-in d [:v] #(:cust/uuid (d/entity db %))))
-
-(defmethod translate-datom :access-request/cust [db d]
-  (update-in d [:v] #(:cust/email (d/entity db %))))
+  (-> d
+    (assoc :a :permission/cust)
+    (update-in [:v] #(:cust/email (d/entity db %)))))
 
 (defmethod translate-datom :access-request/cust-ref [db d]
-  (update-in d [:v] #(:cust/uuid (d/entity db %))))
+  (-> d
+    (assoc :a :access-request/cust)
+    (update-in d [:v] #(:cust/email (d/entity db %)))))
+
+(defmethod translate-datom :permission/document-ref [db d]
+  (-> d
+    (assoc :a :permission/document)))
+
+(defmethod translate-datom :access-request/document-ref [db d]
+  (-> d
+    (assoc :a :access-request/document)))
+
+(defmethod translate-datom :access-grant/document-ref [db d]
+  (-> d
+    (assoc :a :access-grant/document)))
 
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
@@ -126,7 +130,7 @@
 
 (defn notify-subscribers [transaction]
   (let [annotations (get-annotations transaction)]
-    (when (and (:document/id annotations)
+    (when (and (:transaction/document annotations)
                (:transaction/broadcast annotations))
       (when-let [public-datoms (->> transaction
                                  :tx-data
@@ -151,7 +155,7 @@
 (defn handle-precursor-pings [transaction]
   (let [db (:db-after transaction)
         datoms (:tx-data transaction)
-        document-id (delay (:document/id (get-annotations transaction)))
+        document-id (delay (:layer/document (get-annotations transaction)))
         chat-body-eid (d/entid db :chat/body)]
     (when-let [chat-datom (first (filter #(= chat-body-eid (:a %)) datoms))]
       (let [slack-url (if (profile/prod?)

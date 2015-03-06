@@ -5,7 +5,7 @@
 
 
 ;; We'll pretend we have a type here
-#_(t/def-alias Layer (HMap :mandatory {:document/id Long
+#_(t/def-alias Layer (HMap :mandatory {:layer/document Doc
                                        :db/id Long
                                        :layer/name String}
                            :optional {:layer/type Keyword
@@ -21,8 +21,7 @@
   (map (partial d/entity db)
        (d/q '{:find [[?t ...]]
               :in [$ ?document-id]
-              :where [[?t :document/id ?document-id]
-                      [?t :layer/name]]}
+              :where [[?t :layer/document ?document-id]]}
             db (:db/id document))))
 
 ;; TODO: can use pull API here
@@ -49,4 +48,5 @@
                   :layer/ui-id
                   :layer/ui-target
                   :layer/document])
+    (update-in [:layer/document] :db/id)
     (assoc :db/id (web-peer/client-id layer))))

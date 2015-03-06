@@ -148,17 +148,17 @@
 
 (defn send-access-grant-email [db access-grant-eid]
   (let [access-grant (d/entity db access-grant-eid)
-        doc-id (:access-grant/document access-grant)
-        granter (access-grant-model/get-granter db access-grant)
+        doc (:access-grant/document-ref access-grant)
+        granter (:access-grant/granter-ref access-grant)
         token (:access-grant/token access-grant)
-        image-permission (permission-model/create-document-image-permission! {:db/id doc-id})]
+        image-permission (permission-model/create-document-image-permission! doc)]
     (ses/send-message {:from (email-address "Precursor" "joinme")
                        :to (:access-grant/email access-grant)
                        :subject (str (format-inviter granter)
                                      " invited you to a document on Precursor")
-                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id)
+                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc (:db/id doc))
                                   "?access-grant-token=" token)
-                       :html (access-grant-html doc-id access-grant image-permission)
+                       :html (access-grant-html (:db/id doc) access-grant image-permission)
                        :o:tracking "yes"
                        :o:tracking-opens "yes"
                        :o:tracking-clicks "no"
@@ -193,16 +193,16 @@
 
 (defn send-permission-grant-email [db permission-eid]
   (let [permission (d/entity db permission-eid)
-        doc-id (:permission/document permission)
-        granter (permission-model/get-granter db permission)
-        grantee (d/entity db (:permission/cust permission))
-        image-permission (permission-model/create-document-image-permission! {:db/id doc-id})]
+        doc (:permission/document-ref permission)
+        granter (:permission/granter-ref permission)
+        grantee (:permission/cust-ref permission)
+        image-permission (permission-model/create-document-image-permission! doc)]
     (ses/send-message {:from (email-address "Precursor" "joinme")
                        :to (:cust/email grantee)
                        :subject (str (format-inviter granter)
                                      " gave you access to a document on Precursor")
-                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id))
-                       :html (permission-grant-html doc-id image-permission)
+                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc (:db/id doc)))
+                       :html (permission-grant-html (:db/id doc) image-permission)
                        :o:tracking "yes"
                        :o:tracking-opens "yes"
                        :o:tracking-clicks "no"
@@ -229,8 +229,8 @@
 
 (defn send-access-request-email [db request-eid]
   (let [access-request (d/entity db request-eid)
-        requester (cust-model/find-by-id db (:access-request/cust access-request))
-        doc (doc-model/find-by-id db (:access-request/document access-request))
+        requester (:access-request/cust-ref access-request)
+        doc (:access-request/document-ref access-request)
         doc-id (:db/id doc)
         doc-owner (cust-model/find-by-uuid db (:document/creator doc))]
     (ses/send-message {:from (email-address "Precursor" "joinme")

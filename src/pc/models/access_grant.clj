@@ -9,8 +9,7 @@
 
 (defn read-api [grant]
   (-> grant
-    (select-keys [:access-grant/document
-                  :accces-grant/document-ref
+    (select-keys [:accces-grant/document-ref
                   :access-grant/email
                   :access-grant/expiry
                   :access-grant/grant-date])
@@ -19,7 +18,7 @@
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]
               :in [$ ?doc-id]
-              :where [[?t :access-grant/document ?doc-id]]}
+              :where [[?t :access-grant/document-ref ?doc-id]]}
             db (:db/id doc))
     (map first)
     (map #(d/entity db %))))
@@ -42,16 +41,11 @@
                  [(assoc annotations :db/id txid)
                   (web-peer/server-frontend-id temp-id (:db/id doc))
                   {:db/id temp-id
-                   :access-grant/document (:db/id doc)
                    :access-grant/document-ref (:db/id doc)
                    :access-grant/email email
                    :access-grant/token token
                    :access-grant/expiry expiry
                    :access-grant/grant-date grant-date
-                   :access-grant/granter (:db/id granter)
                    :access-grant/granter-ref (:db/id granter)
                    :needs-email :email/access-grant-created
                    :access-grant/doc-email (str (:db/id doc) "-" email)}])))
-
-(defn get-granter [db access-grant]
-  (d/entity db (:access-grant/granter access-grant)))

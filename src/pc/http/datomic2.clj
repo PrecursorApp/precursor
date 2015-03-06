@@ -61,10 +61,11 @@
     :layer/child
     :layer/ui-id
     :layer/ui-target
+    :layer/document
     :session/uuid
-    :document/id ;; TODO: for layers use layer/document
     :document/name
     :chat/body
+    :chat/document
     :chat/color
     :cust/uuid
     :client/timestamp
@@ -124,7 +125,6 @@
                             (remove-float-conflicts)
                             (add-frontend-ids document-id)
                             (concat [(merge {:db/id txid
-                                             :document/id document-id
                                              :session/uuid session-uuid
                                              :session/client-id client-id
                                              :transaction/broadcast true

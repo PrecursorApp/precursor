@@ -19,19 +19,19 @@
   (map (partial d/entity db)
        (d/q '{:find [[?t ...]]
               :in [$ ?document-id]
-              :where [[?t :document/id ?document-id]
+              :where [[?t :chat/document ?document-id]
                       [?t :chat/body]]}
             db (:db/id document))))
 
 ;; TODO: move cust-name lookup into here
 (defn read-api [chat]
   (-> chat
-    (select-keys [:document/id
-                  :server/timestamp
+    (select-keys [:server/timestamp
                   :client/timestamp
                   :session/uuid
                   :chat/body
                   :chat/color
                   :chat/document
                   :cust/uuid])
+    (update-in [:chat/document] :db/id)
     (assoc :db/id (web-peer/client-id chat))))
