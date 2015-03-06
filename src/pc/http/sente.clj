@@ -294,7 +294,6 @@
                              doc-ids)}))))
 
 (defn determine-type [datom datoms]
-  (println datoms)
   (let [e (:e datom)
         attr-nses (map (comp namespace :a) (filter #(= (:e %) (:e datom)) datoms))]
     (cond (first (filter #(= "layer" %) attr-nses))
