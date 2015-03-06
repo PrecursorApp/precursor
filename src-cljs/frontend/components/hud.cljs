@@ -179,6 +179,7 @@
                                        (om/set-state! owner :new-name ""))]
                     {:ref "name-edit"
                      :content-editable (if editing-name? true false)
+                     :spell-check false
                      :on-key-down #(do
                                      (when (= "Enter" (.-key %))
                                        (.preventDefault %)
