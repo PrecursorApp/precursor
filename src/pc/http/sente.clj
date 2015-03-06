@@ -327,7 +327,7 @@
                          []))
         _ (def mydatoms datoms)
         cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
-    (log/infof "transacting %s on %s for %s" datoms document-id client-id)
+    (log/infof "transacting %s datoms on %s for %s" (count datoms) document-id client-id)
     (datomic2/transact! datoms
                         {:document-id document-id
                          :client-id client-id
