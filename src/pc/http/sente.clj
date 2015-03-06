@@ -302,7 +302,9 @@
           (first (filter #(= "chat" %) attr-nses))
           :chat/document
 
-          :else (throw+ {:error :invalid-type-fordocument-id :datom datom}))))
+          :else (throw+ {:error :invalid-type-fordocument-id
+                         :datom datom
+                         :datoms datoms}))))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
@@ -320,7 +322,7 @@
                                  (= :document/id (:a d))
                                  (conj acc
                                        (assoc d :v document-id)
-                                       (assoc d :a (determine-type d datoms) :v document-id))
+                                       (assoc d :a (determine-type d (:datoms ?data)) :v document-id))
                                  :else (conj acc d)))
                          []))
         _ (def mydatoms datoms)

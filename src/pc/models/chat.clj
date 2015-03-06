@@ -1,7 +1,8 @@
 (ns pc.models.chat
-  (:require [pc.datomic :as pcd]
+  (:require [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
-            [datomic.api :refer [db q] :as d]))
+            [pc.utils :as utils]))
 
 
 (defn all [db]
@@ -35,5 +36,5 @@
                   ;; TODO: remove when frontend is deployed
                   :document/id
                   :cust/uuid])
-    (update-in [:chat/document] :db/id)
+    (utils/update-when-in [:chat/document] :db/id)
     (assoc :db/id (web-peer/client-id chat))))
