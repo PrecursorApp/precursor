@@ -497,6 +497,9 @@
       (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg))))
 
+(defmethod ws-handler :server/timestamp [{:keys [client-id ?data ?reply-fn] :as req}]
+  (?reply-fn [:server/timestamp {:date (java.util.Date.)}]))
+
 (defn conj-limit
   "Expects a vector, keeps the newest n items. May return a shorter vector than was passed in."
   ([v n x]

@@ -1,32 +1,29 @@
 (ns frontend.datetime
-  (:require [frontend.utils :as utils :include-macros true]
-            [cljs-time.coerce :refer [from-long]]
+  (:require [cljs-time.coerce :refer [from-long]]
+            [cljs-time.core :as time]
             [cljs-time.format :as time-format]
-            [goog.string :as g-string]
-            goog.string.format
+            [frontend.utils :as utils :include-macros true]
             [goog.date.DateTime]
-            [goog.i18n.DateTimeFormat.Format :as date-formats]))
-
-(defn now []
-  (.getTime (js/Date.)))
+            [goog.i18n.DateTimeFormat.Format :as date-formats]
+            [goog.string :as g-string]
+            [goog.string.format]))
 
 (defn unix-timestamp []
-  (int (/ (now) 1000)))
+  (int (/ (goog/now) 1000)))
 
 (def server-offset (atom nil))
 
-(defn update-server-offset [date-header]
-  (let [server-date (.fromRfc822String goog.date.DateTime date-header)
-        newval (- (.getTime server-date) (now))]
-    (swap! server-offset
-           (fn [oldval]
-             (if oldval
-               (min oldval newval)
-               newval)))))
+(defn update-server-offset [server-date latency-ms]
+  (let [newval (- (.getTime server-date) (/ latency-ms 2) (goog/now))]
+    (reset! server-offset newval)))
 
 ;; TODO: use server-now for chat timestamps
-(defn server-now []
-  (+ (now) (or @server-offset 0)))
+(defn server-date []
+  (let [offset-ms (or @server-offset 0)]
+    (cljs-time.coerce/to-date
+     (if (pos? offset-ms)
+       (time/plus (time/now) (time/millis offset-ms))
+       (time/minus (time/now) (time/millis offset-ms))))))
 
 (def full-date-format
   (goog.i18n.DateTimeFormat. date-formats/FULL_DATE))
@@ -168,14 +165,3 @@
       (if (pos? hours)
         (g-string/format "%s:%s:%s" hours display-minutes display-seconds)
         (g-string/format "%s:%s" display-minutes display-seconds)))))
-
-(defn as-time-since [date-string]
-  (let [time (.getTime (js/Date. date-string))
-        now (server-now)
-        ago (.floor js/Math (/ (- now time) 1000))]
-    (cond (< ago minute) "just now"
-          (< ago hour) (str ago "m ago")
-          (< ago day) (time-format/unparse (time-format/formatter "h:mma") (from-long time))
-          (< ago (* 2 day)) "yesterday"
-          (< ago year) (time-format/unparse (time-format/formatter "MMM d") (from-long time))
-          :else (time-format/unparse (time-format/formatter "MMM yyyy") (from-long time)))))

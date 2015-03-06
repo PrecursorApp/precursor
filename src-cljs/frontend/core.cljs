@@ -176,8 +176,6 @@
            status (second value)
            api-data (utils/third value)]
        (swap! state (partial api-con/api-event container message status api-data))
-       (when-let [date-header (get-in api-data [:response-headers "Date"])]
-         (datetime/update-server-offset date-header))
        (api-con/post-api-event! container message status api-data previous-state @state)))))
 
 (defn errors-handler

@@ -3,14 +3,15 @@
             [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
-            [frontend.async :refer [put!]]
-            [frontend.components.forms :refer [release-button!]]
             [datascript :as d]
             [frontend.analytics :as analytics]
             [frontend.analytics.mixpanel :as mixpanel]
+            [frontend.async :refer [put!]]
             [frontend.camera :as cameras]
-            [frontend.db]
+            [frontend.components.forms :refer [release-button!]]
             [frontend.datascript :as ds]
+            [frontend.datetime :as datetime]
+            [frontend.db]
             [frontend.favicon :as favicon]
             [frontend.layers :as layers]
             [frontend.models.chat :as chat-model]
@@ -27,9 +28,9 @@
             [frontend.utils.seq :refer [dissoc-in]]
             [frontend.utils.state :as state-utils]
             [goog.dom]
+            [goog.labs.userAgent.engine :as engine]
             [goog.math :as math]
             [goog.string :as gstring]
-            [goog.labs.userAgent.engine :as engine]
             goog.style)
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import goog.fx.dom.Scroll))
@@ -934,9 +935,9 @@
                                              :db/id (get-in current-state [:chat :entity-id])
                                              :session/uuid (:sente-id previous-state)
                                              :chat/document (:document/id previous-state)
-                                             :client/timestamp (js/Date.)
+                                             :client/timestamp (datetime/server-date)
                                              ;; server will overwrite this
-                                             :server/timestamp (js/Date.)})])
+                                             :server/timestamp (datetime/server-date)})])
     (when-let [cmd (chat-cmd chat-body)]
       (post-handle-cmd-chat current-state cmd chat-body))))
 
