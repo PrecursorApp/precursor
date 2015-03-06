@@ -194,8 +194,12 @@
                     (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
                       (om/build chat-item {:chat chat
                                            :uuid->cust (get-in app [:cust-data :uuid->cust])
-                                           :show-sender? (not= (chat-model/display-name prev-chat sente-id)
-                                                               (chat-model/display-name chat sente-id))}
+                                           :show-sender? (and (not= (chat-model/display-name prev-chat sente-id)
+                                                                    (chat-model/display-name chat sente-id))
+                                                              (or (not (:server/timestamp chat))
+                                                                  (not (:server/timestamp prev-chat))
+                                                                  (< (* 1000 60 5) (- (.getTime (:server/timestamp chat))
+                                                                                      (.getTime (:server/timestamp prev-chat))))))}
                                 {:react-key (:db/id chat)
                                  :opts {:sente-id sente-id}})))))])))))
 
