@@ -10,6 +10,7 @@
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
+            [goog.dom.Range]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -137,7 +138,8 @@
     (did-update [_ _ _]
       (when (and (om/get-state owner :editing-name?)
                  (om/get-node owner "name-edit"))
-        (.focus (om/get-node owner "name-edit"))))
+        (.focus (om/get-node owner "name-edit"))
+        (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "name-edit")))))
     om/IRenderState
     (render-state [_ {:keys [editing-name? new-name]}]
       (let [{:keys [cast! db]} (om/get-shared owner)
