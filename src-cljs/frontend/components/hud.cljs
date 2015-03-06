@@ -172,29 +172,27 @@
                   (if (= :touch (get-in app [:mouse-type]))
                     (common/icon :phone (when show-mouse? {:path-props {:className (name self-color)}}))
                     (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}})))]
-                  [:div.viewer-name-input
-                   {:ref "name-edit"
-                    :content-editable (if editing-name? true false)
-                    :on-key-down #(do
-                                    (when (= "Enter" (.-key %))
-                                      (.preventDefault %)
-                                      (when-not (str/blank? new-name)
-                                        (cast! :self-updated {:name new-name}))
-                                      (om/set-state! owner :editing-name? false)
-                                      (om/set-state! owner :new-name "")
-                                      (utils/stop-event %))
-                                    (when (= "Escape" (.-key %))
-                                      (om/set-state! owner :editing-name? false)
-                                      (om/set-state! owner :new-name "")
-                                      (utils/stop-event %)))
-                    :on-blur #(do (when-not (str/blank? new-name)
-                                    (cast! :self-updated {:name new-name}))
-                                  (om/set-state! owner :editing-name? false)
-                                  (om/set-state! owner :new-name "")
-                                  (utils/stop-event %))
-                    :on-input #(om/set-state! owner :new-name (goog.dom/getRawTextContent (.-target %)))}
-                   ; (when-not editing-name? [:div.viewer-name.viewer-tag (or self-name "You")])
-                   ]
+                 [:div.viewer-name-input
+                  (let [submit-fn #(do (when-not (str/blank? (om/get-state owner :new-name))
+                                         (cast! :self-updated {:name (om/get-state owner :new-name)}))
+                                       (om/set-state! owner :editing-name? false)
+                                       (om/set-state! owner :new-name ""))]
+                    {:ref "name-edit"
+                     :content-editable (if editing-name? true false)
+                     :on-key-down #(do
+                                     (when (= "Enter" (.-key %))
+                                       (.preventDefault %)
+                                       (submit-fn)
+                                       (utils/stop-event %))
+                                     (when (= "Escape" (.-key %))
+                                       (om/set-state! owner :editing-name? false)
+                                       (om/set-state! owner :new-name "")
+                                       (utils/stop-event %)))
+                     :on-blur #(do (submit-fn)
+                                   (utils/stop-event %))
+                     :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))})
+                  (or self-name "You")
+                  ]
                  [:div.viewer-knobs
                   [:a.viewer-knob
                    {:key client-id
