@@ -76,7 +76,10 @@
 (defn document-ids->document-refs [db conn]
   (log/infof "converting document-ids to document-refs")
   (doseq [datom-group (partition-all 1000 (remove (partial have-document-ref? db) (d/datoms db :avet :document/id)))]
-    @(d/transact-async conn (mapv #(doc-id-datom->ref-transaction db %) datom-group))))
+    @(d/transact-async conn (conj (mapv #(doc-id-datom->ref-transaction db %) datom-group)
+                                  {:db/id (d/tempid :db.part/tx)
+                                   :transaction/source :transaction.source/migration
+                                   :migration :migration/longs->refs}))))
 
 (defn have-ref-attr? [db ref-attr {:keys [e] :as datom}]
   (let [ent (d/entity db e)]
@@ -89,9 +92,12 @@
           :let [ref-attr (keyword (namespace attr) (str (name attr) "-ref"))]]
     (log/infof "converting %s to %s" attr ref-attr)
     (doseq [datom-group (partition-all 1000 (remove (partial have-ref-attr? db ref-attr) (d/datoms db :aevt attr)))]
-      @(d/transact-async conn (mapv (fn [{:keys [e v] :as datom}]
-                                      [:db/add e ref-attr v])
-                                    datom-group)))))
+      @(d/transact-async conn (conj (mapv (fn [{:keys [e v] :as datom}]
+                                            [:db/add e ref-attr v])
+                                          datom-group)
+                                    {:db/id (d/tempid :db.part/tx)
+                                     :transaction/source :transaction.source/migration
+                                     :migration :migration/longs->refs})))))
 
 
 (defn longs->refs
