@@ -60,12 +60,12 @@
 
 (defn notify-transaction [data]
   (let [doc-id (:db/id (:transaction/document data))]
-    (doseq [[uid _] (dissoc (get @document-subs doc-id) (str (:session/uuid data)))]
+    (doseq [[uid _] (dissoc (get @document-subs doc-id) (:session/client-id data))]
       (log/infof "notifying %s about new transactions for %s" uid doc-id)
       ((:send-fn @sente-state) uid [:datomic/transaction data]))
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
       (log/infof "notifying %s about new server timestamp for %s" (:session/uuid data) doc-id)
-      ((:send-fn @sente-state) (str (:session/uuid data)) [:datomic/transaction (assoc data :tx-data server-timestamps)]))))
+      ((:send-fn @sente-state) (str (:session/client-id data)) [:datomic/transaction (assoc data :tx-data server-timestamps)]))))
 
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
