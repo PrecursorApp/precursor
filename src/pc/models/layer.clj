@@ -47,5 +47,6 @@
                   :layer/path
                   :layer/child
                   :layer/ui-id
-                  :layer/ui-target])
+                  :layer/ui-target
+                  :layer/document])
     (assoc :db/id (web-peer/client-id layer))))

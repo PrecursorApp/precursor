@@ -359,6 +359,7 @@
                                                        :response body}])
                           @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)
                                                            :document/id doc-id
+                                                           :transaction/document doc-id
                                                            :transaction/broadcast true}
                                                           (when cust
                                                             {:cust/uuid (:cust/uuid cust)}))
@@ -366,6 +367,7 @@
                                                    {:chat/body body
                                                     :server/timestamp (java.util.Date.)
                                                     :document/id doc-id
+                                                    :chat/document doc-id
                                                     :db/id chat-id
                                                     :cust/uuid (auth/prcrsr-bot-uuid (:db req))
                                                     ;; default bot color, also used on frontend chats
@@ -392,6 +394,7 @@
         ;; letting datomic's schema do validation for us, might be a bad idea?
         setting (-> ?data :setting)
         annotations {:document/id doc-id
+                     :transaction/document doc-id
                      :cust/uuid (:cust/uuid cust)
                      :transaction/broadcast true}
         txid (d/tempid :db.part/tx)]
@@ -405,6 +408,7 @@
       (let [email (-> ?data :email)
             annotations {:document/id doc-id
                          :cust/uuid (:cust/uuid cust)
+                         :transaction/document doc-id
                          :transaction/broadcast true}]
         (if-let [grantee (cust/find-by-email (:db req) email)]
           (permission-model/grant-permit {:db/id doc-id}
@@ -424,6 +428,7 @@
     (if-let [request (some->> ?data :request-id (access-request-model/find-by-client-part (:db req) doc-id))]
       (let [cust (-> req :ring-req :auth :cust)
             annotations {:document/id doc-id
+                         :transaction/document doc-id
                          :cust/uuid (:cust/uuid cust)
                          :transaction/broadcast true}]
         ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
@@ -438,6 +443,7 @@
     (if-let [request (some->> ?data :request-id (access-request-model/find-by-client-part (:db req) doc-id))]
       (let [cust (-> req :ring-req :auth :cust)
             annotations {:document/id doc-id
+                         :transaction/document doc-id
                          :cust/uuid (:cust/uuid cust)
                          :transaction/broadcast true}]
         ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
@@ -453,6 +459,7 @@
       (if-let [doc (doc-model/find-by-id (:db req) doc-id)]
         (let [email (-> ?data :email)
               annotations {:document/id doc-id
+                           :transaction/document doc-id
                            :cust/uuid (:cust/uuid cust)
                            :transaction/broadcast true}]
           (let [{:keys [db-after]} (access-request-model/create-request doc cust annotations)]

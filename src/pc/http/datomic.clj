@@ -49,6 +49,7 @@
     :layer/child
     :layer/ui-id
     :layer/ui-target
+    :layer/document
     :session/uuid
     :document/id ;; TODO: for layers use layer/document
     :document/uuid
@@ -59,25 +60,33 @@
     :chat/body
     :chat/color
     :chat/cust-name
+    :chat/document
     :cust/uuid
     :cust/color-name
     :client/timestamp
     :server/timestamp
 
     :permission/document
+    :permission/document-ref
     :permission/cust ;; translated
+    :permission/cust-ref ;; translated
     :permission/permits
     :permission/grant-date
 
     :access-grant/document
+    :access-grant/document-ref
     :access-grant/email
     :access-grant/grant-date
 
     :access-request/document
+    :access-request/document-ref
     :access-request/cust ;; translated
+    :access-request/cust-ref ;; translated
     :access-request/status
     :access-request/create-date
     :access-request/deny-date
+
+    :transaction/document
 
     })
 
@@ -91,13 +100,19 @@
 (defmethod translate-datom :permission/cust [db d]
   (update-in d [:v] #(:cust/email (d/entity db %))))
 
+(defmethod translate-datom :permission/cust-ref [db d]
+  (update-in d [:v] #(:cust/uuid (d/entity db %))))
+
 (defmethod translate-datom :access-request/cust [db d]
   (update-in d [:v] #(:cust/email (d/entity db %))))
+
+(defmethod translate-datom :access-request/cust-ref [db d]
+  (update-in d [:v] #(:cust/uuid (d/entity db %))))
 
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
         a (schema/get-ident a)
-        v (if (contains? (schema/enums) a)
+        v (if (contains? (schema/ident-ids) v)
             (schema/get-ident v)
             v)
         ;; Temporary fix until we teach frontend how to lookup cust name

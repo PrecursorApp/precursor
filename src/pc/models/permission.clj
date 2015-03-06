@@ -25,11 +25,14 @@
                   {:db/id temp-id
                    :permission/permits permit
                    :permission/document (:db/id doc)
+                   :permission/document-ref (:db/id doc)
                    :permission/cust (:db/id cust)
+                   :permission/cust-ref (:db/id cust)
                    :permission/grant-date (java.util.Date.)
                    ;;; XXX need to check sent-email in pc.email to guard against multiple txes!
                    :needs-email :email/document-permission-for-customer-granted
                    :permission/granter (:db/id granter)
+                   :permission/granter-ref (:db/id granter)
                    :permission/doc-cust (UUID. (:db/id doc) (:db/id cust))}])))
 
 (defn convert-access-grant [access-grant cust annotations]
@@ -44,13 +47,16 @@
                    {:db/id temp-id
                     :permission/permits :permission.permits/admin
                     :permission/document doc-id
+                    :permission/document-ref doc-id
                     :permission/cust (:db/id cust)
+                    :permission/cust-ref (:db/id cust)
                     :permission/grant-date (or (:access-grant/grant-date access-grant)
                                                (java.util.Date.))
                    ;;; XXX need to check sent-email in pc.email to guard against multiple txes!
                     :permission/doc-cust (UUID. doc-id (:db/id cust))}
                    (when-let [granter (:access-grant/granter access-grant)]
-                     {:permission/granter granter}))])))
+                     {:permission/granter granter
+                      :permission/granter-ref granter}))])))
 
 (defn convert-access-request [access-request granter annotations]
   (let [txid (d/tempid :db.part/tx)
@@ -64,20 +70,26 @@
                   {:db/id temp-id
                    :permission/permits :permission.permits/admin
                    :permission/document doc-id
+                   :permission/document-ref doc-id
                    :permission/cust cust-id
+                   :permission/cust-ref cust-id
                    :permission/grant-date (java.util.Date.)
                    :permission/granter (:db/id granter)
+                   :permission/granter-ref (:db/id granter)
                    :permission/doc-cust (UUID. doc-id cust-id)}])))
 
 ;; TODO: figure out how to have only 1 read-api (maybe only send datoms?)
 (defn read-api [db permission]
   (-> permission
     (select-keys [:permission/document
+                  :permission/document-ref
                   :permission/cust
+                  :permission/cust-ref
                   :permission/permits
                   :permission/grant-date])
     (assoc :db/id (web-peer/client-id permission))
-    (update-in [:permission/cust] #(:cust/email (d/entity db %)))))
+    (update-in [:permission/cust] #(:cust/email (d/entity db %)))
+    (update-in [:permission/cust-ref] #(:cust/uuid (d/entity db %)))))
 
 (defn find-by-document [db doc]
   (->> (d/q '{:find [?t]
@@ -110,8 +122,8 @@
                                                 [{:db/id temp-id
                                                   :permission/permits #{:permission.permits/read}
                                                   :permission/token token
-                                                  ;; TODO: ref for doc
                                                   :permission/document (:db/id doc)
+                                                  :permission/document-ref (:db/id doc)
                                                   :permission/expiry expiry}])]
     (->> (d/resolve-tempid db-after
                            tempids

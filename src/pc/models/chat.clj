@@ -32,5 +32,6 @@
                   :session/uuid
                   :chat/body
                   :chat/color
+                  :chat/document
                   :cust/uuid])
     (assoc :db/id (web-peer/client-id chat))))

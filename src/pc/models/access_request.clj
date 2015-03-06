@@ -8,18 +8,23 @@
 (defn read-api [db permission]
   (-> permission
     (select-keys [:access-request/document
+                  :access-request/document-ref
                   :access-request/cust
+                  :access-request/cust-ref
                   :access-request/create-date
                   :access-request/deny-date
                   ;; TODO: different read api based on permissions
                   :access-request/status])
     (assoc :db/id (web-peer/client-id permission))
-    (update-in [:access-request/cust] #(:cust/email (d/entity db %)))))
+    (update-in [:access-request/cust] #(:cust/email (d/entity db %)))
+    (update-in [:access-request/cust-ref] #(:cust/uuid (d/entity db %)))))
 
 (defn requester-read-api [db permission]
   (-> (read-api db permission)
     (select-keys [:access-request/document
+                  :access-request/document-ref
                   :access-request/cust
+                  :access-request/cust-ref
                   :access-request/create-date
                   :db/id])))
 
@@ -60,7 +65,9 @@
                  [(assoc annotations :db/id txid)
                   {:db/id temp-id
                    :access-request/document (:db/id doc)
+                   :access-request/document-ref (:db/id doc)
                    :access-request/cust (:db/id cust)
+                   :access-request/cust-ref (:db/id cust)
                    :access-request/status :access-request.status/pending
                    :access-request/create-date create-date
                    :needs-email :email/access-request-created

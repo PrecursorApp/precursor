@@ -30,10 +30,12 @@
                                          (assoc l
                                                 :db/id temp-id
                                                 :document/id (:db/id doc)
+                                                :layer/document (:db/id doc)
                                                 :frontend/id (UUID. (:db/id doc) (inc i)))))
                                      layers)
                                     (merge {:db/id (d/tempid :db.part/tx)
-                                            :document/id (:db/id doc)}
+                                            :document/id (:db/id doc)
+                                            :transaction/document (:db/id doc)}
                                            (when (:cust/uuid cust)
                                              {:cust/uuid (:cust/uuid cust)}))))
       (log/infof "requested duplicate doc for non-existent doc %s" document-name))
@@ -44,7 +46,7 @@
    after it has been saved."
   [doc-id doc-name]
   (spit (format "resources/docs/%s.edn" doc-name)
-        (pr-str (map #(dissoc % :db/id :document/id)
+        (pr-str (map #(dissoc % :db/id :document/id :layer/document)
                      ;; we may want to save groups at some point in the future, right now they
                      ;; just take up space.
                      (remove #(= :layer.type/group (:layer/type %))

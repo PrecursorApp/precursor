@@ -552,6 +552,9 @@
   (set (map :db/ident (filter #(= :db.type/ref (:db/valueType %))
                               @schema-ents))))
 
+(defn ident-ids []
+  (set (map :db/id @schema-ents)))
+
 (defn color-enums []
   (set (map :db/ident (filter #(= "color.name" (namespace (:db/ident %)))
                               @schema-ents))))
