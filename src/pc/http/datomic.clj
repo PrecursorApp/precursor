@@ -119,8 +119,6 @@
         v (if (contains? (schema/ident-ids) v)
             (schema/get-ident v)
             v)
-        ;; Temporary fix until we teach frontend how to lookup cust name
-        original-e e
         e (web-peer/client-id db e)]
     (->> {:e e :a a :v v :tx tx :added added}
       (translate-datom db))))
