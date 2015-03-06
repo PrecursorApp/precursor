@@ -80,8 +80,6 @@
     :access-request/create-date
     :access-request/deny-date
 
-    :transaction/document
-
     ;; TODO: remove when fully deployed
     :document/id
     })
