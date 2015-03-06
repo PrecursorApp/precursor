@@ -167,12 +167,12 @@
                                        (cast! :self-updated {:color color})
                                        (utils/stop-event %)))
                    :title (if (utils/logged-in? owner)
-                            "Click to change your color"
-                            "Login to change your color")}
+                            "Change your color."
+                            "Login to change your color.")}
                   (if (= :touch (get-in app [:mouse-type]))
                     (common/icon :phone (when show-mouse? {:path-props {:className (name self-color)}}))
                     (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}})))]
-                 [:div.viewer-name-input
+                 [:div.viewer-name.viewer-tag
                   (let [submit-fn #(do (when-not (str/blank? (om/get-state owner :new-name))
                                          (cast! :self-updated {:name (om/get-state owner :new-name)}))
                                        (om/set-state! owner :editing-name? false)
@@ -191,8 +191,7 @@
                      :on-blur #(do (submit-fn)
                                    (utils/stop-event %))
                      :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))})
-                  (or self-name "You")
-                  ]
+                  (or self-name "You")]
                  [:div.viewer-knobs
                   [:a.viewer-knob
                    {:key client-id
@@ -202,7 +201,7 @@
                                    (cast! :overlay-username-toggled))
                                  (.stopPropagation %))
                     :role "button"
-                    :title "Edit your display name."}
+                    :title "Change your display name."}
                    (common/icon :pencil)]]])
               (for [[id {:keys [show-mouse? color cust-name hide-in-list?] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
                     :when (not hide-in-list?)
