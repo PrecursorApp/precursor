@@ -218,6 +218,7 @@
   }
 }
 .viewer {
+  .selection(@white; (100 * @opacity_darker_dark)); // TODO move viewer list into canvas div
   .animation_cascade(10);
   .animation(in-fade-bottom @run_fast @bezier_deform backwards);
   .flex(0 0 @tile_viewers_height);
