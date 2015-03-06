@@ -80,9 +80,6 @@
     :access-request/status
     :access-request/create-date
     :access-request/deny-date
-
-    :transaction/document
-
     })
 
 (defn translate-datom-dispatch-fn [db d] (:a d))
