@@ -61,9 +61,11 @@
 
     [:meta {:name "og:card"         :content "summary"}]
     [:meta {:name "og:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
-    [:meta {:name "og:image"        :content (cdn-path "/img/precursor-logo.png")}]
-    [:meta {:name "og:image:width"  :content "1200"}]
-    [:meta {:name "og:image:height" :content "1200"}]
+    (if-let [image-url (:meta-image view-data)]
+      [:meta {:name "og:image" :content image-url}]
+      (list [:meta {:name "og:image" :content (cdn-path "/img/precursor-logo.png")}]
+            [:meta {:name "og:image:width":content "1200"}]
+            [:meta {:name "og:image:height" :content "1200"}]))
     [:meta {:name "og:site_name"    :content "Precursor"}]
     [:meta {:name "og:title"        :content "Fast prototyping web app, makes collaboration easy."}]
     [:meta {:name "og:type"         :content "website"}]
@@ -71,9 +73,12 @@
 
     [:meta {:name "twitter:card"         :content "summary_large_image"}]
     [:meta {:name "twitter:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
-    [:meta {:name "twitter:image:src"    :content (cdn-path "/img/precursor-logo.png")}]
-    [:meta {:name "twitter:image:width"  :content "1200"}]
-    [:meta {:name "twitter:image:height" :content "1200"}]
+
+    (if-let [image-url (:meta-image view-data)]
+      [:meta {:name "twitter:image" :content image-url}]
+      (list [:meta {:name "twitter:image:src"    :content (cdn-path "/img/precursor-logo.png")}]
+            [:meta {:name "twitter:image:width"  :content "1200"}]
+            [:meta {:name "twitter:image:height" :content "1200"}]))
     [:meta {:name "twitter:site"         :content "@PrecursorApp"}]
     [:meta {:name "twitter:site:id"      :content "2900854766"}]
     [:meta {:name "twitter:title"        :content "Fast prototyping web app, makes collaboration easy."}]

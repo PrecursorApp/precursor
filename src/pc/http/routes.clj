@@ -12,12 +12,13 @@
             [pc.http.doc :as doc-http]
             [pc.http.lb :as lb]
             [pc.http.sente :as sente]
+            [pc.http.urls :as urls]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model]
             [pc.render :as render]
-            [pc.http.urls :as urls]
+            [pc.util.md5 :as md5]
             [pc.views.content :as content]
             [ring.middleware.anti-forgery]
             [ring.util.response :refer (redirect)]))
@@ -42,7 +43,8 @@
       (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                            :google-client-id (google-auth/google-client-id)
                            :sente-id (-> req :session :sente-id)
-                           :initial-document-id (:db/id doc)}
+                           :initial-document-id (:db/id doc)
+                           :meta-image (urls/doc-png (:db/id doc))}
                           ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
                           ;;       Also need a way to handle transactions before sente connects
                           ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
@@ -53,6 +55,15 @@
         (redirect (str "/document/" (:db/id redirect-doc)))
         ;; TODO: this should be a 404...
         (redirect "/")))))
+
+(defn image-cache-headers [db doc]
+  (let [last-modified-instant (or (doc-http/last-modified-instant db doc)
+                                  (java.util.Date.))]
+    {"Cache-Control" "no-cache"
+     "ETag" (format "\"%s\"" (md5/encode (str (pc.utils/inspect last-modified-instant))))
+     "Last-Modified" (->> last-modified-instant
+                       (clj-time.coerce/from-date)
+                       (clj-time.format/unparse (clj-time.format/formatters :rfc822)))}))
 
 (defpage doc-svg "/document/:document-id.svg" [req]
   (let [document-id (-> req :params :document-id)
@@ -67,10 +78,16 @@
              :body "Document not found."})
 
           (auth/has-document-permission? db doc (-> req :auth) :read)
-          (let [layers (layer-model/find-by-document db doc)]
+          (if (= :head (:request-method req))
             {:status 200
-             :headers {"Content-Type" "image/svg+xml"}
-             :body (render/render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))})
+             :headers (merge {"Content-Type" "image/svg+xml"}
+                             (image-cache-headers db doc))
+             :body ""}
+            (let [layers (layer-model/find-by-document db doc)]
+              {:status 200
+               :headers (merge {"Content-Type" "image/svg+xml"}
+                               (image-cache-headers db doc))
+               :body (render/render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
 
           (auth/logged-in? req)
           {:status 403
@@ -95,12 +112,18 @@
              :body "Document not found."})
 
           (auth/has-document-permission? db doc (-> req :auth) :read)
-          (let [layers (layer-model/find-by-document db doc)]
+          (if (= :head (:request-method req))
             {:status 200
-             :headers {"Content-Type" "image/png"}
-             :body (convert/svg->png (render/render-layers layers
-                                                           :invert-colors? (-> req :params :printer-friendly (= "false"))
-                                                           :size-limit 800))})
+             :headers (merge {"Content-Type" "image/png"}
+                             (image-cache-headers db doc))
+             :body ""}
+            (let [layers (layer-model/find-by-document db doc)]
+              {:status 200
+               :headers (merge {"Content-Type" "image/png"}
+                               (image-cache-headers db doc))
+               :body (convert/svg->png (render/render-layers layers
+                                                             :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                             :size-limit 800))}))
 
           (auth/logged-in? req)
           {:status 403

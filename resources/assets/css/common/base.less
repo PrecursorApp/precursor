@@ -109,8 +109,13 @@ code {
   &:after {
     .flex(1);
     content: "";
-    margin: 0 .25rem;
     border-bottom: 1px solid; // calling w/o color forces inheritance
+  }
+  &:before {
+    margin-right: .25rem;
+  }
+  &:after {
+    margin-left: .25rem;
   }
 }
 .divider-small {

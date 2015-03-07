@@ -49,10 +49,9 @@
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head
-                  [:span {:class color-class}
-                   (common/icon :user {:path-props {:className color-class}})]
-                  [:span (str " " cust-name)]
-                  [:span.time (str " " short-time)]])
+                  [:div.message-avatar (common/icon :user {:path-props {:className color-class}})]
+                  [:div.message-author cust-name]
+                  [:div.message-time short-time]])
                [:div.message-body
                 chat-body]])))))
 
@@ -147,12 +146,12 @@
     om/IWillUnmount
     (will-unmount [_]
       (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
-    om/IWillReceiveProps
-    (will-receive-props [_ next-props]
+    om/IWillUpdate
+    (will-update [_ next-props next-state]
       ;; check for scrolled all of the way down
       (let [node (om/get-node owner "chat-messages")
-            auto-scroll? (= (- (.-scrollHeight node) (.-scrollTop node))
-                            (.-clientHeight node))]
+            auto-scroll? (<= (- (.-scrollHeight node) (.-scrollTop node))
+                             (.-clientHeight node))]
         (when (not= (om/get-state owner :auto-scroll?) auto-scroll?)
           (om/set-state! owner :auto-scroll? auto-scroll?))))
     om/IDidUpdate
@@ -190,7 +189,7 @@
 
               (list (when (or (not= 1 (count chat-groups))
                               (not= #{"Today"} (set (keys chat-groups))))
-                      [:h2.chat-date time])
+                      [:div.chat-date.divider-small time])
                     (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
                       (om/build chat-item {:chat chat
                                            :uuid->cust (get-in app [:cust-data :uuid->cust])
