@@ -7,7 +7,8 @@
             [pc.datomic.web-peer :as web-peer]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.doc :as doc-model]
-            [pc.models.layer :as layer-model])
+            [pc.models.layer :as layer-model]
+            [pc.util.md5 :as md5])
   (:import java.io.PushbackReader
            java.util.UUID))
 
@@ -49,3 +50,11 @@
                      ;; just take up space.
                      (remove #(= :layer.type/group (:layer/type %))
                              (layer-model/find-by-document (pcd/default-db) {:db/id doc-id}))))))
+
+(defn last-modified-instant [db doc]
+  (ffirst (d/q '[:find (max ?i)
+                 :in $ ?doc-id
+                 :where
+                 [?t :transaction/document ?doc-id]
+                 [?t :db/txInstant ?i]]
+               db (:db/id doc))))

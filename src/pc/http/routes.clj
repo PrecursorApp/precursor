@@ -18,6 +18,7 @@
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model]
             [pc.render :as render]
+            [pc.util.md5 :as md5]
             [pc.views.content :as content]
             [ring.middleware.anti-forgery]
             [ring.util.response :refer (redirect)]))
@@ -55,6 +56,15 @@
         ;; TODO: this should be a 404...
         (redirect "/")))))
 
+(defn image-cache-headers [db doc]
+  (let [last-modified-instant (or (doc-http/last-modified-instant db doc)
+                                  (java.util.Date.))]
+    {"Cache-Control" "no-cache"
+     "ETag" (md5/encode (str (pc.utils/inspect last-modified-instant)))
+     "Last-Modified" (->> last-modified-instant
+                       (clj-time.coerce/from-date)
+                       (clj-time.format/unparse (clj-time.format/formatters :rfc822)))}))
+
 (defpage doc-svg "/document/:document-id.svg" [req]
   (let [document-id (-> req :params :document-id)
         db (pcd/default-db)
@@ -68,10 +78,16 @@
              :body "Document not found."})
 
           (auth/has-document-permission? db doc (-> req :auth) :read)
-          (let [layers (layer-model/find-by-document db doc)]
+          (if (= :head (:request-method req))
             {:status 200
-             :headers {"Content-Type" "image/svg+xml"}
-             :body (render/render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))})
+             :headers (merge {"Content-Type" "image/svg+xml"}
+                             (image-cache-headers db doc))
+             :body ""}
+            (let [layers (layer-model/find-by-document db doc)]
+              {:status 200
+               :headers (merge {"Content-Type" "image/svg+xml"}
+                               (image-cache-headers db doc))
+               :body (render/render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
 
           (auth/logged-in? req)
           {:status 403
@@ -96,12 +112,18 @@
              :body "Document not found."})
 
           (auth/has-document-permission? db doc (-> req :auth) :read)
-          (let [layers (layer-model/find-by-document db doc)]
+          (if (= :head (:request-method req))
             {:status 200
-             :headers {"Content-Type" "image/png"}
-             :body (convert/svg->png (render/render-layers layers
-                                                           :invert-colors? (-> req :params :printer-friendly (= "false"))
-                                                           :size-limit 800))})
+             :headers (merge {"Content-Type" "image/png"}
+                             (image-cache-headers db doc))
+             :body ""}
+            (let [layers (layer-model/find-by-document db doc)]
+              {:status 200
+               :headers (merge {"Content-Type" "image/png"}
+                               (image-cache-headers db doc))
+               :body (convert/svg->png (render/render-layers layers
+                                                             :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                             :size-limit 800))}))
 
           (auth/logged-in? req)
           {:status 403
