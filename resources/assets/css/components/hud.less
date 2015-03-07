@@ -298,6 +298,12 @@
 }
 .viewer-self {
   .order(4);
+  .viewer-avatar {
+    .transition_transform(@run_fast @bezier_deform);
+    &:active {
+      .scale3d(0, 0, 1);
+    }
+  }
 }
 .viewer-avatar {
   .box-sizing(content-box);
