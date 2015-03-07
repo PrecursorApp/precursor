@@ -140,6 +140,13 @@
       });
     }
   }
+  &.atleast2 {
+    .viewer-avatar {
+      width: @tile_viewers_height;
+      min-width: @tile_viewers_height;
+      padding: 0;
+    }
+  }
 }
 .hud-viewers {
   .hud_toggle_animation(bottom);
@@ -298,9 +305,6 @@
 }
 .viewer-self {
   .order(4);
-  .viewer-avatar {
-    .transition_transform(@run_fast @bezier_deform);
-  }
 }
 .viewer-avatar {
   .animation(in-zoom @run_fast @bezier_deform);
