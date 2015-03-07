@@ -111,12 +111,12 @@
                 :let [cust (cust-model/find-by-id db cust-id)
                       req (first (pc.early-access/find-by-cust db cust))]]
             [:tr
-             [:td (:cust/email cust)]
-             [:td (or (:cust/name cust)
-                      (:cust/first-name cust))]
-             [:td (:early-access-request/company-name req)]
-             [:td (:early-access-request/employee-count req)]
-             [:td (:early-access-request/use-case req)]
+             [:td (h/h (:cust/email cust))]
+             [:td (h/h (or (:cust/name cust)
+                           (:cust/first-name cust)))]
+             [:td (h/h (:early-access-request/company-name req))]
+             [:td (h/h (:early-access-request/employee-count req))]
+             [:td (h/h (:early-access-request/use-case req))]
              [:td [:form {:action "/grant-early-access" :method "post"}
                    (anti-forgery/anti-forgery-field)
                    [:input {:type "hidden" :name "cust-uuid" :value (str (:cust/uuid cust))}]
@@ -133,12 +133,12 @@
              :let [cust (cust-model/find-by-id db cust-id)
                    req (first (pc.early-access/find-by-cust db cust))]]
          [:tr
-          [:td (:cust/email cust)]
-          [:td (or (:cust/name cust)
-                   (:cust/first-name cust))]
-          [:td (:early-access-request/company-name req)]
-          [:td (:early-access-request/employee-count req)]
-          [:td (:early-access-request/use-case req)]])]])))
+          [:td (h/h (:cust/email cust))]
+          [:td (h/h (or (:cust/name cust)
+                        (:cust/first-name cust)))]
+          [:td (h/h (:early-access-request/company-name req))]
+          [:td (h/h (:early-access-request/employee-count req))]
+          [:td (h/h (:early-access-request/use-case req))]])]])))
 
 (defn format-runtime [ms]
   (let [h (int (Math/floor (/ ms (* 1000 60 60))))
@@ -174,25 +174,25 @@
         [:a {:href (urls/doc-svg doc-id)}
          [:img {:style "width:100;height:100;"
                 :src (urls/doc-svg doc-id)}]]]
-       [:td (get-in stats [:cust :cust/email])]
+       [:td (h/h (get-in stats [:cust :cust/email]))]
        [:td [:form {:action "/refresh-client-stats" :method "post"}
              (anti-forgery/anti-forgery-field)
-             [:input {:type "hidden" :name "client-id" :value client-id}]
+             [:input {:type "hidden" :name "client-id" :value (h/h client-id)}]
              [:input {:type "submit" :value "refresh"}]]]
-       [:td (let [v (get-in stats [:stats :code-version])]
+       [:td (let [v (h/h (get-in stats [:stats :code-version]))]
               [:a {:href (str "https://github.com/dwwoelfel/precursor/commit/" v)}
                v])]
-       [:td (get-in stats [:stats :chat-count])]
-       [:td (get-in stats [:stats :unread-chat-count])]
-       [:td (get-in stats [:stats :transaction-count])]
-       [:td (get-in stats [:stats :layer-count])]
-       [:td (get-in stats [:stats :logged-in?])]
-       [:td (some-> (get-in stats [:stats :run-time-millis]) format-runtime)]
+       [:td (h/h (get-in stats [:stats :chat-count]))]
+       [:td (h/h (get-in stats [:stats :unread-chat-count]))]
+       [:td (h/h (get-in stats [:stats :transaction-count]))]
+       [:td (h/h (get-in stats [:stats :layer-count]))]
+       [:td (h/h (get-in stats [:stats :logged-in?]))]
+       [:td (h/h (some-> (get-in stats [:stats :run-time-millis]) format-runtime))]
        [:td (count (get document-subs doc-id))]
-       [:td (let [visibility (get-in stats [:stats :visibility])]
+       [:td (let [visibility (h/h (get-in stats [:stats :visibility]))]
               (list visibility
                     (when (= "hidden" visibility)
                       [:form {:action "/refresh-client-browser" :method "post"}
                        (anti-forgery/anti-forgery-field)
-                       [:input {:type "hidden" :name "client-id" :value client-id}]
+                       [:input {:type "hidden" :name "client-id" :value (h/h client-id)}]
                        [:input {:type "submit" :value "refresh browser"}]])))]])]])
