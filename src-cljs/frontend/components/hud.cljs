@@ -168,7 +168,8 @@
                                        (utils/stop-event %)))
                    :title (if (utils/logged-in? owner)
                             "Change your color."
-                            "Login to change your color.")}
+                            "Login to change your color.")
+                   :key self-color}
                   (if (= :touch (get-in app [:mouse-type]))
                     (common/icon :phone (when show-mouse? {:path-props {:className (name self-color)}}))
                     (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}})))]

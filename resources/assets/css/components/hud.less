@@ -300,12 +300,10 @@
   .order(4);
   .viewer-avatar {
     .transition_transform(@run_fast @bezier_deform);
-    &:active {
-      .scale3d(0, 0, 1);
-    }
   }
 }
 .viewer-avatar {
+  .animation(in-zoom @run_fast @bezier_deform);
   .box-sizing(content-box);
   .flexy(center; center);
   width: (@tile_viewers_height / 2);
