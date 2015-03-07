@@ -218,6 +218,7 @@
   }
 }
 .viewer {
+  .selection(@white; (100 * @opacity_darker_dark)); // TODO move viewer list into canvas div
   .animation_cascade(10);
   .animation(in-fade-bottom @run_fast @bezier_deform backwards);
   .flex(0 0 @tile_viewers_height);
@@ -228,23 +229,6 @@
     .flex(0 0 @tile);
     width: ~"calc(100vw - @{tile})";
   });
-  &:not(:hover) {
-    &:not(.viewer-self) {
-      .viewer-tag {
-        opacity: .5;
-      }
-    }
-    .viewer-knobs {
-      width: 0;
-      .iconpile {
-        display: none;
-      }
-    }
-    .icon-pencil {
-      box-shadow: 0 1px fade(@white, 0);
-      transition: box-shadow @now @now @bezier_fadein;
-    }
-  }
   &:nth-child(2)   {
     .order(1);
   }
@@ -279,26 +263,7 @@
       });
     }
   }
-}
-.viewer-self {
-  .order(4);
-}
-.viewer-avatar {
-  .flexy(center; center);
-  width: @tile_viewers_height;
-  height: @tile_viewers_height;
-}
-.viewer-name {
-  .flex(1);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  cursor: default;
-}
-.viewer-name-form {
-  .flex(1);
-  pointer-events: none;
-  ~ .viewer-knobs {
+  &.busy {
     .viewer-knob {
       pointer-events: none;
       opacity: 1;
@@ -309,12 +274,46 @@
       }
     }
   }
+  &:not(.busy) {
+    .user-select(none);
+    cursor: default;
+    &:not(:hover) {
+      &:not(.viewer-self) {
+        .viewer-tag {
+          opacity: .5;
+        }
+      }
+      .viewer-knobs {
+        width: 0;
+        .iconpile {
+          display: none;
+        }
+      }
+      .icon-pencil {
+        box-shadow: 0 1px fade(@white, 0);
+        transition: box-shadow @now @now @bezier_fadein;
+      }
+    }
+  }
 }
-.viewer-name-input {
-  background: none;
-  border: none;
-  outline: 0;
+.viewer-self {
+  .order(4);
+}
+.viewer-avatar {
+  .flexy(center; center);
+  width: @tile_viewers_height;
+  min-width: @tile_viewers_height;
+  height: @tile_viewers_height;
+}
+.viewer-name {
   color: @white;
+  min-width: 1em;
+  max-width: ((@tile_xl - @tile) - (2 * @tile_viewers_height));
+  border: none;
+  outline: none;
+  background: none;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .viewer-knobs {
   .flexy();
@@ -328,9 +327,10 @@
 }
 .viewer-knob {
   .flexy(center; center);
-  width: 1.5em;
-  min-width: 1.5em;
+  width: @tile_viewers_height;
+  min-width: @tile_viewers_height;
   height: @tile_viewers_height;
+
   &:hover {
     .icon-pencil {
       .iconpile {

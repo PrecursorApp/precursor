@@ -49,10 +49,9 @@
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head
-                  [:span {:class color-class}
-                   (common/icon :user {:path-props {:className color-class}})]
-                  [:span (str " " cust-name)]
-                  [:span.time (str " " short-time)]])
+                  [:div.message-avatar (common/icon :user {:path-props {:className color-class}})]
+                  [:div.message-author cust-name]
+                  [:div.message-time short-time]])
                [:div.message-body
                 chat-body]])))))
 
@@ -190,7 +189,7 @@
 
               (list (when (or (not= 1 (count chat-groups))
                               (not= #{"Today"} (set (keys chat-groups))))
-                      [:h2.chat-date time])
+                      [:div.chat-date.divider-small time])
                     (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
                       (om/build chat-item {:chat chat
                                            :uuid->cust (get-in app [:cust-data :uuid->cust])

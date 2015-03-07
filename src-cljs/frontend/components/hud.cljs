@@ -9,6 +9,8 @@
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [goog.dom]
+            [goog.dom.Range]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -136,7 +138,8 @@
     (did-update [_ _ _]
       (when (and (om/get-state owner :editing-name?)
                  (om/get-node owner "name-edit"))
-        (.focus (om/get-node owner "name-edit"))))
+        (.focus (om/get-node owner "name-edit"))
+        (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "name-edit")))))
     om/IRenderState
     (render-state [_ {:keys [editing-name? new-name]}]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -157,43 +160,39 @@
             [:div.viewers-list
              [:div.viewers-list-frame
               (let [show-mouse? (get-in app [:subscribers :info client-id :show-mouse?])]
-                [:div.viewer.viewer-self
+                [:div.viewer.viewer-self {:class (when editing-name? "busy")}
                  [:div.viewer-avatar.viewer-tag
                   {:on-mouse-down #(let [color (colors/next-color colors/color-idents self-color)]
                                      (when (utils/logged-in? owner)
                                        (cast! :self-updated {:color color})
                                        (utils/stop-event %)))
                    :title (if (utils/logged-in? owner)
-                            "Click to change your color"
-                            "Login to change your color")}
+                            "Change your color."
+                            "Login to change your color.")}
                   (if (= :touch (get-in app [:mouse-type]))
                     (common/icon :phone (when show-mouse? {:path-props {:className (name self-color)}}))
                     (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}})))]
-                 (if editing-name?
-                   [:form.viewer-name-form
-                    {:on-submit #(do (when-not (str/blank? new-name)
-                                       (cast! :self-updated {:name new-name}))
-                                     (om/set-state! owner :editing-name? false)
-                                     (om/set-state! owner :new-name "")
-                                     (utils/stop-event %))
-                     :on-blur #(do (when-not (str/blank? new-name)
-                                     (cast! :self-updated {:name new-name}))
-                                   (om/set-state! owner :editing-name? false)
-                                   (om/set-state! owner :new-name "")
+                 [:div.viewer-name.viewer-tag
+                  (let [submit-fn #(do (when-not (str/blank? (om/get-state owner :new-name))
+                                         (cast! :self-updated {:name (om/get-state owner :new-name)}))
+                                       (om/set-state! owner :editing-name? false)
+                                       (om/set-state! owner :new-name ""))]
+                    {:ref "name-edit"
+                     :content-editable (if editing-name? true false)
+                     :spell-check false
+                     :on-key-down #(do
+                                     (when (= "Enter" (.-key %))
+                                       (.preventDefault %)
+                                       (submit-fn)
+                                       (utils/stop-event %))
+                                     (when (= "Escape" (.-key %))
+                                       (om/set-state! owner :editing-name? false)
+                                       (om/set-state! owner :new-name "")
+                                       (utils/stop-event %)))
+                     :on-blur #(do (submit-fn)
                                    (utils/stop-event %))
-                     :on-key-down #(when (= "Escape" (.-key %))
-                                     (om/set-state! owner :editing-name? false)
-                                     (om/set-state! owner :new-name "")
-                                     (utils/stop-event %))}
-                    [:input.viewer-name-input
-                     {:type "text"
-                      :ref "name-edit"
-                      :tab-index 1
-                      ;; TODO: figure out why we need value here
-                      :value new-name
-                      :on-change #(om/set-state! owner :new-name (.. % -target -value))}]]
-
-                   [:div.viewer-name.viewer-tag (or self-name "You")])
+                     :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))})
+                  (or self-name "You")]
                  [:div.viewer-knobs
                   [:a.viewer-knob
                    {:key client-id
@@ -203,7 +202,7 @@
                                    (cast! :overlay-username-toggled))
                                  (.stopPropagation %))
                     :role "button"
-                    :title "Edit your display name."}
+                    :title "Change your display name."}
                    (common/icon :pencil)]]])
               (for [[id {:keys [show-mouse? color cust-name hide-in-list?] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
                     :when (not hide-in-list?)
