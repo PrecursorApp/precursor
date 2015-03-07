@@ -7,6 +7,7 @@
             [frontend.cursors :as cursors]
             [frontend.models.chat :as chat-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
+            [frontend.roster :refer [current-roster roster-visible? roster-count]]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
@@ -42,6 +43,34 @@
                           (if (overlay-visible? app) "Close Menu" "Open Menu"))
             :title (when main-menu-learned?
                      (if (overlay-visible? app) "Close Menu" "Open Menu"))}
+           (common/icon :menu)])))))
+
+(defn roster [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Hud Roster")
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            roster-learned? (get-in app state/roster-learned-path)]
+        (html
+          [:a.hud-roster.hud-item.hud-toggle.menu-needed
+           {:on-click (if (roster-visible? app)
+                        #(cast! :roster-closed)
+                        #(cast! :roster-opened))
+            :on-touch-end #(do
+                             (.preventDefault %)
+                             (if (roster-visible? app)
+                               (cast! :roster-closed)
+                               (cast! :roster-opened)))
+            :role "button"
+            :class (when (roster-visible? app)
+                     (if (< 1 (roster-count app))
+                       "back"
+                       "close"))
+            :data-left (when-not roster-learned?
+                          (if (roster-visible? app) "Close Menu" "Open Menu"))
+            :title (when roster-learned?
+                     (if (roster-visible? app) "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
 
 (defn mouse-stats [_ owner]
@@ -258,6 +287,9 @@
         (om/build menu (utils/select-in app [state/main-menu-learned-path
                                              state/overlays-path])
                   {:react-key "menu"})
+        (om/build roster (utils/select-in app [state/roster-learned-path
+                                               state/rosters-path])
+                  {:react-key "roster"})
         (om/build chat (utils/select-in app [state/chat-opened-path
                                              state/chat-button-learned-path
                                              state/browser-settings-path

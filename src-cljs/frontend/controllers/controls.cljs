@@ -17,6 +17,7 @@
             [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
             [frontend.overlay :as overlay]
+            [frontend.roster :as roster]
             [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.settings :as settings]
@@ -985,6 +986,10 @@
   [target message _ state]
   (overlay/pop-overlay state))
 
+(defmethod control-event :roster-closed
+  [target message _ state]
+  (roster/pop-roster state))
+
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
@@ -1196,6 +1201,12 @@
   (-> state
       (overlay/replace-overlay :start)
       (assoc-in state/main-menu-learned-path true)))
+
+(defmethod control-event :roster-opened
+  [browser-state message _ state]
+  (-> state
+      (roster/replace-roster :start)
+      (assoc-in state/roster-learned-path true)))
 
 ; (defmethod control-event :invite-menu-opened
 ;   [browser-state message _ state]

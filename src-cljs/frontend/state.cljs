@@ -12,6 +12,7 @@
    :info-button-learned false
    :newdoc-button-learned false
    :main-menu-learned false
+   :roster-learned false
    :chat-button-learned false
    :login-button-learned false})
 
@@ -66,6 +67,7 @@
    :cust-data {:uuid->cust {(:cust/uuid subscriber-bot) (select-keys subscriber-bot [:cust/uuid :cust/name :cust/color-name])}}
    :show-landing? false
    :overlays []
+   :rosters []
    :frontend-id-state nil
    :mouse {}
    :page-count 0})
@@ -108,6 +110,8 @@
 
 (def main-menu-learned-path (conj browser-settings-path :main-menu-learned))
 
+(def roster-learned-path (conj browser-settings-path :roster-learned))
+
 (def invite-menu-learned-path (conj browser-settings-path :invite-menu-learned))
 
 (def sharing-menu-learned-path (conj browser-settings-path :sharing-menu-learned))
@@ -131,6 +135,8 @@
 (def overlay-shortcuts-opened-path [:overlay-shortcuts-opened])
 
 (def overlays-path [:overlays])
+
+(def rosters-path [:rosters])
 
 (def invite-email-path [:invite-email])
 (def permission-grant-email-path [:permission-grant-email])
