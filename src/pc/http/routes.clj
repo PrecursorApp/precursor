@@ -23,34 +23,38 @@
             [ring.middleware.anti-forgery]
             [ring.util.response :refer (redirect)]))
 
+(defn common-view-data [req]
+  (merge
+   {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+    :google-client-id (google-auth/google-client-id)
+    :sente-id (-> req :session :sente-id)}
+   (when-let [cust (-> req :auth :cust)]
+     {:cust (cust-model/read-api cust)})))
+
 (defpage root "/" [req]
   (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
         doc (doc-model/create-public-doc!
              (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                    (when cust-uuid {:document/creator cust-uuid})))]
+                    (when cust-uuid {:document/creator cust-uuid})
+                    ;; needs default permissions set
+                    (when (:team req) {:document/team (:db/id (:team req))})))]
     (if cust-uuid
       (redirect (str "/document/" (:db/id doc)))
-      (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                           :google-client-id (google-auth/google-client-id)
-                           :sente-id (-> req :session :sente-id)
-                           :initial-document-id (:db/id doc)})))))
+      (content/app (merge (common-view-data req)
+                          {:initial-document-id (:db/id doc)})))))
 
 (defpage document [:get "/document/:document-id" {:document-id #"[0-9]+"}] [req]
   (let [document-id (-> req :params :document-id)
         db (pcd/default-db)
         doc (doc-model/find-by-id db (Long/parseLong document-id))]
     (if doc
-      (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                           :google-client-id (google-auth/google-client-id)
-                           :sente-id (-> req :session :sente-id)
-                           :initial-document-id (:db/id doc)
+      (content/app (merge (common-view-data req)
+                          {:initial-document-id (:db/id doc)
                            :meta-image (urls/doc-png (:db/id doc))}
                           ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
-                          ;;       Also need a way to handle transactions before sente connects
                           ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
                           ;;   {:initial-entities (layer/find-by-document db doc)})
-                          (when-let [cust (-> req :auth :cust)]
-                            {:cust (cust-model/read-api cust)})))
+                          ))
       (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
         (redirect (str "/document/" (:db/id redirect-doc)))
         ;; TODO: this should be a 404...
@@ -138,11 +142,7 @@
 (defn frontend-response
   "Response to send for requests that the frontend will route"
   [req]
-  (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                       :google-client-id (google-auth/google-client-id)
-                       :sente-id (-> req :session :sente-id)}
-                      (when-let [cust (-> req :auth :cust)]
-                        {:cust (cust-model/read-api cust)}))))
+  (content/app (common-view-data req)))
 
 (defpage new-doc "/new" [req]
   (frontend-response req))
@@ -155,12 +155,8 @@
         doc (doc-model/create-public-doc!
              (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                     (when cust-uuid {:document/creator cust-uuid})))]
-    (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
-                         :google-client-id (google-auth/google-client-id)
-                         :sente-id (-> req :session :sente-id)
-                         :initial-document-id (:db/id doc)}
-                        (when-let [cust (-> req :auth :cust)]
-                          {:cust (cust-model/read-api cust)})))))
+    (content/app (merge (common-view-data req)
+                        {:initial-document-id (:db/id doc)}))))
 
 (defpage pricing "/pricing" [req]
   (outer-page req))
