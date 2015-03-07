@@ -60,7 +60,7 @@
   (let [last-modified-instant (or (doc-http/last-modified-instant db doc)
                                   (java.util.Date.))]
     {"Cache-Control" "no-cache"
-     "ETag" (md5/encode (str (pc.utils/inspect last-modified-instant)))
+     "ETag" (format "\"%s\"" (md5/encode (str (pc.utils/inspect last-modified-instant))))
      "Last-Modified" (->> last-modified-instant
                        (clj-time.coerce/from-date)
                        (clj-time.format/unparse (clj-time.format/formatters :rfc822)))}))
