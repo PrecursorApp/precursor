@@ -338,11 +338,11 @@
   width: @tile_viewers_height;
   min-width: @tile_viewers_height;
   height: @tile_viewers_height;
-
   &:hover {
     .icon-pencil {
       .iconpile {
-        .animation(pencil-rotate @run_slower @bezier_deform forwards);
+        .transform(rotate3d(0, 0, 1, 180deg));
+        .transition_transform(@run_slower @run @bezier_deform);
       }
     }
   }
