@@ -12,6 +12,7 @@
             [pc.http.doc :as doc-http]
             [pc.http.lb :as lb]
             [pc.http.sente :as sente]
+            [pc.http.urls :as urls]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
@@ -41,7 +42,8 @@
       (content/app (merge {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
                            :google-client-id (google-client-id)
                            :sente-id (-> req :session :sente-id)
-                           :initial-document-id (:db/id doc)}
+                           :initial-document-id (:db/id doc)
+                           :meta-image (urls/doc-png (:db/id doc))}
                           ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
                           ;;       Also need a way to handle transactions before sente connects
                           ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
