@@ -33,7 +33,7 @@
                                                [(last parts)]))))))
 
 
-(defn chat-item [{:keys [chat uuid->cust]} owner {:keys [sente-id show-sender?]}]
+(defn chat-item [{:keys [chat uuid->cust show-sender?]} owner {:keys [sente-id]}]
   (reify
     om/IDisplayName (display-name [_] "Chat Item")
     om/IRender
@@ -140,6 +140,7 @@
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
                    (when-let [chat-datoms (seq (filter #(or (= :chat/body (:a %))
+                                                            (= :server/timestamp (:a %))
                                                             (= :document/chat-bot (:a %)))
                                                        (:tx-data tx-report)))]
                      (om/refresh! owner)))))
@@ -177,11 +178,12 @@
         (html
          [:div.chat-log {:ref "chat-messages"}
           (when chat-bot
-            (om/build chat-item {:chat dummy-chat :uuid->cust {(:cust/uuid state/subscriber-bot)
-                                                               (merge
-                                                                (select-keys state/subscriber-bot [:cust/color-name :cust/uuid])
-                                                                {:cust/name (:chat-bot/name chat-bot)})}}
-                      {:opts {:show-sender? true}}))
+            (om/build chat-item {:chat dummy-chat
+                                 :uuid->cust {(:cust/uuid state/subscriber-bot)
+                                              (merge
+                                               (select-keys state/subscriber-bot [:cust/color-name :cust/uuid])
+                                               {:cust/name (:chat-bot/name chat-bot)})}
+                                 :show-sender? true}))
           (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
             (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
                                              chat-groups)]
@@ -191,11 +193,16 @@
                       [:h2.chat-date time])
                     (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
                       (om/build chat-item {:chat chat
-                                           :uuid->cust (get-in app [:cust-data :uuid->cust])}
-                                {:key-fn #(str (:server/timestamp (:chat %)) "-" (:db/id (:chat %)))
-                                 :opts {:sente-id sente-id
-                                        :show-sender? (not= (chat-model/display-name prev-chat sente-id)
-                                                            (chat-model/display-name chat sente-id))}})))))])))))
+                                           :uuid->cust (get-in app [:cust-data :uuid->cust])
+                                           :show-sender? (or (not= (chat-model/display-name prev-chat sente-id)
+                                                                   (chat-model/display-name chat sente-id))
+
+                                                             (or (not (:server/timestamp chat))
+                                                                 (not (:server/timestamp prev-chat))
+                                                                 (< (* 1000 60 5) (- (.getTime (:server/timestamp chat))
+                                                                                     (.getTime (:server/timestamp prev-chat))))))}
+                                {:react-key (:db/id chat)
+                                 :opts {:sente-id sente-id}})))))])))))
 
 (defn chat [app owner]
   (reify

@@ -54,6 +54,59 @@
                       :cust/name "prcrsr"
                       :cust/uuid (d/squuid)}]))
 
+(defn doc-id-datom->ref-transaction [db {:keys [e v] :as datom}]
+  (let [ent (d/entity db e)]
+    (cond (:db/txInstant ent) [:db/add e :transaction/document v]
+          (:layer/type ent) [:db/add e :layer/document v]
+          (:chat/body ent)  [:db/add e :chat/document v]
+          (:layer/name ent) [:db/add e :layer/document v]
+          (= :layer (:entity/type ent)) [:db/add e :layer/document v]
+          (:layer/end-x ent) [:db/add e :layer/document v]
+          ;; TODO: need to clean up the db to get rid of invalid layers and do some sort of
+          ;;       validation when new fields come through the wire
+          (= #{:frontend/id :document/id} (set (keys ent))) [:db.fn/retractEntity e]
+          :else (throw+ {:error :unknown-document-id-type :e e}))))
+
+(defn have-document-ref? [db {:keys [e] :as datom}]
+  (let [ent (d/entity db e)]
+    (or (:layer/document ent)
+        (:chat/document ent)
+        (:transaction/document ent))))
+
+(defn document-ids->document-refs [db conn]
+  (log/infof "converting document-ids to document-refs")
+  (doseq [datom-group (partition-all 1000 (remove (partial have-document-ref? db) (d/datoms db :avet :document/id)))]
+    @(d/transact-async conn (conj (mapv #(doc-id-datom->ref-transaction db %) datom-group)
+                                  {:db/id (d/tempid :db.part/tx)
+                                   :transaction/source :transaction.source/migration
+                                   :migration :migration/longs->refs}))))
+
+(defn have-ref-attr? [db ref-attr {:keys [e] :as datom}]
+  (let [ent (d/entity db e)]
+    (get ent ref-attr)))
+
+(defn access-entities-ids->refs [db conn]
+  (doseq [attr [:permission/document :permission/cust :permission/granter
+                :access-request/document :access-request/cust
+                :access-grant/document :access-grant/granter]
+          :let [ref-attr (keyword (namespace attr) (str (name attr) "-ref"))]]
+    (log/infof "converting %s to %s" attr ref-attr)
+    (doseq [datom-group (partition-all 1000 (remove (partial have-ref-attr? db ref-attr) (d/datoms db :aevt attr)))]
+      @(d/transact-async conn (conj (mapv (fn [{:keys [e v] :as datom}]
+                                            [:db/add e ref-attr v])
+                                          datom-group)
+                                    {:db/id (d/tempid :db.part/tx)
+                                     :transaction/source :transaction.source/migration
+                                     :migration :migration/longs->refs})))))
+
+
+(defn longs->refs
+  "Converts attributes that store ids to refs, e.g. layers go from :document/id to :layer/document"
+  [conn]
+  (let [db (d/db conn)]
+    (document-ids->document-refs db conn)
+    (access-entities-ids->refs db conn)))
+
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
@@ -65,7 +118,8 @@
    4 #'archive/make-existing-documents-public
    5 #'archive/migrate-fake-documents
    6 #'archive/fix-bounding-boxes
-   7 #'archive/add-frontend-ids))
+   7 #'archive/add-frontend-ids
+   8 #'longs->refs))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"

@@ -179,7 +179,9 @@
              (anti-forgery/anti-forgery-field)
              [:input {:type "hidden" :name "client-id" :value client-id}]
              [:input {:type "submit" :value "refresh"}]]]
-       [:td (get-in stats [:stats :code-version])]
+       [:td (let [v (get-in stats [:stats :code-version])]
+              [:a {:href (str "https://github.com/dwwoelfel/precursor/commit/" v)}
+               v])]
        [:td (get-in stats [:stats :chat-count])]
        [:td (get-in stats [:stats :unread-chat-count])]
        [:td (get-in stats [:stats :transaction-count])]

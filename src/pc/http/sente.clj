@@ -59,12 +59,13 @@
 (defonce client-stats (atom {}))
 
 (defn notify-transaction [data]
-  (doseq [[uid _] (dissoc (get @document-subs (:document/id data)) (str (:session/uuid data)))]
-    (log/infof "notifying %s about new transactions for %s" uid (:document/id data))
-    ((:send-fn @sente-state) uid [:datomic/transaction data]))
-  (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
-    (log/infof "notifying %s about new server timestamp for %s" (:session/uuid data) (:document/id data))
-    ((:send-fn @sente-state) (str (:session/uuid data)) [:datomic/transaction (assoc data :tx-data server-timestamps)])))
+  (let [doc-id (:db/id (:transaction/document data))]
+    (doseq [[uid _] (dissoc (get @document-subs doc-id) (:session/client-id data))]
+      (log/infof "notifying %s about new transactions for %s" uid doc-id)
+      ((:send-fn @sente-state) uid [:datomic/transaction data]))
+    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
+      (log/infof "notifying %s about new server timestamp for %s" (:session/uuid data) doc-id)
+      ((:send-fn @sente-state) (str (:session/client-id data)) [:datomic/transaction (assoc data :tx-data server-timestamps)]))))
 
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
@@ -251,7 +252,7 @@
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
                          :entities (map (partial permission-model/read-api (:db req))
-                                        (filter :permission/cust
+                                        (filter :permission/cust-ref
                                                 (permission-model/find-by-document (:db req)
                                                                                    {:db/id document-id})))
                          :entity-type :permission}])
@@ -288,24 +289,46 @@
           ;; limit (get ?data :limit 100)
           ;; offset (get ?data :offset 0)
           doc-ids (doc-model/find-touched-by-cust (:db req) cust)]
-      (log/infof "fetching touched for %s" client-id)
+      (log/infof "fetched %s touched for %s" (count doc-ids) client-id)
       (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
                                            :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
                              doc-ids)}))))
 
+(defn determine-type [datom datoms]
+  (let [e (:e datom)
+        attr-nses (map (comp namespace :a) (filter #(= (:e %) (:e datom)) datoms))]
+    (cond (first (filter #(= "layer" %) attr-nses))
+          :layer/document
+
+          (first (filter #(= "chat" %) attr-nses))
+          :chat/document
+
+          :else (throw+ {:error :invalid-type-fordocument-id
+                         :datom datom
+                         :datoms datoms}))))
+
 (defmethod ws-handler :frontend/transaction [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
+  (def mydata ?data)
   (let [document-id (-> ?data :document/id)
         datoms (->> ?data
                  :datoms
                  (remove (comp nil? :v))
                  ;; Don't let people sneak layers into other documents
-                 (map (fn [d] (if (= :document/id (:a d))
-                                (assoc d :v document-id)
-                                d))))
-        _ (def datoms datoms)
+                 (reduce (fn [acc d]
+                           (cond (= "document" (name (:a d)))
+                                 (conj acc
+                                       (assoc d :v document-id)
+                                       (assoc d :a :document/id :v document-id))
+                                 (= :document/id (:a d))
+                                 (conj acc
+                                       (assoc d :v document-id)
+                                       (assoc d :a (determine-type d (:datoms ?data)) :v document-id))
+                                 :else (conj acc d)))
+                         []))
+        _ (def mydatoms datoms)
         cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
-    (log/infof "transacting %s on %s for %s" datoms document-id client-id)
+    (log/infof "transacting %s datoms on %s for %s" (count datoms) document-id client-id)
     (datomic2/transact! datoms
                         {:document-id document-id
                          :client-id client-id
@@ -358,14 +381,14 @@
                            [:frontend/invite-response {:document/id doc-id
                                                        :response body}])
                           @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)
-                                                           :document/id doc-id
+                                                           :transaction/document doc-id
                                                            :transaction/broadcast true}
                                                           (when cust
                                                             {:cust/uuid (:cust/uuid cust)}))
                                                    (web-peer/server-frontend-id chat-id doc-id)
                                                    {:chat/body body
                                                     :server/timestamp (java.util.Date.)
-                                                    :document/id doc-id
+                                                    :chat/document doc-id
                                                     :db/id chat-id
                                                     :cust/uuid (auth/prcrsr-bot-uuid (:db req))
                                                     ;; default bot color, also used on frontend chats
@@ -391,7 +414,7 @@
         _ (assert (contains? (:flags cust) :flags/private-docs))
         ;; letting datomic's schema do validation for us, might be a bad idea?
         setting (-> ?data :setting)
-        annotations {:document/id doc-id
+        annotations {:transaction/document doc-id
                      :cust/uuid (:cust/uuid cust)
                      :transaction/broadcast true}
         txid (d/tempid :db.part/tx)]
@@ -403,8 +426,8 @@
   (let [doc-id (-> ?data :document/id)]
     (if-let [cust (-> req :ring-req :auth :cust)]
       (let [email (-> ?data :email)
-            annotations {:document/id doc-id
-                         :cust/uuid (:cust/uuid cust)
+            annotations {:cust/uuid (:cust/uuid cust)
+                         :transaction/document doc-id
                          :transaction/broadcast true}]
         (if-let [grantee (cust/find-by-email (:db req) email)]
           (permission-model/grant-permit {:db/id doc-id}
@@ -423,12 +446,12 @@
   (let [doc-id (-> ?data :document/id)]
     (if-let [request (some->> ?data :request-id (access-request-model/find-by-client-part (:db req) doc-id))]
       (let [cust (-> req :ring-req :auth :cust)
-            annotations {:document/id doc-id
+            annotations {:transaction/document doc-id
                          :cust/uuid (:cust/uuid cust)
                          :transaction/broadcast true}]
         ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
         ;;       Right now it's too easy to accidentally forget to check.
-        (assert (= doc-id (:access-request/document request)))
+        (assert (= doc-id (:db/id (:access-request/document-ref request))))
         (permission-model/convert-access-request request cust annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
@@ -437,12 +460,12 @@
   (let [doc-id (-> ?data :document/id)]
     (if-let [request (some->> ?data :request-id (access-request-model/find-by-client-part (:db req) doc-id))]
       (let [cust (-> req :ring-req :auth :cust)
-            annotations {:document/id doc-id
+            annotations {:transaction/document doc-id
                          :cust/uuid (:cust/uuid cust)
                          :transaction/broadcast true}]
         ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
         ;;       Right now it's too easy to accidentally forget to check.
-        (assert (= doc-id (:access-request/document request)))
+        (assert (= doc-id (:db/id (:access-request/document-ref request))))
         (access-request-model/deny-request request annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
@@ -452,7 +475,7 @@
     (if-let [cust (-> req :ring-req :auth :cust)]
       (if-let [doc (doc-model/find-by-id (:db req) doc-id)]
         (let [email (-> ?data :email)
-              annotations {:document/id doc-id
+              annotations {:transaction/document doc-id
                            :cust/uuid (:cust/uuid cust)
                            :transaction/broadcast true}]
           (let [{:keys [db-after]} (access-request-model/create-request doc cust annotations)]
@@ -473,6 +496,9 @@
     (let [msg (format "no cust for %s" (:remote-addr (:ring-req req)))]
       (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg))))
+
+(defmethod ws-handler :server/timestamp [{:keys [client-id ?data ?reply-fn] :as req}]
+  (?reply-fn [:server/timestamp {:date (java.util.Date.)}]))
 
 (defn conj-limit
   "Expects a vector, keeps the newest n items. May return a shorter vector than was passed in."
