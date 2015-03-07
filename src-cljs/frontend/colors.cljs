@@ -31,4 +31,6 @@
 
 (defn find-color [uuid->cust cust-uuid alt-uuid]
   (or (get-in uuid->cust [cust-uuid :cust/color-name])
-      (choose-from-uuid color-idents alt-uuid)))
+      (if alt-uuid ;; handles old chats that are missing a session/uuid
+        (choose-from-uuid color-idents alt-uuid)
+        :color.name/gray)))
