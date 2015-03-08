@@ -5,6 +5,7 @@
             [crypto.equality :as crypto]
             [defpage.core :as defpage :refer (defpage)]
             [pc.assets]
+            [pc.analytics :as analytics]
             [pc.auth :as auth]
             [pc.auth.google :as google-auth]
             [pc.convert :as convert]
@@ -232,6 +233,7 @@
                                      (when query (str "?" query)))}})))))
 
 (defpage login "/login" [req]
+  (analytics/track-signup-clicked req)
   (redirect (google-auth/oauth-uri ring.middleware.anti-forgery/*anti-forgery-token*
                                    :redirect-path (get-in req [:params :redirect-path] "/")
                                    :redirect-query (get-in req [:params :redirect-query])

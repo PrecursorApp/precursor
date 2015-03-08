@@ -28,3 +28,8 @@
 
 (defn track-login [cust]
   (mixpanel/track "Login" (:cust/uuid cust)))
+
+(defn track-signup-clicked [ring-req]
+  (mixpanel/track "Signup Clicked"
+                  (mixpanel/distinct-id-from-cookie ring-req)
+                  :source (get-in ring-req [:params :source])))
