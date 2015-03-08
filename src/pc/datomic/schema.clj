@@ -544,7 +544,21 @@
                :code (let [frontend-id-e (d/entid db :frontend/id)
                            txes (datomic.builtins/build-retract-args db entity-id)]
                        (remove #(= (nth % 2) frontend-id-e) txes))}
-             :db/doc "Like db.fn/retractEntity, but preserves frontend ids")])
+             :db/doc "Like db.fn/retractEntity, but preserves frontend ids")
+
+   (attribute :team/subdomain
+              :db.type/string
+              :db/unique :db.unique/value
+              :db/doc "precursor subdomain for a team")
+
+   (attribute :team/uuid
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "unique id for a team that can be shared with the frontend")
+
+   (attribute :document/team
+              :db.type/ref
+              :db/doc "Team this doc belongs to (if it belongs to a team)")   ])
 
 
 (defonce schema-ents (atom nil))
