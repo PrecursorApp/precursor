@@ -107,6 +107,17 @@
     (document-ids->document-refs db conn)
     (access-entities-ids->refs db conn)))
 
+(defn add-precursor-team [conn]
+  (let [subdomain "precursor"]
+    (when-not (first (d/q '{:find [?t .]
+                            :where [[?t :team/subdomain ?s]]}
+                          (d/db conn) subdomain))
+      ;; no need to worry about races, unique constraint on subdomain will explode if
+      ;; we try to insert it twice
+      @(d/transact conn [{:db/id (d/tempid :db.part/user)
+                          :team/subdomain subdomain
+                          :team/uuid (d/squuid)}]))))
+
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
@@ -119,7 +130,8 @@
    5 #'archive/migrate-fake-documents
    6 #'archive/fix-bounding-boxes
    7 #'archive/add-frontend-ids
-   8 #'longs->refs))
+   8 #'longs->refs
+   9 #'add-precursor-team))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"
