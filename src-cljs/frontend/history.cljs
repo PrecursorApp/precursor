@@ -59,15 +59,6 @@
                       (utils/mlog "Ignoring duplicate dispatch event to" (.getToken history-imp))
                       (.onHistoryEvent_ history-imp)))))
 
-(defn route-fragment
-  "Returns the route fragment if this is a route that we've don't dispatch
-  on fragments for."
-  [path]
-  (-> path
-      sec/locate-route
-      :params
-      :_fragment))
-
 (defn path-matches?
   "True if the two tokens are the same except for the fragment"
   [token-a token-b]
@@ -79,8 +70,9 @@
       (and (.-platformModifierKey event)
            (.isButton event goog.events.BrowserEvent.MouseButton.LEFT))))
 
-(defn setup-link-dispatcher! [history-imp]
-  (let [dom-helper (goog.dom.DomHelper.)]
+(defn setup-link-dispatcher! [history-imp tokens-to-ignore]
+  (let [dom-helper (goog.dom.DomHelper.)
+        ignore-pattern (re-pattern (str "^" (string/join "|^" tokens-to-ignore)))]
     (events/listen js/document "click"
                    #(let [-target (.. % -target)
                           target (if (= (.-tagName -target) "A")
@@ -92,19 +84,14 @@
                                  (= (.. js/window -location -hostname)
                                     (.-hostname target))
                                  (not (or (new-window-click? %) (seq (.-target target)))))
-                        (.stopPropagation %)
-                        (.preventDefault %)
-                        (if (and (route-fragment location)
-                                 (path-matches? (.getToken history-imp) new-token))
+                        (when-not (re-find ignore-pattern new-token)
+                          (.stopPropagation %)
+                          (.preventDefault %))
 
-                          (do (utils/mlog "scrolling to hash for" location)
-                              ;; don't break the back button
-                              (.replaceToken history-imp new-token))
+                        (utils/mlog "navigating to" location)
+                        (.setToken history-imp new-token))))))
 
-                          (do (utils/mlog "navigating to" location)
-                              (.setToken history-imp new-token))))))))
-
-(defn new-history-imp []
+(defn new-history-imp [tokens-to-ignore]
   ;; need a history element, or goog will overwrite the entire dom
   (let [dom-helper (goog.dom.DomHelper.)
         node (.createDom dom-helper "input" #js {:class "history hide"})]
@@ -116,4 +103,4 @@
     (set-current-token!) ; Stop Safari from double-dispatching
     (disable-erroneous-popstate!) ; Stop Safari from double-dispatching
     (.setEnabled true) ; This will fire a navigate event with the current token
-    (setup-link-dispatcher!)))
+    (setup-link-dispatcher! tokens-to-ignore)))

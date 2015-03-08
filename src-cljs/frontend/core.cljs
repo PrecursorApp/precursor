@@ -279,12 +279,14 @@
             ;; of a server to store it
             (async/timeout 10000) (do #_(print "TODO: print out history: ")))))))
 
+(def tokens-to-ignore ["login" "blog"])
+
 (defn ^:export setup! []
   (when-not (utils/logging-enabled?)
     (println "To enable logging, set Precursor['logging-enabled'] = true"))
   (js/React.initializeTouchEvents true)
   (let [state (app-state)
-        history-imp (history/new-history-imp)]
+        history-imp (history/new-history-imp tokens-to-ignore)]
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (sente/init state)
