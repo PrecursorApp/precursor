@@ -81,7 +81,7 @@
                 [:a.new-here-item {:href "/home"         :role "button" :title "Home"} "Home"]
                 [:a.new-here-item {:href "/pricing"      :role "button" :title "Pricing"} "Pricing"]
                 [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
-                [:a.new-here-item {:href (auth/auth-url) :role "button" :title "Sign in with Google"} "Sign in"]]]))
+                [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
            (om/build mouse-stats {} {:react-key "mouse-stats"})]
           [:div.tray-negative]])))))
 

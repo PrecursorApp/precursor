@@ -19,6 +19,7 @@
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model]
             [pc.models.team :as team-model]
+            [pc.profile :as profile]
             [pc.render :as render]
             [pc.util.md5 :as md5]
             [pc.views.content :as content]
@@ -29,7 +30,8 @@
   (merge
    {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
     :google-client-id (google-auth/google-client-id)
-    :sente-id (-> req :session :sente-id)}
+    :sente-id (-> req :session :sente-id)
+    :hostname (profile/hostname)}
    (when-let [cust (-> req :auth :cust)]
      {:cust (cust-model/read-api cust)})
    (when-let [team (-> req :team)]

@@ -1052,14 +1052,6 @@
                                                                        (when color {:cust/color-name color}))]))
 
 
-(defmethod post-control-event! :track-external-link-clicked
-  [target message {:keys [path event properties]} previous-state current-state]
-  (let [redirect #(set! js/window.location path)]
-    (go (alt!
-         (mixpanel/managed-track event properties) ([v] (do (utils/mlog "tracked" v "... redirecting")
-                                                            (redirect)))
-         (async/timeout 1000) (redirect)))))
-
 (defmethod control-event :canvas-aligned-to-layer-center
   [browser-state message {:keys [ui-id canvas-size]} state]
   ;; TODO: how to handle no layer for ui-id

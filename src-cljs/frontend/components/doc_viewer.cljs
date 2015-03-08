@@ -33,14 +33,8 @@
             Sign up and we'll remember your ideas for you.
             Never lose a great idea again!"]
            [:a.menu-button.make
-            {:href (auth/auth-url)
-             :role "button"
-             :on-click #(do
-                          (.preventDefault %)
-                          (cast! :track-external-link-clicked
-                                 {:path (auth/auth-url)
-                                  :event "Signup Clicked"
-                                  :properties {:source "your-docs-overlay"}}))}
+            {:href (auth/auth-url :source "your-docs-overlay")
+             :role "button"}
             "Sign Up"]]])))))
 
 (defn docs-list [docs owner]

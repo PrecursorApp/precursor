@@ -21,7 +21,7 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(defn auth-link [app owner]
+(defn auth-link [app owner {:keys [source] :as opts}]
   (reify
     om/IDisplayName (display-name [_] "Overlay Auth Link")
     om/IRender
@@ -54,18 +54,8 @@
              [:span "Log out"]]]
 
            [:a.vein.make.stick
-            {:href (auth/auth-url)
-             :role "button"
-             :on-click #(do
-                          (.preventDefault %)
-                          (cast! :login-button-clicked)
-                          (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                               :event "Signup Clicked"}))
-             :on-touch-end #(do
-                              (.preventDefault %)
-                              (cast! :login-button-clicked)
-                              (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                   :event "Signup Clicked"}))}
+            {:href (auth/auth-url :source source)
+             :role "button"}
             (common/icon :login)
             [:span "Log in"]]))))))
 
@@ -143,7 +133,7 @@
            (common/icon :blog)
            [:span "Blog"]]
 
-          (om/build auth-link app)])))))
+          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
 
 (defn format-access-date [date]
   (date->bucket date :sentence? true))
@@ -294,14 +284,8 @@
             Email a friend to invite them to collaborate."]
            (if-not (:cust app)
              [:a.make
-              {:href (auth/auth-url)
-               :role "button"
-               :on-click #(do
-                            (.preventDefault %)
-                            (cast! :track-external-link-clicked
-                                   {:path (auth/auth-url)
-                                    :event "Signup Clicked"
-                                    :properties {:source "username-overlay"}}))}
+              {:href (auth/auth-url :source "username-overlay")
+               :role "button"}
               "Sign Up"]
 
              [:form.menu-invite-form.make
@@ -425,20 +409,8 @@
                  "Sign up and we'll even keep track of all your docs.
                  Never lose a great idea again!"]
                 [:a.make
-                 {:href (auth/auth-url)
-                  :role "button"
-                  :on-click #(do
-                               (.preventDefault %)
-                               (cast! :track-external-link-clicked
-                                      {:path (auth/auth-url)
-                                       :event "Signup Clicked"
-                                       :properties {:source "username-overlay"}}))
-                  :on-touch-end #(do
-                                   (.preventDefault %)
-                                   (cast! :track-external-link-clicked
-                                          {:path (auth/auth-url)
-                                           :event "Signup Clicked"
-                                           :properties {:source "username-overlay"}}))}
+                 {:href (auth/auth-url :source "username-overlay")
+                  :role "button"}
                  "Sign Up"]))]
            (common/mixpanel-badge)])))))
 
@@ -568,14 +540,8 @@
             "Sign up to change how your name appears in chat.
             Let your team know who you are while you collaborate together."]
            [:a.make
-            {:href (auth/auth-url)
-             :role "button"
-             :on-click #(do
-                          (.preventDefault %)
-                          (cast! :track-external-link-clicked
-                                 {:path (auth/auth-url)
-                                  :event "Signup Clicked"
-                                  :properties {:source "username-overlay"}}))}
+            {:href (auth/auth-url :source "username-overlay")
+             :role "button"}
             "Sign Up"]]])))))
 
 (def overlay-components
