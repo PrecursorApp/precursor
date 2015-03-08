@@ -17,6 +17,7 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model]
+            [pc.models.team :as team-model]
             [pc.render :as render]
             [pc.util.md5 :as md5]
             [pc.views.content :as content]
@@ -29,7 +30,11 @@
     :google-client-id (google-auth/google-client-id)
     :sente-id (-> req :session :sente-id)}
    (when-let [cust (-> req :auth :cust)]
-     {:cust (cust-model/read-api cust)})))
+     {:cust (cust-model/read-api cust)})
+   (when-let [team (-> req :team)]
+     {:team (team-model/public-read-api team)})
+   (when-let [subdomain (-> req :subdomain)]
+     {:subdomain subdomain})))
 
 (defpage root "/" [req]
   (let [cust-uuid (get-in req [:auth :cust :cust/uuid])

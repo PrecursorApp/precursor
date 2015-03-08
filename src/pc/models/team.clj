@@ -9,8 +9,18 @@
                                       :team/uuid String}))
 
 (defn find-by-subdomain [db subdomain]
-  (->> subdomain
+  (some->> subdomain
     (d/datoms db :avet :team/subdomain)
     first
     :e
     (d/entity db)))
+
+(defn create-for-subdomain! [subdomain annotations]
+  @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)}
+                                  annotations)
+                           {:db/id (d/tempid :db.part/user)
+                            :team/subdomain subdomain
+                            :team/uuid (d/squuid)}]))
+
+(defn public-read-api [team]
+  (select-keys team [:team/subdomain :team/uuid]))
