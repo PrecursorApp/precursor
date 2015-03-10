@@ -68,7 +68,7 @@
                  [datascript "0.8.1"]
 
                  [ankha "0.1.4"]
-                 [org.clojure/clojurescript "0.0-2760"]
+                 [org.clojure/clojurescript "0.0-3058"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [cljs-ajax "0.2.6"]
 
@@ -78,17 +78,17 @@
 
                  [precursor/react "0.12.2-7-4-new-tags"]
 
-                 [sablono "0.3.1" :exclusions [cljsjs/react]]
+                 [sablono "0.3.4" :exclusions [cljsjs/react]]
                  [secretary "1.2.1"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 
-                 [weasel "0.5.0"] ;; repl
+                 [weasel "0.6.0"] ;; repl
 
                  ;; needed to make lein pedantic happy
                  [commons-codec "1.6"]
-                 [figwheel "0.2.3-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
+                 [figwheel "0.2.5-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
                                                          commons-codec]]
 
                  ;; Frontend tests
