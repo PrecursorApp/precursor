@@ -69,16 +69,19 @@
     :permission/cust ;; translated
     :permission/permits
     :permission/grant-date
+    :permission/team
 
     :access-grant/document
     :access-grant/email
     :access-grant/grant-date
+    :access-grant/team
 
     :access-request/document
     :access-request/cust ;; translated
     :access-request/status
     :access-request/create-date
     :access-request/deny-date
+    :access-request/team
 
     ;; TODO: remove when fully deployed
     :document/id
@@ -126,7 +129,7 @@
 (defn whitelisted? [datom]
   (contains? outgoing-whitelist (:a datom)))
 
-(defn notify-subscribers [transaction]
+(defn notify-document-subscribers [transaction]
   (let [annotations (get-annotations transaction)]
     (when (and (:transaction/document annotations)
                (:transaction/broadcast annotations))
@@ -136,8 +139,21 @@
                                  (map (partial datom-read-api (:db-after transaction)))
                                  (filter whitelisted?)
                                  seq)]
-        (sente/notify-transaction (merge {:tx-data public-datoms}
-                                         annotations))))))
+        (sente/notify-document-transaction (merge {:tx-data public-datoms}
+                                                  annotations))))))
+
+(defn notify-team-subscribers [transaction]
+  (let [annotations (get-annotations transaction)]
+    (when (and (:transaction/team annotations)
+               (:transaction/broadcast annotations))
+      (when-let [public-datoms (->> transaction
+                                 :tx-data
+                                 (filter #(:frontend/id (d/entity (:db-after transaction) (:e %))))
+                                 (map (partial datom-read-api (:db-after transaction)))
+                                 (filter whitelisted?)
+                                 seq)]
+        (sente/notify-team-transaction (merge {:tx-data public-datoms}
+                                              annotations))))))
 
 ;; TODO: this should use a channel instead of a future
 (defn send-emails [transaction]
@@ -201,7 +217,9 @@
 (defn handle-transaction [admin-ch transaction]
   (def myt transaction)
   (utils/with-report-exceptions
-    (notify-subscribers transaction))
+    (notify-document-subscribers transaction))
+  (utils/with-report-exceptions
+    (notify-team-subscribers transaction))
   (utils/with-report-exceptions
     (forward-to-admin-ch admin-ch transaction)))
 

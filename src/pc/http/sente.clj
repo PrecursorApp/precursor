@@ -1,15 +1,15 @@
 (ns pc.http.sente
-  (:require [clojure.core.async :as async]
+  (:require [clj-statsd :as statsd]
+            [clj-time.core :as time]
+            [clojure.core.async :as async]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [clj-time.core :as time]
-            [clj-statsd :as statsd]
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
             [pc.datomic :as pcd]
-            [pc.datomic.web-peer :as web-peer]
             [pc.datomic.schema :as schema]
+            [pc.datomic.web-peer :as web-peer]
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
             [pc.models.access-grant :as access-grant-model]
@@ -19,6 +19,7 @@
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer]
             [pc.models.permission :as permission-model]
+            [pc.models.team :as team-model]
             [pc.rollbar :as rollbar]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
@@ -55,10 +56,11 @@
 ;; sente's channel handling stuff is not much fun to work with :(
 ;; e.g {:12345 {:uuid-1 {show-mouse?: true} :uuid-1 {:show-mouse? false}}}
 (defonce document-subs (atom {}))
+(defonce team-subs (atom {}))
 
 (defonce client-stats (atom {}))
 
-(defn notify-transaction [data]
+(defn notify-document-transaction [data]
   (let [doc-id (:db/id (:transaction/document data))]
     (doseq [[uid _] (dissoc (get @document-subs doc-id) (:session/client-id data))]
       (log/infof "notifying %s about new transactions for %s" uid doc-id)
@@ -66,6 +68,15 @@
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
       (log/infof "notifying %s about new server timestamp for %s" (:session/uuid data) doc-id)
       ((:send-fn @sente-state) (str (:session/client-id data)) [:datomic/transaction (assoc data :tx-data server-timestamps)]))))
+
+(defn notify-team-transaction [data]
+  (let [team-uuid (:team/uuid (:transaction/team data))]
+    (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id data))]
+      (log/infof "notifying %s about new team transactions for %s" uid team-uuid)
+      ((:send-fn @sente-state) uid [:team/transaction data]))
+    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
+      (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid data) team-uuid)
+      ((:send-fn @sente-state) (str (:session/client-id data)) [:team/transaction (assoc data :tx-data server-timestamps)]))))
 
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
@@ -93,75 +104,24 @@
   (or (check-subscribed doc-id req scope)
       (check-document-access-from-auth doc-id req scope)))
 
-(defmulti ws-handler ws-handler-dispatch-fn)
+(defn check-team-subscribed [team-uuid req scope]
+  (when (= scope :admin)
+    (get-in @team-subs [team-uuid (-> req :client-id)])))
 
-(defmethod ws-handler :default [req]
-  (log/infof "%s for %s" (:event req) (:client-id req)))
+(defn check-team-access-from-auth [team-uuid req scope]
+  (let [team (team-model/find-by-uuid (:db req) team-uuid)]
+    (when-not (auth/has-team-permission? (:db req) team (-> req :ring-req :auth) scope)
+      (if (auth/logged-in? (:ring-req req))
+        (throw+ {:status 403
+                 :error-msg "This team is private. Please request access."
+                 :error-key :team-requires-invite})
+        (throw+ {:status 401
+                 :error-msg "This team is private. Please log in to access it."
+                 :error-key :team-requires-login})))))
 
-(defn clean-document-subs [client-id]
-  (swap! document-subs (fn [ds]
-                         ;; Could be optimized...
-                         (reduce (fn [acc [document-id client-ids]]
-                                   (if-not (contains? client-ids client-id)
-                                     acc
-                                     (let [new-client-ids (dissoc client-ids client-id)]
-                                       (if (empty? new-client-ids)
-                                         (dissoc acc document-id)
-                                         (assoc acc document-id new-client-ids)))))
-                                 ds ds)))
-  (swap! client-stats dissoc client-id))
-
-(defn close-connection [client-id]
-  (log/infof "closing connection for %s" client-id)
-  (doseq [uid (reduce (fn [acc [doc-id clients]]
-                        (if (contains? clients client-id)
-                          (set/union acc (keys clients))
-                          acc))
-                      #{} @document-subs)]
-    (log/infof "notifying %s about %s leaving" uid client-id)
-    ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))
-  (clean-document-subs client-id))
-
-(defmethod ws-handler :chsk/uidport-close [{:keys [client-id] :as req}]
-  (close-connection client-id))
-
-(defmethod ws-handler :frontend/close-connection [{:keys [client-id] :as req}]
-  (close-connection client-id))
-
-(defmethod ws-handler :frontend/unsubscribe [{:keys [client-id ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document-id) req :admin)
-  (let [document-id (-> ?data :document-id)]
-    (log/infof "unsubscribing %s from %s" client-id document-id)
-    (close-connection client-id)
-    (doseq [[uid _] (get @document-subs document-id)]
-      ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))))
-
-(def colors
-  #{"#1abc9c"
-    "#2ecc71"
-    "#3498db"
-    "#9b59b6"
-    "#16a085"
-    "#27ae60"
-    "#2980b9"
-    "#8e44ad"
-    "#f1c40f"
-    "#e67e22"
-    "#e74c3c"
-    "#f39c12"
-    "#d35400"
-    "#c0392b"
-    ;;"#ecf0f1"
-    ;;"#bdc3c7"
-    })
-
-(defn choose-color [subs client-id requested-color]
-  (let [available-colors (or (seq (apply disj colors (map :color (vals subs))))
-                             (seq colors))]
-    (or (get-in subs [client-id :color])
-        (when (not= -1 (.indexOf available-colors requested-color))
-          requested-color)
-        (rand-nth available-colors))))
+(defn check-team-access [team-uuid req scope]
+  (or (check-team-subscribed team-uuid req scope)
+      (check-team-access-from-auth team-uuid req scope)))
 
 (defn choose-frontend-id-seed [db document-id subs requested-remainder]
   (let [available-remainders (apply disj web-peer/remainders (map (comp :remainder :frontend-id-seed)
@@ -180,17 +140,84 @@
                :error-msg "There are too many users in the document."
                :error-key :too-many-subscribers}))))
 
-;; XXX need to add requested remainder also
 (defn subscribe-to-doc [db document-id uuid cust & {:keys [requested-color requested-remainder]}]
-  (swap! client-stats assoc uuid {:document {:db/id document-id}})
+  (swap! client-stats update-in [uuid] merge {:document {:db/id document-id}})
   (swap! document-subs update-in [document-id]
          (fn [subs]
            (-> subs
-             (assoc-in [uuid :color] (choose-color subs uuid requested-color))
              (assoc-in [uuid :client-id] uuid)
              (update-in [uuid] merge (select-keys cust [:cust/uuid :cust/color-name :cust/name]))
              (assoc-in [uuid :show-mouse?] true)
              (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
+
+(defn clean-document-subs [client-id]
+  (swap! document-subs (fn [ds]
+                         ;; Could be optimized...
+                         (reduce (fn [acc [document-id client-ids]]
+                                   (if-not (contains? client-ids client-id)
+                                     acc
+                                     (let [new-client-ids (dissoc client-ids client-id)]
+                                       (if (empty? new-client-ids)
+                                         (dissoc acc document-id)
+                                         (assoc acc document-id new-client-ids)))))
+                                 ds ds))))
+
+(defn clean-team-subs [client-id]
+  (swap! team-subs (fn [ds]
+                     ;; Could be optimized...
+                     (reduce (fn [acc [team-uuid client-ids]]
+                               (if-not (contains? client-ids client-id)
+                                 acc
+                                 (let [new-client-ids (dissoc client-ids client-id)]
+                                   (if (empty? new-client-ids)
+                                     (dissoc acc team-uuid)
+                                     (assoc acc team-uuid new-client-ids)))))
+                             ds ds))))
+
+(defn close-connection [client-id]
+  (log/infof "closing connection for %s" client-id)
+  (doseq [uid (reduce (fn [acc [doc-id clients]]
+                        (if (contains? clients client-id)
+                          (set/union acc (keys clients))
+                          acc))
+                      #{} @document-subs)]
+    (log/infof "notifying %s about %s leaving" uid client-id)
+    ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))
+  (clean-team-subs client-id)
+  (clean-document-subs client-id)
+  (swap! client-stats dissoc client-id))
+
+(defn subscribe-to-team [team-uuid uuid cust]
+  (swap! client-stats update-in [uuid] merge {:team {:db/id team-uuid}})
+  (swap! team-subs update-in [team-uuid]
+         (fn [subs]
+           (-> subs
+             (assoc-in [uuid] {:client-id uuid
+                               :cust/uuid (:cust/uuid cust)})))))
+
+(defmulti ws-handler ws-handler-dispatch-fn)
+
+(defmethod ws-handler :default [req]
+  (log/infof "%s for %s" (:event req) (:client-id req)))
+
+(defmethod ws-handler :chsk/uidport-close [{:keys [client-id] :as req}]
+  (close-connection client-id))
+
+(defmethod ws-handler :frontend/close-connection [{:keys [client-id] :as req}]
+  (close-connection client-id))
+
+(defmethod ws-handler :frontend/unsubscribe [{:keys [client-id ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document-id) req :admin)
+  (let [document-id (-> ?data :document-id)]
+    (log/infof "unsubscribing %s from %s" client-id document-id)
+    (close-connection client-id)
+    (doseq [[uid _] (get @document-subs document-id)]
+      ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))))
+
+(defmethod ws-handler :team/subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))))
 
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
@@ -441,6 +468,27 @@
                                            annotations)))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
+(defmethod ws-handler :team/send-permission-grant [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (if-let [cust (-> req :ring-req :auth :cust)]
+      (let [email (-> ?data :email)
+            team (team-model/find-by-uuid (:db req) team-uuid)
+            annotations {:cust/uuid (:cust/uuid cust)
+                         :transaction/team (:db/id team)
+                         :transaction/broadcast true}]
+        (if-let [grantee (cust/find-by-email (:db req) email)]
+          (permission-model/grant-team-permit team
+                                              cust
+                                              grantee
+                                              :permission.permits/admin
+                                              annotations)
+          (access-grant-model/grant-team-access team
+                                                email
+                                                cust
+                                                annotations)))
+      (comment (notify-invite "Please sign up to send an invite.")))))
+
 (defmethod ws-handler :frontend/grant-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)]
@@ -451,9 +499,25 @@
                          :transaction/broadcast true}]
         ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
         ;;       Right now it's too easy to accidentally forget to check.
-        (assert (= doc-id (:db/id (:access-request/document-ref request))))
+        (assert (and doc-id (= doc-id (:db/id (:access-request/document-ref request)))))
         (permission-model/convert-access-request request cust annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
+
+(defmethod ws-handler :team/grant-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)]
+      (if-let [request (some->> ?data :request-id (access-request-model/find-by-client-part (:db req) (:db/id team)))]
+        (let [cust (-> req :ring-req :auth :cust)
+              annotations {:transaction/team (:db/id team)
+                           :cust/uuid (:cust/uuid cust)
+                           :transaction/broadcast true}]
+          ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
+          ;;       Right now it's too easy to accidentally forget to check.
+          (assert (and (:db/id team)
+                       (= (:db/id team) (:db/id (:access-request/team request)))))
+          (permission-model/convert-access-request request cust annotations))
+        (comment (notify-invite "Please sign up to send an invite."))))))
 
 (defmethod ws-handler :frontend/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
@@ -465,9 +529,25 @@
                          :transaction/broadcast true}]
         ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
         ;;       Right now it's too easy to accidentally forget to check.
-        (assert (= doc-id (:db/id (:access-request/document-ref request))))
+        (assert (and doc-id (= doc-id (:db/id (:access-request/document-ref request)))))
         (access-request-model/deny-request request annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
+
+(defmethod ws-handler :team/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)]
+      (if-let [request (some->> ?data :request-id (access-request-model/find-by-client-part (:db req) (:db/id team)))]
+        (let [cust (-> req :ring-req :auth :cust)
+              annotations {:transaction/team (:db/id team)
+                           :cust/uuid (:cust/uuid cust)
+                           :transaction/broadcast true}]
+          ;; TODO: need better permissions checking here. Maybe IAM-type roles for each entity?
+          ;;       Right now it's too easy to accidentally forget to check.
+          (assert (and (:db/id team)
+                       (= (:db/id team) (:db/id (:access-request/team request)))))
+          (access-request-model/deny-request request annotations))
+        (comment (notify-invite "Please sign up to send an invite."))))))
 
 ;; TODO: don't send request if they already have access
 (defmethod ws-handler :frontend/send-permission-request [{:keys [client-id ?data ?reply-fn] :as req}]
@@ -486,6 +566,24 @@
                                                                 (access-request-model/find-by-doc-and-cust db-after doc cust))
                                                  :entity-type :access-request}]))))
       (comment (notify-invite "Please sign up to send an invite.")))))
+
+(defmethod ws-handler :team/send-permission-request [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)]
+      (if-let [cust (-> req :ring-req :auth :cust)]
+        (let [email (-> ?data :email)
+              annotations {:transaction/team (:db/id team)
+                           :cust/uuid (:cust/uuid cust)
+                           :transaction/broadcast true}]
+          (let [{:keys [db-after]} (access-request-model/create-team-request team cust annotations)]
+            ;; have to send it manually to the requestor b/c user won't be subscribed
+            ((:send-fn @sente-state) client-id [:team/db-entities
+                                                {:team/uuid (:team/uuid team)
+                                                 :entities (map (partial access-request-model/requester-read-api db-after)
+                                                                (access-request-model/find-by-team-and-cust db-after team cust))
+                                                 :entity-type :access-request}])))
+        (comment (notify-invite "Please sign up to send an invite."))))))
 
 (defmethod ws-handler :frontend/save-browser-settings [{:keys [client-id ?data ?reply-fn] :as req}]
   (if-let [cust (-> req :ring-req :auth :cust)]

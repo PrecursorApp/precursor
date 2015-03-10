@@ -327,7 +327,7 @@
    ;;       then get rid of document-id
    (attribute :permission/document-ref
               :db.type/ref
-              :db/doc "Document that the permission belongs to")
+              :db/doc "Document that the permission grants access to")
 
    (attribute :permission/cust
               :db.type/long
@@ -337,6 +337,10 @@
    (attribute :permission/cust-ref
               :db.type/ref
               :db/doc "cust that the permission belongs to")
+
+   (attribute :permission/team
+              :db.type/ref
+              :db/doc "team that this permission grants access to")
 
    (attribute :permission/permits
               :db.type/ref
@@ -371,6 +375,11 @@
               :db.type/uuid
               :db/unique :db.unique/identity
               :db/doc "Used to add a composite uniqueness constraint on doc and cust.")
+
+   (attribute :permission/team-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on team and cust.")
 
    (attribute :access-request/document
               :db.type/long
@@ -410,6 +419,11 @@
               :db.type/uuid
               :db/unique :db.unique/identity
               :db/doc "Used to add a composite uniqueness constraint on doc and cust.")
+
+   (attribute :access-request/team-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on team and cust.")
 
    ;; used when access is granted to someone without an account
    (attribute :access-grant/document
@@ -453,6 +467,11 @@
               :db/unique :db.unique/identity
               :db/doc "Used to add a composite uniqueness constraint on doc and email.")
 
+   (attribute :access-grant/team-email
+              :db.type/string
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on team and email.")
+
    (attribute :transaction/broadcast
               :db.type/boolean
               :db/doc "Used to annotate transaction and let frontend know if it should broadcast")
@@ -488,8 +507,11 @@
 
    (enum :email/access-grant-created)
    (enum :email/access-request-created)
-   (enum :email/document-permission-for-customer-granted)
    (enum :email/early-access-granted)
+   ;; XXX: get rid of these two emails and just use permission granted
+   ;;(enum :email/document-permission-for-customer-granted)
+   ;;(enum :email/team-permission-for-customer-granted)
+   (enum :email/permission-granted)
    (enum :email/fake)
 
    (attribute :flags
@@ -558,7 +580,7 @@
 
    (attribute :document/team
               :db.type/ref
-              :db/doc "Team this doc belongs to (if it belongs to a team)")   ])
+              :db/doc "Team this doc belongs to (if it belongs to a team)")])
 
 
 (defonce schema-ents (atom nil))

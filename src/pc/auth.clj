@@ -99,6 +99,12 @@
           :read
           :else nil)))
 
+(defn team-permission [db team cust]
+  (when (and team cust)
+    (if (contains? (permission-model/team-permits db team cust) :permission.permits/admin)
+      :admin
+      nil)))
+
 ;; TODO: unify these so that there is only 1 permission type
 ;;       Could still have multiple permissions for a doc, but want
 ;;       to have 1 type. Owner would automatically get the owner permission
@@ -107,6 +113,7 @@
   (or (cust-permission db doc (:cust auth))
       ;; TODO: stop using access grant tokens as permissions
       ;;       Can remove once all of the tokens expire
+      (team-permission db (:document/team doc) (:cust auth))
       (access-grant-permission db doc (:access-grant auth))
       (permission-permission db doc (:permission auth))))
 
@@ -120,6 +127,9 @@
 (defn has-document-permission? [db doc auth scope]
   (or (= :document.privacy/public (:document/privacy doc))
       (contains-scope? scope-heirarchy (document-permission db doc auth) scope)))
+
+(defn has-team-permission? [db team auth scope]
+  (contains-scope? scope-heirarchy (team-permission db team (:cust auth)) scope))
 
 (defn logged-in? [ring-req]
   (seq (get-in ring-req [:auth :cust])))

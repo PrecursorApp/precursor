@@ -15,6 +15,12 @@
     :e
     (d/entity db)))
 
+(defn find-by-uuid [db uuid]
+  (some->> (d/datoms db :avet :team/uuid uuid)
+    first
+    :e
+    (d/entity db)))
+
 (defn create-for-subdomain! [subdomain annotations]
   @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)}
                                   annotations)

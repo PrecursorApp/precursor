@@ -17,6 +17,15 @@
                                  [?permit-id _ ?permits]]}
                        db (:db/id doc) (:db/id cust)))))
 
+(defn team-permits [db team cust]
+  (set (map first (d/q '{:find [?permits]
+                         :in [$ ?team-id ?cust-id]
+                         :where [[?t :permission/team ?team-id]
+                                 [?t :permission/cust-ref ?cust-id]
+                                 [?t :permission/permits ?permit-id]
+                                 [?permit-id _ ?permits]]}
+                       db (:db/id team) (:db/id cust)))))
+
 (defn grant-permit [doc granter cust permit annotations]
   (let [txid (d/tempid :db.part/tx)
         temp-id (d/tempid :db.part/user)]
@@ -33,10 +42,27 @@
                    :permission/granter-ref (:db/id granter)
                    :permission/doc-cust (UUID. (:db/id doc) (:db/id cust))}])))
 
+(defn grant-team-permit [team granter cust permit annotations]
+  (let [txid (d/tempid :db.part/tx)
+        temp-id (d/tempid :db.part/user)]
+    @(d/transact (pcd/conn)
+                 [(assoc annotations :db/id txid)
+                  (web-peer/server-frontend-id temp-id (:db/id team))
+                  {:db/id temp-id
+                   :permission/permits permit
+                   :permission/team (:db/id team)
+                   :permission/cust-ref (:db/id cust)
+                   :permission/grant-date (java.util.Date.)
+                   ;;; XXX need to check sent-email in pc.email to guard against multiple txes!
+                   :needs-email :email/team-permission-for-customer-granted
+                   :permission/granter-ref (:db/id granter)
+                   :permission/team-cust (UUID. (:db/id team) (:db/id cust))}])))
+
 (defn convert-access-grant [access-grant cust annotations]
   (let [txid (d/tempid :db.part/tx)
         temp-id (d/tempid :db.part/user)
-        doc (:access-grant/document-ref access-grant)]
+        doc (:access-grant/document-ref access-grant)
+        team (:access-grant/team access-grant)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
                   (web-peer/retract-entity (:db/id access-grant))
@@ -44,12 +70,16 @@
                   (merge
                    {:db/id temp-id
                     :permission/permits :permission.permits/admin
-                    :permission/document-ref (:db/id doc)
+
                     :permission/cust-ref (:db/id cust)
                     :permission/grant-date (or (:access-grant/grant-date access-grant)
-                                               (java.util.Date.))
-                   ;;; XXX need to check sent-email in pc.email to guard against multiple txes!
-                    :permission/doc-cust (UUID. (:db/id doc) (:db/id cust))}
+                                               (java.util.Date.))}
+                   (when doc
+                     {:permission/document-ref (:db/id doc)
+                      :permission/doc-cust (UUID. (:db/id doc) (:db/id cust))})
+                   (when team
+                     {:permission/team (:db/id team)
+                      :permission/team-cust (UUID. (:db/id team) (:db/id cust))})
                    (when-let [granter (:access-grant/granter-ref access-grant)]
                      {:permission/granter-ref (:db/id granter)}))])))
 
@@ -57,28 +87,36 @@
   (let [txid (d/tempid :db.part/tx)
         temp-id (d/tempid :db.part/user)
         doc-id (:db/id (:access-request/document-ref access-request))
+        team-id (:db/id (:access-request/team access-request))
         cust (:access-request/cust-ref access-request)]
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
                   (web-peer/retract-entity (:db/id access-request))
                   (web-peer/server-frontend-id temp-id doc-id)
-                  {:db/id temp-id
-                   :permission/permits :permission.permits/admin
-                   :permission/document-ref doc-id
-                   :permission/cust-ref (:db/id cust)
-                   :permission/grant-date (java.util.Date.)
-                   :permission/granter-ref (:db/id granter)
-                   :permission/doc-cust (UUID. doc-id (:db/id cust))}])))
+                  (merge
+                   {:db/id temp-id
+                    :permission/permits :permission.permits/admin
+                    :permission/cust-ref (:db/id cust)
+                    :permission/grant-date (java.util.Date.)
+                    :permission/granter-ref (:db/id granter)}
+                   (when doc-id
+                     {:permission/document-ref doc-id
+                      :permission/doc-cust (UUID. doc-id (:db/id cust))})
+                   (when team-id
+                     {:permission/team team-id
+                      :permission/team-cust (UUID. team-id (:db/id cust))}))])))
 
 ;; TODO: figure out how to have only 1 read-api (maybe only send datoms?)
 (defn read-api [db permission]
   (let [doc-id (:db/id (:permission/document-ref permission))
+        team-uuid (:team/uuid (:permission/team permission))
         cust-email (:cust/email (:permission/cust-ref permission))]
     (-> permission
       (select-keys [:permission/permits
                     :permission/grant-date])
       (assoc :db/id (web-peer/client-id permission))
       (cond-> doc-id (assoc :permission/document doc-id)
+              team-uuid (assoc :permission/team team-uuid)
               cust-email (assoc :permission/cust cust-email)))))
 
 (defn find-by-document [db doc]
@@ -86,6 +124,14 @@
               :in [$ ?doc-id]
               :where [[?t :permission/document-ref ?doc-id]]}
             db (:db/id doc))
+    (map first)
+    (map #(d/entity db %))))
+
+(defn find-by-team [db team]
+  (->> (d/q '{:find [?t]
+              :in [$ ?team-id]
+              :where [[?t :permission/team ?team-id]]}
+            db (:db/id team))
     (map first)
     (map #(d/entity db %))))
 
