@@ -1257,6 +1257,13 @@
                                                                              :email email
                                                                              :invite-loc :overlay}])))
 
+(defmethod post-control-event! :team-permission-grant-submitted
+  [browser-state message {:keys [email]} previous-state current-state]
+  (let [team-uuid (get-in current-state [:team :team/uuid])]
+    (sente/send-msg (:sente current-state) [:team/send-permission-grant {:team/uuid team-uuid
+                                                                         :email email
+                                                                         :invite-loc :overlay}])))
+
 
 (defmethod post-control-event! :document-privacy-changed
   [browser-state message {:keys [doc-id setting]} previous-state current-state]
