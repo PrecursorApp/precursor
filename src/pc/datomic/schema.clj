@@ -486,6 +486,10 @@
               :db.type/ref
               :db/doc "Annotates transaction with document it belongs to")
 
+   (attribute :transaction/team
+              :db.type/ref
+              :db/doc "Annotates transaction with team it belongs to")
+
    (attribute :migration
               :db.type/ref
               :db/doc "Annotates transaction with migration")
