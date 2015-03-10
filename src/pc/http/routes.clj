@@ -23,12 +23,12 @@
             [pc.render :as render]
             [pc.util.md5 :as md5]
             [pc.views.content :as content]
-            [ring.middleware.anti-forgery]
+            [ring.middleware.anti-forgery :as csrf]
             [ring.util.response :refer (redirect)]))
 
 (defn common-view-data [req]
   (merge
-   {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*
+   {:CSRFToken csrf/*anti-forgery-token*
     :google-client-id (google-auth/google-client-id)
     :sente-id (-> req :session :sente-id)
     :hostname (profile/hostname)}
@@ -40,21 +40,60 @@
      {:subdomain subdomain})))
 
 (defpage root "/" [req]
-  (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-        doc (doc-model/create-public-doc!
-             (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                    (when cust-uuid {:document/creator cust-uuid})
-                    ;; needs default permissions set
-                    (when (:team req) {:document/team (:db/id (:team req))})))]
-    (if cust-uuid
-      (redirect (str "/document/" (:db/id doc)))
-      (content/app (merge (common-view-data req)
-                          {:initial-document-id (:db/id doc)})))))
+  (if (:subdomain req)
+    (let [db (pcd/default-db)]
+      (cond (not (auth/logged-in? req))
+            (redirect (str (url/map->URL {:host (profile/hostname)
+                                          :protocol (if (profile/force-ssl?)
+                                                      "https"
+                                                      (name (:scheme req)))
+                                          :port (if (profile/force-ssl?)
+                                                  443
+                                                  (:server-port req))
+                                          :path "/login"
+                                          :query {:redirect-subdomain (:subdomain req)
+                                                  :redirect-csrf-token csrf/*anti-forgery-token*}})))
+
+
+            (and (auth/logged-in? req)
+                 (not (:team req)))
+
+            {:status 200
+             :body "Claim this domain for your team"}
+
+            (and (auth/logged-in? req)
+                 (:team req)
+                 (not (auth/has-team-permission? db (:team req) (:auth req) :admin)))
+
+            {:status 200
+             :body "Request permission"}
+
+            (and (auth/logged-in? req)
+                 (:team req)
+                 (auth/has-team-permission? db (:team req) (:auth req) :admin))
+
+            (let [doc (doc-model/create-team-doc!
+                       (:team req)
+                       (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                              (when-let [cust-uuid (get-in req [:cust :cust/uuid])]
+                                {:document/creator cust-uuid})))]
+              (redirect (str "/document/" (:db/id doc))))))
+    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+          ;; if we get to here,
+          doc (doc-model/create-public-doc!
+               (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                      (when cust-uuid {:document/creator cust-uuid})
+                      ;; needs default permissions set
+                      (when (:team req) {:document/team (:db/id (:team req))})))]
+      (if cust-uuid
+        (redirect (str "/document/" (:db/id doc)))
+        (content/app (merge (common-view-data req)
+                            {:initial-document-id (:db/id doc)}))))))
 
 (defpage document [:get "/document/:document-id" {:document-id #"[0-9]+"}] [req]
   (let [document-id (-> req :params :document-id)
         db (pcd/default-db)
-        doc (doc-model/find-by-id db (Long/parseLong document-id))]
+        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
     (if doc
       (content/app (merge (common-view-data req)
                           {:initial-document-id (:db/id doc)
@@ -63,10 +102,10 @@
                           ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
                           ;;   {:initial-entities (layer/find-by-document db doc)})
                           ))
-      (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
+      (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
         (redirect (str "/document/" (:db/id redirect-doc)))
-        ;; TODO: this should be a 404...
-        (redirect "/")))))
+        {:status 404
+         :body "Document not found"}))))
 
 (defn image-cache-headers [db doc]
   (let [last-modified-instant (or (doc-http/last-modified-instant db doc)
@@ -80,9 +119,9 @@
 (defpage doc-svg "/document/:document-id.svg" [req]
   (let [document-id (-> req :params :document-id)
         db (pcd/default-db)
-        doc (doc-model/find-by-id db (Long/parseLong document-id))]
+        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
     (cond (nil? doc)
-          (if-let [doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
+          (if-let [doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
             (redirect (str "/document/" (:db/id doc) ".svg"))
 
             {:status 404
@@ -94,11 +133,13 @@
             {:status 200
              :headers (merge {"Content-Type" "image/svg+xml"}
                              (image-cache-headers db doc))
+             :pc/doc doc
              :body ""}
             (let [layers (layer-model/find-by-document db doc)]
               {:status 200
                :headers (merge {"Content-Type" "image/svg+xml"}
                                (image-cache-headers db doc))
+               :pc/doc doc
                :body (render/render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
 
           (auth/logged-in? req)
@@ -114,9 +155,9 @@
 (defpage doc-png "/document/:document-id.png" [req]
   (let [document-id (-> req :params :document-id)
         db (pcd/default-db)
-        doc (doc-model/find-by-id db (Long/parseLong document-id))]
+        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
     (cond (nil? doc)
-          (if-let [redirect-doc (doc-model/find-by-invalid-id db (Long/parseLong document-id))]
+          (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
             (redirect (str "/document/" (:db/id redirect-doc) ".png"))
 
             {:status 404
@@ -128,11 +169,13 @@
             {:status 200
              :headers (merge {"Content-Type" "image/png"}
                              (image-cache-headers db doc))
+             :pc/doc doc
              :body ""}
             (let [layers (layer-model/find-by-document db doc)]
               {:status 200
                :headers (merge {"Content-Type" "image/png"}
                                (image-cache-headers db doc))
+               :pc/doc doc
                :body (convert/svg->png (render/render-layers layers
                                                              :invert-colors? (-> req :params :printer-friendly (= "false"))
                                                              :size-limit 800))}))
@@ -155,6 +198,7 @@
 (defpage new-doc "/new" [req]
   (frontend-response req))
 
+;; XXX: outer pages for subdomains
 (defn outer-page
   "Response to send for requests that need a document-id that the frontend will route"
   [req]
@@ -210,7 +254,7 @@
 (defpage google-auth "/auth/google" [{{code :code state :state} :params :as req}]
   (let [parsed-state (-> state url/url-decode json/decode)]
     (if (not (crypto/eq? (get parsed-state "csrf-token")
-                         ring.middleware.anti-forgery/*anti-forgery-token*))
+                         csrf/*anti-forgery-token*))
       {:status 400
        :body "There was a problem logging you in."}
 
@@ -236,7 +280,7 @@
 
 (defpage login "/login" [req]
   (analytics/track-signup-clicked req)
-  (redirect (google-auth/oauth-uri ring.middleware.anti-forgery/*anti-forgery-token*
+  (redirect (google-auth/oauth-uri csrf/*anti-forgery-token*
                                    :redirect-path (get-in req [:params :redirect-path] "/")
                                    :redirect-query (get-in req [:params :redirect-query])
                                    :redirect-subdomain (get-in req [:params :redirect-subdomain])
@@ -253,7 +297,7 @@
 (defpage email-template "/email/welcome/:template.gif" [req]
   (let [template (-> req :params :template)]
     {:status 200
-     :body (content/email-welcome template {:CSRFToken ring.middleware.anti-forgery/*anti-forgery-token*})}))
+     :body (content/email-welcome template {:CSRFToken csrf/*anti-forgery-token*})}))
 
 (defpage duplicate-doc [:post "/duplicate/:document-name"] [req]
   (let [document-name (-> req :params :document-name)]
