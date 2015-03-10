@@ -1216,7 +1216,12 @@
 (defmethod control-event :manage-permissions-opened
   [browser-state message _ state]
   (-> state
-      (overlay/add-overlay :manage-permissions)))
+    (overlay/add-overlay :manage-permissions)))
+
+(defmethod control-event :team-settings-opened
+  [browser-state message _ state]
+  (-> state
+    (overlay/add-overlay :team-settings)))
 
 (defmethod control-event :invite-email-changed
   [browser-state message {:keys [value]} state]

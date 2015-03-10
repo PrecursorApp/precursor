@@ -43,6 +43,9 @@
                                                                   :context {:document-id document-id})])
                 (put! (:errors comms) [:subscribe-to-document-error {:document-id document-id}])))))
 
+(defn subscribe-to-team [sente-state team-uuid]
+  (send-msg sente-state [:team/subscribe {:team/uuid team-uuid}]))
+
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
             (fn [data]
@@ -151,4 +154,6 @@
                                              :chsk-url-fn (fn [& args]
                                                             (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state)))})]
     (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
-    (do-something app-state (:sente @app-state))))
+    (do-something app-state (:sente @app-state))
+    (when (:team @app-state)
+      (subscribe-to-team (:sente @app-state) (get-in @app-state [:team :team/uuid])))))

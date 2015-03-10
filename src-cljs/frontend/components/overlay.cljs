@@ -9,6 +9,8 @@
             [frontend.components.common :as common]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.permissions :as permissions]
+            [frontend.components.team :as team]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.state :as state]
@@ -132,86 +134,13 @@
             :role "button"}
            (common/icon :blog)
            [:span "Blog"]]
+          [:a.vein.make
+           {:on-click #(cast! :team-settings-opened)
+            :role "button"}
+           (common/icon :blog)
+           [:span "Team"]]
 
           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
-
-(defn format-access-date [date]
-  (date->bucket date :sentence? true))
-
-;; TODO: add types to db
-(defn access-entity-type [access-entity]
-  (cond (contains? access-entity :permission/document)
-        :permission
-
-        (contains? access-entity :access-grant/document)
-        :access-grant
-
-        (contains? access-entity :access-request/document)
-        :access-request
-
-        :else nil))
-
-;; TODO: this should call om/build somehow
-(defmulti render-access-entity (fn [entity cast!]
-                                 (access-entity-type entity)))
-
-(defmethod render-access-entity :permission
-  [entity cast!]
-  (html
-   [:div.access-card.make {:key (:db/id entity)}
-    [:div.access-avatar
-     [:img.access-avatar-img
-      {:src (utils/gravatar-url (:permission/cust entity))}]]
-    [:div.access-details
-     [:span
-      {:title (:permission/cust entity)} (:permission/cust entity)]
-     [:span.access-status
-      (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]]))
-
-(defmethod render-access-entity :access-grant
-  [entity cast!]
-  (html
-   [:div.access-card.make {:key (:db/id entity)}
-    [:div.access-avatar
-     [:img.access-avatar-img
-      {:src (utils/gravatar-url (:access-grant/email entity))}]]
-    [:div.access-details
-     [:span
-      {:title (:access-grant/email entity)} (:access-grant/email entity)]
-     [:span.access-status
-      (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]]))
-
-(defmethod render-access-entity :access-request
-  [entity cast!]
-  (html
-   [:div.access-card.make {:key (:db/id entity)}
-    {:class (if (= :access-request.status/denied (:access-request/status entity))
-              "denied"
-              "requesting")}
-    [:div.access-avatar
-     [:img.access-avatar-img {:src (utils/gravatar-url (:access-request/cust entity))}]]
-    [:div.access-details
-     [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
-     [:span.access-status
-      (if (= :access-request.status/denied (:access-request/status entity))
-        (str "Was denied access " (format-access-date (:access-request/deny-date entity)))
-        (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
-    [:div.access-options
-     (when-not (= :access-request.status/denied (:access-request/status entity))
-       [:button.access-option
-        {:role "button"
-         :class "negative"
-         :title "Decline"
-         :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
-                                                   :doc-id (:access-request/document entity)})}
-        (common/icon :times)])
-     [:button.access-option
-      {:role "button"
-       :class "positive"
-       :title "Approve"
-       :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
-                                                  :doc-id (:access-request/document entity)})}
-      (common/icon :check)]]]))
 
 (defn private-sharing [app owner]
   (reify
@@ -266,7 +195,7 @@
               :data-placeholder-nil "What's your teammate's email?"
               :data-placeholder-forgot "Don't forget to submit!"}]]
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
-             (render-access-entity access-entity cast!))])))))
+             (permissions/render-access-entity access-entity cast!))])))))
 
 (defn public-sharing [app owner]
   (reify
@@ -557,7 +486,9 @@
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
-                          :component document-access/permission-denied-overlay}})
+                          :component document-access/permission-denied-overlay}
+   :team-settings {:title "Team Settings"
+                   :component team/team-settings}})
 
 (defn overlay [app owner]
   (reify
