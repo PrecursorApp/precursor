@@ -116,6 +116,18 @@
   (-> d
     (assoc :a :access-grant/document)))
 
+(defmethod translate-datom :permission/team [db d]
+  (-> d
+    (assoc :v (:team/uuid (d/entity db (:v d))))))
+
+(defmethod translate-datom :access-request/team [db d]
+  (-> d
+    (assoc :v (:team/uuid (d/entity db (:v d))))))
+
+(defmethod translate-datom :access-grant/team [db d]
+  (-> d
+    (assoc :v (:team/uuid (d/entity db (:v d))))))
+
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
         a (schema/get-ident a)

@@ -225,3 +225,7 @@
 
 (defn logged-in? [owner]
   (om/get-shared owner :logged-in?))
+
+(defn cast-fn [controls-ch]
+  (fn [message data & [transient?]]
+    (put! controls-ch [message data transient?])))

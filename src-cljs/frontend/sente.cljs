@@ -64,6 +64,12 @@
                  (map ds/datom->transaction datoms)
                  {:server-update true})))
 
+(defmethod handle-message :team/transaction [app-state message data]
+  (let [datoms (:tx-data data)]
+    (d/transact! (:team-db @app-state)
+                 (map ds/datom->transaction datoms)
+                 {:server-update true})))
+
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
   (swap! app-state subs/add-subscriber-data (:client-id data) data))
 
@@ -154,6 +160,4 @@
                                              :chsk-url-fn (fn [& args]
                                                             (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state)))})]
     (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
-    (do-something app-state (:sente @app-state))
-    (when (:team @app-state)
-      (subscribe-to-team (:sente @app-state) (get-in @app-state [:team :team/uuid])))))
+    (do-something app-state (:sente @app-state))))

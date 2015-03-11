@@ -24,6 +24,7 @@
             [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.state :as state]
+            [frontend.team :as team]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
             [goog.dom]
@@ -125,6 +126,9 @@
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
                      :db (db/make-initial-db initial-entities)
+                     ;; team entities go into the team namespace, so we need a separate database
+                     ;; to prevent conflicts
+                     :team-db (db/make-initial-db nil)
                      :document/id document-id
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
@@ -200,6 +204,7 @@
    {:target container
     :shared {:comms                 comms
              :db                    (:db @state)
+             :team-db               (:team-db @state)
              :cast!                 cast!
              :_app-state-do-not-use state
              :handlers              handlers
@@ -249,6 +254,9 @@
     (def om-setup-debug om-setup)
 
     (swap! state assoc :undo-state undo-state)
+
+    (when (get-in @state [:team :team/uuid])
+      (team/setup state))
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)

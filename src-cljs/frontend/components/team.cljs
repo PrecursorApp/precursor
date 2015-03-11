@@ -1,16 +1,42 @@
 (ns frontend.components.team
-  (:require [frontend.utils :as utils]
+  (:require [datascript :as d]
+            [frontend.components.permissions :as permissions]
+            [frontend.datascript :as ds]
+            [frontend.utils :as utils]
             [om.core :as om])
-  (:require-macros [sablono.core :refer (html)]))
+  (:require-macros [sablono.core :refer (html)])
+  (:import [goog.ui IdGenerator]))
 
 (defn team-settings [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Team settings")
     om/IInitState
     (init-state [_]
-      {:permission-grant-email ""})
+      {:permission-grant-email ""
+       :listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :team-db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when (seq (filter #(or (= :permission/team (:a %))
+                                           (= :access-grant/team (:a %))
+                                           (= :access-request/team (:a %))
+                                           (= :access-request/status (:a %)))
+                                      (:tx-data tx-report)))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :team-db) (om/get-state owner :listener-key)))
+
     om/IRenderState
     (render-state [_ {:keys [permission-grant-email]}]
       (let [team (:team app)
+            db (om/get-shared owner :team-db)
+            permissions (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/team ?doc-id]] @db (:team/uuid team))
+            access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/team ?doc-id]] @db (:team/uuid team))
+            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/team ?doc-id]] @db (:team/uuid team))
             cast! (om/get-shared owner :cast!)
             submit-form (fn [e]
                           (cast! :team-permission-grant-submitted {:email permission-grant-email})
@@ -38,4 +64,6 @@
             [:label
              {:data-placeholder "Teammate's email"
               :data-placeholder-nil "What's your teammate's email?"
-              :data-placeholder-forgot "Don't forget to submit!"}]]]])))))
+              :data-placeholder-forgot "Don't forget to submit!"}]]
+           (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
+             (permissions/render-access-entity access-entity cast!))]])))))
