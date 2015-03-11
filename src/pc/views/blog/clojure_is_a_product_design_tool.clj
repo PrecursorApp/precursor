@@ -128,7 +128,7 @@
 
     [:figure
      [:a.img {:data-caption-black "I pile icons on top of each other, and then I toggle their visibility to compare."}
-      [:img {:src "/blog/clojurescript-is-a-design-tool/illustrator-onoff.gif"}]]]
+      [:img {:src (cdn-path "/blog/clojurescript-is-a-design-tool/illustrator-onoff.gif")}]]]
 
     [:article
      [:p "I relate this process to ClojureScript with a map that defines all of my icon paths."]]
