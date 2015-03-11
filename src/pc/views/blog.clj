@@ -40,7 +40,8 @@
    Be careful for daylight savings time!"
   [
    {:slug "clojure-is-a-product-design-tool"
-    :display-in-overview true}
+    :display-in-overview true
+    :scheduled-time (clj-time.format/parse "Wed, 11 Mar 2015 09:00:00 -0800")}
    {:slug "optimizing-om-apps"
     :display-in-overview true}
    {:slug "blue-ocean-made-of-ink"
