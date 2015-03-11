@@ -66,10 +66,19 @@
 
             (and (auth/logged-in? req)
                  (:team req)
+                 (not (auth/has-team-permission? db (:team req) (:auth req) :admin))
+                 (seq (access-request-model/find-by-team-and-cust (pcd/default-db) (:team req) (get-in req [:auth :cust]))))
+
+            {:status 200
+             :body "Thanks for requesting access, we'll send you an email when your request is granted."}
+
+            (and (auth/logged-in? req)
+                 (:team req)
                  (not (auth/has-team-permission? db (:team req) (:auth req) :admin)))
 
             {:status 200
-             :body (hiccup.page/html5 {}
+             :body (hiccup.page/html5
+                    {}
                     [:html
                      [:body
                       [:form {:action "/request-team-permission" :method "post"}
