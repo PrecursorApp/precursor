@@ -176,7 +176,8 @@
     [:article.blogpost-footnote
      [:p
       "Thanks to "
-      [:a {:href "https://twitter.com/sgrove"} "Sean Grove"] ", and "
-      [:a {:href "https://twitter.com/BrandonBloom"} "Brandon Bloom"]
+      [:a {:href "https://twitter.com/sgrove"} "Sean Grove"] ", "
+      [:a {:href "https://twitter.com/BrandonBloom"} "Brandon Bloom"] ", and "
+      [:a {:href "https://twitter.com/Venantius"} "David Jarvis"]
       " for reading drafts of this."]]
     )})
