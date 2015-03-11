@@ -85,6 +85,12 @@
                  (:entities data)
                  {:server-update true})))
 
+(defmethod handle-message :team/db-entities [app-state message data]
+  (when (= (:team/uuid data) (get-in @app-state [:team :team/uuid]))
+    (d/transact! (:team-db @app-state)
+                 (:entities data)
+                 {:server-update true})))
+
 (defmethod handle-message :frontend/custs [app-state message data]
   (swap! app-state update-in [:cust-data :uuid->cust] merge (:uuid->cust data)))
 

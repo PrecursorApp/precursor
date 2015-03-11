@@ -48,6 +48,14 @@
     (map first)
     (map #(d/entity db %))))
 
+(defn find-by-team [db team]
+  (->> (d/q '{:find [?t]
+              :in [$ ?team-id]
+              :where [[?t :access-request/team ?team-id]]}
+            db (:db/id team))
+    (map first)
+    (map #(d/entity db %))))
+
 (defn find-by-doc-and-cust [db doc cust]
   (->> (d/q '{:find [?t]
               :in [$ ?doc-id ?cust-id]

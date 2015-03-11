@@ -215,9 +215,33 @@
       ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))))
 
 (defmethod ws-handler :team/subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
-  (let [team-uuid (-> ?data :team/uuid)]
+  (let [team-uuid (-> ?data :team/uuid)
+        team (team-model/find-by-uuid (:db req) team-uuid)
+        send-fn (:send-fn @sente-state)]
     (check-team-access team-uuid req :admin)
-    (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))))
+    (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
+
+    (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map (partial permission-model/read-api (:db req))
+                                        (filter :permission/cust-ref
+                                                (permission-model/find-by-team (:db req)
+                                                                               team)))
+                         :entity-type :permission}])
+    (send-fn client-id [:frontend/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map access-grant-model/read-api
+                                        (access-grant-model/find-by-team (:db req)
+                                                                         team))
+                         :entity-type :access-grant}])
+
+    (send-fn client-id [:frontend/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map (partial access-request-model/read-api (:db req))
+                                        (access-request-model/find-by-team (:db req)
+                                                                           team))
+                         :entity-type :access-request}])))
 
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
