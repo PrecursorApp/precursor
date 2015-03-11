@@ -45,6 +45,7 @@
     (mixpanel/track (str event) (merge
                                  (:analytics-data data)
                                  (dissoc (get-in state state/browser-settings-path) :document-settings)
+                                 {:logged-in? (boolean (get-in state [:cust :cust/email]))}
                                  (when (:document/id state)
                                    {:doc-id (:document/id state)
                                     :subscriber-count (count (get-in state [:subscribers :info]))})))))
