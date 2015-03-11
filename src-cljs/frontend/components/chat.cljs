@@ -150,7 +150,8 @@
     (will-update [_ next-props next-state]
       ;; check for scrolled all of the way down
       (let [node (om/get-node owner "chat-messages")
-            auto-scroll? (<= (- (.-scrollHeight node) (.-scrollTop node))
+            em 16 ;; extra padding for the scroll
+            auto-scroll? (<= (- (.-scrollHeight node) (.-scrollTop node) em)
                              (.-clientHeight node))]
         (when (not= (om/get-state owner :auto-scroll?) auto-scroll?)
           (om/set-state! owner :auto-scroll? auto-scroll?))))

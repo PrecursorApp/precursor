@@ -139,7 +139,6 @@
             :role "button"}
            (common/icon :blog)
            [:span "Team"]]
-
           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
 
 (defn private-sharing [app owner]

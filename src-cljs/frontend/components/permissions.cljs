@@ -56,10 +56,10 @@
 (defmethod render-access-entity :access-request
   [entity cast!]
   (html
-   [:div.access-card.make {:key (:db/id entity)}
-    {:class (if (= :access-request.status/denied (:access-request/status entity))
-              "denied"
-              "requesting")}
+   [:div.access-card.make {:key (:db/id entity)
+                           :class (if (= :access-request.status/denied (:access-request/status entity))
+                                    "denied"
+                                    "requesting")}
     [:div.access-avatar
      [:img.access-avatar-img {:src (utils/gravatar-url (:access-request/cust entity))}]]
     [:div.access-details
