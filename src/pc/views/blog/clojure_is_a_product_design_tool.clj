@@ -53,7 +53,7 @@
      [:p [:a {:href "http://clojure.org/"} "Clojure"]
          " carries a stark notoriety among developers, despite being a tremendous feat of design. "
          [:a {:href "http://blog.venanti.us/why-clojure/"} "David Jarvis"]
-         ", a former teammate of mine, faced off that reputation during an interview early last year."]]
+         ", a former teammate of mine, encountered that reputation during an interview last year."]]
 
     [:article
      [:blockquote
@@ -170,7 +170,7 @@
          And therein lies the point; Clojure makes me more efficient and extends my reach as a designer."]
      [:p "Don’t let fear prevent growth.
          You don’t have to learn Clojure—even though it’d be nice knowing I'm not alone—you just need to learn something.
-         There's something you can learn right now that will make you a build better products.
+         There's something you can learn right now that will help you a build better products.
          Find it and make something."]]
 
     [:article.blogpost-footnote
