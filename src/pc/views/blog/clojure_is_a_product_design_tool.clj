@@ -57,12 +57,12 @@
 
     [:article
      [:blockquote
-      [:p [:strong [:small "[David] ... "]]
-          "there's a fear that I won't be able to pick up whatever language you're working in."]
-      [:p [:strong [:small "[Them] "]]
-          "Yeah... it's Clojure."]
       [:p [:strong [:small "[David] "]]
-          "*strange gurgling sound*"]]]
+          "... so long as it's not Lisp I'm sure we'll be fine!"]
+      [:p [:strong [:small "[Them] "]]
+          "... it's Clojure."]
+      [:p [:strong [:small "[David] "]]
+          "(not knowing what Clojure is) *strange gurgling sound*"]]]
 
     [:article
      [:p "Later that year I experienced Clojure's reputation for myself when I was invited to give a talk about "
