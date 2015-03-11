@@ -39,6 +39,8 @@
    to anyone with the direct URL. Time should be in the format Fri, 30 Jan 2015 01:12:00 -0800
    Be careful for daylight savings time!"
   [
+   {:slug "clojure-is-a-product-design-tool"
+    :display-in-overview true}
    {:slug "optimizing-om-apps"
     :display-in-overview true}
    {:slug "blue-ocean-made-of-ink"
