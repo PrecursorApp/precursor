@@ -34,9 +34,9 @@
     (render-state [_ {:keys [permission-grant-email]}]
       (let [team (:team app)
             db (om/get-shared owner :team-db)
-            permissions (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/team ?doc-id]] @db (:team/uuid team))
-            access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/team ?doc-id]] @db (:team/uuid team))
-            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/team ?doc-id]] @db (:team/uuid team))
+            permissions (ds/touch-all '[:find ?t :in $ ?team-uuid :where [?t :permission/team ?team-uuid]] @db (:team/uuid team))
+            access-grants (ds/touch-all '[:find ?t :in $ ?team-uuid :where [?t :access-grant/team ?team-uuid]] @db (:team/uuid team))
+            access-requests (ds/touch-all '[:find ?t :in $ ?team-uuid :where [?t :access-request/team ?team-uuid]] @db (:team/uuid team))
             cast! (om/get-shared owner :cast!)
             submit-form (fn [e]
                           (cast! :team-permission-grant-submitted {:email permission-grant-email})

@@ -391,6 +391,10 @@
               :db.type/ref
               :db/doc "document that this request belongs to")
 
+   (attribute :access-request/team
+              :db.type/ref
+              :db/doc "team that this request is requesting access to")
+
    (attribute :access-request/status
               :db.type/ref)
    ;; no granted status, b/c those are just permissions
@@ -435,6 +439,10 @@
    (attribute :access-grant/document-ref
               :db.type/ref
               :db/doc "document that this grant belongs to")
+
+   (attribute :access-grant/team
+              :db.type/ref
+              :db/doc "team that this grant grants access to")
 
    (attribute :access-grant/email
               :db.type/string

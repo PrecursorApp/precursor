@@ -38,7 +38,7 @@
                    :permission/cust-ref (:db/id cust)
                    :permission/grant-date (java.util.Date.)
                    ;;; XXX need to check sent-email in pc.email to guard against multiple txes!
-                   :needs-email :email/document-permission-for-customer-granted
+                   :needs-email :email/permission-granted
                    :permission/granter-ref (:db/id granter)
                    :permission/doc-cust (UUID. (:db/id doc) (:db/id cust))}])))
 
@@ -54,7 +54,7 @@
                    :permission/cust-ref (:db/id cust)
                    :permission/grant-date (java.util.Date.)
                    ;;; XXX need to check sent-email in pc.email to guard against multiple txes!
-                   :needs-email :email/team-permission-for-customer-granted
+                   :needs-email :email/permission-granted
                    :permission/granter-ref (:db/id granter)
                    :permission/team-cust (UUID. (:db/id team) (:db/id cust))}])))
 
@@ -66,7 +66,8 @@
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
                   (web-peer/retract-entity (:db/id access-grant))
-                  (web-peer/server-frontend-id temp-id (:db/id doc))
+                  (web-peer/server-frontend-id temp-id (or (:db/id doc)
+                                                           (:db/id team)))
                   (merge
                    {:db/id temp-id
                     :permission/permits :permission.permits/admin
@@ -92,13 +93,14 @@
     @(d/transact (pcd/conn)
                  [(assoc annotations :db/id txid)
                   (web-peer/retract-entity (:db/id access-request))
-                  (web-peer/server-frontend-id temp-id doc-id)
+                  (web-peer/server-frontend-id temp-id (or doc-id team-id))
                   (merge
                    {:db/id temp-id
                     :permission/permits :permission.permits/admin
                     :permission/cust-ref (:db/id cust)
                     :permission/grant-date (java.util.Date.)
-                    :permission/granter-ref (:db/id granter)}
+                    :permission/granter-ref (:db/id granter)
+                    :needs-email :email/permission-granted}
                    (when doc-id
                      {:permission/document-ref doc-id
                       :permission/doc-cust (UUID. doc-id (:db/id cust))})

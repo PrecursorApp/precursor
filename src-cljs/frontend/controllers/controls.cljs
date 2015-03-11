@@ -1280,16 +1280,26 @@
                                                                              :invite-loc :overlay}]))
 
 (defmethod post-control-event! :access-request-granted
-  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
-  (sente/send-msg (:sente current-state) [:frontend/grant-access-request {:document/id doc-id
-                                                                          :request-id request-id
-                                                                          :invite-loc :overlay}]))
+  [browser-state message {:keys [request-id doc-id team-uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [(keyword (if doc-id
+                                                     "frontend"
+                                                     "team")
+                                                   "grant-access-request")
+                                          {:document/id doc-id
+                                           :team/uuid team-uuid
+                                           :request-id request-id
+                                           :invite-loc :overlay}]))
 
 (defmethod post-control-event! :access-request-denied
-  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
-  (sente/send-msg (:sente current-state) [:frontend/deny-access-request {:document/id doc-id
-                                                                         :request-id request-id
-                                                                         :invite-loc :overlay}]))
+  [browser-state message {:keys [request-id doc-id team-uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [(keyword (if doc-id
+                                                     "frontend"
+                                                     "team")
+                                                   "deny-access-request")
+                                          {:document/id doc-id
+                                           :team/uuid team-uuid
+                                           :request-id request-id
+                                           :invite-loc :overlay}]))
 
 (defmethod post-control-event! :make-button-clicked
   [target message _ previous-state current-state]

@@ -4,6 +4,7 @@
             [clojure.set :as set]
             [crypto.equality :as crypto]
             [defpage.core :as defpage :refer (defpage)]
+            [hiccup.page]
             [pc.assets]
             [pc.analytics :as analytics]
             [pc.auth :as auth]
@@ -14,6 +15,7 @@
             [pc.http.lb :as lb]
             [pc.http.sente :as sente]
             [pc.http.urls :as urls]
+            [pc.models.access-request :as access-request-model]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
@@ -24,6 +26,7 @@
             [pc.util.md5 :as md5]
             [pc.views.content :as content]
             [ring.middleware.anti-forgery :as csrf]
+            [ring.util.anti-forgery :refer (anti-forgery-field)]
             [ring.util.response :refer (redirect)]))
 
 (defn common-view-data [req]
@@ -66,7 +69,12 @@
                  (not (auth/has-team-permission? db (:team req) (:auth req) :admin)))
 
             {:status 200
-             :body "Request permission"}
+             :body (hiccup.page/html5 {}
+                    [:html
+                     [:body
+                      [:form {:action "/request-team-permission" :method "post"}
+                       (anti-forgery-field)
+                       [:input {:type "submit" :value "Request permission"}]]]])}
 
             (and (auth/logged-in? req)
                  (:team req)
@@ -89,6 +97,20 @@
         (redirect (str "/document/" (:db/id doc)))
         (content/app (merge (common-view-data req)
                             {:initial-document-id (:db/id doc)}))))))
+
+(defpage request-team-permission [:post "/request-team-permission"] [req]
+  (let [team (:team req)
+        cust (get-in req [:auth :cust])]
+    (when-not team
+      {:throw 400
+       :public-message "Sorry, we couldn't find that team."})
+    (when-not cust
+      {:throw 400
+       :public-message "Please log in before requesting access."})
+    (do (access-request-model/create-team-request team cust {:transaction/team (:db/id team)
+                                                             :cust/uuid (:cust/uuid cust)
+                                                             :transaction/broadcast true})
+        (redirect "/"))))
 
 (defpage document [:get "/document/:document-id" {:document-id #"[0-9]+"}] [req]
   (let [document-id (-> req :params :document-id)

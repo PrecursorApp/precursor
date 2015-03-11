@@ -229,14 +229,14 @@
                                                 (permission-model/find-by-team (:db req)
                                                                                team)))
                          :entity-type :permission}])
-    (send-fn client-id [:frontend/db-entities
+    (send-fn client-id [:team/db-entities
                         {:team/uuid team-uuid
                          :entities (map access-grant-model/read-api
                                         (access-grant-model/find-by-team (:db req)
                                                                          team))
                          :entity-type :access-grant}])
 
-    (send-fn client-id [:frontend/db-entities
+    (send-fn client-id [:team/db-entities
                         {:team/uuid team-uuid
                          :entities (map (partial access-request-model/read-api (:db req))
                                         (access-request-model/find-by-team (:db req)
@@ -307,6 +307,7 @@
                                                 (permission-model/find-by-document (:db req)
                                                                                    {:db/id document-id})))
                          :entity-type :permission}])
+
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
                          :entities (map access-grant-model/read-api

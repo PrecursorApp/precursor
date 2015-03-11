@@ -7,20 +7,15 @@
             [hiccup.core :as hiccup]
             [pc.datomic :as pcd]
             [pc.http.urls :as urls]
-            [pc.ses :as ses]
             [pc.models.access-grant :as access-grant-model]
-            [pc.models.permission :as permission-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
+            [pc.models.permission :as permission-model]
             [pc.profile :as profile]
+            [pc.ses :as ses]
             [pc.utils]
+            [pc.views.email :as view]
             [slingshot.slingshot :refer (throw+ try+)]))
-
-(defn email-address
-  ([local-part]
-   (format "%s@%s" local-part (profile/prod-domain)))
-  ([fancy-name local-part]
-   (format "%s <%s>" fancy-name (email-address local-part))))
 
 (defn emails-to-send [db eid]
   (set (map first
@@ -57,238 +52,143 @@
                              [:db/add eid :needs-email email-enum]
                              [:db/retract eid :sent-email email-enum]])))
 
-(defn chat-invite-html [doc-id]
-  (hiccup/html
-   [:html
-    [:body
-     [:p
-      "I'm prototyping something on Precursor, come join me at "
-      [:a {:href (urls/doc doc-id)}
-       (urls/doc doc-id)]
-      "."]
-     [:p "This is what I have so far:"]
-     [:p
-      [:a {:href (urls/doc doc-id)
-           :style "display: inline-block"}
-       [:img {:width 325
-              :style "border: 1px solid #888888;"
-              :alt "Images disabled? Just come and take a look."
-              :src (urls/doc-png doc-id :query {:rand (rand)})}]]]
-     [:p {:style "font-size: 12px"}
-      (format "Tell us if this message was sent in error %s." (email-address "info"))
-      ;; Add some hidden text so that Google doesn't try to trim these.
-      [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
-       " Sent at "
-       (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
-       "."]]]]))
 
-(defn format-inviter [inviter]
-  (str/trim (str (:cust/first-name inviter)
-                 (when (and (:cust/first-name inviter)
-                            (:cust/last-name inviter))
-                   (str " " (:cust/last-name inviter)))
-                 " "
-                 (cond (and (not (:cust/last-name inviter))
-                            (:cust/first-name inviter))
-                       (str "(" (:cust/email inviter) ") ")
-
-                       (not (:cust/first-name inviter))
-                       (str (:cust/email inviter) " ")
-
-                       :else nil))))
-
-(defn format-requester [requester]
-  (let [full-name (str/trim (str (:cust/first-name requester)
-                                 " "
-                                 (when (:cust/first-name requester)
-                                   (:cust/last-name requester))))]
-    (str/trim (str full-name " "
-                   (when-not (str/blank? full-name) "(")
-                   (:cust/email requester)
-                   (when-not (str/blank? full-name) ")")))))
 
 (defn send-chat-invite [{:keys [cust to-email doc-id]}]
-  (ses/send-message {:from (email-address "Precursor" "joinme")
+  (ses/send-message {:from (view/email-address "Precursor" "joinme")
                      :to to-email
-                     :subject (str (format-inviter cust)
+                     :subject (str (view/format-inviter cust)
                                    " invited you to a document on Precursor")
                      :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id))
-                     :html (chat-invite-html doc-id)
-                     :o:tracking "yes"
-                     :o:tracking-opens "yes"
-                     :o:tracking-clicks "no"
-                     :o:campaign "chat_invites"}))
+                     :html (view/chat-invite-html doc-id)}))
 
-(defn access-grant-html [doc-id access-grant image-permission]
-  (let [doc-link (urls/doc doc-id :query {:access-grant-token (:access-grant/token access-grant)})
-        image-link (urls/doc-png doc-id :query {:rand (rand) :auth-token (:permission/token image-permission)})]
-    (hiccup/html
-     [:html
-      [:body
-       [:p
-        "I'm prototyping something on Precursor, come join me at "
-        [:a {:href doc-link}
-         (urls/doc doc-id)]
-        "."]
-       [:p "This is what I have so far:"]
-       [:p
-        [:a {:href doc-link
-             :style "display: inline-block"}
-         [:img {:width 325
-                :style "border: 1px solid #888888;"
-                :alt "Images disabled? Just come and take a look."
-                :src image-link}]]]
-       [:p {:style "font-size: 12px"}
-        (format "Tell us if this message was sent in error %s." (email-address "info"))
-        ;; Add some hidden text so that Google doesn't try to trim these.
-        [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
-         " Sent at "
-         (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
-         "."]]]])))
-
-(defn send-access-grant-email [db access-grant-eid]
-  (let [access-grant (d/entity db access-grant-eid)
-        doc (:access-grant/document-ref access-grant)
+(defn send-document-access-grant-email [db access-grant]
+  (let [doc (:access-grant/document-ref access-grant)
         granter (:access-grant/granter-ref access-grant)
         token (:access-grant/token access-grant)
         image-permission (permission-model/create-document-image-permission! doc)]
-    (ses/send-message {:from (email-address "Precursor" "joinme")
+    (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:access-grant/email access-grant)
-                       :subject (str (format-inviter granter)
+                       :subject (str (view/format-inviter granter)
                                      " invited you to a document on Precursor")
                        :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc (:db/id doc))
                                   "?access-grant-token=" token)
-                       :html (access-grant-html (:db/id doc) access-grant image-permission)
-                       :o:tracking "yes"
-                       :o:tracking-opens "yes"
-                       :o:tracking-clicks "no"
-                       :o:campaign "access_grant_invites"})))
+                       :html (view/document-access-grant-html (:db/id doc) access-grant image-permission)})))
 
-(defn permission-grant-html [doc-id image-permission]
-  (let [doc-link (urls/doc doc-id)
-        image-link (urls/doc-png doc-id :query {:rand (rand) :auth-token (:permission/token image-permission)})]
-    (hiccup/html
-     [:html
-      [:body
-       [:p
-        "I'm prototyping something on Precursor, come join me at "
-        [:a {:href doc-link}
-         doc-link]
-        "."]
-       [:p "This is what I have so far:"]
-       [:p
-        [:a {:href doc-link
-             :style "display: inline-block"}
-         [:img {:width 325
-                :style "border: 1px solid #888888;"
-                :alt "Images disabled? Just come and take a look."
-                :src image-link}]]]
-       [:p {:style "font-size: 12px"}
-        (format "Tell us if this message was sent in error %s." (email-address "info"))
-        ;; Add some hidden text so that Google doesn't try to trim these.
-        [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
-         " Sent at "
-         (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
-         "."]]]])))
+(defn send-team-access-grant-email [db access-grant]
+  (let [team (:access-grant/team access-grant)
+        subdomain (:team/subdomain team)
+        granter (:access-grant/granter-ref access-grant)
+        token (:access-grant/token access-grant)]
+    (ses/send-message {:from (view/email-address "Precursor" "joinme")
+                       :to (:access-grant/email access-grant)
+                       :subject (str (view/format-inviter granter)
+                                     " invited you to join the "
+                                     subdomain " team on Precursor")
+                       :text (str "Hey there,\nYou've been invited to the " subdomain " team Precursor: "
+                                  (urls/root "/"
+                                             :query {:access-grant-token token}
+                                             :subdomain subdomain))
+                       :html (view/team-access-grant-html (:team/subdomain team) access-grant)})))
 
-(defn send-permission-grant-email [db permission-eid]
-  (let [permission (d/entity db permission-eid)
-        doc (:permission/document-ref permission)
+(defn send-access-grant-email [db access-grant-eid]
+  (let [access-grant (d/entity db access-grant-eid)]
+    (cond (:access-grant/document-ref access-grant)
+          (send-document-access-grant-email db access-grant)
+
+          (:access-grant/team access-grant)
+          (send-team-access-grant-email db access-grant)
+
+          :else
+          (throw+ {:error :missing-email-handler-for-access-grant
+                   :access-grant access-grant}))))
+
+(defn send-document-permission-grant-email [db permission]
+  (let [doc (:permission/document-ref permission)
         granter (:permission/granter-ref permission)
         grantee (:permission/cust-ref permission)
         image-permission (permission-model/create-document-image-permission! doc)]
-    (ses/send-message {:from (email-address "Precursor" "joinme")
+    (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:cust/email grantee)
-                       :subject (str (format-inviter granter)
-                                     " gave you access to a document on Precursor")
                        :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc (:db/id doc)))
-                       :html (permission-grant-html (:db/id doc) image-permission)
-                       :o:tracking "yes"
-                       :o:tracking-opens "yes"
-                       :o:tracking-clicks "no"
-                       :o:campaign "access_grant_invites"})))
+                       :html (view/document-permission-grant-html (:db/id doc) image-permission)})))
 
+(defn send-team-permission-grant-email [db permission]
+  (let [team (:permission/team permission)
+        subdomain (:team/subdomain team)
+        granter (:permission/granter-ref permission)
+        grantee (:permission/cust-ref permission)]
+    (ses/send-message {:from (view/email-address "Precursor" "joinme")
+                       :to (:cust/email grantee)
+                       :subject (str (view/format-inviter granter)
+                                     " gave you access to a document on Precursor")
+                       :text (str "Hey there,\nYou've been invited to the " subdomain " team Precursor: "
+                                  (urls/root "/" :query :subdomain subdomain))
+                       :html (view/team-permission-grant-html subdomain)})))
 
-(defn access-request-html [doc-id requester]
-  (let [doc-link (urls/doc doc-id)]
-    (hiccup/html
-     [:html
-      [:body
-       [:p (str (format-requester requester) " wants access to one of your documents on Precursor.")]
-       [:p "Go to the "
-        [:a {:href (urls/doc doc-id :query {:overlay "sharing"})}
-         "manage permissions page"]
-        " to grant or deny access."]
-       [:p {:style "font-size: 12px"}
-        (format "Tell us if this message was sent in error %s." (email-address "info"))
-        ;; Add some hidden text so that Google doesn't try to trim these.
-        [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
-         " Sent at "
-         (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
-         "."]]]])))
+(defn send-permission-grant-email [db permission-eid]
+  (let [permission (d/entity db permission-eid)]
+    (cond (:permission/document-ref permission)
+          (send-document-permission-grant-email db permission)
 
-(defn send-access-request-email [db request-eid]
-  (let [access-request (d/entity db request-eid)
-        requester (:access-request/cust-ref access-request)
+          (:permission/team permission)
+          (send-team-permission-grant-email db permission)
+
+          :else
+          (throw+ {:error :missing-email-handler-for-permission
+                   :permission permission}))))
+
+(defn send-document-access-request-email [db access-request]
+  (let [requester (:access-request/cust-ref access-request)
         doc (:access-request/document-ref access-request)
         doc-id (:db/id doc)
         doc-owner (cust-model/find-by-uuid db (:document/creator doc))]
-    (ses/send-message {:from (email-address "Precursor" "joinme")
+    (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:cust/email doc-owner)
-                       :subject (str (format-requester requester)
+                       :subject (str (view/format-requester requester)
                                      " wants access to your document on Precursor")
                        :text (str "Hey there,\nSomeone wants access to your document on Precursor: " (urls/doc doc-id)
                                   "\nYou can grant or deny them access from the document's settings page.")
-                       :html (access-request-html doc-id requester)
-                       :o:tracking "yes"
-                       :o:tracking-opens "yes"
-                       :o:tracking-clicks "no"
-                       :o:campaign "access_request"})))
+                       :html (view/access-request-html doc-id requester)})))
 
-(defn early-access-html [cust]
-  (let [cust-name (or (:cust/name cust)
-                      (:cust/first-name cust))]
-    (hiccup/html
-     [:html
-      [:body
-       (when (seq cust-name)
-         [:p (format "Hi %s," cust-name)])
-       [:p
-        "You've been granted early access to Precursor's paid features."]
-       [:p
-        "You can now create private documents and control who has access to them. "
-        "Let the rest of your team create private docs by having them click the request "
-        "access button and filling out the same form you did."]
+(defn send-team-access-request-email [db access-request]
+  (let [requester (:access-request/cust-ref access-request)
+        team (:access-request/team access-request)
+        subdomain (:team/subdomain team)
+        team-owner (->> team
+                     (permission-model/find-by-team db)
+                     (filter :permission/cust-ref)
+                     (sort-by :permission/grant-date)
+                     first
+                     :permission/cust-ref)]
+    (ses/send-message {:from (view/email-address "Precursor" "joinme")
+                       :to (:cust/email team-owner)
+                       :subject (str (view/format-requester requester)
+                                     " wants access to your document on Precursor")
+                       :text (str "Hey there,\nSomeone wants access to the " subdomain " team on Precursor" (urls/root :subdomain subdomain)
+                                  "\nYou can grant or deny them access from the document's settings page.")
+                       :html (view/team-access-request-html subdomain requester)})))
 
-       [:p
-        "You'll have two weeks of free, unlimited early access, and then we'll follow "
-        "up with you to see how things are going."]
+(defn send-access-request-email [db access-request-eid]
+  (let [access-request (d/entity db access-request-eid)]
+    (cond (:access-request/document-ref access-request)
+          (send-document-access-request-email db access-request)
 
-       [:p
-        "Next, "
-        [:a {:title "Private docs early access"
-             :href (urls/blog-url "private-docs-early-access")}
-         "learn to use private docs"]
-        " or "
-        [:a {:title "Launch Precursor"
-             :href (urls/root)}
-         "make something on Precursor"]
-        "."]
-       [:p {:style "font-size: 12px"}
-        (format "Tell us if this message was sent in error %s." (email-address "info"))
-        ;; Add some hidden text so that Google doesn't try to trim these.
-        [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
-         " Sent at " (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now)) "."]]]])))
+          (:access-request/team access-request)
+          (send-team-access-request-email db access-request)
 
+          :else
+          (throw+ {:error :missing-email-handler-for-access-request
+                   :access-request access-request}))))
 
 (defn send-early-access-granted-email [db cust-eid]
   (let [cust (cust-model/find-by-id db cust-eid)
         email-addresss (:cust/email cust)]
-    (ses/send-message {:from (email-address "Precursor" "early-access")
+    (ses/send-message {:from (view/email-address "Precursor" "early-access")
                        :to (:cust/email cust)
                        :subject "Early access to Precursor"
                        :text (str "You've been granted early access to precursor's paid feaures: https://precursorapp.com")
-                       :html (early-access-html cust)})))
+                       :html (view/early-access-html cust)})))
 
 (defn send-entity-email-dispatch-fn [db email-enum eid] email-enum)
 
@@ -322,6 +222,7 @@
         (throw+ t)))
     (log/infof "not re-sending access-request email for %s" eid)))
 
+;; TODO: deprecated by
 (defmethod send-entity-email :email/document-permission-for-customer-granted
   [db email-enum eid]
   (if (mark-sent-email eid :email/document-permission-for-customer-granted)
@@ -331,6 +232,18 @@
       (catch Object t
         (.printStackTrace (:throwable &throw-context))
         (unmark-sent-email eid :email/document-permission-for-customer-granted)
+        (throw+ t)))
+    (log/infof "not re-sending access-request email for %s" eid)))
+
+(defmethod send-entity-email :email/permission-granted
+  [db email-enum eid]
+  (if (mark-sent-email eid :email/permission-granted)
+    (try+
+      (log/infof "sending access-request email for %s" eid)
+      (send-permission-grant-email db eid)
+      (catch Object t
+        (.printStackTrace (:throwable &throw-context))
+        (unmark-sent-email eid :email/permission-granted)
         (throw+ t)))
     (log/infof "not re-sending access-request email for %s" eid)))
 

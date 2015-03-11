@@ -84,3 +84,8 @@
   "Used to guard against sending emails to customers from dev-mode"
   []
   (not (prod?)))
+
+(defn bcc-audit-log?
+  "Determines whether to bcc audit-log@ on every email"
+  []
+  (prod?))
