@@ -121,7 +121,7 @@
          That's great design, by any standard."]]
 
     [:article
-     [:h3 "And it protects me from complex design tools."]
+     [:h3 "And it protects me from complex design workflows."]
      [:p "The icon system I made for Precursor is a good example of the inherent elegance within ClojureScript."]
      [:p "Using Illustrator, I constrain every icon to a single area.
          This helps me prevent inconsistent proportions."]]
