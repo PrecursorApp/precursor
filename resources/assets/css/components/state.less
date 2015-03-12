@@ -1,4 +1,7 @@
 .state-menu { // IMPORTANT VISUAL CHANGES WHILE MENU IS ACTIVE
+  // &.on-the-right {
+  //   //
+  // }
   .inner {
     .scale(.8);
     cursor: pointer;
@@ -78,6 +81,39 @@
       transition: @now;
     }
   }
+  // .hud-menu {
+  //   .icon(stroke; @black);
+  //   &.close,
+  //   &.back {
+  //     .scale3d(.75);
+  //   }
+  //   &.close {
+  //     .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
+  //     .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
+  //     .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
+  //   }
+  //   &.back {
+  //     .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
+  //     .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
+  //     .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
+  //   }
+  //   path {
+  //     transition+: all @run_slow @now @bezier_bounce;
+  //     transition+: stroke @now @now @bezier_fadein;
+  //   }
+  // }
+  .hud-menu {
+    .icon(stroke; @black);
+    path {
+      transition+: all @run_slow @now @bezier_bounce;
+      transition+: stroke @now @now @bezier_fadein;
+    }
+  }
+  .unseen-eids {
+    display: none;
+  }
+}
+.state-menu-left { // IMPORTANT VISUAL CHANGES WHILE LEFT SIDE MENU IS ACTIVE
   .hud-menu {
     .icon(stroke; @black);
     &.close,
@@ -94,13 +130,16 @@
       .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
       .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
     }
-    path {
-      transition+: all @run_slow @now @bezier_bounce;
-      transition+: stroke @now @now @bezier_fadein;
-    }
   }
-  .unseen-eids {
-    display: none;
+}
+.state-menu-right { // IMPORTANT VISUAL CHANGES WHILE RIGHT SIDE MENU IS ACTIVE
+  .menu {
+    .align-items(flex-end);
+  }
+  .inner {
+    .transform-origin(left);
+    .mq_1920({.transform(translate3d((-@tile * 2), 0, 0); scale3d(.8, .8, 1));});
+    .mq_1280({.transform(translate3d((-@tile * 4), 0, 0); scale3d(.8, .8, 1));});
   }
 }
 .state-outer { // IMPORTANT VISUAL CHANGES WHILE OUTER IS ACTIVE
