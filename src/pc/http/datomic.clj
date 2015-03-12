@@ -171,7 +171,8 @@
 (defn send-emails [transaction]
   (let [annotations (delay (get-annotations transaction))]
     (doseq [datom (:tx-data transaction)]
-      (when (and (= :needs-email (schema/get-ident (:a datom)))
+      (when (and (:added datom)
+                 (= :needs-email (schema/get-ident (:a datom)))
                  (not (contains? #{:transaction.source/unmark-sent-email
                                    :transaction.source/mark-sent-email}
                                  (:transaction/source @annotations))))
