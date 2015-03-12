@@ -692,7 +692,8 @@
             camera (cursors/observe-camera owner)
             in-progress? (settings/drawing-in-progress? app)
             tool (get-in app state/current-tool-path)
-            mouse-down? (get-in app [:mouse-down])]
+            mouse-down? (get-in app [:mouse-down])
+            vw (:width (utils/canvas-size))]
         (dom/svg #js {:width "100%"
                       :height "100%"
                       :id "svg-canvas"
@@ -784,6 +785,10 @@
                                                             (cameras/move-camera c dx (- dy))))))
                                  (utils/stop-event event))}
                  (canvas-grid camera)
+
+                 (dom/defs nil
+                   (dom/clipPath #js {:id "mask-chat"}
+                     (dom/rect #js {:className "mask-chat-window" :x "0" :y "0" :width vw :height "100%"})))
 
                  (when (cameras/show-grid? camera)
                    (dom/rect #js {:id        "background-grid"
