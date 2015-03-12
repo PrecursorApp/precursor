@@ -322,25 +322,15 @@
                                                                                {:db/id document-id}))
                          :entity-type :access-request}])))
 
-(defmethod ws-handler :frontend/fetch-created [{:keys [client-id ?data ?reply-fn] :as req}]
-  (when-let [cust (-> req :ring-req :auth :cust)]
-    (let [;; TODO: at some point we may want to limit, but it's just a
-          ;; list of longs, so meh
-          ;; limit (get ?data :limit 100)
-          ;; offset (get ?data :offset 0)
-          doc-ids (doc-model/find-created-by-cust (:db req) cust)]
-      (log/infof "fetching created for %s" client-id)
-      (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
-                                           :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
-                             doc-ids)}))))
-
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [;; TODO: at some point we may want to limit, but it's just a
           ;; list of longs, so meh
           ;; limit (get ?data :limit 100)
           ;; offset (get ?data :offset 0)
-          doc-ids (doc-model/find-touched-by-cust (:db req) cust)]
+          doc-ids (if-let [team (get-in req [:ring-req :team])]
+                    (doc-model/find-touched-by-cust-in-team (:db req) cust team)
+                    (doc-model/find-touched-by-cust (:db req) cust))]
       (log/infof "fetched %s touched for %s" (count doc-ids) client-id)
       (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
                                            :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})

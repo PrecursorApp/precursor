@@ -1157,15 +1157,6 @@
     (doseq [layer-group (partition-all 100 layers)]
       (d/transact! db layer-group {:can-undo? true}))))
 
-(defmethod post-control-event! :created-fetched
-  [browser-state message _ previous-state current-state]
-  (sente/send-msg
-   (:sente current-state)
-   [:frontend/fetch-created]
-   10000
-   (fn [{:keys [docs]}]
-     (put! (get-in current-state [:comms :api]) [:created-docs :success {:docs docs}]))))
-
 (defmethod control-event :your-docs-opened
   [browser-state message _ state]
   (-> state

@@ -71,14 +71,24 @@
             db (:cust/uuid cust))))
 
 (defn find-touched-by-cust
-  "Returns document entity ids for every doc touched by the given cust"
+  "Returns document entity ids for every doc touched by the given cust, but not part of a team"
   [db cust]
-  (map first
-       (d/q '{:find [?doc-id]
-              :in [$ ?uuid]
-              :where [[?t :cust/uuid ?uuid]
-                      [?t :transaction/document ?doc-id]]}
-            db (:cust/uuid cust))))
+  (d/q '{:find [[?doc-id ...]]
+         :in [$ ?uuid]
+         :where [[?t :cust/uuid ?uuid]
+                 [?t :transaction/document ?doc-id]
+                 (not [?doc-id :document/team])]}
+       db (:cust/uuid cust)))
+
+(defn find-touched-by-cust-in-team
+  "Returns document entity ids for every doc touched by the given cust in a given team"
+  [db cust team]
+  (d/q '{:find [[?doc-id ...]]
+         :in [$ ?uuid ?team-id]
+         :where [[?t :cust/uuid ?uuid]
+                 [?t :transaction/document ?doc-id]
+                 [?doc-id :document/team ?team-id]]}
+       db (:cust/uuid cust) (:db/id team)))
 
 (defn last-updated-time [db doc-id]
   (ffirst (d/q '{:find [(max ?i)]
