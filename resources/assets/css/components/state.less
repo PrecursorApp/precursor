@@ -131,10 +131,40 @@
       .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
     }
   }
+  // .menu-view {
+  //   &:not(:first-child) {
+  //     margin-left: -100%;
+  //   }
+  //   &:not(:last-of-type) {
+  //     .translate3d(-100%,0,0);
+  //   }
+  // }
 }
 .state-menu-right { // IMPORTANT VISUAL CHANGES WHILE RIGHT SIDE MENU IS ACTIVE
   .menu {
     .align-items(flex-end);
+  }
+  .menu-heading {
+    padding: 0 @tile 0 @menu_padding;
+  }
+  .menu-view {
+    // &:not(:first-child) {
+    //   margin-left: 0;
+    //   margin-right: -100%;
+    // }
+    // &:not(:last-of-type) {
+    //   .translate3d(100%,0,0);
+    // }
+    // &:not(:first-child) {
+    //   margin-right: -100%;
+    // }
+    // &:not(:last-of-type) {
+    //   .translate3d(100%,0,0);
+    // }
+    &:not(:last-of-type) {
+      opacity: 0;
+      visibility: hidden;
+    }
   }
   .inner {
     .transform-origin(left);
