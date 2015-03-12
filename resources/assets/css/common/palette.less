@@ -25,14 +25,14 @@
 @purple_tint: hsv((00 + (@purple_spin * (360 / @rotate))), @purity, @luster);
 @pink_tint:   hsv((00 + (@pink_spin   * (360 / @rotate))), @purity, @luster);
 
-@red_root:    softlight(@red_tint,     fade(@orange_tint,  (@filter +  00)));
+@red_root:    softlight(@red_tint,     fade(@orange_tint,  (@filter +  01)));
 @orange_root: softlight(@orange_tint,  fade(@orange_tint,  (@filter +  00)));
-@yellow_root: softlight(@yellow_tint,  fade(@orange_tint,  (@filter +  00)));
-@green_root:  softlight(@green_tint,   fade(@orange_tint,  (@filter +  00)));
-@cyan_root:   softlight(@cyan_tint,    fade(@orange_tint,  (@filter +  00)));
-@blue_root:   softlight(@blue_tint,    fade(@orange_tint,  (@filter +  00)));
-@purple_root: softlight(@purple_tint,  fade(@orange_tint,  (@filter +  00)));
-@pink_root:   softlight(@pink_tint,    fade(@orange_tint,  (@filter +  00)));
+@yellow_root: softlight(@yellow_tint,  fade(@orange_tint,  (@filter +  01)));
+@green_root:  softlight(@green_tint,   fade(@orange_tint,  (@filter +  02)));
+@cyan_root:   softlight(@cyan_tint,    fade(@orange_tint,  (@filter +  03)));
+@blue_root:   softlight(@blue_tint,    fade(@orange_tint,  (@filter +  05)));
+@purple_root: softlight(@purple_tint,  fade(@orange_tint,  (@filter +  08)));
+@pink_root:   softlight(@pink_tint,    fade(@orange_tint,  (@filter +  13)));
 
 @red_soft:    overlay(lighten(@red_root,    @soften), fade(@black, @darker));
 @orange_soft: overlay(lighten(@orange_root, @soften), fade(@black, @darker));
