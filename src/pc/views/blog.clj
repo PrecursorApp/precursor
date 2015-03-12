@@ -41,7 +41,8 @@
   [
    {:slug "clojure-is-a-product-design-tool"
     :display-in-overview true
-    :scheduled-time (clj-time.format/parse "Wed, 11 Mar 2015 09:00:00 -0800")}
+    ;; 9am dst
+    :scheduled-time (clj-time.format/parse "Thu, 12 Mar 2015 08:00:00 -0800")}
    {:slug "optimizing-om-apps"
     :display-in-overview true}
    {:slug "blue-ocean-made-of-ink"
