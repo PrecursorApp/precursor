@@ -46,6 +46,7 @@
   {:title "Clojure is a product design tool."
    :blurb "Clojure makes me more efficient and extends my reach as a designer. And it protects me from complex design tools..."
    :author "Danny"
+   :image (cdn-path "/blog/clojurescript-is-a-design-tool/illustrator-onoff.gif")
    :body
    (list
     [:article
