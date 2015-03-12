@@ -175,9 +175,10 @@
 
     [:article.blogpost-footnote
      [:p
-      "Thanks to "
-      [:a {:href "https://twitter.com/sgrove"} "Sean Grove"] ", "
-      [:a {:href "https://twitter.com/BrandonBloom"} "Brandon Bloom"] ", and "
-      [:a {:href "https://twitter.com/Venantius"} "David Jarvis"]
+      "Thanks "
+      [:a {:href "https://twitter.com/sgrove"       :title "@sgrove"}       "Sean Grove"] ", "
+      [:a {:href "https://twitter.com/BrandonBloom" :title "@BrandonBloom"} "Brandon Bloom"] ", "
+      [:a {:href "https://twitter.com/Venantius"    :title "@Venantius"}    "David Jarvis"] ", & "
+      [:a {:href "https://twitter.com/futurepaul"   :title "@futurepaul"}   "Paul Miller"]
       " for reading drafts of this."]]
     )})
