@@ -61,35 +61,38 @@
 
             (and (auth/logged-in? req)
                  (not (:team req)))
-
             {:status 200
-             :body "Claim this domain for your team"}
+             :body (hiccup.page/html5
+                    {}
+                    "Please email <a href=\"mailto:hi@precursorapp.com\">hi@precursorapp.com</a> to claim this domain for your team")}
 
             (and (auth/logged-in? req)
                  (:team req)
                  (not (auth/has-team-permission? db (:team req) (:auth req) :admin))
                  (seq (access-request-model/find-by-team-and-cust (pcd/default-db) (:team req) (get-in req [:auth :cust]))))
-
             {:status 200
-             :body "Thanks for requesting access, we'll send you an email when your request is granted."}
+             :body (hiccup.page/html5
+                    {}
+                    [:p "Thanks for requesting access, we'll send you an email when your request is granted."]
+                    [:p "In the meantime, you can make something on " [:a {:href (urls/root)}
+                                                                       (urls/root)]])}
 
             (and (auth/logged-in? req)
                  (:team req)
                  (not (auth/has-team-permission? db (:team req) (:auth req) :admin)))
-
             {:status 200
              :body (hiccup.page/html5
                     {}
                     [:html
                      [:body
-                      [:form {:action "/request-team-permission" :method "post"}
-                       (anti-forgery-field)
-                       [:input {:type "submit" :value "Request permission"}]]]])}
+                      [:span
+                       [:form {:action "/request-team-permission" :method "post"}
+                        (anti-forgery-field)
+                        [:input {:type "submit" :value "Request permission to join this team"}]]]]])}
 
             (and (auth/logged-in? req)
                  (:team req)
                  (auth/has-team-permission? db (:team req) (:auth req) :admin))
-
             (let [doc (doc-model/create-team-doc!
                        (:team req)
                        (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
