@@ -13,6 +13,7 @@
             [pc.datomic :as pcd]
             [pc.http.doc :as doc-http]
             [pc.http.lb :as lb]
+            [pc.http.handlers.custom-domain :as custom-domain]
             [pc.http.sente :as sente]
             [pc.http.urls :as urls]
             [pc.models.access-request :as access-request-model]
@@ -233,13 +234,15 @@
 (defn outer-page
   "Response to send for requests that need a document-id that the frontend will route"
   [req]
-  (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-        ;; TODO: Have to figure out a way to create outer pages without creating extraneous entity-ids
-        doc (doc-model/create-public-doc!
-             (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                    (when cust-uuid {:document/creator cust-uuid})))]
-    (content/app (merge (common-view-data req)
-                        {:initial-document-id (:db/id doc)}))))
+  (if (:subdomain req)
+    (custom-domain/redirect-to-main req)
+    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+          ;; TODO: Have to figure out a way to create outer pages without creating extraneous entity-ids
+          doc (doc-model/create-public-doc!
+               (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                      (when cust-uuid {:document/creator cust-uuid})))]
+      (content/app (merge (common-view-data req)
+                          {:initial-document-id (:db/id doc)})))))
 
 (defpage pricing "/pricing" [req]
   (outer-page req))
@@ -261,20 +264,22 @@
 
 
 (defpage bucket [:get "/bucket/:bucket-count" {:bucket-count #"[0-9]+"}] [req]
-  (let [bucket-count (Integer/parseInt (-> req :params :bucket-count))]
-    (when (< 100 (count @bucket-doc-ids)
-             (clean-bucket-doc-ids)))
-    (if-let [doc-id (ffirst (sort-by (comp - count last)
-                                     (filter (fn [[doc-id subs]]
-                                               ;; only send them to docs created by the bucketing
-                                               (and (contains? @bucket-doc-ids doc-id)
-                                                    ;; only send them to docs that are occupied
-                                                    (< 0 (count subs) bucket-count)))
-                                             @sente/document-subs)))]
-      (redirect (str "/document/" doc-id))
-      (let [doc (doc-model/create-public-doc! {:document/chat-bot (rand-nth chat-bot-model/chat-bots)})]
-        (swap! bucket-doc-ids conj (:db/id doc))
-        (redirect (str "/document/" (:db/id doc)))))))
+  (if (:subdomain req)
+    (custom-domain/redirect-to-main req)
+    (let [bucket-count (Integer/parseInt (-> req :params :bucket-count))]
+      (when (< 100 (count @bucket-doc-ids)
+               (clean-bucket-doc-ids)))
+      (if-let [doc-id (ffirst (sort-by (comp - count last)
+                                       (filter (fn [[doc-id subs]]
+                                                 ;; only send them to docs created by the bucketing
+                                                 (and (contains? @bucket-doc-ids doc-id)
+                                                      ;; only send them to docs that are occupied
+                                                      (< 0 (count subs) bucket-count)))
+                                               @sente/document-subs)))]
+        (redirect (str "/document/" doc-id))
+        (let [doc (doc-model/create-public-doc! {:document/chat-bot (rand-nth chat-bot-model/chat-bots)})]
+          (swap! bucket-doc-ids conj (:db/id doc))
+          (redirect (str "/document/" (:db/id doc))))))))
 
 (defpage sente-handshake "/chsk" [req]
   ((:ajax-get-or-ws-handshake-fn @sente/sente-state) req))

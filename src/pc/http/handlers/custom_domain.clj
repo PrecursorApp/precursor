@@ -15,11 +15,23 @@
   (last (re-find (re-pattern (format "(%s)\\.%s" subdomain-pattern (profile/hostname)))
                  (:server-name req))))
 
+(defn redirect-to-main [req]
+  {:status 302
+   :headers {"Location" (str (url/map->URL {:host (profile/hostname)
+                                            :protocol (name (:scheme req))
+                                            :port (:server-port req)
+                                            :path (:uri req)
+                                            :query (:query-string req)}))}
+   :body ""})
+
 ;; XXX: redirect for things that don't match the pattern and aren't (profile/hostname)
 (defn handle-custom-domains [handler req]
   (let [subdomain (parse-subdomain req)]
     (if-not subdomain
-      (handler req)
+      (if (not= (:server-name req)
+                (profile/hostname))
+        (redirect-to-main req)
+        (handler req))
       (handler (assoc req
                       :subdomain subdomain
                       :team (team-model/find-by-subdomain (pcd/default-db) subdomain))))))
