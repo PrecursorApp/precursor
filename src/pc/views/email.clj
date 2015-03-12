@@ -89,23 +89,25 @@
          (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
          "."]]]])))
 
-(defn team-access-grant-html [subdomain access-grant]
-  (hiccup/html
-   [:html
-    [:body
-     [:p
-      "You've been invited to the " subdomain " team on Precursor: "
-      [:a {:href (urls/root :subdomain subdomain :query {:access-grant-token (:access-grant/token access-grant)})}
-       "Accept the invitation"]
-      "."]
-     [:p "When you create a new document in the " subdomain " subdomain, it will be private to your team by default. You'll also have access to all of the documents created by your team."]
-     [:p {:style "font-size: 12px"}
-      (format "Tell us if this message was sent in error %s." (email-address "info"))
-      ;; Add some hidden text so that Google doesn't try to trim these.
-      [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
-       " Sent at "
-       (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
-       "."]]]]))
+(defn team-access-grant-html [team access-grant]
+  (let [subdomain (:team/subdomain team)
+        intro-doc-id (:db/id (:team/intro-doc team))]
+    (hiccup/html
+     [:html
+      [:body
+       [:p
+        "You've been invited to the " subdomain " team on Precursor: "
+        [:a {:href (urls/doc intro-doc-id :subdomain subdomain :query {:access-grant-token (:access-grant/token access-grant)})}
+         "Accept the invitation"]
+        "."]
+       [:p "When you create a new document in the " subdomain " subdomain, it will be private to your team by default. You'll also have access to all of the documents created by your team."]
+       [:p {:style "font-size: 12px"}
+        (format "Tell us if this message was sent in error %s." (email-address "info"))
+        ;; Add some hidden text so that Google doesn't try to trim these.
+        [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
+         " Sent at "
+         (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
+         "."]]]])))
 
 (defn document-permission-grant-html [doc-id image-permission]
   (let [doc-link (urls/doc doc-id)
@@ -134,24 +136,26 @@
          (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
          "."]]]])))
 
-(defn team-permission-grant-html [subdomain]
-  (hiccup/html
-   [:html
-    [:body
-     [:p
-      "You've been added to the " subdomain " team on Precursor. "
-      [:a {:href (urls/root :subdomain subdomain)}
-       (urls/root :subdomain subdomain)]
-      "."]
-     [:p "When you create a new document in the " subdomain " subdomain, it will be private to your team by default."
-      " You'll also have access to all of the documents created by your team."]
-     [:p {:style "font-size: 12px"}
-      (format "Tell us if this message was sent in error %s." (email-address "info"))
-      ;; Add some hidden text so that Google doesn't try to trim these.
-      [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
-       " Sent at "
-       (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
-       "."]]]]))
+(defn team-permission-grant-html [team]
+  (let [subdomain (:team/subdomain team)
+        intro-doc-id (:db/id (:team/intro-doc team))]
+    (hiccup/html
+     [:html
+      [:body
+       [:p
+        "You've been added to the " subdomain " team on Precursor. "
+        [:a {:href (urls/doc intro-doc-id :subdomain subdomain)}
+         (urls/root :subdomain subdomain)]
+        "."]
+       [:p "When you create a new document in the " subdomain " subdomain, it will be private to your team by default."
+        " You'll also have access to all of the documents created by your team."]
+       [:p {:style "font-size: 12px"}
+        (format "Tell us if this message was sent in error %s." (email-address "info"))
+        ;; Add some hidden text so that Google doesn't try to trim these.
+        [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
+         " Sent at "
+         (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
+         "."]]]])))
 
 
 (defn document-access-request-html [doc-id requester]
@@ -172,22 +176,24 @@
          (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
          "."]]]])))
 
-(defn team-access-request-html [subdomain requester]
-  (hiccup/html
-   [:html
-    [:body
-     [:p (str (format-requester requester) " wants to join the " subdomain " team on Precursor.")]
-     [:p "Go to the "
-      [:a {:href (urls/root :subdomain subdomain :query {:overlay "team-settings"})}
-       "manage permissions page"]
-      " to grant or deny access."]
-     [:p {:style "font-size: 12px"}
-      (format "Tell us if this message was sent in error %s." (email-address "info"))
-      ;; Add some hidden text so that Google doesn't try to trim these.
-      [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
-       " Sent at "
-       (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
-       "."]]]]))
+(defn team-access-request-html [team requester]
+  (let [subdomain (:team/subdomain team)
+        intro-doc-id (:db/id (:team/intro-doc team))]
+    (hiccup/html
+     [:html
+      [:body
+       [:p (str (format-requester requester) " wants to join the " subdomain " team on Precursor.")]
+       [:p "Go to the "
+        [:a {:href (urls/doc intro-doc-id :subdomain subdomain :query {:overlay "team-settings"})}
+         "manage permissions page"]
+        " to grant or deny access."]
+       [:p {:style "font-size: 12px"}
+        (format "Tell us if this message was sent in error %s." (email-address "info"))
+        ;; Add some hidden text so that Google doesn't try to trim these.
+        [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
+         " Sent at "
+         (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
+         "."]]]])))
 
 (defn early-access-html [cust]
   (let [cust-name (or (:cust/name cust)

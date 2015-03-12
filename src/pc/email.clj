@@ -89,7 +89,7 @@
                                   (urls/root "/"
                                              :query {:access-grant-token token}
                                              :subdomain subdomain))
-                       :html (view/team-access-grant-html (:team/subdomain team) access-grant)})))
+                       :html (view/team-access-grant-html team access-grant)})))
 
 (defn send-access-grant-email [db access-grant-eid]
   (let [access-grant (d/entity db access-grant-eid)]
@@ -121,10 +121,11 @@
     (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:cust/email grantee)
                        :subject (str (view/format-inviter granter)
-                                     " gave you access to a document on Precursor")
+                                     " invited you to the "
+                                     subdomain " team on Precursor")
                        :text (str "Hey there,\nYou've been invited to the " subdomain " team Precursor: "
                                   (urls/root "/" :query :subdomain subdomain))
-                       :html (view/team-permission-grant-html subdomain)})))
+                       :html (view/team-permission-grant-html team)})))
 
 (defn send-permission-grant-email [db permission-eid]
   (let [permission (d/entity db permission-eid)]
@@ -164,10 +165,11 @@
     (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:cust/email team-owner)
                        :subject (str (view/format-requester requester)
-                                     " wants access to your document on Precursor")
+                                     " wants to join the "
+                                     subdomain " team on Precursor")
                        :text (str "Hey there,\nSomeone wants access to the " subdomain " team on Precursor" (urls/root :subdomain subdomain)
                                   "\nYou can grant or deny them access from the document's settings page.")
-                       :html (view/team-access-request-html subdomain requester)})))
+                       :html (view/team-access-request-html team requester)})))
 
 (defn send-access-request-email [db access-request-eid]
   (let [access-request (d/entity db access-request-eid)]

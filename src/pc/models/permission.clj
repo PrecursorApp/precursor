@@ -53,9 +53,22 @@
                    :permission/team (:db/id team)
                    :permission/cust-ref (:db/id cust)
                    :permission/grant-date (java.util.Date.)
-                   ;;; XXX need to check sent-email in pc.email to guard against multiple txes!
                    :needs-email :email/permission-granted
                    :permission/granter-ref (:db/id granter)
+                   :permission/team-cust (UUID. (:db/id team) (:db/id cust))}])))
+
+(defn grant-first-team-permit [team cust permit]
+  (let [txid (d/tempid :db.part/tx)
+        temp-id (d/tempid :db.part/user)]
+    @(d/transact (pcd/conn)
+                 [{:db/id txid
+                   :transaction/team (:db/id team)}
+                  (web-peer/server-frontend-id temp-id (:db/id team))
+                  {:db/id temp-id
+                   :permission/permits permit
+                   :permission/team (:db/id team)
+                   :permission/cust-ref (:db/id cust)
+                   :permission/grant-date (java.util.Date.)
                    :permission/team-cust (UUID. (:db/id team) (:db/id cust))}])))
 
 (defn convert-access-grant [access-grant cust annotations]

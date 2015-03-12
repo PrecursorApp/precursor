@@ -590,6 +590,10 @@
               :db/unique :db.unique/identity
               :db/doc "unique id for a team that can be shared with the frontend")
 
+   (attribute :team/intro-doc
+              :db.type/ref
+              :db/doc "Document that acts as the team's landing page")
+
    (attribute :document/team
               :db.type/ref
               :db/doc "Team this doc belongs to (if it belongs to a team)")])
