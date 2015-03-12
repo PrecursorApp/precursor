@@ -163,7 +163,7 @@
          This lets me go from ideating to shipping in under 30 minutes."]]
 
     [:article
-     [:h3 "Every product designer should know about Clojure."]
+     [:h3 "Every product designer should know about ClojureScript."]
      [:p "I challenged myself to work outside my expertise, because I knew designing the same way everyday would dilute my passion."]
      [:p "My optimizations are individually subtle but they save me hours every week.
          I spend that time on more important things, like polish.
