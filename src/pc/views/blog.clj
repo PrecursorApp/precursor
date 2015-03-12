@@ -41,7 +41,8 @@
   [
    {:slug "clojure-is-a-product-design-tool"
     :display-in-overview true
-    :scheduled-time (clj-time.format/parse "Wed, 11 Mar 2015 09:00:00 -0800")}
+    ;; 9am dst
+    :scheduled-time (clj-time.format/parse "Thu, 12 Mar 2015 08:00:00 -0800")}
    {:slug "optimizing-om-apps"
     :display-in-overview true}
    {:slug "blue-ocean-made-of-ink"
@@ -102,32 +103,35 @@
        [:p blurb]
        [:p (author-link author)]])]])
 
-(defn single-post [slug]
-  (let [post ((post-fn slug))]
-    [:div.blogpost
-     (blog-head)
-     [:div.blogpost-title
-      [:article
-       [:h2 (:title post)]]]
-     (:body post)]))
+(defn single-post [post]
+  [:div.blogpost
+   (blog-head)
+   [:div.blogpost-title
+    [:article
+     [:h2 (:title post)]]]
+   (:body post)])
 
 (defn render-page [slug]
-  (html (pc.views.content/layout
-         {}
-         [:div.page-blog
-          [:div.nav.nav-head ; keep up to date with outer/nav-head
-           [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} "Precursor"]
-           [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
-           [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
-           [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
-           [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]]
-          (if (post-exists? slug)
-            (single-post slug)
-            (overview))
-          [:div.nav.nav-foot ; keep up to date with outer/nav-foot
-           [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} logomark]
-           [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
-           [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
-           [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
-           [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]
-           [:a.nav-link.nav-twitter {:href "https://twitter.com/PrecursorApp" :title "@PrecursorApp"} twitter]]])))
+  (let [post (when (post-exists? slug)
+               ((post-fn slug)))]
+    (html (pc.views.content/layout
+           {:meta-title (:title post)
+            :meta-description (:blurb post)
+            :meta-image (:image post)}
+           [:div.page-blog
+            [:div.nav.nav-head ; keep up to date with outer/nav-head
+             [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} "Precursor"]
+             [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
+             [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
+             [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
+             [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]]
+            (if post
+              (single-post post)
+              (overview))
+            [:div.nav.nav-foot ; keep up to date with outer/nav-foot
+             [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} logomark]
+             [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
+             [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
+             [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
+             [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]
+             [:a.nav-link.nav-twitter {:href "https://twitter.com/PrecursorApp" :title "@PrecursorApp"} twitter]]]))))
