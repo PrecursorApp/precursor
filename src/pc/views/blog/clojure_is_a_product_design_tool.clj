@@ -44,7 +44,7 @@
 
 (defn clojure-is-a-product-design-tool []
   {:title "Clojure is a product design tool."
-   :blurb "Clojure makes me more efficient and extends my reach as a designer. And it protects me from complex design tools..."
+   :blurb "Clojure makes me more efficient and extends my reach as a designer. And it protects me from complex design workflows..."
    :author "Danny"
    :body
    (list
