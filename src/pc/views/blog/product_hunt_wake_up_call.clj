@@ -1,7 +1,7 @@
 (ns pc.views.blog.product-hunt-wake-up-call
   (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
             [pc.http.urls :as urls]
-            [pc.email :as email]
+            [pc.views.email :as email]
             [pc.profile :as profile]
             [pc.views.common :refer (cdn-path)]
             [pc.views.blog.common :as common]))
