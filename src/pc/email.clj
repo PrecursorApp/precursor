@@ -150,7 +150,7 @@
                                      " wants access to your document on Precursor")
                        :text (str "Hey there,\nSomeone wants access to your document on Precursor: " (urls/doc doc-id)
                                   "\nYou can grant or deny them access from the document's settings page.")
-                       :html (view/access-request-html doc-id requester)})))
+                       :html (view/document-access-request-html doc-id requester)})))
 
 (defn send-team-access-request-email [db access-request]
   (let [requester (:access-request/cust-ref access-request)
