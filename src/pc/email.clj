@@ -86,8 +86,7 @@
                                      " invited you to join the "
                                      subdomain " team on Precursor")
                        :text (str "Hey there,\nYou've been invited to the " subdomain " team Precursor: "
-                                  (urls/root "/"
-                                             :query {:access-grant-token token}
+                                  (urls/root :query {:access-grant-token token}
                                              :subdomain subdomain))
                        :html (view/team-access-grant-html team access-grant)})))
 
@@ -124,7 +123,7 @@
                                      " invited you to the "
                                      subdomain " team on Precursor")
                        :text (str "Hey there,\nYou've been invited to the " subdomain " team Precursor: "
-                                  (urls/root "/" :query :subdomain subdomain))
+                                  urls/root :subdomain subdomain)
                        :html (view/team-permission-grant-html team)})))
 
 (defn send-permission-grant-email [db permission-eid]
