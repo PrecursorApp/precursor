@@ -28,5 +28,8 @@
                             :team/subdomain subdomain
                             :team/uuid (d/squuid)}]))
 
+(defn find-doc-ids [db team]
+  (map :e (d/datoms db :vaet (:db/id team) :document/team)))
+
 (defn public-read-api [team]
   (select-keys team [:team/subdomain :team/uuid]))

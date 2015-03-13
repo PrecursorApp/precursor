@@ -73,31 +73,31 @@
   (repeat doc-count {:db/id current-doc-id
                      :last-update-instant (js/Date.)}))
 
-(defn doc-viewer* [app owner]
+(defn doc-viewer* [app owner {:keys [docs-path] :as opts}]
   (reify
     om/IDisplayName (display-name [_] "Doc Viewer*")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            touched-docs (get-in app [:cust :touched-docs])
-            ;; Not showing created for now, since we haven't been storing that until recently
-            created-docs (get-in app [:cust :created-docs])
-            docs (cond
-                  (nil? touched-docs)
-                  (dummy-docs (:document/id app) 5) ;; loading state
-                  (empty? touched-docs) (dummy-docs (:document/id app) 1) ;; empty state
-                  :else
-                  (->> touched-docs
-                       (filter :last-updated-instant)
-                       (sort-by :last-updated-instant)
-                       (reverse)
-                       (take 100)))]
+            app-docs (get-in app docs-path)
+            display-docs (cond
+                           (nil? app-docs)
+                           (dummy-docs (:document/id app) 5) ;; loading state
+
+                           (empty? app-docs) (dummy-docs (:document/id app) 1) ;; empty state
+
+                           :else
+                           (->> app-docs
+                             (filter :last-updated-instant)
+                             (sort-by :last-updated-instant)
+                             (reverse)
+                             (take 100)))]
         (html
          [:div.menu-view
-          {:class (when (nil? touched-docs) "loading")}
+          {:class (when (nil? app-docs) "loading")}
           [:article
-           (if (seq docs)
-             (om/build docs-list docs))]])))))
+           (if (seq display-docs)
+             (om/build docs-list display-docs))]])))))
 
 ;; Four states
 ;; 1. Logged out
@@ -111,6 +111,13 @@
     om/IRender
     (render [_]
       (if (:cust app)
-        (om/build doc-viewer* app) ;; states 2, 3, 4
+        (om/build doc-viewer* app {:opts {:docs-path [:cust :touched-docs]}}) ;; states 2, 3, 4
         (om/build signup-prompt app) ;; state 1
         ))))
+
+(defn team-doc-viewer [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Team Doc Viewer")
+    om/IRender
+    (render [_]
+      (om/build doc-viewer* app {:opts {:docs-path [:team :recent-docs]}}))))

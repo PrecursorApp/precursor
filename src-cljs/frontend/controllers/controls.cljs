@@ -1174,6 +1174,21 @@
        (when docs
          (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
 
+(defmethod control-event :team-docs-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :team-doc-viewer)))
+
+(defmethod post-control-event! :team-docs-opened
+  [browser-state message _ previous-state current-state]
+  (sente/send-msg
+   (:sente current-state)
+   [:team/fetch-touched]
+   10000
+   (fn [{:keys [docs]}]
+     (when docs
+       (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}])))))
+
 (defmethod control-event :main-menu-opened
   [browser-state message _ state]
   (-> state

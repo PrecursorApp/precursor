@@ -139,6 +139,11 @@
             :role "button"}
            (common/icon :blog)
            [:span "Team"]]
+          [:a.vein.make
+           {:on-click #(cast! :team-docs-opened)
+            :role "button"}
+           (common/icon :clock)
+           [:span "Team Documents"]]
           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
 
 (defn private-sharing [app owner]
@@ -487,7 +492,9 @@
    :document-permissions {:title "Request Access"
                           :component document-access/permission-denied-overlay}
    :team-settings {:title "Team Settings"
-                   :component team/team-settings}})
+                   :component team/team-settings}
+   :team-doc-viewer {:title "Team Documents"
+                     :component doc-viewer/team-doc-viewer}})
 
 (defn overlay [app owner]
   (reify
