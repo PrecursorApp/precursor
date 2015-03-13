@@ -392,7 +392,7 @@
                          :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))})))
 
 (defmethod ws-handler :team/transaction [{:keys [client-id ?data] :as req}]
-  (check-document-access (-> ?data :team/uuid) req :admin)
+  (check-team-access (-> ?data :team/uuid) req :admin)
   (let [team (team-model/find-by-uuid (:db req) (:team/uuid ?data))
         datoms (->> ?data
                  :datoms
