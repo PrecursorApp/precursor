@@ -288,9 +288,10 @@
         (om/build menu (utils/select-in app [state/main-menu-learned-path
                                              state/overlays-path])
                   {:react-key "menu"})
-        (om/build roster (utils/select-in app [state/main-menu-learned-path
-                                               state/overlays-path])
-                  {:react-key "roster"})
+        (when (:team app)
+          (om/build roster (utils/select-in app [state/main-menu-learned-path
+                                                 state/overlays-path])
+                    {:react-key "roster"}))
         (om/build chat (utils/select-in app [state/chat-opened-path
                                              state/chat-button-learned-path
                                              state/browser-settings-path

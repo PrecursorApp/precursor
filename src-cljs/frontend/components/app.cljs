@@ -104,7 +104,8 @@
                                               [:client-id]
                                               [:cust]
                                               [:mouse-type]
-                                              [:cust-data]])
+                                              [:cust-data]
+                                              [:team]])
                       {:react-key "hud"})])
           (html [:div#app]))))))
 
