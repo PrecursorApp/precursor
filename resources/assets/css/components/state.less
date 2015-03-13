@@ -102,12 +102,14 @@
   //     transition+: stroke @now @now @bezier_fadein;
   //   }
   // }
-  .hud-menu {
+  .hud-menu,
+  .hud-roster {
     .icon(stroke; @black);
-    path {
-      transition+: all @run_slow @now @bezier_bounce;
-      transition+: stroke @now @now @bezier_fadein;
-    }
+    // path {
+    //   .transform(translate3d(0,0,0));
+    //   transition+: all @run_slow @now @bezier_bounce;
+    //   transition+: stroke @now @now @bezier_fadein;
+    // }
   }
   .unseen-eids {
     display: none;
@@ -115,7 +117,7 @@
 }
 .state-menu-left { // IMPORTANT VISUAL CHANGES WHILE LEFT SIDE MENU IS ACTIVE
   .hud-menu {
-    .icon(stroke; @black);
+    // .icon(stroke; @black);
     &.close,
     &.back {
       .scale3d(.75);
@@ -142,7 +144,7 @@
 }
 .state-menu-right { // IMPORTANT VISUAL CHANGES WHILE RIGHT SIDE MENU IS ACTIVE
   .hud-roster {
-    .icon(stroke; @black);
+    // .icon(stroke; @black);
     &.close,
     &.back {
       .scale3d(.75);

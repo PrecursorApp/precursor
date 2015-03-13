@@ -18,6 +18,14 @@
     }
   }
 }
+.hud-menu,
+.hud-roster {
+  path {
+    .transform(translate3d(0,0,0));
+    transition+: all @run_slow @now @bezier_deform;
+    transition+: stroke @run_fast @run_fast @bezier_fadein;
+  }
+}
 .hud-menu {
   .hud_toggle_animation(left);
   top: 0;
