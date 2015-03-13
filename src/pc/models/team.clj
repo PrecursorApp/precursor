@@ -16,6 +16,7 @@
     (d/entity db)))
 
 (defn find-by-uuid [db uuid]
+  {:pre [uuid]}
   (some->> (d/datoms db :avet :team/uuid uuid)
     first
     :e
