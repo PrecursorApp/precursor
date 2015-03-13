@@ -26,3 +26,12 @@
 
 (defn overlay-count [state]
   (count (get-in state state/overlays-path)))
+
+(def team-overlays #{:roster :team-settings :team-doc-viewer})
+
+(defn app-overlay-class [state]
+  (when (overlay-visible? state)
+    (str " state-menu "
+         (if (contains? team-overlays (current-overlay state))
+           " state-menu-right "
+           " state-menu-left "))))
