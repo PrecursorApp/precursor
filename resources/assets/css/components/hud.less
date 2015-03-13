@@ -21,7 +21,7 @@
 .hud-menu {
   .hud_toggle_animation(left);
   top: 0;
-  left: 0;
+  right: 0;
   transition: @run @bezier_deform;
   // &.bkg-light {
   //   .icon-menu {
@@ -47,6 +47,12 @@
   //   transition+: all @run_slow @now @bezier_deform;
   //   transition+: stroke @run_fast @run_fast @bezier_fadein;
   // }
+}
+.hud-roster {
+  .hud_toggle_animation(top);
+  top: 0;
+  left: 0;
+  transition: @run @bezier_deform;
 }
 .hud-chat {
   .hud_toggle_animation(right);

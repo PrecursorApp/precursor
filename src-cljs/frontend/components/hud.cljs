@@ -44,6 +44,34 @@
                      (if (overlay-visible? app) "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
 
+(defn roster [app owner] ; all of the events in here need to change to stuff for right side menu
+  (reify
+    om/IDisplayName (display-name [_] "Hud Menu")
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            main-menu-learned? (get-in app state/main-menu-learned-path)]
+        (html
+          [:a.hud-roster.hud-item.hud-toggle.menu-needed
+           {:on-click (if (overlay-visible? app)
+                        #(cast! :overlay-menu-closed)
+                        #(cast! :main-menu-opened))
+            :on-touch-end #(do
+                             (.preventDefault %)
+                             (if (overlay-visible? app)
+                               (cast! :overlay-menu-closed)
+                               (cast! :main-menu-opened)))
+            :role "button"
+            :class (when (overlay-visible? app)
+                     (if (< 1 (overlay-count app))
+                       "back"
+                       "close"))
+            :data-right (when-not main-menu-learned?
+                          (if (overlay-visible? app) "Close Menu" "Open Menu"))
+            :title (when main-menu-learned?
+                     (if (overlay-visible? app) "Close Menu" "Open Menu"))}
+           (common/icon :menu)])))))
+
 (defn mouse-stats [_ owner]
   (reify
     om/IDisplayName (display-name [_] "Mouse Stats")
@@ -258,6 +286,9 @@
         (om/build menu (utils/select-in app [state/main-menu-learned-path
                                              state/overlays-path])
                   {:react-key "menu"})
+        (om/build roster (utils/select-in app [state/main-menu-learned-path
+                                               state/overlays-path])
+                  {:react-key "roster"})
         (om/build chat (utils/select-in app [state/chat-opened-path
                                              state/chat-button-learned-path
                                              state/browser-settings-path
