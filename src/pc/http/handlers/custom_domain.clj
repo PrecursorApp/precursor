@@ -4,7 +4,6 @@
             [pc.models.team :as team-model]
             [pc.profile :as profile]))
 
-;; XXX: redirect for things on the protected list
 (def blacklist #{"www" "admin"})
 
 ;; starts with a letter, only contains letters, numbers, and hyphens
@@ -24,7 +23,6 @@
                                             :query (:query-string req)}))}
    :body ""})
 
-;; XXX: redirect for things that don't match the pattern and aren't (profile/hostname)
 (defn handle-custom-domains [handler req]
   (let [subdomain (parse-subdomain req)]
     (if-not subdomain
@@ -32,9 +30,11 @@
                 (profile/hostname))
         (redirect-to-main req)
         (handler req))
-      (handler (assoc req
-                      :subdomain subdomain
-                      :team (team-model/find-by-subdomain (pcd/default-db) subdomain))))))
+      (if (contains? blacklist subdomain)
+        (redirect-to-main subdomain)
+        (handler (assoc req
+                        :subdomain subdomain
+                        :team (team-model/find-by-subdomain (pcd/default-db) subdomain)))))))
 
 (defn wrap-custom-domains [handler]
   (fn [req]
