@@ -109,6 +109,8 @@
         image-permission (permission-model/create-document-image-permission! doc)]
     (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:cust/email grantee)
+                       :subject (str (view/format-inviter granter)
+                                     " invited you to a document on Precursor")
                        :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc (:db/id doc)))
                        :html (view/document-permission-grant-html (:db/id doc) image-permission)})))
 
