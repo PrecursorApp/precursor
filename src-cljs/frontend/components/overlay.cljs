@@ -509,7 +509,7 @@
           [:div.menu-header
            (for [component overlay-components]
              (html
-              [:h4
+              [:h4.menu-heading
                {:title title}
                (:title component)]))]
           [:div.menu-body

@@ -21,32 +21,38 @@
 .hud-menu {
   .hud_toggle_animation(left);
   top: 0;
+  right: 0;
+  transition: @run @bezier_deform;
+  // &.bkg-light {
+  //   .icon-menu {
+  //     .icon(stroke; @black);
+  //   }
+  // }
+  // &.close,
+  // &.back {
+  //   .scale3d(.75);
+  // }
+  // &.close {
+  //   .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
+  //   .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
+  //   .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
+  // }
+  // &.back {
+  //   .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
+  //   .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
+  //   .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
+  // }
+  // path {
+  //   .transform(translate3d(0,0,0));
+  //   transition+: all @run_slow @now @bezier_deform;
+  //   transition+: stroke @run_fast @run_fast @bezier_fadein;
+  // }
+}
+.hud-roster {
+  .hud_toggle_animation(top);
+  top: 0;
   left: 0;
   transition: @run @bezier_deform;
-  &.bkg-light {
-    .icon-menu {
-      .icon(stroke; @black);
-    }
-  }
-  &.close,
-  &.back {
-    .scale3d(.75);
-  }
-  &.close {
-    .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
-    .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
-    .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
-  }
-  &.back {
-    .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
-    .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
-    .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
-  }
-  path {
-    .transform(translate3d(0,0,0));
-    transition+: all @run_slow @now @bezier_deform;
-    transition+: stroke @run_fast @run_fast @bezier_fadein;
-  }
 }
 .hud-chat {
   .hud_toggle_animation(right);

@@ -44,7 +44,7 @@
 
 (defn clojure-is-a-product-design-tool []
   {:title "Clojure is a product design tool."
-   :blurb "There's something you can learn right now that will make you build better products and extend your reach as a designer..."
+   :blurb "Clojure makes me more efficient and extends my reach as a designer. And it protects me from complex design tools..."
    :author "Danny"
    :body
    (list
@@ -53,16 +53,16 @@
      [:p [:a {:href "http://clojure.org/"} "Clojure"]
          " carries a stark notoriety among developers, despite being a tremendous feat of design. "
          [:a {:href "http://blog.venanti.us/why-clojure/"} "David Jarvis"]
-         ", a former teammate of mine, faced off that reputation during an interview early last year."]]
+         ", a former teammate of mine, encountered that reputation during an interview last year."]]
 
     [:article
      [:blockquote
-      [:p [:strong [:small "[David] ... "]]
-          "there's a fear that I won't be able to pick up whatever language you're working in."]
-      [:p [:strong [:small "[Them] "]]
-          "Yeah... it's Clojure."]
       [:p [:strong [:small "[David] "]]
-          "*strange gurgling sound*"]]]
+          "... so long as it's not Lisp I'm sure we'll be fine!"]
+      [:p [:strong [:small "[Them] "]]
+          "... it's Clojure."]
+      [:p [:strong [:small "[David] "]]
+          "(not knowing what Clojure is) *strange gurgling sound*"]]]
 
     [:article
      [:p "Later that year I experienced Clojure's reputation for myself when I was invited to give a talk about "
@@ -121,7 +121,7 @@
          That's great design, by any standard."]]
 
     [:article
-     [:h3 "And it protects me from complex design tools."]
+     [:h3 "And it protects me from complex design workflows."]
      [:p "The icon system I made for Precursor is a good example of the inherent elegance within ClojureScript."]
      [:p "Using Illustrator, I constrain every icon to a single area.
          This helps me prevent inconsistent proportions."]]
@@ -170,13 +170,15 @@
          And therein lies the point; Clojure makes me more efficient and extends my reach as a designer."]
      [:p "Don’t let fear prevent growth.
          You don’t have to learn Clojure—even though it’d be nice knowing I'm not alone—you just need to learn something.
-         There's something you can learn right now that will make you a build better products.
+         There's something you can learn right now that will help you a build better products.
          Find it and make something."]]
 
     [:article.blogpost-footnote
      [:p
-      "Thanks to "
-      [:a {:href "https://twitter.com/sgrove"} "Sean Grove"] ", and "
-      [:a {:href "https://twitter.com/BrandonBloom"} "Brandon Bloom"]
+      "Thanks "
+      [:a {:href "https://twitter.com/sgrove"       :title "@sgrove"}       "Sean Grove"] ", "
+      [:a {:href "https://twitter.com/BrandonBloom" :title "@BrandonBloom"} "Brandon Bloom"] ", "
+      [:a {:href "https://twitter.com/Venantius"    :title "@Venantius"}    "David Jarvis"] ", & "
+      [:a {:href "https://twitter.com/futurepaul"   :title "@futurepaul"}   "Paul Miller"]
       " for reading drafts of this."]]
     )})
