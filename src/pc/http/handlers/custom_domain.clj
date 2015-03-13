@@ -24,17 +24,19 @@
    :body ""})
 
 (defn handle-custom-domains [handler req]
-  (let [subdomain (parse-subdomain req)]
-    (if-not subdomain
-      (if (not= (:server-name req)
-                (profile/hostname))
-        (redirect-to-main req)
-        (handler req))
-      (if (contains? blacklist subdomain)
-        (redirect-to-main subdomain)
-        (handler (assoc req
-                        :subdomain subdomain
-                        :team (team-model/find-by-subdomain (pcd/default-db) subdomain)))))))
+  (if-not (:server-name req)
+    (handler req)
+    (let [subdomain (parse-subdomain req)]
+      (if-not subdomain
+        (if (not= (:server-name req)
+                  (profile/hostname))
+          (redirect-to-main req)
+          (handler req))
+        (if (contains? blacklist subdomain)
+          (redirect-to-main subdomain)
+          (handler (assoc req
+                          :subdomain subdomain
+                          :team (team-model/find-by-subdomain (pcd/default-db) subdomain))))))))
 
 (defn wrap-custom-domains [handler]
   (fn [req]
