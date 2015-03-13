@@ -241,6 +241,12 @@
    .mq_960({ width: (@size_chat + (@size_chat_step *  8));});
    .mq_640({ width: (@size_chat + (@size_chat_step * 21));});
 }
+.menu_width() {
+  width: @tile * 6;
+  .mq_640({
+    width: @tile * 5;
+  });
+}
 .selection(@color, @opacity) {
   ::-moz-selection {
     color: @color;

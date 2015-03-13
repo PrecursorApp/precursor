@@ -73,6 +73,10 @@
   [target message status {:keys [docs]} state]
   (assoc-in state [:cust :touched-docs] docs))
 
+(defmethod api-event [:team-docs :success]
+  [target message status {:keys [docs]} state]
+  (assoc-in state [:team :recent-docs] docs))
+
 (defmethod api-event [:frontend/frontend-id-state :success]
   [target message status {:keys [context frontend-id-state]} state]
   (if (= (:document/id state)

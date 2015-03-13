@@ -120,7 +120,8 @@
                         (:db-listener-key current-state)
                         (fn [message data & [transient?]]
                           (put! (get-in current-state [:comms :controls]) [message data transient?]))
-                        doc-id
+                        :frontend/transaction
+                        {:document/id doc-id}
                         (:undo-state current-state)
                         sente-state)
     (sente/update-server-offset sente-state)))

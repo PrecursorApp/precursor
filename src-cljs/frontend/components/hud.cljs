@@ -22,26 +22,56 @@
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            main-menu-learned? (get-in app state/main-menu-learned-path)]
+            main-menu-learned? (get-in app state/main-menu-learned-path)
+            menu-visibile? (frontend.overlay/menu-overlay-visible? app)]
         (html
           [:a.hud-menu.hud-item.hud-toggle.menu-needed
-           {:on-click (if (overlay-visible? app)
+           {:on-click (if menu-visibile?
                         #(cast! :overlay-menu-closed)
                         #(cast! :main-menu-opened))
             :on-touch-end #(do
                              (.preventDefault %)
-                             (if (overlay-visible? app)
+                             (if menu-visibile?
                                (cast! :overlay-menu-closed)
                                (cast! :main-menu-opened)))
             :role "button"
-            :class (when (overlay-visible? app)
+            :class (when menu-visibile?
                      (if (< 1 (overlay-count app))
                        "back"
                        "close"))
             :data-right (when-not main-menu-learned?
-                          (if (overlay-visible? app) "Close Menu" "Open Menu"))
+                          (if menu-visibile? "Close Menu" "Open Menu"))
             :title (when main-menu-learned?
-                     (if (overlay-visible? app) "Close Menu" "Open Menu"))}
+                     (if menu-visibile? "Close Menu" "Open Menu"))}
+           (common/icon :menu)])))))
+
+(defn roster [app owner] ; all of the events in here need to change to stuff for right side menu
+  (reify
+    om/IDisplayName (display-name [_] "Hud Menu")
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            main-menu-learned? (get-in app state/main-menu-learned-path)
+            roster-visible? (frontend.overlay/roster-overlay-visible? app)]
+        (html
+          [:a.hud-roster.hud-item.hud-toggle.menu-needed
+           {:on-click (if roster-visible?
+                        #(cast! :roster-closed)
+                        #(cast! :roster-opened))
+            :on-touch-end #(do
+                             (.preventDefault %)
+                             (if roster-visible?
+                               (cast! :roster-closed)
+                               (cast! :roster-opened)))
+            :role "button"
+            :class (when roster-visible?
+                     (if (< 1 (overlay-count app))
+                       "back"
+                       "close"))
+            :data-right (when-not main-menu-learned?
+                          (if roster-visible? "Close Menu" "Open Menu"))
+            :title (when main-menu-learned?
+                     (if roster-visible? "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
 
 (defn mouse-stats [_ owner]
@@ -81,7 +111,7 @@
                 [:a.new-here-item {:href "/home"         :role "button" :title "Home"} "Home"]
                 [:a.new-here-item {:href "/pricing"      :role "button" :title "Pricing"} "Pricing"]
                 [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
-                [:a.new-here-item {:href (auth/auth-url) :role "button" :title "Sign in with Google"} "Sign in"]]]))
+                [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
            (om/build mouse-stats {} {:react-key "mouse-stats"})]
           [:div.tray-negative]])))))
 
@@ -258,6 +288,10 @@
         (om/build menu (utils/select-in app [state/main-menu-learned-path
                                              state/overlays-path])
                   {:react-key "menu"})
+        (when (:team app)
+          (om/build roster (utils/select-in app [state/main-menu-learned-path
+                                                 state/overlays-path])
+                    {:react-key "roster"}))
         (om/build chat (utils/select-in app [state/chat-opened-path
                                              state/chat-button-learned-path
                                              state/browser-settings-path

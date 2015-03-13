@@ -1,37 +1,39 @@
 (ns frontend.core
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
-            [frontend.async :refer [put!]]
             [cljs.reader :as reader]
             [clojure.string :as string]
             [datascript :as d]
-            [goog.dom]
-            [goog.dom.DomHelper]
-            [goog.net.Cookies]
             [frontend.analytics :as analytics]
+            [frontend.async :refer [put!]]
+            [frontend.browser-settings :as browser-settings]
             [frontend.camera :as camera-helper]
             [frontend.clipboard :as clipboard]
             [frontend.components.app :as app]
-            [frontend.controllers.controls :as controls-con]
-            [frontend.controllers.navigation :as nav-con]
             [frontend.components.key-queue :as keyq]
-            [frontend.datascript :as ds]
-            [frontend.db :as db]
-            [frontend.routes :as routes]
+            [frontend.config :as config]
             [frontend.controllers.api :as api-con]
+            [frontend.controllers.controls :as controls-con]
             [frontend.controllers.errors :as errors-con]
-            [frontend.localstorage :as localstorage]
+            [frontend.controllers.navigation :as nav-con]
+            [frontend.datascript :as ds]
+            [frontend.datetime :as datetime]
+            [frontend.db :as db]
+            [frontend.history :as history]
             [frontend.instrumentation :as instrumentation]
+            [frontend.localstorage :as localstorage]
+            [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.state :as state]
+            [frontend.team :as team]
+            [frontend.utils.ajax :as ajax]
+            [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
+            [goog.dom]
+            [goog.dom.DomHelper]
             [goog.events]
             [goog.events.EventType]
-            [om.core :as om :include-macros true]
-            [frontend.history :as history]
-            [frontend.browser-settings :as browser-settings]
-            [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
-            [frontend.utils.ajax :as ajax]
-            [frontend.datetime :as datetime]
             [goog.labs.dom.PageVisibilityMonitor]
+            [goog.net.Cookies]
+            [om.core :as om :include-macros true]
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [cljs.core.UUID]
@@ -112,6 +114,8 @@
                           (long id)))
         cust (some-> (aget js/window "Precursor" "cust")
                (reader/read-string))
+        team (some-> (aget js/window "Precursor" "team")
+               (reader/read-string))
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
                            (reader/read-string))
         tab-id (utils/uuid)
@@ -122,10 +126,15 @@
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
                      :db (db/make-initial-db initial-entities)
+                     ;; team entities go into the team namespace, so we need a separate database
+                     ;; to prevent conflicts
+                     :team-db (db/make-initial-db nil)
                      :document/id document-id
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
                      :cust cust
+                     :team team
+                     :subdomain config/subdomain
                      :show-landing? (:show-landing? utils/initial-query-map)
                      :comms {:controls      controls-ch
                              :api           api-ch
@@ -195,6 +204,7 @@
    {:target container
     :shared {:comms                 comms
              :db                    (:db @state)
+             :team-db               (:team-db @state)
              :cast!                 cast!
              :_app-state-do-not-use state
              :handlers              handlers
@@ -245,6 +255,9 @@
 
     (swap! state assoc :undo-state undo-state)
 
+    (when (get-in @state [:team :team/uuid])
+      (team/setup state))
+
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
     (js/window.addEventListener "mouseup"   handle-canvas-mouse-up false)
@@ -279,12 +292,14 @@
             ;; of a server to store it
             (async/timeout 10000) (do #_(print "TODO: print out history: ")))))))
 
+(def tokens-to-ignore ["login" "blog"])
+
 (defn ^:export setup! []
   (when-not (utils/logging-enabled?)
     (println "To enable logging, set Precursor['logging-enabled'] = true"))
   (js/React.initializeTouchEvents true)
   (let [state (app-state)
-        history-imp (history/new-history-imp)]
+        history-imp (history/new-history-imp tokens-to-ignore)]
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (sente/init state)

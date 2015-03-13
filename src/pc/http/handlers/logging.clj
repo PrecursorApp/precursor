@@ -13,7 +13,7 @@
       ;; log haproxy status if health check is down
       (when (= "/health-check" (:uri req))
         (log/info (:headers req)))
-      (log/infof "%s: %s %s for %s %s in %sms" (:status resp) (:request-method req) (:uri req) (:remote-addr req) cust-str ms))))
+      (log/infof "%s: %s %s %s for %s %s in %sms" (:status resp) (:request-method req) (:server-name req) (:uri req) (:remote-addr req) cust-str ms))))
 
 (defn wrap-logging [handler]
   (fn [req]

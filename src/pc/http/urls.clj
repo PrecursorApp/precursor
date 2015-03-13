@@ -2,8 +2,10 @@
   (:require [cemerick.url :as url]
             [pc.profile :as profile]))
 
-(defn make-url [path & {:keys [query]}]
-  (str (url/map->URL (merge {:host (profile/hostname)
+(defn make-url [path & {:keys [query subdomain]}]
+  (str (url/map->URL (merge {:host (str (when subdomain
+                                          (str subdomain "."))
+                                        (profile/hostname))
                              :protocol (if (profile/force-ssl?)
                                          "https"
                                          "http")
@@ -14,17 +16,17 @@
                             (when query
                               {:query query})))))
 
-(defn root []
-  (make-url "/"))
+(defn root [& {:keys [query subdomain]}]
+  (make-url "/" :query query :subdomain subdomain))
 
-(defn doc [doc-id & {:keys [query]}]
-  (make-url (str "/document/" doc-id) :query query))
+(defn doc [doc-id & {:keys [query subdomain]}]
+  (make-url (str "/document/" doc-id) :query query :subdomain subdomain))
 
-(defn doc-svg [doc-id & {:keys [query]}]
-  (make-url (str "/document/" doc-id ".svg") :query query))
+(defn doc-svg [doc-id & {:keys [query subdomain]}]
+  (make-url (str "/document/" doc-id ".svg") :query query :subdomain subdomain))
 
-(defn doc-png [doc-id & {:keys [query]}]
-  (make-url (str "/document/" doc-id ".png") :query query))
+(defn doc-png [doc-id & {:keys [query subdomain]}]
+  (make-url (str "/document/" doc-id ".png") :query query :subdomain subdomain))
 
 (defn blog-root []
   (make-url "/blog"))

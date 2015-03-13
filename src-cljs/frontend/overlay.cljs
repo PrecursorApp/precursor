@@ -1,5 +1,6 @@
 (ns frontend.overlay
-  (:require [frontend.state :as state]))
+  (:require [clojure.set :as set]
+            [frontend.state :as state]))
 
 (defn clear-overlays [state]
   (assoc-in state state/overlays-path []))
@@ -26,3 +27,19 @@
 
 (defn overlay-count [state]
   (count (get-in state state/overlays-path)))
+
+(def roster-overlays #{:roster :team-settings :team-doc-viewer})
+
+(defn app-overlay-class [state]
+  (when (overlay-visible? state)
+    (str " state-menu "
+         (if (contains? roster-overlays (current-overlay state))
+           " state-menu-right "
+           " state-menu-left "))))
+
+(defn roster-overlay-visible? [state]
+  (some roster-overlays (get-in state state/overlays-path)))
+
+(defn menu-overlay-visible? [state]
+  (and (overlay-visible? state)
+       (seq (set/difference (set (get-in state state/overlays-path)) roster-overlays))))

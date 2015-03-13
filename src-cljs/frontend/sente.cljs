@@ -43,6 +43,9 @@
                                                                   :context {:document-id document-id})])
                 (put! (:errors comms) [:subscribe-to-document-error {:document-id document-id}])))))
 
+(defn subscribe-to-team [sente-state team-uuid]
+  (send-msg sente-state [:team/subscribe {:team/uuid team-uuid}]))
+
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
             (fn [data]
@@ -61,6 +64,12 @@
                  (map ds/datom->transaction datoms)
                  {:server-update true})))
 
+(defmethod handle-message :team/transaction [app-state message data]
+  (let [datoms (:tx-data data)]
+    (d/transact! (:team-db @app-state)
+                 (map ds/datom->transaction datoms)
+                 {:server-update true})))
+
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
   (swap! app-state subs/add-subscriber-data (:client-id data) data))
 
@@ -73,6 +82,12 @@
 (defmethod handle-message :frontend/db-entities [app-state message data]
   (when (= (:document/id data) (:document/id @app-state))
     (d/transact! (:db @app-state)
+                 (:entities data)
+                 {:server-update true})))
+
+(defmethod handle-message :team/db-entities [app-state message data]
+  (when (= (:team/uuid data) (get-in @app-state [:team :team/uuid]))
+    (d/transact! (:team-db @app-state)
                  (:entities data)
                  {:server-update true})))
 

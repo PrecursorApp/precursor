@@ -986,6 +986,10 @@
   [target message _ state]
   (overlay/pop-overlay state))
 
+(defmethod control-event :roster-closed
+  [target message _ state]
+  (overlay/pop-overlay state))
+
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
@@ -1052,14 +1056,6 @@
                                                                        (when name {:cust/name name})
                                                                        (when color {:cust/color-name color}))]))
 
-
-(defmethod post-control-event! :track-external-link-clicked
-  [target message {:keys [path event properties]} previous-state current-state]
-  (let [redirect #(set! js/window.location path)]
-    (go (alt!
-         (mixpanel/managed-track event properties) ([v] (do (utils/mlog "tracked" v "... redirecting")
-                                                            (redirect)))
-         (async/timeout 1000) (redirect)))))
 
 (defmethod control-event :canvas-aligned-to-layer-center
   [browser-state message {:keys [ui-id canvas-size]} state]
@@ -1166,15 +1162,6 @@
     (doseq [layer-group (partition-all 100 layers)]
       (d/transact! db layer-group {:can-undo? true}))))
 
-(defmethod post-control-event! :created-fetched
-  [browser-state message _ previous-state current-state]
-  (sente/send-msg
-   (:sente current-state)
-   [:frontend/fetch-created]
-   10000
-   (fn [{:keys [docs]}]
-     (put! (get-in current-state [:comms :api]) [:created-docs :success {:docs docs}]))))
-
 (defmethod control-event :your-docs-opened
   [browser-state message _ state]
   (-> state
@@ -1192,17 +1179,31 @@
        (when docs
          (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
 
+(defmethod control-event :team-docs-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/add-overlay :team-doc-viewer)))
+
+(defmethod post-control-event! :team-docs-opened
+  [browser-state message _ previous-state current-state]
+  (sente/send-msg
+   (:sente current-state)
+   [:team/fetch-touched {:team/uuid (get-in current-state [:team :team/uuid])}]
+   10000
+   (fn [{:keys [docs]}]
+     (when docs
+       (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}])))))
+
 (defmethod control-event :main-menu-opened
   [browser-state message _ state]
   (-> state
       (overlay/replace-overlay :start)
       (assoc-in state/main-menu-learned-path true)))
 
-; (defmethod control-event :invite-menu-opened
-;   [browser-state message _ state]
-;   (-> state
-;       (overlay/add-overlay :invite)
-;       (assoc-in state/invite-menu-learned-path true)))
+(defmethod control-event :roster-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/replace-overlay :roster)))
 
 (defmethod control-event :sharing-menu-opened
   [browser-state message _ state]
@@ -1225,7 +1226,12 @@
 (defmethod control-event :manage-permissions-opened
   [browser-state message _ state]
   (-> state
-      (overlay/add-overlay :manage-permissions)))
+    (overlay/add-overlay :manage-permissions)))
+
+(defmethod control-event :team-settings-opened
+  [browser-state message _ state]
+  (-> state
+    (overlay/add-overlay :team-settings)))
 
 (defmethod control-event :invite-email-changed
   [browser-state message {:keys [value]} state]
@@ -1261,6 +1267,13 @@
                                                                              :email email
                                                                              :invite-loc :overlay}])))
 
+(defmethod post-control-event! :team-permission-grant-submitted
+  [browser-state message {:keys [email]} previous-state current-state]
+  (let [team-uuid (get-in current-state [:team :team/uuid])]
+    (sente/send-msg (:sente current-state) [:team/send-permission-grant {:team/uuid team-uuid
+                                                                         :email email
+                                                                         :invite-loc :overlay}])))
+
 
 (defmethod post-control-event! :document-privacy-changed
   [browser-state message {:keys [doc-id setting]} previous-state current-state]
@@ -1277,16 +1290,26 @@
                                                                              :invite-loc :overlay}]))
 
 (defmethod post-control-event! :access-request-granted
-  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
-  (sente/send-msg (:sente current-state) [:frontend/grant-access-request {:document/id doc-id
-                                                                          :request-id request-id
-                                                                          :invite-loc :overlay}]))
+  [browser-state message {:keys [request-id doc-id team-uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [(keyword (if doc-id
+                                                     "frontend"
+                                                     "team")
+                                                   "grant-access-request")
+                                          {:document/id doc-id
+                                           :team/uuid team-uuid
+                                           :request-id request-id
+                                           :invite-loc :overlay}]))
 
 (defmethod post-control-event! :access-request-denied
-  [browser-state message {:keys [request-id doc-id]} previous-state current-state]
-  (sente/send-msg (:sente current-state) [:frontend/deny-access-request {:document/id doc-id
-                                                                         :request-id request-id
-                                                                         :invite-loc :overlay}]))
+  [browser-state message {:keys [request-id doc-id team-uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [(keyword (if doc-id
+                                                     "frontend"
+                                                     "team")
+                                                   "deny-access-request")
+                                          {:document/id doc-id
+                                           :team/uuid team-uuid
+                                           :request-id request-id
+                                           :invite-loc :overlay}]))
 
 (defmethod post-control-event! :make-button-clicked
   [target message _ previous-state current-state]

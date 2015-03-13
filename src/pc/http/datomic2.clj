@@ -102,7 +102,7 @@
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
-  [datoms {:keys [document-id client-id session-uuid cust-uuid]}]
+  [datoms {:keys [document-id team-id client-id session-uuid cust-uuid]}]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
         (< 1500 (count datoms))
@@ -125,12 +125,13 @@
                             (map (partial coerce-session-uuid session-uuid))
                             (filter whitelisted?)
                             (remove-float-conflicts)
-                            (add-frontend-ids document-id)
+                            (add-frontend-ids (or document-id team-id))
                             (concat [(merge {:db/id txid
                                              :session/uuid session-uuid
                                              :session/client-id client-id
-                                             :transaction/broadcast true
-                                             :transaction/document document-id}
+                                             :transaction/broadcast true}
+                                            (when document-id {:transaction/document document-id})
+                                            (when team-id {:transaction/team team-id})
                                             (when cust-uuid {:cust/uuid cust-uuid}))])
                             (d/transact conn)
                             deref))}}))

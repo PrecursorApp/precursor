@@ -327,7 +327,7 @@
    ;;       then get rid of document-id
    (attribute :permission/document-ref
               :db.type/ref
-              :db/doc "Document that the permission belongs to")
+              :db/doc "Document that the permission grants access to")
 
    (attribute :permission/cust
               :db.type/long
@@ -337,6 +337,10 @@
    (attribute :permission/cust-ref
               :db.type/ref
               :db/doc "cust that the permission belongs to")
+
+   (attribute :permission/team
+              :db.type/ref
+              :db/doc "team that this permission grants access to")
 
    (attribute :permission/permits
               :db.type/ref
@@ -372,6 +376,11 @@
               :db/unique :db.unique/identity
               :db/doc "Used to add a composite uniqueness constraint on doc and cust.")
 
+   (attribute :permission/team-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on team and cust.")
+
    (attribute :access-request/document
               :db.type/long
               :db/index true
@@ -381,6 +390,10 @@
    (attribute :access-request/document-ref
               :db.type/ref
               :db/doc "document that this request belongs to")
+
+   (attribute :access-request/team
+              :db.type/ref
+              :db/doc "team that this request is requesting access to")
 
    (attribute :access-request/status
               :db.type/ref)
@@ -411,6 +424,11 @@
               :db/unique :db.unique/identity
               :db/doc "Used to add a composite uniqueness constraint on doc and cust.")
 
+   (attribute :access-request/team-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on team and cust.")
+
    ;; used when access is granted to someone without an account
    (attribute :access-grant/document
               :db.type/long
@@ -421,6 +439,10 @@
    (attribute :access-grant/document-ref
               :db.type/ref
               :db/doc "document that this grant belongs to")
+
+   (attribute :access-grant/team
+              :db.type/ref
+              :db/doc "team that this grant grants access to")
 
    (attribute :access-grant/email
               :db.type/string
@@ -453,6 +475,11 @@
               :db/unique :db.unique/identity
               :db/doc "Used to add a composite uniqueness constraint on doc and email.")
 
+   (attribute :access-grant/team-email
+              :db.type/string
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on team and email.")
+
    (attribute :transaction/broadcast
               :db.type/boolean
               :db/doc "Used to annotate transaction and let frontend know if it should broadcast")
@@ -466,6 +493,10 @@
    (attribute :transaction/document
               :db.type/ref
               :db/doc "Annotates transaction with document it belongs to")
+
+   (attribute :transaction/team
+              :db.type/ref
+              :db/doc "Annotates transaction with team it belongs to")
 
    (attribute :migration
               :db.type/ref
@@ -488,8 +519,8 @@
 
    (enum :email/access-grant-created)
    (enum :email/access-request-created)
-   (enum :email/document-permission-for-customer-granted)
    (enum :email/early-access-granted)
+   (enum :email/permission-granted)
    (enum :email/fake)
 
    (attribute :flags
@@ -544,7 +575,25 @@
                :code (let [frontend-id-e (d/entid db :frontend/id)
                            txes (datomic.builtins/build-retract-args db entity-id)]
                        (remove #(= (nth % 2) frontend-id-e) txes))}
-             :db/doc "Like db.fn/retractEntity, but preserves frontend ids")])
+             :db/doc "Like db.fn/retractEntity, but preserves frontend ids")
+
+   (attribute :team/subdomain
+              :db.type/string
+              :db/unique :db.unique/value
+              :db/doc "precursor subdomain for a team")
+
+   (attribute :team/uuid
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "unique id for a team that can be shared with the frontend")
+
+   (attribute :team/intro-doc
+              :db.type/ref
+              :db/doc "Document that acts as the team's landing page")
+
+   (attribute :document/team
+              :db.type/ref
+              :db/doc "Team this doc belongs to (if it belongs to a team)")])
 
 
 (defonce schema-ents (atom nil))

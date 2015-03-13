@@ -19,6 +19,7 @@
             [pc.models.flag :as flag-model]
             [pc.models.layer :as layer-model]
             [pc.models.permission :as permission-model]
+            [pc.models.team :as team-model]
             [slingshot.slingshot :refer (try+ throw+)]))
 
 (defmacro pomegranate-load [artifact]

@@ -15,7 +15,7 @@
   (reset! db-atom @(make-initial-db initial-entities))
   db-atom)
 
-(defn setup-listener! [db key cast! document-id undo-state sente-state]
+(defn setup-listener! [db key cast! sente-event annotations undo-state sente-state]
   (d/listen!
    db
    key
@@ -32,8 +32,8 @@
                    (-> tx-report :tx-meta :bot-layer))
        (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
          (doseq [datom-group (partition-all 1000 datoms)]
-           (sente/send-msg sente-state [:frontend/transaction {:datoms datom-group
-                                                               :document/id document-id}])))))))
+           (sente/send-msg sente-state [sente-event (merge {:datoms datom-group}
+                                                           annotations)])))))))
 
 (defn empty-db? [db]
   (empty? (d/datoms db :eavt)))

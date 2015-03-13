@@ -62,14 +62,8 @@
               (list
                 [:p "Anything you prototype here will only be visible to you.
                     Try signing in and then requesting access to this document."]
-                [:a.menu-button {:href (auth/auth-url)
-                                 :role "button"
-                                 :on-click #(do
-                                              (.preventDefault %)
-                                              (cast! :track-external-link-clicked
-                                                     {:path (auth/auth-url)
-                                                      :event "Signup Clicked"
-                                                      :properties {:source "permission-denied-overlay"}}))}
+                [:a.menu-button {:href (auth/auth-url :source "permission-denied-overlay")
+                                 :role "button"}
                  "Sign In"]))]]])))))
 
 (defn manage-permissions-overlay [app owner]

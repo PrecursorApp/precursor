@@ -199,12 +199,6 @@
           {:class (when (= :small size) "small")
            :role "button"
            :data-after "Sign in"
-           :href (auth/auth-url)
-           :on-click #(do
-                        (.preventDefault %)
-                        (cast! :track-external-link-clicked
-                               {:path (auth/auth-url)
-                                :event "Signup Clicked"
-                                :properties {:source source}}))}
+           :href (auth/auth-url :source source)}
           (icon :google)
           [:div.google-text "Sign in with Google"]])))))

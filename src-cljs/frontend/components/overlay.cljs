@@ -9,6 +9,8 @@
             [frontend.components.common :as common]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.permissions :as permissions]
+            [frontend.components.team :as team]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.state :as state]
@@ -21,7 +23,7 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(defn auth-link [app owner]
+(defn auth-link [app owner {:keys [source] :as opts}]
   (reify
     om/IDisplayName (display-name [_] "Overlay Auth Link")
     om/IRender
@@ -54,18 +56,8 @@
              [:span "Log out"]]]
 
            [:a.vein.make.stick
-            {:href (auth/auth-url)
-             :role "button"
-             :on-click #(do
-                          (.preventDefault %)
-                          (cast! :login-button-clicked)
-                          (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                               :event "Signup Clicked"}))
-             :on-touch-end #(do
-                              (.preventDefault %)
-                              (cast! :login-button-clicked)
-                              (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                   :event "Signup Clicked"}))}
+            {:href (auth/auth-url :source source)
+             :role "button"}
             (common/icon :login)
             [:span "Log in"]]))))))
 
@@ -142,86 +134,28 @@
             :role "button"}
            (common/icon :blog)
            [:span "Blog"]]
+          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
 
-          (om/build auth-link app)])))))
-
-(defn format-access-date [date]
-  (date->bucket date :sentence? true))
-
-;; TODO: add types to db
-(defn access-entity-type [access-entity]
-  (cond (contains? access-entity :permission/document)
-        :permission
-
-        (contains? access-entity :access-grant/document)
-        :access-grant
-
-        (contains? access-entity :access-request/document)
-        :access-request
-
-        :else nil))
-
-;; TODO: this should call om/build somehow
-(defmulti render-access-entity (fn [entity cast!]
-                                 (access-entity-type entity)))
-
-(defmethod render-access-entity :permission
-  [entity cast!]
-  (html
-   [:div.access-card.make {:key (:db/id entity)}
-    [:div.access-avatar
-     [:img.access-avatar-img
-      {:src (utils/gravatar-url (:permission/cust entity))}]]
-    [:div.access-details
-     [:span
-      {:title (:permission/cust entity)} (:permission/cust entity)]
-     [:span.access-status
-      (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]]))
-
-(defmethod render-access-entity :access-grant
-  [entity cast!]
-  (html
-   [:div.access-card.make {:key (:db/id entity)}
-    [:div.access-avatar
-     [:img.access-avatar-img
-      {:src (utils/gravatar-url (:access-grant/email entity))}]]
-    [:div.access-details
-     [:span
-      {:title (:access-grant/email entity)} (:access-grant/email entity)]
-     [:span.access-status
-      (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]]))
-
-(defmethod render-access-entity :access-request
-  [entity cast!]
-  (html
-   [:div.access-card.make {:key (:db/id entity)
-                           :class (if (= :access-request.status/denied (:access-request/status entity))
-                                    "denied"
-                                    "requesting")}
-    [:div.access-avatar
-     [:img.access-avatar-img {:src (utils/gravatar-url (:access-request/cust entity))}]]
-    [:div.access-details
-     [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
-     [:span.access-status
-      (if (= :access-request.status/denied (:access-request/status entity))
-        (str "Was denied access " (format-access-date (:access-request/deny-date entity)))
-        (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
-    [:div.access-options
-     (when-not (= :access-request.status/denied (:access-request/status entity))
-       [:button.access-option
-        {:role "button"
-         :class "negative"
-         :title "Decline"
-         :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
-                                                   :doc-id (:access-request/document entity)})}
-        (common/icon :times)])
-     [:button.access-option
-      {:role "button"
-       :class "positive"
-       :title "Approve"
-       :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
-                                                  :doc-id (:access-request/document entity)})}
-      (common/icon :check)]]]))
+(defn team-start [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Overlay Team Start")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
+        (html
+         [:div.menu-view
+          [:a.vein.make
+           {:on-click #(cast! :team-settings-opened)
+            :role "button"}
+           (common/icon :share)
+           [:span "Permissions"]]
+          [:a.vein.make
+           {:on-click #(cast! :team-docs-opened)
+            :role "button"}
+           (common/icon :clock)
+           [:span "Team Documents"]]
+          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
 
 (defn private-sharing [app owner]
   (reify
@@ -276,7 +210,7 @@
               :data-placeholder-nil "What's your teammate's email?"
               :data-placeholder-forgot "Don't forget to submit!"}]]
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
-             (render-access-entity access-entity cast!))])))))
+             (permissions/render-access-entity access-entity cast!))])))))
 
 (defn public-sharing [app owner]
   (reify
@@ -294,14 +228,8 @@
             Email a friend to invite them to collaborate."]
            (if-not (:cust app)
              [:a.make
-              {:href (auth/auth-url)
-               :role "button"
-               :on-click #(do
-                            (.preventDefault %)
-                            (cast! :track-external-link-clicked
-                                   {:path (auth/auth-url)
-                                    :event "Signup Clicked"
-                                    :properties {:source "username-overlay"}}))}
+              {:href (auth/auth-url :source "username-overlay")
+               :role "button"}
               "Sign Up"]
 
              [:form.menu-invite-form.make
@@ -425,20 +353,8 @@
                  "Sign up and we'll even keep track of all your docs.
                  Never lose a great idea again!"]
                 [:a.make
-                 {:href (auth/auth-url)
-                  :role "button"
-                  :on-click #(do
-                               (.preventDefault %)
-                               (cast! :track-external-link-clicked
-                                      {:path (auth/auth-url)
-                                       :event "Signup Clicked"
-                                       :properties {:source "username-overlay"}}))
-                  :on-touch-end #(do
-                                   (.preventDefault %)
-                                   (cast! :track-external-link-clicked
-                                          {:path (auth/auth-url)
-                                           :event "Signup Clicked"
-                                           :properties {:source "username-overlay"}}))}
+                 {:href (auth/auth-url :source "username-overlay")
+                  :role "button"}
                  "Sign Up"]))]
            (common/mixpanel-badge)])))))
 
@@ -568,14 +484,8 @@
             "Sign up to change how your name appears in chat.
             Let your team know who you are while you collaborate together."]
            [:a.make
-            {:href (auth/auth-url)
-             :role "button"
-             :on-click #(do
-                          (.preventDefault %)
-                          (cast! :track-external-link-clicked
-                                 {:path (auth/auth-url)
-                                  :event "Signup Clicked"
-                                  :properties {:source "username-overlay"}}))}
+            {:href (auth/auth-url :source "username-overlay")
+             :role "button"}
             "Sign Up"]]])))))
 
 (def overlay-components
@@ -591,7 +501,14 @@
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
-                          :component document-access/permission-denied-overlay}})
+                          :component document-access/permission-denied-overlay}
+
+   :roster {:title "Team"
+            :component team-start}
+   :team-settings {:title "Team Permissions"
+                   :component team/team-settings}
+   :team-doc-viewer {:title "Team Documents"
+                     :component doc-viewer/team-doc-viewer}})
 
 (defn overlay [app owner]
   (reify
@@ -606,7 +523,7 @@
           [:div.menu-header
            (for [component overlay-components]
              (html
-              [:h4
+              [:h4.menu-heading
                {:title title}
                (:title component)]))]
           [:div.menu-body

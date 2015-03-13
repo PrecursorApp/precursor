@@ -98,6 +98,7 @@
                         (json/encode (-> view-data
                                        (utils/update-when-in [:initial-entities] serialize-entities)
                                        (utils/update-when-in [:cust] #(-> % escape-entity pr-str))
+                                       (utils/update-when-in [:team] #(-> % escape-entity pr-str))
                                        (assoc :cdn-base-url (common/cdn-base-url)
                                               :manifest-version (pc.assets/asset-manifest-version)
                                               :page-start (java.util.Date.)))))

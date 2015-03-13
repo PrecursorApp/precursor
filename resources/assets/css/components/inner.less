@@ -1,13 +1,14 @@
 .inner {
   .selection(@white; (100 * @opacity_darker_dark));
   .flexy();
-  .transform-origin(right);
+  // .transform-origin(right);
   position: fixed;
   color: @gray_light;
   top: 0;
   right: 0;
   width: 100%;
   height: 100%;
+  overflow: hidden;
   transition: @run @bezier_deform;
   will-change: transform;
   &:active {

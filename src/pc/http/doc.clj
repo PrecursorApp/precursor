@@ -45,7 +45,7 @@
    after it has been saved."
   [doc-id doc-name]
   (spit (format "resources/docs/%s.edn" doc-name)
-        (pr-str (map #(dissoc % :db/id :layer/document)
+        (pr-str (map #(dissoc (into {} %) :db/id :layer/document)
                      ;; we may want to save groups at some point in the future, right now they
                      ;; just take up space.
                      (remove #(= :layer.type/group (:layer/type %))

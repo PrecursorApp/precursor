@@ -4,6 +4,7 @@
             [clj-http.client :as http]
             [clj-time.coerce]
             [clj-time.format]
+            [clojure.string :as str]
             [clojure.tools.logging :as log]
             [pc.profile :as profile]
             [pc.util.base64 :as base64]
@@ -74,3 +75,24 @@
     (catch [:status 404] t
       (log/infof "No google plus info for %s" sub)
       {})))
+
+(defn oauth-uri [csrf-token & {:keys [scopes redirect-path redirect-query redirect-subdomain redirect-csrf-token]
+                               :or {scopes ["openid" "email"]
+                                    redirect-path "/"}}]
+  (let [state (url/url-encode (json/encode (merge {:csrf-token csrf-token
+                                                   :redirect-path redirect-path}
+                                                  (when redirect-query
+                                                    {:redirect-query redirect-query})
+                                                  (when redirect-subdomain
+                                                    {:redirect-subdomain redirect-subdomain})
+                                                  (when redirect-subdomain
+                                                    {:redirect-csrf-token redirect-csrf-token}))))]
+    (str (url/map->URL {:protocol "https"
+                        :host "accounts.google.com"
+                        :path "/o/oauth2/auth"
+                        :query {:client_id (google-client-id)
+                                :response_type "code"
+                                :access_type "online"
+                                :scope (str/join " " scopes)
+                                :redirect_uri (redirect-uri)
+                                :state state}}))))

@@ -220,10 +220,7 @@
                               :onClick (when (:layer/signup-button layer)
                                          #(do
                                             (.preventDefault %)
-                                            (cast! :track-external-link-clicked
-                                                   {:path (auth/auth-url)
-                                                    :event "Signup Clicked"
-                                                    :properties {:source "prcrsr-bot-drawing"}})))
+                                            (set! js/window.location (auth/auth-url :source "prcrsr-bot-drawing"))))
                               :onMouseDown
                               (when-not (:layer/signup-button layer)
                                 #(do

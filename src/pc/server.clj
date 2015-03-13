@@ -11,6 +11,7 @@
             [pc.http.handlers.errors :as errors-handler]
             [pc.http.handlers.logging :as logging-handler]
             [pc.http.handlers.ssl :as ssl-handler]
+            [pc.http.handlers.custom-domain :as custom-domains]
             [pc.http.routes.api :as api]
             [pc.http.routes :as routes]
             [pc.http.routes.blog :as blog]
@@ -35,9 +36,12 @@
           access-grant (some->> req :params :access-grant-token (access-grant-model/find-by-token db))
           permission (some->> req :params :auth-token (permission-model/find-by-token db))]
       (when (and cust access-grant)
-        (permission-model/convert-access-grant access-grant cust {:transaction/document (:db/id (:access-grant/document-ref access-grant))
-                                                                  :cust/uuid (:cust/uuid cust)
-                                                                  :transaction/broadcast true}))
+        (permission-model/convert-access-grant access-grant cust (merge {:cust/uuid (:cust/uuid cust)
+                                                                         :transaction/broadcast true}
+                                                                        (when (:access-grant/document-ref access-grant)
+                                                                          {:transaction/document (:db/id (:access-grant/document-ref access-grant))})
+                                                                        (when (:access-grant/team access-grant)
+                                                                          {:transaction/team (:db/id (:access-grant/team access-grant))}))))
       (handler (-> (cond cust (assoc-in req [:auth :cust] cust)
                          access-grant (assoc-in req [:auth :access-grant] access-grant)
                          :else req)
@@ -75,6 +79,7 @@
                              (compojure.route/resources "/" {:root "public"
                                                              :mime-types {:svg "image/svg"}})
                              #'catch-all)
+    (custom-domains/wrap-custom-domains)
     (auth-middleware)
     (wrap-anti-forgery)
     (wrap-sente-id)

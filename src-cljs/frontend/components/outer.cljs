@@ -305,12 +305,7 @@
          :role "button"}
         "App"]
        [:a.nav-link {:title "Sign in with Google"
-                     :href (auth/auth-url)
-                     :on-click #(do (.preventDefault %)
-                                    ((om/get-shared owner :cast!) :track-external-link-clicked
-                                     {:path (auth/auth-url)
-                                      :event "Signup Clicked"
-                                      :properties {:source "bottom-nav"}}))
+                     :href (auth/auth-url :source "bottom-nav")
                      :role "button"}
         "Sign in"])
      [:a.nav-link.nav-twitter
