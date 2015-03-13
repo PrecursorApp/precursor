@@ -246,7 +246,11 @@
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
 (defmethod ws-handler :frontend/subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document-id) req :admin)
+  (try+
+   (check-document-access (-> ?data :document-id) req :admin)
+   (catch :status t
+     (?reply-fn [:subscribe/error])
+     (throw+)))
   (let [document-id (-> ?data :document-id)
         send-fn (:send-fn @sente-state)
         _ (log/infof "subscribing %s to %s" client-id document-id)
