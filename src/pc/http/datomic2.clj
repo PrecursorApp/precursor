@@ -125,7 +125,7 @@
                             (map (partial coerce-session-uuid session-uuid))
                             (filter whitelisted?)
                             (remove-float-conflicts)
-                            (add-frontend-ids document-id)
+                            (add-frontend-ids (or document-id team-id))
                             (concat [(merge {:db/id txid
                                              :session/uuid session-uuid
                                              :session/client-id client-id
