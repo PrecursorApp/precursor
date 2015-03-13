@@ -206,9 +206,11 @@
           :let [doc-id (get-in stats [:document :db/id])]]
       [:tr
        [:td
-        [:a {:href (urls/doc-svg doc-id)}
-         [:img {:style "width:100;height:100;"
-                :src (urls/doc-svg doc-id)}]]]
+        [:div
+         [:a {:href (urls/doc-svg doc-id)}
+          [:img {:style "width:100;height:100;"
+                 :src (urls/doc-svg doc-id)}]]]
+        [:div doc-id]]
        [:td (h/h (get-in stats [:cust :cust/email]))]
        [:td [:form {:action "/refresh-client-stats" :method "post"}
              (anti-forgery/anti-forgery-field)

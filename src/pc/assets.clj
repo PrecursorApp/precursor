@@ -220,11 +220,10 @@
                      :metadata {:content-length (count manifest-bytes)
                                 :content-type "application/edn"})
       (validate-manifest! (fetch-specific-manifest cdn-bucket manifest-key))
-      (log/infof "skipping moving manifest pointer to %s while we deploy BE" manifest-key)
-      ;;(move-manifest-pointer cdn-bucket manifest-key)
+      (log/infof "moving manifest pointer to %s" manifest-key)
+      (move-manifest-pointer cdn-bucket manifest-key)
       (log/infof "uploading sourcemap to rollbar")
-      (upload-sourcemap sha1 manifest)
-      )))
+      (upload-sourcemap sha1 manifest))))
 
 ;; single agent to prevent dos
 (defonce reload-agent (agent nil :error-handler (fn [a e]
