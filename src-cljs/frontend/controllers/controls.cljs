@@ -1187,7 +1187,7 @@
   [browser-state message _ previous-state current-state]
   (sente/send-msg
    (:sente current-state)
-   [:team/fetch-touched]
+   [:team/fetch-touched {:team/uuid (get-in current-state [:team :team/uuid])}]
    10000
    (fn [{:keys [docs]}]
      (when docs

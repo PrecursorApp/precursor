@@ -337,14 +337,14 @@
                              doc-ids)}))))
 
 (defmethod ws-handler :team/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
-  (let [team-uuid (pc.utils/inspect (-> ?data :team/uuid))
+  (let [team-uuid (-> ?data :team/uuid)
         team (team-model/find-by-uuid (:db req) team-uuid)]
     (check-team-access team-uuid req :admin)
     (let [ ;; TODO: at some point we may want to limit, but it's just a
           ;; list of longs, so meh
           ;; limit (get ?data :limit 100)
           ;; offset (get ?data :offset 0)
-          doc-ids (pc.utils/inspect (vec (team-model/find-doc-ids (:db req) (pc.utils/inspect (into {} team)))))]
+          doc-ids (team-model/find-doc-ids (:db req) team)]
       (log/infof "fetched %s touched in %s for %s" (count doc-ids) (:team/subdomain team) client-id)
       (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
                                            :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
