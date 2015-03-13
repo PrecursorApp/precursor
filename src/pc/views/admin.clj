@@ -1,11 +1,13 @@
 (ns pc.views.admin
   (:require [clj-time.core :as time]
+            [clojure.string]
             [datomic.api :as d]
             [hiccup.core :as h]
             [pc.datomic :as pcd]
             [pc.early-access]
             [pc.http.urls :as urls]
             [pc.models.cust :as cust-model]
+            [pc.models.permission :as permission-model]
             [ring.util.anti-forgery :as anti-forgery]))
 
 (defn count-users [db time]
@@ -139,6 +141,39 @@
           [:td (h/h (:early-access-request/company-name req))]
           [:td (h/h (:early-access-request/employee-count req))]
           [:td (h/h (:early-access-request/use-case req))]])]])))
+
+
+(defn teams []
+  (let [db (pcd/default-db)
+        teams (map #(d/entity db (:e %))
+                   (d/datoms db :aevt :team/subdomain))]
+    (list
+     [:style "td, th { padding: 5px; text-align: left }"]
+     [:form {:action "/create-team" :method "post"}
+      (anti-forgery/anti-forgery-field)
+      [:table
+       [:tr
+        [:td "Subdomain"]
+        [:td [:input {:type "text" :name "subdomain"}]]]
+       [:tr
+        [:td "Customer email address"]
+        [:td [:input {:type "text" :name "cust-email"}]]]
+       [:tr [:td {:colspan 2}
+             [:input {:type "submit" :value "Create team"}]]]]]
+     (if-not (seq teams)
+       [:h4 "Couldn't find any teams :("]
+       (list
+        [:p (str (count teams) " teams:")
+         [:table {:border 1}
+          [:tr
+           [:th "subdomain"]
+           [:th "members"]]
+          (for [team teams]
+            [:tr
+             [:td [:a {:href (urls/root :subdomain (h/h (:team/subdomain team)))}
+                   (h/h (:team/subdomain team))]]
+             [:td (let [permissions (permission-model/find-by-team db team)]
+                    (clojure.string/join ", " (map (comp :cust/email :permission/cust-ref) permissions)))]])]])))))
 
 (defn format-runtime [ms]
   (let [h (int (Math/floor (/ ms (* 1000 60 60))))

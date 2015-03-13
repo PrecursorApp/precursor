@@ -8,6 +8,8 @@
             [pc.datomic :as pcd]
             [pc.http.admin.auth :as auth]
             [pc.http.sente :as sente]
+            [pc.http.team :as team-http]
+            [pc.http.urls :as urls]
             [pc.models.cust :as cust-model]
             [pc.models.flag :as flag-model]
             [pc.views.admin :as admin-content]
@@ -19,6 +21,7 @@
 (defpage base "/admin" [req]
   (hiccup/html (content/layout {}
                                [:div {:style "padding: 40px"}
+                                [:div [:a {:href "/teams"} "Teams"]]
                                 [:div [:a {:href "/early-access"} "Early Access"]]
                                 [:div [:a {:href "/graphs"} "User Graphs"]]
                                 [:div [:a {:href "/clients"} "Clients"]]
@@ -30,6 +33,12 @@
                                [:div {:style "padding: 40px"}
                                 [:h2 "Early access"]
                                 (admin-content/early-access-users)])))
+
+(defpage teams "/teams" [req]
+  (hiccup/html (content/layout {}
+                               [:div {:style "padding: 40px"}
+                                [:h2 "Teams"]
+                                (admin-content/teams)])))
 
 (defpage graphs "/graphs" [req]
   (hiccup/html (content/layout {}
@@ -91,6 +100,23 @@
                                        [:p "All right, granted access to " (:cust/email cust) "."]
                                        [:a {:href "/admin"}
                                         "Go back to the admin page"]
+                                       "."])})))
+
+(defpage create-team [:post "/create-team"] [req]
+  (let [subdomain (some-> req :params (get "subdomain"))
+        cust (some-> req :params (get "cust-email") (#(cust-model/find-by-email (pcd/default-db) %)))]
+    (when (empty? subdomain)
+      (throw+ {:status 400 :public-message "No subdomain"}))
+    (when (empty? cust)
+      (throw+ {:status 400 :public-message "No customer found"}))
+    (let [team (team-http/setup-new-team subdomain cust)]
+      {:status 200 :body (hiccup/html [:div
+                                       [:p "All right, created team "
+                                        [:a {:href (urls/root :subdomain (:team/subdomain team))}
+                                         (:team/subdomain team)]
+                                        "."]
+                                       [:a {:href "/teams"}
+                                        "Go back to the teams page"]
                                        "."])})))
 
 (defn wrap-require-login [handler]
