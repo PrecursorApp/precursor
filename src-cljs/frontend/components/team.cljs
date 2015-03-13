@@ -45,8 +45,6 @@
         (html
          [:div.menu-view
           [:article
-           [:h2.make
-            (:team/subdomain team)]
            [:p.make
             "Any docs you create in the " (:team/subdomain team)
             " subdomain will be private to your team by default."
