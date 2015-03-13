@@ -520,9 +520,6 @@
    (enum :email/access-grant-created)
    (enum :email/access-request-created)
    (enum :email/early-access-granted)
-   ;; XXX: get rid of these two emails and just use permission granted
-   ;;(enum :email/document-permission-for-customer-granted)
-   ;;(enum :email/team-permission-for-customer-granted)
    (enum :email/permission-granted)
    (enum :email/fake)
 

@@ -233,11 +233,12 @@
 (defpage new-doc "/new" [req]
   (frontend-response req))
 
-;; XXX: outer pages for subdomains
 (defn outer-page
   "Response to send for requests that need a document-id that the frontend will route"
   [req]
   (if (:subdomain req)
+    ;; TODO: figure out what to do with outer pages on subdomains, need to
+    ;;       solve the extraneous entity-id problem first
     (custom-domain/redirect-to-main req)
     (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
           ;; TODO: Have to figure out a way to create outer pages without creating extraneous entity-ids

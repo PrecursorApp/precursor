@@ -37,7 +37,6 @@
                    :permission/document-ref (:db/id doc)
                    :permission/cust-ref (:db/id cust)
                    :permission/grant-date (java.util.Date.)
-                   ;;; XXX need to check sent-email in pc.email to guard against multiple txes!
                    :needs-email :email/permission-granted
                    :permission/granter-ref (:db/id granter)
                    :permission/doc-cust (UUID. (:db/id doc) (:db/id cust))}])))

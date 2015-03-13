@@ -130,8 +130,6 @@
                          requested-remainder
                          (first available-remainders))]
       (let [used-client-parts (web-peer/client-parts-for-ns db document-id)
-            ;; do something to protect against over 100K eids
-            ;; XXX should we ensure in the transactor that ids increase properly?
             used-from-partition (set (filter #(= remainder (mod % web-peer/multiple)) used-client-parts))
             start-eid (first (remove #(contains? used-from-partition %)
                                      (iterate (partial + web-peer/multiple) (+ web-peer/multiple remainder))))]
@@ -419,14 +417,12 @@
       (when (:cust/color-name ?data)
         (assert (contains? (schema/color-enums) (:cust/color-name ?data))))
       (let [new-cust (cust/update! cust (select-keys ?data [:cust/name :cust/color-name]))]
-        ;; XXX: do this cross-document
         (doseq [uid (reduce (fn [acc subs]
                               (if (first (filter #(= (:cust/uuid (second %)) (:cust/uuid new-cust))
                                                  subs))
                                 (concat acc (keys subs))
                                 acc))
                             () (vals @document-subs))]
-          ;; TODO: use update-subscriber for everything
           ((:send-fn @sente-state) uid [:frontend/custs {:uuid->cust {(:cust/uuid new-cust) (cust/public-read-api new-cust)}}]))))))
 
 (defmethod ws-handler :frontend/send-invite [{:keys [client-id ?data ?reply-fn] :as req}]

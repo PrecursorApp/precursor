@@ -23,7 +23,6 @@
                    :document/privacy :document.privacy/public}
                   doc-attrs)))
 
-;; XXX: figure out how to give everyone on the team access to the doc
 (defn create-team-doc! [team doc-attrs]
   (create! (merge {:document/name "Untitled"
                    :document/team (:db/id team)
