@@ -18,7 +18,7 @@
             [frontend.components.overlay :as overlay]
             [frontend.cursors :as cursors]
             [frontend.favicon :as favicon]
-            [frontend.overlay :refer [overlay-visible?]]
+            [frontend.overlay]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in select-in]]
@@ -37,12 +37,15 @@
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             chat-opened? (get-in app state/chat-opened-path)
-            right-click-learned? (get-in app state/right-click-learned-path)]
+            overlay-visible? (frontend.overlay/overlay-visible? app)
+            right-click-learned? (get-in app state/right-click-learned-path)
+            ]
 
         (if-let [nav-point (:navigation-point app)]
           (html
-           [:div#app.app.state-menu-right {:class (str (when (overlay-visible? app) " state-menu ")
+           [:div#app.app {:class (str (frontend.overlay/app-overlay-class app)
                                       (when (:show-landing? app) " state-outer "))}
+
             (when (:show-landing? app)
               (om/build outer/outer (select-in app [[:show-landing?]
                                                     [:document/id]
@@ -59,10 +62,10 @@
               (om/build drawing/signup-button {:db/id (:document/id app)}
                         {:react-key "signup-animation"}))
 
-            (when (overlay-visible? app)
+            (when overlay-visible?
               (om/build overlay/overlay app {:react-key "overlay"}))
 
-            [:div.inner {:on-click (when (overlay-visible? app)
+            [:div.inner {:on-click (when overlay-visible?
                                      #(cast! :overlay-closed))
                          :class (when (empty? (:frontend-id-state app))
                                   "loading")

@@ -54,13 +54,13 @@
         (html
           [:a.hud-roster.hud-item.hud-toggle.menu-needed
            {:on-click (if (overlay-visible? app)
-                        #(cast! :overlay-menu-closed)
-                        #(cast! :main-menu-opened))
+                        #(cast! :roster-closed)
+                        #(cast! :roster-opened))
             :on-touch-end #(do
                              (.preventDefault %)
                              (if (overlay-visible? app)
-                               (cast! :overlay-menu-closed)
-                               (cast! :main-menu-opened)))
+                               (cast! :roster-closed)
+                               (cast! :roster-opened)))
             :role "button"
             :class (when (overlay-visible? app)
                      (if (< 1 (overlay-count app))

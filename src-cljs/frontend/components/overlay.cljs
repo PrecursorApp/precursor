@@ -134,10 +134,21 @@
             :role "button"}
            (common/icon :blog)
            [:span "Blog"]]
+          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
+
+(defn team-start [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Overlay Team Start")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
+        (html
+         [:div.menu-view
           [:a.vein.make
            {:on-click #(cast! :team-settings-opened)
             :role "button"}
-           (common/icon :blog)
+           (common/icon :share)
            [:span "Team"]]
           [:a.vein.make
            {:on-click #(cast! :team-docs-opened)
@@ -491,6 +502,9 @@
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
                           :component document-access/permission-denied-overlay}
+
+   :roster {:title "Team"
+            :component team-start}
    :team-settings {:title "Team Settings"
                    :component team/team-settings}
    :team-doc-viewer {:title "Team Documents"

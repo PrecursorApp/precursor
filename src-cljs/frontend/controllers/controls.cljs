@@ -985,6 +985,10 @@
   [target message _ state]
   (overlay/pop-overlay state))
 
+(defmethod control-event :roster-closed
+  [target message _ state]
+  (overlay/pop-overlay state))
+
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
@@ -1195,11 +1199,10 @@
       (overlay/replace-overlay :start)
       (assoc-in state/main-menu-learned-path true)))
 
-; (defmethod control-event :invite-menu-opened
-;   [browser-state message _ state]
-;   (-> state
-;       (overlay/add-overlay :invite)
-;       (assoc-in state/invite-menu-learned-path true)))
+(defmethod control-event :roster-opened
+  [browser-state message _ state]
+  (-> state
+      (overlay/replace-overlay :roster)))
 
 (defmethod control-event :sharing-menu-opened
   [browser-state message _ state]
