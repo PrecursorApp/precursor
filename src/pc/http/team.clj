@@ -34,7 +34,8 @@
                                        :frontend/id (UUID. (:db/id doc) (inc i))))
                               (read-doc "team-intro"))
                              {:db/id (d/tempid :db.part/tx)
-                              :transaction/document (:db/id doc)}
+                              :transaction/document (:db/id doc)
+                              :transaction/broadcast true}
                              {:db/id (:db/id doc)
                               :document/team (:db/id team)}))))
 
