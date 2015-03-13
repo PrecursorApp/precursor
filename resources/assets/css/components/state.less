@@ -8,8 +8,8 @@
     background: @dye_outer;
     box-shadow: 0 8px 21px 0 fade(@black, 21);
     transition: @run_slower @bezier_deform;
-    .mq_1920({.transform(translate3d((@tile * 2), 0, 0); scale3d(.8, .8, 1));});
-    .mq_1280({.transform(translate3d((@tile * 4), 0, 0); scale3d(.8, .8, 1));});
+    // .mq_1920({.transform(translate3d((@tile * 2), 0, 0); scale3d(.8, .8, 1));});
+    // .mq_1280({.transform(translate3d((@tile * 4), 0, 0); scale3d(.8, .8, 1));});
     &:hover {
       box-shadow: 0 21px 34px 0 fade(@black, 21);
       transition-duration: @run;
@@ -132,6 +132,11 @@
       .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
       .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
     }
+  }
+  .inner {
+    .transform-origin(right);
+    .mq_1920({.transform(translate3d((@tile * 2), 0, 0); scale3d(.8, .8, 1));});
+    .mq_1280({.transform(translate3d((@tile * 4), 0, 0); scale3d(.8, .8, 1));});
   }
   // .menu-view {
   //   &:not(:first-child) {
