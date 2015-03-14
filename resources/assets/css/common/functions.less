@@ -40,6 +40,18 @@
     @{property}: extract(@x, 2);
   }.axis_x(@x);
 }
+.selection(@color, @opacity) {
+  ::-moz-selection {
+    color: @color;
+    background: fade(@color, @opacity);
+    text-shadow: none;
+  }
+  ::selection {
+    color: @color;
+    background: fade(@color, @opacity);
+    text-shadow: none;
+  }
+}
 .placeholder_style(@property; @value) {
   &::-webkit-input-placeholder {@{property}: @value;}
   &:-moz-placeholder           {@{property}: @value;}
@@ -218,9 +230,9 @@
   -webkit-animation-timing-function: @arguments;
           animation-timing-function: @arguments;
 }
-
-// ad hoc
-
+//
+// positions icons in radial menu
+//
 .shape_position(@array; @count: length(@array); @name_value: -2; @x_value: -1; @y_value: 0; @icon_scale: .2) when (@count > (length(@array) / 3)) {
   .shape_position(@array; (@count - 2); (@name_value - 1); (@x_value - 1); (@y_value - 1); @icon_scale);    // <-- Loop to next iteration until count is 0
   @name:     extract(@array, (@count + @name_value));                                                       //
@@ -228,67 +240,58 @@
   @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
   &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
 }
+//
+// animates hud buttons when app loads
+//
 .hud_toggle_animation(...) {
   .animation(~"in-fade-@{arguments}" @run_slow);
 }
+//
+// responsive width sizes for chat
+//
 .chat_width(...) {
-  // .invert(@x) {
-  //   width: ((100% - @x) + (@x * (.01 * unit(100% - @x))));
-  // }
-  // .positive(@a) when not (@a = negative) {
   width: @size_chat;
-  // min-width: @tile;
-  // max-width: calc(~"100% -" @tile);
-  .mq_1920({ width: @size_chat + @size_chat_step1;});
-  .mq_1600({ width: @size_chat + @size_chat_step2;});
-  .mq_1280({ width: @size_chat + @size_chat_step3;});
-   .mq_960({ width: @size_chat + @size_chat_step4;});
-   // .mq_640({ width: @size_chat + @size_chat_step5;});
+  .mq_1920({ width: @chat_1920; });
+  .mq_1600({ width: @chat_1600; });
+  .mq_1280({ width: @chat_1280; });
+  .mq_960({  width: @chat_0960;  });
   .chat(@a) when not (@a = menu) {
     min-width: @tile;
     max-width: calc(~"100% -" @tile);
-    .mq_640({ width: @size_chat + @size_chat_step5;});
+    .mq_640({ width: @chat_0640;});
   }.chat(@arguments);
   .menu(@a) when (@a = menu) {
-    .mq_640({ width: 100%;});
+    .mq_640({ width: 100%; });
   }.menu(@arguments);
-  // }.positive(@arguments);
-  // .negative(@a) when (@a = negative) {
-  //   // .invert(@size_chat);
-  //   // width: ((100% - @size_chat) + (@size_chat * (.01 * unit(100% - @size_chat))));
-  //   // min-width: calc(~"100% -" @tile);
-  //   // max-width: @tile;
-  //   // min-width: @tile;
-  //   // max-width: calc(~"100% -" @tile);
-  //   width: 1.25 * (100% - @size_chat);
-  //   .mq_1920({ width: 1.25 * (100% - @size_chat_step1);});
-  //   .mq_1600({ width: 1.25 * (100% - @size_chat_step2);});
-  //   .mq_1280({ width: 1.25 * (100% - @size_chat_step3);});
-  //    .mq_960({ width: 1.25 * (100% - @size_chat_step4);});
-  //    .mq_640({ width: 1.25 * (100% - @size_chat_step5);});
-  // }.negative(@arguments);
 }
-.menu_width() {
-  // width: @tile * 6;
-  // .mq_640({
-  //   width: @tile * 5;
-  // });
-  width: @tile * 6;
-  .mq_1920({ width: (@size_chat + (@size_chat_step *  1));});
-  .mq_1600({ width: (@size_chat + (@size_chat_step *  2));});
-  .mq_1280({ width: (@size_chat + (@size_chat_step *  3));});
-   .mq_960({ width: (@size_chat + (@size_chat_step *  8));});
-   .mq_640({ width: (@size_chat + (@size_chat_step * 21));});
-}
-.selection(@color, @opacity) {
-  ::-moz-selection {
-    color: @color;
-    background: fade(@color, @opacity);
-    text-shadow: none;
-  }
-  ::selection {
-    color: @color;
-    background: fade(@color, @opacity);
-    text-shadow: none;
+//
+// transform canvas when left/right menu is active
+//
+.canvas_off(...) {
+  .left(@a) when not (@a = left) {
+    @init: 5%;
+    @1920: @canvas_pull_1920;
+    @1600: @canvas_pull_1600;
+    @1280: @canvas_pull_1280;
+    @0960: @canvas_pull_0960;
+    @0640: 100%;
+  }.left(@arguments);
+  .right(@a) when (@a = left) {
+    @init: -5%;
+    @1920: -@canvas_pull_1920;
+    @1600: -@canvas_pull_1600;
+    @1280: -@canvas_pull_1280;
+    @0960: -@canvas_pull_0960;
+    @0640: -100%;
+  }.right(@arguments);
+  .inner {
+    .transform(translate3d(@init, 0, 0); scale3d(.8, .8, 1));
+    .transform-origin(@arguments);
+    @{arguments}: 0;
+    .mq_1920({ .transform(translate3d(@1920, 0, 0) scale3d(.8, .8, 1)); });
+    .mq_1600({ .transform(translate3d(@1600, 0, 0) scale3d(.8, .8, 1)); });
+    .mq_1280({ .transform(translate3d(@1280, 0, 0) scale3d(.8, .8, 1)); });
+     .mq_960({ .transform(translate3d(@0960, 0, 0) scale3d(.8, .8, 1)); });
+     .mq_640({ .transform(translate3d(@0640, 0, 0) scale3d(.8, .8, 1)); });
   }
 }

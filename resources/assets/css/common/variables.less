@@ -130,10 +130,28 @@ select,     82.66px,  49.71px;
 ~"pink",   @pink;
 
 @size_chat: 25%;
-@size_chat_step: 3.125%;
+@chat_step: 3.125%;
 
-@size_chat_step1: @size_chat_step *  1;
-@size_chat_step2: @size_chat_step *  2;
-@size_chat_step3: @size_chat_step *  3;
-@size_chat_step4: @size_chat_step *  8;
-@size_chat_step5: @size_chat_step * 21;
+@chat_step_1920: @chat_step *  1;
+@chat_step_1600: @chat_step *  2;
+@chat_step_1280: @chat_step *  3;
+@chat_step_0960: @chat_step *  8;
+@chat_step_0640: @chat_step * 21;
+
+@chat_1920: @size_chat + @chat_step_1920;
+@chat_1600: @size_chat + @chat_step_1600;
+@chat_1280: @size_chat + @chat_step_1280;
+@chat_0960: @size_chat + @chat_step_0960;
+@chat_0640: @size_chat + @chat_step_0640;
+
+@canvas_1920: 100% - @chat_1920;
+@canvas_1600: 100% - @chat_1600;
+@canvas_1280: 100% - @chat_1280;
+@canvas_0960: 100% - @chat_0960;
+@canvas_0640: 100% - @chat_0640;
+
+@canvas_pull_1920: 5% + @chat_step_1920;
+@canvas_pull_1600: 5% + @chat_step_1600;
+@canvas_pull_1280: 5% + @chat_step_1280;
+@canvas_pull_0960: 5% + @chat_step_0960;
+@canvas_pull_0640: 5% + @chat_step_0640;
