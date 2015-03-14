@@ -231,7 +231,13 @@
   (content/app (common-view-data req)))
 
 (defpage new-doc "/new" [req]
-  (frontend-response req))
+  (if (:subdomain req)
+    (if (and (:team req)
+             (auth/logged-in? req)
+             (auth/has-team-permission? (pcd/default-db) (:team req) (:auth req) :admin))
+      (frontend-response req)
+      (custom-domain/redirect-to-main req))
+    (frontend-response req)))
 
 (defn outer-page
   "Response to send for requests that need a document-id that the frontend will route"
