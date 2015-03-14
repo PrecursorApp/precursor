@@ -3,10 +3,12 @@
   width: 100%;
   min-height: 100vh;
   overflow-x: hidden;
+  // transition: padding @run_slower @bezier_deform;
 }
 .menu-header {
   .flex(0 0 @tile);
   .flexy(center);
+  // transition: padding @run_slower @bezier_deform;
   a {
     .flexy(center, center);
     width: @tile;
@@ -33,23 +35,31 @@
 .menu-heading {
   // .flex(0 1 100%);
   .animation(in-fade-top (@run * 3));
-  .menu_width();
+  // .menu_width();
   text-overflow: ellipsis;
   white-space: nowrap;
   margin: 0;
-  padding: 0 @menu_padding 0 @tile;
+  padding: 0 @tile;
+  // padding: 0 @menu_padding 0 @tile;
   // padding: 0 @tile;
   overflow: hidden;
   cursor: default;
+  // .mq_640({
+  //   width: 100%;
+  //   padding: 0 @tile;
+  // });
   &:not(:last-of-type) {
     display: none;
   }
 }
 .menu-body {
+  .box-sizing(content-box);
   .flex(1);
   .flexy();
-  .menu_width();
+  // .menu_width();
+  .chat_width(menu);
   position: relative;
+  // background: fade(red, 5);
   // width: @tile * 6;
   // .mq_640({
   //   width: @tile * 5;
@@ -98,6 +108,7 @@
       &[role="button"] {
         .flexy(center, center);
         height: @tile;
+        // max-width: @tile_menu_max;
         margin-bottom: @tile;
         transition: @run_fast @bezier_fadein;
         border: 1px solid @font_color;
