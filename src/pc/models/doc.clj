@@ -50,7 +50,7 @@
                   :where [[?t :document/invalid-id ?invalid-id]]}
                 db invalid-id)
            ffirst
-           (find-by-id team db)))
+           (find-by-team-and-id db team)))
 
 (defn find-by-invalid-id [db invalid-id]
   (some->> (d/q '{:find [?t]

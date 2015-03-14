@@ -137,4 +137,7 @@
             result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
         (if (= :success (:status result))
           (put! (:nav comms) [:navigate! {:path (str "/document/" (get-in result [:document :db/id]))}])
-          (put! (:errors comms) [:api-error result])))))
+          (if (and (= :unauthorized-to-team (get-in result [:response :error]))
+                   (get-in result [:response :redirect-url]))
+            (set! js/window.location (get-in result [:response :redirect-url]))
+            (put! (:errors comms) [:api-error result]))))))

@@ -28,5 +28,8 @@
 (defn doc-png [doc-id & {:keys [query subdomain]}]
   (make-url (str "/document/" doc-id ".png") :query query :subdomain subdomain))
 
+(defn blog-root []
+  (make-url "/blog"))
+
 (defn blog-url [slug]
   (make-url (str "/blog/" slug)))

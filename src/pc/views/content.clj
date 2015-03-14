@@ -60,20 +60,20 @@
     [:link {:href (cdn-path "/img/2208x1182.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
 
     [:meta {:name "og:card"         :content "summary"}]
-    [:meta {:name "og:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
     (if-let [image-url (:meta-image view-data)]
       [:meta {:name "og:image" :content image-url}]
       (list [:meta {:name "og:image" :content (cdn-path "/img/precursor-logo.png")}]
             [:meta {:name "og:image:width":content "1200"}]
             [:meta {:name "og:image:height" :content "1200"}]))
     [:meta {:name "og:site_name"    :content "Precursor"}]
-    [:meta {:name "og:title"        :content "Fast prototyping web app, makes collaboration easy."}]
+    [:meta {:name "og:title"        :content (or (:meta-title view-data)
+                                                 "Fast prototyping web app, makes collaboration easy.")}]
+    [:meta {:name "og:description"  :content (or (:meta-description view-data)
+                                                 "Precursor lets you prototype product design wireframes with a fast and simple web app.")}]
     [:meta {:name "og:type"         :content "website"}]
     [:meta {:name "og:url"          :content  (urls/root)}]
 
     [:meta {:name "twitter:card"         :content "summary_large_image"}]
-    [:meta {:name "twitter:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
-
     (if-let [image-url (:meta-image view-data)]
       [:meta {:name "twitter:image" :content image-url}]
       (list [:meta {:name "twitter:image:src"    :content (cdn-path "/img/precursor-logo.png")}]
@@ -81,7 +81,10 @@
             [:meta {:name "twitter:image:height" :content "1200"}]))
     [:meta {:name "twitter:site"         :content "@PrecursorApp"}]
     [:meta {:name "twitter:site:id"      :content "2900854766"}]
-    [:meta {:name "twitter:title"        :content "Fast prototyping web app, makes collaboration easy."}]
+    [:meta {:name "twitter:title"        :content (or (:meta-title view-data)
+                                                      "Fast prototyping web app, makes collaboration easy.")}]
+    [:meta {:name "twitter:description"  :content (or (:meta-description view-data)
+                                                      "Precursor lets you prototype product design wireframes with a fast and simple web app.")}]
     [:meta {:name "twitter:url"          :content (urls/root)}]
 
     [:link {:rel "icon"             :href (cdn-path "/favicon.ico")}]
@@ -133,7 +136,7 @@
 (defn interesting* [doc-ids]
   [:div.interesting
    (if-not (seq doc-ids)
-     [:p "Nothing interesting today"])
+     [:p "No interesting docs"])
    (for [doc-id doc-ids]
      [:div.doc-preview
       [:a {:href (urls/doc-svg doc-id)}

@@ -44,30 +44,31 @@
 
 (defn clojure-is-a-product-design-tool []
   {:title "Clojure is a product design tool."
-   :blurb "Clojure makes me more efficient and extends my reach as a designer. And it protects me from complex design tools..."
+   :blurb "Clojure makes me more efficient and extends my reach as a designer. And it protects me from complex design workflows..."
    :author "Danny"
+   :image (cdn-path "/blog/clojurescript-is-a-design-tool/illustrator-onoff.gif")
    :body
    (list
     [:article
      [:p "As a product designer I’m obsessed with solving problems, and lately I’ve been designing with a niche programming language."]
      [:p [:a {:href "http://clojure.org/"} "Clojure"]
-         " carries a stark notoriety among developers, despite being a tremendous feat of design. "
-         [:a {:href "http://blog.venanti.us/why-clojure/"} "David Jarvis"]
-         ", a former teammate of mine, encountered that reputation during an interview last year."]]
+      " carries a stark notoriety among developers, despite being a tremendous feat of design. "
+      [:a {:href "http://blog.venanti.us/why-clojure/"} "David Jarvis"]
+      ", a former teammate of mine, encountered that reputation during an interview last year."]]
 
     [:article
      [:blockquote
       [:p [:strong [:small "[David] "]]
-          "... so long as it's not Lisp I'm sure we'll be fine!"]
+       "... so long as it's not Lisp I'm sure we'll be fine!"]
       [:p [:strong [:small "[Them] "]]
-          "... it's Clojure."]
+       "... it's Clojure."]
       [:p [:strong [:small "[David] "]]
-          "(not knowing what Clojure is) *strange gurgling sound*"]]]
+       "(not knowing what Clojure is) *strange gurgling sound*"]]]
 
     [:article
      [:p "Later that year I experienced Clojure's reputation for myself when I was invited to give a talk about "
-         [:a {:href "https://github.com/clojure/clojurescript"} "ClojureScript"]
-         "—a variant of Clojure that compiles to JavaScript."]
+      [:a {:href "https://github.com/clojure/clojurescript"} "ClojureScript"]
+      "—a variant of Clojure that compiles to JavaScript."]
      [:p "After the talk, one developer told me that he had never met another designer that used Clojure.
          At first I was surprised, and then concerned."]
      [:p "\"Maybe there's a reason no other designers do this\", I thought.
@@ -77,17 +78,17 @@
     [:article
      [:h3 "I didn't get it initially."]
      [:p "At that time I was still working at CircleCI, and my answer reflected my experiences with a recent rewrite of our "
-         [:a {:href "https://github.com/circleci/frontend"} "front end"]
-         " web app to "
-         [:a {:href "https://github.com/omcljs/om"} "Om"]
-         "—a "
-         [:a {:href "http://facebook.github.io/react/"} "React"]
-         " wrapper for building interfaces."
-         "The ordeal taught me discipline but it also made my job harder."]
+      [:a {:href "https://github.com/circleci/frontend"} "front end"]
+      " web app to "
+      [:a {:href "https://github.com/omcljs/om"} "Om"]
+      "—a "
+      [:a {:href "http://facebook.github.io/react/"} "React"]
+      " wrapper for building interfaces."
+      "The ordeal taught me discipline but it also made my job harder."]
      [:p "The Clojure syntax is completely chaotic, with parentheses everywhere—at least that's what I thought last year."]
      [:p "Since then I've since left CircleCI to work full-time on "
-         [:a {:href "https://precursorapp.com/home"} "Precursor"]
-         ", a collaborative prototyping tool that also has a ClojureScript front end."]
+      [:a {:href "https://precursorapp.com/home"} "Precursor"]
+      ", a collaborative prototyping tool that also has a ClojureScript front end."]
      [:p "As opposed to last year, not only would I say I enjoy writing ClojureScript now but—along with Om—it has ruined traditional HTML and JavaScript for me.
          I have a newfound sense of freedom, and that's why I started learning code in the first place."]]
 
@@ -163,7 +164,7 @@
          This lets me go from ideating to shipping in under 30 minutes."]]
 
     [:article
-     [:h3 "Every product designer should know about Clojure."]
+     [:h3 "Every product designer should know about ClojureScript."]
      [:p "I challenged myself to work outside my expertise, because I knew designing the same way everyday would dilute my passion."]
      [:p "My optimizations are individually subtle but they save me hours every week.
          I spend that time on more important things, like polish.
@@ -172,6 +173,12 @@
          You don’t have to learn Clojure—even though it’d be nice knowing I'm not alone—you just need to learn something.
          There's something you can learn right now that will help you a build better products.
          Find it and make something."]]
+
+    [:article.blogpost-author
+     [:p
+      "Written by "
+      [:a {:href "https://twitter.com/dannykingme"} "Danny King"]
+      "."]]
 
     [:article.blogpost-footnote
      [:p

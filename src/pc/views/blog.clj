@@ -2,6 +2,7 @@
   (:require [hiccup.core :refer [html]]
             [clj-time.core :as time]
             [clj-time.format]
+            [pc.http.urls :as urls]
             [pc.profile :as profile]
             [pc.views.content]
             [pc.util.http :as http-util]))
@@ -26,36 +27,44 @@
 (defn post-url [slug]
   (str "/blog/" slug))
 
-(defn display-in-overview? [{:keys [display-in-overview scheduled-time] :as slug-map}]
+(defn display-in-overview? [{:keys [display-in-overview pub-date] :as slug-map}]
   (and display-in-overview
-       (or (not scheduled-time)
-           (time/after? (time/now) scheduled-time))))
+       (or (not pub-date)
+           (time/after? (time/now) pub-date))))
 
 (def slugs
   "Sorted array of slugs, assumes the post content can be found in the
    function returned by post-fn
-   Add a :scheduled-time key to prevent the post from showing up in the
+   :unique-id is a stable id for the RSS feed, it can never change
+   Add a :pub-date key to prevent the post from showing up in the
    overview until after the scheduled time. Posts will still be accessible
    to anyone with the direct URL. Time should be in the format Fri, 30 Jan 2015 01:12:00 -0800
    Be careful for daylight savings time!"
   [
    {:slug "clojure-is-a-product-design-tool"
+    :unique-id "clojure-is-a-product-design-tool"
     :display-in-overview true
-    :scheduled-time (clj-time.format/parse "Wed, 11 Mar 2015 09:00:00 -0800")}
+    ;; 9am dst
+    :pub-date (clj-time.format/parse "Thu, 12 Mar 2015 08:00:00 -0800")}
    {:slug "optimizing-om-apps"
-    :display-in-overview true}
+    :unique-id "optimizing-om-apps"
+    :display-in-overview true
+    :pub-date (clj-time.format/parse "Mon, 2 Mar 2015 14:00:00 -0800")}
    {:slug "blue-ocean-made-of-ink"
-    :display-in-overview true}
+    :unique-id "blue-ocean-made-of-ink"
+    :display-in-overview true
+    :pub-date (clj-time.format/parse "Fri, 30 Jan 2015 08:00:00 -0800")}
    {:slug "private-docs-early-access"
+    :unique-id "private-docs-early-access"
     :display-in-overview false}
    {:slug "product-hunt-wake-up-call"
-    :display-in-overview true}
+    :unique-id "product-hunt-wake-up-call"
+    :display-in-overview true
+    :pub-date (clj-time.format/parse "Fri, 9 Jan 2015 08:00:00 -0800")}
    {:slug "interactive-layers"
-    :display-in-overview true}
-   ;; scheduled time example
-   ;; {:slug "scheduled-time-example"
-   ;;  :display-in-overview true
-   ;;  :scheduled-time (clj-time.format/parse "Fri, 30 Jan 2015 01:12:00 -0800")}
+    :unique-id "interactive-layers"
+    :display-in-overview true
+    :pub-date (clj-time.format/parse "Fri, 4 Dec 2014 08:00:00 -0800")}
    ])
 
 (defn post-exists? [slug]
@@ -102,32 +111,59 @@
        [:p blurb]
        [:p (author-link author)]])]])
 
-(defn single-post [slug]
-  (let [post ((post-fn slug))]
-    [:div.blogpost
-     (blog-head)
-     [:div.blogpost-title
-      [:article
-       [:h2 (:title post)]]]
-     (:body post)]))
+(defn single-post [post]
+  [:div.blogpost
+   (blog-head)
+   [:div.blogpost-title
+    [:article
+     [:h2 (:title post)]]]
+   (:body post)])
 
 (defn render-page [slug]
-  (html (pc.views.content/layout
-         {}
-         [:div.page-blog
-          [:div.nav.nav-head ; keep up to date with outer/nav-head
-           [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} "Precursor"]
-           [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
-           [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
-           [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
-           [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]]
-          (if (post-exists? slug)
-            (single-post slug)
-            (overview))
-          [:div.nav.nav-foot ; keep up to date with outer/nav-foot
-           [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} logomark]
-           [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
-           [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
-           [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
-           [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]
-           [:a.nav-link.nav-twitter {:href "https://twitter.com/PrecursorApp" :title "@PrecursorApp"} twitter]]])))
+  (let [post (when (post-exists? slug)
+               ((post-fn slug)))]
+    (html (pc.views.content/layout
+           {:meta-title (:title post)
+            :meta-description (:blurb post)
+            :meta-image (:image post)}
+           [:div.page-blog
+            [:div.nav.nav-head ; keep up to date with outer/nav-head
+             [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} "Precursor"]
+             [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
+             [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
+             [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
+             [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]]
+            (if post
+              (single-post post)
+              (overview))
+            [:div.nav.nav-foot ; keep up to date with outer/nav-foot
+             [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} logomark]
+             [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
+             [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
+             [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
+             [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]
+             [:a.nav-link.nav-twitter {:href "https://twitter.com/PrecursorApp" :title "@PrecursorApp"} twitter]]]))))
+
+(defn slug->rss [slug pub-date unique-id]
+  (let [post ((post-fn slug))]
+    [:item
+     [:title (:title post)]
+     [:link (urls/blog-url slug)]
+     [:description (str "<![CDATA["
+                        (html (:body post))
+                        "]]>")]
+     [:pubDate (clj-time.format/unparse (clj-time.format/formatters :rfc822) pub-date)]
+     [:author (:author post)]
+     [:guid {:isPermaLink "false"} unique-id]]))
+
+(defn generate-rss []
+  (->> [:rss {:version "2.0"
+              :xmlns:dc "http://purl.org/dc/elements/1.1/"
+              :xmlns:sy "http://purl.org/rss/1.0/modules/syndication/"}
+        [:channel
+         [:title "Precursor"]
+         [:link (urls/blog-root)]
+         [:description "Fast prototyping web app, makes collaboration easy."]
+         (for [{:keys [slug pub-date unique-id]} (filter display-in-overview? slugs)]
+           (slug->rss slug pub-date unique-id))]]
+    (html)))

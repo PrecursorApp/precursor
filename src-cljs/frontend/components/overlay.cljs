@@ -149,7 +149,7 @@
            {:on-click #(cast! :team-settings-opened)
             :role "button"}
            (common/icon :share)
-           [:span "Team"]]
+           [:span "Permissions"]]
           [:a.vein.make
            {:on-click #(cast! :team-docs-opened)
             :role "button"}
@@ -505,7 +505,7 @@
 
    :roster {:title "Team"
             :component team-start}
-   :team-settings {:title "Team Settings"
+   :team-settings {:title "Team Permissions"
                    :component team/team-settings}
    :team-doc-viewer {:title "Team Documents"
                      :component doc-viewer/team-doc-viewer}})

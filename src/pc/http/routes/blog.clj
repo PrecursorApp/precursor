@@ -8,6 +8,11 @@
   {:status 200
    :body (blog/render-page nil)})
 
+(defpage rss-feed "/blog.rss" [req]
+  {:status 200
+   :body (blog/generate-rss)
+   :headers {"Content-Type" "application/xml"}})
+
 (defpage post "/blog/:slug" [req]
   (let [slug (-> req :params :slug)]
     {:status 200

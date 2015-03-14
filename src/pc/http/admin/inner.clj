@@ -2,6 +2,7 @@
   (:require [cemerick.url :as url]
             [cheshire.core :as json]
             [crypto.equality :as crypto]
+            [datomic.api :as d]
             [defpage.core :as defpage :refer (defpage)]
             [hiccup.core :as hiccup]
             [pc.admin.db :as db-admin]
@@ -11,6 +12,7 @@
             [pc.http.team :as team-http]
             [pc.http.urls :as urls]
             [pc.models.cust :as cust-model]
+            [pc.models.doc :as doc-model]
             [pc.models.flag :as flag-model]
             [pc.views.admin :as admin-content]
             [pc.views.content :as content]
@@ -22,6 +24,7 @@
   (hiccup/html (content/layout {}
                                [:div {:style "padding: 40px"}
                                 [:div [:a {:href "/teams"} "Teams"]]
+                                [:div [:a {:href "/users"} "Users"]]
                                 [:div [:a {:href "/early-access"} "Early Access"]]
                                 [:div [:a {:href "/graphs"} "User Graphs"]]
                                 [:div [:a {:href "/clients"} "Clients"]]
@@ -54,6 +57,19 @@
 
 (defpage interesting-count [:get "/interesting/:layer-count" {:layer-count #"[0-9]+"}] [layer-count]
   (content/interesting (db-admin/interesting-doc-ids {:layer-threshold (Integer/parseInt layer-count)})))
+
+(defpage user-activity "/user/:email" [req]
+  (let [cust (->> req :params :email (cust-model/find-by-email (pcd/default-db)))]
+    (if (seq cust)
+      (hiccup/html
+       (content/layout {}
+                       (admin-content/user-info cust)
+                       (content/interesting* (take 100 (doc-model/find-touched-by-cust (pcd/default-db) cust)))))
+      {:status 404
+       :body "Couldn't find user with that email"})))
+
+(defpage users "/users" [req]
+  (hiccup/html (content/layout {} (admin-content/users))))
 
 (defpage occupied "/occupied" [req]
   ;; TODO: fix whatever is causing this :(

@@ -708,6 +708,7 @@
 (defmethod control-event :deleted-selected
   [browser-state message _ state]
   (-> state
+    (cancel-drawing)
     (assoc-in [:selected-eids :selected-eids] #{})
     (assoc-in [:editing-eids :editing-eids] #{})))
 
