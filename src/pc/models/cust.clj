@@ -45,8 +45,8 @@
 
 (defn find-by-uuid [db uuid]
   (d/entity db (ffirst (d/q '{:find [?e] :in [$ ?uuid]
-                              :where [[?e :cust/email]
-                                      [?e :cust/uuid ?uuid]]}
+                              :where [[?e :cust/uuid ?uuid]
+                                      [?e :cust/email]]}
                             db uuid))))
 
 

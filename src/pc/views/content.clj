@@ -136,7 +136,7 @@
 (defn interesting* [doc-ids]
   [:div.interesting
    (if-not (seq doc-ids)
-     [:p "Nothing interesting today"])
+     [:p "No interesting docs"])
    (for [doc-id doc-ids]
      [:div.doc-preview
       [:a {:href (urls/doc-svg doc-id)}

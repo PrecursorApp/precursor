@@ -1,5 +1,6 @@
 (ns pc.views.admin
-  (:require [clj-time.core :as time]
+  (:require [clj-time.coerce]
+            [clj-time.core :as time]
             [clojure.string]
             [datomic.api :as d]
             [hiccup.core :as h]
@@ -7,6 +8,7 @@
             [pc.early-access]
             [pc.http.urls :as urls]
             [pc.models.cust :as cust-model]
+            [pc.models.doc :as doc-model]
             [pc.models.permission :as permission-model]
             [ring.util.anti-forgery :as anti-forgery]))
 
@@ -113,7 +115,8 @@
                 :let [cust (cust-model/find-by-id db cust-id)
                       req (first (pc.early-access/find-by-cust db cust))]]
             [:tr
-             [:td (h/h (:cust/email cust))]
+             [:td [:a {:href (str "/user/" (h/h (:cust/email cust)))}
+                   (h/h (:cust/email cust))]]
              [:td (h/h (or (:cust/name cust)
                            (:cust/first-name cust)))]
              [:td (h/h (:early-access-request/company-name req))]
@@ -135,7 +138,8 @@
              :let [cust (cust-model/find-by-id db cust-id)
                    req (first (pc.early-access/find-by-cust db cust))]]
          [:tr
-          [:td (h/h (:cust/email cust))]
+          [:td [:a {:href (str "/user/" (h/h (:cust/email cust)))}
+                (h/h (:cust/email cust))]]
           [:td (h/h (or (:cust/name cust)
                         (:cust/first-name cust)))]
           [:td (h/h (:early-access-request/company-name req))]
@@ -233,3 +237,67 @@
                        (anti-forgery/anti-forgery-field)
                        [:input {:type "hidden" :name "client-id" :value (h/h client-id)}]
                        [:input {:type "submit" :value "refresh browser"}]])))]])]])
+
+(defn users []
+  (let [db (pcd/default-db)
+        active (time (doall (map (partial cust-model/find-by-uuid db)
+                                 (d/q '[:find [?uuid ...]
+                                        :where [?t :cust/uuid ?uuid]]
+                                      (d/since db (clj-time.coerce/to-date
+                                                   (time/minus
+                                                    (time/now)
+                                                    (time/days 1))))))))]
+    [:div
+     [:h3 "Users active in the last day"]
+     [:style "td, th { padding: 5px; text-align: left }"]
+     [:table {:border 1}
+      [:tr
+       [:th "Email"]
+       [:th "Touched docs count"]]
+      (for [u-info (reverse
+                    (sort-by :doc-count
+                             (map (fn [cust]
+                                    {:email (:cust/email cust)
+                                     :doc-count (d/q '{:find [(count ?doc-id) .]
+                                                       :in [$ ?uuid]
+                                                       :where [[?t :cust/uuid ?uuid]
+                                                               [?t :transaction/document ?doc-id]]}
+                                                     db (:cust/uuid cust))})
+                                  active)))]
+        [:tr
+         [:td [:a {:href (str "/user/" (:email u-info))}
+               (:email u-info)]]
+         [:td (:doc-count u-info)]])]]))
+
+(defmulti render-cust-prop (fn [attr value] attr))
+
+(defmethod render-cust-prop :default
+  [attr value]
+  (h/h value))
+
+(defmethod render-cust-prop :cust/http-session-key
+  [attr value]
+  "")
+
+(defmethod render-cust-prop :google-account/avatar
+  [attr value]
+  [:img {:src value :width 100 :height 100}])
+
+(defmethod render-cust-prop :google-account/sub
+  [attr value]
+  [:a {:href (str "https://plus.google.com/" value)}
+   value])
+
+(defmethod render-cust-prop :cust/guessed-dribbble-username
+  [attr value]
+  [:a {:href (str "https://dribbble.com/" value)}
+   value])
+
+(defn user-info [cust]
+  (list
+   [:style "td, th { padding: 5px; text-align: left }"]
+   [:table {:border 1}
+    (for [[k v] (sort-by first (into {} cust))]
+      [:tr
+       [:td (h/h (str k))]
+       [:td (render-cust-prop k v)]])]))
