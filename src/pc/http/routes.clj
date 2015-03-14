@@ -25,9 +25,9 @@
             [pc.profile :as profile]
             [pc.render :as render]
             [pc.util.md5 :as md5]
+            [pc.views.team :as team-view]
             [pc.views.content :as content]
             [ring.middleware.anti-forgery :as csrf]
-            [ring.util.anti-forgery :refer (anti-forgery-field)]
             [ring.util.response :refer (redirect)]))
 
 (defn common-view-data [req]
@@ -47,48 +47,26 @@
   (if (:subdomain req)
     (let [db (pcd/default-db)]
       (cond (not (auth/logged-in? req))
-            (redirect (str (url/map->URL {:host (profile/hostname)
-                                          :protocol (if (profile/force-ssl?)
-                                                      "https"
-                                                      (name (:scheme req)))
-                                          :port (if (profile/force-ssl?)
-                                                  443
-                                                  (:server-port req))
-                                          :path "/login"
-                                          :query {:redirect-subdomain (:subdomain req)
-                                                  :redirect-csrf-token csrf/*anti-forgery-token*}})))
+            (team-view/login-interstitial req)
 
 
             (and (auth/logged-in? req)
                  (not (:team req)))
             {:status 200
-             :body (hiccup.page/html5
-                    {}
-                    "Please email <a href=\"mailto:hi@precursorapp.com\">hi@precursorapp.com</a> to claim this domain for your team")}
+             :body (team-view/request-domain)}
 
             (and (auth/logged-in? req)
                  (:team req)
                  (not (auth/has-team-permission? db (:team req) (:auth req) :admin))
                  (seq (access-request-model/find-by-team-and-cust (pcd/default-db) (:team req) (get-in req [:auth :cust]))))
             {:status 200
-             :body (hiccup.page/html5
-                    {}
-                    [:p "Thanks for requesting access, we'll send you an email when your request is granted."]
-                    [:p "In the meantime, you can make something on " [:a {:href (urls/root)}
-                                                                       (urls/root)]])}
+             :body (team-view/requested-access)}
 
             (and (auth/logged-in? req)
                  (:team req)
                  (not (auth/has-team-permission? db (:team req) (:auth req) :admin)))
             {:status 200
-             :body (hiccup.page/html5
-                    {}
-                    [:html
-                     [:body
-                      [:span
-                       [:form {:action "/request-team-permission" :method "post"}
-                        (anti-forgery-field)
-                        [:input {:type "submit" :value "Request permission to join this team"}]]]]])}
+             :body (team-view/request-access)}
 
             (and (auth/logged-in? req)
                  (:team req)
