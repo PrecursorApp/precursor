@@ -49,7 +49,9 @@
                   :layer/ui-id
                   :layer/ui-target
                   :layer/document
+                  :layer/points-to
                   ;; TODO: remove when frontend is deployed
                   :document/id])
     (utils/update-when-in [:layer/document] :db/id)
+    (utils/update-when-in [:layer/points-to] #(set (map web-peer/client-id %)))
     (assoc :db/id (web-peer/client-id layer))))

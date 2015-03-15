@@ -125,6 +125,10 @@
   [[(:layer/start-x layer) (:layer/start-y layer)]
    [(:layer/end-x layer) (:layer/end-y layer)]])
 
+(defn center [{:keys [layer/start-x layer/end-x layer/start-y layer/end-y]}]
+  [(+ start-x (/ (- end-x start-x) 2))
+   (+ start-y (/ (- end-y start-y) 2))])
+
 ;; TODO: hack to determine if shape is a circle, should be stored in the model
 (defn circle? [layer]
   (or (:layer/rx layer)

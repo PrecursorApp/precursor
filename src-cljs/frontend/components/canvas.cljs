@@ -193,11 +193,27 @@
                                (or (= :select tool)
                                    (and (= :circle tool) (layers/circle? layer))
                                    (and (= :line tool) (= :layer.type/line (:layer/type layer)))
-                                   (and (= :rect tool) (not (layers/circle? layer)))))]
+                                   (and (= :rect tool) (not (layers/circle? layer)))))
+            show-arrow-handle? (and show-handles? (not (= :layer.type/line (:layer/type layer))))]
         (dom/g #js {:className (str "layer "
                                     (when (= :select tool) "selectable-group ")
                                     (when invalid? "invalid "))
                     :key (str (:db/id layer) live?)}
+
+          (when show-arrow-handle?
+            (let [center (layers/center layer)]
+              (dom/rect #js {:className "arrow-handle"
+                             :x (- (first center) 5)
+                             :y (- (second center) 5)
+                             :width 10
+                             :height 10
+                             :fill "green"
+                             :onMouseDown (fn [e]
+                                            (utils/stop-event e)
+                                            (cast! :layer-relation-started
+                                                   {:layer layer
+                                                    :x (first (cameras/screen-event-coords e))
+                                                    :y (second (cameras/screen-event-coords e))}))})))
 
           (when (and show-handles? (layers/circle? layer))
             (let [layer (layers/normalized-abs-coords layer)]
@@ -604,6 +620,18 @@
     (render [_]
       (let [drawing (cursors/observe-drawing owner)]
         (dom/g nil
+          (when (:relation-in-progress? drawing)
+            (let [layer (get-in drawing [:relation :layer])
+                  layer-center (layers/center layer)]
+              (dom/g #js {:className "layer-arrows"}
+                (svg-element (assoc layer
+                                    :className "layer-arrow"
+                                    :layer/start-x (first layer-center)
+                                    :layer/start-y (second layer-center)
+                                    :layer/end-x (get-in drawing [:relation :rx])
+                                    :layer/end-y (get-in drawing [:relation :ry])
+                                    :layer/type :layer.type/line)))))
+
           (when (and (:in-progress? drawing)
                      (= :layer.type/text (get-in drawing [:layers 0 :layer/type])))
             (om/build text-input (assoc (get-in drawing [:layers 0])
@@ -637,7 +665,43 @@
                             (svg-element (assoc sel :key (str (:db/id sel) "-in-progress")))))
                         sels))))))))
 
+(defn find-arrow-eids [db]
+  (reduce (fn [acc d]
+            (conj acc (:e d) (:v d)))
+          #{} (d/datoms db :aevt :layer/points-to)))
 
+(defn arrows [app owner]
+  (reify
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                                   :arrow-eids (find-arrow-eids @(om/get-shared owner :db))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   (when (some #(or (contains? (om/get-state owner :arrow-eids) (:e %))
+                                    (= :layer/points-to (:a %)))
+                               (:tx-data tx-report))
+                     (om/set-state! owner :arrow-eids (find-arrow-eids (:db-after tx-report)))))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [db @(om/get-shared owner :db)
+            pointer-datoms (seq (d/datoms db :aevt :layer/points-to))]
+        (apply dom/g #js {:className "layer-arrows"}
+               (for [pointer-datom pointer-datoms
+                     :let [origin (d/entity db (:e pointer-datom))
+                           origin-center (layers/center origin)
+                           dest (d/entity db (:v pointer-datom))
+                           dest-center (layers/center dest)]]
+                 (svg-element (-> (into {} origin)
+                                (assoc :layer/start-x (first origin-center)
+                                       :layer/start-y (second origin-center)
+                                       :layer/end-x (first dest-center)
+                                       :layer/end-y (second dest-center)
+                                       :layer/type :layer.type/line)))))))))
 
 (defn canvas-grid [camera]
   (dom/defs nil
@@ -794,6 +858,8 @@
                    (om/build cursors {:client-id (:client-id app)
                                       :uuid->cust (get-in app [:cust-data :uuid->cust])}
                              {:react-key "cursors"})
+
+                   (om/build arrows app {:react-key "arrows"})
 
                    (om/build svg-layers {:tool tool} {:react-key "svg-layers"})
 

@@ -409,6 +409,48 @@
                                   (> sy y0)))))))
                  overlapping))))
 
+(defn eids-containing-point [db x y]
+  (let [candidates (set (map :e (d/datoms db :avet :layer/type :layer.type/rect)))
+
+        above-x-start (d/index-range db :layer/start-x (- x 5) nil)
+        above-x-start-e (set (map :e above-x-start))
+
+        above-x-end (d/index-range db :layer/end-x (- x 5) nil)
+        above-x-end-e (set (map :e above-x-end))
+
+        above-y-start (d/index-range db :layer/start-y (- y 5) nil)
+        above-y-start-e (set (map :e above-y-start))
+
+        above-y-end (d/index-range db :layer/end-y (- y 5) nil)
+        above-y-end-e (set (map :e above-y-end))
+
+        below-x-start (d/index-range db :layer/start-x nil (+ x 5))
+        below-x-start-e (set (map :e below-x-start))
+
+        below-x-end (d/index-range db :layer/end-x nil (+ x 5))
+        below-x-end-e (set (map :e below-x-end))
+
+        below-y-start (d/index-range db :layer/start-y nil (+ y 5))
+        below-y-start-e (set (map :e below-y-start))
+
+        below-y-end (d/index-range db :layer/end-y nil (+ y 5))
+        below-y-end-e (set (map :e below-y-end))
+
+        rejects (set/union
+                 (set/intersection above-x-start-e
+                                   above-x-end-e)
+
+                 (set/intersection below-x-start-e
+                                   below-x-end-e)
+
+                 (set/intersection above-y-start-e
+                                   above-y-end-e)
+
+                 (set/intersection below-y-start-e
+                                   below-y-end-e))]
+    (set/difference candidates
+                    rejects)))
+
 (defn draw-in-progress-drawing [state x y {:keys [force-even? delta]}]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
@@ -479,6 +521,11 @@
                                                                   snap-y
                                                                   y)))))))
 
+(defn draw-in-progress-relation [state x y]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+    (-> state
+      (update-in [:drawing :relation] merge {:rx rx :ry ry}))))
+
 (defn move-drawings [state x y]
   (let [[start-x start-y] (get-in state [:drawing :starting-mouse-position])
         [rx ry] (cameras/screen->point (:camera state) x y)
@@ -503,6 +550,9 @@
         (draw-in-progress-drawing x y {:force-even? shift?
                                        :delta {:x (- x (get-in state [:mouse :x]))
                                                :y (- y (get-in state [:mouse :y]))}})
+
+        (get-in state [:drawing :relation-in-progress?])
+        (draw-in-progress-relation x y)
 
         (get-in state [:drawing :moving?])
         (move-drawings x y))))
@@ -568,6 +618,21 @@
                                                                             (get-in layer [:bbox :height]))}))))])
       (assoc-in [:camera :moving?] false))))
 
+
+(defn finalize-relation [state]
+  (let [{:keys [x y]} (get-in state [:mouse])
+        [rx ry] (cameras/screen->point (:camera state) x y)
+        origin-layer (get-in state [:drawing :relation :layer])
+        dest-layer-id (first (shuffle (disj (eids-containing-point @(:db state) rx ry)
+                                            (:db/id origin-layer))))]
+    (-> state
+      (update-in [:drawing] assoc :relation-in-progress? false)
+      (assoc-in [:mouse-down] false)
+      (assoc-in [:drawing :relation] {})
+      (assoc-in [:drawing :finished-relation] {:origin-layer origin-layer
+                                               :dest-layer-id dest-layer-id})
+      (assoc-in [:camera :moving?] false))))
+
 (defn drop-layers
   "Finalizes layer translation"
   [state]
@@ -630,6 +695,17 @@
         :submit-layer-properties (handle-layer-properties-submitted-after current-state)
         nil))))
 
+(defmethod control-event :layer-relation-started
+  [browser-state message {:keys [layer x y]} state]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+    (-> state
+      (update-mouse x y)
+      (assoc-in [:mouse-down] true)
+      (assoc-in [:drawing :relation-in-progress?] true)
+      (assoc-in [:drawing :relation] {:layer layer
+                                      :rx rx
+                                      :ry ry}))))
+
 (defn detectable-movement?
   "Checks to make sure we moved the layer from its starting position"
   [original-layer layer]
@@ -650,6 +726,9 @@
 
       (cond-> (get-in state [:drawing :in-progress?])
         (finalize-layer)
+
+        (get-in state [:drawing :relation-in-progress?])
+        (finalize-relation)
 
         (get-in state [:drawing :moving?])
         (drop-layers)))))
@@ -682,6 +761,16 @@
                         (doseq [layer-group (partition-all 100 layers)]
                           (d/transact! db layer-group {:can-undo? true})))
                       (maybe-notify-subscribers! current-state x y))
+
+     (and (get-in previous-state [:drawing :relation-in-progress?])
+          (get-in current-state [:drawing :finished-relation :dest-layer-id]))
+     (do
+       (d/transact! db [[:db/add
+                         (get-in current-state [:drawing :finished-relation :origin-layer :db/id])
+                         :layer/points-to
+                         (get-in current-state [:drawing :finished-relation :dest-layer-id])]]
+                    {:can-undo? true})
+       (maybe-notify-subscribers! current-state x y))
 
      :else nil)))
 
