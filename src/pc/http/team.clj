@@ -55,5 +55,6 @@
        (team-model/find-by-subdomain subdomain)))
    (catch :db/error t
      (if (= :db.error/unique-conflict (:db/error t))
-       (throw+ {:status 400 :public-message "Subdomain is already in use"})
+       (throw+ {:status 400 :public-message "Subdomain is already in use"
+                :error :subdomain-exists})
        (throw+)))))

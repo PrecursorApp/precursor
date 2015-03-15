@@ -25,6 +25,29 @@
   .adaptive-placeholder {
     margin-bottom: @menu_padding;
   }
+  .subdomain {
+    display: inline-block;
+    width: auto;
+    min-width: 3em;
+    border: none;
+    border-bottom: 1px solid @gray_light;
+    outline: none;
+    margin-bottom: @menu_padding;
+    padding: 0 @adapt_tiny;
+    &:after {
+      .user-select(none);
+      color: @gray_light;
+      background-color: fade(@dye_outer, 0);
+      pointer-events: none;
+    }
+    &:empty {
+      &:not(:focus) {
+        &:after {
+          content: attr(data-before);
+        }
+      }
+    }
+  }
   .content {
     max-width: @tile * 10; // VETO
   }
@@ -84,10 +107,9 @@
       }
     }
   }
-  &.error {
-    .early-access-button {
-      color: @red;
-    }
+  .error {
+    color: @red;
+    margin-top: @menu_padding;
   }
   &.submitted {
     .early-access-button {

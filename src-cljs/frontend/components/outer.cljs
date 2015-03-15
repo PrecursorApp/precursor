@@ -10,6 +10,7 @@
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
             [frontend.components.landing :as landing]
+            [frontend.config :as config]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.state :as state]
@@ -32,157 +33,114 @@
     ;; we wouldn't typically use ajax in a component--it's not advisable in
     ;; this case, but we're short on time
     ;; important to get the state out of owner since we're not re-rendering on update
-    (let [{:keys [company-name employee-count use-case]} (om/get-state owner)
-          res (<! (ajax/managed-ajax :post "/api/v1/early-access" :params {:company-name company-name
-                                                                           :employee-count employee-count
-                                                                           :use-case use-case}))]
+    (let [{:keys [subdomain]} (om/get-state owner)
+          res (<! (ajax/managed-ajax :post "/api/v1/create-team" :params {:subdomain subdomain}))]
       (if (= :success (:status res))
         (om/update-state! owner (fn [s]
                                   (assoc s
                                          :submitting? false
                                          :submitted? true
                                          :error nil
-                                         :company-name ""
-                                         :employee-count ""
-                                         :use-case ""
-                                         :access-request-granted? (:access-request-granted? res))))
+                                         :team-created? true
+                                         :team (:team res))))
         (do
+          ;; handle already taken subdomains
           (om/update-state!
            owner
            (fn [s]
              (assoc s
                     :submitting? false
-
-                    :error
-                    [:p "Oops that didn't work! "
-                     [:a {:on-click #(.stopPropagation %)
-                          :href
-                          (str "mailto:hi@precursorapp.com?"
-                               (url/map->query {:subject "Early Access to Precursor"
-                                                :body (str "Company Name\n"
-                                                           company-name
-                                                           "\n\nTeam Size\n"
-                                                           employee-count
-                                                           "\n\nUse Case\n"
-                                                           use-case)}))}
-                      "Try this email"]
-                     "."])))
+                    :error [:p (:msg (:response res))])))
           (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))
 
-(defn early-access [app owner]
+(defn signup [app owner]
   (reify
-    om/IInitState (init-state [_] {:company-name ""
-                                   :employee-count ""
-                                   :use-case ""
+    om/IInitState (init-state [_] {:subdomain ""
                                    :error nil
                                    :submitting? false
                                    :submitted? false
-                                   :access-request-granted? false})
-    om/IDisplayName (display-name [_] "Early Access")
+                                   :team-created? false
+                                   :team nil})
+    om/IDisplayName (display-name [_] "")
     om/IRenderState
-    (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted? access-request-granted?]}]
+    (render-state [_ {:keys [subdomain submitting? error submitted? team-created? team]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             disabled? (or submitting? (not (utils/logged-in? owner)))]
         (html
          [:div.early-access {:class (str (get-in app [:navigation-data :type] " team ")
-                                         (when access-request-granted? " granted "))}
+                                         (when team-created? " granted "))}
           [:div.content
            [:div.early-access-info
             [:h2.early-access-heading
              "We're excited to show you the team features we're building."]
+
             [:p.early-access-copy
-             "To activate your early access, please "
+             "To activate your trial, please "
              (if (utils/logged-in? owner)
                "take a moment to"
                "sign in first and")
-             " fill out the following information.
-            We'll send you an email confirmation once your account has been granted full access."]
+             " choose a subdomain."
+             ]
+            (when (utils/logged-in? owner)
+              [:p.early-access-copy
+               "It should be at least 4 characters and start with a letter. You can use letters, numbers, and hyphens."])
             (when-not (utils/logged-in? owner)
               [:div.early-access-sign
                (om/build common/google-login {:source "Early Access Form"})])]
            [:div.early-access-form {:class (str (when disabled? "disabled ")
                                                 (when submitting? "submitting ")
-                                                (when submitted? "submitted ")
-                                                (when error "error "))}
-            [:div.adaptive-placeholder.early-access-name
-             {:tab-index "2"
-              :ref "company-name"
-              :data-before "What's your company's name?"
-              :data-after "Company Name"
-              :content-editable true
-              :on-key-down #(when (= "Enter" (.-key %))
-                              (.preventDefault %)
-                              ;; If they hit enter, send them to the next input.
-                              (.focus (om/get-node owner "employee-count")))
-              :on-input #(om/set-state-nr! owner :company-name (goog.dom/getRawTextContent (.-target %)))}
-             company-name]
-            [:div.adaptive-placeholder.early-access-size
-             {:tab-index "3"
-              :ref "employee-count"
-              :data-before "How many teammates do you have?"
-              :data-after "Team Size"
-              :content-editable true
-              :on-key-down #(when (= "Enter" (.-key %))
-                              (.preventDefault %)
-                              ;; If they hit enter, send them to the next input.
-                              (.focus (om/get-node owner "use-case")))
-              :on-input #(om/set-state-nr! owner :employee-count (goog.dom/getRawTextContent (.-target %)))}
-             employee-count]
-            [:div.adaptive-placeholder.early-access-uses
-             {:tab-index "4"
-              :ref "use-case"
-              :data-before "How will you use Precursor?"
-              :data-after "Use Case"
-              :content-editable true
-              :on-key-down #(when (= "Enter" (.-key %))
-                              (.preventDefault %)
-                              ;; If they hit enter, send them to the next input.
-                              (.focus (om/get-node owner "submit-button"))
-                              (.click (om/get-node owner "submit-button")))
-              :on-input #(om/set-state-nr! owner :use-case (goog.dom/getRawTextContent (.-target %)))}
-             use-case]
+                                                (when submitted? "submitted "))}
+            [:div.subdomain-input
+             [:div.subdomain
+              {:tab-index "1"
+               :ref "subdomain"
+               :data-before "team"
+               :content-editable true
+               :on-key-down #(when (= "Enter" (.-key %))
+                               (.preventDefault %)
+                               ;; If they hit enter, submit the form
+                               (submit-early-access-form owner))
+               :on-input #(om/set-state-nr! owner :subdomain (goog.dom/getRawTextContent (.-target %)))}
+              subdomain]
+             [:div {:style {:display "inline-block"}}
+              ".precursorapp.com"]]
             [:button.early-access-button {:tab-index "5"
                                           :ref "submit-button"
                                           :disabled (or disabled? submitted?)
                                           :on-click #(submit-early-access-form owner)}
              (cond submitting?
                    (html
-                    [:span "Request is submitting"
+                    [:span "Setting up your team"
                      [:i.loading-ellipses
                       [:i "."]
                       [:i "."]
                       [:i "."]]])
 
-                   submitted? (if access-request-granted?
-                                "Thanks, you've been granted early access!"
-                                "Got it! We'll respond soon.")
+                   submitted? "Thanks, your subdomain is ready!"
 
-                   (seq error)
-                   error
+                   :else "Create your team")]
 
-                   :else "Request early access.")]
-            (when access-request-granted?
-             [:div.early-access-granted
-              [:p
-               "You can now create private documents and control who has access to them. "
-               "The rest of your team can create private docs by clicking the request access "
-               "button and filling out the same form you did."]
+            (when error
+              [:div.error error])
 
-              [:p "You'll have two weeks of free, unlimited early access, and then we'll follow up with you to see how things are going."]
+            (when team-created?
+              [:div.early-access-granted
+               [:p "Your team is set up at "
+                [:a {:href (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
+                                               :protocol config/scheme
+                                               :port config/port
+                                               :path (str "/document/" (:team/intro-doc team))
+                                               :query {:overlay "team-settings"}}))
+                     :target "_self"}
+                 (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
+                                     :protocol config/scheme
+                                     :port config/port
+                                     :path "/"}))]
+                ". You'll be prompted to log in, then you can invite your teammates."]
 
-              [:p
-               "Next, "
-               [:a.feature-link {:title "Private docs early access"
-                                 :href "/blog/private-docs-early-access"
-                                 :target "_self"}
-                "learn to use private docs"]
-               " or "
-               [:a.feature-link {:title "Launch Precursor"
-                                 :role "button"
-                                 :on-click #(cast! :launch-app-clicked {:analytics-data {:source "early-access-granted"}})}
-                "launch Precursor"]
-               "."]])]
-           ]])))))
+               [:p "Documents you create in your subdomain are private by default and shared with all of your teammates."]
+
+               [:p "You'll have two weeks of free, unlimited access, and then we'll follow up with you to see how things are going."]])]]])))))
 
 (defn pricing [app owner]
   (reify
@@ -223,9 +181,9 @@
               [:div.price-foot
                [:a.price-button
                 {:href "/early-access/team"
-                 :title "Try it free while we gather feedback."
+                 :title "Start trial"
                  :role "button"}
-                "Request early access."]]]
+                "Start trial"]]]
              [:section.price-divide.right
               [:div.price-divide-line]]
              [:div.price-block.price-corp
@@ -316,8 +274,7 @@
 (def outer-components
   {:landing landing/landing
    :pricing pricing
-   :early-access early-access
-   })
+   :early-access signup})
 
 (defn outer [app owner]
   (reify
@@ -332,5 +289,5 @@
                                       (when (= (:page-count app) 1) ["entry"])
                                       (when (utils/logged-in? owner) ["logged-in"]))}
            [:div.outer-head (om/build nav-head {})]
-           (om/build component app {:react-key nav-point})
+           (om/build component app)
            [:div.outer-foot (om/build nav-foot {})]])))))

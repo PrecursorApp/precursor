@@ -1,6 +1,7 @@
 (ns pc.models.team
   (:require [datomic.api :as d]
-            [pc.datomic :as pcd]))
+            [pc.datomic :as pcd]
+            [pc.utils :as utils]))
 
 ;; We'll pretend we have a type here
 #_(t/def-alias Team (HMap :mandatory {:team/subdomain String
@@ -34,3 +35,8 @@
 
 (defn public-read-api [team]
   (select-keys team [:team/subdomain :team/uuid]))
+
+(defn read-api [team]
+  (-> team
+    (select-keys [:team/subdomain :team/uuid :team/intro-doc])
+    (utils/update-when-in [:team/intro-doc] :db/id)))

@@ -24,6 +24,7 @@
   (hiccup/html (content/layout {}
                                [:div {:style "padding: 40px"}
                                 [:div [:a {:href "/teams"} "Teams"]]
+                                [:div [:a {:href "/users"} "Users"]]
                                 [:div [:a {:href "/early-access"} "Early Access"]]
                                 [:div [:a {:href "/graphs"} "User Graphs"]]
                                 [:div [:a {:href "/clients"} "Clients"]]
