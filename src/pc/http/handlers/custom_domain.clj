@@ -8,10 +8,10 @@
 
 ;; starts with a letter, only contains letters, numbers, and hyphens
 ;; must be more than 3 characters
-(def subdomain-pattern "[a-zA-Z]{1}[a-zA-Z0-9\\-]{3,}")
+(def subdomain-pattern "^[a-zA-Z]{1}[a-zA-Z0-9\\-]{3,}")
 
 (defn parse-subdomain [req]
-  (last (re-find (re-pattern (format "(%s)\\.%s" subdomain-pattern (profile/hostname)))
+  (last (re-find (re-pattern (format "(%s)\\.%s$" subdomain-pattern (profile/hostname)))
                  (:server-name req))))
 
 (defn redirect-to-main [req]

@@ -1,14 +1,18 @@
 (ns pc.http.routes.api
   (:require [cemerick.url :as url]
+            [clojure.string :as str]
             [clojure.tools.reader.edn :as edn]
             [defpage.core :as defpage :refer (defpage)]
             [pc.auth :as auth]
             [pc.datomic :as pcd]
             [pc.early-access]
+            [pc.http.team :as team-http]
             [pc.http.handlers.custom-domain :as custom-domain]
-            [pc.models.doc :as doc-model]
             [pc.models.chat-bot :as chat-bot-model]
-            [pc.profile :as profile]))
+            [pc.models.doc :as doc-model]
+            [pc.models.team :as team-model]
+            [pc.profile :as profile]
+            [slingshot.slingshot :refer (try+ throw+)]))
 
 (defpage new [:post "/api/v1/document/new"] [req]
   (if (:subdomain req)
@@ -33,6 +37,33 @@
                (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                       (when cust-uuid {:document/creator cust-uuid})))]
       {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})})))
+
+(defpage create-team [:post "/api/v1/create-team"] [req]
+  (let [subdomain (:subdomain (edn/read-string (slurp (:body req))))
+        cust (get-in req [:auth :cust])]
+    (cond (empty? cust)
+          {:status 400 :body (pr-str {:error :not-logged-in
+                                      :msg "You must log in first."})}
+
+          (empty? subdomain)
+          {:status 400 :body (pr-str {:error :missing-subdomain
+                                      :msg "Subdomain is missing."})}
+
+          (empty? (re-find (re-pattern (str custom-domain/subdomain-pattern "$")) subdomain))
+          {:status 400 :body (pr-str {:error :subdomain-exists
+                                      :msg "Sorry, that subdomain is taken. Please try another."})}
+
+          (seq (team-model/find-by-subdomain (pcd/default-db) subdomain))
+          {:status 400 :body (pr-str {:error :subdomain-exists
+                                      :msg "Sorry, that subdomain is taken. Please try another."})}
+
+          :else
+          (try+
+           (let [team (team-http/setup-new-team subdomain cust)]
+             {:status 200 :body (pr-str {:team (team-model/read-api team)})})
+           (catch [:error :subdomain-exists] e
+             {:status 400 :body (pr-str {:error :subdomain-exists
+                                         :msg "Sorry, that subdomain is taken. Please try another."})})))))
 
 (defpage early-access [:post "/api/v1/early-access"] [req]
   (if-let [cust (get-in req [:auth :cust])]
