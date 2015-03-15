@@ -7,31 +7,66 @@
             [ring.middleware.anti-forgery :as csrf]
             [ring.util.anti-forgery :refer (anti-forgery-field)]))
 
-(defn request-domain []
+(defn request-domain [req]
   (h/html
    (content/layout
     {}
-    [:div
-     "Please email "
-     [:a {:href "mailto:hi@precursorapp.com"}
-      "hi@precursorapp.com"]
-     " to claim this domain for your team"])))
+    [:div.page-team
+     nav-head
+     [:div.team-login
+      [:div.team-login-content
+       [:h1 "Create your team!"]
+       [:h4 (str (h/h (:subdomain req)) "." (profile/hostname))]
+       [:div.calls-to-action
+        [:a {:href (str (url/map->URL
+                         {:host (profile/hostname)
+                          :protocol (if (profile/force-ssl?)
+                                      "https"
+                                      (name (:scheme req)))
+                          :port (if (profile/force-ssl?)
+                                  443
+                                  (:server-port req))
+                          :path "/early-access/team"
+                          :query {:subdomain (h/h (:subdomain req))}}))}
+         "Start a trial to create this team"]]]]
+     nav-foot])))
 
-(defn request-access []
+(defn request-access [req]
   (h/html
    (content/layout
     {}
-    [:form {:action "/request-team-permission" :method "post"}
-     (anti-forgery-field)
-     [:input {:type "submit" :value "Request permission to join this team"}]])))
+    [:div.page-team
+     nav-head
+     [:div.team-login
+      [:div.team-login-content
+       [:h1 "Join your team!"]
+       [:h4 (str (h/h (:subdomain req)) "." (profile/hostname))]
+       [:div.calls-to-action
+        [:form {:action "/request-team-permission" :method "post"}
+         (anti-forgery-field)
+         [:button {:type "submit" :value ""}
+          "Request permission to join this team"]]]]]
+     nav-foot])))
 
-(defn requested-access []
+(defn requested-access [req]
   (h/html
    (content/layout
     {}
-    [:p "Thanks for requesting access, we'll send you an email when your request is granted."]
-    [:p "In the meantime, you can make something on " [:a {:href (urls/root)}
-                                                       (urls/root)]])))
+    [:div.page-team
+     nav-head
+     [:div.team-login
+      [:div.team-login-content
+       [:h1 "Join your team!"]
+       [:h4 (str (h/h (:subdomain req)) "." (profile/hostname))]
+       [:p "We got your request. We'll send you an email when the owner grants your request."]
+       [:p "You can also give the owner "
+        [:a {:href (str (urls/doc (:db/id (:team/intro-doc (:team req)))
+                                  :subdomain (h/h (:subdomain req))
+                                  :query {:overlay "team-settings"}))}
+         "this link"]
+        " to review your request."]
+       [:p ]]]
+     nav-foot])))
 
 (def logomark
   [:i {:class "icon-logomark"}
@@ -70,18 +105,19 @@
      [:div.team-login
       [:div.team-login-content
        [:h1 "Join your team!"]
-       [:h4 "precursor.precursorapp.com"]
+       [:h4 (str (h/h (:subdomain req)) "." (profile/hostname))]
        [:div.calls-to-action
-       [:a.google-login {:href (str (url/map->URL {:host (profile/hostname)
-                                      :protocol (if (profile/force-ssl?)
-                                                  "https"
-                                                  (name (:scheme req)))
-                                      :port (if (profile/force-ssl?)
-                                              443
-                                              (:server-port req))
-                                      :path "/login"
-                                      :query {:redirect-subdomain (:subdomain req)
-                                              :redirect-csrf-token csrf/*anti-forgery-token*}}))}
+        [:a.google-login {:href (str (url/map->URL
+                                      {:host (profile/hostname)
+                                       :protocol (if (profile/force-ssl?)
+                                                   "https"
+                                                   (name (:scheme req)))
+                                       :port (if (profile/force-ssl?)
+                                               443
+                                               (:server-port req))
+                                       :path "/login"
+                                       :query {:redirect-subdomain (:subdomain req)
+                                               :redirect-csrf-token csrf/*anti-forgery-token*}}))}
         google
         [:div.google-text "Sign in with Google"]]]]]
      nav-foot])))

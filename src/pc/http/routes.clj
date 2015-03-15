@@ -53,20 +53,20 @@
             (and (auth/logged-in? req)
                  (not (:team req)))
             {:status 200
-             :body (team-view/request-domain)}
+             :body (team-view/request-domain req)}
 
             (and (auth/logged-in? req)
                  (:team req)
                  (not (auth/has-team-permission? db (:team req) (:auth req) :admin))
                  (seq (access-request-model/find-by-team-and-cust (pcd/default-db) (:team req) (get-in req [:auth :cust]))))
             {:status 200
-             :body (team-view/requested-access)}
+             :body (team-view/requested-access req)}
 
             (and (auth/logged-in? req)
                  (:team req)
                  (not (auth/has-team-permission? db (:team req) (:auth req) :admin)))
             {:status 200
-             :body (team-view/request-access)}
+             :body (team-view/request-access req)}
 
             (and (auth/logged-in? req)
                  (:team req)
