@@ -1,15 +1,12 @@
-.state-menu { // IMPORTANT VISUAL CHANGES WHILE MENU IS ACTIVE
-  // &.on-the-right {
-  //   //
-  // }
+//
+// IMPORTANT VISUAL CHANGES WHILE MENU IS ACTIVE
+//
+.state-menu {
   .inner {
-    .scale(.8);
     cursor: pointer;
     background: @dye_outer;
     box-shadow: 0 8px 21px 0 fade(@black, 21);
     transition: @run_slower @bezier_deform;
-    // .mq_1920({.transform(translate3d((@tile * 2), 0, 0); scale3d(.8, .8, 1));});
-    // .mq_1280({.transform(translate3d((@tile * 4), 0, 0); scale3d(.8, .8, 1));});
     &:hover {
       box-shadow: 0 21px 34px 0 fade(@black, 21);
       transition-duration: @run;
@@ -81,132 +78,64 @@
       transition: @now;
     }
   }
-  // .hud-menu {
-  //   .icon(stroke; @black);
-  //   &.close,
-  //   &.back {
-  //     .scale3d(.75);
-  //   }
-  //   &.close {
-  //     .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
-  //     .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
-  //     .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
-  //   }
-  //   &.back {
-  //     .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
-  //     .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
-  //     .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
-  //   }
-  //   path {
-  //     transition+: all @run_slow @now @bezier_bounce;
-  //     transition+: stroke @now @now @bezier_fadein;
-  //   }
-  // }
   .hud-menu,
   .hud-roster {
     .icon(stroke; @black);
-    // path {
-    //   .transform(translate3d(0,0,0));
-    //   transition+: all @run_slow @now @bezier_bounce;
-    //   transition+: stroke @now @now @bezier_fadein;
-    // }
   }
   .unseen-eids {
     display: none;
   }
 }
-.state-menu-left { // IMPORTANT VISUAL CHANGES WHILE LEFT SIDE MENU IS ACTIVE
+//
+// IMPORTANT VISUAL CHANGES WHILE MENU IS ON THE LEFT
+//
+.state-menu-left {
+  .canvas_off(right);
   .hud-menu {
-    // .icon(stroke; @black);
-    &.close,
-    &.back {
-      .scale3d(.75);
-    }
-    &.close {
-      .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
-      .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
-      .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
-    }
-    &.back {
-      .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
-      .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
-      .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
-    }
+    .hud_menu_morph();
   }
-  .inner {
-    .transform-origin(right);
-    .mq_1920({.transform(translate3d((@tile * 2), 0, 0); scale3d(.8, .8, 1));});
-    .mq_1280({.transform(translate3d((@tile * 4), 0, 0); scale3d(.8, .8, 1));});
+  .menu-body {
+    .size_of(chat; width);
   }
-  // .menu-view {
-  //   &:not(:first-child) {
-  //     margin-left: -100%;
-  //   }
-  //   &:not(:last-of-type) {
-  //     .translate3d(-100%,0,0);
-  //   }
-  // }
+  .menu-heading {
+    padding: 0 @tile;
+  }
 }
-.state-menu-right { // IMPORTANT VISUAL CHANGES WHILE RIGHT SIDE MENU IS ACTIVE
+//
+// IMPORTANT VISUAL CHANGES WHILE MENU IS ON THE RIGHT
+//
+.state-menu-right {
+  .canvas_off(left);
   .hud-roster {
-    // .icon(stroke; @black);
-    &.close,
-    &.back {
-      .scale3d(.75);
-    }
-    &.close {
-      .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
-      .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
-      .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
-    }
-    &.back {
-      .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
-      .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
-      .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
-    }
+    .hud_menu_morph();
   }
-  .menu {
-    .align-items(flex-end);
+  .menu-header,
+  .menu-body {
+    .size_of(chat; padding-left);
   }
   .menu-heading {
     padding: 0 @tile 0 @menu_padding;
-  }
-  .menu-view {
-    // &:not(:first-child) {
-    //   margin-left: 0;
-    //   margin-right: -100%;
-    // }
-    // &:not(:last-of-type) {
-    //   .translate3d(100%,0,0);
-    // }
-    // &:not(:first-child) {
-    //   margin-right: -100%;
-    // }
-    // &:not(:last-of-type) {
-    //   .translate3d(100%,0,0);
-    // }
-    &:not(:last-of-type) {
-      opacity: 0;
-      visibility: hidden;
-    }
-  }
-  .inner {
-    .transform-origin(left);
-    .mq_1920({.transform(translate3d((-@tile * 2), 0, 0); scale3d(.8, .8, 1));});
-    .mq_1280({.transform(translate3d((-@tile * 4), 0, 0); scale3d(.8, .8, 1));});
+    .mq_640({
+      text-align: center;
+      width: 100%;
+      padding-left: @tile;
+    });
   }
 }
-.state-outer { // IMPORTANT VISUAL CHANGES WHILE OUTER IS ACTIVE
+//
+// IMPORTANT VISUAL CHANGES WHILE OUTER IS ACTIVE
+//
+.state-outer {
   .canvas-background {
     &:after {
       .animation(in-fade @run @run_fast @bezier_fadein backwards);
+      .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
       content: "";
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
     }
   }
   .canvas-frame {
@@ -245,7 +174,7 @@
     display: none;
   }
   .chat {
-    opacity: 0; // doing `display:none` here breaks grid in firefox, use opacity to hide
+    opacity: 0; // `display:none` breaks grid in ff so use opacity
     transition: opacity @now @now;
   }
   .hud {
