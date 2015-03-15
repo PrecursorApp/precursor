@@ -266,26 +266,49 @@
   }
 }
 //
-// responsive sizes for canvas/chat
+// canvas/chat sizes w/ media queries
 //
-.size_of(@c; @p; @u...) {
-  .vw(@u) when     (@u = vw) {@1: 100vw; @0: 0vw;} .vw(@u);
-  .vh(@u) when     (@u = vh) {@1: 100vh; @0: 0vh;} .vh(@u);
-  .ct(@u) when not (@u = vw), (@u = vw) {@1:  100%; @0:  0%;} .ct(@u);
-  .if_width(@p) when (@p = width), (@p = height) {
-    .if-chat(@c) when (@c = chat)   {@v: @0;} .if-chat(@c);
-    .if-canv(@c) when (@c = canvas) {@v: @1;} .if-canv(@c);
-  }.if_width(@p);
-  .no_width(@p) when not (@p = width), (@p = height) {
-    .if-chat(@c) when (@c = chat)   {@v: @1;} .if-chat(@c);
-    .if-canv(@c) when (@c = canvas) {@v: @0;} .if-canv(@c);
-  }.no_width(@p);
-  @{p}: abs(@v - @size_chat);
-  .mq_1920({@{p}: abs(@v - @chat_1920);});
-  .mq_1600({@{p}: abs(@v - @chat_1600);});
-  .mq_1280({@{p}: abs(@v - @chat_1280);});
-  .mq_960({ @{p}: abs(@v - @chat_0960);});
-  .mq_640({ @{p}: abs(@v - @chat_0640);});
+// For Example: .size_of(chat; width);
+// Compiles To: width: 25%;
+//
+// For Example: .size_of(canvas; padding-left; vh);
+// Compiles To: padding-left: 75vh;
+//
+.size_of(@object; @property; @unit...) {
+  .view_width(@unit) when (@unit = vw) {
+    @1: 100vw;
+    @0: 0vw;
+  }.view_width(@unit);
+  .view_height(@unit) when (@unit = vh) {
+    @1: 100vh;
+    @0: 0vh;
+  }.view_height(@unit);
+  .percentage(@unit) when not (@unit = vw), (@unit = vw) {
+    @1: 100%;
+    @0: 0%;
+  }.percentage(@unit);
+  .if_width(@property) when (@property = width), (@property = height) {
+    .if_chat(@object) when (@object = chat) {
+      @value: @0;
+    }.if_chat(@object);
+    .if_canvas(@object) when (@object = canvas) {
+      @value: @1;
+    }.if_canvas(@object);
+  }.if_width(@property);
+  .no_width(@property) when not (@property = width), (@property = height) {
+    .if_chat(@object) when (@object = chat) {
+      @value: @1;
+    }.if_chat(@object);
+    .if_canvas(@object) when (@object = canvas) {
+      @value: @0;
+    }.if_canvas(@object);
+  }.no_width(@property);
+  @{property}: abs(@value - @size_chat);
+  .mq_1920({@{property}: abs(@value - @chat_1920);});
+  .mq_1600({@{property}: abs(@value - @chat_1600);});
+  .mq_1280({@{property}: abs(@value - @chat_1280);});
+  .mq_960({ @{property}: abs(@value - @chat_0960);});
+  .mq_640({ @{property}: abs(@value - @chat_0640);});
 }
 //
 // transform canvas when left/right menu is active
