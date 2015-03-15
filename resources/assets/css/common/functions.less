@@ -247,22 +247,45 @@
   .animation(~"in-fade-@{arguments}" @run_slow);
 }
 //
-// responsive width sizes for chat
+// morph menu icon into close/back icon
 //
-.chat_width(...) {
-  width: @size_chat;
-  .mq_1920({ width: @chat_1920; });
-  .mq_1600({ width: @chat_1600; });
-  .mq_1280({ width: @chat_1280; });
-  .mq_960({  width: @chat_0960;  });
-  .chat(@a) when not (@a = menu) {
-    min-width: @tile;
-    max-width: calc(~"100% -" @tile);
-    .mq_640({ width: @chat_0640;});
-  }.chat(@arguments);
-  .menu(@a) when (@a = menu) {
-    .mq_640({ width: 100%; });
-  }.menu(@arguments);
+.hud_menu_morph() {
+  &.close,
+  &.back {
+    .scale3d(.75);
+  }
+  &.close {
+    .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
+    .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
+    .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
+  }
+  &.back {
+    .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
+    .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
+    .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
+  }
+}
+//
+// responsive sizes for canvas/chat
+//
+.size_of(@c; @p; @u...) {
+  .vw(@u) when     (@u = vw) {@1: 100vw; @0: 0vw;} .vw(@u);
+  .vh(@u) when     (@u = vh) {@1: 100vh; @0: 0vh;} .vh(@u);
+  .ct(@u) when not (@u = vw), (@u = vw) {@1:  100%; @0:  0%;} .ct(@u);
+  .if_width(@p) when (@p = width), (@p = height) {
+    .if-chat(@c) when (@c = chat)   {@v: @0;} .if-chat(@c);
+    .if-canv(@c) when (@c = canvas) {@v: @1;} .if-canv(@c);
+  }.if_width(@p);
+  .no_width(@p) when not (@p = width), (@p = height) {
+    .if-chat(@c) when (@c = chat)   {@v: @1;} .if-chat(@c);
+    .if-canv(@c) when (@c = canvas) {@v: @0;} .if-canv(@c);
+  }.no_width(@p);
+  @{p}: abs(@v - @size_chat);
+  .mq_1920({@{p}: abs(@v - @chat_1920);});
+  .mq_1600({@{p}: abs(@v - @chat_1600);});
+  .mq_1280({@{p}: abs(@v - @chat_1280);});
+  .mq_960({ @{p}: abs(@v - @chat_0960);});
+  .mq_640({ @{p}: abs(@v - @chat_0640);});
 }
 //
 // transform canvas when left/right menu is active
@@ -274,7 +297,7 @@
     @1600: @canvas_pull_1600;
     @1280: @canvas_pull_1280;
     @0960: @canvas_pull_0960;
-    @0640: 100%;
+    @0640: @canvas_pull_0640;
   }.left(@arguments);
   .right(@a) when (@a = left) {
     @init: -5%;
@@ -282,7 +305,7 @@
     @1600: -@canvas_pull_1600;
     @1280: -@canvas_pull_1280;
     @0960: -@canvas_pull_0960;
-    @0640: -100%;
+    @0640: -@canvas_pull_0640;
   }.right(@arguments);
   .inner {
     .transform(translate3d(@init, 0, 0); scale3d(.8, .8, 1));

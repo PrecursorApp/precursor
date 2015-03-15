@@ -32,7 +32,6 @@
   .box-sizing(content-box);
   .flex(1);
   .flexy();
-  .chat_width(menu);
   position: relative;
   .make {
     .animation_cascade(25);
@@ -242,7 +241,6 @@
 .recent-doc-thumb {
   display: block;
   position: relative;
-  height: 15rem;
   border: 1px solid @gray_lighter;
   overflow: hidden;
   transition: @run @bezier_fadein;
@@ -251,6 +249,7 @@
     transition-duration: @run_fast;
   }
   img {
+    .size_of(chat; height; vh);
     width: 100%;
     opacity: .5;
   }

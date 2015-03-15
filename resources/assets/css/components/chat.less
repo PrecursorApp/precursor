@@ -13,11 +13,13 @@
   position: relative;
 }
 .chat-window {
-  .chat_width();
+  .size_of(chat; width);
   .animation(in-fade-right @run_slow @bezier_fadein);
   .flexy(stretch; flex-end; column);
   .user-select(auto); // VETO
   position: relative;
+  min-width: @tile;
+  max-width: calc(~"100% -" @tile);
   height: 100%;
   background: @dye_outer;
   box-shadow: -1px 0 @gray_lighter;
