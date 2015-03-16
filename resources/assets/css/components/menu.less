@@ -3,10 +3,21 @@
   width: 100%;
   min-height: 100vh;
   overflow-x: hidden;
+  .content {
+    max-width: @tile_menu_max;
+    .vein {
+      border-bottom: 1px solid @gray_lightest;
+    }
+  }
 }
 .menu-header {
   .flex(0 0 @tile);
-  .flexy(center);
+  .flexy(center, center);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: @tile;
   a {
     .flexy(center, center);
     width: @tile;
@@ -18,10 +29,13 @@
   }
 }
 .menu-heading {
-  .animation(in-fade-top (@run * 3));
+  .animation(in-fade-bottom-soft @run_slow @bezier_deform);
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin: 0;
+  // margin: 0;
+
+  margin: 0 @tile;
+
   overflow: hidden;
   cursor: default;
   &:not(:last-of-type) {
@@ -33,6 +47,10 @@
   .flex(1);
   .flexy();
   position: relative;
+  // padding-top: @tile;
+  // padding: calc(~"10vh -" @tile) 0;
+  // padding: 10vh 0;
+  padding: 10vh 0 0;
   .make {
     .animation_cascade(25);
   }
@@ -44,7 +62,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  padding-bottom: @tile;
+  // padding-bottom: @tile;
   transition: @run_slow @bezier_deform;
   &:not(:first-child) {
     margin-left: -100%;
@@ -100,11 +118,19 @@
     min-width: 100vw;
   });
 }
+.veins {
+  // .menu.content();
+  max-width: @tile_menu_max;
+  margin: 0 auto;
+}
 .vein {
   .flexy(center);
   .icon(stroke; @gray);
   .icon(fill; @gray);
-  width: 100%;
+  // width: 100%;
+  width: @tile_menu_max;
+  max-width: 100%;
+  height: @tile;
   color: @gray;
   overflow: hidden;
   &:hover {
@@ -459,14 +485,14 @@ img.loading-image {
   .animation(in-fade-top @run_slow);
   display: inline-block;
 }
-
-
-.menu-right {
-  .menu-header {
-    .justify-content(flex-end);
-  }
-  .menu-heading {
-    // text-align: right;
-    padding: 0 @tile 0 @menu_padding;
+.menu-cta {
+  .flexy(center, center);
+  height: @tile;
+  margin-bottom: @tile;
+  transition: @run_fast @bezier_fadein;
+  border: 1px solid @font_color;
+  &:hover {
+    color: @white;
+    background: @font_color;
   }
 }

@@ -44,7 +44,7 @@
                           (utils/stop-event e))]
         (html
          [:div.menu-view
-          [:article
+          [:div.content
            [:p.make
             "Any docs you create in the " (:team/subdomain team)
             " subdomain will be private to your team by default."

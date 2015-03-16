@@ -44,6 +44,9 @@
       padding-bottom: @tile;
     }
   }
+  .content {
+    max-width: @tile_content;
+  }
 }
 .outer-head,
 .outer-foot {
@@ -59,11 +62,20 @@
 }
 .content {
   .box-sizing(content-box);
-  max-width: @tile_content;
   margin-left: auto;
   margin-right: auto;
   padding-left: @padding_outer;
   padding-right: @padding_outer;
+  // &.veins {
+  //   h2,
+  //   p {
+  //     padding: 0 @menu_padding;
+  //   }
+  // }
+  // &:not(.veins) {
+  //   padding-left: @padding_outer;
+  //   padding-right: @padding_outer;
+  // }
 }
 .content-copy {
   .user-select(auto);
