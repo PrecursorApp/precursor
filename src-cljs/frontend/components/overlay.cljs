@@ -293,44 +293,45 @@
           (case cant-edit-reason
             :no-private-docs-flag
             [:div.vein.make.stick
-             (common/icon (if private? :lock :globe))
              [:a {:href "/pricing"}
-              "Start your trial to create private docs"]]
-            :not-creator
-            [:div.vein.make.stick
-             (common/icon (if private? :lock :globe))
-             "Only the creator can change privacy"]
+              "Start your trial to create private docs"]
+             (common/icon (if private? :lock :globe))]
+
             [:form.privacy-select.vein.make.stick
-             [:input.privacy-radio
-              {:type "radio"
-               :hidden "true"
-               :id "privacy-public"
-               :name "privacy"
-               :checked (not private?)
-               :onChange #(if cant-edit-reason
-                            (utils/stop-event %)
-                            (cast! :document-privacy-changed
-                                   {:doc-id doc-id
-                                    :setting :document.privacy/public}))}]
-             [:label.privacy-label
-              {:for "privacy-public"
-               :role "button"}
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-public"
+                                    :name "privacy"
+                                    :checked (not private?)
+                                    :disabled (boolean cant-edit-reason)
+                                    :onChange #(if cant-edit-reason
+                                                 (utils/stop-event %)
+                                                 (cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/public}))}]
+             [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :for "privacy-public"
+                                    :role "button"
+                                    :data-top (when (= :not-creator cant-edit-reason)
+                                                "Only the creator can change privacy.")}
               (common/icon :globe)
               [:span "Public"]]
-             [:input.privacy-radio
-              {:type "radio"
-               :hidden "true"
-               :id "privacy-private"
-               :name "privacy"
-               :checked private?
-               :onChange #(if cant-edit-reason
-                            (utils/stop-event %)
-                            (cast! :document-privacy-changed
-                                   {:doc-id doc-id
-                                    :setting :document.privacy/private}))}]
-             [:label.privacy-label
-              {:for "privacy-private"
-               :role "button"}
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-private"
+                                    :name "privacy"
+                                    :checked private?
+                                    :disabled (boolean cant-edit-reason)
+                                    :onChange #(if cant-edit-reason
+                                                 (utils/stop-event %)
+                                                 (cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/private}))}]
+             [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :for "privacy-private"
+                                    :role "button"
+                                    :data-top (when (= :not-creator cant-edit-reason)
+                                                "Only the creator can change privacy.")}
               (common/icon :lock)
               [:span "Private"]]])])))))
 
