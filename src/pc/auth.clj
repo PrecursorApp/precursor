@@ -101,8 +101,9 @@
 
 (defn team-permission [db team cust]
   (when (and team cust)
+    ;; TODO: fix the permissions
     (if (contains? (permission-model/team-permits db team cust) :permission.permits/admin)
-      :admin
+      :owner
       nil)))
 
 ;; TODO: unify these so that there is only 1 permission type

@@ -236,10 +236,10 @@
   (outer-page req))
 
 (defpage early-access "/early-access" [req]
-  (redirect (str "/trial/team")))
+  (outer-page req))
 
 (defpage early-access-type "/early-access/:type" [req]
-  (redirect (str "/trial/" (-> req :params :type))))
+  (outer-page req))
 
 (defpage trial "/trial/:type" [req]
   (outer-page req))
