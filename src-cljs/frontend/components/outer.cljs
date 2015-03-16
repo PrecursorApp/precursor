@@ -72,18 +72,15 @@
           [:div.content
            [:div.early-access-info
             [:h2.early-access-heading
-             "We're excited to show you the team features we're building."]
-
-            [:p.early-access-copy
-             "To activate your trial, please "
-             (if (utils/logged-in? owner)
-               "take a moment to"
-               "sign in first and")
-             " choose a subdomain."
-             ]
-            (when (utils/logged-in? owner)
+             "Begin your free trial & start using team features today."]
+            (if (utils/logged-in? owner)
               [:p.early-access-copy
-               "It should be at least 4 characters and start with a letter. You can use letters, numbers, and hyphens."])
+               "Choose a name for your team to use on Precursor.
+               Make sure it starts with a letter and is longer than 4 characters.
+               Numbers and hyphens are okay."]
+              [:p.early-access-copy
+               "First, sign in with your Google account.
+               Then we'll just ask you to make a custom subdomain for you and your team."])
             (when-not (utils/logged-in? owner)
               [:div.early-access-sign
                (om/build common/google-login {:source "Early Access Form"})])]
@@ -91,10 +88,9 @@
                                                 (when submitting? "submitting ")
                                                 (when submitted? "submitted "))}
             [:div.subdomain-input
-             [:div.subdomain
+             [:div.subdomain-input-prepend
               {:tab-index "1"
                :ref "subdomain"
-               :data-before "team"
                :content-editable true
                :on-key-down #(when (= "Enter" (.-key %))
                                (.preventDefault %)
@@ -102,7 +98,13 @@
                                (submit-subdomain-form owner))
                :on-input #(om/set-state-nr! owner :subdomain (goog.dom/getRawTextContent (.-target %)))}
               subdomain]
-             [:div {:style {:display "inline-block"}}
+             [:div.subdomain-input-placeholder
+              {:data-prepend "Your team"
+               :data-start " name is..."
+               :data-busy " name is?"
+               :data-end " subdomain will be"}]
+             [:div.subdomain-input-append
+              {:on-click #(.focus (om/get-node owner "subdomain"))}
               ".precursorapp.com"]]
             [:button.early-access-button {:tab-index "5"
                                           :ref "submit-button"
