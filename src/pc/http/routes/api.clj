@@ -49,7 +49,7 @@
           {:status 400 :body (pr-str {:error :missing-subdomain
                                       :msg "Subdomain is missing."})}
 
-          (empty? (re-find (re-pattern (str custom-domain/subdomain-pattern "$")) subdomain))
+          (not (custom-domain/valid-subdomain? subdomain))
           {:status 400 :body (pr-str {:error :subdomain-exists
                                       :msg "Sorry, that subdomain is taken. Please try another."})}
 
