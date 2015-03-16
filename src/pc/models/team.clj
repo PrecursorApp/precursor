@@ -23,12 +23,15 @@
     :e
     (d/entity db)))
 
-(defn create-for-subdomain! [subdomain annotations]
+(defn create-for-subdomain! [subdomain cust annotations]
   @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)}
                                   annotations)
-                           {:db/id (d/tempid :db.part/user)
-                            :team/subdomain subdomain
-                            :team/uuid (d/squuid)}]))
+                           (merge
+                            {:db/id (d/tempid :db.part/user)
+                             :team/subdomain subdomain
+                             :team/uuid (d/squuid)}
+                            (when (seq cust)
+                              {:team/creator cust}))]))
 
 (defn find-doc-ids [db team]
   (map :e (d/datoms db :vaet (:db/id team) :document/team)))

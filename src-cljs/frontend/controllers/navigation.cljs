@@ -80,7 +80,7 @@
   [history-imp navigation-point args state]
   (handle-outer navigation-point args state))
 
-(defmethod navigated-to :early-access
+(defmethod navigated-to :trial
   [history-imp navigation-point args state]
   (handle-outer navigation-point args state))
 

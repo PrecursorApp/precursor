@@ -46,7 +46,7 @@
   "Creates a new team given a subdomain. Returns the team"
   [subdomain cust]
   (try+
-   (let [team (-> (team-model/create-for-subdomain! subdomain {})
+   (let [team (-> (team-model/create-for-subdomain! subdomain cust {:cust/uuid (:cust/uuid cust)})
                 :db-after
                 (team-model/find-by-subdomain subdomain))]
      (add-first-cust team cust)

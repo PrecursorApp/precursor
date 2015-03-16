@@ -18,15 +18,22 @@
     (put! nav-ch [:landing {:query-params query-params}]))
   (defroute home "/home" [{:keys [query-params]}]
     (put! nav-ch [:landing {:query-params query-params}]))
-  (defroute home "/pricing" [{:keys [query-params]}]
+  (defroute pricing "/pricing" [{:keys [query-params]}]
     (put! nav-ch [:pricing {:query-params query-params}]))
-  (defroute home "/early-access" [{:keys [query-params]}]
-    (put! nav-ch [:early-access {:query-params query-params}]))
-  (defroute home "/early-access/:type" [type {:keys [query-params]}]
-    (put! nav-ch [:early-access {:query-params query-params
-                                 :type type}]))
 
-  (defroute home "/new" [{:keys [query-params]}]
+  ;; TODO: remove these when backend deploys, only here for backwards compatibility
+  (defroute early-access "/early-access" [{:keys [query-params]}]
+    (put! nav-ch [:navigate! {:path "/trial/team"
+                              :replace-token? true}]))
+  (defroute early-access-type "/early-access/:type" [type {:keys [query-params]}]
+    (put! nav-ch [:navigate! {:path (str "/trial/" type)
+                              :replace-token? true}]))
+
+  (defroute trial "/trial/:type" [type {:keys [query-params]}]
+    (put! nav-ch [:trial {:query-params query-params
+                          :trial-type type}]))
+
+  (defroute new-doc "/new" [{:keys [query-params]}]
     (put! nav-ch [:new {:query-params query-params}]))
   (defroute document #"/document/(\d+)" [doc-id {:keys [query-params]}]
     (put! nav-ch [:document {:document/id (long doc-id)

@@ -26,7 +26,7 @@
                    [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.ui IdGenerator]))
 
-(defn submit-early-access-form [owner]
+(defn submit-subdomain-form [owner]
   (go
     (om/update-state! owner (fn [s]
                               (assoc s :submitting? true :error nil)))
@@ -53,7 +53,7 @@
                     :error [:p (:msg (:response res))])))
           (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))
 
-(defn signup [app owner]
+(defn team-signup [app owner]
   (reify
     om/IInitState (init-state [_] {:subdomain ""
                                    :error nil
@@ -61,7 +61,7 @@
                                    :submitted? false
                                    :team-created? false
                                    :team nil})
-    om/IDisplayName (display-name [_] "")
+    om/IDisplayName (display-name [_] "Team Signup")
     om/IRenderState
     (render-state [_ {:keys [subdomain submitting? error submitted? team-created? team]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
@@ -99,7 +99,7 @@
                :on-key-down #(when (= "Enter" (.-key %))
                                (.preventDefault %)
                                ;; If they hit enter, submit the form
-                               (submit-early-access-form owner))
+                               (submit-subdomain-form owner))
                :on-input #(om/set-state-nr! owner :subdomain (goog.dom/getRawTextContent (.-target %)))}
               subdomain]
              [:div {:style {:display "inline-block"}}
@@ -107,7 +107,7 @@
             [:button.early-access-button {:tab-index "5"
                                           :ref "submit-button"
                                           :disabled (or disabled? submitted?)
-                                          :on-click #(submit-early-access-form owner)}
+                                          :on-click #(submit-subdomain-form owner)}
              (cond submitting?
                    (html
                     [:span "Setting up your team"
@@ -141,6 +141,90 @@
                [:p "Documents you create in your subdomain are private by default and shared with all of your teammates."]
 
                [:p "You'll have two weeks of free, unlimited access, and then we'll follow up with you to see how things are going."]])]]])))))
+
+(defn submit-solo-trial-form [owner]
+  (go
+    (om/update-state! owner (fn [s]
+                              (assoc s :submitting? true :error nil)))
+    ;; we wouldn't typically use ajax in a component--it's not advisable in
+    ;; this case, but we're short on time
+    ;; important to get the state out of owner since we're not re-rendering on update
+    (let [res (<! (ajax/managed-ajax :post "/api/v1/create-solo-trial"))]
+      (if (= :success (:status res))
+        (om/update-state! owner (fn [s]
+                                  (assoc s
+                                         :submitting? false
+                                         :submitted? true
+                                         :error nil
+                                         :trial-created? true)))
+        (do
+          (om/update-state!
+           owner
+           (fn [s]
+             (assoc s
+                    :submitting? false
+                    :error [:p (or (:msg (:response res))
+                                   "There was an error, please try again.")])))
+          (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))
+
+(defn solo-signup [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Solo signup")
+    om/IRenderState
+    (render-state [_ {:keys [trial-created? disabled? submitting? submitted? error]}]
+      (let [{:keys [cast!]} (om/get-shared owner)]
+        (html
+         [:div.early-access
+          [:div.content
+           [:div.early-access-info
+            [:h2.early-access-heading
+             "We're excited to show you the paid features we're building."]
+
+            (if (utils/logged-in? owner)
+              [:p.early-access-copy "Once you activate your trial, you'll be able to create private docs and control who has access to them."]
+              [:p.early-access-copy "To activate your trial, please sign in first."])
+
+            (when-not (utils/logged-in? owner)
+              [:div.early-access-sign
+               (om/build common/google-login {:source "Early Access Form"})])]
+
+           [:div.early-access-form {:class (str (when disabled? "disabled ")
+                                                (when submitting? "submitting ")
+                                                (when submitted? "submitted "))}
+
+            [:button.early-access-button {:tab-index "5"
+                                          :ref "submit-button"
+                                          :disabled (or disabled? submitted?)
+                                          :on-click #(submit-solo-trial-form owner)}
+             (cond submitting?
+                   (html
+                    [:span "Setting up your trial"
+                     [:i.loading-ellipses
+                      [:i "."]
+                      [:i "."]
+                      [:i "."]]])
+
+                   submitted? "Thanks, your trial is ready!"
+
+                   :else "Start your trial")]
+
+            (when error
+              [:div.error error])
+
+            (when trial-created?
+              [:div.early-access-granted
+               [:p "When you create a document, you can toggle its privacy setting from the sharing menu on the left."]
+
+               [:p "You'll have two weeks of free, unlimited access, and then we'll follow up with you to see how things are going."]])]]])))))
+
+(defn signup [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Signup")
+    om/IRender
+    (render [_]
+      (if (= "solo" (get-in app [:navigation-data :trial-type]))
+        (om/build solo-signup app)
+        (om/build team-signup app)))))
 
 (defn pricing [app owner]
   (reify
@@ -274,7 +358,7 @@
 (def outer-components
   {:landing landing/landing
    :pricing pricing
-   :early-access signup})
+   :trial signup})
 
 (defn outer [app owner]
   (reify

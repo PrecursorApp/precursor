@@ -10,6 +10,7 @@
             [pc.http.handlers.custom-domain :as custom-domain]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.doc :as doc-model]
+            [pc.models.flag :as flag-model]
             [pc.models.team :as team-model]
             [pc.profile :as profile]
             [slingshot.slingshot :refer (try+ throw+)]))
@@ -71,6 +72,14 @@
       (pc.early-access/create-request cust (edn/read-string (slurp (:body req))))
       (pc.early-access/approve-request cust)
       {:status 200 :body (pr-str {:msg "Thanks!" :access-request-granted? true})})
+    {:status 401 :body (pr-str {:error :not-logged-in
+                                :msg "Please log in to request early access."})}))
+
+(defpage create-solo-trial [:post "/api/v1/create-solo-trial"] [req]
+  (if-let [cust (get-in req [:auth :cust])]
+    (do
+      (flag-model/add-flag cust :flags/private-docs)
+      {:status 200 :body (pr-str {:msg "Thanks!" :solo-plan-created? true})})
     {:status 401 :body (pr-str {:error :not-logged-in
                                 :msg "Please log in to request early access."})}))
 
