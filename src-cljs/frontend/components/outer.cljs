@@ -240,28 +240,28 @@
               [:div.price-head
                [:h2.price-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
               [:div.price-body
-               ;; [:h4.content-copy "$10/mo"]    ; <- hold off until pricing is ready
-               [:h4.content-copy "Pricing soon."] ; <- and delete this once it's ready
+               [:h4.content-copy "$10/mo"]
                [:p.price-copy.content-copy
-                "Unlimited public docs, private docs, and project repos.
-                Add additional teammates at any time and take full advantage of team features."]]
+                "Create unlimited public docs. "
+                "Create unlimited private docs. "
+                "Manage access for each of your documents individually."]]
               [:div.price-foot
                [:a.price-button
-                {:href "/early-access/solo"
+                {:href "/trial/solo"
                  :title "Try it free while we gather feedback."
                  :role "button"}
-                "Request early access."]]]
+                "Start trial"]]]
              [:section.price-divide.left
               [:div.price-divide-line]]
              [:div.price-block.price-team
               [:div.price-head
                [:h2.price-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
               [:div.price-body
-               ;; [:h4.content-copy "$10/mo/user"] ; <- hold off until pricing is ready
-               [:h4.content-copy "Pricing soon."]   ; <- and delete this once it's ready
+               [:h4.content-copy "$10/mo/user"]
                [:p.price-copy.content-copy
-                "Unlimited public docs, private docs, and project repos.
-                Additional access to team-wide chat, in-app notifications, and file management."]]
+                "Unlimited public and private docs. "
+                "Custom subdomain for your team where docs are private "
+                "by default and shared with your teammates."]]
               [:div.price-foot
                [:a.price-button
                 {:href "/early-access/team"
@@ -274,7 +274,7 @@
               [:div.price-head
                [:h2.price-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
               [:div.price-body
-               [:h4.content-copy "Contact us."]
+               [:h4.content-copy "Contact us"]
                [:p.price-copy.content-copy
                 "Customized solutions designed to solve specific team constraints.
                 E.g., integrations, custom servers, on-premise accommodations, etc."]]
@@ -283,7 +283,7 @@
                 {:href "mailto:enterprise@precursorapp.com?Subject=Enterprise%20Inquiry"
                  :title "We'll get back to you immediately."
                  :role "button"}
-                "Contact us."]]]]]])))))
+                "Contact us"]]]]]])))))
 
 (defn nav-head [app owner]
   (om/component
