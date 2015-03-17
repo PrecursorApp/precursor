@@ -223,31 +223,34 @@
           [:article
            [:h2.make
             "This document is public."]
-           [:p.make
-            "It's visible to anyone with the url.
-            Email a friend to invite them to collaborate."]
            (if-not (:cust app)
-             [:a.make
-              {:href (auth/auth-url :source "username-overlay")
-               :role "button"}
-              "Sign Up"]
+             (list
+               [:p.make
+                "It's visible to anyone with the url.
+                Sign in with your Google account to send an invite or give someone your url."]
+               [:div.make
+                (om/build common/google-login {:source "Public Sharing Menu"})])
 
-             [:form.menu-invite-form.make
-              {:on-submit #(do (cast! :invite-submitted)
-                             false)
-               :on-key-down #(when (= "Enter" (.-key %))
-                               (cast! :email-invite-submitted)
-                               false)}
-              [:input
-               {:type "text"
-                :required "true"
-                :data-adaptive ""
-                :value (or invite-email "")
-                :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
-              [:label
-               {:data-placeholder "Collaborator's email"
-                :data-placeholder-nil "What's your collaborator's email?"
-                :data-placeholder-forgot "Don't forget to submit!"}]])
+             (list
+               [:p.make
+                "It's visible to anyone with the url.
+                Email a friend to invite them to collaborate."]
+               [:form.menu-invite-form.make
+                {:on-submit #(do (cast! :invite-submitted)
+                               false)
+                 :on-key-down #(when (= "Enter" (.-key %))
+                                 (cast! :email-invite-submitted)
+                                 false)}
+                [:input
+                 {:type "text"
+                  :required "true"
+                  :data-adaptive ""
+                  :value (or invite-email "")
+                  :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+                [:label
+                 {:data-placeholder "Collaborator's email"
+                  :data-placeholder-nil "What's your collaborator's email?"
+                  :data-placeholder-forgot "Don't forget to submit!"}]]))
            (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
              [:div response])
            ;; TODO: keep track of invites
@@ -275,44 +278,67 @@
             invite-email (get-in app state/invite-email-path)
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)
-            private? (= :document.privacy/private (:document/privacy doc))]
+            private? (= :document.privacy/private (:document/privacy doc))
+            cant-edit-reason (cond (:team app)
+                                   nil
+
+                                   (not (contains? (get-in app [:cust :flags]) :flags/private-docs))
+                                   :no-private-docs-flag
+
+                                   (not (auth/owner? @db doc (get-in app [:cust])))
+                                   :not-creator)]
         (html
          [:div.menu-view
           (if private?
             (om/build private-sharing app)
             (om/build public-sharing app))
 
-          (when (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
-                     (auth/owner? @db doc (get-in app [:cust])))
+          (case cant-edit-reason
+            :no-private-docs-flag
+            [:a.vein.make.stick.external {:href "/pricing"}
+             [:span "Need private docs? Start a free trial."]
+             (common/icon :arrow-right)]
+
+
             [:form.privacy-select.vein.make.stick
-             [:input.privacy-radio
-              {:type "radio"
-               :hidden "true"
-               :id "privacy-public"
-               :name "privacy"
-               :checked (not private?)
-               :onChange #(cast! :document-privacy-changed
-                                 {:doc-id doc-id
-                                  :setting :document.privacy/public})}]
-             [:label.privacy-label
-              {:for "privacy-public"
-               :role "button"}
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-public"
+                                    :name "privacy"
+                                    :checked (not private?)
+                                    :disabled (boolean cant-edit-reason)
+                                    :onChange #(if cant-edit-reason
+                                                 (utils/stop-event %)
+                                                 (cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/public}))}]
+             [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
+                                    :for "privacy-public"
+                                    :role "button"}
               (common/icon :globe)
-              [:span "Public"]]
-             [:input.privacy-radio
-              {:type "radio"
-               :hidden "true"
-               :id "privacy-private"
-               :name "privacy"
-               :checked private?
-               :onChange #(cast! :document-privacy-changed
-                                 {:doc-id doc-id
-                                  :setting :document.privacy/private})}]
-             [:label.privacy-label
-              {:for "privacy-private"
-               :role "button"}
+              [:span "Public"]
+              (when (= :not-creator cant-edit-reason)
+                [:small "(privacy change requires owner)"])]
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-private"
+                                    :name "privacy"
+                                    :checked private?
+                                    :disabled (boolean cant-edit-reason)
+                                    :onChange #(if cant-edit-reason
+                                                 (utils/stop-event %)
+                                                 (cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/private}))}]
+             [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
+                                    :for "privacy-private"
+                                    :role "button"}
               (common/icon :lock)
-              [:span "Private"]]])])))))
+              [:span "Private"]
+              (when (= :not-creator cant-edit-reason)
+                [:small "(privacy change requires owner)"])]])])))))
 
 (defn info [app owner]
   (reify
