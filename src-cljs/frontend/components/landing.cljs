@@ -309,9 +309,9 @@
              [:span.content-copy
               "Our team features are optimized to make collaborating in real-time effortless.
               Communicate and create new ideas with your teammates in one secure place."]]
-            [:a.feature-link {:href "/early-access/team" :role "button" :title "Request early access."}
+            [:a.feature-link {:href "/pricing" :role "button" :title "Start your trial"}
              [:span.content-copy
-              "Request early access."]]]
+              "Start your trial"]]]
            [:div.feature-media artwork-team]]])))))
 
 (defn the-what [app owner]
