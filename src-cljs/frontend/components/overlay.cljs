@@ -333,50 +333,29 @@
              "Precursor is a no-nonsense prototyping tool.
              Use it for wireframing, sketching, and brainstorming.
              Invite your team to collaborate instantly."
-             ; Have feedback or a great idea?"
-             ; Say "
-             ; [:a
-             ;  {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
-             ;   :title "We love feedback, good or bad."}
-             ;  "hi@prcrsr.com"]
-             ; " or on "
-             ; [:a
-             ;  {:href "https://twitter.com/PrecursorApp"
-             ;   :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-             ;   :title "@PrecursorApp"
-             ;   :target "_blank"}
-             ;  "Twitter"]
-             ; "."
              ]
-            ; (if (:cust app)
-            ;   [:a.menu-cta.make
-            ;    {:on-click         #(cast! :overlay-menu-closed)
-            ;     :on-touch-end #(do (cast! :overlay-menu-closed) (.preventDefault %))
-            ;     :role "button"} "Okay"]
-            ;   (list
-            ;     [:p.make
-            ;      "Sign up and we'll even keep track of all your docs.
-            ;      Never lose a great idea again!"]
-            ;     [:a.menu-cta.make
-            ;      {:href (auth/auth-url :source "username-overlay")
-            ;       :role "button"}
-            ;      "Sign Up"]))
+            (when-not (:cust app)
+              (list
+                [:p.make
+                 "Sign up and we'll even keep track of all your docs.
+                 Never lose a great idea again!"]
+                [:a.menu-cta.make
+                 {:href (auth/auth-url :source "username-overlay")
+                  :role "button"}
+                 "Sign Up"]))
             [:a.vein.make
              {:href "/home"
               :role "button"}
-             ; (common/icon :home)
              [:span "Home"]]
             [:a.vein.make
              {:href "/pricing"
               :target "_self"
               :role "button"}
-             ; (common/icon :blog)
              [:span "Pricing"]]
             [:a.vein.make
              {:href "/blog"
               :target "_self"
               :role "button"}
-             ; (common/icon :blog)
              [:span "Blog"]]
             [:a.vein.make
              {:href "https://twitter.com/PrecursorApp"
@@ -384,27 +363,12 @@
               :target "_blank"
               :title "@PrecursorApp"
               :role "button"}
-             ; (common/icon :blog)
              [:span "Twitter"]]
             [:a.vein.make
              {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
               :target "_self"
               :role "button"}
-             ; (common/icon :blog)
-             [:span "Email"]]
-            ]
-           ; [:div.content.full
-           ;  [:a.vein.make
-           ;   {:href "/home"
-           ;    :role "button"}
-           ;   ; (common/icon :home)
-           ;   [:span "Home"]]
-           ;  [:a.vein.make
-           ;   {:href "/blog"
-           ;    :target "_self"
-           ;    :role "button"}
-           ;   ; (common/icon :blog)
-           ;   [:span "Blog"]]]
+             [:span "Email"]]]
            (common/mixpanel-badge)])))))
 
 (defn shortcuts [app owner]
