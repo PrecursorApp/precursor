@@ -40,7 +40,7 @@
       {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})})))
 
 (defpage create-team [:post "/api/v1/create-team"] [req]
-  (let [subdomain (:subdomain (edn/read-string (slurp (:body req))))
+  (let [subdomain (some-> req :body slurp edn/read-string :subdomain str/lower-case)
         cust (get-in req [:auth :cust])]
     (cond (empty? cust)
           {:status 400 :body (pr-str {:error :not-logged-in
