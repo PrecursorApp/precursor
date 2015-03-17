@@ -56,6 +56,7 @@
   top: 0;
   left: 0;
   width: 100%;
+  margin-bottom: 10vh;
   transition: @run_slow @bezier_deform;
   &:not(:first-child) {
     margin-left: -100%;
@@ -112,15 +113,17 @@
   });
 }
 .veins {
+  position: relative;
   width: 100%;
   max-width: @tile_menu_max;
+  min-height: 80vh;
   margin: 0 auto;
 }
 .vein {
   .flexy(center);
   .icon(stroke; @gray);
   .icon(fill; @gray);
-  max-width: 100%;
+  width: 100%;
   height: @tile;
   color: @gray;
   overflow: hidden;
@@ -133,6 +136,9 @@
     position: absolute;
     bottom: 0;
     left: 0;
+    right: 0;
+    max-width: @tile_menu_max;
+    margin: 0 auto;
   }
   &.external {
     .icon-arrow-right {
@@ -334,6 +340,9 @@ img.loading-image {
         }
       }
     }
+  }
+  &.vein {
+    height: auto;
   }
 }
 .privacy-radio {

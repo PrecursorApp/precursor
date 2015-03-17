@@ -147,7 +147,6 @@
               :role "button"}
              (common/icon :clock)
              [:span "Team Documents"]]
-            (om/build auth-link app {:opts {:source "start-overlay"}})
             ]])))))
 
 (defn private-sharing [app owner]
@@ -180,7 +179,7 @@
             access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
-          [:article
+          [:div.content
            [:h2.make
             "This document is private."]
            [:p.make
