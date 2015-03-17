@@ -136,6 +136,21 @@
     bottom: 0;
     left: 0;
   }
+  &.external {
+    .icon-arrow-right {
+      transition: @run @bezier_deform;
+    }
+    &:not(:hover) {
+      .icon-arrow-right {
+        margin-left: @menu_padding / -2;
+      }
+    }
+  }
+  span {
+    &:first-child {
+      padding-left: @menu_padding;
+    }
+  }
   i {
     padding: @menu_padding;
   }

@@ -223,31 +223,33 @@
           [:article
            [:h2.make
             "This document is public."]
-           [:p.make
-            "It's visible to anyone with the url.
-            Email a friend to invite them to collaborate."]
            (if-not (:cust app)
-             [:a.make
-              {:href (auth/auth-url :source "username-overlay")
-               :role "button"}
-              "Sign Up"]
+             (list
+               [:p.make
+                "It's visible to anyone with the url.
+                Sign in with your Google account to send an invite or give someone your url."]
+               (om/build common/google-login {:source "Public Sharing Menu"}))
 
-             [:form.menu-invite-form.make
-              {:on-submit #(do (cast! :invite-submitted)
-                             false)
-               :on-key-down #(when (= "Enter" (.-key %))
-                               (cast! :email-invite-submitted)
-                               false)}
-              [:input
-               {:type "text"
-                :required "true"
-                :data-adaptive ""
-                :value (or invite-email "")
-                :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
-              [:label
-               {:data-placeholder "Collaborator's email"
-                :data-placeholder-nil "What's your collaborator's email?"
-                :data-placeholder-forgot "Don't forget to submit!"}]])
+             (list
+               [:p.make
+                "It's visible to anyone with the url.
+                Email a friend to invite them to collaborate."]
+               [:form.menu-invite-form.make
+                {:on-submit #(do (cast! :invite-submitted)
+                               false)
+                 :on-key-down #(when (= "Enter" (.-key %))
+                                 (cast! :email-invite-submitted)
+                                 false)}
+                [:input
+                 {:type "text"
+                  :required "true"
+                  :data-adaptive ""
+                  :value (or invite-email "")
+                  :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+                [:label
+                 {:data-placeholder "Collaborator's email"
+                  :data-placeholder-nil "What's your collaborator's email?"
+                  :data-placeholder-forgot "Don't forget to submit!"}]]))
            (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
              [:div response])
            ;; TODO: keep track of invites
@@ -292,10 +294,10 @@
 
           (case cant-edit-reason
             :no-private-docs-flag
-            [:div.vein.make.stick
-             [:a {:href "/pricing"}
-              "Start your trial to create private docs"]
-             (common/icon (if private? :lock :globe))]
+            [:a.vein.make.stick.external {:href "/pricing"}
+             [:span "Need private docs? Start a free trial."]
+             (common/icon :arrow-right)]
+
 
             [:form.privacy-select.vein.make.stick
              [:input.privacy-radio {:type "radio"
