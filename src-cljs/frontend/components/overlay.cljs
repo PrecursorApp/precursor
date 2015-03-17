@@ -82,59 +82,49 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-         [:div.menu-view
-          [:a.vein.make
-           {:on-click         #(cast! :overlay-info-toggled)
-            :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
-            :role "button"}
-           (common/icon :info)
-           [:span "About"]]
-          [:a.vein.make
-           {:href "/new"
-            :role "button"}
-           (common/icon :newdoc)
-           [:span "New Document"]]
-          [:a.vein.make
-           {:on-click         #(cast! :your-docs-opened)
-            :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
-            :role "button"}
-           (common/icon :clock)
-           [:span "Your Documents"]]
-          ;; TODO: should this use the permissions model? Would have to send some
-          ;;       info about the document
-          (if (auth/has-document-access? app (:document/id app))
+          [:div.menu-view
+           [:div.veins
             [:a.vein.make
-             {:on-click         #(cast! :sharing-menu-opened)
-              :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
+             {:on-click         #(cast! :overlay-info-toggled)
+              :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
               :role "button"}
-             (common/icon :share)
-             [:span "Sharing"]]
+             (common/icon :info)
+             [:span "About"]]
+            [:a.vein.make
+             {:href "/new"
+              :role "button"}
+             (common/icon :newdoc)
+             [:span "New Document"]]
+            [:a.vein.make
+             {:on-click         #(cast! :your-docs-opened)
+              :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
+              :role "button"}
+             (common/icon :clock)
+             [:span "Your Documents"]]
+            ;; TODO: should this use the permissions model? Would have to send some
+            ;;       info about the document
+            (if (auth/has-document-access? app (:document/id app))
+              [:a.vein.make
+               {:on-click         #(cast! :sharing-menu-opened)
+                :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
+                :role "button"}
+               (common/icon :share)
+               [:span "Sharing"]]
 
+              [:a.vein.make
+               {:on-click         #(cast! :document-permissions-opened)
+                :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
+                :role "button"}
+               (common/icon :users)
+               [:span "Request Access"]])
             [:a.vein.make
-             {:on-click         #(cast! :document-permissions-opened)
-              :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
+             {:on-click         #(cast! :shortcuts-menu-opened)
+              :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
+              :class "mobile-hidden"
               :role "button"}
-             (common/icon :users)
-             [:span "Request Access"]])
-          [:a.vein.make
-           {:on-click         #(cast! :shortcuts-menu-opened)
-            :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
-            :class "mobile-hidden"
-            :role "button"}
-           (common/icon :command)
-           [:span "Shortcuts"]]
-          [:a.vein.make
-           {:href "/home"
-            :role "button"}
-           (common/icon :home)
-           [:span "Home"]]
-          [:a.vein.make
-           {:href "/blog"
-            :target "_self"
-            :role "button"}
-           (common/icon :blog)
-           [:span "Blog"]]
-          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
+             (common/icon :command)
+             [:span "Shortcuts"]]
+            ]])))))
 
 (defn team-start [app owner]
   (reify
@@ -144,18 +134,20 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-         [:div.menu-view
-          [:a.vein.make
-           {:on-click #(cast! :team-settings-opened)
-            :role "button"}
-           (common/icon :share)
-           [:span "Permissions"]]
-          [:a.vein.make
-           {:on-click #(cast! :team-docs-opened)
-            :role "button"}
-           (common/icon :clock)
-           [:span "Team Documents"]]
-          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
+          [:div.menu-view
+           [:div.veins
+            [:a.vein.make
+             {:on-click #(cast! :team-settings-opened)
+              :role "button"}
+             (common/icon :share)
+             [:span "Permissions"]]
+            [:a.vein.make
+             {:on-click #(cast! :team-docs-opened)
+              :role "button"}
+             (common/icon :clock)
+             [:span "Team Documents"]]
+            (om/build auth-link app {:opts {:source "start-overlay"}})
+            ]])))))
 
 (defn private-sharing [app owner]
   (reify
@@ -348,40 +340,48 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.menu-view
-           [:article
+           [:div.content
             [:h2.make
              "What is Precursor?"]
             [:p.make
              "Precursor is a no-nonsense prototyping tool.
              Use it for wireframing, sketching, and brainstorming.
-             Invite your team to collaborate instantly.
-             Have feedback or a great idea?
-             Say "
-             [:a
-              {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
-               :title "We love feedback, good or bad."}
-              "hi@prcrsr.com"]
-             " or on "
-             [:a
-              {:href "https://twitter.com/PrecursorApp"
-               :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-               :title "@PrecursorApp"
-               :target "_blank"}
-              "Twitter"]
-             "."]
-            (if (:cust app)
-              [:a.make
-               {:on-click         #(cast! :overlay-menu-closed)
-                :on-touch-end #(do (cast! :overlay-menu-closed) (.preventDefault %))
-                :role "button"} "Okay"]
+             Invite your team to collaborate instantly."
+             ]
+            (when-not (:cust app)
               (list
                 [:p.make
                  "Sign up and we'll even keep track of all your docs.
                  Never lose a great idea again!"]
-                [:a.make
+                [:a.menu-cta.make
                  {:href (auth/auth-url :source "username-overlay")
                   :role "button"}
-                 "Sign Up"]))]
+                 "Sign Up"]))
+            [:a.vein.make
+             {:href "/home"
+              :role "button"}
+             [:span "Home"]]
+            [:a.vein.make
+             {:href "/pricing"
+              :role "button"}
+             [:span "Pricing"]]
+            [:a.vein.make
+             {:href "/blog"
+              :target "_self"
+              :role "button"}
+             [:span "Blog"]]
+            [:a.vein.make
+             {:href "https://twitter.com/PrecursorApp"
+              :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+              :target "_blank"
+              :title "@PrecursorApp"
+              :role "button"}
+             [:span "Twitter"]]
+            [:a.vein.make
+             {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
+              :target "_self"
+              :role "button"}
+             [:span "Email"]]]
            (common/mixpanel-badge)])))))
 
 (defn shortcuts [app owner]
@@ -393,7 +393,7 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          [:article
+          [:div.content
            [:table.shortcuts-items
             [:tbody
              ;;
@@ -549,9 +549,7 @@
           [:div.menu-header
            (for [component overlay-components]
              (html
-              [:h4.menu-heading
-               {:title title}
-               (:title component)]))]
+              [:h4.menu-heading {:title title :key title} title]))]
           [:div.menu-body
            (for [component overlay-components]
             (om/build (:component component) app))]])))))
