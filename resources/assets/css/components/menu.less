@@ -338,12 +338,32 @@ img.loading-image {
     }
   }
 }
+.privacy-radio {
+  &:not(:checked) {
+    + .privacy-label {
+      &.disabled {
+        height: 0;
+        opacity: 0;
+      }
+    }
+  }
+}
 .privacy-label {
   .flexy(center);
   height: @tile;
   cursor: pointer;
   overflow: hidden;
   transition: @run;
+  &.disabled {
+    .user-select(none);
+    .icon(stroke; @gray_light);
+    .icon(fill; @gray_light);
+    color: @gray_light;
+    cursor: default;
+  }
+  small {
+    padding-left: .25em;
+  }
 }
 .access-card {
   .flexy(center);

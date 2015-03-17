@@ -313,12 +313,13 @@
                                                         {:doc-id doc-id
                                                          :setting :document.privacy/public}))}]
              [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
                                     :for "privacy-public"
-                                    :role "button"
-                                    :data-top (when (= :not-creator cant-edit-reason)
-                                                "Only the creator can change privacy.")}
+                                    :role "button"}
               (common/icon :globe)
-              [:span "Public"]]
+              [:span "Public"]
+              (when (= :not-creator cant-edit-reason)
+                [:small "(privacy change requires owner)"])]
              [:input.privacy-radio {:type "radio"
                                     :hidden "true"
                                     :id "privacy-private"
@@ -331,12 +332,13 @@
                                                         {:doc-id doc-id
                                                          :setting :document.privacy/private}))}]
              [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
                                     :for "privacy-private"
-                                    :role "button"
-                                    :data-top (when (= :not-creator cant-edit-reason)
-                                                "Only the creator can change privacy.")}
+                                    :role "button"}
               (common/icon :lock)
-              [:span "Private"]]])])))))
+              [:span "Private"]
+              (when (= :not-creator cant-edit-reason)
+                [:small "(privacy change requires owner)"])]])])))))
 
 (defn info [app owner]
   (reify
