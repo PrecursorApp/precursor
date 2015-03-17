@@ -228,7 +228,8 @@
                [:p.make
                 "It's visible to anyone with the url.
                 Sign in with your Google account to send an invite or give someone your url."]
-               (om/build common/google-login {:source "Public Sharing Menu"}))
+               [:div.make
+                (om/build common/google-login {:source "Public Sharing Menu"})])
 
              (list
                [:p.make
