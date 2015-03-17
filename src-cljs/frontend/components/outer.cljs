@@ -172,8 +172,9 @@
   (reify
     om/IDisplayName (display-name [_] "Solo signup")
     om/IRenderState
-    (render-state [_ {:keys [trial-created? disabled? submitting? submitted? error]}]
-      (let [{:keys [cast!]} (om/get-shared owner)]
+    (render-state [_ {:keys [trial-created? submitting? submitted? error]}]
+      (let [{:keys [cast!]} (om/get-shared owner)
+            disabled? (or submitting? (not (utils/logged-in? owner)))]
         (html
          [:div.page-trial.page-form
           [:div.content
