@@ -83,7 +83,7 @@
                "Then we'll just ask you to make a custom subdomain for you and your team."])
             (when-not (utils/logged-in? owner)
               [:div.early-access-sign
-               (om/build common/google-login {:source "Early Access Form"})])]
+               (om/build common/google-login {:source "Team Signup Form"})])]
            [:div.early-access-form {:class (str (when disabled? "disabled ")
                                                 (when submitting? "submitting ")
                                                 (when submitted? "submitted "))}
@@ -188,7 +188,7 @@
 
             (when-not (utils/logged-in? owner)
               [:div.early-access-sign
-               (om/build common/google-login {:source "Early Access Form"})])]
+               (om/build common/google-login {:source "Solo Signup Form"})])]
 
            [:div.early-access-form {:class (str (when disabled? "disabled ")
                                                 (when submitting? "submitting ")
