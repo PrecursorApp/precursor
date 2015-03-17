@@ -252,7 +252,7 @@
              [:div.price-foot
               [:a.price-button
                {:href "/trial/solo"
-                :title "Try it free while we gather feedback."
+                :title "Start your free, 2 week trial."
                 :role "button"}
                "Start trial"]]]
             [:section.price-divide.left
@@ -269,7 +269,7 @@
              [:div.price-foot
               [:a.price-button
                {:href "/trial/team"
-                :title "Start trial"
+                :title "Start your free, 2 week trial."
                 :role "button"}
                "Start trial"]]]
             [:section.price-divide.right
