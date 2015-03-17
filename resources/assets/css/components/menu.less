@@ -56,7 +56,6 @@
   top: 0;
   left: 0;
   width: 100%;
-  margin-bottom: 10vh;
   transition: @run_slow @bezier_deform;
   &:not(:first-child) {
     margin-left: -100%;
@@ -113,10 +112,10 @@
   });
 }
 .veins {
+  .flex(1);
   position: relative;
   width: 100%;
   max-width: @tile_menu_max;
-  min-height: 80vh;
   margin: 0 auto;
 }
 .vein {
