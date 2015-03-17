@@ -46,7 +46,7 @@
   "Creates a new team given a subdomain. Returns the team"
   [subdomain cust]
   (try+
-   (let [team (-> (team-model/create-for-subdomain! subdomain {})
+   (let [team (-> (team-model/create-for-subdomain! subdomain cust {:cust/uuid (:cust/uuid cust)})
                 :db-after
                 (team-model/find-by-subdomain subdomain))]
      (add-first-cust team cust)
@@ -55,5 +55,6 @@
        (team-model/find-by-subdomain subdomain)))
    (catch :db/error t
      (if (= :db.error/unique-conflict (:db/error t))
-       (throw+ {:status 400 :public-message "Subdomain is already in use"})
+       (throw+ {:status 400 :public-message "Subdomain is already in use"
+                :error :subdomain-exists})
        (throw+)))))

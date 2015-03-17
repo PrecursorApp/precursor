@@ -10,6 +10,7 @@
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
             [frontend.components.landing :as landing]
+            [frontend.config :as config]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.state :as state]
@@ -25,164 +26,208 @@
                    [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.ui IdGenerator]))
 
-(defn submit-early-access-form [owner]
+(defn submit-subdomain-form [owner]
   (go
     (om/update-state! owner (fn [s]
                               (assoc s :submitting? true :error nil)))
     ;; we wouldn't typically use ajax in a component--it's not advisable in
     ;; this case, but we're short on time
     ;; important to get the state out of owner since we're not re-rendering on update
-    (let [{:keys [company-name employee-count use-case]} (om/get-state owner)
-          res (<! (ajax/managed-ajax :post "/api/v1/early-access" :params {:company-name company-name
-                                                                           :employee-count employee-count
-                                                                           :use-case use-case}))]
+    (let [{:keys [subdomain]} (om/get-state owner)
+          res (<! (ajax/managed-ajax :post "/api/v1/create-team" :params {:subdomain subdomain}))]
       (if (= :success (:status res))
         (om/update-state! owner (fn [s]
                                   (assoc s
                                          :submitting? false
                                          :submitted? true
                                          :error nil
-                                         :company-name ""
-                                         :employee-count ""
-                                         :use-case ""
-                                         :access-request-granted? (:access-request-granted? res))))
+                                         :team-created? true
+                                         :team (:team res))))
+        (do
+          ;; handle already taken subdomains
+          (om/update-state!
+           owner
+           (fn [s]
+             (assoc s
+                    :submitting? false
+                    :error [:p (:msg (:response res))])))
+          (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))
+
+(defn team-signup [app owner]
+  (reify
+    om/IInitState (init-state [_] {:subdomain ""
+                                   :error nil
+                                   :submitting? false
+                                   :submitted? false
+                                   :team-created? false
+                                   :team nil})
+    om/IDisplayName (display-name [_] "Team Signup")
+    om/IRenderState
+    (render-state [_ {:keys [subdomain submitting? error submitted? team-created? team]}]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)
+            disabled? (or submitting? (not (utils/logged-in? owner)))]
+        (html
+         [:div.page-trial.page-form
+          {:class (str (get-in app [:navigation-data :type] " team ")
+                       (when team-created? " granted "))}
+          [:div.content
+           [:div.outer-form-info
+            [:h2.outer-form-heading
+             "Begin your free trial & start using team features today."]
+            (if (utils/logged-in? owner)
+              [:p.outer-form-copy
+               "Choose a name for your team to use on Precursor. "
+               "Make sure it starts with a letter and is at least 4 characters. "
+               "Numbers and hyphens are okay."]
+              [:p.outer-form-copy
+               "First, sign in with your Google account. "
+               "Then we'll just ask you to make a custom subdomain for you and your team."])
+            (when-not (utils/logged-in? owner)
+              [:div.outer-form-sign
+               (om/build common/google-login {:source "Team Signup Form"})])]
+           [:div.outer-form
+            {:class (str (when disabled? "disabled ")
+                         (when submitting? "submitting ")
+                         (when submitted? "submitted "))}
+            [:div.subdomain-input
+             [:div.subdomain-input-prepend
+              {:tab-index "1"
+               :ref "subdomain"
+               :content-editable true
+               :on-key-down #(when (= "Enter" (.-key %))
+                               (.preventDefault %)
+                               ;; If they hit enter, submit the form
+                               (submit-subdomain-form owner))
+               :on-input #(om/set-state-nr! owner :subdomain (goog.dom/getRawTextContent (.-target %)))}
+              subdomain]
+             [:div.subdomain-input-placeholder
+              {:data-prepend "Your team"
+               :data-start " name is..."
+               :data-busy " name is?"
+               :data-end " subdomain will be"}]
+             [:div.subdomain-input-append
+              {:on-click #(.focus (om/get-node owner "subdomain"))}
+              ".precursorapp.com"]]
+            [:button.outer-form-button
+             {:tab-index "5"
+              :ref "submit-button"
+              :disabled (or disabled? submitted?)
+              :on-click #(submit-subdomain-form owner)}
+             (cond submitting?
+                   (html
+                    [:span "Setting up your team"
+                     [:i.loading-ellipses
+                      [:i "."]
+                      [:i "."]
+                      [:i "."]]])
+
+                   submitted? [:a.trial-success
+                               {:target "_self"
+                                :href (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
+                                                          :protocol config/scheme
+                                                          :port config/port
+                                                          :path (str "/document/" (:team/intro-doc team))
+                                                          :query {:overlay "team-settings"}}))}
+                               (str (str (:team/subdomain team) "." config/hostname)
+                                    " is set up!")]
+
+                   :else "Create your team")]
+
+            (when error
+              [:div.error error])
+
+            (when team-created?
+              [:div.outer-form-granted
+               [:p "Documents created on this subdomain are private for you and your team.
+                   Enjoy two weeks of free, unlimited access.
+                   Then we'll follow up to see how things are going."]
+               ])]]])))))
+
+(defn submit-solo-trial-form [owner]
+  (go
+    (om/update-state! owner (fn [s]
+                              (assoc s :submitting? true :error nil)))
+    ;; we wouldn't typically use ajax in a component--it's not advisable in
+    ;; this case, but we're short on time
+    ;; important to get the state out of owner since we're not re-rendering on update
+    (let [res (<! (ajax/managed-ajax :post "/api/v1/create-solo-trial"))]
+      (if (= :success (:status res))
+        (om/update-state! owner (fn [s]
+                                  (assoc s
+                                         :submitting? false
+                                         :submitted? true
+                                         :error nil
+                                         :trial-created? true)))
         (do
           (om/update-state!
            owner
            (fn [s]
              (assoc s
                     :submitting? false
-
-                    :error
-                    [:p "Oops that didn't work! "
-                     [:a {:on-click #(.stopPropagation %)
-                          :href
-                          (str "mailto:hi@precursorapp.com?"
-                               (url/map->query {:subject "Early Access to Precursor"
-                                                :body (str "Company Name\n"
-                                                           company-name
-                                                           "\n\nTeam Size\n"
-                                                           employee-count
-                                                           "\n\nUse Case\n"
-                                                           use-case)}))}
-                      "Try this email"]
-                     "."])))
+                    :error [:p (or (:msg (:response res))
+                                   "There was an error, please try again.")])))
           (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))
 
-(defn early-access [app owner]
+(defn solo-signup [app owner]
   (reify
-    om/IInitState (init-state [_] {:company-name ""
-                                   :employee-count ""
-                                   :use-case ""
-                                   :error nil
-                                   :submitting? false
-                                   :submitted? false
-                                   :access-request-granted? false})
-    om/IDisplayName (display-name [_] "Early Access")
+    om/IDisplayName (display-name [_] "Solo signup")
     om/IRenderState
-    (render-state [_ {:keys [company-name employee-count use-case submitting? error submitted? access-request-granted?]}]
-      (let [{:keys [cast! handlers]} (om/get-shared owner)
-            disabled? (or submitting? (not (utils/logged-in? owner)))]
+    (render-state [_ {:keys [trial-created? disabled? submitting? submitted? error]}]
+      (let [{:keys [cast!]} (om/get-shared owner)]
         (html
-         [:div.early-access {:class (str (get-in app [:navigation-data :type] " team ")
-                                         (when access-request-granted? " granted "))}
+         [:div.page-trial.page-form
           [:div.content
-           [:div.early-access-info
-            [:h2.early-access-heading
-             "We're excited to show you the team features we're building."]
-            [:p.early-access-copy
-             "To activate your early access, please "
-             (if (utils/logged-in? owner)
-               "take a moment to"
-               "sign in first and")
-             " fill out the following information.
-            We'll send you an email confirmation once your account has been granted full access."]
+           [:div.outer-form-info
+            [:h2.outer-form-heading
+             "We're excited to show you the paid features we're building."]
+
+            (if (utils/logged-in? owner)
+              [:p.outer-form-copy "Once you activate your trial, you'll be able to create private docs and control who has access to them."]
+              [:p.outer-form-copy "To activate your trial, please sign in first."])
+
             (when-not (utils/logged-in? owner)
-              [:div.early-access-sign
-               (om/build common/google-login {:source "Early Access Form"})])]
-           [:div.early-access-form {:class (str (when disabled? "disabled ")
-                                                (when submitting? "submitting ")
-                                                (when submitted? "submitted ")
-                                                (when error "error "))}
-            [:div.adaptive-placeholder.early-access-name
-             {:tab-index "2"
-              :ref "company-name"
-              :data-before "What's your company's name?"
-              :data-after "Company Name"
-              :content-editable true
-              :on-key-down #(when (= "Enter" (.-key %))
-                              (.preventDefault %)
-                              ;; If they hit enter, send them to the next input.
-                              (.focus (om/get-node owner "employee-count")))
-              :on-input #(om/set-state-nr! owner :company-name (goog.dom/getRawTextContent (.-target %)))}
-             company-name]
-            [:div.adaptive-placeholder.early-access-size
-             {:tab-index "3"
-              :ref "employee-count"
-              :data-before "How many teammates do you have?"
-              :data-after "Team Size"
-              :content-editable true
-              :on-key-down #(when (= "Enter" (.-key %))
-                              (.preventDefault %)
-                              ;; If they hit enter, send them to the next input.
-                              (.focus (om/get-node owner "use-case")))
-              :on-input #(om/set-state-nr! owner :employee-count (goog.dom/getRawTextContent (.-target %)))}
-             employee-count]
-            [:div.adaptive-placeholder.early-access-uses
-             {:tab-index "4"
-              :ref "use-case"
-              :data-before "How will you use Precursor?"
-              :data-after "Use Case"
-              :content-editable true
-              :on-key-down #(when (= "Enter" (.-key %))
-                              (.preventDefault %)
-                              ;; If they hit enter, send them to the next input.
-                              (.focus (om/get-node owner "submit-button"))
-                              (.click (om/get-node owner "submit-button")))
-              :on-input #(om/set-state-nr! owner :use-case (goog.dom/getRawTextContent (.-target %)))}
-             use-case]
-            [:button.early-access-button {:tab-index "5"
-                                          :ref "submit-button"
-                                          :disabled (or disabled? submitted?)
-                                          :on-click #(submit-early-access-form owner)}
+              [:div.outer-form-sign
+               (om/build common/google-login {:source "Solo Signup Form"})])]
+
+           [:div.outer-form
+            {:class (str (when disabled? "disabled ")
+                         (when submitting? "submitting ")
+                         (when submitted? "submitted "))}
+
+            [:button.outer-form-button
+             {:tab-index "5"
+              :ref "submit-button"
+              :disabled (or disabled? submitted?)
+              :on-click #(submit-solo-trial-form owner)}
              (cond submitting?
                    (html
-                    [:span "Request is submitting"
+                    [:span "Setting up your trial"
                      [:i.loading-ellipses
                       [:i "."]
                       [:i "."]
                       [:i "."]]])
 
-                   submitted? (if access-request-granted?
-                                "Thanks, you've been granted early access!"
-                                "Got it! We'll respond soon.")
+                   submitted? "Thanks, your trial is ready!"
 
-                   (seq error)
-                   error
+                   :else "Start your trial")]
 
-                   :else "Request early access.")]
-            (when access-request-granted?
-             [:div.early-access-granted
-              [:p
-               "You can now create private documents and control who has access to them. "
-               "The rest of your team can create private docs by clicking the request access "
-               "button and filling out the same form you did."]
+            (when error
+              [:div.error error])
 
-              [:p "You'll have two weeks of free, unlimited early access, and then we'll follow up with you to see how things are going."]
+            (when trial-created?
+              [:div.outer-form-granted
+               [:p "When you create a document, you can toggle its privacy setting from the sharing menu on the left."]
 
-              [:p
-               "Next, "
-               [:a.feature-link {:title "Private docs early access"
-                                 :href "/blog/private-docs-early-access"
-                                 :target "_self"}
-                "learn to use private docs"]
-               " or "
-               [:a.feature-link {:title "Launch Precursor"
-                                 :role "button"
-                                 :on-click #(cast! :launch-app-clicked {:analytics-data {:source "early-access-granted"}})}
-                "launch Precursor"]
-               "."]])]
-           ]])))))
+               [:p "You'll have two weeks of free, unlimited access, and then we'll follow up with you to see how things are going."]])]]])))))
+
+(defn signup [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Signup")
+    om/IRender
+    (render [_]
+      (if (= "solo" (get-in app [:navigation-data :trial-type]))
+        (om/build solo-signup app)
+        (om/build team-signup app)))))
 
 (defn pricing [app owner]
   (reify
@@ -198,41 +243,41 @@
               [:div.price-head
                [:h2.price-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
               [:div.price-body
-               ;; [:h4.content-copy "$10/mo"]    ; <- hold off until pricing is ready
-               [:h4.content-copy "Pricing soon."] ; <- and delete this once it's ready
+               [:h4.content-copy "$10/mo"]
                [:p.price-copy.content-copy
-                "Unlimited public docs, private docs, and project repos.
-                Add additional teammates at any time and take full advantage of team features."]]
+                "Create unlimited public docs. "
+                "Create unlimited private docs. "
+                "Manage access for each of your documents individually."]]
               [:div.price-foot
                [:a.price-button
-                {:href "/early-access/solo"
+                {:href "/trial/solo"
                  :title "Try it free while we gather feedback."
                  :role "button"}
-                "Request early access."]]]
+                "Start trial"]]]
              [:section.price-divide.left
               [:div.price-divide-line]]
              [:div.price-block.price-team
               [:div.price-head
                [:h2.price-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
               [:div.price-body
-               ;; [:h4.content-copy "$10/mo/user"] ; <- hold off until pricing is ready
-               [:h4.content-copy "Pricing soon."]   ; <- and delete this once it's ready
+               [:h4.content-copy "$10/mo/user"]
                [:p.price-copy.content-copy
-                "Unlimited public docs, private docs, and project repos.
-                Additional access to team-wide chat, in-app notifications, and file management."]]
+                "Unlimited public and private docs. "
+                "Custom subdomain for your team where docs are private "
+                "by default and shared with your teammates."]]
               [:div.price-foot
                [:a.price-button
-                {:href "/early-access/team"
-                 :title "Try it free while we gather feedback."
+                {:href "/trial/team"
+                 :title "Start trial"
                  :role "button"}
-                "Request early access."]]]
+                "Start trial"]]]
              [:section.price-divide.right
               [:div.price-divide-line]]
              [:div.price-block.price-corp
               [:div.price-head
                [:h2.price-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
               [:div.price-body
-               [:h4.content-copy "Contact us."]
+               [:h4.content-copy "Contact us"]
                [:p.price-copy.content-copy
                 "Customized solutions designed to solve specific team constraints.
                 E.g., integrations, custom servers, on-premise accommodations, etc."]]
@@ -241,7 +286,7 @@
                 {:href "mailto:enterprise@precursorapp.com?Subject=Enterprise%20Inquiry"
                  :title "We'll get back to you immediately."
                  :role "button"}
-                "Contact us."]]]]]])))))
+                "Contact us"]]]]]])))))
 
 (defn nav-head [app owner]
   (om/component
@@ -316,8 +361,7 @@
 (def outer-components
   {:landing landing/landing
    :pricing pricing
-   :early-access early-access
-   })
+   :trial signup})
 
 (defn outer [app owner]
   (reify
@@ -332,5 +376,5 @@
                                       (when (= (:page-count app) 1) ["entry"])
                                       (when (utils/logged-in? owner) ["logged-in"]))}
            [:div.outer-head (om/build nav-head {})]
-           (om/build component app {:react-key nav-point})
+           (om/build component app)
            [:div.outer-foot (om/build nav-foot {})]])))))

@@ -97,23 +97,21 @@
             new-here? (empty? (:cust app))
             chat-opened? (get-in app state/chat-opened-path)]
         (html
-         [:div.hud-tray.hud-item {:class (when chat-opened? ["chat-opened"])}
-          [:div.tray-positive
-           (when new-here?
-             (html
-              [:div.new-here
-               [:a.new-here-button {:on-click #(om/set-state! owner :new-here true)
-                                    :data-text "New here?"
-                                    :role "button"}]
-               ;; TODO just make this thing call outer/nav-foot
-               [:div.new-here-items {:on-mouse-leave #(om/set-state! owner :new-here false)
-                                     :class (when (om/get-state owner :new-here) "opened")}
-                [:a.new-here-item {:href "/home"         :role "button" :title "Home"} "Home"]
-                [:a.new-here-item {:href "/pricing"      :role "button" :title "Pricing"} "Pricing"]
-                [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
-                [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
-           (om/build mouse-stats {} {:react-key "mouse-stats"})]
-          [:div.tray-negative]])))))
+         [:div.hud-tray.hud-item.width-canvas
+          (when new-here?
+            (html
+             [:div.new-here
+              [:a.new-here-button {:on-click #(om/set-state! owner :new-here true)
+                                   :data-text "New here?"
+                                   :role "button"}]
+              ;; TODO just make this thing call outer/nav-foot
+              [:div.new-here-items {:on-mouse-leave #(om/set-state! owner :new-here false)
+                                    :class (when (om/get-state owner :new-here) "opened")}
+               [:a.new-here-item {:href "/home"         :role "button" :title "Home"} "Home"]
+               [:a.new-here-item {:href "/pricing"      :role "button" :title "Pricing"} "Pricing"]
+               [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
+               [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
+          (om/build mouse-stats {} {:react-key "mouse-stats"})])))))
 
 (defn chat [app owner]
   (reify

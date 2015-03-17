@@ -1,10 +1,10 @@
-.early-access {
+.page-form {
   &.granted {
-    .early-access-copy {
-      opacity: 0;
-      transition: @run_slow @run_slower;
-    }
-    .early-access-form {
+    &.page-early-access {
+      .outer-form-copy {
+        opacity: 0;
+        transition: @run_slow @run_slower;
+      }
       .adaptive-placeholder {
         height: 0;
         min-height: 0;
@@ -14,11 +14,38 @@
         overflow: hidden;
         transition: @run_slower @run_slower;
       }
-      .early-access-button {
+      .outer-form-button {
         margin-top: -@tile;
-        border-color: @blue;
+        border-color: @color_select;
         transition+: margin-top @run_slower @run_slower;
         transition+: width @run @bezier_fadein;
+      }
+    }
+    &.page-trial {
+      .outer-form-copy {
+        .user-select(none);
+        pointer-events: none;
+        max-height: 0;
+        opacity: 0;
+        margin: 0;
+        transition: @run @run_slower @bezier_deform;
+      }
+      .subdomain-input {
+        .user-select(none);
+        pointer-events: none;
+        height: 0;
+        opacity: 0;
+        margin: 0;
+        transition: @run_slow @run_slower @bezier_deform;
+      }
+      .outer-form-button {
+        border-color: @color_select;
+      }
+      .trial-success {
+        color: @color_select;
+        &:hover {
+          color: @black;
+        }
       }
     }
   }
@@ -29,43 +56,66 @@
     max-width: @tile * 10; // VETO
   }
 }
-.early-access-heading {
-  margin-bottom: -.25em;
+.page-early-access {
+  .outer-form-heading {
+    margin-bottom: -.25em;
+    padding-bottom: @menu_padding;
+  }
+}
+.page-trial {
+  .outer-form-copy {
+    max-height: @tile;
+  }
+}
+.outer-form-heading {
+  margin: 0;
   padding-bottom: @menu_padding;
 }
-.early-access-copy {
+.outer-form-copy {
   margin-bottom: @menu_padding;
 }
-.early-access-sign {
+.outer-form-sign {
   .flexy();
   margin-bottom: @menu_padding;
 }
-.early-access-form {
+.outer-form {
   &.disabled {
     .adaptive-placeholder,
-    .early-access-button {
+    .outer-form-button,
+    .subdomain-input-placeholder,
+    .subdomain-input-prepend,
+    .subdomain-input-append {
       pointer-events: none;
       cursor: default;
     }
     .adaptive-placeholder {
       border: 1px dashed @gray_lighter;
     }
-    .early-access-button {
+    .outer-form-button {
       color: @gray_light;
       border: 1px dashed @gray_lighter;
     }
-  }
-  &.submitting {
-    .early-access-button {
-      color: @blue;
-      border-color: @blue;
-      background-color: @dye_outer;
-      transition: @run_fast @run_faster @bezier_fadein;
+    .subdomain-input-placeholder {
+      box-shadow: none;
+      border: 1px dashed @gray_lighter;
+      transition: none;
     }
-    .loading-ellipses {
-      display: inline-block;
+    .subdomain-input-append {
+      color: @gray_light;
     }
   }
+  // TODO
+  // &.submitting {
+  //   .outer-form-button {
+  //     color: @color_select;
+  //     border-color: @color_select;
+  //     background-color: @dye_outer;
+  //     transition: @run_fast @run_faster @bezier_fadein;
+  //   }
+  //   .loading-ellipses {
+  //     display: inline-block;
+  //   }
+  // }
   &.error,
   &.submitted {
     .adaptive-placeholder {
@@ -73,7 +123,7 @@
       cursor: default;
       pointer-events: none;
     }
-    .early-access-button {
+    .outer-form-button {
       width: 100%;
       border-color: @gray_lightest;
       background-color: @dye_outer;
@@ -84,18 +134,17 @@
       }
     }
   }
-  &.error {
-    .early-access-button {
-      color: @red;
-    }
+  .error {
+    color: @red;
+    margin-top: @menu_padding;
   }
   &.submitted {
-    .early-access-button {
-      color: @blue;
+    .outer-form-button {
+      color: @color_select;
     }
   }
 }
-.early-access-button {
+.outer-form-button {
   line-height: 1;
   width: 40%;
   height: @tile;
@@ -113,7 +162,94 @@
     pointer-events: none;
   }
 }
-.early-access-granted {
+.outer-form-granted {
   .animation(in-fade-bottom @run_slower (1.5 * @run_slower) backwards);
   margin-top: @menu_padding;
+}
+.subdomain-input { // TODO break this input out into its own reusable component in form.less
+  .flexy(center);
+  position: relative;
+  height: @tile;
+  margin-bottom: @menu_padding;
+}
+.subdomain-input-prepend {
+  line-height: 1em;
+  min-width: @tile_xl;
+  padding: 1.5em;
+  outline: none;
+  transition: @run @bezier_deform;
+  &:focus,
+  &:not(:empty) {
+    ~ .subdomain-input-placeholder {
+      &:after {
+        .transform(translate3d(0, -2em, 0));
+        background-size: 100% 1px;
+      }
+    }
+  }
+  &:focus {
+    &:not(:empty) {
+      ~ .subdomain-input-append {
+        color: @color_select;
+      }
+    }
+    ~ .subdomain-input-placeholder {
+      .inline(@color_select);
+      &:after {
+        content: attr(data-prepend) attr(data-busy);
+        color: @color_select;
+      }
+    }
+  }
+  &:not(:empty) {
+    padding-right: 0;
+    min-width: 0;
+    ~ .subdomain-input-placeholder {
+      width: 100%;
+      &:after {
+        content: attr(data-prepend) attr(data-end);
+      }
+    }
+    ~ .subdomain-input-append {
+      padding-left: 0;
+      cursor: text;
+    }
+  }
+}
+.subdomain-input-placeholder {
+  .flexy(center);
+  .user-select(none);
+  .inline(@gray_light);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: @tile_xl;
+  height: 100%;
+  pointer-events: none;
+  transition+: width @run_slower @bezier_deform;
+  transition+: box-shadow @run @bezier_fadein;
+  &:after {
+    .flexy();
+    .gradient(to bottom, @dye_outer, @dye_outer);
+    .transition_transform(@run @bezier_deform);
+    color: @gray_light;
+    content: attr(data-prepend) attr(data-start);
+    white-space: nowrap;
+    margin-left: 1.5em;
+    padding: 0 .25em;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 0% 1px;
+    transition+: color @run @bezier_deform;
+    transition+: background @run_slow @bezier_deform;
+  }
+}
+.subdomain-input-append {
+  .flex(1);
+  .flexy(center);
+  .user-select(none);
+  height: 100%;
+  padding-left: .25em;
+  transition+: color @run @bezier_deform;
+  transition+: padding @run_slower @bezier_deform;
 }

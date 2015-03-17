@@ -40,6 +40,18 @@
     @{property}: extract(@x, 2);
   }.axis_x(@x);
 }
+.selection(@color, @opacity) {
+  ::-moz-selection {
+    color: @color;
+    background: fade(@color, @opacity);
+    text-shadow: none;
+  }
+  ::selection {
+    color: @color;
+    background: fade(@color, @opacity);
+    text-shadow: none;
+  }
+}
 .placeholder_style(@property; @value) {
   &::-webkit-input-placeholder {@{property}: @value;}
   &:-moz-placeholder           {@{property}: @value;}
@@ -218,9 +230,9 @@
   -webkit-animation-timing-function: @arguments;
           animation-timing-function: @arguments;
 }
-
-// ad hoc
-
+//
+// positions icons in radial menu
+//
 .shape_position(@array; @count: length(@array); @name_value: -2; @x_value: -1; @y_value: 0; @icon_scale: .2) when (@count > (length(@array) / 3)) {
   .shape_position(@array; (@count - 2); (@name_value - 1); (@x_value - 1); (@y_value - 1); @icon_scale);    // <-- Loop to next iteration until count is 0
   @name:     extract(@array, (@count + @name_value));                                                       //
@@ -228,34 +240,104 @@
   @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
   &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
 }
+//
+// animates hud buttons when app loads
+//
 .hud_toggle_animation(...) {
   .animation(~"in-fade-@{arguments}" @run_slow);
 }
-.chat_width() {
-  width: @size_chat;
-  min-width: @tile;
-  max-width: ~"calc(100% - @{tile})";
-  .mq_1920({ width: (@size_chat + (@size_chat_step *  1));});
-  .mq_1600({ width: (@size_chat + (@size_chat_step *  2));});
-  .mq_1280({ width: (@size_chat + (@size_chat_step *  3));});
-   .mq_960({ width: (@size_chat + (@size_chat_step *  8));});
-   .mq_640({ width: (@size_chat + (@size_chat_step * 21));});
-}
-.menu_width() {
-  width: @tile * 6;
-  .mq_640({
-    width: @tile * 5;
-  });
-}
-.selection(@color, @opacity) {
-  ::-moz-selection {
-    color: @color;
-    background: fade(@color, @opacity);
-    text-shadow: none;
+//
+// morph menu icon into close/back icon
+//
+.hud_menu_morph() {
+  &.close,
+  &.back {
+    .scale3d(.75);
   }
-  ::selection {
-    color: @color;
-    background: fade(@color, @opacity);
-    text-shadow: none;
+  &.close {
+    .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
+    .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
+    .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
+  }
+  &.back {
+    .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
+    .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
+    .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
+  }
+}
+//
+// canvas/chat sizes w/ media queries
+//
+// For Example: .size_of(chat; width);
+// Compiles To: width: 25%;
+//
+// For Example: .size_of(canvas; padding-left; vh);
+// Compiles To: padding-left: 75vh;
+//
+.size_of(@object; @property; @unit...) {
+  .view_width(@unit) when (@unit = vw) {
+    @1: 100vw;
+    @0: 0vw;
+  }.view_width(@unit);
+  .view_height(@unit) when (@unit = vh) {
+    @1: 100vh;
+    @0: 0vh;
+  }.view_height(@unit);
+  .percentage(@unit) when not (@unit = vw), (@unit = vw) {
+    @1: 100%;
+    @0: 0%;
+  }.percentage(@unit);
+  .if_width(@property) when (@property = width), (@property = height) {
+    .if_chat(@object) when (@object = chat) {
+      @value: @0;
+    }.if_chat(@object);
+    .if_canvas(@object) when (@object = canvas) {
+      @value: @1;
+    }.if_canvas(@object);
+  }.if_width(@property);
+  .no_width(@property) when not (@property = width), (@property = height) {
+    .if_chat(@object) when (@object = chat) {
+      @value: @1;
+    }.if_chat(@object);
+    .if_canvas(@object) when (@object = canvas) {
+      @value: @0;
+    }.if_canvas(@object);
+  }.no_width(@property);
+  @{property}: abs(@value - @size_chat);
+  .mq_1920({@{property}: abs(@value - @chat_1920);});
+  .mq_1600({@{property}: abs(@value - @chat_1600);});
+  .mq_1280({@{property}: abs(@value - @chat_1280);});
+  .mq_960({ @{property}: abs(@value - @chat_0960);});
+  .mq_640({ @{property}: abs(@value - @chat_0640);});
+}
+//
+// transform canvas when left/right menu is active
+//
+.canvas_off(...) {
+  .left(@a) when not (@a = left) {
+    @init: 5%;
+    @1920: @canvas_pull_1920;
+    @1600: @canvas_pull_1600;
+    @1280: @canvas_pull_1280;
+    @0960: @canvas_pull_0960;
+    @0640: @canvas_pull_0640;
+  }.left(@arguments);
+  .right(@a) when (@a = left) {
+    @init: -5%;
+    @1920: -@canvas_pull_1920;
+    @1600: -@canvas_pull_1600;
+    @1280: -@canvas_pull_1280;
+    @0960: -@canvas_pull_0960;
+    @0640: -@canvas_pull_0640;
+  }.right(@arguments);
+  .inner {
+    .transform(translate3d(@init, 0, 0); scale3d(.8, .8, 1));
+    .transform-origin(@arguments);
+    @{arguments}: 0;
+    .mq_1920({ .transform(translate3d(@1920, 0, 0) scale3d(.8, .8, 1)); });
+    .mq_1600({ .transform(translate3d(@1600, 0, 0) scale3d(.8, .8, 1)); });
+    .mq_1280({ .transform(translate3d(@1280, 0, 0) scale3d(.8, .8, 1)); });
+     .mq_960({ .transform(translate3d(@0960, 0, 0) scale3d(.8, .8, 1)); });
+     .mq_640({ .transform(translate3d(@0640, 0, 0) scale3d(.8, .8, 1)); });
   }
 }

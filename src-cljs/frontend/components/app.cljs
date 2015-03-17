@@ -44,7 +44,8 @@
         (if-let [nav-point (:navigation-point app)]
           (html
            [:div#app.app {:class (str (frontend.overlay/app-overlay-class app)
-                                      (when (:show-landing? app) " state-outer "))}
+                                      (when (:show-landing? app) " state-outer ")
+                                      (if chat-opened? " chat-opened " " chat-closed "))}
 
             (when (:show-landing? app)
               (om/build outer/outer (select-in app [[:show-landing?]
@@ -67,8 +68,7 @@
 
             [:div.inner {:on-click (when overlay-visible?
                                      #(cast! :overlay-closed))
-                         :class (when (empty? (:frontend-id-state app))
-                                  "loading")
+                         :class (when (empty? (:frontend-id-state app)) "loading")
                          :key "inner"}
              [:style "#om-app:active{cursor:auto}"]
              (om/build canvas/canvas (select-in app [state/current-tool-path

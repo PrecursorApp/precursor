@@ -82,59 +82,49 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-         [:div.menu-view
-          [:a.vein.make
-           {:on-click         #(cast! :overlay-info-toggled)
-            :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
-            :role "button"}
-           (common/icon :info)
-           [:span "About"]]
-          [:a.vein.make
-           {:href "/new"
-            :role "button"}
-           (common/icon :newdoc)
-           [:span "New Document"]]
-          [:a.vein.make
-           {:on-click         #(cast! :your-docs-opened)
-            :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
-            :role "button"}
-           (common/icon :clock)
-           [:span "Your Documents"]]
-          ;; TODO: should this use the permissions model? Would have to send some
-          ;;       info about the document
-          (if (auth/has-document-access? app (:document/id app))
+          [:div.menu-view
+           [:div.veins
             [:a.vein.make
-             {:on-click         #(cast! :sharing-menu-opened)
-              :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
+             {:on-click         #(cast! :overlay-info-toggled)
+              :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
               :role "button"}
-             (common/icon :share)
-             [:span "Sharing"]]
+             (common/icon :info)
+             [:span "About"]]
+            [:a.vein.make
+             {:href "/new"
+              :role "button"}
+             (common/icon :newdoc)
+             [:span "New Document"]]
+            [:a.vein.make
+             {:on-click         #(cast! :your-docs-opened)
+              :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
+              :role "button"}
+             (common/icon :clock)
+             [:span "Your Documents"]]
+            ;; TODO: should this use the permissions model? Would have to send some
+            ;;       info about the document
+            (if (auth/has-document-access? app (:document/id app))
+              [:a.vein.make
+               {:on-click         #(cast! :sharing-menu-opened)
+                :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
+                :role "button"}
+               (common/icon :share)
+               [:span "Sharing"]]
 
+              [:a.vein.make
+               {:on-click         #(cast! :document-permissions-opened)
+                :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
+                :role "button"}
+               (common/icon :users)
+               [:span "Request Access"]])
             [:a.vein.make
-             {:on-click         #(cast! :document-permissions-opened)
-              :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
+             {:on-click         #(cast! :shortcuts-menu-opened)
+              :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
+              :class "mobile-hidden"
               :role "button"}
-             (common/icon :users)
-             [:span "Request Access"]])
-          [:a.vein.make
-           {:on-click         #(cast! :shortcuts-menu-opened)
-            :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
-            :class "mobile-hidden"
-            :role "button"}
-           (common/icon :command)
-           [:span "Shortcuts"]]
-          [:a.vein.make
-           {:href "/home"
-            :role "button"}
-           (common/icon :home)
-           [:span "Home"]]
-          [:a.vein.make
-           {:href "/blog"
-            :target "_self"
-            :role "button"}
-           (common/icon :blog)
-           [:span "Blog"]]
-          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
+             (common/icon :command)
+             [:span "Shortcuts"]]
+            ]])))))
 
 (defn team-start [app owner]
   (reify
@@ -144,18 +134,20 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-         [:div.menu-view
-          [:a.vein.make
-           {:on-click #(cast! :team-settings-opened)
-            :role "button"}
-           (common/icon :share)
-           [:span "Permissions"]]
-          [:a.vein.make
-           {:on-click #(cast! :team-docs-opened)
-            :role "button"}
-           (common/icon :clock)
-           [:span "Team Documents"]]
-          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
+          [:div.menu-view
+           [:div.veins
+            [:a.vein.make
+             {:on-click #(cast! :team-settings-opened)
+              :role "button"}
+             (common/icon :share)
+             [:span "Permissions"]]
+            [:a.vein.make
+             {:on-click #(cast! :team-docs-opened)
+              :role "button"}
+             (common/icon :clock)
+             [:span "Team Documents"]]
+            (om/build auth-link app {:opts {:source "start-overlay"}})
+            ]])))))
 
 (defn private-sharing [app owner]
   (reify
@@ -223,31 +215,34 @@
           [:article
            [:h2.make
             "This document is public."]
-           [:p.make
-            "It's visible to anyone with the url.
-            Email a friend to invite them to collaborate."]
            (if-not (:cust app)
-             [:a.make
-              {:href (auth/auth-url :source "username-overlay")
-               :role "button"}
-              "Sign Up"]
+             (list
+               [:p.make
+                "It's visible to anyone with the url.
+                Sign in with your Google account to send an invite or give someone your url."]
+               [:div.make
+                (om/build common/google-login {:source "Public Sharing Menu"})])
 
-             [:form.menu-invite-form.make
-              {:on-submit #(do (cast! :invite-submitted)
-                             false)
-               :on-key-down #(when (= "Enter" (.-key %))
-                               (cast! :email-invite-submitted)
-                               false)}
-              [:input
-               {:type "text"
-                :required "true"
-                :data-adaptive ""
-                :value (or invite-email "")
-                :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
-              [:label
-               {:data-placeholder "Collaborator's email"
-                :data-placeholder-nil "What's your collaborator's email?"
-                :data-placeholder-forgot "Don't forget to submit!"}]])
+             (list
+               [:p.make
+                "It's visible to anyone with the url.
+                Email a friend to invite them to collaborate."]
+               [:form.menu-invite-form.make
+                {:on-submit #(do (cast! :invite-submitted)
+                               false)
+                 :on-key-down #(when (= "Enter" (.-key %))
+                                 (cast! :email-invite-submitted)
+                                 false)}
+                [:input
+                 {:type "text"
+                  :required "true"
+                  :data-adaptive ""
+                  :value (or invite-email "")
+                  :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+                [:label
+                 {:data-placeholder "Collaborator's email"
+                  :data-placeholder-nil "What's your collaborator's email?"
+                  :data-placeholder-forgot "Don't forget to submit!"}]]))
            (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
              [:div response])
            ;; TODO: keep track of invites
@@ -275,44 +270,67 @@
             invite-email (get-in app state/invite-email-path)
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)
-            private? (= :document.privacy/private (:document/privacy doc))]
+            private? (= :document.privacy/private (:document/privacy doc))
+            cant-edit-reason (cond (:team app)
+                                   nil
+
+                                   (not (contains? (get-in app [:cust :flags]) :flags/private-docs))
+                                   :no-private-docs-flag
+
+                                   (not (auth/owner? @db doc (get-in app [:cust])))
+                                   :not-creator)]
         (html
          [:div.menu-view
           (if private?
             (om/build private-sharing app)
             (om/build public-sharing app))
 
-          (when (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
-                     (auth/owner? @db doc (get-in app [:cust])))
+          (case cant-edit-reason
+            :no-private-docs-flag
+            [:a.vein.make.stick.external {:href "/pricing"}
+             [:span "Need private docs? Start a free trial."]
+             (common/icon :arrow-right)]
+
+
             [:form.privacy-select.vein.make.stick
-             [:input.privacy-radio
-              {:type "radio"
-               :hidden "true"
-               :id "privacy-public"
-               :name "privacy"
-               :checked (not private?)
-               :onChange #(cast! :document-privacy-changed
-                                 {:doc-id doc-id
-                                  :setting :document.privacy/public})}]
-             [:label.privacy-label
-              {:for "privacy-public"
-               :role "button"}
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-public"
+                                    :name "privacy"
+                                    :checked (not private?)
+                                    :disabled (boolean cant-edit-reason)
+                                    :onChange #(if cant-edit-reason
+                                                 (utils/stop-event %)
+                                                 (cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/public}))}]
+             [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
+                                    :for "privacy-public"
+                                    :role "button"}
               (common/icon :globe)
-              [:span "Public"]]
-             [:input.privacy-radio
-              {:type "radio"
-               :hidden "true"
-               :id "privacy-private"
-               :name "privacy"
-               :checked private?
-               :onChange #(cast! :document-privacy-changed
-                                 {:doc-id doc-id
-                                  :setting :document.privacy/private})}]
-             [:label.privacy-label
-              {:for "privacy-private"
-               :role "button"}
+              [:span "Public"]
+              (when (= :not-creator cant-edit-reason)
+                [:small "(privacy change requires owner)"])]
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-private"
+                                    :name "privacy"
+                                    :checked private?
+                                    :disabled (boolean cant-edit-reason)
+                                    :onChange #(if cant-edit-reason
+                                                 (utils/stop-event %)
+                                                 (cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/private}))}]
+             [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
+                                    :for "privacy-private"
+                                    :role "button"}
               (common/icon :lock)
-              [:span "Private"]]])])))))
+              [:span "Private"]
+              (when (= :not-creator cant-edit-reason)
+                [:small "(privacy change requires owner)"])]])])))))
 
 (defn info [app owner]
   (reify
@@ -322,40 +340,48 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.menu-view
-           [:article
+           [:div.content
             [:h2.make
              "What is Precursor?"]
             [:p.make
              "Precursor is a no-nonsense prototyping tool.
              Use it for wireframing, sketching, and brainstorming.
-             Invite your team to collaborate instantly.
-             Have feedback or a great idea?
-             Say "
-             [:a
-              {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
-               :title "We love feedback, good or bad."}
-              "hi@prcrsr.com"]
-             " or on "
-             [:a
-              {:href "https://twitter.com/PrecursorApp"
-               :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-               :title "@PrecursorApp"
-               :target "_blank"}
-              "Twitter"]
-             "."]
-            (if (:cust app)
-              [:a.make
-               {:on-click         #(cast! :overlay-menu-closed)
-                :on-touch-end #(do (cast! :overlay-menu-closed) (.preventDefault %))
-                :role "button"} "Okay"]
+             Invite your team to collaborate instantly."
+             ]
+            (when-not (:cust app)
               (list
                 [:p.make
                  "Sign up and we'll even keep track of all your docs.
                  Never lose a great idea again!"]
-                [:a.make
+                [:a.menu-cta.make
                  {:href (auth/auth-url :source "username-overlay")
                   :role "button"}
-                 "Sign Up"]))]
+                 "Sign Up"]))
+            [:a.vein.make
+             {:href "/home"
+              :role "button"}
+             [:span "Home"]]
+            [:a.vein.make
+             {:href "/pricing"
+              :role "button"}
+             [:span "Pricing"]]
+            [:a.vein.make
+             {:href "/blog"
+              :target "_self"
+              :role "button"}
+             [:span "Blog"]]
+            [:a.vein.make
+             {:href "https://twitter.com/PrecursorApp"
+              :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+              :target "_blank"
+              :title "@PrecursorApp"
+              :role "button"}
+             [:span "Twitter"]]
+            [:a.vein.make
+             {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
+              :target "_self"
+              :role "button"}
+             [:span "Email"]]]
            (common/mixpanel-badge)])))))
 
 (defn shortcuts [app owner]
@@ -367,7 +393,7 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          [:article
+          [:div.content
            [:table.shortcuts-items
             [:tbody
              ;;
@@ -523,9 +549,7 @@
           [:div.menu-header
            (for [component overlay-components]
              (html
-              [:h4.menu-heading
-               {:title title}
-               (:title component)]))]
+              [:h4.menu-heading {:title title :key title} title]))]
           [:div.menu-body
            (for [component overlay-components]
             (om/build (:component component) app))]])))))
