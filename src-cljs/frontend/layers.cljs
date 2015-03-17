@@ -1,4 +1,5 @@
-(ns frontend.layers)
+(ns frontend.layers
+  (:require [frontend.utils :as utils]))
 
 (defn layers [state]
   (:shapes state))
@@ -133,3 +134,29 @@
 (defn circle? [layer]
   (or (:layer/rx layer)
       (:layer/ry layer)))
+
+(defn measure [[x1 y1] [x2 y2]]
+  (js/Math.sqrt (+ (js/Math.pow (- x2 x1) 2)
+                   (js/Math.pow (- y2 y1) 2))))
+
+(defn radius [layer]
+  (utils/inspect (measure (utils/inspect (center layer)) (utils/inspect [(:layer/start-x layer)
+                                                                         (:layer/start-y layer)]))))
+
+(defn circle-intercept
+  "Takes radius, (x1, y1) = circle center, (x2, y2) = point outside the circle"
+  [r [x1 y1] [x2 y2]]
+  (let [sign (if (< x1 x2) 1 -1)
+        x (if (= x1 x2)
+            x1
+            (+ x1
+               (* sign
+                  (Math/sqrt (/ (* r r)
+                                (+ 1
+                                   (Math/pow (/ (- y2 y1)
+                                                (- x2 x1))
+                                             2)))))))
+        y (if (= x1 x2)
+            (+ y1 r)
+            (+ y1 (* (- x x1) (/ (- y2 y1) (- x2 x1)))))]
+    [x y]))
