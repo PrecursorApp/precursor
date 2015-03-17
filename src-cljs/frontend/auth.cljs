@@ -13,7 +13,7 @@
         redirect-query (or redirect-query
                            (when (seq (:query url))
                              (url/map->query (:query url))))]
-    (str (url/map->URL {:protocol config/protocol
+    (str (url/map->URL {:protocol config/scheme
                         :port config/port
                         :host config/hostname
                         :path "/login"
