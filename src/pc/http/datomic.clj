@@ -223,6 +223,20 @@
         (let [message (format "created the %s subdomain" (:team/subdomain team))]
           (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))))))
 
+(defn admin-notify-solo-trials [transaction]
+  (let [db (:db-after transaction)
+        datoms (:tx-data transaction)
+        private-docs-eid (d/entid db :flags/private-docs)]
+    (when-let [flag-datom (first (filter #(= private-docs-eid (:v %)) datoms))]
+      (let [slack-url (if (profile/prod?)
+                        "https://hooks.slack.com/services/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"
+                        "https://hooks.slack.com/services/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")
+            cust (d/entity db (:e flag-datom))
+            username (:cust/email cust "ping-bot")
+            icon_url (str (:google-account/avatar cust))]
+        (let [message "started a solo trial"]
+          (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))))))
+
 (defn handle-admin [transaction]
   (utils/with-report-exceptions
     (send-emails transaction))
@@ -231,7 +245,9 @@
   (utils/with-report-exceptions
     (pc.early-access/handle-early-access-requests transaction))
   (utils/with-report-exceptions
-    (admin-notify-subdomains transaction)))
+    (admin-notify-subdomains transaction))
+  (utils/with-report-exceptions
+    (admin-notify-solo-trials transaction)))
 
 (defonce raised-full-channel-exception? (atom nil))
 (defn forward-to-admin-ch [admin-ch transaction]
