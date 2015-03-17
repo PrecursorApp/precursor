@@ -1,10 +1,10 @@
-.early-access {
+.page-form {
   &.granted {
-    .early-access-copy {
-      opacity: 0;
-      transition: @run_slow @run_slower;
-    }
-    .early-access-form {
+    &.page-early-access {
+      .outer-form-copy {
+        opacity: 0;
+        transition: @run_slow @run_slower;
+      }
       .adaptive-placeholder {
         height: 0;
         min-height: 0;
@@ -14,11 +14,38 @@
         overflow: hidden;
         transition: @run_slower @run_slower;
       }
-      .early-access-button {
+      .outer-form-button {
         margin-top: -@tile;
-        border-color: @blue;
+        border-color: @color_select;
         transition+: margin-top @run_slower @run_slower;
         transition+: width @run @bezier_fadein;
+      }
+    }
+    &.page-trial {
+      .outer-form-copy {
+        .user-select(none);
+        pointer-events: none;
+        max-height: 0;
+        opacity: 0;
+        margin: 0;
+        transition: @run @run_slower @bezier_deform;
+      }
+      .subdomain-input {
+        .user-select(none);
+        pointer-events: none;
+        height: 0;
+        opacity: 0;
+        margin: 0;
+        transition: @run_slow @run_slower @bezier_deform;
+      }
+      .outer-form-button {
+        border-color: @color_select;
+      }
+      .trial-success {
+        color: @color_select;
+        &:hover {
+          color: @black;
+        }
       }
     }
   }
@@ -29,21 +56,32 @@
     max-width: @tile * 10; // VETO
   }
 }
-.early-access-heading {
-  margin-bottom: -.25em;
+.page-early-access {
+  .outer-form-heading {
+    margin-bottom: -.25em;
+    padding-bottom: @menu_padding;
+  }
+}
+.page-trial {
+  .outer-form-copy {
+    max-height: @tile;
+  }
+}
+.outer-form-heading {
+  margin: 0;
   padding-bottom: @menu_padding;
 }
-.early-access-copy {
+.outer-form-copy {
   margin-bottom: @menu_padding;
 }
-.early-access-sign {
+.outer-form-sign {
   .flexy();
   margin-bottom: @menu_padding;
 }
-.early-access-form {
+.outer-form {
   &.disabled {
     .adaptive-placeholder,
-    .early-access-button,
+    .outer-form-button,
     .subdomain-input-placeholder,
     .subdomain-input-prepend,
     .subdomain-input-append {
@@ -53,29 +91,31 @@
     .adaptive-placeholder {
       border: 1px dashed @gray_lighter;
     }
-    .early-access-button {
+    .outer-form-button {
       color: @gray_light;
       border: 1px dashed @gray_lighter;
     }
     .subdomain-input-placeholder {
       box-shadow: none;
       border: 1px dashed @gray_lighter;
+      transition: none;
     }
     .subdomain-input-append {
       color: @gray_light;
     }
   }
-  &.submitting {
-    .early-access-button {
-      color: @blue;
-      border-color: @blue;
-      background-color: @dye_outer;
-      transition: @run_fast @run_faster @bezier_fadein;
-    }
-    .loading-ellipses {
-      display: inline-block;
-    }
-  }
+  // TODO
+  // &.submitting {
+  //   .outer-form-button {
+  //     color: @color_select;
+  //     border-color: @color_select;
+  //     background-color: @dye_outer;
+  //     transition: @run_fast @run_faster @bezier_fadein;
+  //   }
+  //   .loading-ellipses {
+  //     display: inline-block;
+  //   }
+  // }
   &.error,
   &.submitted {
     .adaptive-placeholder {
@@ -83,7 +123,7 @@
       cursor: default;
       pointer-events: none;
     }
-    .early-access-button {
+    .outer-form-button {
       width: 100%;
       border-color: @gray_lightest;
       background-color: @dye_outer;
@@ -99,12 +139,12 @@
     margin-top: @menu_padding;
   }
   &.submitted {
-    .early-access-button {
-      color: @blue;
+    .outer-form-button {
+      color: @color_select;
     }
   }
 }
-.early-access-button {
+.outer-form-button {
   line-height: 1;
   width: 40%;
   height: @tile;
@@ -122,7 +162,7 @@
     pointer-events: none;
   }
 }
-.early-access-granted {
+.outer-form-granted {
   .animation(in-fade-bottom @run_slower (1.5 * @run_slower) backwards);
   margin-top: @menu_padding;
 }

@@ -67,26 +67,28 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             disabled? (or submitting? (not (utils/logged-in? owner)))]
         (html
-         [:div.early-access {:class (str (get-in app [:navigation-data :type] " team ")
-                                         (when team-created? " granted "))}
+         [:div.page-trial.page-form
+          {:class (str (get-in app [:navigation-data :type] " team ")
+                       (when team-created? " granted "))}
           [:div.content
-           [:div.early-access-info
-            [:h2.early-access-heading
+           [:div.outer-form-info
+            [:h2.outer-form-heading
              "Begin your free trial & start using team features today."]
             (if (utils/logged-in? owner)
-              [:p.early-access-copy
+              [:p.outer-form-copy
                "Choose a name for your team to use on Precursor. "
                "Make sure it starts with a letter and is at least 4 characters. "
                "Numbers and hyphens are okay."]
-              [:p.early-access-copy
+              [:p.outer-form-copy
                "First, sign in with your Google account. "
                "Then we'll just ask you to make a custom subdomain for you and your team."])
             (when-not (utils/logged-in? owner)
-              [:div.early-access-sign
+              [:div.outer-form-sign
                (om/build common/google-login {:source "Team Signup Form"})])]
-           [:div.early-access-form {:class (str (when disabled? "disabled ")
-                                                (when submitting? "submitting ")
-                                                (when submitted? "submitted "))}
+           [:div.outer-form
+            {:class (str (when disabled? "disabled ")
+                         (when submitting? "submitting ")
+                         (when submitted? "submitted "))}
             [:div.subdomain-input
              [:div.subdomain-input-prepend
               {:tab-index "1"
@@ -106,10 +108,11 @@
              [:div.subdomain-input-append
               {:on-click #(.focus (om/get-node owner "subdomain"))}
               ".precursorapp.com"]]
-            [:button.early-access-button {:tab-index "5"
-                                          :ref "submit-button"
-                                          :disabled (or disabled? submitted?)
-                                          :on-click #(submit-subdomain-form owner)}
+            [:button.outer-form-button
+             {:tab-index "5"
+              :ref "submit-button"
+              :disabled (or disabled? submitted?)
+              :on-click #(submit-subdomain-form owner)}
              (cond submitting?
                    (html
                     [:span "Setting up your team"
@@ -118,7 +121,15 @@
                       [:i "."]
                       [:i "."]]])
 
-                   submitted? "Thanks, your subdomain is ready!"
+                   submitted? [:a.trial-success
+                               {:target "_self"
+                                :href (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
+                                                          :protocol config/scheme
+                                                          :port config/port
+                                                          :path (str "/document/" (:team/intro-doc team))
+                                                          :query {:overlay "team-settings"}}))}
+                               (str (str (:team/subdomain team) "." config/hostname)
+                                    " is set up!")]
 
                    :else "Create your team")]
 
@@ -126,23 +137,11 @@
               [:div.error error])
 
             (when team-created?
-              [:div.early-access-granted
-               [:p "Your team is set up at "
-                [:a {:href (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
-                                               :protocol config/scheme
-                                               :port config/port
-                                               :path (str "/document/" (:team/intro-doc team))
-                                               :query {:overlay "team-settings"}}))
-                     :target "_self"}
-                 (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
-                                     :protocol config/scheme
-                                     :port config/port
-                                     :path "/"}))]
-                ". You'll be prompted to log in, then you can invite your teammates."]
-
-               [:p "Documents you create in your subdomain are private by default and shared with all of your teammates."]
-
-               [:p "You'll have two weeks of free, unlimited access, and then we'll follow up with you to see how things are going."]])]]])))))
+              [:div.outer-form-granted
+               [:p "Documents created on this subdomain are private for you and your team.
+                   Enjoy two weeks of free, unlimited access.
+                   Then we'll follow up to see how things are going."]
+               ])]]])))))
 
 (defn submit-solo-trial-form [owner]
   (go
@@ -176,28 +175,30 @@
     (render-state [_ {:keys [trial-created? disabled? submitting? submitted? error]}]
       (let [{:keys [cast!]} (om/get-shared owner)]
         (html
-         [:div.early-access
+         [:div.page-trial.page-form
           [:div.content
-           [:div.early-access-info
-            [:h2.early-access-heading
+           [:div.outer-form-info
+            [:h2.outer-form-heading
              "We're excited to show you the paid features we're building."]
 
             (if (utils/logged-in? owner)
-              [:p.early-access-copy "Once you activate your trial, you'll be able to create private docs and control who has access to them."]
-              [:p.early-access-copy "To activate your trial, please sign in first."])
+              [:p.outer-form-copy "Once you activate your trial, you'll be able to create private docs and control who has access to them."]
+              [:p.outer-form-copy "To activate your trial, please sign in first."])
 
             (when-not (utils/logged-in? owner)
-              [:div.early-access-sign
+              [:div.outer-form-sign
                (om/build common/google-login {:source "Solo Signup Form"})])]
 
-           [:div.early-access-form {:class (str (when disabled? "disabled ")
-                                                (when submitting? "submitting ")
-                                                (when submitted? "submitted "))}
+           [:div.outer-form
+            {:class (str (when disabled? "disabled ")
+                         (when submitting? "submitting ")
+                         (when submitted? "submitted "))}
 
-            [:button.early-access-button {:tab-index "5"
-                                          :ref "submit-button"
-                                          :disabled (or disabled? submitted?)
-                                          :on-click #(submit-solo-trial-form owner)}
+            [:button.outer-form-button
+             {:tab-index "5"
+              :ref "submit-button"
+              :disabled (or disabled? submitted?)
+              :on-click #(submit-solo-trial-form owner)}
              (cond submitting?
                    (html
                     [:span "Setting up your trial"
@@ -214,7 +215,7 @@
               [:div.error error])
 
             (when trial-created?
-              [:div.early-access-granted
+              [:div.outer-form-granted
                [:p "When you create a document, you can toggle its privacy setting from the sharing menu on the left."]
 
                [:p "You'll have two weeks of free, unlimited access, and then we'll follow up with you to see how things are going."]])]]])))))
