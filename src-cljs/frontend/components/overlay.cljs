@@ -124,6 +124,7 @@
               :role "button"}
              (common/icon :command)
              [:span "Shortcuts"]]
+             (om/build auth-link app {:opts {:source "start-overlay"}})
             ]])))))
 
 (defn team-start [app owner]
