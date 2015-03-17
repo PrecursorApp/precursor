@@ -287,13 +287,12 @@
                 :title "We'll get back to you immediately."
                 :role "button"}
                "Contact us"]]]]
-
-           [:div.price-free
-            [:button.price-free-button
+           [:div.price-blocks-foot
+            [:a.feature-link
              {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "free-plan"}})
-              :title "Make something"
+              :title "Precursor is free for everyone."
               :role "button"}
-             "Make public docs for free"]]]])))))
+             "Or make free, public docs."]]]])))))
 
 (defn nav-head [app owner]
   (om/component
