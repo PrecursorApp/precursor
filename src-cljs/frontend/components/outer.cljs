@@ -236,57 +236,64 @@
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)]
         (html
-          [:div.pricing
-           [:div.content
-            [:div.price-blocks
-             [:div.price-block.price-solo
-              [:div.price-head
-               [:h2.price-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
-              [:div.price-body
-               [:h4.content-copy "$10/mo"]
-               [:p.price-copy.content-copy
-                "Create unlimited public docs. "
-                "Create unlimited private docs. "
-                "Manage access for each of your documents individually."]]
-              [:div.price-foot
-               [:a.price-button
-                {:href "/trial/solo"
-                 :title "Try it free while we gather feedback."
-                 :role "button"}
-                "Start trial"]]]
-             [:section.price-divide.left
-              [:div.price-divide-line]]
-             [:div.price-block.price-team
-              [:div.price-head
-               [:h2.price-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
-              [:div.price-body
-               [:h4.content-copy "$10/mo/user"]
-               [:p.price-copy.content-copy
-                "Unlimited public and private docs. "
-                "Custom subdomain for your team where docs are private "
-                "by default and shared with your teammates."]]
-              [:div.price-foot
-               [:a.price-button
-                {:href "/trial/team"
-                 :title "Start trial"
-                 :role "button"}
-                "Start trial"]]]
-             [:section.price-divide.right
-              [:div.price-divide-line]]
-             [:div.price-block.price-corp
-              [:div.price-head
-               [:h2.price-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
-              [:div.price-body
-               [:h4.content-copy "Contact us"]
-               [:p.price-copy.content-copy
-                "Customized solutions designed to solve specific team constraints.
+         [:div.pricing
+          [:div.content
+           [:div.price-blocks
+            [:div.price-block.price-solo
+             [:div.price-head
+              [:h2.price-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
+             [:div.price-body
+              [:h4.content-copy "$10/mo"]
+              [:p.price-copy.content-copy
+               "Create unlimited public docs. "
+               "Create unlimited private docs. "
+               "Manage access for each of your documents individually."]]
+             [:div.price-foot
+              [:a.price-button
+               {:href "/trial/solo"
+                :title "Try it free while we gather feedback."
+                :role "button"}
+               "Start trial"]]]
+            [:section.price-divide.left
+             [:div.price-divide-line]]
+            [:div.price-block.price-team
+             [:div.price-head
+              [:h2.price-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
+             [:div.price-body
+              [:h4.content-copy "$10/mo/user"]
+              [:p.price-copy.content-copy
+               "Unlimited public and private docs. "
+               "Custom subdomain for your team where docs are private "
+               "by default and shared with your teammates."]]
+             [:div.price-foot
+              [:a.price-button
+               {:href "/trial/team"
+                :title "Start trial"
+                :role "button"}
+               "Start trial"]]]
+            [:section.price-divide.right
+             [:div.price-divide-line]]
+            [:div.price-block.price-corp
+             [:div.price-head
+              [:h2.price-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
+             [:div.price-body
+              [:h4.content-copy "Contact us"]
+              [:p.price-copy.content-copy
+               "Customized solutions designed to solve specific team constraints.
                 E.g., integrations, custom servers, on-premise accommodations, etc."]]
-              [:div.price-foot
-               [:a.price-button
-                {:href "mailto:enterprise@precursorapp.com?Subject=Enterprise%20Inquiry"
-                 :title "We'll get back to you immediately."
-                 :role "button"}
-                "Contact us"]]]]]])))))
+             [:div.price-foot
+              [:a.price-button
+               {:href "mailto:enterprise@precursorapp.com?Subject=Enterprise%20Inquiry"
+                :title "We'll get back to you immediately."
+                :role "button"}
+               "Contact us"]]]]
+
+           [:div.price-free
+            [:button.price-free-button
+             {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "free-plan"}})
+              :title "Make something"
+              :role "button"}
+             "Make public docs for free"]]]])))))
 
 (defn nav-head [app owner]
   (om/component
