@@ -266,7 +266,7 @@
                 "by default and shared with your teammates."]]
               [:div.price-foot
                [:a.price-button
-                {:href "/early-access/team"
+                {:href "/trial/team"
                  :title "Start trial"
                  :role "button"}
                 "Start trial"]]]
