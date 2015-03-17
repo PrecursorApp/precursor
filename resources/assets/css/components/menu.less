@@ -32,10 +32,7 @@
   .animation(in-fade-bottom-soft @run_slow @bezier_deform);
   text-overflow: ellipsis;
   white-space: nowrap;
-  // margin: 0;
-
   margin: 0 @tile;
-
   overflow: hidden;
   cursor: default;
   &:not(:last-of-type) {
@@ -47,9 +44,6 @@
   .flex(1);
   .flexy();
   position: relative;
-  // padding-top: @tile;
-  // padding: calc(~"10vh -" @tile) 0;
-  // padding: 10vh 0;
   padding: 10vh 0 0;
   .make {
     .animation_cascade(25);
@@ -62,7 +56,6 @@
   top: 0;
   left: 0;
   width: 100%;
-  // padding-bottom: @tile;
   transition: @run_slow @bezier_deform;
   &:not(:first-child) {
     margin-left: -100%;
@@ -119,7 +112,6 @@
   });
 }
 .veins {
-  // .menu.content();
   max-width: @tile_menu_max;
   margin: 0 auto;
 }
@@ -127,7 +119,6 @@
   .flexy(center);
   .icon(stroke; @gray);
   .icon(fill; @gray);
-  // width: 100%;
   width: @tile_menu_max;
   max-width: 100%;
   height: @tile;
