@@ -97,6 +97,13 @@
                          [?t :db/txInstant ?i]]}
                db doc-id)))
 
+(defn created-time [db doc-id]
+  (ffirst (d/q '{:find [(min ?i)]
+                 :in [$ ?doc-id]
+                 :where [[?t :transaction/document ?doc-id]
+                         [?t :db/txInstant ?i]]}
+               db doc-id)))
+
 (defn read-api [doc]
   (-> doc
     (select-keys [:db/id

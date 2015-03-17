@@ -133,17 +133,5 @@
 (defn app [view-data]
   (h/html (app* view-data)))
 
-(defn interesting* [doc-ids]
-  [:div.interesting
-   (if-not (seq doc-ids)
-     [:p "No interesting docs"])
-   (for [doc-id doc-ids]
-     [:div.doc-preview
-      [:a {:href (urls/doc-svg doc-id)}
-       [:img {:src (urls/doc-svg doc-id)}]]])])
-
-(defn interesting [doc-ids]
-  (h/html (layout {} (interesting* (reverse (sort doc-ids))))))
-
 (defn email-welcome [template-name {:keys [CSRFToken]}]
   (h/html (layout {} (email-landing/email-landing template-name CSRFToken))))
