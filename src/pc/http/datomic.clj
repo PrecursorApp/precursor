@@ -207,13 +207,31 @@
             (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))
           :else nil)))))
 
+(defn admin-notify-subdomains [transaction]
+  (let [db (:db-after transaction)
+        datoms (:tx-data transaction)
+        team-eid (d/entid db :team/subdomain)]
+    (when-let [team-datom (first (filter #(= team-eid (:a %)) datoms))]
+      (let [slack-url (if (profile/prod?)
+                        "https://hooks.slack.com/services/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"
+                        "https://hooks.slack.com/services/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")
+            team (some->> team-datom :e (d/entity db))
+            cust (:team/creator team)
+            username (:cust/email cust "ping-bot")
+            icon_url (str (:google-account/avatar cust))]
+
+        (let [message (format "created the %s subdomain" (:team/subdomain team))]
+          (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))))))
+
 (defn handle-admin [transaction]
   (utils/with-report-exceptions
     (send-emails transaction))
   (utils/with-report-exceptions
     (handle-precursor-pings transaction))
   (utils/with-report-exceptions
-    (pc.early-access/handle-early-access-requests transaction)))
+    (pc.early-access/handle-early-access-requests transaction))
+  (utils/with-report-exceptions
+    (admin-notify-subdomains transaction)))
 
 (defonce raised-full-channel-exception? (atom nil))
 (defn forward-to-admin-ch [admin-ch transaction]
