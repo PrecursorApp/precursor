@@ -411,7 +411,7 @@ img.loading-image {
       }
     }
     .access-status {
-      color: @blue;
+      color: @color_select;
     }
   }
   &.denied {
@@ -501,11 +501,11 @@ img.loading-image {
     }
   }
   &.positive {
-    .icon(stroke; @blue);
-    border-color: @blue;
+    .icon(stroke; @color_select);
+    border-color: @color_select;
     &:hover {
       .icon(stroke; @white);
-      background: @blue;
+      background: @color_select;
     }
   }
   &.negative {

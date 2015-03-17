@@ -8,11 +8,11 @@ input {
       outline: none;
       padding: 1rem;
       &:focus {
-        border-color: @blue;
+        border-color: @color_select;
         + label {
           &[data-placeholder] {
             &:before {
-              color: @blue;
+              color: @color_select;
             }
           }
         }
@@ -170,9 +170,9 @@ input {
     transition: @run ease-in-out;
   }
   &:focus {
-    border: 1px solid @blue;
+    border: 1px solid @color_select;
     &:after {
-      color: @blue;
+      color: @color_select;
     }
   }
   &:focus,
