@@ -5,8 +5,7 @@ dependencies:
     - git submodule update --init
     - lein cljsbuild once production
     - lein run -m pc.tasks/compile-less
-    - du -h resources/public/cljs/production/frontend.js
-    - du -h resources/public/css/app.css
+    - du -h resources/public/cljs/production/frontend.js resources/public/css/app.css
 
 deployment:
   prod:
