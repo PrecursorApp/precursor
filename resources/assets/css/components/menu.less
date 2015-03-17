@@ -152,7 +152,9 @@
   }
   span {
     &:first-child {
-      padding-left: @menu_padding;
+      &:not(:only-child) {
+        padding-left: @menu_padding;
+      }
     }
   }
   i {
