@@ -337,7 +337,6 @@
              [:span "Home"]]
             [:a.vein.make
              {:href "/pricing"
-              :target "_self"
               :role "button"}
              [:span "Pricing"]]
             [:a.vein.make
