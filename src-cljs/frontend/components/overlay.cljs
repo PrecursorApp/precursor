@@ -212,7 +212,7 @@
       (let [cast! (om/get-shared owner :cast!)
             invite-email (get-in app state/invite-email-path)]
         (html
-          [:article
+          [:div.content
            [:h2.make
             "This document is public."]
            (if-not (:cust app)
@@ -503,7 +503,7 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          [:article
+          [:div.content
            [:h2.make
             "Let's change that name."]
            [:p.make

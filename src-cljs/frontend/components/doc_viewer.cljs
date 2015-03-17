@@ -24,18 +24,14 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          {:class (str "menu-prompt-" "username")}
-          [:article
+          [:div.content
            [:h2.make
-            "Remember that one idea?"]
+            "Keep track of all the ideas you make."]
            [:p.make
-            "Neither do we—well, not yet at least.
-            Sign up and we'll remember your ideas for you.
-            Never lose a great idea again!"]
-           [:a.menu-button.make
-            {:href (auth/auth-url :source "your-docs-overlay")
-             :role "button"}
-            "Sign Up"]]])))))
+            "Everyone's ideas made with Precursor save automatically.
+            And if you sign in with Google we'll even keep track of which ones are yours."]
+           [:div.calls-to-action.make
+            (om/build common/google-login {:source "Public Sharing Menu"})]]])))))
 
 (defn docs-list [docs owner]
   (reify
@@ -95,7 +91,7 @@
         (html
          [:div.menu-view
           {:class (when (nil? app-docs) "loading")}
-          [:article
+          [:div.content
            (if (seq display-docs)
              (om/build docs-list display-docs))]])))))
 
