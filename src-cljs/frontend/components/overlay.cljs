@@ -124,18 +124,6 @@
               :role "button"}
              (common/icon :command)
              [:span "Shortcuts"]]
-            ; [:a.vein.make
-            ;  {:href "/home"
-            ;   :role "button"}
-            ;  (common/icon :home)
-            ;  [:span "Home"]]
-            ; [:a.vein.make
-            ;  {:href "/blog"
-            ;   :target "_self"
-            ;   :role "button"}
-            ;  (common/icon :blog)
-            ;  [:span "Blog"]]
-            ; (om/build auth-link app {:opts {:source "start-overlay"}})
             ]])))))
 
 (defn team-start [app owner]
@@ -158,7 +146,7 @@
               :role "button"}
              (common/icon :clock)
              [:span "Team Documents"]]
-            ; (om/build auth-link app {:opts {:source "start-overlay"}})
+            (om/build auth-link app {:opts {:source "start-overlay"}})
             ]])))))
 
 (defn private-sharing [app owner]
