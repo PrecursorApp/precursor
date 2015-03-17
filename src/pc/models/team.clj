@@ -31,7 +31,7 @@
                              :team/subdomain subdomain
                              :team/uuid (d/squuid)}
                             (when (seq cust)
-                              {:team/creator cust}))]))
+                              {:team/creator (:db/id cust)}))]))
 
 (defn find-doc-ids [db team]
   (map :e (d/datoms db :vaet (:db/id team) :document/team)))
