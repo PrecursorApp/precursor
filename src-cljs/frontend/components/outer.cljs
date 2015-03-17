@@ -75,12 +75,12 @@
              "Begin your free trial & start using team features today."]
             (if (utils/logged-in? owner)
               [:p.early-access-copy
-               "Choose a name for your team to use on Precursor.
-               Make sure it starts with a letter and is longer than 4 characters.
-               Numbers and hyphens are okay."]
+               "Choose a name for your team to use on Precursor. "
+               "Make sure it starts with a letter and is at least 4 characters. "
+               "Numbers and hyphens are okay."]
               [:p.early-access-copy
-               "First, sign in with your Google account.
-               Then we'll just ask you to make a custom subdomain for you and your team."])
+               "First, sign in with your Google account. "
+               "Then we'll just ask you to make a custom subdomain for you and your team."])
             (when-not (utils/logged-in? owner)
               [:div.early-access-sign
                (om/build common/google-login {:source "Early Access Form"})])]
