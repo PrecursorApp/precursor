@@ -1,34 +1,37 @@
-.mixpanel-badge {
+#vendor.mixpanel-badge {
   .animation(in-fade-bottom @run_slow);
   position: fixed;
   bottom: 0;
   right: 0;
+  .mq_640({
+    display: none;
+  });
   svg {
     fill: @gray_mixpanel;
   }
 }
-.google-login {
+#vendor.google-login {
   .flexy(center);
   .user-select(none);
-  color: @white !important; // 3rd-party brand color, don't override
-  background-color: @color_google !important;
-  border: none !important;
-  border-bottom: 1px solid @color_google_dark !important;
+  color: @white; // 3rd-party brand color, don't override
+  background-color: @color_google;
+  border: none;
+  border-bottom: 1px solid @color_google_dark;
   border-radius: .25rem;
-  box-shadow: 0 0 fade(@color_google_dark, 0) !important;
+  box-shadow: 0 0 fade(@color_google_dark, 0);
   white-space: nowrap;
   overflow: hidden;
-  transition: none !important;
+  transition: none;
   &:hover,
   &:focus {
     .translate3d(0, -2px, 0);
-    background-color: @color_google_light !important;
-    box-shadow+: 0 2px @color_google_dark, 0 1px fade(@white, 21) inset !important;
+    background-color: @color_google_light;
+    box-shadow+: 0 2px @color_google_dark, 0 1px fade(@white, 21) inset;
   }
   &:active {
     .translate3d(0, 0, 0);
-    background-color: lighten(saturate(@color_google_dark, 21), 8) !important;
-    box-shadow: 0  2px @color_google_dark inset !important;
+    background-color: lighten(saturate(@color_google_dark, 21), 8);
+    box-shadow: 0  2px @color_google_dark inset;
   }
   &.small {
     &:after {
@@ -59,6 +62,6 @@
     border-right: 1px solid @color_google_dark;
   }
   .fill-google {
-    fill: @white !important; // 3rd-party brand color, don't override
+    fill: @white; // 3rd-party brand color, don't override
   }
 }

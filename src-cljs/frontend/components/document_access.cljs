@@ -37,35 +37,36 @@
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
          [:div.menu-view
-          [:div.menu-view-frame
-           [:article
-            [:h2 "This document is private."]
+          [:div.content
+           [:h2.make "This document is private."]
 
-            (if (:cust app)
-              (if (seq access-requests)
-                [:p
-                 [:span "Okay, we've notified the owner about your request.
-                        While you wait for a response, try prototyping in "]
-                 [:a {:href "/" :target "_self"} "your own document"]
-                 [:span "."]]
+           (if (:cust app)
+             (if (seq access-requests)
+               [:p.make
+                [:span "Okay, we notified the owner of this document about your request.
+                       While you wait for a response, try prototyping in "]
+                [:a {:href "/new" :target "_self"} "your own document"]
+                [:span "."]]
 
-                (list
-                  [:p
-                   [:span "Anything you prototype here will only be visible to you.
-                          Try requesting access or even "]
-                   [:a {:href "/" :target "_self"} "create your own"]
-                   [:span "."]]
-                  [:a.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})
-                                   :role "button"}
-                   "Request Access"]))
+               (list
+                 [:p.make
+                  "Anything you prototype here will only be visible to you.
+                  You can try to request access or even "
+                  [:a {:href "/new"} "create your own"]
+                  " document."]
+                 [:a.menu-cta
+                  {:on-click #(cast! :permission-requested {:doc-id doc-id})
+                   :role "button"}
+                  "Request Access"]))
 
-              (list
-                [:p "Anything you prototype here will only be visible to you.
-                    Try signing in and then requesting access to this document."]
-                [:a.menu-button {:href (auth/auth-url :source "permission-denied-overlay")
-                                 :role "button"}
-                 "Sign In"]))]]])))))
+             (list
+               [:p.make
+                "Anything you prototype here will only be visible to you and won't save.
+                If you sign in with Google you can request access from the owner of this document."]
+               [:div.calls-to-action.make
+                (om/build common/google-login {:source "Permission Denied Menu"})]))]])))))
 
+;; TODO is this used anymore, should we kill it?
 (defn manage-permissions-overlay [app owner]
   (reify
     om/IDisplayName (display-name [_] "Manage Permissions Overlay")
