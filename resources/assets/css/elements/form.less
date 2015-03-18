@@ -88,7 +88,6 @@ input {
         pointer-events: none;
         transition: @run_slow @bezier_deform;
         &:before {
-          .user-select(none);
           content: attr(data-placeholder);
           height: 1rem;
           color: @gray_dark;
@@ -100,6 +99,7 @@ input {
           background-size: 100% 0;
           background-repeat: no-repeat;
           background-position: center;
+          user-select: none;
         }
       }
     }
@@ -156,9 +156,8 @@ input {
   outline: none;
   transition: @run ease-in-out;
   &:after {
-    .user-select(none);
-    .transform(translate3d(0, 0, 0) scale3d(1, 1, 1));
-    .transform-origin(left);
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+    transform-origin: left;
     color: @gray_light;
     position: absolute;
     top: (@adapt_size - @adapt_tiny) / 2;
@@ -167,6 +166,7 @@ input {
     line-height: @adapt_tiny;
     background-color: fade(@dye_outer, 0);
     pointer-events: none;
+    user-select: none;
     transition: @run ease-in-out;
   }
   &:focus {
@@ -179,7 +179,7 @@ input {
   &:not(:empty) {
     transition-duration: @run_fast;
     &:after {
-      .transform(translate3d(0, (-@adapt_size / 2), 0) scale3d(.8, .8, 1));
+      transform: translate3d(0, (-@adapt_size / 2), 0) scale3d(.8, .8, 1);
       background-color: @dye_outer;
       transition-duration: @run_fast;
     }

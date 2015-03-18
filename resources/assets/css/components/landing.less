@@ -1,5 +1,5 @@
 .landing {
-  .user-select(none);
+  user-select: none;
   &:active {
     .make-button {
       &:not(:active) {
@@ -24,7 +24,7 @@
   min-height: 100vh;
   overflow: hidden;
   span {
-    .user-select(auto);
+    user-select: auto;
   }
 }
 .the-why {
@@ -82,7 +82,7 @@
     .something-wheel {
       &:before,
       &:after {
-        .animation(out-fade (1.5 * @run_make_button) forwards);
+        animation: out-fade (1.5 * @run_make_button) forwards;
         color: @gray_dark;
         position: absolute;
         left: 0;
@@ -104,12 +104,12 @@
   }
   &:not(:hover) {
     .something-wheel {
-      .animation-name(none);
+      animation-name: none;
     }
   }
   &.alt {
     color: fade(@white, 41.75); // TODO use opacity variables here
-    -webkit-mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
+    mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
     &:hover {
       color: @white;
       .something-wheel {
@@ -173,7 +173,7 @@
   }
 }
 .something-wheel {
-  .animation(something-wheel @run_make_button);
+  animation: something-wheel @run_make_button;
   text-align: left;
   position: absolute;
   top: 0;
@@ -188,7 +188,7 @@
   white-space: pre;
 }
 .our-claim {
-  .flex(1);
+  flex: 1;
   .flexy(column);
   position: relative;
   color: fade(@white, 75.75); // TODO use opacity variables here
@@ -197,11 +197,11 @@
   });
 }
 .our-philosphy-wrap {
-  .flex(1);
+  flex: 1;
   .flexy(center);
 }
 .our-philosphy {
-  .flex(1);
+  flex: 1;
   .flexy(column);
 }
 .philosphy-headline {
@@ -262,7 +262,7 @@
 }
 .feature {
   .flexy(wrap);
-  .align-items(center);
+  align-items: center;
   padding: 10% 0;
   transition: padding @run_slower;
   .mq_1280({
@@ -307,8 +307,8 @@
   }
 }
 .feature-story {
-  .order(2);
-  .flex(1);
+  order: 2;
+  flex: 1;
   padding: 0 @menu_padding;
   .mq_640({
     margin-bottom: auto;
@@ -323,7 +323,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   span {
-    .user-select(auto);
+    user-select: auto;
   }
 }
 .feature-copy {
@@ -378,7 +378,7 @@
   }
 }
 .feature-media {
-  .order(3);
+  order: 3;
   width: 34%;
   padding: 0 @menu_padding;
   .mq_960({
@@ -390,11 +390,11 @@
     padding: @menu_padding 25%; // VETO
   });
   &.reverse {
-    .order(1); // VETO
+    order: 1; // VETO
   }
   &:not(.reverse) {
     .mq_640({
-      .order(1);
+      order: 1;
     });
   }
 }

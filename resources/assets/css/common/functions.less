@@ -6,23 +6,6 @@
 .for(@array)   when (default()) {.for-impl_(length(@array))}
 .for-impl_(@i) when (@i > 1)    {.for-impl_((@i - 1))}
 .for-impl_(@i) when (@i > 0)    {.-each(extract(@array, @i))}
-
-.prefixer(@property; @value; @rest...) {
-  .prefix(@property; @value; @rest; @counter: length(@rest)) when (@counter > 0) {
-    .prefix(@property; @value; @rest; (@counter - 1));
-    @prefix: extract(@rest, @counter);
-    -@{prefix}-@{property}: @value;
-  }.prefix(@property; @value; @rest);
-  @{property}: @value;
-}
-.prefixer_value(@property; @value; @rest...) {
-  .prefix(@property; @value; @rest; @counter: length(@rest)) when (@counter > 0) {
-    .prefix(@property; @value; @rest; (@counter - 1));
-    @prefix: extract(@rest, @counter);
-    @{property}: ~"-@{prefix}-@{value}";
-  }.prefix(@property; @value; @rest);
-  @{property}: @value;
-}
 .position(@p; @x; @y) {
   position: @p;
   .axis_y(@y) when (length(@y) = 1) {
@@ -41,11 +24,6 @@
   }.axis_x(@x);
 }
 .selection(@color, @opacity) {
-  ::-moz-selection {
-    color: @color;
-    background: fade(@color, @opacity);
-    text-shadow: none;
-  }
   ::selection {
     color: @color;
     background: fade(@color, @opacity);
@@ -53,46 +31,39 @@
   }
 }
 .placeholder_style(@property; @value) {
-  &::-webkit-input-placeholder {@{property}: @value;}
-  &:-moz-placeholder           {@{property}: @value;}
-  &::-moz-placeholder          {@{property}: @value;}
+  &::-webkit-input-placeholder {@{property}: @value;} //
+  &:-moz-placeholder           {@{property}: @value;} // non-standard prefix
+  &::-moz-placeholder          {@{property}: @value;} //
 }
 .scrollbar(@property; @value) {
-  &::-webkit-scrollbar {
+  &::-webkit-scrollbar { // non-standard prefix
     @{property}: @value;
   }
 }
 .scrollbar_thumb(@property; @value) {
-  &::-webkit-scrollbar-thumb {
+  &::-webkit-scrollbar-thumb { // non-standard prefix
     @{property}: @value;
   }
 }
 .scrollbar_hide() {
-  &::-webkit-scrollbar {
-    width: 0; // we should calculate to get this effect in the dom
+  &::-webkit-scrollbar { // non-standard prefix
+    width: 0;
   }
 }
 .icon(@type; @value) {
   .iconpile {
     .stroke(@type; @value) when (@type = stroke) {
       [class|="stroke"] {
-        .width(@value) when (isnumber(@value)){stroke-width:@value;}.width(@value);
-        .color(@value) when  (iscolor(@value)){stroke:      @value;}.color(@value);
+        .width(@value) when (isnumber(@value)) {stroke-width: @value;}.width(@value);
+        .color(@value) when  (iscolor(@value)) {stroke:       @value;}.color(@value);
       }
     }.stroke(@type; @value);
     .fill(@type; @value) when (@type = fill) {
       [class|="fill"] {
-        // .width(@value) when (isnumber(@a)) { stroke-width: @value; }.width(@value);
-        .color(@value) when (iscolor(@value))  { fill: @value; }.color(@value);
+        .color(@value) when (iscolor(@value)) {fill: @value;}.color(@value);
       }
     }.fill(@type; @value);
   }
-}
-.box-sizing(...) {
-  .prefixer(box-sizing, @arguments, webkit moz);
-}
-.user-select(...) {
-  .prefixer(user-select, @arguments, webkit moz);
 }
 .to_em(@a) when (ispixel(@a)) {
   @concat: (unit(@a) / unit(@font_size));
@@ -130,7 +101,7 @@
 .animation_cascade(@c) when (@c > 0) {
   .animation_cascade((@c - 1));
   &:nth-child(@{c}) {
-    .animation-delay((@run_faster * @c));
+    animation-delay: @run_faster * @c;
   }
 }
 .outline(@color: @gray_lighter) {
@@ -144,12 +115,6 @@
   box-shadow+:  0   -@width @color inset;
   box-shadow+:  @width  0   @color inset;
   box-shadow+: -@width  0   @color inset;
-}
-.filter(...) {
-  .for(@arguments); .-each(@argument) {
-      -webkit-filter+_: @argument;
-              filter+_: @argument;
-  }
 }
 .shadow_inset(@position; @black; @white) {
   .top(@arguments) when (@position = top) {
@@ -167,68 +132,9 @@
 }
 .font-smoothing(@a: antialiased) {
   .aa(@a) when (@a = antialiased) {
-    -webkit-font-smoothing: @a;
-    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: @a;         // non-standard prefix
+    -moz-osx-font-smoothing: grayscale; //
   }.aa(@a);
-}
-.transition_transform(...) {
-  -webkit-transition+: -webkit-transform @arguments;
-          transition+:         transform @arguments;
-}
-.rotate(...) {
-  .prefixer(transform; ~"rotate(@{arguments}deg)"; webkit);
-}
-.scale(@x; @y: @x) {
-  .prefixer(transform, scale(@x, @y), webkit);
-}
-.scale3d(@x; @y: @x; @z: 1) {
-  .prefixer(transform, scale3d(@x, @y, @z), webkit);
-}
-.translate(@x; @y: @x) {
-  .prefixer(transform, translate(@x, @y), webkit);
-}
-.translate3d(@x; @y: @x; @z: 1) {
-  .prefixer(transform, translate3d(@x, @y, @z), webkit);
-}
-.translateZ(...) {
-  .prefixer(transform, translateZ(@arguments), webkit);
-}
-.transform-origin(...) {
-  .prefixer(transform-origin, @arguments, webkit);
-}
-.transform(...) {
-  .for(@arguments); .-each(@argument) {
-      -webkit-transform+_: @argument;
-              transform+_: @argument;
-  }
-}
-.animation(...) {
-  -webkit-animation: @arguments;
-          animation: @arguments;
-}
-.animation-name(...) {
-  -webkit-animation-name: @arguments;
-          animation-name: @arguments;
-}
-.animation-duration(...) {
-  -webkit-animation-duration: @arguments;
-          animation-duration: @arguments;
-}
-.animation-delay(...) {
-  -webkit-animation-delay: @arguments;
-          animation-delay: @arguments;
-}
-.animation-fill-mode(...) {
-  -webkit-animation-fill-mode: @arguments;
-          animation-fill-mode: @arguments;
-}
-.animation-timing-function(...) {
-  -webkit-animation-timing-function: @arguments;
-          animation-timing-function: @arguments;
-}
-.animation-bezier(...) {
-  -webkit-animation-timing-function: @arguments;
-          animation-timing-function: @arguments;
 }
 //
 // positions icons in radial menu
@@ -238,13 +144,13 @@
   @name:     extract(@array, (@count + @name_value));                                                       //
   @x_offset: extract(@array, (@count + @x_value)) * (1 / @icon_scale);                                      //
   @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
-  &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
+  &.shape-@{name} {transform: scale3d(@icon_scale, @icon_scale, 1) translate3d(@x_offset, @y_offset, 0);} // <-- Actual style to written for each array item
 }
 //
 // animates hud buttons when app loads
 //
 .hud_toggle_animation(...) {
-  .animation(~"in-fade-@{arguments}" @run_slow);
+  animation: ~"in-fade-@{arguments}" @run_slow;
 }
 //
 // morph menu icon into close/back icon
@@ -252,17 +158,17 @@
 .hud_menu_morph() {
   &.close,
   &.back {
-    .scale3d(.75);
+    transform: scale3d(.75, .75, 1);
   }
   &.close {
-    .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
-    .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
-    .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
+    .stroke-menu-top { transform: translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg);}
+    .stroke-menu-mid { transform: translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg); opacity: 0;}
+    .stroke-menu-btm { transform: translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg);}
   }
   &.back {
-    .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
-    .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
-    .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
+    .stroke-menu-top { transform: translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1);}
+    .stroke-menu-mid { transform: translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1);}
+    .stroke-menu-btm { transform: translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1);}
   }
 }
 //
@@ -331,13 +237,13 @@
     @0640: -@canvas_pull_0640;
   }.right(@arguments);
   .inner {
-    .transform(translate3d(@init, 0, 0); scale3d(.8, .8, 1));
-    .transform-origin(@arguments);
+    transform: translate3d(@init, 0, 0) scale3d(.8, .8, 1);
+    transform-origin: @arguments;
     @{arguments}: 0;
-    .mq_1920({ .transform(translate3d(@1920, 0, 0) scale3d(.8, .8, 1)); });
-    .mq_1600({ .transform(translate3d(@1600, 0, 0) scale3d(.8, .8, 1)); });
-    .mq_1280({ .transform(translate3d(@1280, 0, 0) scale3d(.8, .8, 1)); });
-     .mq_960({ .transform(translate3d(@0960, 0, 0) scale3d(.8, .8, 1)); });
-     .mq_640({ .transform(translate3d(@0640, 0, 0) scale3d(.8, .8, 1)); });
+    .mq_1920({ transform: translate3d(@1920, 0, 0) scale3d(.8, .8, 1);});
+    .mq_1600({ transform: translate3d(@1600, 0, 0) scale3d(.8, .8, 1);});
+    .mq_1280({ transform: translate3d(@1280, 0, 0) scale3d(.8, .8, 1);});
+     .mq_960({ transform: translate3d(@0960, 0, 0) scale3d(.8, .8, 1);});
+     .mq_640({ transform: translate3d(@0640, 0, 0) scale3d(.8, .8, 1);});
   }
 }
