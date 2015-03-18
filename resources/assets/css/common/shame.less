@@ -28,19 +28,11 @@
         content: attr(data-loading-tweet);
       }
       &:after {
-        .animation(tweet-load @run_slow @bezier_fadein 3s both);
         content: attr(data-failed-tweet);
+        animation: in-fade @run_slow @bezier_fadein 3s both;
       }
     }
   }
-}
-@keyframes tweet-load {
- 0%   {opacity: 0;}
- 100% {opacity: 1;}
-}
-@-webkit-keyframes tweet-load {
- 0%   {opacity: 0;}
- 100% {opacity: 1;}
 }
 span {
  > i {
