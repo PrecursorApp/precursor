@@ -1225,6 +1225,7 @@
 (defmethod control-event :layers-pasted
   [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
   (let [{:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))
+        eid-map (zipmap (map :db/id layers) entity-ids)
         doc-id (:document/id state)
         camera (:camera state)
         zoom (:zf camera)
@@ -1237,17 +1238,19 @@
         [move-x move-y] (cameras/screen->point camera new-x new-y)
         [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)]
     (-> state
-      (assoc-in [:clipboard :layers] (mapv (fn [l eid]
+      (assoc-in [:clipboard :layers] (mapv (fn [l]
                                              (-> l
                                                (assoc :layer/ancestor (:db/id l)
-                                                      :db/id eid
+                                                      :db/id (get eid-map (:db/id l))
                                                       :layer/document doc-id
                                                       :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
+                                               (utils/update-when-in [:layer/points-to] (fn [dests]
+                                                                                          (set (map #(update-in % [:db/id] eid-map) dests))))
                                                (#(move-layer % %
                                                              {:snap-x snap-move-x :snap-y snap-move-y
                                                               :move-x move-x :move-y move-y :snap-paths? true}))
                                                (dissoc :layer/current-x :layer/current-y :points)))
-                                           layers entity-ids))
+                                           layers))
       (assoc-in [:selected-eids :selected-eids] (set entity-ids)))))
 
 (defmethod post-control-event! :layers-pasted
