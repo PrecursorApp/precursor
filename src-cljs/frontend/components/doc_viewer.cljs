@@ -31,7 +31,7 @@
             "Everyone's ideas made with Precursor save automatically.
             And if you sign in with Google we'll even keep track of which ones are yours."]
            [:div.calls-to-action.make
-            (om/build common/google-login {:source "Public Sharing Menu"})]]])))))
+            (om/build common/google-login {:source "Sharing Signup Menu"})]]])))))
 
 (defn docs-list [docs owner]
   (reify

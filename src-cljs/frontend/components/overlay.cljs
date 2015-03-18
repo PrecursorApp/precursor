@@ -220,7 +220,7 @@
                [:p.make
                 "It's visible to anyone with the url.
                 Sign in with your Google account to send an invite or give someone your url."]
-               [:div.make
+               [:div.calls-to-action.make
                 (om/build common/google-login {:source "Public Sharing Menu"})])
 
              (list
@@ -507,12 +507,10 @@
            [:h2.make
             "Let's change that name."]
            [:p.make
-            "Sign up to change how your name appears in chat.
-            Let your team know who you are while you collaborate together."]
-           [:a.make
-            {:href (auth/auth-url :source "username-overlay")
-             :role "button"}
-            "Sign Up"]]])))))
+            "Chatting with teammates is easier when you can identify each other.
+            Sign in with Google and you'll be able to change your name that gets displayed in chat."]
+           [:div.calls-to-action.make
+            (om/build common/google-login {:source "Username Menu"})]]])))))
 
 (def overlay-components
   {:info {:title "About"
