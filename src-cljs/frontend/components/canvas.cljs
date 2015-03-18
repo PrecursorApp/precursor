@@ -630,7 +630,8 @@
                                     :layer/start-y (second layer-center)
                                     :layer/end-x (get-in drawing [:relation :rx])
                                     :layer/end-y (get-in drawing [:relation :ry])
-                                    :layer/type :layer.type/line)))))
+                                    :layer/type :layer.type/line
+                                    :markerEnd "url(#arrow-point)")))))
 
           (when (and (:in-progress? drawing)
                      (= :layer.type/text (get-in drawing [:layers 0 :layer/type])))
@@ -689,12 +690,26 @@
     om/IRender
     (render [_]
       (let [db @(om/get-shared owner :db)
-            pointer-datoms (seq (d/datoms db :aevt :layer/points-to))]
+            pointer-datoms (seq (d/datoms db :aevt :layer/points-to))
+            drawing-layers (reduce (fn [acc layer]
+                                     (assoc acc (:db/id layer) (assoc layer
+                                                                      :layer/end-x (:layer/current-x layer)
+                                                                      :layer/end-y (:layer/current-y layer))))
+                                   {} (:layers (cursors/observe-drawing owner)))
+            subscriber-layers (reduce (fn [acc layer]
+                                        (assoc acc (:db/id layer) (assoc layer
+                                                                         :layer/end-x (:layer/current-x layer)
+                                                                         :layer/end-y (:layer/current-y layer))))
+                                      {} (mapcat :layers (vals (cursors/observe-subscriber-layers owner))))]
         (apply dom/g #js {:className "layer-arrows"}
                (for [pointer-datom pointer-datoms
-                     :let [origin (d/entity db (:e pointer-datom))
+                     :let [origin (or (get drawing-layers (:e pointer-datom))
+                                      (get subscriber-layers (:e pointer-datom))
+                                      (d/entity db (:e pointer-datom)))
                            origin-center (layers/center origin)
-                           dest (d/entity db (:v pointer-datom))
+                           dest (or (get drawing-layers (:v pointer-datom))
+                                    (get subscriber-layers (:v pointer-datom))
+                                    (d/entity db (:v pointer-datom)))
                            dest-center (layers/center dest)
                            [start-x start-y] (layers/layer-intercept origin dest-center)
                            [end-x end-y] (layers/layer-intercept dest origin-center)]]
