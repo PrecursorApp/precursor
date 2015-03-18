@@ -259,7 +259,7 @@
                                                     (time/now)
                                                     (time/days 1))))))))]
     [:div
-     [:h3 "Users active in the last day"]
+     [:h3 (str (count active) " users active in the last day")]
      [:style "td, th { padding: 5px; text-align: left }"]
      [:table {:border 1}
       [:tr
