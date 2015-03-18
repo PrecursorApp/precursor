@@ -52,7 +52,7 @@
                  [:p.make
                   "Anything you prototype here will only be visible to you.
                   You can try to request access or even "
-                  [:a {:href "/new" :target "_self"} "create your own"]
+                  [:a {:href "/new"} "create your own"]
                   " document."]
                  [:a.menu-cta
                   {:on-click #(cast! :permission-requested {:doc-id doc-id})
