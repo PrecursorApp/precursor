@@ -7,6 +7,7 @@
             [frontend.async :refer [put!]]
             [frontend.browser-settings :as browser-settings]
             [frontend.camera :as camera-helper]
+            [frontend.careful]
             [frontend.clipboard :as clipboard]
             [frontend.components.app :as app]
             [frontend.components.key-queue :as keyq]
@@ -218,8 +219,6 @@
 (defn find-app-container []
   (goog.dom/getElement "om-app"))
 
-(def om-setup-debug (constantly false))
-
 (defn main [state history-imp]
   (let [comms                    (:comms @state)
         cast!                    (fn [message data & [transient?]]
@@ -251,7 +250,7 @@
                                                                            :handle-key-up      handle-key-up})]
 
     ;; allow figwheel in dev-cljs access to this function
-    (def om-setup-debug om-setup)
+    (reset! frontend.careful/om-setup-debug om-setup)
 
     (swap! state assoc :undo-state undo-state)
 
