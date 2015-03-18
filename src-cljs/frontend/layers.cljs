@@ -140,8 +140,8 @@
                    (js/Math.pow (- y2 y1) 2))))
 
 (defn radius [layer]
-  (utils/inspect (measure (utils/inspect (center layer)) (utils/inspect [(:layer/start-x layer)
-                                                                         (:layer/start-y layer)]))))
+  (measure (center layer) [(:layer/start-x layer)
+                           (:layer/start-y layer)]))
 
 (defn circle-intercept
   "Takes radius, (x1, y1) = circle center, (x2, y2) = point outside the circle"
@@ -160,3 +160,54 @@
             (+ y1 r)
             (+ y1 (* (- x x1) (/ (- y2 y1) (- x2 x1)))))]
     [x y]))
+
+(defn determinant [[zx zy :as  zero-point] [ax ay] [bx by]]
+   (- (* (- ax zx)
+         (- by zy))
+      (* (- bx zx)
+         (- ay zy))))
+
+;; much better ways to do this, e.g.
+;; https://math.stackexchange.com/questions/69099/equation-of-a-rectangle/69134#69134
+(defn layer-intercept
+  "Takes layer, (x1, y1) = point outside the layer"
+  [{:keys [layer/start-x layer/end-x layer/start-y layer/end-y] :as layer} [x1 y1]]
+  (let [padding 10
+        max-x (+ padding (max start-x end-x))
+        max-y (+ padding (max start-y end-y))
+        min-x (+ (- padding) (min start-x end-x))
+        min-y (+ (-  padding) (min start-y end-y))
+        p (/ (- max-x min-x) 2)
+        q (/ (- max-y min-y) 2)
+        [cx cy] (center layer)
+        quadrant (if (> x1 cx)
+                   (if (< y1 cy)
+                     1
+                     4)
+                   (if (< y1 cy)
+                     2
+                     3))
+        corner (case quadrant
+                 1 [max-x min-y]
+                 2 [min-x min-y]
+                 3 [min-x max-y]
+                 4 [max-x max-y])
+        d (determinant [cx cy] corner [x1 y1])
+        m (/ (- y1 cy)
+             (- x1 cx))]
+    (if (zero? d)
+      corner
+      (let [[rx ry] (case quadrant
+                      1 (if (pos? d)
+                          [p (* m p)]
+                          [(/ (-  q) m) (- q)])
+                      2 (if (pos? d)
+                          [(/ (- q) m) (- q)]
+                          [(- p) (* m (- p))])
+                      3 (if (pos? d)
+                          [(- p) (* m (- p))]
+                          [(/ q m) q])
+                      4 (if (pos? d)
+                          [(/ q m) q]
+                          [p (* m p)]))]
+        [(+ cx rx) (+ cy ry)]))))

@@ -696,19 +696,17 @@
                            origin-center (layers/center origin)
                            dest (d/entity db (:v pointer-datom))
                            dest-center (layers/center dest)
-                           [start-x start-y] (layers/circle-intercept (layers/radius origin)
-                                                                      origin-center
-                                                                      dest-center)
-                           [end-x end-y] (layers/circle-intercept (layers/radius dest)
-                                                                  dest-center
-                                                                  origin-center)]]
-                 (svg-element (-> (into {} origin)
-                                (assoc :layer/start-x start-x
-                                       :layer/start-y start-y
-                                       :layer/end-x end-x
-                                       :layer/end-y end-y
-                                       :layer/type :layer.type/line
-                                       )))))))))
+                           [start-x start-y] (layers/layer-intercept origin dest-center)
+                           [end-x end-y] (layers/layer-intercept dest origin-center)]]
+                 (dom/g nil
+
+                   (svg-element (-> (into {} origin)
+                                  (assoc :layer/start-x start-x
+                                         :layer/start-y start-y
+                                         :layer/end-x end-x
+                                         :layer/end-y end-y
+                                         :layer/type :layer.type/line
+                                         ))))))))))
 
 (defn canvas-grid [camera]
   (dom/defs nil
