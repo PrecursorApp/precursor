@@ -38,6 +38,13 @@
     [type e a session-uuid]
     transaction))
 
+(defn coerce-points-to [document-id [type e a v :as transaction]]
+  (if (= :layer/points-to a)
+    [type e a [:frontend/id (UUID. document-id v)]]
+    transaction))
+
+
+
 (def incoming-whitelist
   #{:layer/name
     :layer/uuid
@@ -61,6 +68,7 @@
     :layer/child
     :layer/ui-id
     :layer/ui-target
+    :layer/points-to
 
     :session/uuid
     :document/id ;; TODO: for layers use layer/document
@@ -123,6 +131,7 @@
                             (map (partial coerce-uuids uuid-attrs))
                             (map (partial coerce-server-timestamp server-timestamp))
                             (map (partial coerce-session-uuid session-uuid))
+                            (map (partial coerce-points-to document-id))
                             (filter whitelisted?)
                             (remove-float-conflicts)
                             (add-frontend-ids (or document-id team-id))

@@ -39,6 +39,7 @@
     :layer/stroke-width
     :layer/stroke-color
     :layer/opacity
+    :layer/points-to
 
     :entity/type
 
@@ -127,6 +128,10 @@
 (defmethod translate-datom :access-grant/team [db d]
   (-> d
     (assoc :v (:team/uuid (d/entity db (:v d))))))
+
+(defmethod translate-datom :layer/points-to [db d]
+  (-> d
+    (assoc :v (web-peer/client-id db (:v d)))))
 
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
