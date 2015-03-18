@@ -5,7 +5,8 @@
             [frontend.utils :as utils :include-macros true]))
 
 (def schema {:layer/child {:db/cardinality :db.cardinality/many}
-             :layer/points-to {:db/cardinality :db.cardinality/many}})
+             :layer/points-to {:db/cardinality :db.cardinality/many
+                               :db/type :db.type/ref}})
 
 (defn make-initial-db [initial-entities]
   (let [conn (d/create-conn schema)]

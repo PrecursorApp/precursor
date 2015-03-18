@@ -742,6 +742,7 @@
         original-layers (get-in previous-state [:drawing :original-layers])
         layers        (mapv #(-> %
                                (dissoc :points)
+                               (dissoc :layer/points-to)
                                (utils/remove-map-nils))
                             (get-in current-state [:drawing :finished-layers]))]
     (cond
@@ -785,7 +786,8 @@
 
 (defn handle-text-layer-finished-after [current-state]
   (let [db (:db current-state)
-        layer (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))]
+        layer (dissoc (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))
+                      :layer/points-to)]
     (when (layer-model/detectable? layer)
       (d/transact! db [layer] {:can-undo? true}))
     (maybe-notify-subscribers! current-state nil nil)))
@@ -943,7 +945,11 @@
     (let [layers (get-in (finalize-layer previous-state) [:drawing :finished-layers])]
       (when (some layer-model/detectable? layers)
         (d/transact! (:db current-state)
-                     (mapv utils/remove-map-nils layers)
+                     (mapv (fn [l]
+                             (-> l
+                               utils/remove-map-nils
+                               (dissoc :layer/points-to)))
+                           layers)
                      {:can-undo? true}))))
   (maybe-notify-subscribers! current-state nil nil))
 
