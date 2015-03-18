@@ -351,12 +351,10 @@
             (when-not (:cust app)
               (list
                 [:p.make
-                 "Sign up and we'll even keep track of all your docs.
-                 Never lose a great idea again!"]
-                [:a.menu-cta.make
-                 {:href (auth/auth-url :source "username-overlay")
-                  :role "button"}
-                 "Sign Up"]))
+                 "Everyone's ideas made with Precursor save automatically.
+                 And if you sign in with Google we'll even keep track of which ones are yours."]
+                [:div.calls-to-action.make
+                 (om/build common/google-login {:source "Username Menu"})]))
             [:a.vein.make
              {:href "/home"
               :role "button"}
