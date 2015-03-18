@@ -1,10 +1,12 @@
 (ns pc.models.layer
-  (:require [pc.datomic :as pcd]
-            [datomic.api :refer [db q] :as d]))
+  (:require [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
+            [pc.utils :as utils]))
 
 
 ;; We'll pretend we have a type here
-#_(t/def-alias Layer (HMap :mandatory {:document/id Long
+#_(t/def-alias Layer (HMap :mandatory {:layer/document Doc
                                        :db/id Long
                                        :layer/name String}
                            :optional {:layer/type Keyword
@@ -17,26 +19,37 @@
                  db))
 
 (defn find-by-document [db document]
-  (pcd/touch-all '{:find [?t] :in [$ ?document-id]
-                   :where [[?t :document/id ?document-id]
-                           [?t :layer/name]]}
-                 db (:db/id document)))
+  (map (partial d/entity db)
+       (d/q '{:find [[?t ...]]
+              :in [$ ?document-id]
+              :where [[?t :layer/document ?document-id]]}
+            db (:db/id document))))
 
-
-(comment
-  (let [[doc-id & layer-ids] (pcd/generate-eids (pcd/conn) 4)]
-    (d/transact (pcd/conn)
-                [{:db/id doc-id
-                  :document/name "Test Document 1"}
-                 {:db/id (first layer-ids)
-                  :document/id doc-id
-                  :layer/name "Test Layer 1"
-                  :layer/fill "red"}
-                 {:db/id (second layer-ids)
-                  :document/id doc-id
-                  :layer/name "Test Layer 2"
-                  :layer/fill "blue"}
-                 {:db/id (last layer-ids)
-                  :document/id doc-id
-                  :layer/name "Test Layer 3"
-                  :layer/fill "green"}])))
+;; TODO: can use pull API here
+(defn read-api [layer]
+  (-> layer
+    (select-keys [:layer/name
+                  :layer/uuid
+                  :layer/type
+                  :layer/start-x
+                  :layer/start-y
+                  :layer/end-x
+                  :layer/end-y
+                  :layer/rx
+                  :layer/ry
+                  :layer/fill
+                  :layer/stroke-width
+                  :layer/stroke-color
+                  :layer/opacity
+                  :layer/font-family
+                  :layer/text
+                  :layer/font-size
+                  :layer/path
+                  :layer/child
+                  :layer/ui-id
+                  :layer/ui-target
+                  :layer/document
+                  ;; TODO: remove when frontend is deployed
+                  :document/id])
+    (utils/update-when-in [:layer/document] :db/id)
+    (assoc :db/id (web-peer/client-id layer))))

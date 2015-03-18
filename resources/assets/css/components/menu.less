@@ -1,92 +1,23 @@
-@margin_featurette: 30vh;
 .menu {
   .flexy(column);
   width: 100%;
   min-height: 100vh;
-  ~ .inner {
-    .scale(.8);
-    cursor: pointer;
-    background: @dye_outer;
-    box-shadow: 0 8px 21px 0 fade(@black, 21);
-    transition: @run_slower @bezier_deform;
-    .mq_1920({
-      .transform(translate(@tile * 2,0); scale(.8));
-    });
-    .mq_1280({
-      .transform(translate(@tile * 4,0); scale(.8));
-    });
-    &:hover {
-      box-shadow: 0 21px 34px 0 fade(@black, 21);
-      transition-duration: @run;
-    }
-    &:active {
-      box-shadow: 0 5px 13px 0 fade(@black, 21);
-      transition-duration: @run_fast;
-    }
-    .canvas {
-      box-shadow: 0 -1px @gray_lightest;
-      pointer-events: none;
-    }
-    .canvas-background {
-      .scale3d(.6,0,1);
-      transition-duration: @run_slow;
-    }
-    .grid-background {
-      opacity: 0;
-      transition: @now;
-    }
-    .chat-background {
-      .scale3d(0,0,1);
-      transition-duration: @run_slow;
-    }
-    .chat-log {
-      opacity: .5;
-      transition: @run_fast @now @bezier_fadein;
-      color: @color_menu_faded;
-      // TODO this can be cleaner
-      .message-head,
-      .stroke-user,
-      .time,
-      h2,
-      a {
-        color: @color_menu_faded;
-        stroke: @color_menu_faded !important;
-        transition+: color @now @run_fast;
-        transition+: stroke @now @run_fast;
-      }
-    }
-    .chat-box {
-      border-top: 1px solid @gray_lighter;
-      transition: border-top @now @run_faster @bezier_fadein;
-      &:after {
-        opacity: 0;
-        transition: @now;
-      }
-    }
-    .chat-input {
-      .placeholder_style(opacity; 0);
-      .placeholder_style(transition; @now @now @bezier_fadein);
-    }
-  }
-  ~ .hud {
-    .hud-item {
-      &:not(.menu-needed) {
-        opacity: 0;
-        visibility: hidden;
-        transition: @now;
-      }
-    }
-    .hud-menu {
-      path {
-        transition+: all @run_slow @now @bezier_bounce;
-        transition+: stroke @now @now @bezier_fadein;
-      }
+  overflow-x: hidden;
+  .content {
+    max-width: @tile_menu_max;
+    .vein {
+      border-bottom: 1px solid @gray_lightest;
     }
   }
 }
 .menu-header {
   .flex(0 0 @tile);
-  .flexy(center);
+  .flexy(center, center);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: @tile;
   a {
     .flexy(center, center);
     width: @tile;
@@ -96,28 +27,24 @@
       margin-left: auto;
     }
   }
-  h4 {
-    .flex(0 1 100%);
-    .animation(in-fade-top (@run * 3));
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin: 0;
-    padding: 0 1rem 0 @tile;
-    overflow: hidden;
-    cursor: default;
-    &:not(:last-of-type) {
-      display: none;
-    }
+}
+.menu-heading {
+  .animation(in-fade-bottom-soft @run_slow @bezier_deform);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0 @tile;
+  overflow: hidden;
+  cursor: default;
+  &:not(:last-of-type) {
+    display: none;
   }
 }
 .menu-body {
+  .box-sizing(content-box);
   .flex(1);
   .flexy();
   position: relative;
-  width: @tile * 6;
-  .mq_640({
-    width: @tile * 5;
-  });
+  padding: 10vh 0 0;
   .make {
     .animation_cascade(25);
   }
@@ -129,13 +56,14 @@
   top: 0;
   left: 0;
   width: 100%;
-  padding-bottom: @tile;
   transition: @run_slow @bezier_deform;
   &:not(:first-child) {
     margin-left: -100%;
   }
   &:not(:last-of-type) {
     .translate3d(-100%,0,0);
+    opacity: 0;
+    visibility: hidden;
   }
   &:last-child {
     &:only-child {
@@ -183,11 +111,19 @@
     min-width: 100vw;
   });
 }
+.veins {
+  .flex(1);
+  position: relative;
+  width: 100%;
+  max-width: @tile_menu_max;
+  margin: 0 auto;
+}
 .vein {
   .flexy(center);
   .icon(stroke; @gray);
   .icon(fill; @gray);
   width: 100%;
+  height: @tile;
   color: @gray;
   overflow: hidden;
   &:hover {
@@ -199,6 +135,26 @@
     position: absolute;
     bottom: 0;
     left: 0;
+    right: 0;
+    max-width: @tile_menu_max;
+    margin: 0 auto;
+  }
+  &.external {
+    .icon-arrow-right {
+      transition: @run @bezier_deform;
+    }
+    &:not(:hover) {
+      .icon-arrow-right {
+        margin-left: @menu_padding / -2;
+      }
+    }
+  }
+  span {
+    &:first-child {
+      &:not(:only-child) {
+        padding-left: @menu_padding;
+      }
+    }
   }
   i {
     padding: @menu_padding;
@@ -304,15 +260,6 @@
   margin: 0 1em;
   cursor: default;
 }
-.mixpanel-badge {
-  .animation(in-fade-bottom @run_slow);
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  svg {
-    fill: @gray_mixpanel;
-  }
-}
 .recent-time-group {
   text-transform: capitalize;
   margin-bottom: 2em;
@@ -333,7 +280,6 @@
 .recent-doc-thumb {
   display: block;
   position: relative;
-  height: 15rem;
   border: 1px solid @gray_lighter;
   overflow: hidden;
   transition: @run @bezier_fadein;
@@ -342,8 +288,15 @@
     transition-duration: @run_fast;
   }
   img {
+    .size_of(chat; height; vh);
     width: 100%;
+    max-height: 80vh;
     opacity: .5;
+  }
+  .loading-ellipses {
+    position: absolute;
+    bottom: 0.5em;
+    right: 1em;
   }
 }
 // TODO come back to cleanup loading styles here -dk (12/09/14)
@@ -365,23 +318,11 @@ img.loading-image {
   display: none;
 }
 .loading-ellipses {
-  position: absolute;
-  bottom: 0.5em;
-  right: 1em;
   display: none;
 }
-.loading-ellipses i {
-  opacity: 0;
-  .animation(dot 1.3s 0.0s infinite);
-}
-.loading-ellipses i+i {
-  opacity: 0;
-  .animation(dot 1.3s 0.2s infinite);
-}
-.loading-ellipses i+i+i {
-  opacity: 0;
-  .animation(dot 1.3s 0.3s infinite);
-}
+.loading-ellipses i     {.animation(dot (1.5 * @run_slower) (1.00 * @run_slower) infinite both);}
+.loading-ellipses i+i   {.animation(dot (1.5 * @run_slower) (1.25 * @run_slower) infinite both);}
+.loading-ellipses i+i+i {.animation(dot (1.5 * @run_slower) (1.50 * @run_slower) infinite both);}
 .privacy-select {
   .flex-direction(column);
   .align-items(stretch);
@@ -402,6 +343,19 @@ img.loading-image {
       }
     }
   }
+  &.vein {
+    height: auto;
+  }
+}
+.privacy-radio {
+  &:not(:checked) {
+    + .privacy-label {
+      &.disabled {
+        height: 0;
+        opacity: 0;
+      }
+    }
+  }
 }
 .privacy-label {
   .flexy(center);
@@ -409,6 +363,16 @@ img.loading-image {
   cursor: pointer;
   overflow: hidden;
   transition: @run;
+  &.disabled {
+    .user-select(none);
+    .icon(stroke; @gray_light);
+    .icon(fill; @gray_light);
+    color: @gray_light;
+    cursor: default;
+  }
+  small {
+    padding-left: .5em;
+  }
 }
 .access-card {
   .flexy(center);
@@ -447,7 +411,7 @@ img.loading-image {
       }
     }
     .access-status {
-      color: @blue;
+      color: @color_select;
     }
   }
   &.denied {
@@ -457,6 +421,10 @@ img.loading-image {
         .filter(grayscale(1));
         opacity: .5;
       }
+    }
+    .access-avatar-img {
+      .filter(grayscale(1));
+      opacity: .5;
     }
     .access-details {
       opacity: .5;
@@ -472,7 +440,7 @@ img.loading-image {
   height: @size;
   border-radius: @size;
   transition: @run @bezier_fadein;
-  img {
+  .access-avatar-img {
     width: @size;
     height: @size;
     border-radius: @size;
@@ -533,11 +501,11 @@ img.loading-image {
     }
   }
   &.positive {
-    .icon(stroke; @blue);
-    border-color: @blue;
+    .icon(stroke; @color_select);
+    border-color: @color_select;
     &:hover {
       .icon(stroke; @white);
-      background: @blue;
+      background: @color_select;
     }
   }
   &.negative {
@@ -553,4 +521,15 @@ img.loading-image {
 .privacy-private-word {
   .animation(in-fade-top @run_slow);
   display: inline-block;
+}
+.menu-cta {
+  .flexy(center, center);
+  height: @tile;
+  margin-bottom: @tile;
+  transition: @run_fast @bezier_fadein;
+  border: 1px solid @font_color;
+  &:hover {
+    color: @white;
+    background: @font_color;
+  }
 }

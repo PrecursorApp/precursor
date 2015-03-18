@@ -10,30 +10,28 @@
 }
 .chat-offset {
   .flex(1);
+  position: relative;
 }
 .chat-window {
+  .size_of(chat; width);
+  .animation(in-fade-right @run_slow @bezier_fadein);
   .flexy(stretch; flex-end; column);
-  .transform-origin(right center);
-  .transition_transform(@run @now @bezier_fadein);
   .user-select(auto); // VETO
   position: relative;
-  min-width: @tile_chat_min;
-  width: @tile_chat;
-  max-width: @tile_chat_max;
+  min-width: @tile;
+  max-width: calc(~"100% -" @tile);
   height: 100%;
   background: @dye_outer;
   box-shadow: -1px 0 @gray_lighter;
   pointer-events: auto; // VETO
   will-change: transform;
-  .mq_640({
-    max-width: @tile_chat_min;
-  });
+  top: 0;
+  right: 0;
   &.closed {
-    .translate3d(100%, 0, 0);
-    .transition_transform(@run_slow @now @bezier_fadein);
+    .animation-name(none);
+    .translate3d(101%, 0, 0);
+    .transition_transform(@run_slow @bezier_fadein);
     position: absolute;
-    top: 0;
-    right: 0;
     .chat-input {
       visibility: hidden;
       transition: visibility @now @run_slow @bezier_fadein;
@@ -106,24 +104,52 @@
   }
 }
 .chat-date {
-  color: @gray_dark;
-  margin: 0;
-  padding-left: 1rem;
-  text-indent: -.25rem; // better aligns h2 with chats
+  padding-top: (@tile / 4);
+  &.divider-small {
+    .user-select(auto);
+    line-height: 1;
+    opacity: .21;
+    &:before,
+    &:after {
+      opacity: .55;
+      height: 1px;
+    }
+  }
 }
 .chat-message {
-  padding: 0 .125rem 0 1rem;
+  padding: 0 (@tile / 4);
   &:not(:first-child) {
     .message-head {
-      margin-top: .5rem;
+      margin-top: (@tile / 4);
     }
   }
 }
 .message-head {
+  .flexy(center);
   color: white;
-  .time {
-    color: @gray_dark;
-    font-size: .75rem;
-    text-transform: lowercase;
+}
+.message-avatar {
+  .flex(0 0 auto);
+  .iconpile {
+    height: .75em;
+    width: .75em;
+    [class|="stroke"] {
+      stroke-width: 12;
+    }
   }
+}
+.message-author {
+  .user-select(auto);
+  margin: 0 .5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.message-time {
+  .user-select(auto);
+  .flex(0 0 auto);
+  color: @gray_dark;
+  font-size: .75rem;
+  text-transform: lowercase;
+  white-space: nowrap;
 }

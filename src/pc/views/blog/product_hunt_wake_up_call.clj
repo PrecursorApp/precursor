@@ -1,5 +1,8 @@
 (ns pc.views.blog.product-hunt-wake-up-call
   (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
+            [pc.http.urls :as urls]
+            [pc.views.email :as email]
+            [pc.profile :as profile]
             [pc.views.common :refer (cdn-path)]
             [pc.views.blog.common :as common]))
 
@@ -32,8 +35,8 @@
      [:h3 "The product is called Precursor."]
      [:p "Precursor is no-nonsense prototyping tool designed around team workflows.
          To start prototyping, go to "
-         [:a {:href "/"} "prcrsr.com"]
-         ", select a tool with right-click, and then draw.
+      [:a {:href "/"} (profile/prod-domain)]
+      ", select a tool with right-click, and then draw.
          That's it--there's no software to install or sign up required.
          If you want to show your prototypes to a teammate, just send them a link; you'll instantly be able to collaborate in real-time.
          There's no jumping through hoops just to share your idea."]
@@ -71,7 +74,7 @@
      [:p "Our most requested feature is a way to share ideas privately, so we're making private docs our top priority.
          In fact, we're nearly done with an early build of private docs.
          If your team is interested in early access, say "
-         [:a {:href "mailto:hi@prcrsr.com?Subject=I%20am%20interested%20in%20private%20docs"} "hi@prcrsr.com"]]]
+      [:a {:href (str "mailto:" (email/email-address "hi") "?Subject=I%20am%20interested%20in%20private%20docs")} (email/email-address "hi")]]]
 
     [:article
      [:h3 "All of this happened in one weekend."]

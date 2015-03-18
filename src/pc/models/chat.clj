@@ -1,6 +1,8 @@
 (ns pc.models.chat
-  (:require [pc.datomic :as pcd]
-            [datomic.api :refer [db q] :as d]))
+  (:require [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
+            [pc.utils :as utils]))
 
 
 (defn all [db]
@@ -15,17 +17,24 @@
                db cust-uuid)))
 
 (defn find-by-document [db document]
-  (let [memo-find-name (memoize find-chat-name)]
-    (map
-     (fn [[chat-id]]
-       (let [e (pcd/touch+ (d/entity db chat-id))]
-         ;; TODO: teach the frontend how to lookup cust/name
-         (let [name (when-let [uuid (:cust/uuid e)]
-                      (memo-find-name db uuid))]
-           (if name
-             (assoc e :chat/cust-name name)
-             e))))
-     (d/q '{:find [?t] :in [$ ?document-id]
-            :where [[?t :document/id ?document-id]
-                    [?t :chat/body]]}
-          db (:db/id document)))))
+  (map (partial d/entity db)
+       (d/q '{:find [[?t ...]]
+              :in [$ ?document-id]
+              :where [[?t :chat/document ?document-id]
+                      [?t :chat/body]]}
+            db (:db/id document))))
+
+;; TODO: move cust-name lookup into here
+(defn read-api [chat]
+  (-> chat
+    (select-keys [:server/timestamp
+                  :client/timestamp
+                  :session/uuid
+                  :chat/body
+                  :chat/color
+                  :chat/document
+                  ;; TODO: remove when frontend is deployed
+                  :document/id
+                  :cust/uuid])
+    (utils/update-when-in [:chat/document] :db/id)
+    (assoc :db/id (web-peer/client-id chat))))

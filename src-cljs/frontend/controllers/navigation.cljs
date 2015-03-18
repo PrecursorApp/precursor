@@ -7,9 +7,9 @@
             [frontend.overlay :as overlay]
             [frontend.state :as state]
             [frontend.sente :as sente]
+            [frontend.subscribers :as subs]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
-            [frontend.utils.vcs-url :as vcs-url]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
             [goog.string :as gstring]
@@ -42,7 +42,8 @@
 (defn navigated-default [navigation-point args state]
   (-> state
       (assoc :navigation-point navigation-point
-             :navigation-data args)))
+             :navigation-data args)
+      (update-in [:page-count] inc)))
 
 (defmethod navigated-to :default
   [history-imp navigation-point args state]
@@ -66,6 +67,23 @@
       (.replaceToken history-imp path)
       (.setToken history-imp path))))
 
+(defn handle-outer [navigation-point args state]
+  (-> (navigated-default navigation-point args state)
+    (assoc :overlays [])
+    (assoc :show-landing? true)))
+
+(defmethod navigated-to :landing
+  [history-imp navigation-point args state]
+  (handle-outer navigation-point args state))
+
+(defmethod navigated-to :pricing
+  [history-imp navigation-point args state]
+  (handle-outer navigation-point args state))
+
+(defmethod navigated-to :trial
+  [history-imp navigation-point args state]
+  (handle-outer navigation-point args state))
+
 (defmethod navigated-to :document
   [history-imp navigation-point args state]
   (let [doc-id (:document/id args)
@@ -74,8 +92,10 @@
         (assoc :document/id doc-id
                :undo-state (atom {:transactions []
                                   :last-undo nil})
-               :db-listener-key (utils/uuid))
-        (assoc :subscribers state/subscriber-bot)
+               :db-listener-key (utils/uuid)
+               :show-landing? false
+               :frontend-id-state {})
+        (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
             %))
@@ -91,14 +111,33 @@
   (let [sente-state (:sente current-state)
         doc-id (:document/id current-state)]
     (when-let [prev-doc-id (:document/id previous-state)]
-      (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}]))
-    (sente/subscribe-to-document sente-state doc-id)
+      (when (not= prev-doc-id doc-id)
+        (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}])))
+    (sente/subscribe-to-document sente-state (:comms current-state) doc-id)
     ;; TODO: probably only need one listener key here, and can write a fn replace-listener
     (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
     (db/setup-listener! (:db current-state)
                         (:db-listener-key current-state)
                         (fn [message data & [transient?]]
                           (put! (get-in current-state [:comms :controls]) [message data transient?]))
-                        doc-id
+                        :frontend/transaction
+                        {:document/id doc-id}
                         (:undo-state current-state)
-                        sente-state)))
+                        sente-state)
+    (sente/update-server-offset sente-state)))
+
+(defmethod navigated-to :new
+  [history-imp navigation-point args state]
+  (-> (navigated-default navigation-point args state)
+    state/reset-state))
+
+(defmethod post-navigated-to! :new
+  [history-imp navigation-point _ previous-state current-state]
+  (go (let [comms (:comms current-state)
+            result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
+        (if (= :success (:status result))
+          (put! (:nav comms) [:navigate! {:path (str "/document/" (get-in result [:document :db/id]))}])
+          (if (and (= :unauthorized-to-team (get-in result [:response :error]))
+                   (get-in result [:response :redirect-url]))
+            (set! js/window.location (get-in result [:response :redirect-url]))
+            (put! (:errors comms) [:api-error result]))))))

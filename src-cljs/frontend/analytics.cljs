@@ -6,9 +6,9 @@
 
 (defn init-user [cust]
   (utils/swallow-errors
-   (rollbar/init (:cust/uuid cust) (:cust/email cust)))
+   (rollbar/init (str (:cust/uuid cust)) (:cust/email cust)))
   (utils/swallow-errors
-   (mixpanel/identify (:cust/uuid cust))
+   (mixpanel/identify (str (:cust/uuid cust)))
    (mixpanel/name-tag (:cust/email cust))
    (mixpanel/set-people-props {:$email (:cust/email cust)
                                :$last_login (js/Date.)})))
@@ -40,10 +40,12 @@
                           :layer-ui-target-edited
                           :subscriber-updated})
 
-(defn track-control [event state]
+(defn track-control [event data state]
   (when-not (contains? controls-blacklist event)
     (mixpanel/track (str event) (merge
+                                 (:analytics-data data)
                                  (dissoc (get-in state state/browser-settings-path) :document-settings)
+                                 {:logged-in? (boolean (get-in state [:cust :cust/email]))}
                                  (when (:document/id state)
                                    {:doc-id (:document/id state)
-                                    :subscriber-count (count (:subscribers state))})))))
+                                    :subscriber-count (count (get-in state [:subscribers :info]))})))))

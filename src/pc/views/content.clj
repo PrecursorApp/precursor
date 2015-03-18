@@ -3,6 +3,7 @@
             [hiccup.core :as h]
             [pc.assets]
             [pc.datomic.schema :as schema]
+            [pc.http.urls :as urls]
             [pc.utils :as utils]
             [pc.views.common :as common :refer (cdn-path)]
             [pc.views.scripts :as scripts]
@@ -59,24 +60,32 @@
     [:link {:href (cdn-path "/img/2208x1182.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
 
     [:meta {:name "og:card"         :content "summary"}]
-    [:meta {:name "og:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
-    [:meta {:name "og:image"        :content (cdn-path "/img/precursor-logo.png")}]
-    [:meta {:name "og:image:width"  :content "1200"}]
-    [:meta {:name "og:image:height" :content "1200"}]
+    (if-let [image-url (:meta-image view-data)]
+      [:meta {:name "og:image" :content image-url}]
+      (list [:meta {:name "og:image" :content (cdn-path "/img/precursor-logo.png")}]
+            [:meta {:name "og:image:width":content "1200"}]
+            [:meta {:name "og:image:height" :content "1200"}]))
     [:meta {:name "og:site_name"    :content "Precursor"}]
-    [:meta {:name "og:title"        :content "Fast prototyping web app, makes collaboration easy."}]
+    [:meta {:name "og:title"        :content (or (:meta-title view-data)
+                                                 "Fast prototyping web app, makes collaboration easy.")}]
+    [:meta {:name "og:description"  :content (or (:meta-description view-data)
+                                                 "Precursor lets you prototype product design wireframes with a fast and simple web app.")}]
     [:meta {:name "og:type"         :content "website"}]
-    [:meta {:name "og:url"          :content "https://prcrsr.com/"}]
+    [:meta {:name "og:url"          :content  (urls/root)}]
 
     [:meta {:name "twitter:card"         :content "summary_large_image"}]
-    [:meta {:name "twitter:description"  :content "Precursor lets you prototype product design wireframes with a fast and simple web app."}]
-    [:meta {:name "twitter:image:src"    :content (cdn-path "/img/precursor-logo.png")}]
-    [:meta {:name "twitter:image:width"  :content "1200"}]
-    [:meta {:name "twitter:image:height" :content "1200"}]
-    [:meta {:name "twitter:site"         :content "@prcrsr_app"}]
+    (if-let [image-url (:meta-image view-data)]
+      [:meta {:name "twitter:image" :content image-url}]
+      (list [:meta {:name "twitter:image:src"    :content (cdn-path "/img/precursor-logo.png")}]
+            [:meta {:name "twitter:image:width"  :content "1200"}]
+            [:meta {:name "twitter:image:height" :content "1200"}]))
+    [:meta {:name "twitter:site"         :content "@PrecursorApp"}]
     [:meta {:name "twitter:site:id"      :content "2900854766"}]
-    [:meta {:name "twitter:title"        :content "Fast prototyping web app, makes collaboration easy."}]
-    [:meta {:name "twitter:url"          :content "https://prcrsr.com/"}]
+    [:meta {:name "twitter:title"        :content (or (:meta-title view-data)
+                                                      "Fast prototyping web app, makes collaboration easy.")}]
+    [:meta {:name "twitter:description"  :content (or (:meta-description view-data)
+                                                      "Precursor lets you prototype product design wireframes with a fast and simple web app.")}]
+    [:meta {:name "twitter:url"          :content (urls/root)}]
 
     [:link {:rel "icon"             :href (cdn-path "/favicon.ico")}]
     [:link {:rel "apple-touch-icon" :href (cdn-path "/img/apple-touch-icon.png")}]
@@ -89,7 +98,10 @@
                         (json/encode (-> view-data
                                        (utils/update-when-in [:initial-entities] serialize-entities)
                                        (utils/update-when-in [:cust] #(-> % escape-entity pr-str))
-                                       (assoc :cdn-base-url (common/cdn-base-url)))))
+                                       (utils/update-when-in [:team] #(-> % escape-entity pr-str))
+                                       (assoc :cdn-base-url (common/cdn-base-url)
+                                              :manifest-version (pc.assets/asset-manifest-version)
+                                              :page-start (java.util.Date.)))))
     (when (prod-assets?)
       scripts/google-analytics)
     (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))
@@ -112,7 +124,6 @@
        [:script {:type "text/javascript" :src "/cljs/production/frontend.js"}]
        (list
         [:script {:type "text/javascript"} "window.Precursor['logging-enabled']=true"]
-        [:script {:type "text/javascript" :src "/js/vendor/react-0.12.2.js"}]
         [:script {:type "text/javascript" :src "/cljs/out/goog/base.js"}]
         [:script {:type "text/javascript" :src "/cljs/out/frontend-dev.js"}]
         [:script {:type "text/javascript"}
@@ -121,19 +132,6 @@
 
 (defn app [view-data]
   (h/html (app* view-data)))
-
-(defn interesting* [doc-ids]
-  [:div.interesting
-   (if-not (seq doc-ids)
-     [:p "Nothing interesting today"])
-   (for [doc-id doc-ids]
-     [:div.doc-preview
-      [:a {:href (str "/document/" doc-id)}
-       [:img {:src (str "/document/" doc-id ".svg")}]]
-      [:a {:href (str "/document/" doc-id)} doc-id]])])
-
-(defn interesting [doc-ids]
-  (h/html (layout {} (interesting* (reverse (sort doc-ids))))))
 
 (defn email-welcome [template-name {:keys [CSRFToken]}]
   (h/html (layout {} (email-landing/email-landing template-name CSRFToken))))

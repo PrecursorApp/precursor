@@ -50,7 +50,7 @@
                                   :cust/verified-email (:email_verified user-info)
                                   :cust/http-session-key (UUID/randomUUID)
                                   :google-account/sub (:sub user-info)
-                                  :cust/uuid (UUID/randomUUID)})]
+                                  :cust/uuid (d/squuid)})]
           (analytics/track-signup user ring-req)
           (future (utils/with-report-exceptions (update-user-from-sub user)))
           user)
@@ -59,6 +59,7 @@
             (cust/find-by-google-sub (pcd/default-db) (:sub user-info))
             (throw e)))))))
 
+;; Note: this is hardcoded to prcrsr.com for a good reason
 (def prcrsr-bot-email "prcrsr-bot@prcrsr.com")
 (defn prcrsr-bot-uuid [db]
   (ffirst (d/q '{:find [?u]
@@ -83,20 +84,27 @@
   (when (and access-grant
              (:db/id doc)
              (= (:db/id doc)
-                (:access-grant/document access-grant)))
+                (:db/id (:access-grant/document-ref access-grant))))
     :read))
 
 (defn permission-permission [db doc permission]
   (when (and permission
              (:db/id doc)
-             (:permission/document permission)
-             (= (:db/id doc) (:permission/document permission))
+             (:permission/document-ref permission)
+             (= (:db/id doc) (:db/id (:permission/document-ref permission)))
              (not (permission-model/expired? permission)))
     (cond (contains? (:permission/permits permission) :permission.permits/admin)
           :admin
           (contains? (:permission/permits permission) :permission.permits/read)
           :read
           :else nil)))
+
+(defn team-permission [db team cust]
+  (when (and team cust)
+    ;; TODO: fix the permissions
+    (if (contains? (permission-model/team-permits db team cust) :permission.permits/admin)
+      :owner
+      nil)))
 
 ;; TODO: unify these so that there is only 1 permission type
 ;;       Could still have multiple permissions for a doc, but want
@@ -106,6 +114,7 @@
   (or (cust-permission db doc (:cust auth))
       ;; TODO: stop using access grant tokens as permissions
       ;;       Can remove once all of the tokens expire
+      (team-permission db (:document/team doc) (:cust auth))
       (access-grant-permission db doc (:access-grant auth))
       (permission-permission db doc (:permission auth))))
 
@@ -119,6 +128,9 @@
 (defn has-document-permission? [db doc auth scope]
   (or (= :document.privacy/public (:document/privacy doc))
       (contains-scope? scope-heirarchy (document-permission db doc auth) scope)))
+
+(defn has-team-permission? [db team auth scope]
+  (contains-scope? scope-heirarchy (team-permission db team (:cust auth)) scope))
 
 (defn logged-in? [ring-req]
   (seq (get-in ring-req [:auth :cust])))

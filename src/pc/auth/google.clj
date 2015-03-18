@@ -1,12 +1,15 @@
 (ns pc.auth.google
-  (:require [pc.profile :as profile]
-            [pc.util.base64 :as base64]
-            [pc.util.jwt :as jwt]
-            [cemerick.url :as url]
+  (:require [cemerick.url :as url]
             [cheshire.core :as json]
             [clj-http.client :as http]
+            [clj-time.coerce]
             [clj-time.format]
-            [clj-time.coerce]))
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
+            [pc.profile :as profile]
+            [pc.util.base64 :as base64]
+            [pc.util.jwt :as jwt]
+            [slingshot.slingshot :refer (try+ throw+)]))
 
 (def dev-google-client-secret "r5t9LYCCJA3SaHnsDNg-dRsF")
 (defn google-client-secret []
@@ -53,17 +56,43 @@
       (select-keys [:email :email_verified :sub])))
 
 (defn user-info-from-sub [sub]
-  (let [resp (-> (http/get (format "https://www.googleapis.com/plus/v1/people/%s" sub)
-                           {:query-params {:key (google-api-key)}})
+  (try+
+    (let [resp (-> (http/get (format "https://www.googleapis.com/plus/v1/people/%s" sub)
+                             {:query-params {:key (google-api-key)}})
                  :body
                  json/decode)]
-    {:first-name (get-in resp ["name" "givenName"])
-     :last-name (get-in resp ["name" "familyName"])
-     :birthday (some-> resp (get "birthday") clj-time.format/parse clj-time.coerce/to-date)
-     :gender (get resp "gender")
-     :occupation (get resp "occupation")
-     :avatar-url (some-> (get-in resp ["image" "url"])
-                   url/url
-                   (assoc :query {})
-                   str
-                   (java.net.URI.))}))
+      {:first-name (get-in resp ["name" "givenName"])
+       :last-name (get-in resp ["name" "familyName"])
+       :birthday (some-> resp (get "birthday") clj-time.format/parse clj-time.coerce/to-date)
+       :gender (get resp "gender")
+       :occupation (get resp "occupation")
+       :avatar-url (some-> (get-in resp ["image" "url"])
+                     url/url
+                     (assoc :query {})
+                     str
+                     (java.net.URI.))})
+    ;; some users don't have a google plus account
+    (catch [:status 404] t
+      (log/infof "No google plus info for %s" sub)
+      {})))
+
+(defn oauth-uri [csrf-token & {:keys [scopes redirect-path redirect-query redirect-subdomain redirect-csrf-token]
+                               :or {scopes ["openid" "email"]
+                                    redirect-path "/"}}]
+  (let [state (url/url-encode (json/encode (merge {:csrf-token csrf-token
+                                                   :redirect-path redirect-path}
+                                                  (when redirect-query
+                                                    {:redirect-query redirect-query})
+                                                  (when redirect-subdomain
+                                                    {:redirect-subdomain redirect-subdomain})
+                                                  (when redirect-subdomain
+                                                    {:redirect-csrf-token redirect-csrf-token}))))]
+    (str (url/map->URL {:protocol "https"
+                        :host "accounts.google.com"
+                        :path "/o/oauth2/auth"
+                        :query {:client_id (google-client-id)
+                                :response_type "code"
+                                :access_type "online"
+                                :scope (str/join " " scopes)
+                                :redirect_uri (redirect-uri)
+                                :state state}}))))

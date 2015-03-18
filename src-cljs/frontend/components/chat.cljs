@@ -1,9 +1,10 @@
 (ns frontend.components.chat
-  (:require [clojure.set :as set]
-            [clojure.string :as str]
-            [cljs-time.core :as time]
+  (:require [cljs-time.core :as time]
             [cljs-time.format :as time-format]
+            [clojure.set :as set]
+            [clojure.string :as str]
             [datascript :as d]
+            [frontend.colors :as colors]
             [frontend.async :refer [put!]]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
@@ -32,23 +33,25 @@
                                                [(last parts)]))))))
 
 
-(defn chat-item [chat owner {:keys [sente-id show-sender?]}]
+(defn chat-item [{:keys [chat uuid->cust show-sender?]} owner {:keys [sente-id]}]
   (reify
+    om/IDisplayName (display-name [_] "Chat Item")
     om/IRender
     (render [_]
       (let [id (apply str (take 6 (str (:session/uuid chat))))
-            name (chat-model/display-name chat sente-id)
+            cust-name (or (get-in uuid->cust [(:cust/uuid chat) :cust/name])
+                          (chat-model/display-name chat sente-id))
             chat-body (if (string? (:chat/body chat))
                         (linkify (:chat/body chat))
                         (:chat/body chat))
-            short-time (datetime/short-time (js/Date.parse (:server/timestamp chat)))]
+            short-time (datetime/short-time (js/Date.parse (:server/timestamp chat)))
+            color-class (name (colors/find-color uuid->cust (:cust/uuid chat) (:session/uuid chat)))]
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head
-                  [:span
-                   (common/icon :user {:path-props {:style {:stroke (or (:chat/color chat) (str "#" id))}}})]
-                  [:span (str " " name)]
-                  [:span.time (str " " short-time)]])
+                  [:div.message-avatar (common/icon :user {:path-props {:className color-class}})]
+                  [:div.message-author cust-name]
+                  [:div.message-time short-time]])
                [:div.message-body
                 chat-body]])))))
 
@@ -88,8 +91,9 @@
      (time/after? time (time/minus start-of-day (time/days 6))) (day-of-week (time/day-of-week time))
      :else (str (month-of-year (.getMonth time)) " " (.getDate time)))))
 
-(defn input [{:keys [chat-body]} owner]
+(defn input [_ owner]
   (reify
+    om/IDisplayName (display-name [_] "Chat Input")
     om/IInitState (init-state [_] {:chat-body (atom "")})
     om/IRender
     (render [_]
@@ -119,11 +123,13 @@
                         :on-change #(reset! (om/get-state owner :chat-body)
                                             (.. % -target -value))}]]])))))
 
-(defn log [{:keys [db chat-body sente-id client-id chat-opened]} owner]
+(defn log [{:keys [sente-id client-id] :as app} owner]
   (reify
+    om/IDisplayName (display-name [_] "Chat Log")
     om/IInitState
     (init-state [_]
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+       :auto-scroll? true
        :touch-enabled? false})
     om/IDidMount
     (did-mount [_]
@@ -133,6 +139,7 @@
                  (fn [tx-report]
                    ;; TODO: better way to check if state changed
                    (when-let [chat-datoms (seq (filter #(or (= :chat/body (:a %))
+                                                            (= :server/timestamp (:a %))
                                                             (= :document/chat-bot (:a %)))
                                                        (:tx-data tx-report)))]
                      (om/refresh! owner)))))
@@ -140,19 +147,22 @@
     (will-unmount [_]
       (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
     om/IWillUpdate
-    (will-update [_ _ _]
+    (will-update [_ next-props next-state]
       ;; check for scrolled all of the way down
-      (let [node (om/get-node owner "chat-messages")]
-        (om/set-state! owner :auto-scroll (= (- (.-scrollHeight node) (.-scrollTop node))
-                                             (.-clientHeight node)))))
+      (let [node (om/get-node owner "chat-messages")
+            em 16 ;; extra padding for the scroll
+            auto-scroll? (<= (- (.-scrollHeight node) (.-scrollTop node) em)
+                             (.-clientHeight node))]
+        (when (not= (om/get-state owner :auto-scroll?) auto-scroll?)
+          (om/set-state! owner :auto-scroll? auto-scroll?))))
     om/IDidUpdate
     (did-update [_ _ _]
-      (when (om/get-state owner :auto-scroll)
+      (when (om/get-state owner :auto-scroll?)
         (set! (.-scrollTop (om/get-node owner "chat-messages"))
               10000000)))
     om/IRender
     (render [_]
-      (let [{:keys [cast!]} (om/get-shared owner)
+      (let [{:keys [cast! db]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
             chat-bot (:document/chat-bot (d/entity @db (ffirst (d/q '[:find ?t :where [?t :document/name]] @db))))
             dummy-chat {:chat/body [:span
@@ -163,29 +173,40 @@
                                          :role "button"}
                                      (str "@" (:chat-bot/name chat-bot))]
                                     " for help."]
-                        :chat/color "#00b233"
-                        :session/uuid (:chat-bot/name chat-bot)
+                        :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html
          [:div.chat-log {:ref "chat-messages"}
           (when chat-bot
-            (om/build chat-item dummy-chat {:opts {:show-sender? true}}))
+            (om/build chat-item {:chat dummy-chat
+                                 :uuid->cust {(:cust/uuid state/subscriber-bot)
+                                              (merge
+                                               (select-keys state/subscriber-bot [:cust/color-name :cust/uuid])
+                                               {:cust/name (:chat-bot/name chat-bot)})}
+                                 :show-sender? true}))
           (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
             (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
                                              chat-groups)]
 
               (list (when (or (not= 1 (count chat-groups))
                               (not= #{"Today"} (set (keys chat-groups))))
-                      [:h2.chat-date time])
+                      [:div.chat-date.divider-small time])
                     (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
-                      (om/build chat-item chat
-                                {:key :db/id
-                                 :opts {:sente-id sente-id
-                                        :show-sender? (not= (chat-model/display-name prev-chat sente-id)
-                                                            (chat-model/display-name chat sente-id))}})))))])))))
+                      (om/build chat-item {:chat chat
+                                           :uuid->cust (get-in app [:cust-data :uuid->cust])
+                                           :show-sender? (or (not= (chat-model/display-name prev-chat sente-id)
+                                                                   (chat-model/display-name chat sente-id))
+
+                                                             (or (not (:server/timestamp chat))
+                                                                 (not (:server/timestamp prev-chat))
+                                                                 (< (* 1000 60 5) (- (.getTime (:server/timestamp chat))
+                                                                                     (.getTime (:server/timestamp prev-chat))))))}
+                                {:react-key (:db/id chat)
+                                 :opts {:sente-id sente-id}})))))])))))
 
 (defn chat [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Chat")
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
@@ -195,14 +216,13 @@
             chat-mobile-open? (get-in app state/chat-mobile-opened-path)
             document-id (get-in app [:document/id])]
         (html
-          [:div.chat
-           [:div#canvas-size.chat-offset]
-           [:div.chat-window {:class (when-not chat-opened? ["closed"])}
-            [:div.chat-background]
-            (om/build log {:db (:db app)
-                           :document/id (:document/id app)
-                           :sente-id (:sente-id app)
-                           :client-id (:client-id app)
-                           :chat-body (get-in app [:chat :body])
-                           :chat-opened (get-in app state/chat-opened-path)})
-            (om/build input {:chat-body (get-in app [:chat :body])})]])))))
+         [:div.chat
+          [:div#canvas-size.chat-offset]
+          [:div.chat-window {:class (when (or (not chat-opened?)
+                                              (:show-landing? app)) ["closed"])}
+           [:div.chat-background]
+           (om/build log (utils/select-in app [[:document/id]
+                                               [:sente-id]
+                                               [:client-id]
+                                               [:cust-data]]))
+           (om/build input {})]])))))

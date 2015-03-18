@@ -1,0 +1,351 @@
+.artwork {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+@art_a1: (@run)        (@now);
+@art_a2: (@run_slow)   ((extract(@art_a1, 1) * 2.33) + extract(@art_a1, 2));
+@art_a3: (@run_slower) ((extract(@art_a2, 1) * 0.89) + extract(@art_a2, 2));
+@art_a4: (@run_slow)   ((extract(@art_a3, 1) * 2.33) + extract(@art_a3, 2));
+@art_a5: (@run_fast)   ((extract(@art_a4, 1) * 0.55) + extract(@art_a4, 2));
+@art_a6: (@run)        ((extract(@art_a5, 1) * 0.34) + extract(@art_a5, 2));
+@art_a7: (@run_slow)   ((extract(@art_a6, 1) * 0.21) + extract(@art_a6, 2));
+@art_a8: (@run_slower) ((extract(@art_a7, 1) * 0.13) + extract(@art_a7, 2));
+@art_a9: (@run_slower) ((extract(@art_a8, 1) * 0.08) + extract(@art_a8, 2));
+.art-mobile {
+  .animation(in-zoom @art_a1 @bezier_deform);
+  .transform-origin(left top);
+  background: @dye_outer;
+  border: 1px solid @art_mobile_fill;
+  border-radius: (@art_mobile_button * @art_mobile_ratio) ~"/" @art_mobile_button;
+}
+.art-mobile-head {
+  .flexy();
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: @art_mobile_head_height;
+}
+.art-mobile-body {
+  position: absolute;
+  top: @art_mobile_head_height;
+  left: 0;
+  width: 100%;
+  height: @art_mobile_body_height;
+}
+.art-mobile-foot {
+  .flexy();
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: @art_mobile_head_height;
+}
+.art-mobile-camera,
+.art-mobile-button {
+  width: 0;
+  height: 0;
+  margin: auto;
+  border-radius: @tile_xxl;
+  border: 1px solid @art_mobile_fill;
+}
+.art-mobile-camera {
+  .animation(in-zoom @art_a2 @bezier_deform backwards);
+  padding: (@art_mobile_button / 3) / 2;
+}
+.art-mobile-button {
+  .animation(in-zoom @art_a2 @bezier_deform backwards);
+  padding: (@art_mobile_button) / 2;
+}
+.art-screen {
+  .animation(in-zoom @art_a2 @bezier_deform backwards);
+  .flexy();
+  width: 100% - (@art_mobile_padding_x * 2);
+  height: 100%;
+  margin: 0 @art_mobile_padding_x;
+  background: @art_mobile_mask;
+  border: 1px solid @art_mobile_fill;
+  overflow: hidden;
+}
+.art-menu {
+  width: 50%;
+}
+.art-heading {
+  .animation(in-fade-left @art_a5 @bezier_deform backwards);
+  font-size: 1.25em;
+  color: @art_mobile_fill;
+  font-weight: 300;
+  margin: 2% 10%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  + .art-doc {
+    margin-top: 0; // VETO
+    .animation(in-fade-left @art_a6 @bezier_deform backwards);
+    + .art-doc {
+      .animation(in-fade-left @art_a7 @bezier_deform backwards);
+      ~ .art-doc {
+        .animation(in-fade-left @art_a8 @bezier_deform backwards);
+      }
+    }
+  }
+}
+.art-doc {
+  .flex(1);
+  height: 25%;
+  margin: 10%;
+  border: 1px solid @gray_lighter;
+  &.selected {
+    position: relative;
+    &:before {
+      .animation(in-zoom @art_a9 @bezier_deform backwards);
+      .transform-origin(left top);
+      content: "";
+      position: absolute;
+      top: -12%;
+      left: -8%;
+      width: 116%;
+      height: 124%;
+      border: 2px solid @color_select;
+    }
+  }
+  .art-doc-img {
+    .animation(in-zoom @art_a8 @bezier_deform backwards);
+  }
+}
+.art-doc-frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.art-doc-img {
+  max-width: none;
+  max-height: 250%;
+  opacity: .20;
+}
+.art-canvas {
+  .animation(art-canvas @art_a4 @bezier_deform backwards);
+  .flex(1);
+  height: 66%;
+  margin: auto;
+  margin-left: 5%;
+  box-shadow+: 0  5px 13px fade(@black, 21);
+  box-shadow+: 0 -1px  0   fade(@black,  3);
+  overflow: hidden;
+  .art-doc-img {
+    .animation(in-zoom @art_a3 @bezier_deform backwards);
+  }
+}
+@art_b1: (@run_slow)   (@now);
+@art_b2: (@run)        ((extract(@art_b1, 1) * 2.33) + extract(@art_b1, 2));
+@art_b3: (@run_slower) ((extract(@art_b2, 1) * 1.44) + extract(@art_b2, 2));
+@art_b4: (@run_slow)   ((extract(@art_b3, 1) * 0.89) + extract(@art_b3, 2));
+@art_b5: (@run)        ((extract(@art_b4, 1) * 0.55) + extract(@art_b4, 2));
+@art_b6: (@run_fast)   ((extract(@art_b5, 1) * 0.34) + extract(@art_b5, 2));
+@art_b7: (@run_fast)   ((extract(@art_b6, 1) * 0.21) + extract(@art_b6, 2));
+@art_b8: (@run)        ((extract(@art_b7, 1) * 0.13) + extract(@art_b7, 2));
+@art_b9: (@run_slower) ((extract(@art_b8, 1) * 0.08) + extract(@art_b8, 2));
+.art-interact {
+  .art-interact-body {
+    .property-dropdown-targets {
+      .flexy();
+      overflow-y: visible;
+      background: @dye_outer;
+      border: none;
+      box-shadow+:  0  -1px @art_interact_color inset;
+      box-shadow+: -1px 0   @art_interact_color inset;
+      box-shadow+:  1px 0   @art_interact_color inset;
+    }
+    .property-dropdown-target {
+      .animation(in-fade-bottom @art_b8 @bezier_fadein backwards);
+      color: @art_interact_color;
+      position: relative;
+      cursor: default;
+      overflow: visible;
+      border: none;
+      text-indent: 0;
+      &:last-child {
+        max-height: 2rem;
+        padding-bottom: 0;
+        overflow: hidden;
+        &:before {
+          .gradient(to bottom, fade(@dye_outer, 0) 66%, @dye_outer 100%);
+          background-size: 99% 100%;
+          background-repeat: no-repeat;
+          background-position: 1px -1px;
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+      }
+      &.selected {
+        &:before {
+          .animation(in-zoom @art_b9 @bezier_bounce backwards);
+          .transform-origin(left top);
+          content: "";
+          position: absolute;
+          top: -2.5%;
+          left: -2.5%;
+          width: 105%;
+          height: 105%;
+          border: 2px solid @color_select;
+        }
+      }
+    }
+  }
+}
+.art-interact-head {
+  .animation(in-zoom @art_b4 @bezier_deform backwards);
+}
+.art-interact-body {
+  .animation(in-fade-bottom @art_b5 @bezier_deform backwards);
+}
+.art-interact-placeholder {
+  font-size: .75rem;
+  line-height: 1em;
+  color: @art_interact_color;
+  position: absolute;
+  top: -.5em;
+  left: 1em;
+  padding: 0 .25em;
+  background: @dye_outer;
+}
+.art-interact-name {
+  color: @art_interact_color;
+  line-height: 1em;
+  position: relative;
+  padding: 1em;
+  background: @dye_outer;
+  border: 1px solid @art_interact_color;
+  box-shadow+:  0  -2px @white;
+  box-shadow+: -2px 0   @white;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  &:before {
+    .animation(in-fade-bottom @art_b6 @bezier_fadein backwards);
+  }
+}
+.art-interact-target {
+  .flex(0 0 3em);
+  .flexy();
+  position: relative;
+  border-left: 1px solid @art_interact_color;
+  border-right: 1px solid @art_interact_color;
+  &:before {
+    .animation(in-fade-bottom @art_b7 @bezier_fadein backwards);
+  }
+}
+.art-interact-item {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.art-interact-ibeam {
+  .animation(in-fade-bottom @art_b8 @bezier_fadein backwards);
+  color: @art_interact_color;
+  padding: 1rem;
+  margin-right: auto;
+  cursor: default;
+  font-size: 2em;
+  line-height: 1rem;
+  font-weight: 200;
+  padding-left: .75rem;
+}
+.art-interact-more {
+  .animation(in-fade-bottom @art_b8 @bezier_fadein backwards);
+  font-size: 1.5em;
+  color: @art_interact_color;
+  text-align: center;
+  width: @tile * .75;
+  height: @tile * .75;
+  cursor: default;
+}
+.art-interact-button {
+  .animation(in-zoom @art_b1 @bezier_deform backwards);
+  .transform-origin(left top);
+  .flexy(center; center);
+  color: @art_interact_color;
+  position: absolute;
+  top: -2.25rem;
+  left: -1rem;
+  width:  (@art_interact_button) * 3;
+  height: (@art_interact_button);
+  border: 1px solid @art_interact_color;
+  cursor: default;
+  &:after {
+    .animation(in-fade @art_b4 @bezier_deform backwards);
+    content: "";
+    position: absolute;
+    top: -5%;
+    left: -5%;
+    width: 110%;
+    height: 110%;
+    background: fade(@white, 75);
+  }
+}
+.art-interact-text {
+  .animation(in-zoom @art_b2 @bezier_deform backwards);
+  font-size: 20px;
+}
+.art-interact-cursor {
+  .animation(in-fade-right @art_b3 @bezier_deform backwards);
+  font-size: 1.5em;
+  position: absolute;
+  left: (1 / 3) * -1rem;
+  top: 1rem;
+  .stroke-cursor {
+    fill: @dye_outer;
+    stroke: @art_interact_color;
+  }
+}
+@art_c1: (@run_slower * 1.5) (@now);
+@art_c2: (@run_slower * 2)   (@now);
+@art_c3: (@run_slower)       (@run_slower * 2);
+.art-team {
+  .access-card {
+    .animation_cascade(7);
+    .animation(in-zoom @art_c2 @bezier_deform);
+    color: @gray_light; // VETO
+    height: @tile * 1.5;
+    min-height: @tile;
+    margin: 0; // VETO
+    padding: @menu_padding 0;
+    &.selected {
+      .animation(requesting-access @art_c3 @bezier_deform backwards);
+      .access-name {
+        color: @gray; // VETO
+      }
+      .access-status {
+        color: @color_select; // VETO
+      }
+    }
+  }
+}
+.art-team-list {
+  .animation(in-fade-bottom @art_c1 @bezier_deform);
+  .flexy(column);
+  .justify-content(center);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 125%;
+  margin-top: -12.5%;
+  overflow: hidden;
+  &:after {
+    .gradient(to bottom, @white 10%, fade(@white, 0), @white 90%);
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}

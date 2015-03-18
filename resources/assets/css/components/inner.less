@@ -1,0 +1,42 @@
+.inner {
+  .selection(@white; (100 * @opacity_darker_dark));
+  .flexy();
+  position: fixed;
+  color: @gray_light;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  transition: @run @bezier_deform;
+  will-change: transform;
+  &:active {
+    ~ .hud {
+      .user-select(none);
+      pointer-events: none;
+      .new-here-items,
+      .new-here-button {
+        pointer-events: none;
+      }
+    }
+  }
+  a {
+    color: @color_select;
+    &:hover,
+    &:active {
+      color: @color_select_hover;
+    }
+    &[role="button"] {
+      &:hover,
+      &:active {
+        .icon(stroke; @white);
+        .icon(fill; @white);
+      }
+    }
+  }
+  &.loading {
+    .canvas {
+      pointer-events: none
+    }
+    cursor: wait
+  }
+}

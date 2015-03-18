@@ -54,15 +54,17 @@
     }
   }
 }
-.grid-background {
-  transition: opacity @run_slow @run_fast @bezier_fadein;
+.grid-lines-large {
+  fill: none;
+  stroke: @white;
+  stroke-width: 1;
+  opacity: @opacity_darker_dark * .75;
 }
-.grid-big,
-.grid-small {
-  path {
-    stroke: @gray_dark;
-    transition: stroke @run_fast @now @bezier_fadein;
-  }
+.grid-lines-small {
+  fill: none;
+  stroke: @white;
+  stroke-width: .5;
+  opacity: @opacity_darker_dark;
 }
 .layers {
   &.live {
@@ -72,10 +74,12 @@
       }
     }
   }
-}
-.signup-layer {
-  cursor: pointer;
-  fill: transparent;
+  .layer-deleted {
+    &.layer-outline {
+      .animation(layer-deleted (2 * @run_slower) @run_slower @bezier_deform);
+      pointer-events: none;
+    }
+  }
 }
 .selectable-group {
   .layer-handle {
@@ -96,6 +100,10 @@
 .shape-layer {
   stroke: none;
   fill: none;
+  &.signup-layer {
+    fill: transparent;
+    cursor: pointer;
+  }
   &.layer-in-progress {
     stroke: @color_select;
     stroke-width: 2;
@@ -109,7 +117,7 @@
       fill: transparent;
       cursor: pointer;
     }
-    &.selected-group {
+    &.selected {
       cursor: move;
     }
   }
@@ -141,7 +149,12 @@
     stroke-opacity: 1;
   }
   &.interactive-fill {
-    cursor: pointer;
+    &:not(.invalid) {
+      cursor: pointer;
+    }
+    &.selected {
+      cursor: move;
+    }
   }
 }
 .static {
@@ -193,10 +206,10 @@
     background: @dye_inner;
     &:focus {
       border-top-color: transparent !important;
-      box-shadow: 0 -1px @blue;
+      box-shadow: 0 -1px @color_select;
       ~ .property-dropdown-targets {
         &:not(.expanded) {
-          border-bottom-color: @blue;
+          border-bottom-color: @color_select;
         }
       }
     }
@@ -221,7 +234,7 @@
   margin: -3rem 0 0 auto;
   padding-bottom: 1rem; // for ellipsis icon hack
   &:hover {
-    color: @blue;
+    color: @color_select;
   }
 }
 .property-dropdown-targets {
@@ -239,30 +252,31 @@
     // max-height: 0;
     // margin-top: -1px;
   }
-}
-.property-dropdown-target {
-  .flex(0 0 3em);
-  color: @gray_dark;
-  line-height: 1em;
-  padding: 1em;
-  border: 1px solid transparent;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition+: color @run_fast @bezier_fadein;
-  transition+: border @run_fast @bezier_fadein;
-  transition+: text-indent @run @bezier_deform;
-  &:hover {
-    text-indent: 3px;
-    border-color: @gray_lighter;
-    transition-duration+: @now;
-    transition-duration+: @now;
-    transition-duration+: @run;
+  .property-dropdown-target {
+    .flex(0 0 3em);
+    color: @gray_light;
+    line-height: 1em;
+    padding: 1em;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition+: color @run_fast @bezier_fadein;
+    transition+: border @run_fast @bezier_fadein;
+    transition+: text-indent @run @bezier_deform;
+    &:hover {
+      text-indent: 3px;
+      border-color: @color_select;
+      transition-duration+: @now;
+      transition-duration+: @now;
+      transition-duration+: @run;
+    }
   }
 }
 .edit-handles {
   .edit-handle {
     fill: @color_select;
+    transition: @run;
     &.bottom.right {
       cursor: nwse-resize;
     }
@@ -286,6 +300,11 @@
   width: @tile_radial;
   height: @tile_radial;
   z-index: @zindex_radial_menu;
+  + .canvas-frame {
+    .layer-properties {
+      display: none;
+    }
+  }
 }
 .radial-buttons {
   width: @tile_radial + 2;

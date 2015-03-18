@@ -1,0 +1,87 @@
+@luster: 99%; // <- % of luminance
+@purity: 66%; // <- % of saturation
+@filter: 33%; // <- % of congruency
+@soften: 13%; // <- % of dullness in soft colors
+@deepen: 21%; // <- % of richness in deep colors
+@softer: 21%; // <- % of light balance in deep colors
+@darker: 21%; // <- % of dark balance in soft colors
+@rotate: 21 ; // <- degree of a color wheel segment
+
+@red_spin:    00; // <- hue amount for red
+@orange_spin: 01; // <- hue amount for orange
+@yellow_spin: 03; // <- hue amount for yelllow
+@green_spin:  06; // <- hue amount for green
+@cyan_spin:   09; // <- hue amount for cyan
+@blue_spin:   12; // <- hue amount for blue
+@purple_spin: 15; // <- hue amount for purple
+@pink_spin:   18; // <- hue amount for pink
+
+@red_tint:    hsv((00 + (@red_spin    * (360 / @rotate))), @purity, @luster);
+@orange_tint: hsv((00 + (@orange_spin * (360 / @rotate))), @purity, @luster);
+@yellow_tint: hsv((00 + (@yellow_spin * (360 / @rotate))), @purity, @luster);
+@green_tint:  hsv((00 + (@green_spin  * (360 / @rotate))), @purity, @luster);
+@cyan_tint:   hsv((00 + (@cyan_spin   * (360 / @rotate))), @purity, @luster);
+@blue_tint:   hsv((00 + (@blue_spin   * (360 / @rotate))), @purity, @luster);
+@purple_tint: hsv((00 + (@purple_spin * (360 / @rotate))), @purity, @luster);
+@pink_tint:   hsv((00 + (@pink_spin   * (360 / @rotate))), @purity, @luster);
+
+@red_root:    softlight(@red_tint,     fade(@orange_tint,  (@filter +  01)));
+@orange_root: softlight(@orange_tint,  fade(@orange_tint,  (@filter +  00)));
+@yellow_root: softlight(@yellow_tint,  fade(@orange_tint,  (@filter +  01)));
+@green_root:  softlight(@green_tint,   fade(@orange_tint,  (@filter +  02)));
+@cyan_root:   softlight(@cyan_tint,    fade(@orange_tint,  (@filter +  03)));
+@blue_root:   softlight(@blue_tint,    fade(@orange_tint,  (@filter +  05)));
+@purple_root: softlight(@purple_tint,  fade(@orange_tint,  (@filter +  08)));
+@pink_root:   softlight(@pink_tint,    fade(@orange_tint,  (@filter +  13)));
+
+@red_soft:    overlay(lighten(@red_root,    @soften), fade(@black, @darker));
+@orange_soft: overlay(lighten(@orange_root, @soften), fade(@black, @darker));
+@yellow_soft: overlay(lighten(@yellow_root, @soften), fade(@black, @darker));
+@green_soft:  overlay(lighten(@green_root,  @soften), fade(@black, @darker));
+@cyan_soft:   overlay(lighten(@cyan_root,   @soften), fade(@black, @darker));
+@blue_soft:   overlay(lighten(@blue_root,   @soften), fade(@black, @darker));
+@purple_soft: overlay(lighten(@purple_root, @soften), fade(@black, @darker));
+@pink_soft:   overlay(lighten(@pink_root,   @soften), fade(@black, @darker));
+
+@red_deep:    overlay(darken(@red_root,     @deepen), fade(@white, @softer));
+@orange_deep: overlay(darken(@orange_root,  @deepen), fade(@white, @softer));
+@yellow_deep: overlay(darken(@yellow_root,  @deepen), fade(@white, @softer));
+@green_deep:  overlay(darken(@green_root,   @deepen), fade(@white, @softer));
+@cyan_deep:   overlay(darken(@cyan_root,    @deepen), fade(@white, @softer));
+@blue_deep:   overlay(darken(@blue_root,    @deepen), fade(@white, @softer));
+@purple_deep: overlay(darken(@purple_root,  @deepen), fade(@white, @softer));
+@pink_deep:   overlay(darken(@pink_root,    @deepen), fade(@white, @softer));
+
+@red:    @red_root;
+@orange: @orange_root;
+@yellow: @yellow_root;
+@green:  @green_root;
+@cyan:   @cyan_root;
+@blue:   @blue_root;
+@purple: @purple_root;
+@pink:   @pink_root;
+
+.palette(@p; @a: @palette_colors; @c: length(@a); @x: -1; @y: 0) when (@c > (length(@a) / 2)) {
+  .palette(@p; @a; (@c - 1); (@x - 1); (@y - 1));
+  @n: extract(@a, (@c + @x));
+  &:not(.desaturate) {
+    &.@{n}{
+      @{p}: extract(@a, (@c + @y));
+    }
+  }
+}
+
+.iconpile {
+  [class|="stroke"] {
+    .palette(stroke);
+  }
+  [class|="fill"] {
+    .palette(fill);
+  }
+}
+.shape-layer {
+  .palette(stroke);
+}
+.text-layer {
+  .palette(fill);
+}

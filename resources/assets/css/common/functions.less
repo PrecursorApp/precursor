@@ -23,6 +23,35 @@
   }.prefix(@property; @value; @rest);
   @{property}: @value;
 }
+.position(@p; @x; @y) {
+  position: @p;
+  .axis_y(@y) when (length(@y) = 1) {
+    top: @y;
+  }.axis_y(@y);
+  .axis_y(@y) when (length(@y) = 2) {
+    @property: extract(@y, 1);
+    @{property}: extract(@y, 2);
+  }.axis_y(@y);
+  .axis_x(@x) when (length(@x) = 1) {
+    left: @x;
+  }.axis_x(@x);
+  .axis_x(@x) when (length(@x) = 2) {
+    @property: extract(@x, 1);
+    @{property}: extract(@x, 2);
+  }.axis_x(@x);
+}
+.selection(@color, @opacity) {
+  ::-moz-selection {
+    color: @color;
+    background: fade(@color, @opacity);
+    text-shadow: none;
+  }
+  ::selection {
+    color: @color;
+    background: fade(@color, @opacity);
+    text-shadow: none;
+  }
+}
 .placeholder_style(@property; @value) {
   &::-webkit-input-placeholder {@{property}: @value;}
   &:-moz-placeholder           {@{property}: @value;}
@@ -110,11 +139,11 @@
   box-shadow+:  1px  0   @color;
   box-shadow+: -1px  0   @color;
 }
-.inline(@color: @gray_lighter) {
-  box-shadow+:  0    1px @color inset;
-  box-shadow+:  0   -1px @color inset;
-  box-shadow+:  1px  0   @color inset;
-  box-shadow+: -1px  0   @color inset;
+.inline(@color: @gray_lighter; @width: 1px) {
+  box-shadow+:  0    @width @color inset;
+  box-shadow+:  0   -@width @color inset;
+  box-shadow+:  @width  0   @color inset;
+  box-shadow+: -@width  0   @color inset;
 }
 .filter(...) {
   .for(@arguments); .-each(@argument) {
@@ -122,9 +151,25 @@
               filter+_: @argument;
   }
 }
+.shadow_inset(@position; @black; @white) {
+  .top(@arguments) when (@position = top) {
+    box-shadow+: 0 -1px @black;
+    box-shadow+: 0  1px @white inset;
+  }.top(@arguments);
+  .btm(@arguments) when (@position = bottom) {
+    box-shadow+: 0 -1px @black inset;
+    box-shadow+: 0  1px @white;
+  }.btm(@arguments);
+}
 .gradient(@type; @rest...) {
   @colors: ~`"@{rest}".slice(1,-1)`;
   background-image+: linear-gradient(@type, @colors);
+}
+.font-smoothing(@a: antialiased) {
+  .aa(@a) when (@a = antialiased) {
+    -webkit-font-smoothing: @a;
+    -moz-osx-font-smoothing: grayscale;
+  }.aa(@a);
 }
 .transition_transform(...) {
   -webkit-transition+: -webkit-transform @arguments;
@@ -185,9 +230,9 @@
   -webkit-animation-timing-function: @arguments;
           animation-timing-function: @arguments;
 }
-
-// ad hoc
-
+//
+// positions icons in radial menu
+//
 .shape_position(@array; @count: length(@array); @name_value: -2; @x_value: -1; @y_value: 0; @icon_scale: .2) when (@count > (length(@array) / 3)) {
   .shape_position(@array; (@count - 2); (@name_value - 1); (@x_value - 1); (@y_value - 1); @icon_scale);    // <-- Loop to next iteration until count is 0
   @name:     extract(@array, (@count + @name_value));                                                       //
@@ -195,6 +240,104 @@
   @y_offset: extract(@array, (@count + @y_value)) * (1 / @icon_scale);                                      //
   &.shape-@{name} {.transform(scale3d(@icon_scale, @icon_scale, 1); translate3d(@x_offset, @y_offset, 0));} // <-- Actual style to written for each array item
 }
+//
+// animates hud buttons when app loads
+//
 .hud_toggle_animation(...) {
   .animation(~"in-fade-@{arguments}" @run_slow);
+}
+//
+// morph menu icon into close/back icon
+//
+.hud_menu_morph() {
+  &.close,
+  &.back {
+    .scale3d(.75);
+  }
+  &.close {
+    .stroke-menu-top { .transform(translate3d(  32.32px, -3.03px, 0) rotate3d(0, 0, 1,  45deg));}
+    .stroke-menu-mid { .transform(translate3d( -20.71px,    50px, 0) rotate3d(0, 0, 1, -45deg)); opacity: 0;}
+    .stroke-menu-btm { .transform(translate3d( -38.39px, 32.32px, 0) rotate3d(0, 0, 1, -45deg));}
+  }
+  &.back {
+    .stroke-menu-top { .transform(translate3d(  20px, 28px, 0) rotate3d(0, 0, 1,  45deg) scale3d(.5, 1, 1));}
+    .stroke-menu-mid { .transform(translate3d(     0,    0, 0) rotate3d(0, 0, 0, -45deg) scale3d( 1, 1, 1));}
+    .stroke-menu-btm { .transform(translate3d( -51px,  1px, 0) rotate3d(0, 0, 1, -45deg) scale3d(.5, 1, 1));}
+  }
+}
+//
+// canvas/chat sizes w/ media queries
+//
+// For Example: .size_of(chat; width);
+// Compiles To: width: 25%;
+//
+// For Example: .size_of(canvas; padding-left; vh);
+// Compiles To: padding-left: 75vh;
+//
+.size_of(@object; @property; @unit...) {
+  .view_width(@unit) when (@unit = vw) {
+    @1: 100vw;
+    @0: 0vw;
+  }.view_width(@unit);
+  .view_height(@unit) when (@unit = vh) {
+    @1: 100vh;
+    @0: 0vh;
+  }.view_height(@unit);
+  .percentage(@unit) when not (@unit = vw), (@unit = vw) {
+    @1: 100%;
+    @0: 0%;
+  }.percentage(@unit);
+  .if_width(@property) when (@property = width), (@property = height) {
+    .if_chat(@object) when (@object = chat) {
+      @value: @0;
+    }.if_chat(@object);
+    .if_canvas(@object) when (@object = canvas) {
+      @value: @1;
+    }.if_canvas(@object);
+  }.if_width(@property);
+  .no_width(@property) when not (@property = width), (@property = height) {
+    .if_chat(@object) when (@object = chat) {
+      @value: @1;
+    }.if_chat(@object);
+    .if_canvas(@object) when (@object = canvas) {
+      @value: @0;
+    }.if_canvas(@object);
+  }.no_width(@property);
+  @{property}: abs(@value - @size_chat);
+  .mq_1920({@{property}: abs(@value - @chat_1920);});
+  .mq_1600({@{property}: abs(@value - @chat_1600);});
+  .mq_1280({@{property}: abs(@value - @chat_1280);});
+  .mq_960({ @{property}: abs(@value - @chat_0960);});
+  .mq_640({ @{property}: abs(@value - @chat_0640);});
+}
+//
+// transform canvas when left/right menu is active
+//
+.canvas_off(...) {
+  .left(@a) when not (@a = left) {
+    @init: 5%;
+    @1920: @canvas_pull_1920;
+    @1600: @canvas_pull_1600;
+    @1280: @canvas_pull_1280;
+    @0960: @canvas_pull_0960;
+    @0640: @canvas_pull_0640;
+  }.left(@arguments);
+  .right(@a) when (@a = left) {
+    @init: -5%;
+    @1920: -@canvas_pull_1920;
+    @1600: -@canvas_pull_1600;
+    @1280: -@canvas_pull_1280;
+    @0960: -@canvas_pull_0960;
+    @0640: -@canvas_pull_0640;
+  }.right(@arguments);
+  .inner {
+    .transform(translate3d(@init, 0, 0); scale3d(.8, .8, 1));
+    .transform-origin(@arguments);
+    @{arguments}: 0;
+    .mq_1920({ .transform(translate3d(@1920, 0, 0) scale3d(.8, .8, 1)); });
+    .mq_1600({ .transform(translate3d(@1600, 0, 0) scale3d(.8, .8, 1)); });
+    .mq_1280({ .transform(translate3d(@1280, 0, 0) scale3d(.8, .8, 1)); });
+     .mq_960({ .transform(translate3d(@0960, 0, 0) scale3d(.8, .8, 1)); });
+     .mq_640({ .transform(translate3d(@0640, 0, 0) scale3d(.8, .8, 1)); });
+  }
 }

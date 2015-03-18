@@ -20,6 +20,9 @@
   [layer opts]
   [:path (svg/layer->svg-path layer opts)])
 
+(defn nan? [thing]
+  (or (not thing) (.isNaN thing)))
+
 ;; Getting placement here is a bit tricky.
 ;; Goal is to reproduce the canvas exactly as it is in the app, except in
 ;; black-and-white so they can print it.
@@ -27,11 +30,13 @@
 ;; If they've drawn in negative directions, then we to shift the viewport in the
 ;; that direction with a transform.
 (defn render-layers [layers & {:keys [invert-colors? size-limit]}]
-  (let [layers (filter #(not= :layer.type/group (:layer/type %)) layers)
-        start-xs (remove #(.isNaN %) (map :layer/start-x layers))
-        start-ys (remove #(.isNaN %) (map :layer/start-y layers))
-        end-xs (remove #(.isNaN %) (map :layer/end-x layers))
-        end-ys (remove #(.isNaN %) (map :layer/end-y layers))
+  (def mylayers layers)
+  (let [layers (map #(into {} %) (filter #(and (:layer/type %)
+                                               (not= :layer.type/group (:layer/type %))) layers))
+        start-xs (remove nan? (map :layer/start-x layers))
+        start-ys (remove nan? (map :layer/start-y layers))
+        end-xs (remove nan? (map :layer/end-x layers))
+        end-ys (remove nan? (map :layer/end-y layers))
         xs (or (seq (concat start-xs end-xs)) [0])
         ys (or (seq (concat start-ys end-ys)) [0])
         min-x (apply min xs)
@@ -44,19 +49,20 @@
         height (if (pos? min-y)
                  max-y
                  (- max-y min-y))
+        padding 100
+        scale-factor (if size-limit
+                       (let [max-dim (+ padding (max width height))]
+                         (min 1 (/ size-limit max-dim)))
+                       1)
         offset-top (if (neg? min-y)
-                     (+ 250 (- min-y))
+                     (+ (/ padding 2) (- min-y))
                      0)
         offset-left (if (neg? min-x)
-                      (+ 250 (- min-x))
+                      (+ (/ padding 2) (- min-x))
                       0)]
     (html [:svg (merge
-                 {:width (apply min (concat [(+ width 500)]
-                                            (when size-limit
-                                              [size-limit])))
-                  :height (apply min (concat [(+ height 500)]
-                                             (when size-limit
-                                               [size-limit])))
+                 {:width (* scale-factor (+ width padding))
+                  :height (* scale-factor (+ height padding))
                   :xmlns "http://www.w3.org/2000/svg"
                   :xmlns:xlink "http://www.w3.org/1999/xlink"
                   :version "1.1"}
@@ -65,5 +71,8 @@
            ;; hack to make pngs work
            (when invert-colors?
              [:rect {:width "100%" :height "100%" :fill "#333"}])
-           [:g {:transform (format "translate(%s, %s)" offset-left offset-top)}
+           [:g {:transform (format "translate(%s, %s) scale(%s)"
+                                   (* scale-factor offset-left)
+                                   (* scale-factor offset-top)
+                                   scale-factor)}
             (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))

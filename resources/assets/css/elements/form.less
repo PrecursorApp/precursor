@@ -2,17 +2,17 @@ input {
   &[data-adaptive] {
     &[required] {
       width: 100%;
-      line-height: 1em;
-      height: 3em;
+      line-height: 1rem;
+      height: 3rem;
       border: 1px solid @gray_dark;
       outline: none;
-      padding: 1em;
+      padding: 1rem;
       &:focus {
-        border-color: @blue;
+        border-color: @color_select;
         + label {
           &[data-placeholder] {
             &:before {
-              color: @blue;
+              color: @color_select;
             }
           }
         }
@@ -21,11 +21,11 @@ input {
       &:valid {
         + label {
           &[data-placeholder] {
-            margin-top: -3.5em;
-            margin-bottom: 2.5em;
+            margin-top: -3.5rem;
+            margin-bottom: 2.5rem;
             transition-duration: @run;
             &:before {
-              font-size: 0.75em;
+              font-size: 0.75rem;
               background-size: 100% 5px;
               transition-duration: @run;
             }
@@ -82,8 +82,8 @@ input {
     }
     + label {
       &[data-placeholder] {
-        margin-top: -2em;
-        margin-bottom: 1em;
+        margin-top: -2rem;
+        margin-bottom: 1rem;
         white-space: nowrap;
         pointer-events: none;
         transition: @run_slow @bezier_deform;
@@ -121,6 +121,77 @@ input {
           }
         }
       }
+    }
+  }
+}
+input {
+  &[data-white] {
+    &[data-adaptive] {
+      &[required] {
+        &:not(:focus) {
+          border-color: @gray_light;
+        }
+      }
+      + label {
+        &[data-placeholder] {
+          &:before {
+            color: @gray_light;
+            background-image: linear-gradient(to bottom, @dye_outer, @dye_outer);
+          }
+        }
+      }
+    }
+  }
+}
+
+@adapt_size: 4em;
+@adapt_line: (@adapt_size / 3);
+@adapt_tiny: .25em;
+.adaptive-placeholder {
+  position: relative;
+  width: 100%;
+  min-height: @adapt_size;
+  padding: (@adapt_line - ((@line_height - @adapt_line) / 2)) @adapt_line;
+  border: 1px solid @gray_light;
+  outline: none;
+  transition: @run ease-in-out;
+  &:after {
+    .user-select(none);
+    .transform(translate3d(0, 0, 0) scale3d(1, 1, 1));
+    .transform-origin(left);
+    color: @gray_light;
+    position: absolute;
+    top: (@adapt_size - @adapt_tiny) / 2;
+    left: (@adapt_line - @adapt_tiny);
+    padding: 0 @adapt_tiny;
+    line-height: @adapt_tiny;
+    background-color: fade(@dye_outer, 0);
+    pointer-events: none;
+    transition: @run ease-in-out;
+  }
+  &:focus {
+    border: 1px solid @color_select;
+    &:after {
+      color: @color_select;
+    }
+  }
+  &:focus,
+  &:not(:empty) {
+    transition-duration: @run_fast;
+    &:after {
+      .transform(translate3d(0, (-@adapt_size / 2), 0) scale3d(.8, .8, 1));
+      background-color: @dye_outer;
+      transition-duration: @run_fast;
+    }
+  }
+  &:not(:empty) {
+    &:after {
+      content: attr(data-after);
+    }
+  }
+  &:empty {
+    &:after {
+      content: attr(data-before);
     }
   }
 }

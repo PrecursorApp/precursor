@@ -120,6 +120,11 @@
 
 (defmulti svg-element (fn [layer opts] (:layer/type layer)))
 
+(defmethod svg-element :default
+  [layer opts]
+  (js/Rollbar.error "Called clipboard/svg-element for non-drawing" layer)
+  nil)
+
 (defmethod svg-element :layer.type/rect
   [layer opts]
   [:rect (layer->svg-rect layer opts)])
@@ -178,7 +183,7 @@
     (when-let [layers (seq (remove
                             #(= :layer.type/group (:layer/type %))
                             (map #(ds/touch+ (d/entity @(:db app-state) %))
-                                 (:selected-eids app-state))))]
+                                 (get-in app-state [:selected-eids :selected-eids]))))]
       (let [mouse (:mouse app-state)
             [rx ry] (cameras/screen->point (:camera app-state) (:x mouse) (:y mouse))]
         (.preventDefault event)

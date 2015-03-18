@@ -3,8 +3,11 @@
             [clojure.string]
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
+            [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
-            [slingshot.slingshot :refer (try+ throw+)]))
+            [pc.datomic.migrations-archive :as archive]
+            [slingshot.slingshot :refer (try+ throw+)])
+  (:import java.util.UUID))
 
 (defn migration-entity
   "Finds the entity that keeps track of the migration version, there should
@@ -43,69 +46,6 @@
   (assert (= -1 (migration-version (db conn))))
   @(d/transact conn [{:db/id (d/tempid :db.part/user) :migration/version 0}]))
 
-(defn layer-longs->floats
-  "Converts the attributes on the layer that should have been floats, but were mistakenly
-   specified as longs."
-  [conn]
-  (let [layer-attrs #{:start-x :start-y :end-x :end-y :stroke-width :opacity
-                      :start-sx :start-sy :current-sx :current-sy}
-        idents (set (map (fn [a] (keyword "layer" (name a))) layer-attrs))
-        layer-schemas (filter #(contains? idents (:db/ident %))
-                              (pcd/touch-all '{:find [?t]
-                                               :where [[?t :db/ident]]}
-                                             (db conn)))
-        ident->float (fn [ident]
-                       (keyword "layer" (str (name ident) "-float")))
-        ident->long (fn [ident]
-                       (keyword "layer" (str (name ident) "-long")))
-        temp-schemas (for [s layer-schemas]
-                       (-> s
-                           (update-in [:db/ident] ident->float)
-                           (merge {:db/valueType :db.type/float
-                                   :db/id (d/tempid :db.part/db)
-                                   :db.install/_attribute :db.part/db})))
-        new-schemas (for [s layer-schemas]
-                      (merge s {:db/valueType :db.type/float
-                                :db/id (d/tempid :db.part/db)
-                                :db.install/_attribute :db.part/db}))
-        db (db conn)]
-    (when (seq layer-schemas) ;; don't try to migrate on a fresh db
-
-      ;; create temporary schema with :layer/attr-float for each attr
-      @(d/transact conn temp-schemas)
-
-      ;; migrate long properties to the new float properties
-      (doseq [ident idents]
-        (dorun (map (fn [[e]]
-                      (let [new-val (-> (d/entity db e) (get ident) float)]
-                        @(d/transact conn [[:db/add e (ident->float ident) new-val]])))
-                    (q '{:find [?t] :in [$ ?ident]
-                         :where [[?t ?ident]]}
-                       db ident))))
-
-      ;; rename the long attrs to new name
-      @(d/transact conn (for [ident idents]
-                          {:db/id ident
-                           :db/ident (ident->long ident)}))
-
-      ;; rename the float attrs to normal attrs
-      @(d/transact conn (for [ident idents]
-                          {:db/id (ident->float ident)
-                           :db/ident ident})))))
-
-
-(defn layer-child-uuid->long
-  "Converts the child type from uuids to long"
-  [conn]
-  ;; don't try to migrate on a fresh db
-  (when (pcd/touch-one '{:find [?t]
-                         :where [[?t :db/ident :layer/child]
-                                 [?t :db/valueType :db.type/uuid]]}
-                       (db conn))
-    ;; rename the uuid attr to a new name
-    @(d/transact conn [{:db/id :layer/child
-                        :db/ident :layer/child-deprecated}])))
-
 (defn add-prcrsr-bot
   "Adds a precursor bot"
   [conn]
@@ -114,127 +54,72 @@
                       :cust/name "prcrsr"
                       :cust/uuid (d/squuid)}]))
 
-;; TODO: figure out what to do with things like /document/1
-(defn make-existing-documents-public
-  "Marks all existing documents as public"
+(defn doc-id-datom->ref-transaction [db {:keys [e v] :as datom}]
+  (let [ent (d/entity db e)]
+    (cond (:db/txInstant ent) [:db/add e :transaction/document v]
+          (:layer/type ent) [:db/add e :layer/document v]
+          (:chat/body ent)  [:db/add e :chat/document v]
+          (:layer/name ent) [:db/add e :layer/document v]
+          (= :layer (:entity/type ent)) [:db/add e :layer/document v]
+          (:layer/end-x ent) [:db/add e :layer/document v]
+          ;; TODO: need to clean up the db to get rid of invalid layers and do some sort of
+          ;;       validation when new fields come through the wire
+          (= #{:frontend/id :document/id} (set (keys ent))) [:db.fn/retractEntity e]
+          :else (throw+ {:error :unknown-document-id-type :e e}))))
+
+(defn have-document-ref? [db {:keys [e] :as datom}]
+  (let [ent (d/entity db e)]
+    (or (:layer/document ent)
+        (:chat/document ent)
+        (:transaction/document ent))))
+
+(defn document-ids->document-refs [db conn]
+  (log/infof "converting document-ids to document-refs")
+  (doseq [datom-group (partition-all 1000 (remove (partial have-document-ref? db) (d/datoms db :avet :document/id)))]
+    @(d/transact-async conn (conj (mapv #(doc-id-datom->ref-transaction db %) datom-group)
+                                  {:db/id (d/tempid :db.part/tx)
+                                   :transaction/source :transaction.source/migration
+                                   :migration :migration/longs->refs}))))
+
+(defn have-ref-attr? [db ref-attr {:keys [e] :as datom}]
+  (let [ent (d/entity db e)]
+    (get ent ref-attr)))
+
+(defn access-entities-ids->refs [db conn]
+  (doseq [attr [:permission/document :permission/cust :permission/granter
+                :access-request/document :access-request/cust
+                :access-grant/document :access-grant/granter]
+          :let [ref-attr (keyword (namespace attr) (str (name attr) "-ref"))]]
+    (log/infof "converting %s to %s" attr ref-attr)
+    (doseq [datom-group (partition-all 1000 (remove (partial have-ref-attr? db ref-attr) (d/datoms db :aevt attr)))]
+      @(d/transact-async conn (conj (mapv (fn [{:keys [e v] :as datom}]
+                                            [:db/add e ref-attr v])
+                                          datom-group)
+                                    {:db/id (d/tempid :db.part/tx)
+                                     :transaction/source :transaction.source/migration
+                                     :migration :migration/longs->refs})))))
+
+
+(defn longs->refs
+  "Converts attributes that store ids to refs, e.g. layers go from :document/id to :layer/document"
   [conn]
-  (let [db (db conn)
-        doc-ids (map first (d/q '{:find [?t]
-                                  :where [[?t :document/name]]}
-                                db))]
-    (dorun (map-indexed
-            (fn [i ids]
-              (log/infof "making batch %s of %s public" i (/ (count doc-ids) 1000 1.0))
-              @(d/transact conn (map (fn [id]
-                                       {:db/id id
-                                        :document/privacy :document.privacy/public})
-                                     ids)))
-            (partition-all 1000 doc-ids)))))
-
-(defn change-document-id [conn db old-id new-id]
-  (let [eids (map first (d/q '{:find [?t]
-                               :in [$ ?old-id]
-                               :where [[?t :document/id ?old-id]]}
-                             db old-id))]
-    (log/infof "migrating %s eids from %s to %s" (count eids) old-id new-id)
-    @(d/transact conn (mapv (fn [eid] {:db/id eid :document/id new-id}) eids))))
-
-(defn migrate-fake-documents
-  "Migrates documents (i.e. chats, layers, transactions) with invalid document ids to valid document ids"
-  [conn]
-  (let [db (db conn)
-        doc-ids (map first (d/q '{:find [?doc-id]
-                                  :in [$]
-                                  :where [[?t :document/id ?doc-id]
-                                          [(missing? $ ?doc-id :document/name)]]}
-                                db))]
-    (dorun
-     (map-indexed (fn [i invalid-id]
-                    (let [new-doc (doc-model/create-public-doc! {:document/invalid-id invalid-id})]
-                      (log/infof "migrating %s (%s of %s)" invalid-id i (count doc-ids))
-                      (change-document-id conn db invalid-id (:db/id new-doc))))
-                  doc-ids))))
-
-(defn fix-text-bounding-boxes [db conn]
-  (let [tx-count (atom 0)]
-    (doseq [e (map first (d/q '[:find ?t
-                                :where [?t :layer/type :layer.type/text]]
-                              db))
-            :let [layer (d/entity db e)]
-            ;; These have the right height, so we'll assume they're already correct
-            :when (not= -23.5 (- (:layer/end-y layer) (:layer/start-y layer)))]
-      (let [new-end-x (+ (:layer/start-x layer) (* 11 (count (:layer/text layer))))
-            new-end-y (+ (:layer/start-y layer) -23.5)]
-        (try+
-         @(d/transact conn [[:db.fn/cas e :layer/end-x (:layer/end-x layer) new-end-x]
-                            [:db.fn/cas e :layer/end-y (:layer/end-y layer) new-end-y]])
-         (swap! tx-count inc)
-         (when (zero? (mod @tx-count 10000))
-           (log/infof "sleeping for 30 seconds to give the transactor a rest (%s transactions)" @tx-count)
-           (Thread/sleep (* 30 1000)))
-         (catch Object t
-           (if (pcd/cas-failed? t)
-             (let [msg (format "cas failed for text layer with id %s" e)]
-               (println msg)
-               (log/error msg))
-             (throw+))))))))
-
-(defn parse-points [path]
-  (partition-all 2 (map #(Float/parseFloat %) (re-seq #"[\d\.]+" path))))
-
-(defn fix-pen-bounding-boxes [db conn]
-  (let [tx-count (atom 0)]
-    (doseq [e (map first (d/q '[:find ?t
-                                :where [?t :layer/type :layer.type/path]]
-                              db))
-            :let [layer (d/entity db e)
-                  points (some-> layer :layer/path parse-points)]
-            :when (seq points)]
-      (let [new-start-x (apply min (map first points))
-            new-end-x (apply max (map first points))
-            new-start-y (apply min (map second points))
-            new-end-y (apply max (map last points))]
-        (when-not (and (= new-start-x (:layer/start-x layer))
-                       (= new-end-x (:layer/end-x layer))
-                       (= new-start-y (:layer/start-y layer))
-                       (= new-end-y (:layer/end-y layer)))
-          (try+
-           @(d/transact conn [[:db.fn/cas e :layer/start-x (:layer/start-x layer) new-start-x]
-                              [:db.fn/cas e :layer/end-x (:layer/end-x layer) new-end-x]
-                              [:db.fn/cas e :layer/start-y (:layer/start-y layer) new-start-y]
-                              [:db.fn/cas e :layer/end-y (:layer/end-y layer) new-end-y]])
-           (swap! tx-count inc)
-           (when (zero? (mod @tx-count 10000))
-             (log/infof "sleeping for 30 seconds to give the transactor a rest (%s transactions)" @tx-count)
-             (Thread/sleep (* 30 1000)))
-           (catch Object t
-             (if (pcd/cas-failed? t)
-               (let [msg (format "cas failed for pen layer with id %s" e)]
-                 (println msg)
-                 (log/error msg))
-               (throw+)))))))))
-
-(defn fix-bounding-boxes
-  "Fixes bounding boxes for text and pen drawings"
-  [conn]
-  (time
-   (let [db (db conn)]
-     (log/info "fixing text bounding boxes")
-     (fix-text-bounding-boxes db conn)
-     (log/info "fixing pen bounding boxes")
-     (fix-pen-bounding-boxes db conn))))
+  (let [db (d/db conn)]
+    (document-ids->document-refs db conn)
+    (access-entities-ids->refs db conn)))
 
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
   (array-map
    0 #'add-migrations-entity
-   1 #'layer-longs->floats
-   2 #'layer-child-uuid->long
+   1 #'archive/layer-longs->floats
+   2 #'archive/layer-child-uuid->long
    3 #'add-prcrsr-bot
-   4 #'make-existing-documents-public
-   5 #'migrate-fake-documents
-   6 #'fix-bounding-boxes))
+   4 #'archive/make-existing-documents-public
+   5 #'archive/migrate-fake-documents
+   6 #'archive/fix-bounding-boxes
+   7 #'archive/add-frontend-ids
+   8 #'longs->refs))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"

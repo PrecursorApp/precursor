@@ -18,32 +18,24 @@
 
 (defn signup-prompt [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Doc Viewer Signup Prompt")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          {:class (str "menu-prompt-" "username")}
-          [:article
+          [:div.content
            [:h2.make
-            "Remember that one idea?"]
+            "Keep track of all the ideas you make."]
            [:p.make
-            "Neither do we—well, not yet at least.
-            Sign up and we'll remember your ideas for you.
-            Never lose a great idea again!"]
-           [:a.menu-button.make
-            {:href (auth/auth-url)
-             :role "button"
-             :on-click #(do
-                          (.preventDefault %)
-                          (cast! :track-external-link-clicked
-                                 {:path (auth/auth-url)
-                                  :event "Signup Clicked"
-                                  :properties {:source "your-docs-overlay"}}))}
-            "Sign Up"]]])))))
+            "Everyone's ideas made with Precursor save automatically.
+            And if you sign in with Google we'll even keep track of which ones are yours."]
+           [:div.calls-to-action.make
+            (om/build common/google-login {:source "Sharing Signup Menu"})]]])))))
 
 (defn docs-list [docs owner]
   (reify
+    om/IDisplayName (display-name [_] "Doc Viewer Docs List")
     om/IRender
     (render [_]
       (html
@@ -77,30 +69,31 @@
   (repeat doc-count {:db/id current-doc-id
                      :last-update-instant (js/Date.)}))
 
-(defn doc-viewer* [app owner]
+(defn doc-viewer* [app owner {:keys [docs-path] :as opts}]
   (reify
+    om/IDisplayName (display-name [_] "Doc Viewer*")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            touched-docs (get-in app [:cust :touched-docs])
-            ;; Not showing created for now, since we haven't been storing that until recently
-            created-docs (get-in app [:cust :created-docs])
-            docs (cond
-                  (nil? touched-docs)
-                  (dummy-docs (:document/id app) 5) ;; loading state
-                  (empty? touched-docs) (dummy-docs (:document/id app) 1) ;; empty state
-                  :else
-                  (->> touched-docs
-                       (filter :last-updated-instant)
-                       (sort-by :last-updated-instant)
-                       (reverse)
-                       (take 100)))]
+            app-docs (get-in app docs-path)
+            display-docs (cond
+                           (nil? app-docs)
+                           (dummy-docs (:document/id app) 5) ;; loading state
+
+                           (empty? app-docs) (dummy-docs (:document/id app) 1) ;; empty state
+
+                           :else
+                           (->> app-docs
+                             (filter :last-updated-instant)
+                             (sort-by :last-updated-instant)
+                             (reverse)
+                             (take 100)))]
         (html
          [:div.menu-view
-          {:class (when (nil? touched-docs)"loading")}
-          [:article
-           (if (seq docs)
-             (om/build docs-list docs))]])))))
+          {:class (when (nil? app-docs) "loading")}
+          [:div.content
+           (if (seq display-docs)
+             (om/build docs-list display-docs))]])))))
 
 ;; Four states
 ;; 1. Logged out
@@ -110,9 +103,17 @@
 
 (defn doc-viewer [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Doc Viewer")
     om/IRender
     (render [_]
       (if (:cust app)
-        (om/build doc-viewer* app) ;; states 2, 3, 4
+        (om/build doc-viewer* app {:opts {:docs-path [:cust :touched-docs]}}) ;; states 2, 3, 4
         (om/build signup-prompt app) ;; state 1
         ))))
+
+(defn team-doc-viewer [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Team Doc Viewer")
+    om/IRender
+    (render [_]
+      (om/build doc-viewer* app {:opts {:docs-path [:team :recent-docs]}}))))

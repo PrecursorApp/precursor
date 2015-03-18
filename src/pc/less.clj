@@ -30,6 +30,7 @@
   (str "-x"
        " --source-map=" output-file ".map"
        " --source-map-basepath=" output-dir
+       " --source-map-url=" "/css/app.css.map"
        " --source-map-less-inline"
        (format " --autoprefix=\"%s\"" browser-versions)))
 

@@ -1,38 +1,39 @@
 (ns frontend.core
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
-            [frontend.async :refer [put!]]
             [cljs.reader :as reader]
             [clojure.string :as string]
             [datascript :as d]
-            [goog.dom]
-            [goog.dom.DomHelper]
-            [goog.net.Cookies]
             [frontend.analytics :as analytics]
+            [frontend.async :refer [put!]]
+            [frontend.browser-settings :as browser-settings]
             [frontend.camera :as camera-helper]
             [frontend.clipboard :as clipboard]
             [frontend.components.app :as app]
-            [frontend.controllers.controls :as controls-con]
-            [frontend.controllers.navigation :as nav-con]
             [frontend.components.key-queue :as keyq]
-            [frontend.datascript :as ds]
-            [frontend.db :as db]
-            [frontend.routes :as routes]
+            [frontend.config :as config]
             [frontend.controllers.api :as api-con]
+            [frontend.controllers.controls :as controls-con]
             [frontend.controllers.errors :as errors-con]
-            [frontend.env :as env]
-            [frontend.instrumentation :refer [wrap-api-instrumentation]]
+            [frontend.controllers.navigation :as nav-con]
+            [frontend.datascript :as ds]
+            [frontend.datetime :as datetime]
+            [frontend.db :as db]
+            [frontend.history :as history]
+            [frontend.instrumentation :as instrumentation]
             [frontend.localstorage :as localstorage]
+            [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.state :as state]
+            [frontend.team :as team]
+            [frontend.utils.ajax :as ajax]
+            [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
+            [goog.dom]
+            [goog.dom.DomHelper]
             [goog.events]
             [goog.events.EventType]
-            [om.core :as om :include-macros true]
-            [frontend.history :as history]
-            [frontend.browser-settings :as browser-settings]
-            [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
-            [frontend.utils.ajax :as ajax]
-            [frontend.datetime :as datetime]
             [goog.labs.dom.PageVisibilityMonitor]
+            [goog.net.Cookies]
+            [om.core :as om :include-macros true]
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [cljs.core.UUID]
@@ -61,24 +62,15 @@
   (.stopPropagation event))
 
 (defn track-key-state [cast! direction suppressed-key-combos event]
-  (let [meta?      (when (.-metaKey event) "meta")
-        shift?     (when (.-shiftKey event) "shift")
-        ctrl?      (when (.-ctrlKey event) "ctrl")
-        alt?       (when (.-altKey event) "alt")
-        char       (or (get keyq/code->key (.-which event))
-                       (js/String.fromCharCode (.-which event)))
-        tokens     [shift? meta? ctrl? alt? char]
-        key-string (string/join "+" (filter identity tokens))]
-    (when-not (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
-      (when (get suppressed-key-combos key-string)
+  (let [key-set (keyq/event->key event)]
+    (when-not (or (contains? #{"input" "textarea"} (string/lower-case (.. event -target -tagName)))
+                  (= "true" (.. event -target -contentEditable)))
+      (when (contains? suppressed-key-combos key-set)
         (.preventDefault event))
       (when-not (.-repeat event)
-        (let [human-name (keyq/event->key event)]
-          (let [key-name (keyword (str human-name "?"))]
-            (cast! :key-state-changed [{:key-name-kw key-name
-                                        :key         human-name
-                                        :code        (.-which event)
-                                        :depressed?  (= direction :down)}])))))))
+        (cast! :key-state-changed [{:key-set key-set
+                                    :code (.-which event)
+                                    :depressed? (= direction :down)}])))))
 
 ;; Overcome some of the browser limitations around DnD
 (def mouse-move-ch
@@ -106,10 +98,23 @@
 (def navigation-ch
   (chan))
 
+(defn initial-camera []
+  (let [{:keys [x y z]} utils/initial-query-map]
+    (cond-> {}
+      x (assoc :x x)
+      y (assoc :y y)
+      ;; the zoom is zf for some reason
+      z (assoc :zf z))))
+
 (defn app-state []
   (let [initial-state (state/initial-state)
-        document-id (long (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri))))
+        document-id (or (aget js/window "Precursor" "initial-document-id")
+                        ;; TODO: remove after be is fully deployed
+                        (when-let [id (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri)))]
+                          (long id)))
         cust (some-> (aget js/window "Precursor" "cust")
+               (reader/read-string))
+        team (some-> (aget js/window "Precursor" "team")
                (reader/read-string))
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
                            (reader/read-string))
@@ -121,9 +126,15 @@
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
                      :db (db/make-initial-db initial-entities)
+                     ;; team entities go into the team namespace, so we need a separate database
+                     ;; to prevent conflicts
+                     :team-db (db/make-initial-db nil)
+                     :document/id document-id
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
                      :cust cust
+                     :team team
+                     :subdomain config/subdomain
                      :show-landing? (:show-landing? utils/initial-query-map)
                      :comms {:controls      controls-ch
                              :api           api-ch
@@ -139,20 +150,21 @@
                                              :mult (async/mult mouse-down-ch)}
                              :mouse-up      {:ch mouse-up-ch
                                              :mult (async/mult mouse-up-ch)}})
+            (update-in [:camera] merge (initial-camera))
             (browser-settings/restore-browser-settings cust)))))
 
 (defn controls-handler
-  [value state browser-state]
-  (when-not (keyword-identical? :mouse-moved (first value))
+  [[msg data :as value] state browser-state]
+  (when-not (keyword-identical? :mouse-moved msg)
     (mlog "Controls Verbose: " value))
   (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
      (let [previous-state @state
            ;; TODO: control-event probably shouldn't get browser-state
-           current-state (swap! state (partial controls-con/control-event browser-state (first value) (second value)))]
-       (controls-con/post-control-event! browser-state (first value) (second value) previous-state current-state)
+           current-state (swap! state (partial controls-con/control-event browser-state msg data))]
+       (controls-con/post-control-event! browser-state msg data previous-state current-state)
        ;; TODO: enable a way to set the event separate from the control event
-       (analytics/track-control (first value) current-state)))))
+       (analytics/track-control msg data current-state)))))
 
 (defn nav-handler
   [value state history]
@@ -172,10 +184,7 @@
            message (first value)
            status (second value)
            api-data (utils/third value)]
-       (swap! state (wrap-api-instrumentation (partial api-con/api-event container message status api-data)
-                                              api-data))
-       (when-let [date-header (get-in api-data [:response-headers "Date"])]
-         (datetime/update-server-offset date-header))
+       (swap! state (partial api-con/api-event container message status api-data))
        (api-con/post-api-event! container message status api-data previous-state @state)))))
 
 (defn errors-handler
@@ -187,26 +196,24 @@
        (swap! state (partial errors-con/error container (first value) (second value)))
        (errors-con/post-error! container (first value) (second value) previous-state @state)))))
 
-(defn setup-timer-atom
-  "Sets up an atom that will keep track of the current time.
-   Used from frontend.components.common/updating-duration "
-  []
-  (let [mya (atom (datetime/server-now))]
-    (js/setInterval #(reset! mya (datetime/server-now)) 1000)
-    mya))
-
-
 (defn install-om [state container comms cast! handlers]
+  (instrumentation/setup-component-stats!)
   (om/root
    app/app
    state
    {:target container
     :shared {:comms                 comms
              :db                    (:db @state)
+             :team-db               (:team-db @state)
              :cast!                 cast!
-             :timer-atom            (setup-timer-atom)
              :_app-state-do-not-use state
-             :handlers              handlers}}))
+             :handlers              handlers
+             ;; Can't log in without a page refresh, have to re-evaluate this if
+             ;; that ever changes.
+             :logged-in?            (boolean (seq (:cust @state)))
+             }
+    :instrument (fn [f cursor m]
+                  (om/build* f cursor (assoc m :descriptor instrumentation/instrumentation-methods)))}))
 
 (defn find-app-container []
   (goog.dom/getElement "om-app"))
@@ -228,8 +235,8 @@
         nav-tap                  (chan)
         api-tap                  (chan)
         errors-tap               (chan)
-        suppressed-key-combos    #{"meta+A" "meta+D" "meta+Z" "shift+meta+Z" "backspace"
-                                   "shift+meta+D" "up" "down" "left" "right" "meta+G"}
+        suppressed-key-combos    #{#{"meta" "A"} #{"meta" "D"} #{"meta" "Z"} #{"shift" "meta" "Z"} #{"backspace"}
+                                   #{"shift" "meta" "D"} #{"up"} #{"down"} #{"left"} #{"right"} #{"meta" "G"}}
         handle-key-down          (partial track-key-state cast! :down suppressed-key-combos)
         handle-key-up            (partial track-key-state cast! :up   suppressed-key-combos)
         handle-mouse-move        #(handle-mouse-move cast! %)
@@ -247,6 +254,9 @@
     (def om-setup-debug om-setup)
 
     (swap! state assoc :undo-state undo-state)
+
+    (when (get-in @state [:team :team/uuid])
+      (team/setup state))
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
@@ -282,47 +292,14 @@
             ;; of a server to store it
             (async/timeout 10000) (do #_(print "TODO: print out history: ")))))))
 
-(defn fetch-entity-ids [api-ch eid-count]
-  (ajax/ajax :post "/api/entity-ids" :entity-ids api-ch :params {:count eid-count}))
-
-(defn notify-error [state]
-  (d/transact! (:db @state) [{:layer/type :layer.type/text
-                              :layer/name "Error"
-                              :layer/text "There was an error connecting to the server."
-                              :layer/start-x 200
-                              :layer/start-y 200
-                              :db/id -1
-                              :layer/end-x 600
-                              :layer/end-y 175}
-                             {:layer/type :layer.type/text
-                              :layer/name "Error"
-                              :layer/text "Please refresh to try again."
-                              :layer/start-x 200
-                              :layer/start-y 225
-                              :db/id -2
-                              :layer/end-x 400
-                              :layer/end-y 200}]))
-
-(defn setup-entity-id-fetcher [state]
-  (let [api-ch (-> state deref :comms :api)]
-    (go (let [resp (<! (ajax/managed-ajax :post "/api/entity-ids" :params {:count 40}))]
-          (if (= :success (:status resp))
-            (do
-              (put! api-ch [:entity-ids :success {:resp resp :status :success}])
-              (add-watch state :entity-id-fetcher (fn [key ref old new]
-                                                    (when (> 35 (-> new :entity-ids count))
-                                                      (utils/mlog "fetching more entity ids")
-                                                      (fetch-entity-ids api-ch (- 40
-                                                                                  (-> new :entity-ids count)))))))
-            (do (notify-error state)
-                (js/Rollbar.error "entity ids request failed :(")))))))
+(def tokens-to-ignore ["login" "blog"])
 
 (defn ^:export setup! []
   (when-not (utils/logging-enabled?)
     (println "To enable logging, set Precursor['logging-enabled'] = true"))
   (js/React.initializeTouchEvents true)
   (let [state (app-state)
-        history-imp (history/new-history-imp)]
+        history-imp (history/new-history-imp tokens-to-ignore)]
     ;; globally define the state so that we can get to it for debugging
     (def debug-state state)
     (sente/init state)
@@ -330,11 +307,7 @@
     (main state history-imp)
     (when (:cust @state)
       (analytics/init-user (:cust @state)))
-    (setup-entity-id-fetcher state)
-    (if-let [error-status (get-in @state [:render-context :status])]
-      ;; error codes from the server get passed as :status in the render-context
-      (put! (get-in @state [:comms :nav]) [:error {:status error-status}])
-      (sec/dispatch! (str "/" (.getToken history-imp))))))
+    (sec/dispatch! (str "/" (.getToken history-imp)))))
 
 (defn ^:export inspect-state []
   (clj->js @debug-state))

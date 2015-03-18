@@ -1,7 +1,9 @@
 (ns pc.replay
   (:require [datomic.api :as d]
             [pc.datomic :as pcd]
-            [pc.datomic.schema :as schema]))
+            [pc.datomic.schema :as schema]
+            [pc.datomic.web-peer :as web-peer])
+  (:import java.util.UUID))
 
 (defn get-document-transactions
   "Gets the broadcasted transactions for a document"
@@ -9,8 +11,7 @@
   (map #(d/entity db (first %))
        (d/q '{:find [?t]
               :in [$ ?doc-id]
-              :where [[?t :document/id ?doc-id]
-                      [?t :db/txInstant]]}
+              :where [[?t :transaction/document ?doc-id]]}
             db (:db/id doc))))
 
 (defn- ->datom
@@ -25,6 +26,16 @@
     (map ->datom)
     set))
 
+(defn replace-frontend-ids [db doc-id txes]
+  (let [a (d/entid db :frontend/id)]
+    (map (fn [tx]
+           (if (= (:a tx) a)
+             (assoc tx
+                    :v (UUID. doc-id (web-peer/client-part (:v tx)))
+                    :a (d/entid (pcd/default-db) :frontend/id))
+             tx))
+         txes)))
+
 (defn copy-transactions [db doc new-doc & {:keys [sleep-ms]
                                            :or {sleep-ms 1000}}]
   (let [conn (pcd/conn)
@@ -35,11 +46,12 @@
                             (remove #(= (:e %) (:db/id t)))
                             (map #(if (= (:v %) (:db/id doc))
                                     (assoc % :v (:db/id new-doc))
-                                    %))))))
+                                    %))
+                            (replace-frontend-ids db (:db/id new-doc))))))
         eid-translations (-> (apply concat (map #(map :e %) tx-datas))
                            set
                            (disj (:db/id doc))
-                           (zipmap (repeatedly #(first (pcd/generate-eids conn 1))))
+                           (zipmap (repeatedly #(d/tempid :db.part/user)))
                            (assoc (:db/id doc) (:db/id new-doc)))]
     (doseq [tx-data tx-datas]
       (def my-tx-data tx-data)
@@ -49,6 +61,6 @@
                                         pcd/datom->transaction)
                                      tx-data)
                                 {:db/id txid
-                                 :document/id (:db/id new-doc)
+                                 :transaction/document (:db/id new-doc)
                                  :transaction/broadcast true}))
         (Thread/sleep sleep-ms)))))

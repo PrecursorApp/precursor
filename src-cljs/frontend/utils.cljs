@@ -5,7 +5,6 @@
             [om.core :as om :include-macros true]
             [ajax.core :as ajax]
             [cljs-time.core :as time]
-            [frontend.env :as env]
             [goog.async.AnimationDelay]
             [goog.crypt :as crypt]
             [goog.crypt.Md5 :as md5]
@@ -14,7 +13,8 @@
             [goog.Uri]
             [goog.events :as ge]
             [goog.net.EventType :as gevt]
-            [sablono.core :as html :include-macros true])
+            [sablono.core :as html :include-macros true]
+            [frontend.utils.seq :as seq-util])
   (:require-macros [frontend.utils :refer (inspect timing defrender)])
   (:import [goog.format EmailAddress]))
 
@@ -36,7 +36,13 @@
 (def initial-query-map
   {:restore-state? (parse-uri-bool (.getParameterValue parsed-uri "restore-state"))
    :inspector? (parse-uri-bool (.getParameterValue parsed-uri "inspector"))
-   :show-landing? (parse-uri-bool (.getParameterValue parsed-uri "show-landing"))})
+   :show-landing? (parse-uri-bool (.getParameterValue parsed-uri "show-landing"))
+   :x (when-let [x (js/parseFloat (.getParameterValue parsed-uri "x"))]
+        (when-not (js/isNaN x) x))
+   :y (when-let [y (js/parseFloat (.getParameterValue parsed-uri "y"))]
+        (when-not (js/isNaN y) y))
+   :z (when-let [z (js/parseFloat (.getParameterValue parsed-uri "z"))]
+        (when-not (js/isNaN z) z))})
 
 (defn logging-enabled? []
   (aget js/window "Precursor" "logging-enabled"))
@@ -205,3 +211,21 @@
                  (goog.dom/getViewportSize))]
       {:width (.-width size)
        :height (.-height size)})))
+
+(defn react-id [x]
+  (let [id (aget x "_rootNodeID")]
+    (assert id)
+    id))
+
+(def select-in seq-util/select-in)
+
+(defn maybe-set-state! [owner korks value]
+  (when (not= (om/get-state owner korks) value)
+    (om/set-state! owner korks value)))
+
+(defn logged-in? [owner]
+  (om/get-shared owner :logged-in?))
+
+(defn cast-fn [controls-ch]
+  (fn [message data & [transient?]]
+    (put! controls-ch [message data transient?])))

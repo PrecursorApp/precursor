@@ -138,6 +138,10 @@
               :db.type/long
               :db/doc "db/id of this layer's parent. Could be called \"parent\", but want to avoid confusion with \"child\", which is taken.")
 
+   (attribute :layer/document
+              :db.type/ref
+              :db/doc "Document that the layer belongs to")
+
    ;; No logins at the moment, so we'll use this to identify users
    ;; chats rely on this, is it a good idea? Nice to have something stable across tabs
    (attribute :session/uuid
@@ -166,10 +170,6 @@
    (enum :document.privacy/public)
    (enum :document.privacy/private)
 
-   (attribute :dummy
-              :db.type/ref)
-   (enum :dummy/dummy)
-
    (attribute :document/chat-bot
               :db.type/ref)
 
@@ -194,6 +194,10 @@
    (attribute :chat/color
               :db.type/string
               :metadata/unescaped true)
+
+   (attribute :chat/document
+              :db.type/ref
+              :db/doc "Document that the chat belongs to")
 
    (attribute :server/timestamp
               :db.type/instant)
@@ -255,6 +259,17 @@
               :db.type/string
               :metadata/unescaped true)
 
+   (attribute :cust/color-name
+              :db.type/ref)
+   (enum :color.name/red)
+   (enum :color.name/orange)
+   (enum :color.name/yellow)
+   (enum :color.name/green)
+   (enum :color.name/cyan)
+   (enum :color.name/blue)
+   (enum :color.name/purple)
+   (enum :color.name/pink)
+
    (attribute :browser-setting/tool
               :db.type/ref)
    (enum :circle)
@@ -308,9 +323,24 @@
               :db/index true
               :db/doc "db/id of the document")
 
+   ;; TODO: rename document to document-id and document-ref to document,
+   ;;       then get rid of document-id
+   (attribute :permission/document-ref
+              :db.type/ref
+              :db/doc "Document that the permission grants access to")
+
    (attribute :permission/cust
               :db.type/long
               :db/doc "db/id of the user")
+
+   ;; TODO: switch cust-ref with cust, get rid of cust-id
+   (attribute :permission/cust-ref
+              :db.type/ref
+              :db/doc "cust that the permission belongs to")
+
+   (attribute :permission/team
+              :db.type/ref
+              :db/doc "team that this permission grants access to")
 
    (attribute :permission/permits
               :db.type/ref
@@ -332,34 +362,39 @@
               :db.type/long ;; TODO: make this a ref!
               :db/doc "user that granted the permission")
 
+   ;; TODO: switch granter to granter-ref
+   (attribute :permission/granter-ref
+              :db.type/ref ;; TODO: make this a ref!
+              :db/doc "cust that granted the permission")
+
    (attribute :permission/grant-date
               :db.type/instant
               :db/doc "time permission was created (or access-grant if it came first)")
 
-   ;; TODO: rename to grant-cust-permit
-   (function :pc.models.permission/grant-permit
-             '{:lang :clojure
-               :params [db doc-id cust-id permit grant-date & extra-fields]
-               :code (if-let [id (ffirst (d/q '{:find [?t]
-                                                :in [$ ?doc-id ?cust-id]
-                                                :where [[?t :permission/document ?doc-id]
-                                                        [?t :permission/cust ?cust-id]]}
-                                              db doc-id cust-id))]
-                       [[:db/add id :permission/permits permit]]
-                       (let [temp-id (d/tempid :db.part/user)]
-                         (concat
-                          [[:db/add temp-id :permission/document doc-id]
-                           [:db/add temp-id :permission/cust cust-id]
-                           [:db/add temp-id :permission/permits permit]
-                           [:db/add temp-id :permission/grant-date grant-date]]
-                          (for [[field value] extra-fields]
-                            [:db/add temp-id field value]))))}
-             :db/doc "Adds a permit, with composite uniqueness constraint on doc and cust")
+   (attribute :permission/doc-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on doc and cust.")
+
+   (attribute :permission/team-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on team and cust.")
 
    (attribute :access-request/document
               :db.type/long
               :db/index true
               :db/doc "db/id of the document")
+
+   ;; TODO: switch document-ref to document
+   (attribute :access-request/document-ref
+              :db.type/ref
+              :db/doc "document that this request belongs to")
+
+   (attribute :access-request/team
+              :db.type/ref
+              :db/doc "team that this request is requesting access to")
+
    (attribute :access-request/status
               :db.type/ref)
    ;; no granted status, b/c those are just permissions
@@ -370,6 +405,11 @@
               :db.type/long
               :db/doc "db/id of the user")
 
+   ;; TODO: switch cust-ref to cust
+   (attribute :access-request/cust-ref
+              :db.type/ref
+              :db/doc "cust that this request belongs to")
+
    (attribute :access-request/create-date
               :db.type/instant
               :db/doc "date request was created")
@@ -379,28 +419,30 @@
               :db.type/instant
               :db/doc "date request was denied")
 
-   (function :pc.models.access-request/create-request
-             '{:lang :clojure
-               :params [db doc-id cust-id create-date & extra-fields]
-               :code (when-not (ffirst (d/q '{:find [?t]
-                                              :in [$ ?doc-id ?cust-id]
-                                              :where [[?t :access-request/document ?doc-id]
-                                                      [?t :access-request/cust ?cust-id]]}
-                                            db doc-id cust-id))
-                       (let [temp-id (d/tempid :db.part/user)]
-                         (concat [[:db/add temp-id :access-request/document doc-id]
-                                  [:db/add temp-id :access-request/cust cust-id]
-                                  [:db/add temp-id :access-request/status :access-request.status/pending]
-                                  [:db/add temp-id :access-request/create-date create-date]]
-                                 (for [[field value] extra-fields]
-                                   [:db/add temp-id field value]))))}
-             :db/doc "Adds an access request, with composite uniqueness constraint on doc and cust")
+   (attribute :access-request/doc-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on doc and cust.")
+
+   (attribute :access-request/team-cust
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on team and cust.")
 
    ;; used when access is granted to someone without an account
    (attribute :access-grant/document
               :db.type/long
               :db/index true
               :db/doc "db/id of the document")
+
+   ;; TODO: switch document-ref to document
+   (attribute :access-grant/document-ref
+              :db.type/ref
+              :db/doc "document that this grant belongs to")
+
+   (attribute :access-grant/team
+              :db.type/ref
+              :db/doc "team that this grant grants access to")
 
    (attribute :access-grant/email
               :db.type/string
@@ -419,30 +461,24 @@
               :db.type/long ;; TODO: make this a ref!
               :db/doc "user that granted the permission")
 
+   ;; TODO: switch granter-ref to granter
+   (attribute :access-grant/granter-ref
+              :db.type/ref
+              :db/doc "cust that granted the permission")
+
    (attribute :access-grant/grant-date
               :db.type/instant
               :db/doc "time that the access-grant was created")
 
-   (function :pc.models.access-grant/create-grant
-             '{:lang :clojure
-               :params [db doc-id granter-id email token expiry grant-date & extra-fields]
-               :code (when-not (ffirst (d/q '{:find [?t]
-                                              :in [$ ?doc-id ?email ?now]
-                                              :where [[?t :access-grant/document ?doc-id]
-                                                      [?t :access-grant/email ?email]
-                                                      [?t :access-grant/expiry ?expiry]
-                                                      [(> ?expiry ?now)]]}
-                                            db doc-id email (java.util.Date.)))
-                       (let [temp-id (d/tempid :db.part/user)]
-                         (concat [[:db/add temp-id :access-grant/document doc-id]
-                                  [:db/add temp-id :access-grant/email email]
-                                  [:db/add temp-id :access-grant/token token]
-                                  [:db/add temp-id :access-grant/expiry expiry]
-                                  [:db/add temp-id :access-grant/grant-date grant-date]
-                                  [:db/add temp-id :access-grant/granter granter-id]]
-                                 (for [[field value] extra-fields]
-                                   [:db/add temp-id field value]))))}
-             :db/doc "Adds a grant, with composite uniqueness constraint on doc and email, accounting for expiration")
+   (attribute :access-grant/doc-email
+              :db.type/string
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on doc and email.")
+
+   (attribute :access-grant/team-email
+              :db.type/string
+              :db/unique :db.unique/identity
+              :db/doc "Used to add a composite uniqueness constraint on team and email.")
 
    (attribute :transaction/broadcast
               :db.type/boolean
@@ -452,6 +488,22 @@
               :db/doc "Annotates transaction")
    (enum :transaction.source/unmark-sent-email)
    (enum :transaction.source/mark-sent-email)
+   (enum :transaction.source/migration)
+
+   (attribute :transaction/document
+              :db.type/ref
+              :db/doc "Annotates transaction with document it belongs to")
+
+   (attribute :transaction/team
+              :db.type/ref
+              :db/doc "Annotates transaction with team it belongs to")
+
+   (attribute :migration
+              :db.type/ref
+              :db/doc "Annotates transaction with migration")
+   (enum :migration/add-frontend-ids)
+   (enum :migration/choose-colors-for-custs)
+   (enum :migration/longs->refs)
 
    ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
    (attribute :needs-email
@@ -467,7 +519,8 @@
 
    (enum :email/access-grant-created)
    (enum :email/access-request-created)
-   (enum :email/document-permission-for-customer-granted)
+   (enum :email/early-access-granted)
+   (enum :email/permission-granted)
    (enum :email/fake)
 
    (attribute :flags
@@ -475,16 +528,89 @@
               :db/cardinality :db.cardinality/many
               :db/doc "Annotate an entity with feature flags")
    (enum :flags/private-docs)
+   (enum :flags/requested-early-access)
 
    (attribute :pre-made
               :db.type/ref
               :db/doc "dummy attribute so that we can pre-generate entity ids for a migration")
-   (enum :pre-made/free-to-postgres)])
+   (enum :pre-made/free-to-postgres)
+
+   (attribute :frontend/id
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc (str "UUID whose least significant bits can be created on the frontend. "
+                           "Most significant bits are a namespace, like the document id."))
+
+   (function :pc.datomic.web-peer/assign-frontend-id
+             '{:lang :clojure
+               :params [db entity-id namespace-part multiple remainder]
+               :code (let [used-ids (map #(.getLeastSignificantBits (:v %))
+                                         (d/index-range db
+                                                        :frontend/id
+                                                        (java.util.UUID. namespace-part 0)
+                                                        (java.util.UUID. namespace-part Long/MAX_VALUE)))
+                           used-from-partition (set (filter #(= remainder (mod % multiple)) used-ids))
+                           client-part (first (remove #(contains? used-from-partition %)
+                                                      (iterate (partial + multiple) (if (zero? remainder)
+                                                                                      multiple
+                                                                                      remainder))))]
+                       [[:db/add entity-id :frontend/id (java.util.UUID. namespace-part client-part)]])}
+             :db/doc "Assigns frontend-id, meant to be used with the partition reserved for the backend")
+
+   (attribute :early-access-request/company-name
+              :db.type/string
+              :db/doc "Early access request form field.")
+
+   (attribute :early-access-request/employee-count
+              :db.type/string
+              :db/doc "Early access request form field.")
+
+   (attribute :early-access-request/use-case
+              :db.type/string
+              :db/doc "Early access request form field.")
+
+   (function :pc.datomic.web-peer/retract-entity
+             '{:lang :clojure
+               :params [db entity-id]
+               :code (let [frontend-id-e (d/entid db :frontend/id)
+                           txes (datomic.builtins/build-retract-args db entity-id)]
+                       (remove #(= (nth % 2) frontend-id-e) txes))}
+             :db/doc "Like db.fn/retractEntity, but preserves frontend ids")
+
+   (attribute :team/subdomain
+              :db.type/string
+              :db/unique :db.unique/value
+              :db/doc "precursor subdomain for a team")
+
+   (attribute :team/uuid
+              :db.type/uuid
+              :db/unique :db.unique/identity
+              :db/doc "unique id for a team that can be shared with the frontend")
+
+   (attribute :team/creator
+              :db.type/ref
+              :db/doc "Cust that created the team")
+
+   (attribute :team/intro-doc
+              :db.type/ref
+              :db/doc "Document that acts as the team's landing page")
+
+   (attribute :document/team
+              :db.type/ref
+              :db/doc "Team this doc belongs to (if it belongs to a team)")])
+
 
 (defonce schema-ents (atom nil))
 
 (defn enums []
   (set (map :db/ident (filter #(= :db.type/ref (:db/valueType %))
+                              @schema-ents))))
+
+(defn ident-ids []
+  (set (map :db/id @schema-ents)))
+
+(defn color-enums []
+  (set (map :db/ident (filter #(= "color.name" (namespace (:db/ident %)))
                               @schema-ents))))
 
 (defn get-ident [a]

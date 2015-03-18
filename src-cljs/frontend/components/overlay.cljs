@@ -9,9 +9,10 @@
             [frontend.components.common :as common]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.permissions :as permissions]
+            [frontend.components.team :as team]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
-            [frontend.scroll :as scroll]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.date :refer (date->bucket)]
@@ -22,8 +23,9 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(defn auth-link [app owner]
+(defn auth-link [app owner {:keys [source] :as opts}]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Auth Link")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -54,23 +56,14 @@
              [:span "Log out"]]]
 
            [:a.vein.make.stick
-            {:href (auth/auth-url)
-             :role "button"
-             :on-click #(do
-                          (.preventDefault %)
-                          (cast! :login-button-clicked)
-                          (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                               :event "Signup Clicked"}))
-             :on-touch-end #(do
-                              (.preventDefault %)
-                              (cast! :login-button-clicked)
-                              (cast! :track-external-link-clicked {:path (auth/auth-url)
-                                                                   :event "Signup Clicked"}))}
+            {:href (auth/auth-url :source source)
+             :role "button"}
             (common/icon :login)
             [:span "Log in"]]))))))
 
 (defn start [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Start")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -89,136 +82,76 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-         [:div.menu-view
-          [:a.vein.make
-           {:on-click         #(cast! :overlay-info-toggled)
-            :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
-            :role "button"}
-           (common/icon :info)
-           [:span "About"]]
-          [:a.vein.make
-           {:on-click         #(cast! :newdoc-button-clicked)
-            :on-touch-end #(do (cast! :newdoc-button-clicked) (.preventDefault %))
-            :href "/"
-            :target "_self"
-            :role "button"}
-           (common/icon :newdoc)
-           [:span "New Document"]]
-          [:a.vein.make
-           {:on-click         #(cast! :your-docs-opened)
-            :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
-            :role "button"}
-           (common/icon :clock)
-           [:span "Your Documents"]]
-          ;; TODO: should this use the permissions model? Would have to send some
-          ;;       info about the document
-          (if (auth/has-document-access? app (:document/id app))
+          [:div.menu-view
+           [:div.veins
             [:a.vein.make
-             {:on-click         #(cast! :sharing-menu-opened)
-              :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
+             {:on-click         #(cast! :overlay-info-toggled)
+              :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
+              :role "button"}
+             (common/icon :info)
+             [:span "About"]]
+            [:a.vein.make
+             {:href "/new"
+              :role "button"}
+             (common/icon :newdoc)
+             [:span "New Document"]]
+            [:a.vein.make
+             {:on-click         #(cast! :your-docs-opened)
+              :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
+              :role "button"}
+             (common/icon :clock)
+             [:span "Your Documents"]]
+            ;; TODO: should this use the permissions model? Would have to send some
+            ;;       info about the document
+            (if (auth/has-document-access? app (:document/id app))
+              [:a.vein.make
+               {:on-click         #(cast! :sharing-menu-opened)
+                :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
+                :role "button"}
+               (common/icon :share)
+               [:span "Sharing"]]
+
+              [:a.vein.make
+               {:on-click         #(cast! :document-permissions-opened)
+                :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
+                :role "button"}
+               (common/icon :users)
+               [:span "Request Access"]])
+            [:a.vein.make
+             {:on-click         #(cast! :shortcuts-menu-opened)
+              :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
+              :class "mobile-hidden"
+              :role "button"}
+             (common/icon :command)
+             [:span "Shortcuts"]]
+             (om/build auth-link app {:opts {:source "start-overlay"}})
+            ]])))))
+
+(defn team-start [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Overlay Team Start")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
+        (html
+          [:div.menu-view
+           [:div.veins
+            [:a.vein.make
+             {:on-click #(cast! :team-settings-opened)
               :role "button"}
              (common/icon :share)
-             [:span "Sharing"]]
-
+             [:span "Permissions"]]
             [:a.vein.make
-             {:on-click         #(cast! :document-permissions-opened)
-              :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
+             {:on-click #(cast! :team-docs-opened)
               :role "button"}
-             (common/icon :users)
-             [:span "Request Access"]])
-          [:a.vein.make
-           {:on-click         #(cast! :shortcuts-menu-opened)
-            :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
-            :class "mobile-hidden"
-            :role "button"}
-           (common/icon :command)
-           [:span "Shortcuts"]]
-          [:a.vein.make
-           {:href "/blog"
-            :target "_self"
-            :role "button"}
-           (common/icon :blog)
-           [:span "Blog"]]
-
-          (om/build auth-link app)])))))
-
-(defn format-access-date [date]
-  (date->bucket date :sentence? true))
-
-;; TODO: add types to db
-(defn access-entity-type [access-entity]
-  (cond (contains? access-entity :permission/document)
-        :permission
-
-        (contains? access-entity :access-grant/document)
-        :access-grant
-
-        (contains? access-entity :access-request/document)
-        :access-request
-
-        :else nil))
-
-;; TODO: this should call om/build somehow
-(defmulti render-access-entity (fn [entity cast!]
-                                 (access-entity-type entity)))
-
-(defmethod render-access-entity :permission
-  [entity cast!]
-  [:div.access-card.make
-   [:div.access-avatar
-    [:img
-     {:src (utils/gravatar-url (:permission/cust entity))}]]
-   [:div.access-details
-    [:span
-     {:title (:permission/cust entity)} (:permission/cust entity)]
-    [:span.access-status
-     (str "Was granted access " (format-access-date (:permission/grant-date entity)))]]])
-
-(defmethod render-access-entity :access-grant
-  [entity cast!]
-  [:div.access-card.make
-   [:div.access-avatar
-    [:img
-     {:src (utils/gravatar-url (:access-grant/email entity))}]]
-   [:div.access-details
-    [:span
-     {:title (:access-grant/email entity)} (:access-grant/email entity)]
-    [:span.access-status
-     (str "Was granted access " (format-access-date (:access-grant/grant-date entity)))]]])
-
-(defmethod render-access-entity :access-request
-  [entity cast!]
-  [:div.access-card.make
-   {:class (if (= :access-request.status/denied (:access-request/status entity))
-             "denied"
-             "requesting")}
-   [:div.access-avatar
-    [:img {:src (utils/gravatar-url (:access-request/cust entity))}]]
-   [:div.access-details
-    [:span {:title (:access-request/cust entity)} (:access-request/cust entity)]
-    [:span.access-status
-     (if (= :access-request.status/denied (:access-request/status entity))
-       (str "Was denied access " (format-access-date (:access-request/deny-date entity)))
-       (str "Requested access " (format-access-date (:access-request/create-date entity))))]]
-   [:div.access-options
-    (when-not (= :access-request.status/denied (:access-request/status entity))
-      [:a.access-option
-       {:role "button"
-        :class "negative"
-        :title "Decline"
-        :on-click #(cast! :access-request-denied {:request-id (:db/id entity)
-                                                  :doc-id (:access-request/document entity)})}
-       (common/icon :times)])
-    [:a.access-option
-     {:role "button"
-      :class "positive"
-      :title "Approve"
-      :on-click #(cast! :access-request-granted {:request-id (:db/id entity)
-                                                 :doc-id (:access-request/document entity)})}
-     (common/icon :check)]]])
+             (common/icon :clock)
+             [:span "Team Documents"]]
+            ]])))))
 
 (defn private-sharing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Private Sharing")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -246,7 +179,7 @@
             access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
-          [:article
+          [:div.content
            [:h2.make
             "This document is private."]
            [:p.make
@@ -269,49 +202,47 @@
               :data-placeholder-nil "What's your teammate's email?"
               :data-placeholder-forgot "Don't forget to submit!"}]]
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
-             (render-access-entity access-entity cast!))])))))
+             (permissions/render-access-entity access-entity cast!))])))))
 
 (defn public-sharing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Public Sharing")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             invite-email (get-in app state/invite-email-path)]
         (html
-          [:article
+          [:div.content
            [:h2.make
             "This document is public."]
-           [:p.make
-            "It's visible to anyone with the url.
-            Email a friend to invite them to collaborate."]
            (if-not (:cust app)
-             [:a.make
-              {:href (auth/auth-url)
-               :role "button"
-               :on-click #(do
-                            (.preventDefault %)
-                            (cast! :track-external-link-clicked
-                                   {:path (auth/auth-url)
-                                    :event "Signup Clicked"
-                                    :properties {:source "username-overlay"}}))}
-              "Sign Up"]
+             (list
+               [:p.make
+                "It's visible to anyone with the url.
+                Sign in with your Google account to send an invite or give someone your url."]
+               [:div.calls-to-action.make
+                (om/build common/google-login {:source "Public Sharing Menu"})])
 
-             [:form.menu-invite-form.make
-              {:on-submit #(do (cast! :invite-submitted)
-                             false)
-               :on-key-down #(when (= "Enter" (.-key %))
-                               (cast! :email-invite-submitted)
-                               false)}
-              [:input
-               {:type "text"
-                :required "true"
-                :data-adaptive ""
-                :value (or invite-email "")
-                :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
-              [:label
-               {:data-placeholder "Collaborator's email"
-                :data-placeholder-nil "What's your collaborator's email?"
-                :data-placeholder-forgot "Don't forget to submit!"}]])
+             (list
+               [:p.make
+                "It's visible to anyone with the url.
+                Email a friend to invite them to collaborate."]
+               [:form.menu-invite-form.make
+                {:on-submit #(do (cast! :invite-submitted)
+                               false)
+                 :on-key-down #(when (= "Enter" (.-key %))
+                                 (cast! :email-invite-submitted)
+                                 false)}
+                [:input
+                 {:type "text"
+                  :required "true"
+                  :data-adaptive ""
+                  :value (or invite-email "")
+                  :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+                [:label
+                 {:data-placeholder "Collaborator's email"
+                  :data-placeholder-nil "What's your collaborator's email?"
+                  :data-placeholder-forgot "Don't forget to submit!"}]]))
            (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
              [:div response])
            ;; TODO: keep track of invites
@@ -319,6 +250,7 @@
 
 (defn sharing [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Sharing")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -338,173 +270,133 @@
             invite-email (get-in app state/invite-email-path)
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)
-            private? (= :document.privacy/private (:document/privacy doc))]
+            private? (= :document.privacy/private (:document/privacy doc))
+            cant-edit-reason (cond (:team app)
+                                   nil
+
+                                   (not (contains? (get-in app [:cust :flags]) :flags/private-docs))
+                                   :no-private-docs-flag
+
+                                   (not (auth/owner? @db doc (get-in app [:cust])))
+                                   :not-creator)]
         (html
          [:div.menu-view
           (if private?
             (om/build private-sharing app)
             (om/build public-sharing app))
 
-          (when (and (contains? (get-in app [:cust :flags]) :flags/private-docs)
-                     (auth/owner? @db doc (get-in app [:cust])))
+          (case cant-edit-reason
+            :no-private-docs-flag
+            [:a.vein.make.stick.external {:href "/pricing"}
+             [:span "Need private docs? Start a free trial."]
+             (common/icon :arrow-right)]
+
+
             [:form.privacy-select.vein.make.stick
-             [:input.privacy-radio
-              {:type "radio"
-               :hidden "true"
-               :id "privacy-public"
-               :name "privacy"
-               :checked (not private?)
-               :onChange #(cast! :document-privacy-changed
-                                 {:doc-id doc-id
-                                  :setting :document.privacy/public})}]
-             [:label.privacy-label
-              {:for "privacy-public"
-               :role "button"}
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-public"
+                                    :name "privacy"
+                                    :checked (not private?)
+                                    :disabled (boolean cant-edit-reason)
+                                    :onChange #(if cant-edit-reason
+                                                 (utils/stop-event %)
+                                                 (cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/public}))}]
+             [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
+                                    :for "privacy-public"
+                                    :role "button"}
               (common/icon :globe)
-              [:span "Public"]]
-             [:input.privacy-radio
-              {:type "radio"
-               :hidden "true"
-               :id "privacy-private"
-               :name "privacy"
-               :checked private?
-               :onChange #(cast! :document-privacy-changed
-                                 {:doc-id doc-id
-                                  :setting :document.privacy/private})}]
-             [:label.privacy-label
-              {:for "privacy-private"
-               :role "button"}
+              [:span "Public"]
+              (when (= :not-creator cant-edit-reason)
+                [:small "(privacy change requires owner)"])]
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
+                                    :id "privacy-private"
+                                    :name "privacy"
+                                    :checked private?
+                                    :disabled (boolean cant-edit-reason)
+                                    :onChange #(if cant-edit-reason
+                                                 (utils/stop-event %)
+                                                 (cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/private}))}]
+             [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
+                                    :for "privacy-private"
+                                    :role "button"}
               (common/icon :lock)
-              [:span "Private"]]])])))))
+              [:span "Private"]
+              (when (= :not-creator cant-edit-reason)
+                [:small "(privacy change requires owner)"])]])])))))
 
 (defn info [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Info")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
           [:div.menu-view
-           [:article
+           [:div.content
             [:h2.make
              "What is Precursor?"]
             [:p.make
              "Precursor is a no-nonsense prototyping tool.
              Use it for wireframing, sketching, and brainstorming.
-             Invite your team to collaborate instantly.
-             Have feedback or a great idea?
-             Say "
-             [:a
-              {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
-               :title "We love feedback, good or bad."}
-              "hi@prcrsr.com"]
-             " or on "
-             [:a
-              {:href "https://twitter.com/prcrsr_app"
-               :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-               :title "@prcrsr_app"
-               :target "_blank"}
-              "Twitter"]
-             "."]
-            (if (:cust app)
-              [:a.make
-               {:on-click         #(cast! :overlay-menu-closed)
-                :on-touch-end #(do (cast! :overlay-menu-closed) (.preventDefault %))
-                :role "button"} "Okay"]
+             Invite your team to collaborate instantly."
+             ]
+            (when-not (:cust app)
               (list
                 [:p.make
-                 "Sign up and we'll even keep track of all your docs.
-                 Never lose a great idea again!"]
-                [:a.make
-                 {:href (auth/auth-url)
-                  :role "button"
-                  :on-click #(do
-                               (.preventDefault %)
-                               (cast! :track-external-link-clicked
-                                      {:path (auth/auth-url)
-                                       :event "Signup Clicked"
-                                       :properties {:source "username-overlay"}}))
-                  :on-touch-end #(do
-                                   (.preventDefault %)
-                                   (cast! :track-external-link-clicked
-                                          {:path (auth/auth-url)
-                                           :event "Signup Clicked"
-                                           :properties {:source "username-overlay"}}))}
-                 "Sign Up"]))]
+                 "Everyone's ideas made with Precursor save automatically.
+                 And if you sign in with Google we'll even keep track of which ones are yours."]
+                [:div.calls-to-action.make
+                 (om/build common/google-login {:source "Username Menu"})]))
+            [:a.vein.make
+             {:href "/home"
+              :role "button"}
+             [:span "Home"]]
+            [:a.vein.make
+             {:href "/pricing"
+              :role "button"}
+             [:span "Pricing"]]
+            [:a.vein.make
+             {:href "/blog"
+              :target "_self"
+              :role "button"}
+             [:span "Blog"]]
+            [:a.vein.make
+             {:href "https://twitter.com/PrecursorApp"
+              :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+              :target "_blank"
+              :title "@PrecursorApp"
+              :role "button"}
+             [:span "Twitter"]]
+            [:a.vein.make
+             {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
+              :target "_self"
+              :role "button"}
+             [:span "Email"]]]
            (common/mixpanel-badge)])))))
 
 (defn shortcuts [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Shortcuts")
     om/IInitState (init-state [_] {:copy-paste-works? (ua/isChrome)})
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          [:article
+          [:div.content
            [:table.shortcuts-items
             [:tbody
              ;;
-             ;; keystrokes beginning with "option"
-             ;;
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
-                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-              [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
-                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-              [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
-             ;;
-             ;; keystrokes beginning with "shift"
-             ;;
-             [:tr.make
-              [:td {:col-span "2"}]]
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
-                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-              [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
-                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-              [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
-             ;;
-             ;; keystrokes beginning with "command"
-             ;;
-             [:tr.make
-              [:td {:col-span "2"}]]
-             (when (om/get-state owner [:copy-paste-works?])
-               (list
-                [:tr.make
-                 [:td
-                  [:div.shortcuts-keys
-                   [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                   [:div.shortcuts-key {:title "C Key"} "C"]]]
-                 [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
-                [:tr.make
-                 [:td
-                  [:div.shortcuts-keys
-                   [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                   [:div.shortcuts-key {:title "V Key"} "V"]]]
-                 [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]))
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                [:div.shortcuts-key {:title "Z Key"} "Z"]]]
-              [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
-             ;;
              ;; single keystrokes
              ;;
-             [:tr.make
-              [:td {:col-span "2"}]]
              [:tr.make
               [:td [:div.shortcuts-key {:title "V Key"} "V"]]
               [:td [:div.shortcuts-result {:title "Switch to Select Tool."} "Select"]]]
@@ -538,31 +430,85 @@
              [:tr.make
               [:td [:div.shortcuts-key {:title "Escape Key"} (common/icon :esc)]]
               [:td [:div.shortcuts-result {:title "Cancel action or close menu."} "Cancel"]]]
+             ;;
+             ;; keystrokes beginning with "command"
+             ;;
+             [:tr.make
+              [:td {:col-span "2"}]]
+             (when (om/get-state owner [:copy-paste-works?])
+               (list
+                (html
+                 [:tr.make
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "C Key"} "C"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]])
+                (html
+                 [:tr.make
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "V Key"} "V"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]])))
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                [:div.shortcuts-key {:title "Z Key"} "Z"]]]
+              [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
+             ;;
+             ;; keystrokes beginning with "option"
+             ;;
+             [:tr.make
+              [:td {:col-span "2"}]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+              [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+              [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
+             ;;
+             ;; keystrokes beginning with "shift"
+             ;;
+             [:tr.make
+              [:td {:col-span "2"}]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+              [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+              [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
              ]]]])))))
 
 (defn username [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay Username")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          [:article
+          [:div.content
            [:h2.make
             "Let's change that name."]
            [:p.make
-            "Sign up to change how your name appears in chat.
-            Let your team know who you are while you collaborate together."]
-           [:a.make
-            {:href (auth/auth-url)
-             :role "button"
-             :on-click #(do
-                          (.preventDefault %)
-                          (cast! :track-external-link-clicked
-                                 {:path (auth/auth-url)
-                                  :event "Signup Clicked"
-                                  :properties {:source "username-overlay"}}))}
-            "Sign Up"]]])))))
+            "Chatting with teammates is easier when you can identify each other.
+            Sign in with Google and you'll be able to change your name that gets displayed in chat."]
+           [:div.calls-to-action.make
+            (om/build common/google-login {:source "Username Menu"})]]])))))
 
 (def overlay-components
   {:info {:title "About"
@@ -577,10 +523,18 @@
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
-                          :component document-access/permission-denied-overlay}})
+                          :component document-access/permission-denied-overlay}
+
+   :roster {:title "Team"
+            :component team-start}
+   :team-settings {:title "Team Permissions"
+                   :component team/team-settings}
+   :team-doc-viewer {:title "Team Documents"
+                     :component doc-viewer/team-doc-viewer}})
 
 (defn overlay [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Overlay")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -590,9 +544,8 @@
          [:div.menu
           [:div.menu-header
            (for [component overlay-components]
-            [:h4
-             {:title title}
-             (:title component)])]
+             (html
+              [:h4.menu-heading {:title title :key title} title]))]
           [:div.menu-body
            (for [component overlay-components]
             (om/build (:component component) app))]])))))

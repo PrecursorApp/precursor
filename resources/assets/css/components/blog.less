@@ -21,6 +21,9 @@
     max-width: (@tile * 10);
     margin: 0 auto;
     padding: 0 1em;
+    &.blogpost-footnote {
+      padding: 0 1.5em;
+    }
     &.wide {
       max-width: (@tile * 15);
     }
@@ -50,18 +53,6 @@
   }
   &:not(:hover) {
     color: @gray_dark;
-  }
-}
-
-.navigation {
-  .flex(0 0 @tile);
-  .flexy(center, space-between);
-  padding: 0 1.5em;
-  &.header {
-    border-bottom: 1px solid @gray_lighter;
-  }
-  &.footer {
-    border-top: 1px solid @gray_lighter;
   }
 }
 .blogroll-post {
@@ -149,12 +140,12 @@
     text-align: center;
     margin: 1.5em auto;
     padding: 1em 2em;
-    .logomark-fill {
+    .fill-logomark {
       fill: @gray_light;
       transition: @run_slow @bezier_fadein;
     }
     &:hover {
-      .logomark-fill {
+      .fill-logomark {
         fill: darken(@gray_light, 8);
         transition-duration: @run_fast;
       }
@@ -167,6 +158,7 @@
     &:after {
       opacity: 0;
     }
+    [data-caption],
     [data-caption-white],
     [data-caption-black] {
       &:after {
@@ -177,6 +169,11 @@
         transition+: color     @run_fast @bezier_fadein    @run_fast;
         transition+: padding   @run_fast @bezier_deform @run_fast;
         transition+: font-size @run_fast @bezier_deform @run_fast;
+      }
+    }
+    [data-caption] {
+      &:after {
+        color: @blue;
       }
     }
     [data-caption-white] {
@@ -200,4 +197,20 @@
     width: 100%;
     height: 100%;
   }
+}
+.blogpost-footnote {
+  color: @gray;
+  font-size: .75em;
+  margin-top: 4em !important; // TODO come fix this soon!
+  p {
+    line-height: 1.25;
+    a {
+      &:not(:hover) {
+        color: @gray;
+      }
+    }
+  }
+}
+.blogpost-author {
+  margin-top: 3em !important; // TODO come fix this soon!
 }

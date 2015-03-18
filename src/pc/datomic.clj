@@ -2,6 +2,7 @@
   (:require [clojure.core.async :as async]
             [clojure.tools.logging :refer (infof)]
             [datomic.api :refer [db q] :as d]
+            [pc.utils]
             [pc.profile])
   (:import java.util.UUID))
 
@@ -52,12 +53,6 @@
 (defn uuid []
   (UUID/randomUUID))
 
-(defn generate-eids [conn tempid-count]
-  ;; TODO: support for multiple parts
-  (let [tempids (take tempid-count (repeatedly #(d/tempid :db.part/user)))
-        transaction (d/transact conn (mapv (fn [tempid] {:db/id tempid :dummy :dummy/dummy}) tempids))]
-    (mapv (fn [tempid] (d/resolve-tempid (:db-after @transaction) (:tempids @transaction) tempid)) tempids)))
-
 ;; should we convert a to its name (it's currently using its eid)?
 ;; Would require a reference to the db
 (defn datom->transaction [datom]
@@ -103,9 +98,12 @@
 
 (defn setup-tx-report-ch [conn]
   (let [queue (d/tx-report-queue conn)]
-    (future (while true
-              (let [transaction (.take queue)]
-                (async/put! tx-report-ch transaction))))))
+    (def report-future
+      (pc.utils/reporting-future
+       (while true
+         (let [transaction (.take queue)]
+           (assert (async/put! tx-report-ch transaction)
+                   "can't put transaction on tx-report-ch")))))))
 
 (defn init []
   (infof "Creating default database if it doesn't exist: %s"
@@ -114,3 +112,6 @@
   (infof "Connected to: %s" (conn))
   (infof "forwarding report-queue to tx-report-ch")
   (setup-tx-report-ch (conn)))
+
+(defn shutdown []
+  (d/remove-tx-report-queue (conn)))

@@ -4,10 +4,13 @@
             [clojure.tools.logging :as log]
             [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.doc :as doc-model]
-            [pc.models.layer :as layer-model])
-  (:import [java.io PushbackReader]))
+            [pc.models.layer :as layer-model]
+            [pc.util.md5 :as md5])
+  (:import java.io.PushbackReader
+           java.util.UUID))
 
 (defn read-doc [doc]
   (edn/read (PushbackReader. (io/reader (io/resource (format "docs/%s.edn" doc))))))
@@ -22,12 +25,16 @@
                                                   :document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                                                  (when (:cust/uuid cust) {:document/creator (:cust/uuid cust)})))]
     (if-let [layers (get (docs) document-name)]
-      @(d/transact (pcd/conn) (conj (map #(assoc %
-                                            :db/id (d/tempid :db.part/user)
-                                            :document/id (:db/id doc))
-                                         layers)
+      @(d/transact (pcd/conn) (conj (map-indexed
+                                     (fn [i l]
+                                       (let [temp-id (d/tempid :db.part/user)]
+                                         (assoc l
+                                                :db/id temp-id
+                                                :layer/document (:db/id doc)
+                                                :frontend/id (UUID. (:db/id doc) (inc i)))))
+                                     layers)
                                     (merge {:db/id (d/tempid :db.part/tx)
-                                            :document/id (:db/id doc)}
+                                            :transaction/document (:db/id doc)}
                                            (when (:cust/uuid cust)
                                              {:cust/uuid (:cust/uuid cust)}))))
       (log/infof "requested duplicate doc for non-existent doc %s" document-name))
@@ -38,8 +45,16 @@
    after it has been saved."
   [doc-id doc-name]
   (spit (format "resources/docs/%s.edn" doc-name)
-        (pr-str (map #(dissoc % :db/id :document/id)
+        (pr-str (map #(dissoc (into {} %) :db/id :layer/document)
                      ;; we may want to save groups at some point in the future, right now they
                      ;; just take up space.
                      (remove #(= :layer.type/group (:layer/type %))
                              (layer-model/find-by-document (pcd/default-db) {:db/id doc-id}))))))
+
+(defn last-modified-instant [db doc]
+  (ffirst (d/q '[:find (max ?i)
+                 :in $ ?doc-id
+                 :where
+                 [?t :transaction/document ?doc-id]
+                 [?t :db/txInstant ?i]]
+               db (:db/id doc))))

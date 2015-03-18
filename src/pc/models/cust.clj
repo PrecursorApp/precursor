@@ -1,11 +1,12 @@
 (ns pc.models.cust
   "cust is what would usually be called user, we call it cust b/c
    Clojure has already taken the name user in the repl"
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.set :as set]
+            [clojure.tools.logging :as log]
+            [datomic.api :refer [db q] :as d]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
-            [pc.models.flag :as flag-model]
-            [datomic.api :refer [db q] :as d]))
+            [pc.models.flag :as flag-model]))
 
 
 ;; We'll pretend we have a type here
@@ -18,10 +19,12 @@
                                      ;; probably a uuid type
                                      :cust/http-sesion-key String}))
 
+(def admin-emails #{"dwwoelfel@gmail.com" "danny.newidea@gmail.com"})
+
 (defn all [db]
-  (pcd/touch-all '{:find [?e]
-                   :where [[?e :google-account/sub]]}
-                 db))
+  (d/q '{:find [[?e ...]]
+         :where [[?e :google-account/sub]]}
+       db))
 
 (defn find-by-id [db id]
   (let [candidate (d/entity db id)]
@@ -91,3 +94,57 @@
                (concat
                 (schema/browser-setting-idents)
                 [:cust/email :cust/uuid :cust/name :flags])))
+
+(defn public-read-api [cust]
+  (select-keys cust [:cust/uuid :cust/name :cust/color-name]))
+
+(defn public-read-api-per-uuids
+  "Returns hashmap of uuid to cust-map, e.g. {#uuid '123' {:cust/uuid '123' :cust/name 'd'}}"
+  [db uuids]
+  ;; TODO: what should your team know about you?
+  (let [uuids (into #{} uuids)
+        cust-ids (d/q '{:find [[?t ...]]
+                        :in [$ ?uuids]
+                        :where [[?t :cust/email]
+                                [?t :cust/uuid ?uuid]
+                                [(contains? ?uuids ?uuid)]]}
+                      db uuids)]
+    (reduce (fn [acc cust-id]
+              (let [cust (d/entity db cust-id)]
+                (assoc acc (:cust/uuid cust) (select-keys cust [:cust/uuid :cust/name :cust/color-name])))) {} cust-ids)))
+
+(defn cust-uuids-for-doc [db doc-id]
+  (d/q '{:find [[?uuid ...]]
+         :in [$ ?doc-id]
+         :where [[?t :transaction/document ?doc-id]
+                 [?t :cust/uuid ?uuid]]}
+       db doc-id))
+
+(defn choose-color
+  "Finds a color for the given uuid (either a cust/uuid or a session/uuid),
+   tries to pick a color that won't conflict with any of his collaborators."
+  [db uuid]
+  (let [doc-ids (d/q '{:find [[?doc-id ...]]
+                       :in [$ ?uuid]
+                       :where [(or [?t :cust/uuid ?uuid]
+                                   [?t :session/uuid ?uuid])
+                               [?t :transaction/document ?doc-id]]}
+                     db uuid)
+        cust-uuids (mapcat #(d/q '{:find [[?cust-uuid ...]]
+                                   :in [$ ?doc-id]
+                                   :where [[?t :transaction/document ?doc-id]
+                                           [?t :cust/uuid ?cust-uuid]]}
+                                 db %)
+                           doc-ids)
+        collab-colors (remove nil? (map #(d/q '{:find [?color .]
+                                                :in [$ ?uuid]
+                                                :where [[?t :cust/color-name ?color]
+                                                        [?t :cust/uuid ?uuid]]}
+                                              db %)
+                                        (disj (set cust-uuids) uuid)))
+        all-colors (schema/color-enums)]
+    (or (some-> (set/difference all-colors (set collab-colors))
+          seq
+          rand-nth)
+        ;; get the least-frequent color if they're all taken
+        (ffirst (sort-by last (frequencies collab-colors))))))

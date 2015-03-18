@@ -1,0 +1,73 @@
+.om-instrumentation {
+  .user-select(none);
+  pointer-events: none;
+  color: @gray;
+  position: fixed;
+  z-index: @zindex_instrumentation;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+.instrumentation-table {
+  .animation(in-fade-top-soft @run_slower);
+  background-color: fade(@black, 60);
+  font-family: @font_mono;
+  font-size: .75rem;
+  line-height: 2;
+  width: 100%;
+  th {
+    color: @white;
+    line-height: 1rem;
+    padding: @menu_padding 0;
+    text-transform: uppercase;
+    text-align: left;
+    &:not(:first-child) {
+      text-align: center;
+    }
+    &.left {
+      text-align: left;
+    }
+    &.right {
+      text-align: right;
+    }
+  }
+  th,
+  td {
+    white-space: pre-wrap;
+    &:first-child {
+      padding-left: @menu_padding;
+    }
+  }
+  tbody {
+    tr {
+      &:nth-child(odd) {
+        background-color: fade(@black, 40);
+      }
+    }
+    td {
+      &:nth-child(even) {
+        text-align: right;
+        border-right: 1px dashed;
+        padding-right: .5em;
+      }
+      &:nth-child(odd) {
+        text-align: left;
+        padding-left: .5em;
+      }
+      &:first-child {
+        padding-left: @menu_padding;
+      }
+    }
+  }
+  tfoot {
+    td {
+      line-height: 1rem;
+      text-align: center;
+      padding: @menu_padding 0;
+    }
+  }
+  small {
+    font-size: 1em;
+    opacity: .5;
+  }
+}
