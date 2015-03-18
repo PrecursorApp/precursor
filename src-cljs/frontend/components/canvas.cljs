@@ -706,10 +706,20 @@
                                          :layer/end-x end-x
                                          :layer/end-y end-y
                                          :layer/type :layer.type/line
-                                         ))))))))))
+                                         :markerEnd "url(#arrow-point)"))))))))))
 
-(defn canvas-grid [camera]
+(defn defs [camera]
   (dom/defs nil
+    (dom/marker #js {:id "arrow-point"
+                     :viewBox "0 0 10 10"
+                     :refX 5
+                     :refY 5
+                     :markerUnits "strokeWidth"
+                     :markerWidth 5
+                     :markerHeight 5
+                     :orient "auto"
+                     :fill "#ccc"}
+                (dom/path #js {:d "M 0 0 L 10 5 L 0 10 z"}))
     (dom/pattern #js {:id           "small-grid"
                       :width        (str (cameras/grid-width camera))
                       :height       (str (cameras/grid-height camera))
@@ -849,7 +859,7 @@
                                                             (cameras/set-zoom c (cameras/screen-event-coords event) (partial + (* -0.002 dy)))
                                                             (cameras/move-camera c dx (- dy))))))
                                  (utils/stop-event event))}
-                 (canvas-grid camera)
+                 (defs camera)
 
                  (when (cameras/show-grid? camera)
                    (dom/rect #js {:id        "background-grid"
