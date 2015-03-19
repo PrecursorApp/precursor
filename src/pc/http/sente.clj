@@ -590,8 +590,8 @@
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))]
     (let [txes (replay/get-document-transactions (:db req) doc)]
       (doseq [tx txes]
-        (Thread/sleep 250)
-        ((:send-fn @sente-state) client-id [:datomic/transaction (datomic-common/frontend-document-transaction tx)])))))
+        ((:send-fn @sente-state) client-id [:datomic/transaction (datomic-common/frontend-document-transaction tx)])
+        (Thread/sleep (min 500 (get ?data :sleep-ms 250)))))))
 
 (defmethod ws-handler :team/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]

@@ -936,8 +936,15 @@
 (defmethod post-handle-cmd-chat "replay"
   [state cmd body]
   (@frontend.careful/om-setup-debug)
-  (js/setTimeout #(sente/send-msg (:sente state) [:frontend/replay-transactions {:document/id (:document/id state)}])
-                 2000)
+  (let [[_ delay-ms sleep-ms] (re-find #"/replay (\d+)s*(\d*)" body)]
+    (js/setTimeout #(sente/send-msg (:sente state) [:frontend/replay-transactions
+                                                    {:document/id (:document/id state)
+                                                     :sleep-ms (or (when (seq sleep-ms)
+                                                                     (js/parseInt sleep-ms))
+                                                                   250)}])
+                   (or (when (seq delay-ms)
+                         (js/parseInt delay-ms))
+                       2000)))
   ::stop-save)
 
 (defmethod post-control-event! :chat-submitted
