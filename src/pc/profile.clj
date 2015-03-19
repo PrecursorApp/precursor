@@ -89,3 +89,6 @@
   "Determines whether to bcc audit-log@ on every email"
   []
   (prod?))
+
+(defn allow-mismatched-servername? []
+  (not (prod?)))
