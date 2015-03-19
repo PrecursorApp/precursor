@@ -159,6 +159,12 @@
   (-> state
     (update-in [:camera] cameras/previous)))
 
+(defmethod handle-keyboard-shortcut :arrow-tool
+  [state shortcut-name]
+  (-> state
+    (cancel-drawing)
+    (assoc-in [:drawing :relation-in-progress?] true)))
+
 (defmethod control-event :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
@@ -753,6 +759,16 @@
           (get-in current-state [:menu :open?]))
      (cast! [:menu-closed])
 
+     (and (get-in previous-state [:drawing :relation-in-progress?])
+          (seq (get-in current-state [:drawing :finished-relation :origin-layer])))
+     (do
+       (d/transact! db [[:db/add
+                         (get-in current-state [:drawing :finished-relation :origin-layer :db/id])
+                         :layer/points-to
+                         (get-in current-state [:drawing :finished-relation :dest-layer-id])]]
+                    {:can-undo? true})
+       (maybe-notify-subscribers! current-state x y))
+
      (and (not (get-in previous-state [:drawing :moving?]))
           (every? #(= :layer.type/text (:layer/type %)) layers))
      nil
@@ -763,16 +779,6 @@
                         (doseq [layer-group (partition-all 100 layers)]
                           (d/transact! db layer-group {:can-undo? true})))
                       (maybe-notify-subscribers! current-state x y))
-
-     (and (get-in previous-state [:drawing :relation-in-progress?])
-          (get-in current-state [:drawing :finished-relation :dest-layer-id]))
-     (do
-       (d/transact! db [[:db/add
-                         (get-in current-state [:drawing :finished-relation :origin-layer :db/id])
-                         :layer/points-to
-                         (get-in current-state [:drawing :finished-relation :dest-layer-id])]]
-                    {:can-undo? true})
-       (maybe-notify-subscribers! current-state x y))
 
      :else nil)))
 

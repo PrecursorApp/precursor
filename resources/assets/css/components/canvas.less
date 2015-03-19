@@ -53,6 +53,15 @@
       cursor: move;
     }
   }
+  .arrow-handle-group {
+    transition: @run @bezier_deform;
+    opacity: 0;
+    cursor: se-resize;
+    cursor: cell;
+    &:hover {
+      opacity: 1;
+    }
+  }
 }
 .grid-lines-large {
   fill: none;
@@ -132,6 +141,7 @@
     }
   }
 }
+
 .text-layer {
   .user-select(none);
   fill: @gray_light;

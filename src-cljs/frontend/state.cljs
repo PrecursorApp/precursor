@@ -45,7 +45,8 @@
                         :shortcuts-menu #{#{"shift" "/"}}
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
-                        :return-from-origin #{#{"2"}}}
+                        :return-from-origin #{#{"2"}}
+                        :arrow-tool #{#{"ctrl" "shift"}}}
    :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}

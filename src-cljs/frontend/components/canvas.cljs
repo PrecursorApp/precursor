@@ -200,21 +200,6 @@
                                     (when invalid? "invalid "))
                     :key (str (:db/id layer) live?)}
 
-          (when show-arrow-handle?
-            (let [center (layers/center layer)]
-              (dom/rect #js {:className "arrow-handle"
-                             :x (- (first center) 5)
-                             :y (- (second center) 5)
-                             :width 10
-                             :height 10
-                             :fill "green"
-                             :onMouseDown (fn [e]
-                                            (utils/stop-event e)
-                                            (cast! :layer-relation-started
-                                                   {:layer layer
-                                                    :x (first (cameras/screen-event-coords e))
-                                                    :y (second (cameras/screen-event-coords e))}))})))
-
           (when (and show-handles? (layers/circle? layer))
             (let [layer (layers/normalized-abs-coords layer)]
               (dom/rect #js {:className "handle-outline"
@@ -620,7 +605,8 @@
     (render [_]
       (let [drawing (cursors/observe-drawing owner)]
         (dom/g nil
-          (when (:relation-in-progress? drawing)
+          (when (and (:relation-in-progress? drawing)
+                     (get-in drawing [:relation :layer]))
             (let [layer (get-in drawing [:relation :layer])
                   layer-center (layers/center layer)]
               (dom/g #js {:className "layer-arrows"}
@@ -671,6 +657,47 @@
             (conj acc (:e d) (:v d)))
           #{} (d/datoms db :aevt :layer/points-to)))
 
+(defn arrow-handle [layer owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            [rx ry] (om/get-state owner :mouse-pos)
+            camera (cursors/observe-camera owner)
+            center (layers/center layer)]
+        (dom/g #js {:className "arrow-handle-group"}
+          (dom/line #js {:className "arrow-handle"
+                         :x1 (first center)
+                         :x2 (or rx (+ (first center) 10))
+                         :y1 (second center)
+                         :y2 (or ry (+ (second center) 10))
+                         :fill "#ccc"
+                         :stroke "#ccc"
+                         :strokeDasharray "2, 2"
+                         :strokeWidth 2
+                         :markerEnd "url(#arrow-point)"})
+          (dom/rect #js {:className "arrow-handle"
+                                        ;:x (- (first center) 10)
+                         :x (min (:layer/start-x layer) (:layer/end-x layer))
+                                        ;:y (- (second center) 10)
+                         :y (min (:layer/start-y layer) (:layer/end-y layer))
+                         :width (Math/abs (- (:layer/start-x layer) (:layer/end-x layer)))
+                         :height (Math/abs (- (:layer/start-y layer) (:layer/end-y layer)))
+                         :fill "transparent"
+                         :stroke "transparent"
+                         :onMouseMove (fn [e]
+                                        (om/set-state! owner
+                                                       :mouse-pos
+                                                       (apply cameras/screen->point
+                                                              camera
+                                                              (cameras/screen-event-coords e))))
+                         :onMouseDown (fn [e]
+                                        (utils/stop-event e)
+                                        (cast! :layer-relation-started
+                                               {:layer layer
+                                                :x (first (cameras/screen-event-coords e))
+                                                :y (second (cameras/screen-event-coords e))}))}))))))
+
 (defn arrows [app owner]
   (reify
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
@@ -690,37 +717,45 @@
     om/IRender
     (render [_]
       (let [db @(om/get-shared owner :db)
+            cast! (om/get-shared owner :cast!)
             pointer-datoms (seq (d/datoms db :aevt :layer/points-to))
+            drawing (cursors/observe-drawing owner)
             drawing-layers (reduce (fn [acc layer]
                                      (assoc acc (:db/id layer) (assoc layer
                                                                       :layer/end-x (:layer/current-x layer)
                                                                       :layer/end-y (:layer/current-y layer))))
-                                   {} (:layers (cursors/observe-drawing owner)))
+                                   {} (:layers drawing))
             subscriber-layers (reduce (fn [acc layer]
                                         (assoc acc (:db/id layer) (assoc layer
                                                                          :layer/end-x (:layer/current-x layer)
                                                                          :layer/end-y (:layer/current-y layer))))
                                       {} (mapcat :layers (vals (cursors/observe-subscriber-layers owner))))]
-        (apply dom/g #js {:className "layer-arrows"}
-               (for [pointer-datom pointer-datoms
-                     :let [origin (or (get drawing-layers (:e pointer-datom))
-                                      (get subscriber-layers (:e pointer-datom))
-                                      (d/entity db (:e pointer-datom)))
-                           origin-center (layers/center origin)
-                           dest (or (get drawing-layers (:v pointer-datom))
-                                    (get subscriber-layers (:v pointer-datom))
-                                    (d/entity db (:v pointer-datom)))
-                           dest-center (layers/center dest)
-                           [start-x start-y] (layers/layer-intercept origin dest-center)
-                           [end-x end-y] (layers/layer-intercept dest origin-center)]]
-                 (dom/g nil
-                   (svg-element (-> (into {} origin)
-                                  (assoc :layer/start-x start-x
-                                         :layer/start-y start-y
-                                         :layer/end-x end-x
-                                         :layer/end-y end-y
-                                         :layer/type :layer.type/line
-                                         :markerEnd "url(#arrow-point)"))))))))))
+        (dom/g #js {:className "arrows-container"}
+          (when (and (get-in drawing [:relation-in-progress?])
+                     (empty? (get-in drawing [:relation :layer])))
+            (apply dom/g #js {:className "arrow-handles"}
+                   (for [layer (ds/touch-all '[:find ?t :where [?t :layer/type :layer.type/rect]] db)]
+                     (om/build arrow-handle layer {:react-key (:db/id layer)}))))
+          (apply dom/g #js {:className "layer-arrows"}
+                 (for [pointer-datom pointer-datoms
+                       :let [origin (or (get drawing-layers (:e pointer-datom))
+                                        (get subscriber-layers (:e pointer-datom))
+                                        (d/entity db (:e pointer-datom)))
+                             origin-center (layers/center origin)
+                             dest (or (get drawing-layers (:v pointer-datom))
+                                      (get subscriber-layers (:v pointer-datom))
+                                      (d/entity db (:v pointer-datom)))
+                             dest-center (layers/center dest)
+                             [start-x start-y] (layers/layer-intercept origin dest-center)
+                             [end-x end-y] (layers/layer-intercept dest origin-center)]]
+                   (dom/g nil
+                     (svg-element (-> (into {} origin)
+                                    (assoc :layer/start-x start-x
+                                           :layer/start-y start-y
+                                           :layer/end-x end-x
+                                           :layer/end-y end-y
+                                           :layer/type :layer.type/line
+                                           :markerEnd "url(#arrow-point)")))))))))))
 
 (defn defs [camera]
   (dom/defs nil
@@ -787,11 +822,14 @@
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
-                      :className (str "canvas-frame " (str "tool-" (name tool)
-                                                           (when (and mouse-down?
-                                                                      (keyword-identical? :text tool)
-                                                                      in-progress?)
-                                                             " tool-text-move")))
+                      :className (str "canvas-frame "
+                                      (str "tool-" (name tool))
+                                      (when (and mouse-down?
+                                                 (keyword-identical? :text tool)
+                                                 in-progress?)
+                                        " tool-text-move ")
+                                      (when (get-in app [:drawing :relation-in-progress?])
+                                        " arrow-tool "))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
                                         (cond
@@ -888,15 +926,16 @@
                                       :uuid->cust (get-in app [:cust-data :uuid->cust])}
                              {:react-key "cursors"})
 
-                   (om/build arrows app {:react-key "arrows"})
-
                    (om/build svg-layers {:tool tool} {:react-key "svg-layers"})
 
                    (om/build subscribers-layers {:client-id (:client-id app)
                                                  :uuid->cust (get-in app [:cust-data :uuid->cust])}
                              {:react-key "subscribers-layers"})
 
-                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})))))))
+                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})
+
+                   (om/build arrows app {:react-key "arrows"})
+))))))
 
 (defn canvas [app owner]
   (reify
