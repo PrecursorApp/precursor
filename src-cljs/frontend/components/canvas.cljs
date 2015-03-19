@@ -747,7 +747,11 @@
                                       (d/entity db (:v pointer-datom)))
                              dest-center (layers/center dest)
                              [start-x start-y] (layers/layer-intercept origin dest-center)
-                             [end-x end-y] (layers/layer-intercept dest origin-center)]]
+                             [end-x end-y] (layers/layer-intercept dest origin-center)]
+                       :when (not (or (= [start-x start-y]
+                                         [end-x end-y])
+                                      (layers/contains-point? dest [start-x start-y])
+                                      (layers/contains-point? origin [end-x end-y])))]
                    (dom/g nil
                      (svg-element (-> (into {} origin)
                                     (assoc :layer/start-x start-x
@@ -934,8 +938,7 @@
 
                    (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})
 
-                   (om/build arrows app {:react-key "arrows"})
-))))))
+                   (om/build arrows app {:react-key "arrows"})))))))
 
 (defn canvas [app owner]
   (reify

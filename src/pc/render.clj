@@ -90,12 +90,17 @@
              (map #(svg-element % {:invert-colors? invert-colors?}) layers)
              (mapcat (fn [layer]
                        (for [dest (:layer/points-to layer)
-                             :let [dest (into {} dest)
+                             :let [origin layer
+                                   dest (into {} dest)
                                    dest-center (layers/center dest)
-                                   layer-center (layers/center layer)
-                                   [start-x start-y] (layers/layer-intercept layer dest-center)
-                                   [end-x end-y] (layers/layer-intercept dest layer-center)]]
-                         (svg-element (assoc layer
+                                   origin-center (layers/center origin)
+                                   [start-x start-y] (layers/layer-intercept origin dest-center)
+                                   [end-x end-y] (layers/layer-intercept dest origin-center)]
+                             :when (not (or (= [start-x start-y]
+                                               [end-x end-y])
+                                            (layers/contains-point? dest [start-x start-y])
+                                            (layers/contains-point? origin [end-x end-y])))]
+                         (svg-element (assoc origin
                                              :layer/start-x start-x
                                              :layer/start-y start-y
                                              :layer/end-x end-x

@@ -115,3 +115,9 @@
                           [(/ q m) q]
                           [p (* m p)]))]
         [(+ cx rx) (+ cy ry)]))))
+
+(defn contains-point? [{:keys [layer/start-x layer/end-x layer/start-y layer/end-y]} [x y]]
+  (and (<= x (max start-x end-x))
+       (<= y (max start-y end-y))
+       (>= x (min start-x end-x))
+       (>= y (min start-y end-y))))
