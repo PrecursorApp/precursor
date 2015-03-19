@@ -714,7 +714,6 @@
                            [start-x start-y] (layers/layer-intercept origin dest-center)
                            [end-x end-y] (layers/layer-intercept dest origin-center)]]
                  (dom/g nil
-
                    (svg-element (-> (into {} origin)
                                   (assoc :layer/start-x start-x
                                          :layer/start-y start-y

@@ -161,7 +161,7 @@
             (+ y1 (* (- x x1) (/ (- y2 y1) (- x2 x1)))))]
     [x y]))
 
-(defn determinant [[zx zy :as  zero-point] [ax ay] [bx by]]
+(defn determinant [[zx zy :as zero-point] [ax ay] [bx by]]
    (- (* (- ax zx)
          (- by zy))
       (* (- bx zx)
