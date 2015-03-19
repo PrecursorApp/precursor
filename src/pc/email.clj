@@ -144,7 +144,18 @@
   (let [requester (:access-request/cust-ref access-request)
         doc (:access-request/document-ref access-request)
         doc-id (:db/id doc)
-        doc-owner (cust-model/find-by-uuid db (:document/creator doc))]
+        doc-owner (cond (:document/creator doc)
+                        (cust-model/find-by-uuid db (:document/creator doc))
+
+                        (:document/team doc)
+                        (->> (:document/team doc)
+                          (permission-model/find-by-team db)
+                          (filter :permission/cust-ref)
+                          (sort-by :permission/grant-date)
+                          first
+                          :permission/cust-ref)
+
+                        :else (throw+ {:error :no-doc-owner :msg (format "Nobody owns the doc %s" doc-id)}))]
     (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:cust/email doc-owner)
                        :subject (str (view/format-requester requester)
