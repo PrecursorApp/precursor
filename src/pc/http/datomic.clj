@@ -31,7 +31,7 @@
 
 ;; TODO: this should use a channel instead of a future
 (defn send-emails [transaction]
-  (let [annotations (delay (get-annotations transaction))]
+  (let [annotations (delay (datomic-common/get-annotations transaction))]
     (doseq [datom (:tx-data transaction)]
       (when (and (:added datom)
                  (= :needs-email (schema/get-ident (:a datom)))
@@ -44,7 +44,7 @@
 (defn handle-precursor-pings [transaction]
   (let [db (:db-after transaction)
         datoms (:tx-data transaction)
-        document-id (delay (:db/id (:transaction/document (get-annotations transaction))))
+        document-id (delay (:db/id (:transaction/document (datomic-common/get-annotations transaction))))
         chat-body-eid (d/entid db :chat/body)]
     (when-let [chat-datom (first (filter #(= chat-body-eid (:a %)) datoms))]
       (let [slack-url (if (profile/prod?)
