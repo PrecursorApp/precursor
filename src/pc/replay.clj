@@ -5,15 +5,6 @@
             [pc.datomic.web-peer :as web-peer])
   (:import java.util.UUID))
 
-(defn get-document-transactions
-  "Gets the broadcasted transactions for a document"
-  [db doc]
-  (map #(d/entity db (first %))
-       (d/q '{:find [?t]
-              :in [$ ?doc-id]
-              :where [[?t :transaction/document ?doc-id]]}
-            db (:db/id doc))))
-
 (defn- ->datom
   [[e a v tx added]]
   {:e e :a a :v v :tx tx :added added})
@@ -26,6 +17,24 @@
     (map ->datom)
     set))
 
+(defn get-document-transactions
+  "Returns a lazy sequence of transactions for a document in order of db/txInstant.
+   Has :tx-data and :db-after fields"
+  [db doc]
+  (map (fn [e]
+         (let [tx (d/entity db e)]
+           {:tx-data (tx-data tx)
+            :db-after (d/as-of db (:db/txInstant tx))}))
+       (map first
+            (sort-by second
+                     (d/q '{:find [?t ?tx]
+                            :in [$ ?doc-id]
+                            :where [[?t :transaction/document ?doc-id]
+                                    [?t :db/txInstant ?tx]]}
+                          db (:db/id doc))))))
+
+
+
 (defn replace-frontend-ids [db doc-id txes]
   (let [a (d/entid db :frontend/id)]
     (map (fn [tx]
@@ -36,13 +45,14 @@
              tx))
          txes)))
 
+
+
 (defn copy-transactions [db doc new-doc & {:keys [sleep-ms]
                                            :or {sleep-ms 1000}}]
   (let [conn (pcd/conn)
         tx-datas (->> (get-document-transactions db doc)
-                   (sort-by :db/txInstant)
                    (map (fn [t]
-                          (->> (tx-data t)
+                          (->> (:tx-data t)
                             (remove #(= (:e %) (:db/id t)))
                             (map #(if (= (:v %) (:db/id doc))
                                     (assoc % :v (:db/id new-doc))
