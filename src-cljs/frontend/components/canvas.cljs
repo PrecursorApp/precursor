@@ -9,6 +9,7 @@
             [frontend.components.common :as common]
             [frontend.cursors :as cursors]
             [frontend.datascript :as ds]
+            [frontend.keyboard :as keyboard]
             [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
             [frontend.settings :as settings]
@@ -666,20 +667,19 @@
             camera (cursors/observe-camera owner)
             center (layers/center layer)]
         (dom/g #js {:className "arrow-handle-group"}
-          (dom/line #js {:className "arrow-handle"
-                         :x1 (first center)
-                         :x2 (or rx (+ (first center) 10))
-                         :y1 (second center)
-                         :y2 (or ry (+ (second center) 10))
-                         :fill "#ccc"
-                         :stroke "#ccc"
-                         :strokeDasharray "2, 2"
-                         :strokeWidth 2
-                         :markerEnd "url(#arrow-point)"})
+          (when (and rx ry)
+            (dom/line #js {:className "arrow-handle"
+                           :x1 (first center)
+                           :x2 rx
+                           :y1 (second center)
+                           :y2 ry
+                           :fill "#ccc"
+                           :stroke "#ccc"
+                           :strokeDasharray "2, 2"
+                           :strokeWidth 2
+                           :markerEnd "url(#arrow-point)"}))
           (dom/rect #js {:className "arrow-handle"
-                                        ;:x (- (first center) 10)
                          :x (min (:layer/start-x layer) (:layer/end-x layer))
-                                        ;:y (- (second center) 10)
                          :y (min (:layer/start-y layer) (:layer/end-y layer))
                          :width (Math/abs (- (:layer/start-x layer) (:layer/end-x layer)))
                          :height (Math/abs (- (:layer/start-y layer) (:layer/end-y layer)))
@@ -731,7 +731,7 @@
                                                                          :layer/end-y (:layer/current-y layer))))
                                       {} (mapcat :layers (vals (cursors/observe-subscriber-layers owner))))]
         (dom/g #js {:className "arrows-container"}
-          (when (and (get-in drawing [:relation-in-progress?])
+          (when (and (keyboard/arrow-shortcut-active? app)
                      (empty? (get-in drawing [:relation :layer])))
             (apply dom/g #js {:className "arrow-handles"}
                    (for [layer (ds/touch-all '[:find ?t :where [?t :layer/type :layer.type/rect]] db)]
@@ -832,7 +832,7 @@
                                                  (keyword-identical? :text tool)
                                                  in-progress?)
                                         " tool-text-move ")
-                                      (when (get-in app [:drawing :relation-in-progress?])
+                                      (when (keyboard/arrow-shortcut-active? app)
                                         " arrow-tool "))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]

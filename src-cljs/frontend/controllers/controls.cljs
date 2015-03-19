@@ -142,12 +142,16 @@
 (defn close-menu [state]
   (assoc-in state [:menu :open?] false))
 
+(defn clear-shortcuts [state]
+  (assoc-in state [:keyboard] {}))
+
 (defmethod handle-keyboard-shortcut :escape-interaction
   [state shortcut-name]
   (-> state
     overlay/clear-overlays
     close-menu
-    cancel-drawing))
+    cancel-drawing
+    clear-shortcuts))
 
 (defmethod handle-keyboard-shortcut :reset-canvas-position
   [state shortcut-name]
@@ -169,7 +173,7 @@
   [browser-state message [{:keys [key-set depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
     (-> state
-        (assoc-in [:keyboard keys] depressed?)
+        (assoc-in [:keyboard key-set] depressed?)
         (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
                 (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key-set))
                                                          (keys shortcuts))))

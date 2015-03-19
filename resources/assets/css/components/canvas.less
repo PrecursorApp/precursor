@@ -53,11 +53,13 @@
       cursor: move;
     }
   }
+  &.arrow-tool {
+    cursor: e-resize;
+  }
   .arrow-handle-group {
     transition: @run @bezier_deform;
     opacity: 0;
-    cursor: se-resize;
-    cursor: cell;
+    cursor: e-resize;
     &:hover {
       opacity: 1;
     }
