@@ -311,7 +311,7 @@
               Communicate and create new ideas with your teammates in one secure place."]]
             [:a.feature-link {:href "/pricing" :role "button" :title "Start your trial"}
              [:span.content-copy
-              "Start your trial"]]]
+              "Try private docs."]]]
            [:div.feature-media artwork-team]]])))))
 
 (defn the-what [app owner]
