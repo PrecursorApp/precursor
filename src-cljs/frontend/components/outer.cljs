@@ -254,7 +254,7 @@
                {:href "/trial/solo"
                 :title "Start your free, 2 week trial."
                 :role "button"}
-               "Start trial"]]]
+               "Start free trial"]]]
             [:section.price-divide.left
              [:div.price-divide-line]]
             [:div.price-block.price-team
@@ -271,7 +271,7 @@
                {:href "/trial/team"
                 :title "Start your free, 2 week trial."
                 :role "button"}
-               "Start trial"]]]
+               "Start free trial"]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
             [:div.price-block.price-corp
