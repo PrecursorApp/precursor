@@ -53,10 +53,10 @@
   {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})
 
 (defpage interesting "/interesting" [req]
-  (content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))
+  (hiccup/html (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))))
 
 (defpage interesting-count [:get "/interesting/:layer-count" {:layer-count #"[0-9]+"}] [layer-count]
-  (content/interesting (db-admin/interesting-doc-ids {:layer-threshold (Integer/parseInt layer-count)})))
+  (hiccup/html (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids (Integer/parseInt layer-count))))))
 
 (defpage user-activity "/user/:email" [req]
   (let [cust (->> req :params :email (cust-model/find-by-email (pcd/default-db)))]
@@ -64,9 +64,18 @@
       (hiccup/html
        (content/layout {}
                        (admin-content/user-info cust)
-                       (content/interesting* (take 100 (doc-model/find-touched-by-cust (pcd/default-db) cust)))))
+                       (admin-content/interesting (take 100 (doc-model/find-touched-by-cust (pcd/default-db) cust)))))
       {:status 404
        :body "Couldn't find user with that email"})))
+
+(defpage doc-activity "/document/:document-id" [req]
+  (let [doc (->> req :params :document-id (Long/parseLong) (doc-model/find-by-id (pcd/default-db)))]
+    (if (seq doc)
+      (hiccup/html
+       (content/layout {}
+                       (admin-content/doc-info doc)))
+      {:status 404
+       :body "Couldn't find that document"})))
 
 (defpage users "/users" [req]
   (hiccup/html (content/layout {} (admin-content/users))))

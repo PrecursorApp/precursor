@@ -8,6 +8,7 @@
             [frontend.analytics.mixpanel :as mixpanel]
             [frontend.async :refer [put!]]
             [frontend.camera :as cameras]
+            [frontend.careful]
             [frontend.components.forms :refer [release-button!]]
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
@@ -997,6 +998,10 @@
   [state cmd chat]
   (update-in state [:camera :show-grid?] not))
 
+(defmethod handle-cmd-chat "replay"
+  [state cmd chat]
+  (update-in state [:db] frontend.db/reset-db!))
+
 (defmethod control-event :chat-submitted
   [browser-state message {:keys [chat-body]} state]
   (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)]
@@ -1018,24 +1023,44 @@
   (let [email (last (re-find #"/invite\s+([^\s]+)" body))]
     (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
                                                            :email email}])))
+
+(defmethod post-handle-cmd-chat "toggle-grid"
+  [state cmd body]
+  ::stop-save)
+
+(defmethod post-handle-cmd-chat "replay"
+  [state cmd body]
+  (@frontend.careful/om-setup-debug)
+  (let [[_ delay-ms sleep-ms] (re-find #"/replay (\d+)s*(\d*)" body)]
+    (js/setTimeout #(sente/send-msg (:sente state) [:frontend/replay-transactions
+                                                    {:document/id (:document/id state)
+                                                     :sleep-ms (or (when (seq sleep-ms)
+                                                                     (js/parseInt sleep-ms))
+                                                                   250)}])
+                   (or (when (seq delay-ms)
+                         (js/parseInt delay-ms))
+                       2000)))
+  ::stop-save)
+
 (defmethod post-control-event! :chat-submitted
   [browser-state message {:keys [chat-body]} previous-state current-state]
   (let [db (:db current-state)
         client-id (:client-id previous-state)
-        color (get-in previous-state [:subscribers :info client-id :color])]
-    (d/transact! db [(utils/remove-map-nils {:chat/body chat-body
-                                             :chat/color color
-                                             :cust/uuid (get-in current-state [:cust :cust/uuid])
-                                             ;; TODO: teach frontend to lookup cust/name from cust/uuid
-                                             :chat/cust-name (get-in current-state [:cust :cust/name])
-                                             :db/id (get-in current-state [:chat :entity-id])
-                                             :session/uuid (:sente-id previous-state)
-                                             :chat/document (:document/id previous-state)
-                                             :client/timestamp (datetime/server-date)
-                                             ;; server will overwrite this
-                                             :server/timestamp (datetime/server-date)})])
-    (when-let [cmd (chat-cmd chat-body)]
-      (post-handle-cmd-chat current-state cmd chat-body))))
+        color (get-in previous-state [:subscribers :info client-id :color])
+        stop-save? (= ::stop-save (when-let [cmd (chat-cmd chat-body)]
+                                    (post-handle-cmd-chat current-state cmd chat-body)))]
+    (when-not stop-save?
+      (d/transact! db [(utils/remove-map-nils {:chat/body chat-body
+                                               :chat/color color
+                                               :cust/uuid (get-in current-state [:cust :cust/uuid])
+                                               ;; TODO: teach frontend to lookup cust/name from cust/uuid
+                                               :chat/cust-name (get-in current-state [:cust :cust/name])
+                                               :db/id (get-in current-state [:chat :entity-id])
+                                               :session/uuid (:sente-id previous-state)
+                                               :chat/document (:document/id previous-state)
+                                               :client/timestamp (datetime/server-date)
+                                               ;; server will overwrite this
+                                               :server/timestamp (datetime/server-date)})]))))
 
 (defmethod control-event :chat-toggled
   [browser-state message _ state]
@@ -1415,8 +1440,7 @@
 
 (defmethod post-control-event! :launch-app-clicked
   [target message _ previous-state current-state]
-  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))
-                                                          :replace-token? true}]))
+  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
 
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]

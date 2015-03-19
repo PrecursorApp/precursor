@@ -112,6 +112,8 @@
   });
 }
 .veins {
+  .flex(1);
+  position: relative;
   width: 100%;
   max-width: @tile_menu_max;
   margin: 0 auto;
@@ -120,7 +122,7 @@
   .flexy(center);
   .icon(stroke; @gray);
   .icon(fill; @gray);
-  max-width: 100%;
+  width: 100%;
   height: @tile;
   color: @gray;
   overflow: hidden;
@@ -133,6 +135,9 @@
     position: absolute;
     bottom: 0;
     left: 0;
+    right: 0;
+    max-width: @tile_menu_max;
+    margin: 0 auto;
   }
   &.external {
     .icon-arrow-right {
@@ -146,7 +151,9 @@
   }
   span {
     &:first-child {
-      padding-left: @menu_padding;
+      &:not(:only-child) {
+        padding-left: @menu_padding;
+      }
     }
   }
   i {
@@ -282,6 +289,7 @@
   }
   img {
     .size_of(chat; height; vh);
+    width: 100%;
     max-height: 80vh;
     opacity: .5;
   }
@@ -335,6 +343,9 @@ img.loading-image {
       }
     }
   }
+  &.vein {
+    height: auto;
+  }
 }
 .privacy-radio {
   &:not(:checked) {
@@ -360,7 +371,7 @@ img.loading-image {
     cursor: default;
   }
   small {
-    padding-left: .25em;
+    padding-left: .5em;
   }
 }
 .access-card {
@@ -400,7 +411,7 @@ img.loading-image {
       }
     }
     .access-status {
-      color: @blue;
+      color: @color_select;
     }
   }
   &.denied {
@@ -490,11 +501,11 @@ img.loading-image {
     }
   }
   &.positive {
-    .icon(stroke; @blue);
-    border-color: @blue;
+    .icon(stroke; @color_select);
+    border-color: @color_select;
     &:hover {
       .icon(stroke; @white);
-      background: @blue;
+      background: @color_select;
     }
   }
   &.negative {

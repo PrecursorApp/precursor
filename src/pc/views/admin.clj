@@ -1,16 +1,27 @@
 (ns pc.views.admin
   (:require [clj-time.coerce]
+            [clj-time.format]
             [clj-time.core :as time]
             [clojure.string]
             [datomic.api :as d]
             [hiccup.core :as h]
             [pc.datomic :as pcd]
             [pc.early-access]
+            [pc.http.sente :as sente]
             [pc.http.urls :as urls]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.permission :as permission-model]
             [ring.util.anti-forgery :as anti-forgery]))
+
+(defn interesting [doc-ids]
+  [:div.interesting
+   (if-not (seq doc-ids)
+     [:p "No interesting docs"])
+   (for [doc-id doc-ids]
+     [:div.doc-preview
+      [:a {:href (str "/document/" doc-id)}
+       [:img {:src (urls/doc-svg doc-id)}]]])])
 
 (defn count-users [db time]
   (count (seq (d/datoms (d/as-of db (clj-time.coerce/to-date time))
@@ -211,7 +222,7 @@
       [:tr
        [:td
         [:div
-         [:a {:href (urls/doc-svg doc-id)}
+         [:a {:href (str "/document/" doc-id)}
           [:img {:style "width:100;height:100;"
                  :src (urls/doc-svg doc-id)}]]]
         [:div doc-id]]
@@ -248,7 +259,7 @@
                                                     (time/now)
                                                     (time/days 1))))))))]
     [:div
-     [:h3 "Users active in the last day"]
+     [:h3 (str (count active) " users active in the last day")]
      [:style "td, th { padding: 5px; text-align: left }"]
      [:table {:border 1}
       [:tr
@@ -301,3 +312,56 @@
       [:tr
        [:td (h/h (str k))]
        [:td (render-cust-prop k v)]])]))
+
+(defn doc-info [doc]
+  (let [db (pcd/default-db)]
+    (list
+     [:style "td, th { padding: 5px; text-align: left }"]
+     [:table {:border 1}
+      [:tr
+       [:td "Chat count"]
+       [:td (count (seq (d/datoms db :vaet (:db/id doc) :chat/document)))]]
+      [:tr
+       [:td "Layer count"]
+       [:td (count (seq (d/datoms db :vaet (:db/id doc) :layer/document)))]]
+      [:tr
+       [:td {:title "Number of clients connected right now"}
+        "Client count"]
+       [:td (count (get @sente/document-subs (:db/id doc)))]]
+      (let [emails (d/q '{:find [[?email ...]]
+                          :in [$ ?doc-id]
+                          :where [[?t :transaction/document ?doc-id]
+                                  [?t :cust/uuid ?uuid]
+                                  [?u :cust/uuid ?uuid]
+                                  [?u :cust/email ?email]]}
+                        db (:db/id doc))]
+        (list
+         [:tr
+          [:td "User Count"]
+          [:td (count emails)]]
+         [:tr
+          [:td (str "Users")]
+          [:td (for [email emails]
+                 [:span [:a {:href (str "/user/" email)}
+                         email]
+                  " "])]]))
+      [:tr
+       [:td "Created"]
+       [:td (doc-model/created-time db (:db/id doc))]]
+      [:tr
+       [:td "Last updated"]
+       [:td (doc-model/last-updated-time db (:db/id doc))]]
+      [:tr
+       [:td "Full SVG link"]
+       [:td [:a {:href (urls/doc-svg (:db/id doc))}
+             (:db/id doc)]]]
+      [:tr
+       [:td "Live doc url"]
+       [:td
+        "Tiny b/c you could be intruding "
+        [:a {:href (urls/doc (:db/id doc))
+             :style "font-size: 0.5em"}
+         (:db/id doc)]]]]
+     [:a {:href (urls/doc-svg (:db/id doc))}
+      [:img {:src (urls/doc-svg (:db/id doc))
+             :style "width: 100%; height: 100%"}]])))

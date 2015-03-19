@@ -124,6 +124,7 @@
               :role "button"}
              (common/icon :command)
              [:span "Shortcuts"]]
+             (om/build auth-link app {:opts {:source "start-overlay"}})
             ]])))))
 
 (defn team-start [app owner]
@@ -146,7 +147,6 @@
               :role "button"}
              (common/icon :clock)
              [:span "Team Documents"]]
-            (om/build auth-link app {:opts {:source "start-overlay"}})
             ]])))))
 
 (defn private-sharing [app owner]
@@ -179,7 +179,7 @@
             access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
-          [:article
+          [:div.content
            [:h2.make
             "This document is private."]
            [:p.make
@@ -212,7 +212,7 @@
       (let [cast! (om/get-shared owner :cast!)
             invite-email (get-in app state/invite-email-path)]
         (html
-          [:article
+          [:div.content
            [:h2.make
             "This document is public."]
            (if-not (:cust app)
@@ -220,7 +220,7 @@
                [:p.make
                 "It's visible to anyone with the url.
                 Sign in with your Google account to send an invite or give someone your url."]
-               [:div.make
+               [:div.calls-to-action.make
                 (om/build common/google-login {:source "Public Sharing Menu"})])
 
              (list
@@ -351,12 +351,10 @@
             (when-not (:cust app)
               (list
                 [:p.make
-                 "Sign up and we'll even keep track of all your docs.
-                 Never lose a great idea again!"]
-                [:a.menu-cta.make
-                 {:href (auth/auth-url :source "username-overlay")
-                  :role "button"}
-                 "Sign Up"]))
+                 "Everyone's ideas made with Precursor save automatically.
+                 And if you sign in with Google we'll even keep track of which ones are yours."]
+                [:div.calls-to-action.make
+                 (om/build common/google-login {:source "Username Menu"})]))
             [:a.vein.make
              {:href "/home"
               :role "button"}
@@ -397,69 +395,8 @@
            [:table.shortcuts-items
             [:tbody
              ;;
-             ;; keystrokes beginning with "option"
-             ;;
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
-                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-              [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
-                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-              [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
-             ;;
-             ;; keystrokes beginning with "shift"
-             ;;
-             [:tr.make
-              [:td {:col-span "2"}]]
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
-                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-              [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
-                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-              [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
-             ;;
-             ;; keystrokes beginning with "command"
-             ;;
-             [:tr.make
-              [:td {:col-span "2"}]]
-             (when (om/get-state owner [:copy-paste-works?])
-               (list
-                (html
-                 [:tr.make
-                  [:td
-                   [:div.shortcuts-keys
-                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                    [:div.shortcuts-key {:title "C Key"} "C"]]]
-                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]])
-                (html
-                 [:tr.make
-                  [:td
-                   [:div.shortcuts-keys
-                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                    [:div.shortcuts-key {:title "V Key"} "V"]]]
-                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]])))
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                [:div.shortcuts-key {:title "Z Key"} "Z"]]]
-              [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
-             ;;
              ;; single keystrokes
              ;;
-             [:tr.make
-              [:td {:col-span "2"}]]
              [:tr.make
               [:td [:div.shortcuts-key {:title "V Key"} "V"]]
               [:td [:div.shortcuts-result {:title "Switch to Select Tool."} "Select"]]]
@@ -493,6 +430,67 @@
              [:tr.make
               [:td [:div.shortcuts-key {:title "Escape Key"} (common/icon :esc)]]
               [:td [:div.shortcuts-result {:title "Cancel action or close menu."} "Cancel"]]]
+             ;;
+             ;; keystrokes beginning with "command"
+             ;;
+             [:tr.make
+              [:td {:col-span "2"}]]
+             (when (om/get-state owner [:copy-paste-works?])
+               (list
+                (html
+                 [:tr.make
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "C Key"} "C"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]])
+                (html
+                 [:tr.make
+                  [:td
+                   [:div.shortcuts-keys
+                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                    [:div.shortcuts-key {:title "V Key"} "V"]]]
+                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]])))
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                [:div.shortcuts-key {:title "Z Key"} "Z"]]]
+              [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
+             ;;
+             ;; keystrokes beginning with "option"
+             ;;
+             [:tr.make
+              [:td {:col-span "2"}]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+              [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+              [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
+             ;;
+             ;; keystrokes beginning with "shift"
+             ;;
+             [:tr.make
+              [:td {:col-span "2"}]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
+              [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+              [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
              ]]]])))))
 
 (defn username [app owner]
@@ -503,16 +501,14 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu-view
-          [:article
+          [:div.content
            [:h2.make
             "Let's change that name."]
            [:p.make
-            "Sign up to change how your name appears in chat.
-            Let your team know who you are while you collaborate together."]
-           [:a.make
-            {:href (auth/auth-url :source "username-overlay")
-             :role "button"}
-            "Sign Up"]]])))))
+            "Chatting with teammates is easier when you can identify each other.
+            Sign in with Google and you'll be able to change your name that gets displayed in chat."]
+           [:div.calls-to-action.make
+            (om/build common/google-login {:source "Username Menu"})]]])))))
 
 (def overlay-components
   {:info {:title "About"

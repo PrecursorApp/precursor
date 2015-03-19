@@ -206,10 +206,10 @@
     background: @dye_inner;
     &:focus {
       border-top-color: transparent !important;
-      box-shadow: 0 -1px @blue;
+      box-shadow: 0 -1px @color_select;
       ~ .property-dropdown-targets {
         &:not(.expanded) {
-          border-bottom-color: @blue;
+          border-bottom-color: @color_select;
         }
       }
     }
@@ -234,7 +234,7 @@
   margin: -3rem 0 0 auto;
   padding-bottom: 1rem; // for ellipsis icon hack
   &:hover {
-    color: @blue;
+    color: @color_select;
   }
 }
 .property-dropdown-targets {
@@ -266,7 +266,7 @@
     transition+: text-indent @run @bezier_deform;
     &:hover {
       text-indent: 3px;
-      border-color: @blue;
+      border-color: @color_select;
       transition-duration+: @now;
       transition-duration+: @now;
       transition-duration+: @run;

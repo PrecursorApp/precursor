@@ -12,6 +12,7 @@
             [pc.datomic.web-peer :as web-peer]
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
+            [pc.http.datomic.common :as datomic-common]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.access-request :as access-request-model]
             [pc.models.chat :as chat]
@@ -20,6 +21,7 @@
             [pc.models.layer :as layer]
             [pc.models.permission :as permission-model]
             [pc.models.team :as team-model]
+            [pc.replay :as replay]
             [pc.rollbar :as rollbar]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
@@ -582,6 +584,14 @@
         (assert (and doc-id (= doc-id (:db/id (:access-request/document-ref request)))))
         (access-request-model/deny-request request annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
+
+(defmethod ws-handler :frontend/replay-transactions [{:keys [client-id ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document/id) req :admin)
+  (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))]
+    (let [txes (replay/get-document-transactions (:db req) doc)]
+      (doseq [tx txes]
+        ((:send-fn @sente-state) client-id [:datomic/transaction (datomic-common/frontend-document-transaction tx)])
+        (Thread/sleep (min 500 (get ?data :sleep-ms 250)))))))
 
 (defmethod ws-handler :team/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
