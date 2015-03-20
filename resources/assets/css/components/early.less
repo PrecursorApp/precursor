@@ -23,7 +23,7 @@
     }
     &.page-trial {
       .outer-form-copy {
-        .user-select(none);
+        user-select: none;
         pointer-events: none;
         max-height: 0;
         opacity: 0;
@@ -31,7 +31,7 @@
         transition: @run @run_slower @bezier_deform;
       }
       .subdomain-input {
-        .user-select(none);
+        user-select: none;
         pointer-events: none;
         height: 0;
         opacity: 0;
@@ -163,7 +163,7 @@
   }
 }
 .outer-form-granted {
-  .animation(in-fade-bottom @run_slower (1.5 * @run_slower) backwards);
+  animation: in-fade-bottom @run_slower (1.5 * @run_slower) backwards;
   margin-top: @menu_padding;
 }
 .subdomain-input { // TODO break this input out into its own reusable component in form.less
@@ -182,7 +182,7 @@
   &:not(:empty) {
     ~ .subdomain-input-placeholder {
       &:after {
-        .transform(translate3d(0, -2em, 0));
+        transform: translate3d(0, -2em, 0);
         background-size: 100% 1px;
       }
     }
@@ -218,7 +218,7 @@
 }
 .subdomain-input-placeholder {
   .flexy(center);
-  .user-select(none);
+  user-select: none;
   .inline(@gray_light);
   position: absolute;
   top: 0;
@@ -231,7 +231,6 @@
   &:after {
     .flexy();
     .gradient(to bottom, @dye_outer, @dye_outer);
-    .transition_transform(@run @bezier_deform);
     color: @gray_light;
     content: attr(data-prepend) attr(data-start);
     white-space: nowrap;
@@ -242,12 +241,13 @@
     background-size: 0% 1px;
     transition+: color @run @bezier_deform;
     transition+: background @run_slow @bezier_deform;
+    transition+: transform @run @bezier_deform;
   }
 }
 .subdomain-input-append {
-  .flex(1);
+  flex: 1;
   .flexy(center);
-  .user-select(none);
+  user-select: none;
   height: 100%;
   padding-left: .25em;
   transition+: color @run @bezier_deform;

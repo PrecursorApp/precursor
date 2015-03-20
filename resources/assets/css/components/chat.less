@@ -1,6 +1,6 @@
 .chat {
   .flexy();
-  .user-select(none);
+  user-select: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -9,14 +9,14 @@
   pointer-events: none;
 }
 .chat-offset {
-  .flex(1);
+  flex: 1;
   position: relative;
 }
 .chat-window {
   .size_of(chat; width);
-  .animation(in-fade-right @run_slow @bezier_fadein);
+  animation: in-fade-right @run_slow @bezier_fadein;
   .flexy(stretch; flex-end; column);
-  .user-select(auto); // VETO
+  user-select: auto; // VETO
   position: relative;
   min-width: @tile;
   max-width: calc(~"100% -" @tile);
@@ -28,9 +28,9 @@
   top: 0;
   right: 0;
   &.closed {
-    .animation-name(none);
-    .translate3d(101%, 0, 0);
-    .transition_transform(@run_slow @bezier_fadein);
+    animation-name: none;
+    transform: translate3d(101%, 0, 0);
+    transition+: transform @run_slow @bezier_fadein;
     position: absolute;
     .chat-input {
       visibility: hidden;
@@ -39,7 +39,7 @@
   }
 }
 .chat-background {
-  .transform-origin(left);
+  transform-origin: left;
   position: absolute;
   top: 0;
   left: 0;
@@ -51,20 +51,20 @@
   transition: @run @bezier_deform;
 }
 .chat-log {
-  .user-select(none); // so you only select text and not entire chat menu
+  user-select: none; // so you only select text and not entire chat menu
   .scrollbar_hide();
   position: relative;
   padding: 1em 0 1.25em;
   overflow-y: auto;
   transition: @run_fast @run @bezier_fadein;
   span {
-    .user-select(auto); // so you only select text and not entire chat menu
+    user-select: auto; // so you only select text and not entire chat menu
     white-space: pre-line; // honors new line (shift + enter)
     word-break: break-word;
   }
 }
 .chat-box {
-  .box-sizing(content-box);
+  box-sizing: content-box;
   position: relative;
   height: @tile;
   min-height: @tile;
@@ -107,7 +107,7 @@
 .chat-date {
   padding-top: (@tile / 4);
   &.divider-small {
-    .user-select(auto);
+    user-select: auto;
     line-height: 1;
     opacity: .21;
     &:before,
@@ -130,7 +130,7 @@
   color: white;
 }
 .message-avatar {
-  .flex(0 0 auto);
+  flex: 0 0 auto;
   .iconpile {
     height: .75em;
     width: .75em;
@@ -140,15 +140,15 @@
   }
 }
 .message-author {
-  .user-select(auto);
+  user-select: auto;
   margin: 0 .5em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .message-time {
-  .user-select(auto);
-  .flex(0 0 auto);
+  user-select: auto;
+  flex: 0 0 auto;
   color: @gray_dark;
   font-size: .75rem;
   text-transform: lowercase;

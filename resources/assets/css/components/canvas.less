@@ -1,17 +1,17 @@
 .canvas {
-  .flex(1);
+  flex: 1;
   position: relative;
   &:active {
     + .chat {
       .chat-window {
-        .user-select(none);
+        user-select: none;
         pointer-events: none;
       }
     }
   }
   &:not(:active) {
     &:not(:hover) {
-      .user-select(none);
+      user-select: none;
     }
   }
 }
@@ -26,8 +26,8 @@
   transition: @run @bezier_deform;
 }
 .canvas-frame {
-  .user-select(none);
-  .transform-origin(0 0);
+  user-select: none;
+  transform-origin: 0 0;
   position: relative;
   transition+: all @run_slow @now @bezier_deform;
   transition+: width @now @run_slower @bezier_deform;
@@ -76,7 +76,7 @@
   }
   .layer-deleted {
     &.layer-outline {
-      .animation(layer-deleted (2 * @run_slower) @run_slower @bezier_deform);
+      animation: layer-deleted (2 * @run_slower) @run_slower @bezier_deform;
       pointer-events: none;
     }
   }
@@ -133,7 +133,7 @@
   }
 }
 .text-layer {
-  .user-select(none);
+  user-select: none;
   fill: @gray_light;
   transition: @run @bezier_deform;
   &.editable {
@@ -253,7 +253,7 @@
     // margin-top: -1px;
   }
   .property-dropdown-target {
-    .flex(0 0 3em);
+    flex: 0 0 3em;
     color: @gray_light;
     line-height: 1em;
     padding: 1em;
@@ -318,7 +318,7 @@
   cursor: pointer;
   transition: @run @bezier_deform;
   &:hover {
-    .transform(translate3d(-13px, -13px, 0); scale3d(1.1, 1.1, 1));
+    transform: translate3d(-13px, -13px, 0) scale3d(1.1, 1.1, 1);
     transition-duration: @run_fast;
     .radial-pie {
       fill: @gray_dark;
@@ -352,7 +352,7 @@
   fill: @gray_dark;
 }
 .radial-hint {
-  .user-select(none);
+  user-select: none;
   position: absolute;
   top: -@tile;
   left: -@tile;

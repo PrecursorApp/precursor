@@ -2,7 +2,7 @@
   &,
   &:before,
   &:after {
-    .box-sizing(border-box);
+    box-sizing: border-box;
   }
 }
 figure {
@@ -51,7 +51,7 @@ sub {
   bottom: -0.25em;
 }
 hr {
-  .box-sizing(content-box);
+  box-sizing: content-box;
   height: 0;
 }
 pre {
@@ -81,37 +81,37 @@ button,
 html input[type="button"],
 input[type="reset"],
 input[type="submit"] {
-  -webkit-appearance: button;
+  -webkit-appearance: button; // non-standard prefix
   cursor: pointer;
 }
 button[disabled],
 html input[disabled] {
   cursor: default;
 }
-button::-moz-focus-inner,
-input::-moz-focus-inner {
+button::-moz-focus-inner, //
+input::-moz-focus-inner { // non-standard prefix
   border: 0;
   padding: 0;
 }
 input {
   line-height: normal;
-  -webkit-appearance: none;
-     -moz-appearance: none;
+  -webkit-appearance: none; //
+     -moz-appearance: none; // non-standard prefix
 }
 input[type="checkbox"],
 input[type="radio"] {
   padding: 0;
 }
 input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+input[type="number"]::-webkit-outer-spin-button { // non-standard prefix
   height: auto;
 }
 input[type="search"] {
-  .box-sizing(content-box);
+  box-sizing: content-box;
 }
 // TODO May not need this now that all inputs get `appearance: none`, not sure yet
 // input[type="search"]::-webkit-search-cancel-button,
-// input[type="search"]::-webkit-search-decoration {
+// input[type="search"]::-webkit-search-decoration { // non-standard prefix
 //   -webkit-appearance: none;
 // }
 textarea {

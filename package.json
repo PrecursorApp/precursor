@@ -1,17 +1,8 @@
 {
-  "name": "circle-ui",
+  "name": "prcrsr-js-deps",
   "version": "1.0.0",
   "dependencies": {
-    "bower": "*",
-    "less": "1.7.4"
-  },
-  "devDependencies": {
-    "karma": "^0.12.14",
-    "karma-chrome-launcher": "^0.1.3",
-    "karma-cljs.test": "git://github.com/circleci/karma-cljs.test",
-    "karma-closure": "~0.1",
-    "karma-firefox-launcher": "^0.1.3",
-    "karma-jasmine": "^0.1.5",
-    "karma-phantomjs-launcher": "^0.1.4"
+    "less": "2.4.0",
+    "less-plugin-autoprefix": "1.3.0"
   }
 }
