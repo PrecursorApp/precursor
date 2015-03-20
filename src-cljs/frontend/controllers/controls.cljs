@@ -14,6 +14,7 @@
             [frontend.datetime :as datetime]
             [frontend.db]
             [frontend.favicon :as favicon]
+            [frontend.keyboard :as keyboard]
             [frontend.layers :as layers]
             [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
@@ -169,14 +170,18 @@
 
 (defmethod control-event :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] state]
-  (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
-    (-> state
-      (assoc :keyboard {key-set depressed?})
+  (let [shortcuts (get-in state state/keyboard-shortcuts-path)
+        new-state (assoc state :keyboard {key-set depressed?})]
+    (-> new-state
       (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
         (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key-set))
                                                  (keys shortcuts))))
         (and (= #{"shift"} key-set) (settings/drawing-in-progress? state))
-        (assoc-in [:drawing :layers 0 :force-even?] depressed?)))))
+        (assoc-in [:drawing :layers 0 :force-even?] depressed?)
+
+        (and (keyboard/arrow-shortcut-active? state)
+             (not (keyboard/arrow-shortcut-active? new-state)))
+        cancel-drawing))))
 
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
