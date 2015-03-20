@@ -1370,7 +1370,7 @@
                                     :layer/document doc-id
                                     :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
                              (utils/update-when-in [:layer/points-to] (fn [dests]
-                                                                        (set (map #(update-in % [:db/id] eid-map) dests))))
+                                                                        (set (filter :db/id (map #(update-in % [:db/id] eid-map) dests)))))
                              (#(move-layer % %
                                            {:snap-x snap-move-x :snap-y snap-move-y
                                             :move-x move-x :move-y move-y :snap-paths? true}))
