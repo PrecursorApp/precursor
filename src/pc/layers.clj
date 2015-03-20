@@ -97,8 +97,10 @@
                  3 [min-x max-y]
                  4 [max-x max-y])
         d (determinant [cx cy] corner [x1 y1])
-        m (/ (- y1 cy)
-             (- x1 cx))]
+        m (if (= x1 cx)
+            Double/POSITIVE_INFINITY
+            (/ (- y1 cy)
+               (- x1 cx)))]
     (if (zero? d)
       corner
       (let [[rx ry] (case quadrant
