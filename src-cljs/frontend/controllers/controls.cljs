@@ -683,6 +683,7 @@
       (assoc-in [:camera :moving?] false))))
 
 
+;; should only get here if we ended on empty canvas
 (defn finalize-relation [state]
   (let [{:keys [x y]} (get-in state [:mouse])
         [rx ry] (cameras/screen->point (:camera state) x y)
@@ -693,7 +694,7 @@
       (update-in [:drawing] assoc :relation-in-progress? false)
       (assoc-in [:mouse-down] false)
       (assoc-in [:drawing :relation] {})
-      (assoc-in [:drawing :finished-relation] {:origin-layer origin-layer
+      #_(assoc-in [:drawing :finished-relation] {:origin-layer origin-layer
                                                :dest-layer-id dest-layer-id})
       (assoc-in [:camera :moving?] false))))
 
