@@ -658,7 +658,7 @@
       (assoc-in [:mouse-down] false)
       (assoc-in [:editing-eids :editing-eids] #{}))))
 
-(defn mouse-depressed-intents [state button ctrl?]
+(defn mouse-depressed-intents [state button ctrl? shift?]
   (let [tool (get-in state state/current-tool-path)
         drawing-text? (and (keyword-identical? :text tool)
                            (get-in state [:drawing :in-progress?]))]
@@ -668,7 +668,7 @@
      (when drawing-text? [:finish-text-layer])
      (cond
        (= button 2) [:open-menu]
-       (and (= button 0) ctrl?) [:open-menu]
+       (and (= button 0) ctrl? (not shift?)) [:open-menu]
        (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
        (contains? #{:pen :rect :circle :line :select} tool) [:start-drawing]
        (and (keyword-identical? tool :text) (not drawing-text?)) [:start-drawing]
@@ -682,8 +682,8 @@
 (declare handle-text-layer-finished-after)
 
 (defmethod control-event :mouse-depressed
-  [browser-state message [x y {:keys [button type ctrl?]}] state]
-  (let [intents (mouse-depressed-intents state button ctrl?)
+  [browser-state message [x y {:keys [button type ctrl? shift?]}] state]
+  (let [intents (mouse-depressed-intents state button ctrl? shift?)
         new-state (-> state
                     (update-mouse x y)
                     (assoc-in [:mouse-down] true)
@@ -698,9 +698,9 @@
             new-state intents)))
 
 (defmethod post-control-event! :mouse-depressed
-  [browser-state message [x y {:keys [button ctrl?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button ctrl? shift?]}] previous-state current-state]
   ;; use previous state so that we're consistent with the control-event
-  (let [intents (mouse-depressed-intents previous-state button ctrl?)]
+  (let [intents (mouse-depressed-intents previous-state button ctrl? shift?)]
     (doseq [intent intents]
       (case intent
         :finish-text-layer (handle-text-layer-finished-after current-state)
