@@ -334,6 +334,12 @@
     (assoc-in [:drawing :layers 0 :layer/text] value)
     (assoc-in [:drawing :layers 0 :bbox] bbox)))
 
+(defn det [[ax ay] [bx by] [x y]]
+  (math/sign (- (* (- bx ax)
+                   (- y ay))
+                (* (- by ay)
+                   (- x ax)))))
+
 (defn eids-in-bounding-box [db {:keys [start-x end-x start-y end-y] :as box}]
   (let [x0 (min start-x end-x)
         x1 (max start-x end-x)
@@ -375,12 +381,7 @@
                                 above-y0-end-e)
 
                      (set/union below-y1-start-e
-                                below-y1-end-e))
-        det (fn [[ax ay] [bx by] [x y]]
-              (math/sign (- (* (- bx ax)
-                               (- y ay))
-                            (* (- by ay)
-                               (- x ax)))))]
+                                below-y1-end-e))]
     (set (filter (fn [eid]
                    ;; TODO: optimize by looking up start-x, end-x, etc. from the index ranges
                    ;;       we've already created
@@ -463,6 +464,37 @@
     (set/difference candidates
                     rejects)))
 
+(defn arrows-in-bounding-box [db {:keys [start-x end-x start-y end-y]}]
+  (let [x0 (min start-x end-x)
+        x1 (max start-x end-x)
+        y0 (min start-y end-y)
+        y1 (max start-y end-y)]
+    (reduce (fn [acc d]
+              (let [origin (d/entity db (:e d))
+                    dest (d/entity db (:v d))
+                    origin-center (layers/center origin)
+                    dest-center (layers/center dest)
+                    [ox oy] (layers/layer-intercept origin dest-center)
+                    [dx dy] (layers/layer-intercept dest origin-center)]
+                (if (or
+                     ;; has endpoint
+                     (and (< x0 ox x1)
+                          (< y0 oy y1))
+                     ;; has endpoint
+                     (and (< x0 dx x1)
+                          (< y0 dy y1))
+
+                     (and
+                      (> (max ox dx) x0)
+                      (< (min ox dx) x1)
+                      (> (max oy dy) y0)
+                      (< (min oy dy) y1)
+                      (not= 4 (Math/abs (reduce + (map (partial det [ox oy] [dx dy])
+                                                       [[x0 y0] [x0 y1] [x1 y0] [x1 y1]]))))))
+                  (conj acc {:origin-id (:e d) :dest-id (:v d)})
+                  acc)))
+            #{} (d/datoms db :aevt :layer/points-to))))
+
 (defn draw-in-progress-drawing [state x y {:keys [force-even? delta]}]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
         [snap-x snap-y] (cameras/snap-to-grid (:camera state) rx ry)
@@ -475,40 +507,46 @@
                                               {:start-x (get-in state [:drawing :layers 0 :layer/start-x])
                                                :end-x snap-x
                                                :start-y (get-in state [:drawing :layers 0 :layer/start-y])
-                                               :end-y snap-y}))]
+                                               :end-y snap-y}))
+        bounding-arrows (when group?
+                          (arrows-in-bounding-box @(:db state)
+                                                  {:start-x (get-in state [:drawing :layers 0 :layer/start-x])
+                                                   :end-x snap-x
+                                                   :start-y (get-in state [:drawing :layers 0 :layer/start-y])
+                                                   :end-y snap-y}))]
     (-> state
-        (update-in [:drawing :layers 0] #(-> %
-                                             (assoc :points points
-                                                    :force-even? force-even?
-                                                    :layer/current-x snap-x
-                                                    :layer/current-y snap-y)
-                                             (cond-> (and (= tool :text)
-                                                          (get-in state [:mouse-down]))
-                                               ((fn [s]
-                                                  (let [zoom (get-in state [:camera :zf])]
-                                                    (-> s
-                                                      (update-in [:layer/start-x] + (* (/ 1 zoom)
-                                                                                       (:x delta)))
-                                                      (update-in [:layer/start-y] + (* (/ 1 zoom)
-                                                                                       (:y delta))))))))))
-        (update-in [:drawing :layers 0]
-                   (fn [layer]
-                     (merge
-                      layer
-                      (when (= :pen tool)
-                        {:layer/path (svg/points->path points)})
-                      (when (or (= :circle tool)
-                                ;; TODO: hack to preserve border-radius for re-editing circles
-                                (layers/circle? layer))
-                        {:layer/rx (js/Math.abs (- (:layer/start-x layer)
-                                                   (:layer/current-x layer)))
-                         :layer/ry (js/Math.abs (- (:layer/start-y layer)
-                                                   (:layer/current-y layer)))})
-                      (when (seq bounding-eids)
-                        {:layer/child bounding-eids}))))
-        (assoc-in [:editing-eids :editing-eids] #{(get-in state [:drawing :layers 0 :db/id])})
-        (cond-> group?
-          (assoc-in [:selected-eids :selected-eids] (set bounding-eids))))))
+      (update-in [:drawing :layers 0] #(-> %
+                                         (assoc :points points
+                                                :force-even? force-even?
+                                                :layer/current-x snap-x
+                                                :layer/current-y snap-y)
+                                         (cond-> (and (= tool :text)
+                                                      (get-in state [:mouse-down]))
+                                           ((fn [s]
+                                              (let [zoom (get-in state [:camera :zf])]
+                                                (-> s
+                                                  (update-in [:layer/start-x] + (* (/ 1 zoom)
+                                                                                   (:x delta)))
+                                                  (update-in [:layer/start-y] + (* (/ 1 zoom)
+                                                                                   (:y delta))))))))))
+      (update-in [:drawing :layers 0]
+                 (fn [layer]
+                   (merge
+                    layer
+                    (when (= :pen tool)
+                      {:layer/path (svg/points->path points)})
+                    (when (or (= :circle tool)
+                              ;; TODO: hack to preserve border-radius for re-editing circles
+                              (layers/circle? layer))
+                      {:layer/rx (js/Math.abs (- (:layer/start-x layer)
+                                                 (:layer/current-x layer)))
+                       :layer/ry (js/Math.abs (- (:layer/start-y layer)
+                                                 (:layer/current-y layer)))})
+                    (when (seq bounding-eids)
+                      {:layer/child bounding-eids}))))
+      (assoc-in [:editing-eids :editing-eids] #{(get-in state [:drawing :layers 0 :db/id])})
+      (cond-> group? (assoc-in [:selected-eids :selected-eids] (set bounding-eids))
+              group? (assoc-in [:selected-arrows :selected-arrows] (set bounding-arrows))))))
 
 (defn move-points [points move-x move-y]
   (map (fn [{:keys [rx ry]}]
