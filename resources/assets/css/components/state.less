@@ -21,7 +21,7 @@
     pointer-events: none;
   }
   .canvas-background {
-    .scale3d(.6,0,1);
+    transform: scale3d(.6, 0, 1);
     transition-duration: @run_slow;
   }
   .layer {
@@ -41,7 +41,7 @@
     display: none;
   }
   .chat-background {
-    .scale3d(0,0,1);
+    transform: scale3d(0, 0, 1);
     transition-duration: @run_slow;
   }
   .chat-log {
@@ -116,7 +116,7 @@
 .state-outer {
   .canvas-background {
     &:after {
-      .animation(in-fade @run @run_fast @bezier_fadein backwards);
+      animation: in-fade @run @run_fast @bezier_fadein backwards;
       .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
       content: "";
       position: absolute;
@@ -127,7 +127,7 @@
     }
   }
   .canvas-frame {
-    .scale3d(.8);
+    transform: scale3d(.8, .8, 1);
     width: 125%;
     height: 125%;
     transition+: all @run_slower @bezier_deform;

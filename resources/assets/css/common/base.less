@@ -3,16 +3,16 @@ html {
   .font-smoothing();
   font: @font_size/@line_height @font_family, sans-serif;
   color: @gray_dark;
-  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   -webkit-tap-highlight-color: fade(@black, 0);
 }
 body {
   margin: 0;
 }
 .app {
-  .animation(in-fade @run_slower);
   min-height: 100vh;
   background: @dye_outer;
+  animation: in-fade @run_slower;
   &.chat-opened {
     .width-canvas {
       .size_of(canvas; width);
@@ -108,7 +108,7 @@ code {
   &.block {
     .gradient(to bottom, fade(@black, 0) 50%, fade(@black, 02) 50%);
     display: block;
-    font-size: 11px;
+    font-size: 11px; // TODO can improve here
     line-height: 2em;
     margin: 2em 0;
     padding: 2em 1em;
@@ -123,7 +123,7 @@ code {
   .flexy(center, center);
   &:before,
   &:after {
-    .flex(1);
+    flex: 1;
     content: "";
     border-bottom: 1px solid; // calling w/o color forces inheritance
   }

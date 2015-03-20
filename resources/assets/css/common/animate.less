@@ -1,15 +1,15 @@
 .animate_nav() {
   .nav-head {
-    .animation(in-fade-top @run @run_slower @bezier_deform backwards);
+    animation: in-fade-top @run @run_slower @bezier_deform backwards;
   }
 }
 .animate_the_why() {
   .our-philosphy {
-    .animation(our-philosphy @run @run @bezier_deform backwards);
-    .transform-origin(0 0);
+    animation: our-philosphy @run @run @bezier_deform backwards;
+    transform-origin: 0 0;
   }
   .our-proof {
-    .animation(in-fade-bottom @run @run_fast @bezier_deform backwards);
+    animation: in-fade-bottom @run @run_fast @bezier_deform backwards;
   }
 }
 // TODO move artwork animations in here from landing.less
@@ -29,18 +29,18 @@
     @run7: (@run) ((extract(@run6, 1) * 0.05) + extract(@run6, 2));
     @run8: (@run) ((extract(@run7, 1) * 0.03) + extract(@run7, 2));
     @run9: (@run) ((extract(@run8, 1) * 0.02) + extract(@run8, 2));
-    .price-solo .price-head {.animation(in-fade-left-soft  @run4 backwards);}
-    .price-solo .price-body {.animation(in-fade-left-soft  @run6 backwards);}
-    .price-solo .price-foot {.animation(in-fade-left-soft  @run8 backwards);}
-    .price-team .price-head {.animation(in-shrink          @run1 backwards);}
-    .price-team .price-body {.animation(in-shrink          @run2 backwards);}
-    .price-team .price-foot {.animation(in-shrink          @run3 backwards);}
-    .price-corp .price-head {.animation(in-fade-right-soft @run5 backwards);}
-    .price-corp .price-body {.animation(in-fade-right-soft @run7 backwards);}
-    .price-corp .price-foot {.animation(in-fade-right-soft @run9 backwards);}
-    .price-divide.left   {.animation(in-fade-left-soft @run3 backwards);}
-    .price-divide.right {.animation(in-fade-right-soft @run4 backwards);}
-    .price-blocks-foot {.animation(in-fade-bottom-soft @run9 backwards);}
+    .price-solo .price-head {animation: in-fade-left-soft  @run4 backwards;}
+    .price-solo .price-body {animation: in-fade-left-soft  @run6 backwards;}
+    .price-solo .price-foot {animation: in-fade-left-soft  @run8 backwards;}
+    .price-team .price-head {animation: in-shrink          @run1 backwards;}
+    .price-team .price-body {animation: in-shrink          @run2 backwards;}
+    .price-team .price-foot {animation: in-shrink          @run3 backwards;}
+    .price-corp .price-head {animation: in-fade-right-soft @run5 backwards;}
+    .price-corp .price-body {animation: in-fade-right-soft @run7 backwards;}
+    .price-corp .price-foot {animation: in-fade-right-soft @run9 backwards;}
+    .price-divide.left   {animation: in-fade-left-soft @run3 backwards;}
+    .price-divide.right {animation: in-fade-right-soft @run4 backwards;}
+    .price-blocks-foot {animation: in-fade-bottom-soft @run9 backwards;}
   }
 }
 .animate_early_access() {
@@ -50,10 +50,10 @@
     @run3: (@run_slow) ((extract(@run2, 1) * 0.34) + extract(@run2, 2));
     @run4: (@run_slow) ((extract(@run3, 1) * 0.21) + extract(@run3, 2));
     @run5: (@run_slow) ((extract(@run4, 1) * 0.13) + extract(@run4, 2));
-    .early-access-sign    {.animation(in-shrink      @run1 backwards);}
-    .early-access-name    {.animation(in-fade-left-soft @run2 backwards);}
-    .early-access-size    {.animation(in-fade-left-soft @run3 backwards);}
-    .early-access-uses    {.animation(in-fade-left-soft @run4 backwards);}
-    .early-access-button  {.animation(in-fade-left-soft @run5 backwards);}
+    .early-access-sign   {animation: in-shrink         @run1 backwards;}
+    .early-access-name   {animation: in-fade-left-soft @run2 backwards;}
+    .early-access-size   {animation: in-fade-left-soft @run3 backwards;}
+    .early-access-uses   {animation: in-fade-left-soft @run4 backwards;}
+    .early-access-button {animation: in-fade-left-soft @run5 backwards;}
   }
 }

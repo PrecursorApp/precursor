@@ -23,11 +23,16 @@
 (def output-file (str output-dir "app.css"))
 
 (def lessc-path "node_modules/.bin/lessc")
+
+;; browser versions to autoprefix for (https://github.com/ai/browserslist)
+(def browser-versions "> 5%,last 2 versions")
 (defn lessc-options [output-file output-dir]
   (str "-x"
        " --source-map=" output-file ".map"
+       " --source-map-basepath=" output-dir
        " --source-map-url=" "/css/app.css.map"
-       " --source-map-less-inline"))
+       " --source-map-less-inline"
+       (format " --autoprefix=\"%s\"" browser-versions)))
 
 (defn watch-opts-cdm []
   (into-array WatchEvent$Kind [StandardWatchEventKinds/ENTRY_CREATE

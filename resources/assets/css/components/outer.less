@@ -61,14 +61,14 @@
   bottom: 0;
 }
 .content {
-  .box-sizing(content-box);
+  box-sizing: content-box;
   margin-left: auto;
   margin-right: auto;
   padding-left: @padding_outer;
   padding-right: @padding_outer;
 }
 .content-copy {
-  .user-select(auto);
+  user-select: auto;
   display: inline-block;
   max-width: 100%;
   overflow: hidden;
@@ -80,7 +80,7 @@
   padding: 0 @menu_padding;
   transition: box-shadow @run @bezier_fadein;
   .content {
-    .flex(1 1 100%);
+    flex: 1 1 100%;
     .flexy(center);
   }
 }
