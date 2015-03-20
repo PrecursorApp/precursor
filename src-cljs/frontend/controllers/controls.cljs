@@ -171,12 +171,12 @@
   [browser-state message [{:keys [key-set depressed?]}] state]
   (let [shortcuts (get-in state state/keyboard-shortcuts-path)]
     (-> state
-        (assoc-in [:keyboard key-set] depressed?)
-        (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
-                (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key-set))
-                                                         (keys shortcuts))))
-                (and (= #{"shift"} key-set) (settings/drawing-in-progress? state))
-                (assoc-in [:drawing :layers 0 :force-even?] depressed?)))))
+      (assoc :keyboard {key-set depressed?})
+      (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
+        (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key-set))
+                                                 (keys shortcuts))))
+        (and (= #{"shift"} key-set) (settings/drawing-in-progress? state))
+        (assoc-in [:drawing :layers 0 :force-even?] depressed?)))))
 
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
