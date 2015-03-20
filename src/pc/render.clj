@@ -94,12 +94,12 @@
                                    dest (into {} dest)
                                    dest-center (layers/center dest)
                                    origin-center (layers/center origin)
-                                   [start-x start-y] (layers/layer-intercept origin dest-center)
-                                   [end-x end-y] (layers/layer-intercept dest origin-center)]
+                                   [start-x start-y] (layers/layer-intercept origin dest-center :padding 10)
+                                   [end-x end-y] (layers/layer-intercept dest origin-center :padding 10)]
                              :when (not (or (= [start-x start-y]
                                                [end-x end-y])
-                                            (layers/contains-point? dest [start-x start-y])
-                                            (layers/contains-point? origin [end-x end-y])))]
+                                            (layers/contains-point? dest [start-x start-y] :padding 10)
+                                            (layers/contains-point? origin [end-x end-y] :padding 10)))]
                          (svg-element (assoc origin
                                              :layer/start-x start-x
                                              :layer/start-y start-y
@@ -107,5 +107,5 @@
                                              :layer/end-y end-y
                                              :layer/path (layers/arrow-path [start-x start-y] [end-x end-y])
                                              :layer/type :layer.type/path)
-                                      {:invert-colors? invert-colors? :layer-props {:marker-end "url(#arrow-point)"}})))
+                                      {:invert-colors? invert-colors?})))
                      (filter :layer/points-to layers)))]])))
