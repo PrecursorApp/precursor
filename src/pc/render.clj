@@ -105,6 +105,7 @@
                                              :layer/start-y start-y
                                              :layer/end-x end-x
                                              :layer/end-y end-y
-                                             :layer/type :layer.type/line)
+                                             :layer/path (layers/arrow-path [start-x start-y] [end-x end-y])
+                                             :layer/type :layer.type/path)
                                       {:invert-colors? invert-colors? :layer-props {:marker-end "url(#arrow-point)"}})))
                      (filter :layer/points-to layers)))]])))

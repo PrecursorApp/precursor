@@ -54,16 +54,27 @@
     }
   }
   &.arrow-tool {
-    cursor: e-resize;
+    cursor: default;
+  }
+  &.relation-in-progress {
+    cursor: none;
+    .arrow-hint {
+      display: none;
+    }
   }
   .arrow-handle-group {
     transition: @run @bezier_deform;
     opacity: 0;
-    cursor: e-resize;
     &:hover {
       opacity: 1;
     }
+    &:active {
+      opacity: 0.5;
+    }
   }
+}
+.arrow-hint {
+  stroke-dasharray: 2, 2;
 }
 .grid-lines-large {
   fill: none;
@@ -92,12 +103,28 @@
     }
   }
 }
-.selectable-group {
+.tool-select {
   .layer-handle {
     stroke: transparent;
     stroke-width: 20;
     &:hover {
       ~ .layer-outline {
+        stroke: @white;
+        stroke-width: 4;
+        transition-duration: @run_fast;
+        &.selected {
+          stroke: @color_select_hover;
+        }
+      }
+    }
+  }
+}
+.arrow-tool {
+  .arrow-handle {
+    stroke: transparent;
+    stroke-width: 20;
+    &:hover {
+      ~ .arrow-outline {
         stroke: @white;
         stroke-width: 4;
         transition-duration: @run_fast;
@@ -132,7 +159,7 @@
       cursor: move;
     }
   }
-  &.layer-outline {
+  &.layer-outline, &.arrow-outline {
     stroke: @gray_light;
     stroke-width: 2;
     pointer-events: none;
@@ -174,8 +201,8 @@
     display: none;
   }
 }
-.selectable-group {
-  &:hover {
+.tool-select {
+  .layer:hover {
     .text-layer {
       fill: @color_select_hover;
       &.selected {
@@ -373,10 +400,9 @@
     display: none;
   });
 }
-
-.layer-arrows {
-  line {
-    stroke: @gray_light;
-    stroke-width: 2;
-  }
+marker#arrow-point {
+  fill: @gray_light;
+}
+marker#selected-arrow-point {
+  fill: @color_select;
 }

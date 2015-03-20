@@ -165,9 +165,7 @@
 
 (defmethod handle-keyboard-shortcut :arrow-tool
   [state shortcut-name]
-  (-> state
-    (cancel-drawing)
-    (assoc-in [:drawing :relation-in-progress?] true)))
+  state)
 
 (defmethod control-event :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] state]
@@ -220,7 +218,8 @@
                                                    :layer/current-y snap-y)])
               (update-mouse x y)
               (assoc-in [:editing-eids :editing-eids] #{entity-id})
-              (assoc-in [:selected-eids :selected-eids] #{entity-id}))]
+              (assoc-in [:selected-eids :selected-eids] #{entity-id})
+              (assoc-in [:selected-arrows :selected-arrows] #{}))]
       r)))
 
 (defmethod control-event :drawing-started
@@ -245,7 +244,8 @@
     ;; TODO: do we need to update mouse?
     ;; (update-mouse x y)
     (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)})
-    (assoc-in [:editing-eids :editing-eids] #{(:db/id layer)})))
+    (assoc-in [:editing-eids :editing-eids] #{(:db/id layer)})
+    (assoc-in [:editing-arrows :editing-arrows] #{})))
 
 ;; These are used to globally increment names for layer targets and ids
 ;; There is definitely a better to do this, but not sure what it is at the moment.
@@ -284,6 +284,7 @@
     (-> state
       (assoc-in [:selected-eids :selected-eids] #{entity-id})
       (assoc-in [:editing-eids :editing-eids] #{entity-id})
+      (assoc-in [:editing-arrows :editing-arrows] #{})
       (assoc-in [:drawing :original-layers] [layer])
       (assoc-in [:drawing :layers] [(assoc layer
                                            :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
@@ -577,7 +578,9 @@
                                                 :document/id (:document/id current-state)
                                                 :layers (when (or (get-in current-state [:drawing :in-progress?])
                                                                   (get-in current-state [:drawing :moving?]))
-                                                          (get-in current-state [:drawing :layers]))}
+                                                          (get-in current-state [:drawing :layers]))
+                                                :relation (when (get-in current-state [:drawing :relation :layer])
+                                                            (get-in current-state [:drawing :relation]))}
                                                (when (and x y)
                                                  {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
 
@@ -715,7 +718,35 @@
       (assoc-in [:drawing :relation-in-progress?] true)
       (assoc-in [:drawing :relation] {:layer layer
                                       :rx rx
-                                      :ry ry}))))
+                                      :ry ry})
+      (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)}))))
+
+(defmethod control-event :layer-relation-finished
+  [browser-state message {:keys [dest x y]} state]
+  (let [{:keys [x y]} (get-in state [:mouse])
+        origin-layer (get-in state [:drawing :relation :layer])]
+    (-> state
+      (assoc-in [:drawing :relation-in-progress?] false)
+      (assoc-in [:mouse-down] false)
+      (assoc-in [:drawing :relation] {})
+      (assoc-in [:drawing :finished-relation] {:origin-layer origin-layer
+                                               :dest-layer-id (:db/id dest)})
+      (update-in [:selected-eids :selected-eids] conj (:db/id dest))
+      (update-in [:selected-arrows :selected-arrows] conj {:origin-id (:db/id origin-layer)
+                                                           :dest-id (:db/id dest)})
+      (assoc-in [:camera :moving?] false))))
+
+(defmethod post-control-event! :layer-relation-finished
+  [browser-state message {:keys [dest x y]} previous-state current-state]
+  (let [db (:db current-state)]
+    (when (and (get-in previous-state [:drawing :relation-in-progress?])
+               (seq (get-in current-state [:drawing :finished-relation :origin-layer])))
+      (d/transact! db [[:db/add
+                        (get-in current-state [:drawing :finished-relation :origin-layer :db/id])
+                        :layer/points-to
+                        (get-in current-state [:drawing :finished-relation :dest-layer-id])]]
+                   {:can-undo? true})
+      (maybe-notify-subscribers! current-state x y))))
 
 (defn detectable-movement?
   "Checks to make sure we moved the layer from its starting position"
@@ -812,17 +843,19 @@
   (-> state
     (cancel-drawing)
     (assoc-in [:selected-eids :selected-eids] #{})
-    (assoc-in [:editing-eids :editing-eids] #{})))
+    (assoc-in [:editing-eids :editing-eids] #{})
+    (assoc-in [:selected-arrows :selected-arrows] #{})))
 
 (defmethod post-control-event! :deleted-selected
   [browser-state message _ previous-state current-state]
-  (when-let [selected-eids (seq (get-in previous-state [:selected-eids :selected-eids]))]
-    (let [db (:db current-state)
-          document-id (:document/id current-state)]
-      (doseq [eid-group (partition-all 100 selected-eids)]
-        (d/transact! db (for [eid eid-group]
-                          [:db.fn/retractEntity eid])
-                     {:can-undo? true})))))
+  (let [selected-eids (seq (get-in previous-state [:selected-eids :selected-eids]))
+        selected-arrows (seq (get-in previous-state [:selected-arrows :selected-arrows]))
+        db (:db current-state)
+        document-id (:document/id current-state)
+        txes (concat (for [eid selected-eids] [:db.fn/retractEntity eid])
+                     (for [{:keys [origin-id dest-id]} selected-arrows] [:db/retract origin-id :layer/points-to dest-id]))]
+    (doseq [tx-group (partition-all 100 txes)]
+      (d/transact! db tx-group {:can-undo? true}))))
 
 (defn conjv [& args]
   (apply (fnil conj []) args))
@@ -833,6 +866,8 @@
     (-> state
       (update-in [:selected-eids :selected-eids] (fn [eids]
                                                    (conj (if append? eids #{}) (:db/id layer))))
+      (cond-> (not append?)
+        (assoc-in [:selected-arrows :selected-arrows] #{}))
       (update-in [:drawing :layers]
                  (fn [layers]
                    (conjv (if append? layers []) layer)))
@@ -850,6 +885,19 @@
                                                       layer)))
       (assoc-in [:drawing :moving?] true)
       (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
+
+(defmethod control-event :arrow-selected
+  [browser-state message {:keys [origin dest append?]} state]
+  (-> state
+    (update-in [:selected-arrows :selected-arrows] (fn [sels]
+                                                     (conj (if append? sels #{}) {:origin-id (:db/id origin) :dest-id (:db/id dest)})))
+    (cond-> (not append?)
+      (assoc-in [:selected-eids :selected-eids] #{}))))
+
+(defmethod control-event :arrow-deselected
+  [browser-state message {:keys [origin dest]} state]
+  (-> state
+    (update-in [:selected-arrows :selected-arrows] disj {:origin-id (:db/id origin) :dest-id (:db/id dest)})))
 
 ;; TODO: hook this up. Unsure how to tell the difference between layer deselected and group-selected
 (defmethod control-event :layer-deselected
@@ -1271,22 +1319,29 @@
         new-y (+ (* (- center-y) zoom)
                  (/ (:height canvas-size) 2))
         [move-x move-y] (cameras/screen->point camera new-x new-y)
-        [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)]
+        [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
+        new-layers (mapv (fn [l]
+                           (-> l
+                             (assoc :layer/ancestor (:db/id l)
+                                    :db/id (get eid-map (:db/id l))
+                                    :layer/document doc-id
+                                    :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
+                             (utils/update-when-in [:layer/points-to] (fn [dests]
+                                                                        (set (map #(update-in % [:db/id] eid-map) dests))))
+                             (#(move-layer % %
+                                           {:snap-x snap-move-x :snap-y snap-move-y
+                                            :move-x move-x :move-y move-y :snap-paths? true}))
+                             (dissoc :layer/current-x :layer/current-y :points)))
+                         layers)]
     (-> state
-      (assoc-in [:clipboard :layers] (mapv (fn [l]
-                                             (-> l
-                                               (assoc :layer/ancestor (:db/id l)
-                                                      :db/id (get eid-map (:db/id l))
-                                                      :layer/document doc-id
-                                                      :points (when (:layer/path l) (parse-points-from-path (:layer/path l))))
-                                               (utils/update-when-in [:layer/points-to] (fn [dests]
-                                                                                          (set (map #(update-in % [:db/id] eid-map) dests))))
-                                               (#(move-layer % %
-                                                             {:snap-x snap-move-x :snap-y snap-move-y
-                                                              :move-x move-x :move-y move-y :snap-paths? true}))
-                                               (dissoc :layer/current-x :layer/current-y :points)))
-                                           layers))
-      (assoc-in [:selected-eids :selected-eids] (set entity-ids)))))
+      (assoc-in [:clipboard :layers] new-layers)
+      (assoc-in [:selected-eids :selected-eids] (set entity-ids))
+      (assoc-in [:selected-arrows :selected-arrows] (set (reduce (fn [acc layer]
+                                                                   (if-let [pointer (:layer/points-to layer)]
+                                                                     (conj acc {:origin-id (:db/id layer)
+                                                                                :dest-id (:db/id pointer)})
+                                                                     acc))
+                                                                   #{} new-layers))))))
 
 (defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]

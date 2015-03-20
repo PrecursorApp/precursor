@@ -1,5 +1,6 @@
 (ns frontend.layers
-  (:require [frontend.utils :as utils]))
+  (:require [clojure.string]
+            [frontend.utils :as utils]))
 
 (defn layers [state]
   (:shapes state))
@@ -171,9 +172,9 @@
 ;; https://math.stackexchange.com/questions/69099/equation-of-a-rectangle/69134#69134
 (defn layer-intercept
   "Takes layer, (x1, y1) = point outside the layer"
-  [{:keys [layer/start-x layer/end-x layer/start-y layer/end-y] :as layer} [x1 y1]]
-  (let [padding 10
-        max-x (+ padding (max start-x end-x))
+  [{:keys [layer/start-x layer/end-x layer/start-y layer/end-y] :as layer} [x1 y1] & {:keys [padding]
+                                                                                      :or {padding 10}}]
+  (let [max-x (+ padding (max start-x end-x))
         max-y (+ padding (max start-y end-y))
         min-x (+ (- padding) (min start-x end-x))
         min-y (+ (-  padding) (min start-y end-y))
@@ -212,8 +213,29 @@
                           [p (* m p)]))]
         [(+ cx rx) (+ cy ry)]))))
 
-(defn contains-point? [{:keys [layer/start-x layer/end-x layer/start-y layer/end-y]} [x y]]
-  (and (<= x (max start-x end-x))
-       (<= y (max start-y end-y))
-       (>= x (min start-x end-x))
-       (>= y (min start-y end-y))))
+(defn contains-point? [{:keys [layer/start-x layer/end-x layer/start-y layer/end-y]} [x y] & {:keys [padding]
+                                                                                              :or {padding 0}}]
+  (and (<= x (+ (max start-x end-x) padding))
+       (<= y (+ (max start-y end-y) padding))
+       (>= x (- (min start-x end-x) padding))
+       (>= y (- (min start-y end-y) padding))))
+
+(defn arrow-path [[x0 y0] [x1 y1] & {:keys [r]
+                                     :or {r 5}}]
+  (let [theta (Math/atan2 (determinant [x1 y1] [x0 y0] [(+ x1 1) y1])
+                          (- x1 x0))
+        theta-arrow (/ Math/PI 6)
+        t1 [(- x1 (* r (Math/cos (+ theta theta-arrow))))
+            (- y1 (* r (Math/sin (+ theta theta-arrow))))]
+        t2 [(- x1 (* r (Math/cos (- theta theta-arrow))))
+            (- y1 (* r (Math/sin (- theta theta-arrow))))]
+        cross-point [(- x1 (* r (Math/cos theta-arrow) (Math/cos theta)))
+                     (- y1 (* r (Math/cos theta-arrow) (Math/sin theta)))]]
+    (str "M "
+         (clojure.string/join " " (concat [x0 y0]
+                                          [x1 y1]
+                                          cross-point
+                                          t2
+                                          [x1 y1]
+                                          t1
+                                          cross-point)))))

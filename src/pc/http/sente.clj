@@ -421,12 +421,14 @@
   (let [document-id (-> ?data :document/id)
         mouse-position (-> ?data :mouse-position)
         tool (-> ?data :tool)
-        layers (-> ?data :layers)]
+        layers (-> ?data :layers)
+        relation (-> ?data :relation)]
     (doseq [[uid _] (dissoc (get @document-subs document-id) client-id)]
       ((:send-fn @sente-state) uid [:frontend/mouse-move (merge
                                                           {:client-id client-id
                                                            :tool tool
-                                                           :layers layers}
+                                                           :layers layers
+                                                           :relation relation}
                                                           (when mouse-position
                                                             {:mouse-position mouse-position}))]))))
 
