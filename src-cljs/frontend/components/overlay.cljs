@@ -395,7 +395,7 @@
            [:table.shortcuts-items
             [:tbody
              ;;
-             ;; single keystrokes
+             ;; keys
              ;;
              [:tr.make
               [:td [:div.shortcuts-key {:title "V Key"} "V"]]
@@ -431,7 +431,7 @@
               [:td [:div.shortcuts-key {:title "Escape Key"} (common/icon :esc)]]
               [:td [:div.shortcuts-result {:title "Cancel action or close menu."} "Cancel"]]]
              ;;
-             ;; keystrokes beginning with "command"
+             ;; edit
              ;;
              [:tr.make
               [:td {:col-span "2"}]]
@@ -458,16 +458,16 @@
                 [:div.shortcuts-key {:title "Z Key"} "Z"]]]
               [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
              ;;
-             ;; keystrokes beginning with "option"
+             ;; scroll
              ;;
              [:tr.make
               [:td {:col-span "2"}]]
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
-                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-              [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
+                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+              [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
              [:tr.make
               [:td
                [:div.shortcuts-keys
@@ -475,7 +475,7 @@
                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
               [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
              ;;
-             ;; keystrokes beginning with "shift"
+             ;; click
              ;;
              [:tr.make
               [:td {:col-span "2"}]]
@@ -483,14 +483,21 @@
               [:td
                [:div.shortcuts-keys
                 [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
-                [:div.shortcuts-misc {:title "Left Click"} (common/icon :mouse)]]]
-              [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Stack"]]]
+                [:div.shortcuts-misc {:title "Left Click"} (common/icon :click)]]]
+              [:td [:div.shortcuts-result {:title "Hold shift, click multiple shapes."} "Multi-select"]]]
              [:tr.make
               [:td
                [:div.shortcuts-keys
+                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                [:div.shortcuts-misc {:title "Left Click + Drag"} (common/icon :click)]]]
+              [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Control Key"} (common/icon :control)]
                 [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
-                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-              [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
+                [:div.shortcuts-misc {:title "Left Click + Drag"} (common/icon :click)]]]
+              [:td [:div.shortcuts-result {:title "Hold control & shift, drag shape."} "Connect"]]]
              ]]]])))))
 
 (defn username [app owner]
