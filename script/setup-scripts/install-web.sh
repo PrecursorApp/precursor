@@ -55,7 +55,7 @@ echo 'ntpd_sync_on_start="YES"' >> /etc/rc.conf
 service ntpd start
 
 # swap
-dd if=/dev/zero of=/usr/swap0 bs=1m count=2048
+dd if=/dev/zero of=/usr/swap0 bs=1m count=8192
 chmod 600 /usr/swap0
 echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
 swapon -aqL
@@ -120,7 +120,7 @@ echo "${GPG_PASSPHRASE}" | gpg --batch --no-tty --decrypt --passphrase-fd 0 prod
 chown -R precursor:precursor $prcrsr_dir
 
 ## TODO: move this into a script and upload a tarball, similar to datomic
-java_opts="-Xmx2g -Xms2g -Djava.net.preferIPv4Stack=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -Dfile.encoding=UTF-8"
+java_opts="-Xmx4g -Xms4g -Djava.net.preferIPv4Stack=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -Dfile.encoding=UTF-8"
 run_cmd="java -server -cp pc-standalone.jar ${java_opts} clojure.main --main pc.init"
 
 . production.sh
