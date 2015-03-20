@@ -307,24 +307,31 @@
         db @(:db state)
         layer-eids (get-in state [:selected-eids :selected-eids])
         layers (mapv #(ds/touch+ (d/entity db %)) layer-eids)
-        {:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))]
+        {:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))
+        eid-map (zipmap (map :db/id layers) entity-ids)]
     (-> state
       (assoc-in [:selected-eids :selected-eids] (set entity-ids))
       (assoc-in [:editing-eids :editing-eids] (set entity-ids))
+      (assoc-in [:selected-arrows :selected-arrows] #{})
       (assoc-in [:drawing :original-layers] layers)
-      (assoc-in [:drawing :layers] (mapv (fn [layer entity-id index]
-                                           (assoc layer
-                                                  :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
-                                                  :db/id entity-id
-                                                  :layer/start-x (:layer/start-x layer)
-                                                  :layer/end-x (:layer/end-x layer)
-                                                  :layer/current-x (:layer/end-x layer)
-                                                  :layer/current-y (:layer/end-y layer)
-                                                  :layer/ui-id (when (:layer/ui-id layer)
-                                                                 (inc-str-id @(:db state) (:layer/ui-id layer) :offset index))
-                                                  :layer/ui-target (when (:layer/ui-target layer)
-                                                                     (inc-str-target @(:db state) (:layer/ui-target layer) :offset index))))
-                                         layers entity-ids (range)))
+      (assoc-in [:drawing :layers] (mapv (fn [layer index]
+                                           (-> layer
+                                             (assoc :points (when (:layer/path layer) (parse-points-from-path (:layer/path layer)))
+                                                    :db/id (get eid-map (:db/id layer))
+                                                    :layer/start-x (:layer/start-x layer)
+                                                    :layer/end-x (:layer/end-x layer)
+                                                    :layer/current-x (:layer/end-x layer)
+                                                    :layer/current-y (:layer/end-y layer)
+                                                    :layer/ui-id (when (:layer/ui-id layer)
+                                                                   (inc-str-id @(:db state) (:layer/ui-id layer) :offset index))
+                                                    :layer/ui-target (when (:layer/ui-target layer)
+                                                                       (:layer/ui-target layer)))
+                                             (utils/update-when-in [:layer/points-to]
+                                                                   (fn [ps]
+                                                                     (set (map (fn [p]
+                                                                                 {:db/id (get eid-map (:db/id p) (:db/id p))})
+                                                                               ps))))))
+                                         layers (range)))
       (assoc-in [:drawing :moving?] true)
       (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
@@ -822,7 +829,7 @@
         original-layers (get-in previous-state [:drawing :original-layers])
         layers        (mapv #(-> %
                                (dissoc :points)
-                               (dissoc :layer/points-to)
+                               (utils/update-when-in [:layer/points-to] (fn [p] (set (map :db/id p))))
                                (utils/remove-map-nils))
                             (get-in current-state [:drawing :finished-layers]))]
     (cond
@@ -866,8 +873,7 @@
 
 (defn handle-text-layer-finished-after [current-state]
   (let [db (:db current-state)
-        layer (dissoc (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))
-                      :layer/points-to)]
+        layer (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))]
     (when (layer-model/detectable? layer)
       (d/transact! db [layer] {:can-undo? true}))
     (maybe-notify-subscribers! current-state nil nil)))
@@ -1044,8 +1050,7 @@
         (d/transact! (:db current-state)
                      (mapv (fn [l]
                              (-> l
-                               utils/remove-map-nils
-                               (dissoc :layer/points-to)))
+                               utils/remove-map-nils))
                            layers)
                      {:can-undo? true}))))
   (maybe-notify-subscribers! current-state nil nil))

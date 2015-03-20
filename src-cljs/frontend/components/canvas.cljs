@@ -726,7 +726,6 @@
     (render [_]
       (let [db @(om/get-shared owner :db)
             cast! (om/get-shared owner :cast!)
-            pointer-datoms (seq (d/datoms db :aevt :layer/points-to))
             drawing (cursors/observe-drawing owner)
             drawing-layers (reduce (fn [acc layer]
                                      (assoc acc (:db/id layer) (assoc layer
@@ -738,7 +737,16 @@
                                                                          :layer/end-x (:layer/current-x layer)
                                                                          :layer/end-y (:layer/current-y layer))))
                                       {} (mapcat :layers (vals (cursors/observe-subscriber-layers owner))))
+            pointer-datoms (concat (seq (d/datoms db :aevt :layer/points-to))
+                                   (mapcat (fn [l]
+                                             (map (fn [p] {:e (:db/id l) :v (:db/id p)})
+                                                  (:layer/points-to l)))
+                                           (filter :layer/points-to
+                                                   (concat (:layers drawing)
+                                                           (vals subscriber-layers)))))
+
             selected-eids (:selected-eids (cursors/observe-selected-eids owner))
+
             selected-arrows (:selected-arrows (cursors/observe-selected-arrows owner))]
         (dom/g #js {:className "arrows-container"}
 
