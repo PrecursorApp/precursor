@@ -60,6 +60,21 @@
   [browser-state message args previous-state current-state]
   (utils/mlog "No post-control for: " message))
 
+;; TODO: this shouldn't assume it's sending a mouse position
+(defn maybe-notify-subscribers! [current-state x y]
+  (when (get-in current-state [:subscribers :mice (:client-id current-state) :show-mouse?])
+    (sente/send-msg (:sente current-state)
+                    [:frontend/mouse-position (merge
+                                               {:tool (get-in current-state state/current-tool-path)
+                                                :document/id (:document/id current-state)
+                                                :layers (when (or (get-in current-state [:drawing :in-progress?])
+                                                                  (get-in current-state [:drawing :moving?]))
+                                                          (get-in current-state [:drawing :layers]))
+                                                :relation (when (get-in current-state [:drawing :relation :layer])
+                                                            (get-in current-state [:drawing :relation]))}
+                                               (when (and x y)
+                                                 {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
+
 (defmethod control-event :state-restored
   [browser-state message path state]
   (let [str-data (.getItem js/sessionStorage "circle-state")]
@@ -189,7 +204,8 @@
   (when (and depressed?
              (or (= key-set #{"backspace"})
                  (= key-set #{"del"})))
-    (put! (get-in current-state [:comms :controls]) [:deleted-selected])))
+    (put! (get-in current-state [:comms :controls]) [:deleted-selected]))
+  (maybe-notify-subscribers! current-state nil nil))
 
 (defn update-mouse [state x y]
   (if (and x y)
@@ -618,21 +634,6 @@
 
         (get-in state [:drawing :moving?])
         (move-drawings x y))))
-
-;; TODO: this shouldn't assume it's sending a mouse position
-(defn maybe-notify-subscribers! [current-state x y]
-  (when (get-in current-state [:subscribers :mice (:client-id current-state) :show-mouse?])
-    (sente/send-msg (:sente current-state)
-                    [:frontend/mouse-position (merge
-                                               {:tool (get-in current-state state/current-tool-path)
-                                                :document/id (:document/id current-state)
-                                                :layers (when (or (get-in current-state [:drawing :in-progress?])
-                                                                  (get-in current-state [:drawing :moving?]))
-                                                          (get-in current-state [:drawing :layers]))
-                                                :relation (when (get-in current-state [:drawing :relation :layer])
-                                                            (get-in current-state [:drawing :relation]))}
-                                               (when (and x y)
-                                                 {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
 
 (defmethod post-control-event! :text-layer-edited
   [browser-state message _ previous-state current-state]
