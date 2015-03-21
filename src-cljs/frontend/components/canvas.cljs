@@ -755,7 +755,8 @@
                      (get-in drawing [:relation :layer]))
             (let [layer (get-in drawing [:relation :layer])
                   layer-center (layers/center layer)]
-              (dom/g #js {:className "layer-arrows in-progress"}
+              (dom/g #js {:className "layer-arrows in-progress"
+                          :key "in-progress"}
                 (svg-element (assoc layer
                                     :selected? true
                                     :className "shape-layer layer-outline layer-arrow"
@@ -768,7 +769,8 @@
 
           ;; in-progress outlines for shapes
           (when (keyboard/arrow-shortcut-active? app)
-            (apply dom/g #js {:className "arrow-handles"}
+            (apply dom/g #js {:className "arrow-handles"
+                              :key "arrow-handles"}
                    (for [layer (ds/touch-all '[:find ?t :where [?t :layer/type :layer.type/rect]] db)]
                      (om/build arrow-handle
                                (assoc layer
@@ -776,7 +778,8 @@
                                {:react-key (:db/id layer)}))))
 
 
-          (apply dom/g #js {:className "layer-arrows"}
+          (apply dom/g #js {:className "layer-arrows"
+                            :key "layer-arrows"}
                  (for [pointer-datom pointer-datoms
                        :let [origin (or (get drawing-layers (:e pointer-datom))
                                         (get subscriber-layers (:e pointer-datom))
@@ -802,7 +805,7 @@
                                         :layer/type :layer.type/path
                                         :layer/path (layers/arrow-path [start-x start-y] [end-x end-y])
                                         :selected? selected?))]
-                     (dom/g nil
+                     (dom/g #js {:key (str (:db/id origin) "-" (:db/id dest))}
                        (svg-element (assoc props
                                            :className "layer-handle"
                                            :onMouseDown #(do (utils/stop-event %)
