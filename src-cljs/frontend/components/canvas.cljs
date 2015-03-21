@@ -197,7 +197,7 @@
                                    (and (= :rect tool) (not (layers/circle? layer)))))]
         (dom/g #js {:className (str "layer "
                                     (when invalid? "invalid "))
-                    :key (str (:db/id layer) live?)}
+                    :key (:db/id layer)}
 
           (when (and show-handles? (layers/circle? layer))
             (let [layer (layers/normalized-abs-coords layer)]
@@ -357,7 +357,8 @@
                                                       :selected? selected?
                                                       :part-of-group? part-of-group?
                                                       :layer l}))
-                                                 idle-layers)))
+                                                 idle-layers)
+                               {:key-fn #(:db/id (:layer %))}))
           (apply dom/g #js {:className "layers live"}
                  (om/build-all layer-group (mapv (fn [l]
                                                    (let [selected? (contains? selected-eids (:db/id l))
@@ -367,7 +368,8 @@
                                                       :selected? selected?
                                                       :part-of-group? part-of-group?
                                                       :layer l}))
-                                                 live-layers))))))))
+                                                 live-layers)
+                               {:key-fn #(:db/id (:layer %))})))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
