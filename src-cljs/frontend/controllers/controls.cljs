@@ -776,16 +776,23 @@
   [browser-state message {:keys [dest x y]} state]
   (let [{:keys [x y]} (get-in state [:mouse])
         origin-layer (get-in state [:drawing :relation :layer])]
-    (-> state
-      (assoc-in [:drawing :relation-in-progress?] false)
-      (assoc-in [:mouse-down] false)
-      (assoc-in [:drawing :relation] {})
-      (assoc-in [:drawing :finished-relation] {:origin-layer origin-layer
-                                               :dest-layer-id (:db/id dest)})
-      (update-in [:selected-eids :selected-eids] conj (:db/id dest))
-      (update-in [:selected-arrows :selected-arrows] conj {:origin-id (:db/id origin-layer)
-                                                           :dest-id (:db/id dest)})
-      (assoc-in [:camera :moving?] false))))
+    ;; don't create a relation to yourself
+    (if (= (:db/id dest) (:db/id origin-layer))
+      (-> state
+        (assoc-in [:drawing :relation-in-progress?] false)
+        (assoc-in [:mouse-down] false)
+        (assoc-in [:drawing :relation] {})
+        (assoc-in [:camera :moving?] false))
+      (-> state
+        (assoc-in [:drawing :relation-in-progress?] false)
+        (assoc-in [:mouse-down] false)
+        (assoc-in [:drawing :relation] {})
+        (assoc-in [:drawing :finished-relation] {:origin-layer origin-layer
+                                                 :dest-layer-id (:db/id dest)})
+        (update-in [:selected-eids :selected-eids] conj (:db/id dest))
+        (update-in [:selected-arrows :selected-arrows] conj {:origin-id (:db/id origin-layer)
+                                                             :dest-id (:db/id dest)})
+        (assoc-in [:camera :moving?] false)))))
 
 (defmethod post-control-event! :layer-relation-finished
   [browser-state message {:keys [dest x y]} previous-state current-state]
