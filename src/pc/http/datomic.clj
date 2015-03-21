@@ -61,12 +61,14 @@
           (re-find #"(?i)@prcrsr|@danny|@daniel" (:v chat-datom))
           (let [message (format "<%s|%s>: %s"
                                 (urls/doc @document-id) @document-id (:v chat-datom))]
-            (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))
+            (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url
+                                                                        :attachments [{:image_url (urls/doc-png @document-id)}]})}}))
 
           (= 1 (count (get @sente/document-subs @document-id)))
           (let [message (format "<%s|%s> is typing messages to himself: \n %s"
                                 (urls/doc @document-id) @document-id (:v chat-datom))]
-            (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))
+            (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url
+                                                                        :attachments [{:image_url (urls/doc-png @document-id)}]})}}))
           :else nil)))))
 
 (defn admin-notify-subdomains [transaction]
