@@ -38,8 +38,9 @@
                           :subdomain subdomain
                           :team (team-model/find-by-subdomain (pcd/default-db) subdomain)))
           (redirect-to-main req))
-        (if (= (:server-name req)
-               (profile/hostname))
+        (if (or (profile/allow-mismatched-servername?)
+                (= (:server-name req)
+                   (profile/hostname)))
           (handler req)
           (redirect-to-main req))))))
 

@@ -12,7 +12,7 @@
 (defn add-subscriber-data [app-state client-id subscriber-data]
   (let [mouse-data (assoc (select-keys subscriber-data [:mouse-position :show-mouse? :tool :color :cust/uuid])
                           :client-id client-id)
-        layer-data (assoc (select-keys subscriber-data [:layers :color :cust/uuid])
+        layer-data (assoc (select-keys subscriber-data [:layers :color :cust/uuid :relation])
                           :client-id client-id)
         info-data (assoc (select-keys subscriber-data [:color :cust-name :show-mouse? :hide-in-list? :frontend-id-seed :cust/uuid])
                          :client-id client-id)

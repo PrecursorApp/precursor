@@ -45,7 +45,8 @@
                         :shortcuts-menu #{#{"shift" "/"}}
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
-                        :return-from-origin #{#{"2"}}}
+                        :return-from-origin #{#{"2"}}
+                        :arrow-tool #{#{"ctrl" "shift"}}}
    :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}
@@ -60,6 +61,7 @@
                      ;; us have multiple ref cursors in the same component
                      :entity-ids {:entity-ids #{}}}
    :selected-eids   {:selected-eids #{}}
+   :selected-arrows {:selected-arrows #{}}
    :editing-eids    {:editing-eids #{}}
    ;; Info about contributors to the doc
    ;; Combines sessions with custs, which might turn out to be a bad idea

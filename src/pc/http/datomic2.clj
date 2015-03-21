@@ -61,6 +61,7 @@
     :layer/child
     :layer/ui-id
     :layer/ui-target
+    :layer/points-to
 
     :session/uuid
     :document/id ;; TODO: for layers use layer/document
@@ -86,15 +87,18 @@
                 {} txes)))
 
 (defn add-frontend-ids [document-id txes]
-  (:txes (reduce (fn [{:keys [txes eid-map]} [type e a v]]
-                   (if-let [temp-id (get eid-map e)]
-                     {:txes (conj txes [type temp-id a v])
-                      :eid-map eid-map}
-                     (let [temp-id (d/tempid :db.part/user)]
-                       {:txes (concat txes [[type temp-id a v]
-                                            [:db/add temp-id :frontend/id (UUID. document-id e)]])
-                        :eid-map (assoc eid-map e temp-id)})))
-                 {:txes [] :eid-map {}} txes)))
+  (let [eid-map (zipmap (set (map second txes)) (repeatedly #(d/tempid :db.part/user)))
+        frontend-id-txes (map (fn [[e tempid]] [:db/add tempid :frontend/id (UUID. document-id e)]) eid-map)]
+    (concat (map (fn [tx]
+                   (-> tx
+                     (update-in [1] eid-map)
+                     (#(if (= :layer/points-to (nth tx 2))
+                         (update-in % [3] (fn [e]
+                                            (or (get eid-map e)
+                                                [:frontend/id (UUID. document-id e)])))
+                         %))))
+                 txes)
+            frontend-id-txes)))
 
 ;; TODO: only let creators mark things as private
 ;; TODO: only let people on the white list make things as private

@@ -18,6 +18,7 @@
             [frontend.components.overlay :as overlay]
             [frontend.cursors :as cursors]
             [frontend.favicon :as favicon]
+            [frontend.keyboard :as keyboard]
             [frontend.overlay]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
@@ -71,13 +72,15 @@
                          :class (when (empty? (:frontend-id-state app)) "loading")
                          :key "inner"}
              [:style "#om-app:active{cursor:auto}"]
-             (om/build canvas/canvas (select-in app [state/current-tool-path
-                                                     [:drawing :in-progress?]
-                                                     [:mouse-down]
-                                                     [:layer-properties-menu]
-                                                     [:menu]
-                                                     [:client-id]
-                                                     [:cust-data]])
+             (om/build canvas/canvas (select-in app (concat [state/current-tool-path
+                                                             [:drawing :in-progress?]
+                                                             [:drawing :relation-in-progress?]
+                                                             [:mouse-down]
+                                                             [:layer-properties-menu]
+                                                             [:menu]
+                                                             [:client-id]
+                                                             [:cust-data]]
+                                                            (keyboard/arrow-shortcut-state-keys app)))
                        {:react-key "canvas"})
 
              (om/build chat/chat (select-in app [state/chat-opened-path

@@ -25,6 +25,9 @@
 (defn observe-selected-eids [owner]
   (observe owner [:selected-eids]))
 
+(defn observe-selected-arrows [owner]
+  (observe owner [:selected-arrows]))
+
 (defn observe-editing-eids [owner]
   (observe owner [:editing-eids]))
 

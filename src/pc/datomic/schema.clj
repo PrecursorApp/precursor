@@ -142,6 +142,11 @@
               :db.type/ref
               :db/doc "Document that the layer belongs to")
 
+   (attribute :layer/points-to
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Layer that this layer points to, for e.g. flow diagrams.")
+
    ;; No logins at the moment, so we'll use this to identify users
    ;; chats rely on this, is it a good idea? Nice to have something stable across tabs
    (attribute :session/uuid

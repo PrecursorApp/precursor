@@ -1,5 +1,6 @@
 (ns pc.render
-  (:require [pc.svg :as svg]
+  (:require [pc.layers :as layers]
+            [pc.svg :as svg]
             [hiccup.core :refer (h html)]))
 
 (defmulti svg-element (fn [layer opts] (:layer/type layer)))
@@ -71,8 +72,40 @@
            ;; hack to make pngs work
            (when invert-colors?
              [:rect {:width "100%" :height "100%" :fill "#333"}])
+           [:marker {:id "arrow-point"
+                     :viewBox "0 0 10 10"
+                     :refX 5
+                     :refY 5
+                     :markerUnits "strokeWidth"
+                     :markerWidth 5
+                     :markerHeight 5
+                     :orient "auto"
+                     :fill (if invert-colors? "#ccc" "black")}
+            [:path {:d "M 0 0 L 10 5 L 0 10 z"}]]
            [:g {:transform (format "translate(%s, %s) scale(%s)"
                                    (* scale-factor offset-left)
                                    (* scale-factor offset-top)
                                    scale-factor)}
-            (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))
+            (concat
+             (map #(svg-element % {:invert-colors? invert-colors?}) layers)
+             (mapcat (fn [layer]
+                       (for [dest (:layer/points-to layer)
+                             :let [origin layer
+                                   dest (into {} dest)
+                                   dest-center (layers/center dest)
+                                   origin-center (layers/center origin)
+                                   [start-x start-y] (layers/layer-intercept origin dest-center :padding 10)
+                                   [end-x end-y] (layers/layer-intercept dest origin-center :padding 10)]
+                             :when (not (or (= [start-x start-y]
+                                               [end-x end-y])
+                                            (layers/contains-point? dest [start-x start-y] :padding 10)
+                                            (layers/contains-point? origin [end-x end-y] :padding 10)))]
+                         (svg-element (assoc origin
+                                             :layer/start-x start-x
+                                             :layer/start-y start-y
+                                             :layer/end-x end-x
+                                             :layer/end-y end-y
+                                             :layer/path (layers/arrow-path [start-x start-y] [end-x end-y])
+                                             :layer/type :layer.type/path)
+                                      {:invert-colors? invert-colors?})))
+                     (filter :layer/points-to layers)))]])))
