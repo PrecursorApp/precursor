@@ -52,7 +52,7 @@
 }
 .chat-log {
   user-select: none; // so you only select text and not entire chat menu
-  .scrollbar_hide();
+  .scrollbar_inner();
   position: relative;
   padding: 1em 0 1.25em;
   overflow-y: auto;
@@ -86,18 +86,15 @@
 .chat-input {
   .placeholder_style(color; @gray_dark);
   .placeholder_style(transition; @run_fast @run @bezier_fadein);
-  .scrollbar(width; .5em;);
-  .scrollbar_thumb(border-radius; .25em);
   width: 100%;
   height: 80%;
   padding: 1.375em 1rem 0;
   padding-right: 2.5rem; // kill this is stationary chat toggle gets killed
   background: none;
   border: none;
+  .scrollbar_inner();
   outline: 0;
   resize: none;
-  &:hover {
-    .scrollbar_thumb(background; fade(@white, 25));
   }
   &:focus {
     .placeholder_style(color; fade(@gray_dark, 0));
