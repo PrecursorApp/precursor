@@ -18,12 +18,17 @@
   min-width: @tile;
   max-width: calc(~"100% -" @tile);
   height: 100%;
+  background: @dye_outer;
   pointer-events: auto;
   user-select: auto;
   will-change: transform;
   animation: in-fade-right @run_slow @bezier_fadein;
   top: 0;   //
   right: 0; // needed for closing animation
+  box-shadow+: 0    1px @color_menu_faint;
+  box-shadow+: 0   -1px @color_menu_faint;
+  box-shadow+: 1px  0   @color_menu_faint;
+  box-shadow+: 1px  0   @color_menu_faint inset;
   &.closed {
     animation-name: none;
     transform: translate3d(100%, 0, 0);
@@ -47,7 +52,6 @@
   .scrollbar_inner();
   position: relative;
   padding: 1em 0;
-  border-bottom: 1px solid @gray_dark;
   overflow-y: auto;
   user-select: none; // so you only select text and not entire chat menu
   transition: @run_fast @run @bezier_fadein;
@@ -58,8 +62,10 @@
   }
 }
 .chat-box {
-  position: relative;
   flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 1px @gray_dark inset;
+  transition: box-shadow @run_fast @run_fast @bezier_fadein;
 }
 .chat-input {
   .scrollbar_inner();
@@ -103,6 +109,9 @@
   padding: 0 .25em;
   pointer-events: none;
   user-select: none;
+  &:before {
+    transition: opacity @run_fast @run @bezier_fadein;
+  }
 }
 .chat-placeholder {
   color: @gray_dark;
