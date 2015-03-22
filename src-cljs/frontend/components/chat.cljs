@@ -13,6 +13,7 @@
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [goog.date]
+            [goog.dom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -91,37 +92,39 @@
      (time/after? time (time/minus start-of-day (time/days 6))) (day-of-week (time/day-of-week time))
      :else (str (month-of-year (.getMonth time)) " " (.getDate time)))))
 
-(defn input [_ owner]
+(defn input [app owner]
   (reify
     om/IDisplayName (display-name [_] "Chat Input")
-    om/IInitState (init-state [_] {:chat-body (atom "")})
-    om/IRender
-    (render [_]
+    om/IInitState (init-state [_] {:chat-body ""})
+    om/IRenderState
+    (render-state [_ {:keys [chat-body]}]
       (let [{:keys [cast!]} (om/get-shared owner)
-            submit-chat (fn [e]
-                          (cast! :chat-submitted {:chat-body @(om/get-state owner :chat-body)})
-                          (reset! (om/get-state owner :chat-body) "")
-                          (om/refresh! owner)
-                          (utils/stop-event e))]
+            chat-opened? (get-in app state/chat-opened-path)
+            chat-submit-learned? (get-in app state/chat-submit-learned-path)]
         (html
           [:div.chat-box
-           [:form {:class "chat-form"
-                   :on-submit submit-chat
-                   :on-key-down #(when (and (= "Enter" (.-key %))
-                                            (not (.-shiftKey %))
-                                            (not (.-ctrlKey %))
-                                            (not (.-metaKey %))
-                                            (not (.-altKey %)))
-
-                                   (submit-chat %))}
-            [:textarea {:class "chat-input"
-                        :id "chat-input"
-                        :tab-index "1"
-                        :type "text"
-                        :value @(om/get-state owner :chat-body)
-                        :placeholder "Chat..."
-                        :on-change #(reset! (om/get-state owner :chat-body)
-                                            (.. % -target -value))}]]])))))
+           [:div.chat-input {:tab-index "1"
+                             :ref "chat-body"
+                             :content-editable (if (or (not chat-opened?)
+                                                       (:show-landing? app)) false true)
+                             :id "chat-input"
+                             :on-key-down #(do
+                                             (when (and (= "Enter" (.-key %))
+                                                        (not (.-shiftKey %))
+                                                        (not (.-ctrlKey %))
+                                                        (not (.-metaKey %))
+                                                        (not (.-altKey %)))
+                                               (.preventDefault %)
+                                               (cast! :chat-submitted {:chat-body (om/get-state owner :chat-body)})
+                                               (goog.dom/setTextContent (.-target %) "")
+                                               (om/set-state! owner :chat-body "")
+                                               (om/refresh! owner)
+                                               (utils/stop-event %)))
+                             :on-input #(om/set-state-nr! owner :chat-body (goog.dom/getRawTextContent (.-target %)))}
+            (om/get-state owner :chat-body)]
+           (if chat-submit-learned?
+             [:div.chat-placeholder {:data-before "Chat."}]
+             [:div.chat-teach-enter {:data-step-1 "Click here." :data-step-2 "Type something." :data-step-3 "Send with enter."}])])))))
 
 (defn log [{:keys [sente-id client-id] :as app} owner]
   (reify
@@ -225,4 +228,6 @@
                                                [:sente-id]
                                                [:client-id]
                                                [:cust-data]]))
-           (om/build input {})]])))))
+           (om/build input (utils/select-in app [state/chat-opened-path
+                                                 state/chat-submit-learned-path
+                                                 [:show-landing?]]))]])))))
