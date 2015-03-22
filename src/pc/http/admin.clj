@@ -3,8 +3,8 @@
             [clj-time.format :as time-format]
             [compojure.core]
             [compojure.route]
+            [immutant.web :as web]
             [ns-tracker.core :refer (ns-tracker)]
-            [org.httpkit.server :as httpkit]
             [pc.datomic.admin-db :as admin-db]
             [pc.http.admin.auth :as auth]
             [pc.http.admin.inner :as inner]
@@ -54,12 +54,13 @@
     (logging-handler/wrap-logging)))
 
 (defn start []
-  (def server (httpkit/run-server (handler)
-                                  {:port (profile/admin-http-port)})))
+  (def server (web/server (web/run
+                            (handler)
+                            {:port (profile/admin-http-port)}))))
 
 (defn stop [& {:keys [timeout]
                :or {timeout 0}}]
-  (server :timeout timeout))
+  (.stop server))
 
 (defn restart []
   (stop)

@@ -5,7 +5,7 @@
             [compojure.core]
             [compojure.route]
             [datomic.api :refer [db q] :as d]
-            [org.httpkit.server :as httpkit]
+            [immutant.web :as web]
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
             [pc.http.handlers.errors :as errors-handler]
@@ -98,12 +98,13 @@
     (logging-handler/wrap-logging)))
 
 (defn start [sente-state]
-  (def server (httpkit/run-server (handler sente-state)
-                                  {:port (profile/http-port)})))
+  (def server (web/server (web/run
+                            (handler sente-state)
+                            {:port (profile/http-port)}))))
 
 (defn stop [& {:keys [timeout]
                :or {timeout 0}}]
-  (server :timeout timeout))
+  (.stop server))
 
 (defn restart []
   (stop)
