@@ -320,7 +320,8 @@
    (attribute :browser-setting/shortcuts-menu-learned
               :db.type/boolean)
 
-   (attribute :browser-setting/chat-menu-learned
+   (attribute :browser-setting/chat-button-learned
+              :db.type/boolean)
               :db.type/boolean)
 
    (attribute :permission/document
