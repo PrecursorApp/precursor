@@ -210,7 +210,7 @@
   (close-connection client-id))
 
 (defmethod ws-handler :frontend/unsubscribe [{:keys [client-id ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document-id) req :admin)
+  (check-document-access (-> ?data :document-id) req :read)
   (let [document-id (-> ?data :document-id)]
     (log/infof "unsubscribing %s from %s" client-id document-id)
     (close-connection client-id)
@@ -250,7 +250,7 @@
 ;;       all of the data asynchronously
 (defmethod ws-handler :frontend/subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
   (try+
-   (check-document-access (-> ?data :document-id) req :admin)
+   (check-document-access (-> ?data :document-id) req :read)
    (catch :status t
      (?reply-fn [:subscribe/error])
      (throw+)))
@@ -306,28 +306,29 @@
     ;; These are interesting b/c they're read-only. And by "interesting", I mean "bad"
     ;; We should find a way to let the frontend edit things
     ;; TODO: only send this stuff when it's needed
-    (log/infof "sending permission-data for %s to %s" document-id client-id)
-    (send-fn client-id [:frontend/db-entities
-                        {:document/id document-id
-                         :entities (map (partial permission-model/read-api (:db req))
-                                        (filter :permission/cust-ref
-                                                (permission-model/find-by-document (:db req)
-                                                                                   {:db/id document-id})))
-                         :entity-type :permission}])
+    (when (has-document-access? document-id req :admin)
+      (log/infof "sending permission-data for %s to %s" document-id client-id)
+      (send-fn client-id [:frontend/db-entities
+                          {:document/id document-id
+                           :entities (map (partial permission-model/read-api (:db req))
+                                          (filter :permission/cust-ref
+                                                  (permission-model/find-by-document (:db req)
+                                                                                     {:db/id document-id})))
+                           :entity-type :permission}])
 
-    (send-fn client-id [:frontend/db-entities
-                        {:document/id document-id
-                         :entities (map access-grant-model/read-api
-                                        (access-grant-model/find-by-document (:db req)
-                                                                             {:db/id document-id}))
-                         :entity-type :access-grant}])
-
-    (send-fn client-id [:frontend/db-entities
-                        {:document/id document-id
-                         :entities (map (partial access-request-model/read-api (:db req))
-                                        (access-request-model/find-by-document (:db req)
+      (send-fn client-id [:frontend/db-entities
+                          {:document/id document-id
+                           :entities (map access-grant-model/read-api
+                                          (access-grant-model/find-by-document (:db req)
                                                                                {:db/id document-id}))
-                         :entity-type :access-request}])))
+                           :entity-type :access-grant}])
+
+      (send-fn client-id [:frontend/db-entities
+                          {:document/id document-id
+                           :entities (map (partial access-request-model/read-api (:db req))
+                                          (access-request-model/find-by-document (:db req)
+                                                                                 {:db/id document-id}))
+                           :entity-type :access-request}]))))
 
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
@@ -418,7 +419,7 @@
                          :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))})))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
-  (check-document-access (-> ?data :document/id) req :admin)
+  (check-document-access (-> ?data :document/id) req :read)
   (let [document-id (-> ?data :document/id)
         mouse-position (-> ?data :mouse-position)
         tool (-> ?data :tool)
@@ -435,7 +436,7 @@
 
 (defmethod ws-handler :frontend/update-self [{:keys [client-id ?data] :as req}]
   ;; TODO: update subscribers in a different way
-  (check-document-access (-> ?data :document/id) req :admin)
+  (check-document-access (-> ?data :document/id) req :read)
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [doc-id (-> ?data :document/id)]
       (log/infof "updating self for %s" (:cust/uuid cust))
@@ -493,6 +494,7 @@
   (check-document-access (-> ?data :document/id) req :owner)
   (let [doc-id (-> ?data :document/id)
         cust (-> req :ring-req :auth :cust)
+        ;; XXX: only if they try to change it to private
         _ (assert (contains? (:flags cust) :flags/private-docs))
         ;; letting datomic's schema do validation for us, might be a bad idea?
         setting (-> ?data :setting)
@@ -589,7 +591,7 @@
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 (defmethod ws-handler :frontend/replay-transactions [{:keys [client-id ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document/id) req :admin)
+  (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))]
     (let [txes (replay/get-document-transactions (:db req) doc)]
       (doseq [tx txes]
