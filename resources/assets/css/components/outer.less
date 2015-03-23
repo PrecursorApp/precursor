@@ -6,8 +6,11 @@
   width: 100%;
   min-height: 100%;
   background-color: @dye_outer;
-  &:not(.entry) {
+  &.entry,
+  &.page-landing {
     .animate_nav();
+  }
+  &:not(.entry) {
     .animate_the_why();
     // TODO move artwork animations in here from landing.less
     // .animate_landing();
