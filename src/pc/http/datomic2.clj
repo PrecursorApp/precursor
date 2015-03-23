@@ -3,7 +3,8 @@
             [clojure.set :as set]
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
-            [pc.datomic :as pcd])
+            [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer])
   (:import java.util.UUID))
 
 
@@ -87,6 +88,13 @@
 (defn whitelisted? [scope [type e a v :as transaction]]
   (contains? (incoming-whitelist scope) a))
 
+(defn can-modify?
+  "If the user has read scope, makes sure that they don't modify existing txes"
+  [db document-id scope {:keys [remainder multiple]} [type e a v :as transaction]]
+  (cond (= scope :admin) true
+        (= scope :read) (and (= remainder (mod e multiple))
+                             (not (pc.utils/inspect (web-peer/taken-id? db document-id e))))))
+
 (defn remove-float-conflicts [txes]
   (vals (reduce (fn [tx-index [type e a v :as tx]]
                   (let [index-key [e a v]]
@@ -115,7 +123,7 @@
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
-  [datoms {:keys [document-id team-id client-id session-uuid cust-uuid access-scope]}]
+  [datoms {:keys [document-id team-id client-id session-uuid cust-uuid access-scope frontend-id-seed]}]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
         (< 1500 (count datoms))
@@ -138,6 +146,7 @@
                             (map (partial coerce-session-uuid session-uuid))
                             (map (partial coerce-cust-uuid cust-uuid))
                             (filter (partial whitelisted? access-scope))
+                            (filter (partial can-modify? db document-id access-scope frontend-id-seed))
                             (remove-float-conflicts)
                             (add-frontend-ids (or document-id team-id))
                             (concat [(merge {:db/id txid

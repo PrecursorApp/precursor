@@ -398,6 +398,7 @@
                          :access-scope access-scope
                          :client-id client-id
                          :cust-uuid cust-uuid
+                         :frontend-id-seed (get-in @document-subs [document-id client-id :frontend-id-seed])
                          :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))})))
 
 (defmethod ws-handler :team/transaction [{:keys [client-id ?data] :as req}]
