@@ -1,8 +1,9 @@
 (ns pc.http.datomic2
   (:require [clojure.core.async :as async]
+            [clojure.set :as set]
             [clojure.tools.logging :as log]
-            [pc.datomic :as pcd]
-            [datomic.api :refer [db q] :as d])
+            [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd])
   (:import java.util.UUID))
 
 
@@ -38,45 +39,53 @@
     [type e a session-uuid]
     transaction))
 
-(def incoming-whitelist
-  #{:layer/name
-    :layer/uuid
-    :layer/type
-    :layer/start-x
-    :layer/start-y
-    :layer/end-x
-    :layer/end-y
-    :layer/rx
-    :layer/ry
-    :layer/stroke-width
-    :layer/stroke-color
-    :layer/opacity
-    :layer/start-sx
-    :layer/start-sy
-    :layer/fill
-    :layer/font-family
-    :layer/text
-    :layer/font-size
-    :layer/path
-    :layer/child
-    :layer/ui-id
-    :layer/ui-target
-    :layer/points-to
+(defn coerce-cust-uuid [cust-uuid [type e a v :as transaction]]
+  (if (= :cust/uuid a)
+    [type e a cust-uuid]
+    transaction))
 
-    :session/uuid
-    :document/id ;; TODO: for layers use layer/document
-    :layer/document
+(def read-scope-whitelist
+  #{:session/uuid
     :chat/document
-    :document/name
     :chat/body
     :chat/color
     :cust/uuid
     :client/timestamp
-    :server/timestamp
-    :entity/type})
+    :server/timestamp})
 
-(defn whitelisted? [[type e a v :as transaction]]
-  (contains? incoming-whitelist a))
+(defn incoming-whitelist [scope]
+  (case scope
+    :read read-scope-whitelist
+    :admin (set/union read-scope-whitelist
+                      #{:layer/name
+                        :layer/uuid
+                        :layer/type
+                        :layer/start-x
+                        :layer/start-y
+                        :layer/end-x
+                        :layer/end-y
+                        :layer/rx
+                        :layer/ry
+                        :layer/stroke-width
+                        :layer/stroke-color
+                        :layer/opacity
+                        :layer/start-sx
+                        :layer/start-sy
+                        :layer/fill
+                        :layer/font-family
+                        :layer/text
+                        :layer/font-size
+                        :layer/path
+                        :layer/child
+                        :layer/ui-id
+                        :layer/ui-target
+                        :layer/points-to
+                        :layer/document
+                        :document/name
+                        :entity/type})))
+
+(defn whitelisted? [scope [type e a v :as transaction]]
+  (contains? (incoming-whitelist scope) a))
 
 (defn remove-float-conflicts [txes]
   (vals (reduce (fn [tx-index [type e a v :as tx]]
@@ -106,7 +115,7 @@
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
-  [datoms {:keys [document-id team-id client-id session-uuid cust-uuid]}]
+  [datoms {:keys [document-id team-id client-id session-uuid cust-uuid access-scope]}]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
         (< 1500 (count datoms))
@@ -127,7 +136,8 @@
                             (map (partial coerce-uuids uuid-attrs))
                             (map (partial coerce-server-timestamp server-timestamp))
                             (map (partial coerce-session-uuid session-uuid))
-                            (filter whitelisted?)
+                            (map (partial coerce-cust-uuid cust-uuid))
+                            (filter (partial whitelisted? access-scope))
                             (remove-float-conflicts)
                             (add-frontend-ids (or document-id team-id))
                             (concat [(merge {:db/id txid

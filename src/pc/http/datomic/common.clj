@@ -66,9 +66,6 @@
     :access-request/create-date
     :access-request/deny-date
     :access-request/team
-
-    ;; TODO: remove when fully deployed
-    :document/id
     })
 
 (defn translate-datom-dispatch-fn [db d] (:a d))

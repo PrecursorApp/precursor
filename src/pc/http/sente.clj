@@ -88,14 +88,15 @@
     (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth) scope)))
 
 (defn check-document-access-from-auth [doc-id req scope]
-  (time (when-not (has-document-access? doc-id req scope)
-          (if (auth/logged-in? (:ring-req req))
-            (throw+ {:status 403
-                     :error-msg "This document is private. Please request access."
-                     :error-key :document-requires-invite})
-            (throw+ {:status 401
-                     :error-msg "This document is private. Please log in to access it."
-                     :error-key :document-requires-login})))))
+  (if (has-document-access? doc-id req scope)
+    true
+    (if (auth/logged-in? (:ring-req req))
+      (throw+ {:status 403
+               :error-msg "This document is private. Please request access."
+               :error-key :document-requires-invite})
+      (throw+ {:status 401
+               :error-msg "This document is private. Please log in to access it."
+               :error-key :document-requires-login}))))
 
 ;; TODO: make sure to kick the user out of subscribed if he loses access
 (defn check-subscribed [doc-id req scope]
@@ -372,29 +373,29 @@
                          :datoms datoms}))))
 
 (defmethod ws-handler :frontend/transaction [{:keys [client-id ?data] :as req}]
-  (check-document-access (-> ?data :document/id) req :admin)
-  (def mydata ?data)
   (let [document-id (-> ?data :document/id)
+        access-scope (if (has-document-access? document-id req :admin)
+                       :admin
+                       ;; will throw, so we can't get any further
+                       (when (check-document-access document-id req :read)
+                         :read))
+        _ (assert (keyword? access-scope)) ;; just in case
         datoms (->> ?data
                  :datoms
                  (remove (comp nil? :v))
                  ;; Don't let people sneak layers into other documents
                  (reduce (fn [acc d]
-                           (cond (= "document" (name (:a d)))
-                                 (conj acc
-                                       (assoc d :v document-id)
-                                       (assoc d :a :document/id :v document-id))
-                                 (= :document/id (:a d))
-                                 (conj acc
-                                       (assoc d :v document-id)
-                                       (assoc d :a (determine-type d (:datoms ?data)) :v document-id))
-                                 :else (conj acc d)))
+                           (if (= "document" (name (:a d)))
+                             (conj acc
+                                   (assoc d :v document-id))
+                             (conj acc d)))
                          []))
         _ (def mydatoms datoms)
         cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
     (log/infof "transacting %s datoms on %s for %s" (count datoms) document-id client-id)
     (datomic2/transact! datoms
                         {:document-id document-id
+                         :access-scope access-scope
                          :client-id client-id
                          :cust-uuid cust-uuid
                          :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))})))
