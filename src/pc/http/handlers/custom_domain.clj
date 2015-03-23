@@ -29,7 +29,8 @@
    :body ""})
 
 (defn handle-custom-domains [handler req]
-  (if-not (:server-name req)
+  (if (or (= "/health-check" (:uri req))
+          (not (:server-name req)))
     (handler req)
     (let [subdomain (parse-subdomain req)]
       (if subdomain
