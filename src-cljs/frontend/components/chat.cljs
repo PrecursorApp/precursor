@@ -95,16 +95,17 @@
 (defn input [app owner]
   (reify
     om/IDisplayName (display-name [_] "Chat Input")
-    om/IInitState (init-state [_] {:chat-body (atom "")})
+    om/IInitState (init-state [_] {:chat-body (atom "")
+                                   :chat-height 64})
     om/IRenderState
-    (render-state [_ {:keys [chat-body]}]
+    (render-state [_ {:keys [chat-body chat-height]}]
       (let [{:keys [cast!]} (om/get-shared owner)
             chat-opened? (get-in app state/chat-opened-path)
             chat-submit-learned? (get-in app state/chat-submit-learned-path)
             submit-chat (fn [e]
                           (cast! :chat-submitted {:chat-body @(om/get-state owner :chat-body)})
                           (reset! (om/get-state owner :chat-body) "")
-                          (om/refresh! owner)
+                          (om/set-state! owner :chat-height 64)
                           (utils/stop-event e))]
         (html
           [:form.chat-box {:on-submit submit-chat
@@ -119,11 +120,14 @@
                                   :disabled (if (or (not chat-opened?)
                                                     (:show-landing? app)) true false)
                                   :id "chat-input"
-                                  :style {:height "64px"}
+                                  :style {:height chat-height}
                                   :required true
                                   :value @(om/get-state owner :chat-body)
-                                  :on-change #(reset! (om/get-state owner :chat-body)
-                                                      (.. % -target -value))}]
+                                  :on-change #(let [node (.-target %)]
+                                                (reset! (om/get-state owner :chat-body)
+                                                        (.-value node))
+                                                (when (not= (.-scrollHeight node) (.-clientHeight node))
+                                                  (om/set-state! owner :chat-height (max 64 (.-scrollHeight node)))))}]
            (if chat-submit-learned?
              [:div.chat-placeholder {:data-before "Chat."}]
              [:div.chat-teach-enter {:data-step-1 "Click here."
