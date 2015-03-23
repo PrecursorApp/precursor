@@ -14,28 +14,26 @@
 }
 .chat-window {
   .size_of(chat; width);
-  animation: in-fade-right @run_slow @bezier_fadein;
   .flexy(stretch; flex-end; column);
-  user-select: auto; // VETO
-  position: relative;
   min-width: @tile;
   max-width: calc(~"100% -" @tile);
   height: 100%;
   background: @dye_outer;
-  box-shadow: -1px 0 @gray_lighter;
-  pointer-events: auto; // VETO
+  pointer-events: auto;
+  user-select: auto;
   will-change: transform;
-  top: 0;
-  right: 0;
+  animation: in-fade-right @run_slow @bezier_fadein;
+  top: 0;   //
+  right: 0; // needed for closing animation
+  box-shadow+: 0    1px @color_menu_faint;
+  box-shadow+: 0   -1px @color_menu_faint;
+  box-shadow+: 1px  0   @color_menu_faint;
+  box-shadow+: 1px  0   @color_menu_faint inset;
   &.closed {
     animation-name: none;
-    transform: translate3d(101%, 0, 0);
-    transition+: transform @run_slow @bezier_fadein;
+    transform: translate3d(100%, 0, 0);
+    transition: transform @run_slow @bezier_fadein;
     position: absolute;
-    .chat-input {
-      visibility: hidden;
-      transition: visibility @now @run_slow @bezier_fadein;
-    }
   }
 }
 .chat-background {
@@ -46,62 +44,114 @@
   width: 100%;
   height: 100%;
   background: @dye_inner;
-  box-shadow: -1px 0 @gray_dark;
+  border-left: 1px solid @gray_dark;
   will-change: transform;
   transition: @run @bezier_deform;
 }
 .chat-log {
-  user-select: none; // so you only select text and not entire chat menu
-  .scrollbar_hide();
+  .flexy(column; flex-end);
+  flex: 1;
+}
+.chat-messages {
+  .scrollbar_inner();
   position: relative;
-  padding: 1em 0 1.25em;
+  padding: 1em 0;
   overflow-y: auto;
+  user-select: none; // so you only select text and not entire chat menu
   transition: @run_fast @run @bezier_fadein;
   span {
     user-select: auto; // so you only select text and not entire chat menu
-    white-space: pre-line; // honors new line (shift + enter)
+    white-space: pre-wrap; // honors new line (shift + enter)
     word-break: break-word;
+    &:empty {
+      &:after {
+        content: " ";
+      }
+    }
   }
 }
 .chat-box {
-  box-sizing: content-box;
   position: relative;
-  height: @tile;
-  min-height: @tile;
-  border-top: 1px solid @gray_dark;
-  transition: border-top @run_fast @run_fast @bezier_fadein;
-  &:after {
-    .gradient(to bottom; @dye_inner; fade(@dye_inner, 0));
-    .gradient(to bottom; @dye_inner; fade(@dye_inner, 0));
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 33%;
-    pointer-events: none;
-    transition: @run_fast @run;
-  }
+  box-shadow: 0 1px @gray_dark inset;
+  transition: box-shadow @run_fast @run_fast @bezier_fadein;
 }
 .chat-input {
-  .placeholder_style(color; @gray_dark);
-  .placeholder_style(transition; @run_fast @run @bezier_fadein);
-  .scrollbar(width; .5em;);
-  .scrollbar_thumb(border-radius; .25em);
+  .scrollbar_inner();
   width: 100%;
-  height: 80%;
-  padding: 1.375em 1rem 0;
-  padding-right: 2.5rem; // kill this is stationary chat toggle gets killed
+  min-height: @tile;
+  max-height: @tile_xl;
+  padding: 1.25em 1em;
   background: none;
   border: none;
   outline: 0;
+  overflow-y: auto;
   resize: none;
-  &:hover {
-    .scrollbar_thumb(background; fade(@white, 25));
+  &:focus,
+  &:valid {
+    ~ .chat-placeholder {
+      visibility: hidden;
+    }
+    ~ .chat-teach-enter {
+      transform: translate3d(0, -2em, 0);
+      background-size: 100% .25em;
+    }
   }
   &:focus {
-    .placeholder_style(color; fade(@gray_dark, 0));
-    .placeholder_style(transition; @now);
+    ~ .chat-teach-enter {
+      color: @color_select;
+      &:before {
+        content: attr(data-step-2);
+      }
+    }
+  }
+  &:valid {
+    ~ .chat-teach-enter {
+      &:before {
+        content: attr(data-step-3);
+      }
+    }
+  }
+  &:not(:focus) {
+    &:valid {
+      ~ .chat-teach-enter {
+        color: @red;
+        &:before {
+          content: attr(data-remind);
+        }
+      }
+    }
+  }
+}
+.chat-placeholder,
+.chat-teach-enter  {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 1.25em .75em;
+  padding: 0 .25em;
+  pointer-events: none;
+  user-select: none;
+  &:before {
+    transition: opacity @run_fast @run @bezier_fadein;
+  }
+}
+.chat-placeholder {
+  color: @gray_dark;
+  &:before {
+    content: attr(data-before);
+  }
+}
+.chat-teach-enter {
+  .gradient(to bottom, @dye_inner, @dye_inner);
+  color: @gray;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 0% .25em;
+  transition+: color @run @bezier_deform;
+  transition+: background @run_slow @bezier_deform;
+  transition+: transform @run @bezier_deform;
+  &:before {
+    content: attr(data-step-1);
   }
 }
 .chat-date {

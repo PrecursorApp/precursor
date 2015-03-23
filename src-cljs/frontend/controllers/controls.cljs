@@ -1121,6 +1121,7 @@
   [browser-state message {:keys [chat-body]} state]
   (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)]
     (-> state
+      (assoc-in state/chat-submit-learned-path true)
       (handle-cmd-chat (chat-cmd chat-body) chat-body)
       (assoc-in [:chat :entity-id] entity-id))))
 

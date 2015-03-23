@@ -13,6 +13,7 @@
    :newdoc-button-learned false
    :main-menu-learned false
    :chat-button-learned false
+   :chat-submit-learned false
    :login-button-learned false})
 
 (def subscriber-bot
@@ -117,6 +118,8 @@
 (def shortcuts-menu-learned-path (conj browser-settings-path :shortcuts-menu-learned))
 
 (def chat-button-learned-path (conj browser-settings-path :chat-button-learned))
+
+(def chat-submit-learned-path (conj browser-settings-path :chat-submit-learned))
 
 (defn doc-settings-path [doc-id]
   (conj browser-settings-path :document-settings doc-id))

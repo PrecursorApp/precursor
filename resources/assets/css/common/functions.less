@@ -35,20 +35,20 @@
   &:-moz-placeholder           {@{property}: @value;} // non-standard prefix
   &::-moz-placeholder          {@{property}: @value;} //
 }
-.scrollbar(@property; @value) {
+.scrollbar(...) {
   &::-webkit-scrollbar { // non-standard prefix
-    @{property}: @value;
+    @arguments();
   }
 }
-.scrollbar_thumb(@property; @value) {
+.scrollbar_thumb(...) {
   &::-webkit-scrollbar-thumb { // non-standard prefix
-    @{property}: @value;
+    @arguments();
   }
 }
-.scrollbar_hide() {
-  &::-webkit-scrollbar { // non-standard prefix
-    width: 0;
-  }
+.scrollbar_inner() {
+                  .scrollbar({ width: .5em;                     });
+            .scrollbar_thumb({ border: .125em solid @dye_inner; });
+  &:hover { .scrollbar_thumb({ background: @gray_dark;          }); }
 }
 .icon(@type; @value) {
   .iconpile {

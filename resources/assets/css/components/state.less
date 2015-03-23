@@ -3,21 +3,23 @@
 //
 .state-menu {
   .inner {
+    .outline(@color_menu_faint);
     cursor: pointer;
     background: @dye_outer;
-    box-shadow: 0 8px 21px 0 fade(@black, 21);
+    box-shadow+: 0 8px 21px 0 fade(@black, 21);
     transition: @run_slower @bezier_deform;
     &:hover {
-      box-shadow: 0 21px 34px 0 fade(@black, 21);
+      .outline(@color_menu_faint);
+      box-shadow+: 0 21px 34px 0 fade(@black, 21);
       transition-duration: @run;
     }
     &:active {
-      box-shadow: 0 5px 13px 0 fade(@black, 21);
+      .outline(@color_menu_faint);
+      box-shadow+: 0 5px 13px 0 fade(@black, 21);
       transition-duration: @run_fast;
     }
   }
   .canvas {
-    box-shadow: 0 -1px @gray_lightest;
     pointer-events: none;
   }
   .canvas-background {
@@ -45,9 +47,9 @@
     transition-duration: @run_slow;
   }
   .chat-log {
+    color: @color_menu_faded;
     opacity: .5;
     transition: @run_fast @now @bezier_fadein;
-    color: @color_menu_faded;
     .message-head, // TODO this can be cleaner
     .stroke-user,
     .message-time,
@@ -60,16 +62,29 @@
     }
   }
   .chat-box {
-    border-top: 1px solid @gray_lighter;
-    transition: border-top @now @run_faster @bezier_fadein;
+    box-shadow: 0 1px @color_menu_faint inset;
+    transition: box-shadow @now @run_faster @bezier_fadein;
     &:after {
       opacity: 0;
       transition: @now;
     }
   }
-  .chat-input {
-    .placeholder_style(opacity; 0);
-    .placeholder_style(transition; @now @now @bezier_fadein);
+  .chat-placeholder,
+  .chat-teach-enter {
+    &:before {
+      opacity: 0;
+      transition: opacity @now @now @bezier_fadein;
+    }
+    &:after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: .125em;
+      height: 100%;
+      background: @color_menu_faint;
+      animation: in-fade @run_slower @run backwards;
+    }
   }
   .hud-item {
     &:not(.menu-needed) {
