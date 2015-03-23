@@ -184,33 +184,34 @@
                         :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html
-         [:div.chat-log {:ref "chat-messages"}
-          (when chat-bot
-            (om/build chat-item {:chat dummy-chat
-                                 :uuid->cust {(:cust/uuid state/subscriber-bot)
-                                              (merge
-                                               (select-keys state/subscriber-bot [:cust/color-name :cust/uuid])
-                                               {:cust/name (:chat-bot/name chat-bot)})}
-                                 :show-sender? true}))
-          (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
-            (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
-                                             chat-groups)]
+          [:div.chat-log {:ref "chat-messages"}
+           [:div.chat-messages
+            (when chat-bot
+              (om/build chat-item {:chat dummy-chat
+                                   :uuid->cust {(:cust/uuid state/subscriber-bot)
+                                                (merge
+                                                  (select-keys state/subscriber-bot [:cust/color-name :cust/uuid])
+                                                  {:cust/name (:chat-bot/name chat-bot)})}
+                                   :show-sender? true}))
+            (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
+              (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
+                                               chat-groups)]
 
-              (list (when (or (not= 1 (count chat-groups))
-                              (not= #{"Today"} (set (keys chat-groups))))
-                      [:div.chat-date.divider-small time])
-                    (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
-                      (om/build chat-item {:chat chat
-                                           :uuid->cust (get-in app [:cust-data :uuid->cust])
-                                           :show-sender? (or (not= (chat-model/display-name prev-chat sente-id)
-                                                                   (chat-model/display-name chat sente-id))
+                (list (when (or (not= 1 (count chat-groups))
+                                (not= #{"Today"} (set (keys chat-groups))))
+                        [:div.chat-date.divider-small time])
+                      (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
+                        (om/build chat-item {:chat chat
+                                             :uuid->cust (get-in app [:cust-data :uuid->cust])
+                                             :show-sender? (or (not= (chat-model/display-name prev-chat sente-id)
+                                                                     (chat-model/display-name chat sente-id))
 
-                                                             (or (not (:server/timestamp chat))
-                                                                 (not (:server/timestamp prev-chat))
-                                                                 (< (* 1000 60 5) (- (.getTime (:server/timestamp chat))
-                                                                                     (.getTime (:server/timestamp prev-chat))))))}
-                                {:react-key (:db/id chat)
-                                 :opts {:sente-id sente-id}})))))])))))
+                                                               (or (not (:server/timestamp chat))
+                                                                   (not (:server/timestamp prev-chat))
+                                                                   (< (* 1000 60 5) (- (.getTime (:server/timestamp chat))
+                                                                                       (.getTime (:server/timestamp prev-chat))))))}
+                                  {:react-key (:db/id chat)
+                                   :opts {:sente-id sente-id}})))))]])))))
 
 (defn chat [app owner]
   (reify

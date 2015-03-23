@@ -49,9 +49,11 @@
   transition: @run @bezier_deform;
 }
 .chat-log {
-  .scrollbar_inner();
-  .flexy(column);
+  .flexy(column; flex-end);
   flex: 1;
+}
+.chat-messages {
+  .scrollbar_inner();
   position: relative;
   padding: 1em 0;
   overflow-y: auto;
@@ -162,9 +164,6 @@
 }
 .chat-message {
   padding: 0 (@tile / 4);
-  &:first-child {
-    margin-top: auto;
-  }
   &:not(:first-child) {
     .message-head {
       margin-top: (@tile / 4);
