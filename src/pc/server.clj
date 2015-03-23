@@ -100,7 +100,8 @@
 (defn start [sente-state]
   (def server (web/server (web/run
                             (handler sente-state)
-                            {:port (profile/http-port)}))))
+                            {:port (profile/http-port)
+                             :host "0.0.0.0"}))))
 
 (defn stop [& {:keys [timeout]
                :or {timeout 0}}]

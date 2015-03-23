@@ -56,7 +56,8 @@
 (defn start []
   (def server (web/server (web/run
                             (handler)
-                            {:port (profile/admin-http-port)}))))
+                            {:port (profile/admin-http-port)
+                             :host "0.0.0.0"}))))
 
 (defn stop [& {:keys [timeout]
                :or {timeout 0}}]
