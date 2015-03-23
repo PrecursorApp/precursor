@@ -25,7 +25,7 @@
                  [clj-statsd "0.3.10"]
 
                  [cider/cider-nrepl "0.8.2"]
-                 [clj-http "1.0.1" :exclusions [commons-codec]]
+                 [clj-http "1.0.1" :exclusions [commons-codec clj-tuple potemkin]]
                  [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
                                                                   org.slf4j/slf4j-api
                                                                   com.amazonaws/aws-java-sdk]]
@@ -38,10 +38,17 @@
                  ;; uses a url-safe token
                  [dwwoelfel/ring-anti-forgery "1.0.0-cbd219138abf4e9916a51caa7629c357b5d164af" :exclusions [hiccup]]
                  [http-kit "2.1.18-c9c0b155a4ab05630d332a7d2da0aaf433889772"]
-                 [com.taoensso/sente "1.4.0-alpha2" :exclusions [http-kit]]
+                 [com.taoensso/sente "1.4.1" :exclusions [http-kit]]
                  [clj-stacktrace "0.2.8"]
+                 [org.immutant/web "2.0.0-beta2" :exclusions [org.clojure/java.classpath
+                                                              org.jboss.logging/jboss-logging
+                                                              org.slf4j/slf4j-nop
+                                                              org.slf4j/slf4j-api
+                                                              org.slf4j/slf4j-simple
+                                                              org.slf4j/slf4j-log4j12
+                                                              ch.qos.logback/logback-classic]]
 
-                 [org.clojure/tools.reader "0.8.13"]
+                 [org.clojure/tools.reader "0.8.16"]
                  [com.google.guava/guava "18.0"]
 
                  [schejulure "1.0.1"]

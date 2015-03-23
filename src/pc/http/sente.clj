@@ -26,7 +26,7 @@
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
             [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.http-kit :refer (http-kit-adapter)])
+            [taoensso.sente.server-adapters.immutant :refer (sente-web-server-adapter)])
   (:import java.util.UUID))
 
 ;; TODO: find a way to restart sente
@@ -734,7 +734,7 @@
 (defn init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket!
-                                                       http-kit-adapter
+                                                       sente-web-server-adapter
                                                        {:user-id-fn #'user-id-fn})]
     (reset! sente-state fns)
     (setup-ws-handlers fns)
