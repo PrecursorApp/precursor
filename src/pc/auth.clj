@@ -128,6 +128,8 @@
 ;; TODO: public and have permission are different things
 (defn has-document-permission? [db doc auth scope]
   (or (= :document.privacy/public (:document/privacy doc))
+      (and (= :document.privacy/read-only (:document/privacy doc))
+           (contains-scope? scope-heirarchy :read scope))
       (contains-scope? scope-heirarchy (document-permission db doc auth) scope)))
 
 (defn has-team-permission? [db team auth scope]
