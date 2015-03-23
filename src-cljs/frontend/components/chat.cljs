@@ -95,36 +95,41 @@
 (defn input [app owner]
   (reify
     om/IDisplayName (display-name [_] "Chat Input")
-    om/IInitState (init-state [_] {:chat-body ""})
+    om/IInitState (init-state [_] {:chat-body (atom "")})
     om/IRenderState
     (render-state [_ {:keys [chat-body]}]
       (let [{:keys [cast!]} (om/get-shared owner)
             chat-opened? (get-in app state/chat-opened-path)
-            chat-submit-learned? (get-in app state/chat-submit-learned-path)]
+            chat-submit-learned? (get-in app state/chat-submit-learned-path)
+            submit-chat (fn [e]
+                          (cast! :chat-submitted {:chat-body @(om/get-state owner :chat-body)})
+                          (reset! (om/get-state owner :chat-body) "")
+                          (om/refresh! owner)
+                          (utils/stop-event e))]
         (html
-          [:div.chat-box
-           [:div.chat-input {:tab-index "1"
-                             :ref "chat-body"
-                             :content-editable (if (or (not chat-opened?)
-                                                       (:show-landing? app)) false true)
-                             :id "chat-input"
-                             :on-key-down #(do
-                                             (when (and (= "Enter" (.-key %))
-                                                        (not (.-shiftKey %))
-                                                        (not (.-ctrlKey %))
-                                                        (not (.-metaKey %))
-                                                        (not (.-altKey %)))
-                                               (.preventDefault %)
-                                               (cast! :chat-submitted {:chat-body (om/get-state owner :chat-body)})
-                                               (goog.dom/setTextContent (.-target %) "")
-                                               (om/set-state! owner :chat-body "")
-                                               (om/refresh! owner)
-                                               (utils/stop-event %)))
-                             :on-input #(om/set-state-nr! owner :chat-body (goog.dom/getRawTextContent (.-target %)))}
-            (om/get-state owner :chat-body)]
+          [:form.chat-box {:on-submit submit-chat
+                           :on-key-down #(when (and (= "Enter" (.-key %))
+                                                    (not (.-shiftKey %))
+                                                    (not (.-ctrlKey %))
+                                                    (not (.-metaKey %))
+                                                    (not (.-altKey %)))
+                                           (submit-chat %))}
+           [:textarea.chat-input {:tab-index "1"
+                                  :ref "chat-body"
+                                  :disabled (if (or (not chat-opened?)
+                                                    (:show-landing? app)) true false)
+                                  :id "chat-input"
+                                  :style {:height "64px"}
+                                  :required true
+                                  :value @(om/get-state owner :chat-body)
+                                  :on-change #(reset! (om/get-state owner :chat-body)
+                                                      (.. % -target -value))}]
            (if chat-submit-learned?
              [:div.chat-placeholder {:data-before "Chat."}]
-             [:div.chat-teach-enter {:data-step-1 "Click here." :data-step-2 "Type something." :data-step-3 "Send with enter."}])])))))
+             [:div.chat-teach-enter {:data-step-1 "Click here."
+                                     :data-step-2 "Type something."
+                                     :data-step-3 "Send with enter."
+                                     :data-remind "Don't forget to hit enter."}])])))))
 
 (defn log [{:keys [sente-id client-id] :as app} owner]
   (reify

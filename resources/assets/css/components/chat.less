@@ -62,20 +62,23 @@
   }
 }
 .chat-box {
-  flex-shrink: 0;
   position: relative;
   box-shadow: 0 1px @gray_dark inset;
   transition: box-shadow @run_fast @run_fast @bezier_fadein;
 }
 .chat-input {
   .scrollbar_inner();
+  width: 100%;
   min-height: @tile;
   max-height: @tile_xl;
   padding: 1.25em 1em;
+  background: none;
+  border: none;
   outline: 0;
   overflow-y: auto;
+  resize: none;
   &:focus,
-  &:not(:empty) {
+  &:valid {
     ~ .chat-placeholder {
       visibility: hidden;
     }
@@ -92,10 +95,20 @@
       }
     }
   }
-  &:not(:empty) {
+  &:valid {
     ~ .chat-teach-enter {
       &:before {
         content: attr(data-step-3);
+      }
+    }
+  }
+  &:not(:focus) {
+    &:valid {
+      ~ .chat-teach-enter {
+        color: @red;
+        &:before {
+          content: attr(data-remind);
+        }
       }
     }
   }
