@@ -696,13 +696,13 @@
                                                                    (cameras/screen-event-coords e))))
                               :onMouseDown (fn [e]
                                              (utils/stop-event e)
-                                             (cast! :layer-relation-started
+                                             (cast! :layer-relation-mouse-down
                                                     {:layer layer
                                                      :x (first (cameras/screen-event-coords e))
                                                      :y (second (cameras/screen-event-coords e))}))
                               :onMouseUp (fn [e]
                                            (utils/stop-event e)
-                                           (cast! :layer-relation-finished
+                                           (cast! :layer-relation-mouse-up
                                                   {:dest layer
                                                    :x (first (cameras/screen-event-coords e))
                                                    :y (second (cameras/screen-event-coords e))}))))
