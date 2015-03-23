@@ -9,22 +9,22 @@
   (:import java.util.UUID))
 
 (defn permits [db doc cust]
-  (set (map first (d/q '{:find [?permits]
-                         :in [$ ?db-id ?cust-id]
-                         :where [[?t :permission/document-ref ?db-id]
-                                 [?t :permission/cust-ref ?cust-id]
-                                 [?t :permission/permits ?permit-id]
-                                 [?permit-id _ ?permits]]}
-                       db (:db/id doc) (:db/id cust)))))
+  (set (map (partial d/ident db)
+            (d/q '{:find [[?permit-id ...]]
+                   :in [$ ?doc-id ?cust-id]
+                   :where [[?t :permission/document-ref ?doc-id]
+                           [?t :permission/cust-ref ?cust-id]
+                           [?t :permission/permits ?permit-id]]}
+                 db (:db/id doc) (:db/id cust)))))
 
 (defn team-permits [db team cust]
-  (set (map first (d/q '{:find [?permits]
-                         :in [$ ?team-id ?cust-id]
-                         :where [[?t :permission/team ?team-id]
-                                 [?t :permission/cust-ref ?cust-id]
-                                 [?t :permission/permits ?permit-id]
-                                 [?permit-id _ ?permits]]}
-                       db (:db/id team) (:db/id cust)))))
+  (set (map (partial d/ident db)
+            (d/q '{:find [[?permit-id ...]]
+                   :in [$ ?team-id ?cust-id]
+                   :where [[?t :permission/team ?team-id]
+                           [?t :permission/cust-ref ?cust-id]
+                           [?t :permission/permits ?permit-id]]}
+                 db (:db/id team) (:db/id cust)))))
 
 (defn grant-permit [doc granter cust permit annotations]
   (let [txid (d/tempid :db.part/tx)

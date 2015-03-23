@@ -71,8 +71,8 @@
 (defn cust-permission [db doc cust]
   (when cust
     (cond (and (:document/creator doc)
-               (crypto/eq? (str (:cust/uuid cust))
-                           (str (:document/creator doc))))
+               (= (:cust/uuid cust)
+                  (:document/creator doc)))
           :owner
 
           (contains? (permission-model/permits db doc cust) :permission.permits/admin)
@@ -111,10 +111,11 @@
 ;;       to have 1 type. Owner would automatically get the owner permission
 ;; TODO: this should return a :permission/permits type of thing
 (defn document-permission [db doc auth]
-  (or (cust-permission db doc (:cust auth))
+  (or (team-permission db (:document/team doc) (:cust auth))
+      (cust-permission db doc (:cust auth))
       ;; TODO: stop using access grant tokens as permissions
       ;;       Can remove once all of the tokens expire
-      (team-permission db (:document/team doc) (:cust auth))
+
       (access-grant-permission db doc (:access-grant auth))
       (permission-permission db doc (:permission auth))))
 
