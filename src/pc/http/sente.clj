@@ -62,23 +62,29 @@
 
 (defonce client-stats (atom {}))
 
-(defn notify-document-transaction [data]
-  (let [doc-id (:db/id (:transaction/document data))]
-    (doseq [[uid _] (dissoc (get @document-subs doc-id) (:session/client-id data))]
+(defn notify-document-transaction [db {:keys [read-only-data admin-data]}]
+  (let [doc (:transaction/document read-only-data)
+        doc-id (:db/id doc)]
+    (doseq [[uid {:keys [auth]}] (dissoc (get @document-subs doc-id) (:session/client-id read-only-data))]
       (log/infof "notifying %s about new transactions for %s" uid doc-id)
-      ((:send-fn @sente-state) uid [:datomic/transaction data]))
-    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
-      (log/infof "notifying %s about new server timestamp for %s" (:session/uuid data) doc-id)
-      ((:send-fn @sente-state) (str (:session/client-id data)) [:datomic/transaction (assoc data :tx-data server-timestamps)]))))
+      ((:send-fn @sente-state) uid [:datomic/transaction (cond (auth/has-document-permission? db doc auth :admin)
+                                                               admin-data
+                                                               (auth/has-document-permission? db doc auth :read)
+                                                               read-only-data)]))
+    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
+      (log/infof "notifying %s about new server timestamp for %s" (:session/uuid admin-data) doc-id)
+      ;; they made the tx, so we can send them the admin data
+      ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:datomic/transaction (assoc admin-data :tx-data server-timestamps)]))))
 
-(defn notify-team-transaction [data]
-  (let [team-uuid (:team/uuid (:transaction/team data))]
-    (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id data))]
+;; Note: this assumes that everyone subscribe to the team is an admin
+(defn notify-team-transaction [db {:keys [read-only-data admin-data]}]
+  (let [team-uuid (:team/uuid (:transaction/team admin-data))]
+    (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id admin-data))]
       (log/infof "notifying %s about new team transactions for %s" uid team-uuid)
-      ((:send-fn @sente-state) uid [:team/transaction data]))
-    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
-      (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid data) team-uuid)
-      ((:send-fn @sente-state) (str (:session/client-id data)) [:team/transaction (assoc data :tx-data server-timestamps)]))))
+      ((:send-fn @sente-state) uid [:team/transaction admin-data]))
+    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
+      (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid admin-data) team-uuid)
+      ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:team/transaction (assoc admin-data :tx-data server-timestamps)]))))
 
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
@@ -150,6 +156,7 @@
          (fn [subs]
            (-> subs
              (assoc-in [uuid :client-id] uuid)
+             (assoc-in [uuid :auth] cust)
              (update-in [uuid] merge (select-keys cust [:cust/uuid :cust/color-name :cust/name]))
              (assoc-in [uuid :show-mouse?] true)
              (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
@@ -595,9 +602,13 @@
 (defmethod ws-handler :frontend/replay-transactions [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))]
-    (let [txes (replay/get-document-transactions (:db req) doc)]
+    (let [txes (replay/get-document-transactions (:db req) doc)
+          scoped-data-key (if (has-document-access? (:document/id ?data) req :admin)
+                            :admin-data
+                            :read-only-data)]
       (doseq [tx txes]
-        ((:send-fn @sente-state) client-id [:datomic/transaction (datomic-common/frontend-document-transaction tx)])
+        ((:send-fn @sente-state) client-id [:datomic/transaction (get (datomic-common/frontend-document-transaction tx)
+                                                                      scoped-data-key)])
         (Thread/sleep (min 500 (get ?data :sleep-ms 250)))))))
 
 (defmethod ws-handler :team/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]

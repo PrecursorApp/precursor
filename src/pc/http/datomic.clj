@@ -23,11 +23,11 @@
 
 (defn notify-document-subscribers [transaction]
   (when-let [frontend-tx (datomic-common/frontend-document-transaction transaction)]
-    (sente/notify-document-transaction frontend-tx)))
+    (sente/notify-document-transaction (:db-after transaction) frontend-tx)))
 
 (defn notify-team-subscribers [transaction]
   (when-let [frontend-tx (datomic-common/frontend-team-transaction transaction)]
-    (sente/notify-document-transaction frontend-tx)))
+    (sente/notify-document-transaction (:db-after transaction) frontend-tx)))
 
 ;; TODO: this should use a channel instead of a future
 (defn send-emails [transaction]
