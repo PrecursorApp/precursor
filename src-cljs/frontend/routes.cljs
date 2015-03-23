@@ -14,28 +14,34 @@
     (put! nav-ch [:error {:status 404}])))
 
 (defn define-user-routes! [nav-ch]
-  (defroute root "/" [{:keys [query-params]}]
+  (defroute root "/" {:keys [query-params]}
     (put! nav-ch [:landing {:query-params query-params}]))
-  (defroute home "/home" [{:keys [query-params]}]
+
+  (defroute home "/home" {:keys [query-params]}
     (put! nav-ch [:landing {:query-params query-params}]))
-  (defroute pricing "/pricing" [{:keys [query-params]}]
+
+  (defroute pricing "/pricing" {:keys [query-params]}
     (put! nav-ch [:pricing {:query-params query-params}]))
 
   ;; TODO: remove these when backend deploys, only here for backwards compatibility
-  (defroute early-access "/early-access" [{:keys [query-params]}]
+  (defroute early-access "/early-access" {:keys [query-params]}
     (put! nav-ch [:navigate! {:path "/trial/team"
                               :replace-token? true}]))
-  (defroute early-access-type "/early-access/:type" [type {:keys [query-params]}]
+
+  (defroute early-access-type "/early-access/:type" {:keys [type query-params]}
     (put! nav-ch [:navigate! {:path (str "/trial/" type)
                               :replace-token? true}]))
 
-  (defroute trial "/trial/:type" [type {:keys [query-params]}]
+
+  (defroute trial "/trial/:type" {:keys [type query-params]}
     (put! nav-ch [:trial {:query-params query-params
                           :trial-type type}]))
 
-  (defroute new-doc "/new" [{:keys [query-params]}]
+
+  (defroute new-doc "/new" {:keys [query-params]}
     (put! nav-ch [:new {:query-params query-params}]))
-  (defroute document #"/document/(\d+)" [doc-id {:keys [query-params]}]
+
+  (defroute document ["/document/:doc-id" :doc-id #"\d+"] {:keys [doc-id query-params]}
     (put! nav-ch [:document {:document/id (long doc-id)
                              :query-params query-params}])))
 

@@ -68,7 +68,7 @@
                  [datascript "0.8.1"]
 
                  [ankha "0.1.4"]
-                 [org.clojure/clojurescript "0.0-2760"]
+                 [org.clojure/clojurescript "0.0-3126"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [cljs-ajax "0.2.6"]
 
@@ -78,18 +78,18 @@
 
                  [precursor/react "0.12.2-7-4-new-tags"]
 
-                 [sablono "0.3.1" :exclusions [cljsjs/react]]
-                 [secretary "1.2.1"]
+                 [sablono "0.3.4" :exclusions [cljsjs/react]]
+                 [secretary "1.2.2"]
                  [com.andrewmcveigh/cljs-time "0.2.4"]
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 
-                 [weasel "0.5.0"] ;; repl
+                 [weasel "0.6.0"] ;; repl
 
                  ;; needed to make lein pedantic happy
                  [commons-codec "1.6"]
-                 [figwheel "0.2.3-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
-                                                         commons-codec]]
+                 [figwheel "0.2.5" :exclusions [org.codehaus.plexus/plexus-utils
+                                                commons-codec]]
 
                  ;; Frontend tests
                  [com.cemerick/clojurescript.test "0.3.0"]]
@@ -120,10 +120,10 @@
              :server-port 3448
              :css-dirs ["resources/public/css"]}
 
-  :plugins [[lein-cljsbuild "1.0.4"]
-            [com.cemerick/austin "0.1.6"]
-            [lein-figwheel "0.2.3-SNAPSHOT" :exclusions [org.codehaus.plexus/plexus-utils
-                                                         commons-codec]]
+  :plugins [[lein-cljsbuild "1.0.5"]
+            [com.cemerick/austin "0.1.7-SNAPSHOT" :exclusions [org.clojure/clojurescript]]
+            [lein-figwheel "0.2.5" :exclusions [org.codehaus.plexus/plexus-utils
+                                                commons-codec]]
             [circle/lein-deploy-deps "0.1.3"]
             [circle/s3-wagon-private "1.2.2" :exclusions [commons-codec org.apache.httpcomponents/httpclient]]]
 
@@ -165,7 +165,6 @@
                         :compiler {:pretty-print false
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
-                                   :output-wrapper false
                                    :optimizations :advanced
                                    :externs ["src-cljs/js/react-externs.js"
                                              "src-cljs/js/analytics-externs.js"]
