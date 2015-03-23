@@ -61,8 +61,13 @@
   transition: @run_fast @run @bezier_fadein;
   span {
     user-select: auto; // so you only select text and not entire chat menu
-    white-space: pre-line; // honors new line (shift + enter)
+    white-space: pre-wrap; // honors new line (shift + enter)
     word-break: break-word;
+    &:empty {
+      &:after {
+        content: " ";
+      }
+    }
   }
 }
 .chat-box {
