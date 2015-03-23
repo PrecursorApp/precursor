@@ -50,6 +50,8 @@
 }
 .chat-log {
   .scrollbar_inner();
+  .flexy(column);
+  flex: 1;
   position: relative;
   padding: 1em 0;
   overflow-y: auto;
@@ -63,7 +65,6 @@
 }
 .chat-box {
   position: relative;
-  min-height: @tile;
   box-shadow: 0 1px @gray_dark inset;
   transition: box-shadow @run_fast @run_fast @bezier_fadein;
 }
@@ -161,6 +162,9 @@
 }
 .chat-message {
   padding: 0 (@tile / 4);
+  &:first-child {
+    margin-top: auto;
+  }
   &:not(:first-child) {
     .message-head {
       margin-top: (@tile / 4);
