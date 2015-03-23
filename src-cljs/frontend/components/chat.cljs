@@ -188,8 +188,8 @@
                         :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html
-          [:div.chat-log {:ref "chat-messages"}
-           [:div.chat-messages
+          [:div.chat-log
+           [:div.chat-messages {:ref "chat-messages"}
             (when chat-bot
               (om/build chat-item {:chat dummy-chat
                                    :uuid->cust {(:cust/uuid state/subscriber-bot)
