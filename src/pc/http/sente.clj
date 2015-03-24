@@ -65,11 +65,12 @@
 (defn notify-document-transaction [db {:keys [read-only-data admin-data]}]
   (let [doc (:transaction/document read-only-data)
         doc-id (:db/id doc)]
-    (doseq [[uid {:keys [auth]}] (dissoc (get @document-subs doc-id) (:session/client-id read-only-data))]
+    (doseq [[uid {:keys [auth]}] (dissoc (get @document-subs doc-id) (:session/client-id read-only-data))
+            :let [max-scope (auth/max-document-scope db doc auth)]]
       (log/infof "notifying %s about new transactions for %s" uid doc-id)
-      ((:send-fn @sente-state) uid [:datomic/transaction (cond (auth/has-document-permission? db doc auth :admin)
+      ((:send-fn @sente-state) uid [:datomic/transaction (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
                                                                admin-data
-                                                               (auth/has-document-permission? db doc auth :read)
+                                                               (auth/contains-scope? auth/scope-heirarchy max-scope :read)
                                                                read-only-data)]))
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
       (log/infof "notifying %s about new server timestamp for %s" (:session/uuid admin-data) doc-id)
@@ -156,7 +157,7 @@
          (fn [subs]
            (-> subs
              (assoc-in [uuid :client-id] uuid)
-             (assoc-in [uuid :auth] cust)
+             (assoc-in [uuid :auth] {:cust cust})
              (update-in [uuid] merge (select-keys cust [:cust/uuid :cust/color-name :cust/name]))
              (assoc-in [uuid :show-mouse?] true)
              (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
