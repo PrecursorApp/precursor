@@ -126,7 +126,7 @@
            [:div.privacy-stats
             (case (:document/privacy document)
               :document.privacy/public (common/icon :globe)
-              :document.privacy/read-only (common/icon :lock)
+              :document.privacy/read-only (common/icon :pencil)
               :document.privacy/private (common/icon :lock)
               nil)]]])))))
 

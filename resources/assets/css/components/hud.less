@@ -442,8 +442,14 @@
   }
   .privacy-stats {
     display: inline-block;
-    .iconpile [class|="stroke"] {
-      stroke: @white;
+    .iconpile {
+      [class|="stroke"] {
+        stroke: @white;
+      }
+      [class|="fill"] {
+        fill: @white;
+        stroke: none;
+      }
     }
   }
 }
