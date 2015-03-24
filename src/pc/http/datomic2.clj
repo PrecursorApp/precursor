@@ -83,7 +83,8 @@
                         :layer/points-to
                         :layer/document
                         :document/name
-                        :entity/type})))
+                        :entity/type})
+    nil))
 
 (defn whitelisted? [scope [type e a v :as transaction]]
   (contains? (incoming-whitelist scope) a))

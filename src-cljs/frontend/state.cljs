@@ -145,3 +145,6 @@
 
 (defn document-access-path [doc-id]
   [:doc-settings (str doc-id) :access])
+
+(defn notified-read-only-path [doc-id]
+  [:doc-settings (str doc-id) :notified-read-only])

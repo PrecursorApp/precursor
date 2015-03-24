@@ -1190,8 +1190,6 @@
       (d/transact! db [(utils/remove-map-nils {:chat/body chat-body
                                                :chat/color color
                                                :cust/uuid (get-in current-state [:cust :cust/uuid])
-                                               ;; TODO: teach frontend to lookup cust/name from cust/uuid
-                                               :chat/cust-name (get-in current-state [:cust :cust/name])
                                                :db/id (get-in current-state [:chat :entity-id])
                                                :session/uuid (:sente-id previous-state)
                                                :chat/document (:document/id previous-state)

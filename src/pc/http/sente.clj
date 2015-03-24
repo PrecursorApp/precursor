@@ -383,7 +383,7 @@
                          :datom datom
                          :datoms datoms}))))
 
-(defmethod ws-handler :frontend/transaction [{:keys [client-id ?data] :as req}]
+(defmethod ws-handler :frontend/transaction [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [document-id (-> ?data :document/id)
         access-scope (if (has-document-access? document-id req :admin)
                        :admin
@@ -401,9 +401,14 @@
                                    (assoc d :v document-id))
                              (conj acc d)))
                          []))
-        _ (def mydatoms datoms)
-        cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
-    (log/infof "transacting %s datoms on %s for %s" (count datoms) document-id client-id)
+        cust-uuid (-> req :ring-req :auth :cust :cust/uuid)
+        ;; note that these aren't all of the rejected datoms, just the ones not on the whitelist
+        rejects (remove (comp (partial datomic2/whitelisted? access-scope)
+                              pcd/datom->transaction)
+                        datoms)]
+    (when ?reply-fn
+      (?reply-fn {:rejected-datoms rejects}))
+    (log/infof "transacting %s datoms (minus %s rejects) on %s for %s" (count datoms) (count rejects) document-id client-id)
     (datomic2/transact! datoms
                         {:document-id document-id
                          :access-scope access-scope
