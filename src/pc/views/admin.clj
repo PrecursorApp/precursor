@@ -353,15 +353,15 @@
        [:td (doc-model/last-updated-time db (:db/id doc))]]
       [:tr
        [:td "Full SVG link"]
-       [:td [:a {:href (urls/doc-svg (:db/id doc))}
+       [:td [:a {:href (urls/svg-from-doc doc)}
              (:db/id doc)]]]
       [:tr
        [:td "Live doc url"]
        [:td
         "Tiny b/c you could be intruding "
-        [:a {:href (urls/doc (:db/id doc))
+        [:a {:href (urls/from-doc doc)
              :style "font-size: 0.5em"}
          (:db/id doc)]]]]
-     [:a {:href (urls/doc-svg (:db/id doc))}
-      [:img {:src (urls/doc-svg (:db/id doc))
+     [:a {:href (urls/svg-from-doc doc)}
+      [:img {:src (urls/svg-from-doc doc)
              :style "width: 100%; height: 100%"}]])))

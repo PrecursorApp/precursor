@@ -761,42 +761,20 @@
         :submit-layer-properties (handle-layer-properties-submitted-after current-state)
         nil))))
 
-(defmethod control-event :layer-relation-started
-  [browser-state message {:keys [layer x y]} state]
-  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+(defn handle-relation-finished [state dest x y]
+  (let [origin (get-in state [:drawing :relation :layer])]
     (-> state
-      (update-mouse x y)
-      (assoc-in [:mouse-down] true)
-      (assoc-in [:drawing :relation-in-progress?] true)
-      (assoc-in [:drawing :relation] {:layer layer
-                                      :rx rx
-                                      :ry ry})
-      (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)}))))
+      (assoc-in [:drawing :relation-in-progress?] false)
+      (assoc-in [:mouse-down] false)
+      (assoc-in [:drawing :relation] {})
+      (assoc-in [:drawing :finished-relation] {:origin-layer origin
+                                               :dest-layer-id (:db/id dest)})
+      (update-in [:selected-eids :selected-eids] conj (:db/id dest))
+      (update-in [:selected-arrows :selected-arrows] conj {:origin-id (:db/id origin)
+                                                           :dest-id (:db/id dest)})
+      (assoc-in [:camera :moving?] false))))
 
-(defmethod control-event :layer-relation-finished
-  [browser-state message {:keys [dest x y]} state]
-  (let [{:keys [x y]} (get-in state [:mouse])
-        origin-layer (get-in state [:drawing :relation :layer])]
-    ;; don't create a relation to yourself
-    (if (= (:db/id dest) (:db/id origin-layer))
-      (-> state
-        (assoc-in [:drawing :relation-in-progress?] false)
-        (assoc-in [:mouse-down] false)
-        (assoc-in [:drawing :relation] {})
-        (assoc-in [:camera :moving?] false))
-      (-> state
-        (assoc-in [:drawing :relation-in-progress?] false)
-        (assoc-in [:mouse-down] false)
-        (assoc-in [:drawing :relation] {})
-        (assoc-in [:drawing :finished-relation] {:origin-layer origin-layer
-                                                 :dest-layer-id (:db/id dest)})
-        (update-in [:selected-eids :selected-eids] conj (:db/id dest))
-        (update-in [:selected-arrows :selected-arrows] conj {:origin-id (:db/id origin-layer)
-                                                             :dest-id (:db/id dest)})
-        (assoc-in [:camera :moving?] false)))))
-
-(defmethod post-control-event! :layer-relation-finished
-  [browser-state message {:keys [dest x y]} previous-state current-state]
+(defn handle-relation-finished-after [previous-state current-state dest x y]
   (let [db (:db current-state)]
     (when (and (get-in previous-state [:drawing :relation-in-progress?])
                (seq (get-in current-state [:drawing :finished-relation :origin-layer])))
@@ -806,6 +784,39 @@
                         (get-in current-state [:drawing :finished-relation :dest-layer-id])]]
                    {:can-undo? true})
       (maybe-notify-subscribers! current-state x y))))
+
+(defmethod control-event :layer-relation-mouse-down
+  [browser-state message {:keys [layer x y]} state]
+  (let [[rx ry] (cameras/screen->point (:camera state) x y)]
+    (if (and (seq (get-in state [:drawing :relation :layer]))
+             (not= (:db/id layer) (get-in state [:drawing :relation :layer :db/id])))
+      (handle-relation-finished state layer x y)
+      (-> state
+        (update-mouse x y)
+        (assoc-in [:mouse-down] true)
+        (assoc-in [:drawing :relation-in-progress?] true)
+        (assoc-in [:drawing :relation] {:layer layer
+                                        :rx rx
+                                        :ry ry})
+        (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)})))))
+
+(defmethod post-control-event! :layer-relation-mouse-down
+  [browser-state message {:keys [dest x y]} previous-state current-state]
+  ;; only saves if there is a finished relation
+  (handle-relation-finished-after previous-state current-state dest x y))
+
+(defmethod control-event :layer-relation-mouse-up
+  [browser-state message {:keys [dest x y]} state]
+  (let [{:keys [x y]} (get-in state [:mouse])
+        origin-layer (get-in state [:drawing :relation :layer])]
+    ;; don't create a relation to yourself
+    (if (= (:db/id dest) (:db/id origin-layer))
+      state
+      (handle-relation-finished state dest x y))))
+
+(defmethod post-control-event! :layer-relation-mouse-up
+  [browser-state message {:keys [dest x y]} previous-state current-state]
+  (handle-relation-finished-after previous-state current-state dest x y))
 
 (defn detectable-movement?
   "Checks to make sure we moved the layer from its starting position"
@@ -1126,6 +1137,7 @@
   [browser-state message {:keys [chat-body]} state]
   (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)]
     (-> state
+      (assoc-in state/chat-submit-learned-path true)
       (handle-cmd-chat (chat-cmd chat-body) chat-body)
       (assoc-in [:chat :entity-id] entity-id))))
 
@@ -1141,8 +1153,13 @@
 (defmethod post-handle-cmd-chat "invite"
   [state cmd body]
   (let [email (last (re-find #"/invite\s+([^\s]+)" body))]
-    (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
-                                                           :email email}])))
+    ;; this is a bit silly, but we have to make sure the chat tx msg
+    ;; goes through before the send-invite message, since the messages are
+    ;; serialized.
+    (js/setTimeout
+     #(sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
+                                                             :email email}])
+     100)))
 
 (defmethod post-handle-cmd-chat "toggle-grid"
   [state cmd body]

@@ -114,9 +114,8 @@
        [:h4 (str (h/h (:subdomain req)) "." (profile/hostname))]
        [:p "We got your request. We'll send you an email when the owner grants your request."]
        [:p "You can also give the owner "
-        [:a {:href (str (urls/doc (:db/id (:team/intro-doc (:team req)))
-                                  :subdomain (h/h (:subdomain req))
-                                  :query {:overlay "team-settings"}))}
+        [:a {:href (str (urls/from-doc (:team/intro-doc (:team req))
+                                       :query {:overlay "team-settings"}))}
          "this link"]
         " to review your request."]
        [:p ]]]

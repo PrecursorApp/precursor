@@ -299,6 +299,7 @@
                         {:document/id document-id
                          :uuid->cust (->> document-id
                                        (cust/cust-uuids-for-doc (:db req))
+                                       (cons (auth/prcrsr-bot-uuid (:db req)))
                                        set
                                        (set/union (disj (set (map :cust/uuid (vals (get subs document-id))))
                                                         nil))
@@ -409,7 +410,8 @@
                          :client-id client-id
                          :cust-uuid cust-uuid
                          :frontend-id-seed (get-in @document-subs [document-id client-id :frontend-id-seed])
-                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))})))
+                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
+                         :timestamp (:receive-instant req)})))
 
 (defmethod ws-handler :team/transaction [{:keys [client-id ?data] :as req}]
   (check-team-access (-> ?data :team/uuid) req :admin)
@@ -428,7 +430,8 @@
                         {:team-id (:db/id team)
                          :client-id client-id
                          :cust-uuid cust-uuid
-                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))})))
+                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
+                         :timestamp (:receive-instant req)})))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
@@ -467,6 +470,7 @@
   ;; This may turn out to be a bad idea, but error handling is done through creating chats
   (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)
+        doc (doc-model/find-by-id (:db req) doc-id)
         invite-loc (-> ?data :invite-loc)
         chat-id (d/tempid :db.part/user)
         cust (-> req :ring-req :auth :cust)
@@ -483,16 +487,15 @@
                                                    (web-peer/server-frontend-id chat-id doc-id)
                                                    {:chat/body body
                                                     :server/timestamp (java.util.Date.)
+                                                    :client/timestamp (java.util.Date.)
                                                     :chat/document doc-id
                                                     :db/id chat-id
-                                                    :cust/uuid (auth/prcrsr-bot-uuid (:db req))
-                                                    ;; default bot color, also used on frontend chats
-                                                    :chat/color "#00b233"}])))]
+                                                    :cust/uuid (auth/prcrsr-bot-uuid (:db req))}])))]
     (if-let [cust (-> req :ring-req :auth :cust)]
       (let [email (-> ?data :email)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
         (try
-          (email/send-chat-invite {:cust cust :to-email email :doc-id doc-id})
+          (email/send-chat-invite {:cust cust :to-email email :doc doc})
           (notify-invite (str "Invite sent to " email))
           (catch Exception e
             (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
@@ -707,6 +710,7 @@
        (statsd/with-timing (str "ws." (namespace event) "." (name event))
          (ws-handler (assoc req
                             :db (pcd/default-db)
+                            :receive-instant (java.util.Date.)
                             ;; TODO: Have to kill sente
                             :client-id client-id)))
        (catch :status t

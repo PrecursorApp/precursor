@@ -13,6 +13,7 @@
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
             [goog.date]
+            [goog.dom]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -91,37 +92,48 @@
      (time/after? time (time/minus start-of-day (time/days 6))) (day-of-week (time/day-of-week time))
      :else (str (month-of-year (.getMonth time)) " " (.getDate time)))))
 
-(defn input [_ owner]
+(defn input [app owner]
   (reify
     om/IDisplayName (display-name [_] "Chat Input")
-    om/IInitState (init-state [_] {:chat-body (atom "")})
-    om/IRender
-    (render [_]
+    om/IInitState (init-state [_] {:chat-body (atom "")
+                                   :chat-height 64})
+    om/IRenderState
+    (render-state [_ {:keys [chat-body chat-height]}]
       (let [{:keys [cast!]} (om/get-shared owner)
+            chat-opened? (get-in app state/chat-opened-path)
+            chat-submit-learned? (get-in app state/chat-submit-learned-path)
             submit-chat (fn [e]
                           (cast! :chat-submitted {:chat-body @(om/get-state owner :chat-body)})
                           (reset! (om/get-state owner :chat-body) "")
-                          (om/refresh! owner)
+                          (om/set-state! owner :chat-height 64)
                           (utils/stop-event e))]
         (html
-          [:div.chat-box
-           [:form {:class "chat-form"
-                   :on-submit submit-chat
-                   :on-key-down #(when (and (= "Enter" (.-key %))
-                                            (not (.-shiftKey %))
-                                            (not (.-ctrlKey %))
-                                            (not (.-metaKey %))
-                                            (not (.-altKey %)))
-
-                                   (submit-chat %))}
-            [:textarea {:class "chat-input"
-                        :id "chat-input"
-                        :tab-index "1"
-                        :type "text"
-                        :value @(om/get-state owner :chat-body)
-                        :placeholder "Chat..."
-                        :on-change #(reset! (om/get-state owner :chat-body)
-                                            (.. % -target -value))}]]])))))
+          [:form.chat-box {:on-submit submit-chat
+                           :on-key-down #(when (and (= "Enter" (.-key %))
+                                                    (not (.-shiftKey %))
+                                                    (not (.-ctrlKey %))
+                                                    (not (.-metaKey %))
+                                                    (not (.-altKey %)))
+                                           (submit-chat %))}
+           [:textarea.chat-input {:tab-index "1"
+                                  :ref "chat-body"
+                                  :disabled (if (or (not chat-opened?)
+                                                    (:show-landing? app)) true false)
+                                  :id "chat-input"
+                                  :style {:height chat-height}
+                                  :required true
+                                  :value @(om/get-state owner :chat-body)
+                                  :on-change #(let [node (.-target %)]
+                                                (reset! (om/get-state owner :chat-body)
+                                                        (.-value node))
+                                                (when (not= (.-scrollHeight node) (.-clientHeight node))
+                                                  (om/set-state! owner :chat-height (max 64 (.-scrollHeight node)))))}]
+           (if chat-submit-learned?
+             [:div.chat-placeholder {:data-before "Chat."}]
+             [:div.chat-teach-enter {:data-step-1 "Click here."
+                                     :data-step-2 "Type something."
+                                     :data-step-3 "Send with enter."
+                                     :data-remind "Don't forget to hit enter."}])])))))
 
 (defn log [{:keys [sente-id client-id] :as app} owner]
   (reify
@@ -176,33 +188,34 @@
                         :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html
-         [:div.chat-log {:ref "chat-messages"}
-          (when chat-bot
-            (om/build chat-item {:chat dummy-chat
-                                 :uuid->cust {(:cust/uuid state/subscriber-bot)
-                                              (merge
-                                               (select-keys state/subscriber-bot [:cust/color-name :cust/uuid])
-                                               {:cust/name (:chat-bot/name chat-bot)})}
-                                 :show-sender? true}))
-          (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
-            (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
-                                             chat-groups)]
+          [:div.chat-log
+           [:div.chat-messages {:ref "chat-messages"}
+            (when chat-bot
+              (om/build chat-item {:chat dummy-chat
+                                   :uuid->cust {(:cust/uuid state/subscriber-bot)
+                                                (merge
+                                                  (select-keys state/subscriber-bot [:cust/color-name :cust/uuid])
+                                                  {:cust/name (:chat-bot/name chat-bot)})}
+                                   :show-sender? true}))
+            (let [chat-groups (group-by #(date->bucket (:server/timestamp %)) chats)]
+              (for [[time chat-group] (sort-by #(:server/timestamp (first (second %)))
+                                               chat-groups)]
 
-              (list (when (or (not= 1 (count chat-groups))
-                              (not= #{"Today"} (set (keys chat-groups))))
-                      [:div.chat-date.divider-small time])
-                    (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
-                      (om/build chat-item {:chat chat
-                                           :uuid->cust (get-in app [:cust-data :uuid->cust])
-                                           :show-sender? (or (not= (chat-model/display-name prev-chat sente-id)
-                                                                   (chat-model/display-name chat sente-id))
+                (list (when (or (not= 1 (count chat-groups))
+                                (not= #{"Today"} (set (keys chat-groups))))
+                        [:div.chat-date.divider-small time])
+                      (for [[prev-chat chat] (partition 2 1 (concat [nil] (sort-by :server/timestamp chat-group)))]
+                        (om/build chat-item {:chat chat
+                                             :uuid->cust (get-in app [:cust-data :uuid->cust])
+                                             :show-sender? (or (not= (chat-model/display-name prev-chat sente-id)
+                                                                     (chat-model/display-name chat sente-id))
 
-                                                             (or (not (:server/timestamp chat))
-                                                                 (not (:server/timestamp prev-chat))
-                                                                 (< (* 1000 60 5) (- (.getTime (:server/timestamp chat))
-                                                                                     (.getTime (:server/timestamp prev-chat))))))}
-                                {:react-key (:db/id chat)
-                                 :opts {:sente-id sente-id}})))))])))))
+                                                               (or (not (:server/timestamp chat))
+                                                                   (not (:server/timestamp prev-chat))
+                                                                   (< (* 1000 60 5) (- (.getTime (:server/timestamp chat))
+                                                                                       (.getTime (:server/timestamp prev-chat))))))}
+                                  {:react-key (:db/id chat)
+                                   :opts {:sente-id sente-id}})))))]])))))
 
 (defn chat [app owner]
   (reify
@@ -225,4 +238,6 @@
                                                [:sente-id]
                                                [:client-id]
                                                [:cust-data]]))
-           (om/build input {})]])))))
+           (om/build input (utils/select-in app [state/chat-opened-path
+                                                 state/chat-submit-learned-path
+                                                 [:show-landing?]]))]])))))

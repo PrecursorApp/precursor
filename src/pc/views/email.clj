@@ -37,23 +37,23 @@
                    (:cust/email requester)
                    (when-not (str/blank? full-name) ")")))))
 
-(defn chat-invite-html [doc-id]
+(defn chat-invite-html [doc]
   (hiccup/html
    [:html
     [:body
      [:p
       "I'm prototyping something on Precursor, come join me at "
-      [:a {:href (urls/doc doc-id)}
-       (urls/doc doc-id)]
+      [:a {:href (urls/from-doc doc)}
+       (urls/from-doc doc)]
       "."]
      [:p "This is what I have so far:"]
      [:p
-      [:a {:href (urls/doc doc-id)
+      [:a {:href (urls/from-doc doc)
            :style "display: inline-block"}
        [:img {:width 325
               :style "border: 1px solid #888888;"
               :alt "Images disabled? Just come and take a look."
-              :src (urls/doc-png doc-id :query {:rand (rand)})}]]]
+              :src (urls/png-from-doc doc :query {:rand (rand)})}]]]
      [:p {:style "font-size: 12px"}
       (format "Tell us if this message was sent in error %s." (email-address "info"))
       ;; Add some hidden text so that Google doesn't try to trim these.
@@ -62,16 +62,16 @@
        (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
        "."]]]]))
 
-(defn document-access-grant-html [doc-id access-grant image-permission]
-  (let [doc-link (urls/doc doc-id :query {:access-grant-token (:access-grant/token access-grant)})
-        image-link (urls/doc-png doc-id :query {:rand (rand) :auth-token (:permission/token image-permission)})]
+(defn document-access-grant-html [doc access-grant image-permission]
+  (let [doc-link (urls/from-doc doc :query {:access-grant-token (:access-grant/token access-grant)})
+        image-link (urls/png-from-doc doc :query {:rand (rand) :auth-token (:permission/token image-permission)})]
     (hiccup/html
      [:html
       [:body
        [:p
         "I'm prototyping something on Precursor, come join me at "
         [:a {:href doc-link}
-         (urls/doc doc-id)]
+         (urls/from-doc doc)]
         "."]
        [:p "This is what I have so far:"]
        [:p
@@ -91,13 +91,13 @@
 
 (defn team-access-grant-html [team access-grant]
   (let [subdomain (:team/subdomain team)
-        intro-doc-id (:db/id (:team/intro-doc team))]
+        intro-doc (:team/intro-doc team)]
     (hiccup/html
      [:html
       [:body
        [:p
         "You've been invited to the " subdomain " team on Precursor: "
-        [:a {:href (urls/doc intro-doc-id :subdomain subdomain :query {:access-grant-token (:access-grant/token access-grant)})}
+        [:a {:href (urls/from-doc intro-doc :query {:access-grant-token (:access-grant/token access-grant)})}
          "Accept the invitation"]
         "."]
        [:p "When you create a new document in the " subdomain " subdomain, it will be private to your team by default. You'll also have access to all of the documents created by your team."]
@@ -109,9 +109,9 @@
          (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
          "."]]]])))
 
-(defn document-permission-grant-html [doc-id image-permission]
-  (let [doc-link (urls/doc doc-id)
-        image-link (urls/doc-png doc-id :query {:rand (rand) :auth-token (:permission/token image-permission)})]
+(defn document-permission-grant-html [doc image-permission]
+  (let [doc-link (urls/from-doc doc)
+        image-link (urls/png-from-doc doc :query {:rand (rand) :auth-token (:permission/token image-permission)})]
     (hiccup/html
      [:html
       [:body
@@ -138,13 +138,13 @@
 
 (defn team-permission-grant-html [team]
   (let [subdomain (:team/subdomain team)
-        intro-doc-id (:db/id (:team/intro-doc team))]
+        intro-doc (:db/id (:team/intro-doc team))]
     (hiccup/html
      [:html
       [:body
        [:p
         "You've been added to the " subdomain " team on Precursor. "
-        [:a {:href (urls/doc intro-doc-id :subdomain subdomain)}
+        [:a {:href (urls/from-doc intro-doc)}
          (urls/root :subdomain subdomain)]
         "."]
        [:p "When you create a new document in the " subdomain " subdomain, it will be private to your team by default."
@@ -158,14 +158,14 @@
          "."]]]])))
 
 
-(defn document-access-request-html [doc-id requester]
-  (let [doc-link (urls/doc doc-id)]
+(defn document-access-request-html [doc requester]
+  (let [doc-link (urls/from-doc doc)]
     (hiccup/html
      [:html
       [:body
        [:p (str (format-requester requester) " wants access to one of your documents on Precursor.")]
        [:p "Go to the "
-        [:a {:href (urls/doc doc-id :query {:overlay "sharing"})}
+        [:a {:href (urls/from-doc doc :query {:overlay "sharing"})}
          "manage permissions page"]
         " to grant or deny access."]
        [:p {:style "font-size: 12px"}
@@ -178,13 +178,13 @@
 
 (defn team-access-request-html [team requester]
   (let [subdomain (:team/subdomain team)
-        intro-doc-id (:db/id (:team/intro-doc team))]
+        intro-doc (:team/intro-doc team)]
     (hiccup/html
      [:html
       [:body
        [:p (str (format-requester requester) " wants to join the " subdomain " team on Precursor.")]
        [:p "Go to the "
-        [:a {:href (urls/doc intro-doc-id :subdomain subdomain :query {:overlay "team-settings"})}
+        [:a {:href (urls/from-doc intro-doc :query {:overlay "team-settings"})}
          "manage permissions page"]
         " to grant or deny access."]
        [:p {:style "font-size: 12px"}

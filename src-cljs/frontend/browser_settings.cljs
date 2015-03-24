@@ -24,7 +24,8 @@
    :browser-setting/invite-menu-learned :invite-menu-learned
    :browser-setting/sharing-menu-learned :sharing-menu-learned
    :browser-setting/shortcuts-menu-learned :shortcuts-menu-learned
-   :browser-setting/chat-menu-learned :chat-menu-learned})
+   :browser-setting/chat-button-learned :chat-button-learned
+   :browser-setting/chat-submit-learned :chat-submit-learned})
 
 (def app-state-setting->db-setting
   "Translates browser settings key that is stored in app-state (at state/browser-settings-path)

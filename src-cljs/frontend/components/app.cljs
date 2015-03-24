@@ -85,6 +85,7 @@
 
              (om/build chat/chat (select-in app [state/chat-opened-path
                                                  state/chat-mobile-opened-path
+                                                 state/chat-submit-learned-path
                                                  [:document/id]
                                                  [:sente-id]
                                                  [:client-id]
