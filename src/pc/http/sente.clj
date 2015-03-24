@@ -453,6 +453,7 @@
   ;; This may turn out to be a bad idea, but error handling is done through creating chats
   (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)
+        doc (doc-model/find-by-id (:db req) doc-id)
         invite-loc (-> ?data :invite-loc)
         chat-id (d/tempid :db.part/user)
         cust (-> req :ring-req :auth :cust)
@@ -478,7 +479,7 @@
       (let [email (-> ?data :email)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
         (try
-          (email/send-chat-invite {:cust cust :to-email email :doc-id doc-id})
+          (email/send-chat-invite {:cust cust :to-email email :doc doc})
           (notify-invite (str "Invite sent to " email))
           (catch Exception e
             (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))

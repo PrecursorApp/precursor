@@ -19,7 +19,7 @@
 (defn root [& {:keys [query subdomain]}]
   (make-url "/" :query query :subdomain subdomain))
 
-(defn doc [doc-id & {:keys [query subdomain]}]
+(defn doc-url [doc-id & {:keys [query subdomain]}]
   (make-url (str "/document/" doc-id) :query query :subdomain subdomain))
 
 (defn doc-svg [doc-id & {:keys [query subdomain]}]
@@ -33,3 +33,18 @@
 
 (defn blog-url [slug]
   (make-url (str "/blog/" slug)))
+
+(defn from-doc [doc & {:keys [query]}]
+  (if-let [team (:document/team doc)]
+    (doc-url (:db/id doc) :subdomain (:team/subdomain team) :query query)
+    (doc-url (:db/id doc) :query query)))
+
+(defn png-from-doc [doc & {:keys [query]}]
+  (if-let [team (:document/team doc)]
+    (doc-png (:db/id doc) :subdomain (:team/subdomain team) :query query)
+    (doc-png (:db/id doc) :query query)))
+
+(defn svg-from-doc [doc & {:keys [query]}]
+  (if-let [team (:document/team doc)]
+    (doc-svg (:db/id doc) :subdomain (:team/subdomain team) :query query)
+    (doc-svg (:db/id doc) :query query)))

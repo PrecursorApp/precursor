@@ -110,7 +110,7 @@
     (if doc
       (content/app (merge (common-view-data req)
                           {:initial-document-id (:db/id doc)
-                           :meta-image (urls/doc-png (:db/id doc))}
+                           :meta-image (urls/png-from-doc doc)}
                           ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
                           ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
                           ;;   {:initial-entities (layer/find-by-document db doc)})

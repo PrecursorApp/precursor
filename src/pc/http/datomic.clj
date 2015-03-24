@@ -44,7 +44,7 @@
 (defn handle-precursor-pings [transaction]
   (let [db (:db-after transaction)
         datoms (:tx-data transaction)
-        document-id (delay (:db/id (:transaction/document (datomic-common/get-annotations transaction))))
+        document (delay (:transaction/document (datomic-common/get-annotations transaction)))
         chat-body-eid (d/entid db :chat/body)]
     (when-let [chat-datom (first (filter #(= chat-body-eid (:a %)) datoms))]
       (let [slack-url (if (profile/prod?)
@@ -60,15 +60,15 @@
 
           (re-find #"(?i)@prcrsr|@danny|@daniel" (:v chat-datom))
           (let [message (format "<%s|%s>: %s"
-                                (urls/doc @document-id) @document-id (:v chat-datom))]
+                                (urls/from-doc @document) (:db/id @document) (:v chat-datom))]
             (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url
-                                                                        :attachments [{:image_url (urls/doc-png @document-id)}]})}}))
+                                                                        :attachments [{:image_url (urls/png-from-doc @document)}]})}}))
 
-          (= 1 (count (get @sente/document-subs @document-id)))
+          (= 1 (count (get @sente/document-subs (:db/id @document))))
           (let [message (format "<%s|%s> is typing messages to himself: \n %s"
-                                (urls/doc @document-id) @document-id (:v chat-datom))]
+                                (urls/from-doc @document) (:db/id @document) (:v chat-datom))]
             (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url
-                                                                        :attachments [{:image_url (urls/doc-png @document-id)}]})}}))
+                                                                        :attachments [{:image_url (urls/png-from-doc @document)}]})}}))
           :else nil)))))
 
 (defn admin-notify-subdomains [transaction]

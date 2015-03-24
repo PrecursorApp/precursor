@@ -54,13 +54,13 @@
 
 
 
-(defn send-chat-invite [{:keys [cust to-email doc-id]}]
+(defn send-chat-invite [{:keys [cust to-email doc]}]
   (ses/send-message {:from (view/email-address "Precursor" "joinme")
                      :to to-email
                      :subject (str (view/format-inviter cust)
                                    " invited you to a document on Precursor")
-                     :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc doc-id))
-                     :html (view/chat-invite-html doc-id)}))
+                     :text (str "Hey there,\nCome draw with me on Precursor: " (urls/from-doc doc))
+                     :html (view/chat-invite-html doc)}))
 
 (defn send-document-access-grant-email [db access-grant]
   (let [doc (:access-grant/document-ref access-grant)
@@ -71,9 +71,9 @@
                        :to (:access-grant/email access-grant)
                        :subject (str (view/format-inviter granter)
                                      " invited you to a document on Precursor")
-                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc (:db/id doc))
+                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/from-doc doc)
                                   "?access-grant-token=" token)
-                       :html (view/document-access-grant-html (:db/id doc) access-grant image-permission)})))
+                       :html (view/document-access-grant-html doc access-grant image-permission)})))
 
 (defn send-team-access-grant-email [db access-grant]
   (let [team (:access-grant/team access-grant)
@@ -111,8 +111,8 @@
                        :to (:cust/email grantee)
                        :subject (str (view/format-inviter granter)
                                      " invited you to a document on Precursor")
-                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/doc (:db/id doc)))
-                       :html (view/document-permission-grant-html (:db/id doc) image-permission)})))
+                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/from-doc doc))
+                       :html (view/document-permission-grant-html doc image-permission)})))
 
 (defn send-team-permission-grant-email [db permission]
   (let [team (:permission/team permission)
@@ -143,7 +143,6 @@
 (defn send-document-access-request-email [db access-request]
   (let [requester (:access-request/cust-ref access-request)
         doc (:access-request/document-ref access-request)
-        doc-id (:db/id doc)
         doc-owner (cond (:document/creator doc)
                         (cust-model/find-by-uuid db (:document/creator doc))
 
@@ -155,14 +154,14 @@
                           first
                           :permission/cust-ref)
 
-                        :else (throw+ {:error :no-doc-owner :msg (format "Nobody owns the doc %s" doc-id)}))]
+                        :else (throw+ {:error :no-doc-owner :msg (format "Nobody owns the doc %s" (:db/id doc))}))]
     (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:cust/email doc-owner)
                        :subject (str (view/format-requester requester)
                                      " wants access to your document on Precursor")
-                       :text (str "Hey there,\nSomeone wants access to your document on Precursor: " (urls/doc doc-id)
+                       :text (str "Hey there,\nSomeone wants access to your document on Precursor: " (urls/from-doc doc)
                                   "\nYou can grant or deny them access from the document's settings page.")
-                       :html (view/document-access-request-html doc-id requester)})))
+                       :html (view/document-access-request-html doc requester)})))
 
 (defn send-team-access-request-email [db access-request]
   (let [requester (:access-request/cust-ref access-request)
