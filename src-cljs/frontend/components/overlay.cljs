@@ -14,9 +14,11 @@
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.state :as state]
+            [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
+            [goog.dom.Range]
             [goog.labs.userAgent.browser :as ua]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -204,6 +206,132 @@
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
              (permissions/render-access-entity access-entity cast!))])))))
 
+(defn read-only-sharing-for-admin [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Read-Only Sharing (admin)")
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when (seq (filter #(or (= :document/privacy (:a %))
+                                           (= :permission/document (:a %))
+                                           (= :access-grant/document (:a %))
+                                           (= :access-request/document (:a %))
+                                           (= :access-request/status (:a %)))
+                                      (:tx-data tx-report)))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc-id (:document/id app)
+            doc (doc-model/find-by-id @db doc-id)
+            permission-grant-email (get-in app state/permission-grant-email-path)
+            permissions (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :permission/document ?doc-id]] @db doc-id)
+            access-grants (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-grant/document ?doc-id]] @db doc-id)
+            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
+        (html
+         [:div.content
+          [:h2.make
+           "This document is read-only."]
+          [:p.make
+           "Anyone with the url can see the doc and chat, but can't edit the canvas. "
+           "Share the url to show off your work."]
+          [:p.make
+           [:input {:type "text"
+                    :onMouseDown (fn [e]
+                                   (.focus (.-target e))
+                                   (.select (goog.dom.Range/createFromNodeContents (.-target e)))
+                                   (utils/stop-event e))
+                    :value (urls/absolute-doc-url (:document/id app))}]]
+          [:p.make
+           "Add your teammate's email to grant them full access."]
+          [:form.menu-invite-form.make
+           {:on-submit #(do (cast! :permission-grant-submitted)
+                            false)
+            :on-key-down #(when (= "Enter" (.-key %))
+                            (cast! :permission-grant-submitted)
+                            false)}
+           [:input
+            {:type "text"
+             :required "true"
+             :data-adaptive ""
+             :value (or permission-grant-email "")
+             :on-change #(cast! :permission-grant-email-changed {:value (.. % -target -value)})}]
+           [:label
+            {:data-placeholder "Teammate's email"
+             :data-placeholder-nil "What's your teammate's email?"
+             :data-placeholder-forgot "Don't forget to submit!"}]]
+          (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
+            (permissions/render-access-entity access-entity cast!))])))))
+
+(defn read-only-sharing-for-viewer [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Read-Only sharing (viewer)")
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when (seq (filter #(or (= :access-request/document (:a %)))
+                                      (:tx-data tx-report)))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [db cast!]} (om/get-shared owner)
+            doc-id (:document/id app)
+            document (d/entity @db doc-id)
+            access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
+        (html
+         [:div.content
+          [:h2.make
+           "This document is read-only."]
+          (if (:cust app)
+            (list
+             [:p.make
+              "You can view this doc and chat, but anything you prototype here will only be visible to you."]
+             (if (empty? access-requests)
+               (list
+                [:p.make
+                 "You can try to request full access or even "
+                 [:a {:href "/new"} "create your own"]
+                 " document."]
+                [:a.make.menu-cta
+                 {:on-click #(cast! :permission-requested {:doc-id doc-id})
+                  :role "button"}
+                 "Request Access"])
+               [:p.make
+                [:span
+                 "Okay, we notified the owner of this document about your request. "
+                 "While you wait for a response, try prototyping in "]
+                [:a {:href "/new" :target "_self"} "your own document"]
+                [:span "."]]))
+            (list
+             [:p.make
+              "You can view this doc and chat, but anything you prototype here won't save. "
+              "If you sign in with Google you can request full access from the owner of this document."]
+             [:div.calls-to-action.make
+              (om/build common/google-login {:source "Permission Denied Menu"})]))])))))
+
+(defn read-only-sharing [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Read-Only Sharing")
+    om/IRender
+    (render [_]
+      (if (auth/contains-scope? auth/scope-heirarchy (:max-document-scope app) :admin)
+        (om/build read-only-sharing-for-admin app)
+        (om/build read-only-sharing-for-viewer app)))))
+
 (defn public-sharing [app owner]
   (reify
     om/IDisplayName (display-name [_] "Public Sharing")
@@ -270,7 +398,6 @@
             invite-email (get-in app state/invite-email-path)
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)
-            private? (= :document.privacy/private (:document/privacy doc))
             cant-edit-reason (cond (:team app)
                                    nil
 
@@ -281,9 +408,11 @@
                                    :not-creator)]
         (html
          [:div.menu-view
-          (if private?
-            (om/build private-sharing app)
-            (om/build public-sharing app))
+          (case (:document/privacy doc)
+            :document.privacy/public (om/build public-sharing app)
+            :document.privacy/private (om/build private-sharing app)
+            ;;read-only sharing needs to know the user's permission for the doc
+            :document.privacy/read-only (om/build read-only-sharing app))
 
           (case cant-edit-reason
             :no-private-docs-flag
@@ -297,7 +426,7 @@
                                     :hidden "true"
                                     :id "privacy-public"
                                     :name "privacy"
-                                    :checked (not private?)
+                                    :checked (keyword-identical? :document.privacy/public (:document/privacy doc))
                                     :disabled (boolean cant-edit-reason)
                                     :onChange #(if cant-edit-reason
                                                  (utils/stop-event %)
@@ -314,9 +443,28 @@
                 [:small "(privacy change requires owner)"])]
              [:input.privacy-radio {:type "radio"
                                     :hidden "true"
+                                    :id "privacy-read-only"
+                                    :name "privacy"
+                                    :checked (keyword-identical? :document.privacy/read-only (:document/privacy doc))
+                                    :disabled (boolean cant-edit-reason)
+                                    :onChange #(if cant-edit-reason
+                                                 (utils/stop-event %)
+                                                 (cast! :document-privacy-changed
+                                                        {:doc-id doc-id
+                                                         :setting :document.privacy/read-only}))}]
+             [:label.privacy-label {:class (when cant-edit-reason "disabled")
+                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
+                                    :for "privacy-read-only"
+                                    :role "button"}
+              (common/icon :pencil)
+              [:span "Read-only"]
+              (when (= :not-creator cant-edit-reason)
+                [:small "(privacy change requires owner)"])]
+             [:input.privacy-radio {:type "radio"
+                                    :hidden "true"
                                     :id "privacy-private"
                                     :name "privacy"
-                                    :checked private?
+                                    :checked (keyword-identical? :document.privacy/private (:document/privacy doc))
                                     :disabled (boolean cant-edit-reason)
                                     :onChange #(if cant-edit-reason
                                                  (utils/stop-event %)
@@ -552,7 +700,7 @@
           [:div.menu-header
            (for [component overlay-components]
              (html
-              [:h4.menu-heading {:title title :key title} title]))]
+              [:h4.menu-heading {:title (:title component) :key (:title component)} (:title component)]))]
           [:div.menu-body
            (for [component overlay-components]
             (om/build (:component component) app))]])))))

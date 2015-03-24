@@ -108,7 +108,8 @@
                                               [:cust]
                                               [:mouse-type]
                                               [:cust-data]
-                                              [:team]])
+                                              [:team]
+                                              [:max-document-scope]])
                       {:react-key "hud"})])
           (html [:div#app]))))))
 
