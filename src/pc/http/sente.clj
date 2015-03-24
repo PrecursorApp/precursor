@@ -418,26 +418,6 @@
                          :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
                          :timestamp (:receive-instant req)})))
 
-(defmethod ws-handler :team/transaction [{:keys [client-id ?data] :as req}]
-  (check-team-access (-> ?data :team/uuid) req :admin)
-  (let [team (team-model/find-by-uuid (:db req) (:team/uuid ?data))
-        datoms (->> ?data
-                 :datoms
-                 (remove (comp nil? :v))
-                 ;; Don't let people sneak into other teams
-                 (map (fn [d]
-                        (if (= "team" (name (:a d)))
-                          (assoc d :v (:db/id team))
-                          d))))
-        cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
-    (log/infof "transacting %s datoms on %s for %s" (count datoms) (:team/uuid team) client-id)
-    (datomic2/transact! datoms
-                        {:team-id (:db/id team)
-                         :client-id client-id
-                         :cust-uuid cust-uuid
-                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
-                         :timestamp (:receive-instant req)})))
-
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [document-id (-> ?data :document/id)
