@@ -421,7 +421,7 @@
 .new-here-item {
   padding: 0 @menu_padding;
 }
-.mouse-stats {
+.doc-stats {
   color: @white;
   font-family: @font_mono;
   font-size: .625rem;
@@ -436,5 +436,14 @@
   &:before,
   &:after {
     animation: in-fade-bottom @run_slower @run_fast @bezier_deform backwards;
+  }
+  .mouse-stats {
+    display: inline-block;
+  }
+  .privacy-stats {
+    display: inline-block;
+    .iconpile [class|="stroke"] {
+      stroke: @white;
+    }
   }
 }

@@ -82,20 +82,30 @@
       (let [mouse (cursors/observe-mouse owner)]
         (html
          [:div.mouse-stats
-          {:data-text (str "{:x " (:x mouse 0)
-                           ", :y " (:y mouse 0)
-                           ", :rx " (:rx mouse 0)
-                           ", :ry " (:ry mouse 0)
+          {:data-text (str "{:x " (:rx mouse 0)
+                           ", :y " (:ry mouse 0)
                            "}")}])))))
 
 (defn tray [app owner]
   (reify
     om/IDisplayName (display-name [_] "Hud Tray")
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   (when (seq (filter #(= :document/privacy (:a %)) (:tx-data tx-report)))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             new-here? (empty? (:cust app))
-            chat-opened? (get-in app state/chat-opened-path)]
+            chat-opened? (get-in app state/chat-opened-path)
+            document (d/entity @(om/get-shared owner :db) (:document/id app))]
         (html
          [:div.hud-tray.hud-item.width-canvas
           (when new-here?
@@ -111,7 +121,14 @@
                [:a.new-here-item {:href "/pricing"      :role "button" :title "Pricing"} "Pricing"]
                [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
                [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
-          (om/build mouse-stats {} {:react-key "mouse-stats"})])))))
+          [:div.doc-stats
+           (om/build mouse-stats {} {:react-key "mouse-stats"})
+           [:div.privacy-stats
+            (case (:document/privacy document)
+              :document.privacy/public (common/icon :globe)
+              :document.privacy/read-only (common/icon :lock)
+              :document.privacy/private (common/icon :lock)
+              nil)]]])))))
 
 (defn chat [app owner]
   (reify
@@ -298,7 +315,9 @@
 
         (om/build tray (utils/select-in app [state/chat-opened-path
                                              state/info-button-learned-path
-                                             [:cust]])
+                                             [:document/id]
+                                             [:cust]
+                                             [:max-document-scope]])
                   {:react-key "tray"})
 
         ]))))
