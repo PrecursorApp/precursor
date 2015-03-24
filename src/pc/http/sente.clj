@@ -689,7 +689,7 @@
 (defn handle-req [req]
   (utils/with-report-exceptions
     (let [client-id (user-id-fn (:ring-req req))
-          event (pc.utils/inspect (ws-handler-dispatch-fn req))]
+          event (ws-handler-dispatch-fn req)]
       (try+
        (statsd/with-timing (str "ws." (namespace event) "." (name event))
          (ws-handler (assoc req
