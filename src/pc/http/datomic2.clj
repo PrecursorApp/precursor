@@ -106,7 +106,7 @@
 (defn transact!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
    Returns backend's version of the datoms."
-  [datoms {:keys [document-id team-id client-id session-uuid cust-uuid]}]
+  [datoms {:keys [document-id team-id client-id session-uuid cust-uuid receive-instant]}]
   (cond (empty? datoms)
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
         (< 1500 (count datoms))
@@ -120,7 +120,7 @@
                               txid (d/tempid :db.part/tx)
                               float-attrs (get-float-attrs db)
                               uuid-attrs (get-uuid-attrs db)
-                              server-timestamp (java.util.Date.)]
+                              server-timestamp (or receive-instant (java.util.Date.))]
                           (->> datoms
                             (map pcd/datom->transaction)
                             (map (partial coerce-floats float-attrs))

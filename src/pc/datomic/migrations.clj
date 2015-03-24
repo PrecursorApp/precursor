@@ -107,6 +107,15 @@
     (document-ids->document-refs db conn)
     (access-entities-ids->refs db conn)))
 
+(defn add-prcrsr-bot-color
+  "Gives precursor bot the stable green color"
+  [conn]
+  (let [prcrsr-bot-id (d/q '{:find [?t .]
+                             :in [$ ?email]
+                             :where [[?t :cust/email ?email]]}
+                           (d/db conn) "prcrsr-bot@prcrsr.com")]
+    @(d/transact conn [[:db/add prcrsr-bot-id :cust/color-name :color.name/green]])))
+
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
@@ -119,7 +128,8 @@
    5 #'archive/migrate-fake-documents
    6 #'archive/fix-bounding-boxes
    7 #'archive/add-frontend-ids
-   8 #'longs->refs))
+   8 #'longs->refs
+   9 #'add-prcrsr-bot-color))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"

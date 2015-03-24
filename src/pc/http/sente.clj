@@ -287,6 +287,7 @@
                         {:document/id document-id
                          :uuid->cust (->> document-id
                                        (cust/cust-uuids-for-doc (:db req))
+                                       (cons (auth/prcrsr-bot-uuid (:db req)))
                                        set
                                        (set/union (disj (set (map :cust/uuid (vals (get subs document-id))))
                                                         nil))
@@ -395,7 +396,8 @@
                         {:document-id document-id
                          :client-id client-id
                          :cust-uuid cust-uuid
-                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))})))
+                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
+                         :timestamp (:receive-instant req)})))
 
 (defmethod ws-handler :team/transaction [{:keys [client-id ?data] :as req}]
   (check-team-access (-> ?data :team/uuid) req :admin)
@@ -414,7 +416,8 @@
                         {:team-id (:db/id team)
                          :client-id client-id
                          :cust-uuid cust-uuid
-                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))})))
+                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
+                         :timestamp (:receive-instant req)})))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
@@ -470,11 +473,10 @@
                                                    (web-peer/server-frontend-id chat-id doc-id)
                                                    {:chat/body body
                                                     :server/timestamp (java.util.Date.)
+                                                    :client/timestamp (java.util.Date.)
                                                     :chat/document doc-id
                                                     :db/id chat-id
-                                                    :cust/uuid (auth/prcrsr-bot-uuid (:db req))
-                                                    ;; default bot color, also used on frontend chats
-                                                    :chat/color "#00b233"}])))]
+                                                    :cust/uuid (auth/prcrsr-bot-uuid (:db req))}])))]
     (if-let [cust (-> req :ring-req :auth :cust)]
       (let [email (-> ?data :email)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
@@ -689,6 +691,7 @@
        (statsd/with-timing (str "ws." (namespace event) "." (name event))
          (ws-handler (assoc req
                             :db (pcd/default-db)
+                            :receive-instant (java.util.Date.)
                             ;; TODO: Have to kill sente
                             :client-id client-id)))
        (catch :status t

@@ -1148,8 +1148,13 @@
 (defmethod post-handle-cmd-chat "invite"
   [state cmd body]
   (let [email (last (re-find #"/invite\s+([^\s]+)" body))]
-    (sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
-                                                           :email email}])))
+    ;; this is a bit silly, but we have to make sure the chat tx msg
+    ;; goes through before the send-invite message, since the messages are
+    ;; serialized.
+    (js/setTimeout
+     #(sente/send-msg (:sente state) [:frontend/send-invite {:document/id (:document/id state)
+                                                             :email email}])
+     100)))
 
 (defmethod post-handle-cmd-chat "toggle-grid"
   [state cmd body]
