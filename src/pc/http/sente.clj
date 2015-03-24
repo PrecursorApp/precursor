@@ -270,9 +270,11 @@
                                client-id
                                (-> req :ring-req :auth :cust)
                                :requested-color (:requested-color ?data)
-                               :requested-remainder (:requested-remainder ?data))]
+                               :requested-remainder (:requested-remainder ?data))
+        doc (doc-model/find-by-id (:db req) document-id)]
 
-    (?reply-fn [:frontend/frontend-id-state {:frontend-id-state (get-in subs [document-id client-id :frontend-id-seed])}])
+    (?reply-fn [:frontend/frontend-id-state {:frontend-id-state (get-in subs [document-id client-id :frontend-id-seed])
+                                             :max-document-scope (auth/max-document-scope (:db req) doc (get-in req [:ring-req :auth]))}])
 
     (doseq [[uid _] (get @document-subs document-id)]
       (send-fn uid [:frontend/subscriber-joined (merge {:client-id client-id}

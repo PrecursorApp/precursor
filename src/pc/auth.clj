@@ -132,6 +132,13 @@
            (contains-scope? scope-heirarchy :read scope))
       (contains-scope? scope-heirarchy (document-permission db doc auth) scope)))
 
+(defn max-document-scope [db doc auth]
+  (loop [scopes (reverse scope-heirarchy)]
+    (when-let [scope (first scopes)]
+      (if (has-document-permission? db doc auth scope)
+        scope
+        (recur (next scopes))))))
+
 (defn has-team-permission? [db team auth scope]
   (contains-scope? scope-heirarchy (team-permission db team (:cust auth)) scope))
 
