@@ -1618,3 +1618,8 @@
                                 #js [(.-scrollLeft body) (.-scrollTop body)]
                                 #js [(.-scrollLeft body) vh]
                                 375))))
+
+(defmethod control-event :privacy-stats-clicked
+  [browser-state message _ state]
+  (-> state
+    (overlay/add-overlay :sharing)))

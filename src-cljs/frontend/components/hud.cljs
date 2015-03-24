@@ -123,7 +123,7 @@
                [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
           [:div.doc-stats
            (om/build mouse-stats {} {:react-key "mouse-stats"})
-           [:div.privacy-stats
+           [:div.privacy-stats {:on-click #(cast! :privacy-stats-clicked)}
             (case (:document/privacy document)
               :document.privacy/public (common/icon :globe)
               :document.privacy/read-only (common/icon :pencil)
