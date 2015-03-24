@@ -19,6 +19,7 @@
             [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
             [goog.dom.Range]
+            [goog.dom.selection]
             [goog.labs.userAgent.browser :as ua]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -242,13 +243,19 @@
           [:p.make
            "Anyone with the url can see the doc and chat, but can't edit the canvas. "
            "Share the url to show off your work."]
-          [:p.make
+          [:form.menu-invite-form.make
            [:input {:type "text"
+                    :required "true"
+                    :data-adaptive ""
                     :onMouseDown (fn [e]
+                                   (js/console.log (.-target e))
                                    (.focus (.-target e))
-                                   (.select (goog.dom.Range/createFromNodeContents (.-target e)))
+                                   (goog.dom.selection/setStart (.-target e) 0)
+                                   (goog.dom.selection/setEnd (.-target e) 10000)
                                    (utils/stop-event e))
-                    :value (urls/absolute-doc-url (:document/id app))}]]
+                    :value (urls/absolute-doc-url (:document/id app))}]
+           [:label
+            {:data-placeholder "Copy the url to share"}]]
           [:p.make
            "Add your teammate's email to grant them full access."]
           [:form.menu-invite-form.make
