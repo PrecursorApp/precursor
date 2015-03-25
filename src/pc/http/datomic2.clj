@@ -94,7 +94,7 @@
   [db document-id scope {:keys [remainder multiple]} [type e a v :as transaction]]
   (cond (= scope :admin) true
         (= scope :read) (and (= remainder (mod e multiple))
-                             (not (pc.utils/inspect (web-peer/taken-id? db document-id e))))))
+                             (not (web-peer/taken-id? db document-id e)))))
 
 (defn remove-float-conflicts [txes]
   (vals (reduce (fn [tx-index [type e a v :as tx]]
