@@ -19,8 +19,8 @@
   {:status 200 :body ":up"})
 
 (defpage google-auth "/auth/google" [req]
-  (let [{:strs [code state]} (-> req :query-string url/query->map pc.utils/inspect)
-        parsed-state (-> state url/url-decode json/decode pc.utils/inspect)]
+  (let [{:strs [code state]} (-> req :query-string url/query->map)
+        parsed-state (-> state url/url-decode json/decode)]
     (if (not (crypto/eq? (get parsed-state "csrf-token")
                          ring.middleware.anti-forgery/*anti-forgery-token*))
       {:status 400
