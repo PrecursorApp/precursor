@@ -125,6 +125,7 @@
           [:div.doc-stats
            (om/build mouse-stats {} {:react-key "mouse-stats"})
            [:div.privacy-stats {:on-click #(cast! :privacy-stats-clicked)
+                                :key rejected-tx-count
                                 :class (when (pos? rejected-tx-count)
                                          (if (= 0 (mod rejected-tx-count 2))
                                            "rejected-txes-a"
