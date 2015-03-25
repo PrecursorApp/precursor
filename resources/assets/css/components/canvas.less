@@ -205,6 +205,14 @@
       cursor: move;
     }
   }
+  &.unsaved {
+    &.selected {
+      opacity: .5;
+    }
+    &:not(.selected) {
+      fill: @gray_dark;
+    }
+  }
 }
 .static {
   .interactive-fill {
