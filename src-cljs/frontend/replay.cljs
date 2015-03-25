@@ -32,7 +32,15 @@
                            (map ds/datom->transaction (:tx-data tx))
                            {:server-update true})
               (when (next tx-ids)
-                (<! (async/timeout sleep-ms))
+                (when (seq tx)
+                  (<! (async/timeout sleep-ms)))
                 (recur (next tx-ids))))))
         (finally
           (async/close! replay-ch))))))
+
+(defn replay-and-subscribe [state & {:keys [delay-ms sleep-ms]
+                                     :or {delay-ms 0
+                                          sleep-ms 150}}]
+  (go
+    (<! (replay state :delay-ms delay-ms :sleep-ms sleep-ms))
+    (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state))))

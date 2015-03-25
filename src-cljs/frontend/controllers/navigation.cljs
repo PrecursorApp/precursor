@@ -5,6 +5,7 @@
             [frontend.async :refer [put!]]
             [frontend.db :as db]
             [frontend.overlay :as overlay]
+            [frontend.replay :as replay]
             [frontend.state :as state]
             [frontend.sente :as sente]
             [frontend.subscribers :as subs]
@@ -107,13 +108,15 @@
                                     (db/reset-db! db initial-entities)))))))
 
 (defmethod post-navigated-to! :document
-  [history-imp navigation-point _ previous-state current-state]
+  [history-imp navigation-point args previous-state current-state]
   (let [sente-state (:sente current-state)
         doc-id (:document/id current-state)]
     (when-let [prev-doc-id (:document/id previous-state)]
       (when (not= prev-doc-id doc-id)
         (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}])))
-    (sente/subscribe-to-document sente-state (:comms current-state) doc-id)
+    (if (get-in (utils/inspect args) [:query-params :replay])
+      (replay/replay-and-subscribe current-state :sleep-ms 25)
+      (sente/subscribe-to-document sente-state (:comms current-state) doc-id))
     ;; TODO: probably only need one listener key here, and can write a fn replace-listener
     (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
     (db/setup-listener! (:db current-state)
