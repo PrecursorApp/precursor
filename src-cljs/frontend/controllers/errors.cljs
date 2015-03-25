@@ -94,3 +94,20 @@
                          (:camera current-state)
                          "There was an error connecting to the server.\nPlease refresh to try again.")
   (js/Rollbar.error "entity ids request failed :("))
+
+(defmethod error :datascript/rejected-datoms
+  [container message {:keys [rejects sent-datoms sente-event]} state]
+  (if (and (= (count rejects) (count sent-datoms))
+           (= :read (:max-document-scope state)))
+    (-> state
+      (assoc-in (state/notified-read-only-path (:document/id state)) true)
+      (update-in (state/doc-tx-rejected-count-path (:document/id state)) (fnil inc 0))
+      (cond-> (nil? (get-in state (state/notified-read-only-path (:document/id state))))
+        (overlay/replace-overlay :sharing)))
+    state))
+
+(defmethod post-error! :datascript/sync-tx-error
+  [container message {:keys [reason sente-event sent-datoms]} previous-state current-state]
+  (js/Rollbar.error "sync-tx-error" #js {:reason reason
+                                         :sente-event sente-event
+                                         :datom-count (count sent-datoms)}))

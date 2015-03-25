@@ -6,7 +6,7 @@
 (defn setup-team-db [app-state]
   (db/setup-listener! (:team-db @app-state)
                       "team-listener"
-                      (utils/cast-fn (get-in @app-state [:comms :controls]))
+                      (:comms @app-state)
                       {:team/uuid (get-in @app-state [:team :team/uuid])}
                       :team/transaction
                       (atom {:transactions []

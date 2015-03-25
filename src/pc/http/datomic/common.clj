@@ -1,5 +1,6 @@
 (ns pc.http.datomic.common
-  (:require [datomic.api :as d]
+  (:require [clojure.set :as set]
+            [datomic.api :as d]
             [pc.datomic.schema :as schema]
             [pc.datomic.web-peer :as web-peer]))
 
@@ -8,7 +9,7 @@
   (let [txid (-> transaction :tx-data first :tx)]
     (d/entity (:db-after transaction) txid)))
 
-(def outgoing-whitelist
+(def read-only-outgoing-whitelist
   #{:layer/name
     :layer/uuid
     :layer/type
@@ -23,9 +24,6 @@
     :layer/stroke-color
     :layer/opacity
     :layer/points-to
-
-    :entity/type
-
     :layer/font-family
     :layer/text
     :layer/font-size
@@ -34,12 +32,15 @@
     :layer/ui-id
     :layer/ui-target
     :layer/document
+
+    :entity/type
     :session/uuid
     :document/uuid
     :document/name
     :document/creator
     :document/collaborators
     :document/privacy
+
     :chat/body
     :chat/color
     :chat/cust-name
@@ -47,29 +48,31 @@
     :cust/uuid
     :cust/color-name
     :client/timestamp
-    :server/timestamp
+    :server/timestamp})
 
-    :permission/document
-    :permission/cust ;; translated
-    :permission/permits
-    :permission/grant-date
-    :permission/team
+(defn outgoing-whitelist [scope]
+  (cond (= scope :read)
+        read-only-outgoing-whitelist
+        (= scope :admin)
+        (set/union read-only-outgoing-whitelist
+                   #{:permission/document
+                     :permission/cust ;; translated
+                     :permission/permits
+                     :permission/grant-date
+                     :permission/team
 
-    :access-grant/document
-    :access-grant/email
-    :access-grant/grant-date
-    :access-grant/team
+                     :access-grant/document
+                     :access-grant/email
+                     :access-grant/grant-date
+                     :access-grant/team
 
-    :access-request/document
-    :access-request/cust ;; translated
-    :access-request/status
-    :access-request/create-date
-    :access-request/deny-date
-    :access-request/team
-
-    ;; TODO: remove when fully deployed
-    :document/id
-    })
+                     :access-request/document
+                     :access-request/cust ;; translated
+                     :access-request/status
+                     :access-request/create-date
+                     :access-request/deny-date
+                     :access-request/team
+                     })))
 
 (defn translate-datom-dispatch-fn [db d] (:a d))
 
@@ -126,10 +129,12 @@
     (->> {:e e :a a :v v :tx tx :added added}
       (translate-datom db))))
 
-(defn whitelisted? [datom]
-  (contains? outgoing-whitelist (:a datom)))
+(defn whitelisted? [scope datom]
+  (contains? (outgoing-whitelist scope) (:a datom)))
 
-(defn frontend-document-transaction [transaction]
+(defn frontend-document-transaction
+  "Returns map of document transactions filtered for admin and filtered for read-only access"
+  [transaction]
   (let [annotations (get-annotations transaction)]
     (when (and (:transaction/document annotations)
                (:transaction/broadcast annotations))
@@ -137,12 +142,16 @@
                                  :tx-data
                                  (filter #(:frontend/id (d/entity (:db-after transaction) (:e %))))
                                  (map (partial datom-read-api (:db-after transaction)))
-                                 (filter whitelisted?)
+                                 (filter (partial whitelisted? :admin))
                                  seq)]
-        (merge {:tx-data public-datoms}
-               annotations)))))
+        {:admin-data (merge {:tx-data public-datoms}
+                            annotations)
+         :read-only-data (merge {:tx-data (filter (partial whitelisted? :read) public-datoms)}
+                                annotations)}))))
 
-(defn frontend-team-transaction [transaction]
+(defn frontend-team-transaction
+  "Returns map of document transactions filtered for admin and filtered for read-only access"
+  [transaction]
   (let [annotations (get-annotations transaction)]
     (when (and (:transaction/team annotations)
                (:transaction/broadcast annotations))
@@ -150,7 +159,9 @@
                                  :tx-data
                                  (filter #(:frontend/id (d/entity (:db-after transaction) (:e %))))
                                  (map (partial datom-read-api (:db-after transaction)))
-                                 (filter whitelisted?)
+                                 (filter (partial whitelisted? :admin))
                                  seq)]
-        (merge {:tx-data public-datoms}
-               annotations)))))
+        {:admin-data (merge {:tx-data public-datoms}
+                            annotations)
+         :read-only-data (merge {:tx-data (filter (partial whitelisted? :read) public-datoms)}
+                                annotations)}))))

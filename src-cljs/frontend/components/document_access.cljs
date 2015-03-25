@@ -34,18 +34,22 @@
     (render [_]
       (let [{:keys [db cast!]} (om/get-shared owner)
             doc-id (:document/id app)
+            document (d/entity @db doc-id)
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
          [:div.menu-view
           [:div.content
-           [:h2.make "This document is private."]
+           [:h2.make "This document is " (if (:document/privacy document)
+                                           (name (:document/privacy document))
+                                           "private") "."]
 
            (if (:cust app)
              (if (seq access-requests)
                [:p.make
-                [:span "Okay, we notified the owner of this document about your request.
-                       While you wait for a response, try prototyping in "]
-                [:a {:href "/new" :target "_self"} "your own document"]
+                [:span
+                 "Okay, we notified the owner of this document about your request. "
+                 "While you wait for a response, try prototyping in "]
+                [:a {:href "/new"} "your own document"]
                 [:span "."]]
 
                (list
@@ -61,8 +65,8 @@
 
              (list
                [:p.make
-                "Anything you prototype here will only be visible to you and won't save.
-                If you sign in with Google you can request access from the owner of this document."]
+                "Anything you prototype here will only be visible to you and won't save. "
+                "If you sign in with Google you can request access from the owner of this document."]
                [:div.calls-to-action.make
                 (om/build common/google-login {:source "Permission Denied Menu"})]))]])))))
 

@@ -65,70 +65,96 @@
 
 (defonce client-stats (atom {}))
 
-(defn notify-document-transaction [data]
-  (let [doc-id (:db/id (:transaction/document data))]
-    (doseq [[uid _] (dissoc (get @document-subs doc-id) (:session/client-id data))]
-      (log/infof "notifying %s about new transactions for %s" uid doc-id)
-      ((:send-fn @sente-state) uid [:datomic/transaction data]))
-    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
-      (log/infof "notifying %s about new server timestamp for %s" (:session/uuid data) doc-id)
-      ((:send-fn @sente-state) (str (:session/client-id data)) [:datomic/transaction (assoc data :tx-data server-timestamps)]))))
+(defn track-document-subs []
+  (add-watch document-subs :statsd (fn [_ _ old-state new-state]
+                                     (when (not= (count old-state)
+                                                 (count new-state))
+                                       (statsd/gauge "document-subs" (count new-state))))))
 
-(defn notify-team-transaction [data]
-  (let [team-uuid (:team/uuid (:transaction/team data))]
-    (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id data))]
+(defn track-clients []
+  (add-watch client-stats :statsd (fn [_ _ old-state new-state]
+                                    (when (not= (count old-state)
+                                                (count new-state))
+                                      (statsd/gauge "connected-clients" (count new-state))))))
+
+(defn track-team-subs []
+  (add-watch team-subs :statsd (fn [_ _ old-state new-state]
+                                 (when (not= (count old-state)
+                                             (count new-state))
+                                   (statsd/gauge "team-subs" (count new-state))))))
+
+(defn notify-document-transaction [db {:keys [read-only-data admin-data]}]
+  (let [doc (:transaction/document read-only-data)
+        doc-id (:db/id doc)]
+    (doseq [[uid {:keys [auth]}] (dissoc (get @document-subs doc-id) (:session/client-id read-only-data))
+            :let [max-scope (auth/max-document-scope db doc auth)]]
+      (log/infof "notifying %s about new transactions for %s" uid doc-id)
+      ((:send-fn @sente-state) uid [:datomic/transaction (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
+                                                               admin-data
+                                                               (auth/contains-scope? auth/scope-heirarchy max-scope :read)
+                                                               read-only-data)]))
+    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
+      (log/infof "notifying %s about new server timestamp for %s" (:session/uuid admin-data) doc-id)
+      ;; they made the tx, so we can send them the admin data
+      ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:datomic/transaction (assoc admin-data :tx-data server-timestamps)]))))
+
+;; Note: this assumes that everyone subscribe to the team is an admin
+(defn notify-team-transaction [db {:keys [read-only-data admin-data]}]
+  (let [team-uuid (:team/uuid (:transaction/team admin-data))]
+    (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id admin-data))]
       (log/infof "notifying %s about new team transactions for %s" uid team-uuid)
-      ((:send-fn @sente-state) uid [:team/transaction data]))
-    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data data)))]
-      (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid data) team-uuid)
-      ((:send-fn @sente-state) (str (:session/client-id data)) [:team/transaction (assoc data :tx-data server-timestamps)]))))
+      ((:send-fn @sente-state) uid [:team/transaction admin-data]))
+    (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
+      (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid admin-data) team-uuid)
+      ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:team/transaction (assoc admin-data :tx-data server-timestamps)]))))
 
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
 
-(defn check-document-access-from-auth [doc-id req scope]
+(defn has-document-access? [doc-id req scope]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
-    (when-not (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth) scope)
-      (if (auth/logged-in? (:ring-req req))
-        (throw+ {:status 403
-                 :error-msg "This document is private. Please request access."
-                 :error-key :document-requires-invite})
-        (throw+ {:status 401
-                 :error-msg "This document is private. Please log in to access it."
-                 :error-key :document-requires-login})))))
+    (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth) scope)))
 
 ;; TODO: make sure to kick the user out of subscribed if he loses access
 (defn check-subscribed [doc-id req scope]
-  ;; TODO: we're making a simplifying assumption that subscribed == :admin
-  ;;       That needs to be fixed at some point
-  (when (= scope :admin)
+  ;; TODO: we're making a simplifying assumption that subscribed at least
+  ;;       gives you read access
+  (when (= scope :read)
     (get-in @document-subs [doc-id (-> req :client-id)])))
 
-;; TODO: this should take an access level at some point
 (defn check-document-access [doc-id req scope]
   {:pre [doc-id]}
-  (or (check-subscribed doc-id req scope)
-      (check-document-access-from-auth doc-id req scope)))
+  (if (or (check-subscribed doc-id req scope)
+          (has-document-access? doc-id req scope))
+    true
+    (if (auth/logged-in? (:ring-req req))
+      (throw+ {:status 403
+               :error-msg "This document is private. Please request access."
+               :error-key :document-requires-invite})
+      (throw+ {:status 401
+               :error-msg "This document is private. Please log in to access it."
+               :error-key :document-requires-login}))))
 
 (defn check-team-subscribed [team-uuid req scope]
   (when (= scope :admin)
     (get-in @team-subs [team-uuid (-> req :client-id)])))
 
-(defn check-team-access-from-auth [team-uuid req scope]
+(defn has-team-permission? [team-uuid req scope]
   (let [team (team-model/find-by-uuid (:db req) team-uuid)]
-    (when-not (auth/has-team-permission? (:db req) team (-> req :ring-req :auth) scope)
-      (if (auth/logged-in? (:ring-req req))
-        (throw+ {:status 403
-                 :error-msg "This team is private. Please request access."
-                 :error-key :team-requires-invite})
-        (throw+ {:status 401
-                 :error-msg "This team is private. Please log in to access it."
-                 :error-key :team-requires-login})))))
+    (auth/has-team-permission? (:db req) team (-> req :ring-req :auth) scope)))
 
 (defn check-team-access [team-uuid req scope]
   {:pre [team-uuid]}
-  (or (check-team-subscribed team-uuid req scope)
-      (check-team-access-from-auth team-uuid req scope)))
+  (if (or (check-team-subscribed team-uuid req scope)
+          (has-team-permission? team-uuid req scope))
+    true
+    (if (auth/logged-in? (:ring-req req))
+      (throw+ {:status 403
+               :error-msg "This team is private. Please request access."
+               :error-key :team-requires-invite})
+      (throw+ {:status 401
+               :error-msg "This team is private. Please log in to access it."
+               :error-key :team-requires-login}))))
 
 (defn choose-frontend-id-seed [db document-id subs requested-remainder]
   (let [available-remainders (apply disj web-peer/remainders (map (comp :remainder :frontend-id-seed)
@@ -151,6 +177,7 @@
          (fn [subs]
            (-> subs
              (assoc-in [uuid :client-id] uuid)
+             (assoc-in [uuid :auth] {:cust cust})
              (update-in [uuid] merge (select-keys cust [:cust/uuid :cust/color-name :cust/name]))
              (assoc-in [uuid :show-mouse?] true)
              (assoc-in [uuid :frontend-id-seed] (choose-frontend-id-seed db document-id subs requested-remainder))))))
@@ -212,7 +239,7 @@
   (close-connection client-id))
 
 (defmethod ws-handler :frontend/unsubscribe [{:keys [client-id ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document-id) req :admin)
+  (check-document-access (-> ?data :document-id) req :read)
   (let [document-id (-> ?data :document-id)]
     (log/infof "unsubscribing %s from %s" client-id document-id)
     (close-connection client-id)
@@ -223,36 +250,36 @@
   (let [team-uuid (-> ?data :team/uuid)
         team (team-model/find-by-uuid (:db req) team-uuid)
         send-fn (:send-fn @sente-state)]
-    (check-team-access team-uuid req :admin)
-    (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
+    (when (has-team-permission? team-uuid req :admin)
+      (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
 
-    (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
-    (send-fn client-id [:team/db-entities
-                        {:team/uuid team-uuid
-                         :entities (map (partial permission-model/read-api (:db req))
-                                        (filter :permission/cust-ref
-                                                (permission-model/find-by-team (:db req)
-                                                                               team)))
-                         :entity-type :permission}])
-    (send-fn client-id [:team/db-entities
-                        {:team/uuid team-uuid
-                         :entities (map access-grant-model/read-api
-                                        (access-grant-model/find-by-team (:db req)
-                                                                         team))
-                         :entity-type :access-grant}])
-
-    (send-fn client-id [:team/db-entities
-                        {:team/uuid team-uuid
-                         :entities (map (partial access-request-model/read-api (:db req))
-                                        (access-request-model/find-by-team (:db req)
+      (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
+      (send-fn client-id [:team/db-entities
+                          {:team/uuid team-uuid
+                           :entities (map (partial permission-model/read-api (:db req))
+                                          (filter :permission/cust-ref
+                                                  (permission-model/find-by-team (:db req)
+                                                                                 team)))
+                           :entity-type :permission}])
+      (send-fn client-id [:team/db-entities
+                          {:team/uuid team-uuid
+                           :entities (map access-grant-model/read-api
+                                          (access-grant-model/find-by-team (:db req)
                                                                            team))
-                         :entity-type :access-request}])))
+                           :entity-type :access-grant}])
+
+      (send-fn client-id [:team/db-entities
+                          {:team/uuid team-uuid
+                           :entities (map (partial access-request-model/read-api (:db req))
+                                          (access-request-model/find-by-team (:db req)
+                                                                             team))
+                           :entity-type :access-request}]))))
 
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
 (defmethod ws-handler :frontend/subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
   (try+
-   (check-document-access (-> ?data :document-id) req :admin)
+   (check-document-access (-> ?data :document-id) req :read)
    (catch :status t
      (?reply-fn [:subscribe/error])
      (throw+)))
@@ -264,9 +291,11 @@
                                client-id
                                (-> req :ring-req :auth :cust)
                                :requested-color (:requested-color ?data)
-                               :requested-remainder (:requested-remainder ?data))]
+                               :requested-remainder (:requested-remainder ?data))
+        doc (doc-model/find-by-id (:db req) document-id)]
 
-    (?reply-fn [:frontend/frontend-id-state {:frontend-id-state (get-in subs [document-id client-id :frontend-id-seed])}])
+    (?reply-fn [:frontend/frontend-id-state {:frontend-id-state (get-in subs [document-id client-id :frontend-id-seed])
+                                             :max-document-scope (auth/max-document-scope (:db req) doc (get-in req [:ring-req :auth]))}])
 
     (doseq [[uid _] (get @document-subs document-id)]
       (send-fn uid [:frontend/subscriber-joined (merge {:client-id client-id}
@@ -309,28 +338,29 @@
     ;; These are interesting b/c they're read-only. And by "interesting", I mean "bad"
     ;; We should find a way to let the frontend edit things
     ;; TODO: only send this stuff when it's needed
-    (log/infof "sending permission-data for %s to %s" document-id client-id)
-    (send-fn client-id [:frontend/db-entities
-                        {:document/id document-id
-                         :entities (map (partial permission-model/read-api (:db req))
-                                        (filter :permission/cust-ref
-                                                (permission-model/find-by-document (:db req)
-                                                                                   {:db/id document-id})))
-                         :entity-type :permission}])
+    (when (has-document-access? document-id req :admin)
+      (log/infof "sending permission-data for %s to %s" document-id client-id)
+      (send-fn client-id [:frontend/db-entities
+                          {:document/id document-id
+                           :entities (map (partial permission-model/read-api (:db req))
+                                          (filter :permission/cust-ref
+                                                  (permission-model/find-by-document (:db req)
+                                                                                     {:db/id document-id})))
+                           :entity-type :permission}])
 
-    (send-fn client-id [:frontend/db-entities
-                        {:document/id document-id
-                         :entities (map access-grant-model/read-api
-                                        (access-grant-model/find-by-document (:db req)
-                                                                             {:db/id document-id}))
-                         :entity-type :access-grant}])
-
-    (send-fn client-id [:frontend/db-entities
-                        {:document/id document-id
-                         :entities (map (partial access-request-model/read-api (:db req))
-                                        (access-request-model/find-by-document (:db req)
+      (send-fn client-id [:frontend/db-entities
+                          {:document/id document-id
+                           :entities (map access-grant-model/read-api
+                                          (access-grant-model/find-by-document (:db req)
                                                                                {:db/id document-id}))
-                         :entity-type :access-request}])))
+                           :entity-type :access-grant}])
+
+      (send-fn client-id [:frontend/db-entities
+                          {:document/id document-id
+                           :entities (map (partial access-request-model/read-api (:db req))
+                                          (access-request-model/find-by-document (:db req)
+                                                                                 {:db/id document-id}))
+                           :entity-type :access-request}]))))
 
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
@@ -373,57 +403,43 @@
                          :datom datom
                          :datoms datoms}))))
 
-(defmethod ws-handler :frontend/transaction [{:keys [client-id ?data] :as req}]
-  (check-document-access (-> ?data :document/id) req :admin)
-  (def mydata ?data)
+(defmethod ws-handler :frontend/transaction [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [document-id (-> ?data :document/id)
+        access-scope (if (has-document-access? document-id req :admin)
+                       :admin
+                       ;; will throw, so we can't get any further
+                       (when (check-document-access document-id req :read)
+                         :read))
+        _ (assert (keyword? access-scope)) ;; just in case
         datoms (->> ?data
                  :datoms
                  (remove (comp nil? :v))
                  ;; Don't let people sneak layers into other documents
                  (reduce (fn [acc d]
-                           (cond (= "document" (name (:a d)))
-                                 (conj acc
-                                       (assoc d :v document-id)
-                                       (assoc d :a :document/id :v document-id))
-                                 (= :document/id (:a d))
-                                 (conj acc
-                                       (assoc d :v document-id)
-                                       (assoc d :a (determine-type d (:datoms ?data)) :v document-id))
-                                 :else (conj acc d)))
+                           (if (= "document" (name (:a d)))
+                             (conj acc
+                                   (assoc d :v document-id))
+                             (conj acc d)))
                          []))
-        _ (def mydatoms datoms)
-        cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
-    (log/infof "transacting %s datoms on %s for %s" (count datoms) document-id client-id)
+        cust-uuid (-> req :ring-req :auth :cust :cust/uuid)
+        ;; note that these aren't all of the rejected datoms, just the ones not on the whitelist
+        rejects (remove (comp (partial datomic2/whitelisted? access-scope)
+                              pcd/datom->transaction)
+                        datoms)]
+    (when ?reply-fn
+      (?reply-fn {:rejected-datoms rejects}))
+    (log/infof "transacting %s datoms (minus %s rejects) on %s for %s" (count datoms) (count rejects) document-id client-id)
     (datomic2/transact! datoms
                         {:document-id document-id
+                         :access-scope access-scope
                          :client-id client-id
                          :cust-uuid cust-uuid
-                         :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
-                         :timestamp (:receive-instant req)})))
-
-(defmethod ws-handler :team/transaction [{:keys [client-id ?data] :as req}]
-  (check-team-access (-> ?data :team/uuid) req :admin)
-  (let [team (team-model/find-by-uuid (:db req) (:team/uuid ?data))
-        datoms (->> ?data
-                 :datoms
-                 (remove (comp nil? :v))
-                 ;; Don't let people sneak into other teams
-                 (map (fn [d]
-                        (if (= "team" (name (:a d)))
-                          (assoc d :v (:db/id team))
-                          d))))
-        cust-uuid (-> req :ring-req :auth :cust :cust/uuid)]
-    (log/infof "transacting %s datoms on %s for %s" (count datoms) (:team/uuid team) client-id)
-    (datomic2/transact! datoms
-                        {:team-id (:db/id team)
-                         :client-id client-id
-                         :cust-uuid cust-uuid
+                         :frontend-id-seed (get-in @document-subs [document-id client-id :frontend-id-seed])
                          :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
                          :timestamp (:receive-instant req)})))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
-  (check-document-access (-> ?data :document/id) req :admin)
+  (check-document-access (-> ?data :document/id) req :read)
   (let [document-id (-> ?data :document/id)
         mouse-position (-> ?data :mouse-position)
         tool (-> ?data :tool)
@@ -440,7 +456,7 @@
 
 (defmethod ws-handler :frontend/update-self [{:keys [client-id ?data] :as req}]
   ;; TODO: update subscribers in a different way
-  (check-document-access (-> ?data :document/id) req :admin)
+  (check-document-access (-> ?data :document/id) req :read)
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [doc-id (-> ?data :document/id)]
       (log/infof "updating self for %s" (:cust/uuid cust))
@@ -498,6 +514,7 @@
   (check-document-access (-> ?data :document/id) req :owner)
   (let [doc-id (-> ?data :document/id)
         cust (-> req :ring-req :auth :cust)
+        ;; XXX: only if they try to change it to private
         _ (assert (contains? (:flags cust) :flags/private-docs))
         ;; letting datomic's schema do validation for us, might be a bad idea?
         setting (-> ?data :setting)
@@ -594,20 +611,26 @@
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 (defmethod ws-handler :document/transaction-ids [{:keys [client-id ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document/id) req :admin)
+  (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))]
     (let [tx-ids (replay/get-document-tx-ids (:db req) doc)]
       (log/infof "sending %s tx-ids for %s to %s" (count tx-ids) (:document/id ?data) client-id)
       (?reply-fn {:tx-ids tx-ids}))))
 
 (defmethod ws-handler :document/fetch-transaction [{:keys [client-id ?data ?reply-fn] :as req}]
-  (check-document-access (-> ?data :document/id) req :admin)
+  (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))
+        max-scope (auth/max-document-scope (:db req) doc (get-in req [:ring-req :auth]))
+        data-key (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
+                       :admin-data
+                       (auth/contains-scope? auth/scope-heirarchy max-scope :read)
+                       :read-only-data)
         tx-id (:tx-id ?data)]
     (if (= (:db/id doc) (:db/id (:transaction/document (d/entity (:db req) tx-id))))
       (let [transaction (->> tx-id
                           (replay/reproduce-transaction (:db req))
-                          (datomic-common/frontend-document-transaction))]
+                          (datomic-common/frontend-document-transaction)
+                          (#(get % data-key)))]
         (log/infof "sending %s txes from %s for %s to %s" (count (:tx-data transaction)) tx-id (:document/id ?data) client-id)
         (?reply-fn {:document/transaction transaction}))
       (throw+ {:status 403
@@ -758,6 +781,9 @@
                                                        {:user-id-fn #'user-id-fn})]
     (reset! sente-state fns)
     (setup-ws-handlers fns)
+    (track-document-subs)
+    (track-clients)
+    (track-team-subs)
     fns))
 
 (defn shutdown [& {:keys [sleep-ms]

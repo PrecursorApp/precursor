@@ -1,8 +1,10 @@
 (ns frontend.db
-  (:require [datascript :as d]
+  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close! put!]]
+            [datascript :as d]
             [frontend.datascript :as ds]
             [frontend.sente :as sente]
-            [frontend.utils :as utils :include-macros true]))
+            [frontend.utils :as utils :include-macros true]
+            [taoensso.sente]))
 
 (def schema {:layer/child {:db/cardinality :db.cardinality/many}
              :layer/points-to {:db/cardinality :db.cardinality/many
@@ -17,7 +19,7 @@
   (reset! db-atom @(make-initial-db initial-entities))
   db-atom)
 
-(defn setup-listener! [db key cast! sente-event annotations undo-state sente-state]
+(defn setup-listener! [db key comms sente-event annotations undo-state sente-state]
   (d/listen!
    db
    key
@@ -25,7 +27,7 @@
      ;; TODO: figure out why I can send tx-report through controls ch
      ;; (cast! :db-updated {:tx-report tx-report})
      (when (first (filter #(= :server/timestamp (:a %)) (:tx-data tx-report)))
-       (cast! :chat-db-updated []))
+       (put! (:controls comms) [:chat-db-updated []]))
      (when (-> tx-report :tx-meta :can-undo?)
        (swap! undo-state update-in [:transactions] conj tx-report)
        (when-not (-> tx-report :tx-meta :undo)
@@ -35,7 +37,17 @@
        (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
          (doseq [datom-group (partition-all 1000 datoms)]
            (sente/send-msg sente-state [sente-event (merge {:datoms datom-group}
-                                                           annotations)])))))))
+                                                           annotations)]
+                           30000
+                           (fn [reply]
+                             (if (taoensso.sente/cb-success? reply)
+                               (when-let [rejects (seq (:rejected-datoms reply))]
+                                 (put! (:errors comms) [:datascript/rejected-datoms {:rejects rejects
+                                                                                     :sente-event sente-event
+                                                                                     :sent-datoms datom-group}]))
+                               (put! (:errors comms) [:datascript/sync-tx-error {:reason reply
+                                                                                 :sente-event sente-event
+                                                                                 :sent-datoms datom-group}]))))))))))
 
 (defn empty-db? [db]
   (empty? (d/datoms db :eavt)))

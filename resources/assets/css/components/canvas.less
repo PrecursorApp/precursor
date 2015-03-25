@@ -169,6 +169,15 @@
       stroke-width: 2;
       stroke: @color_select;
     }
+    &.unsaved {
+      stroke-dasharray: 5,5;
+      &.selected {
+        opacity: .5;
+      }
+      &:not(.selected) {
+        stroke: @gray_dark;
+      }
+    }
   }
 }
 
@@ -194,6 +203,14 @@
     }
     &.selected {
       cursor: move;
+    }
+  }
+  &.unsaved {
+    &.selected {
+      opacity: .5;
+    }
+    &:not(.selected) {
+      fill: @gray_dark;
     }
   }
 }
