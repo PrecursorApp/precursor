@@ -26,7 +26,10 @@
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
             [taoensso.sente :as sente]
-            [taoensso.sente.server-adapters.immutant :refer (sente-web-server-adapter)])
+            [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
+            ;; waiting on fix for this bug: https://issues.jboss.org/browse/IMMUTANT-543
+            ;;[taoensso.sente.server-adapters.immutant :refer (sente-web-server-adapter)]
+            )
   (:import java.util.UUID))
 
 ;; TODO: find a way to restart sente
