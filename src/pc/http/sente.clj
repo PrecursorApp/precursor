@@ -65,6 +65,24 @@
 
 (defonce client-stats (atom {}))
 
+(defn track-document-subs []
+  (add-watch document-subs :statsd (fn [_ _ old-state new-state]
+                                     (when (not= (count old-state)
+                                                 (count new-state))
+                                       (statsd/gauge "document-subs" (count new-state))))))
+
+(defn track-clients []
+  (add-watch client-stats :statsd (fn [_ _ old-state new-state]
+                                    (when (not= (count old-state)
+                                                (count new-state))
+                                      (statsd/gauge "connected-clients" (count new-state))))))
+
+(defn track-team-subs []
+  (add-watch team-subs :statsd (fn [_ _ old-state new-state]
+                                 (when (not= (count old-state)
+                                             (count new-state))
+                                   (statsd/gauge "team-subs" (count new-state))))))
+
 (defn notify-document-transaction [db {:keys [read-only-data admin-data]}]
   (let [doc (:transaction/document read-only-data)
         doc-id (:db/id doc)]
@@ -748,6 +766,9 @@
                                                        {:user-id-fn #'user-id-fn})]
     (reset! sente-state fns)
     (setup-ws-handlers fns)
+    (track-document-subs)
+    (track-clients)
+    (track-team-subs)
     fns))
 
 (defn shutdown [& {:keys [sleep-ms]
