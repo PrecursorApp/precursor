@@ -148,3 +148,6 @@
 
 (defn notified-read-only-path [doc-id]
   [:doc-settings (str doc-id) :notified-read-only])
+
+(defn doc-tx-rejected-count-path [doc-id]
+  [:doc-settings (str doc-id) :tx-rejected-count])

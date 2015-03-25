@@ -98,11 +98,12 @@
 (defmethod error :datascript/rejected-datoms
   [container message {:keys [rejects sent-datoms sente-event]} state]
   (if (and (= (count rejects) (count sent-datoms))
-           (= :read (:max-document-scope state))
-           (empty? (get-in state (state/notified-read-only-path (:document/id state)))))
+           (= :read (:max-document-scope state)))
     (-> state
       (assoc-in (state/notified-read-only-path (:document/id state)) true)
-      (overlay/replace-overlay :sharing))
+      (update-in (state/doc-tx-rejected-count-path (:document/id state)) (fnil inc 0))
+      (cond-> (nil? (get-in state (state/notified-read-only-path (:document/id state))))
+        (overlay/replace-overlay :sharing)))
     state))
 
 (defmethod post-error! :datascript/sync-tx-error

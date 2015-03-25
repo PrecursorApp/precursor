@@ -105,7 +105,8 @@
       (let [cast! (om/get-shared owner :cast!)
             new-here? (empty? (:cust app))
             chat-opened? (get-in app state/chat-opened-path)
-            document (d/entity @(om/get-shared owner :db) (:document/id app))]
+            document (d/entity @(om/get-shared owner :db) (:document/id app))
+            rejected-tx-count (get-in app (state/doc-tx-rejected-count-path (:document/id app)))]
         (html
          [:div.hud-tray.hud-item.width-canvas
           (when new-here?
@@ -123,7 +124,11 @@
                [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
           [:div.doc-stats
            (om/build mouse-stats {} {:react-key "mouse-stats"})
-           [:div.privacy-stats {:on-click #(cast! :privacy-stats-clicked)}
+           [:div.privacy-stats {:on-click #(cast! :privacy-stats-clicked)
+                                :class (when (pos? rejected-tx-count)
+                                         (if (= 0 (mod rejected-tx-count 2))
+                                           "rejected-txes-a"
+                                           "rejected-txes-b"))}
             (case (:document/privacy document)
               :document.privacy/public (common/icon :public)
               :document.privacy/read-only (common/icon :read-only)
@@ -317,7 +322,8 @@
                                              state/info-button-learned-path
                                              [:document/id]
                                              [:cust]
-                                             [:max-document-scope]])
+                                             [:max-document-scope]
+                                             (state/doc-tx-rejected-count-path (:document/id app))])
                   {:react-key "tray"})
 
         ]))))

@@ -110,7 +110,8 @@
                                               [:mouse-type]
                                               [:cust-data]
                                               [:team]
-                                              [:max-document-scope]])
+                                              [:max-document-scope]
+                                              (state/doc-tx-rejected-count-path (:document/id app))])
                       {:react-key "hud"})])
           (html [:div#app]))))))
 
