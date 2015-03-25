@@ -37,7 +37,6 @@
                   :required "true"
                   :data-adaptive ""
                   :onMouseDown (fn [e]
-                                 (js/console.log (.-target e))
                                  (.focus (.-target e))
                                  (goog.dom.selection/setStart (.-target e) 0)
                                  (goog.dom.selection/setEnd (.-target e) 10000)

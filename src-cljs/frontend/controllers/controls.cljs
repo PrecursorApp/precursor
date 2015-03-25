@@ -884,7 +884,8 @@
                         (doseq [layer-group (partition-all 100 layers)]
                           (d/transact! db (if (= :read (:max-document-scope current-state))
                                             (map #(assoc % :unsaved true) layer-group)
-                                            layer-group) {:can-undo? true})))
+                                            layer-group)
+                                       {:can-undo? true})))
                       (maybe-notify-subscribers! current-state x y))
 
      :else nil)))
