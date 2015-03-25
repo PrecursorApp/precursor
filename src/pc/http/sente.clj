@@ -110,14 +110,15 @@
 
 ;; TODO: make sure to kick the user out of subscribed if he loses access
 (defn check-subscribed [doc-id req scope]
-  ;; TODO: we're making a simplifying assumption that subscribed == :admin
-  ;;       That needs to be fixed at some point
-  (when (= scope :admin)
+  ;; TODO: we're making a simplifying assumption that subscribed at least
+  ;;       gives you read access
+  (when (= scope :read)
     (get-in @document-subs [doc-id (-> req :client-id)])))
 
 (defn check-document-access [doc-id req scope]
   {:pre [doc-id]}
-  (check-document-access-from-auth doc-id req scope))
+  (or (check-subscribed doc-id req scope)
+      (check-document-access-from-auth doc-id req scope)))
 
 (defn check-team-subscribed [team-uuid req scope]
   (when (= scope :admin)
