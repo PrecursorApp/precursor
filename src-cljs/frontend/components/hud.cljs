@@ -125,9 +125,9 @@
            (om/build mouse-stats {} {:react-key "mouse-stats"})
            [:div.privacy-stats {:on-click #(cast! :privacy-stats-clicked)}
             (case (:document/privacy document)
-              :document.privacy/public (common/icon :globe)
-              :document.privacy/read-only (common/icon :pencil)
-              :document.privacy/private (common/icon :lock)
+              :document.privacy/public (common/icon :public)
+              :document.privacy/read-only (common/icon :read-only)
+              :document.privacy/private (common/icon :private)
               nil)]]])))))
 
 (defn chat [app owner]

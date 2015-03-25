@@ -444,7 +444,7 @@
                                     :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
                                     :for "privacy-public"
                                     :role "button"}
-              (common/icon :globe)
+              (common/icon :public)
               [:span "Public"]
               (when (= :not-creator cant-edit-reason)
                 [:small "(privacy change requires owner)"])]
@@ -463,7 +463,7 @@
                                     :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
                                     :for "privacy-read-only"
                                     :role "button"}
-              (common/icon :pencil)
+              (common/icon :read-only)
               [:span "Read-only"]
               (when (= :not-creator cant-edit-reason)
                 [:small "(privacy change requires owner)"])]
@@ -482,7 +482,7 @@
                                     :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
                                     :for "privacy-private"
                                     :role "button"}
-              (common/icon :lock)
+              (common/icon :private)
               [:span "Private"]
               (when (= :not-creator cant-edit-reason)
                 [:small "(privacy change requires owner)"])]])])))))
