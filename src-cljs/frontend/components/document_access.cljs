@@ -49,7 +49,7 @@
                 [:span
                  "Okay, we notified the owner of this document about your request. "
                  "While you wait for a response, try prototyping in "]
-                [:a {:href "/new" :target "_self"} "your own document"]
+                [:a {:href "/new"} "your own document"]
                 [:span "."]]
 
                (list
