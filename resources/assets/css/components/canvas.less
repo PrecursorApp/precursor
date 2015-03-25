@@ -171,6 +171,12 @@
     }
     &.unsaved {
       stroke-dasharray: 5,5;
+      &.selected {
+        opacity: .5;
+      }
+      &:not(.selected) {
+        stroke: @gray_dark;
+      }
     }
   }
 }
