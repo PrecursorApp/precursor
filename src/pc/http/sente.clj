@@ -97,17 +97,6 @@
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
     (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth) scope)))
 
-(defn check-document-access-from-auth [doc-id req scope]
-  (if (has-document-access? doc-id req scope)
-    true
-    (if (auth/logged-in? (:ring-req req))
-      (throw+ {:status 403
-               :error-msg "This document is private. Please request access."
-               :error-key :document-requires-invite})
-      (throw+ {:status 401
-               :error-msg "This document is private. Please log in to access it."
-               :error-key :document-requires-login}))))
-
 ;; TODO: make sure to kick the user out of subscribed if he loses access
 (defn check-subscribed [doc-id req scope]
   ;; TODO: we're making a simplifying assumption that subscribed at least
@@ -117,28 +106,37 @@
 
 (defn check-document-access [doc-id req scope]
   {:pre [doc-id]}
-  (or (check-subscribed doc-id req scope)
-      (check-document-access-from-auth doc-id req scope)))
+  (if (or (check-subscribed doc-id req scope)
+          (has-document-access? doc-id req scope))
+    true
+    (if (auth/logged-in? (:ring-req req))
+      (throw+ {:status 403
+               :error-msg "This document is private. Please request access."
+               :error-key :document-requires-invite})
+      (throw+ {:status 401
+               :error-msg "This document is private. Please log in to access it."
+               :error-key :document-requires-login}))))
 
 (defn check-team-subscribed [team-uuid req scope]
   (when (= scope :admin)
     (get-in @team-subs [team-uuid (-> req :client-id)])))
 
-(defn check-team-access-from-auth [team-uuid req scope]
+(defn has-team-permission? [team-uuid req scope]
   (let [team (team-model/find-by-uuid (:db req) team-uuid)]
-    (when-not (auth/has-team-permission? (:db req) team (-> req :ring-req :auth) scope)
-      (if (auth/logged-in? (:ring-req req))
-        (throw+ {:status 403
-                 :error-msg "This team is private. Please request access."
-                 :error-key :team-requires-invite})
-        (throw+ {:status 401
-                 :error-msg "This team is private. Please log in to access it."
-                 :error-key :team-requires-login})))))
+    (auth/has-team-permission? (:db req) team (-> req :ring-req :auth) scope)))
 
 (defn check-team-access [team-uuid req scope]
   {:pre [team-uuid]}
-  (or (check-team-subscribed team-uuid req scope)
-      (check-team-access-from-auth team-uuid req scope)))
+  (if (or (check-team-subscribed team-uuid req scope)
+          (has-team-permission? team-uuid req scope))
+    true
+    (if (auth/logged-in? (:ring-req req))
+      (throw+ {:status 403
+               :error-msg "This team is private. Please request access."
+               :error-key :team-requires-invite})
+      (throw+ {:status 401
+               :error-msg "This team is private. Please log in to access it."
+               :error-key :team-requires-login}))))
 
 (defn choose-frontend-id-seed [db document-id subs requested-remainder]
   (let [available-remainders (apply disj web-peer/remainders (map (comp :remainder :frontend-id-seed)
@@ -234,30 +232,30 @@
   (let [team-uuid (-> ?data :team/uuid)
         team (team-model/find-by-uuid (:db req) team-uuid)
         send-fn (:send-fn @sente-state)]
-    (check-team-access team-uuid req :admin)
-    (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
+    (when (has-team-permission? team-uuid req :admin)
+      (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
 
-    (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
-    (send-fn client-id [:team/db-entities
-                        {:team/uuid team-uuid
-                         :entities (map (partial permission-model/read-api (:db req))
-                                        (filter :permission/cust-ref
-                                                (permission-model/find-by-team (:db req)
-                                                                               team)))
-                         :entity-type :permission}])
-    (send-fn client-id [:team/db-entities
-                        {:team/uuid team-uuid
-                         :entities (map access-grant-model/read-api
-                                        (access-grant-model/find-by-team (:db req)
-                                                                         team))
-                         :entity-type :access-grant}])
-
-    (send-fn client-id [:team/db-entities
-                        {:team/uuid team-uuid
-                         :entities (map (partial access-request-model/read-api (:db req))
-                                        (access-request-model/find-by-team (:db req)
+      (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
+      (send-fn client-id [:team/db-entities
+                          {:team/uuid team-uuid
+                           :entities (map (partial permission-model/read-api (:db req))
+                                          (filter :permission/cust-ref
+                                                  (permission-model/find-by-team (:db req)
+                                                                                 team)))
+                           :entity-type :permission}])
+      (send-fn client-id [:team/db-entities
+                          {:team/uuid team-uuid
+                           :entities (map access-grant-model/read-api
+                                          (access-grant-model/find-by-team (:db req)
                                                                            team))
-                         :entity-type :access-request}])))
+                           :entity-type :access-grant}])
+
+      (send-fn client-id [:team/db-entities
+                          {:team/uuid team-uuid
+                           :entities (map (partial access-request-model/read-api (:db req))
+                                          (access-request-model/find-by-team (:db req)
+                                                                             team))
+                           :entity-type :access-request}]))))
 
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
