@@ -26,6 +26,26 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
+(defn share-url-input [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       [:div.make
+        [:form.menu-invite-form.make
+         [:input {:type "text"
+                  :required "true"
+                  :data-adaptive ""
+                  :onMouseDown (fn [e]
+                                 (js/console.log (.-target e))
+                                 (.focus (.-target e))
+                                 (goog.dom.selection/setStart (.-target e) 0)
+                                 (goog.dom.selection/setEnd (.-target e) 10000)
+                                 (utils/stop-event e))
+                  :value (urls/absolute-doc-url (:document/id app))}]
+         [:label
+          {:data-placeholder "Copy the url to share"}]]]))))
+
 (defn auth-link [app owner {:keys [source] :as opts}]
   (reify
     om/IDisplayName (display-name [_] "Overlay Auth Link")
@@ -240,22 +260,12 @@
          [:div.content
           [:h2.make
            "This document is read-only."]
+
           [:p.make
            "Anyone with the url can see the doc and chat, but can't edit the canvas. "
            "Share the url to show off your work."]
-          [:form.menu-invite-form.make
-           [:input {:type "text"
-                    :required "true"
-                    :data-adaptive ""
-                    :onMouseDown (fn [e]
-                                   (js/console.log (.-target e))
-                                   (.focus (.-target e))
-                                   (goog.dom.selection/setStart (.-target e) 0)
-                                   (goog.dom.selection/setEnd (.-target e) 10000)
-                                   (utils/stop-event e))
-                    :value (urls/absolute-doc-url (:document/id app))}]
-           [:label
-            {:data-placeholder "Copy the url to share"}]]
+          (om/build share-url-input app)
+
           [:p.make
            "Add your teammate's email to grant them full access."]
           [:form.menu-invite-form.make
@@ -360,8 +370,12 @@
 
              (list
                [:p.make
-                "It's visible to anyone with the url.
-                Email a friend to invite them to collaborate."]
+                "Anyone with the url can view and edit."]
+
+               (om/build share-url-input app)
+
+               [:p.make
+                "Email a friend to invite them to collaborate."]
                [:form.menu-invite-form.make
                 {:on-submit #(do (cast! :invite-submitted)
                                false)
