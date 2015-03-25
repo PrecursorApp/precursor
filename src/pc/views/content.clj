@@ -41,7 +41,7 @@
 (defn layout [view-data & content]
   [:html
    [:head
-    [:title "Precursor—fast prototyping web app, makes collaboration easy."]
+    [:title "Precursor&#8212;fast prototyping web app, makes collaboration easy."]
     [:meta {:charset    "utf-8"}]
     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
 
