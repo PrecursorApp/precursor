@@ -42,8 +42,7 @@
                                  (goog.dom.selection/setEnd (.-target e) 10000)
                                  (utils/stop-event e))
                   :value (urls/absolute-doc-url (:document/id app))}]
-         [:label
-          {:data-placeholder "Copy the url to share"}]]]))))
+         [:label {:data-placeholder "Copy the url to share"}]]]))))
 
 (defn auth-link [app owner {:keys [source] :as opts}]
   (reify
