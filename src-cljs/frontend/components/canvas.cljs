@@ -1023,10 +1023,9 @@
     (render [_]
       (let [right-click-learned? (get-in app state/right-click-learned-path)]
         (html
-         [:div.canvas
-          {:onContextMenu (fn [e]
-                            (.preventDefault e)
-                            (.stopPropagation e))}
+         [:div.canvas {:onContextMenu (fn [e]
+                                        (.preventDefault e)
+                                        (.stopPropagation e))}
           [:div.canvas-background]
           (om/build svg-canvas app)
           (when (get-in app [:menu :open?])

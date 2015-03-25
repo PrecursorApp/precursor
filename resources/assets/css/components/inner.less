@@ -33,9 +33,13 @@
     }
   }
   &.loading {
-    .canvas {
-      pointer-events: none
+    cursor: wait;
+    .canvas-frame {
+      cursor: wait;
     }
-    cursor: wait
+    .shape-layer,
+    .text-layer {
+      pointer-events: none;
+    }
   }
 }

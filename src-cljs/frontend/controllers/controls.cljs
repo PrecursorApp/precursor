@@ -736,31 +736,34 @@
 
 (defmethod control-event :mouse-depressed
   [browser-state message [x y {:keys [button type ctrl? shift?]}] state]
-  (let [intents (mouse-depressed-intents state button ctrl? shift?)
-        new-state (-> state
-                    (update-mouse x y)
-                    (assoc-in [:mouse-down] true)
-                    (assoc-in [:mouse-type] (if (= type "mousedown") :mouse :touch)))]
-    (reduce (fn [s intent]
-              (case intent
-                :finish-text-layer (handle-text-layer-finished s)
-                :open-menu (handle-menu-opened s)
-                :start-drawing (handle-drawing-started s x y)
-                :submit-layer-properties (handle-layer-properties-submitted s)
-                s))
-            new-state intents)))
+  (if (empty? (:frontend-id-state state))
+    state
+    (let [intents (mouse-depressed-intents state button ctrl? shift?)
+          new-state (-> state
+                      (update-mouse x y)
+                      (assoc-in [:mouse-down] true)
+                      (assoc-in [:mouse-type] (if (= type "mousedown") :mouse :touch)))]
+      (reduce (fn [s intent]
+                (case intent
+                  :finish-text-layer (handle-text-layer-finished s)
+                  :open-menu (handle-menu-opened s)
+                  :start-drawing (handle-drawing-started s x y)
+                  :submit-layer-properties (handle-layer-properties-submitted s)
+                  s))
+              new-state intents))))
 
 (defmethod post-control-event! :mouse-depressed
   [browser-state message [x y {:keys [button ctrl? shift?]}] previous-state current-state]
-  ;; use previous state so that we're consistent with the control-event
-  (let [intents (mouse-depressed-intents previous-state button ctrl? shift?)]
-    (doseq [intent intents]
-      (case intent
-        :finish-text-layer (handle-text-layer-finished-after current-state)
-        :open-menu (handle-menu-opened-after current-state previous-state)
-        :start-drawing nil
-        :submit-layer-properties (handle-layer-properties-submitted-after current-state)
-        nil))))
+  (when-not (empty? (:frontend-id-state previous-state))
+    ;; use previous state so that we're consistent with the control-event
+    (let [intents (mouse-depressed-intents previous-state button ctrl? shift?)]
+      (doseq [intent intents]
+        (case intent
+          :finish-text-layer (handle-text-layer-finished-after current-state)
+          :open-menu (handle-menu-opened-after current-state previous-state)
+          :start-drawing nil
+          :submit-layer-properties (handle-layer-properties-submitted-after current-state)
+          nil)))))
 
 (defn handle-relation-finished [state dest x y]
   (let [origin (get-in state [:drawing :relation :layer])]
