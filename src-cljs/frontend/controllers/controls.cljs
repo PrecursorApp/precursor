@@ -19,6 +19,7 @@
             [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
             [frontend.overlay :as overlay]
+            [frontend.replay :as replay]
             [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.settings :as settings]
@@ -1163,15 +1164,13 @@
 (defmethod post-handle-cmd-chat "replay"
   [state cmd body]
   (@frontend.careful/om-setup-debug)
+
   (let [[_ delay-ms sleep-ms] (re-find #"/replay (\d+)s*(\d*)" body)]
-    (js/setTimeout #(sente/send-msg (:sente state) [:frontend/replay-transactions
-                                                    {:document/id (:document/id state)
-                                                     :sleep-ms (or (when (seq sleep-ms)
-                                                                     (js/parseInt sleep-ms))
-                                                                   250)}])
-                   (or (when (seq delay-ms)
-                         (js/parseInt delay-ms))
-                       2000)))
+    (replay/replay state
+                   :sleep-ms (or (when (seq sleep-ms) (js/parseInt sleep-ms))
+                                 150)
+                   :delay-ms (or (when (seq delay-ms) (js/parseInt delay-ms))
+                                 0)))
   ::stop-save)
 
 (defmethod post-control-event! :chat-submitted
