@@ -1,5 +1,6 @@
 (ns pc.svg
   (:require [clojure.string :as str]
+            [hiccup.core :as h]
             [pc.layers :as layers]))
 
 (defn points->path [points]
@@ -19,7 +20,7 @@
       :stroke        (if invert-colors? "#ccc" "black")
       :stroke-width   2
       :rx            (:layer/rx layer)
-      :ry            (:layer/ry layer)     }
+      :ry            (:layer/ry layer)}
      layer-props)))
 
 (defn layer->svg-text [layer {:keys [invert-colors? layer-props]}]
@@ -27,7 +28,7 @@
           :y (:layer/start-y layer)
           :fill (if invert-colors? "#ccc" "black")
           :stroke-width 0
-          :font-family (:layer/font-family layer "Helvetica")
+          :font-family (h/h (:layer/font-family layer "Helvetica"))
           :font-size   (:layer/font-size layer 20)}
          layer-props))
 
@@ -42,7 +43,7 @@
    layer-props))
 
 (defn layer->svg-path [layer {:keys [invert-colors? layer-props]}]
-  (merge {:d (:layer/path layer)
+  (merge {:d (h/h (:layer/path layer))
           :stroke (if invert-colors? "#ccc" "black")
           :fill "none"
           :stroke-width 2}

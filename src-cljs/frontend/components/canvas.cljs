@@ -103,11 +103,21 @@
     (update-in svg-layer [:className] #(str % " layer-deleted"))
     svg-layer))
 
+(defn maybe-add-unsaved [svg-layer layer]
+  (if (:unsaved layer)
+    (update-in svg-layer [:className] #(str % " unsaved "))
+    svg-layer))
+
+(defn maybe-add-classes [svg-layer layer]
+  (-> svg-layer
+    (maybe-add-selected layer)
+    (maybe-add-deleted layer)
+    (maybe-add-unsaved layer)))
+
 (defmethod svg-element :layer.type/rect
   [layer]
   (-> (svg/layer->svg-rect layer)
-    (maybe-add-selected layer)
-    (maybe-add-deleted layer)
+    (maybe-add-classes layer)
     (clj->js)
     (dom/rect)))
 
@@ -115,8 +125,7 @@
   [layer]
   (let [text-props (svg/layer->svg-text layer)]
     (-> text-props
-      (maybe-add-selected layer)
-      (maybe-add-deleted layer)
+      (maybe-add-classes layer)
       (clj->js)
       (#(apply dom/text % (reduce (fn [tspans text]
                                     (conj tspans (dom/tspan
@@ -130,8 +139,7 @@
   (-> (svg/layer->svg-line layer)
     (merge layer)
     (update-in [:className] #(str % " shape-layer"))
-    (maybe-add-selected layer)
-    (maybe-add-deleted layer)
+    (maybe-add-classes layer)
     (clj->js)
     (dom/line)))
 
@@ -139,8 +147,7 @@
   [layer]
   (-> (merge (dissoc layer :points) (svg/layer->svg-path layer))
     (update-in [:className] #(str % " shape-layer"))
-    (maybe-add-selected layer)
-    (maybe-add-deleted layer)
+    (maybe-add-classes layer)
     (clj->js)
     (dom/path)))
 

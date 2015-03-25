@@ -35,3 +35,10 @@
 ;; TODO: handle more cases
 (defn owner? [db doc cust]
   (= (str (:document/creator doc)) (str (:cust/uuid cust))))
+
+(def scope-heirarchy [:read :admin :owner])
+(def scope-index {:read 0 :admin 1 :owner 2})
+
+(defn contains-scope? [heirarchy granted-scope requested-scope]
+  (contains? (set (take (inc (get scope-index granted-scope)) heirarchy))
+             requested-scope))

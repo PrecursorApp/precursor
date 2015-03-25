@@ -174,6 +174,7 @@
               :db.type/ref)
    (enum :document.privacy/public)
    (enum :document.privacy/private)
+   (enum :document.privacy/read-only)
 
    (attribute :document/chat-bot
               :db.type/ref)

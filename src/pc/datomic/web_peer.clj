@@ -17,6 +17,9 @@
                       ;; migrate everything down.
                       (UUID. namespace-part Long/MAX_VALUE))))
 
+(defn taken-id? [db namespace-part client-part]
+  (first (d/datoms db :avet :frontend/id (UUID. namespace-part client-part))))
+
 (defn namespace-part [frontend-id]
   (.getMostSignificantBits frontend-id))
 

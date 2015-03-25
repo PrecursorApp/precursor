@@ -118,8 +118,7 @@
     (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
     (db/setup-listener! (:db current-state)
                         (:db-listener-key current-state)
-                        (fn [message data & [transient?]]
-                          (put! (get-in current-state [:comms :controls]) [message data transient?]))
+                        (:comms current-state)
                         :frontend/transaction
                         {:document/id doc-id}
                         (:undo-state current-state)

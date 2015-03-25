@@ -71,8 +71,8 @@
 (defn cust-permission [db doc cust]
   (when cust
     (cond (and (:document/creator doc)
-               (crypto/eq? (str (:cust/uuid cust))
-                           (str (:document/creator doc))))
+               (= (:cust/uuid cust)
+                  (:document/creator doc)))
           :owner
 
           (contains? (permission-model/permits db doc cust) :permission.permits/admin)
@@ -111,10 +111,11 @@
 ;;       to have 1 type. Owner would automatically get the owner permission
 ;; TODO: this should return a :permission/permits type of thing
 (defn document-permission [db doc auth]
-  (or (cust-permission db doc (:cust auth))
+  (or (team-permission db (:document/team doc) (:cust auth))
+      (cust-permission db doc (:cust auth))
       ;; TODO: stop using access grant tokens as permissions
       ;;       Can remove once all of the tokens expire
-      (team-permission db (:document/team doc) (:cust auth))
+
       (access-grant-permission db doc (:access-grant auth))
       (permission-permission db doc (:permission auth))))
 
@@ -127,7 +128,16 @@
 ;; TODO: public and have permission are different things
 (defn has-document-permission? [db doc auth scope]
   (or (= :document.privacy/public (:document/privacy doc))
+      (and (= :document.privacy/read-only (:document/privacy doc))
+           (contains-scope? scope-heirarchy :read scope))
       (contains-scope? scope-heirarchy (document-permission db doc auth) scope)))
+
+(defn max-document-scope [db doc auth]
+  (loop [scopes (reverse scope-heirarchy)]
+    (when-let [scope (first scopes)]
+      (if (has-document-permission? db doc auth scope)
+        scope
+        (recur (next scopes))))))
 
 (defn has-team-permission? [db team auth scope]
   (contains-scope? scope-heirarchy (team-permission db team (:cust auth)) scope))

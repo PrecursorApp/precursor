@@ -78,10 +78,12 @@
   (assoc-in state [:team :recent-docs] docs))
 
 (defmethod api-event [:frontend/frontend-id-state :success]
-  [target message status {:keys [context frontend-id-state]} state]
+  [target message status {:keys [context frontend-id-state max-document-scope]} state]
   (if (= (:document/id state)
          (:document-id context))
-    (assoc state :frontend-id-state frontend-id-state)
+    (assoc state
+           :frontend-id-state frontend-id-state
+           :max-document-scope max-document-scope)
     (do
       (utils/mlog "document ids don't match")
       state)))

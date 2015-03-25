@@ -882,7 +882,10 @@
                                  (or (not (get-in previous-state [:drawing :moving?]))
                                      (some true? (map detectable-movement? original-layers layers))))
                         (doseq [layer-group (partition-all 100 layers)]
-                          (d/transact! db layer-group {:can-undo? true})))
+                          (d/transact! db (if (= :read (:max-document-scope current-state))
+                                            (map #(assoc % :unsaved true) layer-group)
+                                            layer-group)
+                                       {:can-undo? true})))
                       (maybe-notify-subscribers! current-state x y))
 
      :else nil)))
@@ -898,7 +901,10 @@
 
 (defn handle-text-layer-finished-after [current-state]
   (let [db (:db current-state)
-        layer (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))]
+        layer (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))
+        layer (if (= :read (:max-document-scope current-state))
+                (assoc layer :unsaved true)
+                layer)]
     (when (layer-model/detectable? layer)
       (d/transact! db [layer] {:can-undo? true}))
     (maybe-notify-subscribers! current-state nil nil)))
@@ -1185,8 +1191,6 @@
       (d/transact! db [(utils/remove-map-nils {:chat/body chat-body
                                                :chat/color color
                                                :cust/uuid (get-in current-state [:cust :cust/uuid])
-                                               ;; TODO: teach frontend to lookup cust/name from cust/uuid
-                                               :chat/cust-name (get-in current-state [:cust :cust/name])
                                                :db/id (get-in current-state [:chat :entity-id])
                                                :session/uuid (:sente-id previous-state)
                                                :chat/document (:document/id previous-state)
@@ -1422,7 +1426,11 @@
   (let [db (:db current-state)
         layers (mapv utils/remove-map-nils (get-in current-state [:clipboard :layers]))]
     (doseq [layer-group (partition-all 100 layers)]
-      (d/transact! db layer-group {:can-undo? true}))))
+      (d/transact! db
+                   (if (= :read (:max-document-scope current-state))
+                     (map #(assoc % :unsaved true) layer-group)
+                     layer-group)
+                   {:can-undo? true}))))
 
 (defmethod control-event :your-docs-opened
   [browser-state message _ state]
@@ -1611,3 +1619,8 @@
                                 #js [(.-scrollLeft body) (.-scrollTop body)]
                                 #js [(.-scrollLeft body) vh]
                                 375))))
+
+(defmethod control-event :privacy-stats-clicked
+  [browser-state message _ state]
+  (-> state
+    (overlay/add-overlay :sharing)))

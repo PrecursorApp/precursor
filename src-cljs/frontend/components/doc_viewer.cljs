@@ -51,11 +51,9 @@
            (for [doc bucket-docs]
              (html
               [:div.recent-doc.make
-               [:a.recent-doc-thumb
-                {:href (str "/document/" (:db/id doc))}
-                [:img
-                 {:src (str "/document/" (:db/id doc) ".svg")}]
-                [:img.loading-image]
+               [:a.recent-doc-thumb {:href (str "/document/" (:db/id doc))}
+                [:img {:src (str "/document/" (:db/id doc) ".svg")}]
+
                 [:i.loading-ellipses
                  [:i "."]
                  [:i "."]
