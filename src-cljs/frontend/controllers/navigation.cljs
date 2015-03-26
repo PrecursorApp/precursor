@@ -45,7 +45,11 @@
   (-> state
       (assoc :navigation-point navigation-point
              :navigation-data args)
-      (update-in [:page-count] inc)))
+      (update-in [:page-count] inc)
+      (utils/update-when-in [:replay-interrupt-chan] (fn [c]
+                                                       (when c
+                                                         (put! c :interrupt))
+                                                       nil))))
 
 (defmethod navigated-to :default
   [history-imp navigation-point args state]
@@ -96,7 +100,9 @@
                                   :last-undo nil})
                :db-listener-key (utils/uuid)
                :show-landing? false
-               :frontend-id-state {})
+               :frontend-id-state {}
+               :replay-interrupt-chan (when (get-in args [:query-params :replay])
+                                        (async/chan)))
         (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
@@ -116,7 +122,14 @@
       (when (not= prev-doc-id doc-id)
         (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}])))
     (if (get-in args [:query-params :replay])
-      (replay/replay-and-subscribe current-state :sleep-ms 25)
+      (utils/apply-map replay/replay-and-subscribe
+                       current-state
+                       (-> {:sleep-ms 25
+                            :interrupt-ch (:replay-interrupt-chan current-state)}
+                         (merge
+                          (select-keys (:query-params args)
+                                       [:delay-ms :sleep-ms :tx-count]))
+                         (utils/update-when-in [:tx-count] js/parseInt)))
       (sente/subscribe-to-document sente-state (:comms current-state) doc-id))
     ;; TODO: probably only need one listener key here, and can write a fn replace-listener
     (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
