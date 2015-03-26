@@ -41,7 +41,8 @@
                     (recur (next tx-ids))))))))
         (finally
           (async/close! replay-ch)
-          (async/close! interrupt-ch))))))
+          (when interrupt-ch
+            (async/close! interrupt-ch)))))))
 
 (defn replay-and-subscribe [state & {:keys [delay-ms sleep-ms tx-count] :as args}]
   (utils/go+
