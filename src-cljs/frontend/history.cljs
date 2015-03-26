@@ -1,6 +1,6 @@
 (ns frontend.history
   (:require [clojure.string :as string]
-            [frontend.utils :as utils :include-macros true]
+            [frontend.utils :as utils]
             [goog.events :as events]
             [goog.history.Html5History :as html5-history]
             [goog.window :as window]
@@ -28,6 +28,9 @@
 
     transformer))
 
+(defn current-token [history-imp]
+  (.-_current_token history-imp))
+
 (defn set-current-token!
   "Lets us keep track of the history state, so that we don't dispatch twice on the same URL"
   [history-imp & [token]]
@@ -35,8 +38,11 @@
 
 (defn setup-dispatcher! [history-imp]
   (events/listen history-imp goog.history.EventType.NAVIGATE
-                 #(do (set-current-token! history-imp)
-                      (sec/dispatch! (str "/" (.-token %))))))
+                 #(let [token-before (current-token history-imp)
+                        token-after (set-current-token! history-imp (.-token %))]
+                    (when-not (= (re-find #"^[^\?]+" token-before)
+                                 (re-find #"^[^\?]+" token-after))
+                      (sec/dispatch! (str "/" token-after))))))
 
 (defn bootstrap-dispatcher!
   "We need lots of control over when we start listening to navigation events because

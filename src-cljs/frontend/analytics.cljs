@@ -38,7 +38,8 @@
                           :text-layer-edited
                           :layer-ui-id-edited
                           :layer-ui-target-edited
-                          :subscriber-updated})
+                          :subscriber-updated
+                          :handle-camera-query-params})
 
 (defn track-control [event data state]
   (when-not (contains? controls-blacklist event)

@@ -3,8 +3,10 @@
             [clojure.string :as str]
             [datascript :as d]
             [frontend.async :refer [put!]]
+            [frontend.camera :as cameras]
             [frontend.db :as db]
             [frontend.overlay :as overlay]
+            [frontend.replay :as replay]
             [frontend.state :as state]
             [frontend.sente :as sente]
             [frontend.subscribers :as subs]
@@ -43,7 +45,11 @@
   (-> state
       (assoc :navigation-point navigation-point
              :navigation-data args)
-      (update-in [:page-count] inc)))
+      (update-in [:page-count] inc)
+      (utils/update-when-in [:replay-interrupt-chan] (fn [c]
+                                                       (when c
+                                                         (put! c :interrupt))
+                                                       nil))))
 
 (defmethod navigated-to :default
   [history-imp navigation-point args state]
@@ -94,7 +100,9 @@
                                   :last-undo nil})
                :db-listener-key (utils/uuid)
                :show-landing? false
-               :frontend-id-state {})
+               :frontend-id-state {}
+               :replay-interrupt-chan (when (get-in args [:query-params :replay])
+                                        (async/chan)))
         (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
@@ -107,13 +115,22 @@
                                     (db/reset-db! db initial-entities)))))))
 
 (defmethod post-navigated-to! :document
-  [history-imp navigation-point _ previous-state current-state]
+  [history-imp navigation-point args previous-state current-state]
   (let [sente-state (:sente current-state)
         doc-id (:document/id current-state)]
     (when-let [prev-doc-id (:document/id previous-state)]
       (when (not= prev-doc-id doc-id)
         (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}])))
-    (sente/subscribe-to-document sente-state (:comms current-state) doc-id)
+    (if (get-in args [:query-params :replay])
+      (utils/apply-map replay/replay-and-subscribe
+                       current-state
+                       (-> {:sleep-ms 25
+                            :interrupt-ch (:replay-interrupt-chan current-state)}
+                         (merge
+                          (select-keys (:query-params args)
+                                       [:delay-ms :sleep-ms :tx-count]))
+                         (utils/update-when-in [:tx-count] js/parseInt)))
+      (sente/subscribe-to-document sente-state (:comms current-state) doc-id))
     ;; TODO: probably only need one listener key here, and can write a fn replace-listener
     (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
     (db/setup-listener! (:db current-state)
@@ -123,7 +140,9 @@
                         {:document/id doc-id}
                         (:undo-state current-state)
                         sente-state)
-    (sente/update-server-offset sente-state)))
+    (sente/update-server-offset sente-state)
+    (put! (get-in current-state [:comms :controls]) [:handle-camera-query-params (select-keys (:query-params args)
+                                                                                              [:cx :cy :x :y :z])])))
 
 (defmethod navigated-to :new
   [history-imp navigation-point args state]

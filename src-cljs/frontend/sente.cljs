@@ -25,6 +25,13 @@
                      (apply (:send-fn sente-state) message rest)
                      (remove-watch ref watch-id)))))))
 
+(defn ch-send-msg
+  "Like send-msg, but takes a channel to put the reply onto."
+  [sente-state message timeout-ms channel]
+  (let [callback-fn #(put! channel %)]
+    (send-msg sente-state message timeout-ms callback-fn)
+    channel))
+
 (defn update-server-offset [sente-state]
   (let [start (goog/now)]
     (send-msg sente-state [:server/timestamp] 1000 (fn [reply]

@@ -610,17 +610,32 @@
         (access-request-model/deny-request request annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
-(defmethod ws-handler :frontend/replay-transactions [{:keys [client-id ?data ?reply-fn] :as req}]
+(defmethod ws-handler :document/transaction-ids [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))]
-    (let [txes (replay/get-document-transactions (:db req) doc)
-          scoped-data-key (if (has-document-access? (:document/id ?data) req :admin)
-                            :admin-data
-                            :read-only-data)]
-      (doseq [tx txes]
-        ((:send-fn @sente-state) client-id [:datomic/transaction (get (datomic-common/frontend-document-transaction tx)
-                                                                      scoped-data-key)])
-        (Thread/sleep (min 500 (get ?data :sleep-ms 250)))))))
+    (let [tx-ids (replay/get-document-tx-ids (:db req) doc)]
+      (log/infof "sending %s tx-ids for %s to %s" (count tx-ids) (:document/id ?data) client-id)
+      (?reply-fn {:tx-ids tx-ids}))))
+
+(defmethod ws-handler :document/fetch-transaction [{:keys [client-id ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document/id) req :read)
+  (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))
+        max-scope (auth/max-document-scope (:db req) doc (get-in req [:ring-req :auth]))
+        data-key (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
+                       :admin-data
+                       (auth/contains-scope? auth/scope-heirarchy max-scope :read)
+                       :read-only-data)
+        tx-id (:tx-id ?data)]
+    (if (= (:db/id doc) (:db/id (:transaction/document (d/entity (:db req) tx-id))))
+      (let [transaction (->> tx-id
+                          (replay/reproduce-transaction (:db req))
+                          (datomic-common/frontend-document-transaction)
+                          (#(get % data-key)))]
+        (log/infof "sending %s txes from %s for %s to %s" (count (:tx-data transaction)) tx-id (:document/id ?data) client-id)
+        (?reply-fn {:document/transaction transaction}))
+      (throw+ {:status 403
+               :error-msg "The document for the transaction doesn't match the requested document."
+               :error-key :invalid-transaction-id}))))
 
 (defmethod ws-handler :team/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
