@@ -1,9 +1,13 @@
 (ns pc.http.routes.api
   (:require [cemerick.url :as url]
+            [cheshire.core :as json]
+            [clojure.core.memoize :as memo]
             [clojure.string :as str]
             [clojure.tools.reader.edn :as edn]
+            [crypto.equality :as crypto]
             [defpage.core :as defpage :refer (defpage)]
             [pc.auth :as auth]
+            [pc.crm :as crm]
             [pc.datomic :as pcd]
             [pc.early-access]
             [pc.http.team :as team-http]
@@ -13,6 +17,7 @@
             [pc.models.flag :as flag-model]
             [pc.models.team :as team-model]
             [pc.profile :as profile]
+            [ring.middleware.anti-forgery :as csrf]
             [slingshot.slingshot :refer (try+ throw+)]))
 
 (defpage new [:post "/api/v1/document/new"] [req]
@@ -82,5 +87,17 @@
       {:status 200 :body (pr-str {:msg "Thanks!" :solo-plan-created? true})})
     {:status 401 :body (pr-str {:error :not-logged-in
                                 :msg "Please log in to request early access."})}))
+
+(def get-dribbble-profile (memo/ttl crm/get-dribbble-profile :ttl/threshold (* 1000 60 60)))
+
+(def dribbble-user-whitelist #{"dannykingme" "lobanovskiy"})
+
+(defpage dribbble-profile "/api/v1/dribbble/users/:username" [req]
+  (let [username (get-in req [:params :username])]
+    (if (contains? dribbble-user-whitelist username)
+      {:body (json/encode (get-dribbble-profile username))
+       :status 200}
+      (throw+ {:status 400
+               :public-message "Sorry, this user isn't on the whitelist."}))))
 
 (def app (defpage/collect-routes))

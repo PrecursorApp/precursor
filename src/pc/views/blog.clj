@@ -41,6 +41,9 @@
    to anyone with the direct URL. Time should be in the format Fri, 30 Jan 2015 01:12:00 -0800
    Be careful for daylight savings time!"
   [
+   {:slug "dribbble-card-test"
+    :unique-id "dribbble-card-test"
+    :display-in-overview false}
    {:slug "clojure-is-a-product-design-tool"
     :unique-id "clojure-is-a-product-design-tool"
     :display-in-overview true
