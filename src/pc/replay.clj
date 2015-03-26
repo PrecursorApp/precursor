@@ -32,7 +32,7 @@
 (defn reproduce-transaction [db tx-id]
   (let [tx (d/entity db tx-id)]
     {:tx-data (tx-data tx)
-     :db-after (d/as-of db (:db/txInstant tx))}))
+     :db-after db}))
 
 (defn get-document-transactions
   "Returns a lazy sequence of transactions for a document in order of db/txInstant.
