@@ -1661,4 +1661,6 @@
       y (assoc-in [:camera :y] y)
       cx (assoc-in [:camera :x] (- (- cx sx)))
       cy (assoc-in [:camera :y] (- (- cy sy)))
-      z (update-in [:camera] cameras/set-zoom [sx sy] (constantly z)))))
+      z (update-in [:camera] #(-> %
+                                (assoc :zf 1 :z-exact 1)
+                                (cameras/set-zoom [sx sy] (constantly z)))))))
