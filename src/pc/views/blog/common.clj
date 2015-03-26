@@ -74,27 +74,6 @@
            (when (coll? prop)
              {:data-subprop (str/join "," (rest prop))}))))
 
-; (defn dribbble-card [username]
-;   (let [props ["comments_received_count" "bio" "shots_count" "can_upload_shot" "followings_count"
-;                "followers_url" "likes_received_count" "avatar_url" "username" "buckets_count"
-;                "pro" "id" "projects_url" "name" "likes_url" "location" "buckets_url" "updated_at"
-;                "html_url" "teams_count" "links" "likes_count" "shots_url" "following_url" "type"
-;                "created_at" "teams_url" "followers_count" "rebounds_received_count" "projects_count"]
-;         class-map (zipmap props (repeatedly #(str (UUID/randomUUID))))]
-;     [:div {:class "dribbble-card"}
-;      (dribbble-card-script class-map username)
-;      [:img (dribbble-attrs class-map "avatar_url" "src")]
-;      [:div
-;       "Shots: "
-;       [:span (dribbble-attrs class-map "shots_count" "innerText"
-;                              :class "shots-count")]]
-;      [:div
-;       "Followers: "
-;       [:span (dribbble-attrs class-map "followers_count" "innerText"
-;                              :class "followers-count")]]]))
-
-
-
 (defn dribbble-card [username]
   (let [props ["comments_received_count" "bio" "shots_count" "can_upload_shot" "followings_count"
                "followers_url" "likes_received_count" "avatar_url" "username" "buckets_count"
@@ -126,6 +105,4 @@
         [:strong (dribbble-attrs class-map "name" "innerText")]]]
       [:div.dribbble-link
        [:a.dribbble-site (dribbble-attrs class-map ["links" "web"] "href")
-        ; [:span "unfold.co"]
-        [:span (dribbble-attrs class-map ["links" "web"] "innerText")]]]]
-     (demo-with-blank-canvas (cdn-path "/blog/private-docs-early-access/grant-access.gif") "Grant someone access with their email address.")]))
+        [:span (dribbble-attrs class-map ["links" "web"] "innerText")]]]]]))
