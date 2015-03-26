@@ -71,7 +71,8 @@
    :overlays []
    :frontend-id-state nil
    :mouse {}
-   :page-count 0})
+   :page-count 0
+   :progress {:active false :percent 0}})
 
 (defn reset-state [state]
   (-> state

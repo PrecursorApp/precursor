@@ -87,3 +87,7 @@
     (do
       (utils/mlog "document ids don't match")
       state)))
+
+(defmethod api-event [:progress :success]
+  [target message status progress-data state]
+  (update-in state [:progress] merge progress-data))
