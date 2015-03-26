@@ -65,3 +65,86 @@
     fill: @white; // 3rd-party brand color, don't override
   }
 }
+#vendor.dribbble-card {
+  .flexy(column);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  width: 100%;
+  margin-bottom: 1em;
+  border: 1px solid @gray_lightest;
+  border-radius: 4px;
+  overflow: hidden;
+  a {
+    box-shadow: none;
+  }
+  strong {
+    font-weight: bold;
+  }
+  .dribbble-head {
+    .flexy(flex-start);
+    font-size: 12px;
+    line-height: 15px;
+  }
+  .dribbble-stats {
+    .flexy(center);
+    width: calc(~"50% -" (.50 * @tile));
+    height: .75 * @tile;
+    padding: .25 * @tile;
+    border-bottom: 1px solid @gray_lightest;
+  }
+  .dribbble-stat {
+    margin-right: .25 * @tile;
+  }
+  .dribbble-photo {
+    .flexy(center);
+    height: 1.5 * @tile;
+    &:hover {
+      opacity: .75;
+    }
+  }
+  .dribbble-avatar {
+    width: @tile;
+    height: @tile;
+    border-radius: @tile;
+  }
+  .dribbble-follow {
+    .flexy(center; flex-end);
+    width: calc(~"50% -" (.50 * @tile));
+    height: .75 * @tile;
+    padding: .25 * @tile;
+    border-bottom: 1px solid @gray_lightest;
+  }
+  .dribbble-button {
+    .flexy(center; center);
+    .gradient(to bottom; fade(@white, 21); fade(@white, 3));
+    .icon(fill; #666);
+    color: #666;
+    padding: 7px 12px;
+    background-color: fade(@black, 16);
+    border-radius: .25em;
+    &:hover {
+      .icon(fill; @white);
+      color: @white;
+      background-color: #8aba56;
+    }
+    .icon-dribbble {
+      margin-right: .75em;
+    }
+  }
+  .dribbble-body {
+    .flexy(column);
+    text-align: center;
+    padding-bottom: .25 * @tile;
+  }
+  .dribbble-name {
+    color: fade(@black, 72);
+    line-height: 1;
+  }
+  .dribbble-link {
+    color: #777;
+    font-size: 16px;
+    line-height: 24px;
+    &:hover {
+      color: fade(@black, 72);
+    }
+  }
+}

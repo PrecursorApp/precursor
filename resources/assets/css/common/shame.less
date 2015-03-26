@@ -4,25 +4,33 @@
   });
 }
 
-
+.twitter-card {
+  position: relative;
+}
 [id|="twitter-widget"] {
+  position: relative !important;
   width: 100% !important;
   max-width: 100% !important;
-  margin: 1rem 0 !important;
+  margin: 0 0 1em 0 !important;
+  box-shadow: none !important;
+
+  border: 1px solid @gray_lightest !important;
+  border-radius: 4px !important;
 }
 .twitter-tweet {
   &:not(:empty) {
     .flexy(center);
     font-size: inherit;
     font-weight: inherit;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     min-height: (186px - 24);
-    margin: 1em 0;
+    margin: 0 0 1em 0;
     padding: 1.25rem 0 1.250rem 1.875rem;
-    border-color: #eee #ddd #bbb;
-    border-radius: 5px;
-    border-style: solid;
-    border-width: 1px;
-    box-shadow: 0 1px 3px fade(@black, 15);
+    border: 1px solid @gray_lightest;
+    border-radius: 4px;
     a {
       &:before {
         content: attr(data-loading-tweet);
