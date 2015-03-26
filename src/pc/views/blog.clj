@@ -41,6 +41,10 @@
    to anyone with the direct URL. Time should be in the format Fri, 30 Jan 2015 01:12:00 -0800
    Be careful for daylight savings time!"
   [
+   {:slug "ideas-are-made-with-precursor"
+    :unique-id "ideas-are-made-with-precursor"
+    :display-in-overview true
+    :pub-date (clj-time.format/parse "Wed, 25 Mar 2015 08:00:00 -0800")}
    {:slug "clojure-is-a-product-design-tool"
     :unique-id "clojure-is-a-product-design-tool"
     :display-in-overview true

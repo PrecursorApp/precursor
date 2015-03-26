@@ -2,12 +2,13 @@
   (:require [pc.views.common :refer (cdn-path)]))
 
 (defn tweet [name id & {:keys [no-parent]}]
-  (list
+  [:div.twitter-card
    [:script {:charset "utf-8", :src "//platform.twitter.com/widgets.js", :async "async"}]
-   [:blockquote.twitter-tweet {:data-conversation (when no-parent "none")}
+   [:blockquote.twitter-tweet {:data-conversation (when no-parent "none")
+                               :data-cards "hidden"}
     [:a {:href (str "https://twitter.com/" name "/status/" id)
          :data-loading-tweet "Loading tweet..."
-         :data-failed-tweet " failed. View on Twitter."}]]))
+         :data-failed-tweet " failed. View on Twitter."}]]])
 
 (defn demo [placeholder gif & {:keys [caption]}]
   [:figure.play-gif {:alt "demo"
