@@ -90,7 +90,8 @@
                                                  [:sente-id]
                                                  [:client-id]
                                                  [:show-landing?]
-                                                 [:cust-data]])
+                                                 [:cust-data]
+                                                 [:navigation-data]])
                        {:react-key "chat"})
 
              (when (not right-click-learned?)

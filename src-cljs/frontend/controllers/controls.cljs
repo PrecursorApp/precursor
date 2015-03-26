@@ -1644,3 +1644,21 @@
                       "z" (:zf camera)})]
     (.replaceToken history (str path (when (seq query)
                                        (str "?" (url/map->query query)))))))
+
+(defmethod control-event :handle-camera-query-params
+  [browser-state message {:keys [cx cy x y z]} state]
+  (let [x (when x (js/parseInt x))
+        y (when y (js/parseInt y))
+        z (or (when z (js/parseFloat z))
+              (get-in state [:camera :zf]))
+        cx (when cx (js/parseInt cx))
+        cy (when cy (js/parseInt cy))
+        canvas-size (utils/canvas-size)
+        [sx sy] [(/ (:width canvas-size) 2)
+                 (/ (:height canvas-size) 2)]]
+    (cond-> state
+      x (assoc-in [:camera :x] x)
+      y (assoc-in [:camera :y] y)
+      cx (assoc-in [:camera :x] (- (- cx sx)))
+      cy (assoc-in [:camera :y] (- (- cy sy)))
+      z (update-in [:camera] cameras/set-zoom [sx sy] (constantly z)))))
