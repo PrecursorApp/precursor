@@ -15,4 +15,6 @@
          [:div.progress-bar {:class (when (:active progress) "active")}
           [:div.progress {:style {:width (if (:active progress)
                                            (str (:percent progress) "%")
-                                           "100%")}}]])))))
+                                           "100%")
+                                  :transition-duration (str (+ 16 (:expected-tick-duration progress 0))
+                                                            "ms")}}]])))))

@@ -15,7 +15,7 @@
         doc-id (:document/id state)
         interrupted (atom false)
         api-ch (get-in state [:comms :api])]
-    (put! api-ch [:progress :success {:active true :percent 0}])
+    (put! api-ch [:progress :success {:active true :percent 0 :expected-tick-duration (+ sleep-ms 180)}])
     (when interrupt-ch
       (async/take! interrupt-ch #(when % (reset! interrupted true))))
     (utils/go+
@@ -30,7 +30,9 @@
                            seq)]
          (let [tx-count (or tx-count (count tx-ids))]
            (loop [tx-ids (take tx-count tx-ids)
-                  i 0]
+                  i 0
+                  start (js/Date.)
+                  durations []]
              (let [tx (-> (sente/ch-send-msg (:sente state)
                                              [:document/fetch-transaction {:document/id doc-id
                                                                            :tx-id (first tx-ids)}]
@@ -41,16 +43,25 @@
                (if @interrupted
                  ::interrupted
                  (do
-                   (put! api-ch [:progress :success {:active true :percent (* 100 (/ (inc i)
-                                                                                     tx-count))}])
                    (d/transact! (:db state)
                                 (map ds/datom->transaction (:tx-data tx))
                                 {:server-update true})
+                   (put! api-ch [:progress :success {:active true
+                                                     :percent (* 100 (/ (inc i)
+                                                                        tx-count))
+                                                     :expected-tick-duration (apply max sleep-ms (- (.getTime (js/Date.))
+                                                                                                    (.getTime start))
+                                                                                    (take-last 5 durations))}])
                    (when (next tx-ids)
                      (when (seq tx)
-                       (<! (async/timeout sleep-ms)))
+                       (<! (async/timeout (- sleep-ms
+                                             (- (.getTime (js/Date.))
+                                                (.getTime start))))))
                      (recur (next tx-ids)
-                            (inc i)))))))))
+                            (inc i)
+                            (js/Date.)
+                            (conj durations (- (.getTime (js/Date.))
+                                               (.getTime start)))))))))))
        (finally
          (put! api-ch [:progress :success {:active false}])
          (async/close! replay-ch)
