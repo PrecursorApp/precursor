@@ -618,6 +618,7 @@
       (log/infof "sending %s tx-ids for %s to %s" (count tx-ids) (:document/id ?data) client-id)
       (?reply-fn {:tx-ids tx-ids}))))
 
+(def ^:dynamic *db*)
 (def memo-frontend-tx-data (memo/lru (fn [tx-id]
                                        (->> tx-id
                                          (replay/reproduce-transaction *db*)
@@ -625,7 +626,6 @@
                                          :read-only-data))
                                      :lru/threshold 2000))
 
-(def ^:dynamic *db*)
 (defn get-frontend-tx-data [db tx-id]
   (binding [*db* db]
     (memo-frontend-tx-data tx-id)))
