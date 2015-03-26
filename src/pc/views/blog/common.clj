@@ -1,5 +1,6 @@
 (ns pc.views.blog.common
   (:require [cheshire.core :as json]
+            [clojure.string :as str]
             [pc.views.common :refer (cdn-path)])
   (:import [java.util UUID]))
 
@@ -43,7 +44,13 @@
           var nodes = document.getElementsByClassName(classMap[key]);
           for (var i = 0; i < nodes.length; i++) {
             var node = nodes[i];
-            node[node.getAttribute('data-attr')] = fields[key];
+            var field = fields[key];
+            if (subprop = node.getAttribute('data-subprop')) {
+              for (k of subprop.split(',')) {
+                field = field[k];
+              }
+            }
+            node[node.getAttribute('data-attr')] = field;
           }
         }
       }
@@ -58,9 +65,14 @@
     (json/encode class-map) username)])
 
 (defn dribbble-attrs [class-map prop attr & {:as extra-attrs}]
-  (merge extra-attrs
-         {:class (str (:class extra-attrs) " " (get class-map prop))
-          :data-attr attr}))
+  (let [class-prop (if (string? prop)
+                     prop
+                     (first prop))]
+    (merge extra-attrs
+           {:class (str (:class extra-attrs) " " (get class-map class-prop))
+            :data-attr attr}
+           (when (coll? prop)
+             {:data-subprop (str/join "," (rest prop))}))))
 
 ; (defn dribbble-card [username]
 ;   (let [props ["comments_received_count" "bio" "shots_count" "can_upload_shot" "followings_count"
@@ -113,7 +125,7 @@
        [:a.dribbble-name profile-link
         [:strong (dribbble-attrs class-map "name" "innerText")]]]
       [:div.dribbble-link
-       [:a.dribbble-site (dribbble-attrs class-map "links" "href")
+       [:a.dribbble-site (dribbble-attrs class-map ["links" "web"] "href")
         ; [:span "unfold.co"]
-        [:span (dribbble-attrs class-map "links" "innerText")]]]]
+        [:span (dribbble-attrs class-map ["links" "web"] "innerText")]]]]
      (demo-with-blank-canvas (cdn-path "/blog/private-docs-early-access/grant-access.gif") "Grant someone access with their email address.")]))
