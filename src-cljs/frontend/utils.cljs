@@ -208,7 +208,8 @@
   (let [node (goog.dom/getElement "canvas-size")]
     (let [size (if node
                  (goog.style/getSize node)
-                 (goog.dom/getViewportSize))]
+                 (do (mwarn "no #canvas-size element for utils/canvas-size to grab, using viewport")
+                     (goog.dom/getViewportSize)))]
       {:width (.-width size)
        :height (.-height size)})))
 

@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [datascript :as d]
             [frontend.async :refer [put!]]
+            [frontend.camera :as cameras]
             [frontend.db :as db]
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
@@ -85,6 +86,23 @@
   [history-imp navigation-point args state]
   (handle-outer navigation-point args state))
 
+(defn handle-camera-params [state {:keys [cx cy x y z] :as query-params}]
+  (let [x (when x (js/parseInt x))
+        y (when y (js/parseInt y))
+        z (or (when z (js/parseFloat z))
+              (get-in state [:camera :zf]))
+        cx (when cx (js/parseInt cx))
+        cy (when cy (js/parseInt cy))
+        canvas-size (utils/canvas-size)
+        [sx sy] [(/ (:width canvas-size) 2)
+                 (/ (:height canvas-size) 2)]]
+    (cond-> state
+      x (assoc-in [:camera :x] x)
+      y (assoc-in [:camera :y] y)
+      cx (assoc-in [:camera :x] (- (- cx sx)))
+      cy (assoc-in [:camera :y] (- (- cy sy)))
+      z (update-in [:camera] cameras/set-zoom [sx sy] (constantly z)))))
+
 (defmethod navigated-to :document
   [history-imp navigation-point args state]
   (let [doc-id (:document/id args)
@@ -96,6 +114,7 @@
                :db-listener-key (utils/uuid)
                :show-landing? false
                :frontend-id-state {})
+        (handle-camera-params (:query-params args))
         (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
@@ -114,7 +133,7 @@
     (when-let [prev-doc-id (:document/id previous-state)]
       (when (not= prev-doc-id doc-id)
         (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}])))
-    (if (get-in (utils/inspect args) [:query-params :replay])
+    (if (get-in args [:query-params :replay])
       (replay/replay-and-subscribe current-state :sleep-ms 25)
       (sente/subscribe-to-document sente-state (:comms current-state) doc-id))
     ;; TODO: probably only need one listener key here, and can write a fn replace-listener

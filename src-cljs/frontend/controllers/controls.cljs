@@ -1,5 +1,6 @@
 (ns frontend.controllers.controls
-  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+  (:require [cemerick.url :as url]
+            [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -1330,10 +1331,10 @@
                              (:layer/end-y layer))
           center-x (+ layer-start-x (/ layer-width 2))
           center-y (+ layer-start-y (/ layer-height 2))
-          new-x (+ (* (- center-x) zoom)
-                   (/ (:width canvas-size) 2))
-          new-y (+ (* (- center-y) zoom)
-                   (/ (:height canvas-size) 2))]
+          new-x (-  (/ (:width canvas-size) 2)
+                    (* center-x zoom))
+          new-y (- (/ (:height canvas-size) 2)
+                   (* center-y zoom))]
       (-> state
         (assoc-in [:camera :x] new-x)
         (assoc-in [:camera :y] new-y)
@@ -1584,11 +1585,11 @@
                                            :invite-loc :overlay}]))
 
 (defmethod post-control-event! :make-button-clicked
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
 
 (defmethod post-control-event! :launch-app-clicked
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
 
 (defmethod control-event :subscriber-updated
@@ -1596,25 +1597,25 @@
   (subs/add-subscriber-data state client-id fields))
 
 (defmethod control-event :viewers-opened
-  [target message _ state]
+  [browser-state message _ state]
   (-> state
     (assoc :show-viewers? true)))
 
 (defmethod control-event :viewers-closed
-  [target message _ state]
+  [browser-state message _ state]
   (-> state
     (assoc :show-viewers? false)))
 
 (defmethod control-event :landing-animation-completed
-  [target message _ state]
+  [browser-state message _ state]
   (assoc state :show-scroll-to-arrow true))
 
 (defmethod control-event :scroll-to-arrow-clicked
-  [target message _ state]
+  [browser-state message _ state]
   (assoc state :show-scroll-to-arrow false))
 
 (defmethod post-control-event! :scroll-to-arrow-clicked
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (let [body (.-body js/document)
         vh (.-height (goog.dom/getViewportSize))]
     (.play (goog.fx.dom.Scroll. body
@@ -1626,3 +1627,20 @@
   [browser-state message _ state]
   (-> state
     (overlay/add-overlay :sharing)))
+
+(defmethod post-control-event! :mouse-stats-clicked
+  [browser-state message _ previous-state current-state]
+  (let [canvas-size (utils/canvas-size)
+        camera (:camera current-state)
+        z (:zf camera)
+        [sx sy] [(/ (:width canvas-size) 2)
+                 (/ (:height canvas-size) 2)]
+        {:keys [x y]} (cameras/set-zoom camera [sx sy] (constantly 1))
+        history (:history-imp browser-state)
+        [_ path query-str] (re-find #"^([^\?]+)\?{0,1}(.*)$" (.getToken history))
+        query (merge (url/query->map query-str)
+                     {"cx" (int (+ (- x) sx))
+                      "cy" (int (+ (- y) sy))
+                      "z" (:zf camera)})]
+    (.replaceToken history (str path (when (seq query)
+                                       (str "?" (url/map->query query)))))))
