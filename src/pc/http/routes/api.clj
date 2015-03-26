@@ -92,6 +92,7 @@
 
 (def dribbble-user-whitelist #{"dannykingme" "lobanovskiy"})
 
+;; proxy for the dribbble API, to be used by our dribbble cards on the blog
 (defpage dribbble-profile "/api/v1/dribbble/users/:username" [req]
   (let [username (get-in req [:params :username])]
     (if (contains? dribbble-user-whitelist username)
