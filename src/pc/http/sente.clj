@@ -620,17 +620,12 @@
 (defmethod ws-handler :document/fetch-transaction [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))
-        max-scope (auth/max-document-scope (:db req) doc (get-in req [:ring-req :auth]))
-        data-key (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
-                       :admin-data
-                       (auth/contains-scope? auth/scope-heirarchy max-scope :read)
-                       :read-only-data)
         tx-id (:tx-id ?data)]
     (if (= (:db/id doc) (:db/id (:transaction/document (d/entity (:db req) tx-id))))
       (let [transaction (->> tx-id
                           (replay/reproduce-transaction (:db req))
                           (datomic-common/frontend-document-transaction)
-                          (#(get % data-key)))]
+                          :read-only-data)]
         (log/infof "sending %s txes from %s for %s to %s" (count (:tx-data transaction)) tx-id (:document/id ?data) client-id)
         (?reply-fn {:document/transaction transaction}))
       (throw+ {:status 403
