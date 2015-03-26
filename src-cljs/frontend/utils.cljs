@@ -15,7 +15,8 @@
             [goog.net.EventType :as gevt]
             [sablono.core :as html :include-macros true]
             [frontend.utils.seq :as seq-util])
-  (:require-macros [frontend.utils :refer (inspect timing defrender)])
+  (:require-macros [frontend.utils :refer (inspect timing defrender go+)]
+                   [cljs.core.async.macros :refer (go)])
   (:import [goog.format EmailAddress]))
 
 (defn csrf-token []
@@ -208,7 +209,8 @@
   (let [node (goog.dom/getElement "canvas-size")]
     (let [size (if node
                  (goog.style/getSize node)
-                 (goog.dom/getViewportSize))]
+                 (do (mwarn "no #canvas-size element for utils/canvas-size to grab, using viewport")
+                     (goog.dom/getViewportSize)))]
       {:width (.-width size)
        :height (.-height size)})))
 
@@ -229,3 +231,6 @@
 (defn cast-fn [controls-ch]
   (fn [message data & [transient?]]
     (put! controls-ch [message data transient?])))
+
+(defn apply-map [f & args]
+  (apply f (apply concat (butlast args) (last args))))

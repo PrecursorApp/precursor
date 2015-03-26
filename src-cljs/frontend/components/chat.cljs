@@ -220,6 +220,13 @@
 (defn chat [app owner]
   (reify
     om/IDisplayName (display-name [_] "Chat")
+    om/IDidMount
+    (did-mount [_]
+      ;; this needs to be here so that we can account for chat :(
+      ((om/get-shared owner :cast!)
+       :handle-camera-query-params
+       (select-keys (get-in app [:navigation-data :query-params])
+                    [:x :y :z :cx :cy])))
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)

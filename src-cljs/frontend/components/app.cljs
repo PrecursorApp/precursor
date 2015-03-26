@@ -16,6 +16,7 @@
             [frontend.components.drawing :as drawing]
             [frontend.components.outer :as outer]
             [frontend.components.overlay :as overlay]
+            [frontend.components.progress :as progress]
             [frontend.cursors :as cursors]
             [frontend.favicon :as favicon]
             [frontend.keyboard :as keyboard]
@@ -47,6 +48,7 @@
            [:div#app.app {:class (str (frontend.overlay/app-overlay-class app)
                                       (when (:show-landing? app) " state-outer ")
                                       (if chat-opened? " chat-opened " " chat-closed "))}
+            (om/build progress/progress-bar {} {:react-key "progress-bar"})
 
             (when (:show-landing? app)
               (om/build outer/outer (select-in app [[:show-landing?]
@@ -90,7 +92,8 @@
                                                  [:sente-id]
                                                  [:client-id]
                                                  [:show-landing?]
-                                                 [:cust-data]])
+                                                 [:cust-data]
+                                                 [:navigation-data]])
                        {:react-key "chat"})
 
              (when (not right-click-learned?)
@@ -121,7 +124,7 @@
     om/IRender
     (render [_]
       (om/build app* (-> app
-                       (dissoc :mouse)
+                       (dissoc :mouse :progress)
                        (dissoc-in [:subscribers :mice])
                        (dissoc-in [:subscribers :layers]))
                 {:react-key "app*"}))))

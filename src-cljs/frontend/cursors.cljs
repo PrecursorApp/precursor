@@ -36,3 +36,6 @@
 
 (defn observe-camera [owner]
   (observe owner [:camera]))
+
+(defn observe-progress [owner]
+  (observe owner [:progress]))

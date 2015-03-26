@@ -2,6 +2,7 @@
   (:require [clj-statsd :as statsd]
             [clj-time.core :as time]
             [clojure.core.async :as async]
+            [clojure.core.memoize :as memo]
             [clojure.set :as set]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
@@ -610,17 +611,36 @@
         (access-request-model/deny-request request annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
-(defmethod ws-handler :frontend/replay-transactions [{:keys [client-id ?data ?reply-fn] :as req}]
+(defmethod ws-handler :document/transaction-ids [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))]
-    (let [txes (replay/get-document-transactions (:db req) doc)
-          scoped-data-key (if (has-document-access? (:document/id ?data) req :admin)
-                            :admin-data
-                            :read-only-data)]
-      (doseq [tx txes]
-        ((:send-fn @sente-state) client-id [:datomic/transaction (get (datomic-common/frontend-document-transaction tx)
-                                                                      scoped-data-key)])
-        (Thread/sleep (min 500 (get ?data :sleep-ms 250)))))))
+    (let [tx-ids (replay/get-document-tx-ids (:db req) doc)]
+      (log/infof "sending %s tx-ids for %s to %s" (count tx-ids) (:document/id ?data) client-id)
+      (?reply-fn {:tx-ids tx-ids}))))
+
+(def ^:dynamic *db*)
+(def memo-frontend-tx-data (memo/lru (fn [tx-id]
+                                       (->> tx-id
+                                         (replay/reproduce-transaction *db*)
+                                         (datomic-common/frontend-document-transaction)
+                                         :read-only-data))
+                                     :lru/threshold 2000))
+
+(defn get-frontend-tx-data [db tx-id]
+  (binding [*db* db]
+    (memo-frontend-tx-data tx-id)))
+
+(defmethod ws-handler :document/fetch-transaction [{:keys [client-id ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document/id) req :read)
+  (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))
+        tx-id (:tx-id ?data)]
+    (if (= (:db/id doc) (:db/id (:transaction/document (d/entity (:db req) tx-id))))
+      (let [transaction (get-frontend-tx-data (:db req) tx-id)]
+        (log/infof "sending %s txes from %s for %s to %s" (count (:tx-data transaction)) tx-id (:document/id ?data) client-id)
+        (?reply-fn {:document/transaction transaction}))
+      (throw+ {:status 403
+               :error-msg "The document for the transaction doesn't match the requested document."
+               :error-key :invalid-transaction-id}))))
 
 (defmethod ws-handler :team/deny-access-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]

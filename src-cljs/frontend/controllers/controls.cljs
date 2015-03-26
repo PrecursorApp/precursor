@@ -1,5 +1,6 @@
 (ns frontend.controllers.controls
-  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+  (:require [cemerick.url :as url]
+            [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -19,6 +20,7 @@
             [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
             [frontend.overlay :as overlay]
+            [frontend.replay :as replay]
             [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.settings :as settings]
@@ -735,31 +737,34 @@
 
 (defmethod control-event :mouse-depressed
   [browser-state message [x y {:keys [button type ctrl? shift?]}] state]
-  (let [intents (mouse-depressed-intents state button ctrl? shift?)
-        new-state (-> state
-                    (update-mouse x y)
-                    (assoc-in [:mouse-down] true)
-                    (assoc-in [:mouse-type] (if (= type "mousedown") :mouse :touch)))]
-    (reduce (fn [s intent]
-              (case intent
-                :finish-text-layer (handle-text-layer-finished s)
-                :open-menu (handle-menu-opened s)
-                :start-drawing (handle-drawing-started s x y)
-                :submit-layer-properties (handle-layer-properties-submitted s)
-                s))
-            new-state intents)))
+  (if (empty? (:frontend-id-state state))
+    state
+    (let [intents (mouse-depressed-intents state button ctrl? shift?)
+          new-state (-> state
+                      (update-mouse x y)
+                      (assoc-in [:mouse-down] true)
+                      (assoc-in [:mouse-type] (if (= type "mousedown") :mouse :touch)))]
+      (reduce (fn [s intent]
+                (case intent
+                  :finish-text-layer (handle-text-layer-finished s)
+                  :open-menu (handle-menu-opened s)
+                  :start-drawing (handle-drawing-started s x y)
+                  :submit-layer-properties (handle-layer-properties-submitted s)
+                  s))
+              new-state intents))))
 
 (defmethod post-control-event! :mouse-depressed
   [browser-state message [x y {:keys [button ctrl? shift?]}] previous-state current-state]
-  ;; use previous state so that we're consistent with the control-event
-  (let [intents (mouse-depressed-intents previous-state button ctrl? shift?)]
-    (doseq [intent intents]
-      (case intent
-        :finish-text-layer (handle-text-layer-finished-after current-state)
-        :open-menu (handle-menu-opened-after current-state previous-state)
-        :start-drawing nil
-        :submit-layer-properties (handle-layer-properties-submitted-after current-state)
-        nil))))
+  (when-not (empty? (:frontend-id-state previous-state))
+    ;; use previous state so that we're consistent with the control-event
+    (let [intents (mouse-depressed-intents previous-state button ctrl? shift?)]
+      (doseq [intent intents]
+        (case intent
+          :finish-text-layer (handle-text-layer-finished-after current-state)
+          :open-menu (handle-menu-opened-after current-state previous-state)
+          :start-drawing nil
+          :submit-layer-properties (handle-layer-properties-submitted-after current-state)
+          nil)))))
 
 (defn handle-relation-finished [state dest x y]
   (let [origin (get-in state [:drawing :relation :layer])]
@@ -1169,15 +1174,13 @@
 (defmethod post-handle-cmd-chat "replay"
   [state cmd body]
   (@frontend.careful/om-setup-debug)
+
   (let [[_ delay-ms sleep-ms] (re-find #"/replay (\d+)s*(\d*)" body)]
-    (js/setTimeout #(sente/send-msg (:sente state) [:frontend/replay-transactions
-                                                    {:document/id (:document/id state)
-                                                     :sleep-ms (or (when (seq sleep-ms)
-                                                                     (js/parseInt sleep-ms))
-                                                                   250)}])
-                   (or (when (seq delay-ms)
-                         (js/parseInt delay-ms))
-                       2000)))
+    (replay/replay state
+                   :sleep-ms (or (when (seq sleep-ms) (js/parseInt sleep-ms))
+                                 150)
+                   :delay-ms (or (when (seq delay-ms) (js/parseInt delay-ms))
+                                 0)))
   ::stop-save)
 
 (defmethod post-control-event! :chat-submitted
@@ -1328,10 +1331,10 @@
                              (:layer/end-y layer))
           center-x (+ layer-start-x (/ layer-width 2))
           center-y (+ layer-start-y (/ layer-height 2))
-          new-x (+ (* (- center-x) zoom)
-                   (/ (:width canvas-size) 2))
-          new-y (+ (* (- center-y) zoom)
-                   (/ (:height canvas-size) 2))]
+          new-x (-  (/ (:width canvas-size) 2)
+                    (* center-x zoom))
+          new-y (- (/ (:height canvas-size) 2)
+                   (* center-y zoom))]
       (-> state
         (assoc-in [:camera :x] new-x)
         (assoc-in [:camera :y] new-y)
@@ -1582,11 +1585,11 @@
                                            :invite-loc :overlay}]))
 
 (defmethod post-control-event! :make-button-clicked
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
 
 (defmethod post-control-event! :launch-app-clicked
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
 
 (defmethod control-event :subscriber-updated
@@ -1594,25 +1597,25 @@
   (subs/add-subscriber-data state client-id fields))
 
 (defmethod control-event :viewers-opened
-  [target message _ state]
+  [browser-state message _ state]
   (-> state
     (assoc :show-viewers? true)))
 
 (defmethod control-event :viewers-closed
-  [target message _ state]
+  [browser-state message _ state]
   (-> state
     (assoc :show-viewers? false)))
 
 (defmethod control-event :landing-animation-completed
-  [target message _ state]
+  [browser-state message _ state]
   (assoc state :show-scroll-to-arrow true))
 
 (defmethod control-event :scroll-to-arrow-clicked
-  [target message _ state]
+  [browser-state message _ state]
   (assoc state :show-scroll-to-arrow false))
 
 (defmethod post-control-event! :scroll-to-arrow-clicked
-  [target message _ previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (let [body (.-body js/document)
         vh (.-height (goog.dom/getViewportSize))]
     (.play (goog.fx.dom.Scroll. body
@@ -1624,3 +1627,40 @@
   [browser-state message _ state]
   (-> state
     (overlay/add-overlay :sharing)))
+
+(defmethod post-control-event! :mouse-stats-clicked
+  [browser-state message _ previous-state current-state]
+  (let [canvas-size (utils/canvas-size)
+        camera (:camera current-state)
+        z (:zf camera)
+        [sx sy] [(/ (:width canvas-size) 2)
+                 (/ (:height canvas-size) 2)]
+        {:keys [x y]} (cameras/set-zoom camera [sx sy] (constantly 1))
+        history (:history-imp browser-state)
+        [_ path query-str] (re-find #"^([^\?]+)\?{0,1}(.*)$" (.getToken history))
+        query (merge (url/query->map query-str)
+                     {"cx" (int (+ (- x) sx))
+                      "cy" (int (+ (- y) sy))
+                      "z" (:zf camera)})]
+    (.replaceToken history (str path (when (seq query)
+                                       (str "?" (url/map->query query)))))))
+
+(defmethod control-event :handle-camera-query-params
+  [browser-state message {:keys [cx cy x y z]} state]
+  (let [x (when x (js/parseInt x))
+        y (when y (js/parseInt y))
+        z (or (when z (js/parseFloat z))
+              (get-in state [:camera :zf]))
+        cx (when cx (js/parseInt cx))
+        cy (when cy (js/parseInt cy))
+        canvas-size (utils/canvas-size)
+        [sx sy] [(/ (:width canvas-size) 2)
+                 (/ (:height canvas-size) 2)]]
+    (cond-> state
+      x (assoc-in [:camera :x] x)
+      y (assoc-in [:camera :y] y)
+      cx (assoc-in [:camera :x] (- (- cx sx)))
+      cy (assoc-in [:camera :y] (- (- cy sy)))
+      z (update-in [:camera] #(-> %
+                                (assoc :zf 1 :z-exact 1)
+                                (cameras/set-zoom [sx sy] (constantly z)))))))

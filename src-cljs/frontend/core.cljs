@@ -99,14 +99,6 @@
 (def navigation-ch
   (chan))
 
-(defn initial-camera []
-  (let [{:keys [x y z]} utils/initial-query-map]
-    (cond-> {}
-      x (assoc :x x)
-      y (assoc :y y)
-      ;; the zoom is zf for some reason
-      z (assoc :zf z))))
-
 (defn app-state []
   (let [initial-state (state/initial-state)
         document-id (or (aget js/window "Precursor" "initial-document-id")
@@ -151,7 +143,6 @@
                                              :mult (async/mult mouse-down-ch)}
                              :mouse-up      {:ch mouse-up-ch
                                              :mult (async/mult mouse-up-ch)}})
-            (update-in [:camera] merge (initial-camera))
             (browser-settings/restore-browser-settings cust)))))
 
 (defn controls-handler
@@ -280,16 +271,18 @@
     (async/tap (:api-mult comms) api-tap)
     (async/tap (:errors-mult comms) errors-tap)
 
-    (go (while true
-          (alt!
-            controls-tap ([v] (controls-handler v state {:container container
-                                                         :visibility-monitor visibility-monitor}))
-            nav-tap ([v] (nav-handler v state history-imp))
-            api-tap ([v] (api-handler v state container))
-            errors-tap ([v] (errors-handler v state container))
-            ;; Capture the current history for playback in the absence
-            ;; of a server to store it
-            (async/timeout 10000) (do #_(print "TODO: print out history: ")))))))
+    (utils/go+
+     (while true
+       (alt!
+         controls-tap ([v] (controls-handler v state {:container container
+                                                      :visibility-monitor visibility-monitor
+                                                      :history-imp history-imp}))
+         nav-tap ([v] (nav-handler v state history-imp))
+         api-tap ([v] (api-handler v state container))
+         errors-tap ([v] (errors-handler v state container))
+         ;; Capture the current history for playback in the absence
+         ;; of a server to store it
+         (async/timeout 10000) (do #_(print "TODO: print out history: ")))))))
 
 (def tokens-to-ignore ["login" "blog"])
 

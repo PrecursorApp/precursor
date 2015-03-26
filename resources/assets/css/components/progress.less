@@ -1,0 +1,18 @@
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 0px;
+  width: 100%;
+  &.active {
+    height: 2px;
+  }
+  transition: height @run @bezier_fadein;
+  .progress {
+    background-color: @color_select;
+    position: relative;
+    height: 100%;
+    z-index: @zindex_progress;
+    transition: width @run @bezier_fadein;
+  }
+}

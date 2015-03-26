@@ -1,4 +1,5 @@
-(ns frontend.camera)
+(ns frontend.camera
+  (:require [frontend.utils :as utils]))
 
 (def max-zoom 5)
 (def min-zoom 0.1)

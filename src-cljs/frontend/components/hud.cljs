@@ -81,10 +81,11 @@
     (render [_]
       (let [mouse (cursors/observe-mouse owner)]
         (html
-         [:div.mouse-stats
-          {:data-text (str "{:x " (:rx mouse 0)
-                           ", :y " (:ry mouse 0)
-                           "}")}])))))
+         [:div.mouse-stats {:onMouseDown #((om/get-shared owner :cast!)
+                                           :mouse-stats-clicked)
+                            :data-text (str "{:x " (:rx mouse 0)
+                                            ", :y " (:ry mouse 0)
+                                            "}")}])))))
 
 (defn tray [app owner]
   (reify

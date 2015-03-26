@@ -1,4 +1,5 @@
-(ns frontend.utils)
+(ns frontend.utils
+  (:require [cljs.core.async.macros :refer (go)]))
 
 (defmacro inspect
   "prints the expression '<name> is <value>', and returns the value"
@@ -49,3 +50,12 @@
        (~'display-name [~'_] ~(str name))
        om.core/IRender
        (~'render [~'_] ~@body))))
+
+(defmacro go+
+  [& body]
+  `(go
+     (try
+       ~@body
+       (catch js/Error e#
+         (merror e#)
+         (throw e#)))))
