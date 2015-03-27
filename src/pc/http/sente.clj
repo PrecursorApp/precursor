@@ -624,7 +624,7 @@
                                          (replay/reproduce-transaction *db*)
                                          (datomic-common/frontend-document-transaction)
                                          :read-only-data))
-                                     :lru/threshold 2000))
+                                     :lru/threshold 10000))
 
 (defn get-frontend-tx-data [db tx-id]
   (binding [*db* db]
