@@ -69,9 +69,8 @@
   .flexy(column);
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   width: 100%;
-  margin-bottom: 1em;
+  margin-top: .75 * @tile;
   border: 1px solid @gray_lightest;
-  border-radius: 4px;
   overflow: hidden;
   a {
     box-shadow: none;
@@ -82,7 +81,7 @@
   .dribbble-head {
     .flexy(flex-start);
     font-size: 12px;
-    line-height: 15px;
+    line-height: 1;
   }
   .dribbble-stats {
     .flexy(center);
@@ -126,7 +125,8 @@
       color: @white;
       background-color: #8aba56;
     }
-    .icon-dribbble {
+    .icon-dribbble,
+    .icon-github {
       margin-right: .75em;
     }
   }

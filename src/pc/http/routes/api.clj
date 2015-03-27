@@ -90,7 +90,12 @@
 
 (def get-dribbble-profile (memo/ttl crm/get-dribbble-profile :ttl/threshold (* 1000 60 60)))
 
-(def dribbble-user-whitelist #{"dannykingme" "lobanovskiy"})
+(def dribbble-user-whitelist #{"lobanovskiy"
+                               "dhotlo2"
+                               "fatihturan"
+                               "kenseals"
+                               "jyo208"
+                               "dannykingme"})
 
 ;; proxy for the dribbble API, to be used by our dribbble cards on the blog
 (defpage dribbble-profile "/api/v1/dribbble/users/:username" [req]

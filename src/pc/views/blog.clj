@@ -43,8 +43,7 @@
   [
    {:slug "ideas-are-made-with-precursor"
     :unique-id "ideas-are-made-with-precursor"
-    :display-in-overview true
-    :pub-date (clj-time.format/parse "Wed, 25 Mar 2015 08:00:00 -0800")}
+    :display-in-overview false}
    {:slug "clojure-is-a-product-design-tool"
     :unique-id "clojure-is-a-product-design-tool"
     :display-in-overview true
