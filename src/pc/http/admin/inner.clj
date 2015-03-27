@@ -49,6 +49,12 @@
                                 [:h2 "User Growth"]
                                 (admin-content/users-graph)])))
 
+(defpage graphs "/growth" [req]
+  (hiccup/html (content/layout {}
+                               [:div {:style "padding: 40px"}
+                                [:h2 "Growth"]
+                                (admin-content/growth)])))
+
 (defpage clients "/clients" [req]
   {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})
 

@@ -99,6 +99,57 @@
                       [:title (title user-count)]])
                    user-counts)])))
 
+(defn growth-graph [user-counts]
+  [:table {:border 1}
+   [:tr
+    [:th "End of month"]
+    [:th "User count"]
+    [:th "Total growth"]
+    [:th "New user count"]
+    [:th "New user growth"]
+    [:th "Avg/Day"]]
+   (for [[way-before before after] (partition 3 1 (cons {:user-count 0} user-counts))]
+     [:tr
+      [:td (format "%s-%s"
+                   (clj-time.format/unparse (clj-time.format/formatter "MMM dd") (:time before))
+                   (clj-time.format/unparse (clj-time.format/formatter "MMM dd") (:time after)))]
+      [:td (:user-count after)]
+      [:td (when (pos? (:user-count before))
+             (format "%.2f%%" (float (* 100 (/ (- (:user-count after) (:user-count before))
+                                               (:user-count before))))))]
+      [:td (- (:user-count after) (:user-count before))]
+      [:td (when (pos? (:user-count before))
+             (format "%.2f%%" (float (* 100 (/ (- (- (:user-count after) (:user-count before))
+                                                  (- (:user-count before) (:user-count way-before)))
+                                               (- (:user-count before) (:user-count way-before)))))))]
+      [:td (int (/ (- (:user-count after) (:user-count before))
+                   (time/number-of-days-in-the-month (:time before))))]])])
+
+(defn growth []
+  (let [db (pcd/default-db)
+        earliest (time/date-time 2014 11)
+        now (time/now)
+        times (take-while #(time/before? % (time/plus now (time/months 1)))
+                          (map #(time/plus earliest (time/months %))
+                               (range)))
+        user-counts (map (fn [time]
+                           {:time time
+                            :user-count (count-users db time)})
+                         times)
+        rolling-times (reverse (take-while #(time/after? % earliest)
+                                           (map #(time/minus now (time/months %))
+                                                (range))))
+        rolling-counts (map (fn [time]
+                           {:time time
+                            :user-count (count-users db time)})
+                            rolling-times)]
+    (list
+     [:style "td, th { padding: 5px; text-align: right }"]
+     [:h4 "Growth per month"]
+     [:p (growth-graph user-counts)]
+     [:h4 "Growth per rolling month"]
+     [:p (growth-graph rolling-counts)])))
+
 (defn early-access-users []
   (let [db (pcd/default-db)
         requested (d/q '{:find [[?t ...]]
