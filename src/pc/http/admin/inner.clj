@@ -50,7 +50,7 @@
                                 [:h2 "User Growth"]
                                 (admin-content/users-graph)])))
 
-(defpage graphs "/growth" [req]
+(defpage growth "/growth" [req]
   (hiccup/html (content/layout {}
                                [:div {:style "padding: 40px"}
                                 [:h2 "Growth"]
