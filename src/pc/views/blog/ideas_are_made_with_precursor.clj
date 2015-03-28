@@ -11,23 +11,59 @@
    [:svg {:class "iconpile" :viewBox "0 0 100 100"}
     [:path {:class "fill-github" :d "M50,0C22.4,0,0,22.4,0,50c0,22.1,14.3,40.8,34.2,47.4 c2.5,0.5,3.4-1.1,3.4-2.4c0-1.2,0-4.3-0.1-8.5c-13.9,3-16.8-6.7-16.8-6.7c-2.3-5.8-5.6-7.3-5.6-7.3c-4.5-3.1,0.3-3,0.3-3 c5,0.4,7.7,5.2,7.7,5.2c4.5,7.6,11.7,5.4,14.6,4.2c0.5-3.2,1.7-5.4,3.2-6.7c-11.1-1.3-22.8-5.6-22.8-24.7c0-5.5,1.9-9.9,5.1-13.4 c-0.5-1.3-2.2-6.3,0.5-13.2c0,0,4.2-1.3,13.7,5.1c4-1.1,8.3-1.7,12.5-1.7c4.2,0,8.5,0.6,12.5,1.7c9.5-6.5,13.7-5.1,13.7-5.1 c2.7,6.9,1,12,0.5,13.2c3.2,3.5,5.1,8,5.1,13.4c0,19.2-11.7,23.4-22.8,24.7c1.8,1.5,3.4,4.6,3.4,9.3c0,6.7-0.1,12.1-0.1,13.7 c0,1.3,0.9,2.9,3.4,2.4C85.7,90.8,100,72.1,100,50C100,22.4,77.6,0,50,0z"}]]])
 
-(defn featured [username document]
+(defn featured-dribbble [username document]
   [:figure
    (common/dribbble-card username)
-   (let [animation   (cdn-path (str "/blog/ideas-are-made-with-precursor/" username ".gif"))
-         placeholder (cdn-path (str "/blog/ideas-are-made-with-precursor/" username "-placeholder.gif"))]
+   (let [animated    (cdn-path (str "/blog/ideas-are-made-with-precursor/" username ".gif"))
+         placeholder (cdn-path (str "/blog/ideas-are-made-with-precursor/" username "-placeholder.gif"))
+         swap-img    "this.getElementsByTagName('img')[0].src = '%s'"]
      [:div.gif-shot {:data-content "Preview."
-                     :onmouseover  (format "this.getElementsByTagName('img')[0].src = '%s'" animation)
-                     :ontouchstart (format "this.getElementsByTagName('img')[0].src = '%s'" animation)
-                     :onmouseout   (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)
-                     :ontouchend   (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)}
+                     :onmouseover  (format swap-img animated)
+                     :ontouchstart (format swap-img animated)
+                     :onmouseout   (format swap-img placeholder)
+                     :ontouchend   (format swap-img placeholder)}
     [:a {:href (str "https://precursorapp.com" "/document/" document)
-         :data-caption "Remake."}
+         :data-caption "Remake."
+         :target "_blank"}
+     [:img {:src placeholder}]]])])
+
+(defn featured-github [username document]
+  [:figure
+   [:div#vendor.dribbble-card
+    [:div.dribbble-head
+     [:div.dribbble-stats
+      [:div.dribbble-stat
+       [:strong "0"]
+       [:span " Followers"]]]
+     [:div.dribbble-photo
+      [:a {:href (str "https://github.com/" username)}
+       [:img.dribbble-avatar {:src "https://avatars0.githubusercontent.com/u/3895824"}]]]
+     [:div.dribbble-follow
+      [:a.dribbble-button {:href (str "https://github.com/" username)}
+       logo-github
+       [:strong "Follow"]]]]
+    [:div.dribbble-body
+     [:div.dribbble-info
+      [:a.dribbble-name {:href (str "https://github.com/" username)}
+       [:strong "Peter Berg"]]]
+     [:div.dribbble-link
+      [:span "New York"]]]]
+   (let [animated    (cdn-path (str "/blog/ideas-are-made-with-precursor/" username ".gif"))
+         placeholder (cdn-path (str "/blog/ideas-are-made-with-precursor/" username "-placeholder.gif"))
+         swap-img    "this.getElementsByTagName('img')[0].src = '%s'"]
+     [:div.gif-shot {:data-content "Preview."
+                     :onmouseover  (format swap-img animated)
+                     :ontouchstart (format swap-img animated)
+                     :onmouseout   (format swap-img placeholder)
+                     :ontouchend   (format swap-img placeholder)}
+    [:a {:href (str "https://precursorapp.com" "/document/" document)
+         :data-caption "Remake."
+         :target "_blank"}
      [:img {:src placeholder}]]])])
 
 (defn ideas-are-made-with-precursor []
   {:title "Ideas are made with Precursor."
-   :blurb "What we found most interesting about the Product Hunt traffic was not its volume, but its quality of feedback..."
+   :blurb ""
    :author "Danny"
    :image ""
    :body
@@ -38,44 +74,20 @@
          "There are fascinating things being made with Precursor everyday. "
          "I even put together a list of my favorites. "]]
 
-    (featured "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")
-    (featured "dhotlo2"     "17592197311947?cx=629&cy=376&z=1&replay=true")
-    (featured "fatihturan"  "17592197311774?cx=707&cy=502&z=1&replay=true")
-    (featured "jyo208"      "17592197310592?cx=584&cy=581&z=0.55&replay=true")
-    (featured "kenseals"    "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
-
-    [:figure
-     [:div#vendor.dribbble-card
-      [:div.dribbble-head
-       [:div.dribbble-stats
-        [:div.dribbble-stat
-         [:strong "0"]
-         [:span " Followers"]]]
-       [:div.dribbble-photo
-        [:a {:href "https://github.com/peteratticusberg"}
-         [:img.dribbble-avatar {:src "https://avatars0.githubusercontent.com/u/3895824"}]]]
-       [:div.dribbble-follow
-        [:a.dribbble-button {:href "https://github.com/peteratticusberg"}
-         logo-github
-         [:strong "Follow"]]]]
-      [:div.dribbble-body
-       [:div.dribbble-info
-        [:a.dribbble-name {:href "https://github.com/peteratticusberg"}
-         [:strong "Peter Berg"]]]
-       [:div.dribbble-link
-        [:span "New York"]]]]
-     (let [animation   (cdn-path (str "/blog/ideas-are-made-with-precursor/peteratticusberg.gif"))
-           placeholder (cdn-path (str "/blog/ideas-are-made-with-precursor/peteratticusberg-placeholder.gif"))]
-       [:div.gif-shot {:data-content "Preview."
-                       :onmouseover  (format "this.getElementsByTagName('img')[0].src = '%s'" animation)
-                       :ontouchstart (format "this.getElementsByTagName('img')[0].src = '%s'" animation)
-                       :onmouseout   (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)
-                       :ontouchend   (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)}
-      [:a {:href "https://precursorapp.com/document/17592197310304?cx=687&cy=636&z=0.8&replay=true"
-           :data-caption "Remake."}
-       [:img {:src placeholder}]]])]
-
-    (featured "tooks_" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
+    [:article [:h3 "Dave was here."]]
+    (featured-dribbble "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")
+    [:article [:h3 "Why so artsy?"]]
+    (featured-dribbble "dhotlo2" "17592197311947?cx=629&cy=376&z=1&replay=true")
+    [:article [:h3 "That poor avatar."]]
+    (featured-dribbble "fatihturan" "17592197311774?cx=707&cy=502&z=1&replay=true")
+    [:article [:h3 "Would watch again."]]
+    (featured-dribbble "jyo208" "17592197310592?cx=584&cy=581&z=0.55&replay=true")
+    [:article [:h3 "Cost of living."]]
+    (featured-dribbble "kenseals" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
+    [:article [:h3 "Solid spatial awareness."]]
+    (featured-github "peteratticusberg" "17592197310304?cx=687&cy=636&z=0.8&replay=true")
+    [:article [:h3 "Teammate helps out."]]
+    (featured-dribbble "tooks_" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
 
     [:article
      [:h3 "What's with the anonymity?"]
