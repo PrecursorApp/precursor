@@ -121,7 +121,9 @@
 
 (defmethod handle-keyboard-shortcut :default
   [state shortcut-name]
-  (assoc-in state state/current-tool-path shortcut-name))
+  (if (contains? state/tools shortcut-name)
+    (assoc-in state state/current-tool-path shortcut-name)
+    state))
 
 (defn vec-index [v elem]
   (let [result (atom nil)
@@ -200,6 +202,42 @@
              (not (keyboard/arrow-shortcut-active? new-state)))
         cancel-drawing))))
 
+(defmulti handle-keyboard-shortcut-after (fn [state shortcut-name] shortcut-name))
+
+(defmethod handle-keyboard-shortcut-after :default
+  [state shortcut-name]
+  nil)
+
+(defn next-font-size [current-size direction]
+  (let [grow? (keyword-identical? :grow direction)
+        comp (if grow? > <)]
+    (or (first (filter #(comp % current-size)
+                       (sort-by (if grow? identity -) (conj state/font-options current-size))))
+        current-size)))
+
+(defn set-text-font-sizes [state direction]
+  (some->> (get-in state [:selected-eids :selected-eids])
+    (map #(d/entity @(:db state) %))
+    (filter #(keyword-identical? (:layer/type %) :layer.type/text))
+    (map (fn [layer]
+           (let [font-size (next-font-size (:layer/font-size layer state/default-font-size) direction)]
+             {:db/id (:db/id layer)
+              :layer/font-size font-size
+              :layer/end-x (+ (:layer/start-x layer) (utils/measure-text-width (:layer/text layer)
+                                                                               font-size
+                                                                               (:layer/font-family layer state/default-font-family)))
+              :layer/end-y (- (:layer/start-y layer) font-size)})))
+    seq
+    (d/transact! (:db state))))
+
+(defmethod handle-keyboard-shortcut-after :shrink-text
+  [state shortcut-name]
+  (set-text-font-sizes state :shrink))
+
+(defmethod handle-keyboard-shortcut-after :grow-text
+  [state shortcut-name]
+  (set-text-font-sizes state :grow))
+
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
   ;; TODO: better way to handle this
@@ -207,6 +245,10 @@
              (or (= key-set #{"backspace"})
                  (= key-set #{"del"})))
     (put! (get-in current-state [:comms :controls]) [:deleted-selected]))
+  (let [shortcuts (get-in current-state state/keyboard-shortcuts-path)]
+    (when (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
+      (handle-keyboard-shortcut-after current-state (first (filter #(-> shortcuts % (contains? key-set))
+                                                                   (keys shortcuts))))))
   (maybe-notify-subscribers! current-state nil nil))
 
 (defn update-mouse [state x y]
