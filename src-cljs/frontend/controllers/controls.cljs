@@ -680,9 +680,11 @@
                                                               :layer/end-y (apply max ys)}))
                                                          (when (= layer-type :layer.type/text)
                                                            {:layer/end-x (+ (get-in layer [:layer/start-x])
-                                                                            (get-in layer [:bbox :width]))
+                                                                            (/ (get-in layer [:bbox :width])
+                                                                               (:zf (:camera state))))
                                                             :layer/end-y (- (get-in layer [:layer/start-y])
-                                                                            (get-in layer [:bbox :height]))}))))])
+                                                                            (/ (get-in layer [:bbox :height])
+                                                                               (:zf (:camera state))))}))))])
       (assoc-in [:camera :moving?] false))))
 
 
