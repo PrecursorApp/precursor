@@ -101,7 +101,7 @@
          "And if we're trying to show it off to a group, why not target a huge group? "
          "Like Reddit, perhaps? "]]
 
-    [:figure [:img {:src "http://placehold.it/800x600"}]]
+    [:figure [:img {:src "https://placehold.it/800x600"}]]
 
     [:article
      [:h3 "That's it for now."]
