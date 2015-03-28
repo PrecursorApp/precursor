@@ -493,26 +493,15 @@
     om/IDisplayName (display-name [_] "Canvas Text Input")
     om/IDidMount
     (did-mount [_]
-      (om/set-state! owner
-                     :input-min-width
-                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
       (.focus (om/get-node owner "input")))
     om/IDidUpdate
     (did-update [_ _ _]
-      (utils/maybe-set-state! owner :input-min-width
-                              (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
       (.focus (om/get-node owner "input")))
-    om/IInitState
-    (init-state [_]
-      {:input-min-width 0})
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
-            text-style {:font-size (:layer/font-size layer 20)}]
+            text-style {:font-size (:layer/font-size layer state/default-font-size)}]
         (dom/g #js {:key "text-input-group"}
-          (svg-element (assoc layer
-                              :className "text-size-helper"
-                              :ref "text-size-helper"))
           (dom/foreignObject #js {:width "100%"
                                   :height "100%"
                                   :x (:layer/start-x layer)
@@ -542,8 +531,12 @@
                                       :placeholder "Type something..."
                                       :value (or (:layer/text layer) "")
                                       ;; TODO: defaults for each layer when we create them
-                                      :style (clj->js (merge text-style
-                                                             {:width (+ 50 (max 160 (om/get-state owner :input-min-width)))}))
+                                      :style #js {:font-size (:layer/font-size layer state/default-font-size)
+                                                  :width (+ 50 (max 160
+                                                                    (utils/measure-text-width
+                                                                     (or (:layer/text layer) "")
+                                                                     (:layer/font-size layer state/default-font-size)
+                                                                     (:layer/font-family layer state/default-font-family))))}
                                       :ref "input"
                                       :onChange #(cast! :text-layer-edited {:value (.. % -target -value)})}))))))))
 
