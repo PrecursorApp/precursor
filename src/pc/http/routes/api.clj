@@ -102,7 +102,8 @@
   (let [username (get-in req [:params :username])]
     (if (contains? dribbble-user-whitelist username)
       {:body (json/encode (get-dribbble-profile username))
-       :status 200}
+       :status 200
+       :headers {"Content-Type" "application/json; charset=utf-8"}}
       (throw+ {:status 400
                :public-message "Sorry, this user isn't on the whitelist."}))))
 
