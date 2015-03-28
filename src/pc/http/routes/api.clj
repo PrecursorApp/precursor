@@ -95,6 +95,7 @@
                                "fatihturan"
                                "kenseals"
                                "jyo208"
+                               "tooks_"
                                "dannykingme"})
 
 ;; proxy for the dribbble API, to be used by our dribbble cards on the blog

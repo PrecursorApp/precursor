@@ -41,8 +41,8 @@
     (featured "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")
     (featured "dhotlo2"     "17592197311947?cx=629&cy=376&z=1&replay=true")
     (featured "fatihturan"  "17592197311774?cx=707&cy=502&z=1&replay=true")
-    (featured "kenseals"    "17592197311539?cx=517&cy=392&replay=true&tx-count=59&z=1")
     (featured "jyo208"      "17592197310592?cx=584&cy=581&z=0.55&replay=true")
+    (featured "kenseals"    "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
 
     [:figure
      [:div#vendor.dribbble-card
@@ -75,36 +75,7 @@
            :data-caption "Remake."}
        [:img {:src placeholder}]]])]
 
-    [:figure
-     [:div#vendor.dribbble-card
-      [:div.dribbble-head
-       [:div.dribbble-stats
-        [:div.dribbble-stat
-         [:strong "0"]
-         [:span " Followers"]]]
-       [:div.dribbble-photo
-        [:a {:href "https://github.com/peteratticusberg"}
-         [:img.dribbble-avatar {:src "https://avatars0.githubusercontent.com/u/3895824"}]]]
-       [:div.dribbble-follow
-        [:a.dribbble-button {:href "https://github.com/peteratticusberg"}
-         logo-github
-         [:strong "Follow"]]]]
-      [:div.dribbble-body
-       [:div.dribbble-info
-        [:a.dribbble-name {:href "https://github.com/peteratticusberg"}
-         [:strong "Peter Berg"]]]
-       [:div.dribbble-link
-        [:span "New York"]]]]
-     (let [animation   (cdn-path (str "/blog/ideas-are-made-with-precursor/peteratticusberg.gif"))
-           placeholder (cdn-path (str "/blog/ideas-are-made-with-precursor/peteratticusberg-placeholder.gif"))]
-       [:div.gif-shot {:data-content "Preview."
-                       :onmouseover  (format "this.getElementsByTagName('img')[0].src = '%s'" animation)
-                       :ontouchstart (format "this.getElementsByTagName('img')[0].src = '%s'" animation)
-                       :onmouseout   (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)
-                       :ontouchend   (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)}
-      [:a {:href (str "/document/17592193910914") ; ?cx=678&cy=651&z=0.575&replay=true&overlay=start
-           :data-caption "Remake."}
-       [:img {:src placeholder}]]])]
+    (featured "tooks_" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
 
     [:article
      [:h3 "What's with the anonymity?"]
