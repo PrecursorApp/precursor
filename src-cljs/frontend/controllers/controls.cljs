@@ -359,10 +359,9 @@
       (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :text-layer-edited
-  [browser-state message {:keys [value bbox]} state]
+  [browser-state message {:keys [value]} state]
   (-> state
-    (assoc-in [:drawing :layers 0 :layer/text] value)
-    (assoc-in [:drawing :layers 0 :bbox] bbox)))
+    (assoc-in [:drawing :layers 0 :layer/text] value)))
 
 (defn det [[ax ay] [bx by] [x y]]
   (math/sign (- (* (- bx ax)
@@ -663,7 +662,7 @@
                                                 (#(if (:force-even? layer)
                                                     (layers/force-even %)
                                                     %))
-                                                (dissoc :points :force-even? :layer/current-x :layer/current-y :bbox)
+                                                (dissoc :points :force-even? :layer/current-x :layer/current-y)
                                                 (#(merge %
                                                          (when (= :circle (get-in state state/current-tool-path))
                                                            {:layer/rx (js/Math.abs (- (:layer/start-x %)
@@ -680,11 +679,11 @@
                                                               :layer/end-y (apply max ys)}))
                                                          (when (= layer-type :layer.type/text)
                                                            {:layer/end-x (+ (get-in layer [:layer/start-x])
-                                                                            (/ (get-in layer [:bbox :width])
-                                                                               (:zf (:camera state))))
+                                                                            (utils/measure-text-width (:layer/text layer)
+                                                                                                      (:layer/font-size layer state/default-font-size)
+                                                                                                      (:layer/font-family layer state/default-font-family)))
                                                             :layer/end-y (- (get-in layer [:layer/start-y])
-                                                                            (/ (get-in layer [:bbox :height])
-                                                                               (:zf (:camera state))))}))))])
+                                                                            (:layer/font-size layer state/default-font-size))}))))])
       (assoc-in [:camera :moving?] false))))
 
 
@@ -897,14 +896,11 @@
 
      :else nil)))
 
-(defn handle-text-layer-finished [state bbox]
-  (-> state
-    (update-in [:drawing :layers 0 :bbox] #(or bbox %))
-    (finalize-layer)))
+(def handle-text-layer-finished finalize-layer)
 
 (defmethod control-event :text-layer-finished
-  [browser-state message {:keys [bbox]} state]
-  (handle-text-layer-finished state bbox))
+  [browser-state message _ state]
+  (finalize-layer state))
 
 (defn handle-text-layer-finished-after [current-state]
   (let [db (:db current-state)
@@ -1071,9 +1067,7 @@
   (-> state
     (assoc-in [:drawing :layers] [(assoc layer
                                          :layer/current-x (:layer/start-x layer)
-                                         :layer/current-y (:layer/start-y layer)
-                                         :bbox {:width (js/Math.abs (- (:layer/start-x layer) (:layer/end-x layer)))
-                                                :height (js/Math.abs (- (:layer/start-y layer) (:layer/end-y layer)))})])
+                                         :layer/current-y (:layer/start-y layer))])
     (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)})
     (assoc-in [:editing-eids :editing-eids] #{(:db/id layer)})
     (assoc-in [:drawing :in-progress?] true)

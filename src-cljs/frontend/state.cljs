@@ -84,6 +84,8 @@
                          :show-landing? :overlays
                          :frontend-id-state]))))
 
+(def default-font-family "Roboto")
+(def default-font-size 20)
 (def user-path [:current-user])
 
 (def settings-path [:settings])

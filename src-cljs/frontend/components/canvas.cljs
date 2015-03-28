@@ -522,17 +522,13 @@
                            :onMouseDown #(.stopPropagation %)
                            :onWheel #(.stopPropagation %)
                            :onSubmit (fn [e]
-                                       (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
-                                         (cast! :text-layer-finished {:bbox {:width (.-width bbox)
-                                                                             :height (.-height bbox)}})
-                                         (utils/stop-event e)))
+                                       (cast! :text-layer-finished)
+                                       (utils/stop-event e))
                            :onMouseMove (when-not (:moving? layer)
                                           #(.stopPropagation %))
                            :onKeyDown #(cond (= "Enter" (.-key %))
-                                             (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
-                                               (cast! :text-layer-finished {:bbox {:width (.-width bbox)
-                                                                                   :height (.-height bbox)}})
-                                               (utils/stop-event %))
+                                             (do (cast! :text-layer-finished)
+                                                 (utils/stop-event %))
 
                                              (= "Escape" (.-key %))
                                              (do (cast! :cancel-drawing)
@@ -549,14 +545,7 @@
                                       :style (clj->js (merge text-style
                                                              {:width (+ 50 (max 160 (om/get-state owner :input-min-width)))}))
                                       :ref "input"
-                                      :onChange #(let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
-                                                   ;; this will always be a letter behind, but we sometimes
-                                                   ;; call text-layer-finished from a place that doesn't
-                                                   ;; have access to the DOM
-                                                   ;; TODO: can we save on focus-out instead?
-                                                   (cast! :text-layer-edited {:value (.. % -target -value)
-                                                                              :bbox {:width (.-width bbox)
-                                                                                     :height (.-height bbox)}}))}))))))))
+                                      :onChange #(cast! :text-layer-edited {:value (.. % -target -value)})}))))))))
 
 (defn layer-properties [{:keys [layer x y]} owner]
   (reify
