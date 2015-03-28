@@ -136,3 +136,9 @@
         request-map (if request (request-data request cust) {})
         data-maps [data-map trace-map request-map]]
     (send-payload (build-payload (token) data-maps))))
+
+(defn report-error
+  "Reports an exception at the 'error' level"
+  [error-string & [params]]
+  (let [data-map (base-data (profile/env) "error")]
+    (send-payload (build-payload (token) [data-map (assoc params :body {:message {:body error-string}})]))))

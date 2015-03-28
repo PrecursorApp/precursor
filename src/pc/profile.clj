@@ -92,3 +92,6 @@
 
 (defn allow-mismatched-servername? []
   (not (prod?)))
+
+(defn register-twilio-callbacks? []
+  (prod?))
