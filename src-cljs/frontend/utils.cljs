@@ -234,3 +234,18 @@
 
 (defn apply-map [f & args]
   (apply f (apply concat (butlast args) (last args))))
+
+(defn set-canvas-font
+  "Takes 2d context, font-size as number (in px), and font-family as string, returns context"
+  [context font-size font-family]
+  (set! (.-font context) (str font-size "px " font-family))
+  context)
+
+(defn measure-text-width
+  "Takes text as string, font-size as number (in px), and font-family as string"
+  [text font-size font-family]
+  (-> (goog.dom/getElement "text-sizer")
+    (.getContext "2d")
+    (set-canvas-font font-size font-family)
+    (.measureText text)
+    (.-width)))

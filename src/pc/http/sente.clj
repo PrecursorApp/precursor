@@ -9,6 +9,7 @@
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
+            [pc.cache :as cache]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
             [pc.datomic.web-peer :as web-peer]
@@ -663,18 +664,18 @@
       (log/infof "sending %s tx-ids for %s to %s" (count tx-ids) (:document/id ?data) client-id)
       (?reply-fn {:tx-ids tx-ids}))))
 
-(def ^:dynamic *db*)
-(defn frontend-tx-data* [tx-id]
-  (->> tx-id
-    (replay/reproduce-transaction *db*)
+(defn frontend-tx-data [db tx-id]
+  (-> (replay/reproduce-transaction db tx-id)
     (datomic-common/frontend-document-transaction)
-    :read-only-data))
-
-(def frontend-tx-data (memo/lru frontend-tx-data* :lru/threshold 10000))
+    :read-only-data
+    ;; remove entity-maps b/c easier to cache that way
+    (update-in [:tx-data] vec)
+    (dissoc :transaction/document)))
 
 (defn get-frontend-tx-data [db tx-id]
-  (binding [*db* db]
-    (frontend-tx-data tx-id)))
+  (cache/wrap-memcache
+   (str "pc.http.sente/frontend-tx-data-" tx-id)
+   frontend-tx-data db tx-id))
 
 (defmethod ws-handler :document/fetch-transaction [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)

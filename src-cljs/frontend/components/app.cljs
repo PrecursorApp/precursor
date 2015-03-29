@@ -32,6 +32,15 @@
 (def keymap
   (atom nil))
 
+(defn text-sizer [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Text sizer")
+    om/IRender
+    (render [_]
+      (dom/canvas #js {:id "text-sizer"
+                       :width 0
+                       :height 0}))))
+
 (defn app* [app owner]
   (reify
     om/IDisplayName (display-name [_] "App*")
@@ -48,6 +57,7 @@
            [:div#app.app {:class (str (frontend.overlay/app-overlay-class app)
                                       (when (:show-landing? app) " state-outer ")
                                       (if chat-opened? " chat-opened " " chat-closed "))}
+            (om/build text-sizer {})
             (om/build progress/progress-bar {} {:react-key "progress-bar"})
 
             (when (:show-landing? app)

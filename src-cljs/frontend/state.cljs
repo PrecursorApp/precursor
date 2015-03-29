@@ -47,7 +47,10 @@
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
                         :return-from-origin #{#{"2"}}
-                        :arrow-tool #{#{"ctrl" "shift"}}}
+                        :arrow-tool #{#{"ctrl" "shift"}}
+                        :shrink-text #{#{"-"} #{"["}}
+                        :grow-text #{#{"shift" "="}
+                                     #{"]"}}}
    :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}
@@ -83,6 +86,11 @@
                          :editing-eids :mouse
                          :show-landing? :overlays
                          :frontend-id-state]))))
+
+(def tools #{:pen :select :line :text :rect :circle})
+(def default-font-family "Roboto")
+(def default-font-size 20)
+(def font-options [12 16 20 24 32])
 
 (def user-path [:current-user])
 
