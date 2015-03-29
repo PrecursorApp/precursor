@@ -1,18 +1,19 @@
 (ns pc.init
   (:require pc.assets
+            pc.cache
             pc.datomic
+            pc.datomic.admin-db
             pc.datomic.migrations
             pc.datomic.schema
             pc.email
+            pc.http.admin
             pc.less
             pc.logging
             pc.models.chat-bot
             pc.nrepl
-            pc.server
-            pc.statsd
             pc.repl
-            pc.datomic.admin-db
-            pc.http.admin)
+            pc.server
+            pc.statsd)
   (:gen-class))
 
 (defn init-fns []
@@ -26,6 +27,7 @@
    #'pc.models.chat-bot/init
    #'pc.assets/init
    #'pc.email/init
+   #'pc.cache/init
    #'pc.server/init
    #'pc.datomic.admin-db/init
    #'pc.http.admin/init])
