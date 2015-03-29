@@ -63,67 +63,73 @@
 
 (defn ideas-are-made-with-precursor []
   {:title "Ideas are made with Precursor."
-   :blurb ""
+   :blurb "I'm exceedingly curious to see how people use Precursor. Recently we've been using an internal playback tool to learn about this..."
    :author "Danny"
    :image ""
    :body
    (list
     [:article
-     [:p "Precursor is a collaboration web app that makes prototyping effortless. "
-         "Although, lately I've noticed a lot of users ignore that last part. "
-         "There are fascinating things being made with Precursor everyday. "
-         "I even put together a list of my favorites. "]]
+     [:p "As our user base continues to grow, I'm exceedingly curious to see how people use Precursor. "
+         "Recently we've been using an internal playback tool to learn about this. "]
+     [:p "Today I'm excited to announce that we're now making this tool accessible to everyone. "
+         "I've curated the following examples to showcase some of its key uses. "]]
 
-    [:article [:h3 "Dave was here."]]
+    [:article
+     [:h3 "Keep moving forward."]
+     [:p  "This doc is a unique glimpse at the discipline it takes to be a great designer. "
+          "Eddie is well known for his exceptional work, and rather than waste time with elaborate sketches, he quickly opts for a simple placeholder to get the job done. "]]
     (featured-dribbble "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")
-    [:article [:h3 "Why so artsy?"]]
+
+    [:article
+     [:h3 "Why so serious?"]
+     [:p  "I like this illustration because it reminds me that work should be fun. "
+          "I also find it interesting how much detail Damir can achieve with each stroke. "]]
     (featured-dribbble "dhotlo2" "17592197311947?cx=629&cy=376&z=1&replay=true")
-    [:article [:h3 "That poor avatar."]]
+
+    [:article
+     [:h3 "Trim the trash."]
+     [:p  "This is something I'm seeing more people practice with Precursor—prototypes don't need many detail. "
+          "Watch Faith contemplate the value of that avatar, explore the idea, and ultimately remove it. "]]
     (featured-dribbble "fatihturan" "17592197311774?cx=707&cy=502&z=1&replay=true")
-    [:article [:h3 "Would watch again."]]
+
+    [:article
+     [:h3 "Iteration is important."]
+     [:p  "Without watching Justin build this prototype, it's hard to tell how many iterations we through. "
+          "Too many can be just as dangerous as too few, but I think this strikes a good balance. "]]
     (featured-dribbble "jyo208" "17592197310592?cx=584&cy=581&z=0.55&replay=true")
-    [:article [:h3 "Cost of living."]]
+
+    [:article
+     [:h3 "Cost of living."]
+     [:p  "Before Ken tried drawing any components, he got his content and spacing figured out. "
+          "Isolating important areas of your ideas is crucial for expressing them quickly. "]]
     (featured-dribbble "kenseals" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
-    [:article [:h3 "Solid spatial awareness."]]
+
+    [:article
+     [:h3 "Solid spatial awareness."]
+     [:p  "Well that was fast. "
+          "Peter made short work of this map by staying focused on his content—a great strategy for diagramming. "
+          "He figured out alignment and connections afterwards. "]]
     (featured-github "peteratticusberg" "17592197310304?cx=687&cy=636&z=0.8&replay=true")
-    [:article [:h3 "Teammate helps out."]]
+
+    [:article
+     [:h3 "Teammate helps out."]
+     [:p  "Mathieu used duplication to skip over the tedious areas of his idea. "
+          "He prioritized the unique aspects of his prototype by automating the others. "]]
     (featured-dribbble "tooks_" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
 
+    ; [:article
+    ;  [:h3 "Lastly, for Reddit."]
+    ;  [:p  "And just for fun I went ahead and made a little playback of my own for Alexis Ohanian. "
+    ;       "It features everyone's favorite alien mascot, Snoo. "
+    ;       "*tips fedora* "]]
+    ; (featured-dribbble "lobanovskiy" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
+
     [:article
-     [:h3 "What's with the anonymity?"]
-     [:p "Precursor is free for everyone to use. "
-         "That even includes users who don't sign up, so we get a lot of anonymous illustrations. "
-         "If one of these belongs to you send me an email. "
-         "The attribution will get updated and I'll even send you a custom t-shirt to say thanks. "]]
+     [:h3 "I'd wear that."]
+     [:p  "To thank these users for letting me use their work, I'm sending them all custom t-shirts displaying their prototypes. "
+          "I want to do this again soon, so if you make something cool, let me know. "
+          "Email danny@precursorapp.com with a link and if I feature it, you'll get a one-of-a-kind t-shirt! "]]
 
     [:figure [:img {:src (cdn-path "/blog/ideas-are-made-with-precursor/eddie-shirt.png")}]]
-
-    [:article
-     [:p "And by \"custom\" I mean the t-shirt will have your design on it. "
-         "I plan on doing more features like this in the future. "
-         "If you make something cool with Precursor email "
-         [:a {:href "#"} "danny@precursorapp.com"]
-         " with your mailing address and a link to the doc. "
-         "If it gets featured in the next post I'll ship you a one-of-a-kind t-shirt!"]]
-
-    [:article
-     [:h3 "I tried making one of my own."]
-     [:p "We implemented a new feature recently that lets users play back interactions that happened in their doc. "
-         "The main utility in this feature will come later, but in the meantime we thought it would be fun to play with in groups. "
-         "And if we're trying to show it off to a group, why not target a huge group? "
-         "Like Reddit, perhaps? "]]
-
-    [:figure [:img {:src "https://placehold.it/800x600"}]]
-
-    [:article
-     [:h3 "That's it for now."]
-     [:p "I had a lot of fun finding all of this cool stuff, and I didn't even get to showcase everything."
-         "I'm hoping to do this again soon, but it does take a considerable amount of time to sort through thousands of these. "
-         "You can help by sending me tips for amazing docs to take a look at. "
-         "So if you or your teammate make a really cool looking wireframe, illustration, etc. this week, tell me about it! "]]
-
-    ; [:figure
-    ;  [:a.img {:data-caption-black "I pile icons on top of each other, and then I toggle their visibility to compare."}
-    ;   [:img {:src (cdn-path "/blog/clojurescript-is-a-design-tool/illustrator-onoff.gif")}]]]
 
     )})
