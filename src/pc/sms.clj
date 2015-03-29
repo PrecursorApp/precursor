@@ -32,3 +32,11 @@
                                     {:StatusCallback (urls/twilio-status-callback)})
                                   (when image-url
                                     {:MediaUrl image-url}))}))
+
+(defn async-send-sms [phone-number body & {:keys [image-url callback]}]
+  (let [response-promise (promise)]
+    (send-off send-agent (fn [a]
+                           (let [resp (send-sms phone-number body :image-url image-url)]
+                             (deliver response-promise resp)
+                             (when callback (callback resp)))))
+    response-promise))
