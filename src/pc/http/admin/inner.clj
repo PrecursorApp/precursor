@@ -21,71 +21,69 @@
   (:import java.util.UUID))
 
 (defpage base "/admin" [req]
-  (hiccup/html (content/layout {}
-                               [:div {:style "padding: 40px"}
-                                [:div [:a {:href "/teams"} "Teams"]]
-                                [:div [:a {:href "/users"} "Users"]]
-                                [:div [:a {:href "/growth"} "Growth"]]
-                                [:div [:a {:href "/early-access"} "Early Access"]]
-                                [:div [:a {:href "/graphs"} "User Graphs"]]
-                                [:div [:a {:href "/clients"} "Clients"]]
-                                [:div [:a {:href "/occupied"} "Occupied"]]
-                                [:div [:a {:href "/interesting"} "Interesting"]]])))
+  (content/layout {}
+                  [:div {:style "padding: 40px"}
+                   [:div [:a {:href "/teams"} "Teams"]]
+                   [:div [:a {:href "/users"} "Users"]]
+                   [:div [:a {:href "/growth"} "Growth"]]
+                   [:div [:a {:href "/early-access"} "Early Access"]]
+                   [:div [:a {:href "/graphs"} "User Graphs"]]
+                   [:div [:a {:href "/clients"} "Clients"]]
+                   [:div [:a {:href "/occupied"} "Occupied"]]
+                   [:div [:a {:href "/interesting"} "Interesting"]]]))
 
 (defpage early-access "/early-access" [req]
-  (hiccup/html (content/layout {}
-                               [:div {:style "padding: 40px"}
-                                [:h2 "Early access"]
-                                (admin-content/early-access-users)])))
+  (content/layout {}
+                  [:div {:style "padding: 40px"}
+                   [:h2 "Early access"]
+                   (admin-content/early-access-users)]))
 
 (defpage teams "/teams" [req]
-  (hiccup/html (content/layout {}
-                               [:div {:style "padding: 40px"}
-                                [:h2 "Teams"]
-                                (admin-content/teams)])))
+  (content/layout {}
+                  [:div {:style "padding: 40px"}
+                   [:h2 "Teams"]
+                   (admin-content/teams)]))
 
 (defpage graphs "/graphs" [req]
-  (hiccup/html (content/layout {}
-                               [:div {:style "padding: 40px"}
-                                [:h2 "User Growth"]
-                                (admin-content/users-graph)])))
+  (content/layout {}
+                  [:div {:style "padding: 40px"}
+                   [:h2 "User Growth"]
+                   (admin-content/users-graph)]))
 
 (defpage growth "/growth" [req]
-  (hiccup/html (content/layout {}
-                               [:div {:style "padding: 40px"}
-                                [:h2 "Growth"]
-                                (admin-content/growth)])))
+  (content/layout {}
+                  [:div {:style "padding: 40px"}
+                   [:h2 "Growth"]
+                   (admin-content/growth)]))
 
 (defpage clients "/clients" [req]
-  {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})
+  {:status 200 :body (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs))})
 
 (defpage interesting "/interesting" [req]
-  (hiccup/html (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))))
+  (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10}))))
 
 (defpage interesting-count [:get "/interesting/:layer-count" {:layer-count #"[0-9]+"}] [layer-count]
-  (hiccup/html (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids (Integer/parseInt layer-count))))))
+  (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids (Integer/parseInt layer-count)))))
 
 (defpage user-activity "/user/:email" [req]
   (let [cust (->> req :params :email (cust-model/find-by-email (pcd/default-db)))]
     (if (seq cust)
-      (hiccup/html
-       (content/layout {}
-                       (admin-content/user-info cust)
-                       (admin-content/interesting (take 100 (doc-model/find-touched-by-cust (pcd/default-db) cust)))))
+      (content/layout {}
+                      (admin-content/user-info cust)
+                      (admin-content/interesting (take 100 (doc-model/find-touched-by-cust (pcd/default-db) cust))))
       {:status 404
        :body "Couldn't find user with that email"})))
 
 (defpage doc-activity "/document/:document-id" [req]
   (let [doc (->> req :params :document-id (Long/parseLong) (doc-model/find-by-id (pcd/default-db)))]
     (if (seq doc)
-      (hiccup/html
-       (content/layout {}
-                       (admin-content/doc-info doc)))
+      (content/layout {}
+                      (admin-content/doc-info doc))
       {:status 404
        :body "Couldn't find that document"})))
 
 (defpage users "/users" [req]
-  (hiccup/html (content/layout {} (admin-content/users))))
+  (content/layout {} (admin-content/users)))
 
 (defpage occupied "/occupied" [req]
   ;; TODO: fix whatever is causing this :(

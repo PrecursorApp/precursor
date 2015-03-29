@@ -125,27 +125,27 @@
 (defn render-page [slug]
   (let [post (when (post-exists? slug)
                ((post-fn slug)))]
-    (html (pc.views.content/layout
-           {:meta-title (:title post)
-            :meta-description (:blurb post)
-            :meta-image (:image post)}
-           [:div.page-blog
-            [:div.nav.nav-head ; keep up to date with outer/nav-head
-             [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} "Precursor"]
-             [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
-             [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
-             [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
-             [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]]
-            (if post
-              (single-post post)
-              (overview))
-            [:div.nav.nav-foot ; keep up to date with outer/nav-foot
-             [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} logomark]
-             [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
-             [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
-             [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
-             [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]
-             [:a.nav-link.nav-twitter {:href "https://twitter.com/PrecursorApp" :title "@PrecursorApp"} twitter]]]))))
+    (pc.views.content/layout
+     {:meta-title (:title post)
+      :meta-description (:blurb post)
+      :meta-image (:image post)}
+     [:div.page-blog
+      [:div.nav.nav-head ; keep up to date with outer/nav-head
+       [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} "Precursor"]
+       [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
+       [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
+       [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
+       [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]]
+      (if post
+        (single-post post)
+        (overview))
+      [:div.nav.nav-foot ; keep up to date with outer/nav-foot
+       [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} logomark]
+       [:a.nav-link.nav-home    {:href "/home"    :title "Home"}      "Home"]
+       [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
+       [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
+       [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]
+       [:a.nav-link.nav-twitter {:href "https://twitter.com/PrecursorApp" :title "@PrecursorApp"} twitter]]])))
 
 (defn slug->rss [slug pub-date unique-id]
   (let [post ((post-fn slug))]
