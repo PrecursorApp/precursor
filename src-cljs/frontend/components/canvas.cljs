@@ -134,6 +134,25 @@
                                                   text)))
                                   [] (str/split (:layer/text layer) #"\n")))))))
 
+;; debug method for showing text with bounding box
+#_(defmethod svg-element :layer.type/text
+    [layer]
+    (let [text-props (svg/layer->svg-text layer)]
+      (dom/g nil
+        (svg-element (assoc layer
+                            :layer/type :layer.type/rect
+                            :key (str (:db/id layer) "-text-bbox")
+                            :style #js {:stroke "yellow"}))
+        (-> text-props
+          (maybe-add-classes layer)
+          (clj->js)
+          (#(apply dom/text % (reduce (fn [tspans text]
+                                        (conj tspans (dom/tspan
+                                                      #js {:dy (if (seq tspans) "1em" "0")
+                                                           :x (:x text-props)}
+                                                      text)))
+                                      [] (str/split (:layer/text layer) #"\n"))))))))
+
 (defmethod svg-element :layer.type/line
   [layer]
   (-> (svg/layer->svg-line layer)
@@ -474,26 +493,15 @@
     om/IDisplayName (display-name [_] "Canvas Text Input")
     om/IDidMount
     (did-mount [_]
-      (om/set-state! owner
-                     :input-min-width
-                     (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
       (.focus (om/get-node owner "input")))
     om/IDidUpdate
     (did-update [_ _ _]
-      (utils/maybe-set-state! owner :input-min-width
-                              (.-width (.getBoundingClientRect (om/get-node owner "text-size-helper"))))
       (.focus (om/get-node owner "input")))
-    om/IInitState
-    (init-state [_]
-      {:input-min-width 0})
     om/IRender
     (render [_]
       (let [{:keys [cast!]} (om/get-shared owner)
-            text-style {:font-size (:layer/font-size layer 20)}]
+            text-style {:font-size (:layer/font-size layer state/default-font-size)}]
         (dom/g #js {:key "text-input-group"}
-          (svg-element (assoc layer
-                              :className "text-size-helper"
-                              :ref "text-size-helper"))
           (dom/foreignObject #js {:width "100%"
                                   :height "100%"
                                   :x (:layer/start-x layer)
@@ -503,17 +511,13 @@
                            :onMouseDown #(.stopPropagation %)
                            :onWheel #(.stopPropagation %)
                            :onSubmit (fn [e]
-                                       (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
-                                         (cast! :text-layer-finished {:bbox {:width (.-width bbox)
-                                                                             :height (.-height bbox)}})
-                                         (utils/stop-event e)))
+                                       (cast! :text-layer-finished)
+                                       (utils/stop-event e))
                            :onMouseMove (when-not (:moving? layer)
                                           #(.stopPropagation %))
                            :onKeyDown #(cond (= "Enter" (.-key %))
-                                             (let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
-                                               (cast! :text-layer-finished {:bbox {:width (.-width bbox)
-                                                                                   :height (.-height bbox)}})
-                                               (utils/stop-event %))
+                                             (do (cast! :text-layer-finished)
+                                                 (utils/stop-event %))
 
                                              (= "Escape" (.-key %))
                                              (do (cast! :cancel-drawing)
@@ -527,17 +531,14 @@
                                       :placeholder "Type something..."
                                       :value (or (:layer/text layer) "")
                                       ;; TODO: defaults for each layer when we create them
-                                      :style (clj->js (merge text-style
-                                                             {:width (+ 50 (max 160 (om/get-state owner :input-min-width)))}))
+                                      :style #js {:font-size (:layer/font-size layer state/default-font-size)
+                                                  :width (+ 50 (max 160
+                                                                    (utils/measure-text-width
+                                                                     (or (:layer/text layer) "")
+                                                                     (:layer/font-size layer state/default-font-size)
+                                                                     (:layer/font-family layer state/default-font-family))))}
                                       :ref "input"
-                                      :onChange #(let [bbox (.getBoundingClientRect (om/get-node owner "text-size-helper"))]
-                                                   ;; this will always be a letter behind, but we sometimes
-                                                   ;; call text-layer-finished from a place that doesn't
-                                                   ;; have access to the DOM
-                                                   ;; TODO: can we save on focus-out instead?
-                                                   (cast! :text-layer-edited {:value (.. % -target -value)
-                                                                              :bbox {:width (.-width bbox)
-                                                                                     :height (.-height bbox)}}))}))))))))
+                                      :onChange #(cast! :text-layer-edited {:value (.. % -target -value)})}))))))))
 
 (defn layer-properties [{:keys [layer x y]} owner]
   (reify
