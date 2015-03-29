@@ -90,7 +90,7 @@
 (def tools #{:pen :select :line :text :rect :circle})
 (def default-font-family "Roboto")
 (def default-font-size 20)
-(def font-options [16 20 32])
+(def font-options [12 16 20 24 32])
 
 (def user-path [:current-user])
 
