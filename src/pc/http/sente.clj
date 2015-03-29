@@ -664,16 +664,17 @@
       (?reply-fn {:tx-ids tx-ids}))))
 
 (def ^:dynamic *db*)
-(def memo-frontend-tx-data (memo/lru (fn [tx-id]
-                                       (->> tx-id
-                                         (replay/reproduce-transaction *db*)
-                                         (datomic-common/frontend-document-transaction)
-                                         :read-only-data))
-                                     :lru/threshold 10000))
+(defn frontend-tx-data* [tx-id]
+  (->> tx-id
+    (replay/reproduce-transaction *db*)
+    (datomic-common/frontend-document-transaction)
+    :read-only-data))
+
+(def frontend-tx-data (memo/lru frontend-tx-data* :lru/threshold 10000))
 
 (defn get-frontend-tx-data [db tx-id]
   (binding [*db* db]
-    (memo-frontend-tx-data tx-id)))
+    (frontend-tx-data tx-id)))
 
 (defmethod ws-handler :document/fetch-transaction [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
