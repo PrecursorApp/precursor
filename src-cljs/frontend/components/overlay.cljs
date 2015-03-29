@@ -353,7 +353,7 @@
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
-            invite-email (get-in app state/invite-email-path)]
+            invite-to (or (get-in app state/invite-to-path) "")]
         (html
           [:div.content
            [:h2.make
@@ -373,22 +373,26 @@
                (om/build share-url-input app)
 
                [:p.make
-                "Email a friend to invite them to collaborate."]
+                "Email or text a friend to invite them to collaborate:"]
                [:form.menu-invite-form.make
                 {:on-submit #(do (cast! :invite-submitted)
                                false)
                  :on-key-down #(when (= "Enter" (.-key %))
-                                 (cast! :email-invite-submitted)
+                                 (cast! :invite-submitted)
                                  false)}
                 [:input
                  {:type "text"
                   :required "true"
                   :data-adaptive ""
-                  :value (or invite-email "")
-                  :on-change #(cast! :invite-email-changed {:value (.. % -target -value)})}]
+                  :value (or invite-to "")
+                  :on-change #(cast! :invite-to-changed {:value (.. % -target -value)})}]
                 [:label
-                 {:data-placeholder "Collaborator's email"
-                  :data-placeholder-nil "What's your collaborator's email?"
+                 {:data-placeholder (cond (pos? (.indexOf invite-to "@"))
+                                          "Email address"
+                                          (= 10 (count (str/replace invite-to #"[^0-9]" "")))
+                                          "Phone number"
+                                          :else "Email address or phone number")
+                  :data-placeholder-nil "Email address or phone number?"
                   :data-placeholder-forgot "Don't forget to submit!"}]]))
            (when-let [response (first (get-in app (state/invite-responses-path (:document/id app))))]
              [:div response])
@@ -414,7 +418,6 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            invite-email (get-in app state/invite-email-path)
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)
             cant-edit-reason (cond (:team app)

@@ -138,7 +138,7 @@
 
 (def overlays-path [:overlays])
 
-(def invite-email-path [:invite-email])
+(def invite-to-path [:invite-to])
 (def permission-grant-email-path [:permission-grant-email])
 
 (defn invite-responses-path [doc-id]
