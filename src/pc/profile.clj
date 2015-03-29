@@ -92,3 +92,7 @@
 
 (defn allow-mismatched-servername? []
   (not (prod?)))
+
+
+(defn memcached-server []
+  (System/getenv "MEMCACHED_SERVER"))

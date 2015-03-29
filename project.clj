@@ -30,6 +30,7 @@
                                                                   org.slf4j/slf4j-api
                                                                   com.amazonaws/aws-java-sdk]]
                  [org.postgresql/postgresql "9.4-1200-jdbc41" :exclusions [org.slf4j/slf4j-simple]]
+                 [clojurewerkz/spyglass "1.1.0"]
 
                  [amazonica "0.3.12"]
 
