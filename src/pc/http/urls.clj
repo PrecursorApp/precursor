@@ -48,3 +48,6 @@
   (if-let [team (:document/team doc)]
     (doc-svg (:db/id doc) :subdomain (:team/subdomain team) :query query)
     (doc-svg (:db/id doc) :query query)))
+
+(defn twilio-status-callback []
+  (make-url "/hooks/twilio"))

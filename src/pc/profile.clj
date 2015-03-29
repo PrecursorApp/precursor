@@ -93,6 +93,8 @@
 (defn allow-mismatched-servername? []
   (not (prod?)))
 
+(defn register-twilio-callbacks? []
+  (prod?))
 
 (defn memcached-server []
   (System/getenv "MEMCACHED_SERVER"))

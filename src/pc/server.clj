@@ -8,13 +8,14 @@
             [immutant.web :as web]
             [pc.datomic :as pcd]
             [pc.http.datomic :as datomic]
+            [pc.http.handlers.custom-domain :as custom-domains]
             [pc.http.handlers.errors :as errors-handler]
             [pc.http.handlers.logging :as logging-handler]
             [pc.http.handlers.ssl :as ssl-handler]
-            [pc.http.handlers.custom-domain :as custom-domains]
             [pc.http.routes.api :as api]
             [pc.http.routes :as routes]
             [pc.http.routes.blog :as blog]
+            [pc.http.routes.twilio :as twilio]
             [pc.http.sente :as sente]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust-model]
@@ -22,8 +23,8 @@
             [pc.profile :as profile]
             [pc.rollbar :as rollbar]
             [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
-            [ring.middleware.params :refer (wrap-params)]
             [ring.middleware.keyword-params :refer (wrap-keyword-params)]
+            [ring.middleware.params :refer (wrap-params)]
             [ring.middleware.reload :refer (wrap-reload)]
             [ring.middleware.session.cookie :refer (cookie-store)]
             [ring.middleware.session :refer (wrap-session)])
@@ -76,6 +77,7 @@
   (-> (compojure.core/routes #'routes/app
                              #'api/app
                              #'blog/app
+                             #'twilio/app
                              (compojure.route/resources "/" {:root "public"
                                                              :mime-types {:svg "image/svg"}})
                              #'catch-all)

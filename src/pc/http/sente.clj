@@ -1,5 +1,6 @@
 (ns pc.http.sente
-  (:require [clj-statsd :as statsd]
+  (:require [clj-http.client :as http]
+            [clj-statsd :as statsd]
             [clj-time.core :as time]
             [clojure.core.async :as async]
             [clojure.core.memoize :as memo]
@@ -15,16 +16,18 @@
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
+            [pc.http.urls :as urls]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.access-request :as access-request-model]
             [pc.models.chat :as chat]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
-            [pc.models.layer :as layer]
+            [pc.models.layer :as layer-model]
             [pc.models.permission :as permission-model]
             [pc.models.team :as team-model]
             [pc.replay :as replay]
             [pc.rollbar :as rollbar]
+            [pc.sms :as sms]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
             [taoensso.sente :as sente]
@@ -313,7 +316,7 @@
     (log/infof "sending layers for %s to %s" document-id client-id)
     (send-fn client-id [:frontend/db-entities
                         {:document/id document-id
-                         :entities (map layer/read-api (layer/find-by-document (:db req) {:db/id document-id}))
+                         :entities (map layer-model/read-api (layer-model/find-by-document (:db req) {:db/id document-id}))
                          :entity-type :layer}])
 
     (log/infof "sending custs for %s to %s" document-id client-id)
@@ -511,6 +514,47 @@
             (notify-invite (str "Sorry! There was a problem sending the invite to " email)))))
 
       (notify-invite "Please sign up to send an invite."))))
+
+(defmethod ws-handler :frontend/sms-invite [{:keys [client-id ?data ?reply-fn] :as req}]
+  ;; This may turn out to be a bad idea, but error handling is done through creating chats
+  (check-document-access (-> ?data :document/id) req :admin)
+  (def myreq req)
+  (let [doc-id (-> ?data :document/id)
+        doc (doc-model/find-by-id (:db req) doc-id)
+        invite-loc (-> ?data :invite-loc)
+        chat-id (d/tempid :db.part/user)
+        cust (-> req :ring-req :auth :cust)
+        notify-invite (fn [body]
+                        (if (= :overlay invite-loc)
+                          ((:send-fn @sente-state) client-id
+                           [:frontend/invite-response {:document/id doc-id
+                                                       :response body}])))]
+    (if-let [cust (-> req :ring-req :auth :cust)]
+      (let [phone-number (-> ?data :phone-number)
+            stripped-phone-number (str/replace phone-number #"[^0-9]" "")]
+        (log/infof "%s sending an sms to %s on doc %s" (:cust/email cust) phone-number doc-id)
+        (try
+          (sms/async-send-sms stripped-phone-number
+                              (format "Come draw with me on Precursor: %s" (urls/from-doc doc))
+                              :image-url (when (and (contains? #{:document.privacy/public :document.privacy/read-only}
+                                                               (:document/privacy doc))
+                                                    (seq (layer-model/find-by-document (:db req) doc)))
+                                           (urls/png-from-doc doc))
+                              :callback (fn [resp]
+                                          (if (http/unexceptional-status? (:status resp))
+                                            (notify-invite (str "Sent text to " phone-number))
+                                            (do (notify-invite (str "Sorry! There was a problem sending the text to " phone-number))
+                                                (rollbar/report-error "Error sending sms" {:http-resp resp
+                                                                                           :request (:ring-req req)
+                                                                                           :cust (some-> req :ring-req :auth :cust)})
+                                                (log/errorf "Error sending sms: %s" resp)))))
+          (catch Exception e
+            (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
+            (log/error e)
+            (.printStackTrace e)
+            (notify-invite (str "Sorry! There was a problem sending the text to " phone-number)))))
+
+      (notify-invite "Please sign up to send a text."))))
 
 (defmethod ws-handler :frontend/change-privacy [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :owner)

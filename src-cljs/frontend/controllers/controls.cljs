@@ -1544,22 +1544,26 @@
   (-> state
     (overlay/add-overlay :team-settings)))
 
-(defmethod control-event :invite-email-changed
+(defmethod control-event :invite-to-changed
   [browser-state message {:keys [value]} state]
   (-> state
-      (assoc-in state/invite-email-path value)))
+      (assoc-in state/invite-to-path value)))
 
-(defmethod control-event :email-invite-submitted
+(defmethod control-event :invite-submitted
   [browser-state message _ state]
-  (assoc-in state state/invite-email-path nil))
+  (assoc-in state state/invite-to-path nil))
 
-(defmethod post-control-event! :email-invite-submitted
+(defmethod post-control-event! :invite-submitted
   [browser-state message _ previous-state current-state]
-  (let [email (get-in previous-state state/invite-email-path)
+  (let [to (get-in previous-state state/invite-to-path)
         doc-id (:document/id previous-state)]
-    (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
-                                                                   :email email
-                                                                   :invite-loc :overlay}])))
+    (if (pos? (.indexOf to "@"))
+      (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
+                                                                     :email to
+                                                                     :invite-loc :overlay}])
+      (sente/send-msg (:sente current-state) [:frontend/sms-invite {:document/id doc-id
+                                                                    :phone-number to
+                                                                    :invite-loc :overlay}]))))
 
 (defmethod control-event :permission-grant-email-changed
   [browser-state message {:keys [value]} state]
