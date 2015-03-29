@@ -1,5 +1,6 @@
 (ns pc.replay
-  (:require [datomic.api :as d]
+  (:require [clojure.set :as set]
+            [datomic.api :as d]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
             [pc.datomic.web-peer :as web-peer])
@@ -32,11 +33,11 @@
 (defn reproduce-transaction [db tx-id]
   (let [tx (d/entity db tx-id)]
     {:tx-data (tx-data tx)
+     :tx tx
      :db-after db}))
 
 (defn get-document-transactions
-  "Returns a lazy sequence of transactions for a document in order of db/txInstant.
-   Has :tx-data and :db-after fields"
+  "Returns a lazy sequence of transactions for a document in order of db/txInstant."
   [db doc]
   (map (partial reproduce-transaction db)
        (get-document-tx-ids db doc)))
@@ -46,37 +47,76 @@
     (map (fn [tx]
            (if (= (:a tx) a)
              (assoc tx
-                    :v (UUID. doc-id (web-peer/client-part (:v tx)))
-                    :a (d/entid (pcd/default-db) :frontend/id))
+                    :v (UUID. doc-id (web-peer/client-part (:v tx))))
              tx))
          txes)))
 
+(defn doc-id-attr->ref-attr [db {:keys [e v] :as d}]
+  (let [ent (d/entity db e)]
+    (cond (:layer/type ent) :layer/document
+          (:chat/body ent)  :chat/document
+          (:layer/name ent) :layer/document
+          (= :layer (:entity/type ent)) :layer/document
+          (:layer/end-x ent) :layer/document
+          :else (throw (Exception. (format "couldn't find attr for %s" d))))))
 
+(defn replace-document-ids [db txes]
+  (let [a (d/entid db :document/id)]
+    (map (fn [tx]
+           (if (= (:a tx) a)
+             (assoc tx
+                    :a (doc-id-attr->ref-attr (d/as-of db (if (:added tx)
+                                                            (:tx tx)
+                                                            (dec (:tx tx))))
+                                              tx))
+             tx))
+         txes)))
 
 (defn copy-transactions [db doc new-doc & {:keys [sleep-ms]
                                            :or {sleep-ms 1000}}]
   (let [conn (pcd/conn)
-        tx-datas (->> (get-document-transactions db doc)
-                   (map (fn [t]
-                          (->> (:tx-data t)
-                            (remove #(= (:e %) (:db/id t)))
-                            (map #(if (= (:v %) (:db/id doc))
-                                    (assoc % :v (:db/id new-doc))
-                                    %))
-                            (replace-frontend-ids db (:db/id new-doc))))))
-        eid-translations (-> (apply concat (map #(map :e %) tx-datas))
-                           set
+        txes (->> (get-document-transactions db doc)
+               (map (fn [tx]
+                      (update-in tx
+                                 [:tx-data]
+                                 (fn [tx-data]
+                                   (->> tx-data
+                                     (remove #(= (:e %) (:db/id (:tx tx))))
+                                     (map #(if (= (:v %) (:db/id doc))
+                                             (assoc % :v (:db/id new-doc))
+                                             %))
+                                     (replace-frontend-ids db (:db/id new-doc))
+                                     (replace-document-ids db)))))))
+        eid-translations (-> (reduce (fn [acc {:keys [tx-data]}]
+                                       (set/union acc (set (map :e tx-data))))
+                                     #{} txes)
                            (disj (:db/id doc))
                            (zipmap (repeatedly #(d/tempid :db.part/user)))
-                           (assoc (:db/id doc) (:db/id new-doc)))]
-    (doseq [tx-data tx-datas]
-      (def my-tx-data tx-data)
-      (let [txid (d/tempid :db.part/tx)]
-        @(d/transact conn (conj (map #(-> %
-                                        (update-in [:e] eid-translations)
-                                        pcd/datom->transaction)
-                                     tx-data)
-                                {:db/id txid
-                                 :transaction/document (:db/id new-doc)
-                                 :transaction/broadcast true}))
-        (Thread/sleep sleep-ms)))))
+                           (assoc (:db/id doc) (:db/id new-doc)))
+        reverse-eid-translations (set/map-invert eid-translations)
+        new-eids (reduce (fn [new-eid-trans tx]
+                           (if-not (seq (:tx-data tx))
+                             new-eid-trans
+                             (let [txid (d/tempid :db.part/tx)
+                                   tempids (map #(get eid-translations %)
+                                                (remove #(get new-eid-trans %)
+                                                        (map :e (:tx-data tx))))
+                                   new-tx @(d/transact conn (conj (map #(-> %
+                                                                          (update-in [:e] (fn [e] (or (get new-eid-trans e)
+                                                                                                      (get eid-translations e))))
+                                                                          pcd/datom->transaction)
+                                                                       (:tx-data tx))
+                                                                  (merge
+                                                                   {:db/id txid
+                                                                    :transaction/document (:db/id new-doc)}
+                                                                   (when (:transaction/broadcast (:tx tx))
+                                                                     {:transaction/broadcast true}))))]
+                               (merge new-eid-trans
+                                      (zipmap (map #(get reverse-eid-translations %) tempids)
+                                              (map #(d/resolve-tempid (:db-after new-tx) (:tempids new-tx) %) tempids))))))
+                         {} txes)]
+    @(d/transact conn (map (fn [e]
+                             [:db/add e :frontend/id (UUID. (:db/id new-doc) e)])
+                           (remove #(:frontend/id (d/entity db %))
+                                   (vals new-eids))))
+    new-doc))

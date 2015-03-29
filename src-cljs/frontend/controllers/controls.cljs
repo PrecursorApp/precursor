@@ -121,7 +121,9 @@
 
 (defmethod handle-keyboard-shortcut :default
   [state shortcut-name]
-  (assoc-in state state/current-tool-path shortcut-name))
+  (if (contains? state/tools shortcut-name)
+    (assoc-in state state/current-tool-path shortcut-name)
+    state))
 
 (defn vec-index [v elem]
   (let [result (atom nil)
@@ -200,6 +202,42 @@
              (not (keyboard/arrow-shortcut-active? new-state)))
         cancel-drawing))))
 
+(defmulti handle-keyboard-shortcut-after (fn [state shortcut-name] shortcut-name))
+
+(defmethod handle-keyboard-shortcut-after :default
+  [state shortcut-name]
+  nil)
+
+(defn next-font-size [current-size direction]
+  (let [grow? (keyword-identical? :grow direction)
+        comp (if grow? > <)]
+    (or (first (filter #(comp % current-size)
+                       (sort-by (if grow? identity -) (conj state/font-options current-size))))
+        current-size)))
+
+(defn set-text-font-sizes [state direction]
+  (some->> (get-in state [:selected-eids :selected-eids])
+    (map #(d/entity @(:db state) %))
+    (filter #(keyword-identical? (:layer/type %) :layer.type/text))
+    (map (fn [layer]
+           (let [font-size (next-font-size (:layer/font-size layer state/default-font-size) direction)]
+             {:db/id (:db/id layer)
+              :layer/font-size font-size
+              :layer/end-x (+ (:layer/start-x layer) (utils/measure-text-width (:layer/text layer)
+                                                                               font-size
+                                                                               (:layer/font-family layer state/default-font-family)))
+              :layer/end-y (- (:layer/start-y layer) font-size)})))
+    seq
+    (d/transact! (:db state))))
+
+(defmethod handle-keyboard-shortcut-after :shrink-text
+  [state shortcut-name]
+  (set-text-font-sizes state :shrink))
+
+(defmethod handle-keyboard-shortcut-after :grow-text
+  [state shortcut-name]
+  (set-text-font-sizes state :grow))
+
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
   ;; TODO: better way to handle this
@@ -207,6 +245,10 @@
              (or (= key-set #{"backspace"})
                  (= key-set #{"del"})))
     (put! (get-in current-state [:comms :controls]) [:deleted-selected]))
+  (let [shortcuts (get-in current-state state/keyboard-shortcuts-path)]
+    (when (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
+      (handle-keyboard-shortcut-after current-state (first (filter #(-> shortcuts % (contains? key-set))
+                                                                   (keys shortcuts))))))
   (maybe-notify-subscribers! current-state nil nil))
 
 (defn update-mouse [state x y]
@@ -359,10 +401,9 @@
       (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
 (defmethod control-event :text-layer-edited
-  [browser-state message {:keys [value bbox]} state]
+  [browser-state message {:keys [value]} state]
   (-> state
-    (assoc-in [:drawing :layers 0 :layer/text] value)
-    (assoc-in [:drawing :layers 0 :bbox] bbox)))
+    (assoc-in [:drawing :layers 0 :layer/text] value)))
 
 (defn det [[ax ay] [bx by] [x y]]
   (math/sign (- (* (- bx ax)
@@ -663,7 +704,7 @@
                                                 (#(if (:force-even? layer)
                                                     (layers/force-even %)
                                                     %))
-                                                (dissoc :points :force-even? :layer/current-x :layer/current-y :bbox)
+                                                (dissoc :points :force-even? :layer/current-x :layer/current-y)
                                                 (#(merge %
                                                          (when (= :circle (get-in state state/current-tool-path))
                                                            {:layer/rx (js/Math.abs (- (:layer/start-x %)
@@ -680,9 +721,11 @@
                                                               :layer/end-y (apply max ys)}))
                                                          (when (= layer-type :layer.type/text)
                                                            {:layer/end-x (+ (get-in layer [:layer/start-x])
-                                                                            (get-in layer [:bbox :width]))
+                                                                            (utils/measure-text-width (:layer/text layer)
+                                                                                                      (:layer/font-size layer state/default-font-size)
+                                                                                                      (:layer/font-family layer state/default-font-family)))
                                                             :layer/end-y (- (get-in layer [:layer/start-y])
-                                                                            (get-in layer [:bbox :height]))}))))])
+                                                                            (:layer/font-size layer state/default-font-size))}))))])
       (assoc-in [:camera :moving?] false))))
 
 
@@ -895,14 +938,11 @@
 
      :else nil)))
 
-(defn handle-text-layer-finished [state bbox]
-  (-> state
-    (update-in [:drawing :layers 0 :bbox] #(or bbox %))
-    (finalize-layer)))
+(def handle-text-layer-finished finalize-layer)
 
 (defmethod control-event :text-layer-finished
-  [browser-state message {:keys [bbox]} state]
-  (handle-text-layer-finished state bbox))
+  [browser-state message _ state]
+  (finalize-layer state))
 
 (defn handle-text-layer-finished-after [current-state]
   (let [db (:db current-state)
@@ -1069,9 +1109,7 @@
   (-> state
     (assoc-in [:drawing :layers] [(assoc layer
                                          :layer/current-x (:layer/start-x layer)
-                                         :layer/current-y (:layer/start-y layer)
-                                         :bbox {:width (js/Math.abs (- (:layer/start-x layer) (:layer/end-x layer)))
-                                                :height (js/Math.abs (- (:layer/start-y layer) (:layer/end-y layer)))})])
+                                         :layer/current-y (:layer/start-y layer))])
     (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)})
     (assoc-in [:editing-eids :editing-eids] #{(:db/id layer)})
     (assoc-in [:drawing :in-progress?] true)

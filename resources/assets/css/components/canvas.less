@@ -184,7 +184,8 @@
 .text-layer {
   user-select: none;
   fill: @gray_light;
-  transition: @run @bezier_deform;
+  transition+: fill @run @bezier_deform;
+  transition+: font-size @run_fast @bezier_deform;
   &.editable {
     &:hover {
       fill: @color_select_hover;

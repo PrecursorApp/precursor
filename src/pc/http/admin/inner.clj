@@ -25,6 +25,7 @@
                                [:div {:style "padding: 40px"}
                                 [:div [:a {:href "/teams"} "Teams"]]
                                 [:div [:a {:href "/users"} "Users"]]
+                                [:div [:a {:href "/growth"} "Growth"]]
                                 [:div [:a {:href "/early-access"} "Early Access"]]
                                 [:div [:a {:href "/graphs"} "User Graphs"]]
                                 [:div [:a {:href "/clients"} "Clients"]]
@@ -48,6 +49,12 @@
                                [:div {:style "padding: 40px"}
                                 [:h2 "User Growth"]
                                 (admin-content/users-graph)])))
+
+(defpage growth "/growth" [req]
+  (hiccup/html (content/layout {}
+                               [:div {:style "padding: 40px"}
+                                [:h2 "Growth"]
+                                (admin-content/growth)])))
 
 (defpage clients "/clients" [req]
   {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})

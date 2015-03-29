@@ -75,37 +75,6 @@
            :data-caption "Remake."}
        [:img {:src placeholder}]]])]
 
-    [:figure
-     [:div#vendor.dribbble-card
-      [:div.dribbble-head
-       [:div.dribbble-stats
-        [:div.dribbble-stat
-         [:strong "0"]
-         [:span " Followers"]]]
-       [:div.dribbble-photo
-        [:a {:href "https://github.com/peteratticusberg"}
-         [:img.dribbble-avatar {:src "https://avatars0.githubusercontent.com/u/3895824"}]]]
-       [:div.dribbble-follow
-        [:a.dribbble-button {:href "https://github.com/peteratticusberg"}
-         logo-github
-         [:strong "Follow"]]]]
-      [:div.dribbble-body
-       [:div.dribbble-info
-        [:a.dribbble-name {:href "https://github.com/peteratticusberg"}
-         [:strong "Peter Berg"]]]
-       [:div.dribbble-link
-        [:span "New York"]]]]
-     (let [animation   (cdn-path (str "/blog/ideas-are-made-with-precursor/peteratticusberg.gif"))
-           placeholder (cdn-path (str "/blog/ideas-are-made-with-precursor/peteratticusberg-placeholder.gif"))]
-       [:div.gif-shot {:data-content "Preview."
-                       :onmouseover  (format "this.getElementsByTagName('img')[0].src = '%s'" animation)
-                       :ontouchstart (format "this.getElementsByTagName('img')[0].src = '%s'" animation)
-                       :onmouseout   (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)
-                       :ontouchend   (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)}
-      [:a {:href (str "/document/17592193910914") ; ?cx=678&cy=651&z=0.575&replay=true&overlay=start
-           :data-caption "Remake."}
-       [:img {:src placeholder}]]])]
-
     [:article
      [:h3 "What's with the anonymity?"]
      [:p "Precursor is free for everyone to use. "
@@ -130,7 +99,7 @@
          "And if we're trying to show it off to a group, why not target a huge group? "
          "Like Reddit, perhaps? "]]
 
-    [:figure [:img {:src "http://placehold.it/800x600"}]]
+    [:figure [:img {:src "https://placehold.it/800x600"}]]
 
     [:article
      [:h3 "That's it for now."]

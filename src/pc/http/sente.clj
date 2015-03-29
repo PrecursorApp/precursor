@@ -516,7 +516,8 @@
   (let [doc-id (-> ?data :document/id)
         cust (-> req :ring-req :auth :cust)
         ;; XXX: only if they try to change it to private
-        _ (assert (contains? (:flags cust) :flags/private-docs))
+        _ (assert (or (:document/team (doc-model/find-by-id (:db req) doc-id))
+                      (contains? (:flags cust) :flags/private-docs)))
         ;; letting datomic's schema do validation for us, might be a bad idea?
         setting (-> ?data :setting)
         annotations {:transaction/document doc-id
@@ -624,7 +625,7 @@
                                          (replay/reproduce-transaction *db*)
                                          (datomic-common/frontend-document-transaction)
                                          :read-only-data))
-                                     :lru/threshold 2000))
+                                     :lru/threshold 10000))
 
 (defn get-frontend-tx-data [db tx-id]
   (binding [*db* db]
