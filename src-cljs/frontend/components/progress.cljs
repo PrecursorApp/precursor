@@ -8,13 +8,18 @@
 
 (defn progress-bar [app owner]
   (reify
+    om/IDisplayName
+    (display-name [_] "Progress Bar")
     om/IRender
     (render [_]
       (let [progress (cursors/observe-progress owner)]
         (html
          [:div.progress-bar {:class (when (:active progress) "active")}
-          [:div.progress {:style {:width (if (:active progress)
-                                           (str (:percent progress) "%")
-                                           "100%")
+          [:div.progress {:style {:width "100%"
+                                  :transform (str "translate("
+                                                  (if (:active progress)
+                                                    (str (- (:percent progress) 100) "%")
+                                                    0)
+                                                  ")")
                                   :transition-duration (str (+ 16 (:expected-tick-duration progress 0))
                                                             "ms")}}]])))))
