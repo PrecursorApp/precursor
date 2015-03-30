@@ -179,17 +179,22 @@
                        (dom/tr nil
                          (dom/td nil display-name)
                          (dom/td #js {:className "number" } render-count)
-                         (dom/td #js {:className "number" } (when mount-count (gstring/format "%2d" mount-count)))
-                         (dom/td #js {:className "number" } last-mount-ms)
-                         (dom/td #js {:className "number" } (when last-render-ms (gstring/format "%2d" last-render-ms)))
-                         (dom/td #js {:className "number" } average-mount-ms)
-                         (dom/td #js {:className "number" } (when average-render-ms (gstring/format "%2d" average-render-ms)))
-                         (dom/td #js {:className "number" } max-mount-ms)
-                         (dom/td #js {:className "number" } (when max-render-ms (gstring/format "%2d" max-render-ms)))
-                         (dom/td #js {:className "number" } min-mount-ms)
-                         (dom/td #js {:className "number" } (when min-render-ms (gstring/format "%2d" min-render-ms)))
-                         (dom/td #js {:className "number" } mount-std-dev)
-                         (dom/td #js {:className "number" } (when render-std-dev (gstring/format "%2d" render-std-dev))) )))
+                         (dom/td #js {:className "number" } (when mount-count (gstring/format "%4d" mount-count)))
+
+                         (dom/td #js {:className "number" } last-render-ms)
+                         (dom/td #js {:className "number" } (when last-mount-ms (gstring/format "%3d" last-mount-ms)))
+
+                         (dom/td #js {:className "number" } average-render-ms)
+                         (dom/td #js {:className "number" } (when average-mount-ms (gstring/format "%3d" average-mount-ms)))
+
+                         (dom/td #js {:className "number" } max-render-ms)
+                         (dom/td #js {:className "number" } (when max-mount-ms (gstring/format "%3d" max-mount-ms)))
+
+                         (dom/td #js {:className "number" } min-render-ms)
+                         (dom/td #js {:className "number" } (when min-mount-ms (gstring/format "%3d" min-mount-ms)))
+
+                         (dom/td #js {:className "number" } render-std-dev)
+                         (dom/td #js {:className "number" } (when mount-std-dev (gstring/format "%3d" mount-std-dev))))))
               (dom/tfoot nil
                 (dom/tr nil
                   (dom/td #js {:className "instrumentation-info" :colSpan "13"}
