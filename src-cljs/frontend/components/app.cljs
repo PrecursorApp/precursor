@@ -72,7 +72,8 @@
                         {:react-key "outer"}))
 
             (when (and (keyword-identical? :document nav-point)
-                       (empty? (:cust app)))
+                       (empty? (:cust app))
+                       (seq (:frontend-id-state app)))
               (om/build drawing/signup-button {:db/id (:document/id app)}
                         {:react-key "signup-animation"}))
 
