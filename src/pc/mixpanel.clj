@@ -8,7 +8,7 @@
             [pc.profile :as profile]
             [pc.util.base64 :as base64]))
 
-(def mixpanel-agent (agent nil :error-mode :continue))
+(defonce mixpanel-agent (agent nil :error-mode :continue))
 
 (def endpoint "http://api.mixpanel.com")
 

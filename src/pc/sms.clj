@@ -13,13 +13,13 @@
 (def twilio-phone-number "+19207538241")
 (def base-url (format "https://api.twilio.com/2010-04-01/Accounts/%s/" twilio-sid))
 
-(def send-agent (agent nil
-                       :error-mode :continue
-                       :error-handler (fn [a e]
-                                        (println (Throwables/getStackTraceAsString e))
-                                        (flush)
-                                        (log/error e)
-                                        (rollbar/report-exception e))))
+(defonce send-agent (agent nil
+                           :error-mode :continue
+                           :error-handler (fn [a e]
+                                            (println (Throwables/getStackTraceAsString e))
+                                            (flush)
+                                            (log/error e)
+                                            (rollbar/report-exception e))))
 
 (defn send-sms [phone-number body & {:keys [image-url]}]
   (http/post (str base-url "Messages.json")
