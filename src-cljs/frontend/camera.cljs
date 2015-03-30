@@ -55,6 +55,34 @@
         (update-in [:x] (fn [x] (+ x (* (- x_s x) (- 1 (/ new-zf old-zf))))))
         (update-in [:y] (fn [y] (+ y (* (- y_s y) (- 1 (/ new-zf old-zf)))))))))
 
+(defn x-left [camera viewport]
+  (/ (- (:x camera)) (:zf camera)))
+
+(defn x-right [camera viewport]
+  (+ (/ (:width viewport) (:zf camera)) (x-left camera viewport)))
+
+(defn y-top [camera viewport]
+  (/ (- (:y camera)) (:zf camera)))
+
+(defn y-bottom [camera viewport]
+  (+ (/ (:height viewport) (:zf camera)) (y-top camera viewport)))
+
+(defn top-left [camera viewport]
+  [(x-left camera viewport)
+   (y-top camera viewport)])
+
+(defn top-right [camera viewport]
+  [(x-right camera viewport)
+   (y-top camera viewport)])
+
+(defn bottom-left [camera viewport]
+  [(x-left camera viewport)
+   (y-bottom camera viewport)])
+
+(defn bottom-right [camera viewport]
+  [(x-right camera viewport)
+   (y-bottom camera viewport)])
+
 (defn move-camera [camera dx dy]
   (-> camera
    (update-in [:x] + dx)
