@@ -49,8 +49,7 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)
             chat-opened? (get-in app state/chat-opened-path)
             overlay-visible? (frontend.overlay/overlay-visible? app)
-            right-click-learned? (get-in app state/right-click-learned-path)
-            ]
+            right-click-learned? (get-in app state/right-click-learned-path)]
 
         (if-let [nav-point (:navigation-point app)]
           (html
@@ -74,7 +73,8 @@
             (when (and (keyword-identical? :document nav-point)
                        (empty? (:cust app))
                        (seq (:frontend-id-state app)))
-              (om/build drawing/signup-button {:db/id (:document/id app)}
+              (om/build drawing/signup-button {:document {:db/id (:document/id app)}
+                                               :camera (:camera app)}
                         {:react-key "signup-animation"}))
 
             (when overlay-visible?
