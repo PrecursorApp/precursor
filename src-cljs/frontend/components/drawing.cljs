@@ -17,12 +17,14 @@
   (update-in tick-state [:keyframes] #(apply (fnil conj #{}) % ticks)))
 
 (defn clear-subscriber [tick-state tick]
-  (add-tick tick-state tick (fn [owner]
-                              ((om/get-shared owner :cast!)
-                               :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                    :fields (merge state/subscriber-bot {:mouse-position nil
-                                                                                         :tool nil
-                                                                                         :show-mouse? false})}))))
+  (-> tick-state
+    (add-tick tick (fn [owner]
+                     ((om/get-shared owner :cast!)
+                      :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                                           :fields (merge state/subscriber-bot {:mouse-position nil
+                                                                                :tool nil
+                                                                                :show-mouse? false})})))
+    (annotate-keyframes tick)))
 
 (defn move-mouse [tick-state {:keys [start-tick end-tick start-x end-x start-y end-y tool]
                               :or {tool :rect}}]
