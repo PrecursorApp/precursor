@@ -664,13 +664,21 @@
       (log/infof "sending %s tx-ids for %s to %s" (count tx-ids) (:document/id ?data) client-id)
       (?reply-fn {:tx-ids tx-ids}))))
 
-(defn frontend-tx-data [db tx-id]
-  (-> (replay/reproduce-transaction db tx-id)
+(def ^:dynamic *db* nil)
+(defn memo-frontend-tx-data* [tx-id]
+  (-> (replay/reproduce-transaction *db* tx-id)
     (datomic-common/frontend-document-transaction)
     :read-only-data
     ;; remove entity-maps b/c easier to cache that way
     (update-in [:tx-data] vec)
     (dissoc :transaction/document)))
+
+(defonce memo-frontend-tx-data (memo/lru memo-frontend-tx-data
+                                         :lru/threshold 10000))
+
+(defn frontend-tx-data [db tx-id]
+  (binding [*db* db]
+    (memo-frontend-tx-data tx-id)))
 
 (defn get-frontend-tx-data [db tx-id]
   (cache/wrap-memcache
