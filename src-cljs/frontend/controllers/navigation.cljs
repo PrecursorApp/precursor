@@ -114,6 +114,13 @@
                                     db
                                     (db/reset-db! db initial-entities)))))))
 
+(defn play-replay? [args]
+  (and (get-in args [:query-params :replay])
+       (if-let [min-width (utils/inspect (some-> args :query-params :min-width js/parseInt))]
+         (> (.-width (goog.dom/getViewportSize))
+            min-width)
+         true)))
+
 (defmethod post-navigated-to! :document
   [history-imp navigation-point args previous-state current-state]
   (let [sente-state (:sente current-state)
@@ -121,7 +128,7 @@
     (when-let [prev-doc-id (:document/id previous-state)]
       (when (not= prev-doc-id doc-id)
         (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}])))
-    (if (get-in args [:query-params :replay])
+    (if (play-replay? args)
       (utils/apply-map replay/replay-and-subscribe
                        current-state
                        (-> {:sleep-ms 25
