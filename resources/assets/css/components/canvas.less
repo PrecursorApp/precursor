@@ -186,6 +186,9 @@
   fill: @gray_light;
   transition+: fill @run @bezier_deform;
   transition+: font-size @run_fast @bezier_deform;
+  &.signup-layer {
+    cursor: pointer;
+  }
   &.editable {
     &:hover {
       fill: @color_select_hover;
