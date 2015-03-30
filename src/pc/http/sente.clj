@@ -673,7 +673,7 @@
     (update-in [:tx-data] vec)
     (dissoc :transaction/document)))
 
-(defonce memo-frontend-tx-data (memo/lru memo-frontend-tx-data
+(defonce memo-frontend-tx-data (memo/lru memo-frontend-tx-data*
                                          :lru/threshold 10000))
 
 (defn frontend-tx-data [db tx-id]
