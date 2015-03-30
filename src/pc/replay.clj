@@ -10,11 +10,10 @@
   [[e a v tx added]]
   {:e e :a a :v v :tx tx :added added})
 
-(defn tx-data [transaction]
-  (->> (d/q '{:find [?e ?a ?v ?tx ?op]
-              :in [?log ?txid]
-              :where [[(tx-data ?log ?txid) [[?e ?a ?v ?tx ?op]]]]}
-            (d/log (pcd/conn)) (:db/id transaction))
+(defn tx-data [tx-id]
+  (->> (d/tx-range (d/log (pcd/conn)) tx-id (inc tx-id))
+    first
+    :data
     (map ->datom)
     set))
 
@@ -32,7 +31,7 @@
 
 (defn reproduce-transaction [db tx-id]
   (let [tx (d/entity db tx-id)]
-    {:tx-data (tx-data tx)
+    {:tx-data (tx-data tx-id)
      :tx tx
      :db-after db}))
 
