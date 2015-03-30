@@ -1025,6 +1025,7 @@
                              {:react-key "cursors"})
 
                    (om/build svg-layers {:tool tool
+                                         ;; we want this to re-render when doc changes
                                          :document/id (:document/id app)}
                              {:react-key "svg-layers"})
 
