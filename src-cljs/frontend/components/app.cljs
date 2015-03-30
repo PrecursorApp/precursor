@@ -92,7 +92,8 @@
                                                              [:layer-properties-menu]
                                                              [:menu]
                                                              [:client-id]
-                                                             [:cust-data]]
+                                                             [:cust-data]
+                                                             [:document/id]]
                                                             (keyboard/arrow-shortcut-state-keys app)))
                        {:react-key "canvas"})
 

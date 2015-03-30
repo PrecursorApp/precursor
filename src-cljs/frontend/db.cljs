@@ -4,11 +4,14 @@
             [frontend.datascript :as ds]
             [frontend.sente :as sente]
             [frontend.utils :as utils :include-macros true]
+            [frontend.utils.seq :refer (dissoc-in)]
             [taoensso.sente]))
 
 (def schema {:layer/child {:db/cardinality :db.cardinality/many}
              :layer/points-to {:db/cardinality :db.cardinality/many
                                :db/type :db.type/ref}})
+
+(defonce listeners (atom {}))
 
 (defn make-initial-db [initial-entities]
   (let [conn (d/create-conn schema)]
@@ -26,6 +29,16 @@
    (fn [tx-report]
      ;; TODO: figure out why I can send tx-report through controls ch
      ;; (cast! :db-updated {:tx-report tx-report})
+     (let [[eids attrs] (reduce (fn [[eids attrs] datom]
+                                  [(conj eids (:e datom))
+                                   (conj attrs (:a datom))])
+                                [#{} #{}] (:tx-data tx-report))]
+       (doseq [eid eids
+               [k callback] (get-in @listeners [db :entity-listeners (str eid)])]
+         (callback tx-report))
+       (doseq [attr attrs
+               [k callback] (get-in @listeners [db :attribute-listeners attr])]
+         (callback tx-report)))
      (when (first (filter #(= :server/timestamp (:a %)) (:tx-data tx-report)))
        (put! (:controls comms) [:chat-db-updated []]))
      (when (-> tx-report :tx-meta :can-undo?)
@@ -94,3 +107,15 @@
   [app-state n]
   (let [{:keys [entity-ids frontend-id-state]} (generate-entity-ids @(:db app-state) n (:frontend-id-state app-state))]
     {:entity-ids entity-ids :state (assoc app-state :frontend-id-state frontend-id-state)}))
+
+(defn add-entity-listener [conn eid key callback]
+  (swap! listeners assoc-in [conn :entity-listeners (str eid) key] callback))
+
+(defn add-attribute-listener [conn attribute key callback]
+  (swap! listeners assoc-in [conn :attribute-listeners attribute key] callback))
+
+(defn remove-entity-listener [conn eid key]
+  (swap! listeners dissoc-in [conn :entity-listeners (str eid) key]))
+
+(defn remove-attribute-listener [conn attribute key]
+  (swap! listeners dissoc-in [conn :attribute-listeners attribute key]))
