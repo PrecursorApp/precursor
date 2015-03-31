@@ -41,6 +41,9 @@
    to anyone with the direct URL. Time should be in the format Fri, 30 Jan 2015 01:12:00 -0800
    Be careful for daylight savings time!"
   [
+   {:slug "id-wear-that"
+    :unique-id "id-wear-that"
+    :display-in-overview false}
    {:slug "ideas-are-made-with-precursor"
     :unique-id "ideas-are-made-with-precursor"
     :display-in-overview true
