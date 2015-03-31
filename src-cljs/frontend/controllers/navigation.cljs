@@ -90,6 +90,13 @@
   [history-imp navigation-point args state]
   (handle-outer navigation-point args state))
 
+(defn play-replay? [args]
+  (and (get-in args [:query-params :replay])
+       (if-let [min-width (utils/inspect (some-> args :query-params :min-width js/parseInt))]
+         (> (.-width (goog.dom/getViewportSize))
+            min-width)
+         true)))
+
 (defmethod navigated-to :document
   [history-imp navigation-point args state]
   (let [doc-id (:document/id args)
@@ -101,7 +108,7 @@
                :db-listener-key (utils/uuid)
                :show-landing? false
                :frontend-id-state {}
-               :replay-interrupt-chan (when (get-in args [:query-params :replay])
+               :replay-interrupt-chan (when (play-replay? args)
                                         (async/chan)))
         (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
@@ -113,13 +120,6 @@
         (update-in [:db] (fn [db] (if (:initial-state state)
                                     db
                                     (db/reset-db! db initial-entities)))))))
-
-(defn play-replay? [args]
-  (and (get-in args [:query-params :replay])
-       (if-let [min-width (utils/inspect (some-> args :query-params :min-width js/parseInt))]
-         (> (.-width (goog.dom/getViewportSize))
-            min-width)
-         true)))
 
 (defmethod post-navigated-to! :document
   [history-imp navigation-point args previous-state current-state]
