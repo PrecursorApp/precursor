@@ -46,8 +46,9 @@
 (defn layout [view-data & content]
   [:html
    [:head
-    [:title (or (str (:meta-title view-data) " | Precursor")
-                "Precursor&mdash;fast prototyping web app, makes collaboration easy.")]
+    [:title (if-let [meta-title (:meta-title view-data)]
+              (str meta-title " | Precursor")
+              "Precursor&mdash;fast prototyping web app, makes collaboration easy.")]
     [:meta {:charset    "utf-8"}]
     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
 
