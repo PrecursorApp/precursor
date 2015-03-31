@@ -30,7 +30,8 @@
                                 [:div [:a {:href "/graphs"} "User Graphs"]]
                                 [:div [:a {:href "/clients"} "Clients"]]
                                 [:div [:a {:href "/occupied"} "Occupied"]]
-                                [:div [:a {:href "/interesting"} "Interesting"]]])))
+                                [:div [:a {:href "/interesting"} "Interesting"]]
+                                [:div [:a {:href "/upload"} "Upload to Google CDN"]]])))
 
 (defpage early-access "/early-access" [req]
   (hiccup/html (content/layout {}
@@ -102,6 +103,9 @@
                       (format "<p><a href=\"/document/%s\">%s</a> with %s users</p>" doc-id doc-id (count subs))))
                ["Nothing occupied right now :("]))
           "</body></html")})
+
+(defpage upload "/upload" [req]
+  (hiccup/html (content/layout {} (admin-content/upload-files))))
 
 
 

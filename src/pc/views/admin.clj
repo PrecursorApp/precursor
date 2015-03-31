@@ -7,6 +7,7 @@
             [hiccup.core :as h]
             [pc.datomic :as pcd]
             [pc.early-access]
+            [pc.gcs]
             [pc.http.sente :as sente]
             [pc.http.urls :as urls]
             [pc.models.cust :as cust-model]
@@ -441,3 +442,35 @@
      [:a {:href (urls/svg-from-doc doc)}
       [:img {:src (urls/svg-from-doc doc)
              :style "width: 100%; height: 100%"}]])))
+
+(defn upload-files []
+  (let [bucket "precursor"
+        acl "public-read"
+        expiration (time/plus (time/now) (time/days 1))
+        object-prefix ""
+        policy (pc.gcs/generate-policy-document {:bucket bucket
+                                                 :acl acl
+                                                 :expiration expiration
+                                                 :object-prefix object-prefix})]
+    (list
+     [:style "body { margin: 2em;}"]
+     [:form {:action (format "https://%s.storage.googleapis.com" bucket)
+             :method "post"
+             :enctype "multipart/form-data"
+             :onSubmit (format "this.submit(); event.preventDefault(); window.setTimeout(function () { window.location.assign('https://%s.storage.googleapis.com/' + document.getElementById('key').value)}, 10)"
+                               bucket)}
+      [:p "Upload file:"]
+      [:p [:input {:name "file" :type "file"}]]
+      [:p "Choose path (careful not to override an existing path):"]
+      [:p
+       (format "https://%s.storage.googleapis.com/" bucket)
+       [:input {:type "text"
+                :name "key"
+                :id "key"
+                :value ""}]]
+      [:input {:type "hidden" :name "bucket" :value bucket}]
+      [:input {:type "hidden" :name "GoogleAccessId" :value pc.gcs/access-id}]
+      [:input {:type "hidden" :name "acl" :value acl}]
+      [:input {:type "hidden" :name "policy" :value policy}]
+      [:input {:type "hidden" :name "signature" :value (pc.gcs/sign policy)}]
+      [:input {:type "submit" :value "Upload"}]])))
