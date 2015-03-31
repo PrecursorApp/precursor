@@ -798,7 +798,8 @@
           (when (keyboard/arrow-shortcut-active? app)
             (apply dom/g #js {:className "arrow-handles"
                               :key "arrow-handles"}
-                   (for [layer (ds/touch-all '[:find ?t :where [?t :layer/type :layer.type/rect]] db)]
+                   (for [layer (concat (ds/touch-all '[:find ?t :where [?t :layer/type :layer.type/rect]] db)
+                                       (ds/touch-all '[:find ?t :where [?t :layer/type :layer.type/text]] db))]
                      (om/build arrow-handle
                                (assoc layer
                                       :selected? (contains? selected-eids (:db/id layer)))
