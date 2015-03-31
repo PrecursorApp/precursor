@@ -38,14 +38,21 @@
 (defn serialize-entities [entities]
   (pr-str (mapv escape-entity entities)))
 
+(defn og-meta [prop content]
+  [:meta {:name prop
+          :property prop
+          :content content}])
+
 (defn layout [view-data & content]
   [:html
    [:head
-    [:title "Precursor&#8212;fast prototyping web app, makes collaboration easy."]
+    [:title (or (str (:meta-title view-data) " | Precursor")
+                "Precursor&mdash;fast prototyping web app, makes collaboration easy.")]
     [:meta {:charset    "utf-8"}]
     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
 
-    [:meta {:name       "description"     :content "Your wireframe should be easy to share with any developer on your team. Design fast with iPhone and iPad collaboration. Precursor is productive prototyping."}]
+    [:meta {:name "description" :content (or (:meta-description view-data)
+                                             "Your wireframe should be easy to share with any developer on your team. Design fast with iPhone and iPad collaboration. Precursor is productive prototyping.")}]
 
     [:meta {:name "viewport"                              :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
     [:meta {:name "apple-touch-fullscreen"                :content "yes"}]
@@ -59,33 +66,35 @@
     [:link {:href (cdn-path "/img/1242x2148.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 3)"}]
     [:link {:href (cdn-path "/img/2208x1182.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
 
-    [:meta {:name "og:card"         :content "summary"}]
+    (og-meta "twitter:card" "summary_large_image")
     (if-let [image-url (:meta-image view-data)]
-      [:meta {:name "og:image" :content image-url}]
-      (list [:meta {:name "og:image" :content (cdn-path "/img/precursor-logo.png")}]
-            [:meta {:name "og:image:width":content "1200"}]
-            [:meta {:name "og:image:height" :content "1200"}]))
-    [:meta {:name "og:site_name"    :content "Precursor"}]
-    [:meta {:name "og:title"        :content (or (:meta-title view-data)
-                                                 "Fast prototyping web app, makes collaboration easy.")}]
-    [:meta {:name "og:description"  :content (or (:meta-description view-data)
-                                                 "Precursor lets you prototype product design wireframes with a fast and simple web app.")}]
-    [:meta {:name "og:type"         :content "website"}]
-    [:meta {:name "og:url"          :content  (urls/root)}]
+      (og-meta "twitter:image:src" image-url)
+      (list (og-meta "twitter:image:src" (cdn-path "/img/precursor-logo.png"))
+            (og-meta "twitter:image:width" "1200")
+            (og-meta "twitter:image:height" "1200")))
+    (og-meta "twitter:site" "@PrecursorApp")
+    (og-meta "twitter:site:id" "2900854766")
+    (og-meta "twitter:title" (or (:meta-title view-data)
+                                 "Fast prototyping web app, makes collaboration easy."))
+    (og-meta "twitter:description" (or (:meta-description view-data)
+                                       "Precursor lets you prototype product design wireframes with a fast and simple web app."))
+    (og-meta "twitter:url" (or (:meta-url view-data)
+                               (urls/root)))
 
-    [:meta {:name "twitter:card"         :content "summary_large_image"}]
+    (og-meta "og:card" "summary")
     (if-let [image-url (:meta-image view-data)]
-      [:meta {:name "twitter:image" :content image-url}]
-      (list [:meta {:name "twitter:image:src"    :content (cdn-path "/img/precursor-logo.png")}]
-            [:meta {:name "twitter:image:width"  :content "1200"}]
-            [:meta {:name "twitter:image:height" :content "1200"}]))
-    [:meta {:name "twitter:site"         :content "@PrecursorApp"}]
-    [:meta {:name "twitter:site:id"      :content "2900854766"}]
-    [:meta {:name "twitter:title"        :content (or (:meta-title view-data)
-                                                      "Fast prototyping web app, makes collaboration easy.")}]
-    [:meta {:name "twitter:description"  :content (or (:meta-description view-data)
-                                                      "Precursor lets you prototype product design wireframes with a fast and simple web app.")}]
-    [:meta {:name "twitter:url"          :content (urls/root)}]
+      (og-meta "og:image" image-url)
+      (list (og-meta "og:image" (cdn-path "/img/precursor-logo.png"))
+            (og-meta "og:image:width" "1200")
+            (og-meta "og:image:height" "1200")))
+    (og-meta "og:site_name" "Precursor")
+    (og-meta "og:title" (or (:meta-title view-data)
+                            "Fast prototyping web app, makes collaboration easy."))
+    (og-meta "og:description" (or (:meta-description view-data)
+                                  "Precursor lets you prototype product design wireframes with a fast and simple web app."))
+    (og-meta "og:type" "website")
+    (og-meta  "og:url" (or (:meta-url view-data)
+                           (urls/root)))
 
     [:link {:rel "icon"             :href (cdn-path "/favicon.ico")}]
     [:link {:rel "apple-touch-icon" :href (cdn-path "/img/apple-touch-icon.png")}]

@@ -5,8 +5,7 @@
 ;; TODO: could we serve the blog on a separate port so that it acts like its own app?
 
 (defpage overview "/blog" [req]
-  {:status 200
-   :body (blog/render-page nil)})
+  (blog/render-page nil))
 
 (defpage rss-feed "/blog.rss" [req]
   {:status 200
@@ -15,7 +14,6 @@
 
 (defpage post "/blog/:slug" [req]
   (let [slug (-> req :params :slug)]
-    {:status 200
-     :body (blog/render-page slug)}))
+    (blog/render-page slug)))
 
 (def app (defpage/collect-routes))

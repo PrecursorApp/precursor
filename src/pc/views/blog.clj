@@ -132,7 +132,8 @@
     (html (pc.views.content/layout
            {:meta-title (:title post)
             :meta-description (:blurb post)
-            :meta-image (:image post)}
+            :meta-image (:image post)
+            :meta-url (urls/blog-url slug)}
            [:div.page-blog
             [:div.nav.nav-head ; keep up to date with outer/nav-head
              [:a.nav-link.nav-logo    {:href "/"        :title "Precursor"} "Precursor"]
