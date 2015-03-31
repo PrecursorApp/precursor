@@ -20,6 +20,9 @@
   (send-off add-agent (fn [a]
                         (c/add connection cache-key timeout value))))
 
+(defn safe-get [cache-key]
+  (deref (c/async-get @conn cache-key) 25 nil))
+
 (defn wrap-memcache
   "Doesn't cache nils"
   [cache-key f & args]

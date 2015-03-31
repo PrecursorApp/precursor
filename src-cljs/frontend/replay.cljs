@@ -83,7 +83,7 @@
 
 (defn replay-and-subscribe [state & {:keys [delay-ms sleep-ms tx-count] :as args}]
   (utils/go+
-   (case (utils/inspect (<! (utils/apply-map replay state args)))
+   (case (<! (utils/apply-map replay state args))
      ::interrupted nil
      ::error (do (fdb/reset-db! (:db state) nil)
                  (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state)))
