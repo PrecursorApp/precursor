@@ -29,6 +29,11 @@ if [ -z "$GPG_PASSPHRASE" ]; then
 fi
 
 # set up private network
+$host="web${number}"
+echo "${host} 127.0.0.1" >> /etc/hosts
+
+hostname $host
+
 private_ip="10.99.0.11${number}"
 echo "ifconfig_vtnet1=\"inet $private_ip netmask 255.255.0.0\"" >> /etc/rc.conf
 # hack to get the exit code we need :/
