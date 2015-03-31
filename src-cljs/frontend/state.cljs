@@ -50,6 +50,7 @@
                         :arrow-tool #{#{"ctrl" "shift"}}
                         :shrink-text #{#{"-"} #{"["}}
                         :grow-text #{#{"shift" "="}
+                                     #{"="}
                                      #{"]"}}}
    :drawing {:layers []}
    :current-user    nil
