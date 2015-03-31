@@ -665,6 +665,7 @@
       (?reply-fn {:tx-ids tx-ids}))))
 
 (def ^:dynamic *db* nil)
+(defonce circuit-breaker (atom nil))
 (defn memo-frontend-tx-data* [tx-id]
   (-> (replay/reproduce-transaction *db* tx-id)
     (datomic-common/frontend-document-transaction)
@@ -685,14 +686,25 @@
    (str "pc.http.sente/frontend-tx-data-" tx-id)
    frontend-tx-data db tx-id))
 
+(defn get-frontend-tx-data-from-cache [tx-id]
+  (or (get (memo/snapshot memo-frontend-tx-data) [tx-id])
+      (cache/safe-get (str "pc.http.sente/frontend-tx-data-" tx-id))))
+
 (defmethod ws-handler :document/fetch-transaction [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))
         tx-id (:tx-id ?data)]
     (if (= (:db/id doc) (:db/id (:transaction/document (d/entity (:db req) tx-id))))
-      (let [transaction (get-frontend-tx-data (:db req) tx-id)]
-        (log/infof "sending %s txes from %s for %s to %s" (count (:tx-data transaction)) tx-id (:document/id ?data) client-id)
-        (?reply-fn {:document/transaction transaction}))
+      (if @circuit-breaker
+        (let [transaction (get-frontend-tx-data-from-cache tx-id)]
+          (if transaction
+            (do (log/infof "sending %s txes from %s for %s to %s" (count (:tx-data transaction)) tx-id (:document/id ?data) client-id)
+                (?reply-fn {:document/transaction transaction}))
+            (do (log/infof "sending :chsk/timeout b/c circuit breaker was pulled")
+                (?reply-fn :chsk/timeout))))
+        (let [transaction (get-frontend-tx-data (:db req) tx-id)]
+          (log/infof "sending %s txes from %s for %s to %s" (count (:tx-data transaction)) tx-id (:document/id ?data) client-id)
+          (?reply-fn {:document/transaction transaction})))
       (throw+ {:status 403
                :error-msg "The document for the transaction doesn't match the requested document."
                :error-key :invalid-transaction-id}))))
