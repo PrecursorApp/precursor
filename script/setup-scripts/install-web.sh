@@ -29,8 +29,8 @@ if [ -z "$GPG_PASSPHRASE" ]; then
 fi
 
 # set up private network
-$host="web${number}"
-echo "${host} 127.0.0.1" >> /etc/hosts
+host="web${number}"
+echo "127.0.0.1 ${host}" >> /etc/hosts
 
 hostname $host
 
