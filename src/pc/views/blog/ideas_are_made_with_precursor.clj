@@ -78,32 +78,31 @@
      [:h3 "Keep moving forward."]
      [:p  "This doc is a unique glimpse at the discipline it takes to be a great designer. "
           "Eddie is well known for his exceptional work, and rather than waste time with elaborate sketches, he quickly opts for a simple placeholder to get the job done. "]]
-    ; (featured-dribbble "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")
     [:figure (common/card "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")]
 
     [:article
      [:h3 "Why so serious?"]
      [:p  "I like this illustration because it reminds me that work should be fun. "
           "I also find it interesting how much detail Damir can achieve with each stroke. "]]
-    (featured-dribbble "dhotlo2" "17592197311947?cx=629&cy=376&z=1&replay=true")
+    [:figure (common/card "dhotlo2" "17592197311947?cx=629&cy=376&z=1&replay=true")]
 
     [:article
      [:h3 "Trim the trash."]
      [:p  "This is something I'm seeing more people practice with Precursor—prototypes don't need many detail. "
           "Watch Faith contemplate the value of that avatar, explore the idea, and ultimately remove it. "]]
-    (featured-dribbble "fatihturan" "17592197311774?cx=707&cy=502&z=1&replay=true")
+    [:figure (common/card "fatihturan" "17592197311774?cx=707&cy=502&z=1&replay=true")]
 
     [:article
      [:h3 "Iteration is important."]
      [:p  "Without watching Justin build this prototype, it's hard to tell how many iterations we through. "
           "Too many can be just as dangerous as too few, but I think this strikes a good balance. "]]
-    (featured-dribbble "jyo208" "17592197310592?cx=584&cy=581&z=0.55&replay=true")
+    [:figure (common/card "jyo208" "17592197310592?cx=584&cy=581&z=0.55&replay=true")]
 
     [:article
      [:h3 "Cost of living."]
      [:p  "Before Ken tried drawing any components, he got his content and spacing figured out. "
           "Isolating important areas of your ideas is crucial for expressing them quickly. "]]
-    (featured-dribbble "kenseals" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
+    [:figure (common/card "kenseals" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")]
 
     [:article
      [:h3 "Solid spatial awareness."]
@@ -116,7 +115,7 @@
      [:h3 "Teammate helps out."]
      [:p  "Mathieu used duplication to skip over the tedious areas of his idea. "
           "He prioritized the unique aspects of his prototype by automating the others. "]]
-    (featured-dribbble "tooks_" "17592197347828?cx=982&cy=974&z=0.45&replay")
+    [:figure (common/card "tooks_" "17592197347828?cx=982&cy=974&z=0.45&replay")]
 
     ; [:article
     ;  [:h3 "Lastly, for Reddit."]
