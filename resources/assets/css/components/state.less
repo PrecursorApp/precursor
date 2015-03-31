@@ -3,19 +3,16 @@
 //
 .state-menu {
   .inner {
-    .outline(@color_menu_faint);
+    .shadow_canvas();
     cursor: pointer;
     background: @dye_outer;
-    box-shadow+: 0 8px 21px 0 fade(@black, 21);
     transition: @run_slower @bezier_deform;
     &:hover {
-      .outline(@color_menu_faint);
-      box-shadow+: 0 21px 34px 0 fade(@black, 21);
+      .shadow_canvas(hover);
       transition-duration: @run;
     }
     &:active {
-      .outline(@color_menu_faint);
-      box-shadow+: 0 5px 13px 0 fade(@black, 21);
+      .shadow_canvas(active);
       transition-duration: @run_fast;
     }
   }

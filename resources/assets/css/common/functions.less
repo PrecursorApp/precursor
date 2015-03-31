@@ -247,3 +247,18 @@
      .mq_640({ transform: translate3d(@0640, 0, 0) scale3d(.8, .8, 1);});
   }
 }
+.shadow_canvas(@state: default) {
+  // @border: fade(@black, (100 * @opacity_white_lightest));
+  @shadow: fade(@black, (100 * @opacity_white_light));
+  // .inline(@border);
+  .inline(@gray_lightest);
+  .default(@state) when (@state = default) {
+    box-shadow+: 0 8px 21px 0 @shadow;
+  }.default(@state);
+  .hover(@state) when (@state = hover) {
+    box-shadow+: 0 21px 34px 0 @shadow;
+  }.hover(@state);
+  .active(@state) when (@state = active) {
+    box-shadow+: 0 5px 13px 0 @shadow;
+  }.active(@state);
+}

@@ -65,12 +65,18 @@
     fill: @white; // 3rd-party brand color, don't override
   }
 }
+
+
+
+
 #vendor.dribbble-card {
   .flexy(column);
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  // .inline(@gray_lightest);
+  .outline(@gray_lightest);
+  // font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   width: 100%;
   margin-top: .75 * @tile;
-  border: 1px solid @gray_lightest;
+  // border: 1px solid @gray_lightest;
   overflow: hidden;
   a {
     box-shadow: none;
@@ -80,7 +86,8 @@
   }
   .dribbble-head {
     .flexy(flex-start);
-    font-size: 12px;
+    font-size: @font_size_small;
+    font-size: 1rem;
     line-height: 1;
   }
   .dribbble-stats {
@@ -88,7 +95,8 @@
     width: calc(~"50% -" (.50 * @tile));
     height: .75 * @tile;
     padding: .25 * @tile;
-    border-bottom: 1px solid @gray_lightest;
+    // border-bottom: 1px solid @gray_lightest;
+    box-shadow: 0 1px @gray_lightest;
   }
   .dribbble-stat {
     margin-right: .25 * @tile;

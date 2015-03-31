@@ -217,11 +217,21 @@
 .gif-shot {
   position: relative;
   color: @color_select;
-  border-right: 1px solid @gray_lightest;
-  border-bottom: 1px solid @gray_lightest;
-  border-left: 1px solid @gray_lightest;
+  // border-right: 1px solid @gray_lightest;
+  // border-bottom: 1px solid @gray_lightest;
+  // border-left: 1px solid @gray_lightest;
+  // box-shadow+:  0   1px @gray_lightest inset;
+
+  // box-shadow+:  0  -1px @gray_lightest inset;
+  // box-shadow+:  1px 0   @gray_lightest inset;
+  // box-shadow+: -1px 0   @gray_lightest inset;
+  .outline(@gray_lightest);
   overflow: hidden;
+
+  transition: box-shadow @run_slower @bezier_deform;
   &:hover {
+    .shadow_canvas(hover);
+    transition-duration: @run;
     &:after {
       opacity: 0;
     }
@@ -236,6 +246,10 @@
         transition+: font-size @run_fast @bezier_deform @run_fast;
       }
     }
+  }
+  &:active {
+    .shadow_canvas(active);
+    transition-duration: @run_fast;
   }
   &:after {
     .flexy(center, center);

@@ -78,7 +78,8 @@
      [:h3 "Keep moving forward."]
      [:p  "This doc is a unique glimpse at the discipline it takes to be a great designer. "
           "Eddie is well known for his exceptional work, and rather than waste time with elaborate sketches, he quickly opts for a simple placeholder to get the job done. "]]
-    (featured-dribbble "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")
+    ; (featured-dribbble "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")
+    [:figure (common/card "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")]
 
     [:article
      [:h3 "Why so serious?"]
@@ -115,7 +116,7 @@
      [:h3 "Teammate helps out."]
      [:p  "Mathieu used duplication to skip over the tedious areas of his idea. "
           "He prioritized the unique aspects of his prototype by automating the others. "]]
-    (featured-dribbble "tooks_" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")
+    (featured-dribbble "tooks_" "17592197347828?cx=982&cy=974&z=0.45&replay")
 
     ; [:article
     ;  [:h3 "Lastly, for Reddit."]

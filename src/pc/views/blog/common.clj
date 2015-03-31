@@ -114,3 +114,51 @@
       [:div.dribbble-link
        [:a.dribbble-site (dribbble-attrs class-map ["links" "web"] "href")
         [:span (dribbble-attrs class-map ["links" "web"] "innerText")]]]]]))
+
+(defn card-maker [username]
+  (let [props ["comments_received_count" "bio" "shots_count" "can_upload_shot" "followings_count"
+               "followers_url" "likes_received_count" "avatar_url" "username" "buckets_count"
+               "pro" "id" "projects_url" "name" "likes_url" "location" "buckets_url" "updated_at"
+               "html_url" "teams_count" "links" "likes_count" "shots_url" "following_url" "type"
+               "created_at" "teams_url" "followers_count" "rebounds_received_count" "projects_count"]
+        class-map (zipmap props (repeatedly #(str (UUID/randomUUID))))
+        profile-link (dribbble-attrs class-map "html_url" "href")]
+    [:div.card-maker.free-border.card-maker-dribbble
+     (dribbble-card-script class-map username)
+     [:div.card-maker-head.free-border
+      [:div.card-top.free-border
+       [:div.card-stat
+        [:span (dribbble-attrs class-map "shots_count" "innerText")]
+        [:span " shots"]]
+       [:div.card-stat
+        [:span (dribbble-attrs class-map "followers_count" "innerText")]
+        [:span " followers"]]]
+      [:div.card-photo
+       [:a profile-link
+        [:img.card-avatar (dribbble-attrs class-map "avatar_url" "src")]]]
+      [:div.card-top.free-border
+       [:a.card-follow profile-link
+        logo-dribbble
+        [:span "Follow"]]]]
+     [:div.card-maker-body
+      [:div.card-name (dribbble-attrs class-map "name" "innerText")]
+      [:div.card-link
+       [:a profile-link
+        [:span (str "@" username)]]]]]))
+
+(defn card-doc [username document]
+  (let [animated    (cdn-path (str "/blog/ideas-are-made-with-precursor/" username ".gif"))
+        placeholder (cdn-path (str "/blog/ideas-are-made-with-precursor/" username "-placeholder.gif"))
+        swap-img    "this.getElementsByTagName('img')[0].src = '%s'"]
+    [:a.card-doc.free-border {:href (str "https://precursorapp.com" "/document/" document)
+                              :target "_blank"
+                              :onmouseover  (format swap-img animated)
+                              :ontouchstart (format swap-img animated)
+                              :onmouseout   (format swap-img placeholder)
+                              :ontouchend   (format swap-img placeholder)}
+     [:img {:src placeholder}]]))
+
+(defn card [username document]
+  [:div.card
+   (card-doc username document)
+   (card-maker username)])
