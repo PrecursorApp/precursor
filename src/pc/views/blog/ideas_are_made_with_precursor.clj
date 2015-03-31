@@ -49,7 +49,9 @@
    :body
    (list
     [:article
-     [:p "As our user base continues to grow, I'm exceedingly curious to see how people use Precursor. "
+     [:p "As our user base continues to grow, I'm exceedingly curious to see how people use "
+         [:a {:href "/" :title "What's Precursor?"} "Precursor"]
+         ". "
          "Recently we've been using an internal playback tool to learn about this. "]
      [:p "Today I'm excited to announce that we're now making this tool accessible to everyone. "
          "I've curated the following examples to showcase some of its key uses. "]]
@@ -57,7 +59,9 @@
     [:article
      [:h3 "Keep moving forward."]
      [:p  "This doc is a unique glimpse at the discipline it takes to be a great designer. "
-          "Eddie is well known for his exceptional work, and rather than waste time with elaborate sketches, he quickly opts for a simple placeholder to get the job done. "]]
+          "Eddie is known for "
+          [:a {:href "https://dribbble.com/shots/1754995-SF-Dribbble-Meetup" :title "SF Dribbble Meetup"} "exceptional illustrations"]
+          ", but he saves time here using placeholders, rather than elaborate sketches. "]]
     [:figure (common/card "lobanovskiy" "17592197312062?cx=1044&cy=580&z=0.45&replay=true")]
 
     [:article
@@ -99,17 +103,16 @@
 
     [:article
      [:h3 "I'd wear that."]
-     [:p  "To thank these users for letting me show their work, I'm sending them all custom t-shirts displaying their prototypes. "
-          "I want to do this again soon, so if you make something cool, let me know. "
-          "Email "
-          [:a {:href (format "mailto:%s" (email/email-address "hi"))} "hi@precursorapp.com"]
-          " with a link and if it gets featured, you'll get a one-of-a-kind t-shirt! "]]
+     [:p  "To thank them for showing off their work, everyone featured today will recieve a free t-shirt displaying their unique designs. "]
+     [:p  "Got something interesting, made with " [:a {:href "/new" :title "Make something."} "Precursor"] "? "]
+     [:p  "Tweet " [:a {:href "https://twitter.com/PrecursorApp"} "@PrecursorApp"] " and include #madewithprecursor. "
+          " I'll send you a one-of-a-kind shirt for free, if we feature it next time! "]]
     [:figure [:img {:src (external-cdn-path "/blog/ideas-are-made-with-precursor/eddie-shirt.png")}]]
 
     [:article.blogpost-author
      [:p
       "Written by "
       [:a {:href "https://twitter.com/dannykingme"} "Danny King"]
-      "."]]
+      ". "]]
 
     )})
