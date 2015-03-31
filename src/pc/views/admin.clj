@@ -458,19 +458,22 @@
              :method "post"
              :enctype "multipart/form-data"
              :onSubmit (format "this.submit(); event.preventDefault(); window.setTimeout(function () { window.location.assign('https://%s.storage.googleapis.com/' + document.getElementById('key').value)}, 10)"
-                               bucket)}
-      [:p "Upload file:"]
-      [:p [:input {:name "file" :type "file"}]]
+                               bucket)
+             }
       [:p "Choose path (careful not to override an existing path):"]
       [:p
        (format "https://%s.storage.googleapis.com/" bucket)
        [:input {:type "text"
                 :name "key"
                 :id "key"
-                :value ""}]]
+                :value ""
+                :style "width: 500px"}]]
       [:input {:type "hidden" :name "bucket" :value bucket}]
       [:input {:type "hidden" :name "GoogleAccessId" :value pc.gcs/access-id}]
       [:input {:type "hidden" :name "acl" :value acl}]
       [:input {:type "hidden" :name "policy" :value policy}]
       [:input {:type "hidden" :name "signature" :value (pc.gcs/sign policy)}]
+      ;; must be last (!)
+      [:p "Upload file:"]
+      [:p [:input {:name "file" :type "file"}]]
       [:input {:type "submit" :value "Upload"}]])))
