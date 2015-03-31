@@ -1,5 +1,6 @@
 (ns frontend.components.drawing
   (:require [datascript :as d]
+            [frontend.camera :as cameras]
             [frontend.db :as ds]
             [frontend.state :as state]
             [frontend.utils :as utils]
@@ -17,12 +18,14 @@
   (update-in tick-state [:keyframes] #(apply (fnil conj #{}) % ticks)))
 
 (defn clear-subscriber [tick-state tick]
-  (add-tick tick-state tick (fn [owner]
-                              ((om/get-shared owner :cast!)
-                               :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                    :fields (merge state/subscriber-bot {:mouse-position nil
-                                                                                         :tool nil
-                                                                                         :show-mouse? false})}))))
+  (-> tick-state
+    (add-tick tick (fn [owner]
+                     ((om/get-shared owner :cast!)
+                      :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                                           :fields (merge state/subscriber-bot {:mouse-position nil
+                                                                                :tool nil
+                                                                                :show-mouse? false})})))
+    (annotate-keyframes tick)))
 
 (defn move-mouse [tick-state {:keys [start-tick end-tick start-x end-x start-y end-y tool]
                               :or {tool :rect}}]
@@ -193,7 +196,7 @@
                                                                                           :layers nil
                                                                                           :show-mouse? false})}))
 
-(defn signup-animation [document vw]
+(defn signup-animation [document top-right]
   (let [text "Sign in with Google"
         text-width 171
 
@@ -203,16 +206,19 @@
         rect-offset-x 8
         rect-offset-y 8
 
-        rect-start-x (- vw rect-width rect-offset-x)
-        rect-start-y (+ rect-offset-y rect-height)
+        ;; e stands for edge
+        [ex ey] top-right
+
+        rect-start-x (- ex rect-width rect-offset-x)
+        rect-start-y (+ ey (+ rect-offset-y rect-height))
         rect-end-x (+ rect-start-x rect-width)
-        rect-end-y rect-offset-y
+        rect-end-y (+ ey rect-offset-y)
 
         text-start-x (+ rect-start-x (/ (- rect-width text-width) 2))
         text-start-y (+ rect-end-y text-height (/ (- rect-height text-height) 2))]
     (-> {:tick-ms 16
          :ticks {}}
-      (move-mouse {:start-tick 10 :end-tick 45 :start-x vw :end-x rect-start-x :start-y 0 :end-y rect-start-y})
+      (move-mouse {:start-tick 10 :end-tick 45 :start-x ex :end-x rect-start-x :start-y ey :end-y rect-start-y})
       (draw-shape {:doc-id (:db/id document) :tool :rect :start-tick 50 :end-tick 100
                    :start-x rect-start-x :end-x rect-end-x
                    :start-y rect-start-y :end-y rect-end-y
@@ -232,16 +238,16 @@
                           :layer/signup-button true}})
       (clear-subscriber 201))))
 
-(defn signup-button [document owner]
+(defn signup-button [{:keys [document camera]} owner]
   (reify
     om/IDisplayName (display-name [_] "Signup Button Animation")
     om/IDidMount
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(
-      (let [vw (:width (utils/canvas-size))]
-        (when (and (< 640 vw) ;; only if not on mobile
+      (let [viewport (utils/canvas-size)]
+        (when (and (< 640 (:width viewport)) ;; only if not on mobile
                    (empty? (d/datoms @(om/get-shared owner :db) :avet :layer/source "signup-animation")))
-          (run-animation owner (signup-animation document vw)))))
+          (run-animation owner (signup-animation document (cameras/top-right camera viewport))))))
     om/IWillUnmount
     (will-unmount [_]
       (cleanup owner))

@@ -8,6 +8,7 @@
             [frontend.colors :as colors]
             [frontend.components.common :as common]
             [frontend.cursors :as cursors]
+            [frontend.db :as fdb]
             [frontend.datascript :as ds]
             [frontend.keyboard :as keyboard]
             [frontend.layers :as layers]
@@ -206,12 +207,26 @@
                                                                           :y y}))
                                 :key (str "edit-handle-" x "-" y)})))))))
 
-(defn layer-group [{:keys [layer tool selected? part-of-group? live?]} owner]
+(defn layer-group [{:keys [layer-id tool selected? part-of-group? live?]} owner]
   (reify
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-entity-listener (om/get-shared owner :db)
+                               layer-id
+                               (om/get-state owner :listener-key)
+                               (fn [tx-report]
+                                 (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-entity-listener (om/get-shared owner :db)
+                                  layer-id
+                                  (om/get-state owner :listener-key)))
     om/IDisplayName (display-name [_] "Layer Group")
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
+            layer (ds/touch+ (d/entity @db layer-id))
             invalid? (and (:layer/ui-target layer)
                           (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-target layer)))))
             show-handles? (and (not part-of-group?)
@@ -349,15 +364,16 @@
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
-      (d/listen! (om/get-shared owner :db)
-                 (om/get-state owner :listener-key)
-                 (fn [tx-report]
-                   ;; TODO: better way to check if state changed
-                   (when (seq (:tx-data tx-report))
-                     (om/refresh! owner)))))
+      (fdb/add-attribute-listener (om/get-shared owner :db)
+                                  :layer/name
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner))))
     om/IWillUnmount
     (will-unmount [_]
-      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
+      (fdb/remove-attribute-listener (om/get-shared owner :db)
+                                     :layer/name
+                                     (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -366,36 +382,37 @@
             sub-eids (:entity-ids (cursors/observe-subscriber-entity-ids owner))
             editing-eids (:editing-eids (cursors/observe-editing-eids owner))
             editing-eids (set/union sub-eids editing-eids)
-            layers (ds/touch-all '[:find ?t :where [?t :layer/name]] @db)
-            renderable-layers (remove #(contains? editing-eids (:db/id %)) layers)
-            {idle-layers false live-layers true} (group-by (comp boolean :layer/ui-target)
-                                                           renderable-layers)]
+            live-ids (set/difference (set (map :e (d/datoms @db :aevt :layer/ui-target)))
+                                     editing-eids)
+            idle-ids (set/difference (set (map :e (d/datoms @db :aevt :layer/name)))
+                                     live-ids
+                                     editing-eids)]
         ;; TODO: this should probably be split into a couple of components
         (dom/g #js {:className (if (= :select tool)
                                  "interactive"
                                  "static")}
           (apply dom/g #js {:className "layers idle"}
-                 (om/build-all layer-group (mapv (fn [l]
-                                                   (let [selected? (contains? selected-eids (:db/id l))
+                 (om/build-all layer-group (mapv (fn [id]
+                                                   (let [selected? (contains? selected-eids id)
                                                          part-of-group? (and selected? selected-group?)]
                                                      {:live? false
                                                       :tool tool
                                                       :selected? selected?
                                                       :part-of-group? part-of-group?
-                                                      :layer l}))
-                                                 idle-layers)
-                               {:key-fn #(:db/id (:layer %))}))
+                                                      :layer-id id}))
+                                                 (sort live-ids))
+                               {:key :layer-id}))
           (apply dom/g #js {:className "layers live"}
-                 (om/build-all layer-group (mapv (fn [l]
-                                                   (let [selected? (contains? selected-eids (:db/id l))
+                 (om/build-all layer-group (mapv (fn [id]
+                                                   (let [selected? (contains? selected-eids id)
                                                          part-of-group? (and selected? selected-group?)]
                                                      {:live? true
                                                       :tool tool
                                                       :selected? selected?
                                                       :part-of-group? part-of-group?
-                                                      :layer l}))
-                                                 live-layers)
-                               {:key-fn #(:db/id (:layer %))})))))))
+                                                      :layer-id id}))
+                                                 (sort idle-ids))
+                               {:key :layer-id})))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
@@ -1007,7 +1024,10 @@
                                       :uuid->cust (get-in app [:cust-data :uuid->cust])}
                              {:react-key "cursors"})
 
-                   (om/build svg-layers {:tool tool} {:react-key "svg-layers"})
+                   (om/build svg-layers {:tool tool
+                                         ;; we want this to re-render when doc changes
+                                         :document/id (:document/id app)}
+                             {:react-key "svg-layers"})
 
                    (om/build subscribers-layers {:client-id (:client-id app)
                                                  :uuid->cust (get-in app [:cust-data :uuid->cust])}

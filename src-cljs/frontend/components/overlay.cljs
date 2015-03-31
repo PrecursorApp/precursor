@@ -31,18 +31,17 @@
     om/IRender
     (render [_]
       (html
-       [:div.make
-        [:form.menu-invite-form.make
-         [:input {:type "text"
-                  :required "true"
-                  :data-adaptive ""
-                  :onMouseDown (fn [e]
-                                 (.focus (.-target e))
-                                 (goog.dom.selection/setStart (.-target e) 0)
-                                 (goog.dom.selection/setEnd (.-target e) 10000)
-                                 (utils/stop-event e))
-                  :value (urls/absolute-doc-url (:document/id app))}]
-         [:label {:data-placeholder "Copy the url to share"}]]]))))
+       [:form.menu-invite-form.make
+        [:input {:type "text"
+                 :required "true"
+                 :data-adaptive ""
+                 :onMouseDown (fn [e]
+                                (.focus (.-target e))
+                                (goog.dom.selection/setStart (.-target e) 0)
+                                (goog.dom.selection/setEnd (.-target e) 10000)
+                                (utils/stop-event e))
+                 :value (urls/absolute-doc-url (:document/id app))}]
+        [:label {:data-placeholder "Copy the url to share"}]]))))
 
 (defn auth-link [app owner {:keys [source] :as opts}]
   (reify
@@ -399,6 +398,25 @@
            ;; TODO: keep track of invites
            ])))))
 
+(defn unknown-sharing [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Unknown Sharing")
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            invite-to (or (get-in app state/invite-to-path) "")])
+      (html
+       [:div.content
+        [:h2.make "Share this document"]
+        (if-not (:cust app)
+          (list
+           [:p.make
+            "Sign in with your Google account to send an invite or give someone your url."]
+           [:div.calls-to-action.make
+            (om/build common/google-login {:source "Public Sharing Menu"})])
+
+          (om/build share-url-input app))]))))
+
 (defn sharing [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Sharing")
@@ -434,7 +452,8 @@
             :document.privacy/public (om/build public-sharing app)
             :document.privacy/private (om/build private-sharing app)
             ;;read-only sharing needs to know the user's permission for the doc
-            :document.privacy/read-only (om/build read-only-sharing app))
+            :document.privacy/read-only (om/build read-only-sharing app)
+            (om/build unknown-sharing app))
 
           (case cant-edit-reason
             :no-private-docs-flag

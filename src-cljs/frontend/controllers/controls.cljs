@@ -238,6 +238,13 @@
   [state shortcut-name]
   (set-text-font-sizes state :grow))
 
+(defmethod handle-keyboard-shortcut-after :escape-interaction
+  [state shortcut-name]
+  (when (and (:replay-interrupt-chan state)
+             (put! (:replay-interrupt-chan state) :interrupt))
+    (frontend.db/reset-db! (:db state) nil)
+    (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state))))
+
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
   ;; TODO: better way to handle this
