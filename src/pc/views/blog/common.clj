@@ -87,39 +87,6 @@
            (when (coll? kstrs)
              {:data-subprop (str/join "," (rest kstrs))}))))
 
-(defn dribbble-card [username]
-  (let [props ["comments_received_count" "bio" "shots_count" "can_upload_shot" "followings_count"
-               "followers_url" "likes_received_count" "avatar_url" "username" "buckets_count"
-               "pro" "id" "projects_url" "name" "likes_url" "location" "buckets_url" "updated_at"
-               "html_url" "teams_count" "links" "likes_count" "shots_url" "following_url" "type"
-               "created_at" "teams_url" "followers_count" "rebounds_received_count" "projects_count"]
-        class-map (zipmap props (repeatedly #(str (UUID/randomUUID))))
-        profile-link (dribbble-attrs class-map "html_url" "href")]
-    [:div#vendor.dribbble-card
-     (dribbble-card-script class-map username)
-     [:div.dribbble-head
-      [:div.dribbble-stats
-       [:div.dribbble-stat
-        [:strong (dribbble-attrs class-map "shots_count" "innerText")]
-        [:span " Shots"]]
-       [:div.dribbble-stat
-        [:strong (dribbble-attrs class-map "followers_count" "innerText")]
-        [:span " Followers"]]]
-      [:div.dribbble-photo
-       [:a profile-link
-        [:img.dribbble-avatar (dribbble-attrs class-map "avatar_url" "src")]]]
-      [:div.dribbble-follow
-       [:a.dribbble-button profile-link
-        logo-dribbble
-        [:strong "Follow"]]]]
-     [:div.dribbble-body
-      [:div.dribbble-info
-       [:a.dribbble-name profile-link
-        [:strong (dribbble-attrs class-map "name" "innerText")]]]
-      [:div.dribbble-link
-       [:a.dribbble-site (dribbble-attrs class-map ["links" "web"] "href")
-        [:span (dribbble-attrs class-map ["links" "web"] "innerText")]]]]]))
-
 (defn card-maker [username]
   (let [props ["comments_received_count" "bio" "shots_count" "can_upload_shot" "followings_count"
                "followers_url" "likes_received_count" "avatar_url" "username" "buckets_count"
