@@ -45,7 +45,7 @@
   {:title "Ideas are made with Precursor."
    :blurb "I'm exceedingly curious to see how people use Precursor. Recently we've been using an internal playback tool to learn about this..."
    :author "Danny"
-   :image (external-cdn-path "/blog/ideas-are-made-with-precursor/lobanovskiy.gif")
+   :image (external-cdn-path "/blog/ideas-are-made-with-precursor/lobanovskiy-placeholder.gif")
    :body
    (list
     [:article
