@@ -46,6 +46,26 @@
   80%  { transform: scale3d(.95,.95,.95); }
   100% { transform: scale3d(1,1,1); opacity: 1;}
 }
+@keyframes in-expand {
+  0%   { transform: scale3d(0, 1, 1);}
+  100% { transform: none;}
+}
+@keyframes out-contract {
+  0%   { transform: none;}
+  100% { transform: scale3d(0, 1, 1);}
+}
+@keyframes in-stand {
+  0%   { transform: scale3d(1, 0, 1);}
+  100% { transform: none;}
+}
+@keyframes out-sit {
+  0%   { transform: none;}
+  100% { transform: scale3d(1, 0, 1);}
+}
+@keyframes out-fade-bottom {
+  0%   { opacity: 1; transform: none;}
+  100% { opacity: 0; transform: translate3d(0, 100%, 0);}
+}
 @keyframes dot {
   0%   {opacity: 0;}
   50%  {opacity: 1;}

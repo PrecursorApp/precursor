@@ -1,0 +1,190 @@
+.card {
+  @1st: (1.25 * @run),            @now,                                    (.75 * @run),             @now;
+  @2nd: (extract(@1st, 1) * 2),   (extract(@1st, 1) + extract(@1st, 2)),   (extract(@1st, 3) * 2),   (extract(@1st, 3) + extract(@1st, 4));
+  @3rd: (extract(@1st, 1) * 1),   (extract(@2nd, 1) + extract(@2nd, 2)),   (extract(@1st, 3) * 1),   (extract(@2nd, 3) + extract(@2nd, 4));
+  .flexy(column);
+  margin: 3rem 0;
+  .card-maker {
+    order: 1;
+    box-shadow: none;
+    &:before {
+      box-shadow: 1px 0 @gray_lightest inset;
+      animation: in-stand extract(@3rd, 1) extract(@3rd, 2) ease-out both;
+      transform-origin: top;
+    }
+    &:after {
+      box-shadow: -1px 0 @gray_lightest inset;
+      animation: in-stand extract(@1st, 1) extract(@1st, 2) ease-in both;
+      transform-origin: bottom;
+    }
+  }
+  .card-maker-head {
+    &:before {
+      box-shadow: 0 1px @gray_lightest inset;
+      animation: in-expand extract(@2nd, 1) extract(@2nd, 2) linear both;
+      transform-origin: right;
+    }
+  }
+  .card-top {
+    &:first-child {
+      &:before {
+        box-shadow: 0 1px @gray_lightest;
+        animation: in-expand @run_slow (extract(@3rd, 2) - @run_fast) both;
+        transform-origin: left;
+      }
+    }
+    &:last-child {
+      &:before {
+        box-shadow: 0 1px @gray_lightest;
+        animation: in-expand @run_slow @run_fast both;
+        transform-origin: right;
+      }
+    }
+  }
+  .card-stat:nth-of-type(1) { animation: in-fade-bottom extract(@1st, 1) (6 * @run_faster) @bezier_deform both;}
+  .card-stat:nth-of-type(2) { animation: in-fade-bottom extract(@1st, 1) (4 * @run_faster) @bezier_deform both;}
+  .card-follow              { animation: in-fade-bottom extract(@1st, 1) (2 * @run_faster) @bezier_deform both;}
+  .card-doc {
+    order: 2;
+    &:hover {
+      ~ .card-maker {
+        &:before                     { animation: out-sit         extract(@1st, 3) extract(@1st, 4)  ease-in        both;}
+        &:after                      { animation: out-sit         extract(@3rd, 3) extract(@3rd, 4)  ease-out       both;}
+        .card-maker-head:before      { animation: out-contract    extract(@2nd, 3) extract(@2nd, 4)  linear         both;}
+        .card-top:first-child:before { animation: out-contract    extract(@1st, 3) extract(@1st, 4)  @bezier_deform both;}
+        .card-top:last-child:before  { animation: out-contract    extract(@1st, 3) extract(@3rd, 4)  @bezier_deform both;}
+        .card-stat:nth-of-type(1)    { animation: out-fade-bottom extract(@1st, 3) (1 * @run_faster) @bezier_deform both;}
+        .card-stat:nth-of-type(2)    { animation: out-fade-bottom extract(@1st, 3) (2 * @run_faster) @bezier_deform both;}
+        .card-follow                 { animation: out-fade-bottom extract(@1st, 3) (3 * @run_faster) @bezier_deform both;}
+      }
+    }
+  }
+}
+.card-maker {
+  .flexy(column);
+  .inline(@gray_lightest);
+  font-size: 1rem;
+  line-height: 1rem;
+  width: 100%;
+  overflow: hidden;
+}
+.card-maker-dribbble {
+  a {
+    .icon(fill; @gray);
+    color: @gray;
+    &:hover {
+      .icon(fill; #ea4c89);
+      color: #ea4c89;
+    }
+  }
+}
+.card-maker-github {
+  a {
+    .icon(fill; @gray);
+    color: @gray;
+    &:hover {
+      .icon(fill; @black);
+      color: @black;
+    }
+  }
+}
+.card-maker-head {
+  .flexy(flex-start);
+}
+.card-top {
+  .flexy();
+  flex: 1;
+  padding: 1rem;
+}
+.card-stat {
+  font-size: .75rem;
+  margin-right: .25 * @tile;
+  span {
+    &:nth-child(2) {
+      color: @gray;
+    }
+  }
+}
+.card-follow {
+  .flexy(center);
+  margin-left: auto;
+  .icon-dribbble,
+  .icon-github {
+    margin-right: .5em;
+  }
+}
+.card-photo {
+  .flexy(center);
+  position: relative;
+  padding-top: 1rem;
+  &:hover {
+    opacity: .75;
+  }
+}
+.card-avatar {
+  width: @tile;
+  height: @tile;
+  border-radius: @tile;
+}
+.card-maker-body {
+  .flexy(column);
+  text-align: center;
+  padding: 1rem 0;
+}
+.card-name {
+  font-size: 1.5rem;
+  margin-bottom: .5rem;
+}
+.card-doc {
+  .flexy(flex-start);
+  min-height: 450px;
+  &:after {
+    .inline(@gray_lightest);
+    transition: box-shadow @run_slower @bezier_deform;
+  }
+  &:hover:after {
+    .shadow_canvas(hover);
+    transition-duration: @run_fast;
+  }
+  &:active:after {
+    .shadow_canvas(active);
+    transition-duration: @run_faster;
+  }
+  &:not(:hover) {
+    .icon-user,
+    .card-count {
+      opacity: 0;
+      transform: scale3d(0, 0, 0);
+      transition: @run @bezier_deform;
+    }
+  }
+  .icon-user,
+  .card-count {
+    .icon(stroke; @color_select);
+    color: @color_select;
+    font-size: 1rem;
+    line-height: 1rem;
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    transition: @run_fast @bezier_deform;
+  }
+  .card-count {
+    left: 2rem;
+    margin: 0 .25em;
+  }
+}
+.free-border {
+  position: relative;
+  &:before,
+  &:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    pointer-events: none;
+  }
+}
