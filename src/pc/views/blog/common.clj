@@ -119,8 +119,8 @@
         [:span (str "@" username)]]]]]))
 
 (defn card-doc [username document]
-  (let [animated    (cdn-path (str "https://dl.dropboxusercontent.com/u/1212676/madewithprecursor/" username ".gif"))
-        placeholder (cdn-path (str "https://dl.dropboxusercontent.com/u/1212676/madewithprecursor/" username "-placeholder.gif"))
+  (let [animated (str "https://dl.dropboxusercontent.com/u/1212676/madewithprecursor/" username ".gif")
+        placeholder (str "https://dl.dropboxusercontent.com/u/1212676/madewithprecursor/" username "-placeholder.gif")
         swap-img    "this.getElementsByTagName('img')[0].src = '%s'"]
     [:a.card-doc.free-border {:href (str "https://precursorapp.com" "/document/" document)
                               :target "_blank"
