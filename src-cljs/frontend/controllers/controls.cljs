@@ -228,7 +228,7 @@
                                                                                (:layer/font-family layer state/default-font-family)))
               :layer/end-y (- (:layer/start-y layer) font-size)})))
     seq
-    (d/transact! (:db state))))
+    (#(d/transact! (:db state) % {:can-undo? true}))))
 
 (defmethod handle-keyboard-shortcut-after :shrink-text
   [state shortcut-name]
