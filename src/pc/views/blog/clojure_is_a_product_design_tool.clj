@@ -50,7 +50,7 @@
    :body
    (list
     [:article
-     [:p "As a product designer I’m obsessed with solving problems, and lately I’ve been designing with a niche programming language."]
+     [:p "As a product designer I'm obsessed with solving problems, and lately I've been designing with a niche programming language."]
      [:p [:a {:href "http://clojure.org/"} "Clojure"]
       " carries a stark notoriety among developers, despite being a tremendous feat of design. "
       [:a {:href "http://blog.venanti.us/why-clojure/"} "David Jarvis"]
@@ -118,7 +118,7 @@
       [:span example-cljs]]
      [:p "My favorite part about ClojureScript, is that it shares its syntax with Clojure itself.
          I improve my understanding of Clojure as a side effect of my normal workflow.
-         I can’t think of a better way to learn.
+         I can't think of a better way to learn.
          That's great design, by any standard."]]
 
     [:article
@@ -169,8 +169,8 @@
      [:p "My optimizations are individually subtle but they save me hours every week.
          I spend that time on more important things, like polish.
          And therein lies the point; Clojure makes me more efficient and extends my reach as a designer."]
-     [:p "Don’t let fear prevent growth.
-         You don’t have to learn Clojure—even though it’d be nice knowing I'm not alone—you just need to learn something.
+     [:p "Don't let fear prevent growth.
+         You don't have to learn Clojure—even though it'd be nice knowing I'm not alone—you just need to learn something.
          There's something you can learn right now that will help you a build better products.
          Find it and make something."]]
 
