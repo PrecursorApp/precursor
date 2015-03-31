@@ -69,7 +69,7 @@
     [:article
      [:h3 "Minimum viable prototype."]
      [:p  "This is something I'm seeing more people practice on Precursor&mdash;prototypes don't need every detail. "
-          "Watch Faith contemplate the value of that avatar, explore the idea, and ultimately remove it. "]]
+          "Watch Fatih contemplate the value of that avatar, explore the idea, and ultimately remove it. "]]
     [:figure (common/card "fatihturan" "17592197311774?cx=707&cy=502&z=1&replay=true")]
 
     [:article
