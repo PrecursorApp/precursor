@@ -3,7 +3,7 @@
             [pc.http.urls :as urls]
             [pc.views.email :as email]
             [pc.profile :as profile]
-            [pc.views.common :refer (cdn-path)]
+            [pc.views.common :refer (cdn-path external-cdn-path)]
             [pc.views.blog.common :as common]))
 
 (def logo-github
@@ -12,8 +12,8 @@
     [:path {:class "fill-github" :d "M50,0C22.4,0,0,22.4,0,50c0,22.1,14.3,40.8,34.2,47.4 c2.5,0.5,3.4-1.1,3.4-2.4c0-1.2,0-4.3-0.1-8.5c-13.9,3-16.8-6.7-16.8-6.7c-2.3-5.8-5.6-7.3-5.6-7.3c-4.5-3.1,0.3-3,0.3-3 c5,0.4,7.7,5.2,7.7,5.2c4.5,7.6,11.7,5.4,14.6,4.2c0.5-3.2,1.7-5.4,3.2-6.7c-11.1-1.3-22.8-5.6-22.8-24.7c0-5.5,1.9-9.9,5.1-13.4 c-0.5-1.3-2.2-6.3,0.5-13.2c0,0,4.2-1.3,13.7,5.1c4-1.1,8.3-1.7,12.5-1.7c4.2,0,8.5,0.6,12.5,1.7c9.5-6.5,13.7-5.1,13.7-5.1 c2.7,6.9,1,12,0.5,13.2c3.2,3.5,5.1,8,5.1,13.4c0,19.2-11.7,23.4-22.8,24.7c1.8,1.5,3.4,4.6,3.4,9.3c0,6.7-0.1,12.1-0.1,13.7 c0,1.3,0.9,2.9,3.4,2.4C85.7,90.8,100,72.1,100,50C100,22.4,77.6,0,50,0z"}]]])
 
 (defn card-github [username document name img stat]
-  (let [animated    (str "https://dl.dropboxusercontent.com/u/1212676/madewithprecursor/" username ".gif")
-        placeholder (str "https://dl.dropboxusercontent.com/u/1212676/madewithprecursor/" username "-placeholder.gif")
+  (let [animated (external-cdn-path (str "/blog/ideas-are-made-with-precursor/" username ".gif"))
+        placeholder (external-cdn-path (str "/blog/ideas-are-made-with-precursor/" username "-placeholder.gif"))
         swap-img    "this.getElementsByTagName('img')[0].src = '%s'"]
     [:div.card
      [:a.card-doc.free-border {:href (str "https://precursorapp.com" "/document/" document)
@@ -104,7 +104,7 @@
           "Email "
           [:a {:href (format "mailto:%s" (email/email-address "hi"))} "hi@precursorapp.com"]
           " with a link and if it gets featured, you'll get a one-of-a-kind t-shirt! "]]
-    [:figure [:img {:src "https://dl.dropboxusercontent.com/u/1212676/madewithprecursor/eddie-shirt.png"}]]
+    [:figure [:img {:src (external-cdn-path "/blog/ideas-are-made-with-precursor/eddie-shirt.png")}]]
 
     [:article.blogpost-author
      [:p

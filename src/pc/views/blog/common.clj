@@ -1,7 +1,7 @@
 (ns pc.views.blog.common
   (:require [cheshire.core :as json]
             [clojure.string :as str]
-            [pc.views.common :refer (cdn-path)])
+            [pc.views.common :refer (cdn-path external-cdn-path)])
   (:import [java.util UUID]))
 
 (defn tweet [name id & {:keys [no-parent]}]
@@ -119,8 +119,8 @@
         [:span (str "@" username)]]]]]))
 
 (defn card-doc [username document]
-  (let [animated (str "https://dl.dropboxusercontent.com/u/1212676/madewithprecursor/" username ".gif")
-        placeholder (str "https://dl.dropboxusercontent.com/u/1212676/madewithprecursor/" username "-placeholder.gif")
+  (let [animated (external-cdn-path (str "/blog/ideas-are-made-with-precursor/" username ".gif"))
+        placeholder (external-cdn-path (str "/blog/ideas-are-made-with-precursor/" username "-placeholder.gif"))
         swap-img    "this.getElementsByTagName('img')[0].src = '%s'"]
     [:a.card-doc.free-border {:href (str "https://precursorapp.com" "/document/" document)
                               :target "_blank"

@@ -9,3 +9,6 @@
 
 (defn cdn-path [path]
   (str (cdn-base-url) path))
+
+(defn external-cdn-path [path]
+  (str "https://precursor.storage.googleapis.com" path))
