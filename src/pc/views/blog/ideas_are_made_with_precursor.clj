@@ -68,7 +68,7 @@
 
     [:article
      [:h3 "Minimum viable prototype."]
-     [:p  "This is something I'm seeing more people practice on Precursor—prototypes don't need every detail. "
+     [:p  "This is something I'm seeing more people practice on Precursor&mdash;prototypes don't need every detail. "
           "Watch Faith contemplate the value of that avatar, explore the idea, and ultimately remove it. "]]
     [:figure (common/card "fatihturan" "17592197311774?cx=707&cy=502&z=1&replay=true")]
 
@@ -86,7 +86,7 @@
 
     [:article
      [:h3 "That was fast."]
-     [:p  "Peter made short work of this map by staying focused on his content—a great strategy for diagramming. "
+     [:p  "Peter made short work of this map by staying focused on his content&mdash;a great strategy for diagramming. "
           "He figured out alignment and connections afterwards. "]]
     [:figure (card-github "peteratticusberg" "17592197310304?cx=687&cy=636&z=0.8&replay=true" "Peter Berg" "https://avatars0.githubusercontent.com/u/3895824" "11 repos")]
 

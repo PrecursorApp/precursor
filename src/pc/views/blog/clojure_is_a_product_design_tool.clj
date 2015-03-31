@@ -68,11 +68,11 @@
     [:article
      [:p "Later that year I experienced Clojure's reputation for myself when I was invited to give a talk about "
       [:a {:href "https://github.com/clojure/clojurescript"} "ClojureScript"]
-      "—a variant of Clojure that compiles to JavaScript."]
+      "&mdash;a variant of Clojure that compiles to JavaScript."]
      [:p "After the talk, one developer told me that he had never met another designer that used Clojure.
          At first I was surprised, and then concerned."]
      [:p "\"Maybe there's a reason no other designers do this\", I thought.
-         Then I remembered how I answered the first question I was asked that night—whether or not I enjoy writing ClojureScript.
+         Then I remembered how I answered the first question I was asked that night&mdash;whether or not I enjoy writing ClojureScript.
          My answer was \"No.\""]]
 
     [:article
@@ -81,15 +81,15 @@
       [:a {:href "https://github.com/circleci/frontend"} "front end"]
       " web app to "
       [:a {:href "https://github.com/omcljs/om"} "Om"]
-      "—a "
+      "&mdash;a "
       [:a {:href "http://facebook.github.io/react/"} "React"]
       " wrapper for building interfaces."
       "The ordeal taught me discipline but it also made my job harder."]
-     [:p "The Clojure syntax is completely chaotic, with parentheses everywhere—at least that's what I thought last year."]
+     [:p "The Clojure syntax is completely chaotic, with parentheses everywhere&mdash;at least that's what I thought last year."]
      [:p "Since then I've since left CircleCI to work full-time on "
       [:a {:href "https://precursorapp.com/home"} "Precursor"]
       ", a collaborative prototyping tool that also has a ClojureScript front end."]
-     [:p "As opposed to last year, not only would I say I enjoy writing ClojureScript now but—along with Om—it has ruined traditional HTML and JavaScript for me.
+     [:p "As opposed to last year, not only would I say I enjoy writing ClojureScript now but&mdash;along with Om&mdash;it has ruined traditional HTML and JavaScript for me.
          I have a newfound sense of freedom, and that's why I started learning code in the first place."]]
 
     [:article
@@ -170,7 +170,7 @@
          I spend that time on more important things, like polish.
          And therein lies the point; Clojure makes me more efficient and extends my reach as a designer."]
      [:p "Don't let fear prevent growth.
-         You don't have to learn Clojure—even though it'd be nice knowing I'm not alone—you just need to learn something.
+         You don't have to learn Clojure&mdash;even though it'd be nice knowing I'm not alone&mdash;you just need to learn something.
          There's something you can learn right now that will help you a build better products.
          Find it and make something."]]
 

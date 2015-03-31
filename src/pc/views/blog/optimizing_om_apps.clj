@@ -46,13 +46,13 @@
     [:article
      [:p "Performance is very important for a prototyping tool, particularly one built on the web. This forces me to spend a lot of time thinking about browser performance for "
       [:a {:href "https://precursorapp.com"} "Precursor"]
-      ". Our goal at Precursor is to make collaborating on ideas effortless. If things don't behave the way users expect, there's a risk of pushing them backwards—retreating towards alternatives that are more familiar, like pen and paper or whiteboards."]
+      ". Our goal at Precursor is to make collaborating on ideas effortless. If things don't behave the way users expect, there's a risk of pushing them backwards&mdash;retreating towards alternatives that are more familiar, like pen and paper or whiteboards."]
      [:p "Our front end is built with "
       [:a {:href "https://github.com/omcljs/om"} "Om"]
       " and "
       [:a {:href "https://github.com/facebook/react"} "React"]
       "; both come with excellent performance right out of the box. React is well-known for minimizing the amount of slow DOM updates with their virtual DOM diffing. Om improves on that by "
-      [:a {:href "https://swannodette.github.io/2013/12/17/the-future-of-javascript-mvcs/"} "leveraging fast comparisons of Closure’s persistent data structures"]
+      [:a {:href "https://swannodette.github.io/2013/12/17/the-future-of-javascript-mvcs/"} "leveraging fast comparisons of Closure's persistent data structures"]
       "."]
 
      [:p "As good as they are, the defaults weren't good enough for us. I noticed that Precursor felt sluggish when too many people were drawing in the same document together, and when drawing on mobile browsers. I traced most of these problems to components rendering unnecessarily. For example, the chat component would re-render every time a new drawing was created."]
@@ -62,12 +62,12 @@
      [:p
       [:ul
        [:li "How many times a component is mounted/unmounted"]
-       [:li "How many times a component is rendered (to determine when it’s being rendered unnecessarily)"]
+       [:li "How many times a component is rendered (to determine when it's being rendered unnecessarily)"]
        [:li "How long each component takes to render"]]]
 
      [:p "I built some instrumentation tools to display this information in an actionable format while interacting with the app. These tools have been invaluable while optimizing Precursor, and we've decided to open-source them so anyone can include them in their own Om projects."]
 
-     [:p "I'm calling the library Om-i (pronounced “Oh, my!”), which is short for Om-instrumentation. You can find "
+     [:p "I'm calling the library Om-i (pronounced \"Oh, my!\"), which is short for Om-instrumentation. You can find "
       [:a {:href "https://github.com/PrecursorApp/Om-i"}
        "Om-i on GitHub"]
       " and you can also play with a live version on "
