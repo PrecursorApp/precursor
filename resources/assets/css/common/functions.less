@@ -248,9 +248,7 @@
   }
 }
 .shadow_canvas(@state: default) {
-  // @border: fade(@black, (100 * @opacity_white_lightest));
   @shadow: fade(@black, (100 * @opacity_white_light));
-  // .inline(@border);
   .inline(@gray_lightest);
   .default(@state) when (@state = default) {
     box-shadow+: 0 8px 21px 0 @shadow;
