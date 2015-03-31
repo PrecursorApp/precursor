@@ -92,7 +92,8 @@
 
 (defn play-replay? [args]
   (and (get-in args [:query-params :replay])
-       (if-let [min-width (utils/inspect (some-> args :query-params :min-width js/parseInt))]
+       (if-let [min-width (or (some-> args :query-params :min-width js/parseInt)
+                              640)]
          (> (.-width (goog.dom/getViewportSize))
             min-width)
          true)))
