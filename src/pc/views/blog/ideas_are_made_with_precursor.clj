@@ -86,8 +86,9 @@
 
     [:article
      [:h3 "That was fast."]
-     [:p  "Peter made short work of this map by staying focused on his content&mdash;a great strategy for diagramming. "
-          "He figured out alignment and connections afterwards. "]]
+     [:p  "Peter made short work of this by focusing on his content&mdash;great strategy&mdash;lining things up afterwards. "
+          "You may like our new arrows, Peter. "
+          "Hold ctrl+shift and click shapes to connect them! "]]
     [:figure (card-github "peteratticusberg" "17592197310304?cx=687&cy=636&z=0.8&replay=true" "Peter Berg" "https://avatars0.githubusercontent.com/u/3895824" "11 repos")]
 
     [:article
