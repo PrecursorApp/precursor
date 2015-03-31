@@ -102,6 +102,15 @@
     [:figure (common/card "tooks_" "17592197347828?cx=982&cy=974&z=0.45&replay")]
 
     [:article
+     [:h3 "Make a playback."]
+     [:p  "If you want to make your own replay, like those featured above, just add a parameter to your url, like the example below. "]
+     [:code.block
+      [:span "https://precursorapp.com/document/17592197312062?replay=true"]]
+     [:p [:a {:href (format "mailto:%s" (email/email-address "hi"))} "Let us know"]
+         " if you find a doc that won't replay. "
+         "There may be some missing transactions on older docs, but we can fix it!"]]
+
+    [:article
      [:h3 "I'd wear that."]
      [:p  "To thank them for showing off their work, everyone featured today will recieve a free t-shirt displaying their unique designs. "]
      [:p  "Got something interesting, made with " [:a {:href "/new" :title "Make something."} "Precursor"] "? "]
