@@ -67,8 +67,8 @@
     [:figure (common/card "dhotlo2" "17592197311947?cx=629&cy=376&z=1&replay=true")]
 
     [:article
-     [:h3 "Trim the trash."]
-     [:p  "This is something I'm seeing more people practice with Precursor—prototypes don't need many detail. "
+     [:h3 "Minimum viable prototype."]
+     [:p  "This is something I'm seeing more people practice on Precursor—prototypes don't need every detail. "
           "Watch Faith contemplate the value of that avatar, explore the idea, and ultimately remove it. "]]
     [:figure (common/card "fatihturan" "17592197311774?cx=707&cy=502&z=1&replay=true")]
 
@@ -79,29 +79,36 @@
     [:figure (common/card "jyo208" "17592197310592?cx=584&cy=581&z=0.55&replay=true")]
 
     [:article
-     [:h3 "Cost of living."]
+     [:h3 "Set it up."]
      [:p  "Before Ken tried drawing any components, he got his content and spacing figured out. "
           "Isolating important areas of your ideas is crucial for expressing them quickly. "]]
     [:figure (common/card "kenseals" "17592197311539?cx=517&cy=392&z=1&replay=true&tx-count=59")]
 
     [:article
-     [:h3 "Solid spatial awareness."]
-     [:p  "Well that was fast. "
-          "Peter made short work of this map by staying focused on his content—a great strategy for diagramming. "
+     [:h3 "That was fast."]
+     [:p  "Peter made short work of this map by staying focused on his content—a great strategy for diagramming. "
           "He figured out alignment and connections afterwards. "]]
     [:figure (card-github "peteratticusberg" "17592197310304?cx=687&cy=636&z=0.8&replay=true" "Peter Berg" "https://avatars0.githubusercontent.com/u/3895824" "11 repos")]
 
     [:article
-     [:h3 "Teammate helps out."]
+     [:h3 "Avoid the tedious."]
      [:p  "Mathieu used duplication to skip over the tedious areas of his idea. "
-          "He prioritized the unique aspects of his prototype by automating the others. "]]
+          "He prioritized the unique aspects of his prototype and automated the others. "]]
     [:figure (common/card "tooks_" "17592197347828?cx=982&cy=974&z=0.45&replay")]
 
     [:article
      [:h3 "I'd wear that."]
-     [:p  "To thank these users for letting me use their work, I'm sending them all custom t-shirts displaying their prototypes. "
+     [:p  "To thank these users for letting me show their work, I'm sending them all custom t-shirts displaying their prototypes. "
           "I want to do this again soon, so if you make something cool, let me know. "
-          "Email danny@precursorapp.com with a link and if I feature it, you'll get a one-of-a-kind t-shirt! "]]
+          "Email "
+          [:a {:href (format "mailto:%s" (email/email-address "hi"))} "hi@precursorapp.com"]
+          " with a link and if it gets featured, you'll get a one-of-a-kind t-shirt! "]]
     [:figure [:img {:src (cdn-path "/blog/ideas-are-made-with-precursor/eddie-shirt.png")}]]
+
+    [:article.blogpost-author
+     [:p
+      "Written by "
+      [:a {:href "https://twitter.com/dannykingme"} "Danny King"]
+      "."]]
 
     )})
