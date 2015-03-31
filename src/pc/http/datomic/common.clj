@@ -122,7 +122,8 @@
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
         a (schema/get-ident a)
-        v (if (contains? (schema/ident-ids) v)
+        v (if (and (contains? (schema/enums) a)
+                   (contains? (schema/ident-ids) v))
             (schema/get-ident v)
             v)
         e (web-peer/client-id db e)]
