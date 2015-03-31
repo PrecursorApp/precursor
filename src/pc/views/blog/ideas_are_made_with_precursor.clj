@@ -74,7 +74,7 @@
 
     [:article
      [:h3 "Iteration is important."]
-     [:p  "Without watching Justin build this prototype, it's hard to tell how many iterations we through. "
+     [:p  "Without watching Justin build this prototype, it's hard to tell how many iterations he went through. "
           "Too many can be just as dangerous as too few, but I think this strikes a good balance. "]]
     [:figure (common/card "jyo208" "17592197310592?cx=584&cy=581&z=0.55&replay=true")]
 
