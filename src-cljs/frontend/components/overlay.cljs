@@ -434,7 +434,8 @@
             :document.privacy/public (om/build public-sharing app)
             :document.privacy/private (om/build private-sharing app)
             ;;read-only sharing needs to know the user's permission for the doc
-            :document.privacy/read-only (om/build read-only-sharing app))
+            :document.privacy/read-only (om/build read-only-sharing app)
+            nil)
 
           (case cant-edit-reason
             :no-private-docs-flag
