@@ -10,6 +10,12 @@
   [[e a v tx added]]
   {:e e :a a :v v :tx tx :added added})
 
+(defn touched-eids [tx-id]
+  (d/q '{:find [[?e ...]]
+         :in [?log ?tx]
+         :where [[(tx-data ?log ?tx) [[?e]]]]}
+       (d/log (pcd/conn)) tx-id))
+
 (defn tx-data [tx-id]
   (->> (d/tx-range (d/log (pcd/conn)) tx-id (inc tx-id))
     first
@@ -119,3 +125,38 @@
                            (remove #(:frontend/id (d/entity db %))
                                    (vals new-eids))))
     new-doc))
+
+(defn needs-frontend-id? [db eid]
+  (let [ent (d/entity db eid)]
+    (and (:dummy ent)
+         (not (:frontend/id ent)))))
+
+(defn ensure-deleted-frontend-ids [db doc]
+  (let [txids (get-document-tx-ids db doc)
+        eids (reduce (fn [acc tx]
+                       (set/union acc (set (filter #(and (not (contains? acc %))
+                                                         (or (needs-frontend-id? (d/as-of db tx) %)
+                                                             (needs-frontend-id? (d/as-of db (dec tx)) %)))
+                                                   (touched-eids tx)))))
+                     #{} txids)]
+    @(d/transact (pcd/conn) (map (fn [e] [:db/add e :frontend/id (UUID. (:db/id doc) e)])
+                                 eids))))
+
+(defn ensure-transaction-broadcast [db doc]
+  (let [txids (d/q '{:find [[?t ...]]
+                     :in [$ ?doc-id]
+                     :where [[?t :transaction/document ?doc-id]
+                             [?t :db/txInstant]]}
+                   db (:db/id doc))]
+    (d/transact (pcd/conn)
+                (map (fn [e]
+                       [:db/add e :transaction/broadcast true])
+                     (filter #(let [ent (d/entity db %)]
+                                (and (not (:transaction/broadcast ent))
+                                     (:session/uuid ent)))
+                             txids)))))
+
+#_(defn clear-cache [db doc]
+  (doseq [tx-id (get-document-tx-ids db doc)]
+    (pc.cache/delete (str "pc.http.sente/frontend-tx-data-" tx-id)))
+  (clojure.core.memoize/memo-clear! pc.http.sente/memo-frontend-tx-data))
