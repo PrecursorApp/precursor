@@ -23,6 +23,9 @@
 (defn safe-get [cache-key]
   (deref (c/async-get @conn cache-key) 25 nil))
 
+(defn delete [cache-key]
+  (c/delete @conn cache-key))
+
 (defn wrap-memcache
   "Doesn't cache nils"
   [cache-key f & args]
