@@ -112,7 +112,7 @@
 
     [:article
      [:h3 "I'd wear that."]
-     [:p  "To thank them for showing off their work, everyone featured today will recieve a free t-shirt displaying their unique designs. "]
+     [:p  "To thank them for showing off their work, everyone featured today will receive a free t-shirt displaying their unique designs. "]
      [:p  "Got something interesting, made with " [:a {:href "/new" :title "Make something."} "Precursor"] "? "]
      [:p  "Tweet " [:a {:href "https://twitter.com/PrecursorApp"} "@PrecursorApp"] " and include #madewithprecursor. "
           " I'll send you a one-of-a-kind shirt for free, if we feature it next time! "]]
