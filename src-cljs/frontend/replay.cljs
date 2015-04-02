@@ -47,7 +47,8 @@
                            (<!))
                     tx (:document/transaction resp)]
                 (if-not (taoensso.sente/cb-success? resp)
-                  ::error
+                  (do (js/Rollbar.error (str "error fetching " (first tx-ids)))
+                      ::error)
                   (if @interrupted
                     ::interrupted
                     (do
@@ -72,6 +73,7 @@
                                                   (.getTime start)))))))))))))
        (catch js/Error e
          (utils/merror e)
+         (js/Rollbar.error e)
          (reset! result ::error))
        (finally
          (put! api-ch [:progress :success {:active false}])
