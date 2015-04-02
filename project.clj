@@ -41,13 +41,13 @@
                  [http-kit "2.1.18-c9c0b155a4ab05630d332a7d2da0aaf433889772"]
                  [com.taoensso/sente "1.4.1" :exclusions [http-kit]]
                  [clj-stacktrace "0.2.8"]
-                 [org.immutant/web "2.0.0-beta2" :exclusions [org.clojure/java.classpath
-                                                              org.jboss.logging/jboss-logging
-                                                              org.slf4j/slf4j-nop
-                                                              org.slf4j/slf4j-api
-                                                              org.slf4j/slf4j-simple
-                                                              org.slf4j/slf4j-log4j12
-                                                              ch.qos.logback/logback-classic]]
+                 [org.immutant/web "2.x.incremental.539" :exclusions [org.clojure/java.classpath
+                                                                      org.jboss.logging/jboss-logging
+                                                                      org.slf4j/slf4j-nop
+                                                                      org.slf4j/slf4j-api
+                                                                      org.slf4j/slf4j-simple
+                                                                      org.slf4j/slf4j-log4j12
+                                                                      ch.qos.logback/logback-classic]]
 
                  [org.clojure/tools.reader "0.8.16"]
                  [com.google.guava/guava "18.0"]
@@ -115,7 +115,8 @@
                                                                 "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
                                                    :snapshots true}]
                            ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
-                           ["clojars" {:url "https://clojars.org/repo/"}]]
+                           ["clojars" {:url "https://clojars.org/repo/"}]
+                           ["Immutant incremental builds" {:url "http://downloads.immutant.org/incremental/"}]]
 
   :figwheel {:http-server-root "public"
              :server-port 3448

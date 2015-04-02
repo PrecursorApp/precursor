@@ -23,15 +23,8 @@
                        (fn [im-ch {:keys [code reason] :as status-map}]
                          (on-close im-ch status-map)))
         :on-message  (when on-msg (fn [im-ch message] (on-msg im-ch message)))
-        ;; bandaid: adds an on-error handler to deal with clients that disappear
-        ;; waiting on fix for https://issues.jboss.org/browse/IMMUTANT-543
-        :on-error (when on-close
-                    (fn [im-ch throwable]
-                      (log/errorf "immutant channel error %s" (Throwables/getStackTraceAsString throwable))
-                      (when (instance? java.nio.channels.ClosedChannelException
-                                       throwable)
-                        (log/infof "closing channel for %s b/c of error" (get-in ring-req [:session :sente-id]))
-                        (on-close im-ch {}))))))))
+        :on-error (fn [im-ch throwable]
+                    (log/errorf "immutant channel error %s" throwable))))))
 
 (def immutant-adapter (ImmutantAsyncNetworkChannelAdapter.))
 (def sente-web-server-adapter immutant-adapter) ; Alias for ns import convenience
