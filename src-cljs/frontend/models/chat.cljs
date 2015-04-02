@@ -18,7 +18,7 @@
 
 (defn compute-unread-chat-count [db last-read-time]
   (if-not last-read-time
-    0
+    (find-count db)
     (count (chat-timestamps-since db last-read-time))))
 
 (defn display-name [chat sente-id]
