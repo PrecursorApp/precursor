@@ -216,12 +216,28 @@
                                layer-id
                                (om/get-state owner :listener-key)
                                (fn [tx-report]
-                                 (om/refresh! owner))))
+                                 (om/refresh! owner)))
+      (fdb/add-attribute-listener (om/get-shared owner :db)
+                                  :layer/ui-id
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (let [targets (reduce (fn [acc datom]
+                                                            (if (= :layer/ui-id (:a datom))
+                                                              (conj acc (:v datom))
+                                                              acc))
+                                                          #{} (:tx-data tx-report))
+                                          db @(om/get-shared owner :db)]
+                                      (when (contains? targets
+                                                       (:layer/ui-target (d/entity db layer-id)))
+                                        (om/refresh! owner))))))
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-entity-listener (om/get-shared owner :db)
                                   layer-id
-                                  (om/get-state owner :listener-key)))
+                                  (om/get-state owner :listener-key))
+      (fdb/remove-attribute-listener (om/get-shared owner :db)
+                                     :layer/ui-id
+                                     (om/get-state owner :listener-key)))
     om/IDisplayName (display-name [_] "Layer Group")
     om/IRender
     (render [_]
