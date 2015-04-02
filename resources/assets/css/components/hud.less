@@ -457,3 +457,19 @@
 .rejected-txes-b {
   animation: rejected-pulse @run;
 }
+
+
+.pan-cursor {
+  .iconpile {
+    [class|="stroke"] {
+      stroke: red;
+    }
+  }
+  &.active {
+    .iconpile {
+      [class|="stroke"] {
+        stroke: green;
+      }
+    }
+  }
+}

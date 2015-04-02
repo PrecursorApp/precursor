@@ -919,9 +919,9 @@
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
                       :className (str "canvas-frame "
-                                      (if (keyboard/arrow-shortcut-active? app)
-                                        " arrow-tool "
-                                        (str " tool-" (name tool) " "))
+                                      (cond (keyboard/arrow-shortcut-active? app) " arrow-tool "
+                                            (get (:keyboard app) #{"space"}) " pan-tool "
+                                            :else (str " tool-" (name tool) " "))
                                       (when (and mouse-down?
                                                  (keyword-identical? :text tool)
                                                  in-progress?)

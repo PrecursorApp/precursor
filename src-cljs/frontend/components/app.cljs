@@ -85,16 +85,16 @@
                          :class (when (empty? (:frontend-id-state app)) "loading")
                          :key "inner"}
              [:style "#om-app:active{cursor:auto}"]
-             (om/build canvas/canvas (select-in app (concat [state/current-tool-path
-                                                             [:drawing :in-progress?]
-                                                             [:drawing :relation-in-progress?]
-                                                             [:mouse-down]
-                                                             [:layer-properties-menu]
-                                                             [:menu]
-                                                             [:client-id]
-                                                             [:cust-data]
-                                                             [:document/id]]
-                                                            (keyboard/arrow-shortcut-state-keys app)))
+             (om/build canvas/canvas (select-in app [state/current-tool-path
+                                                     [:drawing :in-progress?]
+                                                     [:drawing :relation-in-progress?]
+                                                     [:mouse-down]
+                                                     [:layer-properties-menu]
+                                                     [:menu]
+                                                     [:client-id]
+                                                     [:cust-data]
+                                                     [:document/id]
+                                                     [:keyboard]])
                        {:react-key "canvas"})
 
              (om/build chat/chat (select-in app [state/chat-opened-path
@@ -126,6 +126,8 @@
                                               [:cust-data]
                                               [:team]
                                               [:max-document-scope]
+                                              [:keyboard]
+                                              [:mouse-down]
                                               (state/doc-tx-rejected-count-path (:document/id app))])
                       {:react-key "hud"})])
           (html [:div#app]))))))
