@@ -336,19 +336,6 @@
                         0 ids)]
     (str base "(" (+ 1 offset max-num) ")")))
 
-
-(defn inc-str-target [db str-target & {:keys [offset]
-                                       :or {offset 0}}]
-  (let [[_ base _] (re-find str-id-regex str-target)
-        base (or base (str str-target " "))
-        ids (remove nil? (map first (d/q '[:find ?id :where [_ :layer/ui-target ?id]] db)))
-        max-num (reduce (fn [acc str-target]
-                          (if-let [[match num] (re-find (re-pattern (str base "\\((\\d+\\))$")) str-target)]
-                            (max acc (js/parseInt num))
-                            acc))
-                        0 ids)]
-    (str base "(" (+ 1 offset max-num) ")")))
-
 (defmethod control-event :layer-duplicated
   [browser-state message {:keys [layer x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
@@ -368,7 +355,7 @@
                                            :layer/ui-id (when (:layer/ui-id layer)
                                                           (inc-str-id @(:db state) (:layer/ui-id layer)))
                                            :layer/ui-target (when (:layer/ui-target layer)
-                                                              (inc-str-target @(:db state) (:layer/ui-target layer))))])
+                                                              (:layer/ui-target layer)))])
       (assoc-in [:drawing :moving?] true)
       (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
