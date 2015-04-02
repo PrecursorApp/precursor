@@ -3,6 +3,7 @@
             [cheshire.core :as json]
             [clojure.set :as set]
             [crypto.equality :as crypto]
+            [datomic.api :as d]
             [defpage.core :as defpage :refer (defpage)]
             [hiccup.page]
             [pc.assets]
@@ -149,10 +150,12 @@
                              (image-cache-headers db doc))
              :pc/doc doc
              :body ""}
-            (let [layers (layer-model/find-by-document db doc)]
+            (let [as-of (some-> req :params :as-of (Long/parseLong))
+                  layer-db (if as-of (d/as-of db as-of) db)
+                  layers (layer-model/find-by-document layer-db doc)]
               {:status 200
                :headers (merge {"Content-Type" "image/svg+xml"}
-                               (image-cache-headers db doc))
+                               (image-cache-headers layer-db doc))
                :pc/doc doc
                :body (render/render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
 
@@ -185,10 +188,12 @@
                              (image-cache-headers db doc))
              :pc/doc doc
              :body ""}
-            (let [layers (layer-model/find-by-document db doc)]
+            (let [as-of (some-> req :params :as-of (Long/parseLong))
+                  layer-db (if as-of (d/as-of db as-of) db)
+                  layers (layer-model/find-by-document layer-db doc)]
               {:status 200
                :headers (merge {"Content-Type" "image/png"}
-                               (image-cache-headers db doc))
+                               (image-cache-headers layer-db doc))
                :pc/doc doc
                :body (convert/svg->png (render/render-layers layers
                                                              :invert-colors? (-> req :params :printer-friendly (= "false"))

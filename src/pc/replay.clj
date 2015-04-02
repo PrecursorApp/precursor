@@ -157,6 +157,6 @@
                              txids)))))
 
 #_(defn clear-cache [db doc]
-  (doseq [tx-id (get-document-tx-ids db doc)]
-    (pc.cache/delete (str "pc.http.sente/frontend-tx-data-" tx-id)))
-  (clojure.core.memoize/memo-clear! pc.http.sente/memo-frontend-tx-data))
+    (doseq [tx-id (get-document-tx-ids db doc)]
+      (pc.cache/delete (str "pc.http.sente/frontend-tx-data-" tx-id)))
+    (clojure.core.memoize/memo-clear! pc.http.sente/memo-frontend-tx-data))
