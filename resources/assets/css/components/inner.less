@@ -33,8 +33,10 @@
     }
   }
   &.loading {
-    cursor: wait;
-    .canvas-frame {
+    &:active {
+      cursor: wait;
+    }
+    .canvas-frame:active {
       cursor: wait;
     }
     .shape-layer,
