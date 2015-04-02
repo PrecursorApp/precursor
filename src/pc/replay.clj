@@ -77,10 +77,11 @@
              tx))
          txes)))
 
-(defn copy-transactions [db doc new-doc & {:keys [sleep-ms]
+(defn copy-transactions [db doc new-doc & {:keys [sleep-ms remove-tx]
                                            :or {sleep-ms 1000}}]
   (let [conn (pcd/conn)
         txes (->> (get-document-transactions db doc)
+               (remove (fn [tx] (contains? remove-tx (:db/id (:tx tx)))))
                (map (fn [tx]
                       (update-in tx
                                  [:tx-data]
