@@ -94,7 +94,8 @@
                                                      [:client-id]
                                                      [:cust-data]
                                                      [:document/id]
-                                                     [:keyboard]])
+                                                     [:keyboard]
+                                                     [:keyboard-shortcuts]])
                        {:react-key "canvas"})
 
              (om/build chat/chat (select-in app [state/chat-opened-path
