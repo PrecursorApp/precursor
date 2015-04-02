@@ -13,6 +13,7 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.permission :as permission-model]
+            [pc.replay :as replay]
             [ring.util.anti-forgery :as anti-forgery]))
 
 (defn interesting [doc-ids]
@@ -477,3 +478,21 @@
       [:p "Upload file:"]
       [:p [:input {:name "file" :type "file"}]]
       [:input {:type "submit" :value "Upload"}]])))
+
+(defn replay-helper [doc]
+  (let [txids (replay/get-document-tx-ids (pcd/default-db) doc)
+        initial-tx (last txids)]
+    (list
+     [:div {:style "display: inline-block; width: 19%; vertical-align: top;"}
+      [:span "Current: " [:span#current-tx initial-tx]]
+      [:ol {:style "max-height: 50vh; overflow: scroll"}
+       (for [txid txids]
+         [:li {:style "cursor:pointer;"
+               :onClick (str (format "document.getElementById('current-tx').textContent = '%s';"
+                                     txid)
+                             (format "document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) { return m1 + '%s'});"
+                                     txid))}
+          txid])]]
+     [:img#img {:src (urls/svg-from-doc doc :query {:as-of initial-tx})
+                :width "80%"
+                :style "border: 1px solid rgba(0,0,0,0.3)"}])))
