@@ -198,6 +198,10 @@
         (and (= #{"shift"} key-set) (settings/drawing-in-progress? state))
         (assoc-in [:drawing :layers 0 :force-even?] depressed?)
 
+        (= #{"space"} key-set)
+        (assoc-in [:pan :position] {:x (get-in state [:mouse :x])
+                                    :y (get-in state [:mouse :y])})
+
         (and (keyboard/arrow-shortcut-active? state)
              (not (keyboard/arrow-shortcut-active? new-state)))
         cancel-drawing))))
@@ -671,8 +675,11 @@
 
 (defn pan-canvas [state x y]
   (-> state
-    (assoc-in [:pan :start] {:x x :y y})
-    (update-in [:camera] cameras/move-camera (- x (get-in state [:pan :start :x])) (- y (get-in state [:pan :start :y])))))
+    (assoc-in [:pan :position] {:x x :y y})
+    (update-in [:camera] (fn [c]
+                           (cameras/move-camera c
+                                                (- x (get-in state [:pan :position :x]))
+                                                (- y (get-in state [:pan :position :y])))))))
 
 (defmethod control-event :mouse-moved
   [browser-state message [x y {:keys [shift?]}] state]
@@ -690,9 +697,11 @@
         (get-in state [:drawing :moving?])
         (move-drawings x y)
 
-        (and (get-in state [:keyboard #{"space"}])
-             (:mouse-down state))
-        (pan-canvas x y))))
+        (get-in state [:keyboard #{"space"}])
+        ((fn [s]
+            (if (:mouse-down s)
+              (pan-canvas s x y)
+              (assoc-in s [:pan :position] {:x x :y y})))))))
 
 (defmethod post-control-event! :text-layer-edited
   [browser-state message _ previous-state current-state]
@@ -772,7 +781,8 @@
       (assoc-in [:editing-eids :editing-eids] #{}))))
 
 (defn handle-start-pan [state x y]
-  (assoc-in state [:pan :start] {:x x :y y}))
+  (-> state
+    (assoc-in [:pan :position] {:x x :y y})))
 
 (defn mouse-depressed-intents [state button ctrl? shift?]
   (let [tool (get-in state state/current-tool-path)
@@ -783,7 +793,7 @@
      ;; You also want the right-click menu to open
      (when drawing-text? [:finish-text-layer])
      (cond
-       (get (:keyboard state) #{"space"}) [:pan]
+       (get-in state [:keyboard #{"space"}]) [:pan]
        (= button 2) [:open-menu]
        (and (= button 0) ctrl? (not shift?)) [:open-menu]
        (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]

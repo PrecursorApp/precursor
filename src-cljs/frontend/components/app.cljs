@@ -127,8 +127,6 @@
                                               [:cust-data]
                                               [:team]
                                               [:max-document-scope]
-                                              [:keyboard]
-                                              [:mouse-down]
                                               (state/doc-tx-rejected-count-path (:document/id app))])
                       {:react-key "hud"})])
           (html [:div#app]))))))
@@ -139,7 +137,7 @@
     om/IRender
     (render [_]
       (om/build app* (-> app
-                       (dissoc :mouse :progress)
+                       (dissoc :mouse :progress :pan)
                        (dissoc-in [:subscribers :mice])
                        (dissoc-in [:subscribers :layers]))
                 {:react-key "app*"}))))

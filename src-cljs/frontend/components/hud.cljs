@@ -74,50 +74,18 @@
                      (if roster-visible? "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
 
-;; defined in js instead of css b/c we rely on the value to get the positioning correct
-;; can put it in css if top and left don't need to be corrected for cursor size
-(def cursor-size 16)
-
-(def inactive-pan-cursor (common/svg-icon :crosshair
-                                          {:svg-props {:style {:height cursor-size
-                                                               :width cursor-size}
-                                                       :x 0
-                                                       :y 0}}))
-
-(def active-pan-cursor (common/svg-icon :crosshair
-                                        {:svg-props {:style {:height cursor-size
-                                                             :width cursor-size}
-                                                     :x 0
-                                                     :y 0}}))
-
-
-
-(defn mouse-stats [{:keys [mouse-down keyboard]} owner]
+(defn mouse-stats [_ owner]
   (reify
     om/IDisplayName (display-name [_] "Mouse Stats")
     om/IRender
     (render [_]
-      (let [mouse (cursors/observe-mouse owner)
-            width cursor-size]
-        (dom/div nil
-          (when (get keyboard #{"space"})
-            (dom/div #js {:className (str "pan-cursor "
-                                          (when mouse-down
-                                            "active "))
-                          :style #js {:top (- (:y mouse) (/ width 2))
-                                      :left (- (:x mouse) (/ width 2))
-                                      :position "fixed"
-                                      :width width
-                                      :height width}}
-              (if mouse-down
-                active-pan-cursor
-                inactive-pan-cursor)))
-          (dom/div #js {:className "mouse-stats"
-                        :onMouseDown #((om/get-shared owner :cast!)
-                                       :mouse-stats-clicked)
-                        :data-text (str "{:x " (:rx mouse 0)
-                                        ", :y " (:ry mouse 0)
-                                        "}")}))))))
+      (let [mouse (cursors/observe-mouse owner)]
+        (dom/div #js {:className "mouse-stats"
+                      :onMouseDown #((om/get-shared owner :cast!)
+                                     :mouse-stats-clicked)
+                      :data-text (str "{:x " (:rx mouse 0)
+                                      ", :y " (:ry mouse 0)
+                                      "}")})))))
 
 (defn tray [app owner]
   (reify
@@ -156,8 +124,7 @@
                [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
                [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
           [:div.doc-stats
-           (om/build mouse-stats {:keyboard (:keyboard app)
-                                  :mouse-down (:mouse-down app)}
+           (om/build mouse-stats {}
                      {:react-key "mouse-stats"})
            [:div.privacy-stats {:on-click #(cast! :privacy-stats-clicked)
                                 :key rejected-tx-count
@@ -359,8 +326,6 @@
                                              [:document/id]
                                              [:cust]
                                              [:max-document-scope]
-                                             [:keyboard]
-                                             [:mouse-down]
                                              (state/doc-tx-rejected-count-path (:document/id app))])
                   {:react-key "tray"})
 
