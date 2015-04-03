@@ -28,7 +28,7 @@
           :y (:layer/start-y layer)
           :fill (if invert-colors? "#ccc" "black")
           :stroke-width 0
-          :font-family (h/h (:layer/font-family layer "Helvetica"))
+          :font-family (h/h (:layer/font-family layer "Roboto"))
           :font-size   (:layer/font-size layer 20)}
          layer-props))
 
