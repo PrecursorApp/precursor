@@ -1,0 +1,23 @@
+.pan-cursor {
+  pointer-events: none;
+  .iconpile {
+    [class|="stroke"] {
+      stroke: red;
+    }
+  }
+  &.active {
+    .iconpile {
+      [class|="stroke"] {
+        stroke: green;
+      }
+    }
+  }
+  display: none;
+  z-index: @zindex_pan_tool;
+}
+.canvas:hover,
+.canvas:active {
+  .pan-cursor {
+    display: block;
+  }
+}

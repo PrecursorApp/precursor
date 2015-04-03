@@ -55,7 +55,8 @@
           (html
            [:div#app.app {:class (str (frontend.overlay/app-overlay-class app)
                                       (when (:show-landing? app) " state-outer ")
-                                      (if chat-opened? " chat-opened " " chat-closed "))}
+                                      (if chat-opened? " chat-opened " " chat-closed ")
+                                      (when (keyboard/pan-shortcut-active? app) " state-pan "))}
             (om/build text-sizer {})
             (om/build progress/progress-bar {} {:react-key "progress-bar"})
 
@@ -85,16 +86,17 @@
                          :class (when (empty? (:frontend-id-state app)) "loading")
                          :key "inner"}
              [:style "#om-app:active{cursor:auto}"]
-             (om/build canvas/canvas (select-in app (concat [state/current-tool-path
-                                                             [:drawing :in-progress?]
-                                                             [:drawing :relation-in-progress?]
-                                                             [:mouse-down]
-                                                             [:layer-properties-menu]
-                                                             [:menu]
-                                                             [:client-id]
-                                                             [:cust-data]
-                                                             [:document/id]]
-                                                            (keyboard/arrow-shortcut-state-keys app)))
+             (om/build canvas/canvas (select-in app [state/current-tool-path
+                                                     [:drawing :in-progress?]
+                                                     [:drawing :relation-in-progress?]
+                                                     [:mouse-down]
+                                                     [:layer-properties-menu]
+                                                     [:menu]
+                                                     [:client-id]
+                                                     [:cust-data]
+                                                     [:document/id]
+                                                     [:keyboard]
+                                                     [:keyboard-shortcuts]])
                        {:react-key "canvas"})
 
              (om/build chat/chat (select-in app [state/chat-opened-path
@@ -136,7 +138,7 @@
     om/IRender
     (render [_]
       (om/build app* (-> app
-                       (dissoc :mouse :progress)
+                       (dissoc :mouse :progress :pan)
                        (dissoc-in [:subscribers :mice])
                        (dissoc-in [:subscribers :layers]))
                 {:react-key "app*"}))))

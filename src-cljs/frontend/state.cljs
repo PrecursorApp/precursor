@@ -34,6 +34,7 @@
                      :offset-x   0
                      :offset-y   0
                      :show-grid? true}
+   :pan {}
    :error-message   nil
    :settings        {:browser-settings initial-browser-settings}
    :keyboard-shortcuts {:select #{#{"v"}}

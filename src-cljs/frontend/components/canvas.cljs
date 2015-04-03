@@ -13,6 +13,7 @@
             [frontend.keyboard :as keyboard]
             [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
+            [frontend.components.pan :as pan]
             [frontend.settings :as settings]
             [frontend.state :as state]
             [frontend.svg :as svg]
@@ -935,9 +936,9 @@
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
                       :className (str "canvas-frame "
-                                      (if (keyboard/arrow-shortcut-active? app)
-                                        " arrow-tool "
-                                        (str " tool-" (name tool) " "))
+                                      (cond (keyboard/arrow-shortcut-active? app) " arrow-tool "
+                                            (keyboard/pan-shortcut-active? app) " pan-tool "
+                                            :else (str " tool-" (name tool) " "))
                                       (when (and mouse-down?
                                                  (keyword-identical? :text tool)
                                                  in-progress?)
@@ -1066,5 +1067,8 @@
                                         (.stopPropagation e))}
           [:div.canvas-background]
           (om/build svg-canvas app)
+
+          (om/build pan/pan-cursor {:keyboard (:keyboard app)
+                                    :mouse-down (:mouse-down app)})
           (when (get-in app [:menu :open?])
             (om/build radial-menu (utils/select-in app [[:menu]])))])))))

@@ -80,12 +80,12 @@
     om/IRender
     (render [_]
       (let [mouse (cursors/observe-mouse owner)]
-        (html
-         [:div.mouse-stats {:onMouseDown #((om/get-shared owner :cast!)
-                                           :mouse-stats-clicked)
-                            :data-text (str "{:x " (:rx mouse 0)
-                                            ", :y " (:ry mouse 0)
-                                            "}")}])))))
+        (dom/div #js {:className "mouse-stats"
+                      :onMouseDown #((om/get-shared owner :cast!)
+                                     :mouse-stats-clicked)
+                      :data-text (str "{:x " (:rx mouse 0)
+                                      ", :y " (:ry mouse 0)
+                                      "}")})))))
 
 (defn tray [app owner]
   (reify
@@ -124,7 +124,8 @@
                [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
                [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
           [:div.doc-stats
-           (om/build mouse-stats {} {:react-key "mouse-stats"})
+           (om/build mouse-stats {}
+                     {:react-key "mouse-stats"})
            [:div.privacy-stats {:on-click #(cast! :privacy-stats-clicked)
                                 :key rejected-tx-count
                                 :class (when (pos? rejected-tx-count)
