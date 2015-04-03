@@ -654,20 +654,26 @@
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
-                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
-              [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
-             [:tr.make
-              [:td
-               [:div.shortcuts-keys
                 [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
               [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
+              [:td [:div.shortcuts-result {:title "Hold shift, scroll."} "Pan"]]]
              ;;
              ;; click
              ;;
              [:tr.make
               [:td {:col-span "2"}]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Space Key"} (common/icon :space)]
+                [:div.shortcuts-misc {:title "Left Click"} (common/icon :click)]]]
+              [:td [:div.shortcuts-result {:title "Hold space, click and drag to pan."} "Pan"]]]
              [:tr.make
               [:td
                [:div.shortcuts-keys
