@@ -55,7 +55,8 @@
           (html
            [:div#app.app {:class (str (frontend.overlay/app-overlay-class app)
                                       (when (:show-landing? app) " state-outer ")
-                                      (if chat-opened? " chat-opened " " chat-closed "))}
+                                      (if chat-opened? " chat-opened " " chat-closed ")
+                                      (when (get (:keyboard app) #{"space"}) " state-pan "))}
             (om/build text-sizer {})
             (om/build progress/progress-bar {} {:react-key "progress-bar"})
 

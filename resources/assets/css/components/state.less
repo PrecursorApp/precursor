@@ -181,3 +181,15 @@
     display: none;
   }
 }
+.state-pan {
+  .hud {
+    pointer-events: none;
+  }
+  .canvas {
+    &:not(:hover) {
+      .pan-cursor {
+        display: none;
+      }
+    }
+  }
+}
