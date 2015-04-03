@@ -1,7 +1,10 @@
 (ns pc.render
-  (:require [pc.layers :as layers]
+  (:require [clojure.java.io :as io]
+            [pc.layers :as layers]
             [pc.svg :as svg]
-            [hiccup.core :refer (h html)]))
+            [pc.util.base64 :as base64]
+            [hiccup.core :refer (h html)])
+  (:import [org.apache.commons.io IOUtils]))
 
 (defmulti svg-element (fn [layer opts] (:layer/type layer)))
 
@@ -23,6 +26,15 @@
 
 (defn nan? [thing]
   (or (not thing) (.isNaN thing)))
+
+(defn fonts* []
+  {:roboto-regular (-> "public/webfonts/Roboto/RobotoRegular.ttf"
+                     (io/resource)
+                     (io/input-stream)
+                     (IOUtils/toByteArray)
+                     (base64/encode))})
+
+(def fonts (memoize fonts*))
 
 ;; Getting placement here is a bit tricky.
 ;; Goal is to reproduce the canvas exactly as it is in the app, except in
@@ -69,6 +81,10 @@
                   :version "1.1"}
                  (when invert-colors?
                    {:style "background: #333"}))
+           [:defs
+            [:style {:type "text/css"}
+             (format "@font-face { font-family: 'Roboto'; src: url('data:application/x-font-ttf;base64, %s') format('truetype');"
+                     (:roboto-regular (fonts)))]]
            ;; hack to make pngs work
            (when invert-colors?
              [:rect {:width "100%" :height "100%" :fill "#333"}])
