@@ -921,7 +921,7 @@
                       :xmlns "http://www.w3.org/2000/svg"
                       :className (str "canvas-frame "
                                       (cond (keyboard/arrow-shortcut-active? app) " arrow-tool "
-                                            (get-in app [:keyboard #{"space"}]) " pan-tool "
+                                            (keyboard/pan-shortcut-active? app) " pan-tool "
                                             :else (str " tool-" (name tool) " "))
                                       (when (and mouse-down?
                                                  (keyword-identical? :text tool)

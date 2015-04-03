@@ -1,6 +1,7 @@
 (ns frontend.components.pan
   (:require [frontend.components.common :as common]
             [frontend.cursors :as cursors]
+            [frontend.keyboard :as keyboard]
             [frontend.utils :as utils]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
@@ -9,12 +10,12 @@
 ;; can put it in css if top and left don't need to be corrected for cursor size
 (def cursor-size 16)
 
-(defn pan-cursor [{:keys [keyboard mouse-down]} owner]
+(defn pan-cursor [{:keys [keyboard mouse-down] :as app} owner]
   (reify
     om/IRender
     (render [_]
       (let [pan (cursors/observe-pan-tool owner)]
-        (if (and (get keyboard #{"space"})
+        (if (and (keyboard/pan-shortcut-active? app)
                  (:position pan))
           (dom/div #js {:className (str "pan-cursor "
                                         (when mouse-down

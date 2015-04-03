@@ -13,3 +13,6 @@
 
 (defn arrow-shortcut-active? [app]
   (first (filter #(get-in app %) (arrow-shortcut-key-paths app))))
+
+(defn pan-shortcut-active? [app]
+  (get-in app [:keyboard #{"space"}]))

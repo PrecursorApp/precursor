@@ -697,7 +697,7 @@
         (get-in state [:drawing :moving?])
         (move-drawings x y)
 
-        (get-in state [:keyboard #{"space"}])
+        (keyboard/pan-shortcut-active? state)
         ((fn [s]
             (if (:mouse-down s)
               (pan-canvas s x y)
@@ -793,7 +793,7 @@
      ;; You also want the right-click menu to open
      (when drawing-text? [:finish-text-layer])
      (cond
-       (get-in state [:keyboard #{"space"}]) [:pan]
+       (keyboard/pan-shortcut-active? state) [:pan]
        (= button 2) [:open-menu]
        (and (= button 0) ctrl? (not shift?)) [:open-menu]
        (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
