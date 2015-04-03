@@ -73,20 +73,6 @@
                                     :code (.-which event)
                                     :depressed? (= direction :down)}])))))
 
-;; Overcome some of the browser limitations around DnD
-(def mouse-move-ch
-  (chan (sliding-buffer 1)))
-
-(def mouse-down-ch
-  (chan (sliding-buffer 1)))
-
-(def mouse-up-ch
-  (chan (sliding-buffer 1)))
-
-(js/window.addEventListener "mousedown" #(put! mouse-down-ch %))
-(js/window.addEventListener "mouseup"   #(put! mouse-up-ch   %))
-(js/window.addEventListener "mousemove" #(put! mouse-move-ch %))
-
 (def controls-ch
   (chan))
 
@@ -136,13 +122,7 @@
                              :controls-mult (async/mult controls-ch)
                              :api-mult      (async/mult api-ch)
                              :errors-mult   (async/mult errors-ch)
-                             :nav-mult      (async/mult navigation-ch)
-                             :mouse-move    {:ch mouse-move-ch
-                                             :mult (async/mult mouse-move-ch)}
-                             :mouse-down    {:ch mouse-down-ch
-                                             :mult (async/mult mouse-down-ch)}
-                             :mouse-up      {:ch mouse-up-ch
-                                             :mult (async/mult mouse-up-ch)}})
+                             :nav-mult      (async/mult navigation-ch)})
             (browser-settings/restore-browser-settings cust)))))
 
 (defn controls-handler
