@@ -237,7 +237,7 @@
             document-id (get-in app [:document/id])]
         (html
          [:div.chat
-          [:div#canvas-size.chat-offset]
+          [:div#canvas-size.chat-offset.holo]
           [:div.chat-window {:class (when (or (not chat-opened?)
                                               (:show-landing? app)) ["closed"])}
            [:div.chat-background]
