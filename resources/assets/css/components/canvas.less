@@ -36,14 +36,14 @@
   transition+: width @now @run_slower @bezier_deform;
   transition+: height @now @run_slower @bezier_deform;
   will-change: transform;
+  cursor: crosshair;
   &:not(:hover) {
     ~ .radial-tip {
       display: none;
     }
   }
-  top: 0;
-  left: 0;
-  cursor: crosshair;
+  // top: 0;
+  // left: 0;
   &.tool-text {
     cursor: text;
   }
