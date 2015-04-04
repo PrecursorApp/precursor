@@ -19,7 +19,8 @@
                  (:position pan))
           (dom/div #js {:className (str "pan-cursor "
                                         (when mouse-down
-                                          "active "))
+                                          "active ")
+                                        " holo ")
                         :style #js {:top (- (get-in pan [:position :y]) (/ cursor-size 2))
                                     :left (- (get-in pan [:position :x]) (/ cursor-size 2))
                                     :position "fixed"
