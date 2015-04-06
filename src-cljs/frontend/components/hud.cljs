@@ -248,23 +248,30 @@
                      :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))})
                   (or self-name "You")]
                  [:div.viewer-knobs
-                  [:a.viewer-knob
-                   {:key client-id
-                    :on-click #(do
-                                 (if can-edit?
-                                   (om/set-state! owner :editing-name? true)
-                                   (cast! :overlay-username-toggled))
-                                 (.stopPropagation %))
-                    :role "button"
-                    :title "Change your display name."}
+                  (when (contains? #{"danny@precursorapp.com"
+                                     "daniel@precursorapp.com"} (get-in app [:cust :cust/email]))
+                    [:a.viewer-knob {:on-click #(cast! :recording-toggled)
+                                     :role "button"
+                                     :title "Share your audio with everyone in the doc"}
+                     (common/icon :globe)])
+                  [:a.viewer-knob {:on-click #(do
+                                                (if can-edit?
+                                                  (om/set-state! owner :editing-name? true)
+                                                  (cast! :overlay-username-toggled))
+                                                (.stopPropagation %))
+                                   :role "button"
+                                   :title "Change your display name."}
                    (common/icon :pencil)]]])
-              (for [[id {:keys [show-mouse? color cust-name hide-in-list?] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
+              (for [[id {:keys [show-mouse? color cust-name hide-in-list? stream-url] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
                     :when (not hide-in-list?)
                     :let [id-str (get-in app [:cust-data :uuid->cust (:cust/uuid sub) :cust/name] (apply str (take 6 id)))
                           color-class (name (colors/find-color (get-in app [:cust-data :uuid->cust])
                                                                (:cust/uuid sub)
                                                                (:client-id sub)))]]
                 [:div.viewer
+                 (when stream-url
+                   [:audio {:autoPlay true
+                            :src stream-url}])
                  [:div.viewer-avatar.viewer-tag
                   (common/icon :user (when show-mouse? {:path-props {:className color-class}}))]
                  [:div.viewer-name.viewer-tag
