@@ -31,9 +31,6 @@
   padding: @padding_hint;
   background: @color_select;
   white-space: nowrap;
-
-
-
   &:before {
     content: "";
     position: absolute;
@@ -44,18 +41,12 @@
     position: relative;
     background: inherit;
   }
-
-
-
   &:not(.fast) {
     transition: @run_slower @bezier_deform;
     &:before {
       transition-delay: @run_slow;
     }
   }
-
-
-
   &[data-radial] {
     top: inherit;
     left: inherit;
@@ -64,9 +55,6 @@
       content: attr(data-radial);
     }
   }
-
-
-
   &[data-chat] {
     top: calc(~"100% -" @hint_top);
     left: calc(~"100% -" @tile);
@@ -99,9 +87,6 @@
       content: attr(data-team);
     }
   }
-
-
-
   &.north:before,
   &.south:before {
     left: 50%;
@@ -128,4 +113,54 @@
     left: -@padding_hint * 2;
     border-right-color: @color_select;
   }
+}
+.radial-menu {
+  position: fixed;
+  width: @tile_radial;
+  height: @tile_radial;
+}
+.radial-buttons {
+  width: @tile_radial + 2;
+  height: @tile_radial + 2;
+  margin-left: -1em;
+  margin-top: -1em;
+  padding: 1rem;
+  overflow: visible;
+}
+.radial-button {
+  cursor: pointer;
+  transition: @run @bezier_deform;
+  &:hover {
+    transform: translate3d(-13px, -13px, 0) scale3d(1.1, 1.1, 1);
+    transition-duration: @run_fast;
+    .radial-pie {
+      fill: @gray_dark;
+      transition-duration: @run_fast;
+    }
+    .radial-icon {
+      stroke: @white;
+      transition-duration: @run_fast;
+    }
+  }
+  &:active {
+    .radial-pie {
+      fill: @gray_darker;
+    }
+  }
+}
+.radial-pie {
+  fill: @gray_darker;
+  stroke: @gray_dark;
+  transition: @run @bezier_deform;
+}
+.radial-icon {
+  .shape_position(@radial_tools);
+  fill: none;
+  stroke: @gray;
+  stroke-width: 8;
+  pointer-events: none;
+  transition: @run @bezier_fadein;
+}
+.radial-point {
+  fill: @gray_dark;
 }
