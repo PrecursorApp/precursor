@@ -33,12 +33,6 @@
       fill: @gray_light;
     }
   }
-  .layer-properties {
-    display: none;
-  }
-  .radial-hint {
-    display: none;
-  }
   .chat-background {
     transform: scale3d(0, 0, 1);
     transition-duration: @run_slow;
@@ -167,12 +161,6 @@
       transition-duration: @run;
     }
   }
-  .layer-properties {
-    display: none;
-  }
-  .radial-hint {
-    display: none;
-  }
   .chat {
     opacity: 0; // `display:none` breaks grid in ff so use opacity
     transition: opacity @now @now;
@@ -184,12 +172,5 @@
 .state-pan {
   .hud {
     pointer-events: none;
-  }
-  .canvas {
-    &:not(:hover) {
-      .pan-cursor {
-        display: none;
-      }
-    }
   }
 }
