@@ -343,4 +343,8 @@
 (defpage health-check "/health-check" [req]
   (lb/health-check-response req))
 
+(defpage robots-txt "/robots.txt" [req]
+  {:status 200
+   :body "User-agent: Twitterbot\nDisallow:\n"})
+
 (def app (defpage/collect-routes))
