@@ -75,6 +75,7 @@
                          :key "inner"}
              [:style "#om-app:active{cursor:auto}"]
              (om/build canvas/canvas (select-in app [state/current-tool-path
+                                                     state/right-click-learned-path
                                                      [:drawing :in-progress?]
                                                      [:drawing :relation-in-progress?]
                                                      [:mouse-down]
