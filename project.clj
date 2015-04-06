@@ -12,7 +12,7 @@
                  [compojure "1.3.1"]
                  [cheshire "5.4.0"]
                  [clj-time "0.6.0"]
-                 [org.clojure/tools.nrepl "0.2.7"]
+                 [org.clojure/tools.nrepl "0.2.10"]
                  [javax.servlet/servlet-api "2.5"]
                  [slingshot "0.12.1"]
                  [hiccup "1.0.4"]
@@ -24,7 +24,7 @@
 
                  [clj-statsd "0.3.10"]
 
-                 [cider/cider-nrepl "0.8.2"]
+                 [cider/cider-nrepl "0.9.0-SNAPSHOT"]
                  [clj-http "1.0.1" :exclusions [commons-codec clj-tuple potemkin]]
                  [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
                                                                   org.slf4j/slf4j-api
@@ -85,7 +85,8 @@
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 
-                 [weasel "0.6.0"] ;; repl
+                 [dwwoelfel/weasel "0.6.1-09967ffe4a4a849a3d3988ffd241ea0770ab16c9"] ;; repl
+                 [com.cemerick/piggieback "0.1.5"]
 
                  ;; needed to make lein pedantic happy
                  [commons-codec "1.6"]
@@ -123,15 +124,21 @@
              :css-dirs ["resources/public/css"]}
 
   :plugins [[lein-cljsbuild "1.0.5"]
-            [com.cemerick/austin "0.1.7-SNAPSHOT" :exclusions [org.clojure/clojurescript]]
             [lein-figwheel "0.2.5" :exclusions [org.codehaus.plexus/plexus-utils
+                                                org.clojure/clojure
                                                 commons-codec]]
             [circle/lein-deploy-deps "0.1.3"]
-            [circle/s3-wagon-private "1.2.2" :exclusions [commons-codec org.apache.httpcomponents/httpclient]]]
+            [circle/s3-wagon-private "1.2.2" :exclusions [commons-codec
+                                                          org.apache.httpcomponents/httpclient]]]
 
   :exclusions [[org.clojure/clojure]
                [org.clojure/clojurescript]
-               [org.slf4j/log4j-over-slf4j]]
+               [org.slf4j/log4j-over-slf4j]
+               [org.clojure/tools.nrepl]]
+
+  ;; prevent leiningen from loading its version of nrepl (!)
+  :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.10"
+                                 :exclusions [org.clojure/clojure]]]}}
 
   :pedantic? :abort
 
