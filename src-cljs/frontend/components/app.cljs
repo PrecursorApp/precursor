@@ -114,7 +114,7 @@
                                               [:team]
                                               [:max-document-scope]
                                               (state/doc-tx-rejected-count-path (:document/id app))])
-                      {:react-key "hud"})])
+                      {:react-key "hud"})
 
             (when (:show-landing? app)
               (om/build outer/outer (select-in app [[:show-landing?]
