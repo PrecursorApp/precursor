@@ -175,6 +175,6 @@
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
                                    :optimizations :advanced
-                                   :externs ["src-cljs/js/react-externs.js"
-                                             "src-cljs/js/analytics-externs.js"]
+                                   :externs ["src-cljs/js/analytics-externs.js"
+                                             "src-cljs/js/w3c_rtc-externs.js"]
                                    :source-map "resources/public/cljs/production/sourcemap-frontend.map"}}]})

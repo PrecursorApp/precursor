@@ -22,6 +22,7 @@
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
             [frontend.routes :as routes]
+            [frontend.rtc :as rtc]
             [frontend.sente :as sente]
             [frontend.settings :as settings]
             [frontend.state :as state]
@@ -73,7 +74,8 @@
                                                                   (get-in current-state [:drawing :moving?]))
                                                           (get-in current-state [:drawing :layers]))
                                                 :relation (when (get-in current-state [:drawing :relation :layer])
-                                                            (get-in current-state [:drawing :relation]))}
+                                                            (get-in current-state [:drawing :relation]))
+                                                :recording? (:recording? current-state)}
                                                (when (and x y)
                                                  {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
 
@@ -1724,3 +1726,45 @@
       z (update-in [:camera] #(-> %
                                 (assoc :zf 1 :z-exact 1)
                                 (cameras/set-zoom [sx sy] (constantly z)))))))
+
+(defmethod post-control-event! :recording-toggled
+  [browser-state message _ previous-state current-state]
+  (rtc/setup-stream (get-in current-state [:comms :controls])))
+
+;; need to double-check that this accounts for multiple steams being stopped and started
+(defmethod control-event :media-stream-started
+  [browser-state message {:keys [stream-id]} state]
+  (let [stream @rtc/stream]
+    (if (and stream (= stream-id (.-id stream)))
+      (assoc state :recording? true)
+      state)))
+
+(defmethod post-control-event! :media-stream-started
+  [browser-state message _ previous-state current-state]
+  (maybe-notify-subscribers! current-state nil nil))
+
+(defmethod control-event :media-stream-failed
+  [browser-state message {:keys [error]} state]
+  (let [stream @rtc/stream]
+    (if (and stream (not (.-ended stream)))
+      state
+      (assoc state :recording? false))))
+
+(defmethod post-control-event! :media-stream-failed
+  [browser-state message _ previous-state current-state]
+  (maybe-notify-subscribers! current-state nil nil))
+
+(defmethod control-event :media-stream-stopped
+  [browser-state message {:keys [stream-id]} state]
+  (let [stream @rtc/stream]
+    (if (and stream (= stream-id (.-id stream)))
+      (assoc state :recording? false)
+      state)))
+
+(defmethod post-control-event! :media-stream-stopped
+  [browser-state message _ previous-state current-state]
+  (maybe-notify-subscribers! current-state nil nil))
+
+(defmethod control-event :remote-media-stream-ready
+  [browser-state message {:keys [stream-url producer]} state]
+  (utils/update-when-in state [:subscribers :info producer] assoc :stream-url stream-url))
