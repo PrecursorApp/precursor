@@ -1,6 +1,13 @@
 .canvas {
   flex: 1;
   position: relative;
+  &:not(:hover) {
+    &:not(:active) {
+      .hint {
+        display: none;
+      }
+    }
+  }
   &:active {
     + .chat {
       .chat-window {
@@ -33,7 +40,9 @@
     &:not(:active) {
       user-select: none;
       ~ .mouse {
-        display: none;
+        .mouse-cursor {
+          display: none;
+        }
       }
     }
   }
