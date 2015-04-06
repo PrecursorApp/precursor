@@ -60,6 +60,10 @@
   (when (logging-enabled?)
     (.apply (.-error js/console) js/console (clj->js messages))))
 
+(defn report-error [& messages]
+  (.apply js/Rollbar.error js/Rollbar (clj->js messages))
+  (apply merror messages))
+
 (defn log-pr [& args]
   (apply print (map #(if (= (type %) (type ""))
                      %
