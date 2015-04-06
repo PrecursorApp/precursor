@@ -58,18 +58,6 @@
                                       (if chat-opened? " chat-opened " " chat-closed ")
                                       (when (keyboard/pan-shortcut-active? app) " state-pan "))}
             (om/build text-sizer {})
-            (om/build progress/progress-bar {} {:react-key "progress-bar"})
-
-            (when (:show-landing? app)
-              (om/build outer/outer (select-in app [[:show-landing?]
-                                                    [:document/id]
-                                                    [:navigation-point]
-                                                    [:navigation-data]
-                                                    [:cust]
-                                                    [:subscribers :info]
-                                                    [:page-count]
-                                                    [:show-scroll-to-arrow]])
-                        {:react-key "outer"}))
 
             (when (and (keyword-identical? :document nav-point)
                        (empty? (:cust app))
@@ -130,6 +118,19 @@
                                               [:max-document-scope]
                                               (state/doc-tx-rejected-count-path (:document/id app))])
                       {:react-key "hud"})])
+
+            (when (:show-landing? app)
+              (om/build outer/outer (select-in app [[:show-landing?]
+                                                    [:document/id]
+                                                    [:navigation-point]
+                                                    [:navigation-data]
+                                                    [:cust]
+                                                    [:subscribers :info]
+                                                    [:page-count]
+                                                    [:show-scroll-to-arrow]])
+                        {:react-key "outer"}))
+
+            (om/build progress/progress {} {:react-key "progress-bar"})])
           (html [:div#app]))))))
 
 (defn app [app owner]
