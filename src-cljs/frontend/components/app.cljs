@@ -79,7 +79,7 @@
                                                      [:drawing :relation-in-progress?]
                                                      [:mouse-down]
                                                      [:layer-properties-menu]
-                                                     [:menu]
+                                                     [:radial]
                                                      [:client-id]
                                                      [:cust-data]
                                                      [:document/id]

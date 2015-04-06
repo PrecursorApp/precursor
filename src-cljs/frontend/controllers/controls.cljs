@@ -171,8 +171,8 @@
     (overlay/clear-overlays state)
     (handle-replace-menu state :shortcuts)))
 
-(defn close-menu [state]
-  (assoc-in state [:menu :open?] false))
+(defn close-radial [state]
+  (assoc-in state [:radial :open?] false))
 
 (defn clear-shortcuts [state]
   (assoc-in state [:keyboard] {}))
@@ -181,7 +181,7 @@
   [state shortcut-name]
   (-> state
     overlay/clear-overlays
-    close-menu
+    close-radial
     cancel-drawing
     clear-shortcuts))
 
@@ -793,15 +793,15 @@
      (when drawing-text? [:finish-text-layer])
      (cond
        (keyboard/pan-shortcut-active? state) [:pan]
-       (= button 2) [:open-menu]
-       (and (= button 0) ctrl? (not shift?)) [:open-menu]
+       (= button 2) [:open-radial]
+       (and (= button 0) ctrl? (not shift?)) [:open-radial]
        (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
        (contains? #{:pen :rect :circle :line :select} tool) [:start-drawing]
        (and (keyword-identical? tool :text) (not drawing-text?)) [:start-drawing]
        :else nil))))
 
-(declare handle-menu-opened)
-(declare handle-menu-opened-after)
+(declare handle-radial-opened)
+(declare handle-radial-opened-after)
 (declare handle-layer-properties-submitted)
 (declare handle-layer-properties-submitted-after)
 (declare handle-text-layer-finished)
@@ -819,7 +819,7 @@
       (reduce (fn [s intent]
                 (case intent
                   :finish-text-layer (handle-text-layer-finished s)
-                  :open-menu (handle-menu-opened s)
+                  :open-radial (handle-radial-opened s)
                   :start-drawing (handle-drawing-started s x y)
                   :submit-layer-properties (handle-layer-properties-submitted s)
                   :pan (handle-start-pan s x y)
@@ -834,7 +834,7 @@
       (doseq [intent intents]
         (case intent
           :finish-text-layer (handle-text-layer-finished-after current-state)
-          :open-menu (handle-menu-opened-after current-state previous-state)
+          :open-radial (handle-radial-opened-after current-state previous-state)
           :start-drawing nil
           :submit-layer-properties (handle-layer-properties-submitted-after current-state)
           nil)))))
@@ -939,8 +939,8 @@
      (and (not= type "touchend")
           (not= button 2)
           (not (and (= button 0) ctrl?))
-          (get-in current-state [:menu :open?]))
-     (cast! [:menu-closed])
+          (get-in current-state [:radial :open?]))
+     (cast! [:radial-closed])
 
      (and (get-in previous-state [:drawing :relation-in-progress?])
           (seq (get-in current-state [:drawing :finished-relation :origin-layer])))
@@ -1091,33 +1091,33 @@
       (assoc-in [:drawing :moving?] true)
       (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
 
-(defn handle-menu-opened [state]
+(defn handle-radial-opened [state]
   (-> state
-    (update-in [:menu] assoc
+    (update-in [:radial] assoc
                :open? true
                :x (get-in state [:mouse :x])
                :y (get-in state [:mouse :y]))
     (assoc-in [:drawing :in-progress?] false)
-    (assoc-in state/right-click-learned-path true)))
+    (assoc-in state/right-click-learned-path true)
     (assoc-in [:layer-properties-menu :opened?] false)))
 
-(defmethod control-event :menu-opened
+(defmethod control-event :radial-opened
   [browser-state message _ state]
-  (handle-menu-opened state))
+  (handle-radial-opened state))
 
-(defn handle-menu-opened-after [previous-state current-state]
+(defn handle-radial-opened-after [previous-state current-state]
   (when (and (not (get-in previous-state state/right-click-learned-path))
              (get-in current-state state/right-click-learned-path))
     (analytics/track "Radial menu learned")))
 
-(defmethod post-control-event! :menu-opened
+(defmethod post-control-event! :radial-opened
   [browser-state message _ previous-state current-state]
-  (handle-menu-opened-after previous-state current-state))
+  (handle-radial-opened-after previous-state current-state))
 
-(defmethod control-event :menu-closed
+(defmethod control-event :radial-closed
   [browser-state message _ state]
   (-> state
-    close-menu))
+    close-radial))
 
 (defmethod control-event :newdoc-button-clicked
   [browser-state message _ state]
@@ -1133,7 +1133,7 @@
   [browser-state message [tool] state]
   (-> state
       (assoc-in state/current-tool-path tool)
-      (assoc-in [:menu :open?] false)))
+      (assoc-in [:radial :open?] false)))
 
 (defmethod control-event :text-layer-re-edited
   [browser-state message layer state]

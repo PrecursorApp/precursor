@@ -58,8 +58,8 @@
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)]
         (html
-         [:a.radial-menu {:style {:top  (- (get-in app [:menu :y]) 128)
-                                  :left (- (get-in app [:menu :x]) 128)}}
+         [:a.radial-menu {:style {:top  (- (get-in app [:radial :y]) 128)
+                                  :left (- (get-in app [:radial :x]) 128)}}
           [:svg.radial-buttons {:width "256" :height "256"}
            (for [[tool template] tools-templates]
              (html
@@ -944,7 +944,7 @@
                                           (do
                                             (.preventDefault event)
                                             (js/clearInterval (om/get-state owner :touch-timer))
-                                            (om/set-state! owner :touch-timer (js/setTimeout #(cast! :menu-opened) 500))
+                                            (om/set-state! owner :touch-timer (js/setTimeout #(cast! :radial-opened) 500))
                                             ((:handle-mouse-down handlers) (aget touches "0")))
 
                                           (= (.-length touches) 2)
