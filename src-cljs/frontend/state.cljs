@@ -52,7 +52,8 @@
                         :shrink-text #{#{"-"} #{"["}}
                         :grow-text #{#{"shift" "="}
                                      #{"="}
-                                     #{"]"}}}
+                                     #{"]"}}
+                        :record #{#{"shift" "ctrl" "alt" "r"}}}
    :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}

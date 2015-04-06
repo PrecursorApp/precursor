@@ -214,6 +214,10 @@
   [state shortcut-name]
   nil)
 
+(defmethod handle-keyboard-shortcut-after :record
+  [state shortcut-name]
+  (rtc/setup-stream (get-in state [:comms :controls])))
+
 (defn next-font-size [current-size direction]
   (let [grow? (keyword-identical? :grow direction)
         comp (if grow? > <)]
