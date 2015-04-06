@@ -480,6 +480,18 @@
                                                                                :recording? recording?
                                                                                :mouse-position mouse-position})]))))
 
+(defmethod ws-handler :rtc/signal [{:keys [client-id ?data] :as req}]
+  (check-document-access (-> ?data :document/id) req :read)
+  (let [document-id (:document/id ?data)
+        consumer (-> ?data :consumer)
+        producer (-> ?data :producer)
+        target (first (filter #(not= client-id %) [consumer producer]))
+        data (select-keys ?data [:candidate :sdp :consumer :producer :subscribe-to-recording?])]
+    (assert (get-in @document-subs [document-id target])
+            (format "%s is the target, but isn't subscribed to %s" target document-id))
+    (log/infof "sending signal from %s to %s" client-id target)
+    ((:send-fn @sente-state) target [:rtc/signal data])))
+
 (defmethod ws-handler :frontend/update-self [{:keys [client-id ?data] :as req}]
   ;; TODO: update subscribers in a different way
   (check-document-access (-> ?data :document/id) req :read)
