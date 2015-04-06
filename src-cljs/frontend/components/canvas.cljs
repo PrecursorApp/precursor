@@ -13,7 +13,7 @@
             [frontend.keyboard :as keyboard]
             [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
-            [frontend.components.pan :as pan]
+            [frontend.components.mouse :as mouse]
             [frontend.settings :as settings]
             [frontend.state :as state]
             [frontend.svg :as svg]
@@ -72,19 +72,6 @@
                [:path.radial-icon {:class (str "shape-" (:type template))
                                    :d (get common/icon-paths (:icon template))}]]))
            [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
-
-(defn radial-hint [app owner]
-  (reify
-    om/IDisplayName (display-name [_] "Radial Hint")
-    om/IRender
-    (render [_]
-      (let [mouse (cursors/observe-mouse owner)]
-        (html
-         [:div.radial-hint {:style {:top  (+ (or (:y mouse) (- 1000)) 16)
-                                    :left (+ (or (:x mouse) (- 1000)) 16)}}
-          (if (= :touch (get-in app [:mouse-type]))
-            "Tap and hold to select tool"
-            "Right-click.")])))))
 
 ;; layers are always denominated in absolute coordinates
 ;; transforms are applied to handle panning and zooming
@@ -930,7 +917,8 @@
             in-progress? (settings/drawing-in-progress? app)
             relation-in-progress? (get-in app [:drawing :relation-in-progress?])
             tool (get-in app state/current-tool-path)
-            mouse-down? (get-in app [:mouse-down])]
+            mouse-down? (get-in app [:mouse-down])
+            right-click-learned? (get-in app state/right-click-learned-path)]
         (dom/svg #js {:width "100%"
                       :height "100%"
                       :id "svg-canvas"
@@ -945,7 +933,10 @@
                                         " tool-text-move ")
 
                                       (when relation-in-progress?
-                                        " relation-in-progress "))
+                                        " relation-in-progress ")
+
+                                      (when-not right-click-learned?
+                                        "radial-not-learned"))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
                                         (cond
@@ -1060,15 +1051,17 @@
     om/IDisplayName (display-name [_] "Canvas")
     om/IRender
     (render [_]
-      (let [right-click-learned? (get-in app state/right-click-learned-path)]
-        (html
-         [:div.canvas {:onContextMenu (fn [e]
-                                        (.preventDefault e)
-                                        (.stopPropagation e))}
-          [:div.canvas-background]
-          (om/build svg-canvas app)
+      (html
+        [:div.canvas {:onContextMenu (fn [e]
+                                       (.preventDefault e)
+                                       (.stopPropagation e))}
+         [:div.canvas-background]
+         (om/build svg-canvas app)
 
-          (om/build pan/pan-cursor {:keyboard (:keyboard app)
-                                    :mouse-down (:mouse-down app)})
-          (when (get-in app [:menu :open?])
-            (om/build radial-menu (utils/select-in app [[:menu]])))])))))
+         (when (get-in app [:radial :open?])
+           (om/build radial-menu (utils/select-in app [[:radial]])))
+
+         (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
+                                                     [:keyboard]
+                                                     [:mouse-down]])
+                   {:react-key "mouse"})]))))

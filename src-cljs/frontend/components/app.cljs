@@ -96,11 +96,7 @@
                                                  [:show-landing?]
                                                  [:cust-data]
                                                  [:navigation-data]])
-                       {:react-key "chat"})
-
-             (when (not right-click-learned?)
-               (om/build canvas/radial-hint (select-in app [[:mouse-type]])
-                         {:react-key "radial-hint"}))]
+                       {:react-key "chat"})]
 
             (om/build hud/hud (select-in app [state/chat-opened-path
                                               state/overlays-path

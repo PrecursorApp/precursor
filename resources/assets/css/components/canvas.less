@@ -9,14 +9,6 @@
       }
     }
   }
-  &:not(:active) {
-    &:not(:hover) {
-      user-select: none;
-      .pan-cursor {
-        display: none;
-      }
-    }
-  }
 }
 .canvas-background {
   position: absolute;
@@ -38,12 +30,13 @@
   will-change: transform;
   cursor: crosshair;
   &:not(:hover) {
-    ~ .radial-tip {
-      display: none;
+    &:not(:active) {
+      user-select: none;
+      ~ .mouse {
+        display: none;
+      }
     }
   }
-  // top: 0;
-  // left: 0;
   &.tool-text {
     cursor: text;
   }
@@ -67,6 +60,9 @@
     .arrow-hint {
       display: none;
     }
+  }
+  &.radial-not-learned {
+    cursor: context-menu;
   }
   .arrow-handle-group {
     transition: @run @bezier_deform;
@@ -372,12 +368,6 @@
   position: fixed;
   width: @tile_radial;
   height: @tile_radial;
-  z-index: @zindex_radial_menu;
-  + .canvas-frame {
-    .layer-properties {
-      display: none;
-    }
-  }
 }
 .radial-buttons {
   width: @tile_radial + 2;
@@ -423,16 +413,6 @@
 }
 .radial-point {
   fill: @gray_dark;
-}
-.radial-hint {
-  user-select: none;
-  position: absolute;
-  top: -@tile;
-  left: -@tile;
-  white-space: nowrap;
-  .mq_640({
-    display: none;
-  });
 }
 #arrow-point {
   fill: @gray_light;
