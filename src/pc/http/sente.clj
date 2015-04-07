@@ -568,7 +568,7 @@
         (log/infof "%s sending an sms to %s on doc %s" (:cust/email cust) phone-number doc-id)
         (try
           (sms/async-send-sms stripped-phone-number
-                              (format "Come draw with me on Precursor: %s" (urls/from-doc doc))
+                              (format "Make something with me on Precursor. %s" (urls/from-doc doc))
                               :image-url (when (and (contains? #{:document.privacy/public :document.privacy/read-only}
                                                                (:document/privacy doc))
                                                     (seq (layer-model/find-by-document (:db req) doc)))
