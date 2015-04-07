@@ -22,6 +22,7 @@
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
             [frontend.routes :as routes]
+            [frontend.rtc :as rtc]
             [frontend.sente :as sente]
             [frontend.settings :as settings]
             [frontend.state :as state]
@@ -73,7 +74,8 @@
                                                                   (get-in current-state [:drawing :moving?]))
                                                           (get-in current-state [:drawing :layers]))
                                                 :relation (when (get-in current-state [:drawing :relation :layer])
-                                                            (get-in current-state [:drawing :relation]))}
+                                                            (get-in current-state [:drawing :relation]))
+                                                :recording? (:recording? current-state)}
                                                (when (and x y)
                                                  {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
 
@@ -224,6 +226,10 @@
   [state shortcut-name]
   nil)
 
+(defmethod handle-keyboard-shortcut-after :record
+  [state shortcut-name]
+  (rtc/setup-stream (get-in state [:comms :controls])))
+
 (defn next-font-size [current-size direction]
   (let [grow? (keyword-identical? :grow direction)
         comp (if grow? > <)]
@@ -236,13 +242,12 @@
     (map #(d/entity @(:db state) %))
     (filter #(keyword-identical? (:layer/type %) :layer.type/text))
     (map (fn [layer]
-           (let [font-size (next-font-size (:layer/font-size layer state/default-font-size) direction)]
+           (let [layer (ds/touch+ layer)
+                 font-size (next-font-size (:layer/font-size layer state/default-font-size) direction)]
              {:db/id (:db/id layer)
               :layer/font-size font-size
-              :layer/end-x (+ (:layer/start-x layer) (utils/measure-text-width (:layer/text layer)
-                                                                               font-size
-                                                                               (:layer/font-family layer state/default-font-family)))
-              :layer/end-y (- (:layer/start-y layer) font-size)})))
+              :layer/end-x (layers/calc-text-end-x (assoc layer :layer/font-size font-size))
+              :layer/end-y (layers/calc-text-end-y (assoc layer :layer/font-size font-size))})))
     seq
     (#(d/transact! (:db state) % {:can-undo? true}))))
 
@@ -327,7 +332,10 @@
                                                                    %))
                                     (dissoc :layer/end-x :layer/end-y)
                                     (assoc :layer/current-x x
-                                           :layer/current-y y))])
+                                           :layer/current-y y)
+                                    (cond-> (keyword-identical? (:layer/type layer) :layer.type/text)
+                                      (assoc :layer/current-x (:layer/end-x layer)
+                                             :layer/current-y (:layer/end-y layer))))])
     (assoc-in [:mouse-down] true)
     ;; TODO: do we need to update mouse?
     ;; (update-mouse x y)
@@ -413,7 +421,10 @@
 (defmethod control-event :text-layer-edited
   [browser-state message {:keys [value]} state]
   (-> state
-    (assoc-in [:drawing :layers 0 :layer/text] value)))
+    (update-in [:drawing :layers 0] #(-> %
+                                       (assoc :layer/text value)
+                                       (assoc :layer/current-x (layers/calc-text-end-x (assoc % :layer/text value))
+                                              :layer/current-y (layers/calc-text-end-y (assoc % :layer/text value)))))))
 
 (defn det [[ax ay] [bx by] [x y]]
   (math/sign (- (* (- bx ax)
@@ -609,7 +620,12 @@
                                                   (update-in [:layer/start-x] + (* (/ 1 zoom)
                                                                                    (:x delta)))
                                                   (update-in [:layer/start-y] + (* (/ 1 zoom)
-                                                                                   (:y delta))))))))))
+                                                                                   (:y delta)))))))
+                                           (keyword-identical? :layer.type/text (:layer/type %))
+                                           ((fn [new-l]
+                                              (assoc new-l
+                                                     :layer/current-x (layers/calc-text-end-x new-l)
+                                                     :layer/current-y (layers/calc-text-end-y new-l)))))))
       (update-in [:drawing :layers 0]
                  (fn [layer]
                    (merge
@@ -744,12 +760,8 @@
                                                               :layer/start-y (apply min ys)
                                                               :layer/end-y (apply max ys)}))
                                                          (when (= layer-type :layer.type/text)
-                                                           {:layer/end-x (+ (get-in layer [:layer/start-x])
-                                                                            (utils/measure-text-width (:layer/text layer)
-                                                                                                      (:layer/font-size layer state/default-font-size)
-                                                                                                      (:layer/font-family layer state/default-font-family)))
-                                                            :layer/end-y (- (get-in layer [:layer/start-y])
-                                                                            (:layer/font-size layer state/default-font-size))}))))])
+                                                           {:layer/end-x (layers/calc-text-end-x layer)
+                                                            :layer/end-y (layers/calc-text-end-y layer)}))))])
       (assoc-in [:camera :moving?] false))))
 
 
@@ -976,7 +988,9 @@
 
 (defn handle-text-layer-finished-after [current-state]
   (let [db (:db current-state)
-        layer (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))
+        layer (-> (get-in current-state [:drawing :finished-layers 0])
+                utils/remove-map-nils
+                (utils/update-when-in [:layer/points-to] (fn [p] (set (map :db/id p)))))
         layer (if (= :read (:max-document-scope current-state))
                 (assoc layer :unsaved true)
                 layer)]
@@ -1139,8 +1153,8 @@
   [browser-state message layer state]
   (-> state
     (assoc-in [:drawing :layers] [(assoc layer
-                                         :layer/current-x (:layer/start-x layer)
-                                         :layer/current-y (:layer/start-y layer))])
+                                         :layer/current-x (:layer/end-x layer)
+                                         :layer/current-y (:layer/end-y layer))])
     (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)})
     (assoc-in [:editing-eids :editing-eids] #{(:db/id layer)})
     (assoc-in [:drawing :in-progress?] true)
@@ -1155,7 +1169,8 @@
         (d/transact! (:db current-state)
                      (mapv (fn [l]
                              (-> l
-                               utils/remove-map-nils))
+                               utils/remove-map-nils
+                               (utils/update-when-in [:layer/points-to] (fn [p] (set (map :db/id p))))))
                            layers)
                      {:can-undo? true}))))
   (maybe-notify-subscribers! current-state nil nil))
@@ -1738,3 +1753,45 @@
       z (update-in [:camera] #(-> %
                                 (assoc :zf 1 :z-exact 1)
                                 (cameras/set-zoom [sx sy] (constantly z)))))))
+
+(defmethod post-control-event! :recording-toggled
+  [browser-state message _ previous-state current-state]
+  (rtc/setup-stream (get-in current-state [:comms :controls])))
+
+;; need to double-check that this accounts for multiple steams being stopped and started
+(defmethod control-event :media-stream-started
+  [browser-state message {:keys [stream-id]} state]
+  (let [stream @rtc/stream]
+    (if (and stream (= stream-id (.-id stream)))
+      (assoc state :recording? true)
+      state)))
+
+(defmethod post-control-event! :media-stream-started
+  [browser-state message _ previous-state current-state]
+  (maybe-notify-subscribers! current-state nil nil))
+
+(defmethod control-event :media-stream-failed
+  [browser-state message {:keys [error]} state]
+  (let [stream @rtc/stream]
+    (if (and stream (not (.-ended stream)))
+      state
+      (assoc state :recording? false))))
+
+(defmethod post-control-event! :media-stream-failed
+  [browser-state message _ previous-state current-state]
+  (maybe-notify-subscribers! current-state nil nil))
+
+(defmethod control-event :media-stream-stopped
+  [browser-state message {:keys [stream-id]} state]
+  (let [stream @rtc/stream]
+    (if (and stream (= stream-id (.-id stream)))
+      (assoc state :recording? false)
+      state)))
+
+(defmethod post-control-event! :media-stream-stopped
+  [browser-state message _ previous-state current-state]
+  (maybe-notify-subscribers! current-state nil nil))
+
+(defmethod control-event :remote-media-stream-ready
+  [browser-state message {:keys [stream-url producer]} state]
+  (utils/update-when-in state [:subscribers :info producer] assoc :stream-url stream-url))

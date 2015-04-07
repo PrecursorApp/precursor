@@ -280,6 +280,22 @@
                                                                              team))
                            :entity-type :access-request}]))))
 
+(defn subscriber-read-api [subscriber]
+  (-> subscriber
+    (select-keys [:client-id
+                  :cust/uuid
+                  :cust/name
+                  :cust/color-name
+                  :frontend-id-seed
+                  :hide-in-list?
+                  :tool
+                  :layers
+                  :relation
+                  :recording?
+                  :show-mouse?])
+    (merge (when (:mouse-position subscriber)
+             (select-keys subscriber [:mouse-position])))))
+
 ;; TODO: subscribe should be the only function you need when you get to a doc, then it should send
 ;;       all of the data asynchronously
 (defmethod ws-handler :frontend/subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
@@ -303,8 +319,8 @@
                                              :max-document-scope (auth/max-document-scope (:db req) doc (get-in req [:ring-req :auth]))}])
 
     (doseq [[uid _] (get @document-subs document-id)]
-      (send-fn uid [:frontend/subscriber-joined (merge {:client-id client-id}
-                                                       (get-in subs [document-id client-id]))]))
+      (send-fn uid [:frontend/subscriber-joined (subscriber-read-api (merge {:client-id client-id}
+                                                                            (get-in subs [document-id client-id])))]))
 
     ;; TODO: we'll need a read-api or something here at some point
     (log/infof "sending document for %s to %s" document-id client-id)
@@ -338,7 +354,9 @@
     (log/infof "sending subscribers for %s to %s" document-id client-id)
     (send-fn client-id [:frontend/subscribers
                         {:document/id document-id
-                         :subscribers (get subs document-id)}])
+                         :subscribers (reduce (fn [acc [client-id subscriber]]
+                                                (assoc acc client-id (subscriber-read-api subscriber)))
+                                              {} (get subs document-id))}])
 
     ;; These are interesting b/c they're read-only. And by "interesting", I mean "bad"
     ;; We should find a way to let the frontend edit things
@@ -449,15 +467,30 @@
         mouse-position (-> ?data :mouse-position)
         tool (-> ?data :tool)
         layers (-> ?data :layers)
-        relation (-> ?data :relation)]
+        relation (-> ?data :relation)
+        recording? (-> ?data :recording?)]
+    (swap! document-subs utils/update-when-in [document-id client-id] merge {:mouse-position mouse-position
+                                                                             :tool tool
+                                                                             :recording? recording?})
     (doseq [[uid _] (dissoc (get @document-subs document-id) client-id)]
-      ((:send-fn @sente-state) uid [:frontend/mouse-move (merge
-                                                          {:client-id client-id
-                                                           :tool tool
-                                                           :layers layers
-                                                           :relation relation}
-                                                          (when mouse-position
-                                                            {:mouse-position mouse-position}))]))))
+      ((:send-fn @sente-state) uid [:frontend/mouse-move (subscriber-read-api {:client-id client-id
+                                                                               :tool tool
+                                                                               :layers layers
+                                                                               :relation relation
+                                                                               :recording? recording?
+                                                                               :mouse-position mouse-position})]))))
+
+(defmethod ws-handler :rtc/signal [{:keys [client-id ?data] :as req}]
+  (check-document-access (-> ?data :document/id) req :read)
+  (let [document-id (:document/id ?data)
+        consumer (-> ?data :consumer)
+        producer (-> ?data :producer)
+        target (first (filter #(not= client-id %) [consumer producer]))
+        data (select-keys ?data [:candidate :sdp :consumer :producer :subscribe-to-recording?])]
+    (assert (get-in @document-subs [document-id target])
+            (format "%s is the target, but isn't subscribed to %s" target document-id))
+    (log/infof "sending signal from %s to %s" client-id target)
+    ((:send-fn @sente-state) target [:rtc/signal data])))
 
 (defmethod ws-handler :frontend/update-self [{:keys [client-id ?data] :as req}]
   ;; TODO: update subscribers in a different way
@@ -535,7 +568,7 @@
         (log/infof "%s sending an sms to %s on doc %s" (:cust/email cust) phone-number doc-id)
         (try
           (sms/async-send-sms stripped-phone-number
-                              (format "Come draw with me on Precursor: %s" (urls/from-doc doc))
+                              (format "Make something with me on Precursor. %s" (urls/from-doc doc))
                               :image-url (when (and (contains? #{:document.privacy/public :document.privacy/read-only}
                                                                (:document/privacy doc))
                                                     (seq (layer-model/find-by-document (:db req) doc)))

@@ -59,7 +59,7 @@
                      :to to-email
                      :subject (str (view/format-inviter cust)
                                    " invited you to a document on Precursor")
-                     :text (str "Hey there,\nCome draw with me on Precursor: " (urls/from-doc doc))
+                     :text (str "Hey there,\nMake something with me on Precursor. " (urls/from-doc doc))
                      :html (view/chat-invite-html doc)}))
 
 (defn send-document-access-grant-email [db access-grant]
@@ -71,7 +71,7 @@
                        :to (:access-grant/email access-grant)
                        :subject (str (view/format-inviter granter)
                                      " invited you to a document on Precursor")
-                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/from-doc doc)
+                       :text (str "Hey there,\nMake something with me on Precursor. " (urls/from-doc doc)
                                   "?access-grant-token=" token)
                        :html (view/document-access-grant-html doc access-grant image-permission)})))
 
@@ -111,7 +111,7 @@
                        :to (:cust/email grantee)
                        :subject (str (view/format-inviter granter)
                                      " invited you to a document on Precursor")
-                       :text (str "Hey there,\nCome draw with me on Precursor: " (urls/from-doc doc))
+                       :text (str "Hey there,\nMake something with me on Precursor. " (urls/from-doc doc))
                        :html (view/document-permission-grant-html doc image-permission)})))
 
 (defn send-team-permission-grant-email [db permission]

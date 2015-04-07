@@ -1,5 +1,6 @@
 (ns frontend.subscribers
-  (:require [frontend.utils :as utils]))
+  (:require [clojure.set :as set]
+            [frontend.utils :as utils]))
 
 (defn subscriber-entity-ids [app-state]
   (reduce (fn [acc [id data]]
@@ -14,7 +15,7 @@
                           :client-id client-id)
         layer-data (assoc (select-keys subscriber-data [:layers :color :cust/uuid :relation])
                           :client-id client-id)
-        info-data (assoc (select-keys subscriber-data [:color :cust-name :show-mouse? :hide-in-list? :frontend-id-seed :cust/uuid])
+        info-data (assoc (select-keys subscriber-data [:color :cust-name :show-mouse? :hide-in-list? :frontend-id-seed :cust/uuid :recording?])
                          :client-id client-id)
         cust-data (select-keys subscriber-data [:cust/uuid :cust/name :cust/color-name])]
     (cond-> app-state
@@ -30,11 +31,27 @@
     (add-subscriber-data app-state client-id subscriber-data)
     app-state))
 
-
-
 (defn remove-subscriber [app-state client-id]
   (-> app-state
     (update-in [:subscribers :mice] dissoc client-id)
     (update-in [:subscribers :layers] dissoc client-id)
     (update-in [:subscribers :info] dissoc client-id)
     (update-subscriber-entity-ids)))
+
+(defn add-recording-watcher [app-state signal-fn]
+  (add-watch app-state :recording-watcher
+             (fn [_ _ old new]
+               (when-not (identical? (get-in old [:subscribers :info])
+                                     (get-in new [:subscribers :info]))
+                 (let [before (->> (get-in old [:subscribers :info])
+                                (filter (fn [[client-id info]] (:recording? info)))
+                                (map first)
+                                set)
+                       after (->> (get-in new [:subscribers :info])
+                               (filter (fn [[client-id info]] (:recording? info)))
+                               (map first)
+                               set)]
+                   (doseq [producer (disj (set/difference after before) (:client-id new))]
+                     (signal-fn {:producer producer
+                                 :consumer (:client-id new)
+                                 :subscribe-to-recording? true})))))))

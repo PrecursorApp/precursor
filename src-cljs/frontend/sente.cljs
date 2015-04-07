@@ -6,6 +6,7 @@
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
             [frontend.models.chat :as chat-model]
+            [frontend.rtc :as rtc]
             [frontend.state :as state]
             [frontend.stats :as stats]
             [frontend.subscribers :as subs]
@@ -136,6 +137,15 @@
                                                                 "click to refresh"]
                                                                " now to avoid losing any work."]))))
 
+(defmethod handle-message :rtc/signal [app-state message data]
+  (rtc/handle-signal
+   (assoc data
+          :controls-ch (get-in @app-state [:comms :controls])
+          :send-msg  (fn [d]
+                       (send-msg (:sente @app-state)
+                                 [:rtc/signal (merge d
+                                                     (select-keys @app-state [:document/id]))])))))
+
 (defmethod handle-message :chsk/state [app-state message data]
   (let [state @app-state]
     (when (and (:open? data)
@@ -173,4 +183,5 @@
                                              :chsk-url-fn (fn [& args]
                                                             (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state)))})]
     (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
+    (subs/add-recording-watcher app-state (fn [d] (send-msg (:sente @app-state) [:rtc/signal (merge d {:document/id (:document/id @app-state)})])))
     (do-something app-state (:sente @app-state))))

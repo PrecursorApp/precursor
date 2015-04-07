@@ -218,24 +218,33 @@
         text-start-y (+ rect-end-y text-height (/ (- rect-height text-height) 2))]
     (-> {:tick-ms 16
          :ticks {}}
-      (move-mouse {:start-tick 10 :end-tick 45 :start-x ex :end-x rect-start-x :start-y ey :end-y rect-start-y})
-      (draw-shape {:doc-id (:db/id document) :tool :rect :start-tick 50 :end-tick 100
-                   :start-x rect-start-x :end-x rect-end-x
-                   :start-y rect-start-y :end-y rect-end-y
-                   :source "signup-animation"
-                   :props {;; look into this later, right now it interfers with signup action
-                           ;; :layer/ui-target "/signup"
-                           :layer/signup-button true}})
-      (move-mouse {:tool :text :start-tick 100 :end-tick 120
-                   :start-x rect-end-x :end-x text-start-x
-                   :start-y rect-end-y :end-y (- text-start-y (/ text-height 2))})
-      (draw-text {:text text :doc-id (:db/id document) :start-tick 120 :end-tick 200
+      (move-mouse {:tool :text
+                   :start-tick 10
+                   :end-tick 45
+                   :start-x ex :end-x text-start-x
+                   :start-y ey :end-y (- text-start-y (/ text-height 2))})
+      (draw-text {:text text
+                  :doc-id (:db/id document)
+                  :start-tick 50
+                  :end-tick 130
                   :start-x text-start-x :end-x (+ text-start-x text-width)
                   :start-y text-start-y :end-y (- text-start-y text-height)
                   :source "signup-animation"
-                  :props {;; look into this later, right now it interfers with signup action
-                          ;;:layer/ui-target "/signup"
-                          :layer/signup-button true}})
+                  :props {:layer/signup-button true}})
+      (move-mouse {:start-tick 140
+                   :end-tick 145
+                   :start-x text-start-x :end-x rect-start-x
+                   :start-y text-start-y :end-y rect-start-y})
+      (draw-shape {:doc-id (:db/id document)
+                   :tool :rect
+                   :start-tick 150
+                   :end-tick 200
+                   :start-x rect-start-x :end-x rect-end-x
+                   :start-y rect-start-y :end-y rect-end-y
+                   :source "signup-animation"
+                   :props {:layer/ui-target "/signup"
+                           :layer/ui-id "/signup"
+                           :layer/signup-button true}})
       (clear-subscriber 201))))
 
 (defn signup-button [{:keys [document camera]} owner]

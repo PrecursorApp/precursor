@@ -125,7 +125,7 @@
 (defn image-cache-headers [db doc]
   (let [last-modified-instant (or (doc-http/last-modified-instant db doc)
                                   (java.util.Date.))]
-    {"Cache-Control" "no-cache"
+    {"Cache-Control" "no-cache; private"
      "ETag" (format "\"%s\"" (md5/encode (str last-modified-instant)))
      "Last-Modified" (->> last-modified-instant
                        (clj-time.coerce/from-date)
@@ -342,5 +342,9 @@
 
 (defpage health-check "/health-check" [req]
   (lb/health-check-response req))
+
+(defpage robots-txt "/robots.txt" [req]
+  {:status 200
+   :body "User-agent: Twitterbot\nDisallow:\n"})
 
 (def app (defpage/collect-routes))

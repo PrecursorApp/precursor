@@ -206,62 +206,58 @@
                              :fill "none"
                              :strokeWidth 1})))
 
-          (svg-element (assoc layer
-                              :selected? selected?
-                              :className (str "selectable-layer layer-handle "
-                                              (when (and (= :layer.type/text (:layer/type layer))
-                                                         (= :text tool)) "editable ")
-                                              (when (:layer/signup-button layer)
-                                                " signup-layer"))
-                              :key (str "selectable-" (:db/id layer))
-                              :onClick (when (:layer/signup-button layer)
-                                         #(do
-                                            (.preventDefault %)
-                                            (set! js/window.location (auth/auth-url :source "prcrsr-bot-drawing"))))
-                              :onMouseDown
-                              (when-not (:layer/signup-button layer)
-                                #(do
-                                   (.stopPropagation %)
-                                   (let [group? part-of-group?]
+          (svg-element (assoc
+                         layer
+                         :selected? selected?
+                         :className (str "selectable-layer layer-handle "
+                                         (when (and (= :layer.type/text (:layer/type layer))
+                                                    (= :text tool)) "editable ")
+                                         (when (:layer/signup-button layer)
+                                           " signup-layer"))
+                         :key (str "selectable-" (:db/id layer))
+                         :onMouseDown
+                         #(do
+                            (.stopPropagation %)
+                            (let [group? part-of-group?]
 
-                                     (cond
-                                       (and (= :text tool)
-                                            (= :layer.type/text (:layer/type layer)))
-                                       (cast! :text-layer-re-edited layer)
+                              (cond
+                                (and (= :text tool)
+                                     (= :layer.type/text (:layer/type layer)))
+                                (cast! :text-layer-re-edited layer)
 
-                                       (not= :select tool) nil
+                                (not= :select tool) nil
 
-                                       (or (= (.-button %) 2)
-                                           (and (= (.-button %) 0) (.-ctrlKey %)))
-                                       (cast! :layer-properties-opened {:layer layer
-                                                                        :x (first (cameras/screen-event-coords %))
-                                                                        :y (second (cameras/screen-event-coords %))})
+                                (or (= (.-button %) 2)
+                                    (and (= (.-button %) 0) (.-ctrlKey %)))
+                                (cast! :layer-properties-opened {:layer layer
+                                                                 :x (first (cameras/screen-event-coords %))
+                                                                 :y (second (cameras/screen-event-coords %))})
 
 
-                                       (and (.-altKey %) group?)
-                                       (cast! :group-duplicated
-                                              {:x (first (cameras/screen-event-coords %))
-                                               :y (second (cameras/screen-event-coords %))})
+                                (and (.-altKey %) group?)
+                                (cast! :group-duplicated
+                                       {:x (first (cameras/screen-event-coords %))
+                                        :y (second (cameras/screen-event-coords %))})
 
-                                       (and (.-altKey %) (not group?))
-                                       (cast! :layer-duplicated
-                                              {:layer layer
-                                               :x (first (cameras/screen-event-coords %))
-                                               :y (second (cameras/screen-event-coords %))})
+                                (and (.-altKey %) (not group?))
+                                (cast! :layer-duplicated
+                                       {:layer layer
+                                        :x (first (cameras/screen-event-coords %))
+                                        :y (second (cameras/screen-event-coords %))})
 
-                                       (and (.-shiftKey %) selected?)
-                                       (cast! :layer-deselected {:layer layer})
+                                (and (.-shiftKey %) selected?)
+                                (cast! :layer-deselected {:layer layer})
 
 
-                                       group?
-                                       (cast! :group-selected {:x (first (cameras/screen-event-coords %))
-                                                               :y (second (cameras/screen-event-coords %))})
+                                group?
+                                (cast! :group-selected {:x (first (cameras/screen-event-coords %))
+                                                        :y (second (cameras/screen-event-coords %))})
 
-                                       :else
-                                       (cast! :layer-selected {:layer layer
-                                                               :x (first (cameras/screen-event-coords %))
-                                                               :y (second (cameras/screen-event-coords %))
-                                                               :append? (.-shiftKey %)})))))))
+                                :else
+                                (cast! :layer-selected {:layer layer
+                                                        :x (first (cameras/screen-event-coords %))
+                                                        :y (second (cameras/screen-event-coords %))
+                                                        :append? (.-shiftKey %)}))))))
           (when-not (= :layer.type/text (:layer/type layer))
             (svg-element (assoc layer
                                 :selected? selected?
@@ -280,14 +276,19 @@
             (svg-element (assoc layer
                                 :selected? selected?
                                 :padding 4 ;; only works for rects right now
+                                :onClick (when (:layer/signup-button layer)
+                                           #(do
+                                              (.preventDefault %)
+                                              (set! js/window.location (auth/auth-url :source "prcrsr-bot-drawing"))))
                                 :onMouseDown #(when (= tool :select)
                                                 (.stopPropagation %)
                                                 (cond
                                                   (or (= (.-button %) 2)
                                                       (and (= (.-button %) 0) (.-ctrlKey %)))
-                                                  (cast! :layer-properties-opened {:layer layer
-                                                                                   :x (first (cameras/screen-event-coords %))
-                                                                                   :y (second (cameras/screen-event-coords %))})
+                                                  (when-not (:layer/signup-button layer)
+                                                    (cast! :layer-properties-opened {:layer layer
+                                                                                     :x (first (cameras/screen-event-coords %))
+                                                                                     :y (second (cameras/screen-event-coords %))}))
 
                                                   selected?
                                                   (cast! :group-selected
@@ -295,9 +296,10 @@
                                                           :y (second (cameras/screen-event-coords %))})
 
                                                   :else
-                                                  (cast! :canvas-aligned-to-layer-center
-                                                         {:ui-id (:layer/ui-target layer)
-                                                          :canvas-size (utils/canvas-size)})))
+                                                  (when-not (:layer/signup-button layer)
+                                                    (cast! :canvas-aligned-to-layer-center
+                                                           {:ui-id (:layer/ui-target layer)
+                                                            :canvas-size (utils/canvas-size)}))))
                                 :onTouchStart (fn [event]
                                                 (when (= (.-length (.-touches event)) 1)
                                                   (utils/stop-event event)
@@ -356,7 +358,7 @@
                                                       :selected? selected?
                                                       :part-of-group? part-of-group?
                                                       :layer-id id}))
-                                                 (sort live-ids))
+                                                 (sort idle-ids))
                                {:key :layer-id}))
           (apply dom/g #js {:className "layers live"}
                  (om/build-all layer-group (mapv (fn [id]
@@ -367,7 +369,7 @@
                                                       :selected? selected?
                                                       :part-of-group? part-of-group?
                                                       :layer-id id}))
-                                                 (sort idle-ids))
+                                                 (sort live-ids))
                                {:key :layer-id})))))))
 
 (defn subscriber-cursor-icon [tool]
