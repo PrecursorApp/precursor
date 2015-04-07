@@ -75,7 +75,7 @@
                                                           (get-in current-state [:drawing :layers]))
                                                 :relation (when (get-in current-state [:drawing :relation :layer])
                                                             (get-in current-state [:drawing :relation]))
-                                                :recording? (:recording? current-state)}
+                                                :recording (:recording current-state)}
                                                (when (and x y)
                                                  {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
 
@@ -1749,7 +1749,8 @@
   [browser-state message {:keys [stream-id]} state]
   (let [stream @rtc/stream]
     (if (and stream (= stream-id (.-id stream)))
-      (assoc state :recording? true)
+      (assoc state :recording {:stream-id stream-id
+                               :producer (:client-id state)})
       state)))
 
 (defmethod post-control-event! :media-stream-started
@@ -1761,7 +1762,7 @@
   (let [stream @rtc/stream]
     (if (and stream (not (.-ended stream)))
       state
-      (assoc state :recording? false))))
+      (assoc state :recording nil))))
 
 (defmethod post-control-event! :media-stream-failed
   [browser-state message _ previous-state current-state]
@@ -1771,7 +1772,7 @@
   [browser-state message {:keys [stream-id]} state]
   (let [stream @rtc/stream]
     (if (and stream (= stream-id (.-id stream)))
-      (assoc state :recording? false)
+      (assoc state :recording nil)
       state)))
 
 (defmethod post-control-event! :media-stream-stopped

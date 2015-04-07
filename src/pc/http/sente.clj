@@ -291,7 +291,7 @@
                   :tool
                   :layers
                   :relation
-                  :recording?
+                  :recording
                   :show-mouse?])
     (merge (when (:mouse-position subscriber)
              (select-keys subscriber [:mouse-position])))))
@@ -468,16 +468,16 @@
         tool (-> ?data :tool)
         layers (-> ?data :layers)
         relation (-> ?data :relation)
-        recording? (-> ?data :recording?)]
+        recording (-> ?data :recording)]
     (swap! document-subs utils/update-when-in [document-id client-id] merge {:mouse-position mouse-position
                                                                              :tool tool
-                                                                             :recording? recording?})
+                                                                             :recording recording})
     (doseq [[uid _] (dissoc (get @document-subs document-id) client-id)]
       ((:send-fn @sente-state) uid [:frontend/mouse-move (subscriber-read-api {:client-id client-id
                                                                                :tool tool
                                                                                :layers layers
                                                                                :relation relation
-                                                                               :recording? recording?
+                                                                               :recording recording
                                                                                :mouse-position mouse-position})]))))
 
 (defmethod ws-handler :rtc/signal [{:keys [client-id ?data] :as req}]
@@ -486,7 +486,9 @@
         consumer (-> ?data :consumer)
         producer (-> ?data :producer)
         target (first (filter #(not= client-id %) [consumer producer]))
-        data (select-keys ?data [:candidate :sdp :consumer :producer :subscribe-to-recording?])]
+        data (select-keys ?data [:candidate :sdp :consumer :producer :subscribe-to-recording :stream-id :close-connection])]
+    (assert (contains? (set [consumer producer]) client-id)
+            (format "client (%s) is not the consumer (%s) or producer (%s)" client-id consumer producer))
     (assert (get-in @document-subs [document-id target])
             (format "%s is the target, but isn't subscribed to %s" target document-id))
     (log/infof "sending signal from %s to %s" client-id target)
