@@ -230,13 +230,12 @@
     (map #(d/entity @(:db state) %))
     (filter #(keyword-identical? (:layer/type %) :layer.type/text))
     (map (fn [layer]
-           (let [font-size (next-font-size (:layer/font-size layer state/default-font-size) direction)]
+           (let [layer (ds/touch+ layer)
+                 font-size (next-font-size (:layer/font-size layer state/default-font-size) direction)]
              {:db/id (:db/id layer)
               :layer/font-size font-size
-              :layer/end-x (+ (:layer/start-x layer) (utils/measure-text-width (:layer/text layer)
-                                                                               font-size
-                                                                               (:layer/font-family layer state/default-font-family)))
-              :layer/end-y (- (:layer/start-y layer) font-size)})))
+              :layer/end-x (layers/calc-text-end-x (assoc layer :layer/font-size font-size))
+              :layer/end-y (layers/calc-text-end-y (assoc layer :layer/font-size font-size))})))
     seq
     (#(d/transact! (:db state) % {:can-undo? true}))))
 
@@ -321,7 +320,10 @@
                                                                    %))
                                     (dissoc :layer/end-x :layer/end-y)
                                     (assoc :layer/current-x x
-                                           :layer/current-y y))])
+                                           :layer/current-y y)
+                                    (cond-> (keyword-identical? (:layer/type layer) :layer.type/text)
+                                      (assoc :layer/current-x (:layer/end-x layer)
+                                             :layer/current-y (:layer/end-y layer))))])
     (assoc-in [:mouse-down] true)
     ;; TODO: do we need to update mouse?
     ;; (update-mouse x y)
@@ -407,7 +409,10 @@
 (defmethod control-event :text-layer-edited
   [browser-state message {:keys [value]} state]
   (-> state
-    (assoc-in [:drawing :layers 0 :layer/text] value)))
+    (update-in [:drawing :layers 0] #(-> %
+                                       (assoc :layer/text value)
+                                       (assoc :layer/current-x (layers/calc-text-end-x (assoc % :layer/text value))
+                                              :layer/current-y (layers/calc-text-end-y (assoc % :layer/text value)))))))
 
 (defn det [[ax ay] [bx by] [x y]]
   (math/sign (- (* (- bx ax)
@@ -603,7 +608,12 @@
                                                   (update-in [:layer/start-x] + (* (/ 1 zoom)
                                                                                    (:x delta)))
                                                   (update-in [:layer/start-y] + (* (/ 1 zoom)
-                                                                                   (:y delta))))))))))
+                                                                                   (:y delta)))))))
+                                           (keyword-identical? :layer.type/text (:layer/type %))
+                                           ((fn [new-l]
+                                              (assoc new-l
+                                                     :layer/current-x (layers/calc-text-end-x new-l)
+                                                     :layer/current-y (layers/calc-text-end-y new-l)))))))
       (update-in [:drawing :layers 0]
                  (fn [layer]
                    (merge
@@ -738,12 +748,8 @@
                                                               :layer/start-y (apply min ys)
                                                               :layer/end-y (apply max ys)}))
                                                          (when (= layer-type :layer.type/text)
-                                                           {:layer/end-x (+ (get-in layer [:layer/start-x])
-                                                                            (utils/measure-text-width (:layer/text layer)
-                                                                                                      (:layer/font-size layer state/default-font-size)
-                                                                                                      (:layer/font-family layer state/default-font-family)))
-                                                            :layer/end-y (- (get-in layer [:layer/start-y])
-                                                                            (:layer/font-size layer state/default-font-size))}))))])
+                                                           {:layer/end-x (layers/calc-text-end-x layer)
+                                                            :layer/end-y (layers/calc-text-end-y layer)}))))])
       (assoc-in [:camera :moving?] false))))
 
 
@@ -1134,8 +1140,8 @@
   [browser-state message layer state]
   (-> state
     (assoc-in [:drawing :layers] [(assoc layer
-                                         :layer/current-x (:layer/start-x layer)
-                                         :layer/current-y (:layer/start-y layer))])
+                                         :layer/current-x (:layer/end-x layer)
+                                         :layer/current-y (:layer/end-y layer))])
     (assoc-in [:selected-eids :selected-eids] #{(:db/id layer)})
     (assoc-in [:editing-eids :editing-eids] #{(:db/id layer)})
     (assoc-in [:drawing :in-progress?] true)

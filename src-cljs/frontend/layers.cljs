@@ -1,5 +1,6 @@
 (ns frontend.layers
   (:require [clojure.string]
+            [frontend.state :as state]
             [frontend.utils :as utils]))
 
 (defn layers [state]
@@ -239,3 +240,13 @@
                                           [x1 y1]
                                           t1
                                           cross-point)))))
+
+(defn calc-text-end-x [layer]
+  (+ (:layer/start-x layer)
+     (utils/measure-text-width (:layer/text layer "")
+                               (:layer/font-size layer state/default-font-size)
+                               (:layer/font-family layer state/default-font-family))))
+
+(defn calc-text-end-y [layer]
+  (- (:layer/start-y layer)
+     (:layer/font-size layer state/default-font-size)))
