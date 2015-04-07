@@ -242,8 +242,8 @@
                    :start-x rect-start-x :end-x rect-end-x
                    :start-y rect-start-y :end-y rect-end-y
                    :source "signup-animation"
-                   :props {;; look into this later, right now it interfers with signup action
-                           ;; :layer/ui-target "/signup"
+                   :props {:layer/ui-target "/signup"
+                           :layer/ui-id "/signup"
                            :layer/signup-button true}})
       (clear-subscriber 201))))
 
