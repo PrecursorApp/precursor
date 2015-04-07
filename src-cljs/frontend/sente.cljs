@@ -82,7 +82,10 @@
   (swap! app-state subs/add-subscriber-data (:client-id data) data))
 
 (defmethod handle-message :frontend/subscriber-left [app-state message data]
-  (swap! app-state subs/remove-subscriber (:client-id data)))
+  (let [client-id (:client-id data)]
+    (swap! app-state subs/remove-subscriber client-id)
+    (rtc/cleanup-conns :consumer client-id)
+    (rtc/cleanup-conns :producer client-id)))
 
 (defmethod handle-message :frontend/mouse-move [app-state message data]
   (swap! app-state subs/maybe-add-subscriber-data (:client-id data) data))
