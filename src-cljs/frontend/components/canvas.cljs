@@ -417,7 +417,7 @@
                                                       :selected? selected?
                                                       :part-of-group? part-of-group?
                                                       :layer-id id}))
-                                                 (sort live-ids))
+                                                 (sort idle-ids))
                                {:key :layer-id}))
           (apply dom/g #js {:className "layers live"}
                  (om/build-all layer-group (mapv (fn [id]
@@ -428,7 +428,7 @@
                                                       :selected? selected?
                                                       :part-of-group? part-of-group?
                                                       :layer-id id}))
-                                                 (sort idle-ids))
+                                                 (sort live-ids))
                                {:key :layer-id})))))))
 
 (defn subscriber-cursor-icon [tool]
