@@ -23,7 +23,7 @@
    :show-mouse? true
    :hide-in-list? true
    :cust/uuid "prcrsr-subscriber-bot"
-   :cust/color-name :color.name/green
+   :cust/color-name :color.name/blue
    :client-id "prcrsr-subscriber-bot"})
 
 (defn initial-state []
