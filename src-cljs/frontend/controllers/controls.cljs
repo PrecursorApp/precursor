@@ -970,7 +970,9 @@
 
 (defn handle-text-layer-finished-after [current-state]
   (let [db (:db current-state)
-        layer (utils/remove-map-nils (get-in current-state [:drawing :finished-layers 0]))
+        layer (-> (get-in current-state [:drawing :finished-layers 0])
+                utils/remove-map-nils
+                (utils/update-when-in [:layer/points-to] (fn [p] (set (map :db/id p)))))
         layer (if (= :read (:max-document-scope current-state))
                 (assoc layer :unsaved true)
                 layer)]
@@ -1148,7 +1150,8 @@
         (d/transact! (:db current-state)
                      (mapv (fn [l]
                              (-> l
-                               utils/remove-map-nils))
+                               utils/remove-map-nils
+                               (utils/update-when-in [:layer/points-to] (fn [p] (set (map :db/id p))))))
                            layers)
                      {:can-undo? true}))))
   (maybe-notify-subscribers! current-state nil nil))
