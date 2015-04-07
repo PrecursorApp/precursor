@@ -141,10 +141,6 @@
 .shape-layer {
   stroke: none;
   fill: none;
-  &.signup-layer {
-    fill: transparent;
-    cursor: pointer;
-  }
   &.layer-in-progress {
     stroke: @color_select;
     stroke-width: 2;
@@ -189,9 +185,6 @@
   fill: @gray_light;
   transition+: fill @run @bezier_deform;
   transition+: font-size @run_fast @bezier_deform;
-  &.signup-layer {
-    cursor: pointer;
-  }
   &.editable {
     &:hover {
       fill: @color_select_hover;
