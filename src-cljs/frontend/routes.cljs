@@ -41,9 +41,9 @@
   (defroute new-doc "/new" {:keys [query-params]}
     (put! nav-ch [:new {:query-params query-params}]))
 
-  (defroute document #"/document/(\d+)" [doc-id {:keys [query-params]}]
+  (defroute document #"/document/(\d+)" [doc-id args]
     (put! nav-ch [:document {:document/id (long doc-id)
-                             :query-params query-params}])))
+                             :query-params (:query-params args)}])))
 
 (defn define-routes! [state]
   (let [nav-ch (get-in @state [:comms :nav])]
