@@ -72,7 +72,7 @@
                                                 :document/id (:document/id current-state)
                                                 :layers (when (or (get-in current-state [:drawing :in-progress?])
                                                                   (get-in current-state [:drawing :moving?]))
-                                                          (get-in current-state [:drawing :layers]))
+                                                          (map #(dissoc % :points) (get-in current-state [:drawing :layers])))
                                                 :relation (when (get-in current-state [:drawing :relation :layer])
                                                             (get-in current-state [:drawing :relation]))
                                                 :recording (:recording current-state)}
