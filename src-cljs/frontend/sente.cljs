@@ -1,6 +1,7 @@
 (ns frontend.sente
   (:require [cemerick.url :as url]
             [cljs.core.async :as async :refer (<! >! put! chan)]
+            [cljs-time.core :as time]
             [clojure.set :as set]
             [datascript :as d]
             [frontend.datascript :as ds]
@@ -168,6 +169,8 @@
     (async/tap mult tap)
     (go-loop []
       (when-let [{[type data] :event :as stuff} (<! tap)]
+        (swap! (:state sente-state) assoc :last-message {:time (time/now)
+                                                         :type type})
         (case type
           :chsk/recv (utils/swallow-errors
                       (let [[message message-data] data]

@@ -7,6 +7,7 @@
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]
             [frontend.components.common :as common]
+            [frontend.components.connection :as connection]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
             [frontend.components.permissions :as permissions]
@@ -528,48 +529,53 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-          [:div.menu-view
-           [:div.content
-            [:h2.make
-             "What is Precursor?"]
-            [:p.make
-             "Precursor is a no-nonsense prototyping tool.
+         [:div.menu-view
+          [:div.content
+           [:h2.make
+            "What is Precursor?"]
+           [:p.make
+            "Precursor is a no-nonsense prototyping tool.
              Use it for wireframing, sketching, and brainstorming.
              Invite your team to collaborate instantly."
-             ]
-            (when-not (:cust app)
-              (list
-                [:p.make
-                 "Everyone's ideas made with Precursor save automatically.
+            ]
+           (when-not (:cust app)
+             (list
+              [:p.make
+               "Everyone's ideas made with Precursor save automatically.
                  And if you sign in with Google we'll even keep track of which ones are yours."]
-                [:div.calls-to-action.make
-                 (om/build common/google-login {:source "Username Menu"})]))
-            [:a.vein.make
-             {:href "/home"
-              :role "button"}
-             [:span "Home"]]
-            [:a.vein.make
-             {:href "/pricing"
-              :role "button"}
-             [:span "Pricing"]]
-            [:a.vein.make
-             {:href "/blog"
-              :target "_self"
-              :role "button"}
-             [:span "Blog"]]
-            [:a.vein.make
-             {:href "https://twitter.com/PrecursorApp"
-              :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-              :target "_blank"
-              :title "@PrecursorApp"
-              :role "button"}
-             [:span "Twitter"]]
-            [:a.vein.make
-             {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
-              :target "_self"
-              :role "button"}
-             [:span "Email"]]]
-           (common/mixpanel-badge)])))))
+              [:div.calls-to-action.make
+               (om/build common/google-login {:source "Username Menu"})]))
+           [:a.vein.make
+            {:href "/home"
+             :role "button"}
+            [:span "Home"]]
+           [:a.vein.make
+            {:href "/pricing"
+             :role "button"}
+            [:span "Pricing"]]
+           [:a.vein.make
+            {:href "/blog"
+             :target "_self"
+             :role "button"}
+            [:span "Blog"]]
+           [:a.vein.make
+            {:href "https://twitter.com/PrecursorApp"
+             :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+             :target "_blank"
+             :title "@PrecursorApp"
+             :role "button"}
+            [:span "Twitter"]]
+           [:a.vein.make
+            {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
+             :target "_self"
+             :role "button"}
+            [:span "Email"]]
+           [:a.vein.make
+            {:on-click #(cast! :connection-info-opened)
+             :on-touch-end #(do (cast! :connection-stats-opened) (.preventDefault %))
+             :role "button"}
+            [:span "Connection Info"]]]
+          (common/mixpanel-badge)])))))
 
 (defn shortcuts [app owner]
   (reify
@@ -732,7 +738,9 @@
    :team-settings {:title "Team Permissions"
                    :component team/team-settings}
    :team-doc-viewer {:title "Team Documents"
-                     :component doc-viewer/team-doc-viewer}})
+                     :component doc-viewer/team-doc-viewer}
+   :connection-info {:title "Connection Info"
+                     :component connection/connection-info}})
 
 (defn overlay [app owner]
   (reify

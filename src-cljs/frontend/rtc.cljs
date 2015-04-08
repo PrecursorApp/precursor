@@ -73,7 +73,31 @@
   (when-let [c (.-candidate event)]
     (signal-fn {:candidate (js/JSON.stringify c)})))
 
-(defn setup-listeners [conn signal-fn]
+(defn should-update-stats? [conn id]
+  (get @conns id))
+
+(defn report-data [report]
+  (reduce (fn [acc stat-name]
+            (assoc acc stat-name (.stat report stat-name)))
+          {} (.names report)))
+
+(defn update-stats [conn id]
+  (.getStats conn (fn [resp]
+                    (let [stats-data (reduce (fn [acc r]
+                                               (assoc acc (.-type r) (report-data r)))
+                                             {} (.result resp))]
+                      (swap! conns utils/update-when-in [id] (fn [data]
+                                                               (assoc data
+                                                                      :stats stats-data
+                                                                      :previous-stats (:stats data)))))
+                    (when (should-update-stats? conn id)
+                      (js/window.setTimeout #(update-stats conn id)
+                                            1000)))))
+
+(defn setup-get-stats [conn id]
+  (update-stats conn id))
+
+(defn setup-listeners [conn id signal-fn]
   (doseq [event-name ["connecting" "track" "negotiationneeded"
                       "signalingstatechange" "iceconnectionstatechange"
                       "icegatheringstatechange" "icecandidate" "datachannel"
@@ -84,6 +108,7 @@
   (.addEventListener conn "negotiationneeded" #(handle-negotiation conn signal-fn))
   (.addEventListener conn "iceconnectionstatechange" #(when (= "closed" (.-iceConnectionState conn))
                                                         (signal-fn {:close-connection true})))
+  (setup-get-stats conn id)
   conn)
 
 ;; Handle navigator.mediaStreams.getUserMedia, which doesn't seem to exist in the wild
@@ -128,15 +153,16 @@
   {:stream-id stream-id :consumer consumer :producer producer})
 
 (defn setup-producer [{:keys [signal-fn stream producer consumer]}]
-  (let [conn (new-peer-conn)]
-    (swap! conns assoc (conn-id (.-id stream) producer consumer) {:conn conn :consumer consumer :producer producer :stream-id (.-id stream)})
-    (setup-listeners conn signal-fn)
+  (let [conn (new-peer-conn)
+        id (conn-id (.-id stream) producer consumer)]
+    (swap! conns assoc id {:conn conn :consumer consumer :producer producer :stream-id (.-id stream)})
+    (setup-listeners conn id signal-fn)
     (add-stream conn stream)
     (handle-negotiation conn signal-fn)))
 
 (defn get-or-create-peer-conn [signal-fn stream-id producer consumer]
   (let [id (conn-id stream-id producer consumer)
-        new-conns (swap! conns update-in [id] #(or % {:conn (setup-listeners (new-peer-conn) signal-fn)
+        new-conns (swap! conns update-in [id] #(or % {:conn (setup-listeners (new-peer-conn) id signal-fn)
                                                       :consumer consumer
                                                       :producer producer
                                                       :stream-id stream-id}))]
@@ -206,3 +232,34 @@
               maybe-close)
             (swap! conns dissoc id)))))
 
+(defn track-stats [track]
+  {:id (.-id track)
+   :enabled (.-enabled track)
+   :kind (.-kind track)
+   :label (.-label track)})
+
+(defn stream-stats [stream]
+  {:id (.-id stream)
+   :label (.-label stream)
+   :ended (.-ended stream)
+   :tracks (mapv track-stats (.getTracks stream))})
+
+(defn connection-stats [conn-data]
+  (let [conn (:conn conn-data)]
+    (merge (select-keys conn-data [:consumer :producer :stream-id :stats])
+           {:local-streams (mapv stream-stats (.getLocalStreams conn))
+            :remote-streams (mapv stream-stats (.getRemoteStreams conn))
+            :connection-state (.-iceConnectionState conn)
+            :gathering-state (.-iceGatheringState conn)
+            :signaling-state (.-signalingState conn)
+            :remote-description (js/JSON.stringify (.-remoteDescription conn))
+            :local-description (js/JSON.stringify (.-localDescription conn))})))
+
+;; TODO: start gathering stats via getStats
+(defn gather-stats []
+  {:user-agent js/navigator.userAgent
+   :connections (mapv connection-stats (vals @conns))
+   :stream (when-let [s @stream] (stream-stats s))})
+
+(defn ^:export inspect-stats []
+  (clj->js (gather-stats)))

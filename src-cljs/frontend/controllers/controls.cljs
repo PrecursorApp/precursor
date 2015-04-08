@@ -1577,6 +1577,11 @@
   (-> state
     (overlay/add-overlay :team-settings)))
 
+(defmethod control-event :connection-info-opened
+  [browser-state message _ state]
+  (-> state
+    (overlay/add-overlay :connection-info)))
+
 (defmethod control-event :invite-to-changed
   [browser-state message {:keys [value]} state]
   (-> state

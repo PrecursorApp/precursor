@@ -53,7 +53,7 @@
                                          (assoc acc (:stream-id recording) recording)
                                          acc))
                                      {} (get-in new [:subscribers :info]))]
-                   (doseq [[stream-id recording] (utils/inspect (apply dissoc after (keys before)))
+                   (doseq [[stream-id recording] (apply dissoc after (keys before))
                            :when (not= (:producer recording) (:client-id new))]
                      (signal-fn {:producer (:producer recording)
                                  :consumer (:client-id new)
