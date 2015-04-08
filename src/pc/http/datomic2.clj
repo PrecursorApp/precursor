@@ -139,7 +139,7 @@
                               float-attrs (get-float-attrs db)
                               uuid-attrs (get-uuid-attrs db)
                               server-timestamp (or receive-instant (java.util.Date.))]
-                          (->> datoms
+                          (some->> datoms
                             (map pcd/datom->transaction)
                             (map (partial coerce-floats float-attrs))
                             (map (partial coerce-uuids uuid-attrs))
@@ -150,6 +150,7 @@
                             (filter (partial can-modify? db document-id access-scope frontend-id-seed))
                             (remove-float-conflicts)
                             (add-frontend-ids (or document-id team-id))
+                            seq
                             (concat [(merge {:db/id txid
                                              :session/uuid session-uuid
                                              :session/client-id client-id
