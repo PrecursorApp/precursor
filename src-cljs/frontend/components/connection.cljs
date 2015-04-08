@@ -79,7 +79,7 @@
                                                           (disj s conn-id)
                                                           (conj (or s #{}) conn-id))))}
                "Connection from " (client-id->user app (:producer conn-stats))
-               " to " (client-id->user app (:consumer conn-stats)) "."]
+               " to " (client-id->user app (:consumer conn-stats))]
               (when-not (contains? (om/get-state owner :hidden-stats) conn-id)
                 [:div
                  [:table.connection-items.make {:key "conn"}
