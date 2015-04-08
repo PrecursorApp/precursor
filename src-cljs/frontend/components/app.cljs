@@ -17,6 +17,7 @@
             [frontend.components.outer :as outer]
             [frontend.components.overlay :as overlay]
             [frontend.components.progress :as progress]
+            [frontend.components.rtc :as rtc]
             [frontend.cursors :as cursors]
             [frontend.favicon :as favicon]
             [frontend.keyboard :as keyboard]
@@ -129,7 +130,11 @@
                                               [:team]
                                               [:max-document-scope]
                                               (state/doc-tx-rejected-count-path (:document/id app))])
-                      {:react-key "hud"})])
+                      {:react-key "hud"})
+
+            (om/build rtc/rtc (select-in app [[:subscribers :info]])
+                      {:react-key "rtc"})])
+
           (html [:div#app]))))))
 
 (defn app [app owner]
