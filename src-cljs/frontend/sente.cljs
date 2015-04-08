@@ -1,6 +1,7 @@
 (ns frontend.sente
   (:require [cemerick.url :as url]
             [cljs.core.async :as async :refer (<! >! put! chan)]
+            [cljs-time.core :as time]
             [clojure.set :as set]
             [datascript :as d]
             [frontend.datascript :as ds]
@@ -82,7 +83,10 @@
   (swap! app-state subs/add-subscriber-data (:client-id data) data))
 
 (defmethod handle-message :frontend/subscriber-left [app-state message data]
-  (swap! app-state subs/remove-subscriber (:client-id data)))
+  (let [client-id (:client-id data)]
+    (swap! app-state subs/remove-subscriber client-id)
+    (rtc/cleanup-conns :consumer client-id)
+    (rtc/cleanup-conns :producer client-id)))
 
 (defmethod handle-message :frontend/mouse-move [app-state message data]
   (swap! app-state subs/maybe-add-subscriber-data (:client-id data) data))
@@ -146,6 +150,9 @@
                                  [:rtc/signal (merge d
                                                      (select-keys @app-state [:document/id]))])))))
 
+(defmethod handle-message :rtc/diagnostics [app-state message data]
+  (send-msg (:sente @app-state) [:rtc/diagnostics (rtc/gather-stats)]))
+
 (defmethod handle-message :chsk/state [app-state message data]
   (let [state @app-state]
     (when (and (:open? data)
@@ -165,6 +172,8 @@
     (async/tap mult tap)
     (go-loop []
       (when-let [{[type data] :event :as stuff} (<! tap)]
+        (swap! (:state sente-state) assoc :last-message {:time (time/now)
+                                                         :type type})
         (case type
           :chsk/recv (utils/swallow-errors
                       (let [[message message-data] data]

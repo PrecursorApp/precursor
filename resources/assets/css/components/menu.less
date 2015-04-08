@@ -462,3 +462,20 @@
     background: @font_color;
   }
 }
+.connection-items {
+  margin: 1em 0;
+  td {
+    padding: .5em 0;
+  }
+  tr {
+    &:nth-child(even) {
+      background-color: fade(@black, 10);
+    }
+  }
+  th {
+    text-align: left;
+  }
+}
+.connection-result {
+  margin: 0 1em;
+}

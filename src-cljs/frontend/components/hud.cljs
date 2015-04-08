@@ -269,9 +269,6 @@
                                                                (:cust/uuid sub)
                                                                (:client-id sub)))]]
                 [:div.viewer
-                 (when stream-url
-                   [:audio {:autoPlay true
-                            :src stream-url}])
                  [:div.viewer-avatar.viewer-tag
                   (common/icon :user (when show-mouse? {:path-props {:className color-class}}))]
                  [:div.viewer-name.viewer-tag

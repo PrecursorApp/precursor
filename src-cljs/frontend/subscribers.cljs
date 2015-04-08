@@ -15,7 +15,7 @@
                           :client-id client-id)
         layer-data (assoc (select-keys subscriber-data [:layers :color :cust/uuid :relation])
                           :client-id client-id)
-        info-data (assoc (select-keys subscriber-data [:color :cust-name :show-mouse? :hide-in-list? :frontend-id-seed :cust/uuid :recording?])
+        info-data (assoc (select-keys subscriber-data [:color :cust-name :show-mouse? :hide-in-list? :frontend-id-seed :cust/uuid :recording])
                          :client-id client-id)
         cust-data (select-keys subscriber-data [:cust/uuid :cust/name :cust/color-name])]
     (cond-> app-state
@@ -43,15 +43,19 @@
              (fn [_ _ old new]
                (when-not (identical? (get-in old [:subscribers :info])
                                      (get-in new [:subscribers :info]))
-                 (let [before (->> (get-in old [:subscribers :info])
-                                (filter (fn [[client-id info]] (:recording? info)))
-                                (map first)
-                                set)
-                       after (->> (get-in new [:subscribers :info])
-                               (filter (fn [[client-id info]] (:recording? info)))
-                               (map first)
-                               set)]
-                   (doseq [producer (disj (set/difference after before) (:client-id new))]
-                     (signal-fn {:producer producer
+                 (let [before (reduce (fn [acc [client-id info]]
+                                        (if-let [recording (:recording info)]
+                                          (assoc acc (:stream-id recording) recording)
+                                          acc))
+                                      {} (get-in old [:subscribers :info]))
+                       after (reduce (fn [acc [client-id info]]
+                                       (if-let [recording (:recording info)]
+                                         (assoc acc (:stream-id recording) recording)
+                                         acc))
+                                     {} (get-in new [:subscribers :info]))]
+                   (doseq [[stream-id recording] (apply dissoc after (keys before))
+                           :when (not= (:producer recording) (:client-id new))]
+                     (signal-fn {:producer (:producer recording)
                                  :consumer (:client-id new)
-                                 :subscribe-to-recording? true})))))))
+                                 :subscribe-to-recording recording
+                                 :stream-id stream-id})))))))
