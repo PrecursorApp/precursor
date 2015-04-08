@@ -150,6 +150,9 @@
                                  [:rtc/signal (merge d
                                                      (select-keys @app-state [:document/id]))])))))
 
+(defmethod handle-message :rtc/diagnostics [app-state message data]
+  (send-msg (:sente @app-state) [:rtc/diagnostics (rtc/gather-stats)]))
+
 (defmethod handle-message :chsk/state [app-state message data]
   (let [state @app-state]
     (when (and (:open? data)

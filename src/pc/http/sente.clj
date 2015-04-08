@@ -494,6 +494,12 @@
     (log/infof "sending signal from %s to %s" client-id target)
     ((:send-fn @sente-state) target [:rtc/signal data])))
 
+(defmethod ws-handler :rtc/diagnostics [{:keys [client-id ?data] :as req}]
+  (email/send-connection-stats {:client-id client-id
+                                :cust (select-keys (get-in req [:ring-req :auth :cust])
+                                                   [:cust/email :cust/name])
+                                :data ?data}))
+
 (defmethod ws-handler :frontend/update-self [{:keys [client-id ?data] :as req}]
   ;; TODO: update subscribers in a different way
   (check-document-access (-> ?data :document/id) req :read)
