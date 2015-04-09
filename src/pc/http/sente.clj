@@ -27,6 +27,7 @@
             [pc.models.team :as team-model]
             [pc.replay :as replay]
             [pc.rollbar :as rollbar]
+            [pc.http.sente.sliding-send :as sliding-send]
             [pc.sms :as sms]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
@@ -468,17 +469,18 @@
         tool (-> ?data :tool)
         layers (-> ?data :layers)
         relation (-> ?data :relation)
-        recording (-> ?data :recording)]
+        recording (-> ?data :recording)
+        message [:frontend/mouse-move (subscriber-read-api {:client-id client-id
+                                                            :tool tool
+                                                            :layers layers
+                                                            :relation relation
+                                                            :recording recording
+                                                            :mouse-position mouse-position})]]
     (swap! document-subs utils/update-when-in [document-id client-id] merge {:mouse-position mouse-position
                                                                              :tool tool
                                                                              :recording recording})
     (doseq [[uid _] (dissoc (get @document-subs document-id) client-id)]
-      ((:send-fn @sente-state) uid [:frontend/mouse-move (subscriber-read-api {:client-id client-id
-                                                                               :tool tool
-                                                                               :layers layers
-                                                                               :relation relation
-                                                                               :recording recording
-                                                                               :mouse-position mouse-position})]))))
+      (sliding-send/sliding-send sente-state uid message))))
 
 (defmethod ws-handler :rtc/signal [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
