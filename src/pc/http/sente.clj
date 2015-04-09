@@ -893,7 +893,8 @@
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket!
                                                        sente-web-server-adapter
-                                                       {:user-id-fn #'user-id-fn})]
+                                                       {:user-id-fn #'user-id-fn
+                                                        :send-buf-ms-ws 5})]
     (reset! sente-state fns)
     (setup-ws-handlers fns)
     (track-document-subs)
