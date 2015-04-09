@@ -152,13 +152,21 @@
 (defn conn-id [stream-id producer consumer]
   {:stream-id stream-id :consumer consumer :producer producer})
 
+(defn workaround-firefox-negotiation-bug
+  "Firefox won't fire negotiationneeded after adding a stream:
+   https://bugzilla.mozilla.org/show_bug.cgi?id=1071643.
+   Fixed, but not widely released"
+  [conn signal-fn]
+  (let [negotiation-timer (js/window.setTimeout #(handle-negotiation conn signal-fn) 10)]
+    (.addEventListener conn "negotiationneeded" #(js/window.clearTimeout negotiation-timer))))
+
 (defn setup-producer [{:keys [signal-fn stream producer consumer]}]
   (let [conn (new-peer-conn)
         id (conn-id (.-id stream) producer consumer)]
     (swap! conns assoc id {:conn conn :consumer consumer :producer producer :stream-id (.-id stream)})
     (setup-listeners conn id signal-fn)
-    (add-stream conn stream)
-    (handle-negotiation conn signal-fn)))
+    (workaround-firefox-negotiation-bug conn signal-fn)
+    (add-stream conn stream)))
 
 (defn get-or-create-peer-conn [signal-fn stream-id producer consumer]
   (let [id (conn-id stream-id producer consumer)
