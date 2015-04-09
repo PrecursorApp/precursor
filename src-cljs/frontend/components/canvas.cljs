@@ -372,7 +372,9 @@
                                                 (when part-of-group?
                                                   "selected-group ")
                                                 (when invalid?
-                                                  "invalid"))
+                                                  "invalid")
+                                                (when (:layer/signup-button layer)
+                                                  " signup-layer"))
                                 :key (str "action-" (:db/id layer))))))))))
 
 (defn svg-layers [{:keys [tool] :as data} owner]
