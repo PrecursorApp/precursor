@@ -39,7 +39,9 @@
                  ;; uses a url-safe token
                  [dwwoelfel/ring-anti-forgery "1.0.0-cbd219138abf4e9916a51caa7629c357b5d164af" :exclusions [hiccup]]
                  [http-kit "2.1.18-c9c0b155a4ab05630d332a7d2da0aaf433889772"]
-                 [com.taoensso/sente "1.4.1" :exclusions [http-kit]]
+
+                 ;; adds support for on-complete callback
+                 [precursor/sente "1.4.1-a28061fff118ea3313f99ae6afb89f064c35c9b2"]
                  [clj-stacktrace "0.2.8"]
                  [org.immutant/web "2.x.incremental.539" :exclusions [org.clojure/java.classpath
                                                                       org.jboss.logging/jboss-logging

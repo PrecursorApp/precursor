@@ -8,8 +8,13 @@
   i/IAsyncNetworkChannel
   (open?  [im-ch] (immutant/open? im-ch))
   (close! [im-ch] (immutant/close im-ch))
-  (send!* [im-ch msg close-after-send?]
-    (immutant/send! im-ch msg {:close? close-after-send?})))
+  (send!* [im-ch msg close-after-send? on-complete]
+    (let [queued? (immutant/send! im-ch msg (merge {:close? close-after-send?}
+                                                   (when on-complete
+                                                     {:on-complete on-complete})))]
+      (when (and (not queued?)
+                 on-complete)
+        (on-complete ::closed)))))
 
 (deftype ImmutantAsyncNetworkChannelAdapter []
   i/IAsyncNetworkChannelAdapter
