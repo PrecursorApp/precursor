@@ -491,10 +491,11 @@
         data (select-keys ?data [:candidate :sdp :consumer :producer :subscribe-to-recording :stream-id :close-connection])]
     (assert (contains? (set [consumer producer]) client-id)
             (format "client (%s) is not the consumer (%s) or producer (%s)" client-id consumer producer))
-    (assert (get-in @document-subs [document-id target])
-            (format "%s is the target, but isn't subscribed to %s" target document-id))
-    (log/infof "sending signal from %s to %s" client-id target)
-    ((:send-fn @sente-state) target [:rtc/signal data])))
+    (if (get-in @document-subs [document-id target])
+      (do
+        (log/infof "sending signal from %s to %s" client-id target)
+        ((:send-fn @sente-state) target [:rtc/signal data]))
+      (log/warnf (format "%s is the target, but isn't subscribed to %s" target document-id)))))
 
 (defmethod ws-handler :rtc/diagnostics [{:keys [client-id ?data] :as req}]
   (email/send-connection-stats {:client-id client-id
