@@ -90,6 +90,9 @@
                          :show-landing? :overlays
                          :frontend-id-state]))))
 
+(defn clear-subscribers [state]
+  (assoc state :subscribers (:subscribers (initial-state))))
+
 (def tools #{:pen :select :line :text :rect :circle})
 (def default-font-family "Roboto")
 (def default-font-size 20)

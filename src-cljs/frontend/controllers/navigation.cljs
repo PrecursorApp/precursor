@@ -111,6 +111,7 @@
                :frontend-id-state {}
                :replay-interrupt-chan (when (play-replay? args)
                                         (async/chan)))
+        (state/clear-subscribers)
         (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
         (#(if-let [overlay (get-in args [:query-params :overlay])]
             (overlay/replace-overlay % (keyword overlay))
