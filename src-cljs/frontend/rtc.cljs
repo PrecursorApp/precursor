@@ -139,17 +139,28 @@
 (defn setup-get-stats [conn id]
   (update-stats conn id))
 
+(defn handle-connection [conn id signal-fn]
+  (if (= "closed" (.-iceConnectionState conn))
+    (signal-fn {:close-connection true})
+    (doseq [candidate-str (get-in @conns [id :candidates])]
+      (.addIceCandidate
+       conn
+       (RTCIceCandidate. (js/JSON.parse candidate-str))
+       #(do
+          (swap! conns update-in [id :candidates] disj candidate-str)
+          (utils/mlog "successfully set ice candidate that failed"))
+       #(utils/report-error "error setting ice candidate that failed" %)))))
+
 (defn setup-listeners [conn id signal-fn]
   (doseq [event-name ["connecting" "track" "negotiationneeded"
                       "signalingstatechange" "iceconnectionstatechange"
                       "icegatheringstatechange" "icecandidate" "datachannel"
                       "isolationchange" "identityresult" "peeridentity"
                       "idpassertionerror" "idpvalidationerror"]]
-    (.addEventListener conn event-name (fn [& args] (utils/mlog event-name args))))
+    (.addEventListener conn event-name (fn [e] (utils/mlog event-name e))))
   (.addEventListener conn "icecandidate" #(handle-ice-candidate conn signal-fn %))
   (.addEventListener conn "negotiationneeded" #(handle-negotiation conn signal-fn))
-  (.addEventListener conn "iceconnectionstatechange" #(when (= "closed" (.-iceConnectionState conn))
-                                                        (signal-fn {:close-connection true})))
+  (.addEventListener conn "iceconnectionstatechange" #(handle-connection conn id signal-fn))
   conn)
 
 ;; Handle navigator.mediaStreams.getUserMedia, which doesn't seem to exist in the wild
@@ -257,11 +268,14 @@
                                #(utils/report-error "error setting remote description in handle-sdp" %))))))
 
 (defn add-candidate [signal-fn candidate-str stream-id producer consumer]
-  (let [conn (get-or-create-peer-conn signal-fn stream-id producer consumer)
-        state (.-signalingState conn)]
-    (.addIceCandidate conn (RTCIceCandidate. (js/JSON.parse candidate-str))
-                      #(utils/mlog "successfully set ice candidate")
-                      #(utils/report-error (str "error setting ice candidate, state was " state) %))))
+  (let [conn (get-or-create-peer-conn signal-fn stream-id producer consumer)]
+    (.addIceCandidate
+     conn
+     (RTCIceCandidate. (js/JSON.parse candidate-str))
+     #(utils/mlog "successfully set ice candidate")
+     #(do (utils/mlog "error setting ice candidate, will try it again on connection change")
+          (swap! conns update-in [(conn-id stream-id producer consumer) :candidates]
+                 (fnil conj #{}) candidate-str)))))
 
 ;; signal-fn takes a map of data, e.g. {:candidate "candidate-string"}
 (defn handle-signal [{:keys [send-msg producer consumer stream-id controls-ch] :as data}]
