@@ -86,7 +86,7 @@
        :body "Couldn't find that document"})))
 
 (defpage doc-replay-helper "/replay-helper/:document-id" [req]
-  (let [doc (->> req :params :document-id (Long/parseLong) (doc-model/find-by-id (pcd/default-db)) pc.utils/inspect)]
+  (let [doc (->> req :params :document-id (Long/parseLong) (doc-model/find-by-id (pcd/default-db)))]
     (if (seq doc)
       (hiccup/html
        (content/layout {}

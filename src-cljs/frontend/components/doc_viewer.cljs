@@ -59,8 +59,7 @@
                  [:i "."]
                  [:i "."]]]
                [:div.recent-doc-title
-                [:a
-                 {:href (str "/document/" (:db/id doc))}
+                [:a {:href (str "/document/" (:db/id doc))}
                  (str (:db/id doc))]]]))))]))))
 
 (defn dummy-docs [current-doc-id doc-count]

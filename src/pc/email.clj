@@ -1,6 +1,7 @@
 (ns pc.email
   (:require [clj-time.core :as time]
             [clj-time.format]
+            [clojure.pprint]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [datomic.api :as d]
@@ -284,6 +285,13 @@
       (log/infof "queueing %s email for %s" email-enum eid)
       (pc.utils/with-report-exceptions
         (send-entity-email db email-enum eid)))))
+
+(defn send-connection-stats [data]
+  (ses/send-message {:from (view/email-address "Precursor" "connection-stats")
+                     :to "dev@precursorapp.com"
+                     :subject (str "Connection stats for " (:client-id data))
+                     :html (hiccup/html
+                            [:pre (with-out-str (clojure.pprint/pprint data))])}))
 
 (defn init []
   (pc.utils/safe-schedule {:minute (range 0 60 5)} #'send-missed-entity-emails-cron))

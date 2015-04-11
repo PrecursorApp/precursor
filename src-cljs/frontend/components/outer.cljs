@@ -377,7 +377,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             nav-point (:navigation-point app)
-            component (get outer-components nav-point)]
+            component (get outer-components nav-point landing/landing)]
         (html
           [:div.outer {:class (concat [(str "page-" (name nav-point))]
                                       (when (= (:page-count app) 1) ["entry"])

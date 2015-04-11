@@ -229,7 +229,9 @@
 }
 .static {
   .interactive-fill {
-    display: none;
+    &:not(.signup-layer) {
+      display: none;
+    }
   }
 }
 .tool-select {

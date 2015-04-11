@@ -173,6 +173,11 @@ MediaStream.prototype.id;
 /**
  * @return {!Array.<!MediaStreamTrack>}
  */
+MediaStream.prototype.getTracks = function() {};
+
+/**
+ * @return {!Array.<!MediaStreamTrack>}
+ */
 MediaStream.prototype.getAudioTracks = function() {};
 
 /**

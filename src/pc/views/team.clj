@@ -46,7 +46,7 @@
        [:h1 "Join your team!"]
        [:h4 (str (h/h (:subdomain req)) "." (profile/hostname))]
        [:div.calls-to-action
-        [:a.google-login {:href (str (url/map->URL
+        [:a#vendor.google-login {:href (str (url/map->URL
                                       {:host (profile/hostname)
                                        :protocol (if (profile/force-ssl?)
                                                    "https"

@@ -17,6 +17,7 @@
             [frontend.components.outer :as outer]
             [frontend.components.overlay :as overlay]
             [frontend.components.progress :as progress]
+            [frontend.components.rtc :as rtc]
             [frontend.cursors :as cursors]
             [frontend.favicon :as favicon]
             [frontend.keyboard :as keyboard]
@@ -126,6 +127,9 @@
                                                     [:page-count]
                                                     [:show-scroll-to-arrow]])
                         {:react-key "outer"}))
+
+            (om/build rtc/rtc (select-in app [[:subscribers :info]])
+                      {:react-key "rtc"})
 
             (om/build progress/progress {} {:react-key "progress-bar"})])
           (html [:div#app]))))))
