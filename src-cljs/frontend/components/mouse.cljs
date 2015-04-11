@@ -87,8 +87,13 @@
                  hint-team {:data-team "Open team menu." :class "east"}
                  hint-radial {:data-radial "Right-click." :class "north fast"}]
              ;; TODO find solution for hold+hold hint
-             [:div.hint.holo (if radial-open?
-                               hint-chat
-                               hint-radial)])
+             ; [:div.hint.holo (if radial-open?
+             ;                   hint-chat
+             ;                   hint-radial)]
+
+             (when-not right-click-learned?
+               [:div.hint.holo {:data-radial "Right-click." :class "north fast"}])
+
+             )
 
            ])))))
