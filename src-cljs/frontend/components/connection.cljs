@@ -2,6 +2,7 @@
   (:require [cljs-time.format :as time-format]
             [frontend.components.inspector :as inspector]
             [frontend.rtc :as rtc]
+            [frontend.rtc.stats :as rtc-stats]
             [frontend.utils :as utils]
             [goog.date]
             [goog.string :as gstring]
@@ -34,7 +35,7 @@
     om/IRender
     (render [_]
       (let [sente-state @(get-in app [:sente :state])
-            rtc-stats (rtc/gather-stats)
+            rtc-stats (rtc-stats/gather-stats rtc/conns rtc/stream)
             uuid->cust (get-in app [:cust-data :uuid->cust])]
         (html
          [:div.menu-view

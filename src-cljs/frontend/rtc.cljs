@@ -1,7 +1,7 @@
 (ns frontend.rtc
   (:require [cljs.core.async :as async :refer (put! <!)]
-            [frontend.utils :as utils]
-            [goog.object])
+            [frontend.rtc.stats :as stats]
+            [frontend.utils :as utils])
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)]))
 
 ;; How it works:
@@ -43,41 +43,6 @@
 (def RTCSessionDescription (or js/window.RTCSessionDescription
                                js/window.mozRTCSessionDescription))
 
-;; https://w3c.github.io/webrtc-pc/#h-methods-7
-(defn spec-get-stats
-  "selector should be a media track"
-  [conn selector success failure]
-  (.getStats conn selector success failure))
-
-(defn webkit-get-stats [conn selector success failure]
-  (.getStats conn success))
-
-(def get-stats (if js/window.webkitRTCPeerConnection
-                 webkit-get-stats
-                 spec-get-stats))
-
-(defn report-data [report]
-  (reduce (fn [acc stat-name]
-            (assoc acc stat-name (.stat report stat-name)))
-          {} (.names report)))
-
-(defn webkit-report->map [report]
-  (reduce (fn [acc r]
-            (assoc acc (.-type r) (report-data r)))
-          {} (.result report)))
-
-(defn spec-report->map [report]
-  (reduce (fn [acc k]
-            ;; check that compiler doesn't squish
-            (if (.hasOwnProperty report k)
-              (assoc acc k (js->clj (.get report k)))
-              acc))
-          {} (goog.object/getKeys report)))
-
-(def report->map (if js/window.webkitRTCPeerConnection
-                   webkit-report->map
-                   spec-report->map))
-
 ;; map of conn-id (:producer, :consumer, :stream-id) to map with keys :conn, :producer, :consumer, and :stream-id
 (defonce conns (atom {}))
 
@@ -118,19 +83,18 @@
                                 (first (.getRemoteStreams conn)))
                       (.getAudioTracks)
                       first)]
-    (get-stats conn
-               selector
-               (fn [resp]
-                 (set! js/window.resp resp)
-                 (let [stats-data (report->map resp)]
-                   (swap! conns utils/update-when-in [id] (fn [data]
-                                                            (assoc data
-                                                                   :stats stats-data
-                                                                   :previous-stats (:stats data)))))
-                 (when (should-update-stats? conn id)
-                   (js/window.setTimeout #(update-stats conn id)
-                                         1000)))
-               #(utils/report-error "error gathering stats" %))
+    (stats/get-stats conn
+                     selector
+                     (fn [resp]
+                       (let [stats-data (stats/report->map resp)]
+                         (swap! conns utils/update-when-in [id] (fn [data]
+                                                                  (assoc data
+                                                                         :stats stats-data
+                                                                         :previous-stats (:stats data)))))
+                       (when (should-update-stats? conn id)
+                         (js/window.setTimeout #(update-stats conn id)
+                                               1000)))
+                     #(utils/report-error "error gathering stats" %))
     ;; stream may not be attached yet, don't let that kill the stats loop
     (when (should-update-stats? conn id)
       (js/window.setTimeout #(update-stats conn id)
@@ -305,33 +269,5 @@
               maybe-close)
             (swap! conns dissoc id)))))
 
-(defn track-stats [track]
-  {:id (.-id track)
-   :enabled (.-enabled track)
-   :kind (.-kind track)
-   :label (.-label track)})
-
-(defn stream-stats [stream]
-  {:id (.-id stream)
-   :label (.-label stream)
-   :ended (.-ended stream)
-   :tracks (mapv track-stats (.getAudioTracks stream))})
-
-(defn connection-stats [conn-data]
-  (let [conn (:conn conn-data)]
-    (merge (select-keys conn-data [:consumer :producer :stream-id :stats])
-           {:local-streams (mapv stream-stats (.getLocalStreams conn))
-            :remote-streams (mapv stream-stats (.getRemoteStreams conn))
-            :connection-state (.-iceConnectionState conn)
-            :gathering-state (.-iceGatheringState conn)
-            :signaling-state (.-signalingState conn)
-            :remote-description (js/JSON.stringify (.-remoteDescription conn))
-            :local-description (js/JSON.stringify (.-localDescription conn))})))
-
-(defn gather-stats []
-  {:user-agent js/navigator.userAgent
-   :connections (mapv connection-stats (vals @conns))
-   :stream (when-let [s @stream] (stream-stats s))})
-
 (defn ^:export inspect-stats []
-  (clj->js (gather-stats)))
+  (clj->js (stats/gather-stats conns stream)))
