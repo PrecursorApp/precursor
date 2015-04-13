@@ -7,13 +7,14 @@
             [frontend.camera :as cameras]
             [frontend.colors :as colors]
             [frontend.components.common :as common]
+            [frontend.components.context :as context]
+            [frontend.components.mouse :as mouse]
             [frontend.cursors :as cursors]
             [frontend.db :as fdb]
             [frontend.datascript :as ds]
             [frontend.keyboard :as keyboard]
             [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
-            [frontend.components.mouse :as mouse]
             [frontend.settings :as settings]
             [frontend.state :as state]
             [frontend.svg :as svg]
@@ -1013,8 +1014,9 @@
                                        (.stopPropagation e))}
          [:div.canvas-background]
          (om/build svg-canvas app)
+         (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
          (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
                                                      [:keyboard]
-                                                     [:mouse-down]
-                                                     [:radial]])
-                   {:react-key "mouse"})]))))
+                                                     [:mouse-down]])
+                   {:react-key "mouse"})
+         ]))))

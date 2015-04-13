@@ -3,7 +3,7 @@
   top: inherit;
   left: inherit;
 }
-.pan-handle {
+.pan-cursor {
   position: absolute;
   top: -.5em;
   left: -.5em;
@@ -16,7 +16,7 @@
   stroke-width: 1;
   stroke-linejoin: round;
 }
-.pan-lines {
+.pan-line {
   fill: none;
   stroke: @black;
   stroke-width: .75;
@@ -47,12 +47,12 @@
       transition-delay: @run_slow;
     }
   }
-  &[data-radial] {
+  &[data-dial] {
     top: inherit;
     left: inherit;
     transform: translate3d(-50%, 100%, 0);
     &:after {
-      content: attr(data-radial);
+      content: attr(data-dial);
     }
   }
   &[data-chat] {
@@ -113,54 +113,4 @@
     left: -@padding_hint * 2;
     border-right-color: @color_select;
   }
-}
-.radial-menu {
-  position: fixed;
-  width: @tile_radial;
-  height: @tile_radial;
-}
-.radial-buttons {
-  width: @tile_radial + 2;
-  height: @tile_radial + 2;
-  margin-left: -1em;
-  margin-top: -1em;
-  padding: 1rem;
-  overflow: visible;
-}
-.radial-button {
-  cursor: pointer;
-  transition: @run @bezier_deform;
-  &:hover {
-    transform: translate3d(-13px, -13px, 0) scale3d(1.1, 1.1, 1);
-    transition-duration: @run_fast;
-    .radial-pie {
-      fill: @gray_dark;
-      transition-duration: @run_fast;
-    }
-    .radial-icon {
-      stroke: @white;
-      transition-duration: @run_fast;
-    }
-  }
-  &:active {
-    .radial-pie {
-      fill: @gray_darker;
-    }
-  }
-}
-.radial-pie {
-  fill: @gray_darker;
-  stroke: @gray_dark;
-  transition: @run @bezier_deform;
-}
-.radial-icon {
-  .shape_position(@radial_tools);
-  fill: none;
-  stroke: @gray;
-  stroke-width: 8;
-  pointer-events: none;
-  transition: @run @bezier_fadein;
-}
-.radial-point {
-  fill: @gray_dark;
 }
