@@ -102,9 +102,6 @@
     [:link {:rel "stylesheet"       :href (pc.assets/asset-path "/css/app.css")}]
     [:link {:rel "stylesheet"       :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
 
-    ;; temporary meta tag, to verify account on pinterest
-    [:meta {:name "p:domain_verify" :content "3382b742326a852747a8bbb04e8462e5"}]
-
     [:style "#om-app{min-height:100vh;background-size:10px 10px,10px 10px,100px 100px,100px 100px;background-color:rgba(51,51,51,1);background-image:linear-gradient(to bottom,rgba(85,85,85,.25)10%,rgba(85,85,85,0)10%),linear-gradient(to right,rgba(85,85,85,.25)10%,rgba(85,85,85,0)10%),linear-gradient(to bottom,rgba(85,85,85,.57)1%,rgba(85,85,85,0)1%),linear-gradient(to right,rgba(85,85,85,.57)1%,rgba(85,85,85,0)1%);}#om-app:active{cursor:wait;}"]
 
     (embed-json-in-head "window.Precursor"
