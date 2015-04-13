@@ -127,7 +127,8 @@
 
 (defn controls-handler
   [[msg data :as value] state browser-state]
-  (when-not (keyword-identical? :mouse-moved msg)
+  (when-not (or (keyword-identical? :mouse-moved msg)
+                (keyword-identical? :media-stream-volume msg))
     (mlog "Controls Verbose: " value))
   (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]

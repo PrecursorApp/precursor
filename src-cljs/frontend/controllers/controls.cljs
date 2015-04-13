@@ -63,21 +63,27 @@
   [browser-state message args previous-state current-state]
   (utils/mlog "No post-control for: " message))
 
+(defn extract-sub-info [state x y]
+  (merge
+   {:tool (get-in state state/current-tool-path)
+    :document/id (:document/id state)
+    :layers (when (or (get-in state [:drawing :in-progress?])
+                      (get-in state [:drawing :moving?]))
+              (map #(dissoc % :points) (get-in state [:drawing :layers])))
+    :relation (when (get-in state [:drawing :relation :layer])
+                (get-in state [:drawing :relation]))
+    :recording (:recording state)}
+   (when (and x y)
+     {:mouse-position [(:x (:mouse state)) (:y (:mouse state))]})))
+
 ;; TODO: this shouldn't assume it's sending a mouse position
-(defn maybe-notify-subscribers! [current-state x y]
+(defn maybe-notify-subscribers! [previous-state current-state x y]
   (when (get-in current-state [:subscribers :mice (:client-id current-state) :show-mouse?])
-    (sente/send-msg (:sente current-state)
-                    [:frontend/mouse-position (merge
-                                               {:tool (get-in current-state state/current-tool-path)
-                                                :document/id (:document/id current-state)
-                                                :layers (when (or (get-in current-state [:drawing :in-progress?])
-                                                                  (get-in current-state [:drawing :moving?]))
-                                                          (map #(dissoc % :points) (get-in current-state [:drawing :layers])))
-                                                :relation (when (get-in current-state [:drawing :relation :layer])
-                                                            (get-in current-state [:drawing :relation]))
-                                                :recording (:recording current-state)}
-                                               (when (and x y)
-                                                 {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
+    (let [previous-info (extract-sub-info current-state x y)
+          current-info (extract-sub-info previous-state x y)]
+      (when-not (= previous-info current-info)
+        (sente/send-msg (:sente current-state)
+                        [:frontend/mouse-position (extract-sub-info current-state x y)])))))
 
 (defmethod control-event :state-restored
   [browser-state message path state]
@@ -265,7 +271,7 @@
     (when (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
       (handle-keyboard-shortcut-after current-state (first (filter #(-> shortcuts % (contains? key-set))
                                                                    (keys shortcuts))))))
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defn update-mouse [state x y]
   (if (and x y)
@@ -708,11 +714,11 @@
 
 (defmethod post-control-event! :text-layer-edited
   [browser-state message _ previous-state current-state]
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod post-control-event! :mouse-moved
   [browser-state message [x y] previous-state current-state]
-  (maybe-notify-subscribers! current-state x y))
+  (maybe-notify-subscribers! previous-state current-state x y))
 
 (defn finalize-layer [state]
   (let [{:keys [x y]} (get-in state [:mouse])
@@ -833,7 +839,7 @@
     (let [intents (mouse-depressed-intents previous-state button ctrl? shift?)]
       (doseq [intent intents]
         (case intent
-          :finish-text-layer (handle-text-layer-finished-after current-state)
+          :finish-text-layer (handle-text-layer-finished-after previous-state current-state)
           :open-menu (handle-menu-opened-after current-state previous-state)
           :start-drawing nil
           :submit-layer-properties (handle-layer-properties-submitted-after current-state)
@@ -861,7 +867,7 @@
                         :layer/points-to
                         (get-in current-state [:drawing :finished-relation :dest-layer-id])]]
                    {:can-undo? true})
-      (maybe-notify-subscribers! current-state x y))))
+      (maybe-notify-subscribers! previous-state current-state x y))))
 
 (defmethod control-event :layer-relation-mouse-down
   [browser-state message {:keys [layer x y]} state]
@@ -950,7 +956,7 @@
                          :layer/points-to
                          (get-in current-state [:drawing :finished-relation :dest-layer-id])]]
                     {:can-undo? true})
-       (maybe-notify-subscribers! current-state x y))
+       (maybe-notify-subscribers! previous-state current-state x y))
 
      (and (not (get-in previous-state [:drawing :moving?]))
           (every? #(= :layer.type/text (:layer/type %)) layers))
@@ -964,7 +970,7 @@
                                             (map #(assoc % :unsaved true) layer-group)
                                             layer-group)
                                        {:can-undo? true})))
-                      (maybe-notify-subscribers! current-state x y))
+                      (maybe-notify-subscribers! previous-state current-state x y))
 
      :else nil)))
 
@@ -974,7 +980,7 @@
   [browser-state message _ state]
   (finalize-layer state))
 
-(defn handle-text-layer-finished-after [current-state]
+(defn handle-text-layer-finished-after [previous-state current-state]
   (let [db (:db current-state)
         layer (-> (get-in current-state [:drawing :finished-layers 0])
                 utils/remove-map-nils
@@ -984,11 +990,11 @@
                 layer)]
     (when (layer-model/detectable? layer)
       (d/transact! db [layer] {:can-undo? true}))
-    (maybe-notify-subscribers! current-state nil nil)))
+    (maybe-notify-subscribers! previous-state current-state nil nil)))
 
 (defmethod post-control-event! :text-layer-finished
   [browser-state message _ previous-state current-state]
-  (handle-text-layer-finished-after current-state))
+  (handle-text-layer-finished-after previous-state current-state))
 
 (defmethod control-event :deleted-selected
   [browser-state message _ state]
@@ -1160,7 +1166,7 @@
                                (utils/update-when-in [:layer/points-to] (fn [p] (set (map :db/id p))))))
                            layers)
                      {:can-undo? true}))))
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod control-event :chat-db-updated
   [browser-state message _ state]
@@ -1760,7 +1766,7 @@
 
 (defmethod post-control-event! :media-stream-started
   [browser-state message _ previous-state current-state]
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod control-event :media-stream-failed
   [browser-state message {:keys [error]} state]
@@ -1771,7 +1777,7 @@
 
 (defmethod post-control-event! :media-stream-failed
   [browser-state message _ previous-state current-state]
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod control-event :media-stream-stopped
   [browser-state message {:keys [stream-id]} state]
@@ -1782,7 +1788,18 @@
 
 (defmethod post-control-event! :media-stream-stopped
   [browser-state message _ previous-state current-state]
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
+
+(defmethod control-event :media-stream-volume
+  [browser-state message {:keys [stream-id volume]} state]
+  (let [smoothed-volume (* 10 (js/Math.floor (/ volume 10)))]
+    (-> state
+      (assoc-in [:recording :media-stream-volume] smoothed-volume)
+      (assoc-in [:subscribers :info (:client-id state) :recording :media-stream-volume] smoothed-volume))))
+
+(defmethod post-control-event! :media-stream-volume
+  [browser-state message _ previous-state current-state]
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod control-event :remote-media-stream-ready
   [browser-state message {:keys [stream-url producer]} state]

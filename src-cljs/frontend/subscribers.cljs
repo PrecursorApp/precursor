@@ -11,7 +11,7 @@
   (assoc-in app-state [:subscribers :entity-ids :entity-ids] (subscriber-entity-ids app-state)))
 
 (defn add-subscriber-data [app-state client-id subscriber-data]
-  (let [mouse-data (assoc (select-keys subscriber-data [:mouse-position :show-mouse? :tool :color :cust/uuid])
+  (let [mouse-data (assoc (select-keys subscriber-data [:mouse-position :show-mouse? :tool :color :cust/uuid :recording])
                           :client-id client-id)
         layer-data (assoc (select-keys subscriber-data [:layers :color :cust/uuid :relation])
                           :client-id client-id)

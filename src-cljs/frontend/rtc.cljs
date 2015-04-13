@@ -132,15 +132,39 @@
 (def getUserMedia (or js/navigator.mozGetUserMedia
                       js/navigator.webkitGetUserMedia))
 
+(defonce audio-ctx (js/window.AudioContext.))
 
 (defn get-user-media [config success error]
   (.call getUserMedia js/navigator (clj->js config) success error))
+
+(defn watch-volume [stream ch]
+  (let [bin-count 16
+        analyser (.createAnalyser audio-ctx)
+        _ (set! (.-fftSize analyser) (* 2 bin-count))
+        _ (set! (.-smoothingTimeConstant analyser) 0.2)
+        source (.createMediaStreamSource audio-ctx stream)
+        data-array (js/Uint8Array. bin-count)]
+
+    (.connect source analyser)
+
+    (go-loop []
+      (async/<! (async/timeout 50))
+      (when-not (.-ended stream)
+        (.getByteFrequencyData analyser data-array)
+        (put! ch [:media-stream-volume {:stream-id (.-id stream)
+                                        :volume (/ (reduce (fn [acc i]
+                                                             (+ acc (* 100 (/ (aget data-array i)
+                                                                              256))))
+                                                           0 (range bin-count))
+                                                   bin-count)}])
+        (recur)))))
 
 ;; http://www.w3.org/TR/mediacapture-streams/#h-event-summary
 (defn add-stream-watcher [stream ch]
   ;; TODO: figure out which of these events is real
   (.addEventListener stream "inactive" #(put! ch [:media-stream-stopped {:stream-id (.-id stream)}]))
-  (.addEventListener stream "ended" #(put! ch [:media-stream-stopped {:stream-id (.-id stream)}])))
+  (.addEventListener stream "ended" #(put! ch [:media-stream-stopped {:stream-id (.-id stream)}]))
+  (watch-volume stream ch))
 
 (defn cleanup-conns [k v]
   (doseq [cleanup-key (filter #(= v (get % k)) (keys @conns))]
