@@ -59,18 +59,6 @@
                                       (if chat-opened? " chat-opened " " chat-closed ")
                                       (when (keyboard/pan-shortcut-active? app) " state-pan "))}
             (om/build text-sizer {})
-            (om/build progress/progress-bar {} {:react-key "progress-bar"})
-
-            (when (:show-landing? app)
-              (om/build outer/outer (select-in app [[:show-landing?]
-                                                    [:document/id]
-                                                    [:navigation-point]
-                                                    [:navigation-data]
-                                                    [:cust]
-                                                    [:subscribers :info]
-                                                    [:page-count]
-                                                    [:show-scroll-to-arrow]])
-                        {:react-key "outer"}))
 
             (when (and (keyword-identical? :document nav-point)
                        (empty? (:cust app))
@@ -88,11 +76,12 @@
                          :key "inner"}
              [:style "#om-app:active{cursor:auto}"]
              (om/build canvas/canvas (select-in app [state/current-tool-path
+                                                     state/right-click-learned-path
                                                      [:drawing :in-progress?]
                                                      [:drawing :relation-in-progress?]
                                                      [:mouse-down]
                                                      [:layer-properties-menu]
-                                                     [:menu]
+                                                     [:radial]
                                                      [:client-id]
                                                      [:cust-data]
                                                      [:document/id]
@@ -109,11 +98,7 @@
                                                  [:show-landing?]
                                                  [:cust-data]
                                                  [:navigation-data]])
-                       {:react-key "chat"})
-
-             (when (not right-click-learned?)
-               (om/build canvas/radial-hint (select-in app [[:mouse-type]])
-                         {:react-key "radial-hint"}))]
+                       {:react-key "chat"})]
 
             (om/build hud/hud (select-in app [state/chat-opened-path
                                               state/overlays-path
@@ -132,9 +117,21 @@
                                               (state/doc-tx-rejected-count-path (:document/id app))])
                       {:react-key "hud"})
 
-            (om/build rtc/rtc (select-in app [[:subscribers :info]])
-                      {:react-key "rtc"})])
+            (when (:show-landing? app)
+              (om/build outer/outer (select-in app [[:show-landing?]
+                                                    [:document/id]
+                                                    [:navigation-point]
+                                                    [:navigation-data]
+                                                    [:cust]
+                                                    [:subscribers :info]
+                                                    [:page-count]
+                                                    [:show-scroll-to-arrow]])
+                        {:react-key "outer"}))
 
+            (om/build rtc/rtc (select-in app [[:subscribers :info]])
+                      {:react-key "rtc"})
+
+            (om/build progress/progress {} {:react-key "progress-bar"})])
           (html [:div#app]))))))
 
 (defn app [app owner]

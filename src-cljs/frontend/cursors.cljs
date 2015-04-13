@@ -39,6 +39,3 @@
 
 (defn observe-progress [owner]
   (observe owner [:progress]))
-
-(defn observe-pan-tool [owner]
-  (observe owner [:pan]))

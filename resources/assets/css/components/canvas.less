@@ -1,17 +1,19 @@
 .canvas {
   flex: 1;
   position: relative;
+  &:not(:hover) {
+    &:not(:active) {
+      .hint {
+        display: none;
+      }
+    }
+  }
   &:active {
     + .chat {
       .chat-window {
         user-select: none;
         pointer-events: none;
       }
-    }
-  }
-  &:not(:active) {
-    &:not(:hover) {
-      user-select: none;
     }
   }
 }
@@ -33,14 +35,17 @@
   transition+: width @now @run_slower @bezier_deform;
   transition+: height @now @run_slower @bezier_deform;
   will-change: transform;
+  cursor: crosshair;
   &:not(:hover) {
-    ~ .radial-tip {
-      display: none;
+    &:not(:active) {
+      user-select: none;
+      ~ .mouse {
+        .mouse-cursor {
+          display: none;
+        }
+      }
     }
   }
-  top: 0;
-  left: 0;
-  cursor: crosshair;
   &.tool-text {
     cursor: text;
   }
@@ -64,6 +69,9 @@
     .arrow-hint {
       display: none;
     }
+  }
+  &.radial-not-learned {
+    cursor: context-menu;
   }
   .arrow-handle-group {
     transition: @run @bezier_deform;
@@ -179,7 +187,6 @@
     }
   }
 }
-
 .text-layer {
   user-select: none;
   fill: @gray_light;
@@ -359,72 +366,6 @@
 .handle-outline {
   stroke: @color_select;
   stroke-dasharray: 1,1;
-}
-.radial-menu {
-  position: fixed;
-  width: @tile_radial;
-  height: @tile_radial;
-  z-index: @zindex_radial_menu;
-  + .canvas-frame {
-    .layer-properties {
-      display: none;
-    }
-  }
-}
-.radial-buttons {
-  width: @tile_radial + 2;
-  height: @tile_radial + 2;
-  margin-left: -1em;
-  margin-top: -1em;
-  padding: 1rem;
-  overflow: visible;
-}
-.radial-button {
-  cursor: pointer;
-  transition: @run @bezier_deform;
-  &:hover {
-    transform: translate3d(-13px, -13px, 0) scale3d(1.1, 1.1, 1);
-    transition-duration: @run_fast;
-    .radial-pie {
-      fill: @gray_dark;
-      transition-duration: @run_fast;
-    }
-    .radial-icon {
-      stroke: @white;
-      transition-duration: @run_fast;
-    }
-  }
-  &:active {
-    .radial-pie {
-      fill: @gray_darker;
-    }
-  }
-}
-.radial-pie {
-  fill: @gray_darker;
-  stroke: @gray_dark;
-  transition: @run @bezier_deform;
-}
-.radial-icon {
-  .shape_position(@radial_tools);
-  fill: none;
-  stroke: @gray;
-  stroke-width: 8;
-  pointer-events: none;
-  transition: @run @bezier_fadein;
-}
-.radial-point {
-  fill: @gray_dark;
-}
-.radial-hint {
-  user-select: none;
-  position: absolute;
-  top: -@tile;
-  left: -@tile;
-  white-space: nowrap;
-  .mq_640({
-    display: none;
-  });
 }
 #arrow-point {
   fill: @gray_light;

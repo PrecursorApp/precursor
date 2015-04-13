@@ -1,0 +1,116 @@
+.mouse-cursor {
+  position: fixed;
+  top: inherit;
+  left: inherit;
+}
+.pan-cursor {
+  position: absolute;
+  top: -.5em;
+  left: -.5em;
+  width: 1rem;
+  height: 1rem;
+}
+.pan-hand {
+  fill: @white;
+  stroke: @black;
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+.pan-line {
+  fill: none;
+  stroke: @black;
+  stroke-width: .75;
+  stroke-linecap: round;
+}
+.hint {
+  @padding_hint: @tile / 8;
+  @hint_top: (((@tile / 2) - .5rem) - @padding_hint);
+  color: @white;
+  line-height: 1;
+  position: absolute;
+  padding: @padding_hint;
+  background: @color_select;
+  white-space: nowrap;
+  &:before {
+    content: "";
+    position: absolute;
+    border: @padding_hint solid transparent;
+    transition: @run @bezier_deform;
+  }
+  &:after {
+    position: relative;
+    background: inherit;
+  }
+  &:not(.fast) {
+    transition: @run_slower @bezier_deform;
+    &:before {
+      transition-delay: @run_slow;
+    }
+  }
+  &[data-dial] {
+    top: inherit;
+    left: inherit;
+    transform: translate3d(-50%, 100%, 0);
+    &:after {
+      content: attr(data-dial);
+    }
+  }
+  &[data-chat] {
+    top: calc(~"100% -" @hint_top);
+    left: calc(~"100% -" @tile);
+    transform: translate3d(-100%, -100%, 0);
+    &:after {
+      content: attr(data-chat);
+    }
+  }
+  &[data-name] {
+    top: calc(~"100% -" @hint_top);
+    left: @tile;
+    transform: translate3d((1 + @tile), -100%, 0);
+    &:after {
+      content: attr(data-name);
+    }
+  }
+  &[data-menu] {
+    top: @hint_top;
+    left: @tile;
+    transform: translate3d(0, 0, 0);
+    &:after {
+      content: attr(data-menu);
+    }
+  }
+  &[data-team] {
+    top: @hint_top;
+    left: calc(~"100% -" @tile);
+    transform: translate3d(-100%, 0, 0);
+    &:after {
+      content: attr(data-team);
+    }
+  }
+  &.north:before,
+  &.south:before {
+    left: 50%;
+    transform: translate3d(-50%, 0, 0);
+  }
+  &.east:before,
+  &.west:before {
+    top: 50%;
+    transform: translate3d(0, -50%, 0);
+  }
+  &.north:before {
+    top: -@padding_hint * 2;
+    border-bottom-color: @color_select;
+  }
+  &.south:before {
+    top: 100%;
+    border-top-color: @color_select;
+  }
+  &.east:before {
+    left: 100%;
+    border-left-color: @color_select;
+  }
+  &.west:before {
+    left: -@padding_hint * 2;
+    border-right-color: @color_select;
+  }
+}

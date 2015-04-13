@@ -6,7 +6,7 @@
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)]))
 
-(defn progress-bar [app owner]
+(defn progress [app owner]
   (reify
     om/IDisplayName
     (display-name [_] "Progress Bar")
@@ -14,12 +14,11 @@
     (render [_]
       (let [progress (cursors/observe-progress owner)]
         (html
-         [:div.progress-bar {:class (when (:active progress) "active")}
-          [:div.progress {:style {:width "100%"
-                                  :transform (str "translate("
-                                                  (if (:active progress)
-                                                    (str (- (:percent progress) 100) "%")
-                                                    0)
-                                                  ")")
-                                  :transition-duration (str (+ 16 (:expected-tick-duration progress 0))
-                                                            "ms")}}]])))))
+          [:div.progress {:class (when (:active progress) "active")}
+           [:div.progress-bar {:style {:transform (str "translateX("
+                                                       (if (:active progress)
+                                                         (str (- (:percent progress) 100) "%")
+                                                         0)
+                                                       ")")
+                                       :transition-duration (str (+ 16 (:expected-tick-duration progress 0))
+                                                                 "ms")}}]])))))
