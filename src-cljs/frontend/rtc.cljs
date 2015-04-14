@@ -61,8 +61,7 @@
     (.close conn)))
 
 (defn new-peer-conn [extra-servers]
-  (PeerConnection. (clj->js (update-in config [:iceServers] concat nil;extra-servers
-                                       ))))
+  (PeerConnection. (clj->js (update-in config [:iceServers] concat extra-servers))))
 
 (defn handle-negotiation [conn {:keys [signal-fn comms] :as signal-data}]
   (.createOffer conn
