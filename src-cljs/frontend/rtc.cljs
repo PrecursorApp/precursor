@@ -138,7 +138,8 @@
 (def getUserMedia (or js/navigator.mozGetUserMedia
                       js/navigator.webkitGetUserMedia))
 
-(defonce audio-ctx (js/window.AudioContext.))
+(defonce audio-ctx (when js/window.AudioContext
+                     (js/window.AudioContext.)))
 
 (defn get-user-media [config success error]
   (.call getUserMedia js/navigator (clj->js config) success error))
