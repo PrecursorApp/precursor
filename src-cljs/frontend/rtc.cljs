@@ -30,8 +30,7 @@
 ;;  3. Cleanup peer connections when users leave
 ;;  4. Do something useful with errors (currently reports them)
 
-(def config {:iceServers [{:url "stun:stun.l.google.com:19302"}
-                          {:url "stun:global.stun.twilio.com:3478?transport=udp"}]})
+(def config {:iceServers [{:url "stun:stun.l.google.com:19302"}]})
 
 (def PeerConnection (or js/window.RTCPeerConnection
                         js/window.mozRTCPeerConnection
@@ -59,8 +58,8 @@
   (when-not (= "closed" (.-iceConnectionState conn))
     (.close conn)))
 
-(defn new-peer-conn []
-  (PeerConnection. (clj->js config)))
+(defn new-peer-conn [extra-servers]
+  (PeerConnection. (clj->js (update-in config [:iceServers] concat extra-servers))))
 
 (defn handle-negotiation [conn signal-fn]
   (.createOffer conn
@@ -200,8 +199,8 @@
   (let [negotiation-timer (js/window.setTimeout #(handle-negotiation conn signal-fn) 10)]
     (.addEventListener conn "negotiationneeded" #(js/window.clearTimeout negotiation-timer))))
 
-(defn setup-producer [{:keys [signal-fn stream producer consumer]}]
-  (let [conn (new-peer-conn)
+(defn setup-producer [{:keys [signal-fn stream producer consumer ice-servers]}]
+  (let [conn (new-peer-conn ice-servers)
         id (conn-id (.-id stream) producer consumer)]
     (swap! conns assoc id {:conn conn :consumer consumer :producer producer :stream-id (.-id stream)})
     (setup-listeners conn id signal-fn)
@@ -209,10 +208,10 @@
     (workaround-firefox-negotiation-bug conn signal-fn)
     (add-stream conn stream)))
 
-(defn get-or-create-peer-conn [signal-fn stream-id producer consumer]
+(defn get-or-create-peer-conn [signal-fn stream-id producer consumer ice-servers]
   (let [id (conn-id stream-id producer consumer)
         conns-before @conns
-        new-conns (swap! conns update-in [id] #(or % {:conn (setup-listeners (new-peer-conn) id signal-fn)
+        new-conns (swap! conns update-in [id] #(or % {:conn (setup-listeners (new-peer-conn ice-servers) id signal-fn)
                                                       :consumer consumer
                                                       :producer producer
                                                       :stream-id stream-id}))
@@ -225,10 +224,10 @@
 (defn get-peer-conn [stream-id producer consumer]
   (get-in @conns [(conn-id stream-id producer consumer) :conn]))
 
-(defn handle-sdp [{:keys [signal-fn sdp-str stream-id producer consumer controls-ch]}]
+(defn handle-sdp [{:keys [signal-fn sdp-str stream-id producer consumer controls-ch ice-servers]}]
   (let [desc (RTCSessionDescription. (js/JSON.parse sdp-str))]
     (if (= "offer" (.-type desc))
-      (let [conn (get-or-create-peer-conn signal-fn stream-id producer consumer)
+      (let [conn (get-or-create-peer-conn signal-fn stream-id producer consumer ice-servers)
             ch (async/chan)]
         (go
           (try
@@ -255,8 +254,8 @@
                                #(utils/mlog "successfully set remote description")
                                #(utils/report-error "error setting remote description in handle-sdp" %))))))
 
-(defn add-candidate [signal-fn candidate-str stream-id producer consumer]
-  (let [conn (get-or-create-peer-conn signal-fn stream-id producer consumer)]
+(defn add-candidate [signal-fn candidate-str stream-id producer consumer ice-servers]
+  (let [conn (get-or-create-peer-conn signal-fn stream-id producer consumer ice-servers)]
     (.addIceCandidate
      conn
      (RTCIceCandidate. (js/JSON.parse candidate-str))
@@ -266,22 +265,22 @@
                  (fnil conj #{}) candidate-str)))))
 
 ;; signal-fn takes a map of data, e.g. {:candidate "candidate-string"}
-(defn handle-signal [{:keys [send-msg producer consumer stream-id controls-ch] :as data}]
+(defn handle-signal [{:keys [send-msg producer consumer stream-id controls-ch ice-servers] :as data}]
   (let [signal-fn (fn [d]
                     (let [data (merge d {:producer producer :consumer consumer :stream-id stream-id})]
                       (utils/mlog "sending signal" data)
                       (send-msg data)))]
     (cond (:candidate data)
-          (add-candidate signal-fn (:candidate data) stream-id producer consumer)
+          (add-candidate signal-fn (:candidate data) stream-id producer consumer ice-servers)
 
           (:sdp data)
-          (handle-sdp {:sdp-str (:sdp data) :stream-id stream-id :producer producer :consumer consumer :signal-fn signal-fn :controls-ch controls-ch})
-
+          (handle-sdp {:sdp-str (:sdp data) :stream-id stream-id :producer producer :consumer consumer
+                       :signal-fn signal-fn :controls-ch controls-ch :ice-servers ice-servers})
 
           (:subscribe-to-recording data)
           (if-let [stream @stream]
             (if (= (.-id stream) (get-in data [:subscribe-to-recording :stream-id]))
-              (setup-producer {:signal-fn signal-fn :stream stream :consumer consumer :producer producer})
+              (setup-producer {:signal-fn signal-fn :stream stream :ice-servers ice-servers :consumer consumer :producer producer})
               (utils/report-error "subscribe to recording of different or outdated stream"))
             (utils/report-error "Subscribe to recording without stream"))
 
