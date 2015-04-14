@@ -124,7 +124,8 @@
                                      (state-utils/client-id->user current-state consumer)
                                      " to "
                                      (state-utils/client-id->user current-state producer)
-                                     ". Please ping @prcrsr in chat if you're having troubles connecting and we'll try to fix it for you."))
+                                     ". Please ping @prcrsr in chat if you're having troubles connecting and we'll try to fix it for you.")
+                                {:error/id :error/rtc-error})
     (sente/send-msg (:sente current-state) [:rtc/diagnostics (assoc (rtc-stats/gather-stats rtc/conns rtc/stream)
                                                                     :signal-data (select-keys signal-data [:stream-id :consumer :producer])
                                                                     :error-type type)]))

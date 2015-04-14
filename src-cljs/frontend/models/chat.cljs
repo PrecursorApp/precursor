@@ -31,11 +31,18 @@
         (apply str (take 6 (str (:session/uuid chat)))))))
 
 (defn create-bot-chat [conn app-state body & [extra-fields]]
-  (d/transact! conn [(merge {:db/id (trans/get-next-transient-id conn)
-                             :chat/body body
-                             :chat/document (:document/id app-state)
-                             :client/timestamp (datetime/server-date)
-                             :server/timestamp (datetime/server-date)
-                             :cust/uuid (:cust/uuid state/subscriber-bot)}
-                            extra-fields)]
-               {:bot-layer true}))
+  (let [props (merge {:db/id (trans/get-next-transient-id conn)
+                      :chat/body body
+                      :chat/document (:document/id app-state)
+                      :client/timestamp (datetime/server-date)
+                      :server/timestamp (datetime/server-date)
+                      :cust/uuid (:cust/uuid state/subscriber-bot)}
+                     extra-fields)]
+    (try
+      (d/transact! conn [props]
+                   {:bot-layer true})
+      (catch js/Error e
+        ;; this should be handled differently, perhaps with multiple dbs
+        (when (= :transact/upsert (:error (ex-data e)))
+          (d/transact! conn [(dissoc props :db/id)]
+                       {:bot-layer true}))))))

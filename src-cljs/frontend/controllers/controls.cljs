@@ -34,6 +34,7 @@
             [frontend.utils.state :as state-utils]
             [goog.dom]
             [goog.labs.userAgent.engine :as engine]
+            [goog.labs.userAgent.browser :as ua-browser]
             [goog.math :as math]
             [goog.string :as gstring]
             goog.style)
@@ -1792,7 +1793,17 @@
 
 (defmethod post-control-event! :media-stream-failed
   [browser-state message _ previous-state current-state]
-  (maybe-notify-subscribers! previous-state current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil)
+  (chat-model/create-bot-chat
+   (:db current-state)
+   current-state
+   (str "We weren't able to capture your microphone. "
+        "If you didn't see the confirmation dialog, you can enable it by clicking the "
+        (cond (ua-browser/isFirefox) "globe"
+              (ua-browser/isChrome) "camera"
+              (ua-browser/isOpera) "mic")
+        " icon in the url bar. Please ping @prcrsr in chat if you need help.")
+   {:error/id :error/mic-not-enabled}))
 
 (defmethod control-event :media-stream-stopped
   [browser-state message {:keys [stream-id]} state]
