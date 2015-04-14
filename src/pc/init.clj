@@ -11,6 +11,7 @@
             pc.logging
             pc.models.chat-bot
             pc.nrepl
+            pc.nts
             pc.repl
             pc.server
             pc.statsd)
@@ -25,6 +26,7 @@
    #'pc.datomic.schema/init
    #'pc.datomic.migrations/init
    #'pc.models.chat-bot/init
+   #'pc.nts/init
    #'pc.assets/init
    #'pc.email/init
    #'pc.cache/init

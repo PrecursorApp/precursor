@@ -88,6 +88,6 @@
 (defn init []
   (log/infof "fetching tokens")
   (time
-   (reset! tokens (pmap-n min-token-count (fn [i] (fetch-token)) (range min-token-count))))
+   (reset! tokens (pmap-n 10 (fn [i] (fetch-token)) (range min-token-count))))
   (setup-token-fetcher)
   (setup-clean-old-tokens))
