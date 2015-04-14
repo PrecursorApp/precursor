@@ -1,5 +1,7 @@
 (ns frontend.models.chat
   (:require [datascript :as d]
+            [frontend.db :as fdb]
+            [frontend.datetime :as datetime]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]))
 
@@ -28,11 +30,12 @@
         "You"
         (apply str (take 6 (str (:session/uuid chat)))))))
 
-(defn create-bot-chat [conn app-state body]
-  (d/transact! conn [{:db/id -1
-                      :chat/body body
-                      :chat/document (:document/id app-state)
-                      :client/timestamp (js/Date.)
-                      :server/timestamp (js/Date.)
-                      :cust/uuid (:cust/uuid state/subscriber-bot)}]
+(defn create-bot-chat [conn app-state body & [extra-fields]]
+  (d/transact! conn [(merge {:db/id (fdb/get-next-transient-id conn)
+                             :chat/body body
+                             :chat/document (:document/id app-state)
+                             :client/timestamp (datetime/server-date)
+                             :server/timestamp (datetime/server-date)
+                             :cust/uuid (:cust/uuid state/subscriber-bot)}
+                            extra-fields)]
                {:bot-layer true}))
