@@ -491,14 +491,9 @@
             (format "client (%s) is not the consumer (%s) or producer (%s)" client-id consumer producer))
     (if (get-in @document-subs [document-id target])
       (do
-        (swap! document-subs utils/update-when-in [document-id target] #(let [ice-servers (:ice-servers %)]
-                                                                          (if (or (nil? ice-servers)
-                                                                                  (nts/token-expired? ice-servers))
-                                                                            (assoc % :ice-servers (get (nts/get-token) "ice_servers"))
-                                                                            %)))
         (log/infof "sending signal from %s to %s" client-id target)
         ((:send-fn @sente-state) target [:rtc/signal (assoc data
-                                                            :ice-servers (get-in @document-subs [document-id target :ice-servers]))]))
+                                                            :ice-servers (nts/get-ice-servers))]))
       (log/warnf (format "%s is the target, but isn't subscribed to %s" target document-id)))))
 
 (defmethod ws-handler :rtc/diagnostics [{:keys [client-id ?data] :as req}]
