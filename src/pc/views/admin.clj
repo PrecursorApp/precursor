@@ -8,9 +8,11 @@
             [pc.datomic :as pcd]
             [pc.early-access]
             [pc.gcs]
+            [pc.auth :as auth]
             [pc.http.sente :as sente]
             [pc.http.urls :as urls]
             [pc.models.cust :as cust-model]
+            [pc.models.chat :as chat-model]
             [pc.models.doc :as doc-model]
             [pc.models.permission :as permission-model]
             [pc.replay :as replay]
@@ -391,7 +393,7 @@
        [:td (h/h (str k))]
        [:td (render-cust-prop k v)]])]))
 
-(defn doc-info [doc]
+(defn doc-info [doc auth]
   (let [db (pcd/default-db)]
     (list
      [:style "td, th { padding: 5px; text-align: left }"]
@@ -442,7 +444,21 @@
          (:db/id doc)]]]]
      [:a {:href (urls/svg-from-doc doc)}
       [:img {:src (urls/svg-from-doc doc)
-             :style "width: 100%; height: 100%"}]])))
+             :style "width: 100%; height: 100%"}]]
+     (when (auth/has-document-permission? db doc auth :read)
+       (list
+        [:h3 "Chats"]
+        (let [find-cust (memoize (partial cust-model/find-by-uuid db))]
+          [:table
+           (for [chat (sort-by :server/timestamp (chat-model/find-by-document db doc))]
+             [:tr
+              [:td (:server/timestamp chat)]
+              (let [email (some->> chat :cust/uuid find-cust :cust/email)]
+                [:td (if email
+                       [:a {:href (str "/user/" email)}
+                        email]
+                       (some-> chat :session/uuid str (subs 0 5)))])
+              [:td (h/h (:chat/body chat))]])]))))))
 
 (defn upload-files []
   (let [bucket "precursor"
