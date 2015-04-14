@@ -255,7 +255,7 @@
                   (or self-name "You")]
                  [:div.viewer-controls
                   (when (:recording sub)
-                    [:div.viewer-symbols
+                    [:div.viewer-symbols.holo
                      [:div.viewer-symbol
                       (volume-icon (get-in sub [:recording :media-stream-volume] 0) (name self-color))]])
                   [:div.viewer-toggles
