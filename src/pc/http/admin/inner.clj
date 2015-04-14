@@ -81,7 +81,7 @@
     (if (seq doc)
       (hiccup/html
        (content/layout {}
-                       (admin-content/doc-info doc)))
+                       (admin-content/doc-info doc (:auth req))))
       {:status 404
        :body "Couldn't find that document"})))
 
