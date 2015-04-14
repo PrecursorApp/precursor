@@ -486,7 +486,7 @@
         consumer (-> ?data :consumer)
         producer (-> ?data :producer)
         target (first (filter #(not= client-id %) [consumer producer]))
-        data (select-keys ?data [:candidate :sdp :consumer :producer :subscribe-to-recording :stream-id :close-connection])]
+        data (select-keys ?data [:candidate :sdp :consumer :producer :subscribe-to-recording :stream-id :close-connection :connection-failed])]
     (assert (contains? (set [consumer producer]) client-id)
             (format "client (%s) is not the consumer (%s) or producer (%s)" client-id consumer producer))
     (if (get-in @document-subs [document-id target])

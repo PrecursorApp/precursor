@@ -63,16 +63,16 @@
 (defn new-peer-conn [extra-servers]
   (PeerConnection. (clj->js (update-in config [:iceServers] concat extra-servers))))
 
-(defn handle-negotiation [conn signal-fn]
+(defn handle-negotiation [conn {:keys [signal-fn comms]}]
   (.createOffer conn
                 (fn [offer]
                   (.setLocalDescription conn
                                         offer
                                         #(signal-fn {:sdp (js/JSON.stringify (.-localDescription conn))})
-                                        #(utils/report-error "error setting local description in negotiation" %)))
-                #(utils/report-error "Error handling negotitation" %)))
+                                        #(put! (:errors comms) [:rtc-error {:error % :type :setting-local-description}])))
+                #(put! (:errors comms) [:rtc-error {:error % :type :creating-offer}])))
 
-(defn handle-ice-candidate [conn signal-fn event]
+(defn handle-ice-candidate [conn event {:keys [signal-fn]}]
   (when-let [c (.-candidate event)]
     (signal-fn {:candidate (js/JSON.stringify c)})))
 
@@ -104,9 +104,10 @@
 (defn setup-get-stats [conn id]
   (update-stats conn id))
 
-(defn handle-connection [conn id signal-fn]
-  (if (= "closed" (.-iceConnectionState conn))
-    (signal-fn {:close-connection true})
+(defn handle-connection [conn id {:keys [signal-fn comms]}]
+  (case (.-iceConnectionState conn)
+    "closed" (signal-fn {:close-connection true})
+    "failed" (signal-fn {:connection-failed true})
     (doseq [candidate-str (get-in @conns [id :candidates])]
       (.addIceCandidate
        conn
@@ -116,16 +117,16 @@
           (utils/mlog "successfully set ice candidate that failed"))
        #(utils/report-error "error setting ice candidate that failed" %)))))
 
-(defn setup-listeners [conn id signal-fn]
+(defn setup-listeners [conn id signal-data]
   (doseq [event-name ["connecting" "track" "negotiationneeded"
                       "signalingstatechange" "iceconnectionstatechange"
                       "icegatheringstatechange" "icecandidate" "datachannel"
                       "isolationchange" "identityresult" "peeridentity"
                       "idpassertionerror" "idpvalidationerror"]]
     (.addEventListener conn event-name (fn [e] (utils/mlog event-name e))))
-  (.addEventListener conn "icecandidate" #(handle-ice-candidate conn signal-fn %))
-  (.addEventListener conn "negotiationneeded" #(handle-negotiation conn signal-fn))
-  (.addEventListener conn "iceconnectionstatechange" #(handle-connection conn id signal-fn))
+  (.addEventListener conn "icecandidate" #(handle-ice-candidate conn % signal-data))
+  (.addEventListener conn "negotiationneeded" #(handle-negotiation conn signal-data))
+  (.addEventListener conn "iceconnectionstatechange" #(handle-connection conn id signal-data))
   conn)
 
 ;; Handle navigator.mediaStreams.getUserMedia, which doesn't seem to exist in the wild
@@ -210,19 +211,19 @@
   (let [negotiation-timer (js/window.setTimeout #(handle-negotiation conn signal-fn) 10)]
     (.addEventListener conn "negotiationneeded" #(js/window.clearTimeout negotiation-timer))))
 
-(defn setup-producer [{:keys [signal-fn stream producer consumer ice-servers]}]
+(defn setup-producer [{:keys [signal-fn stream producer consumer ice-servers comms] :as signal-data}]
   (let [conn (new-peer-conn ice-servers)
         id (conn-id (.-id stream) producer consumer)]
     (swap! conns assoc id {:conn conn :consumer consumer :producer producer :stream-id (.-id stream)})
-    (setup-listeners conn id signal-fn)
+    (setup-listeners conn id signal-data)
     (setup-get-stats conn id)
     (workaround-firefox-negotiation-bug conn signal-fn)
     (add-stream conn stream)))
 
-(defn get-or-create-peer-conn [signal-fn stream-id producer consumer ice-servers]
+(defn get-or-create-peer-conn [{:keys [signal-fn stream-id producer consumer ice-servers comms] :as signal-data}]
   (let [id (conn-id stream-id producer consumer)
         conns-before @conns
-        new-conns (swap! conns update-in [id] #(or % {:conn (setup-listeners (new-peer-conn ice-servers) id signal-fn)
+        new-conns (swap! conns update-in [id] #(or % {:conn (setup-listeners (new-peer-conn ice-servers) id signal-data)
                                                       :consumer consumer
                                                       :producer producer
                                                       :stream-id stream-id}))
@@ -232,66 +233,66 @@
       (setup-get-stats conn id))
     conn))
 
-(defn get-peer-conn [stream-id producer consumer]
+(defn get-peer-conn [{:keys [stream-id producer consumer]}]
   (get-in @conns [(conn-id stream-id producer consumer) :conn]))
 
-(defn handle-sdp [{:keys [signal-fn sdp-str stream-id producer consumer comms ice-servers]}]
-  (let [desc (RTCSessionDescription. (js/JSON.parse sdp-str))]
+(defn handle-sdp [{:keys [signal-fn sdp stream-id producer consumer comms ice-servers] :as signal-data}]
+  (let [desc (RTCSessionDescription. (js/JSON.parse sdp))]
     (if (= "offer" (.-type desc))
-      (let [conn (get-or-create-peer-conn signal-fn stream-id producer consumer ice-servers)
+      (let [conn (get-or-create-peer-conn signal-data)
             ch (async/chan)]
         (go
           (try
             (.setRemoteDescription conn desc #(put! ch :desc) #(put! ch {:error %}))
             (if-let [error (:error (<! ch))]
-              (put! (:errors comms) [:rtc-error {:error error :msg "error setting remote description"}])
+              (put! (:errors comms) [:rtc-error {:error error :type :setting-remote-description}])
               (.createAnswer conn #(put! ch {:answer %}) #(put! ch {:error %})))
             (let [resp (<! ch)]
               (if-let [error (:error resp)]
-                (put! (:errors comms) [:rtc-error {:error error :msg "error creating answer"}])
+                (put! (:errors comms) [:rtc-error {:error error :type :creating-answer}])
                 (.setLocalDescription conn (:answer resp) #(put! ch :desc) #(put! ch {:error %}))))
             (if-let [error (:error (<! ch))]
-              (put! (:errors comms) [:rtc-error {:error error :msg "error setting local description"}])
+              (put! (:errors comms) [:rtc-error {:error error :type :setting-local-description}])
               (do
                 (signal-fn {:sdp (js/JSON.stringify (.-localDescription conn))})
                 (put! (:controls comms) [:remote-media-stream-ready {:stream-url (js/window.URL.createObjectURL (first (.getRemoteStreams conn)))
-                                                                  :producer producer}])))
+                                                                     :producer producer}])))
             (catch js/Error e
-              (put! (:errors comms) [:rtc-error {:error e :msg "error in handle-sdp for offer"}]))
+              (put! (:errors comms) [:rtc-error {:error e :type :offer-handle-sdp}]))
             (finally
               (async/close! ch)))))
-      (let [conn (get-peer-conn stream-id producer consumer)]
+      (let [conn (get-peer-conn signal-data)]
         (.setRemoteDescription conn desc
                                #(utils/mlog "successfully set remote description")
-                               #(utils/report-error "error setting remote description in handle-sdp" %))))))
+                               #(put! (:errors comms) [:rtc-error :setting-remote-description :error %]))))))
 
-(defn add-candidate [signal-fn candidate-str stream-id producer consumer ice-servers]
-  (let [conn (get-or-create-peer-conn signal-fn stream-id producer consumer ice-servers)]
+(defn add-candidate [{:keys [signal-fn candidate stream-id producer consumer ice-servers] :as signal-data}]
+  (let [conn (get-or-create-peer-conn signal-data)]
     (.addIceCandidate
      conn
-     (RTCIceCandidate. (js/JSON.parse candidate-str))
+     (RTCIceCandidate. (js/JSON.parse candidate))
      #(utils/mlog "successfully set ice candidate")
      #(do (utils/mlog "error setting ice candidate, will try it again on connection change")
           (swap! conns update-in [(conn-id stream-id producer consumer) :candidates]
-                 (fnil conj #{}) candidate-str)))))
+                 (fnil conj #{}) candidate)))))
 
 ;; signal-fn takes a map of data, e.g. {:candidate "candidate-string"}
 (defn handle-signal [{:keys [send-msg producer consumer stream-id comms ice-servers] :as data}]
   (let [signal-fn (fn [d]
                     (let [data (merge d {:producer producer :consumer consumer :stream-id stream-id})]
                       (utils/mlog "sending signal" data)
-                      (send-msg data)))]
+                      (send-msg data)))
+        signal-data (assoc data :signal-fn signal-fn)]
     (cond (:candidate data)
-          (add-candidate signal-fn (:candidate data) stream-id producer consumer ice-servers)
+          (add-candidate signal-data)
 
           (:sdp data)
-          (handle-sdp {:sdp-str (:sdp data) :stream-id stream-id :producer producer :consumer consumer
-                       :signal-fn signal-fn :comms comms :ice-servers ice-servers})
+          (handle-sdp signal-data)
 
           (:subscribe-to-recording data)
           (if-let [stream @stream]
             (if (= (.-id stream) (get-in data [:subscribe-to-recording :stream-id]))
-              (setup-producer {:signal-fn signal-fn :stream stream :ice-servers ice-servers :consumer consumer :producer producer})
+              (setup-producer (assoc signal-data :stream stream))
               (utils/report-error "subscribe to recording of different or outdated stream"))
             (utils/report-error "Subscribe to recording without stream"))
 
@@ -301,7 +302,10 @@
               (get id)
               :conn
               maybe-close)
-            (swap! conns dissoc id)))))
+            (swap! conns dissoc id))
+
+          (:connection-failed data)
+          (put! (:errors comms) [:rtc-error {:type :connection-failed}]))))
 
 (defn ^:export inspect-stats []
   (clj->js (stats/gather-stats conns stream)))
