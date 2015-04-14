@@ -259,7 +259,7 @@
     }
   }
   &.busy {
-    .viewer-knob {
+    .viewer-toggle {
       pointer-events: none;
       opacity: 1;
       .icon-pencil {
@@ -278,7 +278,7 @@
           opacity: .5;
         }
       }
-      .viewer-knobs {
+      .viewer-toggles {
         width: 0;
         .iconpile {
           display: none;
@@ -290,11 +290,10 @@
       }
     }
     &:hover {
-      .viewer-volume {
-        width: 0;
-        .iconpile {
-         display: none;
-        }
+      .viewer-symbols {
+        transform: translate3d(0, -50%, 0);
+        opacity: 0;
+        transition-delay: @run_fast;
       }
     }
   }
@@ -321,7 +320,7 @@
   white-space: nowrap;
   overflow: hidden;
 }
-.viewer-knobs {
+.viewer-toggles {
   .flexy();
   .icon-pencil {
     box-shadow: 0 1px @white;
@@ -331,16 +330,7 @@
     animation: in-fade-bottom @run_fast @bezier_deform backwards;
   }
 }
-.viewer-volume {
-  .flexy(center; center);
-  width: @tile_viewers_height;
-  height: @tile_viewers_height;
-  opacity: .5;
-  .iconpile {
-    animation+: in-fade-top @run_fast @bezier_fadein;
-  }
-}
-.viewer-knob {
+.viewer-toggle {
   .flexy(center; center);
   width: @tile_viewers_height;
   min-width: @tile_viewers_height;
@@ -359,6 +349,14 @@
   &:nth-child(1) { .iconpile { animation-delay: @run + (@run_faster * 1)}}
   &:nth-child(2) { .iconpile { animation-delay: @run + (@run_faster * 3)}}
   &:nth-child(3) { .iconpile { animation-delay: @run + (@run_faster * 5)}}
+}
+.viewer-symbols {
+  .viewer-toggles();
+  position: absolute;
+  transition: @run_fast @now @bezier_deform;
+}
+.viewer-symbol {
+  .viewer-toggle();
 }
 .hud-tray {
   .flexy();
