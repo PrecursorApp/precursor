@@ -320,6 +320,10 @@
   white-space: nowrap;
   overflow: hidden;
 }
+.viewer-controls {
+  position: relative;
+  flex: 1;
+}
 .viewer-toggles {
   .flexy();
   .icon-pencil {
@@ -352,8 +356,9 @@
 }
 .viewer-symbols {
   .viewer-toggles();
-  top: 0;
   position: absolute;
+  top: 0;
+  left: 0;
   transition: @run_fast @now @bezier_deform;
 }
 .viewer-symbol {
