@@ -193,8 +193,9 @@
     om/IInitState (init-state [_] {:editing-name? false
                                    :new-name ""})
     om/IDidUpdate
-    (did-update [_ _ _]
-      (when (and (om/get-state owner :editing-name?)
+    (did-update [_ _ prev-props]
+      (when (and (not (:editing-name? prev-props))
+                 (om/get-state owner :editing-name?)
                  (om/get-node owner "name-edit"))
         (.focus (om/get-node owner "name-edit"))
         (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "name-edit")))))
