@@ -178,5 +178,6 @@
                                    :output-dir "resources/public/cljs/production"
                                    :optimizations :advanced
                                    :externs ["src-cljs/js/analytics-externs.js"
-                                             "src-cljs/js/w3c_rtc-externs.js"]
+                                             "src-cljs/js/w3c_rtc-externs.js"
+                                             "src-cljs/js/w3c_audio-externs.js"]
                                    :source-map "resources/public/cljs/production/sourcemap-frontend.map"}}]})
