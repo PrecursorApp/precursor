@@ -4,17 +4,12 @@
             [frontend.rtc :as rtc]
             [frontend.rtc.stats :as rtc-stats]
             [frontend.utils :as utils]
+            [frontend.utils.state :as state-utils]
             [goog.date]
             [goog.string :as gstring]
             [om.core :as om]
             [om.dom :as dom])
   (:require-macros [sablono.core :refer (html)]))
-
-(defn client-id->user [app client-id]
-  (if (= client-id (:client-id app))
-    "you"
-    (let [cust-uuid (get-in app [:subscribers :info client-id :cust/uuid])]
-      (get-in app [:cust-data :uuid->cust cust-uuid :cust/name] (apply str (take 6 client-id))))))
 
 (defn connection-info [app owner]
   (reify
@@ -79,9 +74,9 @@
                                                         (if (contains? s conn-id)
                                                           (disj s conn-id)
                                                           (conj (or s #{}) conn-id))))}
-               (client-id->user app (:producer conn-stats))
+               (state-utils/client-id->user app (:producer conn-stats))
                " → "
-               (client-id->user app (:consumer conn-stats))]
+               (state-utils/client-id->user app (:consumer conn-stats))]
               (when-not (contains? (om/get-state owner :hidden-stats) conn-id)
                 [:div
                  [:table.connection-items.make {:key "conn"}

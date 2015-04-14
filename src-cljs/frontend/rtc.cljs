@@ -61,15 +61,18 @@
     (.close conn)))
 
 (defn new-peer-conn [extra-servers]
-  (PeerConnection. (clj->js (update-in config [:iceServers] concat extra-servers))))
+  (PeerConnection. (clj->js (update-in config [:iceServers] concat nil;extra-servers
+                                       ))))
 
-(defn handle-negotiation [conn {:keys [signal-fn comms]}]
+(defn handle-negotiation [conn {:keys [signal-fn comms] :as signal-data}]
   (.createOffer conn
                 (fn [offer]
                   (.setLocalDescription conn
                                         offer
                                         #(signal-fn {:sdp (js/JSON.stringify (.-localDescription conn))})
-                                        #(put! (:errors comms) [:rtc-error {:error % :type :setting-local-description}])))
+                                        #(put! (:errors comms) [:rtc-error {:error %
+                                                                            :signal-data signal-data
+                                                                            :type :setting-local-description}])))
                 #(put! (:errors comms) [:rtc-error {:error % :type :creating-offer}])))
 
 (defn handle-ice-candidate [conn event {:keys [signal-fn]}]
@@ -104,10 +107,12 @@
 (defn setup-get-stats [conn id]
   (update-stats conn id))
 
-(defn handle-connection [conn id {:keys [signal-fn comms]}]
+(defn handle-connection [conn id {:keys [signal-fn comms] :as signal-data}]
   (case (.-iceConnectionState conn)
     "closed" (signal-fn {:close-connection true})
-    "failed" (signal-fn {:connection-failed true})
+    "failed" (do (signal-fn {:connection-failed true})
+                 (put! (:errors comms) [:rtc-error {:type :ice-connection-failed
+                                                    :signal-data signal-data}]))
     (doseq [candidate-str (get-in @conns [id :candidates])]
       (.addIceCandidate
        conn
@@ -245,26 +250,36 @@
           (try
             (.setRemoteDescription conn desc #(put! ch :desc) #(put! ch {:error %}))
             (if-let [error (:error (<! ch))]
-              (put! (:errors comms) [:rtc-error {:error error :type :setting-remote-description}])
+              (put! (:errors comms) [:rtc-error {:error error
+                                                 :type :setting-remote-description
+                                                 :signal-data signal-data}])
               (.createAnswer conn #(put! ch {:answer %}) #(put! ch {:error %})))
             (let [resp (<! ch)]
               (if-let [error (:error resp)]
-                (put! (:errors comms) [:rtc-error {:error error :type :creating-answer}])
+                (put! (:errors comms) [:rtc-error {:error error
+                                                   :type :creating-answer
+                                                   :signal-data signal-data}])
                 (.setLocalDescription conn (:answer resp) #(put! ch :desc) #(put! ch {:error %}))))
             (if-let [error (:error (<! ch))]
-              (put! (:errors comms) [:rtc-error {:error error :type :setting-local-description}])
+              (put! (:errors comms) [:rtc-error {:error error
+                                                 :type :setting-local-description
+                                                 :signal-data signal-data}])
               (do
                 (signal-fn {:sdp (js/JSON.stringify (.-localDescription conn))})
                 (put! (:controls comms) [:remote-media-stream-ready {:stream-url (js/window.URL.createObjectURL (first (.getRemoteStreams conn)))
                                                                      :producer producer}])))
             (catch js/Error e
-              (put! (:errors comms) [:rtc-error {:error e :type :offer-handle-sdp}]))
+              (put! (:errors comms) [:rtc-error {:error e :type
+                                                 :offer-handle-sdp
+                                                 :signal-data signal-data}]))
             (finally
               (async/close! ch)))))
       (let [conn (get-peer-conn signal-data)]
         (.setRemoteDescription conn desc
                                #(utils/mlog "successfully set remote description")
-                               #(put! (:errors comms) [:rtc-error :setting-remote-description :error %]))))))
+                               #(put! (:errors comms) [:rtc-error {:type :setting-remote-description
+                                                                   :error %
+                                                                   :signal-data signal-data}]))))))
 
 (defn add-candidate [{:keys [signal-fn candidate stream-id producer consumer ice-servers] :as signal-data}]
   (let [conn (get-or-create-peer-conn signal-data)]
@@ -305,7 +320,8 @@
             (swap! conns dissoc id))
 
           (:connection-failed data)
-          (put! (:errors comms) [:rtc-error {:type :connection-failed}]))))
+          (put! (:errors comms) [:rtc-error {:type :connection-failed
+                                             :signal-data signal-data}]))))
 
 (defn ^:export inspect-stats []
   (clj->js (stats/gather-stats conns stream)))

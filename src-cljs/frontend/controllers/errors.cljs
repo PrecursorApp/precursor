@@ -4,6 +4,10 @@
             [datascript :as d]
             [frontend.overlay :as overlay]
             [frontend.camera :as cameras]
+            [frontend.models.chat :as chat-model]
+            [frontend.rtc :as rtc]
+            [frontend.rtc.stats :as rtc-stats]
+            [frontend.sente :as sente]
             [frontend.state :as state]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
@@ -111,3 +115,17 @@
   (js/Rollbar.error "sync-tx-error" #js {:reason reason
                                          :sente-event sente-event
                                          :datom-count (count sent-datoms)}))
+
+(defmethod post-error! :rtc-error
+  [container message {:keys [type error signal-data]} previous-state current-state]
+  (let [{:keys [consumer producer]} signal-data]
+    (chat-model/create-bot-chat (:db current-state) current-state
+                                (str "There was an error creating the webRTC connection from "
+                                     (state-utils/client-id->user current-state consumer)
+                                     " to "
+                                     (state-utils/client-id->user current-state producer)
+                                     ". Please ping @prcrsr in chat if you're having troubles connecting and we'll try to fix it for you."))
+    (sente/send-msg (:sente current-state) [:rtc/diagnostics (assoc (rtc-stats/gather-stats rtc/conns rtc/stream)
+                                                                    :signal-data (select-keys signal-data [:stream-id :consumer :producer])
+                                                                    :error-type type)]))
+  (js/Rollbar.error (str "rtc error of type " type) error))
