@@ -289,12 +289,13 @@
         transition: box-shadow @now @now @bezier_fadein;
       }
     }
-    &:hover {
-      .viewer-symbols {
-        transform: translate3d(0, -50%, 0);
-        opacity: 0;
-        transition-delay: @run_fast;
-      }
+  }
+  &.busy,
+  &:hover {
+    .viewer-symbols {
+      transform: translate3d(0, -50%, 0);
+      opacity: 0;
+      transition-delay: @run_fast;
     }
   }
 }
