@@ -42,6 +42,8 @@
 (def RTCSessionDescription (or js/window.RTCSessionDescription
                                js/window.mozRTCSessionDescription))
 
+(def supports-rtc? (boolean PeerConnection))
+
 ;; map of conn-id (:producer, :consumer, :stream-id) to map with keys :conn, :producer, :consumer, and :stream-id
 (defonce conns (atom {}))
 
