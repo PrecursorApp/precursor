@@ -1,6 +1,6 @@
 (ns frontend.models.chat
   (:require [datascript :as d]
-            [frontend.db :as fdb]
+            [frontend.db.trans :as trans]
             [frontend.datetime :as datetime]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]))
@@ -31,7 +31,7 @@
         (apply str (take 6 (str (:session/uuid chat)))))))
 
 (defn create-bot-chat [conn app-state body & [extra-fields]]
-  (d/transact! conn [(merge {:db/id (fdb/get-next-transient-id conn)
+  (d/transact! conn [(merge {:db/id (trans/get-next-transient-id conn)
                              :chat/body body
                              :chat/document (:document/id app-state)
                              :client/timestamp (datetime/server-date)

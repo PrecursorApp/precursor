@@ -2,6 +2,7 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close! put!]]
             [datascript :as d]
             [frontend.datascript :as ds]
+            [frontend.db.trans :as trans]
             [frontend.sente :as sente]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer (dissoc-in)]
@@ -14,27 +15,15 @@
 
 (defonce listeners (atom {}))
 
-;; Need a better way to accomplish this--perhaps a separate transient db?
-;; lets us use the first 5000 ids for things like bot chats and bot drawings
-(defonce transient-ids (atom {}))
-
-(defn get-next-transient-id [conn]
-  (loop [id (get @transient-ids conn 1)]
-    (let [ids @transient-ids]
-      (if (or (first (d/datoms @conn :eavt id))
-              (not (compare-and-set! transient-ids ids (assoc-in ids [conn] (inc id)))))
-        (recur (inc id))
-        id))))
-
 (defn make-initial-db [initial-entities]
   (let [conn (d/create-conn schema)]
     (d/transact! conn initial-entities)
-    (swap! transient-ids assoc conn 1)
+    (trans/reset-id conn)
     conn))
 
 (defn reset-db! [db-atom initial-entities]
   (reset! db-atom @(make-initial-db initial-entities))
-  (swap! transient-ids assoc db-atom 1)
+  (trans/reset-id db-atom)
   db-atom)
 
 (defn setup-listener! [db key comms sente-event annotations undo-state sente-state]
