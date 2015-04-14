@@ -253,10 +253,11 @@
                      :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))})
                   (or self-name "You")]
                  (when (:recording sub)
-                   [:div.viewer-volume
-                    (volume-icon (get-in sub [:recording :media-stream-volume] 0) (name self-color))])
-                 [:div.viewer-knobs
-                  [:a.viewer-knob {:on-click #(do
+                   [:div.viewer-symbols
+                    [:div.viewer-symbol
+                     (volume-icon (get-in sub [:recording :media-stream-volume] 0) (name self-color))]])
+                 [:div.viewer-toggles
+                  [:a.viewer-toggle {:on-click #(do
                                                 (if can-edit?
                                                   (om/set-state! owner :editing-name? true)
                                                   (cast! :overlay-username-toggled))
@@ -266,7 +267,7 @@
                    (common/icon :pencil)]
                   (when (contains? #{"danny@precursorapp.com"
                                      "daniel@precursorapp.com"} (get-in app [:cust :cust/email]))
-                    [:a.viewer-knob {:on-click #(cast! :recording-toggled)
+                    [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
                                      :role "button"
                                      :title "Share your audio with everyone in the doc"}
                      (common/icon (if (:recording sub) :mic-off :mic))])]])
@@ -282,10 +283,11 @@
                  [:div.viewer-name.viewer-tag
                   id-str]
                  (when (:recording sub)
-                   [:div.viewer-volume
-                    (volume-icon (get-in sub [:recording :media-stream-volume] 0) color-class)])
-                 [:div.viewer-knobs
-                  [:a.viewer-knob
+                   [:div.viewer-symbols.holo
+                    [:div.viewer-symbol
+                     (volume-icon (get-in sub [:recording :media-stream-volume] 0) color-class)]])
+                 [:div.viewer-toggles
+                  [:a.viewer-toggle
                    {:key id
                     :on-click #(cast! :chat-user-clicked {:id-str id-str})
                     :role "button"
