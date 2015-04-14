@@ -166,3 +166,6 @@
 
 (defn doc-tx-rejected-count-path [doc-id]
   [:doc-settings (str doc-id) :tx-rejected-count])
+
+(defn self-recording-path [state]
+  [:subscribers :info (:client-id state) :recording])

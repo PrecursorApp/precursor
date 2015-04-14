@@ -34,6 +34,7 @@
             [frontend.utils.state :as state-utils]
             [goog.dom]
             [goog.labs.userAgent.engine :as engine]
+            [goog.labs.userAgent.browser :as ua-browser]
             [goog.math :as math]
             [goog.string :as gstring]
             goog.style)
@@ -63,21 +64,27 @@
   [browser-state message args previous-state current-state]
   (utils/mlog "No post-control for: " message))
 
+(defn extract-sub-info [state x y]
+  (merge
+   {:tool (get-in state state/current-tool-path)
+    :document/id (:document/id state)
+    :layers (when (or (get-in state [:drawing :in-progress?])
+                      (get-in state [:drawing :moving?]))
+              (map #(dissoc % :points) (get-in state [:drawing :layers])))
+    :relation (when (get-in state [:drawing :relation :layer])
+                (get-in state [:drawing :relation]))
+    :recording (get-in state (state/self-recording-path state))}
+   (when (and x y)
+     {:mouse-position [(:x (:mouse state)) (:y (:mouse state))]})))
+
 ;; TODO: this shouldn't assume it's sending a mouse position
-(defn maybe-notify-subscribers! [current-state x y]
+(defn maybe-notify-subscribers! [previous-state current-state x y]
   (when (get-in current-state [:subscribers :mice (:client-id current-state) :show-mouse?])
-    (sente/send-msg (:sente current-state)
-                    [:frontend/mouse-position (merge
-                                               {:tool (get-in current-state state/current-tool-path)
-                                                :document/id (:document/id current-state)
-                                                :layers (when (or (get-in current-state [:drawing :in-progress?])
-                                                                  (get-in current-state [:drawing :moving?]))
-                                                          (map #(dissoc % :points) (get-in current-state [:drawing :layers])))
-                                                :relation (when (get-in current-state [:drawing :relation :layer])
-                                                            (get-in current-state [:drawing :relation]))
-                                                :recording (:recording current-state)}
-                                               (when (and x y)
-                                                 {:mouse-position (cameras/screen->point (:camera current-state) x y)}))])))
+    (let [previous-info (extract-sub-info current-state x y)
+          current-info (extract-sub-info previous-state x y)]
+      (when-not (= previous-info current-info)
+        (sente/send-msg (:sente current-state)
+                        [:frontend/mouse-position current-info])))))
 
 (defmethod control-event :state-restored
   [browser-state message path state]
@@ -277,7 +284,7 @@
     (when (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
       (handle-keyboard-shortcut-after current-state (first (filter #(-> shortcuts % (contains? key-set))
                                                                    (keys shortcuts))))))
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defn update-mouse [state x y]
   (if (and x y)
@@ -720,11 +727,11 @@
 
 (defmethod post-control-event! :text-layer-edited
   [browser-state message _ previous-state current-state]
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod post-control-event! :mouse-moved
   [browser-state message [x y] previous-state current-state]
-  (maybe-notify-subscribers! current-state x y))
+  (maybe-notify-subscribers! previous-state current-state x y))
 
 (defn finalize-layer [state]
   (let [{:keys [x y]} (get-in state [:mouse])
@@ -873,7 +880,7 @@
                         :layer/points-to
                         (get-in current-state [:drawing :finished-relation :dest-layer-id])]]
                    {:can-undo? true})
-      (maybe-notify-subscribers! current-state x y))))
+      (maybe-notify-subscribers! previous-state current-state x y))))
 
 (defmethod control-event :layer-relation-mouse-down
   [browser-state message {:keys [layer x y]} state]
@@ -962,7 +969,7 @@
                          :layer/points-to
                          (get-in current-state [:drawing :finished-relation :dest-layer-id])]]
                     {:can-undo? true})
-       (maybe-notify-subscribers! current-state x y))
+       (maybe-notify-subscribers! previous-state current-state x y))
 
      (and (not (get-in previous-state [:drawing :moving?]))
           (every? #(= :layer.type/text (:layer/type %)) layers))
@@ -976,7 +983,7 @@
                                             (map #(assoc % :unsaved true) layer-group)
                                             layer-group)
                                        {:can-undo? true})))
-                      (maybe-notify-subscribers! current-state x y))
+                      (maybe-notify-subscribers! previous-state current-state x y))
 
      :else nil)))
 
@@ -986,7 +993,7 @@
   [browser-state message _ state]
   (finalize-layer state))
 
-(defn handle-text-layer-finished-after [current-state]
+(defn handle-text-layer-finished-after [previous-state current-state]
   (let [db (:db current-state)
         layer (-> (get-in current-state [:drawing :finished-layers 0])
                 utils/remove-map-nils
@@ -996,11 +1003,11 @@
                 layer)]
     (when (layer-model/detectable? layer)
       (d/transact! db [layer] {:can-undo? true}))
-    (maybe-notify-subscribers! current-state nil nil)))
+    (maybe-notify-subscribers! previous-state current-state nil nil)))
 
 (defmethod post-control-event! :text-layer-finished
   [browser-state message _ previous-state current-state]
-  (handle-text-layer-finished-after current-state))
+  (handle-text-layer-finished-after previous-state current-state))
 
 (defmethod control-event :deleted-selected
   [browser-state message _ state]
@@ -1173,7 +1180,7 @@
                                (utils/update-when-in [:layer/points-to] (fn [p] (set (map :db/id p))))))
                            layers)
                      {:can-undo? true}))))
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod control-event :chat-db-updated
   [browser-state message _ state]
@@ -1761,42 +1768,62 @@
 
 (defmethod post-control-event! :recording-toggled
   [browser-state message _ previous-state current-state]
-  (rtc/setup-stream (get-in current-state [:comms :controls])))
+  (if-let [recording (get-in current-state (state/self-recording-path current-state))]
+    (rtc/end-stream (:stream-id recording))
+    (rtc/setup-stream (get-in current-state [:comms :controls]))))
 
-;; need to double-check that this accounts for multiple steams being stopped and started
 (defmethod control-event :media-stream-started
   [browser-state message {:keys [stream-id]} state]
   (let [stream @rtc/stream]
     (if (and stream (= stream-id (.-id stream)))
-      (assoc state :recording {:stream-id stream-id
-                               :producer (:client-id state)})
+      (assoc-in state (state/self-recording-path state) {:stream-id stream-id
+                                                         :producer (:client-id state)})
       state)))
 
 (defmethod post-control-event! :media-stream-started
   [browser-state message _ previous-state current-state]
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod control-event :media-stream-failed
   [browser-state message {:keys [error]} state]
   (let [stream @rtc/stream]
     (if (and stream (not (.-ended stream)))
       state
-      (assoc state :recording nil))))
+      (assoc-in state (state/self-recording-path state) nil))))
 
 (defmethod post-control-event! :media-stream-failed
   [browser-state message _ previous-state current-state]
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil)
+  (chat-model/create-bot-chat
+   (:db current-state)
+   current-state
+   (str "We weren't able to capture your microphone. "
+        "If you didn't see the confirmation dialog, you can enable it by clicking the "
+        (cond (ua-browser/isFirefox) "globe"
+              (ua-browser/isChrome) "camera"
+              (ua-browser/isOpera) "mic")
+        " icon in the url bar. Please ping @prcrsr in chat if you need help.")
+   {:error/id :error/mic-not-enabled}))
 
 (defmethod control-event :media-stream-stopped
   [browser-state message {:keys [stream-id]} state]
   (let [stream @rtc/stream]
-    (if (and stream (= stream-id (.-id stream)))
-      (assoc state :recording nil)
+    (if (or (nil? stream) (and stream (= stream-id (.-id stream))))
+      (assoc-in state (state/self-recording-path state) nil)
       state)))
 
 (defmethod post-control-event! :media-stream-stopped
   [browser-state message _ previous-state current-state]
-  (maybe-notify-subscribers! current-state nil nil))
+  (maybe-notify-subscribers! previous-state current-state nil nil))
+
+(defmethod control-event :media-stream-volume
+  [browser-state message {:keys [stream-id volume]} state]
+  (let [smoothed-volume (* 10 (js/Math.floor (/ volume 10)))]
+    (assoc-in state (conj (state/self-recording-path state) :media-stream-volume) smoothed-volume)))
+
+(defmethod post-control-event! :media-stream-volume
+  [browser-state message _ previous-state current-state]
+  (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod control-event :remote-media-stream-ready
   [browser-state message {:keys [stream-url producer]} state]

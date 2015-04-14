@@ -2,6 +2,7 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close! put!]]
             [datascript :as d]
             [frontend.datascript :as ds]
+            [frontend.db.trans :as trans]
             [frontend.sente :as sente]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer (dissoc-in)]
@@ -9,17 +10,20 @@
 
 (def schema {:layer/child {:db/cardinality :db.cardinality/many}
              :layer/points-to {:db/cardinality :db.cardinality/many
-                               :db/type :db.type/ref}})
+                               :db/type :db.type/ref}
+             :error/id {:db/unique :db.unique/identity}})
 
 (defonce listeners (atom {}))
 
 (defn make-initial-db [initial-entities]
   (let [conn (d/create-conn schema)]
     (d/transact! conn initial-entities)
+    (trans/reset-id conn)
     conn))
 
 (defn reset-db! [db-atom initial-entities]
   (reset! db-atom @(make-initial-db initial-entities))
+  (trans/reset-id db-atom)
   db-atom)
 
 (defn setup-listener! [db key comms sente-event annotations undo-state sente-state]

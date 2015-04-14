@@ -16,6 +16,8 @@
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
+            [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
+            [pc.http.sente.sliding-send :as sliding-send]
             [pc.http.urls :as urls]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.access-request :as access-request-model]
@@ -25,17 +27,13 @@
             [pc.models.layer :as layer-model]
             [pc.models.permission :as permission-model]
             [pc.models.team :as team-model]
+            [pc.nts :as nts]
             [pc.replay :as replay]
             [pc.rollbar :as rollbar]
-            [pc.http.sente.sliding-send :as sliding-send]
             [pc.sms :as sms]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
-            [taoensso.sente :as sente]
-            [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
-            ;; waiting on fix for this bug: https://issues.jboss.org/browse/IMMUTANT-543
-            ;;[taoensso.sente.server-adapters.immutant :refer (sente-web-server-adapter)]
-            )
+            [taoensso.sente :as sente])
   (:import java.util.UUID))
 
 ;; TODO: find a way to restart sente
@@ -488,13 +486,14 @@
         consumer (-> ?data :consumer)
         producer (-> ?data :producer)
         target (first (filter #(not= client-id %) [consumer producer]))
-        data (select-keys ?data [:candidate :sdp :consumer :producer :subscribe-to-recording :stream-id :close-connection])]
+        data (select-keys ?data [:candidate :sdp :consumer :producer :subscribe-to-recording :stream-id :close-connection :connection-failed])]
     (assert (contains? (set [consumer producer]) client-id)
             (format "client (%s) is not the consumer (%s) or producer (%s)" client-id consumer producer))
     (if (get-in @document-subs [document-id target])
       (do
         (log/infof "sending signal from %s to %s" client-id target)
-        ((:send-fn @sente-state) target [:rtc/signal data]))
+        ((:send-fn @sente-state) target [:rtc/signal (assoc data
+                                                            :ice-servers (nts/get-ice-servers))]))
       (log/warnf (format "%s is the target, but isn't subscribed to %s" target document-id)))))
 
 (defmethod ws-handler :rtc/diagnostics [{:keys [client-id ?data] :as req}]

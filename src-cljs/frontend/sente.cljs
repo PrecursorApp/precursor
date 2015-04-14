@@ -8,6 +8,7 @@
             [frontend.datetime :as datetime]
             [frontend.models.chat :as chat-model]
             [frontend.rtc :as rtc]
+            [frontend.rtc.stats :as rtc-stats]
             [frontend.state :as state]
             [frontend.stats :as stats]
             [frontend.subscribers :as subs]
@@ -144,14 +145,14 @@
 (defmethod handle-message :rtc/signal [app-state message data]
   (rtc/handle-signal
    (assoc data
-          :controls-ch (get-in @app-state [:comms :controls])
+          :comms (:comms @app-state)
           :send-msg  (fn [d]
                        (send-msg (:sente @app-state)
                                  [:rtc/signal (merge d
                                                      (select-keys @app-state [:document/id]))])))))
 
 (defmethod handle-message :rtc/diagnostics [app-state message data]
-  (send-msg (:sente @app-state) [:rtc/diagnostics (rtc/gather-stats)]))
+  (send-msg (:sente @app-state) [:rtc/diagnostics (rtc-stats/gather-stats rtc/conns rtc/stream)]))
 
 (defmethod handle-message :chsk/state [app-state message data]
   (let [state @app-state]

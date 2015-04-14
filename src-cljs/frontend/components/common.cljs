@@ -100,107 +100,117 @@
   :fill-x9 "M82.5,75c0,4.1-3.4,7.5-7.5,7.5s-7.5-3.4-7.5-7.5s3.4-7.5,7.5-7.5S82.5,70.9,82.5,75z"
 })
 
-(def icon-templates {
-  :precursor   {:paths [:stroke-precursor]}
-  :download    {:paths [:stroke-download]}
-  :check       {:paths [:stroke-check]}
-  :times       {:paths [:stroke-times]}
-  :cursor      {:paths [:stroke-cursor]}
-  :rectangle   {:paths [:stroke-rectangle]}
-  :line        {:paths [:stroke-line]}
-  :text        {:paths [:stroke-text]}
-  :pencil      {:paths [:stroke-pencil]}
-  :ellipse     {:paths [:stroke-ellipse]}
-  :mic         {:paths [:stroke-mic]}
-  :user        {:paths [:stroke-user]}
-  :users       {:paths [:stroke-users]}
-  :bullet      {:paths [:stroke-dot]}
-  :chats       {:paths [:stroke-chats]}
-  :crosshair   {:paths [:stroke-crosshair]}
-  :ibeam       {:paths [:stroke-ibeam]}
-  :blog        {:paths [:stroke-blog]}
-  :clock       {:paths [:stroke-clock]}
-  :delete      {:paths [:stroke-delete]}
-  :shift       {:paths [:stroke-shift]}
-  :option      {:paths [:stroke-option]}
-  :control     {:paths [:stroke-control]}
-  :command     {:paths [:stroke-command]}
-  :esc         {:paths [:stroke-esc]}
-  :space       {:paths [:stroke-space]}
-  :mouse       {:paths [:stroke-mouse]}
-  :globe       {:paths [:stroke-globe]}
-  :newdoc      {:paths [:stroke-newdoc]}
-  :login       {:paths [:stroke-login]}
-  :logout      {:paths [:stroke-logout]}
-  :info        {:paths [:stroke-info]}
-  :home        {:paths [:stroke-home]}
-  :arrow-up    {:paths [:stroke-arrow-up]}
-  :arrow-down  {:paths [:stroke-arrow-down]}
-  :arrow-left  {:paths [:stroke-arrow-left]}
-  :arrow-right {:paths [:stroke-arrow-right]}
-  :at          {:paths [:stroke-at]}
-  :share       {:paths [:stroke-share]}
-  :phone       {:paths [:stroke-phone]}
-  :public      {:paths [:stroke-public]}
-  :read-only   {:paths [:stroke-read-only
-                        :fill-read-only]}
-  :settings    {:paths [:stroke-dot
-                        :stroke-cog]}
-  :menu        {:paths [:stroke-menu-top
-                        :stroke-menu-mid
-                        :stroke-menu-btm]}
-  :sound       {:paths [:stroke-sound
-                        :stroke-wave1
-                        :stroke-wave2
-                        :stroke-wave3]}
+(def icon-templates
+  {:precursor   {:paths [:stroke-precursor]}
+   :download    {:paths [:stroke-download]}
+   :check       {:paths [:stroke-check]}
+   :times       {:paths [:stroke-times]}
+   :cursor      {:paths [:stroke-cursor]}
+   :rectangle   {:paths [:stroke-rectangle]}
+   :line        {:paths [:stroke-line]}
+   :text        {:paths [:stroke-text]}
+   :pencil      {:paths [:stroke-pencil]}
+   :ellipse     {:paths [:stroke-ellipse]}
+   :mic         {:paths [:stroke-mic]}
+   :mic-off     {:paths [:stroke-mic
+                         :stroke-slash-backward]}
+   :user        {:paths [:stroke-user]}
+   :users       {:paths [:stroke-users]}
+   :bullet      {:paths [:stroke-dot]}
+   :chats       {:paths [:stroke-chats]}
+   :crosshair   {:paths [:stroke-crosshair]}
+   :ibeam       {:paths [:stroke-ibeam]}
+   :blog        {:paths [:stroke-blog]}
+   :clock       {:paths [:stroke-clock]}
+   :delete      {:paths [:stroke-delete]}
+   :shift       {:paths [:stroke-shift]}
+   :option      {:paths [:stroke-option]}
+   :control     {:paths [:stroke-control]}
+   :command     {:paths [:stroke-command]}
+   :esc         {:paths [:stroke-esc]}
+   :space       {:paths [:stroke-space]}
+   :mouse       {:paths [:stroke-mouse]}
+   :globe       {:paths [:stroke-globe]}
+   :newdoc      {:paths [:stroke-newdoc]}
+   :login       {:paths [:stroke-login]}
+   :logout      {:paths [:stroke-logout]}
+   :info        {:paths [:stroke-info]}
+   :home        {:paths [:stroke-home]}
+   :arrow-up    {:paths [:stroke-arrow-up]}
+   :arrow-down  {:paths [:stroke-arrow-down]}
+   :arrow-left  {:paths [:stroke-arrow-left]}
+   :arrow-right {:paths [:stroke-arrow-right]}
+   :at          {:paths [:stroke-at]}
+   :share       {:paths [:stroke-share]}
+   :phone       {:paths [:stroke-phone]}
+   :public      {:paths [:stroke-public]}
+   :read-only   {:paths [:stroke-read-only
+                         :fill-read-only]}
+   :settings    {:paths [:stroke-dot
+                         :stroke-cog]}
+   :menu        {:paths [:stroke-menu-top
+                         :stroke-menu-mid
+                         :stroke-menu-btm]}
 
-  :lock        {:paths [:stroke-lock-top
-                        :fill-lock-bottom]}
-  :private     {:paths [:stroke-private
-                        :fill-private]}
-  :chat        {:paths [:stroke-chat
-                        :fill-chat1
-                        :fill-x5
-                        :fill-chat2]}
-  :click       {:paths [:fill-click-cursor
-                        :stroke-click-1
-                        :stroke-click-2
-                        :stroke-click-3]}
-  :chat-morph  {:paths [:stroke-chat
-                        :fill-x1
-                        :fill-x2
-                        :fill-x3
-                        :fill-x4
-                        :fill-x5
-                        :fill-x6
-                        :fill-x7
-                        :fill-x8
-                        :fill-x9]}
+   :lock        {:paths [:stroke-lock-top
+                         :fill-lock-bottom]}
+   :private     {:paths [:stroke-private
+                         :fill-private]}
+   :chat        {:paths [:stroke-chat
+                         :fill-chat1
+                         :fill-x5
+                         :fill-chat2]}
+
+   :sound-mute  {:paths [:stroke-sound]}
+   :sound-min   {:paths [:stroke-sound
+                         :stroke-wave1]}
+   :sound-med   {:paths [:stroke-sound
+                         :stroke-wave1
+                         :stroke-wave2]}
+   :sound-max   {:paths [:stroke-sound
+                         :stroke-wave1
+                         :stroke-wave2
+                         :stroke-wave3]}
+
+   :click       {:paths [:fill-click-cursor
+                         :stroke-click-1
+                         :stroke-click-2
+                         :stroke-click-3]}
+   :chat-morph  {:paths [:stroke-chat
+                         :fill-x1
+                         :fill-x2
+                         :fill-x3
+                         :fill-x4
+                         :fill-x5
+                         :fill-x6
+                         :fill-x7
+                         :fill-x8
+                         :fill-x9]}
 
 
-  :logomark    {:paths [:fill-logomark]}
-  :twitter     {:paths [:fill-twitter]}
-  :google      {:paths [:fill-google]}
-  :dribbble    {:paths [:fill-dribbble]}
-  :github      {:paths [:fill-github]}
-  :scroll      {:paths [:fill-scroll-north
-                        :fill-dot
-                        :fill-scroll-south]}
-  :north       {:paths [:fill-up-down
-                        :fill-north]}
-  :south       {:paths [:fill-up-down
-                        :fill-south]}
-  :east        {:paths [:fill-left-right
-                        :fill-east]}
-  :west        {:paths [:fill-left-right
-                        :fill-west]}
-  :north-south {:paths [:fill-up-down
-                        :fill-north
-                        :fill-south]}
-  :east-west   {:paths [:fill-left-right
-                        :fill-east
-                        :fill-west]}
-})
+   :logomark    {:paths [:fill-logomark]}
+   :twitter     {:paths [:fill-twitter]}
+   :google      {:paths [:fill-google]}
+   :dribbble    {:paths [:fill-dribbble]}
+   :github      {:paths [:fill-github]}
+   :scroll      {:paths [:fill-scroll-north
+                         :fill-dot
+                         :fill-scroll-south]}
+   :north       {:paths [:fill-up-down
+                         :fill-north]}
+   :south       {:paths [:fill-up-down
+                         :fill-south]}
+   :east        {:paths [:fill-left-right
+                         :fill-east]}
+   :west        {:paths [:fill-left-right
+                         :fill-west]}
+   :north-south {:paths [:fill-up-down
+                         :fill-north
+                         :fill-south]}
+   :east-west   {:paths [:fill-left-right
+                         :fill-east
+                         :fill-west]}
+   })
 
 (defn svg-icon [icon-name & [{:keys [path-props svg-props]}]]
   (let [template (get icon-templates icon-name)]
@@ -242,3 +252,9 @@
            :href (auth/auth-url :source source)}
           (icon :google)
           [:div.google-text "Sign in with Google"]])))))
+
+(defn volume-icon-kw [level]
+  (cond (= 0 level) :sound-mute
+        (>= 10 level) :sound-min
+        (>= 50 level) :sound-med
+        :else :sound-max))
