@@ -184,6 +184,15 @@
                     (put! ch [:media-stream-started {:stream-id (.-id s)}]))
                   #(put! ch [:media-stream-failed {:error (.-name %)}])))
 
+(defn end-stream [stream-id]
+  (when-let [old @stream]
+    (swap! stream #(if (and % (= (.-id %) stream-id))
+                     nil
+                     %))
+    (when (= stream-id (.-id old))
+      (.stop old)
+      (cleanup-conns :stream-id (.-id old)))))
+
 (defn add-stream [conn stream]
   ;; spec says this should be addMediaTrack
   (.addStream conn stream))

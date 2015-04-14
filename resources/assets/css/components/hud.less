@@ -323,6 +323,13 @@
     animation: in-fade-bottom @run_fast @bezier_deform backwards;
   }
 }
+.viewer-volume {
+  .flexy(center; center);
+  width: @tile_viewers_height;
+  min-width: @tile_viewers_height;
+  height: @tile_viewers_height;
+  opacity: .5;
+}
 .viewer-knob {
   .flexy(center; center);
   width: @tile_viewers_height;

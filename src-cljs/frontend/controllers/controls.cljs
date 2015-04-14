@@ -72,7 +72,7 @@
               (map #(dissoc % :points) (get-in state [:drawing :layers])))
     :relation (when (get-in state [:drawing :relation :layer])
                 (get-in state [:drawing :relation]))
-    :recording (:recording state)}
+    :recording (get-in state (state/self-recording-path state))}
    (when (and x y)
      {:mouse-position [(:x (:mouse state)) (:y (:mouse state))]})))
 
@@ -1767,15 +1767,16 @@
 
 (defmethod post-control-event! :recording-toggled
   [browser-state message _ previous-state current-state]
-  (rtc/setup-stream (get-in current-state [:comms :controls])))
+  (if-let [recording (get-in current-state (state/self-recording-path current-state))]
+    (rtc/end-stream (:stream-id recording))
+    (rtc/setup-stream (get-in current-state [:comms :controls]))))
 
-;; need to double-check that this accounts for multiple steams being stopped and started
 (defmethod control-event :media-stream-started
   [browser-state message {:keys [stream-id]} state]
   (let [stream @rtc/stream]
     (if (and stream (= stream-id (.-id stream)))
-      (assoc state :recording {:stream-id stream-id
-                               :producer (:client-id state)})
+      (assoc-in state (state/self-recording-path state) {:stream-id stream-id
+                                                         :producer (:client-id state)})
       state)))
 
 (defmethod post-control-event! :media-stream-started
@@ -1787,7 +1788,7 @@
   (let [stream @rtc/stream]
     (if (and stream (not (.-ended stream)))
       state
-      (assoc state :recording nil))))
+      (assoc-in state (state/self-recording-path state) nil))))
 
 (defmethod post-control-event! :media-stream-failed
   [browser-state message _ previous-state current-state]
@@ -1796,8 +1797,8 @@
 (defmethod control-event :media-stream-stopped
   [browser-state message {:keys [stream-id]} state]
   (let [stream @rtc/stream]
-    (if (and stream (= stream-id (.-id stream)))
-      (assoc state :recording nil)
+    (if (or (nil? stream) (and stream (= stream-id (.-id stream))))
+      (assoc-in state (state/self-recording-path state) nil)
       state)))
 
 (defmethod post-control-event! :media-stream-stopped
@@ -1807,9 +1808,7 @@
 (defmethod control-event :media-stream-volume
   [browser-state message {:keys [stream-id volume]} state]
   (let [smoothed-volume (* 10 (js/Math.floor (/ volume 10)))]
-    (-> state
-      (assoc-in [:recording :media-stream-volume] smoothed-volume)
-      (assoc-in [:subscribers :info (:client-id state) :recording :media-stream-volume] smoothed-volume))))
+    (assoc-in state (conj (state/self-recording-path state) :media-stream-volume) smoothed-volume)))
 
 (defmethod post-control-event! :media-stream-volume
   [browser-state message _ previous-state current-state]

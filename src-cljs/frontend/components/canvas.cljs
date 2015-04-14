@@ -386,6 +386,17 @@
 
     "select" :cursor))
 
+(defn volume-icon [subscriber color-class]
+  (let [level (get-in subscriber [:recording :media-stream-volume] 0)
+        icon (common/volume-icon-kw level)]
+    (common/svg-icon icon
+                     {:svg-props {:height 16 :width 16
+                                  :className "mouse-tool"
+                                  :x (- (first (:mouse-position subscriber)) (- 16))
+                                  :y (- (last (:mouse-position subscriber)) 8)
+                                  :key (:client-id subscriber)}
+                      :path-props {:className color-class}})))
+
 (defn cursor [{:keys [subscriber uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Canvas Cursor")
@@ -394,17 +405,20 @@
     (render [_]
       (if (and (:tool subscriber)
                (:show-mouse? subscriber))
-        (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
-                         {:svg-props {:height 16 :width 16
-                                      :className "mouse-tool"
-                                      :x (- (first (:mouse-position subscriber)) 8)
-                                      :y (- (last (:mouse-position subscriber)) 8)
-                                      :key (:client-id subscriber)}
-                          :path-props {:className (name
-                                                   (colors/find-color
-                                                    uuid->cust
-                                                    (:cust/uuid subscriber)
-                                                    (:client-id subscriber)))}})
+        (let [color-class (name (colors/find-color uuid->cust
+                                                   (:cust/uuid subscriber)
+                                                   (:client-id subscriber)))]
+          (dom/g nil
+            (dom/g {:key "recording"}
+              (when (:recording subscriber)
+                (volume-icon subscriber color-class)))
+            (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
+                             {:svg-props {:height 16 :width 16
+                                          :className "mouse-tool"
+                                          :x (- (first (:mouse-position subscriber)) 8)
+                                          :y (- (last (:mouse-position subscriber)) 8)
+                                          :key (:client-id subscriber)}
+                              :path-props {:className color-class}})))
         (dom/circle #js {:cx 0 :cy 0 :r 0})))))
 
 (defn cursors [{:keys [client-id uuid->cust]} owner]
