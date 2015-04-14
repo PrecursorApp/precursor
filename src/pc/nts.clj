@@ -25,6 +25,7 @@
   (get @token "ice_servers"))
 
 (defn replace-token []
+  (log/info "retrieving new ice servers from Twilio")
   (let [new-token (fetch-token)]
     (reset! token new-token)))
 
