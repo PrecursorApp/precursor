@@ -84,7 +84,7 @@
           current-info (extract-sub-info previous-state x y)]
       (when-not (= previous-info current-info)
         (sente/send-msg (:sente current-state)
-                        [:frontend/mouse-position (extract-sub-info current-state x y)])))))
+                        [:frontend/mouse-position current-info])))))
 
 (defmethod control-event :state-restored
   [browser-state message path state]
