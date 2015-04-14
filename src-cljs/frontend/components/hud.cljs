@@ -4,6 +4,7 @@
             [frontend.auth :as auth]
             [frontend.colors :as colors]
             [frontend.components.common :as common]
+            [frontend.config :as config]
             [frontend.cursors :as cursors]
             [frontend.models.chat :as chat-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
@@ -265,8 +266,7 @@
                                    :role "button"
                                    :title "Change your display name."}
                    (common/icon :pencil)]
-                  (when (contains? #{"danny@precursorapp.com"
-                                     "daniel@precursorapp.com"} (get-in app [:cust :cust/email]))
+                  (when config/subdomain
                     [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
                                      :role "button"
                                      :title "Share your audio with everyone in the doc"}
