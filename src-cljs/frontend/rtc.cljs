@@ -235,7 +235,7 @@
 (defn get-peer-conn [stream-id producer consumer]
   (get-in @conns [(conn-id stream-id producer consumer) :conn]))
 
-(defn handle-sdp [{:keys [signal-fn sdp-str stream-id producer consumer controls-ch ice-servers]}]
+(defn handle-sdp [{:keys [signal-fn sdp-str stream-id producer consumer comms ice-servers]}]
   (let [desc (RTCSessionDescription. (js/JSON.parse sdp-str))]
     (if (= "offer" (.-type desc))
       (let [conn (get-or-create-peer-conn signal-fn stream-id producer consumer ice-servers)
@@ -244,20 +244,20 @@
           (try
             (.setRemoteDescription conn desc #(put! ch :desc) #(put! ch {:error %}))
             (if-let [error (:error (<! ch))]
-              (utils/report-error "error setting remote description" error)
+              (put! (:errors comms) [:rtc-error {:error error :msg "error setting remote description"}])
               (.createAnswer conn #(put! ch {:answer %}) #(put! ch {:error %})))
             (let [resp (<! ch)]
               (if-let [error (:error resp)]
-                (utils/report-error "error creating answer" error)
+                (put! (:errors comms) [:rtc-error {:error error :msg "error creating answer"}])
                 (.setLocalDescription conn (:answer resp) #(put! ch :desc) #(put! ch {:error %}))))
             (if-let [error (:error (<! ch))]
-              (utils/report-error "error setting local description" error)
+              (put! (:errors comms) [:rtc-error {:error error :msg "error setting local description"}])
               (do
                 (signal-fn {:sdp (js/JSON.stringify (.-localDescription conn))})
-                (put! controls-ch [:remote-media-stream-ready {:stream-url (js/window.URL.createObjectURL (first (.getRemoteStreams conn)))
-                                                               :producer producer}])))
+                (put! (:controls comms) [:remote-media-stream-ready {:stream-url (js/window.URL.createObjectURL (first (.getRemoteStreams conn)))
+                                                                  :producer producer}])))
             (catch js/Error e
-              (utils/report-error "error in handle-sdp for offer" e))
+              (put! (:errors comms) [:rtc-error {:error e :msg "error in handle-sdp for offer"}]))
             (finally
               (async/close! ch)))))
       (let [conn (get-peer-conn stream-id producer consumer)]
@@ -276,7 +276,7 @@
                  (fnil conj #{}) candidate-str)))))
 
 ;; signal-fn takes a map of data, e.g. {:candidate "candidate-string"}
-(defn handle-signal [{:keys [send-msg producer consumer stream-id controls-ch ice-servers] :as data}]
+(defn handle-signal [{:keys [send-msg producer consumer stream-id comms ice-servers] :as data}]
   (let [signal-fn (fn [d]
                     (let [data (merge d {:producer producer :consumer consumer :stream-id stream-id})]
                       (utils/mlog "sending signal" data)
@@ -286,7 +286,7 @@
 
           (:sdp data)
           (handle-sdp {:sdp-str (:sdp data) :stream-id stream-id :producer producer :consumer consumer
-                       :signal-fn signal-fn :controls-ch controls-ch :ice-servers ice-servers})
+                       :signal-fn signal-fn :comms comms :ice-servers ice-servers})
 
           (:subscribe-to-recording data)
           (if-let [stream @stream]

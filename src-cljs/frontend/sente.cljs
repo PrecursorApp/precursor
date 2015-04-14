@@ -144,7 +144,7 @@
 (defmethod handle-message :rtc/signal [app-state message data]
   (rtc/handle-signal
    (assoc data
-          :controls-ch (get-in @app-state [:comms :controls])
+          :comms (:comms @app-state)
           :send-msg  (fn [d]
                        (send-msg (:sente @app-state)
                                  [:rtc/signal (merge d
