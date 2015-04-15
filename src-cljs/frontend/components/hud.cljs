@@ -286,17 +286,18 @@
                   (common/icon :user (when show-mouse? {:path-props {:className color-class}}))]
                  [:div.viewer-name.viewer-tag
                   id-str]
-                 (when (:recording sub)
-                   [:div.viewer-symbols.holo
-                    [:div.viewer-symbol
-                     (volume-icon (get-in sub [:recording :media-stream-volume] 0) color-class)]])
-                 [:div.viewer-toggles
-                  [:a.viewer-toggle
-                   {:key id
-                    :on-click #(cast! :chat-user-clicked {:id-str id-str})
-                    :role "button"
-                    :title "Ping this viewer in chat."}
-                   (common/icon :at)]]])]])
+                 [:div.viewer-controls
+                  (when (:recording sub)
+                    [:div.viewer-symbols.holo
+                     [:div.viewer-symbol
+                      (volume-icon (get-in sub [:recording :media-stream-volume] 0) color-class)]])
+                  [:div.viewer-toggles
+                   [:a.viewer-toggle
+                    {:key id
+                     :on-click #(cast! :chat-user-clicked {:id-str id-str})
+                     :role "button"
+                     :title "Ping this viewer in chat."}
+                    (common/icon :at)]]]])]])
 
           [:a.hud-viewers.hud-item.hud-toggle
            {:on-click (if show-viewers?
