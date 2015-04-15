@@ -39,6 +39,7 @@
   :stroke-click-2 "M31.8,23.6L19.1,10.9"
   :stroke-click-3 "M38.2,21V9"
   :stroke-private "M72.5,50V37.5 C72.5,25.1,62.4,15,50,15S27.5,25.1,27.5,37.5V50"
+  :stroke-private-bottom "M80,95H20V50h60V95z"
   :stroke-public "M65,95H5V50h60V95z M95,50V27.5 C95,15.1,84.9,5,72.5,5S50,15.1,50,27.5V50"
   :stroke-mouse "M58,5h17c2.8,0,5,2.2,5,5v55c0,16.6-13.4,30-30,30 S20,81.6,20,65V10c0-2.8,2.2-5,5-5h20c2.8,0,5,2.2,5,5c0,0,0,25,0,25"
   :stroke-globe "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z M16.5,20c8.2,4.6,20.2,7.5,33.5,7.5s25.3-2.9,33.5-7.5 M83.5,80c-8.2-4.6-20.2-7.5-33.5-7.5S24.7,75.4,16.5,80 M50,5C37.6,5,27.5,25.1,27.5,50S37.6,95,50,95s22.5-20.1,22.5-45S62.4,5,50,5z M5,50h90 M50,95V5"
@@ -154,8 +155,8 @@
                         :stroke-wave2
                         :stroke-wave3]}
 
-  :lock        {:paths [:stroke-lock-top
-                        :fill-lock-bottom]}
+  :lock        {:paths [:stroke-private
+                        :stroke-private-bottom]}
   :private     {:paths [:stroke-private
                         :fill-private]}
   :chat        {:paths [:stroke-chat

@@ -287,6 +287,67 @@
                 "Reach out to our sales and we'll respond right away with additional information."]]
              [:div.price-foot
               [:a.price-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
+               [:span "Email a sales rep."]]]]]]])))))
+
+(defn team-features [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Team Features Page")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)]
+        (html
+         [:div.team-features
+          [:div.content
+           [:div.feature-head
+            [:h1 "Productivity tools will help your team collaborate."]]
+           [:div.feature.content.art-visible
+            [:div.feature-story
+             [:h2.feature-headline
+              [:span "Create a subdomain."]]
+             [:p.feature-copy
+              [:span.content-copy
+               "Subdomains help you collaborate on ideas quickly by remembering your teammates. "
+               "New documents created on your subdomain get shared with the whole team. "]]
+             [:a.feature-link {:href "/trial/team"}
+              [:span.content-copy "Try a custom subdomain."]]]
+            [:div.feature-media.reverse
+             [:div.art-frame
+              [:div.artwork (common/icon :chat)]]]]
+           [:div.feature.content.art-visible
+            [:div.feature-story
+             [:h2.feature-headline
+              [:span "Share ideas privately."]]
+             [:p.feature-copy
+              [:span.content-copy
+               "We understand that your team may have proprietary information and technologies. "
+               "That's why ideas shared in your subdomain are secured with private documents. "]]
+             [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569407" :target "_blank"}
+              [:span.content-copy "Try a private doc."]]]
+            [:div.feature-media
+             [:div.art-frame
+              [:div.artwork (common/icon :lock)]]]]
+           [:div.feature.content.art-visible
+            [:div.feature-story
+             [:h2.feature-headline
+              [:span "Chat with voice."]]
+             [:p.feature-copy
+              [:span.content-copy
+               "Sometimes speaking out loud is just easier than typing messages back and forth. "
+               "Teammates on your subdomain will have access to voice chat in every document. "]]
+             [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569418?voice=true" :target "_blank"}
+              [:span.content-copy "Try a voice chat."]]]
+            [:div.feature-media.reverse
+             [:div.art-frame
+              [:div.artwork (common/icon :mic)]]]]
+           [:div.feature-foot
+            [:h1 "Ready to start?"]
+            [:p.content-copy
+              "Precursor will make your team more productive. "
+              "See for yourself by making a "
+              [:a.feature-link {:href "/trial/team"} "custom subdomain"]
+              ", free for 30 days. "]
+            [:div.calls-to-action
+             [:a.price-button {:href "/pricing"} "See pricing."]]]]])))))
 
 (defn nav-head [app owner]
   (om/component
@@ -361,7 +422,8 @@
 (def outer-components
   {:landing landing/landing
    :pricing pricing
-   :trial signup})
+   :trial signup
+   :team-features team-features})
 
 (defn outer [app owner]
   (reify
