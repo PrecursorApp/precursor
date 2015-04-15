@@ -182,7 +182,8 @@
   (when (str/blank? (js/window.getSelection)) ;; don't break normal copy/paste
     (when-let [layers (seq (remove
                             #(= :layer.type/group (:layer/type %))
-                            (map #(ds/touch+ (d/entity @(:db app-state) %))
+                            (map #(dissoc (ds/touch+ (d/entity @(:db app-state) %))
+                                          :unsaved)
                                  (get-in app-state [:selected-eids :selected-eids]))))]
       (let [mouse (:mouse app-state)
             [rx ry] (cameras/screen->point (:camera app-state) (:x mouse) (:y mouse))]
