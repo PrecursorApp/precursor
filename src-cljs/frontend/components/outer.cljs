@@ -108,30 +108,31 @@
              [:div.subdomain-input-append
               {:on-click #(.focus (om/get-node owner "subdomain"))}
               ".precursorapp.com"]]
-            [:button.outer-form-button
-             {:tab-index "5"
-              :ref "submit-button"
-              :disabled (or disabled? submitted?)
-              :on-click #(submit-subdomain-form owner)}
-             (cond submitting?
-                   (html
-                    [:span "Setting up your team"
-                     [:i.loading-ellipses
-                      [:i "."]
-                      [:i "."]
-                      [:i "."]]])
+            [:div.calls-to-action
+             [:button.bubble-button
+              {:tab-index "5"
+               :ref "submit-button"
+               :disabled (or disabled? submitted?)
+               :on-click #(submit-subdomain-form owner)}
+              (cond submitting?
+                    (html
+                      [:span "Setting up your team"
+                       [:i.loading-ellipses
+                        [:i "."]
+                        [:i "."]
+                        [:i "."]]])
 
-                   submitted? [:a.trial-success
-                               {:target "_self"
-                                :href (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
-                                                          :protocol config/scheme
-                                                          :port config/port
-                                                          :path (str "/document/" (:team/intro-doc team))
-                                                          :query {:overlay "team-settings"}}))}
-                               (str (str (:team/subdomain team) "." config/hostname)
-                                    " is set up!")]
+                    submitted? [:a.trial-success
+                                {:target "_self"
+                                 :href (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
+                                                           :protocol config/scheme
+                                                           :port config/port
+                                                           :path (str "/document/" (:team/intro-doc team))
+                                                           :query {:overlay "team-settings"}}))}
+                                (str (str (:team/subdomain team) "." config/hostname)
+                                     " is ready, let's go!")]
 
-                   :else "Create your team")]
+                    :else "Create your team")]]
 
             (when error
               [:div.error error])
@@ -195,7 +196,7 @@
                          (when submitting? "submitting ")
                          (when submitted? "submitted "))}
 
-            [:button.outer-form-button
+            [:button.bubble-button
              {:tab-index "5"
               :ref "submit-button"
               :disabled (or disabled? submitted?)
@@ -252,7 +253,7 @@
                "We think collaboration should be simple. "
                "To prove it we've made our design tools accessible to anyone, anywhere, and at any time. "]]
              [:div.price-foot
-              [:a.price-button {:href "/new"}
+              [:a.bubble-button {:href "/new"}
                [:span "Make a public doc."]]]]
             [:section.price-divide.left
              [:div.price-divide-line]]
@@ -266,11 +267,11 @@
               [:p.price-copy.content-copy
                "Need more than just design tools? "
                "We now offer "
-               [:a.feature-link {:href "/features/team"} "productivity tools"]
+               [:a {:href "/features/team"} "productivity tools"]
                " to improve your team collaborations. "
                "Get a private subdomain and make things knowing they're secure. "]]
              [:div.price-foot
-              [:a.price-button {:href "/trial/team"}
+              [:a.bubble-button {:href "/trial/team"}
                [:span "Start a free trial."]]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
@@ -286,7 +287,7 @@
                 "We offer licenses to run Precursor on your own hardware. "
                 "Reach out to our sales and we'll respond right away with additional information."]]
              [:div.price-foot
-              [:a.price-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
+              [:a.bubble-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
                [:span "Email a sales rep."]]]]]]])))))
 
 (defn team-features [app owner]
@@ -296,58 +297,74 @@
     (render [_]
       (let [{:keys [cast! handlers]} (om/get-shared owner)]
         (html
-         [:div.team-features
-          [:div.content
-           [:div.feature-head
-            [:h1 "Productivity tools will help your team collaborate."]]
-           [:div.feature.content.art-visible
-            [:div.feature-story
-             [:h2.feature-headline
-              [:span "Create a subdomain."]]
-             [:p.feature-copy
-              [:span.content-copy
-               "Subdomains help you collaborate on ideas quickly by remembering your teammates. "
-               "New documents created on your subdomain get shared with the whole team. "]]
-             [:a.feature-link {:href "/trial/team"}
-              [:span.content-copy "Try a custom subdomain."]]]
-            [:div.feature-media.reverse
-             [:div.art-frame
-              [:div.artwork (common/icon :chat)]]]]
-           [:div.feature.content.art-visible
-            [:div.feature-story
-             [:h2.feature-headline
-              [:span "Share ideas privately."]]
-             [:p.feature-copy
-              [:span.content-copy
-               "We understand that your team may have proprietary information and technologies. "
-               "That's why ideas shared in your subdomain are secured with private documents. "]]
-             [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569407" :target "_blank"}
-              [:span.content-copy "Try a private doc."]]]
-            [:div.feature-media
-             [:div.art-frame
-              [:div.artwork (common/icon :lock)]]]]
-           [:div.feature.content.art-visible
-            [:div.feature-story
-             [:h2.feature-headline
-              [:span "Chat with voice."]]
-             [:p.feature-copy
-              [:span.content-copy
-               "Sometimes speaking out loud is just easier than typing messages back and forth. "
-               "Teammates on your subdomain will have access to voice chat in every document. "]]
-             [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569418?voice=true" :target "_blank"}
-              [:span.content-copy "Try a voice chat."]]]
-            [:div.feature-media.reverse
-             [:div.art-frame
-              [:div.artwork (common/icon :mic)]]]]
-           [:div.feature-foot
-            [:h1 "Ready to start?"]
-            [:p.content-copy
-              "Precursor will make your team more productive. "
-              "See for yourself by making a "
-              [:a.feature-link {:href "/trial/team"} "custom subdomain"]
-              ", free for 30 days. "]
-            [:div.calls-to-action
-             [:a.price-button {:href "/pricing"} "See pricing."]]]]])))))
+          [:div.team-features
+
+            [:div.features-head.content
+             [:h1.content-copy
+              "Productivity tools will help your team collaborate."]
+             [:p.content-copy
+              "Precursor design tools are free. "
+              "But being a "
+              [:a {:href "/blog/clojure-is-a-product-design-tool" :target "_blank"} "product team ourselves"]
+              ", we know that teams need more than just prototyping to be successful. "
+              "That's why we're now offering productivity tools—to make your team collaborations more productive. "]]
+
+            [:div.feature.art-visible.content
+             [:div.feature-story
+              [:h2.feature-headline
+               [:span "Create a subdomain."]]
+              [:p.feature-copy
+               [:span.content-copy
+                "Subdomains help you collaborate on ideas quickly by remembering your teammates. "
+                "New documents created on your subdomain get shared with the whole team. "]]
+              [:a.feature-link {:href "/trial/team"}
+               [:span.content-copy "Try a subdomain."]]]
+             [:div.feature-media.reverse
+              [:div.art-frame
+               [:div.artwork (common/icon :chat)]]]]
+
+            [:div.feature-divider]
+
+            [:div.feature.art-visible.content
+             [:div.feature-story
+              [:h2.feature-headline
+               [:span "Share ideas privately."]]
+              [:p.feature-copy
+               [:span.content-copy
+                "We understand that your team may have proprietary information and technologies. "
+                "That's why ideas shared in your subdomain are secured with private documents. "]]
+              [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569407" :target "_blank"}
+               [:span.content-copy "Try a private doc."]]]
+             [:div.feature-media
+              [:div.art-frame
+               [:div.artwork (common/icon :lock)]]]]
+
+            [:div.feature-divider]
+
+            [:div.feature.art-visible.content
+             [:div.feature-story
+              [:h2.feature-headline
+               [:span "Chat with voice."]]
+              [:p.feature-copy
+               [:span.content-copy
+                "Sometimes speaking out loud is just easier than typing messages back and forth. "
+                "Teammates on your subdomain will have access to voice chat in every document. "]]
+              [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569418?voice=true" :target "_blank"}
+               [:span.content-copy "Try a voice chat."]]]
+             [:div.feature-media.reverse
+              [:div.art-frame
+               [:div.artwork (common/icon :mic)]]]]
+
+            [:div.features-foot.content
+             [:h1.content-copy
+              "Ready to start?"]
+             [:p.content-copy
+              "Find out why teams all over the world are already collaborating on thousands of ideas "
+              [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"} "made with Precursor"]
+              "."]
+             [:div.calls-to-action
+              [:a.bubble-button {:href "/trial/team"}
+               [:span "Start a free trial."]]]]])))))
 
 (defn nav-head [app owner]
   (om/component

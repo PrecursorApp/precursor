@@ -18,6 +18,14 @@
 //     //
 //   }
 // }
+.animate_page_transitions() {
+  .animate_the_why();
+  // TODO move artwork animations in here from landing.less
+  // .animate_landing();
+  .animate_pricing();
+  .animate_early_access();
+  .animate_team_features();
+}
 .animate_pricing() {
   &.page-pricing {
     @run1: (@run) (@now);
@@ -55,5 +63,20 @@
     .early-access-size   {animation: in-fade-left-soft @run3 backwards;}
     .early-access-uses   {animation: in-fade-left-soft @run4 backwards;}
     .early-access-button {animation: in-fade-left-soft @run5 backwards;}
+  }
+}
+.animate_team_features() {
+  &.page-team-features {
+    @run1: (@run_slower) (@now);
+    @run2: (@run_slower) ((extract(@run1, 1) * 0.89) + extract(@run1, 2));
+    @run3: (@run_slow)   ((extract(@run2, 1) * 0.34) + extract(@run2, 2));
+    @run4: (@run)        ((extract(@run3, 1) * 0.21) + extract(@run3, 2));
+    @run5: (@run)        ((extract(@run4, 1) * 0.13) + extract(@run4, 2));
+    .features-head h1 {animation: in-shrink         @run1 backwards;}
+    .features-head p  {animation: in-zoom-soft      @run1 backwards;}
+    .feature-media    {animation: in-zoom           @run2 backwards;}
+    .feature-headline {animation: in-fade-left-soft @run3 backwards;}
+    .feature-copy     {animation: in-fade-left-soft @run4 backwards;}
+    .feature-link     {animation: in-fade-left-soft @run5 backwards;}
   }
 }
