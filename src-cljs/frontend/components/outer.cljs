@@ -242,58 +242,55 @@
            [:div.price-blocks
             [:div.price-block.price-solo
              [:div.price-head
-              [:h2.price-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
+              [:h2.price-heading.content-copy
+               "Users"]]
              [:div.price-body
-              [:h4.content-copy "$10/mo"]
+              [:h4.content-copy
+               "Free for everyone."]
               [:p.price-copy.content-copy
-               "Create unlimited public docs. "
-               "Create unlimited private docs. "
-               "Manage access for each of your documents individually."]]
+               "Wondering why Precursor is free? "
+               "We think collaboration should be simple. "
+               "To prove it we've made our design tools accessible to anyone, anywhere, and at any time. "]]
              [:div.price-foot
-              [:a.price-button
-               {:href "/trial/solo"
-                :title "Start your free, 2 week trial."
-                :role "button"}
-               "Start free trial"]]]
+              [:a.price-button {:href "/new"}
+               [:span
+                "Make a public doc."]]]]
             [:section.price-divide.left
              [:div.price-divide-line]]
             [:div.price-block.price-team
              [:div.price-head
-              [:h2.price-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
+              [:h2.price-heading.content-copy
+               "Teams"]]
              [:div.price-body
-              [:h4.content-copy "$10/mo/user"]
+              [:h4.content-copy
+               "$10 per user/month."]
               [:p.price-copy.content-copy
-               "Unlimited public and private docs. "
-               "Custom subdomain for your team where docs are private "
-               "by default and shared with your teammates."]]
+               "Need more than just design tools? "
+               "We now offer "
+               [:a.feature-link {:href "/features/team"} "productivity tools"]
+               " to improve your team collaborations. "
+               "Get a private subdomain and make things knowing they're secure. "]]
              [:div.price-foot
-              [:a.price-button
-               {:href "/trial/team"
-                :title "Start your free, 2 week trial."
-                :role "button"}
-               "Start free trial"]]]
+              [:a.price-button {:href "/trial/team"}
+               [:span
+                "Start a free trial."]]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
             [:div.price-block.price-corp
              [:div.price-head
-              [:h2.price-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
+              [:h2.price-heading.content-copy
+               "Enterprise"]]
              [:div.price-body
-              [:h4.content-copy "Contact us"]
+              [:h4.content-copy
+               "Contact our sales."]
               [:p.price-copy.content-copy
-               "Customized solutions designed to solve specific team constraints.
-                E.g., integrations, custom servers, on-premise accommodations, etc."]]
+                "Looking for a customized solution? "
+                "We offer licenses to run Precursor on your own hardware. "
+                "Reach out to our sales and we'll respond right away with additional information."]]
              [:div.price-foot
-              [:a.price-button
-               {:href "mailto:enterprise@precursorapp.com?Subject=Enterprise%20Inquiry"
-                :title "We'll get back to you immediately."
-                :role "button"}
-               "Contact us"]]]]
-           [:div.price-blocks-foot
-            [:a.feature-link
-             {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "free-plan"}})
-              :title "Precursor is free for everyone."
-              :role "button"}
-             "Or make free, public docs."]]]])))))
+              [:a.price-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
+               [:span
+                "Email a sales rep."]]]]]]])))))
 
 (defn nav-head [app owner]
   (om/component
