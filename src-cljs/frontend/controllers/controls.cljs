@@ -852,7 +852,7 @@
     (let [intents (mouse-depressed-intents previous-state button ctrl? shift?)]
       (doseq [intent intents]
         (case intent
-          :finish-text-layer (handle-text-layer-finished-after current-state)
+          :finish-text-layer (handle-text-layer-finished-after previous-state current-state)
           :open-radial (handle-radial-opened-after current-state previous-state)
           :start-drawing nil
           :submit-layer-properties (handle-layer-properties-submitted-after current-state)
