@@ -253,8 +253,7 @@
                "To prove it we've made our design tools accessible to anyone, anywhere, and at any time. "]]
              [:div.price-foot
               [:a.price-button {:href "/new"}
-               [:span
-                "Make a public doc."]]]]
+               [:span "Make a public doc."]]]]
             [:section.price-divide.left
              [:div.price-divide-line]]
             [:div.price-block.price-team
@@ -272,8 +271,7 @@
                "Get a private subdomain and make things knowing they're secure. "]]
              [:div.price-foot
               [:a.price-button {:href "/trial/team"}
-               [:span
-                "Start a free trial."]]]]
+               [:span "Start a free trial."]]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
             [:div.price-block.price-corp
@@ -289,8 +287,6 @@
                 "Reach out to our sales and we'll respond right away with additional information."]]
              [:div.price-foot
               [:a.price-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
-               [:span
-                "Email a sales rep."]]]]]]])))))
 
 (defn nav-head [app owner]
   (om/component
