@@ -1828,3 +1828,17 @@
 (defmethod control-event :remote-media-stream-ready
   [browser-state message {:keys [stream-url producer]} state]
   (utils/update-when-in state [:subscribers :info producer] assoc :stream-url stream-url))
+
+(defmethod control-event :retry-unsynced-datoms
+  [browser-state message {:keys [stream-url producer]} state]
+  (assoc state :unsynced-datoms nil))
+
+(defmethod post-control-event! :retry-unsynced-datoms
+  [browser-state message {:keys [stream-url producer]} previous-state current-state]
+  (doseq [{:keys [datom-group annotations]} (:unsynced-datoms previous-state)]
+    (frontend.db/send-datoms-to-server (:sente current-state) :frontend/transaction datom-group annotations (:comms current-state)))
+  (d/transact! (:db current-state)
+               (mapcat #(map (fn [d] [:db/add (:e d) :unsaved false])
+                             (utils/inspect (:datom-group %)))
+                       (:unsynced-datoms previous-state))
+               {:bot-layer true}))

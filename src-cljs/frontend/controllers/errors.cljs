@@ -1,5 +1,5 @@
 (ns frontend.controllers.errors
-  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+  (:require [cljs.core.async :as async :refer [>! <! alts! put! chan sliding-buffer close!]]
             [clojure.string :as str]
             [datascript :as d]
             [frontend.overlay :as overlay]
@@ -100,8 +100,8 @@
   (js/Rollbar.error "entity ids request failed :("))
 
 (defmethod error :datascript/rejected-datoms
-  [container message {:keys [rejects sent-datoms sente-event]} state]
-  (if (and (= (count rejects) (count sent-datoms))
+  [container message {:keys [rejects datom-group sente-event]} state]
+  (if (and (= (count rejects) (count datom-group))
            (= :read (:max-document-scope state)))
     (-> state
       (assoc-in (state/notified-read-only-path (:document/id state)) true)
@@ -110,11 +110,29 @@
         (overlay/replace-overlay :sharing)))
     state))
 
+(defmethod error :datascript/sync-tx-error
+  [container message {:keys [reason sente-event datom-group annotations]} state]
+  (update-in state [:unsynced-datoms] (fnil conj []) {:datom-group datom-group
+                                                      :annotations annotations}))
+
 (defmethod post-error! :datascript/sync-tx-error
-  [container message {:keys [reason sente-event sent-datoms]} previous-state current-state]
+  [container message {:keys [reason sente-event datom-group]} previous-state current-state]
+  (chat-model/create-bot-chat (:db current-state)
+                              current-state
+                              [:span "There was an error saving some of your recent changes. The affected shapes have been marked with dashed lines. "
+                               [:a {:role "button"
+                                    :on-click #(put! (get-in current-state [:comms :controls])
+                                                     [:retry-unsynced-datoms])}
+                                "Click here to retry"]
+                               ". You may also want to work on the document in a separate tab, in case there are any persistent problems."]
+                              {:error/id :error/sync-tx-error})
+  (d/transact! (:db current-state)
+               (mapv (fn [e] [:db/add e :unsaved true])
+                     (set (map :e datom-group)))
+               {:bot-layer true})
   (js/Rollbar.error "sync-tx-error" #js {:reason reason
                                          :sente-event sente-event
-                                         :datom-count (count sent-datoms)}))
+                                         :datom-count (count datom-group)}))
 
 (defmethod post-error! :rtc-error
   [container message {:keys [type error signal-data]} previous-state current-state]

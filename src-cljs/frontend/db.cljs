@@ -26,6 +26,22 @@
   (trans/reset-id db-atom)
   db-atom)
 
+(defn send-datoms-to-server [sente-state sente-event datom-group annotations comms]
+  (sente/send-msg sente-state [sente-event (merge {:datoms datom-group}
+                                                  annotations)]
+                  5000
+                  (fn [reply]
+                    (if (taoensso.sente/cb-success? reply)
+                      (when-let [rejects (seq (:rejected-datoms reply))]
+                        (put! (:errors comms) [:datascript/rejected-datoms {:rejects rejects
+                                                                            :sente-event sente-event
+                                                                            :datom-group datom-group
+                                                                            :annotations annotations}]))
+                      (put! (:errors comms) [:datascript/sync-tx-error {:reason reply
+                                                                        :sente-event sente-event
+                                                                        :datom-group datom-group
+                                                                        :annotations annotations}])))))
+
 (defn setup-listener! [db key comms sente-event annotations undo-state sente-state]
   (d/listen!
    db
@@ -53,18 +69,7 @@
                    (-> tx-report :tx-meta :bot-layer))
        (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
          (doseq [datom-group (partition-all 1000 datoms)]
-           (sente/send-msg sente-state [sente-event (merge {:datoms datom-group}
-                                                           annotations)]
-                           30000
-                           (fn [reply]
-                             (if (taoensso.sente/cb-success? reply)
-                               (when-let [rejects (seq (:rejected-datoms reply))]
-                                 (put! (:errors comms) [:datascript/rejected-datoms {:rejects rejects
-                                                                                     :sente-event sente-event
-                                                                                     :sent-datoms datom-group}]))
-                               (put! (:errors comms) [:datascript/sync-tx-error {:reason reply
-                                                                                 :sente-event sente-event
-                                                                                 :sent-datoms datom-group}]))))))))))
+           (send-datoms-to-server sente-state sente-event datom-group annotations comms)))))))
 
 (defn empty-db? [db]
   (empty? (d/datoms db :eavt)))

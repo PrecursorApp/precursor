@@ -448,8 +448,6 @@
         rejects (remove (comp (partial datomic2/whitelisted? access-scope)
                               pcd/datom->transaction)
                         datoms)]
-    (when ?reply-fn
-      (?reply-fn {:rejected-datoms rejects}))
     (log/infof "transacting %s datoms (minus %s rejects) on %s for %s" (count datoms) (count rejects) document-id client-id)
     (datomic2/transact! datoms
                         {:document-id document-id
@@ -458,7 +456,9 @@
                          :cust-uuid cust-uuid
                          :frontend-id-seed (get-in @document-subs [document-id client-id :frontend-id-seed])
                          :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
-                         :timestamp (:receive-instant req)})))
+                         :timestamp (:receive-instant req)})
+    (when ?reply-fn
+      (?reply-fn {:rejected-datoms rejects}))))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
