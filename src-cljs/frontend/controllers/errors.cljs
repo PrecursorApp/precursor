@@ -1,9 +1,13 @@
 (ns frontend.controllers.errors
-  (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+  (:require [cljs.core.async :as async :refer [>! <! alts! put! chan sliding-buffer close!]]
             [clojure.string :as str]
             [datascript :as d]
             [frontend.overlay :as overlay]
             [frontend.camera :as cameras]
+            [frontend.models.chat :as chat-model]
+            [frontend.rtc :as rtc]
+            [frontend.rtc.stats :as rtc-stats]
+            [frontend.sente :as sente]
             [frontend.state :as state]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
@@ -96,8 +100,8 @@
   (js/Rollbar.error "entity ids request failed :("))
 
 (defmethod error :datascript/rejected-datoms
-  [container message {:keys [rejects sent-datoms sente-event]} state]
-  (if (and (= (count rejects) (count sent-datoms))
+  [container message {:keys [rejects datom-group sente-event]} state]
+  (if (and (= (count rejects) (count datom-group))
            (= :read (:max-document-scope state)))
     (-> state
       (assoc-in (state/notified-read-only-path (:document/id state)) true)
@@ -106,8 +110,41 @@
         (overlay/replace-overlay :sharing)))
     state))
 
+(defmethod error :datascript/sync-tx-error
+  [container message {:keys [reason sente-event datom-group annotations]} state]
+  (update-in state [:unsynced-datoms] (fnil conj []) {:datom-group datom-group
+                                                      :annotations annotations}))
+
 (defmethod post-error! :datascript/sync-tx-error
-  [container message {:keys [reason sente-event sent-datoms]} previous-state current-state]
+  [container message {:keys [reason sente-event datom-group]} previous-state current-state]
+  (chat-model/create-bot-chat (:db current-state)
+                              current-state
+                              [:span "There was an error saving some of your recent changes. The affected shapes have been marked with dashed lines. "
+                               [:a {:role "button"
+                                    :on-click #(put! (get-in current-state [:comms :controls])
+                                                     [:retry-unsynced-datoms])}
+                                "Click here to retry"]
+                               ". You may also want to work on the document in a separate tab, in case there are any persistent problems."]
+                              {:error/id :error/sync-tx-error})
+  (d/transact! (:db current-state)
+               (mapv (fn [e] [:db/add e :unsaved true])
+                     (set (map :e datom-group)))
+               {:bot-layer true})
   (js/Rollbar.error "sync-tx-error" #js {:reason reason
                                          :sente-event sente-event
-                                         :datom-count (count sent-datoms)}))
+                                         :datom-count (count datom-group)}))
+
+(defmethod post-error! :rtc-error
+  [container message {:keys [type error signal-data]} previous-state current-state]
+  (let [{:keys [consumer producer]} signal-data]
+    (chat-model/create-bot-chat (:db current-state) current-state
+                                (str "There was an error creating the webRTC connection from "
+                                     (state-utils/client-id->user current-state consumer)
+                                     " to "
+                                     (state-utils/client-id->user current-state producer)
+                                     ". Please ping @prcrsr in chat if you're having troubles connecting and we'll try to fix it for you.")
+                                {:error/id :error/rtc-error})
+    (sente/send-msg (:sente current-state) [:rtc/diagnostics (assoc (rtc-stats/gather-stats rtc/conns rtc/stream)
+                                                                    :signal-data (select-keys signal-data [:stream-id :consumer :producer])
+                                                                    :error-type type)]))
+  (js/Rollbar.error (str "rtc error of type " type) error))

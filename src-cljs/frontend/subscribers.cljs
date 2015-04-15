@@ -1,5 +1,7 @@
 (ns frontend.subscribers
   (:require [clojure.set :as set]
+            [frontend.models.chat :as chat-model]
+            [frontend.rtc :as rtc]
             [frontend.utils :as utils]))
 
 (defn subscriber-entity-ids [app-state]
@@ -11,7 +13,7 @@
   (assoc-in app-state [:subscribers :entity-ids :entity-ids] (subscriber-entity-ids app-state)))
 
 (defn add-subscriber-data [app-state client-id subscriber-data]
-  (let [mouse-data (assoc (select-keys subscriber-data [:mouse-position :show-mouse? :tool :color :cust/uuid])
+  (let [mouse-data (assoc (select-keys subscriber-data [:mouse-position :show-mouse? :tool :color :cust/uuid :recording])
                           :client-id client-id)
         layer-data (assoc (select-keys subscriber-data [:layers :color :cust/uuid :relation])
                           :client-id client-id)
@@ -55,7 +57,17 @@
                                      {} (get-in new [:subscribers :info]))]
                    (doseq [[stream-id recording] (apply dissoc after (keys before))
                            :when (not= (:producer recording) (:client-id new))]
-                     (signal-fn {:producer (:producer recording)
-                                 :consumer (:client-id new)
-                                 :subscribe-to-recording recording
-                                 :stream-id stream-id})))))))
+                     (if rtc/supports-rtc?
+                       (signal-fn {:producer (:producer recording)
+                                   :consumer (:client-id new)
+                                   :subscribe-to-recording recording
+                                   :stream-id stream-id})
+                       (let [cust-uuid (get-in new [:subscribers :info (:producer recording) :cust/uuid])
+                             cust-name (get-in new [:cust-data :uuid->cust cust-uuid :cust/name])]
+                         (chat-model/create-bot-chat (:db new)
+                                                     new
+                                                     (str "Unable to get audio from @"
+                                                          (or cust-name (apply str (take 6 (:producer recording))))
+                                                          ", your browser doesn't seem to support webRTC."
+                                                          " Please try Chrome, Firefox or Opera. Ping @prcrsr for help.")
+                                                     {:error/id :error/webrtc-unsupported})))))))))

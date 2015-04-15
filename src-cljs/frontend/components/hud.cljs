@@ -4,6 +4,7 @@
             [frontend.auth :as auth]
             [frontend.colors :as colors]
             [frontend.components.common :as common]
+            [frontend.config :as config]
             [frontend.cursors :as cursors]
             [frontend.models.chat :as chat-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
@@ -182,14 +183,19 @@
              [:i.unseen-eids
               (str unread-chat-count)])])))))
 
+(defn volume-icon [level color-class]
+  (common/icon (common/volume-icon-kw level)
+               {:path-props {:className color-class}}))
+
 (defn viewers [app owner]
   (reify
     om/IDisplayName (display-name [_] "Hud Viewers")
     om/IInitState (init-state [_] {:editing-name? false
                                    :new-name ""})
     om/IDidUpdate
-    (did-update [_ _ _]
-      (when (and (om/get-state owner :editing-name?)
+    (did-update [_ _ prev-props]
+      (when (and (not (:editing-name? prev-props))
+                 (om/get-state owner :editing-name?)
                  (om/get-node owner "name-edit"))
         (.focus (om/get-node owner "name-edit"))
         (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "name-edit")))))
@@ -212,7 +218,8 @@
           (when show-viewers?
             [:div.viewers-list
              [:div.viewers-list-frame
-              (let [show-mouse? (get-in app [:subscribers :info client-id :show-mouse?])]
+              (let [sub (get-in app [:subscribers :info client-id])
+                    show-mouse? (:show-mouse? sub)]
                 [:div.viewer.viewer-self {:class (when editing-name? "busy")}
                  [:div.viewer-avatar.viewer-tag
                   {:on-mouse-down #(let [color (colors/next-color colors/color-idents self-color)]
@@ -247,21 +254,27 @@
                                    (utils/stop-event %))
                      :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))})
                   (or self-name "You")]
-                 [:div.viewer-knobs
-                  (when (contains? #{"danny@precursorapp.com"
-                                     "daniel@precursorapp.com"} (get-in app [:cust :cust/email]))
-                    [:a.viewer-knob {:on-click #(cast! :recording-toggled)
-                                     :role "button"
-                                     :title "Share your audio with everyone in the doc"}
-                     (common/icon :globe)])
-                  [:a.viewer-knob {:on-click #(do
-                                                (if can-edit?
-                                                  (om/set-state! owner :editing-name? true)
-                                                  (cast! :overlay-username-toggled))
-                                                (.stopPropagation %))
-                                   :role "button"
-                                   :title "Change your display name."}
-                   (common/icon :pencil)]]])
+                 [:div.viewer-controls
+                  (when (:recording sub)
+                    [:div.viewer-symbols.holo
+                     [:div.viewer-symbol
+                      (volume-icon (get-in sub [:recording :media-stream-volume] 0) (name self-color))]])
+                  [:div.viewer-toggles
+                   [:a.viewer-toggle {:on-click #(do
+                                                   (if can-edit?
+                                                     (om/set-state! owner :editing-name? true)
+                                                     (cast! :overlay-username-toggled))
+                                                   (.stopPropagation %))
+                                      :role "button"
+                                      :title "Change your display name."}
+                    (common/icon :pencil)]
+                   (when config/subdomain
+                     [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
+                                        :role "button"
+                                        :title (if (:recording sub)
+                                                 "Turn off your mic"
+                                                 "Share your audio with everyone in the doc")}
+                      (common/icon (if (:recording sub) :mic-off :mic))])]]])
               (for [[id {:keys [show-mouse? color cust-name hide-in-list? stream-url] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
                     :when (not hide-in-list?)
                     :let [id-str (get-in app [:cust-data :uuid->cust (:cust/uuid sub) :cust/name] (apply str (take 6 id)))
@@ -273,13 +286,19 @@
                   (common/icon :user (when show-mouse? {:path-props {:className color-class}}))]
                  [:div.viewer-name.viewer-tag
                   id-str]
-                 [:div.viewer-knobs
-                  [:a.viewer-knob
-                   {:key id
-                    :on-click #(cast! :chat-user-clicked {:id-str id-str})
-                    :role "button"
-                    :title "Ping this viewer in chat."}
-                   (common/icon :at)]]])]])
+                 [:div.viewer-controls
+                  (when (:recording sub)
+                    [:div.viewer-symbols.holo
+                     [:div.viewer-symbol
+                      (volume-icon (get-in sub [:recording :media-stream-volume] 0) color-class)]])
+                  [:div.viewer-toggles
+                   [:a.viewer-toggle
+                    {:key id
+                     :on-click #(cast! :chat-user-clicked {:id-str id-str})
+                     :role "button"
+                     :title "Ping this viewer in chat."}
+                    (common/icon :at)]]]])]])
+
           [:a.hud-viewers.hud-item.hud-toggle
            {:on-click (if show-viewers?
                         #(cast! :viewers-closed)
