@@ -129,7 +129,7 @@
                {:on-click         #(cast! :sharing-menu-opened)
                 :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
                 :role "button"}
-               (common/icon :share)
+               (common/icon :sharing)
                [:span "Sharing"]]
 
               [:a.vein.make
@@ -161,7 +161,7 @@
             [:a.vein.make
              {:on-click #(cast! :team-settings-opened)
               :role "button"}
-             (common/icon :share)
+             (common/icon :sharing)
              [:span "Permissions"]]
             [:a.vein.make
              {:on-click #(cast! :team-docs-opened)

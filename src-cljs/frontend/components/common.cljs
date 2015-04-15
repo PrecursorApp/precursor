@@ -66,7 +66,7 @@
   :stroke-slash-forward "M5,95L95,5"
   :stroke-slash-backward "M5,5l90,90"
   :stroke-at "M70,50c0,11-9,20-20,20s-20-9-20-20s9-20,20-20 S70,39,70,50z M70,25v50 M90.3,70c3-6,4.7-12.8,4.7-20C95,25.1,74.9,5,50,5S5,25.1,5,50c0,24.9,20.1,45,45,45c7.2,0,14-1.7,20-4.7"
-  :stroke-share "M50,5h45c0,0,0,45,0,45 M50,50L95,5 M27.5,5H5v90 c0,0,90,0,90,0V72.5"
+  :stroke-sharing "M50,5h45c0,0,0,45,0,45 M50,50L95,5 M27.5,5H5v90 c0,0,90,0,90,0V72.5"
   :stroke-phone "M70,95 H30c-5.5,0-10-4.5-10-10V15c0-5.5,4.5-10,10-10h40c5.5,0,10,4.5,10,10v70C80,90.5,75.5,95,70,95z M50.8,70.1 c-3.4-0.5-6.2,2.4-5.7,5.7c0.3,2.1,2,3.8,4.1,4.1c3.4,0.5,6.2-2.4,5.7-5.7C54.6,72.1,52.9,70.4,50.8,70.1z M65,20H35v35h30V20z"
 
   :fill-logomark "M43,100H29.5V39H43V100z M94,33.8C90.9,22,83.3,12.2,72.8,6.1C62.2,0,50-1.6,38.2,1.6 C26.5,4.7,16.6,12.3,10.6,22.8C4.5,33.3,2.9,45.6,6,57.4l1.7,6.4l12.7-3.4l-1.7-6.4c-4.6-17.2,5.6-35,22.9-39.6 c8.3-2.2,17.1-1.1,24.6,3.2c7.5,4.3,12.8,11.3,15.1,19.7c4.6,17.2-5.6,35-22.9,39.6L52,78.5l3.4,12.7l6.4-1.7 C86.1,83.1,100.5,58,94,33.8z"
@@ -139,7 +139,7 @@
   :arrow-left  {:paths [:stroke-arrow-left]}
   :arrow-right {:paths [:stroke-arrow-right]}
   :at          {:paths [:stroke-at]}
-  :share       {:paths [:stroke-share]}
+  :sharing     {:paths [:stroke-sharing]}
   :phone       {:paths [:stroke-phone]}
   :public      {:paths [:stroke-public]}
   :read-only   {:paths [:stroke-read-only
@@ -180,7 +180,7 @@
 
   :logomark    {:paths [:fill-logomark]}
   :twitter     {:paths [:fill-twitter]}
-  :google      {:paths [:fill-google]}
+  :google-logo {:paths [:fill-google]}
   :dribbble    {:paths [:fill-dribbble]}
   :github      {:paths [:fill-github]}
   :scroll      {:paths [:fill-scroll-north
@@ -240,5 +240,5 @@
            :role "button"
            :data-after "Sign in"
            :href (auth/auth-url :source source)}
-          (icon :google)
+          (icon :google-logo)
           [:div.google-text "Sign in with Google"]])))))
