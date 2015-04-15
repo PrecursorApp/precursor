@@ -271,7 +271,9 @@
                    (when config/subdomain
                      [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
                                         :role "button"
-                                        :title "Share your audio with everyone in the doc"}
+                                        :title (if (:recording sub)
+                                                 "Turn off your mic"
+                                                 "Share your audio with everyone in the doc")}
                       (common/icon (if (:recording sub) :mic-off :mic))])]]])
               (for [[id {:keys [show-mouse? color cust-name hide-in-list? stream-url] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
                     :when (not hide-in-list?)
