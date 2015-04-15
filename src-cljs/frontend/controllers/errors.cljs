@@ -119,7 +119,7 @@
   [container message {:keys [reason sente-event datom-group]} previous-state current-state]
   (chat-model/create-bot-chat (:db current-state)
                               current-state
-                              [:span "There was an error saving some of your recent changes. The affected shapes have been marked in gray. "
+                              [:span "There was an error saving some of your recent changes. The affected shapes have been marked with dashed lines. "
                                [:a {:role "button"
                                     :on-click #(put! (get-in current-state [:comms :controls])
                                                      [:retry-unsynced-datoms])}
