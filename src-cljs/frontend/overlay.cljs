@@ -28,7 +28,7 @@
 (defn overlay-count [state]
   (count (get-in state state/overlays-path)))
 
-(def roster-overlays #{:roster :team-settings :team-doc-viewer})
+(def roster-overlays #{:roster :team-settings :team-doc-viewer :plan})
 
 (defn app-overlay-class [state]
   (when (overlay-visible? state)

@@ -1,6 +1,7 @@
 (ns pc.models.team
   (:require [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [pc.utils :as utils]))
 
 ;; We'll pretend we have a type here
@@ -41,5 +42,6 @@
 
 (defn read-api [team]
   (-> team
-    (select-keys [:team/subdomain :team/uuid :team/intro-doc])
-    (utils/update-when-in [:team/intro-doc] :db/id)))
+    (select-keys [:team/subdomain :team/uuid :team/intro-doc :team/plan])
+    (utils/update-when-in [:team/intro-doc] :db/id)
+    (utils/update-when-in [:team/plan] (fn [p] (web-peer/client-id p)))))

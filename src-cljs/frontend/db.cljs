@@ -11,7 +11,8 @@
 (def schema {:layer/child {:db/cardinality :db.cardinality/many}
              :layer/points-to {:db/cardinality :db.cardinality/many
                                :db/type :db.type/ref}
-             :error/id {:db/unique :db.unique/identity}})
+             :error/id {:db/unique :db.unique/identity}
+             :team/plan {:db/type :db.type/ref}})
 
 (defonce listeners (atom {}))
 

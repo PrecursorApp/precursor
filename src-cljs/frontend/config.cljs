@@ -5,3 +5,4 @@
 (def hostname (aget js/window "Precursor" "hostname"))
 (def scheme (.getScheme utils/parsed-uri))
 (def port (.getPort utils/parsed-uri))
+(def stripe-publishable-key (aget js/window "Precursor" "stripe-publishable-key"))

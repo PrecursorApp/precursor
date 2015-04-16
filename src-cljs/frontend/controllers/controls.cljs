@@ -26,6 +26,7 @@
             [frontend.sente :as sente]
             [frontend.settings :as settings]
             [frontend.state :as state]
+            [frontend.stripe :as stripe]
             [frontend.subscribers :as subs]
             [frontend.svg :as svg]
             [frontend.utils.ajax :as ajax]
@@ -1559,6 +1560,11 @@
      (when docs
        (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}])))))
 
+(defmethod control-event :plan-settings-opened
+  [browser-state message _ state]
+  (-> state
+      (handle-add-menu :plan)))
+
 (defmethod control-event :main-menu-opened
   [browser-state message _ state]
   (-> state
@@ -1842,3 +1848,29 @@
                              (utils/inspect (:datom-group %)))
                        (:unsynced-datoms previous-state))
                {:bot-layer true}))
+
+(defmethod post-control-event! :stripe-form-opened
+  [browser-state message _ previous-state current-state]
+  (stripe/open-checkout (get-in current-state [:cust :cust/email])
+                        #(go
+                           (let [result (<! (sente/ch-send-msg (:sente current-state)
+                                                               [:team/create-plan
+                                                                {:token-id (aget % "id")
+                                                                 :team/uuid (get-in current-state [:team :team/uuid])}]
+                                                               30000
+                                                               (async/promise-chan)))]
+                             (utils/inspect result)))
+                        #(js/console.log "closed stripe checkout")))
+
+(defmethod post-control-event! :change-card-clicked
+  [browser-state message _ previous-state current-state]
+  (stripe/open-checkout (get-in current-state [:cust :cust/email])
+                        #(go
+                           (let [result (<! (sente/ch-send-msg (:sente current-state)
+                                                               [:team/update-card
+                                                                {:token-id (aget % "id")
+                                                                 :team/uuid (get-in current-state [:team :team/uuid])}]
+                                                               30000
+                                                               (async/promise-chan)))]
+                             (utils/inspect result)))
+                        #(js/console.log "closed stripe checkout")))

@@ -33,3 +33,8 @@
   `(do
      (require 'weasel.repl.websocket)
      (cemerick.piggieback/cljs-repl :repl-env (weasel.repl.websocket/repl-env :ip "0.0.0.0" :port 9001))))
+
+(defmacro java-doc [x]
+  `(do
+     (require 'clojure.java.javadoc)
+     (clojure.java.javadoc/javadoc ~x)))

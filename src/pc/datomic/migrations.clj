@@ -2,10 +2,13 @@
   (:require [pc.datomic :as pcd]
             [clojure.string]
             [clojure.tools.logging :as log]
+            [clj-time.core :as time]
+            [clj-time.coerce]
             [datomic.api :refer [db q] :as d]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.datomic.migrations-archive :as archive]
+            [pc.datomic.web-peer :as web-peer]
             [slingshot.slingshot :refer (try+ throw+)])
   (:import java.util.UUID))
 
@@ -99,7 +102,6 @@
                                      :transaction/source :transaction.source/migration
                                      :migration :migration/longs->refs})))))
 
-
 (defn longs->refs
   "Converts attributes that store ids to refs, e.g. layers go from :document/id to :layer/document"
   [conn]
@@ -116,6 +118,17 @@
                            (d/db conn) "prcrsr-bot@prcrsr.com")]
     @(d/transact conn [[:db/add prcrsr-bot-id :cust/color-name :color.name/green]])))
 
+(defn add-team-plans [conn]
+  (let [db (d/db conn)]
+    (doseq [team (map #(d/entity db %) (d/q '[:find [?t ...] :where [?t :team/subdomain]] db))
+            :let [planid (d/tempid :db.part/user)]]
+      (d/transact conn [{:db/id (d/tempid :db.part/tx)
+                         :migration :migration/add-team-plans
+                         :transaction/source :transaction.source/migration}
+                        {:team/plan {:db/id planid
+                                     :plan/trial-end (clj-time.coerce/to-date (time/plus (time/now) (time/weeks 2)))}}
+                        (web-peer/server-frontend-id planid (:db/id team))]))))
+
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
@@ -129,7 +142,8 @@
    6 #'archive/fix-bounding-boxes
    7 #'archive/add-frontend-ids
    8 #'longs->refs
-   9 #'add-prcrsr-bot-color))
+   9 #'add-prcrsr-bot-color
+   10 #'add-team-plans))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"

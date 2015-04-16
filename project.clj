@@ -72,7 +72,7 @@
 
                  [ankha "0.1.4"]
                  [org.clojure/clojurescript "0.0-3126"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+                 [precursor/core.async "0.1.0-d8047c0b0ec13788c1092f579f03733ee635c493"]
                  [cljs-ajax "0.2.6"]
 
                  ;; Use yaks/om for the pattern tag (it's in React,

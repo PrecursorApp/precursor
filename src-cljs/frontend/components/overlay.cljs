@@ -11,6 +11,7 @@
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
             [frontend.components.permissions :as permissions]
+            [frontend.components.plan :as plan]
             [frontend.components.team :as team]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
@@ -156,19 +157,23 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-          [:div.menu-view
-           [:div.veins
-            [:a.vein.make
-             {:on-click #(cast! :team-settings-opened)
-              :role "button"}
-             (common/icon :share)
-             [:span "Permissions"]]
-            [:a.vein.make
-             {:on-click #(cast! :team-docs-opened)
-              :role "button"}
-             (common/icon :clock)
-             [:span "Team Documents"]]
-            ]])))))
+         [:div.menu-view
+          [:div.veins
+           [:a.vein.make
+            {:on-click #(cast! :team-settings-opened)
+             :role "button"}
+            (common/icon :share)
+            [:span "Permissions"]]
+           [:a.vein.make
+            {:on-click #(cast! :team-docs-opened)
+             :role "button"}
+            (common/icon :clock)
+            [:span "Team Documents"]]
+           [:a.vein.make
+            {:on-click #(cast! :plan-settings-opened)
+             :role "button"}
+            (common/icon :clock)
+            [:span "Plan"]]]])))))
 
 (defn private-sharing [app owner]
   (reify
@@ -740,7 +745,9 @@
    :team-doc-viewer {:title "Team Documents"
                      :component doc-viewer/team-doc-viewer}
    :connection-info {:title "Connection Info"
-                     :component connection/connection-info}})
+                     :component connection/connection-info}
+   :plan {:title "Plan"
+          :component plan/plan-overlay}})
 
 (defn overlay [app owner]
   (reify

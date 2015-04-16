@@ -43,3 +43,7 @@ twttr.conversion.trackPid;
 
 var _fbq;
 _fbq.push;
+
+var StripeCheckout;
+StripeCheckout.configure;
+StripeCheckout.open;

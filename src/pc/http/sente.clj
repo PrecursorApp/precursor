@@ -17,6 +17,7 @@
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
             [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
+            [pc.http.plan :as plan-http]
             [pc.http.sente.sliding-send :as sliding-send]
             [pc.http.urls :as urls]
             [pc.models.access-grant :as access-grant-model]
@@ -26,11 +27,13 @@
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model]
             [pc.models.permission :as permission-model]
+            [pc.models.plan :as plan-model]
             [pc.models.team :as team-model]
             [pc.nts :as nts]
             [pc.replay :as replay]
             [pc.rollbar :as rollbar]
             [pc.sms :as sms]
+            [pc.stripe :as stripe]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
             [taoensso.sente :as sente])
@@ -256,6 +259,10 @@
         send-fn (:send-fn @sente-state)]
     (when (has-team-permission? team-uuid req :admin)
       (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
+      (send-fn client-id [:team/db-entities
+                          {:team/uuid team-uuid
+                           :entities [(team-model/read-api team)]
+                           :entity-type :team}])
 
       (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
       (send-fn client-id [:team/db-entities
@@ -277,7 +284,12 @@
                            :entities (map (partial access-request-model/read-api (:db req))
                                           (access-request-model/find-by-team (:db req)
                                                                              team))
-                           :entity-type :access-request}]))))
+                           :entity-type :access-request}])
+
+      (send-fn client-id [:team/db-entities
+                          {:team/uuid team-uuid
+                           :entities [(plan-model/read-api (:team/plan team))]
+                           :entity-type :plan}]))))
 
 (defn subscriber-read-api [subscriber]
   (-> subscriber
@@ -803,6 +815,40 @@
                                                                 (access-request-model/find-by-team-and-cust db-after team cust))
                                                  :entity-type :access-request}])))
         (comment (notify-invite "Please sign up to send an invite."))))))
+
+(defmethod ws-handler :team/create-plan [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          plan (:team/plan team)
+          cust (get-in req [:ring-req :auth :cust])
+          token-id (:token-id ?data)
+          stripe-customer (plan-http/create-stripe-customer team cust token-id)
+          tx @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                       :transaction/team (:db/id team)
+                                       :cust/uuid (:cust/uuid cust)
+                                       :transaction/broadcast true}
+                                      (-> (plan-http/stripe-customer->plan-fields stripe-customer)
+                                        (assoc :db/id (:db/id plan)
+                                               :plan/paid? true))])]
+      (?reply-fn {:plan-created? true}))))
+
+(defmethod ws-handler :team/update-card [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          plan (:team/plan team)
+          cust (get-in req [:ring-req :auth :cust])
+          token-id (:token-id ?data)
+          stripe-customer (plan-http/update-card team token-id)
+          tx @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                       :transaction/team (:db/id team)
+                                       :cust/uuid (:cust/uuid cust)
+                                       :transaction/broadcast true}
+                                      (-> (plan-http/stripe-customer->plan-fields stripe-customer)
+                                        (assoc :db/id (:db/id plan)
+                                               :plan/paid? true))])]
+      (?reply-fn {:plan-created? true}))))
 
 (defmethod ws-handler :frontend/save-browser-settings [{:keys [client-id ?data ?reply-fn] :as req}]
   (if-let [cust (-> req :ring-req :auth :cust)]

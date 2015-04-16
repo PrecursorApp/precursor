@@ -72,6 +72,18 @@
                      :access-request/create-date
                      :access-request/deny-date
                      :access-request/team
+
+                     :team/plan
+
+                     :plan/start
+                     :plan/trial-end
+                     :plan/credit-card
+                     :plan/paid?
+
+                     :credit-card/exp-year
+                     :credit-card/exp-month
+                     :credit-card/last4
+                     :credit-card/brand
                      })))
 
 (defn translate-datom-dispatch-fn [db d] (:a d))
@@ -116,6 +128,10 @@
     (assoc :v (:team/uuid (d/entity db (:v d))))))
 
 (defmethod translate-datom :layer/points-to [db d]
+  (-> d
+    (assoc :v (web-peer/client-id db (:v d)))))
+
+(defmethod translate-datom :team/plan [db d]
   (-> d
     (assoc :v (web-peer/client-id db (:v d)))))
 

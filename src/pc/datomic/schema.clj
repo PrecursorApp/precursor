@@ -513,6 +513,7 @@
    (enum :migration/add-frontend-ids)
    (enum :migration/choose-colors-for-custs)
    (enum :migration/longs->refs)
+   (enum :migration/add-team-plans)
 
    ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
    (attribute :needs-email
@@ -606,7 +607,50 @@
 
    (attribute :document/team
               :db.type/ref
-              :db/doc "Team this doc belongs to (if it belongs to a team)")])
+              :db/doc "Team this doc belongs to (if it belongs to a team)")
+
+   (attribute :team/plan
+              :db.type/ref
+              :db/doc "Plan for a given team")
+
+   (attribute :plan/start
+              :db.type/instant
+              :db/doc "Stripe start time for the plan")
+
+   (attribute :plan/trial-end
+              :db.type/instant
+              :db/doc "Instant that plan's trial is over")
+
+   (attribute :plan/stripe-customer-id
+              :db.type/string
+              :db/unique :db.unique/value
+              :db/doc "Stripe customer id for the plan")
+
+   (attribute :plan/paid?
+              :db.type/boolean
+              :db/doc "Whether plan is paid or not")
+
+   (attribute :credit-card/exp-year
+              :db.type/long)
+
+   (attribute :credit-card/exp-month
+              :db.type/long)
+
+   (attribute :credit-card/last4
+              :db.type/string
+              :db/doc "last 4 digits of card")
+
+   (attribute :credit-card/brand
+              :db.type/string
+              :db/doc "card brand, e.g. Visa")
+
+   (attribute :credit-card/fingerprint
+              :db.type/string
+              :db/doc "Unique fingerprint for the card")
+
+   (attribute :credit-card/stripe-id
+              :db.type/string
+              :db/doc "Stripe id for the card")])
 
 
 (defonce schema-ents (atom nil))
