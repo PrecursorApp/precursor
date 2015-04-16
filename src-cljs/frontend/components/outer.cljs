@@ -244,14 +244,14 @@
             [:div.price-block.price-solo
              [:div.price-head
               [:h2.price-heading.content-copy
-               "Users"]]
+               "User"]]
              [:div.price-body
               [:h4.content-copy
                "Free for everyone."]
               [:p.price-copy.content-copy
-               "Wondering why Precursor is free? "
-               "We think collaboration should be simple. "
-               "To prove it we've made our design tools accessible to anyone, anywhere, and at any time. "]]
+               "Are you wondering why it's free? "
+               "We think prototyping should just be simple, and to prove it we've made Precursor accessible to everyone, everywhere. "
+               "Go make something. "]]
              [:div.price-foot
               [:a.bubble-button {:href "/new"}
                [:span "Make a public doc."]]]]
@@ -260,16 +260,16 @@
             [:div.price-block.price-team
              [:div.price-head
               [:h2.price-heading.content-copy
-               "Teams"]]
+               "Team"]]
              [:div.price-body
               [:h4.content-copy
                "$10 per user/month."]
               [:p.price-copy.content-copy
-               "Need more than just design tools? "
-               "We now offer "
+               "Need more than just prototyping? "
+               "Team plans offer "
                [:a {:href "/features/team"} "productivity tools"]
-               " to improve your team collaborations. "
-               "Get a private subdomain and make things knowing they're secure. "]]
+               " to improve your communication. "
+               "Grab a domain and collaborate on ideas knowing that they're secured. "]]
              [:div.price-foot
               [:a.bubble-button {:href "/trial/team"}
                [:span "Start a free trial."]]]]
@@ -281,11 +281,11 @@
                "Enterprise"]]
              [:div.price-body
               [:h4.content-copy
-               "Contact our sales."]
+               "Contact sales."]
               [:p.price-copy.content-copy
                 "Looking for a customized solution? "
-                "We offer licenses to run Precursor on your own hardware. "
-                "Reach out to our sales and we'll respond right away with additional information."]]
+                "We made Precursor easy to run on your own hardware. "
+                "Email our sales and we'll get back to you right away with additional information."]]
              [:div.price-foot
               [:a.bubble-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
                [:span "Email a sales rep."]]]]]]])))))
@@ -298,21 +298,19 @@
       (let [{:keys [cast! handlers]} (om/get-shared owner)]
         (html
           [:div.team-features
-
             [:div.features-head.content
-             [:h1.content-copy
+             [:h1.content-heading
               "Productivity tools will help your team collaborate."]
              [:p.content-copy
-              "Precursor design tools are free. "
+              "Precursor prototyping is free. "
               "But being a "
               [:a {:href "/blog/clojure-is-a-product-design-tool" :target "_blank"} "product team ourselves"]
-              ", we know that teams need more than just prototyping to be successful. "
-              "That's why we're now offering productivity tools—to make your team collaborations more productive. "]]
-
+              ", we know teams need more than just prototyping to be successful. "
+              "That's why we offer productivity tools—to make your team collaborations more productive. "]]
             [:div.feature.art-visible.content
              [:div.feature-story
               [:h2.feature-headline
-               [:span "Create a subdomain."]]
+               [:span "Organize your team."]]
               [:p.feature-copy
                [:span.content-copy
                 "Subdomains help you collaborate on ideas quickly by remembering your teammates. "
@@ -321,10 +319,8 @@
                [:span.content-copy "Try a subdomain."]]]
              [:div.feature-media.reverse
               [:div.art-frame
-               [:div.artwork (common/icon :chat)]]]]
-
+               [:div.artwork (common/icon :users)]]]]
             [:div.feature-divider]
-
             [:div.feature.art-visible.content
              [:div.feature-story
               [:h2.feature-headline
@@ -338,9 +334,7 @@
              [:div.feature-media
               [:div.art-frame
                [:div.artwork (common/icon :lock)]]]]
-
             [:div.feature-divider]
-
             [:div.feature.art-visible.content
              [:div.feature-story
               [:h2.feature-headline
@@ -354,9 +348,8 @@
              [:div.feature-media.reverse
               [:div.art-frame
                [:div.artwork (common/icon :mic)]]]]
-
             [:div.features-foot.content
-             [:h1.content-copy
+             [:h1.content-heading
               "Ready to start?"]
              [:p.content-copy
               "Find out why teams all over the world are already collaborating on thousands of ideas "

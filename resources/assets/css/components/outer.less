@@ -37,9 +37,13 @@
   }
   &:not(.page-landing) {
     padding: @tile 0;
-    > .content {
-      padding-top: 10%;
-      padding-bottom: @tile;
+    .content {
+      padding-top: @tile_xl;
+      padding-bottom: @tile_xl;
+      .mq_640({
+        padding-top: @tile_xl / 2;
+        padding-bottom: @tile_xl / 2;
+      });
     }
   }
   .content {
@@ -106,6 +110,14 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.content-heading {
+  user-select: auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+  padding-bottom: 1rem;
 }
 .nav {
   .flexy(center);
@@ -217,34 +229,20 @@
   }
 }
 .team-features {
+  user-select: none;
   .content {
-    user-select: none;
-    padding-top: 5%; padding-bottom: 5%;
-    .mq_1280({padding-top: 10%; padding-bottom: 10%;});
-     .mq_960({padding-top: 15%; padding-bottom: 15%;});
-     .mq_640({padding-top: 20%; padding-bottom: 20%;});
-  }
-  .features-head,
-  .features-foot {
-    .mq_640({
-      padding-top: @tile_xl / 2;
+    &.feature {
+      padding-top: 5%; padding-bottom: 5%;
+      .mq_1280({padding-top: 10%; padding-bottom: 10%;});
+       .mq_960({padding-top: 15%; padding-bottom: 15%;});
+       .mq_640({padding-top: 20%; padding-bottom: 20%;});
+    }
+    &.features-head {
       padding-bottom: @tile_xl / 2;
-    });
-    h1 {
-      padding-bottom: @tile / 4;
     }
-    p {
-      padding-bottom: @menu_padding;
+    &.features-foot {
+      padding-bottom: @tile_xl;
     }
-    .content-copy {
-      margin: 0;
-    }
-  }
-  .features-head {
-    padding-top: @tile_xl;
-  }
-  .features-foot {
-    padding-bottom: @tile_xl;
   }
   .feature-link {
     .mq_640({display: none;});
