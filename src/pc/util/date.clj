@@ -2,12 +2,12 @@
   (:require [clj-time.coerce])
   (:import [java.util.Date]))
 
-(defn default-timestamp-sec [t]
-  (int (/ (timestamp-ms t) 1000)))
-
 (defprotocol Dateable
   (timestamp-ms [t])
   (timestamp-sec [t]))
+
+(defn default-timestamp-sec [t]
+  (int (/ (timestamp-ms t) 1000)))
 
 (extend java.util.Date
   Dateable
