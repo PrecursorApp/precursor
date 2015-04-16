@@ -24,6 +24,7 @@
   // .animate_landing();
   .animate_pricing();
   .animate_early_access();
+  .animate_trial();
   .animate_team_features();
 }
 .animate_pricing() {
@@ -63,6 +64,20 @@
     .early-access-size   {animation: in-fade-left-soft @run3 backwards;}
     .early-access-uses   {animation: in-fade-left-soft @run4 backwards;}
     .early-access-button {animation: in-fade-left-soft @run5 backwards;}
+  }
+}
+.animate_trial() {
+  &.page-trial {
+    @run1: (@run_slow)   (@now);
+    @run2: (@run_slower) ((extract(@run1, 1) * 0.55) + extract(@run1, 2));
+    @run3: (@run)        ((extract(@run2, 1) * 0.34) + extract(@run2, 2));
+    @run4: (@run_slower) ((extract(@run3, 1) * 0.21) + extract(@run3, 2));
+    @run5: (@run_slow)   ((extract(@run4, 1) * 0.13) + extract(@run4, 2));
+    .outer-form-heading          {animation: in-shrink           @run1 backwards;}
+    .outer-form-copy             {animation: in-shrink           @run2 backwards;}
+    .subdomain-input-placeholder {animation: in-fade-bottom-soft @run3 backwards;}
+    .subdomain-input-append      {animation: in-fade-right-soft  @run4 backwards;}
+    .bubble-button               {animation: in-fade-bottom-soft @run5 backwards;}
   }
 }
 .animate_team_features() {

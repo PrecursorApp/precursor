@@ -55,9 +55,6 @@
   .adaptive-placeholder {
     margin-bottom: @menu_padding;
   }
-  .content {
-    max-width: @tile * 10; // VETO
-  }
 }
 .page-early-access {
   .outer-form-heading {
@@ -76,12 +73,14 @@
 }
 .outer-form-copy {
   margin-bottom: @menu_padding;
+  max-width: @tile_content / 2;
 }
 .outer-form-sign {
   .flexy();
   margin-bottom: @menu_padding;
 }
 .outer-form {
+  max-width: @tile_content / 2;
   &.disabled {
     .adaptive-placeholder,
     .bubble-button,

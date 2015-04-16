@@ -72,16 +72,16 @@
                        (when team-created? " granted "))}
           [:div.content
            [:div.outer-form-info
-            [:h2.outer-form-heading
-             "Begin your free trial & start using team features today."]
+            [:h1.outer-form-heading
+             "Try team productivity tools for free."]
             (if (utils/logged-in? owner)
               [:p.outer-form-copy
-               "Choose a name for your team to use on Precursor. "
-               "Make sure it starts with a letter and is at least 4 characters. "
-               "Numbers and hyphens are okay."]
+               "Grab a team name. "
+               "Numbers and hyphens work but start with a letter. "
+               "Solo teams are always welcome! "]
               [:p.outer-form-copy
                "First, sign in with your Google account. "
-               "Then we'll just ask you to make a custom subdomain for you and your team."])
+               "Then we'll just ask you to choose a domain for your team. "])
             (when-not (utils/logged-in? owner)
               [:div.outer-form-sign
                (om/build common/google-login {:source "Team Signup Form"})])]
@@ -102,9 +102,9 @@
               subdomain]
              [:div.subdomain-input-placeholder
               {:data-prepend "Your team"
-               :data-start " name is..."
-               :data-busy " name is?"
-               :data-end " subdomain will be"}]
+               :data-start " name..."
+               :data-busy " name is"
+               :data-end "'s domain will be"}]
              [:div.subdomain-input-append
               {:on-click #(.focus (om/get-node owner "subdomain"))}
               ".precursorapp.com"]]
@@ -132,17 +132,15 @@
                                 (str (str (:team/subdomain team) "." config/hostname)
                                      " is ready, let's go!")]
 
-                    :else "Create your team")]]
+                    :else "Start your team.")]]
 
             (when error
               [:div.error error])
 
             (when team-created?
               [:div.outer-form-granted
-               [:p "Documents created on this subdomain are private for you and your team.
-                   Enjoy two weeks of free, unlimited access.
-                   Then we'll follow up to see how things are going."]
-               ])]]])))))
+               [:p "New documents made on this team domain will be private by default. "
+                   "Enjoy your 30 day free trial! "]])]]])))))
 
 (defn submit-solo-trial-form [owner]
   (go
