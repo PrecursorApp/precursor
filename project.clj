@@ -24,7 +24,7 @@
 
                  [clj-statsd "0.3.10"]
 
-                 [cider/cider-nrepl "0.9.0-SNAPSHOT" :exclusions [org.clojure/tools.reader]]
+                 [cider/cider-nrepl "0.8.2" :exclusions [org.clojure/tools.reader]]
                  [clj-http "1.0.1" :exclusions [commons-codec clj-tuple potemkin]]
                  [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
                                                                   org.slf4j/slf4j-api
