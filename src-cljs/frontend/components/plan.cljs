@@ -49,21 +49,21 @@
                            (om/set-state! owner :new-email ""))]
         (html
          [:div
-          [:div {:ref "billing-email"
-                 :content-editable (if (om/get-state owner :editing-email?) true false)
-                 :spell-check false
-                 :on-key-down #(do
-                                 (when (= "Enter" (.-key %))
-                                   (.preventDefault %)
-                                   (submit-fn)
-                                   (utils/stop-event %))
-                                 (when (= "Escape" (.-key %))
-                                   (om/set-state! owner :editing-email? false)
-                                   (om/set-state! owner :new-email "")
-                                   (utils/stop-event %)))
-                 :on-blur #(do (submit-fn)
-                               (utils/stop-event %))
-                 :on-input #(om/set-state-nr! owner :new-email (goog.dom/getRawTextContent (.-target %)))}
+          [:div.billing-email {:ref "billing-email"
+                               :content-editable (if (om/get-state owner :editing-email?) true false)
+                               :spell-check false
+                               :on-key-down #(do
+                                               (when (= "Enter" (.-key %))
+                                                 (.preventDefault %)
+                                                 (submit-fn)
+                                                 (utils/stop-event %))
+                                               (when (= "Escape" (.-key %))
+                                                 (om/set-state! owner :editing-email? false)
+                                                 (om/set-state! owner :new-email "")
+                                                 (utils/stop-event %)))
+                               :on-blur #(do (submit-fn)
+                                             (utils/stop-event %))
+                               :on-input #(om/set-state-nr! owner :new-email (goog.dom/getRawTextContent (.-target %)))}
            (:plan/billing-email plan)]
           [:a {:on-click #(do
                             (om/set-state! owner :editing-email? true)
@@ -81,28 +81,30 @@
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
          [:div.make
-          [:h4.make "Credit card"]
-          [:p.make
+          [:h4 "Credit card"]
+          [:p
            (for [[k v] (filter #(= "credit-card" (namespace (first %))) plan)
                  :let [v (str v)]]
              [:tr.make
               [:td [:div {:title k} (str k)]]
               [:td [:div.connection-result {:title v}
                     v]]])]
-          [:a.make {:on-click #(cast! :change-card-clicked)
-                    :role "button"}
+          [:a {:on-click #(cast! :change-card-clicked)
+               :role "button"}
            "Change card"]
+          [:h4 "Billing email"]
+          [:p "We'll send invoices to this email."]
           (om/build billing-email {:plan plan})
-          [:h4.make "Usage"]
+          [:h4 "Usage"]
           (when (plan-model/in-trial? plan)
-            [:p.make
+            [:p
              "You still have "
              [:span {:title (:plan/trial-end plan)}
               (time-left plan)]
              " left in your trial. We won't start charging until your trial is over."])
-          [:p.make "You pay $10/month for every active user on your team. Add users from the "
-           [:a.make {:on-click #(cast! :team-settings-opened)
-                     :role "button"}
+          [:p "You pay $10/month for every active user on your team. Add users from the "
+           [:a {:on-click #(cast! :team-settings-opened)
+                :role "button"}
             "team permissions"]
            " page."]])))))
 
