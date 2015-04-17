@@ -184,6 +184,7 @@
              ;; Can't log in without a page refresh, have to re-evaluate this if
              ;; that ever changes.
              :logged-in?            (boolean (seq (:cust @state)))
+             :sente                 (:sente @state)
              }
     :instrument (fn [f cursor m]
                   (om/build* f cursor (assoc m :descriptor instrumentation/instrumentation-methods)))}))

@@ -4,6 +4,8 @@
             [pc.models.cust :as cust-model]
             [pc.models.permission :as permission-model]))
 
+(def active-threshold 10)
+
 (defn team-member? [db team cust]
   (seq (permission-model/team-permits db team cust)))
 

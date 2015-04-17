@@ -9,11 +9,13 @@
             [frontend.db :as fdb]
             [frontend.models.plan :as plan-model]
             [frontend.models.team :as team-model]
+            [frontend.sente :as sente]
             [frontend.utils :as utils]
             [goog.dom]
             [goog.dom.Range]
             [om.core :as om]
-            [om.dom :as dom])
+            [om.dom :as dom]
+            [taoensso.sente])
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
@@ -74,7 +76,35 @@
                :title "Change your billing email."}
            (common/icon :pencil)]])))))
 
-(defn paid-info [{:keys [plan]} owner]
+(defn active-users [{:keys [team-uuid]} owner]
+  (reify
+    om/IInitState (init-state [_] {:active-users nil})
+    om/IDidMount
+    (did-mount [_]
+      ;; We're not using the controls here because we the state gets stale fast
+      ;; May turn out to be a bad idea
+      (sente/send-msg (om/get-shared owner :sente) [:team/active-users {:team/uuid team-uuid}]
+
+                      20000
+                      (fn [res]
+                        (if (taoensso.sente/cb-success? res)
+                          (om/set-state! owner :active-users (:active-users res))
+                          (comment "do something about errors")))))
+    om/IRenderState
+    (render-state [_ {:keys [active-users]}]
+      (let [{:keys [cast! team-db]} (om/get-shared owner)]
+        (html
+         (if (nil? active-users)
+           [:div.loading "Loading"]
+           [:div
+            "Over the last 30 days, " (count active-users) (if (= 1 (count active-users))
+                                                             " user on your team has been active."
+                                                             " users on your team have been active.")
+            " This would cost you $" (max 10 (* (count active-users) 10)) "/month."
+            (for [[email tx-count] (sort-by (comp - last) active-users)]
+              [:div email])]))))))
+
+(defn paid-info [{:keys [plan team-uuid]} owner]
   (reify
     om/IRender
     (render [_]
@@ -106,9 +136,10 @@
            [:a {:on-click #(cast! :team-settings-opened)
                 :role "button"}
             "team permissions"]
-           " page."]])))))
+           " page."]
+          (om/build active-users {:team-uuid team-uuid})])))))
 
-(defn plan-info [{:keys [plan-id]} owner]
+(defn plan-info [{:keys [plan-id team-uuid]} owner]
   (reify
     om/IInitState
     (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -129,10 +160,12 @@
       (let [{:keys [cast! team-db]} (om/get-shared owner)
             plan (d/entity @team-db plan-id)]
         (html
-         (if (:plan/trial-end plan)
+         (if (:plan/trial-end plan) ;; wait for plan to load
            (if (:plan/paid? plan)
-             (om/build paid-info {:plan (ds/touch+ plan)})
-             (om/build trial-info {:plan (ds/touch+ plan)}))
+             (om/build paid-info {:plan (ds/touch+ plan)
+                                  :team-uuid team-uuid})
+             (om/build trial-info {:plan (ds/touch+ plan)
+                                   :team-uuid team-uuid}))
            [:div.loading]))))))
 
 (defn plan-overlay [app owner]
@@ -168,4 +201,5 @@
           [:div.content
            [:p.make
             (when (:team/plan team)
-              (om/build plan-info {:plan-id (:db/id (:team/plan team))}))]]])))))
+              (om/build plan-info {:plan-id (:db/id (:team/plan team))
+                                   :team-uuid (:team/uuid team)}))]]])))))

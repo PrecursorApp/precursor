@@ -9,6 +9,7 @@
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
+            [pc.billing :as billing]
             [pc.cache :as cache]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
@@ -423,6 +424,20 @@
       (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
                                            :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
                              doc-ids)}))))
+
+(defmethod ws-handler :team/active-users [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          tx-counts (billing/team-transaction-counts
+                     (:db req) team
+                     (clj-time.coerce/to-date (time/minus (time/now) (time/months 1)))
+                     (clj-time.coerce/to-date (time/now)))]
+      (?reply-fn {:active-users (reduce-kv (fn [m k v]
+                                             (if (<= billing/active-threshold v)
+                                               (assoc m (:cust/email k) v)
+                                               m))
+                                           {} tx-counts)}))))
 
 (defn determine-type [datom datoms]
   (let [e (:e datom)
