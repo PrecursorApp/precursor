@@ -98,3 +98,8 @@
 
 (defn memcached-server []
   (System/getenv "MEMCACHED_SERVER"))
+
+(defn rasterize-key []
+  (if (prod?)
+    "b1c19e04b7667e6a84dace987ff4bd475324f29c"
+    "cf99bca9e5dca62b974c694cc2e3273f535da200"))
