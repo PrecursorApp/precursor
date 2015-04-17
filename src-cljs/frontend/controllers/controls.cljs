@@ -1849,7 +1849,7 @@
                        (:unsynced-datoms previous-state))
                {:bot-layer true}))
 
-(defmethod post-control-event! :stripe-form-opened
+(defmethod post-control-event! :start-plan-clicked
   [browser-state message _ previous-state current-state]
   (stripe/open-checkout (get-in current-state [:cust :cust/email])
                         #(go
@@ -1873,4 +1873,6 @@
                                                                30000
                                                                (async/promise-chan)))]
                              (utils/inspect result)))
-                        #(js/console.log "closed stripe checkout")))
+                        #(js/console.log "closed stripe checkout")
+                        {:panelLabel "Change card"}
+                        ))

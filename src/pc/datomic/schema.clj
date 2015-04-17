@@ -626,6 +626,10 @@
               :db/unique :db.unique/value
               :db/doc "Stripe customer id for the plan")
 
+   (attribute :plan/billing-email
+              :db.type/string
+              :db/doc "Stripe customer id for the plan")
+
    (attribute :plan/paid?
               :db.type/boolean
               :db/doc "Whether plan is paid or not")

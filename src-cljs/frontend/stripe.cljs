@@ -28,13 +28,14 @@
    :email email
    :closed close-callback})
 
-(defn open-checkout [email token-callback close-callback]
+(defn open-checkout [email token-callback close-callback & [extra-config]]
   (go
     (when-not (checkout-loaded?)
       (async/<! (load-checkout)))
     (-> (checkout-config token-callback
                          close-callback
                          email)
+      (merge extra-config)
       clj->js
       (js/window.StripeCheckout.configure)
       (.open))))

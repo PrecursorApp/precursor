@@ -7,8 +7,8 @@
   (db/setup-listener! (:team-db @app-state)
                       "team-listener"
                       (:comms @app-state)
-                      {:team/uuid (get-in @app-state [:team :team/uuid])}
                       :team/transaction
+                      {:team/uuid (get-in @app-state [:team :team/uuid])}
                       (atom {:transactions []
                              :last-undo nil})
                       (:sente @app-state)))

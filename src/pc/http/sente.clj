@@ -854,7 +854,8 @@
                                        :transaction/broadcast true}
                                       (-> (plan-http/stripe-customer->plan-fields stripe-customer)
                                         (assoc :db/id (:db/id plan)
-                                               :plan/paid? true))])]
+                                               :plan/paid? true
+                                               :plan/billing-email (:cust/email cust)))])]
       (?reply-fn {:plan-created? true}))))
 
 (defmethod ws-handler :team/update-card [{:keys [client-id ?data ?reply-fn] :as req}]

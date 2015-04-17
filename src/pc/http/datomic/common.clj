@@ -79,6 +79,7 @@
                      :plan/trial-end
                      :plan/credit-card
                      :plan/paid?
+                     :plan/billing-email
 
                      :credit-card/exp-year
                      :credit-card/exp-month
