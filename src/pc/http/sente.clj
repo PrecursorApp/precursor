@@ -472,6 +472,30 @@
     (when ?reply-fn
       (?reply-fn {:rejected-datoms rejects}))))
 
+(defmethod ws-handler :team/transaction [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [datoms (->> ?data
+                   :datoms
+                   (remove (comp nil? :v))
+                   (remove #(= "document" (name (:a %)))))
+          cust-uuid (-> req :ring-req :auth :cust :cust/uuid)
+          ;; note that these aren't all of the rejected datoms, just the ones not on the whitelist
+          rejects (remove (comp (partial datomic2/whitelisted? :admin)
+                                pcd/datom->transaction)
+                          datoms)
+          team-id (:db/id (team-model/find-by-uuid (:db req) team-uuid))]
+      (log/infof "transacting %s datoms (minus %s rejects) on %s for %s" (count datoms) (count rejects) team-id client-id)
+      (datomic2/transact! datoms
+                          {:team-id team-id
+                           :access-scope :admin
+                           :client-id client-id
+                           :cust-uuid cust-uuid
+                           :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
+                           :timestamp (:receive-instant req)})
+      (when ?reply-fn
+        (?reply-fn {:rejected-datoms rejects})))))
+
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [document-id (-> ?data :document/id)
