@@ -19,7 +19,7 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(def url-regex #"(?im)\b(?:https?|ftp)://[-A-Za-z0-9+@#/%?=~_|!:,.;]*[-A-Za-z0-9+@#/%=~_|]")
+(def url-regex #"(?im)\b(?:https?|ftp)://[-A-Za-z0-9+@#/%?&=~_|!:,.;]*[-A-Za-z0-9+@#/%=~_|]")
 
 (defn linkify [text]
   (let [matches (re-seq url-regex text)
