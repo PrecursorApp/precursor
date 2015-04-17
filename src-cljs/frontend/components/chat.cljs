@@ -26,7 +26,9 @@
         ;; may need to add [""], split can return empty array
         parts (or (seq (str/split text url-regex)) [""])]
     (reduce (fn [acc [pre url]]
-              (conj acc [:span pre] (when url [:a {:href url :target "_blank"} url])))
+              (conj acc
+                    (when (< 0 (count pre)) [:span pre])
+                    (when url [:a {:href url :target "_blank"} url])))
             [:span] (partition-all 2 (concat (interleave parts
                                                          matches)
                                              (when (not= (count parts)
