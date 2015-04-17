@@ -73,12 +73,13 @@
           [:div.content
            [:div.outer-form-info
             [:h1.outer-form-heading
-             "Try team productivity tools for free."]
+             "What is the name of your team? "
+             "Grab your domain to get started. "]
             (if (utils/logged-in? owner)
               [:p.outer-form-copy
-               "Grab a team name. "
-               "Numbers and hyphens work but start with a letter. "
-               "Solo teams are always welcome! "]
+               "Numbers and hyphens will work but start your team name with a letter. "
+               "You'll have two free weeks of unlimited access. "
+               "(Solo teams work too!) "]
               [:p.outer-form-copy
                "First, sign in with your Google account. "
                "Then we'll just ask you to choose a domain for your team. "])
@@ -140,7 +141,8 @@
             (when team-created?
               [:div.outer-form-granted
                [:p "New documents made on this team domain will be private by default. "
-                   "Enjoy your 30 day free trial! "]])]]])))))
+                   "Enjoy your two weeks of unlimited access. "
+                   "We're excited to have you! "]])]]])))))
 
 (defn submit-solo-trial-form [owner]
   (go
@@ -242,14 +244,14 @@
             [:div.price-block.price-solo
              [:div.price-head
               [:h2.price-heading.content-copy
-               "User"]]
+               "Public"]]
              [:div.price-body
               [:h4.content-copy
                "Free for everyone."]
               [:p.price-copy.content-copy
-               "Are you wondering why it's free? "
-               "We think prototyping should just be simple, and to prove it we've made Precursor accessible to everyone, everywhere. "
-               "Go make something. "]]
+               "Why are the prototyping tools free? "
+               "Prototyping should just be simple, and to prove it we made Precursor accessible to anyone, anywhere. "
+               "Make something & show someone. "]]
              [:div.price-foot
               [:a.bubble-button {:href "/new"}
                [:span "Make a public doc."]]]]
@@ -258,16 +260,15 @@
             [:div.price-block.price-team
              [:div.price-head
               [:h2.price-heading.content-copy
-               "Team"]]
+               "Teams"]]
              [:div.price-body
               [:h4.content-copy
                "$10 per user/month."]
               [:p.price-copy.content-copy
                "Need more than just prototyping? "
-               "Team plans offer "
-               [:a {:href "/features/team"} "productivity tools"]
-               " to improve your communication. "
-               "Grab a domain and collaborate on ideas knowing that they're secured. "]]
+               [:a {:href "/features/team"} "Team domains"]
+               " have collaboration tools to improve your productivity. "
+               "Start your domain to organize team communications with private docs. "]]
              [:div.price-foot
               [:a.bubble-button {:href "/trial/team"}
                [:span "Start a free trial."]]]]
@@ -282,8 +283,8 @@
                "Contact sales."]
               [:p.price-copy.content-copy
                 "Looking for a customized solution? "
-                "We made Precursor easy to run on your own hardware. "
-                "Email our sales and we'll get back to you right away with additional information."]]
+                "Precursor was engineered to easily set up and run on your own server. "
+                "Email sales@precursorapp.com and we will respond immediately."]]
              [:div.price-foot
               [:a.bubble-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
                [:span "Email a sales rep."]]]]]]])))))
@@ -298,23 +299,27 @@
           [:div.team-features
             [:div.features-head.content
              [:h1.content-heading
-              "Productivity tools will help your team collaborate."]
+              "Team domains make real-time collaboration even simpler. "]
              [:p.content-copy
               "Precursor prototyping is free. "
-              "But being a "
+              "But we're a "
               [:a {:href "/blog/clojure-is-a-product-design-tool" :target "_blank"} "product team ourselves"]
-              ", we know teams need more than just prototyping to be successful. "
-              "That's why we offer productivity tools—to make your team collaborations more productive. "]]
+              ", and we know that it takes more than just prototyping to be successful. "
+              "That's why we built lightweight collaboration tools, to help your team communicate effectively. "
+              "Solve problems with your team in real time. "]
+             [:div.calls-to-action
+              [:a.bubble-button {:href "pricing"}
+               [:span "See our team pricing."]]]]
             [:div.feature.art-visible.content
              [:div.feature-story
               [:h2.feature-headline
                [:span "Organize your team."]]
               [:p.feature-copy
                [:span.content-copy
-                "Subdomains help you collaborate on ideas quickly by remembering your teammates. "
-                "New documents created on your subdomain get shared with the whole team. "]]
+                "Team domains help you collaborate on ideas quickly by remembering your teammates. "
+                "New documents created in your team domain are automatically shared with your team. "]]
               [:a.feature-link {:href "/trial/team"}
-               [:span.content-copy "Try a subdomain."]]]
+               [:span.content-copy "Try a team domain."]]]
              [:div.feature-media.reverse
               [:div.art-frame
                [:div.artwork (common/icon :users)]]]]
@@ -325,10 +330,10 @@
                [:span "Share ideas privately."]]
               [:p.feature-copy
                [:span.content-copy
-                "We understand that your team may have proprietary information and technologies. "
-                "That's why ideas shared in your subdomain are secured with private documents. "]]
+                "We understand that your team might use proprietary technology or even trade secrets. "
+                "And that's why we built private documents, so you can collaborate with peace of mind. "]]
               [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569407" :target "_blank"}
-               [:span.content-copy "Try a private doc."]]]
+               [:span.content-copy "Try a private document."]]]
              [:div.feature-media
               [:div.art-frame
                [:div.artwork (common/icon :lock)]]]]
@@ -339,8 +344,8 @@
                [:span "Chat with voice."]]
               [:p.feature-copy
                [:span.content-copy
-                "Sometimes speaking out loud is just easier than typing messages back and forth. "
-                "Teammates on your subdomain will have access to voice chat in every document. "]]
+                "Sometimes speaking out loud is simply easier than typing messages back and forth. "
+                "Teammates on your domain will get unlimited access to voice chat in every document. "]]
               [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569418?voice=true" :target "_blank"}
                [:span.content-copy "Try a voice chat."]]]
              [:div.feature-media.reverse
@@ -350,7 +355,10 @@
              [:h1.content-heading
               "Ready to start?"]
              [:p.content-copy
-              "Find out why teams all over the world are already collaborating on thousands of ideas "
+              "Precursor will become the muse for creativity on your team. "
+              "Design wireframes, develop prototypes, and collaborate on any idea in real time. "
+              "Use built-in chat to keep feedback and research in one place. "
+              "Teams around the world are already collaborating on ideas "
               [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"} "made with Precursor"]
               "."]
              [:div.calls-to-action

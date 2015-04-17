@@ -90,6 +90,7 @@
   position: absolute;
   left: 0;
   width: 100%;
+  user-select: none;
 }
 .outer-head {
   top: 0;
@@ -142,6 +143,7 @@
   color: @gray;
   margin: 0 @menu_padding;
   transition: @run_fast @bezier_fadein;
+  user-select: auto;
   .mq_640({
     margin: 0 (@menu_padding / 3);
   });
@@ -201,7 +203,7 @@
 .bubble-button {
   .flexy(center; center);
   .inline(@gray_lighter);
-  color: @black;
+  color: @gray_darker;
   line-height: 1;
   height: @tile;
   width: 100%;
@@ -249,6 +251,6 @@
     .mq_640({display: none;});
   }
   .feature-media {
-    transform-origin: left bottom;
+    transform-origin: left;
   }
 }
