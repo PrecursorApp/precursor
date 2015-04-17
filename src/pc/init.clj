@@ -14,7 +14,8 @@
             pc.nts
             pc.repl
             pc.server
-            pc.statsd)
+            pc.statsd
+            pc.http.webhooks)
   (:gen-class))
 
 (defn init-fns []
@@ -31,6 +32,7 @@
    #'pc.email/init
    #'pc.cache/init
    #'pc.server/init
+   #'pc.http.webhooks/init
    #'pc.datomic.admin-db/init
    #'pc.http.admin/init])
 
@@ -48,4 +50,6 @@
 
 (defn shutdown []
   (pc.server/shutdown)
-  (pc.datomic/shutdown))
+  (pc.datomic/shutdown)
+  (pc.http.webhooks/shutdown)
+  (pc.http.admin/shutdown))

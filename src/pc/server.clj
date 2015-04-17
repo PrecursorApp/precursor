@@ -15,7 +15,6 @@
             [pc.http.routes.api :as api]
             [pc.http.routes :as routes]
             [pc.http.routes.blog :as blog]
-            [pc.http.routes.twilio :as twilio]
             [pc.http.sente :as sente]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust-model]
@@ -77,7 +76,6 @@
   (-> (compojure.core/routes #'routes/app
                              #'api/app
                              #'blog/app
-                             #'twilio/app
                              (compojure.route/resources "/" {:root "public"
                                                              :mime-types {:svg "image/svg"}})
                              #'catch-all)
@@ -97,7 +95,7 @@
                                  :force-ssl? (profile/force-ssl?)})
     (wrap-wrap-reload)
     (errors-handler/wrap-errors)
-    (logging-handler/wrap-logging)))
+    (logging-handler/wrap-logging {:context "web"})))
 
 (defn start [sente-state]
   (def server (web/server (web/run
