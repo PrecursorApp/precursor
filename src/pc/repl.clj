@@ -9,6 +9,7 @@
             [clojure.java.javadoc :refer (javadoc)]
             [clojure.repl :refer :all]
             [datomic.api :as d]
+            [pc.billing :as billing]
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
             [pc.email :as email]
