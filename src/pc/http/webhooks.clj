@@ -4,6 +4,7 @@
             [pc.http.handlers.errors :as errors-handler]
             [pc.http.handlers.logging :as logging-handler]
             [pc.http.handlers.ssl :as ssl-handler]
+            [pc.http.routes.stripe :as stripe]
             [pc.http.routes.twilio :as twilio]
             [pc.profile :as profile]
             [ring.middleware.keyword-params :refer (wrap-keyword-params)]
@@ -23,6 +24,7 @@
 
 (defn handler []
   (-> (compojure.core/routes #'twilio/hooks-app
+                             #'stripe/hooks-app
                              #'catch-all)
     (wrap-keyword-params)
     (wrap-params)

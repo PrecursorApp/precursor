@@ -116,9 +116,6 @@
       (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid admin-data) team-uuid)
       ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:team/transaction (assoc admin-data :tx-data server-timestamps)]))))
 
-(defn ws-handler-dispatch-fn [req]
-  (-> req :event first))
-
 (defn has-document-access? [doc-id req scope]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
     (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth) scope)))
@@ -234,6 +231,9 @@
            (-> subs
              (assoc-in [uuid] {:client-id uuid
                                :cust/uuid (:cust/uuid cust)})))))
+
+(defn ws-handler-dispatch-fn [req]
+  (-> req :event first))
 
 (defmulti ws-handler ws-handler-dispatch-fn)
 
