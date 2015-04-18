@@ -54,11 +54,21 @@
                                                      (when metadata
                                                        {:metadata (json/encode metadata)})
                                                      (when description
-                                                       {:description (json/encode metadata)}))})))
+                                                       {:description description}))})))
 
 (defn update-card [customer-id token-id]
   (api-call :post (str "customers/" customer-id)
             {:form-params {:source token-id}}))
 
+(defn update-quantity [customer-id subscription-id quantity]
+  (api-call :post (str "customers/" customer-id "/subscriptions/" subscription-id)
+            {:form-params {:quantity quantity}}))
+
 (defn fetch-customer [customer-id]
   (api-call :get (str "customers/" customer-id)))
+
+(defn fetch-subscription [customer-id subscription-id]
+  (api-call :get (str "customers/" customer-id "/subscriptions/" subscription-id)))
+
+(defn fetch-event [event-id]
+  (api-call :get (str "events/" event-id)))

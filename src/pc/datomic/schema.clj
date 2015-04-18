@@ -624,7 +624,12 @@
    (attribute :plan/stripe-customer-id
               :db.type/string
               :db/unique :db.unique/value
-              :db/doc "Stripe customer id for the plan")
+              :db/doc "Stripe's customer id for the plan")
+
+   (attribute :plan/stripe-subscription-id
+              :db.type/string
+              :db/unique :db.unique/value
+              :db/doc "Stripe's subscription id for the plan")
 
    (attribute :plan/billing-email
               :db.type/string
