@@ -199,7 +199,6 @@
         (html
          [:div.menu-view
           [:div.content
-           [:p.make
-            (when (:team/plan team)
-              (om/build plan-info {:plan-id (:db/id (:team/plan team))
-                                   :team-uuid (:team/uuid team)}))]]])))))
+           (when (:team/plan team)
+             (om/build plan-info {:plan-id (:db/id (:team/plan team))
+                                  :team-uuid (:team/uuid team)}))]])))))
