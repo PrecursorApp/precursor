@@ -10,6 +10,9 @@
                                       ;; probably a uuid type
                                       :team/uuid String}))
 
+(defn all [db]
+  (map (partial d/entity db) (d/q '[:find [?t ...] :where [?t :team/subdomain]] db)))
+
 (defn find-by-subdomain [db subdomain]
   (some->> subdomain
     (d/datoms db :avet :team/subdomain)

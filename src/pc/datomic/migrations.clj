@@ -122,12 +122,13 @@
   (let [db (d/db conn)]
     (doseq [team (map #(d/entity db %) (d/q '[:find [?t ...] :where [?t :team/subdomain]] db))
             :let [planid (d/tempid :db.part/user)]]
-      (d/transact conn [{:db/id (d/tempid :db.part/tx)
-                         :migration :migration/add-team-plans
-                         :transaction/source :transaction.source/migration}
-                        {:team/plan {:db/id planid
-                                     :plan/trial-end (clj-time.coerce/to-date (time/plus (time/now) (time/weeks 2)))}}
-                        (web-peer/server-frontend-id planid (:db/id team))]))))
+      @(d/transact conn [{:db/id (d/tempid :db.part/tx)
+                          :migration :migration/add-team-plans
+                          :transaction/source :transaction.source/migration}
+                         {:db/id (:db/id team)
+                          :team/plan {:db/id planid
+                                      :plan/trial-end (clj-time.coerce/to-date (time/plus (time/now) (time/weeks 2)))}}
+                         (web-peer/server-frontend-id planid (:db/id team))]))))
 
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
