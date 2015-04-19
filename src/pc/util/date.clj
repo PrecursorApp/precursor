@@ -1,5 +1,6 @@
 (ns pc.util.date
-  (:require [clj-time.coerce])
+  (:require [clj-time.core :as time]
+            [clj-time.coerce])
   (:import [java.util.Date]))
 
 (defprotocol Dateable
@@ -18,3 +19,13 @@
   Dateable
   {:timestamp-ms #(clj-time.coerce/to-long %)
    :timestamp-sec default-timestamp-sec})
+
+(defn min-time
+  ([x] x)
+  ([x y] (if (time/after? x y) y x))
+  ([x y & more] (reduce min-time (min-time x y) more)))
+
+(defn max-time
+  ([x] x)
+  ([x y] (if (time/after? x y) x y))
+  ([x y & more] (reduce max-time (max-time x y) more)))

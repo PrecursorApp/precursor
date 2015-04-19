@@ -76,33 +76,21 @@
                :title "Change your billing email."}
            (common/icon :pencil)]])))))
 
-(defn active-users [{:keys [team-uuid]} owner]
+(defn active-users [{:keys [plan]} owner]
   (reify
-    om/IInitState (init-state [_] {:active-users nil})
-    om/IDidMount
-    (did-mount [_]
-      ;; We're not using the controls here because we the state gets stale fast
-      ;; May turn out to be a bad idea
-      (sente/send-msg (om/get-shared owner :sente) [:team/active-users {:team/uuid team-uuid}]
-
-                      20000
-                      (fn [res]
-                        (if (taoensso.sente/cb-success? res)
-                          (om/set-state! owner :active-users (:active-users res))
-                          (comment "do something about errors")))))
-    om/IRenderState
-    (render-state [_ {:keys [active-users]}]
-      (let [{:keys [cast! team-db]} (om/get-shared owner)]
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! team-db]} (om/get-shared owner)
+            active-custs (:plan/active-custs plan)]
         (html
-         (if (nil? active-users)
-           [:div.loading "Loading"]
-           [:div
-            "Over the last 30 days, " (count active-users) (if (= 1 (count active-users))
-                                                             " user on your team has been active."
-                                                             " users on your team have been active.")
-            " This would cost you $" (max 10 (* (count active-users) 10)) "/month."
-            (for [[email tx-count] (sort-by (comp - last) active-users)]
-              [:div email])]))))))
+         [:div
+          "Over the last 30 days, " (count active-custs)
+          (if (= 1 (count active-custs))
+            " user on your team has been active."
+            " users on your team have been active.")
+          " This would cost you $" (max 10 (* (count active-custs) 10)) "/month."
+          (for [cust active-custs]
+            [:div cust])])))))
 
 (defn paid-info [{:keys [plan team-uuid]} owner]
   (reify
@@ -137,7 +125,7 @@
                 :role "button"}
             "team permissions"]
            " page."]
-          (om/build active-users {:team-uuid team-uuid})])))))
+          (om/build active-users {:plan plan})])))))
 
 (defn plan-info [{:keys [plan-id team-uuid]} owner]
   (reify

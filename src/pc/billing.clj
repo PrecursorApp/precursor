@@ -1,8 +1,12 @@
 (ns pc.billing
-  (:require [datomic.api :as d]
+  (:require [clj-time.coerce :refer (to-date)]
+            [clj-time.core :as time]
+            [datomic.api :as d]
             [pc.datomic :as pcd]
             [pc.models.cust :as cust-model]
-            [pc.models.permission :as permission-model]))
+            [pc.models.plan :as plan-model]
+            [pc.models.permission :as permission-model]
+            [pc.util.date :as date-util]))
 
 (def active-threshold 10)
 
@@ -28,3 +32,21 @@
                      (assoc m cust (count v))
                      m)))
                {})))
+
+;; TODO: should users be calculated based on activity during the trial?
+(defn set-active-users [db team]
+  (let [plan (:team/plan team)
+        now (time/now)]
+    (let [start-time (time/minus now (time/months 1))
+          active-custs (->> (team-transaction-counts db team (to-date start-time) (to-date now))
+                         (reduce-kv (fn [acc u tx-count]
+                                      (if (> tx-count active-threshold)
+                                        (conj acc u)
+                                        acc))
+                                    #{}))]
+      @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                :transaction/team (:db/id team)
+                                :transaction/broadcast true}
+                               (pcd/replace-many (:db/id plan)
+                                                 :plan/active-custs
+                                                 (set (map :db/id active-custs)))]))))

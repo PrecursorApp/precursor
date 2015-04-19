@@ -587,6 +587,19 @@
                        (remove #(= (nth % 2) frontend-id-e) txes))}
              :db/doc "Like db.fn/retractEntity, but preserves frontend ids")
 
+   (function :pc.datomic/replace-many
+             '{:lang :clojure
+               ;; check syntax here
+               :requires [[clojure.data]]
+               :params [db eid attr-ident new-values]
+               :code (let [old-values (set (map :v (d/datoms db :eavt eid attr-ident)))
+                           [only-old only-new _] (clojure.data/diff old-values new-values)]
+                       (concat (for [old-val only-old]
+                                 [:db/retract eid attr-ident old-val])
+                               (for [new-val only-new]
+                                 [:db/add eid attr-ident new-val])))}
+             :db/doc "Replaces all of the cardinality-many values with new value")
+
    (attribute :team/subdomain
               :db.type/string
               :db/unique :db.unique/value
@@ -638,6 +651,11 @@
    (attribute :plan/paid?
               :db.type/boolean
               :db/doc "Whether plan is paid or not")
+
+   (attribute :plan/active-custs
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "List of active custs on the team")
 
    (attribute :credit-card/exp-year
               :db.type/long)

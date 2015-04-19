@@ -53,6 +53,9 @@
 (defn uuid []
   (UUID/randomUUID))
 
+(defn replace-many [eid attr-ident new-values]
+  [:pc.datomic/replace-many eid attr-ident new-values])
+
 ;; should we convert a to its name (it's currently using its eid)?
 ;; Would require a reference to the db
 (defn datom->transaction [datom]

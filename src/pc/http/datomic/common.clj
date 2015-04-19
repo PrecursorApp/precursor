@@ -80,6 +80,7 @@
                      :plan/credit-card
                      :plan/paid?
                      :plan/billing-email
+                     :plan/active-custs
 
                      :credit-card/exp-year
                      :credit-card/exp-month
@@ -135,6 +136,10 @@
 (defmethod translate-datom :team/plan [db d]
   (-> d
     (assoc :v (web-peer/client-id db (:v d)))))
+
+(defmethod translate-datom :plan/active-custs [db d]
+  (-> d
+    (assoc :v (:cust/email (d/entity db (:v d))))))
 
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
