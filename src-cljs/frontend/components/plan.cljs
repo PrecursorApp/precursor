@@ -92,6 +92,32 @@
           (for [cust active-custs]
             [:div cust])])))))
 
+
+(defn active-history [{:keys [team-uuid]} owner]
+  (reify
+    om/IInitState (init-state [_] {:history nil})
+    om/IDidMount
+    (did-mount [_]
+      ;; We're not using the controls here because the history state gets stale fast
+      ;; May turn out to be a bad idea
+      ;; Ideally, we'd have the history in our frontend db
+      (sente/send-msg (om/get-shared owner :sente) [:team/plan-active-history {:team/uuid team-uuid}]
+                      20000
+                      (fn [res]
+                        (if (taoensso.sente/cb-success? res)
+                          (om/set-state! owner :history (:history res))
+                          (comment "do something about errors")))))
+    om/IRenderState
+    (render-state [_ {:keys [history]}]
+      (let [{:keys [cast! team-db]} (om/get-shared owner)]
+        (html
+         (if (nil? active-users)
+           [:div.loading "Loading"]
+           [:div
+            (for [{:keys [cust instant added?]} (reverse history)]
+              [:div (str cust (if added? " was marked active at " " was marked inactive at ") instant)])]))))))
+
+
 (defn paid-info [{:keys [plan team-uuid]} owner]
   (reify
     om/IRender
@@ -113,6 +139,10 @@
           [:h4 "Billing email"]
           [:p "We'll send invoices to this email."]
           (om/build billing-email {:plan plan})
+          [:h4 "Discount"]
+          [:p "Coupon: " (name (:discount/coupon plan))]
+          [:p (str "Start: " (:discount/start plan))]
+          [:p (str "End: " (:discount/end plan))]
           [:h4 "Usage"]
           (when (plan-model/in-trial? plan)
             [:p
@@ -125,7 +155,9 @@
                 :role "button"}
             "team permissions"]
            " page."]
-          (om/build active-users {:plan plan})])))))
+          (om/build active-users {:plan plan})
+          [:h4 "Plan history"]
+          (om/build active-history {:team-uuid team-uuid})])))))
 
 (defn plan-info [{:keys [plan-id team-uuid]} owner]
   (reify

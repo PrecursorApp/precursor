@@ -2,6 +2,7 @@
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
             [clj-time.core :as time]
+            [clj-time.coerce]
             [clojure.set :as set]
             [pc.util.date :as date-util]))
 
@@ -29,6 +30,16 @@
     (select-keys (keys card-translation))
     (set/rename-keys card-translation)))
 
+(defn timestamp->model [timestamp]
+  (-> timestamp
+    (* 1000)
+    (clj-time.coerce/from-long)
+    (clj-time.coerce/to-date)))
+
+(defn discount-api->model [discount-fields]
+  {:discount/start (timestamp->model (get discount-fields "start"))
+   :discount/end (timestamp->model (get discount-fields "end"))
+   :discount/coupon {:coupon/stripe-id (get-in discount-fields ["coupon" "id"])}})
 
 (def base-url "https://api.stripe.com/v1/")
 

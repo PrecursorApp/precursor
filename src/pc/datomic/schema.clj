@@ -657,6 +657,10 @@
               :db/cardinality :db.cardinality/many
               :db/doc "List of active custs on the team")
 
+   (attribute :plan/coupon-code
+              :db.type/string
+              :db/doc "Holds coupon code for the plan until the Stripe subscription is created")
+
    (attribute :credit-card/exp-year
               :db.type/long)
 
@@ -677,8 +681,52 @@
 
    (attribute :credit-card/stripe-id
               :db.type/string
-              :db/doc "Stripe id for the card")])
+              :db/doc "Stripe id for the card")
 
+   (attribute :plan/invoices
+              :db.type/ref
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :invoice/stripe-id
+              :db.type/string)
+
+   (attribute :invoice/subtotal
+              :db.type/long
+              :db/doc "Invoice total before discounts in cents")
+
+   (attribute :invoice/total
+              :db.type/long
+              :db/doc "Invoice total after discounts in cents")
+
+   (attribute :invoice/date
+              :db.type/instant)
+
+   (attribute :invoice/paid?
+              :db.type/boolean)
+
+   (attribute :invoice/attempted?
+              :db.type/boolean)
+
+   (attribute :discount/coupon
+              :db.type/ref)
+
+   (attribute :discount/start
+              :db.type/instant)
+
+   (attribute :discount/end
+              :db.type/instant)
+
+   (attribute :coupon/stripe-id
+              :db.type/string
+              :db/unique :db.unique/identity)
+
+   (attribute :coupon/percent-off
+              :db.type/long
+              :db/doc "Discount percent, from 0-100")
+
+   (attribute :coupon/duration-in-months
+              :db.type/long
+              :db/doc "Number of months that the discount is active")])
 
 (defonce schema-ents (atom nil))
 

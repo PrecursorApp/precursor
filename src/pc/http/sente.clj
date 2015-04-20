@@ -425,6 +425,17 @@
                                            :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
                              doc-ids)}))))
 
+(defmethod ws-handler :team/plan-active-history [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)
+        team (team-model/find-by-uuid (:db req) team-uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [history (->> (billing/active-history (:db req) team)
+                    (map (fn [info]
+                           (update-in info [:cust] :cust/email))))]
+      (log/infof "fetched %s entries in active history for %s" (count history) (:team/subdomain team))
+      (?reply-fn {:history history
+                  :team/uuid team-uuid}))))
+
 (defn determine-type [datom datoms]
   (let [e (:e datom)
         attr-nses (map (comp namespace :a) (filter #(= (:e %) (:e datom)) datoms))]
@@ -849,14 +860,17 @@
           cust (get-in req [:ring-req :auth :cust])
           token-id (:token-id ?data)
           stripe-customer (plan-http/create-stripe-customer team cust token-id)
-          tx @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
-                                       :transaction/team (:db/id team)
-                                       :cust/uuid (:cust/uuid cust)
-                                       :transaction/broadcast true}
-                                      (-> (plan-http/stripe-customer->plan-fields stripe-customer)
-                                        (assoc :db/id (:db/id plan)
-                                               :plan/paid? true
-                                               :plan/billing-email (:cust/email cust)))])]
+          tx @(d/transact (pcd/conn) (concat
+                                      [{:db/id (d/tempid :db.part/tx)
+                                        :transaction/team (:db/id team)
+                                        :cust/uuid (:cust/uuid cust)
+                                        :transaction/broadcast true}
+                                       (-> (plan-http/stripe-customer->plan-fields stripe-customer)
+                                         (assoc :db/id (:db/id plan)
+                                                :plan/paid? true
+                                                :plan/billing-email (:cust/email cust)))
+                                       (when (:plan/coupon-code plan)
+                                         [:db/retract (:db/id plan) :plan/coupon-code (:plan/coupon-code plan)])]))]
       (?reply-fn {:plan-created? true}))))
 
 (defmethod ws-handler :team/update-card [{:keys [client-id ?data ?reply-fn] :as req}]
@@ -874,7 +888,7 @@
                                       (-> (plan-http/stripe-customer->plan-fields stripe-customer)
                                         (assoc :db/id (:db/id plan)
                                                :plan/paid? true))])]
-      (?reply-fn {:plan-created? true}))))
+      (?reply-fn {:card-updated? true}))))
 
 (defmethod ws-handler :frontend/save-browser-settings [{:keys [client-id ?data ?reply-fn] :as req}]
   (if-let [cust (-> req :ring-req :auth :cust)]

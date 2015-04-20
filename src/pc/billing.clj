@@ -7,7 +7,21 @@
             [pc.models.team :as team-model]
             [pc.models.plan :as plan-model]
             [pc.models.permission :as permission-model]
+            [pc.stripe :as stripe]
             [pc.util.date :as date-util]))
+
+(defn active-history [db team]
+  (->> (d/q '[:find ?v ?i ?op
+             :in $ ?plan-id
+             :where
+             [?plan-id :plan/active-custs ?v ?tx ?op]
+             [?tx :db/txInstant ?i]]
+           (d/history db) (:db/id (:team/plan team)))
+    (sort-by second)
+    (map (fn [[cust-id instant added?]]
+           {:cust (d/entity db cust-id)
+            :instant instant
+            :added? added?}))))
 
 (def active-threshold 10)
 
@@ -45,12 +59,21 @@
                                         (conj acc u)
                                         acc))
                                     #{}))]
-      @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
-                                :transaction/team (:db/id team)
-                                :transaction/broadcast true}
-                               (pcd/replace-many (:db/id plan)
-                                                 :plan/active-custs
-                                                 (set (map :db/id active-custs)))]))))
+      (let [t @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                        :transaction/team (:db/id team)
+                                        :transaction/broadcast true}
+                                       (pcd/replace-many (:db/id plan)
+                                                         :plan/active-custs
+                                                         (set (map :db/id active-custs)))])
+            before-custs (:plan/active-custs (d/entity (:db-before t) (:db/id plan)))
+            after-custs (:plan/active-custs (d/entity (:db-after t) (:db/id plan)))
+            ;; 1 is the minimum, so that's what we want to compare for billing purposes
+            paid-before-count (max 1 (count before-custs))
+            paid-after-count (max 1 (count after-custs))]
+        (when (and (not= paid-before-count paid-after-count)
+                   (:plan/paid? plan))
+          ;; We'll send an email after Stripe sends out their webhook
+          (stripe/update-quantity (:plan/stripe-customer-id plan) (:plan/stripe-subscription-id plan) paid-after-count))))))
 
 (defn set-active-users-cron []
   (let [now (time/now)

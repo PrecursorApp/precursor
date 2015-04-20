@@ -12,6 +12,7 @@
             pc.less
             pc.logging
             pc.models.chat-bot
+            pc.models.plan
             pc.nrepl
             pc.nts
             pc.repl
@@ -29,6 +30,7 @@
    #'pc.datomic.schema/init
    #'pc.datomic.migrations/init
    #'pc.models.chat-bot/init
+   #'pc.models.plan/init
    #'pc.nts/init
    #'pc.assets/init
    #'pc.email/init
