@@ -214,19 +214,10 @@
         (html
          [:div.the-why
           [:div.our-claim
-           [:div.our-philosphy-wrap
-            [:div.our-philosphy.content
-             [:h1.philosphy-headline
-              [:span.philosphy-needed "Precursor wants to simplify"]
-              [:span.philosphy-excess " your"]
-              [:span.philosphy-needed " prototyping"]
-              [:span.philosphy-excess " workflow"]
-              [:span.philosphy-needed "."]]
-             [:p.philosphy-subtext
-              [:span.philosphy-needed "No nonsense—"]
-              [:span.philosphy-needed "exactly what you need"]
-              [:span.philosphy-excess " when you need it"]
-              [:span.philosphy-needed "."]]
+           [:div.our-philosophy-wrap
+            [:div.our-philosophy.content
+             [:h1 "Prototyping and team collaboration should be simple. "]
+             [:p "And whiteboards weren't designed for teams. "]
              [:div.calls-to-action
               (om/build make-button (select-keys app [:document/id]))]]]]
           [:div.our-proof {:class (when (:show-scroll-to-arrow app) "extend")}
@@ -275,44 +266,38 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.the-how
-          [:div.feature.content
-           {:class (when (contains? active-features "1") "art-visible") :ref "1"}
+          [:div.feature.content {:class (when (contains? active-features "1") "art-visible") :ref "1"}
            [:div.feature-story
-            [:h2.feature-headline
-             [:span "Make your ideas accessible anywhere, using any device."]]
-            [:p.feature-copy
-             [:span.content-copy
-              "Quickly find sketches on any tablet or phone and be ready when inspiration hits you.
-              Don't bother wasting time with a big app download—just pull up your favorite browser."]]]
+            [:h2.content-copy
+             "Make your ideas accessible anywhere, using any device. "]
+            [:p.content-copy
+             "Quickly find sketches on any tablet or phone and be ready when inspiration hits you. "
+             "Don't bother wasting time with a big app download—just pull up your favorite browser. "]]
            [:div.feature-media artwork-mobile]]
           [:div.feature-divider]
-          [:div.feature.content
-           {:class (when (contains? active-features "2") "art-visible") :ref "2"}
+          [:div.feature.content {:class (when (contains? active-features "2") "art-visible") :ref "2"}
            [:div.feature-story
-            [:h2.feature-headline
-             [:span "Make prototypes interactive & refine your user experience."]]
-            [:p.feature-copy
-             [:span.content-copy
-              "Easily link your wireframes together in minutes to create working demos of your idea.
-              You'll save time by pinpointing areas for improvement before you go into development."]]
-            [:a.feature-link {:href "/blog/interactive-layers" :target "_self" :role "button" :title "Read the tutorial."}
-             [:span.content-copy
-              "Read the tutorial."]]]
+            [:h2.content-copy
+             "Make prototypes interactive & refine your user experience. "]
+            [:p.content-copy
+             "Easily link your wireframes together in minutes to create working demos of your idea. "
+             "You'll save time by pinpointing areas for improvement before you go into development. "]
+            [:a.feature-link.content-copy {:href "/blog/interactive-layers"}
+             "Read the tutorial."]]
            [:div.feature-media.reverse artwork-interact]]
           [:div.feature-divider]
-          [:div.feature.content
-           {:class (when (contains? active-features "3") "art-visible") :ref "3"}
+          [:div.feature.content {:class (when (contains? active-features "3") "art-visible") :ref "3"}
            [:div.feature-story
-            [:h2.feature-headline
-             [:span "Make team collaboration more productive & engaging."]]
-            [:p.feature-copy
-             [:span.content-copy
-              "Our team features are optimized to make collaborating in real-time effortless.
-              Communicate and create new ideas with your teammates in one secure place."]]
-            [:a.feature-link {:href "/pricing" :role "button" :title "Start your trial"}
-             [:span.content-copy
-              "Try private docs."]]]
-           [:div.feature-media artwork-team]]])))))
+            [:h2.content-copy
+             "Make team collaboration more productive & engaging. "]
+            [:p.content-copy
+             "Our team features are optimized to make collaborating in real-time effortless. "
+             "Communicate and create new ideas with your teammates in one secure place. "]
+            [:a.feature-link.content-copy {:href "/pricing"}
+             "Try private docs."]]
+           [:div.feature-media artwork-team]
+
+           ]])))))
 
 (defn the-what [app owner]
   (reify
@@ -324,15 +309,15 @@
          [:div.the-what
           [:div.our-proof]
           [:div.our-claim
-           [:div.our-philosphy-wrap
-            [:div.our-philosphy.content
-             [:h1.philosphy-headline
-              [:span.philosphy-needed "Precursor is pure prototyping."]]
-             [:p.philosphy-subtext
-              [:span.philosphy-needed "Real-time collaboration"]
-              [:span.philosphy-excess " that makes it easy "]
-              [:span.philosphy-excess " to focus on what's important"]
-              [:span.philosphy-needed "."]]
+           [:div.our-philosophy-wrap
+            [:div.our-philosophy.content
+             [:h1.philosophy-headline
+              [:span.philosophy-needed "Precursor is pure prototyping."]]
+             [:p.philosophy-subtext
+              [:span.philosophy-needed "Real-time collaboration"]
+              [:span.philosophy-excess " that makes it easy "]
+              [:span.philosophy-excess " to focus on what's important"]
+              [:span.philosophy-needed "."]]
              (if (utils/logged-in? owner)
                [:div.calls-to-action
                 (om/build make-button (select-keys app [:document/id]))]
