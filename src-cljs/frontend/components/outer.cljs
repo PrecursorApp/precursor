@@ -73,7 +73,7 @@
           [:div.content
            [:div.outer-form-info
             [:h1.outer-form-heading
-             "What is the name of your team? "
+             "What should we call your team? "
              "Grab your domain to get started. "]
             (if (utils/logged-in? owner)
               [:p.outer-form-copy
@@ -299,7 +299,7 @@
           [:div.team-features
             [:div.features-head.content
              [:h1.content-heading
-              "Team domains make real-time collaboration even simpler. "]
+              "Team domains make real-time collaboration more productive. "]
              [:p.content-copy
               "Precursor prototyping is free. "
               "But we're a "
