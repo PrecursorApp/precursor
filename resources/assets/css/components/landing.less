@@ -8,7 +8,7 @@
     }
   }
   &.page {
-    padding: 0;       // VETO
+    padding: 0;
     .the-why {
       padding-top: @tile;
     }
@@ -135,7 +135,7 @@
     }
     .something-default {
       &:after {
-        display: none; // VETO
+        display: none;
       }
     }
   }
@@ -191,47 +191,14 @@
   .flexy(column);
   position: relative;
   color: fade(@white, 75.75); // TODO use opacity variables here
-  .mq_640({
-    min-height: 100vh;
-  });
 }
-.our-philosphy-wrap {
+.our-philosophy-wrap {
   flex: 1;
   .flexy(center);
 }
-.our-philosphy {
+.our-philosophy {
   flex: 1;
   .flexy(column);
-}
-.philosphy-headline {
-  margin: 0;
-  padding-bottom: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  .mq_640({
-    font-size: 3em; // VETO
-    line-height: 1.125em; // VETO
-  });
-  &:first-letter {
-    .mq_640({
-      text-transform: capitalize;
-    });
-  }
-}
-.philosphy-subtext {
-  margin-bottom: 2rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  &:first-letter {
-    .mq_640({
-      text-transform: capitalize;
-    });
-  }
-}
-.philosphy-excess {
-  .mq_960({
-    display: none;
-  });
 }
 .our-proof {
   height: 3px;
@@ -290,7 +257,7 @@
   width: 100%;
   border-bottom: 1px dashed @gray_light;
   .mq_640({
-    border-bottom: 1px solid @gray_light; // VETO
+    border-bottom: 1px solid @gray_light;
   });
   &:before {
     .gradient(to right, @white, fade(@white, 0), @white);
@@ -301,7 +268,7 @@
     width: 100%;
     height: 1px;
     .mq_640({
-      display: none; // VETO
+      display: none;
     });
   }
 }
@@ -317,17 +284,14 @@
   });
 }
 .feature-headline {
-  margin: 0; // VETO
-  padding: @menu_padding 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  .mq_640({
+    font-size: 2.5em;
+  });
   span {
     user-select: auto;
   }
-}
-.feature-copy {
-  margin: 0; // VETO
-  padding-bottom: @menu_padding;
 }
 .feature-link {
   display: inline-block;
@@ -386,10 +350,10 @@
   .mq_640({
     width: 100%;
     margin-top: auto;
-    padding: @menu_padding 25%; // VETO
+    padding: @menu_padding 25%;
   });
   &.reverse {
-    order: 1; // VETO
+    order: 1;
   }
   &:not(.reverse) {
     .mq_640({
