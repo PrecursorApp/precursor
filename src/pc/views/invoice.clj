@@ -7,6 +7,9 @@
             [pc.http.urls :as urls]))
 
 
+;; Docs on building pdfs with clj-pdf:
+;; https://github.com/yogthos/clj-pdf
+
 (def styles {:link {:color [6 155 250]}})
 
 (defn invoice-pdf [team invoice out]
