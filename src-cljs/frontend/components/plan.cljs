@@ -112,11 +112,46 @@
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
          (if (nil? active-users)
-           [:div.loading "Loading"]
-           [:div
+           [:div.loading {:key "loading"} "Loading"]
+           [:div {:key "history"}
             (for [{:keys [cust instant added?]} (reverse history)]
               [:div (str cust (if added? " was marked active at " " was marked inactive at ") instant)])]))))))
 
+(defn invoice-component [{:keys [invoice-id]} owner]
+  (reify
+    om/IInitState
+    (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-entity-listener (om/get-shared owner :team-db)
+                               invoice-id
+                               (om/get-state owner :listener-key)
+                               (fn [tx-report]
+                                 (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-entity-listener (om/get-shared owner :team-db)
+                                  invoice-id
+                                  (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [invoice (utils/inspect (d/touch (d/entity @(om/get-shared owner :team-db) invoice-id)))]
+        (html
+         [:table
+          [:tbody
+           (for [[k v] invoice]
+             [:tr
+              [:td (str k)]
+              [:td (str v)]])]])))))
+
+(defn invoices [{:keys [plan team-uuid]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       [:div
+        (for [invoice (:plan/invoices plan)]
+          (om/build invoice-component {:invoice-id (:db/id invoice)} {:key :invoice-id}))]))))
 
 (defn paid-info [{:keys [plan team-uuid]} owner]
   (reify
@@ -126,19 +161,19 @@
         (html
          [:div.make
           [:h4 "Credit card"]
-          [:p
-           (for [[k v] (filter #(= "credit-card" (namespace (first %))) plan)
-                 :let [v (str v)]]
-             [:tr.make
-              [:td [:div {:title k} (str k)]]
-              [:td [:div.connection-result {:title v}
-                    v]]])]
+          (for [[k v] (filter #(= "credit-card" (namespace (first %))) plan)
+                :let [v (str v)]]
+            [:tr.make
+             [:td [:div {:title k} (str k)]]
+             [:td [:div.connection-result {:title v}
+                   v]]])
           [:a {:on-click #(cast! :change-card-clicked)
                :role "button"}
            "Change card"]
           [:h4 "Billing email"]
           [:p "We'll send invoices to this email."]
-          (om/build billing-email {:plan plan})
+          (om/build billing-email {:plan plan}
+                    {:react-key "billing-email"})
           [:h4 "Discount"]
           [:p "Coupon: " (name (:discount/coupon plan ""))]
           [:p (str "Start: " (:discount/start plan))]
@@ -155,9 +190,15 @@
                 :role "button"}
             "team permissions"]
            " page."]
-          (om/build active-users {:plan plan})
+          (om/build active-users {:plan plan}
+                    {:react-key "active-users"})
           [:h4 "Plan history"]
-          (om/build active-history {:team-uuid team-uuid})])))))
+          (om/build active-history {:team-uuid team-uuid}
+                    {:react-key "active-history"})
+          [:h4 "Invoices"]
+          (om/build invoices {:plan plan :team-uuid team-uuid}
+                    {:react-key "invoices"})
+          ])))))
 
 (defn plan-info [{:keys [plan-id team-uuid]} owner]
   (reify
@@ -183,10 +224,12 @@
          (if (:plan/trial-end plan) ;; wait for plan to load
            (if (:plan/paid? plan)
              (om/build paid-info {:plan (ds/touch+ plan)
-                                  :team-uuid team-uuid})
+                                  :team-uuid team-uuid}
+                       {:react-key "paid-info"})
              (om/build trial-info {:plan (ds/touch+ plan)
-                                   :team-uuid team-uuid}))
-           [:div.loading]))))))
+                                   :team-uuid team-uuid}
+                       {:react-key "trial-info"}))
+           [:div.loading {:key "loading"}]))))))
 
 (defn plan-overlay [app owner]
   (reify
@@ -221,4 +264,5 @@
           [:div.content
            (when (:team/plan team)
              (om/build plan-info {:plan-id (:db/id (:team/plan team))
-                                  :team-uuid (:team/uuid team)}))]])))))
+                                  :team-uuid (:team/uuid team)}
+                       {:react-key "plan-info"}))]])))))

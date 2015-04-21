@@ -75,8 +75,8 @@
             invoice (invoice-model/find-by-stripe-id db (get invoice-fields "id"))
             ;; Stripe gives us a list of the keys that changed, we extract those and
             ;; do :db/retract from previous  and :db/add from new attrs
-            before-values (pc.utils/inspect (-> (get hook-json "previous_attributes")
-                                              stripe/invoice-api->model))
+            before-values (-> (get hook-json "previous_attributes")
+                            stripe/invoice-api->model)
             after-values (stripe/invoice-api->model invoice-fields)]
         (when (seq before-values) ;; only if things we care about changed
           @(d/transact (pcd/conn) (reduce-kv (fn [acc k before-v]

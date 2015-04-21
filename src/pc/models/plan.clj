@@ -3,7 +3,9 @@
             [clj-time.coerce]
             [datomic.api :as d]
             [pc.datomic :as pcd]
-            [pc.datomic.web-peer :as web-peer]))
+            [pc.datomic.web-peer :as web-peer]
+            [pc.models.invoice :as invoice-model]
+            [pc.utils :as utils]))
 
 ;; How coupons work on a plan:
 ;;  1. plan gets plan/coupon-code on trial start
@@ -31,8 +33,10 @@
                   :credit-card/exp-year
                   :credit-card/exp-month
                   :credit-card/last4
-                  :credit-card/brand])
+                  :credit-card/brand
+                  :plan/invoices])
     (update-in [:plan/active-custs] #(set (map :cust/email %)))
+    (utils/update-when-in [:plan/invoices] #(map invoice-model/read-api %))
     (assoc :db/id (web-peer/client-id plan))))
 
 (defn trial-over? [plan & {:keys [now]

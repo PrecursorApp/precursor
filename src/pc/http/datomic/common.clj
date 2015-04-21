@@ -91,6 +91,14 @@
                      :credit-card/exp-month
                      :credit-card/last4
                      :credit-card/brand
+
+                     :invoice/subtotal
+                     :invoice/total
+                     :invoice/date
+                     :invoice/paid?
+                     :invoice/attempted?
+                     :invoice/next-payment-attempt
+                     :invoice/description
                      })))
 
 (defn translate-datom-dispatch-fn [db d] (:a d))
