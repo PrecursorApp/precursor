@@ -14,6 +14,8 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.flag :as flag-model]
+            [pc.profile :as profile]
+            [pc.stripe.dev :as stripe-dev]
             [pc.views.admin :as admin-content]
             [pc.views.content :as content]
             [ring.middleware.anti-forgery]
@@ -31,7 +33,9 @@
                                 [:div [:a {:href "/clients"} "Clients"]]
                                 [:div [:a {:href "/occupied"} "Occupied"]]
                                 [:div [:a {:href "/interesting"} "Interesting"]]
-                                [:div [:a {:href "/upload"} "Upload to Google CDN"]]])))
+                                [:div [:a {:href "/upload"} "Upload to Google CDN"]]
+                                (when (profile/fetch-stripe-events?)
+                                  [:div [:a {:href "/stripe-events"} "View Stripe events"]])])))
 
 (defpage early-access "/early-access" [req]
   (hiccup/html (content/layout {}
@@ -116,7 +120,8 @@
 (defpage upload "/upload" [req]
   (hiccup/html (content/layout {} (admin-content/upload-files))))
 
-
+(defpage upload "/stripe-events" [req]
+  (hiccup/html (content/layout {} (admin-content/stripe-events))))
 
 (defpage refresh-client [:post "/refresh-client-stats"] [req]
   (if-let [client-id (get-in req [:params "client-id"])]
@@ -163,6 +168,11 @@
                                        [:a {:href "/teams"}
                                         "Go back to the teams page"]
                                        "."])})))
+
+(defpage retry-stripe-event [:post "/retry-stripe-event/:evt-id"] [req]
+  (stripe-dev/retry-event (get-in req [:params :evt-id]))
+  {:status 200
+   :body (str "retried " (get-in req [:params :evt-id]))})
 
 (defn wrap-require-login [handler]
   (fn [req]

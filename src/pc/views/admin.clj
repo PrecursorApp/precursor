@@ -1,5 +1,6 @@
 (ns pc.views.admin
-  (:require [clj-time.coerce]
+  (:require [cheshire.core :as json]
+            [clj-time.coerce]
             [clj-time.format]
             [clj-time.core :as time]
             [clojure.string]
@@ -16,6 +17,7 @@
             [pc.models.doc :as doc-model]
             [pc.models.permission :as permission-model]
             [pc.replay :as replay]
+            [pc.stripe.dev :as stripe-dev]
             [ring.util.anti-forgery :as anti-forgery]))
 
 (defn interesting [doc-ids]
@@ -512,3 +514,17 @@
      [:img#img {:src (urls/svg-from-doc doc :query {:as-of initial-tx})
                 :width "80%"
                 :style "border: 1px solid rgba(0,0,0,0.3)"}])))
+
+(defn stripe-events []
+  (list
+   [:style "body { padding: 1em }"]
+   (for [event (reverse @stripe-dev/events)]
+     [:div.event
+      [:div.event-type
+       [:span (get-in event ["type"])]
+       [:form {:style "display: inline-block; padding-left: 1em"
+               :method "post"
+               :action (str "/retry-stripe-event/" (get-in event ["id"]))}
+        (anti-forgery/anti-forgery-field)
+        [:input {:type "submit" :value "retry"}]]]
+      [:pre.event-body (h/h (json/encode event {:pretty true}))]])))

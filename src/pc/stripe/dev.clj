@@ -8,16 +8,7 @@
             [pc.stripe :as stripe]
             [slingshot.slingshot :refer (try+ throw+)]))
 
-(defn conj-limit
-  "Expects a vector, keeps the newest n items. May return a shorter vector than was passed in."
-  ([v n x]
-   (subvec (conj v x) (if (> (dec n) (count v))
-                        0
-                        (- (count v) (dec n)))))
-  ([v n x & xs]
-   (if xs
-     (recur (conj-limit v n x) n (first xs) (next xs))
-     (conj-limit v n x))))
+(def max-events 1000)
 
 (defonce events (atom []))
 
@@ -31,7 +22,7 @@
   (swap! events (fn [e]
                   (->> (set/union (set e) (set new-events))
                     (sort-by #(get % "created"))
-                    (take-last 100)))))
+                    (take-last max-events)))))
 
 
 (defn fetch-events []
@@ -42,6 +33,11 @@
     (doseq [event new-events]
       (http/post (urls/make-url "/hooks/stripe") {:body (json/encode event)
                                                   :throw-exceptions false}))))
+
+(defn retry-event [evt-id]
+  (when-let [evt (first (filter #(= evt-id (get % "id")) @events))]
+    (http/post (urls/make-url "/hooks/stripe") {:body (json/encode evt)
+                                                :throw-exceptions false})))
 
 (def interrupt (atom nil))
 
