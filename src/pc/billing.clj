@@ -73,7 +73,10 @@
         (when (and (not= paid-before-count paid-after-count)
                    (:plan/paid? plan))
           ;; We'll send an email after Stripe sends out their webhook
-          (stripe/update-quantity (:plan/stripe-customer-id plan) (:plan/stripe-subscription-id plan) paid-after-count))))))
+          (stripe/update-quantity (:plan/stripe-customer-id plan) (:plan/stripe-subscription-id plan) paid-after-count)
+          (stripe/create-invoice (:plan/stripe-customer-id plan)
+                                 :description (str "Number of active users changed from "
+                                                   paid-before-count " to " paid-after-count)))))))
 
 (defn set-active-users-cron []
   (let [now (time/now)

@@ -4,7 +4,10 @@
             [clj-time.core :as time]
             [clj-time.coerce]
             [clojure.set :as set]
-            [pc.util.date :as date-util]))
+            [clojure.tools.logging :as log]
+            [pc.utils :as utils]
+            [pc.util.date :as date-util]
+            [slingshot.slingshot :refer (try+ throw+)]))
 
 ;; Prerequisites:
 ;;  clj-http: https://github.com/dakrone/clj-http
@@ -41,6 +44,24 @@
    :discount/end (timestamp->model (get discount-fields "end"))
    :discount/coupon {:coupon/stripe-id (get-in discount-fields ["coupon" "id"])}})
 
+(def invoice-translation
+  {"total" :invoice/total
+   "paid" :invoice/paid?
+   "id" :invoice/stripe-id
+   "subtotal" :invoice/subtotal
+   "attempted" :invoice/attempted?
+   "date" :invoice/date
+   "next_payment_attempt" :invoice/next-payment-attempt
+   "description" :invoice/description})
+
+(defn invoice-api->model [api-fields]
+  (-> api-fields
+    (select-keys (keys invoice-translation))
+    (set/rename-keys invoice-translation)
+    (utils/remove-map-nils)
+    (utils/update-when-in [:invoice/date] timestamp->model)
+    (utils/update-when-in [:invoice/next-payment-attempt] timestamp->model)))
+
 (def base-url "https://api.stripe.com/v1/")
 
 (defn api-call [method endpoint & [params]]
@@ -75,6 +96,11 @@
   (api-call :post (str "customers/" customer-id "/subscriptions/" subscription-id)
             {:form-params {:quantity quantity}}))
 
+(defn create-invoice [customer-id & {:keys [description]}]
+  (api-call :post "invoices" {:form-params (merge {:customer customer-id}
+                                                  (when description
+                                                    {:description description}))}))
+
 (defn fetch-customer [customer-id]
   (api-call :get (str "customers/" customer-id)))
 
@@ -83,3 +109,34 @@
 
 (defn fetch-event [event-id]
   (api-call :get (str "events/" event-id)))
+
+(defn ensure-plans []
+  (try+
+   (api-call :post
+             "plans"
+             {:form-params {:id "team"
+                            :amount (* 100 10) ; $10
+                            :currency "usd"
+                            :interval "month"
+                            :name "Team subscription"}})
+   (catch [:status 400] e
+     (if (some-> e :body json/decode (get-in ["error" "message"]) (= "Plan already exists."))
+       (log/infof "team plan already exists in Stripe")
+       (throw+)))))
+
+(defn ensure-coupons []
+  (try+
+   (api-call :post
+             "coupons"
+             {:form-params {:id "product-hunt"
+                            :percent_off "50"
+                            :duration "repeating"
+                            :duration_in_months 6}})
+   (catch [:status 400] e
+     (if (some-> e :body json/decode (get-in ["error" "message"]) (= "Coupon already exists."))
+       (log/infof "product-hunt coupon already exists in Stripe")
+       (throw+)))))
+
+(defn init []
+  (ensure-plans)
+  (ensure-coupons))

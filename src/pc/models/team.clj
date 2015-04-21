@@ -27,6 +27,12 @@
     :e
     (d/entity db)))
 
+(defn find-by-plan [db plan]
+  (->> (d/datoms db :vaet (:db/id plan) :team/plan)
+    first
+    :e
+    (d/entity db)))
+
 (defn create-for-subdomain! [subdomain cust annotations]
   @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)}
                                   annotations)

@@ -860,17 +860,16 @@
           cust (get-in req [:ring-req :auth :cust])
           token-id (:token-id ?data)
           stripe-customer (plan-http/create-stripe-customer team cust token-id)
-          tx @(d/transact (pcd/conn) (concat
-                                      [{:db/id (d/tempid :db.part/tx)
-                                        :transaction/team (:db/id team)
-                                        :cust/uuid (:cust/uuid cust)
-                                        :transaction/broadcast true}
-                                       (-> (plan-http/stripe-customer->plan-fields stripe-customer)
-                                         (assoc :db/id (:db/id plan)
-                                                :plan/paid? true
-                                                :plan/billing-email (:cust/email cust)))
-                                       (when (:plan/coupon-code plan)
-                                         [:db/retract (:db/id plan) :plan/coupon-code (:plan/coupon-code plan)])]))]
+          tx @(d/transact (pcd/conn) (concat [{:db/id (d/tempid :db.part/tx)
+                                               :transaction/team (:db/id team)
+                                               :cust/uuid (:cust/uuid cust)
+                                               :transaction/broadcast true}
+                                              (-> (plan-http/stripe-customer->plan-fields stripe-customer)
+                                                (assoc :db/id (:db/id plan)
+                                                       :plan/paid? true
+                                                       :plan/billing-email (:cust/email cust)))]
+                                             (when (:plan/coupon-code plan)
+                                               [[:db/retract (:db/id plan) :plan/coupon-code (:plan/coupon-code plan)]])))]
       (?reply-fn {:plan-created? true}))))
 
 (defmethod ws-handler :team/update-card [{:keys [client-id ?data ?reply-fn] :as req}]

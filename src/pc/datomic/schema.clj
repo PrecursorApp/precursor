@@ -661,6 +661,11 @@
               :db.type/string
               :db/doc "Holds coupon code for the plan until the Stripe subscription is created")
 
+   (attribute :plan/stripe-event-ids
+              :db.type/string
+              :db/cardinality :db.cardinality/many
+              :db/doc "Stripe webhook ids that have been handled or are currently being handled")
+
    (attribute :credit-card/exp-year
               :db.type/long)
 
@@ -688,7 +693,8 @@
               :db/cardinality :db.cardinality/many)
 
    (attribute :invoice/stripe-id
-              :db.type/string)
+              :db.type/string
+              :db/unique :db.unique/value)
 
    (attribute :invoice/subtotal
               :db.type/long
@@ -706,6 +712,12 @@
 
    (attribute :invoice/attempted?
               :db.type/boolean)
+
+   (attribute :invoice/next-payment-attempt
+              :db.type/instant)
+
+   (attribute :invoice/description
+              :db.type/string)
 
    (attribute :discount/coupon
               :db.type/ref)

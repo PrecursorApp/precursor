@@ -140,7 +140,7 @@
           [:p "We'll send invoices to this email."]
           (om/build billing-email {:plan plan})
           [:h4 "Discount"]
-          [:p "Coupon: " (name (:discount/coupon plan))]
+          [:p "Coupon: " (name (:discount/coupon plan ""))]
           [:p (str "Start: " (:discount/start plan))]
           [:p (str "End: " (:discount/end plan))]
           [:h4 "Usage"]

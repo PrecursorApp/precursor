@@ -12,6 +12,10 @@
 ;;  3. The discount has an end-date, after which it's no longer applied
 ;;  4. Discount mirrors what is up in Stripe
 
+(defn find-by-stripe-customer [db stripe-customer]
+  (d/entity db (d/q '[:find ?e . :in $ ?c :where [?e :plan/stripe-customer-id ?c]]
+                    db stripe-customer)))
+
 (defn read-api [plan]
   (-> plan
     (select-keys [:plan/start
