@@ -16,6 +16,8 @@
                  [javax.servlet/servlet-api "2.5"]
                  [slingshot "0.12.1"]
                  [hiccup "1.0.4"]
+                 [clj-pdf "2.0.3"]
+
                  [org.clojure/tools.logging "0.3.1"]
                  [log4j "1.2.17"]
                  [log4j/apache-log4j-extras "1.1"]
