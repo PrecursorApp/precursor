@@ -51,7 +51,7 @@
     (with-hook-accounting plan hook-json
       (let [team (team-model/find-by-plan db plan)
             invoice-fields (get-in hook-json ["data" "object"])
-            discount-fields (get-in invoice-fields "discount")
+            discount-fields (get-in invoice-fields ["discount"])
             invoice-id (d/tempid :db.part/user)]
         @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
                                   :transaction/broadcast true
