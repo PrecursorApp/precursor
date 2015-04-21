@@ -18,6 +18,7 @@
             pc.repl
             pc.server
             pc.statsd
+            pc.stripe.dev
             pc.utils)
   (:gen-class))
 
@@ -39,7 +40,8 @@
    #'pc.http.webhooks/init
    #'pc.datomic.admin-db/init
    #'pc.http.admin/init
-   #'pc.billing/init])
+   #'pc.billing/init
+   #'pc.stripe.dev/init])
 
 (defn pretty-now []
   (.toLocaleString (java.util.Date.)))

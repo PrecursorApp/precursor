@@ -110,6 +110,13 @@
 (defn fetch-event [event-id]
   (api-call :get (str "events/" event-id)))
 
+(defn fetch-events [& {:keys [limit ending-before]
+                       :or {limit 100}}]
+  (api-call :get "events" {:query-params (merge
+                                          {:limit limit}
+                                          (when ending-before
+                                            {:ending_before ending-before}))}))
+
 (defn ensure-plans []
   (try+
    (api-call :post
