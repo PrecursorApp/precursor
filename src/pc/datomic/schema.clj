@@ -776,6 +776,16 @@
               acc))
           [] @schema-ents))
 
+(defn prettify-tx-data [db tx-data]
+  (for [[e a v tx added] tx-data]
+    [e
+     (get-ident a)
+     (if (contains? (enums) a)
+       (get-ident v)
+       v)
+     tx
+     added]))
+
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))
   ([conn]

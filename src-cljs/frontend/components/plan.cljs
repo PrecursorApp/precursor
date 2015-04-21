@@ -34,6 +34,8 @@
            (if (plan-model/in-trial? plan)
              (str "This plan is still in trial for " (time-left plan))
              "The trial is over")]
+          (when (= "product-hunt" (:plan/coupon-code plan))
+            "You have the Product Hunt discount, which gives you 50% off for the first 6 months.")
           [:p.make
            [:a {:role "button"
                 :on-click #(cast! :start-plan-clicked)}

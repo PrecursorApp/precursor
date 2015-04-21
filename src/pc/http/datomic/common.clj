@@ -82,6 +82,7 @@
                      :plan/paid?
                      :plan/billing-email
                      :plan/active-custs
+                     :plan/invoices
 
                      :discount/start
                      :discount/coupon
@@ -157,6 +158,10 @@
 (defmethod translate-datom :discount/coupon [db d]
   (-> d
     (assoc :v (d/ident db (:v d)))))
+
+(defmethod translate-datom :plan/invoices [db d]
+  (-> d
+    (assoc :v (web-peer/client-id (d/entity db (:v d))))))
 
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
