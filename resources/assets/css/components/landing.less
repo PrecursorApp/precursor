@@ -60,8 +60,10 @@
   min-width: @tile * 4;
   height: @tile;
   padding: 0 @padding_outer;
+  border: 2px solid @white;
   cursor: pointer;
   overflow: hidden;
+  transition: border @run @bezier_deform;
   .mq_640({
     width: 100%;
   });
@@ -108,15 +110,26 @@
     }
   }
   &.alt {
-    color: fade(@white, (100 * @opacity_darker_dark));
-    mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
+    order: 2;
+    color: fade(@white, (100 * @opacity_darker_gray));
+    margin-left: @menu_padding;
+    border-color: fade(@white, (100 * @opacity_darker_dark));
+    .mq_640({
+      display: none;
+    });
     &:hover {
       color: @white;
+      border-color: @white;
+      transition-duration: @run_fast;
       .something-wheel {
         &:before,
         &:after {
           color: fade(@white, (100 * @opacity_darker_dark));
         }
+      }
+      ~ .pancake-button {
+        color: fade(@white, (100 * @opacity_darker_gray));
+        border-color: fade(@white, (100 * @opacity_darker_dark));
       }
     }
     .make-prepend,
@@ -127,22 +140,28 @@
         text-transform: none;
       }
     }
-    .make-append {
-      margin-right: auto;
-      .mq_640({
-        margin-right: 0;
-      });
+    .make-something {
+      .flexy(center);
+      height: @tile;
+      mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
     }
     .something-default {
       &:after {
         display: none;
       }
     }
+    .something-wheel {
+      bottom: 0;
+      height: @tile / 4;
+      margin: auto 0;
+    }
+    ~ .pancake-button {
+      order: 1;
+    }
   }
   &:not(.alt) {
     color: @white;
     transition: @run @bezier_fadein;
-    border: 2px solid @white;
     &:hover,
     &:focus,
     &:active {
