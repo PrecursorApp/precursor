@@ -108,14 +108,14 @@
     }
   }
   &.alt {
-    color: fade(@white, 41.75); // TODO use opacity variables here
+    color: fade(@white, (100 * @opacity_darker_dark));
     mask-image: linear-gradient(to bottom, fade(@black, 0), @black, @black, fade(@black, 0));
     &:hover {
       color: @white;
       .something-wheel {
         &:before,
         &:after {
-          color: fade(@white, 41.75); // TODO use opacity variables here
+          color: fade(@white, (100 * @opacity_darker_dark));
         }
       }
     }
