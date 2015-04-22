@@ -217,7 +217,8 @@
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
              [:h1 "Prototyping and team collaboration should be simple. "]
-             [:p "And whiteboards weren't designed for teams. "]
+             [:p {:style {:letter-spacing "-.0067px;"}} ; style is inline so it gets deleted if copy ever changes (dirty hack to get text on single line for phone)
+              "No nonsense. That's why we made Precursor."]
              [:div.calls-to-action
               (om/build make-button (select-keys app [:document/id]))]]]]
           [:div.our-proof {:class (when (:show-scroll-to-arrow app) "extend")}
@@ -269,35 +270,35 @@
           [:div.feature.content {:class (when (contains? active-features "1") "art-visible") :ref "1"}
            [:div.feature-story
             [:h2.content-copy
-             "Make your ideas accessible anywhere, using any device. "]
+             "Prototype ideas anywhere."]
             [:p.content-copy
-             "Quickly find sketches on any tablet or phone and be ready when inspiration hits you. "
-             "Don't bother wasting time with a big app download—just pull up your favorite browser. "]]
+             "We designed our interface to get out of the way and let you concentrate on your ideas. "
+             "It's simple enough to show on your phone and perfect for collaborating on your tablet. "]
+            [:a.feature-link {:href "/features/team"}
+             "Save to iPhone."]]
            [:div.feature-media artwork-mobile]]
           [:div.feature-divider]
           [:div.feature.content {:class (when (contains? active-features "2") "art-visible") :ref "2"}
            [:div.feature-story
             [:h2.content-copy
-             "Make prototypes interactive & refine your user experience. "]
+             "Make real interactions."]
             [:p.content-copy
              "Easily link your wireframes together in minutes to create working demos of your idea. "
              "You'll save time by pinpointing areas for improvement before you go into development. "]
-            [:a.feature-link.content-copy {:href "/blog/interactive-layers"}
-             "Read the tutorial."]]
+            [:a.feature-link {:href "/blog/interactive-layers"}
+             "Read our tutorial."]]
            [:div.feature-media.reverse artwork-interact]]
           [:div.feature-divider]
           [:div.feature.content {:class (when (contains? active-features "3") "art-visible") :ref "3"}
            [:div.feature-story
             [:h2.content-copy
-             "Make team collaboration more productive & engaging. "]
+             "Collaborate with ease."]
             [:p.content-copy
              "Our team features are optimized to make collaborating in real-time effortless. "
              "Communicate and create new ideas with your teammates in one secure place. "]
-            [:a.feature-link.content-copy {:href "/pricing"}
-             "Try private docs."]]
-           [:div.feature-media artwork-team]
-
-           ]])))))
+            [:a.feature-link {:href "/features/team"}
+             "See team features."]]
+           [:div.feature-media artwork-team]]])))))
 
 (defn the-what [app owner]
   (reify
@@ -311,21 +312,13 @@
           [:div.our-claim
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
-             [:h1.philosophy-headline
-              [:span.philosophy-needed "Precursor is pure prototyping."]]
-             [:p.philosophy-subtext
-              [:span.philosophy-needed "Real-time collaboration"]
-              [:span.philosophy-excess " that makes it easy "]
-              [:span.philosophy-excess " to focus on what's important"]
-              [:span.philosophy-needed "."]]
+             [:h1 "It's a blackboard designed to help teams brainstorm."]
+             [:p "Communicate ideas to your team more effectively."]
              (if (utils/logged-in? owner)
                [:div.calls-to-action
-                (om/build make-button (select-keys app [:document/id]))]
-
-               [:div.calls-to-action
-                (om/build common/google-login {:source "Landing What"})
                 (om/build make-button (select-keys app [:document/id])
-                          {:opts {:alt "alt"}})])]]]])))))
+                          {:opts {:alt "alt"}})
+                [:a.pancake-button {:href "/trial/team"} "Start a free trial."]])]]]])))))
 
 (defn landing [app owner]
   (reify
