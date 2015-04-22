@@ -184,7 +184,7 @@
                             (cast! :make-button-clicked))
            :on-mouse-enter #(om/set-state! owner :word-list (shuffle word-list))}
           [:div.make-prepend
-           {:data-before "or "}
+           {:data-before "Or "}
            "Make "]
           [:div.make-something
            [:div.something-default (when widths
