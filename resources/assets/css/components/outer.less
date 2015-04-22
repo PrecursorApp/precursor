@@ -188,7 +188,8 @@
 }
 .calls-to-action {
   .flexy(wrap);
-  .bubble-button {
+  .bubble-button,
+  .pancake-button {
     width: @tile_xl;
     .mq_640({
       width: 100%;
@@ -221,8 +222,28 @@
     background-image: none;
     transition-duration: @now;
   }
-  &:focus {
+  &[disabled] {
+    pointer-events: none;
+  }
+  span {
+    user-select: auto;
+  }
+}
+.pancake-button {
+  .flexy(center; center);
+  color: @white;
+  line-height: 1;
+  height: @tile;
+  width: 100%;
+  padding: @menu_padding 0;
+  border: 1px solid @white;
+  transition: @run @bezier_deform;
+  &:hover,
+  &:active {
     color: @black;
+    background: @white;
+    border: 1px solid @white;
+    transition-duration: @run_fast;
   }
   &[disabled] {
     pointer-events: none;
