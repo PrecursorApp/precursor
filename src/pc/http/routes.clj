@@ -209,6 +209,46 @@
            ;; TODO: use an image here
            :body "Please log in so that we can check if you have permission to access this document"})))
 
+(defpage doc-pdf "/document/:document-id.pdf" [req]
+  (let [document-id (-> req :params :document-id)
+        db (pcd/default-db)
+        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
+    (cond (nil? doc)
+          (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
+            (redirect (str "/document/" (:db/id redirect-doc) ".png"))
+
+            {:status 404
+             ;; TODO: Return a "not found" image.
+             :body "Document not found."})
+
+          (auth/has-document-permission? db doc (-> req :auth) :read)
+          (if (= :head (:request-method req))
+            {:status 200
+             :headers (merge {"Content-Type" "application/pdf"}
+                             (image-cache-headers db doc))
+             :pc/doc doc
+             :body ""}
+            (let [as-of (some-> req :params :as-of (Long/parseLong))
+                  layer-db (if as-of (d/as-of db as-of) db)
+                  layers (layer-model/find-by-document layer-db doc)]
+              {:status 200
+               :headers (merge {"Content-Type" "application/pdf"}
+                               (image-cache-headers layer-db doc))
+               :pc/doc doc
+               :body (convert/svg->pdf (render/render-layers layers
+                                                             :invert-colors? (-> req :params :printer-friendly (= "false")))
+                                       (render/svg-props layers))}))
+
+          (auth/logged-in? req)
+          {:status 403
+           ;; TODO: use an image here
+           :body "Please request permission to access this document"}
+
+          :else
+          {:status 401
+           ;; TODO: use an image here
+           :body "Please log in so that we can check if you have permission to access this document"})))
+
 (defn frontend-response
   "Response to send for requests that the frontend will route"
   [req]
