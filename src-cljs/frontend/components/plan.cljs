@@ -121,10 +121,16 @@
             (for [{:keys [cust instant added?]} (reverse history)]
               [:div (str cust (if added? " was marked active at " " was marked inactive at ") instant)])]))))))
 
-(defn format-stripe-cents [cents]
+(defn format-stripe-cents
+  "Formats Stripe's currency values into ordinary dollar format
+   500 -> $5
+   489 -> $4.89"
+  [cents]
   (let [pennies (mod cents 100)
         dollars (/ (- cents pennies) 100)]
-    (gstring/format "$%d.%02d" dollars pennies)))
+    (when (pos? pennies)
+      (gstring/format "$%d.%02d" dollars pennies)
+      (gstring/format "$%d" dollars))))
 
 (defn invoice-component [{:keys [invoice-id]} owner]
   (reify
