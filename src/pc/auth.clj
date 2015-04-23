@@ -60,13 +60,6 @@
             (throw e)))))))
 
 ;; Note: this is hardcoded to prcrsr.com for a good reason
-(def prcrsr-bot-email "prcrsr-bot@prcrsr.com")
-(defn prcrsr-bot-uuid [db]
-  (ffirst (d/q '{:find [?u]
-                 :in [$ ?e]
-                 :where [[?t :cust/email ?e]
-                         [?t :cust/uuid ?u]]}
-               db prcrsr-bot-email)))
 
 (defn cust-permission [db doc cust]
   (when cust
