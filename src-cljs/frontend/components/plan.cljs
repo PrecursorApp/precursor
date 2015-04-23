@@ -13,6 +13,8 @@
             [frontend.utils :as utils]
             [goog.dom]
             [goog.dom.Range]
+            [goog.string :as gstring]
+            [goog.string.format]
             [om.core :as om]
             [om.dom :as dom]
             [taoensso.sente])
@@ -119,6 +121,11 @@
             (for [{:keys [cust instant added?]} (reverse history)]
               [:div (str cust (if added? " was marked active at " " was marked inactive at ") instant)])]))))))
 
+(defn format-stripe-cents [cents]
+  (let [pennies (mod cents 100)
+        dollars (/ (- cents pennies) 100)]
+    (gstring/format "$%d.%02d" dollars pennies)))
+
 (defn invoice-component [{:keys [invoice-id]} owner]
   (reify
     om/IInitState
@@ -137,23 +144,37 @@
                                   (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [invoice (utils/inspect (d/touch (d/entity @(om/get-shared owner :team-db) invoice-id)))]
+      (let [invoice (d/touch (d/entity @(om/get-shared owner :team-db) invoice-id))]
         (html
-         [:table
-          [:tbody
-           (for [[k v] invoice]
-             [:tr
-              [:td (str k)]
-              [:td (str v)]])]])))))
+         [:div.invoice {:style {:margin-bottom "1em"}}
+          [:div.invoice-number "Invoice #" (:db/id invoice)]
+          [:div.invoice-date (datetime/medium-consistent-date (:invoice/date invoice))]
+          [:div.invoice-description (:invoice/description invoice)]
+          [:div.invoice-discount
+           (when (= :coupon/product-hunt (:discount/coupon invoice))
+             "Discount: 50% off for first 6 months")]
+          [:div.invoice-total
+           "Total: " (format-stripe-cents (:invoice/total invoice))]
+          [:div.invoice-status
+           "Status: "
+           (cond (:invoice/paid? invoice)
+                 "paid"
 
-(defn invoices [{:keys [plan team-uuid]} owner]
+                 (:invoice/next-payment-attempt invoice)
+                 (str "will charge on " (datetime/medium-consistent-date (:invoice/next-payment-attempt invoice)))
+                 :else "unpaid")]])))))
+
+(defn invoices [{:keys [plan team-uuid]} owner & {:keys [limit] :as opts}]
   (reify
     om/IRender
     (render [_]
-      (html
-       [:div
-        (for [invoice (:plan/invoices plan)]
-          (om/build invoice-component {:invoice-id (:db/id invoice)} {:key :invoice-id}))]))))
+      (let [sorted-invoices (reverse (sort-by :invoice/date (:plan/invoices plan)))]
+        (html
+         [:div
+          (for [invoice (if limit
+                          (take limit sorted-invoices)
+                          sorted-invoices)]
+            (om/build invoice-component {:invoice-id (:db/id invoice)} {:key :invoice-id}))])))))
 
 (defn paid-info [{:keys [plan team-uuid]} owner]
   (reify
