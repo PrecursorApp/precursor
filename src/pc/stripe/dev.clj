@@ -26,13 +26,19 @@
 
 
 (defn fetch-events []
-  (when-let [new-events (seq (get (stripe/fetch-events :ending-before (-> @events last (get "id")))
-                                  "data"))]
-    (log/infof "fetched %s new Stripe events" (count new-events))
-    (add-events new-events)
-    (doseq [event new-events]
-      (http/post (urls/make-url "/hooks/stripe") {:body (json/encode event)
-                                                  :throw-exceptions false}))))
+  (try+
+   (when-let [new-events (seq (get (stripe/fetch-events :ending-before (-> @events last (get "id")))
+                                   "data"))]
+     (log/infof "fetched %s new Stripe events" (count new-events))
+     (add-events new-events)
+     (doseq [event (sort-by #(get % "created") new-events)]
+       (http/post (urls/make-url "/hooks/stripe") {:body (json/encode event)
+                                                   :throw-exceptions false})))
+   (catch [:status 400] e
+     (when (some-> e :body json/decode (get-in ["error" "param"]) (= "ending_before"))
+       (log/infof "event in events doesn't exist, data was probably cleared, resetting events")
+       (reset! events []))
+     (throw+))))
 
 (defn retry-event [evt-id]
   (when-let [evt (first (filter #(= evt-id (get % "id")) @events))]
