@@ -181,12 +181,17 @@
             chat-bot (:document/chat-bot (d/entity @db (ffirst (d/q '[:find ?t :where [?t :document/name]] @db))))
             dummy-chat {:chat/body [:span
                                     "Welcome to Precursor! "
-                                    "Create fast prototypes and share your url to collaborate. "
-                                    "Chat "
-                                    [:a {:on-click #(cast! :chat-user-clicked {:id-str (:chat-bot/name chat-bot)})
-                                         :role "button"}
-                                     (str "@" (:chat-bot/name chat-bot))]
-                                    " for help."]
+                                    [:br]
+                                    "Check out "
+                                    [:a {:href "/document/17592197661008" :target "_blank"}
+                                     "how to doc"]
+                                    " and what's "
+                                    [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"}
+                                     "made with Precursor"]
+                                    " or just "
+                                    [:a {:on-click #(cast! :chat-user-clicked {:id-str (:chat-bot/name chat-bot)}) :role "button"}
+                                     "ask us anything"]
+                                    "!"]
                         :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html
