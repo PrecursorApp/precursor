@@ -274,8 +274,8 @@
             [:p.content-copy
              "We designed our interface to get out of the way and let you concentrate on your ideas. "
              "It's simple enough to show on your phone and perfect for collaborating on your tablet. "]
-            [:a.feature-link {:href "/features/team"}
-             "Save to iPhone."]]
+            [:a.feature-link {:href "/document/17592197661694"}
+             "Try on iPhone."]]
            [:div.feature-media artwork-mobile]]
           [:div.feature-divider]
           [:div.feature.content {:class (when (contains? active-features "2") "art-visible") :ref "2"}
