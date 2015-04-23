@@ -45,7 +45,9 @@
       {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})})))
 
 (defpage create-team [:post "/api/v1/create-team"] [req]
-  (let [subdomain (some-> req :body slurp edn/read-string :subdomain str/lower-case)
+  (let [params (some-> req :body slurp edn/read-string)
+        subdomain (some-> params :subdomain str/lower-case)
+        coupon-code (some-> params :coupon-code)
         cust (get-in req [:auth :cust])]
     (cond (empty? cust)
           {:status 400 :body (pr-str {:error :not-logged-in
@@ -65,7 +67,7 @@
 
           :else
           (try+
-           (let [team (team-http/setup-new-team subdomain cust)]
+           (let [team (team-http/setup-new-team subdomain cust coupon-code)]
              {:status 200 :body (pr-str {:team (team-model/read-api team)})})
            (catch [:error :subdomain-exists] e
              {:status 400 :body (pr-str {:error :subdomain-exists
