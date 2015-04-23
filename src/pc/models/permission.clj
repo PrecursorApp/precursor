@@ -26,6 +26,14 @@
                            [?t :permission/permits ?permit-id]]}
                  db (:db/id team) (:db/id cust)))))
 
+(defn team-permissions [db team cust]
+  (set (map (partial d/entity db)
+            (d/q '{:find [[?t ...]]
+                   :in [$ ?team-id ?cust-id]
+                   :where [[?t :permission/team ?team-id]
+                           [?t :permission/cust-ref ?cust-id]]}
+                 db (:db/id team) (:db/id cust)))))
+
 (defn grant-permit [doc granter cust permit annotations]
   (let [txid (d/tempid :db.part/tx)
         temp-id (d/tempid :db.part/user)]
@@ -55,6 +63,14 @@
                    :needs-email :email/permission-granted
                    :permission/granter-ref (:db/id granter)
                    :permission/team-cust (UUID. (:db/id team) (:db/id cust))}])))
+
+(defn revoke-team-permissions [db team revoker cust annotations]
+  (let [txid (d/tempid :db.part/tx)]
+    (when-let [permissions (seq (team-permissions db team cust))]
+      @(d/transact (pcd/conn)
+                   (concat [(assoc annotations :db/id txid)]
+                           (for [permission permissions]
+                             (pc.utils/inspect (web-peer/retract-entity (:db/id permission)))))))))
 
 (defn grant-first-team-permit [team cust permit]
   (let [txid (d/tempid :db.part/tx)

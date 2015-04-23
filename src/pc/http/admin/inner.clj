@@ -6,6 +6,7 @@
             [defpage.core :as defpage :refer (defpage)]
             [hiccup.core :as hiccup]
             [pc.admin.db :as db-admin]
+            [pc.billing.dev :as billing-dev]
             [pc.datomic :as pcd]
             [pc.http.admin.auth :as auth]
             [pc.http.sente :as sente]
@@ -14,6 +15,7 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.flag :as flag-model]
+            [pc.models.team :as team-model]
             [pc.profile :as profile]
             [pc.stripe.dev :as stripe-dev]
             [pc.views.admin :as admin-content]
@@ -35,7 +37,9 @@
                                 [:div [:a {:href "/interesting"} "Interesting"]]
                                 [:div [:a {:href "/upload"} "Upload to Google CDN"]]
                                 (when (profile/fetch-stripe-events?)
-                                  [:div [:a {:href "/stripe-events"} "View Stripe events"]])])))
+                                  [:div [:a {:href "/stripe-events"} "View Stripe events"]])
+                                (when-not (profile/prod?)
+                                  [:div [:a {:href "/modify-billing"} "Modify billing"]])])))
 
 (defpage early-access "/early-access" [req]
   (hiccup/html (content/layout {}
@@ -173,6 +177,28 @@
   (stripe-dev/retry-event (get-in req [:params :evt-id]))
   {:status 200
    :body (str "retried " (get-in req [:params :evt-id]))})
+
+(defpage modify-billing "/modify-billing" [req]
+  (hiccup/html (content/layout {} (admin-content/modify-billing))))
+
+(defpage add-team-cust [:post "/add-team-cust"] [req]
+  (def myreq req)
+  (let [db (pcd/default-db)
+        email (-> req :params (get "email"))
+        subdomain (-> req :params (get "team-subdomain"))
+        team (team-model/find-by-subdomain db subdomain)]
+    (billing-dev/add-billing-cust-to-team team email)
+    {:status 200
+     :body (str "added " email " to " subdomain " team")}))
+
+(defpage remove-team-cust [:post "/remove-team-cust"] [req]
+  (let [db (pcd/default-db)
+        email (-> req :params (get "email"))
+        subdomain (-> req :params (get "team-subdomain"))
+        team (team-model/find-by-subdomain db subdomain)]
+    (billing-dev/remove-billing-cust-from-team team email)
+    {:status 200
+     :body (str "removed " email " from " subdomain " team")}))
 
 (defn wrap-require-login [handler]
   (fn [req]

@@ -352,7 +352,7 @@
                         {:document/id document-id
                          :uuid->cust (->> document-id
                                        (cust/cust-uuids-for-doc (:db req))
-                                       (cons (auth/prcrsr-bot-uuid (:db req)))
+                                       (cons (:cust/uuid (cust/prcrsr-bot (:db req))))
                                        set
                                        (set/union (disj (set (map :cust/uuid (vals (get subs document-id))))
                                                         nil))
@@ -591,7 +591,7 @@
                                                     :client/timestamp (java.util.Date.)
                                                     :chat/document doc-id
                                                     :db/id chat-id
-                                                    :cust/uuid (auth/prcrsr-bot-uuid (:db req))}])))]
+                                                    :cust/uuid (:cust/uuid (cust/prcrsr-bot (:db req)))}])))]
     (if-let [cust (-> req :ring-req :auth :cust)]
       (let [email (-> ?data :email)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)

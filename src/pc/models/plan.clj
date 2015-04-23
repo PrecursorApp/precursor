@@ -18,6 +18,10 @@
   (d/entity db (d/q '[:find ?e . :in $ ?c :where [?e :plan/stripe-customer-id ?c]]
                     db stripe-customer)))
 
+;; Only use for debugging. In code, always go from team -> plan
+(defn find-by-subdomain [db subdomain]
+  (d/entity db (d/q '[:find ?e . :in $ ?sub :where [?t :team/subdomain ?sub] [?t :team/plan ?e]] db subdomain)))
+
 (defn read-api [plan]
   (-> plan
     (select-keys [:plan/start

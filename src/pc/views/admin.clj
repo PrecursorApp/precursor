@@ -528,3 +528,27 @@
         (anti-forgery/anti-forgery-field)
         [:input {:type "submit" :value "retry"}]]]
       [:pre.event-body (h/h (json/encode event {:pretty true}))]])))
+
+(defn modify-billing []
+  [:div {:style "padding: 40px"}
+   [:div {:style "margin-top: 1em"}
+    "Add team member to team"
+    [:form {:method "post" :action "/add-team-cust"}
+     (anti-forgery/anti-forgery-field)
+     [:label "Team subdomain "]
+     [:input {:type "text" :name "team-subdomain"}]
+     [:label "Cust email "]
+     [:input {:type "text" :name "email"}]
+     [:div
+      [:input {:type "submit" :value "Add"}]]]]
+   [:div {:style "margin-top: 1em"}
+    "Remove team member from team"
+    [:form {:method "post" :action "/remove-team-cust"}
+     (anti-forgery/anti-forgery-field)
+     [:label "Team subdomain "]
+     [:input {:type "text" :name "team-subdomain"}]
+     [:label "Cust email "]
+     [:input {:type "text" :name "email"}]
+     [:div
+      [:input {:type "submit" :value "Remove"}]]]]
+   ])
