@@ -308,7 +308,7 @@
               "That's why we built lightweight collaboration tools, to help your team communicate effectively. "
               "Solve problems with your team in real time. "]
              [:div.calls-to-action
-              [:a.bubble-button {:href "pricing"}
+              [:a.bubble-button {:href "/pricing"}
                [:span "See our team pricing."]]]]
             [:div.feature.art-visible.content
              [:div.feature-story
