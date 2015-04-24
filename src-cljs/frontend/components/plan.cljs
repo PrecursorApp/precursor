@@ -10,6 +10,7 @@
             [frontend.models.plan :as plan-model]
             [frontend.models.team :as team-model]
             [frontend.sente :as sente]
+            [frontend.urls :as urls]
             [frontend.utils :as utils]
             [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
@@ -126,7 +127,7 @@
            (om/build active-history {:team-uuid team-uuid}
                      {:react-key "active-history"})]])))))
 
-(defn invoice-component [{:keys [invoice-id]} owner]
+(defn invoice-component [{:keys [invoice-id team-uuid]} owner]
   (reify
     om/IInitState
     (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -147,7 +148,11 @@
       (let [invoice (d/touch (d/entity @(om/get-shared owner :team-db) invoice-id))]
         (html
          [:div.invoice {:style {:margin-bottom "1em"}}
-          [:div.invoice-number "Invoice #" (:db/id invoice)]
+          [:div.invoice-number
+           [:a {:href (urls/invoice-url team-uuid invoice-id)
+                :target "_blank"
+                :role "button"}
+            "Invoice #" (:db/id invoice)]]
           [:div.invoice-date (datetime/medium-consistent-date (:invoice/date invoice))]
           [:div.invoice-description (:invoice/description invoice)]
           [:div.invoice-discount
@@ -173,7 +178,9 @@
          [:div.menu-view
           [:div.content.make
            (for [invoice sorted-invoices]
-             (om/build invoice-component {:invoice-id (:db/id invoice)} {:key :invoice-id}))]])))))
+             (om/build invoice-component {:invoice-id (:db/id invoice)
+                                          :team-uuid team-uuid}
+                       {:key :invoice-id}))]])))))
 
 (defn payment [{:keys [plan team-uuid]} owner]
   (reify

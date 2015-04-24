@@ -1,35 +1,40 @@
 (ns pc.http.routes
   (:require [cemerick.url :as url]
             [cheshire.core :as json]
+            [clojure.java.io :as io]
             [clojure.set :as set]
             [crypto.equality :as crypto]
             [datomic.api :as d]
             [defpage.core :as defpage :refer (defpage)]
             [hiccup.page]
-            [pc.assets]
             [pc.analytics :as analytics]
+            [pc.assets]
             [pc.auth :as auth]
             [pc.auth.google :as google-auth]
             [pc.convert :as convert]
             [pc.datomic :as pcd]
             [pc.http.doc :as doc-http]
-            [pc.http.lb :as lb]
             [pc.http.handlers.custom-domain :as custom-domain]
+            [pc.http.lb :as lb]
             [pc.http.sente :as sente]
             [pc.http.urls :as urls]
             [pc.models.access-request :as access-request-model]
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
+            [pc.models.invoice :as invoice-model]
             [pc.models.layer :as layer-model]
             [pc.models.team :as team-model]
             [pc.profile :as profile]
             [pc.render :as render]
             [pc.util.md5 :as md5]
-            [pc.views.team :as team-view]
             [pc.views.content :as content]
+            [pc.views.invoice :as invoice-view]
+            [pc.views.team :as team-view]
             [ring.middleware.anti-forgery :as csrf]
-            [ring.util.response :refer (redirect)]))
+            [ring.util.response :refer (redirect)])
+  (:import [java.io ByteArrayOutputStream]
+           [java.util UUID]))
 
 (defn common-view-data [req]
   (merge
@@ -350,6 +355,25 @@
                            :http-session-key (:cust/http-session-key cust))
            :headers {"Location" (str (or (get parsed-state "redirect-path") "/")
                                      (when query (str "?" query)))}})))))
+
+(defpage invoice "/team/:team-uuid/plan/invoice/:invoice-id" [req]
+  (let [db (pcd/default-db)
+        team (some->> req :params :team-uuid UUID/fromString (team-model/find-by-uuid db))
+        invoice-id (some->> req :params :invoice-id Long/parseLong)]
+    (if (auth/has-team-permission? db team (:auth req) :admin)
+      (if-let [invoice (invoice-model/find-by-team-and-client-part db team invoice-id)]
+        {:body (let [out (ByteArrayOutputStream.)]
+                 (invoice-view/invoice-pdf db team invoice out)
+                 (io/input-stream (.toByteArray out)))
+         :headers {"Content-Type" "application/pdf"}
+         :status 200}
+        {:body "Unable to find invoice"
+         :status 400})
+      (if (auth/logged-in? req)
+        {:status 403
+         :body "Please request permission to join this team"}
+        {:status 401
+         :body "Please login to view the invoice"}))))
 
 (defpage login "/login" [req]
   (analytics/track-signup-clicked req)
