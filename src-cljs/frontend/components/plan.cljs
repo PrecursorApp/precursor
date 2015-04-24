@@ -126,11 +126,12 @@
    500 -> $5
    489 -> $4.89"
   [cents]
-  (let [pennies (mod cents 100)
-        dollars (/ (- cents pennies) 100)]
+  (let [abs-cents (Math/abs cents)
+        pennies (mod abs-cents 100)
+        dollars (/ (- abs-cents pennies) 100)]
     (if (pos? pennies)
-      (gstring/format "$%d.%02d" dollars pennies)
-      (gstring/format "$%d" (utils/inspect dollars)))))
+      (gstring/format "$%s%d.%02d" (if (neg? cents) "-" "") dollars pennies)
+      (gstring/format "$%s%d" (if (neg? cents) "-" "") dollars))))
 
 (defn invoice-component [{:keys [invoice-id]} owner]
   (reify
