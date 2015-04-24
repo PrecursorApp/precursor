@@ -118,17 +118,20 @@ code {
 .divider,
 .divider-small {
   .flexy(center, center);
+  width: 100%;
   &:before,
   &:after {
     flex: 1;
     content: "";
     border-bottom: 1px solid; // calling w/o color forces inheritance
   }
-  &:before {
-    margin-right: .25rem;
-  }
-  &:after {
-    margin-left: .25rem;
+  &:not(:empty) {
+    &:before {
+      margin-right: .25rem;
+    }
+    &:after {
+      margin-left: .25rem;
+    }
   }
 }
 .divider-small {

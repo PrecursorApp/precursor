@@ -254,6 +254,42 @@
                        {:react-key "trial-info"}))
            [:div.loading {:key "loading"}]))))))
 
+(defn billing-start [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)]
+        (html
+          [:div.menu-view
+           [:div.divider.make]
+           [:div.content.make
+            [:h4 "Team of 3 @ $10/mo."]]
+           [:div.content.make
+            [:p "We'll begin charging in 14 days when your free trial expires. "
+                "Then your Product Hunt discount will save you 50% for the next 6 months. "
+                "Your first invoice will be $15. "]]
+           [:div.divider.make]
+           [:a.vein.make {:on-click         #(cast! :billing-info-opened)
+                          :on-touch-end #(do (cast! :billing-info-opened) (.preventDefault %))}
+            (common/icon :info)
+            [:span "Information"]]
+           [:a.vein.make {:on-click         #(cast! :billing-payment-opened)
+                          :on-touch-end #(do (cast! :billing-payment-opened) (.preventDefault %))}
+            (common/icon :credit)
+            [:span "Payment"]]
+           [:a.vein.make {:on-click         #(cast! :billing-invoices-opened)
+                          :on-touch-end #(do (cast! :billing-invoices-opened) (.preventDefault %))}
+            (common/icon :docs)
+            [:span "Invoices"]]
+           [:a.vein.make {:on-click         #(cast! :billing-activity-opened)
+                          :on-touch-end #(do (cast! :billing-activity-opened) (.preventDefault %))}
+            (common/icon :activity)
+            [:span "Activity"]]
+           [:a.vein.make {:on-click         #(cast! :billing-discount-opened)
+                          :on-touch-end #(do (cast! :billing-discount-opened) (.preventDefault %))}
+            (common/icon :heart)
+            [:span "Discount"]]])))))
+
 (defn plan-overlay [app owner]
   (reify
     om/IInitState
@@ -283,9 +319,12 @@
       (let [{:keys [cast! team-db]} (om/get-shared owner)
             team (team-model/find-by-uuid @team-db (get-in app [:team :team/uuid]))]
         (html
-         [:div.menu-view
-          [:div.content
-           (when (:team/plan team)
-             (om/build plan-info {:plan-id (:db/id (:team/plan team))
-                                  :team-uuid (:team/uuid team)}
-                       {:react-key "plan-info"}))]])))))
+          (when (:team/plan team)
+            ; (om/build plan-info {:plan-id (:db/id (:team/plan team))
+            ;                      :team-uuid (:team/uuid team)}
+            ;           {:react-key "plan-info"})
+
+            (om/build billing-start app)
+
+
+            ))))))

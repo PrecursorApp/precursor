@@ -4,9 +4,19 @@
   min-height: 100vh;
   overflow-x: hidden;
   .content {
-    max-width: @tile_menu_max;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: @tile_blog;
+    margin-right: auto;
     .vein {
       border-bottom: 1px solid @gray_lightest;
+    }
+  }
+  .divider {
+    color: @gray_lightest;
+    margin: .5rem 0;
+    &:first-of-type {
+      margin: 0 0 1rem;
     }
   }
 }
@@ -101,21 +111,16 @@
     }
   }
 }
-.veins {
-  flex: 1;
-  position: relative;
-  width: 100%;
-  max-width: @tile_menu_max;
-  margin: 0 auto;
-}
 .vein {
+  .menu.content();
   .flexy(center);
   .icon(stroke; @gray);
   .icon(fill; @gray);
-  width: 100%;
+  // width: 100%;
   height: @tile;
   color: @gray;
   overflow: hidden;
+  cursor: pointer;
   &:hover {
     .icon(stroke; @black);
     .icon(fill; @black);
@@ -146,8 +151,13 @@
       }
     }
   }
-  i {
+  > i {
     padding: @menu_padding;
+  }
+  .peak {
+    color: @gray_light;
+    font-size: @font_size_small;
+    margin-left: auto;
   }
 }
 .menu-invite-form {
