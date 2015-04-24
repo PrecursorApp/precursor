@@ -128,9 +128,9 @@
   [cents]
   (let [pennies (mod cents 100)
         dollars (/ (- cents pennies) 100)]
-    (when (pos? pennies)
+    (if (pos? pennies)
       (gstring/format "$%d.%02d" dollars pennies)
-      (gstring/format "$%d" dollars))))
+      (gstring/format "$%d" (utils/inspect dollars)))))
 
 (defn invoice-component [{:keys [invoice-id]} owner]
   (reify
