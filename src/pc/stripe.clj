@@ -62,6 +62,19 @@
     (utils/update-when-in [:invoice/date] timestamp->model)
     (utils/update-when-in [:invoice/next-payment-attempt] timestamp->model)))
 
+(def invoice-item-translation
+  {"amount" :line-item/amount
+   "id" :line-item/stripe-id
+   "description" :line-item/description
+   "date" :line-item/date})
+
+(defn invoice-item->model [api-fields]
+  (-> api-fields
+    (select-keys (keys invoice-item-translation))
+    (set/rename-keys invoice-item-translation)
+    (utils/remove-map-nils)
+    (utils/update-when-in [:line-item/date] timestamp->model)))
+
 (def base-url "https://api.stripe.com/v1/")
 
 (defn api-call [method endpoint & [params]]

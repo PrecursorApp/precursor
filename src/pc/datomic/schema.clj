@@ -719,6 +719,24 @@
    (attribute :invoice/description
               :db.type/string)
 
+   (attribute :invoice/line-items
+              :db.type/ref
+              :db/isComponent true
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :line-item/stripe-id
+              :db.type/string
+              :db/unique :db.unique/identity)
+
+   (attribute :line-item/amount
+              :db.type/long)
+
+   (attribute :line-item/description
+              :db.type/string)
+
+   (attribute :line-item/date
+              :db.type/instant)
+
    (attribute :discount/coupon
               :db.type/ref)
 

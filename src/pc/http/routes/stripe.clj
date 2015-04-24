@@ -51,6 +51,7 @@
     (with-hook-accounting plan hook-json
       (let [team (team-model/find-by-plan db plan)
             invoice-fields (get-in hook-json ["data" "object"])
+            items (get-in invoice-fields ["lines" "data"])
             discount-fields (get-in invoice-fields ["discount"])
             invoice-id (d/tempid :db.part/user)]
         @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
@@ -61,6 +62,8 @@
                                  (merge
                                   {:db/id invoice-id}
                                   (stripe/invoice-api->model invoice-fields)
+                                  {:invoice/line-items (map #(assoc (stripe/invoice-item->model %) :db/id (d/tempid :db.part/user))
+                                                            items)}
                                   (when (seq discount-fields)
                                     (stripe/discount-api->model discount-fields)))])))))
 
