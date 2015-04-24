@@ -27,7 +27,7 @@
         parts (or (seq (str/split text url-regex)) [""])]
     (reduce (fn [acc [pre url]]
               (conj acc
-                    (when (< 0 (count pre)) [:span pre])
+                    (when (seq pre) [:span pre])
                     (when url [:a {:href url :target "_blank"} url])))
             [:span] (partition-all 2 (concat (interleave parts
                                                          matches)
