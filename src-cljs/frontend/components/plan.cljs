@@ -43,43 +43,6 @@
                 :on-click #(cast! :start-plan-clicked)}
             "Pay"]]])))))
 
-(defn billing-email [{:keys [plan]} owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            submit-fn #(do (when-not (str/blank? (om/get-state owner :new-email))
-                             (d/transact! (om/get-shared owner :team-db)
-                                          [[:db/add (:db/id plan) :plan/billing-email (om/get-state owner :new-email)]]))
-                           (om/set-state! owner :editing-email? false)
-                           (om/set-state! owner :new-email ""))]
-        (html
-         [:div
-          [:div.billing-email {:ref "billing-email"
-                               :content-editable (if (om/get-state owner :editing-email?) true false)
-                               :spell-check false
-                               :on-key-down #(do
-                                               (when (= "Enter" (.-key %))
-                                                 (.preventDefault %)
-                                                 (submit-fn)
-                                                 (utils/stop-event %))
-                                               (when (= "Escape" (.-key %))
-                                                 (om/set-state! owner :editing-email? false)
-                                                 (om/set-state! owner :new-email "")
-                                                 (utils/stop-event %)))
-                               :on-blur #(do (submit-fn)
-                                             (utils/stop-event %))
-                               :on-input #(om/set-state-nr! owner :new-email (goog.dom/getRawTextContent (.-target %)))}
-           (:plan/billing-email plan)]
-          [:a {:on-click #(do
-                            (om/set-state! owner :editing-email? true)
-                            (.focus (om/get-node owner "billing-email"))
-                            (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "billing-email")))
-                            (.stopPropagation %))
-               :role "button"
-               :title "Change your billing email."}
-           (common/icon :pencil)]])))))
-
 (defn active-users [{:keys [plan]} owner]
   (reify
     om/IRender
@@ -133,6 +96,25 @@
       (gstring/format "$%s%d.%02d" (if (neg? cents) "-" "") dollars pennies)
       (gstring/format "$%s%d" (if (neg? cents) "-" "") dollars))))
 
+(defn activity [{:keys [plan team-uuid]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! team-db]} (om/get-shared owner)]
+        (html
+         [:div.menu-view
+          [:div.content.make
+           [:h4 "Usage"]
+           [:p "You pay $10/month for every active user on your team. Add users from the "
+            [:a {:on-click #(cast! :team-settings-opened)
+                 :role "button"}
+             "team permissions"]]
+           (om/build active-users {:plan plan}
+                     {:react-key "active-users"})
+           [:h4 "Plan history"]
+           (om/build active-history {:team-uuid team-uuid}
+                     {:react-key "active-history"})]])))))
+
 (defn invoice-component [{:keys [invoice-id]} owner]
   (reify
     om/IInitState
@@ -171,70 +153,118 @@
                  (str "will charge on " (datetime/medium-consistent-date (:invoice/next-payment-attempt invoice)))
                  :else "unpaid")]])))))
 
-(defn invoices [{:keys [plan team-uuid]} owner & {:keys [limit] :as opts}]
+(defn invoices [{:keys [plan team-uuid]} owner]
   (reify
     om/IRender
     (render [_]
       (let [sorted-invoices (reverse (sort-by :invoice/date (:plan/invoices plan)))]
         (html
-         [:div
-          (for [invoice (if limit
-                          (take limit sorted-invoices)
-                          sorted-invoices)]
-            (om/build invoice-component {:invoice-id (:db/id invoice)} {:key :invoice-id}))])))))
+         [:div.menu-view
+          [:div.content.make
+           (for [invoice sorted-invoices]
+             (om/build invoice-component {:invoice-id (:db/id invoice)} {:key :invoice-id}))]])))))
 
-(defn paid-info [{:keys [plan team-uuid]} owner]
+(defn payment [{:keys [plan team-uuid]} owner]
   (reify
     om/IRender
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         [:div.make
-          [:h4 "Credit card"]
-          (for [[k v] (filter #(= "credit-card" (namespace (first %))) plan)
-                :let [v (str v)]]
-            [:tr.make
-             [:td [:div {:title k} (str k)]]
-             [:td [:div.connection-result {:title v}
-                   v]]])
-          [:a {:on-click #(cast! :change-card-clicked)
-               :role "button"}
-           "Change card"]
-          [:h4 "Billing email"]
-          [:p "We'll send invoices to this email."]
-          (om/build billing-email {:plan plan}
-                    {:react-key "billing-email"})
-          (when (neg? (:plan/account-balance plan))
-            (list
-             [:h4 "Credit"]
-             [:p (format-stripe-cents (Math/abs (:plan/account-balance plan)))]))
-          [:h4 "Discount"]
-          [:p "Coupon: " (name (:discount/coupon plan ""))]
-          [:p (str "Start: " (:discount/start plan))]
-          [:p (str "End: " (:discount/end plan))]
-          [:h4 "Usage"]
-          (when (plan-model/in-trial? plan)
-            [:p
-             "You still have "
-             [:span {:title (:plan/trial-end plan)}
-              (time-left plan)]
-             " left in your trial. We won't start charging until your trial is over."])
-          [:p "You pay $10/month for every active user on your team. Add users from the "
-           [:a {:on-click #(cast! :team-settings-opened)
-                :role "button"}
-            "team permissions"]
-           " page."]
-          (om/build active-users {:plan plan}
-                    {:react-key "active-users"})
-          [:h4 "Plan history"]
-          (om/build active-history {:team-uuid team-uuid}
-                    {:react-key "active-history"})
-          [:h4 "Invoices"]
-          (om/build invoices {:plan plan :team-uuid team-uuid}
-                    {:react-key "invoices"})
-          ])))))
+         [:div.menu-view
+          [:div.content.make
+           [:div.make
+            (for [[k v] (filter #(= "credit-card" (namespace (first %))) plan)
+                  :let [v (str v)]]
+              [:tr.make
+               [:td [:div {:title k} (str k)]]
+               [:td [:div.connection-result {:title v}
+                     v]]])]]])))))
 
-(defn plan-info [{:keys [plan-id team-uuid]} owner]
+(defn info [{:keys [plan team-uuid]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            submit-fn #(do (when-not (str/blank? (om/get-state owner :new-email))
+                             (d/transact! (om/get-shared owner :team-db)
+                                          [[:db/add (:db/id plan) :plan/billing-email (om/get-state owner :new-email)]]))
+                           (om/set-state! owner :editing-email? false)
+                           (om/set-state! owner :new-email ""))]
+        (html
+         [:div.menu-view
+          [:div.content.make
+           [:div.billing-email {:ref "billing-email"
+                                :content-editable (if (om/get-state owner :editing-email?) true false)
+                                :spell-check false
+                                :on-key-down #(do
+                                                (when (= "Enter" (.-key %))
+                                                  (.preventDefault %)
+                                                  (submit-fn)
+                                                  (utils/stop-event %))
+                                                (when (= "Escape" (.-key %))
+                                                  (om/set-state! owner :editing-email? false)
+                                                  (om/set-state! owner :new-email "")
+                                                  (utils/stop-event %)))
+                                :on-blur #(do (submit-fn)
+                                              (utils/stop-event %))
+                                :on-input #(om/set-state-nr! owner :new-email (goog.dom/getRawTextContent (.-target %)))}
+            (:plan/billing-email plan)]
+           [:a {:on-click #(do
+                             (om/set-state! owner :editing-email? true)
+                             (.focus (om/get-node owner "billing-email"))
+                             (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "billing-email")))
+                             (.stopPropagation %))
+                :role "button"
+                :title "Change your billing email."}
+            (common/icon :pencil)]]])))))
+
+(defn start [{:keys [plan team-uuid]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            open-menu-props (fn [submenu]
+                              {:on-click #(cast! :plan-submenu-opened {:submenu submenu})
+                               :on-touch-end #(do (cast! :plan-submenu-opened {:submenu submenu})
+                                                  (.preventDefault %))})]
+        (html
+         [:div.menu-view
+          [:div.divider.make]
+          [:div.content.make
+           [:h4 "Your team plan renews June 7 for $15."]]
+          [:div.content.make
+           [:p "3 users are active on your team. "
+            "Your plan renews monthly. "
+            "Product Hunt's 50% discount is included in the renewal price. "
+            "The 14 days left in your trial are included in the renewal date. "]]
+          [:div.divider.make]
+          [:a.vein.make (open-menu-props :info)
+           (common/icon :info)
+           [:span "Information"]]
+          [:a.vein.make (open-menu-props :payment)
+           (common/icon :credit)
+           [:span "Payment"]]
+          [:a.vein.make (open-menu-props :invoices)
+           (common/icon :docs)
+           [:span "Invoices"]]
+          [:a.vein.make (open-menu-props :activity)
+           (common/icon :activity)
+           [:span "Activity"]]
+          [:a.vein.make (open-menu-props :discount)
+           (common/icon :heart)
+           [:span "Discount"]]
+          (when (neg? (:plan/account-balance plan))
+            [:span "Credit " (format-stripe-cents (Math/abs (:plan/account-balance plan)))])])))))
+
+(def plan-components
+  {:start start
+   :info info
+   :payment payment
+   :invoices invoices
+   :activity activity
+   :discount info})
+
+(defn plan-menu* [{:keys [plan-id team-uuid submenu]} owner]
   (reify
     om/IInitState
     (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -253,66 +283,19 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)
-            plan (d/entity @team-db plan-id)]
-        (html
-         (if (:plan/trial-end plan) ;; wait for plan to load
-           (if (:plan/paid? plan)
-             (om/build paid-info {:plan (ds/touch+ plan)
-                                  :team-uuid team-uuid}
-                       {:react-key "paid-info"})
-             (om/build trial-info {:plan (ds/touch+ plan)
-                                   :team-uuid team-uuid}
-                       {:react-key "trial-info"}))
-           [:div.loading {:key "loading"}]))))))
+            plan (ds/touch+ (d/entity @team-db plan-id))
+            component-key (or submenu :start)
+            component (get plan-components component-key)]
+        (if (:plan/trial-end plan) ;; wait for plan to load
+          (om/build component {:plan plan :team-uuid team-uuid} {:react-key component-key})
+          (dom/div {:className "loading"}))))))
 
-(defn billing-start [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! db]} (om/get-shared owner)]
-        (html
-          [:div.menu-view
-           [:div.divider.make]
-           [:div.content.make
-            [:h4 "Your team plan renews June 7 for $15."]]
-           [:div.content.make
-            [:p "3 users are active on your team. "
-                "Your plan renews monthly. "
-                "Product Hunt's 50% discount is included in the renewal price. "
-                "The 14 days left in your trial are included in the renewal date. "]]
-           [:div.divider.make]
-           [:a.vein.make {:on-click         #(cast! :billing-info-opened)
-                          :on-touch-end #(do (cast! :billing-info-opened) (.preventDefault %))}
-            (common/icon :info)
-            [:span "Information"]]
-           [:a.vein.make {:on-click         #(cast! :billing-payment-opened)
-                          :on-touch-end #(do (cast! :billing-payment-opened) (.preventDefault %))}
-            (common/icon :credit)
-            [:span "Payment"]]
-           [:a.vein.make {:on-click         #(cast! :billing-invoices-opened)
-                          :on-touch-end #(do (cast! :billing-invoices-opened) (.preventDefault %))}
-            (common/icon :docs)
-            [:span "Invoices"]]
-           [:a.vein.make {:on-click         #(cast! :billing-activity-opened)
-                          :on-touch-end #(do (cast! :billing-activity-opened) (.preventDefault %))}
-            (common/icon :activity)
-            [:span "Activity"]]
-           [:a.vein.make {:on-click         #(cast! :billing-discount-opened)
-                          :on-touch-end #(do (cast! :billing-discount-opened) (.preventDefault %))}
-            (common/icon :heart)
-            [:span "Discount"]]])))))
-
-(defn plan-overlay [app owner]
+(defn plan-menu [app owner {:keys [submenu]}]
   (reify
     om/IInitState
     (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
-      (fdb/add-attribute-listener (om/get-shared owner :team-db)
-                                  :plan/paid?
-                                  (om/get-state owner :listener-key)
-                                  (fn [tx-report]
-                                    (om/refresh! owner)))
       (fdb/add-attribute-listener (om/get-shared owner :team-db)
                                   :team/plan
                                   (om/get-state owner :listener-key)
@@ -321,9 +304,6 @@
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-attribute-listener (om/get-shared owner :team-db)
-                                     :plan/paid?
-                                     (om/get-state owner :listener-key))
-      (fdb/remove-attribute-listener (om/get-shared owner :team-db)
                                      :team/plan
                                      (om/get-state owner :listener-key)))
     om/IRender
@@ -331,12 +311,8 @@
       (let [{:keys [cast! team-db]} (om/get-shared owner)
             team (team-model/find-by-uuid @team-db (get-in app [:team :team/uuid]))]
         (html
-          (when (:team/plan team)
-            ; (om/build plan-info {:plan-id (:db/id (:team/plan team))
-            ;                      :team-uuid (:team/uuid team)}
-            ;           {:react-key "plan-info"})
-
-            (om/build billing-start app)
-
-
-            ))))))
+         (when (:team/plan team)
+           (om/build plan-menu* {:plan-id (:db/id (:team/plan team))
+                                 :team-uuid (:team/uuid team)
+                                 :submenu submenu}
+                     {:react-key "plan-component*"})))))))

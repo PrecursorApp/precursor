@@ -1531,8 +1531,8 @@
 (defmethod control-event :your-docs-opened
   [browser-state message _ state]
   (-> state
-      (handle-add-menu :doc-viewer)
-      (assoc-in state/your-docs-learned-path true)))
+    (handle-add-menu :doc-viewer)
+    (assoc-in state/your-docs-learned-path true)))
 
 (defmethod post-control-event! :your-docs-opened
   [browser-state message _ previous-state current-state]
@@ -1848,6 +1848,10 @@
                              (utils/inspect (:datom-group %)))
                        (:unsynced-datoms previous-state))
                {:bot-layer true}))
+
+(defmethod control-event :plan-submenu-opened
+  [browser-state message {:keys [submenu]} state]
+  (handle-add-menu state (keyword "plan" (name submenu))))
 
 (defmethod post-control-event! :start-plan-clicked
   [browser-state message _ previous-state current-state]

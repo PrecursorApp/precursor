@@ -745,22 +745,35 @@
    :connection-info {:title "Connection Info"
                      :component connection/connection-info}
    :plan {:title "Billing"
-          :component plan/plan-overlay}})
+          :component plan/plan-menu}})
+
+(defn namespaced? [kw]
+  (namespace kw))
+
+(defn overlay-component-key [overlay-key]
+  (if (namespaced? overlay-key)
+    (keyword (namespace overlay-key))
+    overlay-key))
 
 (defn overlay [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            overlay-components (map #(get overlay-components %) (get-in app state/overlays-path))
-            title (:title (last overlay-components))]
+      (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu
           [:div.menu-header
-           (for [component overlay-components]
+           (for [overlay-key (get-in app state/overlays-path)
+                 :let [component (get overlay-components (overlay-component-key overlay-key))]]
              (html
-              [:h4.menu-heading {:title (:title component) :key (:title component)} (:title component)]))]
+              [:h4.menu-heading {:title (:title component) :react-key (:title component)}
+               (if (namespaced? overlay-key)
+                 (str (:title component) " - " (str/capitalize (name overlay-key)))
+                 (:title component))]))]
           [:div.menu-body
-           (for [component overlay-components]
-            (om/build (:component component) app))]])))))
+           (for [overlay-key (get-in app state/overlays-path)
+                 :let [component (get overlay-components (overlay-component-key overlay-key))]]
+             (om/build (:component component) app {:react-key overlay-key
+                                                   :opts {:submenu (when (namespaced? overlay-key)
+                                                                     (keyword (name overlay-key)))}}))]])))))
