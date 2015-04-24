@@ -270,11 +270,12 @@
           [:div.menu-view
            [:div.divider.make]
            [:div.content.make
-            [:h4 "Team of 3 @ $10/mo."]]
+            [:h4 "Your team plan renews June 7 for $15."]]
            [:div.content.make
-            [:p "We'll begin charging in 14 days when your free trial expires. "
-                "Then your Product Hunt discount will save you 50% for the next 6 months. "
-                "Your first invoice will be $15. "]]
+            [:p "3 users are active on your team. "
+                "Your plan renews monthly. "
+                "Product Hunt's 50% discount is included in the renewal price. "
+                "The 14 days left in your trial are included in the renewal date. "]]
            [:div.divider.make]
            [:a.vein.make {:on-click         #(cast! :billing-info-opened)
                           :on-touch-end #(do (cast! :billing-info-opened) (.preventDefault %))}
