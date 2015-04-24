@@ -11,6 +11,7 @@
             [frontend.models.team :as team-model]
             [frontend.sente :as sente]
             [frontend.utils :as utils]
+            [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
             [goog.dom.Range]
             [goog.string :as gstring]
@@ -59,6 +60,8 @@
           (for [cust active-custs]
             [:div cust])])))))
 
+(defn format-access-date [date]
+  (date->bucket date :sentence? true))
 
 (defn active-history [{:keys [team-uuid]} owner]
   (reify
@@ -82,7 +85,15 @@
            [:div.loading {:key "loading"} "Loading"]
            [:div {:key "history"}
             (for [{:keys [cust instant added?]} (reverse history)]
-              [:div (str cust (if added? " was marked active at " " was marked inactive at ") instant)])]))))))
+              [:div.access-card.make {:key (str instant cust)}
+               [:div.access-avatar
+                [:img.access-avatar-img
+                 {:src (utils/gravatar-url cust)}]]
+               [:div.access-details
+                [:span {:title cust}
+                 cust]
+                [:span.access-status
+                 (str "Was marked " (if added? "active" "inactive") " " (format-access-date instant))]]])]))))))
 
 (defn format-stripe-cents
   "Formats Stripe's currency values into ordinary dollar format
@@ -238,23 +249,28 @@
             "Product Hunt's 50% discount is included in the renewal price. "
             "The 14 days left in your trial are included in the renewal date. "]]
           [:div.divider.make]
-          [:a.vein.make (open-menu-props :info)
-           (common/icon :info)
-           [:span "Information"]]
-          [:a.vein.make (open-menu-props :payment)
-           (common/icon :credit)
-           [:span "Payment"]]
-          [:a.vein.make (open-menu-props :invoices)
-           (common/icon :docs)
-           [:span "Invoices"]]
-          [:a.vein.make (open-menu-props :activity)
-           (common/icon :activity)
-           [:span "Activity"]]
-          [:a.vein.make (open-menu-props :discount)
-           (common/icon :heart)
-           [:span "Discount"]]
-          (when (neg? (:plan/account-balance plan))
-            [:span "Credit " (format-stripe-cents (Math/abs (:plan/account-balance plan)))])])))))
+          (if-not (:plan/paid? plan)
+            [:a.vein.make {:on-click #(cast! :start-plan-clicked)}
+             (common/icon :credit)
+             [:span "Add payment"]]
+            (list
+             [:a.vein.make (open-menu-props :info)
+              (common/icon :info)
+              [:span "Information"]]
+             [:a.vein.make (open-menu-props :payment)
+              (common/icon :credit)
+              [:span "Payment"]]
+             [:a.vein.make (open-menu-props :invoices)
+              (common/icon :docs)
+              [:span "Invoices"]]
+             [:a.vein.make (open-menu-props :activity)
+              (common/icon :activity)
+              [:span "Activity"]]
+             [:a.vein.make (open-menu-props :discount)
+              (common/icon :heart)
+              [:span "Discount"]]
+             (when (neg? (:plan/account-balance plan))
+               [:span "Credit " (format-stripe-cents (Math/abs (:plan/account-balance plan)))])))])))))
 
 (def plan-components
   {:start start

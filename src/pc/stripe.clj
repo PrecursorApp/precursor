@@ -52,7 +52,9 @@
    "attempted" :invoice/attempted?
    "date" :invoice/date
    "next_payment_attempt" :invoice/next-payment-attempt
-   "description" :invoice/description})
+   "description" :invoice/description
+   "period_start" :invoice/period-start
+   "period_end" :invoice/period-end})
 
 (defn invoice-api->model [api-fields]
   (-> api-fields
@@ -60,7 +62,9 @@
     (set/rename-keys invoice-translation)
     (utils/remove-map-nils)
     (utils/update-when-in [:invoice/date] timestamp->model)
-    (utils/update-when-in [:invoice/next-payment-attempt] timestamp->model)))
+    (utils/update-when-in [:invoice/next-payment-attempt] timestamp->model)
+    (utils/update-when-in [:invoice/period-start] timestamp->model)
+    (utils/update-when-in [:invoice/period-end] timestamp->model)))
 
 (def invoice-item-translation
   {"amount" :line-item/amount
