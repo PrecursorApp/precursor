@@ -39,4 +39,5 @@
                                               cust
                                               {:cust/uuid (:cust/uuid prcrsr-bot)
                                                :transaction/team (:db/id team)
-                                               :transaction/broadcast true})))
+                                               :transaction/broadcast true}))
+  (billing/set-active-users (pcd/default-db) team))

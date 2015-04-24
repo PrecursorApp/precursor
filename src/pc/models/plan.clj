@@ -48,6 +48,9 @@
   (time/after? now
                (clj-time.coerce/from-date (:plan/trial-end plan))))
 
+(defn coupon-exists? [db stripe-id]
+  (seq (d/q '[:find ?e :in $ ?stripe-id :where [?e :coupon/stripe-id ?stripe-id]] db stripe-id)))
+
 (def coupons
   #{{:coupon/stripe-id "product-hunt"
      :coupon/percent-off 50

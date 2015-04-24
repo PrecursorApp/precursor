@@ -14,21 +14,22 @@
   (let [re-fragments ["dwwoelfel" "danny.newidea" "@prcrsr.com" "@precursorapp.com"]]
     (re-pattern (str/join "|" re-fragments))))
 
-(defn filter-to [to-addresses]
+(defn filter-addresses [to-addresses]
   (if (profile/use-email-whitelist?)
     (filter #(re-find dev-whitelist-pattern %) to-addresses)
     to-addresses))
 
 (defn send-message [{:keys [from to cc bcc subject text html] :as props}]
   (amazonica.core/with-credential [access-key-id secret-access-key "us-west-2"]
-    (ses/send-email :destination (merge {:to-addresses (filter-to [to])
-                                         :bcc-addresses (concat (when (profile/bcc-audit-log?)
-                                                                  ["audit-log@precursorapp.com"])
-                                                                (when bcc [bcc]))}
-                                        (when cc
-                                          {:cc-addresses [cc]}))
-                    :source from
-                    :return-path "bounces@precursorapp.com"
-                    :message {:subject subject
-                              :body {:html html
-                                     :text text}})))
+    (when-let [to-addresses (seq (filter-to [to]))]
+      (ses/send-email :destination (merge {:to-addresses (filter-to [to])
+                                           :bcc-addresses (concat (when (profile/bcc-audit-log?)
+                                                                    ["audit-log@precursorapp.com"])
+                                                                  (when bcc [bcc]))}
+                                          (when cc
+                                            {:cc-addresses [cc]}))
+                      :source from
+                      :return-path "bounces@precursorapp.com"
+                      :message {:subject subject
+                                :body {:html html
+                                       :text text}}))))
