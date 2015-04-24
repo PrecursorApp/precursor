@@ -183,7 +183,7 @@
                                     "Welcome to Precursor! "
                                     [:br]
                                     "Check out "
-                                    [:a {:href "/document/17592197661008" :target "_blank"}
+                                    [:a {:href "https://precursorapp.com/document/17592197661008" :target "_blank"}
                                      "how to doc"]
                                     " and what's "
                                     [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"}
