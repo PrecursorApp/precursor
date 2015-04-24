@@ -83,6 +83,7 @@
                      :plan/billing-email
                      :plan/active-custs
                      :plan/invoices
+                     :plan/account-balance
 
                      :discount/start
                      :discount/coupon

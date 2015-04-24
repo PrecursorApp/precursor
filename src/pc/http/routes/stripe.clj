@@ -43,6 +43,19 @@
   (log/infof "%s hook from Stripe with no handler" (get hook-json "type"))
   (swap! examples assoc (get hook-json "type") hook-json))
 
+(defmethod handle-hook "customer.updated"
+  [hook-json]
+  (let [db (pcd/default-db)
+        _ (def mycustomer-updated-json hook-json)
+        plan (plan-model/find-by-stripe-customer db (get-in hook-json ["data" "object" "id"]))]
+    (with-hook-accounting plan hook-json
+      (when (contains? (set (keys (get-in hook-json ["data" "previous_attributes"])))
+                       "account_balance")
+        @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                  :transaction/broadcast true
+                                  :transaction/team (:db/id (team-model/find-by-plan db plan))}
+                                 [:db/add (:db/id plan) :plan/account-balance (get-in hook-json ["data" "object" "account_balance"])]])))))
+
 (defmethod handle-hook "invoice.created"
   [hook-json]
   (let [db (pcd/default-db)
@@ -78,7 +91,7 @@
             invoice (invoice-model/find-by-stripe-id db (get invoice-fields "id"))
             ;; Stripe gives us a list of the keys that changed, we extract those and
             ;; do :db/retract from previous  and :db/add from new attrs
-            before-values (-> (get hook-json "previous_attributes")
+            before-values (-> (get-in hook-json ["data" "previous_attributes"])
                             stripe/invoice-api->model)
             after-values (stripe/invoice-api->model invoice-fields)]
         (when (seq before-values) ;; only if things we care about changed
@@ -88,8 +101,7 @@
                                                          (when before-v
                                                            [[:db/retract (:db/id invoice) k before-v]])
                                                          (when (get after-values k)
-                                                           [[:db/add (:db/id invoice) k (get after-values k)]])
-                                                         )))
+                                                           [[:db/add (:db/id invoice) k (get after-values k)]]))))
                                              [] before-values)))))))
 
 ;; /hooks/stripe

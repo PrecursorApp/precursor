@@ -31,6 +31,7 @@
                   :plan/billing-email
                   :plan/coupon-code
                   :plan/active-custs
+                  :plan/account-balance
                   :discount/start
                   :discount/end
                   :discount/coupon

@@ -204,6 +204,10 @@
           [:p "We'll send invoices to this email."]
           (om/build billing-email {:plan plan}
                     {:react-key "billing-email"})
+          (when (neg? (:plan/account-balance plan))
+            (list
+             [:h4 "Credit"]
+             [:p (format-stripe-cents (Math/abs (:plan/account-balance plan)))]))
           [:h4 "Discount"]
           [:p "Coupon: " (name (:discount/coupon plan ""))]
           [:p (str "Start: " (:discount/start plan))]

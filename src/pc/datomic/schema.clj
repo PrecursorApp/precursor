@@ -666,6 +666,9 @@
               :db/cardinality :db.cardinality/many
               :db/doc "Stripe webhook ids that have been handled or are currently being handled")
 
+   (attribute :plan/account-balance
+              :db.type/long)
+
    (attribute :credit-card/exp-year
               :db.type/long)
 
