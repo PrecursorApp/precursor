@@ -229,3 +229,14 @@
         ;; Add some hidden text so that Google doesn't try to trim these.
         [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
          " Sent at " (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now)) "."]]]])))
+
+(defn invoice-html [team invoice]
+  (hiccup/html
+   [:html
+    [:body
+     [:p "You have a new invoice for the " (:team/subdomain team) " team."]
+     [:p {:style "font-size: 12px"}
+      (format "Tell us if this message was sent in error %s." (email-address "info"))
+      ;; Add some hidden text so that Google doesn't try to trim these.
+      [:span {:style "display: none; max-height: 0px; font-size: 0px; overflow: hidden;"}
+       " Sent at " (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now)) "."]]]]))

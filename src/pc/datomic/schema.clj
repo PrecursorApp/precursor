@@ -531,6 +531,7 @@
    (enum :email/access-request-created)
    (enum :email/early-access-granted)
    (enum :email/permission-granted)
+   (enum :email/invoice-created)
    (enum :email/fake)
 
    (attribute :flags

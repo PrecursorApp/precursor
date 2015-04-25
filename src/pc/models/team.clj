@@ -33,6 +33,13 @@
     :e
     (d/entity db)))
 
+(defn find-by-invoice [db invoice]
+  (->> (d/datoms db :vaet (:db/id invoice) :plan/invoices)
+    first
+    :e
+    (d/entity db)
+    (find-by-plan db)))
+
 (defn create-for-subdomain! [subdomain cust annotations]
   @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)}
                                   annotations)

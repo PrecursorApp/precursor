@@ -73,7 +73,8 @@
                                  [:db/add (:db/id plan) :plan/invoices invoice-id]
                                  (web-peer/server-frontend-id invoice-id (:db/id team))
                                  (merge
-                                  {:db/id invoice-id}
+                                  {:db/id invoice-id
+                                   :needs-email :email/invoice-created}
                                   (stripe/invoice-api->model invoice-fields)
                                   {:invoice/line-items (map #(assoc (stripe/invoice-item->model %) :db/id (d/tempid :db.part/user))
                                                             items)}

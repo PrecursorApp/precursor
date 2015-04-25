@@ -6,7 +6,8 @@
             [datomic.api :as d]
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
-            [pc.http.urls :as urls]))
+            [pc.http.urls :as urls])
+  (:import [java.io ByteArrayOutputStream]))
 
 
 ;; Docs on building pdfs with clj-pdf:
@@ -30,7 +31,7 @@
       (format "$%s%d.%02d" (if (neg? cents) "-" "") dollars pennies)
       (format "$%s%d" (if (neg? cents) "-" "") dollars))))
 
-(defn invoice-pdf [db team invoice out]
+(defn render-pdf [db team invoice out]
   (pdf/pdf
    [{:title (str "Precursor invoice for the " (:team/subdomain team) " team")
      :size "a4"
@@ -75,3 +76,8 @@
       "your team's plan page"]
      "."]]
    out))
+
+(defn invoice-pdf [db team invoice]
+  (let [out (ByteArrayOutputStream.)]
+    (render-pdf db team invoice out)
+    (.toByteArray out)))

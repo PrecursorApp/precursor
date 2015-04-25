@@ -1,20 +1,25 @@
 (ns pc.email
   (:require [clj-time.core :as time]
             [clj-time.format]
+            [clojure.java.io :as io]
             [clojure.pprint]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [datomic.api :as d]
+            [fs]
             [hiccup.core :as hiccup]
             [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [pc.http.urls :as urls]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.permission :as permission-model]
+            [pc.models.team :as team-model]
             [pc.profile :as profile]
             [pc.ses :as ses]
             [pc.utils]
+            [pc.views.invoice :as invoice-view]
             [pc.views.email :as view]
             [slingshot.slingshot :refer (throw+ try+)]))
 
@@ -204,6 +209,21 @@
                        :text (str "You've been granted early access to precursor's paid feaures: https://precursorapp.com")
                        :html (view/early-access-html cust)})))
 
+(defn send-invoice-created-email [db invoice-id]
+  (let [invoice (d/entity db invoice-id)
+        team (team-model/find-by-invoice db invoice)]
+    (ses/send-message {:from (view/email-address "Precursor" "early-access")
+                       :to (:plan/billing-email (:team/plan team))
+                       :subject "Precursor Invoice"
+                       :text (str "You have a new invoice for the " (:team/subdomain team) " team.")
+                       :html (view/invoice-html team invoice)
+                       :attachments (let [temp (fs/tempfile)]
+                                      ;; only supports files :(
+                                      (invoice-view/render-pdf db team invoice temp)
+                                      [{:content temp
+                                        :content-type "application/pdf"
+                                        :file-name (str "Precursor invoice #" (web-peer/client-id invoice))}])})))
+
 (defmacro with-email-accounting [email-enum eid & body]
   `(if (mark-sent-email ~eid ~email-enum)
      (try+
@@ -244,10 +264,10 @@
   (with-email-accounting email-enum eid
     (send-early-access-granted-email db eid)))
 
-(defmethod send-entity-email :email/early-access-granted
+(defmethod send-entity-email :email/invoice-created
   [db email-enum eid]
   (with-email-accounting email-enum eid
-    (unmark-sent-email eid :email/early-access-granted)))
+    (send-invoice-created-email db eid)))
 
 (defn send-missed-entity-emails-cron
   "Used to catch any emails missed by the transaction watcher."
