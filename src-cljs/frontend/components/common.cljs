@@ -164,7 +164,9 @@
                          :fill-x5
                          :fill-chat2]}
 
-   :sound-mute  {:paths [:stroke-sound]}
+   :sound-mute  {:paths [:stroke-sound
+                         :stroke-slash-backward]}
+   :sound-off   {:paths [:stroke-sound]}
    :sound-min   {:paths [:stroke-sound
                          :stroke-wave1]}
    :sound-med   {:paths [:stroke-sound

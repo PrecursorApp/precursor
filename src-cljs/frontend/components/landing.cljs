@@ -119,6 +119,30 @@
         [:span.access-name "roland@prcr.sr"]
         [:span.access-status "Was granted access today."]]]]]]))
 
+(def artwork-voice
+  (html
+   [:div.art-frame
+    [:div.art-team.artwork
+     [:div.art-voice-list
+      [:div.art-voice-items
+       [:div.art-voice-item
+        [:div.art-voice-user.a (common/icon :user)]
+        [:div.art-voice-name.a "Raph"]
+        [:div.art-voice-talk.a (common/icon :sound-off)]]
+       [:div.art-voice-item.selected
+        [:div.art-voice-user.b (common/icon :user)]
+        [:div.art-voice-name.b "Leo"]
+        [:div.art-voice-talk.b (common/icon :sound-off)]
+        [:div.art-voice-make.b.focus (common/icon :sound-max)]]
+       [:div.art-voice-item
+        [:div.art-voice-user.c (common/icon :user)]
+        [:div.art-voice-name.c "Donnie"]
+        [:div.art-voice-talk.c (common/icon :sound-off)]]
+       [:div.art-voice-item
+        [:div.art-voice-user.d (common/icon :user)]
+        [:div.art-voice-name.d "Mikey"]
+        [:div.art-voice-talk.d (common/icon :sound-mute)]]]]]]))
+
 (defn make-button [{:keys [document/id]} owner {:keys [alt]}]
   (reify
     om/IDisplayName (display-name [_] "Landing Make Button")
@@ -269,13 +293,13 @@
           [:div.feature.content {:class (when (contains? active-features "1") "art-visible") :ref "1"}
            [:div.feature-story
             [:h2.content-copy
-             "Prototype ideas anywhere."]
+             "Collaborate with ease."]
             [:p.content-copy
-             "We designed our interface to get out of the way and let you concentrate on your ideas. "
-             "It's simple enough to show on your phone and perfect for collaborating on your tablet. "]
-            [:a.feature-link {:href "https://precursorapp.com/document/17592197661694"}
-             "Try on iPhone."]]
-           [:div.feature-media artwork-mobile]]
+             "Our team features are optimized to make collaborating in real-time effortless. "
+             "Communicate and create new ideas with your teammates in one secure place. "]
+            [:a.feature-link {:href "/features/team"}
+             "See team features."]]
+           [:div.feature-media artwork-voice]]
           [:div.feature-divider]
           [:div.feature.content {:class (when (contains? active-features "2") "art-visible") :ref "2"}
            [:div.feature-story
@@ -291,13 +315,13 @@
           [:div.feature.content {:class (when (contains? active-features "3") "art-visible") :ref "3"}
            [:div.feature-story
             [:h2.content-copy
-             "Collaborate with ease."]
+             "Prototype ideas anywhere."]
             [:p.content-copy
-             "Our team features are optimized to make collaborating in real-time effortless. "
-             "Communicate and create new ideas with your teammates in one secure place. "]
-            [:a.feature-link {:href "/features/team"}
-             "See team features."]]
-           [:div.feature-media artwork-team]]])))))
+             "We designed our interface to get out of the way and let you concentrate on your ideas. "
+             "It's simple enough to show on your phone and perfect for collaborating on your tablet. "]
+            [:a.feature-link {:href "https://precursorapp.com/document/17592197661694"}
+             "Try on iPhone."]]
+           [:div.feature-media artwork-mobile]]])))))
 
 (defn the-what [app owner]
   (reify

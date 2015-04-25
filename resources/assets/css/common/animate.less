@@ -27,6 +27,9 @@
   .animate_trial();
   .animate_team_features();
 }
+.animate_landing_features() {
+  .animate_art_voice();
+}
 .animate_pricing() {
   &.page-pricing {
     @run1: (@run) (@now);
@@ -97,5 +100,37 @@
     .feature-headline   {animation: in-fade-left-soft   @run5 backwards;}
     .feature-copy       {animation: in-fade-left-soft   @run6 backwards;}
     .feature-link       {animation: in-fade-left-soft   @run7 backwards;}
+  }
+}
+.animate_art_voice() {
+  .art-voice-list {
+    @run1: (@run_slow) (@run);
+    @run2: (@run_slow) ((extract(@run1, 1) * 0.34) + extract(@run1, 2));
+    @run3: (@run_slow) ((extract(@run2, 1) * 0.34) + extract(@run2, 2));
+    @run4: (@run_slow) ((extract(@run3, 1) * 0.34) + extract(@run3, 2));
+    @run5: (@run_slow) ((extract(@run4, 1) * 0.34) + extract(@run4, 2));
+    @run6: (@run_slow) ((extract(@run5, 1) * 0.55) + extract(@run5, 2));
+    @run7: (@run)      ((extract(@run6, 1) * 0.34) + extract(@run6, 2));
+    @run8: (@run)      ((extract(@run7, 1) * 0.21) + extract(@run7, 2));
+    @run9: (@run)      ((extract(@run8, 1) * 0.13) + extract(@run8, 2));
+    .art-voice-user.a {animation: in-fade-left      @run1 backwards;}
+    .art-voice-name.a {animation: in-fade-left-soft @run1 backwards;}
+    .art-voice-talk.a {animation: in-zoom           @run2 backwards;}
+    .art-voice-user.b {animation: in-fade-left      @run2 backwards;}
+    .art-voice-name.b {animation: in-fade-left-soft @run2 backwards;}
+    .art-voice-talk.b {animation: in-zoom           @run2 backwards;}
+    .art-voice-user.c {animation: in-fade-left      @run3 backwards;}
+    .art-voice-name.c {animation: in-fade-left-soft @run3 backwards;}
+    .art-voice-talk.c {animation: in-zoom           @run4 backwards;}
+    .art-voice-user.d {animation: in-fade-left      @run4 backwards;}
+    .art-voice-name.d {animation: in-fade-left-soft @run4 backwards;}
+    .art-voice-talk.d {animation: in-zoom           @run5 backwards;}
+    .focus {
+      .iconpile     {animation: in-fade @run6 backwards; transform-origin: center;}
+      .stroke-sound {animation: in-zoom @run7 backwards; transform-origin: center;}
+      .stroke-wave1 {animation: in-zoom @run7 backwards; transform-origin: left;}
+      .stroke-wave2 {animation: in-zoom @run8 backwards; transform-origin: left;}
+      .stroke-wave3 {animation: in-zoom @run9 backwards; transform-origin: left;}
+    }
   }
 }
