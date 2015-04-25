@@ -330,8 +330,8 @@
                [:span "Share ideas privately."]]
               [:p.feature-copy
                [:span.content-copy
-                "We understand that your team might use proprietary technology or even trade secrets. "
-                "And that's why we built private documents, so you can collaborate with peace of mind. "]]
+                "We understand that your team needs its privacy, that's why we built private documents. "
+                "You should be able to collaborate with peace of mind, knowing that your ideas are safe."]]
               [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569407" :target "_blank"}
                [:span.content-copy "Try a private document."]]]
              [:div.feature-media
