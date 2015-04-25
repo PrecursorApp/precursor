@@ -160,18 +160,18 @@
           [:a.vein.make
            {:on-click #(cast! :team-settings-opened)
             :role "button"}
-           (common/icon :share)
+           (common/icon :private)
            [:span "Permissions"]]
           [:a.vein.make
            {:on-click #(cast! :team-docs-opened)
             :role "button"}
-           (common/icon :clock)
+           (common/icon :docs)
            [:span "Team Documents"]]
           [:a.vein.make
            {:on-click #(cast! :plan-settings-opened)
             :role "button"}
-           (common/icon :clock)
-           [:span "Plan"]]])))))
+           (common/icon :credit)
+           [:span "Billing"]]])))))
 
 (defn private-sharing [app owner]
   (reify
@@ -769,7 +769,7 @@
              (html
               [:h4.menu-heading {:title (:title component) :react-key (:title component)}
                (if (namespaced? overlay-key)
-                 (str (:title component) " - " (str/capitalize (name overlay-key)))
+                 (str (:title component) " " (str/capitalize (name overlay-key)))
                  (:title component))]))]
           [:div.menu-body
            (for [overlay-key (get-in app state/overlays-path)

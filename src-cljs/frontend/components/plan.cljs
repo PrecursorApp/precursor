@@ -102,18 +102,19 @@
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         [:div.menu-view
-          [:div.content.make
-           [:h4 "Usage"]
-           [:p "You pay $10/month for every active user on your team. Add users from the "
-            [:a {:on-click #(cast! :team-settings-opened)
-                 :role "button"}
-             "team permissions"]]
-           (om/build active-users {:plan plan}
-                     {:react-key "active-users"})
-           [:h4 "Plan history"]
+          [:div.menu-view
+           ; [:div.divider.make]
+           ; [:div.content.make
+           ;  [:p "You pay $10/month for every active user on your team. Add users from the "
+           ;   [:a {:on-click #(cast! :team-settings-opened)
+           ;        :role "button"}
+           ;    "team permissions"]]]
+           ; [:div.content.make
+           ;  (om/build active-users {:plan plan}
+           ;            {:react-key "active-users"})]
+           ; [:div.divider.make "Activity"]
            (om/build active-history {:team-uuid team-uuid}
-                     {:react-key "active-history"})]])))))
+                     {:react-key "active-history"})])))))
 
 (defn invoice-component [{:keys [invoice-id]} owner]
   (reify
@@ -135,23 +136,47 @@
     (render [_]
       (let [invoice (d/touch (d/entity @(om/get-shared owner :team-db) invoice-id))]
         (html
-         [:div.invoice {:style {:margin-bottom "1em"}}
-          [:div.invoice-number "Invoice #" (:db/id invoice)]
-          [:div.invoice-date (datetime/medium-consistent-date (:invoice/date invoice))]
-          [:div.invoice-description (:invoice/description invoice)]
-          [:div.invoice-discount
-           (when (= :coupon/product-hunt (:discount/coupon invoice))
-             "Discount: 50% off for first 6 months")]
-          [:div.invoice-total
-           "Total: " (format-stripe-cents (:invoice/total invoice))]
-          [:div.invoice-status
-           "Status: "
-           (cond (:invoice/paid? invoice)
-                 "paid"
 
-                 (:invoice/next-payment-attempt invoice)
-                 (str "will charge on " (datetime/medium-consistent-date (:invoice/next-payment-attempt invoice)))
-                 :else "unpaid")]])))))
+
+          ; [:div.invoice {:style {:margin-bottom "1em"}}
+          ;  [:div.invoice-number "Invoice #" (:db/id invoice)]
+          ;  [:div.invoice-date (datetime/medium-consistent-date (:invoice/date invoice))]
+          ;  [:div.invoice-description (:invoice/description invoice)]
+          ;  [:div.invoice-discount
+          ;   (when (= :coupon/product-hunt (:discount/coupon invoice))
+          ;     "Discount: 50% off for first 6 months")]
+          ;  [:div.invoice-total
+          ;   "Total: " (format-stripe-cents (:invoice/total invoice))]
+          ;  [:div.invoice-status
+          ;   "Status: "
+          ;   (cond (:invoice/paid? invoice)
+          ;         "paid"
+
+          ;         (:invoice/next-payment-attempt invoice)
+          ;         (str "will charge on " (datetime/medium-consistent-date (:invoice/next-payment-attempt invoice)))
+          ;         :else "unpaid")]]
+
+          [:tr.invoice.make
+           [:td.invoice-date
+            (datetime/medium-consistent-date (:invoice/date invoice))]
+           [:td.invoice-id
+            [:a {:href "#"}
+             (str "#" (:db/id invoice))]]
+           [:td.invoice-total
+            (format-stripe-cents (:invoice/total invoice))]
+           [:td.invoice-status
+            (cond (:invoice/paid? invoice)
+                  "Paid"
+
+                  (:invoice/next-payment-attempt invoice)
+                  (str "Charging " (datetime/medium-consistent-date (:invoice/next-payment-attempt invoice)))
+
+                  :else "Unpaid")]]
+
+
+
+
+          )))))
 
 (defn invoices [{:keys [plan team-uuid]} owner]
   (reify
@@ -159,10 +184,17 @@
     (render [_]
       (let [sorted-invoices (reverse (sort-by :invoice/date (:plan/invoices plan)))]
         (html
-         [:div.menu-view
-          [:div.content.make
-           (for [invoice sorted-invoices]
-             (om/build invoice-component {:invoice-id (:db/id invoice)} {:key :invoice-id}))]])))))
+          [:div.menu-view
+           [:table.invoices-table
+            [:thead.invoices-head
+             [:tr.make
+              [:th.invoice-date "date"]
+              [:th.invoice-id "invoice"]
+              [:th.invoice-total "total"]
+              [:th.invoice-status "status"]]]
+            [:tbody.invoices-body
+             (for [invoice sorted-invoices]
+               (om/build invoice-component {:invoice-id (:db/id invoice)} {:key :invoice-id}))]]])))))
 
 (defn payment [{:keys [plan team-uuid]} owner]
   (reify
@@ -170,15 +202,16 @@
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         [:div.menu-view
-          [:div.content.make
-           [:div.make
-            (for [[k v] (filter #(= "credit-card" (namespace (first %))) plan)
-                  :let [v (str v)]]
-              [:tr.make
-               [:td [:div {:title k} (str k)]]
-               [:td [:div.connection-result {:title v}
-                     v]]])]]])))))
+          [:div.menu-view.credit-card
+
+           (for [[k v] (filter #(= "credit-card" (namespace (first %))) plan)
+                 :let [v (str v)]]
+             [:div.content.make
+              [:div.disabled-input {:data-after k} v]])
+
+           [:div.calls-to-action.content.make
+            [:a.bubble-button {:role "button"}
+             "Change card."]]])))))
 
 (defn info [{:keys [plan team-uuid]} owner]
   (reify
@@ -193,30 +226,53 @@
         (html
          [:div.menu-view
           [:div.content.make
-           [:div.billing-email {:ref "billing-email"
-                                :content-editable (if (om/get-state owner :editing-email?) true false)
-                                :spell-check false
-                                :on-key-down #(do
-                                                (when (= "Enter" (.-key %))
-                                                  (.preventDefault %)
-                                                  (submit-fn)
-                                                  (utils/stop-event %))
-                                                (when (= "Escape" (.-key %))
-                                                  (om/set-state! owner :editing-email? false)
-                                                  (om/set-state! owner :new-email "")
-                                                  (utils/stop-event %)))
-                                :on-blur #(do (submit-fn)
-                                              (utils/stop-event %))
-                                :on-input #(om/set-state-nr! owner :new-email (goog.dom/getRawTextContent (.-target %)))}
-            (:plan/billing-email plan)]
-           [:a {:on-click #(do
-                             (om/set-state! owner :editing-email? true)
-                             (.focus (om/get-node owner "billing-email"))
-                             (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "billing-email")))
-                             (.stopPropagation %))
-                :role "button"
-                :title "Change your billing email."}
-            (common/icon :pencil)]]])))))
+
+
+
+           ; [:div.billing-email {:ref "billing-email"
+           ;                      :content-editable (if (om/get-state owner :editing-email?) true false)
+           ;                      :spell-check false
+           ;                      :on-key-down #(do
+           ;                                      (when (= "Enter" (.-key %))
+           ;                                        (.preventDefault %)
+           ;                                        (submit-fn)
+           ;                                        (utils/stop-event %))
+           ;                                      (when (= "Escape" (.-key %))
+           ;                                        (om/set-state! owner :editing-email? false)
+           ;                                        (om/set-state! owner :new-email "")
+           ;                                        (utils/stop-event %)))
+           ;                      :on-blur #(do (submit-fn)
+           ;                                    (utils/stop-event %))
+           ;                      :on-input #(om/set-state-nr! owner :new-email (goog.dom/getRawTextContent (.-target %)))}
+           ;  (:plan/billing-email plan)]
+           ; [:a {:on-click #(do
+           ;                   (om/set-state! owner :editing-email? true)
+           ;                   (.focus (om/get-node owner "billing-email"))
+           ;                   (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "billing-email")))
+           ;                   (.stopPropagation %))
+           ;      :role "button"
+           ;      :title "Change your billing email."}
+           ;  (common/icon :pencil)]
+
+           [:form.menu-invite-form
+            [:input {:type "text"
+                     :required "true"
+                     :data-adaptive ""
+                     :value (or (:plan/billing-email plan) "")
+                     :on-change #(do
+                                   (.preventDefault %)
+                                   (submit-fn)
+                                   (utils/stop-event %))}]
+            [:label {:data-placeholder "We'll send your invoices here"
+                     :data-placeholder-nil "We need an email to send invoices"}]]]
+          [:div.calls-to-action.content.make
+           [:a.bubble-button {:role "button"
+                              :on-click #(do (submit-fn)
+                                           (utils/stop-event %))}
+            "Save information."]]
+
+
+          ])))))
 
 (defn start [{:keys [plan team-uuid]} owner]
   (reify

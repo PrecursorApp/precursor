@@ -195,3 +195,24 @@ input {
     }
   }
 }
+.disabled-input {
+  .holo();
+  color: @gray;
+  position: relative;
+  width: 100%;
+  min-height: @adapt_size;
+  padding: (@adapt_line - ((@line_height - @adapt_line) / 2)) @adapt_line;
+  border: 1px dashed @gray_lighter;
+  &:after {
+    content: attr(data-after);
+    color: @gray_light;
+    position: absolute;
+    top: (@adapt_size - @adapt_tiny) / 2;
+    left: (@adapt_line - @adapt_tiny);
+    padding: 0 @adapt_tiny;
+    line-height: @adapt_tiny;
+    background-color: @dye_outer;
+    transform: translate3d(0, (-@adapt_size / 2), 0) scale3d(.8, .8, 1);
+    transform-origin: left;
+  }
+}

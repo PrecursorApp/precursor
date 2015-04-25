@@ -93,6 +93,11 @@
       }
     }
   }
+  &.credit-card {
+    .disabled-input {
+      margin-bottom: @menu_padding;
+    }
+  }
   article {
     padding: @menu_padding;
     width: 100%;
@@ -488,4 +493,43 @@
 }
 .connection-result {
   margin: 0 1em;
+}
+.invoices-table {
+  width: 100%;
+  [class^="invoice-"] {
+    line-height: 1.5;
+    padding: 1.25rem .5rem;
+    white-space: nowrap;
+    &:first-child {
+      padding-left: @menu_padding;
+    }
+    &:last-child {
+      padding-right: @menu_padding;
+    }
+  }
+}
+.invoices-head {
+  th {
+    text-transform: capitalize;
+    font-weight: normal;
+    padding: 1rem;
+  }
+}
+.invoices-body {
+  .invoice {
+    border-bottom: 1px dashed @gray_lighter;
+  }
+}
+.invoice-date,
+.invoice-id {
+  width: 30%;
+  text-align: left;
+}
+.invoice-total,
+.invoice-status {
+  text-align: center;
+  width: 10%;
+}
+.invoice-total {
+  text-align: right;
 }
