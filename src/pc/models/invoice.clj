@@ -18,6 +18,9 @@
     (when (:invoice/date candidate)
       candidate)))
 
+(defn should-notify? [invoice]
+  (not (zero? (:invoice/total invoice))))
+
 (defn read-api [invoice]
   (-> invoice
     (select-keys [:invoice/subtotal

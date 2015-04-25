@@ -190,7 +190,12 @@
   (reify
     om/IRender
     (render [_]
-      (let [sorted-invoices (reverse (sort-by :invoice/date (:plan/invoices plan)))]
+      (let [sorted-invoices (->> plan
+                              :plan/invoices
+                              ;; don't show $0 invoices
+                              (filter #(not (zero? (:invoice/total %))))
+                              (sort-by :invoice/date)
+                              reverse)]
         (html
           [:div.menu-view
            [:table.invoices-table

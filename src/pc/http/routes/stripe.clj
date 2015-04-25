@@ -64,6 +64,7 @@
     (with-hook-accounting plan hook-json
       (let [team (team-model/find-by-plan db plan)
             invoice-fields (get-in hook-json ["data" "object"])
+            invoice (stripe/invoice-api->model invoice-fields)
             items (get-in invoice-fields ["lines" "data"])
             discount-fields (get-in invoice-fields ["discount"])
             invoice-id (d/tempid :db.part/user)]
@@ -72,14 +73,15 @@
                                   :transaction/team (:db/id team)}
                                  [:db/add (:db/id plan) :plan/invoices invoice-id]
                                  (web-peer/server-frontend-id invoice-id (:db/id team))
-                                 (merge
-                                  {:db/id invoice-id
-                                   :needs-email :email/invoice-created}
-                                  (stripe/invoice-api->model invoice-fields)
-                                  {:invoice/line-items (map #(assoc (stripe/invoice-item->model %) :db/id (d/tempid :db.part/user))
-                                                            items)}
-                                  (when (seq discount-fields)
-                                    (stripe/discount-api->model discount-fields)))])))))
+                                 (merge invoice
+                                        {:db/id invoice-id}
+                                        (when (invoice-model/should-notify? invoice)
+                                          {:needs-email :email/invoice-created})
+                                        {:invoice/line-items (map #(assoc (stripe/invoice-item->model %)
+                                                                          :db/id (d/tempid :db.part/user))
+                                                                  items)}
+                                        (when (seq discount-fields)
+                                          (stripe/discount-api->model discount-fields)))])))))
 
 (defmethod handle-hook "invoice.updated"
   [hook-json]
