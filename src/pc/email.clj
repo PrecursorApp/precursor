@@ -204,6 +204,18 @@
                        :text (str "You've been granted early access to precursor's paid feaures: https://precursorapp.com")
                        :html (view/early-access-html cust)})))
 
+(defmacro with-email-accounting [email-enum eid & body]
+  `(if (mark-sent-email ~eid ~email-enum)
+     (try+
+      (log/infof "sending %s email for %s" (name ~email-enum) ~eid)
+      ~@body
+      (catch Object t#
+        (log/errorf (:throwable ~'&throw-context) "error sending %s email for %s" (name ~email-enum) ~eid)
+        (.printStackTrace (:throwable ~'&throw-context))
+        (unmark-sent-email ~eid ~email-enum)
+        (throw+ t#)))
+     (log/infof "not re-sending %s email for %s" (name ~email-enum) ~eid)))
+
 (defn send-entity-email-dispatch-fn [db email-enum eid] email-enum)
 
 (defmulti send-entity-email send-entity-email-dispatch-fn)
@@ -214,65 +226,28 @@
 
 (defmethod send-entity-email :email/access-grant-created
   [db email-enum eid]
-  (if (mark-sent-email eid :email/access-grant-created)
-    (try+
-      (log/infof "sending access-grant email for %s" eid)
-      (send-access-grant-email db eid)
-      (catch Object t
-        (.printStackTrace (:throwable &throw-context))
-        (unmark-sent-email eid :email/access-grant-created)
-        (throw+ t)))
-    (log/infof "not re-sending access-grant email for %s" eid)))
+  (with-email-accounting email-enum eid
+    (send-access-grant-email db eid)))
 
 (defmethod send-entity-email :email/access-request-created
   [db email-enum eid]
-  (if (mark-sent-email eid :email/access-request-created)
-    (try+
-      (log/infof "sending access-request email for %s" eid)
-      (send-access-request-email db eid)
-      (catch Object t
-        (.printStackTrace (:throwable &throw-context))
-        (unmark-sent-email eid :email/access-request-created)
-        (throw+ t)))
-    (log/infof "not re-sending access-request email for %s" eid)))
-
-;; TODO: deprecated by
-(defmethod send-entity-email :email/document-permission-for-customer-granted
-  [db email-enum eid]
-  (if (mark-sent-email eid :email/document-permission-for-customer-granted)
-    (try+
-      (log/infof "sending access-request email for %s" eid)
-      (send-permission-grant-email db eid)
-      (catch Object t
-        (.printStackTrace (:throwable &throw-context))
-        (unmark-sent-email eid :email/document-permission-for-customer-granted)
-        (throw+ t)))
-    (log/infof "not re-sending access-request email for %s" eid)))
+  (with-email-accounting email-enum eid
+    (send-access-request-email db eid)))
 
 (defmethod send-entity-email :email/permission-granted
   [db email-enum eid]
-  (if (mark-sent-email eid :email/permission-granted)
-    (try+
-      (log/infof "sending access-request email for %s" eid)
-      (send-permission-grant-email db eid)
-      (catch Object t
-        (.printStackTrace (:throwable &throw-context))
-        (unmark-sent-email eid :email/permission-granted)
-        (throw+ t)))
-    (log/infof "not re-sending access-request email for %s" eid)))
+  (with-email-accounting email-enum eid
+    (send-permission-grant-email db eid)))
 
 (defmethod send-entity-email :email/early-access-granted
   [db email-enum eid]
-  (if (mark-sent-email eid :email/early-access-granted)
-    (try+
-      (log/infof "sending early access email for %s" eid)
-      (send-early-access-granted-email db eid)
-      (catch Object t
-        (.printStackTrace (:throwable &throw-context))
-        (unmark-sent-email eid :email/early-access-granted)
-        (throw+ t)))
-    (log/infof "not re-sending early-access-granted email for %s" eid)))
+  (with-email-accounting email-enum eid
+    (send-early-access-granted-email db eid)))
 
+(defmethod send-entity-email :email/early-access-granted
+  [db email-enum eid]
+  (with-email-accounting email-enum eid
+    (unmark-sent-email eid :email/early-access-granted)))
 
 (defn send-missed-entity-emails-cron
   "Used to catch any emails missed by the transaction watcher."
