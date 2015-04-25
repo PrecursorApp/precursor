@@ -84,7 +84,7 @@
         (html
          (if (nil? active-users)
            [:div.loading {:key "loading"} "Loading"]
-           [:div {:key "history"}
+           [:div.content {:key "history"}
             (for [{:keys [cust instant added?]} (reverse history)]
               [:div.access-card.make {:key (str instant cust)}
                [:div.access-avatar
@@ -94,7 +94,7 @@
                 [:span {:title cust}
                  cust]
                 [:span.access-status
-                 (str "Was marked " (if added? "active" "inactive") " " (format-access-date instant))]]])]))))))
+                 (str "Was marked as" (if added? " active " " inactive ") (format-access-date instant) ".")]]])]))))))
 
 (defn format-stripe-cents
   "Formats Stripe's currency values into ordinary dollar format
@@ -115,16 +115,11 @@
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
           [:div.menu-view
-           ; [:div.divider.make]
-           ; [:div.content.make
-           ;  [:p "You pay $10/month for every active user on your team. Add users from the "
-           ;   [:a {:on-click #(cast! :team-settings-opened)
-           ;        :role "button"}
-           ;    "team permissions"]]]
+
            ; [:div.content.make
            ;  (om/build active-users {:plan plan}
            ;            {:react-key "active-users"})]
-           ; [:div.divider.make "Activity"]
+
            (om/build active-history {:team-uuid team-uuid}
                      {:react-key "active-history"})])))))
 
@@ -330,7 +325,8 @@
               (common/icon :heart)
               [:span "Discount"]]
              (when (neg? (:plan/account-balance plan))
-               [:span "Credit " (format-stripe-cents (Math/abs (:plan/account-balance plan)))])))])))))
+               [:div.content.make.store-credit
+                [:span (str "You have " (format-stripe-cents (Math/abs (:plan/account-balance plan))) " of available credit.")]])))])))))
 
 (def plan-components
   {:start start
