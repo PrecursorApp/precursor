@@ -331,7 +331,7 @@
               [:span "Discount"]]
              (when (neg? (:plan/account-balance plan))
                [:div.content.make.store-credit
-                [:span (str "You have " (format-stripe-cents (Math/abs (:plan/account-balance plan))) " of available credit.")]])))])))))
+                [:span (str "You have " (format-stripe-cents (Math/abs (:plan/account-balance plan))) " of credit for future payments.")]])))])))))
 
 (def plan-components
   {:start start
