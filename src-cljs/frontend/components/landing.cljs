@@ -221,12 +221,7 @@
               "No nonsense. That's why we made Precursor."]
              [:div.calls-to-action
               (om/build make-button (select-keys app [:document/id]))]]]]
-          [:div.our-proof {:class (when (:show-scroll-to-arrow app) "extend")}
-           ;; probably kill this when customers are ready
-           (when (:show-scroll-to-arrow app)
-             [:a {:role "button"
-                  :on-click #(cast! :scroll-to-arrow-clicked)}
-              (common/icon :arrow-down)])
+          [:div.our-proof
            ;; Hide this until we get testimonials/stats figured out
            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
            ]])))))
@@ -267,6 +262,10 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.the-how
+          [:div.landing-learn-back {:class (when (and (:show-scroll-to-arrow app) (not (contains? active-features "1"))) " show ")}]
+          [:div.landing-learn-front {:class (when-not (contains? active-features "1") " show ")}
+           [:a {:role "button" :on-click #(cast! :scroll-to-arrow-clicked)}
+            "Learn more."]]
           [:div.feature.content {:class (when (contains? active-features "1") "art-visible") :ref "1"}
            [:div.feature-story
             [:h2.content-copy
