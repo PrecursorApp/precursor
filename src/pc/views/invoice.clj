@@ -3,6 +3,8 @@
             [clj-time.coerce]
             [clj-time.format]
             [clojure.java.io :as io]
+            [datomic.api :as d]
+            [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
             [pc.http.urls :as urls]))
 
@@ -12,15 +14,28 @@
 
 (def styles {:link {:color [6 155 250]}})
 
-(defn invoice-pdf [team invoice out]
+(defn format-invoice-date [instant]
+  (clj-time.format/unparse (clj-time.format/formatter "E, d MMM y")
+                           (clj-time.coerce/from-date instant)))
+
+(defn format-stripe-cents
+  "Formats Stripe's currency values into ordinary dollar format
+   500 -> $5
+   489 -> $4.89"
+  [cents]
+  (let [abs-cents (Math/abs cents)
+        pennies (mod abs-cents 100)
+        dollars (/ (- abs-cents pennies) 100)]
+    (if (pos? pennies)
+      (format "$%s%d.%02d" (if (neg? cents) "-" "") dollars pennies)
+      (format "$%s%d" (if (neg? cents) "-" "") dollars))))
+
+(defn invoice-pdf [db team invoice out]
   (pdf/pdf
    [{:title (str "Precursor invoice for the " (:team/subdomain team) " team")
      :size "a4"
      :footer {:page-numbers false}
      :stylesheet styles}
-    [:image {:width 150
-             :height 100}
-     (io/resource "public/img/precursor-banner-small.png")]
 
     [:heading "Precursor Invoice #" (web-peer/client-id invoice)]
 
@@ -33,12 +48,23 @@
       "support@precursorapp.com"]
      "."]
 
+    [:table {:border false
+             :widths [1 4]}
+     ["Date" (format-invoice-date (:invoice/date invoice))]
+     ["Period" (str (format-invoice-date (:invoice/period-start invoice))
+                    " to "
+                    (format-invoice-date (:invoice/period-end invoice)))]
+     ["Team" (:team/subdomain team)]
+     ["Description" (:invoice/description invoice "Team subscription")]
 
-    [:table
-     ["Date" (clj-time.format/unparse (clj-time.format/formatter "E, d MMM y")
-                                      (clj-time.coerce/from-date (:invoice/date invoice)))]
-     ["Subtotal" (format "$%.2f" (float (/ (:invoice/subtotal invoice) 100)))]
-     ["Total" (format "$%.2f" (float (/ (:invoice/total invoice) 100)))]]
+     (when (:discount/coupon invoice)
+       (let [coupon (d/entity db (:discount/coupon invoice))]
+         ["Discount" (format "%s%% off for %s months"
+                             (:coupon/percent-off coupon)
+                             (:coupon/duration-in-months coupon))]))
+     ["Total Charge" (format-stripe-cents (:invoice/total invoice))]
+     (when (neg? (:invoice/total invoice))
+       ["Credit" (format-stripe-cents (- (:invoice/total invoice)))])]
 
     [:spacer 1]
 
@@ -49,8 +75,3 @@
       "your team's plan page"]
      "."]]
    out))
-
-(comment
-  (let [team (pc.models.team/find-by-subdomain (pc.datomic/default-db) "precursor")]
-    (invoice-pdf team (first (:plan/invoices (:team/plan team)))
-                 "test.pdf")))

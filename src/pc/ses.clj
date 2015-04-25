@@ -21,8 +21,8 @@
 
 (defn send-message [{:keys [from to cc bcc subject text html] :as props}]
   (amazonica.core/with-credential [access-key-id secret-access-key "us-west-2"]
-    (when-let [to-addresses (seq (filter-to [to]))]
-      (ses/send-email :destination (merge {:to-addresses (filter-to [to])
+    (when-let [to-addresses (seq (filter-addresses [to]))]
+      (ses/send-email :destination (merge {:to-addresses to-addresses
                                            :bcc-addresses (concat (when (profile/bcc-audit-log?)
                                                                     ["audit-log@precursorapp.com"])
                                                                   (when bcc [bcc]))}

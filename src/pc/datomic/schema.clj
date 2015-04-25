@@ -710,6 +710,12 @@
    (attribute :invoice/date
               :db.type/instant)
 
+   (attribute :invoice/period-start
+              :db.type/instant)
+
+   (attribute :invoice/period-end
+              :db.type/instant)
+
    (attribute :invoice/paid?
               :db.type/boolean)
 
