@@ -56,6 +56,20 @@
                                   :transaction/team (:db/id (team-model/find-by-plan db plan))}
                                  [:db/add (:db/id plan) :plan/account-balance (get-in hook-json ["data" "object" "account_balance"])]])))))
 
+(defmethod handle-hook "customer.subscription.updated"
+  [hook-json]
+  (let [db (pcd/default-db)
+        _ (def mysubscription-updated-json hook-json)
+        plan (plan-model/find-by-stripe-customer db (get-in hook-json ["data" "object" "customer"]))]
+    (with-hook-accounting plan hook-json
+      (when (contains? (set (keys (get-in hook-json ["data" "previous_attributes"])))
+                       "current_period_end")
+        @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                  :transaction/broadcast true
+                                  :transaction/team (:db/id (team-model/find-by-plan db plan))}
+                                 [:db/add (:db/id plan) :plan/next-period-start (stripe/timestamp->model
+                                                                                 (get-in hook-json ["data" "object" "current_period_end"]))]])))))
+
 (defmethod handle-hook "invoice.created"
   [hook-json]
   (let [db (pcd/default-db)

@@ -84,6 +84,7 @@
                      :plan/active-custs
                      :plan/invoices
                      :plan/account-balance
+                     :plan/next-period-start
 
                      :discount/start
                      :discount/coupon

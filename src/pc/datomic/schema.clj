@@ -631,6 +631,10 @@
               :db.type/instant
               :db/doc "Stripe start time for the plan")
 
+   (attribute :plan/next-period-start
+              :db.type/instant
+              :db/doc "Time of next Stripe plan period")
+
    (attribute :plan/trial-end
               :db.type/instant
               :db/doc "Instant that plan's trial is over")
