@@ -3,8 +3,11 @@
             [clj-time.format]
             [clojure.string :as str]
             [hiccup.core :as hiccup]
+            [pc.datomic.web-peer :as web-peer]
             [pc.http.urls :as urls]
-            [pc.profile :as profile]))
+            [pc.models.plan :as plan-model]
+            [pc.profile :as profile]
+            [pc.views.invoice :as invoice-view]))
 
 (defn email-address
   ([local-part]
@@ -235,6 +238,49 @@
    [:html
     [:body
      [:p "You have a new invoice for the " (:team/subdomain team) " team."]
+
+     [:p "Invoice #" (web-peer/client-id invoice)]
+
+     [:table {:border false}
+      [:tbody
+       [:tr
+        [:td "Date"]
+        [:td (invoice-view/format-invoice-date (:invoice/date invoice))]]
+       [:tr
+        [:td "Period"]
+        [:td (str (invoice-view/format-invoice-date (:invoice/period-start invoice))
+                  " to "
+                  (invoice-view/format-invoice-date (:invoice/period-end invoice)))]]
+       [:tr
+        [:td "Description"]
+        [:td (:invoice/description invoice "Team subscription")]]
+
+       (when (:discount/coupon invoice)
+         (let [coupon (plan-model/coupon-read-api (:discount/coupon invoice))]
+           [:tr
+            [:td "Discount"]
+            [:td (format "%s%% off for %s months"
+                         (:coupon/percent-off coupon)
+                         (:coupon/duration-in-months coupon))]]))
+
+       [:tr
+        [:td "Total Charge"]
+        [:td (invoice-view/format-stripe-cents (:invoice/total invoice))]]
+
+       (when (neg? (:invoice/total invoice))
+         [:tr
+          [:td "Credit"]
+          [:td (invoice-view/format-stripe-cents (- (:invoice/total invoice)))]])]]
+
+     [:p
+      "You can modify your plan on "
+      [:a {:href (urls/from-doc (:team/intro-doc team)
+                                   :query {:overlay "plan"})}
+       "your team's plan page"]
+      "."]
+
+     [:p "If you have any questions, please respond to this email."]
+
      [:p {:style "font-size: 12px"}
       (format "Tell us if this message was sent in error %s." (email-address "info"))
       ;; Add some hidden text so that Google doesn't try to trim these.
