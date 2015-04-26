@@ -110,9 +110,9 @@
         (redirect "/"))))
 
 (defpage document [:get "/document/:document-id" {:document-id #"[0-9]+"}] [req]
-  (let [document-id (-> req :params :document-id)
+  (let [document-id (some-> req :params :document-id Long/parseLong)
         db (pcd/default-db)
-        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
+        doc (doc-model/find-by-team-and-id db (:team req) document-id)]
     (if doc
       (content/app (merge (common-view-data req)
                           {:initial-document-id (:db/id doc)
@@ -122,10 +122,14 @@
                           ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
                           ;;   {:initial-entities (layer/find-by-document db doc)})
                           ))
-      (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
+      (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) document-id)]
         (redirect (str "/document/" (:db/id redirect-doc)))
         {:status 404
-         :body "Document not found"}))))
+         :body (if-let [doc (doc-model/find-by-id db document-id)]
+                 (hiccup.page/html5
+                  [:body "This document lives on a different domain: " [:a {:href (urls/from-doc doc)}
+                                                                        (urls/from-doc doc)]])
+                 "Document not found")}))))
 
 (defn image-cache-headers [db doc]
   (let [last-modified-instant (or (doc-http/last-modified-instant db doc)
