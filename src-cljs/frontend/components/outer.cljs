@@ -81,8 +81,8 @@
                "You'll have two free weeks of unlimited access. "
                "(Solo teams work too!) "]
               [:p.outer-form-copy
-               "First, sign in with your Google account. "
-               "Then we'll just ask you to choose a domain for your team. "])
+               "To get started, you'll just need to sign in with your Google account. "
+               "After that, we'll ask you to create a name for your team domain. "])
             (when-not (utils/logged-in? owner)
               [:div.outer-form-sign
                (om/build common/google-login {:source "Team Signup Form"})])]
