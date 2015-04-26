@@ -65,7 +65,6 @@
   border: 2px solid @white;
   cursor: pointer;
   overflow: hidden;
-  transition: border @run @bezier_deform;
   .mq_640({
     width: 100%;
   });
@@ -115,13 +114,13 @@
     order: 2;
     color: fade(@white, (100 * @opacity_darker_gray));
     margin-left: @tile / 2;
-    border-color: fade(@white, (100 * @opacity_darker_dark));
+    border: 1px dashed fade(@white, (100 * @opacity_darker_dark));
     .mq_640({
       display: none;
     });
     &:hover {
       color: @white;
-      border-color: @white;
+      border: 2px solid @white;
       transition-duration: @run_fast;
       .something-wheel {
         &:before,
@@ -131,7 +130,8 @@
       }
       ~ .pancake-button {
         color: fade(@white, (100 * @opacity_darker_gray));
-        border-color: fade(@white, (100 * @opacity_darker_dark));
+        border: 1px dashed fade(@white, (100 * @opacity_darker_dark));
+        transition-duration: @now;
       }
     }
     .make-prepend,
