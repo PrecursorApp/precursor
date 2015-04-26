@@ -199,17 +199,17 @@
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-          [:div.menu-view.credit-card
-
-           (for [[k v] (filter #(= "credit-card" (namespace (first %))) plan)
-                 :let [v (str v)]]
-             [:div.content.make
-              [:div.disabled-input {:data-after k} v]])
-
-           [:div.calls-to-action.content.make
-            [:a.bubble-button {:role "button"
-                               :on-click #(cast! :change-card-clicked)}
-             "Change card."]]])))))
+         [:div.menu-view.credit-card
+          [:div.content.make
+           [:div.disabled-input {:data-after "Card number"}
+            (str "✳✳✳✳ ✳✳✳✳ ✳✳✳✳ " (:credit-card/last4 plan))]]
+          [:div.content.make
+           [:div.disabled-input {:data-after "Expiration"}
+            (str (:credit-card/exp-month plan) "/" (:credit-card/exp-year plan))]]
+          [:div.calls-to-action.content.make
+           [:a.bubble-button {:role "button"
+                              :on-click #(cast! :change-card-clicked)}
+            "Change card."]]])))))
 
 (defn info [{:keys [plan team-uuid]} owner]
   (reify
