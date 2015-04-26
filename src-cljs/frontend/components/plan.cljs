@@ -269,6 +269,22 @@
                                            (utils/stop-event %))}
             "Save information."]]])))))
 
+(defn discount [{:keys [plan team-uuid]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            {:keys [coupon/duration-in-months
+                    coupon/stripe-id coupon/percent-off]} (:discount/coupon plan)]
+        (html
+         [:div.menu-view
+          [:div.content.make
+           "You have the " stripe-id " coupon, which gives you " percent-off "% off for the first "
+           duration-in-months " months."]
+          (when (:discount/end plan)
+            [:div.content.make
+             "Your discount expires on " (datetime/month-day (:discount/end plan)) "."])])))))
+
 (defn paid-summary [{:keys [plan team-uuid]} owner]
   (reify
     om/IRender
@@ -361,9 +377,10 @@
              [:a.vein.make (open-menu-props :activity)
               (common/icon :activity)
               [:span "Activity"]]
-             [:a.vein.make (open-menu-props :discount)
-              (common/icon :heart)
-              [:span "Discount"]]
+             (when (plan-model/active-discount? plan)
+               [:a.vein.make (open-menu-props :discount)
+                (common/icon :heart)
+                [:span "Discount"]])
              (when (neg? (:plan/account-balance plan))
                [:div.content.make.store-credit
                 [:span (str "You have " (format-stripe-cents (Math/abs (:plan/account-balance plan))) " of credit for future payments.")]])))])))))
@@ -374,7 +391,7 @@
    :payment payment
    :invoices invoices
    :activity activity
-   :discount info})
+   :discount discount})
 
 (defn plan-menu* [{:keys [plan-id team-uuid submenu]} owner]
   (reify
