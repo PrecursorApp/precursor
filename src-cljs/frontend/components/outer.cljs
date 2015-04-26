@@ -77,9 +77,9 @@
              "Grab your domain to get started. "]
             (if (utils/logged-in? owner)
               [:p.outer-form-copy
-               "Numbers and hyphens will work but start your team name with a letter. "
-               "You'll have two free weeks of unlimited access. "
-               "(Solo teams work too!) "]
+               "Your team domain needs more than 3 characters, starting with a letter. "
+               "Don't have any teammates? "
+               "That's okay, solo teams are also welcome! "]
               [:p.outer-form-copy
                "To get started, you'll just need to sign in with your Google account. "
                "After that, we'll ask you to create a name for your team domain. "])
@@ -133,7 +133,7 @@
                                 (str (str (:team/subdomain team) "." config/hostname)
                                      " is ready, let's go!")]
 
-                    :else "Start your team.")]]
+                    :else "Start for free.")]]
 
             (when error
               [:div.error error])
