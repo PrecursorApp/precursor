@@ -284,10 +284,37 @@
            [:a.bubble-button {:role "button"
                               :on-click #(do (submit-fn)
                                            (utils/stop-event %))}
-            "Save information."]]
+            "Save information."]]])))))
 
-
-          ])))))
+(defn paid-summary [{:keys [plan team-uuid]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       [:div
+        (if (plan-model/in-trial? plan)
+          [:div.content.make
+           [:h4
+            "Your team plan starts " (datetime/month-day (:plan/trial-end plan))
+            " for " (format-stripe-cents (plan-model/cost plan)) "."]]
+          [:div.content.make
+           [:h4
+            "Your team plan renews " (datetime/month-day (:plan/trial-end plan))
+            " for " (format-stripe-cents (plan-model/cost plan)) "."]])
+        [:div.content.make
+         [:p
+          (case (count (:plan/active-custs plan))
+            0 "No users are active on your team, yet."
+            1 "One user is active on your team."
+            (str (count (:plan/active-custs plan)) " users are active on your team."))
+          " Your plan renews monthly. "
+          ;; discount
+          (when-let [coupon (:discount/coupon plan)]
+            (str "The " (:coupon/percent-off coupon) "% " (:coupon/stripe-id coupon)
+                 " discount is included in the renewal price. "))
+          ;; trial days
+          (when (plan-model/in-trial? plan)
+            (str "The " (time-left plan) " left in your trial are included in the start date."))]]]))))
 
 (defn start [{:keys [plan team-uuid]} owner]
   (reify
@@ -301,13 +328,9 @@
         (html
          [:div.menu-view
           [:div.divider.make]
-          [:div.content.make
-           [:h4 "Your team plan renews June 7 for $15."]]
-          [:div.content.make
-           [:p "3 users are active on your team. "
-            "Your plan renews monthly. "
-            "Product Hunt's 50% discount is included in the renewal price. "
-            "The 14 days left in your trial are included in the renewal date. "]]
+          (if (:plan/paid? plan)
+            (om/build paid-summary {:plan plan :team-uuid team-uuid} {:react-key "paid-summary"})
+            (om/build paid-summary {:plan plan :team-uuid team-uuid} {:react-key "paid-summary"}))
           [:div.divider.make]
           (if-not (:plan/paid? plan)
             [:a.vein.make {:on-click #(cast! :start-plan-clicked)}

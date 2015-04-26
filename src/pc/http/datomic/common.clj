@@ -2,7 +2,8 @@
   (:require [clojure.set :as set]
             [datomic.api :as d]
             [pc.datomic.schema :as schema]
-            [pc.datomic.web-peer :as web-peer]))
+            [pc.datomic.web-peer :as web-peer]
+            [pc.models.plan :as plan-model]))
 
 ;; TODO: is the transaction guaranteed to be the first? Can there be multiple?
 (defn get-annotations [transaction]
@@ -158,7 +159,7 @@
 
 (defmethod translate-datom :discount/coupon [db d]
   (-> d
-    (assoc :v (d/ident db (:v d)))))
+    (assoc :v (plan-model/coupon-read-api (d/ident db (:v d))))))
 
 (defmethod translate-datom :plan/invoices [db d]
   (-> d

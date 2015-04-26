@@ -22,6 +22,15 @@
 (defn find-by-subdomain [db subdomain]
   (d/entity db (d/q '[:find ?e . :in $ ?sub :where [?t :team/subdomain ?sub] [?t :team/plan ?e]] db subdomain)))
 
+(def coupons
+  #{{:coupon/stripe-id "product-hunt"
+     :coupon/percent-off 50
+     :coupon/duration-in-months 6
+     :db/ident :coupon/product-hunt}})
+
+(defn coupon-read-api [coupon-ident]
+  (first (filter #(= (:db/ident %) coupon-ident) coupons)))
+
 (defn read-api [plan]
   (-> plan
     (select-keys [:plan/start
@@ -40,6 +49,7 @@
                   :credit-card/last4
                   :credit-card/brand
                   :plan/invoices])
+    (utils/update-when-in [:discount/coupon] coupon-read-api)
     (update-in [:plan/active-custs] #(set (map :cust/email %)))
     (utils/update-when-in [:plan/invoices] #(map invoice-model/read-api %))
     (assoc :db/id (web-peer/client-id plan))))
@@ -51,12 +61,6 @@
 
 (defn coupon-exists? [db stripe-id]
   (seq (d/q '[:find ?e :in $ ?stripe-id :where [?e :coupon/stripe-id ?stripe-id]] db stripe-id)))
-
-(def coupons
-  #{{:coupon/stripe-id "product-hunt"
-     :coupon/percent-off 50
-     :coupon/duration-in-months 6
-     :db/ident :coupon/product-hunt}})
 
 ;; only adds new coupons, deleted or modified coupons need to be handled manually
 (defn ensure-coupons []
