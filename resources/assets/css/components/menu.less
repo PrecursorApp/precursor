@@ -384,6 +384,12 @@
   height: @size_menu_avatar;
   border-radius: @size_menu_avatar;
   transition: @run @bezier_fadein;
+  div {
+    &.access-avatar-img {
+      box-shadow: none;
+      border: 1px dashed @gray_light;
+    }
+  }
 }
 .access-avatar-img {
   width: @size_menu_avatar;
@@ -532,6 +538,13 @@
 }
 .invoice-total {
   text-align: right;
+}
+.menu-empty {
+  text-align: center;
+  .iconpile {
+    font-size: @tile;
+    margin-bottom: .5rem;
+  }
 }
 .store-credit {
   .flexy(center; center);

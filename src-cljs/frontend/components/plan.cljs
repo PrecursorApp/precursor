@@ -67,16 +67,23 @@
          (if (nil? active-users)
            [:div.loading {:key "loading"} "Loading"]
            [:div.content {:key "history"}
-            (for [{:keys [cust instant added?]} (reverse history)]
-              [:div.access-card.make {:key (str instant cust)}
-               [:div.access-avatar
-                [:img.access-avatar-img
-                 {:src (utils/gravatar-url cust)}]]
-               [:div.access-details
-                [:span {:title cust}
-                 cust]
-                [:span.access-status
-                 (str "Was marked as" (if added? " active " " inactive ") (format-access-date instant) ".")]]])]))))))
+            (if (< 0 (count history))
+
+              (for [{:keys [cust instant added?]} (reverse history)]
+                [:div.access-card.make {:key (str instant cust)}
+                 [:div.access-avatar
+                  [:img.access-avatar-img
+                   {:src (utils/gravatar-url cust)}]]
+                 [:div.access-details
+                  [:span {:title cust}
+                   cust]
+                  [:span.access-status
+                   (str "Was marked as" (if added? " active " " inactive ") (format-access-date instant) ".")]]])
+
+              [:div.menu-empty.content
+               [:p.make (common/icon :activity)]
+               [:p.make "We haven't seen any activity on your team yet. "]
+               [:a.make.feature-link {:on-click #(cast! :team-settings-opened) :role "button"} "Add a teammate."]])]))))))
 
 (defn format-stripe-cents
   "Formats Stripe's currency values into ordinary dollar format
@@ -97,11 +104,6 @@
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
           [:div.menu-view
-
-           ; [:div.content.make
-           ;  (om/build active-users {:plan plan}
-           ;            {:react-key "active-users"})]
-
            (om/build active-history {:team-uuid team-uuid}
                      {:react-key "active-history"})])))))
 
@@ -125,26 +127,6 @@
     (render [_]
       (let [invoice (d/touch (d/entity @(om/get-shared owner :team-db) invoice-id))]
         (html
-
-
-          ; [:div.invoice {:style {:margin-bottom "1em"}}
-          ;  [:div.invoice-number "Invoice #" (:db/id invoice)]
-          ;  [:div.invoice-date (datetime/medium-consistent-date (:invoice/date invoice))]
-          ;  [:div.invoice-description (:invoice/description invoice)]
-          ;  [:div.invoice-discount
-          ;   (when (= :coupon/product-hunt (:discount/coupon invoice))
-          ;     "Discount: 50% off for first 6 months")]
-          ;  [:div.invoice-total
-          ;   "Total: " (format-stripe-cents (:invoice/total invoice))]
-          ;  [:div.invoice-status
-          ;   "Status: "
-          ;   (cond (:invoice/paid? invoice)
-          ;         "paid"
-
-          ;         (:invoice/next-payment-attempt invoice)
-          ;         (str "will charge on " (datetime/medium-consistent-date (:invoice/next-payment-attempt invoice)))
-          ;         :else "unpaid")]]
-
           [:tr.invoice.make
            [:td.invoice-date
             (datetime/medium-consistent-date (:invoice/date invoice))]
@@ -157,22 +139,16 @@
            [:td.invoice-status
             (cond (:invoice/paid? invoice)
                   "Paid"
-
                   (:invoice/next-payment-attempt invoice)
                   (str "Charging " (datetime/medium-consistent-date (:invoice/next-payment-attempt invoice)))
-
-                  :else "Unpaid")]]
-
-
-
-
-          )))))
+                  :else "Unpaid")]])))))
 
 (defn invoices [{:keys [plan team-uuid]} owner]
   (reify
     om/IRender
     (render [_]
-      (let [sorted-invoices (->> plan
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            sorted-invoices (->> plan
                               :plan/invoices
                               ;; don't show $0 invoices
                               (filter #(not (zero? (:invoice/total %))))
@@ -180,18 +156,29 @@
                               reverse)]
         (html
           [:div.menu-view
-           [:table.invoices-table
-            [:thead.invoices-head
-             [:tr.make
-              [:th.invoice-date "date"]
-              [:th.invoice-id "invoice"]
-              [:th.invoice-total "total"]
-              [:th.invoice-status "status"]]]
-            [:tbody.invoices-body
-             (for [invoice sorted-invoices]
-               (om/build invoice-component {:invoice-id (:db/id invoice)
-                                            :team-uuid team-uuid}
-                         {:key :invoice-id}))]]])))))
+           (if (= 2 (count sorted-invoices))
+
+             [:table.invoices-table
+              [:thead.invoices-head
+               [:tr.make
+                [:th.invoice-date "date"]
+                [:th.invoice-id "invoice"]
+                [:th.invoice-total "total"]
+                [:th.invoice-status "status"]]]
+              [:tbody.invoices-body
+               (for [invoice sorted-invoices]
+                 (om/build invoice-component {:invoice-id (:db/id invoice)
+                                              :team-uuid team-uuid}
+                           {:key :invoice-id}))]]
+
+             [:div.menu-empty.content
+              [:p.make (common/icon :docs)]
+              [:p.make "We'll list your first invoice here when it's ready."]
+              [:a.make.feature-link {:role "button"
+                                     :on-click #(cast! :plan-submenu-opened {:submenu :activity})
+                                     :on-touch-end #(do (cast! :plan-submenu-opened {:submenu :activity})
+                                                      (.preventDefault %))}
+               "View team activity."]])])))))
 
 (defn payment [{:keys [plan team-uuid]} owner]
   (reify
@@ -223,34 +210,6 @@
         (html
          [:div.menu-view
           [:div.content.make
-
-
-
-           ; [:div.billing-email {:ref "billing-email"
-           ;                      :content-editable (if (om/get-state owner :editing-email?) true false)
-           ;                      :spell-check false
-           ;                      :on-key-down #(do
-           ;                                      (when (= "Enter" (.-key %))
-           ;                                        (.preventDefault %)
-           ;                                        (submit-fn)
-           ;                                        (utils/stop-event %))
-           ;                                      (when (= "Escape" (.-key %))
-           ;                                        (om/set-state! owner :editing-email? false)
-           ;                                        (om/set-state! owner :new-email "")
-           ;                                        (utils/stop-event %)))
-           ;                      :on-blur #(do (submit-fn)
-           ;                                    (utils/stop-event %))
-           ;                      :on-input #(om/set-state-nr! owner :new-email (goog.dom/getRawTextContent (.-target %)))}
-           ;  (:plan/billing-email plan)]
-           ; [:a {:on-click #(do
-           ;                   (om/set-state! owner :editing-email? true)
-           ;                   (.focus (om/get-node owner "billing-email"))
-           ;                   (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "billing-email")))
-           ;                   (.stopPropagation %))
-           ;      :role "button"
-           ;      :title "Change your billing email."}
-           ;  (common/icon :pencil)]
-
            [:form.menu-invite-form
             [:input {:type "text"
                      :required "true"
@@ -317,7 +276,7 @@
             0 "No users are active on your team, yet."
             1 "One user is active on your team."
             (str (count (:plan/active-custs plan)) " users are active on your team."))
-          " Your plan will cost " (format-stripe-cents (plan-model/cost plan)) "/month. "
+          " Your plan will cost " (format-stripe-cents (plan-model/cost plan)) "/mo. "
           ;; discount
           (when-let [coupon (:discount/coupon plan)]
             (str "The " (:coupon/percent-off coupon) "% " (:coupon/stripe-id coupon)
