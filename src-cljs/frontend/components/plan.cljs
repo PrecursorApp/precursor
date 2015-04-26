@@ -128,8 +128,8 @@
       (let [invoice (d/touch (d/entity @(om/get-shared owner :team-db) invoice-id))]
         (html
           [:tr.invoice.make
-           [:td.invoice-date
-            (datetime/medium-consistent-date (:invoice/date invoice))]
+           [:td.invoice-date {:title (datetime/medium-date (:invoice/date invoice))}
+            (datetime/month-day (:invoice/date invoice))]
            [:td.invoice-id
             [:a {:href (urls/invoice-url team-uuid invoice-id)
                  :target "_blank"}
@@ -140,7 +140,7 @@
             (cond (:invoice/paid? invoice)
                   "Paid"
                   (:invoice/next-payment-attempt invoice)
-                  (str "Charging " (datetime/medium-consistent-date (:invoice/next-payment-attempt invoice)))
+                  (str "Charging " (datetime/month-day (:invoice/next-payment-attempt invoice)))
                   :else "Unpaid")]])))))
 
 (defn invoices [{:keys [plan team-uuid]} owner]
@@ -156,7 +156,7 @@
                               reverse)]
         (html
           [:div.menu-view
-           (if (= 2 (count sorted-invoices))
+           (if (< 0 (count sorted-invoices))
 
              [:table.invoices-table
               [:thead.invoices-head
