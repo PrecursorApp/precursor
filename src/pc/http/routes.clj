@@ -362,7 +362,7 @@
         invoice-id (some->> req :params :invoice-id Long/parseLong)]
     (if (auth/has-team-permission? db team (:auth req) :admin)
       (if-let [invoice (invoice-model/find-by-team-and-client-part db team invoice-id)]
-        {:body (io/input-stream (invoice-view/invoice-pdf db team invoice))
+        {:body (io/input-stream (invoice-view/invoice-pdf team invoice))
          :headers {"Content-Type" "application/pdf"}
          :status 200}
         {:body "Unable to find invoice"

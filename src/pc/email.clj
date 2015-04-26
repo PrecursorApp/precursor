@@ -212,14 +212,14 @@
 (defn send-invoice-created-email [db invoice-id]
   (let [invoice (d/entity db invoice-id)
         team (team-model/find-by-invoice db invoice)]
-    (ses/send-message {:from (view/email-address "Precursor" "early-access")
+    (ses/send-message {:from (view/email-address "Precursor" "billing")
                        :to (:plan/billing-email (:team/plan team))
                        :subject "Precursor Invoice"
                        :text (str "You have a new invoice for the " (:team/subdomain team) " team.")
                        :html (view/invoice-html team invoice)
                        :attachments (let [temp (fs/tempfile)]
                                       ;; only supports files :(
-                                      (invoice-view/render-pdf db team invoice temp)
+                                      (invoice-view/render-pdf team invoice temp)
                                       [{:content temp
                                         :content-type "application/pdf"
                                         :file-name (str "Precursor invoice #" (web-peer/client-id invoice))}])})))

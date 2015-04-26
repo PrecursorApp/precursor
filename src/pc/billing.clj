@@ -8,6 +8,7 @@
             [pc.models.plan :as plan-model]
             [pc.models.permission :as permission-model]
             [pc.stripe :as stripe]
+            [pc.utils :as utils]
             [pc.util.date :as date-util]))
 
 (defn active-history [db team]
@@ -82,7 +83,8 @@
   (let [now (time/now)
         db (pcd/default-db)]
     (doseq [team (team-model/all db)]
-      (set-active-users db team :now now))))
+      (utils/straight-jacket
+       (set-active-users db team :now now)))))
 
 (defn init []
   (pc.utils/safe-schedule {:minute [8] :hour [0 8 16]} #'set-active-users-cron))

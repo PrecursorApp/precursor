@@ -6,7 +6,8 @@
             [datomic.api :as d]
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
-            [pc.http.urls :as urls])
+            [pc.http.urls :as urls]
+            [pc.models.plan :as plan-model])
   (:import [java.io ByteArrayOutputStream]))
 
 
@@ -31,7 +32,7 @@
       (format "$%s%d.%02d" (if (neg? cents) "-" "") dollars pennies)
       (format "$%s%d" (if (neg? cents) "-" "") dollars))))
 
-(defn render-pdf [db team invoice out]
+(defn render-pdf [team invoice out]
   (pdf/pdf
    [{:title (str "Precursor invoice for the " (:team/subdomain team) " team")
      :size "a4"
@@ -59,7 +60,7 @@
      ["Description" (:invoice/description invoice "Team subscription")]
 
      (when (:discount/coupon invoice)
-       (let [coupon (d/entity db (:discount/coupon invoice))]
+       (let [coupon (plan-model/coupon-read-api (:discount/coupon invoice))]
          ["Discount" (format "%s%% off for %s months"
                              (:coupon/percent-off coupon)
                              (:coupon/duration-in-months coupon))]))
@@ -77,7 +78,7 @@
      "."]]
    out))
 
-(defn invoice-pdf [db team invoice]
+(defn invoice-pdf [team invoice]
   (let [out (ByteArrayOutputStream.)]
-    (render-pdf db team invoice out)
+    (render-pdf team invoice out)
     (.toByteArray out)))
