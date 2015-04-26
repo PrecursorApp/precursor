@@ -241,8 +241,7 @@
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
              [:h1 "Prototyping and team collaboration should be simple. "]
-             [:p {:style {:letter-spacing "-.0067px;"}} ; style is inline so it gets deleted if copy ever changes (dirty hack to get text on single line for phone)
-              "No nonsense. That's why we made Precursor."]
+             [:p "That's why we made Precursor."]
              [:div.calls-to-action
               (om/build make-button (select-keys app [:document/id]))]]]]
           [:div.our-proof
@@ -336,7 +335,7 @@
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
              [:h1 "It's a blackboard designed to help teams brainstorm."]
-             [:p "Communicate ideas to your team more effectively."]
+             [:p "Precursor is no-nonsense prototyping."]
              (if (utils/logged-in? owner)
                [:div.calls-to-action
                 (om/build make-button (select-keys app [:document/id])
