@@ -249,6 +249,7 @@
 }
 .landing-learn-front {
   .flexy(center; center);
+  animation: in-fade-bottom-soft @run_slower @run_slower @bezier_fadein backwards;
   &:not(.show) {
     opacity: 0;
     pointer-events: none;
