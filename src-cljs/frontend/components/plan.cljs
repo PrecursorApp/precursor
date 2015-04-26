@@ -67,8 +67,7 @@
          (if (nil? active-users)
            [:div.loading {:key "loading"} "Loading"]
            [:div.content {:key "history"}
-            (if (< 0 (count history))
-
+            (if (seq history)
               (for [{:keys [cust instant added?]} (reverse history)]
                 [:div.access-card.make {:key (str instant cust)}
                  [:div.access-avatar
@@ -80,10 +79,38 @@
                   [:span.access-status
                    (str "Was marked as" (if added? " active " " inactive ") (format-access-date instant) ".")]]])
 
-              [:div.menu-empty.content
+              [:div.menu-empty.content {:key "empty"}
                [:p.make (common/icon :activity)]
-               [:p.make "We haven't seen any activity on your team yet. "]
+               [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
                [:a.make.feature-link {:on-click #(cast! :team-settings-opened) :role "button"} "Add a teammate."]])]))))))
+
+(defn active-custs [{:keys [plan team-uuid]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! team-db]} (om/get-shared owner)
+            active (:plan/active-custs plan)]
+        (html
+         [:div.menu-view
+          (if (seq active)
+            [:div.content {:key "active"}
+             [:div.content.make
+              (str (count active) " active user" (when (< 1 (count active)) "s") " on your plan")]
+             (for [email (sort active)]
+               [:div.access-card.make {:key email}
+                [:div.access-avatar
+                 [:img.access-avatar-img
+                  {:src (utils/gravatar-url email)}]]
+                [:div.access-details
+                 [:span {:title email}
+                  email]
+                 [:span.access-status
+                  ""]]])]
+            [:div.content {:key "empty"}
+             [:div.menu-empty.content
+              [:p.make (common/icon :activity)]
+              [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
+              [:a.make.feature-link {:on-click #(cast! :team-settings-opened) :role "button"} "Add a teammate."]]])])))))
 
 (defn format-stripe-cents
   "Formats Stripe's currency values into ordinary dollar format
@@ -245,6 +272,35 @@
             [:div.content.make
              "Your discount expires on " (datetime/month-day (:discount/end plan)) "."])])))))
 
+(defn open-menu-props [cast! submenu]
+  {:on-click #(cast! :plan-submenu-opened {:submenu submenu})
+   :on-touch-end #(do (cast! :plan-submenu-opened {:submenu submenu})
+                      (.preventDefault %))})
+
+(defn activity-summary [{:keys [plan team-uuid]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+         (case (count (:plan/active-custs plan))
+           0 [:span
+              [:a (merge {:role "button"}
+                         (open-menu-props cast! :active))
+               "No users"]
+              " are active on your team, yet."]
+           1 [:span
+              [:a (merge {:role "button"}
+                         (open-menu-props cast! :active))
+               "One user"]
+              " is active on your team."]
+           [:span
+            [:a (merge {:role "button"}
+                       (open-menu-props cast! :active))
+             (str (count (:plan/active-custs plan)) " users")]
+
+            " are active on your team."]))))))
+
 (defn paid-summary [{:keys [plan team-uuid]} owner]
   (reify
     om/IRender
@@ -262,10 +318,7 @@
             " for " (format-stripe-cents (plan-model/cost plan)) "."]])
         [:div.content.make
          [:p
-          (case (count (:plan/active-custs plan))
-            0 "No users are active on your team, yet."
-            1 "One user is active on your team."
-            (str (count (:plan/active-custs plan)) " users are active on your team."))
+          (om/build activity-summary {:plan plan :team-uuid team-uuid})
           " Your plan renews monthly. "
           ;; discount
           (when-let [coupon (:discount/coupon plan)]
@@ -289,10 +342,7 @@
            [:h4 "Your free trial has expired."]])
         [:div.content.make
          [:p
-          (case (count (:plan/active-custs plan))
-            0 "No users are active on your team, yet."
-            1 "One user is active on your team."
-            (str (count (:plan/active-custs plan)) " users are active on your team."))
+          (om/build activity-summary {:plan plan :team-uuid team-uuid})
           " Your plan will cost " (format-stripe-cents (plan-model/cost plan)) "/mo. "
           ;; discount
           (when-let [coupon (:discount/coupon plan)]
@@ -308,10 +358,7 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            open-menu-props (fn [submenu]
-                              {:on-click #(cast! :plan-submenu-opened {:submenu submenu})
-                               :on-touch-end #(do (cast! :plan-submenu-opened {:submenu submenu})
-                                                  (.preventDefault %))})]
+            ]
         (html
          [:div.menu-view
           [:div.divider.make]
@@ -324,20 +371,20 @@
              (common/icon :credit)
              [:span "Add payment"]]
             (list
-             [:a.vein.make (open-menu-props :info)
+             [:a.vein.make (open-menu-props cast! :info)
               (common/icon :info)
               [:span "Information"]]
-             [:a.vein.make (open-menu-props :payment)
+             [:a.vein.make (open-menu-props cast! :payment)
               (common/icon :credit)
               [:span "Payment"]]
-             [:a.vein.make (open-menu-props :invoices)
+             [:a.vein.make (open-menu-props cast! :invoices)
               (common/icon :docs)
               [:span "Invoices"]]
-             [:a.vein.make (open-menu-props :activity)
+             [:a.vein.make (open-menu-props cast! :activity)
               (common/icon :activity)
               [:span "Activity"]]
              (when (plan-model/active-discount? plan)
-               [:a.vein.make (open-menu-props :discount)
+               [:a.vein.make (open-menu-props cast! :discount)
                 (common/icon :heart)
                 [:span "Discount"]])
              (when (neg? (:plan/account-balance plan))
@@ -350,6 +397,7 @@
    :payment payment
    :invoices invoices
    :activity activity
+   :active active-custs
    :discount discount})
 
 (defn plan-menu* [{:keys [plan-id team-uuid submenu]} owner]
