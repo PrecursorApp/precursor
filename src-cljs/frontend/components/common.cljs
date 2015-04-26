@@ -257,7 +257,7 @@
           [:div.google-text "Sign in with Google"]])))))
 
 (defn volume-icon-kw [level]
-  (cond (= 0 level) :sound-mute
+  (cond (= 0 level) :sound-off
         (>= 10 level) :sound-min
         (>= 50 level) :sound-med
         :else :sound-max))
