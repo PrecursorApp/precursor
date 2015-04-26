@@ -2,6 +2,7 @@
   "Provides helpers for plan operations that need to happen during an http request"
   (:require [clj-time.core :as time]
             [clj-time.coerce]
+            [pc.models.plan :as plan-model]
             [pc.stripe :as stripe]))
 
 
@@ -31,7 +32,10 @@
                                                     ;; XXX: just until we have plans with trial-ends
                                                     (time/now))
                                                 :email (:cust/email cust)
-                                                :coupon-code (:plan/coupon-code plan)
+                                                :coupon-code (some-> plan
+                                                               :discount/coupon
+                                                               (plan-model/coupon-read-api)
+                                                               :coupon/stripe-id)
                                                 :description (format "Team plan for %s, created by %s"
                                                                      (:team/subdomain team)
                                                                      (:cust/email cust)))]

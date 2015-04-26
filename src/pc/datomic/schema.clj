@@ -658,10 +658,6 @@
               :db/cardinality :db.cardinality/many
               :db/doc "List of active custs on the team")
 
-   (attribute :plan/coupon-code
-              :db.type/string
-              :db/doc "Holds coupon code for the plan until the Stripe subscription is created")
-
    (attribute :plan/stripe-event-ids
               :db.type/string
               :db/cardinality :db.cardinality/many

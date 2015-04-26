@@ -8,8 +8,9 @@
 
 (defn active-discount? [plan]
   (and (:discount/coupon plan)
-       (time/after? (cljs-time.coerce/from-date (:discount/end plan))
-                    (time/now))))
+       (or (not (:discount/end plan))
+           (time/after? (cljs-time.coerce/from-date (:discount/end plan))
+                        (time/now)))))
 
 (defn cost
   "Calculates plan cost in cents"

@@ -28,6 +28,9 @@
      :coupon/duration-in-months 6
      :db/ident :coupon/product-hunt}})
 
+(defn coupon-by-code [coupon-code]
+  (first (filter #(= (:coupon/stripe-id %) coupon-code) coupons)))
+
 (defn coupon-read-api [coupon-ident]
   (first (filter #(= (:db/ident %) coupon-ident) coupons)))
 
@@ -38,7 +41,6 @@
                   :plan/credit-card
                   :plan/paid?
                   :plan/billing-email
-                  :plan/coupon-code
                   :plan/active-custs
                   :plan/account-balance
                   :discount/start

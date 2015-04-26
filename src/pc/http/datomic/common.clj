@@ -76,7 +76,6 @@
 
                      :team/plan
 
-                     :plan/coupon-code
                      :plan/start
                      :plan/trial-end
                      :plan/credit-card

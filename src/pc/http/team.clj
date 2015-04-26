@@ -46,8 +46,8 @@
                                            :plan/trial-end (clj-time.coerce/to-date
                                                             (time/plus (time/now)
                                                                        (time/days 14)))}
-                                          (when coupon-code
-                                            {:coupon-code coupon-code}))}
+                                          (when-let [coupon (plan-model/coupon-by-code coupon-code)]
+                                            {:discount/coupon (:db/ident coupon)}))}
 
                              {:db/id (:db/id doc)
                               :document/team (:db/id team)}

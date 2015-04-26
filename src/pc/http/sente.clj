@@ -867,9 +867,7 @@
                                               (-> (plan-http/stripe-customer->plan-fields stripe-customer)
                                                 (assoc :db/id (:db/id plan)
                                                        :plan/paid? true
-                                                       :plan/billing-email (:cust/email cust)))]
-                                             (when (:plan/coupon-code plan)
-                                               [[:db/retract (:db/id plan) :plan/coupon-code (:plan/coupon-code plan)]])))]
+                                                       :plan/billing-email (:cust/email cust)))]))]
       (?reply-fn {:plan-created? true}))))
 
 (defmethod ws-handler :team/update-card [{:keys [client-id ?data ?reply-fn] :as req}]

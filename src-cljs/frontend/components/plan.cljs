@@ -27,24 +27,6 @@
   (datetime/time-ago (- (:plan/trial-end plan)
                         (.getTime (js/Date.)))))
 
-(defn trial-info [{:keys [plan]} owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! team-db]} (om/get-shared owner)]
-        (html
-         [:div.make
-          [:p.make {:title (:plan/trial-end plan)}
-           (if (plan-model/in-trial? plan)
-             (str "This plan is still in trial for " (time-left plan))
-             "The trial is over")]
-          (when (= "product-hunt" (:plan/coupon-code plan))
-            "You have the Product Hunt discount, which gives you 50% off for the first 6 months.")
-          [:p.make
-           [:a {:role "button"
-                :on-click #(cast! :start-plan-clicked)}
-            "Pay"]]])))))
-
 (defn active-users [{:keys [plan]} owner]
   (reify
     om/IRender
@@ -316,6 +298,35 @@
           (when (plan-model/in-trial? plan)
             (str "The " (time-left plan) " left in your trial are included in the start date."))]]]))))
 
+(defn trial-summary [{:keys [plan team-uuid]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       [:div
+        (if (plan-model/in-trial? plan)
+          [:div.content.make
+           [:h4
+            "Your have " (time-left plan) " left in your trial."]]
+          [:div.content.make
+           [:h4
+            "Your free trial is over."]])
+        [:div.content.make
+         [:p
+          (case (count (:plan/active-custs plan))
+            0 "No users are active on your team, yet."
+            1 "One user is active on your team."
+            (str (count (:plan/active-custs plan)) " users are active on your team."))
+          " Your plan will cost " (format-stripe-cents (plan-model/cost plan)) "/month. "
+          ;; discount
+          (when-let [coupon (:discount/coupon plan)]
+            (str "The " (:coupon/percent-off coupon) "% " (:coupon/stripe-id coupon)
+                 " discount is included in the cost. "))
+          ;; trial days
+          (if (plan-model/in-trial? plan)
+            "We won't start charging until your trial ends."
+            "Add payment below to keep using Precursor with your team.")]]]))))
+
 (defn start [{:keys [plan team-uuid]} owner]
   (reify
     om/IRender
@@ -330,7 +341,7 @@
           [:div.divider.make]
           (if (:plan/paid? plan)
             (om/build paid-summary {:plan plan :team-uuid team-uuid} {:react-key "paid-summary"})
-            (om/build paid-summary {:plan plan :team-uuid team-uuid} {:react-key "paid-summary"}))
+            (om/build trial-summary {:plan plan :team-uuid team-uuid} {:react-key "trial-summary"}))
           [:div.divider.make]
           (if-not (:plan/paid? plan)
             [:a.vein.make {:on-click #(cast! :start-plan-clicked)}
