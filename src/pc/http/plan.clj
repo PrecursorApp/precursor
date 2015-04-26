@@ -14,9 +14,10 @@
      (stripe/card-api->model card-fields)
      {:plan/start (-> subscription
                     (get "start")
-                    (* 1000)
-                    clj-time.coerce/from-long
-                    clj-time.coerce/to-date)
+                    stripe/timestamp->model)
+      :plan/next-period-start (-> subscription
+                                (get "current_period_end")
+                                stripe/timestamp->model)
       :plan/stripe-subscription-id (get subscription "id")
       :plan/stripe-customer-id (get stripe-customer "id")}
      (when (seq discount-fields)

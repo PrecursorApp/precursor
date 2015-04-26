@@ -207,7 +207,8 @@
               [:div.disabled-input {:data-after k} v]])
 
            [:div.calls-to-action.content.make
-            [:a.bubble-button {:role "button"}
+            [:a.bubble-button {:role "button"
+                               :on-click #(cast! :change-card-clicked)}
              "Change card."]]])))))
 
 (defn info [{:keys [plan team-uuid]} owner]
@@ -277,11 +278,11 @@
         (if (plan-model/in-trial? plan)
           [:div.content.make
            [:h4
-            "Your team plan starts " (datetime/month-day (:plan/trial-end plan))
+            "Your team plan starts " (datetime/month-day (:plan/next-period-start plan))
             " for " (format-stripe-cents (plan-model/cost plan)) "."]]
           [:div.content.make
            [:h4
-            "Your team plan renews " (datetime/month-day (:plan/trial-end plan))
+            "Your team plan renews " (datetime/month-day (:plan/next-period-start plan))
             " for " (format-stripe-cents (plan-model/cost plan)) "."]])
         [:div.content.make
          [:p

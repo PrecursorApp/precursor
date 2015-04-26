@@ -43,6 +43,7 @@
                   :plan/billing-email
                   :plan/active-custs
                   :plan/account-balance
+                  :plan/next-period-start
                   :discount/start
                   :discount/end
                   :discount/coupon
