@@ -188,10 +188,11 @@
         (html
          [:div.menu-view.credit-card
           [:div.content.make
-           [:div.disabled-input {:data-after "Card number"}
-            (str "✳✳✳✳ ✳✳✳✳ ✳✳✳✳ " (:credit-card/last4 plan))]]
+           [:div.disabled-input {:data-after "Credit Card"}
+            [:span.secret-card-number "•••• •••• •••• "]
+            (str  (:credit-card/last4 plan))]]
           [:div.content.make
-           [:div.disabled-input {:data-after "Expiration"}
+           [:div.disabled-input {:data-after "Expires"}
             (str (:credit-card/exp-month plan) "/" (:credit-card/exp-year plan))]]
           [:div.calls-to-action.content.make
            [:a.bubble-button {:role "button"
@@ -285,8 +286,7 @@
            [:h4
             "Your have " (time-left plan) " left in your trial."]]
           [:div.content.make
-           [:h4
-            "Your free trial is over."]])
+           [:h4 "Your free trial has expired."]])
         [:div.content.make
          [:p
           (case (count (:plan/active-custs plan))
