@@ -4,6 +4,7 @@
   left: 0;
   width: 100%;
   height: 100%;
+  cursor: default;
 }
 @art_a1: (@run)        (@now);
 @art_a2: (@run_slow)   ((extract(@art_a1, 1) * 2.33) + extract(@art_a1, 2));
@@ -348,3 +349,40 @@
     height: 100%;
   }
 }
+.art-voice-list {
+  .flexy(center; center; column);
+  width: 100%;
+  height: 100%;
+}
+.art-voice-items {
+  .icon(stroke; @gray_light);
+  .icon(stroke; 2.5);
+  color: @gray_light;
+  font-size: 3em;
+  font-weight: 200;
+  max-width: 100%;
+  .mq_640({
+    .icon(stroke; 5);
+    font-size: 8vw;
+    font-weight: 300;
+  });
+}
+.art-voice-item {
+  .flexy(center);
+  height: 2em;
+  &.selected {
+    .focus {
+      .icon(stroke; @color_select);
+      .icon(stroke; 8);
+      margin-left: -1em;
+      .iconpile {
+        background: @dye_outer;
+      }
+    }
+  }
+}
+.art-voice-name {
+  flex-shrink: 0;
+  margin: 0 .5em;
+}
+

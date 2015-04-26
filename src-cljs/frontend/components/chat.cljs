@@ -19,14 +19,16 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(def url-regex #"(?im)\b(?:https?|ftp)://[-A-Za-z0-9+@#/%?=~_|!:,.;]*[-A-Za-z0-9+@#/%=~_|]")
+(def url-regex #"(?im)\b(?:https?|ftp)://[-A-Za-z0-9+@#/%?&=~_|!:,.;]*[-A-Za-z0-9+@#/%=~_|]")
 
 (defn linkify [text]
   (let [matches (re-seq url-regex text)
         ;; may need to add [""], split can return empty array
         parts (or (seq (str/split text url-regex)) [""])]
     (reduce (fn [acc [pre url]]
-              (conj acc [:span pre] (when url [:a {:href url :target "_blank"} url])))
+              (conj acc
+                    (when (seq pre) [:span pre])
+                    (when url [:a {:href url :target "_blank"} url])))
             [:span] (partition-all 2 (concat (interleave parts
                                                          matches)
                                              (when (not= (count parts)
@@ -178,13 +180,16 @@
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
             chat-bot (:document/chat-bot (d/entity @db (ffirst (d/q '[:find ?t :where [?t :document/name]] @db))))
             dummy-chat {:chat/body [:span
-                                    "Welcome to Precursor! "
-                                    "Create fast prototypes and share your url to collaborate. "
-                                    "Chat "
-                                    [:a {:on-click #(cast! :chat-user-clicked {:id-str (:chat-bot/name chat-bot)})
-                                         :role "button"}
-                                     (str "@" (:chat-bot/name chat-bot))]
-                                    " for help."]
+                                    "Welcome, try the "
+                                    [:a {:href "https://precursorapp.com/document/17592197661008" :target "_blank"}
+                                     "how-to"]
+                                    " doc, see other users "
+                                    [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"}
+                                     "make"]
+                                    " things, or ask us "
+                                    [:a {:on-click #(cast! :chat-user-clicked {:id-str (:chat-bot/name chat-bot)}) :role "button"}
+                                     "anything"]
+                                    "!"]
                         :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html

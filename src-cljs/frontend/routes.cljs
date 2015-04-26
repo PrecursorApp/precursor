@@ -23,6 +23,9 @@
   (defroute pricing "/pricing" {:keys [query-params]}
     (put! nav-ch [:pricing {:query-params query-params}]))
 
+  (defroute team-features "/features/team" {:keys [query-params]}
+    (put! nav-ch [:team-features {:query-params query-params}]))
+
   ;; TODO: remove these when backend deploys, only here for backwards compatibility
   (defroute early-access "/early-access" {:keys [query-params]}
     (put! nav-ch [:navigate! {:path "/trial/team"
