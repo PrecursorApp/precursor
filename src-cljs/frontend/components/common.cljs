@@ -20,8 +20,8 @@
   :stroke-text "M65.9,92.4H34.1H50 V7.6 M95,21.4c0,0-7.9-13.8-7.9-13.8c0,0-74.1,0-74.1,0L5,21.4"
   :stroke-pencil "M89.5,10.5c3.9,3.9,6.3,7.8,5.3,8.8L24.3,89.8L5,95l5.2-19.3L80.7,5.2C81.7,4.2,85.6,6.6,89.5,10.5z M22.5,88.1L11.9,77.5 M81.3,8.1c0.9,1.7,2.6,3.8,4.7,5.9c2.1,2.1,4.2,3.8,5.9,4.7 M70.3,19.1c0.9,1.7,2.6,3.8,4.7,5.9c2.1,2.1,4.2,3.8,5.9,4.7 M68.3,21.1c0.9,1.7,2.6,3.8,4.7,5.9c2.1,2.1,4.2,3.8,5.9,4.7"
   :stroke-ellipse "M57.5,5h-15v15h15V5z M95,42.5H80v15h15V42.5z M20,42.5H5v15h15V42.5z M57.5,80h-15v15h15V80z M87.5,50c0,20.7-16.8,37.5-37.5,37.5 S12.5,70.7,12.5,50S29.3,12.5,50,12.5S87.5,29.3,87.5,50z"
-  :stroke-user "M50,5 c11.8,0,21.3,9.5,21.3,21.3S61.8,47.6,50,47.6s-21.3-9.5-21.3-21.3S38.2,5,50,5z M24.8,45.9C17,52.4,12,64.1,12,71.9 C12,86.4,29,95,50,95c21,0,38-8.6,38-23.1c0-7.8-4.9-19.5-12.7-26"
-  :stroke-users "M41.9,13.3 c10.5,0,19,8.5,19,19s-8.5,19-19,19s-19-8.5-19-19S31.4,13.3,41.9,13.3z M68.4,41.5C76.9,39.6,83.2,32,83.2,23c0-10.5-8.5-19-19-19 C60.5,4,57,5.1,54.1,6.9 M19.4,49.7C12.4,55.5,8,66,8,72.9c0,12.9,15.1,20.6,33.8,20.6c18.7,0,33.8-7.7,33.8-20.6 c0-6.9-4.4-17.4-11.4-23.2 M85.9,80C93.3,76.4,98,70.9,98,63.7c0-6.9-4.4-17.4-11.4-23.2"
+  :stroke-user "M75,30 c0,13.8-11.2,25-25,25S25,43.8,25,30S36.2,5,50,5S75,16.2,75,30z M24.1,49.6C15.5,56.9,10,67.8,10,80c0,8.3,17.9,15,40,15 s40-6.7,40-15c0-12.2-5.5-23.1-14.1-30.4"
+  :stroke-users "M59.2,40.8c0,11.5-9.3,20.8-20.8,20.8s-20.8-9.3-20.8-20.8S26.8,20,38.3,20S59.2,29.3,59.2,40.8z M16.7,57.1 C9.5,63.3,5,72.3,5,82.5C5,89.4,19.9,95,38.3,95s33.3-5.6,33.3-12.5c0-10.2-4.5-19.2-11.7-25.4 M64.8,46.4 c10-1.5,17.7-10.1,17.7-20.6C82.5,14.3,73.2,5,61.7,5c-7.3,0-13.7,3.8-17.5,9.5 M77.4,78.5c10.5-2.1,17.6-6.3,17.6-11 c0-10.2-4.5-19.2-11.7-25.4"
   :stroke-dot "M49.5,50a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0"
   :stroke-chats "M60.8,63.2c-0.2,12-12.9,21.5-28.3,21.2 c-3.5-0.1-6.8-0.6-9.8-1.6L8.5,88.8c0,0,4.8-9.7,0.4-15.3c-2.6-3.4-4-7.3-3.9-11.4c0.2-12,12.9-21.5,28.3-21.2 C48.7,41.2,61,51.2,60.8,63.2z M68.5,73.9L89.7,83c0,0-7.2-14.5-0.6-22.9c3.8-5,6-10.9,5.9-17.2c-0.4-18-19.4-32.2-42.5-31.7 c-19.1,0.4-35,10.7-39.8,24.4"
   :stroke-crosshair "M50,5v90 M5,50h90"
@@ -39,6 +39,7 @@
   :stroke-click-2 "M31.8,23.6L19.1,10.9"
   :stroke-click-3 "M38.2,21V9"
   :stroke-private "M72.5,50V37.5 C72.5,25.1,62.4,15,50,15S27.5,25.1,27.5,37.5V50"
+  :stroke-private-bottom "M80,95H20V50h60V95z"
   :stroke-public "M65,95H5V50h60V95z M95,50V27.5 C95,15.1,84.9,5,72.5,5S50,15.1,50,27.5V50"
   :stroke-mouse "M58,5h17c2.8,0,5,2.2,5,5v55c0,16.6-13.4,30-30,30 S20,81.6,20,65V10c0-2.8,2.2-5,5-5h20c2.8,0,5,2.2,5,5c0,0,0,25,0,25"
   :stroke-globe "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z M16.5,20c8.2,4.6,20.2,7.5,33.5,7.5s25.3-2.9,33.5-7.5 M83.5,80c-8.2-4.6-20.2-7.5-33.5-7.5S24.7,75.4,16.5,80 M50,5C37.6,5,27.5,25.1,27.5,50S37.6,95,50,95s22.5-20.1,22.5-45S62.4,5,50,5z M5,50h90 M50,95V5"
@@ -67,7 +68,7 @@
   :stroke-slash-forward "M5,95L95,5"
   :stroke-slash-backward "M5,5l90,90"
   :stroke-at "M70,50c0,11-9,20-20,20s-20-9-20-20s9-20,20-20 S70,39,70,50z M70,25v50 M90.3,70c3-6,4.7-12.8,4.7-20C95,25.1,74.9,5,50,5S5,25.1,5,50c0,24.9,20.1,45,45,45c7.2,0,14-1.7,20-4.7"
-  :stroke-share "M50,5h45c0,0,0,45,0,45 M50,50L95,5 M27.5,5H5v90 c0,0,90,0,90,0V72.5"
+  :stroke-sharing "M50,5h45c0,0,0,45,0,45 M50,50L95,5 M27.5,5H5v90 c0,0,90,0,90,0V72.5"
   :stroke-phone "M70,95 H30c-5.5,0-10-4.5-10-10V15c0-5.5,4.5-10,10-10h40c5.5,0,10,4.5,10,10v70C80,90.5,75.5,95,70,95z M50.8,70.1 c-3.4-0.5-6.2,2.4-5.7,5.7c0.3,2.1,2,3.8,4.1,4.1c3.4,0.5,6.2-2.4,5.7-5.7C54.6,72.1,52.9,70.4,50.8,70.1z M65,20H35v35h30V20z"
   :stroke-activity "M92.1,34.1c0,0-31.8,31.8-31.8,31.8L39.1,44.7L17.9,65.9 M5,5v90h90"
   :stroke-credit "M95,80H5V20h90V80z M5,35h90 M15,65h50"
@@ -116,8 +117,6 @@
    :pencil      {:paths [:stroke-pencil]}
    :ellipse     {:paths [:stroke-ellipse]}
    :mic         {:paths [:stroke-mic]}
-   :mic-off     {:paths [:stroke-mic
-                         :stroke-slash-backward]}
    :user        {:paths [:stroke-user]}
    :users       {:paths [:stroke-users]}
    :bullet      {:paths [:stroke-dot]}
@@ -146,7 +145,7 @@
    :arrow-left  {:paths [:stroke-arrow-left]}
    :arrow-right {:paths [:stroke-arrow-right]}
    :at          {:paths [:stroke-at]}
-   :share       {:paths [:stroke-share]}
+   :sharing     {:paths [:stroke-sharing]}
    :phone       {:paths [:stroke-phone]}
    :activity    {:paths [:stroke-activity]}
    :credit      {:paths [:stroke-credit]}
@@ -159,9 +158,13 @@
    :menu        {:paths [:stroke-menu-top
                          :stroke-menu-mid
                          :stroke-menu-btm]}
+   :sound       {:paths [:stroke-sound
+                         :stroke-wave1
+                         :stroke-wave2
+                         :stroke-wave3]}
 
-   :lock        {:paths [:stroke-lock-top
-                         :fill-lock-bottom]}
+   :lock        {:paths [:stroke-private
+                         :stroke-private-bottom]}
    :private     {:paths [:stroke-private
                          :fill-private]}
    :chat        {:paths [:stroke-chat
@@ -169,7 +172,9 @@
                          :fill-x5
                          :fill-chat2]}
 
-   :sound-mute  {:paths [:stroke-sound]}
+   :sound-mute  {:paths [:stroke-sound
+                         :stroke-slash-backward]}
+   :sound-off   {:paths [:stroke-sound]}
    :sound-min   {:paths [:stroke-sound
                          :stroke-wave1]}
    :sound-med   {:paths [:stroke-sound
@@ -195,10 +200,9 @@
                          :fill-x8
                          :fill-x9]}
 
-
    :logomark    {:paths [:fill-logomark]}
    :twitter     {:paths [:fill-twitter]}
-   :google      {:paths [:fill-google]}
+   :google-logo {:paths [:fill-google]}
    :dribbble    {:paths [:fill-dribbble]}
    :github      {:paths [:fill-github]}
    :scroll      {:paths [:fill-scroll-north
@@ -217,8 +221,7 @@
                          :fill-south]}
    :east-west   {:paths [:fill-left-right
                          :fill-east
-                         :fill-west]}
-   })
+                         :fill-west]}})
 
 (defn svg-icon [icon-name & [{:keys [path-props svg-props]}]]
   (let [template (get icon-templates icon-name)]
@@ -258,11 +261,11 @@
            :role "button"
            :data-after "Sign in"
            :href (auth/auth-url :source source)}
-          (icon :google)
+          (icon :google-logo)
           [:div.google-text "Sign in with Google"]])))))
 
 (defn volume-icon-kw [level]
-  (cond (= 0 level) :sound-mute
+  (cond (= 0 level) :sound-off
         (>= 10 level) :sound-min
         (>= 50 level) :sound-med
         :else :sound-max))

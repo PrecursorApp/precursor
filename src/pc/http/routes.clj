@@ -290,6 +290,9 @@
 (defpage pricing "/pricing" [req]
   (outer-page req))
 
+(defpage team-features "/features/team" [req]
+  (outer-page req))
+
 (defpage early-access "/early-access" [req]
   (outer-page req))
 

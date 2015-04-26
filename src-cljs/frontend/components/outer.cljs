@@ -72,16 +72,17 @@
                        (when team-created? " granted "))}
           [:div.content
            [:div.outer-form-info
-            [:h2.outer-form-heading
-             "Begin your free trial & start using team features today."]
+            [:h1.outer-form-heading
+             "What should we call your team? "
+             "Grab your domain to get started. "]
             (if (utils/logged-in? owner)
               [:p.outer-form-copy
-               "Choose a name for your team to use on Precursor. "
-               "Make sure it starts with a letter and is at least 4 characters. "
-               "Numbers and hyphens are okay."]
+               "Your team domain needs more than 3 characters, starting with a letter. "
+               "Don't have any teammates? "
+               "That's okay, solo teams are also welcome! "]
               [:p.outer-form-copy
-               "First, sign in with your Google account. "
-               "Then we'll just ask you to make a custom subdomain for you and your team."])
+               "To get started, you'll just need to sign in with your Google account. "
+               "After that, we'll ask you to create a name for your team domain. "])
             (when-not (utils/logged-in? owner)
               [:div.outer-form-sign
                (om/build common/google-login {:source "Team Signup Form"})])]
@@ -102,46 +103,46 @@
               subdomain]
              [:div.subdomain-input-placeholder
               {:data-prepend "Your team"
-               :data-start " name is..."
-               :data-busy " name is?"
-               :data-end " subdomain will be"}]
+               :data-start " name..."
+               :data-busy " name is"
+               :data-end "'s domain will be"}]
              [:div.subdomain-input-append
               {:on-click #(.focus (om/get-node owner "subdomain"))}
               ".precursorapp.com"]]
-            [:button.outer-form-button
-             {:tab-index "5"
-              :ref "submit-button"
-              :disabled (or disabled? submitted?)
-              :on-click #(submit-subdomain-form owner)}
-             (cond submitting?
-                   (html
-                    [:span "Setting up your team"
-                     [:i.loading-ellipses
-                      [:i "."]
-                      [:i "."]
-                      [:i "."]]])
+            [:div.calls-to-action
+             [:button.bubble-button
+              {:tab-index "5"
+               :ref "submit-button"
+               :disabled (or disabled? submitted?)
+               :on-click #(submit-subdomain-form owner)}
+              (cond submitting?
+                    (html
+                      [:span "Setting up your team"
+                       [:i.loading-ellipses
+                        [:i "."]
+                        [:i "."]
+                        [:i "."]]])
 
-                   submitted? [:a.trial-success
-                               {:target "_self"
-                                :href (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
-                                                          :protocol config/scheme
-                                                          :port config/port
-                                                          :path (str "/document/" (:team/intro-doc team))
-                                                          :query {:overlay "team-settings"}}))}
-                               (str (str (:team/subdomain team) "." config/hostname)
-                                    " is set up!")]
+                    submitted? [:a.trial-success
+                                {:target "_self"
+                                 :href (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
+                                                           :protocol config/scheme
+                                                           :port config/port
+                                                           :path (str "/document/" (:team/intro-doc team))
+                                                           :query {:overlay "team-settings"}}))}
+                                (str (str (:team/subdomain team) "." config/hostname)
+                                     " is ready, let's go!")]
 
-                   :else "Create your team")]
+                    :else "Start for free.")]]
 
             (when error
               [:div.error error])
 
             (when team-created?
               [:div.outer-form-granted
-               [:p "Documents created on this subdomain are private for you and your team.
-                   Enjoy two weeks of free, unlimited access.
-                   Then we'll follow up to see how things are going."]
-               ])]]])))))
+               [:p "New documents made on this team domain will be private by default. "
+                   "Enjoy your two weeks of unlimited access. "
+                   "We're excited to have you! "]])]]])))))
 
 (defn submit-solo-trial-form [owner]
   (go
@@ -195,7 +196,7 @@
                          (when submitting? "submitting ")
                          (when submitted? "submitted "))}
 
-            [:button.outer-form-button
+            [:button.bubble-button
              {:tab-index "5"
               :ref "submit-button"
               :disabled (or disabled? submitted?)
@@ -242,58 +243,127 @@
            [:div.price-blocks
             [:div.price-block.price-solo
              [:div.price-head
-              [:h2.price-heading.content-copy {:title "Solo—freelancers, self-employed, etc."} "Solo"]]
+              [:h2.price-heading.content-copy
+               "Public"]]
              [:div.price-body
-              [:h4.content-copy "$10/mo"]
+              [:h4.content-copy
+               "Free for everyone."]
               [:p.price-copy.content-copy
-               "Create unlimited public docs. "
-               "Create unlimited private docs. "
-               "Manage access for each of your documents individually."]]
+               "Why are the prototyping tools free? "
+               "Prototyping should just be simple, and to prove it we made Precursor accessible to anyone, anywhere. "
+               "Make something & show someone. "]]
              [:div.price-foot
-              [:a.price-button
-               {:href "/trial/solo"
-                :title "Start your free, 2 week trial."
-                :role "button"}
-               "Start free trial"]]]
+              [:a.bubble-button {:href "/new"}
+               [:span "Make a public doc."]]]]
             [:section.price-divide.left
              [:div.price-divide-line]]
             [:div.price-block.price-team
              [:div.price-head
-              [:h2.price-heading.content-copy {:title "Team—startups, agencies, etc."} "Team"]]
+              [:h2.price-heading.content-copy
+               "Teams"]]
              [:div.price-body
-              [:h4.content-copy "$10/mo/user"]
+              [:h4.content-copy
+               "$10 per user/month."]
               [:p.price-copy.content-copy
-               "Unlimited public and private docs. "
-               "Custom subdomain for your team where docs are private "
-               "by default and shared with your teammates."]]
+               "Need more than just prototyping? "
+               [:a {:href "/features/team"} "Team domains"]
+               " have collaboration tools to improve your productivity. "
+               "Start your domain to organize team communications with private docs. "]]
              [:div.price-foot
-              [:a.price-button
-               {:href "/trial/team"
-                :title "Start your free, 2 week trial."
-                :role "button"}
-               "Start free trial"]]]
+              [:a.bubble-button {:href "/trial/team"}
+               [:span "Start a free trial."]]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
             [:div.price-block.price-corp
              [:div.price-head
-              [:h2.price-heading.content-copy {:title "Enterprise—large teams, industry leaders, etc."} "Enterprise"]]
+              [:h2.price-heading.content-copy
+               "Enterprise"]]
              [:div.price-body
-              [:h4.content-copy "Contact us"]
+              [:h4.content-copy
+               "Contact sales."]
               [:p.price-copy.content-copy
-               "Customized solutions designed to solve specific team constraints.
-                E.g., integrations, custom servers, on-premise accommodations, etc."]]
+                "Looking for a customized solution? "
+                "Precursor was engineered to easily set up and run on your own server. "
+                "Email sales@precursorapp.com and we will respond immediately."]]
              [:div.price-foot
-              [:a.price-button
-               {:href "mailto:enterprise@precursorapp.com?Subject=Enterprise%20Inquiry"
-                :title "We'll get back to you immediately."
-                :role "button"}
-               "Contact us"]]]]
-           [:div.price-blocks-foot
-            [:a.feature-link
-             {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "free-plan"}})
-              :title "Precursor is free for everyone."
-              :role "button"}
-             "Or make free, public docs."]]]])))))
+              [:a.bubble-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
+               [:span "Email a sales rep."]]]]]]])))))
+
+(defn team-features [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Team Features Page")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)]
+        (html
+          [:div.team-features
+            [:div.features-head.content
+             [:h1.content-heading
+              "Team domains make real-time collaboration more productive. "]
+             [:p.content-copy
+              "Precursor prototyping is free. "
+              "But we're a "
+              [:a {:href "/blog/clojure-is-a-product-design-tool" :target "_blank"} "product team ourselves"]
+              ", and we know that it takes more than just prototyping to be successful. "
+              "That's why we built lightweight collaboration tools, to help your team communicate effectively. "
+              "Solve problems with your team in real time. "]
+             [:div.calls-to-action
+              [:a.bubble-button {:href "/pricing"}
+               [:span "See our team pricing."]]]]
+            [:div.feature.art-visible.content
+             [:div.feature-story
+              [:h2.feature-headline
+               [:span "Organize your team."]]
+              [:p.feature-copy
+               [:span.content-copy
+                "Team domains help you collaborate on ideas quickly by remembering your teammates. "
+                "New documents created in your team domain are automatically shared with your team. "]]
+              [:a.feature-link {:href "/trial/team"}
+               [:span.content-copy "Try a team domain."]]]
+             [:div.feature-media.reverse
+              [:div.art-frame
+               [:div.artwork (common/icon :users)]]]]
+            [:div.feature-divider]
+            [:div.feature.art-visible.content
+             [:div.feature-story
+              [:h2.feature-headline
+               [:span "Share ideas privately."]]
+              [:p.feature-copy
+               [:span.content-copy
+                "We understand that your team needs its privacy, that's why we built private documents. "
+                "You should be able to collaborate with peace of mind, knowing that your ideas are safe."]]
+              [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569407" :target "_blank"}
+               [:span.content-copy "Try a private document."]]]
+             [:div.feature-media
+              [:div.art-frame
+               [:div.artwork (common/icon :lock)]]]]
+            [:div.feature-divider]
+            [:div.feature.art-visible.content
+             [:div.feature-story
+              [:h2.feature-headline
+               [:span "Chat with voice."]]
+              [:p.feature-copy
+               [:span.content-copy
+                "Sometimes speaking out loud is simply easier than typing messages back and forth. "
+                "Teammates on your domain will get unlimited access to voice chat in every document. "]]
+              [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569418?voice=true" :target "_blank"}
+               [:span.content-copy "Try a voice chat."]]]
+             [:div.feature-media.reverse
+              [:div.art-frame
+               [:div.artwork (common/icon :mic)]]]]
+            [:div.features-foot.content
+             [:h1.content-heading
+              "Ready to start?"]
+             [:p.content-copy
+              "Precursor will become the muse for creativity on your team. "
+              "Design wireframes, develop prototypes, and collaborate on any idea in real time. "
+              "Use built-in chat to keep feedback and research in one place. "
+              "Teams around the world are already collaborating on ideas "
+              [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"} "made with Precursor"]
+              "."]
+             [:div.calls-to-action
+              [:a.bubble-button {:href "/trial/team"}
+               [:span "Start a free trial."]]]]])))))
 
 (defn nav-head [app owner]
   (om/component
@@ -368,7 +438,8 @@
 (def outer-components
   {:landing landing/landing
    :pricing pricing
-   :trial signup})
+   :trial signup
+   :team-features team-features})
 
 (defn outer [app owner]
   (reify
