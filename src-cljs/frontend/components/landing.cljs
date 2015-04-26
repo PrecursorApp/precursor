@@ -240,8 +240,8 @@
           [:div.our-claim
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
-             [:h1 "Prototyping and team collaboration should be simple. "]
-             [:p "That's why we made Precursor."]
+             [:h1.content-copy "Prototyping and team collaboration should be simple. "]
+             [:p.content-copy "That's why we made Precursor."]
              [:div.calls-to-action
               (om/build make-button (select-keys app [:document/id]))]]]]
           [:div.our-proof
@@ -334,13 +334,12 @@
           [:div.our-claim
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
-             [:h1 "It's a blackboard designed to help teams brainstorm."]
-             [:p "Precursor is no-nonsense prototyping."]
-             (if (utils/logged-in? owner)
-               [:div.calls-to-action
-                (om/build make-button (select-keys app [:document/id])
-                          {:opts {:alt "alt"}})
-                [:a.pancake-button {:href "/trial/team"} "Start a free trial."]])]]]])))))
+             [:h1.content-copy "It's a blackboard designed to help teams brainstorm."]
+             [:p.content-copy "Precursor is no-nonsense prototyping."]
+             [:div.calls-to-action
+              (om/build make-button (select-keys app [:document/id])
+                        {:opts {:alt "alt"}})
+              [:a.pancake-button {:href "/trial/team"} "Start a free trial."]]]]]])))))
 
 (defn landing [app owner]
   (reify
