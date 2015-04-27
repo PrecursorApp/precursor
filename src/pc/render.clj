@@ -37,8 +37,7 @@
 (def fonts (memoize fonts*))
 
 (defn svg-props [layers & {:keys [size-limit padding]
-                           :or {padding 100}
-                           }]
+                           :or {padding 100}}]
   (let [start-xs (remove nan? (map :layer/start-x layers))
         start-ys (remove nan? (map :layer/start-y layers))
         end-xs (remove nan? (map :layer/end-x layers))
