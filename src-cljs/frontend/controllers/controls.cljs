@@ -1880,8 +1880,8 @@
                                                                  :team/uuid (get-in current-state [:team :team/uuid])}]
                                                                30000
                                                                (async/promise-chan)))]
-                             (utils/inspect result)))
-                        #(js/console.log "closed stripe checkout")
+                             result))
+                        #(utils/mlog "closed stripe checkout")
                         {:panelLabel "Add card"}))
 
 (defmethod post-control-event! :change-card-clicked
@@ -1894,8 +1894,8 @@
                                                                  :team/uuid (get-in current-state [:team :team/uuid])}]
                                                                30000
                                                                (async/promise-chan)))]
-                             (utils/inspect result)))
-                        #(js/console.log "closed stripe checkout")
+                             result))
+                        #(utils/mlog "closed stripe checkout")
                         {:panelLabel "Change card"}))
 
 (defmethod post-control-event! :billing-email-changed

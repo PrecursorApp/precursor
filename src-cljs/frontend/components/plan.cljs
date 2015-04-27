@@ -381,7 +381,7 @@
 (defn plan-menu* [{:keys [plan-id team-uuid submenu]} owner]
   (reify
     om/IInitState
-    (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
       (fdb/add-entity-listener (om/get-shared owner :team-db)
@@ -424,9 +424,9 @@
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)
             team (team-model/find-by-uuid @team-db (get-in app [:team :team/uuid]))]
-        (html
-         (when (:team/plan team)
-           (om/build plan-menu* {:plan-id (:db/id (:team/plan team))
-                                 :team-uuid (:team/uuid team)
-                                 :submenu submenu}
-                     {:react-key "plan-menu*"})))))))
+        (if (:team/plan team)
+          (om/build plan-menu* {:plan-id (:db/id (:team/plan team))
+                                :team-uuid (:team/uuid team)
+                                :submenu submenu}
+                    {:react-key "plan-menu*"})
+          (dom/div {:className "loading"}))))))
