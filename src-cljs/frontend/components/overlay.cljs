@@ -714,7 +714,7 @@
    :connection-info {:title "Connection Info"
                      :component connection/connection-info}
    :roster {:title "Team"
-            :component team-start}
+            :component team/team-start}
    :team-settings {:title "Team Permissions"
                    :component team/team-settings}
    :team-doc-viewer {:title "Team Documents"
