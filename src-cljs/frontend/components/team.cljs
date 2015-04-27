@@ -133,22 +133,25 @@
     om/IRenderState
     (render-state [_ {:keys [teams]}]
       (html
-       [:div.menu-view
-        [:div.content.make
+        [:div.menu-view
+
+         [:a.vein.make.menu-new-team {:href (if (empty? teams) "/pricing" "/trial")}
+          (common/icon :plus)
+          "Start a new team."]
+
          (if (nil? teams)
-           [:div.loading "Loading..."]
+
+           [:div.content.make
+            [:div.loading "Loading..."]]
+
            (if (empty? teams)
-             [:p.make "You don't have any teams, yet"]
-             [:div.make
-              (for [team (sort-by :team/subdomain teams)]
-                [:p.make {:key (:team/subdomain team)}
-                 [:a {:href (urls/absolute-doc-url (:team/intro-doc team)
-                                                   :subdomain (:team/subdomain team))}
-                  (:team/subdomain team)]])]))
-         [:div.calls-to-action.content.make
-          [:a.bubble-button {:role "button"
-                             :href "/pricing"}
-           "Create a new team"]]]]))))
+             [:p.content.make "You don't have any teams, yet"]
+             (for [team (sort-by :team/subdomain teams)]
+               [:a.vein.make {:key (:team/subdomain team)
+                              :href (urls/absolute-doc-url (:team/intro-doc team)
+                                                           :subdomain(:team/subdomain team))}
+                (common/icon :team)
+                (:team/subdomain team)])))]))))
 
 (defn team-start [app owner]
   (reify

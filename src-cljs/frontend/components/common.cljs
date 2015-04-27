@@ -14,7 +14,10 @@
   :stroke-download "M5,95 h90 M5,85v10 M95,85v10 M50,5v70 M50,75l30-30 M20,45l30,30"
   :stroke-check "M35,80 L5,50 M95,20L35,80"
   :stroke-times "M82.5,82.5l-65-65 M82.5,17.5l-65,65"
+  :stroke-plus "M50,72.5v-45 M27.5,50h45"
+  :stroke-minus "M27.5,50h45"
   :stroke-cursor "M23.3,80.4V5 l53.3,53.3c0,0-21.5,0-21.5,0s12.4,29.8,12.4,29.8L50.9,95c0,0-12.4-29.8-12.4-29.8S23.3,80.4,23.3,80.4z"
+  :stroke-border-circle "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z"
   :stroke-rectangle "M87.5,87.5h-75v-75h75V87.5z M20,5H5v15h15V5z M95,5H80v15h15V5z M20,80H5v15h15V80z M95,80H80v15h15V80z"
   :stroke-line "M95,20H80V5h15V20z M20,80H5v15h15V80z M87.5,12.5l-75,75"
   :stroke-text "M65.9,92.4H34.1H50 V7.6 M95,21.4c0,0-7.9-13.8-7.9-13.8c0,0-74.1,0-74.1,0L5,21.4"
@@ -156,6 +159,10 @@
    :heart       {:paths [:stroke-heart]}
    :public      {:paths [:stroke-public]}
    :team        {:paths [:stroke-team]}
+   :plus        {:paths [:stroke-border-circle
+                         :stroke-plus]}
+   :minus       {:paths [:stroke-border-circle
+                         :stroke-minus]}
    :read-only   {:paths [:stroke-read-only
                          :fill-read-only]}
    :settings    {:paths [:stroke-dot
