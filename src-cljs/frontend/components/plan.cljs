@@ -27,22 +27,6 @@
   (datetime/time-ago (- (:plan/trial-end plan)
                         (.getTime (js/Date.)))))
 
-(defn active-users [{:keys [plan]} owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! team-db]} (om/get-shared owner)
-            active-custs (:plan/active-custs plan)]
-        (html
-         [:div
-          "Over the last 30 days, " (count active-custs)
-          (if (= 1 (count active-custs))
-            " user on your team has been active."
-            " users on your team have been active.")
-          " This would cost you $" (max 10 (* (count active-custs) 10)) "/month."
-          (for [cust active-custs]
-            [:div cust])])))))
-
 (defn format-access-date [date]
   (date->bucket date :sentence? true))
 
