@@ -148,38 +148,6 @@
              [:span "Shortcuts"]]
              (om/build auth-link app {:opts {:source "start-overlay"}})]])))))
 
-(defn team-start [app owner]
-  (reify
-    om/IDisplayName (display-name [_] "Overlay Team Start")
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! db]} (om/get-shared owner)
-            doc (doc-model/find-by-id @db (:document/id app))]
-        (if-not (:team app)
-          (om/build team/your-teams app)
-          (html
-           [:div.menu-view
-            [:div.veins
-             [:a.vein.make
-              {:on-click #(cast! :team-settings-opened)
-               :role "button"}
-              (common/icon :sharing)
-              [:span "Permissions"]]
-             [:a.vein.make
-              {:on-click #(cast! :team-docs-opened)
-               :role "button"}
-              (common/icon :clock)
-              [:span "Team Documents"]]
-             [:a.vein.make
-              {:on-click #(cast! :plan-settings-opened)
-               :role "button"}
-              (common/icon :credit)
-              [:span "Billing"]]
-             [:a.vein.make
-              {:on-click #(cast! :your-teams-opened)
-               :role "button"}
-              (common/icon :users)
-              [:span "Your Teams"]]]]))))))
 
 (defn private-sharing [app owner]
   (reify

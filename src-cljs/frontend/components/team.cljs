@@ -1,7 +1,9 @@
 (ns frontend.components.team
   (:require [datascript :as d]
+            [frontend.components.common :as common]
             [frontend.components.permissions :as permissions]
             [frontend.datascript :as ds]
+            [frontend.models.doc :as doc-model]
             [frontend.sente :as sente]
             [frontend.urls :as urls]
             [frontend.utils :as utils]
@@ -98,3 +100,34 @@
           [:a.bubble-button {:role "button"
                              :href "/pricing"}
            "Create a new team"]]]]))))
+
+(defn team-start [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Overlay Team Start")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
+        (html
+         [:div.menu-view
+          [:div.veins
+           [:a.vein.make
+            {:on-click #(cast! :team-settings-opened)
+             :role "button"}
+            (common/icon :sharing)
+            [:span "Permissions"]]
+           [:a.vein.make
+            {:on-click #(cast! :team-docs-opened)
+             :role "button"}
+            (common/icon :clock)
+            [:span "Team Documents"]]
+           [:a.vein.make
+            {:on-click #(cast! :plan-settings-opened)
+             :role "button"}
+            (common/icon :credit)
+            [:span "Billing"]]
+           [:a.vein.make
+            {:on-click #(cast! :your-teams-opened)
+             :role "button"}
+            (common/icon :users)
+            [:span "Your Teams"]]]])))))

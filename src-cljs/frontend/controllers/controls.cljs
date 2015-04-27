@@ -1573,8 +1573,9 @@
 
 (defmethod control-event :roster-opened
   [browser-state message _ state]
-  (-> state
-      (handle-replace-menu :roster)))
+  (if (:team state)
+    (handle-replace-menu state :roster)
+    (handle-replace-menu state :your-teams)))
 
 (defmethod control-event :sharing-menu-opened
   [browser-state message _ state]
