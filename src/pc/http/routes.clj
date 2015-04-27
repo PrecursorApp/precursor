@@ -294,13 +294,16 @@
   (outer-page req))
 
 (defpage early-access "/early-access" [req]
-  (outer-page req))
+  (redirect "/trial"))
 
 (defpage early-access-type "/early-access/:type" [req]
+  (redirect "/trial"))
+
+(defpage trial "/trial" [req]
   (outer-page req))
 
-(defpage trial "/trial/:type" [req]
-  (outer-page req))
+(defpage trial-type "/trial/:type" [req]
+  (redirect "/trial"))
 
 (defpage home "/home" [req]
   (outer-page req))

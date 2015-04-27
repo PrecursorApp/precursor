@@ -26,17 +26,7 @@
   (defroute team-features "/features/team" {:keys [query-params]}
     (put! nav-ch [:team-features {:query-params query-params}]))
 
-  ;; TODO: remove these when backend deploys, only here for backwards compatibility
-  (defroute early-access "/early-access" {:keys [query-params]}
-    (put! nav-ch [:navigate! {:path "/trial/team"
-                              :replace-token? true}]))
-
-  (defroute early-access-type "/early-access/:type" {:keys [type query-params]}
-    (put! nav-ch [:navigate! {:path (str "/trial/" type)
-                              :replace-token? true}]))
-
-
-  (defroute trial "/trial/:type" {:keys [type query-params]}
+  (defroute trial "/trial" {:keys [type query-params]}
     (put! nav-ch [:trial {:query-params query-params
                           :trial-type type}]))
 
