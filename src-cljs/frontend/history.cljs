@@ -95,7 +95,10 @@
                           (.preventDefault %))
 
                         (utils/mlog "navigating to" location)
-                        (.setToken history-imp new-token))))))
+                        (.setToken history-imp new-token)
+                        ;; This might not be the best place for this--too much separation
+                        ;; between history and routing
+                        (set! js/document.body.scrollTop 0))))))
 
 (defn new-history-imp [tokens-to-ignore]
   ;; need a history element, or goog will overwrite the entire dom
