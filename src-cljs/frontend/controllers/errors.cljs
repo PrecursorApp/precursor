@@ -65,13 +65,20 @@
   (when (get-in current-state state/error-message-path)
     (set! (.-scrollTop js/document.body) 0)))
 
-(defmethod error :document-permission-error
+(defmethod error :document/permission-error
   [container message data state]
   ;; When we have more fine-grained permissions, we'll put more info
   ;; into the state
   (-> state
       (overlay/replace-overlay :document-permissions)
       (assoc-in (state/document-access-path (:document/id state)) :none)))
+
+(defmethod error :team/permission-error
+  [container message data state]
+  ;; When we have more fine-grained permissions, we'll put more info
+  ;; into the state
+  (-> state
+    (assoc-in (state/team-access-path (:team/uuid (:team state))) :none)))
 
 (defn write-error-to-canvas [conn camera error-text]
   (let [[start-x start-y] (cameras/screen->point camera 64 (+ 16 14))]

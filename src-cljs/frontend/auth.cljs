@@ -32,6 +32,10 @@
 (defn has-document-access? [state doc-id]
   (not= :none (get-in state (state/document-access-path doc-id))))
 
+;; TODO: this needs to be in the db (along with doc access)
+(defn has-team-permission? [state team-uuid]
+  (not= :none (get-in state (state/team-access-path team-uuid))))
+
 ;; TODO: handle more cases
 (defn owner? [db doc cust]
   (= (str (:document/creator doc)) (str (:cust/uuid cust))))

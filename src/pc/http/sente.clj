@@ -135,10 +135,10 @@
     (if (auth/logged-in? (:ring-req req))
       (throw+ {:status 403
                :error-msg "This document is private. Please request access."
-               :error-key :document-requires-invite})
+               :error-key :document/permission-error})
       (throw+ {:status 401
                :error-msg "This document is private. Please log in to access it."
-               :error-key :document-requires-login}))))
+               :error-key :document/permission-error}))))
 
 (defn check-team-subscribed [team-uuid req scope]
   (when (= scope :admin)
@@ -156,10 +156,10 @@
     (if (auth/logged-in? (:ring-req req))
       (throw+ {:status 403
                :error-msg "This team is private. Please request access."
-               :error-key :team-requires-invite})
+               :error-key :team/permission-error})
       (throw+ {:status 401
                :error-msg "This team is private. Please log in to access it."
-               :error-key :team-requires-login}))))
+               :error-key :team/permission-error}))))
 
 (defn choose-frontend-id-seed [db document-id subs requested-remainder]
   (let [available-remainders (apply disj web-peer/remainders (map (comp :remainder :frontend-id-seed)
@@ -258,39 +258,40 @@
   (let [team-uuid (-> ?data :team/uuid)
         team (team-model/find-by-uuid (:db req) team-uuid)
         send-fn (:send-fn @sente-state)]
-    (when (has-team-permission? team-uuid req :admin)
-      (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
-      (send-fn client-id [:team/db-entities
-                          {:team/uuid team-uuid
-                           :entities [(team-model/read-api team)]
-                           :entity-type :team}])
+    (check-team-access team-uuid req :admin)
 
-      (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
-      (send-fn client-id [:team/db-entities
-                          {:team/uuid team-uuid
-                           :entities (map (partial permission-model/read-api (:db req))
-                                          (filter :permission/cust-ref
-                                                  (permission-model/find-by-team (:db req)
-                                                                                 team)))
-                           :entity-type :permission}])
-      (send-fn client-id [:team/db-entities
-                          {:team/uuid team-uuid
-                           :entities (map access-grant-model/read-api
-                                          (access-grant-model/find-by-team (:db req)
+    (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities [(team-model/read-api team)]
+                         :entity-type :team}])
+
+    (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map (partial permission-model/read-api (:db req))
+                                        (filter :permission/cust-ref
+                                                (permission-model/find-by-team (:db req)
+                                                                               team)))
+                         :entity-type :permission}])
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map access-grant-model/read-api
+                                        (access-grant-model/find-by-team (:db req)
+                                                                         team))
+                         :entity-type :access-grant}])
+
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map (partial access-request-model/read-api (:db req))
+                                        (access-request-model/find-by-team (:db req)
                                                                            team))
-                           :entity-type :access-grant}])
+                         :entity-type :access-request}])
 
-      (send-fn client-id [:team/db-entities
-                          {:team/uuid team-uuid
-                           :entities (map (partial access-request-model/read-api (:db req))
-                                          (access-request-model/find-by-team (:db req)
-                                                                             team))
-                           :entity-type :access-request}])
-
-      (send-fn client-id [:team/db-entities
-                          {:team/uuid team-uuid
-                           :entities [(plan-model/read-api (:team/plan team))]
-                           :entity-type :plan}]))))
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities [(plan-model/read-api (:team/plan team))]
+                         :entity-type :plan}])))
 
 (defn subscriber-read-api [subscriber]
   (-> subscriber
@@ -840,7 +841,6 @@
 
 (defmethod ws-handler :team/send-permission-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
-    (check-team-access team-uuid req :admin)
     (let [team (team-model/find-by-uuid (:db req) team-uuid)]
       (if-let [cust (-> req :ring-req :auth :cust)]
         (let [email (-> ?data :email)
@@ -942,6 +942,7 @@
            ;; TODO: rip out sente and write a sensible library
            (send-fn client-id [:frontend/error {:status-code (:status t)
                                                 :error-msg (:error-msg t)
+                                                :error-key (:error-key t)
                                                 :event (:event req)
                                                 :event-data (:?data req)}])))
        (catch Object e
