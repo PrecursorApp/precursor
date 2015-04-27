@@ -2,13 +2,22 @@
   (:refer-clojure :exclude [alias])
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
-            [clj-time.core :as time]
             [clj-time.coerce]
-            [slingshot.slingshot :refer (throw+)]
+            [clj-time.core :as time]
+            [clojure.tools.logging :as log]
             [pc.profile :as profile]
-            [pc.util.base64 :as base64]))
+            [pc.rollbar :as rollbar]
+            [pc.util.base64 :as base64]
+            [slingshot.slingshot :refer (throw+)])
+  (:import [com.google.common.base Throwables]))
 
-(defonce mixpanel-agent (agent nil :error-mode :continue))
+(defonce mixpanel-agent (agent nil
+                               :error-mode :continue
+                               :error-handler (fn [a e]
+                                                (println (Throwables/getStackTraceAsString e))
+                                                (flush)
+                                                (log/error e)
+                                                (rollbar/report-exception e))))
 
 (def endpoint "http://api.mixpanel.com")
 
@@ -44,8 +53,9 @@
   (clj-time.format/unparse (clj-time.format/formatter "yyyy-MM-dd") datetime))
 
 (defn api-call* [_ uri data]
-  (let [resp (http/post (str endpoint uri) {:query-params {:data (encode data)}})
-        success? (-> resp :body (Integer/parseInt) (= 1))]
+  (let [resp (http/post (str endpoint uri) {:query-params {:data (encode data)
+                                                           :verbose 1}})
+        success? (-> resp :body json/decode (get "status") (= 1))]
     (when (or (-> resp :status (not= 200)) (not success?))
       (throw+ resp))
     resp))
