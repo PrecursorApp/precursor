@@ -30,7 +30,7 @@
 (defn format-access-date [date]
   (date->bucket date :sentence? true))
 
-(defn active-history [{:keys [team-uuid]} owner]
+(defn active-history [{:keys [plan team-uuid]} owner]
   (reify
     om/IInitState (init-state [_] {:history nil})
     om/IDidMount
@@ -48,25 +48,26 @@
     (render-state [_ {:keys [history]}]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         (if (nil? active-users)
-           [:div.loading {:key "loading"} "Loading"]
-           [:div.content {:key "history"}
-            (if (seq history)
-              (for [{:keys [cust instant added?]} (reverse history)]
-                [:div.access-card.make {:key (str instant cust)}
-                 [:div.access-avatar
-                  [:img.access-avatar-img
-                   {:src (utils/gravatar-url cust)}]]
-                 [:div.access-details
-                  [:span {:title cust}
-                   cust]
-                  [:span.access-status
-                   (str "Was marked as" (if added? " active " " inactive ") (format-access-date instant) ".")]]])
+         [:div.menu-view
+          (if (nil? history)
+            [:div.content.make.loading {:key "loading"} "Loading..."]
+            [:div.content {:key "history"}
+             (if (seq history)
+               (for [{:keys [cust instant added?]} (reverse history)]
+                 [:div.access-card.make {:key (str instant cust)}
+                  [:div.access-avatar
+                   [:img.access-avatar-img
+                    {:src (utils/gravatar-url cust)}]]
+                  [:div.access-details
+                   [:span {:title cust}
+                    cust]
+                   [:span.access-status
+                    (str "Was marked as" (if added? " active " " inactive ") (format-access-date instant) ".")]]])
 
-              [:div.menu-empty.content {:key "empty"}
-               [:p.make (common/icon :activity)]
-               [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
-               [:a.make.feature-link {:on-click #(cast! :team-settings-opened) :role "button"} "Add a teammate."]])]))))))
+               [:div.menu-empty.content {:key "empty"}
+                [:p.make (common/icon :activity)]
+                [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
+                [:a.make.feature-link {:on-click #(cast! :team-settings-opened) :role "button"} "Add a teammate."]])])])))))
 
 (defn active-custs [{:keys [plan team-uuid]} owner]
   (reify
@@ -107,16 +108,6 @@
     (if (pos? pennies)
       (gstring/format "$%s%d.%02d" (if (neg? cents) "-" "") dollars pennies)
       (gstring/format "$%s%d" (if (neg? cents) "-" "") dollars))))
-
-(defn activity [{:keys [plan team-uuid]} owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! team-db]} (om/get-shared owner)]
-        (html
-          [:div.menu-view
-           (om/build active-history {:team-uuid team-uuid}
-                     {:react-key "active-history"})])))))
 
 (defn invoice-component [{:keys [invoice-id team-uuid]} owner]
   (reify
@@ -380,7 +371,7 @@
    :info info
    :payment payment
    :invoices invoices
-   :activity activity
+   :activity active-history
    :active active-custs
    :discount discount})
 
