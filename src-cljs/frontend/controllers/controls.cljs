@@ -1901,4 +1901,4 @@
 (defmethod post-control-event! :billing-email-changed
   [browser-state message {:keys [plan-id email]} previous-state current-state]
   (d/transact! (:team-db current-state)
-               [[:db/add plan-id :plan/billing-email email]])))
+               [[:db/add plan-id :plan/billing-email email]]))
