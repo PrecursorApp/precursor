@@ -130,7 +130,6 @@
     (get "id")
     (stripe/fetch-event)
     handle-hook)
-  ;; todo: handle replay attacks
   {:status 200})
 
 (def hooks-app (defpage/collect-routes))
