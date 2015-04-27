@@ -3,10 +3,10 @@ input {
     &[required] {
       width: 100%;
       line-height: 1rem;
-      height: 3rem;
+      height: @tile;
       border: 1px solid @gray_dark;
       outline: none;
-      padding: 1rem;
+      padding: @menu_padding;
       &:focus {
         border-color: @color_select;
         + label {
@@ -21,8 +21,8 @@ input {
       &:valid {
         + label {
           &[data-placeholder] {
-            margin-top: -3.5rem;
-            margin-bottom: 2.5rem;
+            margin-top: -4.5rem;
+            margin-bottom: 3.5rem;
             transition-duration: @run;
             &:before {
               font-size: 0.75rem;
@@ -82,8 +82,8 @@ input {
     }
     + label {
       &[data-placeholder] {
-        margin-top: -2rem;
-        margin-bottom: 1rem;
+        margin-top: -2.5rem;
+        margin-bottom: 1.5rem;
         white-space: nowrap;
         pointer-events: none;
         transition: @run_slow @bezier_deform;
@@ -193,5 +193,26 @@ input {
     &:after {
       content: attr(data-before);
     }
+  }
+}
+.disabled-input {
+  .holo();
+  color: @gray;
+  position: relative;
+  width: 100%;
+  min-height: @adapt_size;
+  padding: (@adapt_line - ((@line_height - @adapt_line) / 2)) @adapt_line;
+  border: 1px dashed @gray_lighter;
+  &:after {
+    content: attr(data-after);
+    color: @gray_light;
+    position: absolute;
+    top: (@adapt_size - @adapt_tiny) / 2;
+    left: (@adapt_line - @adapt_tiny);
+    padding: 0 @adapt_tiny;
+    line-height: @adapt_tiny;
+    background-color: @dye_outer;
+    transform: translate3d(0, (-@adapt_size / 2), 0) scale3d(.8, .8, 1);
+    transform-origin: left;
   }
 }

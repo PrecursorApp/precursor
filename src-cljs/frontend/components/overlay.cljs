@@ -11,6 +11,7 @@
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
             [frontend.components.permissions :as permissions]
+            [frontend.components.plan :as plan]
             [frontend.components.team :as team]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
@@ -104,71 +105,48 @@
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
           [:div.menu-view
-           [:div.veins
-            [:a.vein.make
-             {:on-click         #(cast! :overlay-info-toggled)
-              :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
-              :role "button"}
-             (common/icon :info)
-             [:span "About"]]
-            [:a.vein.make
-             {:href "/new"
-              :role "button"}
-             (common/icon :newdoc)
-             [:span "New Document"]]
-            [:a.vein.make
-             {:on-click         #(cast! :your-docs-opened)
-              :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
-              :role "button"}
-             (common/icon :clock)
-             [:span "Your Documents"]]
-            ;; TODO: should this use the permissions model? Would have to send some
-            ;;       info about the document
-            (if (auth/has-document-access? app (:document/id app))
-              [:a.vein.make
-               {:on-click         #(cast! :sharing-menu-opened)
-                :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
-                :role "button"}
-               (common/icon :sharing)
-               [:span "Sharing"]]
+           [:a.vein.make
+            {:on-click         #(cast! :overlay-info-toggled)
+             :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
+             :role "button"}
+            (common/icon :info)
+            [:span "About"]]
+           [:a.vein.make
+            {:href "/new"
+             :role "button"}
+            (common/icon :newdoc)
+            [:span "New Document"]]
+           [:a.vein.make
+            {:on-click         #(cast! :your-docs-opened)
+             :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
+             :role "button"}
+            (common/icon :clock)
+            [:span "Your Documents"]]
+           ;; TODO: should this use the permissions model? Would have to send some
+           ;;       info about the document
+           (if (auth/has-document-access? app (:document/id app))
+             [:a.vein.make
+              {:on-click         #(cast! :sharing-menu-opened)
+               :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
+               :role "button"}
+              (common/icon :sharing)
+              [:span "Sharing"]]
 
-              [:a.vein.make
-               {:on-click         #(cast! :document-permissions-opened)
-                :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
-                :role "button"}
-               (common/icon :users)
-               [:span "Request Access"]])
-            [:a.vein.make
-             {:on-click         #(cast! :shortcuts-menu-opened)
-              :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
-              :class "mobile-hidden"
-              :role "button"}
-             (common/icon :command)
-             [:span "Shortcuts"]]
-             (om/build auth-link app {:opts {:source "start-overlay"}})
-            ]])))))
+             [:a.vein.make
+              {:on-click         #(cast! :document-permissions-opened)
+               :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
+               :role "button"}
+              (common/icon :users)
+              [:span "Request Access"]])
+           [:a.vein.make
+            {:on-click         #(cast! :shortcuts-menu-opened)
+             :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
+             :class "mobile-hidden"
+             :role "button"}
+            (common/icon :command)
+            [:span "Shortcuts"]]
+           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
 
-(defn team-start [app owner]
-  (reify
-    om/IDisplayName (display-name [_] "Overlay Team Start")
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! db]} (om/get-shared owner)
-            doc (doc-model/find-by-id @db (:document/id app))]
-        (html
-          [:div.menu-view
-           [:div.veins
-            [:a.vein.make
-             {:on-click #(cast! :team-settings-opened)
-              :role "button"}
-             (common/icon :sharing)
-             [:span "Permissions"]]
-            [:a.vein.make
-             {:on-click #(cast! :team-docs-opened)
-              :role "button"}
-             (common/icon :clock)
-             [:span "Team Documents"]]
-            ]])))))
 
 (defn private-sharing [app owner]
   (reify
@@ -321,10 +299,10 @@
                  "You can try to request full access or even "
                  [:a {:href "/new"} "create your own"]
                  " document."]
-                [:a.make.menu-cta
-                 {:on-click #(cast! :permission-requested {:doc-id doc-id})
-                  :role "button"}
-                 "Request Access"])
+                [:div.menu-buttons
+                 [:a.make.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})
+                                       :role "button"}
+                  "Request Access"]])
                [:p.make
                 [:span
                  "Okay, we notified the owner of this document about your request. "
@@ -732,30 +710,51 @@
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
                           :component document-access/permission-denied-overlay}
-
+   :connection-info {:title "Connection Info"
+                     :component connection/connection-info}
    :roster {:title "Team"
-            :component team-start}
-   :team-settings {:title "Team Permissions"
+            :component team/team-start}
+   :team-settings {:title "Add Teammates"
                    :component team/team-settings}
    :team-doc-viewer {:title "Team Documents"
                      :component doc-viewer/team-doc-viewer}
-   :connection-info {:title "Connection Info"
-                     :component connection/connection-info}})
+   :your-teams {:title "Your Teams"
+                :component team/your-teams}
+   :request-team-access {:title "Request Access"
+                         :component team/request-access}
+   :plan {:title "Billing"
+          :component plan/plan-menu}})
+
+(defn namespaced? [kw]
+  (namespace kw))
+
+(defn overlay-component-key [overlay-key]
+  (if (namespaced? overlay-key)
+    (keyword (namespace overlay-key))
+    overlay-key))
+
+(defn get-component [overlay-key]
+  (get overlay-components (overlay-component-key overlay-key)))
 
 (defn overlay [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            overlay-components (map #(get overlay-components %) (get-in app state/overlays-path))
-            title (:title (last overlay-components))]
+      (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.menu
           [:div.menu-header
-           (for [component overlay-components]
+           (for [overlay-key (get-in app state/overlays-path)
+                 :let [component (get-component overlay-key)]]
              (html
-              [:h4.menu-heading {:title (:title component) :key (:title component)} (:title component)]))]
+              [:h4.menu-heading {:title (:title component) :react-key (:title component)}
+               (if (namespaced? overlay-key)
+                 (str (:title component) " " (str/capitalize (name overlay-key)))
+                 (:title component))]))]
           [:div.menu-body
-           (for [component overlay-components]
-            (om/build (:component component) app))]])))))
+           (for [overlay-key (get-in app state/overlays-path)
+                 :let [component (get-component overlay-key)]]
+             (om/build (:component component) app {:react-key overlay-key
+                                                   :opts {:submenu (when (namespaced? overlay-key)
+                                                                     (keyword (name overlay-key)))}}))]])))))

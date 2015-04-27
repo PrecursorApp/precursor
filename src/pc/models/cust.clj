@@ -148,3 +148,8 @@
           rand-nth)
         ;; get the least-frequent color if they're all taken
         (ffirst (sort-by last (frequencies collab-colors))))))
+
+(def prcrsr-bot-email "prcrsr-bot@prcrsr.com")
+
+(defn prcrsr-bot [db]
+  (find-by-email db prcrsr-bot-email))

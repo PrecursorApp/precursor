@@ -11,9 +11,16 @@
 (def schema {:layer/child {:db/cardinality :db.cardinality/many}
              :layer/points-to {:db/cardinality :db.cardinality/many
                                :db/type :db.type/ref}
-             :error/id {:db/unique :db.unique/identity}})
+             :error/id {:db/unique :db.unique/identity}
+             :team/plan {:db/type :db.type/ref}
+             :plan/active-custs {:db/cardinality :db.cardinality/many}
+             :plan/invoices {:db/cardinality :db.cardinality/many
+                             :db/type :db.type/ref}})
 
 (defonce listeners (atom {}))
+
+(defn ^:export inspect-listeners []
+  (clj->js @listeners))
 
 (defn make-initial-db [initial-entities]
   (let [conn (d/create-conn schema)]

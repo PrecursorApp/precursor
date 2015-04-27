@@ -4,9 +4,52 @@
   min-height: 100vh;
   overflow-x: hidden;
   .content {
-    max-width: @tile_menu_max;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: @tile_blog;
+    margin-right: auto;
     .vein {
       border-bottom: 1px solid @gray_lightest;
+    }
+  }
+  .divider {
+    color: @gray_lightest;
+    margin: .5rem 0;
+    &:first-of-type {
+      margin: 0 0 1rem;
+    }
+  }
+  p {
+    a {
+      display: inline-block;
+      position: relative;
+      border-bottom: 1px dotted @gray_light;
+      white-space: nowrap;
+      cursor: pointer;
+      &:not(:hover) {
+        &:after {
+          width: 0;
+          left: 50%;
+          transition-duration: @run;
+        }
+      }
+      &:active {
+        &:after {
+          left: -5%;
+          width: 110%;
+          transition: @now;
+        }
+      }
+      &:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        box-shadow: 0 1px @color_select;
+        transition: @run_fast @bezier_deform;
+      }
     }
   }
 }
@@ -83,6 +126,11 @@
       }
     }
   }
+  &.credit-card {
+    .disabled-input {
+      margin-bottom: @menu_padding;
+    }
+  }
   article {
     padding: @menu_padding;
     width: 100%;
@@ -101,21 +149,16 @@
     }
   }
 }
-.veins {
-  flex: 1;
-  position: relative;
-  width: 100%;
-  max-width: @tile_menu_max;
-  margin: 0 auto;
-}
 .vein {
+  .menu.content();
   .flexy(center);
   .icon(stroke; @gray);
   .icon(fill; @gray);
-  width: 100%;
+  // width: 100%;
   height: @tile;
   color: @gray;
   overflow: hidden;
+  cursor: pointer;
   &:hover {
     .icon(stroke; @black);
     .icon(fill; @black);
@@ -148,6 +191,11 @@
   }
   i {
     padding: @menu_padding;
+  }
+  .peak {
+    color: @gray_light;
+    font-size: @font_size_small;
+    margin-left: auto;
   }
 }
 .menu-invite-form {
@@ -369,6 +417,12 @@
   height: @size_menu_avatar;
   border-radius: @size_menu_avatar;
   transition: @run @bezier_fadein;
+  div {
+    &.access-avatar-img {
+      box-shadow: none;
+      border: 1px dashed @gray_light;
+    }
+  }
 }
 .access-avatar-img {
   width: @size_menu_avatar;
@@ -451,10 +505,20 @@
   animation: in-fade-top @run_slow;
   display: inline-block;
 }
-.menu-cta {
+.menu-buttons {
+  .flexy(wrap);
+  .menu-button {
+    width: @tile_xl;
+    .mq_640({
+      width: 100%;
+    });
+  }
+}
+.menu-button {
   .flexy(center, center);
   height: @tile;
   margin-bottom: @tile;
+  padding: 0 @menu_padding;
   transition: @run_fast @bezier_fadein;
   border: 1px solid @font_color;
   &:hover {
@@ -478,4 +542,63 @@
 }
 .connection-result {
   margin: 0 1em;
+}
+.invoices-table {
+  width: 100%;
+  [class^="invoice-"] {
+    line-height: 1.5;
+    padding: 1.25rem .5rem;
+    white-space: nowrap;
+    &:first-child {
+      padding-left: @menu_padding;
+    }
+    &:last-child {
+      padding-right: @menu_padding;
+    }
+  }
+}
+.invoices-head {
+  th {
+    text-transform: capitalize;
+    font-weight: normal;
+    padding: 1rem;
+  }
+}
+.invoices-body {
+  .invoice {
+    border-bottom: 1px dashed @gray_lighter;
+  }
+}
+.invoice-date,
+.invoice-id {
+  width: 30%;
+  text-align: left;
+}
+.invoice-total,
+.invoice-status {
+  text-align: center;
+  width: 10%;
+}
+.invoice-total {
+  text-align: right;
+}
+.menu-empty {
+  text-align: center;
+  .iconpile {
+    font-size: @tile;
+    margin-bottom: .5rem;
+  }
+}
+.store-credit {
+  .flexy(center; center);
+  color: @gray;
+  height: @tile;
+  margin-top: auto;
+}
+.secret-card-number {
+  letter-spacing: .25rem;
+  font-weight: bold;
+}
+.menu-new-team {
+  border: 1px dashed @gray_lighter;
 }

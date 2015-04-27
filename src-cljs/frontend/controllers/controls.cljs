@@ -26,6 +26,7 @@
             [frontend.sente :as sente]
             [frontend.settings :as settings]
             [frontend.state :as state]
+            [frontend.stripe :as stripe]
             [frontend.subscribers :as subs]
             [frontend.svg :as svg]
             [frontend.utils.ajax :as ajax]
@@ -1530,8 +1531,8 @@
 (defmethod control-event :your-docs-opened
   [browser-state message _ state]
   (-> state
-      (handle-add-menu :doc-viewer)
-      (assoc-in state/your-docs-learned-path true)))
+    (handle-add-menu :doc-viewer)
+    (assoc-in state/your-docs-learned-path true)))
 
 (defmethod post-control-event! :your-docs-opened
   [browser-state message _ previous-state current-state]
@@ -1559,6 +1560,11 @@
      (when docs
        (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}])))))
 
+(defmethod control-event :plan-settings-opened
+  [browser-state message _ state]
+  (-> state
+      (handle-add-menu :plan)))
+
 (defmethod control-event :main-menu-opened
   [browser-state message _ state]
   (-> state
@@ -1567,8 +1573,9 @@
 
 (defmethod control-event :roster-opened
   [browser-state message _ state]
-  (-> state
-      (handle-replace-menu :roster)))
+  (if (:team state)
+    (handle-replace-menu state :roster)
+    (handle-replace-menu state :your-teams)))
 
 (defmethod control-event :sharing-menu-opened
   [browser-state message _ state]
@@ -1598,10 +1605,20 @@
   (-> state
     (handle-add-menu :team-settings)))
 
+(defmethod control-event :your-teams-opened
+  [browser-state message _ state]
+  (-> state
+    (handle-add-menu :your-teams)))
+
 (defmethod control-event :connection-info-opened
   [browser-state message _ state]
   (-> state
     (overlay/add-overlay :connection-info)))
+
+(defmethod control-event :request-team-access-opened
+  [browser-state message _ state]
+  (-> state
+    (overlay/add-overlay :request-team-access)))
 
 (defmethod control-event :invite-to-changed
   [browser-state message {:keys [value]} state]
@@ -1662,6 +1679,12 @@
   [browser-state message {:keys [doc-id]} previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/send-permission-request {:document/id doc-id
                                                                              :invite-loc :overlay}]))
+
+(defmethod post-control-event! :team-permission-requested
+  [browser-state message {:keys [doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:team/send-permission-request {:team/uuid (:team/uuid (:team current-state))
+                                                  :invite-loc :overlay}]))
 
 (defmethod post-control-event! :access-request-granted
   [browser-state message {:keys [request-id doc-id team-uuid]} previous-state current-state]
@@ -1842,3 +1865,40 @@
                              (utils/inspect (:datom-group %)))
                        (:unsynced-datoms previous-state))
                {:bot-layer true}))
+
+(defmethod control-event :plan-submenu-opened
+  [browser-state message {:keys [submenu]} state]
+  (handle-add-menu state (keyword "plan" (name submenu))))
+
+(defmethod post-control-event! :start-plan-clicked
+  [browser-state message _ previous-state current-state]
+  (stripe/open-checkout (get-in current-state [:cust :cust/email])
+                        #(go
+                           (let [result (<! (sente/ch-send-msg (:sente current-state)
+                                                               [:team/create-plan
+                                                                {:token-id (aget % "id")
+                                                                 :team/uuid (get-in current-state [:team :team/uuid])}]
+                                                               30000
+                                                               (async/promise-chan)))]
+                             result))
+                        #(utils/mlog "closed stripe checkout")
+                        {:panelLabel "Add card"}))
+
+(defmethod post-control-event! :change-card-clicked
+  [browser-state message _ previous-state current-state]
+  (stripe/open-checkout (get-in current-state [:cust :cust/email])
+                        #(go
+                           (let [result (<! (sente/ch-send-msg (:sente current-state)
+                                                               [:team/update-card
+                                                                {:token-id (aget % "id")
+                                                                 :team/uuid (get-in current-state [:team :team/uuid])}]
+                                                               30000
+                                                               (async/promise-chan)))]
+                             result))
+                        #(utils/mlog "closed stripe checkout")
+                        {:panelLabel "Change card"}))
+
+(defmethod post-control-event! :billing-email-changed
+  [browser-state message {:keys [plan-id email]} previous-state current-state]
+  (d/transact! (:team-db current-state)
+               [[:db/add plan-id :plan/billing-email email]]))

@@ -36,17 +36,9 @@
 
 (def fonts (memoize fonts*))
 
-;; Getting placement here is a bit tricky.
-;; Goal is to reproduce the canvas exactly as it is in the app, except in
-;; black-and-white so they can print it.
-;; If they've only drawn in positive x and y coordinates, then we're good
-;; If they've drawn in negative directions, then we to shift the viewport in the
-;; that direction with a transform.
-(defn render-layers [layers & {:keys [invert-colors? size-limit]}]
-  (def mylayers layers)
-  (let [layers (map #(into {} %) (filter #(and (:layer/type %)
-                                               (not= :layer.type/group (:layer/type %))) layers))
-        start-xs (remove nan? (map :layer/start-x layers))
+(defn svg-props [layers & {:keys [size-limit padding]
+                           :or {padding 100}}]
+  (let [start-xs (remove nan? (map :layer/start-x layers))
         start-ys (remove nan? (map :layer/start-y layers))
         end-xs (remove nan? (map :layer/end-x layers))
         end-ys (remove nan? (map :layer/end-y layers))
@@ -62,20 +54,38 @@
         height (if (pos? min-y)
                  max-y
                  (- max-y min-y))
-        padding 100
         scale-factor (if size-limit
                        (let [max-dim (+ padding (max width height))]
                          (min 1 (/ size-limit max-dim)))
                        1)
-        offset-top (if (neg? min-y)
-                     (+ (/ padding 2) (- min-y))
-                     0)
-        offset-left (if (neg? min-x)
-                      (+ (/ padding 2) (- min-x))
-                      0)]
+        offset-top (* (if (neg? min-y)
+                        (+ (/ padding 2) (- min-y))
+                        0)
+                      scale-factor)
+        offset-left (* (if (neg? min-x)
+                         (+ (/ padding 2) (- min-x))
+                         0)
+                       scale-factor)]
+    {:width (* scale-factor (+ width padding))
+     :height (* scale-factor (+ height padding))
+     :offset-top offset-top
+     :offset-left offset-left
+     :padding padding
+     :scale-factor scale-factor}))
+
+;; Getting placement here is a bit tricky.
+;; Goal is to reproduce the canvas exactly as it is in the app, except in
+;; black-and-white so they can print it.
+;; If they've only drawn in positive x and y coordinates, then we're good
+;; If they've drawn in negative directions, then we to shift the viewport in the
+;; that direction with a transform.
+(defn render-layers [layers & {:keys [invert-colors? size-limit]}]
+  (let [layers (map #(into {} %) (filter #(and (:layer/type %)
+                                               (not= :layer.type/group (:layer/type %))) layers))
+        {:keys [width height offset-top offset-left padding scale-factor]} (svg-props layers)]
     (html [:svg (merge
-                 {:width (* scale-factor (+ width padding))
-                  :height (* scale-factor (+ height padding))
+                 {:width width
+                  :height height
                   :xmlns "http://www.w3.org/2000/svg"
                   :xmlns:xlink "http://www.w3.org/1999/xlink"
                   :version "1.1"}
@@ -99,8 +109,8 @@
                      :fill (if invert-colors? "#ccc" "black")}
             [:path {:d "M 0 0 L 10 5 L 0 10 z"}]]
            [:g {:transform (format "translate(%s, %s) scale(%s)"
-                                   (* scale-factor offset-left)
-                                   (* scale-factor offset-top)
+                                   offset-left
+                                   offset-top
                                    scale-factor)}
             (concat
              (map #(svg-element % {:invert-colors? invert-colors?}) layers)

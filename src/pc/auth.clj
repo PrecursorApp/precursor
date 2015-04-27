@@ -60,13 +60,6 @@
             (throw e)))))))
 
 ;; Note: this is hardcoded to prcrsr.com for a good reason
-(def prcrsr-bot-email "prcrsr-bot@prcrsr.com")
-(defn prcrsr-bot-uuid [db]
-  (ffirst (d/q '{:find [?u]
-                 :in [$ ?e]
-                 :where [[?t :cust/email ?e]
-                         [?t :cust/uuid ?u]]}
-               db prcrsr-bot-email)))
 
 (defn cust-permission [db doc cust]
   (when cust
@@ -102,9 +95,8 @@
 (defn team-permission [db team cust]
   (when (and team cust)
     ;; TODO: fix the permissions
-    (if (contains? (permission-model/team-permits db team cust) :permission.permits/admin)
-      :owner
-      nil)))
+    (when (contains? (permission-model/team-permits db team cust) :permission.permits/admin)
+      :owner)))
 
 ;; TODO: unify these so that there is only 1 permission type
 ;;       Could still have multiple permissions for a doc, but want

@@ -72,6 +72,10 @@
                 (when old-job (.cancel old-job false))
                 (assoc jobs job-name new-job)))))))
 
+(defn shutdown-safe-scheduled-jobs []
+  (doseq [[job-name job] @safe-scheduled-jobs]
+    (.cancel job false)))
+
 (defn safe-throw-hook
   "Safe slingshot throw-hook implementation that excludes :environment to
   prevent secure information such as oauth tokens being leaked via rollbars"

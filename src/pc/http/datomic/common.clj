@@ -2,7 +2,8 @@
   (:require [clojure.set :as set]
             [datomic.api :as d]
             [pc.datomic.schema :as schema]
-            [pc.datomic.web-peer :as web-peer]))
+            [pc.datomic.web-peer :as web-peer]
+            [pc.models.plan :as plan-model]))
 
 ;; TODO: is the transaction guaranteed to be the first? Can there be multiple?
 (defn get-annotations [transaction]
@@ -72,6 +73,35 @@
                      :access-request/create-date
                      :access-request/deny-date
                      :access-request/team
+
+                     :team/plan
+
+                     :plan/start
+                     :plan/trial-end
+                     :plan/credit-card
+                     :plan/paid?
+                     :plan/billing-email
+                     :plan/active-custs
+                     :plan/invoices
+                     :plan/account-balance
+                     :plan/next-period-start
+
+                     :discount/start
+                     :discount/coupon
+                     :discount/end
+
+                     :credit-card/exp-year
+                     :credit-card/exp-month
+                     :credit-card/last4
+                     :credit-card/brand
+
+                     :invoice/subtotal
+                     :invoice/total
+                     :invoice/date
+                     :invoice/paid?
+                     :invoice/attempted?
+                     :invoice/next-payment-attempt
+                     :invoice/description
                      })))
 
 (defn translate-datom-dispatch-fn [db d] (:a d))
@@ -118,6 +148,22 @@
 (defmethod translate-datom :layer/points-to [db d]
   (-> d
     (assoc :v (web-peer/client-id db (:v d)))))
+
+(defmethod translate-datom :team/plan [db d]
+  (-> d
+    (assoc :v (web-peer/client-id db (:v d)))))
+
+(defmethod translate-datom :plan/active-custs [db d]
+  (-> d
+    (assoc :v (:cust/email (d/entity db (:v d))))))
+
+(defmethod translate-datom :discount/coupon [db d]
+  (-> d
+    (assoc :v (plan-model/coupon-read-api (d/ident db (:v d))))))
+
+(defmethod translate-datom :plan/invoices [db d]
+  (-> d
+    (assoc :v (web-peer/client-id (d/entity db (:v d))))))
 
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom

@@ -58,10 +58,11 @@
                   You can try to request access or even "
                   [:a {:href "/new"} "create your own"]
                   " document."]
-                 [:a.menu-cta
-                  {:on-click #(cast! :permission-requested {:doc-id doc-id})
-                   :role "button"}
-                  "Request Access"]))
+                 [:div.make
+                  [:div.menu-buttons
+                   [:a.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})
+                                    :role "button"}
+                    "Request Access"]]]))
 
              (list
                [:p.make

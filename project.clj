@@ -16,6 +16,8 @@
                  [javax.servlet/servlet-api "2.5"]
                  [slingshot "0.12.1"]
                  [hiccup "1.0.4"]
+                 [clj-pdf "2.0.3"]
+
                  [org.clojure/tools.logging "0.3.1"]
                  [log4j "1.2.17"]
                  [log4j/apache-log4j-extras "1.1"]
@@ -32,7 +34,8 @@
                  [org.postgresql/postgresql "9.4-1200-jdbc41" :exclusions [org.slf4j/slf4j-simple]]
                  [clojurewerkz/spyglass "1.1.0"]
 
-                 [amazonica "0.3.12"]
+                 [amazonica "0.3.21"]
+                 [com.draines/postal "1.11.3" :exclusions [commons-codec]]
 
                  [ring/ring "1.3.2" :exclusions [hiccup
                                                  org.clojure/java.classpath]]
@@ -72,7 +75,7 @@
 
                  [ankha "0.1.4"]
                  [org.clojure/clojurescript "0.0-3126"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+                 [precursor/core.async "0.1.361.0-d8047c-alpha"]
                  [cljs-ajax "0.2.6"]
 
                  ;; Use yaks/om for the pattern tag (it's in React,

@@ -83,7 +83,9 @@
                         :layer/points-to
                         :layer/document
                         :document/name
-                        :entity/type})
+                        :entity/type
+
+                        :plan/billing-email})
     nil))
 
 (defn whitelisted? [scope [type e a v :as transaction]]
@@ -129,7 +131,8 @@
         {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
         (< 1500 (count datoms))
         {:status 400 :body (pr-str {:error "You can only transact 1500 datoms at once"})}
-        (not (number? document-id))
+        (not (or (number? document-id)
+                 (number? team-id)))
         {:status 400 :body (pr-str {:error "document-id is required and should be an entity id"})}
         :else
         {:status 200
@@ -158,5 +161,4 @@
                                             (when document-id {:transaction/document document-id})
                                             (when team-id {:transaction/team team-id})
                                             (when cust-uuid {:cust/uuid cust-uuid}))])
-                            (d/transact conn)
-                            deref))}}))
+                            (d/transact conn)))}}))

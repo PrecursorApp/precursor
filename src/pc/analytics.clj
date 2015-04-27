@@ -1,5 +1,6 @@
 (ns pc.analytics
   (:require [clj-time.coerce]
+            [clj-time.format]
             [pc.mailchimp :as mailchimp]
             [pc.mixpanel :as mixpanel]
             [pc.models.cust :as cust-model]
@@ -25,6 +26,17 @@
                                                :verified_email (:cust/verified-email cust)
                                                :occupation (:cust/occupation cust)}})
     (mailchimp/maybe-list-subscribe cust)))
+
+(defn track-create-team [team]
+  (mixpanel/engage (:cust/uuid (:team/creator team))
+                   {:$set {:team_trial_expires (->> team
+                                                 :team/plan
+                                                 :plan/trial-end
+                                                 clj-time.coerce/from-date
+                                                 (clj-time.format/unparse (clj-time.format/formatters :date-time-no-ms)))}}))
+
+(defn track-create-plan [team]
+  (mixpanel/engage (:cust/uuid (:team/creator team)) {:$set {:created_plan true}}))
 
 (defn track-login [cust]
   (mixpanel/track "Login" (:cust/uuid cust)))

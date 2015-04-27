@@ -98,3 +98,6 @@
 
 (defn memcached-server []
   (System/getenv "MEMCACHED_SERVER"))
+
+(defn fetch-stripe-events? []
+  (not (prod?)))

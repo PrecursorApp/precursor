@@ -6,6 +6,7 @@
             [defpage.core :as defpage :refer (defpage)]
             [hiccup.core :as hiccup]
             [pc.admin.db :as db-admin]
+            [pc.billing.dev :as billing-dev]
             [pc.datomic :as pcd]
             [pc.http.admin.auth :as auth]
             [pc.http.sente :as sente]
@@ -14,6 +15,9 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.flag :as flag-model]
+            [pc.models.team :as team-model]
+            [pc.profile :as profile]
+            [pc.stripe.dev :as stripe-dev]
             [pc.views.admin :as admin-content]
             [pc.views.content :as content]
             [ring.middleware.anti-forgery]
@@ -31,7 +35,11 @@
                                 [:div [:a {:href "/clients"} "Clients"]]
                                 [:div [:a {:href "/occupied"} "Occupied"]]
                                 [:div [:a {:href "/interesting"} "Interesting"]]
-                                [:div [:a {:href "/upload"} "Upload to Google CDN"]]])))
+                                [:div [:a {:href "/upload"} "Upload to Google CDN"]]
+                                (when (profile/fetch-stripe-events?)
+                                  [:div [:a {:href "/stripe-events"} "View Stripe events"]])
+                                (when-not (profile/prod?)
+                                  [:div [:a {:href "/modify-billing"} "Modify billing"]])])))
 
 (defpage early-access "/early-access" [req]
   (hiccup/html (content/layout {}
@@ -116,7 +124,8 @@
 (defpage upload "/upload" [req]
   (hiccup/html (content/layout {} (admin-content/upload-files))))
 
-
+(defpage upload "/stripe-events" [req]
+  (hiccup/html (content/layout {} (admin-content/stripe-events))))
 
 (defpage refresh-client [:post "/refresh-client-stats"] [req]
   (if-let [client-id (get-in req [:params "client-id"])]
@@ -163,6 +172,33 @@
                                        [:a {:href "/teams"}
                                         "Go back to the teams page"]
                                        "."])})))
+
+(defpage retry-stripe-event [:post "/retry-stripe-event/:evt-id"] [req]
+  (stripe-dev/retry-event (get-in req [:params :evt-id]))
+  {:status 200
+   :body (str "retried " (get-in req [:params :evt-id]))})
+
+(defpage modify-billing "/modify-billing" [req]
+  (hiccup/html (content/layout {} (admin-content/modify-billing))))
+
+(defpage add-team-cust [:post "/add-team-cust"] [req]
+  (def myreq req)
+  (let [db (pcd/default-db)
+        email (-> req :params (get "email"))
+        subdomain (-> req :params (get "team-subdomain"))
+        team (team-model/find-by-subdomain db subdomain)]
+    (billing-dev/add-billing-cust-to-team team email)
+    {:status 200
+     :body (str "added " email " to " subdomain " team")}))
+
+(defpage remove-team-cust [:post "/remove-team-cust"] [req]
+  (let [db (pcd/default-db)
+        email (-> req :params (get "email"))
+        subdomain (-> req :params (get "team-subdomain"))
+        team (team-model/find-by-subdomain db subdomain)]
+    (billing-dev/remove-billing-cust-from-team team email)
+    {:status 200
+     :body (str "removed " email " from " subdomain " team")}))
 
 (defn wrap-require-login [handler]
   (fn [req]

@@ -119,7 +119,7 @@
                               % subscribers))))
 
 (defmethod handle-message :frontend/error [app-state message data]
-  (put! (get-in @app-state [:comms :errors]) [:document-permission-error data])
+  (put! (get-in @app-state [:comms :errors]) [(:error-key data) data])
   (utils/inspect data))
 
 (defmethod handle-message :frontend/stats [app-state message data]

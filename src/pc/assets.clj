@@ -82,7 +82,7 @@
 
 (defn validate-manifest! [manifest]
   (doseq [[path value] (:assets manifest)]
-    (assert (< 0 (count (:body (http/get (cdn-url value))))))))
+    (assert (pos? (count (:body (http/get (cdn-url value))))))))
 
 (defn load-manifest! []
   (let [manifest (fetch-manifest)]
@@ -160,8 +160,7 @@
       (let [existing (try+
                       (s3/get-object-metadata :bucket-name cdn-bucket :key key)
                       (catch AmazonS3Exception e
-                        (if (-> e amazonica.core/ex->map :status-code (= 403))
-                          nil
+                        (when-not (-> e amazonica.core/ex->map :status-code (= 403))
                           (throw+))))]
         (if (= tag (:etag existing))
           (log/infof "already uploaded %s to %s" (str file) key)

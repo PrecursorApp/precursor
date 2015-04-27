@@ -46,7 +46,7 @@
                      (if menu-visibile? "Close Menu" "Open Menu"))}
            (common/icon :menu)])))))
 
-(defn roster [app owner] ; all of the events in here need to change to stuff for right side menu
+(defn roster [app owner]
   (reify
     om/IDisplayName (display-name [_] "Hud Menu")
     om/IRender
@@ -334,7 +334,7 @@
         (om/build menu (utils/select-in app [state/main-menu-learned-path
                                              state/overlays-path])
                   {:react-key "menu"})
-        (when (:team app)
+        (when (utils/logged-in? owner)
           (om/build roster (utils/select-in app [state/main-menu-learned-path
                                                  state/overlays-path])
                     {:react-key "roster"}))

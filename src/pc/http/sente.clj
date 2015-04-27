@@ -9,6 +9,7 @@
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
             [pc.auth :as auth]
+            [pc.billing :as billing]
             [pc.cache :as cache]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
@@ -17,6 +18,7 @@
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
             [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
+            [pc.http.plan :as plan-http]
             [pc.http.sente.sliding-send :as sliding-send]
             [pc.http.urls :as urls]
             [pc.models.access-grant :as access-grant-model]
@@ -26,11 +28,13 @@
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model]
             [pc.models.permission :as permission-model]
+            [pc.models.plan :as plan-model]
             [pc.models.team :as team-model]
             [pc.nts :as nts]
             [pc.replay :as replay]
             [pc.rollbar :as rollbar]
             [pc.sms :as sms]
+            [pc.stripe :as stripe]
             [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)]
             [taoensso.sente :as sente])
@@ -112,9 +116,6 @@
       (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid admin-data) team-uuid)
       ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:team/transaction (assoc admin-data :tx-data server-timestamps)]))))
 
-(defn ws-handler-dispatch-fn [req]
-  (-> req :event first))
-
 (defn has-document-access? [doc-id req scope]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
     (auth/has-document-permission? (:db req) doc (-> req :ring-req :auth) scope)))
@@ -134,10 +135,10 @@
     (if (auth/logged-in? (:ring-req req))
       (throw+ {:status 403
                :error-msg "This document is private. Please request access."
-               :error-key :document-requires-invite})
+               :error-key :document/permission-error})
       (throw+ {:status 401
                :error-msg "This document is private. Please log in to access it."
-               :error-key :document-requires-login}))))
+               :error-key :document/permission-error}))))
 
 (defn check-team-subscribed [team-uuid req scope]
   (when (= scope :admin)
@@ -155,10 +156,10 @@
     (if (auth/logged-in? (:ring-req req))
       (throw+ {:status 403
                :error-msg "This team is private. Please request access."
-               :error-key :team-requires-invite})
+               :error-key :team/permission-error})
       (throw+ {:status 401
                :error-msg "This team is private. Please log in to access it."
-               :error-key :team-requires-login}))))
+               :error-key :team/permission-error}))))
 
 (defn choose-frontend-id-seed [db document-id subs requested-remainder]
   (let [available-remainders (apply disj web-peer/remainders (map (comp :remainder :frontend-id-seed)
@@ -231,6 +232,9 @@
              (assoc-in [uuid] {:client-id uuid
                                :cust/uuid (:cust/uuid cust)})))))
 
+(defn ws-handler-dispatch-fn [req]
+  (-> req :event first))
+
 (defmulti ws-handler ws-handler-dispatch-fn)
 
 (defmethod ws-handler :default [req]
@@ -254,30 +258,40 @@
   (let [team-uuid (-> ?data :team/uuid)
         team (team-model/find-by-uuid (:db req) team-uuid)
         send-fn (:send-fn @sente-state)]
-    (when (has-team-permission? team-uuid req :admin)
-      (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
+    (check-team-access team-uuid req :admin)
 
-      (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
-      (send-fn client-id [:team/db-entities
-                          {:team/uuid team-uuid
-                           :entities (map (partial permission-model/read-api (:db req))
-                                          (filter :permission/cust-ref
-                                                  (permission-model/find-by-team (:db req)
-                                                                                 team)))
-                           :entity-type :permission}])
-      (send-fn client-id [:team/db-entities
-                          {:team/uuid team-uuid
-                           :entities (map access-grant-model/read-api
-                                          (access-grant-model/find-by-team (:db req)
+    (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities [(team-model/read-api team)]
+                         :entity-type :team}])
+
+    (log/infof "sending permission-data for team %s to %s" (:team/subdomain team) client-id)
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map (partial permission-model/read-api (:db req))
+                                        (filter :permission/cust-ref
+                                                (permission-model/find-by-team (:db req)
+                                                                               team)))
+                         :entity-type :permission}])
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map access-grant-model/read-api
+                                        (access-grant-model/find-by-team (:db req)
+                                                                         team))
+                         :entity-type :access-grant}])
+
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map (partial access-request-model/read-api (:db req))
+                                        (access-request-model/find-by-team (:db req)
                                                                            team))
-                           :entity-type :access-grant}])
+                         :entity-type :access-request}])
 
-      (send-fn client-id [:team/db-entities
-                          {:team/uuid team-uuid
-                           :entities (map (partial access-request-model/read-api (:db req))
-                                          (access-request-model/find-by-team (:db req)
-                                                                             team))
-                           :entity-type :access-request}]))))
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities [(plan-model/read-api (:team/plan team))]
+                         :entity-type :plan}])))
 
 (defn subscriber-read-api [subscriber]
   (-> subscriber
@@ -339,7 +353,7 @@
                         {:document/id document-id
                          :uuid->cust (->> document-id
                                        (cust/cust-uuids-for-doc (:db req))
-                                       (cons (auth/prcrsr-bot-uuid (:db req)))
+                                       (cons (:cust/uuid (cust/prcrsr-bot (:db req))))
                                        set
                                        (set/union (disj (set (map :cust/uuid (vals (get subs document-id))))
                                                         nil))
@@ -384,6 +398,10 @@
                                                                                  {:db/id document-id}))
                            :entity-type :access-request}]))))
 
+(defmethod ws-handler :cust/fetch-teams [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (?reply-fn {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
+
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [;; TODO: at some point we may want to limit, but it's just a
@@ -411,6 +429,17 @@
       (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
                                            :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
                              doc-ids)}))))
+
+(defmethod ws-handler :team/plan-active-history [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)
+        team (team-model/find-by-uuid (:db req) team-uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [history (->> (billing/active-history (:db req) team)
+                    (map (fn [info]
+                           (update-in info [:cust] :cust/email))))]
+      (log/infof "fetched %s entries in active history for %s" (count history) (:team/subdomain team))
+      (?reply-fn {:history history
+                  :team/uuid team-uuid}))))
 
 (defn determine-type [datom datoms]
   (let [e (:e datom)
@@ -459,6 +488,30 @@
                          :timestamp (:receive-instant req)})
     (when ?reply-fn
       (?reply-fn {:rejected-datoms rejects}))))
+
+(defmethod ws-handler :team/transaction [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [datoms (->> ?data
+                   :datoms
+                   (remove (comp nil? :v))
+                   (remove #(= "document" (name (:a %)))))
+          cust-uuid (-> req :ring-req :auth :cust :cust/uuid)
+          ;; note that these aren't all of the rejected datoms, just the ones not on the whitelist
+          rejects (remove (comp (partial datomic2/whitelisted? :admin)
+                                pcd/datom->transaction)
+                          datoms)
+          team-id (:db/id (team-model/find-by-uuid (:db req) team-uuid))]
+      (log/infof "transacting %s datoms (minus %s rejects) on %s for %s" (count datoms) (count rejects) team-id client-id)
+      (datomic2/transact! datoms
+                          {:team-id team-id
+                           :access-scope :admin
+                           :client-id client-id
+                           :cust-uuid cust-uuid
+                           :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
+                           :timestamp (:receive-instant req)})
+      (when ?reply-fn
+        (?reply-fn {:rejected-datoms rejects})))))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
@@ -543,7 +596,7 @@
                                                     :client/timestamp (java.util.Date.)
                                                     :chat/document doc-id
                                                     :db/id chat-id
-                                                    :cust/uuid (auth/prcrsr-bot-uuid (:db req))}])))]
+                                                    :cust/uuid (:cust/uuid (cust/prcrsr-bot (:db req)))}])))]
     (if-let [cust (-> req :ring-req :auth :cust)]
       (let [email (-> ?data :email)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
@@ -788,7 +841,6 @@
 
 (defmethod ws-handler :team/send-permission-request [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
-    (check-team-access team-uuid req :admin)
     (let [team (team-model/find-by-uuid (:db req) team-uuid)]
       (if-let [cust (-> req :ring-req :auth :cust)]
         (let [email (-> ?data :email)
@@ -803,6 +855,41 @@
                                                                 (access-request-model/find-by-team-and-cust db-after team cust))
                                                  :entity-type :access-request}])))
         (comment (notify-invite "Please sign up to send an invite."))))))
+
+(defmethod ws-handler :team/create-plan [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          plan (:team/plan team)
+          cust (get-in req [:ring-req :auth :cust])
+          token-id (:token-id ?data)
+          stripe-customer (plan-http/create-stripe-customer team cust token-id)
+          tx @(d/transact (pcd/conn) (concat [{:db/id (d/tempid :db.part/tx)
+                                               :transaction/team (:db/id team)
+                                               :cust/uuid (:cust/uuid cust)
+                                               :transaction/broadcast true}
+                                              (-> (plan-http/stripe-customer->plan-fields stripe-customer)
+                                                (assoc :db/id (:db/id plan)
+                                                       :plan/paid? true
+                                                       :plan/billing-email (:cust/email cust)))]))]
+      (?reply-fn {:plan-created? true}))))
+
+(defmethod ws-handler :team/update-card [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          plan (:team/plan team)
+          cust (get-in req [:ring-req :auth :cust])
+          token-id (:token-id ?data)
+          stripe-customer (plan-http/update-card team token-id)
+          tx @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                       :transaction/team (:db/id team)
+                                       :cust/uuid (:cust/uuid cust)
+                                       :transaction/broadcast true}
+                                      (-> (plan-http/stripe-customer->plan-fields stripe-customer)
+                                        (assoc :db/id (:db/id plan)
+                                               :plan/paid? true))])]
+      (?reply-fn {:card-updated? true}))))
 
 (defmethod ws-handler :frontend/save-browser-settings [{:keys [client-id ?data ?reply-fn] :as req}]
   (if-let [cust (-> req :ring-req :auth :cust)]
@@ -855,6 +942,7 @@
            ;; TODO: rip out sente and write a sensible library
            (send-fn client-id [:frontend/error {:status-code (:status t)
                                                 :error-msg (:error-msg t)
+                                                :error-key (:error-key t)
                                                 :event (:event req)
                                                 :event-data (:?data req)}])))
        (catch Object e
