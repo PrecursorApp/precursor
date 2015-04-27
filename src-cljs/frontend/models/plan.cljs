@@ -1,6 +1,7 @@
 (ns frontend.models.plan
   (:require [cljs-time.core :as time]
-            [cljs-time.coerce]))
+            [cljs-time.coerce]
+            [goog.date]))
 
 (defn in-trial? [plan]
   (when (:plan/trial-end plan)

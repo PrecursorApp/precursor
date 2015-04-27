@@ -270,7 +270,7 @@
                " have collaboration tools to improve your productivity. "
                "Start your domain to organize team communications with private docs. "]]
              [:div.price-foot
-              [:a.bubble-button {:href "/trial/team"}
+              [:a.bubble-button {:href "/trial"}
                [:span "Start a free trial."]]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
@@ -318,7 +318,7 @@
                [:span.content-copy
                 "Team domains help you collaborate on ideas quickly by remembering your teammates. "
                 "New documents created in your team domain are automatically shared with your team. "]]
-              [:a.feature-link {:href "/trial/team"}
+              [:a.feature-link {:href "/trial"}
                [:span.content-copy "Try a team domain."]]]
              [:div.feature-media.reverse
               [:div.art-frame
@@ -362,7 +362,7 @@
               [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"} "made with Precursor"]
               "."]
              [:div.calls-to-action
-              [:a.bubble-button {:href "/trial/team"}
+              [:a.bubble-button {:href "/trial"}
                [:span "Start a free trial."]]]]])))))
 
 (defn nav-head [app owner]
