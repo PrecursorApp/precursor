@@ -1604,6 +1604,11 @@
   (-> state
     (handle-add-menu :team-settings)))
 
+(defmethod control-event :your-teams-opened
+  [browser-state message _ state]
+  (-> state
+    (handle-add-menu :your-teams)))
+
 (defmethod control-event :connection-info-opened
   [browser-state message _ state]
   (-> state

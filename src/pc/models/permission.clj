@@ -173,6 +173,14 @@
     ffirst
     (d/entity db)))
 
+(defn find-team-permissions-for-cust [db cust]
+  (->> (d/q '{:find [[?t ...]]
+              :in [$ ?cust-id]
+              :where [[?t :permission/cust-ref ?cust-id]
+                      [?t :permission/team]]}
+            db (:db/id cust))
+    (map #(d/entity db %))))
+
 (defn expired? [permission]
   (when-let [expiry (:permission/expiry permission)]
     (.before expiry (java.util.Date.))))

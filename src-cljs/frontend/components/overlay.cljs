@@ -155,24 +155,31 @@
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
-        (html
-          [:div.menu-view
-           [:div.veins
-            [:a.vein.make
-             {:on-click #(cast! :team-settings-opened)
-              :role "button"}
-             (common/icon :sharing)
-             [:span "Permissions"]]
-            [:a.vein.make
-             {:on-click #(cast! :team-docs-opened)
-              :role "button"}
-             (common/icon :clock)
-             [:span "Team Documents"]]
-            [:a.vein.make
-             {:on-click #(cast! :plan-settings-opened)
-              :role "button"}
-             (common/icon :credit)
-             [:span "Billing"]]]])))))
+        (if-not (:team app)
+          (om/build team/your-teams app)
+          (html
+           [:div.menu-view
+            [:div.veins
+             [:a.vein.make
+              {:on-click #(cast! :team-settings-opened)
+               :role "button"}
+              (common/icon :sharing)
+              [:span "Permissions"]]
+             [:a.vein.make
+              {:on-click #(cast! :team-docs-opened)
+               :role "button"}
+              (common/icon :clock)
+              [:span "Team Documents"]]
+             [:a.vein.make
+              {:on-click #(cast! :plan-settings-opened)
+               :role "button"}
+              (common/icon :credit)
+              [:span "Billing"]]
+             [:a.vein.make
+              {:on-click #(cast! :your-teams-opened)
+               :role "button"}
+              (common/icon :users)
+              [:span "Your Teams"]]]]))))))
 
 (defn private-sharing [app owner]
   (reify
@@ -736,15 +743,16 @@
                 :component doc-viewer/doc-viewer}
    :document-permissions {:title "Request Access"
                           :component document-access/permission-denied-overlay}
-
+   :connection-info {:title "Connection Info"
+                     :component connection/connection-info}
    :roster {:title "Team"
             :component team-start}
    :team-settings {:title "Team Permissions"
                    :component team/team-settings}
    :team-doc-viewer {:title "Team Documents"
                      :component doc-viewer/team-doc-viewer}
-   :connection-info {:title "Connection Info"
-                     :component connection/connection-info}
+   :your-teams {:title "Your Teams"
+                :component team/your-teams}
    :plan {:title "Billing"
           :component plan/plan-menu}})
 

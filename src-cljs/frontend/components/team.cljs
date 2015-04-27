@@ -2,8 +2,11 @@
   (:require [datascript :as d]
             [frontend.components.permissions :as permissions]
             [frontend.datascript :as ds]
+            [frontend.sente :as sente]
+            [frontend.urls :as urls]
             [frontend.utils :as utils]
-            [om.core :as om])
+            [om.core :as om]
+            [taoensso.sente])
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
@@ -65,3 +68,33 @@
               :data-placeholder-forgot "Don't forget to submit!"}]]
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
              (permissions/render-access-entity access-entity cast!))]])))))
+
+(defn your-teams [app owner]
+  (reify
+    om/IDidMount
+    (did-mount [_]
+      (sente/send-msg (om/get-shared owner :sente) [:cust/fetch-teams]
+                      20000
+                      (fn [res]
+                        (if (taoensso.sente/cb-success? res)
+                          (om/set-state! owner :teams (:teams res))
+                          (comment "do something about errors")))))
+    om/IRenderState
+    (render-state [_ {:keys [teams]}]
+      (html
+       [:div.menu-view
+        [:div.content.make
+         (if (nil? teams)
+           [:div.loading "Loading..."]
+           (if (empty? teams)
+             [:p.make "You don't have any teams, yet"]
+             [:div.make
+              (for [team (sort-by :team/subdomain teams)]
+                [:p.make {:key (:team/subdomain team)}
+                 [:a {:href (urls/absolute-doc-url (:team/intro-doc team)
+                                                   :subdomain (:team/subdomain team))}
+                  (:team/subdomain team)]])]))
+         [:div.calls-to-action.content.make
+          [:a.bubble-button {:role "button"
+                             :href "/pricing"}
+           "Create a new team"]]]]))))

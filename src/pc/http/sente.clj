@@ -397,6 +397,10 @@
                                                                                  {:db/id document-id}))
                            :entity-type :access-request}]))))
 
+(defmethod ws-handler :cust/fetch-teams [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (?reply-fn {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
+
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [;; TODO: at some point we may want to limit, but it's just a

@@ -28,7 +28,7 @@
 (defn overlay-count [state]
   (count (get-in state state/overlays-path)))
 
-(def roster-overlays #{:roster :team-settings :team-doc-viewer :plan})
+(def roster-overlays #{:roster :team-settings :team-doc-viewer :plan :your-teams})
 
 (defn roster-overlay? [overlay-key]
   (or (contains? roster-overlays overlay-key)
