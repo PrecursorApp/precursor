@@ -1897,3 +1897,8 @@
                         #(js/console.log "closed stripe checkout")
                         {:panelLabel "Change card"}
                         ))
+
+(defmethod post-control-event! :billing-email-changed
+  [browser-state message {:keys [plan-id email]} previous-state current-state]
+  (d/transact! (:team-db current-state)
+               [[:db/add plan-id :plan/billing-email email]])))

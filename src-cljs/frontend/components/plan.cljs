@@ -207,8 +207,8 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             submit-fn #(do (when-not (str/blank? (om/get-state owner :new-email))
-                             (d/transact! (om/get-shared owner :team-db)
-                                          [[:db/add (:db/id plan) :plan/billing-email (om/get-state owner :new-email)]]))
+                             (cast! :billing-email-changed {:email (om/get-state owner :new-email)
+                                                            :plan-id (:db/id plan)}))
                            (om/set-state! owner :editing-email? false)
                            (om/set-state! owner :new-email ""))]
         (html
@@ -218,17 +218,17 @@
             [:input {:type "text"
                      :required "true"
                      :data-adaptive ""
-                     :value (or (:plan/billing-email plan) "")
-                     :on-change #(do
-                                   (.preventDefault %)
-                                   (submit-fn)
-                                   (utils/stop-event %))}]
+                     :value (or (when (seq (om/get-state owner :new-email))
+                                  (om/get-state owner :new-email))
+                                (:plan/billing-email plan)
+                                "")
+                     :on-change #(om/set-state! owner :new-email (.. % -target -value))}]
             [:label {:data-placeholder "We'll send your invoices here"
                      :data-placeholder-nil "We need an email to send invoices"}]]]
           [:div.calls-to-action.content.make
            [:a.bubble-button {:role "button"
                               :on-click #(do (submit-fn)
-                                           (utils/stop-event %))}
+                                             (utils/stop-event %))}
             "Save information."]]])))))
 
 (defn discount [{:keys [plan team-uuid]} owner]
