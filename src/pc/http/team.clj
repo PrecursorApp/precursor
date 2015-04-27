@@ -3,12 +3,14 @@
             [clojure.java.io :as io]
             [clojure.tools.reader.edn :as edn]
             [datomic.api :as d]
+            [pc.analytics :as analytics]
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
             [pc.models.doc :as doc-model]
             [pc.models.permission :as permission-model]
             [pc.models.plan :as plan-model]
             [pc.models.team :as team-model]
+            [pc.utils :as utils]
             [slingshot.slingshot :refer (try+ throw+)])
   (:import [java.io PushbackReader]
            [java.util UUID]))
@@ -65,11 +67,14 @@
                 :db-after
                 (team-model/find-by-subdomain subdomain))
          coupon-code (when (and coupon-code (plan-model/coupon-exists? (pcd/default-db) coupon-code))
-                       coupon-code)]
-     (add-first-cust team cust)
-     (-> (create-initial-team-entities team coupon-code)
-       :db-after
-       (team-model/find-by-subdomain subdomain)))
+                       coupon-code)
+         _ (add-first-cust team cust)
+         team (-> (create-initial-team-entities team coupon-code)
+                :db-after
+                (team-model/find-by-subdomain subdomain))]
+     (utils/straight-jacket
+      (analytics/track-create-team team)) ; non-blocking, has to happen after plan
+     team)
    (catch :db/error t
      (if (= :db.error/unique-conflict (:db/error t))
        (throw+ {:status 400 :public-message "Subdomain is already in use"

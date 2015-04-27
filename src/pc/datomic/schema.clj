@@ -514,6 +514,7 @@
    (enum :migration/choose-colors-for-custs)
    (enum :migration/longs->refs)
    (enum :migration/add-team-plans)
+   (enum :migration/ensure-team-creators)
 
    ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
    (attribute :needs-email

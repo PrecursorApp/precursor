@@ -2,8 +2,10 @@
   "Provides helpers for plan operations that need to happen during an http request"
   (:require [clj-time.core :as time]
             [clj-time.coerce]
+            [pc.analytics :as analytics]
             [pc.models.plan :as plan-model]
-            [pc.stripe :as stripe]))
+            [pc.stripe :as stripe]
+            [pc.utils :as utils]))
 
 
 (defn stripe-customer->plan-fields [stripe-customer]
@@ -40,6 +42,8 @@
                                                 :description (format "Team plan for %s, created by %s"
                                                                      (:team/subdomain team)
                                                                      (:cust/email cust)))]
+    (utils/straight-jacket
+     (analytics/track-create-plan team)) ; non-blocking
     stripe-customer))
 
 (defn update-card

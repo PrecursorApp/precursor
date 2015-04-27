@@ -27,26 +27,10 @@
   (datetime/time-ago (- (:plan/trial-end plan)
                         (.getTime (js/Date.)))))
 
-(defn active-users [{:keys [plan]} owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! team-db]} (om/get-shared owner)
-            active-custs (:plan/active-custs plan)]
-        (html
-         [:div
-          "Over the last 30 days, " (count active-custs)
-          (if (= 1 (count active-custs))
-            " user on your team has been active."
-            " users on your team have been active.")
-          " This would cost you $" (max 10 (* (count active-custs) 10)) "/month."
-          (for [cust active-custs]
-            [:div cust])])))))
-
 (defn format-access-date [date]
   (date->bucket date :sentence? true))
 
-(defn active-history [{:keys [team-uuid]} owner]
+(defn active-history [{:keys [plan team-uuid]} owner]
   (reify
     om/IInitState (init-state [_] {:history nil})
     om/IDidMount
@@ -64,25 +48,26 @@
     (render-state [_ {:keys [history]}]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         (if (nil? active-users)
-           [:div.loading {:key "loading"} "Loading"]
-           [:div.content {:key "history"}
-            (if (seq history)
-              (for [{:keys [cust instant added?]} (reverse history)]
-                [:div.access-card.make {:key (str instant cust)}
-                 [:div.access-avatar
-                  [:img.access-avatar-img
-                   {:src (utils/gravatar-url cust)}]]
-                 [:div.access-details
-                  [:span {:title cust}
-                   cust]
-                  [:span.access-status
-                   (str "Was marked as" (if added? " active " " inactive ") (format-access-date instant) ".")]]])
+         [:div.menu-view
+          (if (nil? history)
+            [:div.content.make.loading {:key "loading"} "Loading..."]
+            [:div.content {:key "history"}
+             (if (seq history)
+               (for [{:keys [cust instant added?]} (reverse history)]
+                 [:div.access-card.make {:key (str instant cust)}
+                  [:div.access-avatar
+                   [:img.access-avatar-img
+                    {:src (utils/gravatar-url cust)}]]
+                  [:div.access-details
+                   [:span {:title cust}
+                    cust]
+                   [:span.access-status
+                    (str "Was marked as" (if added? " active " " inactive ") (format-access-date instant) ".")]]])
 
-              [:div.menu-empty.content {:key "empty"}
-               [:p.make (common/icon :activity)]
-               [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
-               [:a.make.feature-link {:on-click #(cast! :team-settings-opened) :role "button"} "Add a teammate."]])]))))))
+               [:div.menu-empty.content {:key "empty"}
+                [:p.make (common/icon :activity)]
+                [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
+                [:a.make.feature-link {:on-click #(cast! :team-settings-opened) :role "button"} "Add a teammate."]])])])))))
 
 (defn active-custs [{:keys [plan team-uuid]} owner]
   (reify
@@ -123,16 +108,6 @@
     (if (pos? pennies)
       (gstring/format "$%s%d.%02d" (if (neg? cents) "-" "") dollars pennies)
       (gstring/format "$%s%d" (if (neg? cents) "-" "") dollars))))
-
-(defn activity [{:keys [plan team-uuid]} owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! team-db]} (om/get-shared owner)]
-        (html
-          [:div.menu-view
-           (om/build active-history {:team-uuid team-uuid}
-                     {:react-key "active-history"})])))))
 
 (defn invoice-component [{:keys [invoice-id team-uuid]} owner]
   (reify
@@ -232,8 +207,8 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             submit-fn #(do (when-not (str/blank? (om/get-state owner :new-email))
-                             (d/transact! (om/get-shared owner :team-db)
-                                          [[:db/add (:db/id plan) :plan/billing-email (om/get-state owner :new-email)]]))
+                             (cast! :billing-email-changed {:email (om/get-state owner :new-email)
+                                                            :plan-id (:db/id plan)}))
                            (om/set-state! owner :editing-email? false)
                            (om/set-state! owner :new-email ""))]
         (html
@@ -243,17 +218,17 @@
             [:input {:type "text"
                      :required "true"
                      :data-adaptive ""
-                     :value (or (:plan/billing-email plan) "")
-                     :on-change #(do
-                                   (.preventDefault %)
-                                   (submit-fn)
-                                   (utils/stop-event %))}]
+                     :value (or (when (seq (om/get-state owner :new-email))
+                                  (om/get-state owner :new-email))
+                                (:plan/billing-email plan)
+                                "")
+                     :on-change #(om/set-state! owner :new-email (.. % -target -value))}]
             [:label {:data-placeholder "We'll send your invoices here"
                      :data-placeholder-nil "We need an email to send invoices"}]]]
           [:div.calls-to-action.content.make
            [:a.bubble-button {:role "button"
                               :on-click #(do (submit-fn)
-                                           (utils/stop-event %))}
+                                             (utils/stop-event %))}
             "Save information."]]])))))
 
 (defn discount [{:keys [plan team-uuid]} owner]
@@ -396,7 +371,7 @@
    :info info
    :payment payment
    :invoices invoices
-   :activity activity
+   :activity active-history
    :active active-custs
    :discount discount})
 

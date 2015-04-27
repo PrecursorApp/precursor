@@ -733,6 +733,9 @@
     (keyword (namespace overlay-key))
     overlay-key))
 
+(defn get-component [overlay-key]
+  (get overlay-components (overlay-component-key overlay-key)))
+
 (defn overlay [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay")
@@ -743,7 +746,7 @@
          [:div.menu
           [:div.menu-header
            (for [overlay-key (get-in app state/overlays-path)
-                 :let [component (get overlay-components (overlay-component-key overlay-key))]]
+                 :let [component (get-component overlay-key)]]
              (html
               [:h4.menu-heading {:title (:title component) :react-key (:title component)}
                (if (namespaced? overlay-key)
@@ -751,7 +754,7 @@
                  (:title component))]))]
           [:div.menu-body
            (for [overlay-key (get-in app state/overlays-path)
-                 :let [component (get overlay-components (overlay-component-key overlay-key))]]
+                 :let [component (get-component overlay-key)]]
              (om/build (:component component) app {:react-key overlay-key
                                                    :opts {:submenu (when (namespaced? overlay-key)
                                                                      (keyword (name overlay-key)))}}))]])))))
