@@ -715,7 +715,7 @@
                      :component connection/connection-info}
    :roster {:title "Team"
             :component team/team-start}
-   :team-settings {:title "Team Permissions"
+   :team-settings {:title "Add Teammates"
                    :component team/team-settings}
    :team-doc-viewer {:title "Team Documents"
                      :component doc-viewer/team-doc-viewer}

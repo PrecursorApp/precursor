@@ -114,12 +114,12 @@
            [:a.vein.make
             {:on-click #(cast! :team-settings-opened)
              :role "button"}
-            (common/icon :sharing)
-            [:span "Permissions"]]
+            (common/icon :users)
+            [:span "Add Teammates"]]
            [:a.vein.make
             {:on-click #(cast! :team-docs-opened)
              :role "button"}
-            (common/icon :clock)
+            (common/icon :docs)
             [:span "Team Documents"]]
            [:a.vein.make
             {:on-click #(cast! :plan-settings-opened)
@@ -129,5 +129,5 @@
            [:a.vein.make
             {:on-click #(cast! :your-teams-opened)
              :role "button"}
-            (common/icon :users)
+            (common/icon :team)
             [:span "Your Teams"]]]])))))
