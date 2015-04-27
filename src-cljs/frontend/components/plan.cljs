@@ -10,6 +10,7 @@
             [frontend.models.plan :as plan-model]
             [frontend.models.team :as team-model]
             [frontend.sente :as sente]
+            [frontend.stripe :as stripe]
             [frontend.urls :as urls]
             [frontend.utils :as utils]
             [frontend.utils.date :refer (date->bucket)]
@@ -333,10 +334,13 @@
 
 (defn start [{:keys [plan team-uuid]} owner]
   (reify
+    om/IDidMount
+    (did-mount [_]
+      (when-not (:plan/paid? plan)
+        (stripe/load-checkout)))
     om/IRender
     (render [_]
-      (let [{:keys [cast! db]} (om/get-shared owner)
-            ]
+      (let [{:keys [cast! db]} (om/get-shared owner)]
         (html
          [:div.menu-view
           [:div.divider.make]
