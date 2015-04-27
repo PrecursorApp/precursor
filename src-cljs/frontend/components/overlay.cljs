@@ -721,6 +721,8 @@
                      :component doc-viewer/team-doc-viewer}
    :your-teams {:title "Your Teams"
                 :component team/your-teams}
+   :request-team-access {:title "Request Access"
+                         :component team/request-access}
    :plan {:title "Billing"
           :component plan/plan-menu}})
 

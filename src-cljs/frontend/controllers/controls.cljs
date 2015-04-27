@@ -1615,6 +1615,11 @@
   (-> state
     (overlay/add-overlay :connection-info)))
 
+(defmethod control-event :request-team-access-opened
+  [browser-state message _ state]
+  (-> state
+    (overlay/add-overlay :request-team-access)))
+
 (defmethod control-event :invite-to-changed
   [browser-state message {:keys [value]} state]
   (-> state
@@ -1674,6 +1679,12 @@
   [browser-state message {:keys [doc-id]} previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/send-permission-request {:document/id doc-id
                                                                              :invite-loc :overlay}]))
+
+(defmethod post-control-event! :team-permission-requested
+  [browser-state message {:keys [doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:team/send-permission-request {:team/uuid (:team/uuid (:team current-state))
+                                                  :invite-loc :overlay}]))
 
 (defmethod post-control-event! :access-request-granted
   [browser-state message {:keys [request-id doc-id team-uuid]} previous-state current-state]

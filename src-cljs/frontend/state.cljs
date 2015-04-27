@@ -169,3 +169,6 @@
 
 (defn self-recording-path [state]
   [:subscribers :info (:client-id state) :recording])
+
+(defn team-access-path [team-uuid]
+  [:team-settings team-uuid :access])

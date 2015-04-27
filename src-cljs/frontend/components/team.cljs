@@ -1,5 +1,6 @@
 (ns frontend.components.team
   (:require [datascript :as d]
+            [frontend.auth :as auth]
             [frontend.components.common :as common]
             [frontend.components.permissions :as permissions]
             [frontend.datascript :as ds]
@@ -71,6 +72,54 @@
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
              (permissions/render-access-entity access-entity cast!))]])))))
 
+(defn request-access [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Request Team Access")
+    om/IInitState
+    (init-state [_]
+      {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :team-db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when (seq (filter #(= :access-request/team (:a %))
+                                      (:tx-data tx-report)))
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :team-db) (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! team-db]} (om/get-shared owner)
+            team (:team app)
+            access-requests (ds/touch-all '[:find ?t
+                                            :in $ ?team-uuid
+                                            :where [?t :access-request/team ?team-uuid]]
+                                          @team-db (:team/uuid team))]
+        (html
+         [:div.menu-view
+          [:div.content
+           [:h2.make
+            "Join your team"]
+           (if (empty? access-requests)
+             (list
+              [:p.make
+               "Request access below and we'll notify the team owner."]
+              [:a.make.menu-cta
+               {:on-click #(cast! :team-permission-requested {:team-uuid (:team/uuid (:team app))})
+                :role "button"}
+               "Request Access"])
+             [:p.make
+              [:span
+               "Okay, we notified the owner of the team about your request. "
+               "While you wait for a response, try prototyping in "]
+              [:a {:href (urls/absolute-url "/new" :subdomain nil)
+                   :target "_self"}
+               "your own document"]
+              [:span "."]])]])))))
+
 (defn your-teams [app owner]
   (reify
     om/IDidMount
@@ -111,21 +160,23 @@
         (html
          [:div.menu-view
           [:div.veins
-           [:a.vein.make
-            {:on-click #(cast! :team-settings-opened)
-             :role "button"}
-            (common/icon :users)
-            [:span "Add Teammates"]]
-           [:a.vein.make
-            {:on-click #(cast! :team-docs-opened)
-             :role "button"}
-            (common/icon :docs)
-            [:span "Team Documents"]]
-           [:a.vein.make
-            {:on-click #(cast! :plan-settings-opened)
-             :role "button"}
-            (common/icon :credit)
-            [:span "Billing"]]
+           (if (auth/has-team-permission? app (:team/uuid (:team app)))
+             (list
+              [:a.vein.make {:on-click #(cast! :team-settings-opened)
+                             :role "button"}
+               (common/icon :users)
+               [:span "Add Teammates"]]
+              [:a.vein.make {:on-click #(cast! :team-docs-opened)
+                             :role "button"}
+               (common/icon :docs)
+               [:span "Team Documents"]]
+              [:a.vein.make {:on-click #(cast! :plan-settings-opened)
+                             :role "button"}
+               (common/icon :credit)
+               [:span "Billing"]])
+             [:a.vein.make {:on-click #(cast! :request-team-access-opened)}
+              (common/icon :sharing)
+              [:span "Request Access"]])
            [:a.vein.make
             {:on-click #(cast! :your-teams-opened)
              :role "button"}
