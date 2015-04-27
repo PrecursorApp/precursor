@@ -196,10 +196,11 @@
           [:div.content.make
            [:div.disabled-input {:data-after "Expires"}
             (str (:credit-card/exp-month plan) "/" (:credit-card/exp-year plan))]]
-          [:div.calls-to-action.content.make
-           [:a.bubble-button {:role "button"
-                              :on-click #(cast! :change-card-clicked)}
-            "Change card."]]])))))
+          [:div.content.make
+           [:div.menu-buttons
+            [:a.menu-button {:role "button"
+                             :on-click #(cast! :change-card-clicked)}
+             "Change card."]]]])))))
 
 (defn info [{:keys [plan team-uuid]} owner]
   (reify
@@ -225,11 +226,12 @@
                      :on-change #(om/set-state! owner :new-email (.. % -target -value))}]
             [:label {:data-placeholder "We'll send your invoices here"
                      :data-placeholder-nil "We need an email to send invoices"}]]]
-          [:div.calls-to-action.content.make
-           [:a.bubble-button {:role "button"
-                              :on-click #(do (submit-fn)
-                                             (utils/stop-event %))}
-            "Save information."]]])))))
+          [:div.content.make
+           [:div.menu-buttons
+            [:a.menu-button {:role "button"
+                             :on-click #(do (submit-fn)
+                                          (utils/stop-event %))}
+             "Save information."]]]])))))
 
 (defn discount [{:keys [plan team-uuid]} owner]
   (reify

@@ -107,10 +107,10 @@
              (list
               [:p.make
                "Request access below and we'll notify the team owner."]
-              [:a.make.menu-cta
-               {:on-click #(cast! :team-permission-requested {:team-uuid (:team/uuid (:team app))})
-                :role "button"}
-               "Request Access"])
+              [:div.menu-buttons.make
+               [:a.menu-button {:on-click #(cast! :team-permission-requested {:team-uuid (:team/uuid (:team app))})
+                                :role "button"}
+                "Request Access"]])
              [:p.make
               [:span
                "Okay, we notified the owner of the team about your request. "
