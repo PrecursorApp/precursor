@@ -81,6 +81,7 @@
             [:div.content {:key "active"}
              [:div.content.make
               (str (count active) " active user" (when (< 1 (count active)) "s") " on your plan")]
+             ;; TODO: should make active a ref
              (for [email (sort active)]
                [:div.access-card.make {:key email}
                 [:div.access-avatar
@@ -428,4 +429,4 @@
            (om/build plan-menu* {:plan-id (:db/id (:team/plan team))
                                  :team-uuid (:team/uuid team)
                                  :submenu submenu}
-                     {:react-key "plan-component*"})))))))
+                     {:react-key "plan-menu*"})))))))

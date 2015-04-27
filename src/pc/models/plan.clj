@@ -8,9 +8,9 @@
             [pc.utils :as utils]))
 
 ;; How coupons work on a plan:
-;;  1. plan gets plan/coupon-code on trial start
-;;  2. When the stripe plan is created, plan/coupon-code is removed
-;;     and replaced with a discount (which has a coupon)
+;;  1. plan gets discount/coupon on trial start
+;;  2. When the stripe plan is created, discount is updated with
+;;     start and end dates
 ;;  3. The discount has an end-date, after which it's no longer applied
 ;;  4. Discount mirrors what is up in Stripe
 

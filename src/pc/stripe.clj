@@ -5,6 +5,7 @@
             [clj-time.coerce]
             [clojure.set :as set]
             [clojure.tools.logging :as log]
+            [pc.profile :as profile]
             [pc.utils :as utils]
             [pc.util.date :as date-util]
             [slingshot.slingshot :refer (try+ throw+)]))
@@ -14,11 +15,21 @@
 ;;  Stripe API: https://stripe.com/docs/api/curl
 
 ;; XXX: live keys from env vars
+(def dev-secret-key "sk_test_STWXh4dEaDLn3FFVJVnnZBQF")
 (defn secret-key []
-  "sk_test_STWXh4dEaDLn3FFVJVnnZBQF")
+  (let [env-key (System/getenv "STRIPE_SECRET_KEY")]
+    (when (profile/prod?)
+      (assert env-key "Have to provide an STRIPE_SECRET_KEY in prod!"))
+    (or env-key
+        dev-secret-key)))
 
+(def dev-publishable-key "pk_test_EggMOrfTt155yQVE4IvpN9sy")
 (defn publishable-key []
-  "pk_test_EggMOrfTt155yQVE4IvpN9sy")
+  (let [env-key (System/getenv "STRIPE_PUBLISHABLE_KEY")]
+    (when (profile/prod?)
+      (assert env-key "Have to provide an STRIPE_PUBLISHABLE_KEY in prod!"))
+    (or env-key
+        dev-publishable-key)))
 
 (def card-translation
   {"exp_year" :credit-card/exp-year

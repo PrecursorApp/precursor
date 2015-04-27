@@ -80,7 +80,7 @@
                           :port (if (profile/force-ssl?)
                                   443
                                   (:server-port req))
-                          :path "/trial/team"
+                          :path "/trial"
                           :query {:subdomain (h/h (:subdomain req))}}))}
          "Start a trial to create this team"]]]]
      nav-foot])))

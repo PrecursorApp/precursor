@@ -4,6 +4,7 @@
             [frontend.components.common :as common]
             [frontend.components.permissions :as permissions]
             [frontend.datascript :as ds]
+            [frontend.db :as fdb]
             [frontend.models.doc :as doc-model]
             [frontend.sente :as sente]
             [frontend.urls :as urls]
@@ -80,16 +81,17 @@
       {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
-      (d/listen! (om/get-shared owner :team-db)
-                 (om/get-state owner :listener-key)
-                 (fn [tx-report]
-                   ;; TODO: better way to check if state changed
-                   (when (seq (filter #(= :access-request/team (:a %))
-                                      (:tx-data tx-report)))
-                     (om/refresh! owner)))))
+      ;; TODO: a lot of this could be abstracted
+      (fdb/add-attribute-listener (om/get-shared owner :team-db)
+                                  :access-request/team
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner))))
     om/IWillUnmount
     (will-unmount [_]
-      (d/unlisten! (om/get-shared owner :team-db) (om/get-state owner :listener-key)))
+      (fdb/remove-attribute-listener (om/get-shared owner :team-db)
+                                     :access-request/team
+                                     (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)

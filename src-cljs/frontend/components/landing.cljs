@@ -340,7 +340,7 @@
                [:div.calls-to-action
                 (om/build make-button (select-keys app [:document/id])
                           {:opts {:alt "alt"}})
-                [:a.pancake-button {:href "/trial/team"} "Start a free trial."]])]]]])))))
+                [:a.pancake-button {:href "/trial"} "Start a free trial."]])]]]])))))
 
 (defn landing [app owner]
   (reify
