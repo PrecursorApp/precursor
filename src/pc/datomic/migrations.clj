@@ -7,6 +7,7 @@
             [datomic.api :refer [db q] :as d]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
+            [pc.models.permission :as permission-model]
             [pc.datomic.migrations-archive :as archive]
             [pc.datomic.web-peer :as web-peer]
             [slingshot.slingshot :refer (try+ throw+)])
@@ -130,6 +131,21 @@
                                       :plan/trial-end (clj-time.coerce/to-date (time/plus (time/now) (time/weeks 2)))}}
                          (web-peer/server-frontend-id planid (:db/id team))]))))
 
+(defn ensure-team-creators [conn]
+  (let [db (d/db conn)]
+    (doseq [team (map #(d/entity db %) (d/q '[:find [?t ...] :where [?t :team/subdomain] (not [?t :team/creator])] db))]
+      @(d/transact conn [{:db/id (d/tempid :db.part/tx)
+                          :migration :migration/ensure-team-creators
+                          :transaction/source :transaction.source/migration}
+                         {:db/id (:db/id team)
+                          :team/creator (->> team
+                                          (permission-model/find-by-team db)
+                                          (filter :permission/cust-ref)
+                                          (sort-by :permission/grant-date)
+                                          first
+                                          :permission/cust-ref
+                                          :db/id)}]))))
+
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
@@ -144,7 +160,8 @@
    7 #'archive/add-frontend-ids
    8 #'longs->refs
    9 #'add-prcrsr-bot-color
-   10 #'add-team-plans))
+   10 #'add-team-plans
+   11 #'ensure-team-creators))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"
