@@ -3,7 +3,7 @@
             [cljs-time.coerce]))
 
 (defn in-trial? [plan]
-  (if (:plan/trial-end plan)
+  (when (:plan/trial-end plan)
     (time/after? (cljs-time.coerce/from-date (:plan/trial-end plan)) (time/now))))
 
 (defn active-discount? [plan]

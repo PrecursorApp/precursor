@@ -1881,7 +1881,8 @@
                                                                30000
                                                                (async/promise-chan)))]
                              (utils/inspect result)))
-                        #(js/console.log "closed stripe checkout")))
+                        #(js/console.log "closed stripe checkout")
+                        {:panelLabel "Add card"}))
 
 (defmethod post-control-event! :change-card-clicked
   [browser-state message _ previous-state current-state]
@@ -1895,8 +1896,7 @@
                                                                (async/promise-chan)))]
                              (utils/inspect result)))
                         #(js/console.log "closed stripe checkout")
-                        {:panelLabel "Change card"}
-                        ))
+                        {:panelLabel "Change card"}))
 
 (defmethod post-control-event! :billing-email-changed
   [browser-state message {:keys [plan-id email]} previous-state current-state]
