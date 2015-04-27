@@ -105,48 +105,47 @@
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
           [:div.menu-view
-           [:div.veins
-            [:a.vein.make
-             {:on-click         #(cast! :overlay-info-toggled)
-              :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
-              :role "button"}
-             (common/icon :info)
-             [:span "About"]]
-            [:a.vein.make
-             {:href "/new"
-              :role "button"}
-             (common/icon :newdoc)
-             [:span "New Document"]]
-            [:a.vein.make
-             {:on-click         #(cast! :your-docs-opened)
-              :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
-              :role "button"}
-             (common/icon :clock)
-             [:span "Your Documents"]]
-            ;; TODO: should this use the permissions model? Would have to send some
-            ;;       info about the document
-            (if (auth/has-document-access? app (:document/id app))
-              [:a.vein.make
-               {:on-click         #(cast! :sharing-menu-opened)
-                :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
-                :role "button"}
-               (common/icon :sharing)
-               [:span "Sharing"]]
+           [:a.vein.make
+            {:on-click         #(cast! :overlay-info-toggled)
+             :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
+             :role "button"}
+            (common/icon :info)
+            [:span "About"]]
+           [:a.vein.make
+            {:href "/new"
+             :role "button"}
+            (common/icon :newdoc)
+            [:span "New Document"]]
+           [:a.vein.make
+            {:on-click         #(cast! :your-docs-opened)
+             :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
+             :role "button"}
+            (common/icon :clock)
+            [:span "Your Documents"]]
+           ;; TODO: should this use the permissions model? Would have to send some
+           ;;       info about the document
+           (if (auth/has-document-access? app (:document/id app))
+             [:a.vein.make
+              {:on-click         #(cast! :sharing-menu-opened)
+               :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
+               :role "button"}
+              (common/icon :sharing)
+              [:span "Sharing"]]
 
-              [:a.vein.make
-               {:on-click         #(cast! :document-permissions-opened)
-                :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
-                :role "button"}
-               (common/icon :users)
-               [:span "Request Access"]])
-            [:a.vein.make
-             {:on-click         #(cast! :shortcuts-menu-opened)
-              :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
-              :class "mobile-hidden"
-              :role "button"}
-             (common/icon :command)
-             [:span "Shortcuts"]]
-             (om/build auth-link app {:opts {:source "start-overlay"}})]])))))
+             [:a.vein.make
+              {:on-click         #(cast! :document-permissions-opened)
+               :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
+               :role "button"}
+              (common/icon :users)
+              [:span "Request Access"]])
+           [:a.vein.make
+            {:on-click         #(cast! :shortcuts-menu-opened)
+             :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
+             :class "mobile-hidden"
+             :role "button"}
+            (common/icon :command)
+            [:span "Shortcuts"]]
+           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
 
 
 (defn private-sharing [app owner]
