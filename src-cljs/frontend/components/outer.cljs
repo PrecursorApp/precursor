@@ -131,7 +131,7 @@
                                                            :protocol config/scheme
                                                            :port config/port
                                                            :path (str "/document/" (:team/intro-doc team))
-                                                           :query {:overlay "team-settings"}}))}
+                                                           :query {:overlay "roster"}}))}
                                 (str (str (:team/subdomain team) "." config/hostname)
                                      " is ready, let's go!")]
 
