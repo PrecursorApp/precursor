@@ -164,6 +164,9 @@
                   layers (layer-model/find-by-document layer-db doc)]
               {:status 200
                :headers (merge {"Content-Type" "image/svg+xml"}
+                               (when (-> req :params :dl)
+                                 {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.svg\""
+                                                                (:db/id doc))})
                                (image-cache-headers layer-db doc))
                :pc/doc doc
                :body (render/render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
@@ -202,6 +205,9 @@
                   layers (layer-model/find-by-document layer-db doc)]
               {:status 200
                :headers (merge {"Content-Type" "image/png"}
+                               (when (-> req :params :dl)
+                                 {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.png\""
+                                                                (:db/id doc))})
                                (image-cache-headers layer-db doc))
                :pc/doc doc
                :body (convert/svg->png (render/render-layers layers
@@ -236,6 +242,9 @@
                 layers (layer-model/find-by-document layer-db doc)]
             {:status 200
              :headers (merge {"Content-Type" "application/pdf"}
+                             (when (-> req :params :dl)
+                               {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.pdf\""
+                                                              (:db/id doc))})
                              (image-cache-headers layer-db doc))
              :pc/doc doc
              :body (convert/svg->pdf (render/render-layers layers
