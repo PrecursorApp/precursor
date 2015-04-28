@@ -6,7 +6,8 @@
             [datomic.api :refer [db q] :as d]
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
-            [pc.models.flag :as flag-model]))
+            [pc.models.flag :as flag-model]
+            [pc.utils :as utils]))
 
 
 ;; We'll pretend we have a type here
@@ -90,13 +91,16 @@
     (flag-model/add-flag cust :flags/private-docs)))
 
 (defn read-api [cust]
-  (select-keys cust
-               (concat
-                (schema/browser-setting-idents)
-                [:cust/email :cust/uuid :cust/name :flags :google-account/avatar])))
+  (-> cust
+    (select-keys (concat
+                  (schema/browser-setting-idents)
+                  [:cust/email :cust/uuid :cust/name :flags :google-account/avatar]))
+    (utils/update-when-in [:google-account/avatar] str)))
 
 (defn public-read-api [cust]
-  (select-keys cust [:cust/uuid :cust/name :cust/color-name :google-account/avatar]))
+  (-> cust
+    (select-keys [:cust/uuid :cust/name :cust/color-name :google-account/avatar])
+    (utils/update-when-in [:google-account/avatar] str)))
 
 (defn public-read-api-per-uuids
   "Returns hashmap of uuid to cust-map, e.g. {#uuid '123' {:cust/uuid '123' :cust/name 'd'}}"
