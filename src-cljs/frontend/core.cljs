@@ -140,13 +140,14 @@
        (analytics/track-control msg data current-state)))))
 
 (defn nav-handler
-  [value state history]
+  [[msg data :as value] state history]
   (mlog "Navigation Verbose: " value)
   (utils/swallow-errors
    (binding [frontend.async/*uuid* (:uuid (meta value))]
-     (let [previous-state @state]
-       (swap! state (partial nav-con/navigated-to history (first value) (second value)))
-       (nav-con/post-navigated-to! history (first value) (second value) previous-state @state)))))
+     (let [previous-state @state
+           current-state (swap! state (partial nav-con/navigated-to history (first value) (second value)))]
+       (nav-con/post-navigated-to! history (first value) (second value) previous-state current-state)
+       (analytics/track-nav msg data current-state)))))
 
 (defn api-handler
   [value state container]
