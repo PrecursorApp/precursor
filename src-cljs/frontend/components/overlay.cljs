@@ -248,7 +248,7 @@
           [:p.make
            "Anyone with the url can see the doc and chat, but can't edit the canvas. "
            "Share the url to show off your work."]
-          (om/build share-input {:url (urls/absolute-doc-url doc-id)} app)
+          (om/build share-input {:url (urls/absolute-doc-url doc-id)})
 
           [:p.make
            "Add your teammate's email to grant them full access."]
