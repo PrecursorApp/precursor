@@ -93,10 +93,10 @@
   (select-keys cust
                (concat
                 (schema/browser-setting-idents)
-                [:cust/email :cust/uuid :cust/name :flags])))
+                [:cust/email :cust/uuid :cust/name :flags :google-account/avatar])))
 
 (defn public-read-api [cust]
-  (select-keys cust [:cust/uuid :cust/name :cust/color-name]))
+  (select-keys cust [:cust/uuid :cust/name :cust/color-name :google-account/avatar]))
 
 (defn public-read-api-per-uuids
   "Returns hashmap of uuid to cust-map, e.g. {#uuid '123' {:cust/uuid '123' :cust/name 'd'}}"
