@@ -150,7 +150,9 @@
              [:a.nav-link.nav-pricing {:href "/pricing" :title "Pricing"}   "Pricing"]
              [:a.nav-link.nav-blog    {:href "/blog"    :title "Blog"}      "Blog"]
              [:a.nav-link.nav-app     {:href "/new"     :title "Launch"}    "App"]
-             [:a.nav-link.nav-twitter {:href "https://twitter.com/PrecursorApp" :title "@PrecursorApp"} twitter]]]))))
+             [:a.nav-link.nav-twitter {:href "https://twitter.com/PrecursorApp" :title "@PrecursorApp"} twitter]]]
+           [:script {:type "text/javascript"}
+            (format "mixpanel.track(\"View blog\", {blog_post: \"%s\"})" (hiccup.core/h (:title post "Overview")))]))))
 
 (defn slug->rss [slug pub-date unique-id]
   (let [post ((post-fn slug))]
