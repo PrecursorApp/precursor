@@ -1583,6 +1583,12 @@
       (handle-add-menu :sharing)
       (assoc-in state/sharing-menu-learned-path true)))
 
+(defmethod control-event :export-menu-opened
+  [browser-state message _ state]
+  (-> state
+      (handle-add-menu :export)
+      (assoc-in state/export-menu-learned-path true)))
+
 (defmethod control-event :shortcuts-menu-opened
   [browser-state message _ state]
   (-> state

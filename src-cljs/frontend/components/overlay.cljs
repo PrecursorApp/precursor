@@ -45,6 +45,57 @@
                  :value (urls/absolute-doc-url (:document/id app))}]
         [:label {:data-placeholder "Copy the url to share"}]]))))
 
+(defn share-svg-input [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       [:form.menu-invite-form.make
+        [:input {:type "text"
+                 :required "true"
+                 :data-adaptive ""
+                 :onMouseDown (fn [e]
+                                (.focus (.-target e))
+                                (goog.dom.selection/setStart (.-target e) 0)
+                                (goog.dom.selection/setEnd (.-target e) 10000)
+                                (utils/stop-event e))
+                 :value (str (urls/absolute-doc-url (:document/id app)) ".svg")}]
+        [:label {:data-placeholder "or use this url"}]]))))
+
+(defn share-pdf-input [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       [:form.menu-invite-form.make
+        [:input {:type "text"
+                 :required "true"
+                 :data-adaptive ""
+                 :onMouseDown (fn [e]
+                                (.focus (.-target e))
+                                (goog.dom.selection/setStart (.-target e) 0)
+                                (goog.dom.selection/setEnd (.-target e) 10000)
+                                (utils/stop-event e))
+                 :value (str (urls/absolute-doc-url (:document/id app)) ".pdf")}]
+        [:label {:data-placeholder "or use this url"}]]))))
+
+(defn share-png-input [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       [:form.menu-invite-form.make
+        [:input {:type "text"
+                 :required "true"
+                 :data-adaptive ""
+                 :onMouseDown (fn [e]
+                                (.focus (.-target e))
+                                (goog.dom.selection/setStart (.-target e) 0)
+                                (goog.dom.selection/setEnd (.-target e) 10000)
+                                (utils/stop-event e))
+                 :value (str (urls/absolute-doc-url (:document/id app)) ".png")}]
+        [:label {:data-placeholder "or use this url"}]]))))
+
 (defn auth-link [app owner {:keys [source] :as opts}]
   (reify
     om/IDisplayName (display-name [_] "Overlay Auth Link")
@@ -114,14 +165,14 @@
            [:a.vein.make
             {:href "/new"
              :role "button"}
-            (common/icon :newdoc)
-            [:span "New Document"]]
+            (common/icon :plus)
+            [:span "New"]]
            [:a.vein.make
             {:on-click         #(cast! :your-docs-opened)
              :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
              :role "button"}
-            (common/icon :clock)
-            [:span "Your Documents"]]
+            (common/icon :docs)
+            [:span "Documents"]]
            ;; TODO: should this use the permissions model? Would have to send some
            ;;       info about the document
            (if (auth/has-document-access? app (:document/id app))
@@ -138,6 +189,13 @@
                :role "button"}
               (common/icon :users)
               [:span "Request Access"]])
+           ;; holding off until files and actually be downloaded
+           ;; [:a.vein.make
+           ;;  {:on-click         #(cast! :export-menu-opened)
+           ;;   :on-touch-end #(do (cast! :export-menu-opened) (.preventDefault %))
+           ;;   :role "button"}
+           ;;  (common/icon :download)
+           ;;  [:span "Export"]]
            [:a.vein.make
             {:on-click         #(cast! :shortcuts-menu-opened)
              :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
@@ -500,6 +558,24 @@
               (when (= :not-creator cant-edit-reason)
                 [:small "(privacy change requires owner)"])]])])))))
 
+(defn export [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Export Menu")
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+         [:div.menu-view
+
+          [:a.vein.make {:href "#"} (common/icon :file-svg) "Download as SVG"]
+          [:div.content.make (om/build share-svg-input app)]
+
+          [:a.vein.make {:href "#"} (common/icon :file-pdf) "Download as PDF"]
+          [:div.content.make (om/build share-pdf-input app)]
+
+          [:a.vein.make {:href "#"} (common/icon :file-png) "Download as PNG"]
+          [:div.content.make (om/build share-png-input app)]])))))
+
 (defn info [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Info")
@@ -705,6 +781,8 @@
            :component start}
    :sharing {:title "Sharing"
              :component sharing}
+   :export {:title "Export Document"
+             :component export}
    :username {:component username}
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}

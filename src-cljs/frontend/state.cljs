@@ -130,6 +130,8 @@
 
 (def sharing-menu-learned-path (conj browser-settings-path :sharing-menu-learned))
 
+(def export-menu-learned-path (conj browser-settings-path :export-menu-learned))
+
 (def shortcuts-menu-learned-path (conj browser-settings-path :shortcuts-menu-learned))
 
 (def chat-button-learned-path (conj browser-settings-path :chat-button-learned))
