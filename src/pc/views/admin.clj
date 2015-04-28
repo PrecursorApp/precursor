@@ -255,6 +255,7 @@
           [:tr
            [:th "subdomain"]
            [:th "status"]
+           [:th "coupon"]
            [:th "creator"]
            [:th "active"]
            [:th "members"]]
@@ -266,6 +267,7 @@
              [:td (cond (:plan/paid? plan) "paid"
                         (not (plan-model/trial-over? plan)) "trial"
                         :else "trial expired")]
+             [:td (:discount/coupon (:team/plan team))]
              [:td [:a {:href (str "/user/" (:cust/email (:team/creator team)))}
                    (:cust/email (:team/creator team))]]
              [:td (let [active (:plan/active-custs plan)]
