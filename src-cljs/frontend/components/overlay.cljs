@@ -28,7 +28,8 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(defn share-url-input [app owner]
+(defn share-input [{:keys [url placeholder]
+                    :or {placeholder "Copy the url to share"}} owner]
   (reify
     om/IRender
     (render [_]
@@ -38,63 +39,13 @@
                  :required "true"
                  :data-adaptive ""
                  :onMouseDown (fn [e]
+                                (set! (.-value (.-target e)) url) ; send cursor to end of input
                                 (.focus (.-target e))
                                 (goog.dom.selection/setStart (.-target e) 0)
                                 (goog.dom.selection/setEnd (.-target e) 10000)
                                 (utils/stop-event e))
-                 :value (urls/absolute-doc-url (:document/id app))}]
-        [:label {:data-placeholder "Copy the url to share"}]]))))
-
-(defn share-svg-input [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (html
-       [:form.menu-invite-form.make
-        [:input {:type "text"
-                 :required "true"
-                 :data-adaptive ""
-                 :onMouseDown (fn [e]
-                                (.focus (.-target e))
-                                (goog.dom.selection/setStart (.-target e) 0)
-                                (goog.dom.selection/setEnd (.-target e) 10000)
-                                (utils/stop-event e))
-                 :value (str (urls/absolute-doc-url (:document/id app)) ".svg")}]
-        [:label {:data-placeholder "or use this url"}]]))))
-
-(defn share-pdf-input [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (html
-       [:form.menu-invite-form.make
-        [:input {:type "text"
-                 :required "true"
-                 :data-adaptive ""
-                 :onMouseDown (fn [e]
-                                (.focus (.-target e))
-                                (goog.dom.selection/setStart (.-target e) 0)
-                                (goog.dom.selection/setEnd (.-target e) 10000)
-                                (utils/stop-event e))
-                 :value (str (urls/absolute-doc-url (:document/id app)) ".pdf")}]
-        [:label {:data-placeholder "or use this url"}]]))))
-
-(defn share-png-input [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (html
-       [:form.menu-invite-form.make
-        [:input {:type "text"
-                 :required "true"
-                 :data-adaptive ""
-                 :onMouseDown (fn [e]
-                                (.focus (.-target e))
-                                (goog.dom.selection/setStart (.-target e) 0)
-                                (goog.dom.selection/setEnd (.-target e) 10000)
-                                (utils/stop-event e))
-                 :value (str (urls/absolute-doc-url (:document/id app)) ".png")}]
-        [:label {:data-placeholder "or use this url"}]]))))
+                 :value url}]
+        [:label {:data-placeholder placeholder}]]))))
 
 (defn auth-link [app owner {:keys [source] :as opts}]
   (reify
@@ -189,13 +140,12 @@
                :role "button"}
               (common/icon :users)
               [:span "Request Access"]])
-           ;; holding off until files and actually be downloaded
-           ;; [:a.vein.make
-           ;;  {:on-click         #(cast! :export-menu-opened)
-           ;;   :on-touch-end #(do (cast! :export-menu-opened) (.preventDefault %))
-           ;;   :role "button"}
-           ;;  (common/icon :download)
-           ;;  [:span "Export"]]
+           [:a.vein.make
+            {:on-click         #(cast! :export-menu-opened)
+             :on-touch-end #(do (cast! :export-menu-opened) (.preventDefault %))
+             :role "button"}
+            (common/icon :download)
+            [:span "Export"]]
            [:a.vein.make
             {:on-click         #(cast! :shortcuts-menu-opened)
              :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
@@ -298,7 +248,7 @@
           [:p.make
            "Anyone with the url can see the doc and chat, but can't edit the canvas. "
            "Share the url to show off your work."]
-          (om/build share-url-input app)
+          (om/build share-input {:url (urls/absolute-doc-url doc-id)} app)
 
           [:p.make
            "Add your teammate's email to grant them full access."]
@@ -406,7 +356,7 @@
                [:p.make
                 "Anyone with the url can view and edit."]
 
-               (om/build share-url-input app)
+               (om/build share-input {:url (urls/absolute-doc-url (:document/id app))})
 
                [:p.make
                 "Email or text a friend to invite them to collaborate:"]
@@ -452,7 +402,7 @@
            [:div.calls-to-action.make
             (om/build common/google-login {:source "Public Sharing Menu"})])
 
-          (om/build share-url-input app))]))))
+          (om/build share-input {:url (urls/absolute-doc-url (:document/id app))}))]))))
 
 (defn sharing [app owner]
   (reify
@@ -563,18 +513,27 @@
     om/IDisplayName (display-name [_] "Export Menu")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [cast! (om/get-shared owner :cast!)
+            doc-id (:document/id app)]
         (html
          [:div.menu-view
+          [:a.vein.make {:href (urls/absolute-doc-svg doc-id :query {:dl true})
+                         :target "_self"}
+           (common/icon :file-svg) "Download as SVG"]
+          [:div.content.make (om/build share-input {:url (urls/absolute-doc-svg doc-id)
+                                                    :placeholder "or use this url"})]
 
-          [:a.vein.make {:href "#"} (common/icon :file-svg) "Download as SVG"]
-          [:div.content.make (om/build share-svg-input app)]
+          [:a.vein.make {:href (urls/absolute-doc-pdf doc-id :query {:dl true})
+                         :target "_self"}
+           (common/icon :file-pdf) "Download as PDF"]
+          [:div.content.make (om/build share-input {:url (urls/absolute-doc-pdf doc-id)
+                                                    :placeholder "or use this url"})]
 
-          [:a.vein.make {:href "#"} (common/icon :file-pdf) "Download as PDF"]
-          [:div.content.make (om/build share-pdf-input app)]
-
-          [:a.vein.make {:href "#"} (common/icon :file-png) "Download as PNG"]
-          [:div.content.make (om/build share-png-input app)]])))))
+          [:a.vein.make {:href (urls/absolute-doc-png doc-id :query {:dl true})
+                         :target "_self"}
+           (common/icon :file-png) "Download as PNG"]
+          [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc-id)
+                                                    :placeholder "or use this url"})]])))))
 
 (defn info [app owner]
   (reify
