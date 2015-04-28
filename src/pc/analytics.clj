@@ -33,10 +33,14 @@
                                                  :team/plan
                                                  :plan/trial-end
                                                  clj-time.coerce/from-date
-                                                 (clj-time.format/unparse (clj-time.format/formatters :date-time-no-ms)))}}))
+                                                 (clj-time.format/unparse (clj-time.format/formatters :date-time-no-ms)))}})
+  (mixpanel/track "Created team" (:cust/uuid (:team/creator team))
+                  :subdomain (:team/subdomain team)))
 
 (defn track-create-plan [team]
-  (mixpanel/engage (:cust/uuid (:team/creator team)) {:$set {:created_plan true}}))
+  (mixpanel/engage (:cust/uuid (:team/creator team)) {:$set {:created_plan true}})
+  (mixpanel/track "Created plan" (:cust/uuid (:team/creator team))
+                  :subdomain (:team/subdomain team)))
 
 (defn track-login [cust]
   (mixpanel/track "Login" (:cust/uuid cust)))
