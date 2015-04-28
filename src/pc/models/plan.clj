@@ -22,6 +22,9 @@
 (defn find-by-subdomain [db subdomain]
   (d/entity db (d/q '[:find ?e . :in $ ?sub :where [?t :team/subdomain ?sub] [?t :team/plan ?e]] db subdomain)))
 
+(defn add-coupon [plan coupon-ident]
+  @(d/transact (pcd/conn) [[:db/add (:db/id plan) :discount/coupon coupon-ident]]))
+
 (def coupons
   #{{:coupon/stripe-id "product-hunt"
      :coupon/percent-off 50

@@ -279,8 +279,8 @@
     (sente/init state)
     (browser-settings/setup! state)
     (main state history-imp)
-    (when (:cust @state)
-      (analytics/init-user (:cust @state)))
+    (when-let [cust (:cust @state)]
+      (analytics/init-user cust))
     (sec/dispatch! (str "/" (.getToken history-imp)))))
 
 (defn ^:export inspect-state []
