@@ -15,6 +15,7 @@
             [pc.models.cust :as cust-model]
             [pc.models.chat :as chat-model]
             [pc.models.doc :as doc-model]
+            [pc.models.plan :as plan-model]
             [pc.models.permission :as permission-model]
             [pc.replay :as replay]
             [pc.stripe.dev :as stripe-dev]
@@ -246,17 +247,6 @@
                    (d/datoms db :aevt :team/subdomain))]
     (list
      [:style "td, th { padding: 5px; text-align: left }"]
-     [:form {:action "/create-team" :method "post"}
-      (anti-forgery/anti-forgery-field)
-      [:table
-       [:tr
-        [:td "Subdomain"]
-        [:td [:input {:type "text" :name "subdomain"}]]]
-       [:tr
-        [:td "Customer email address"]
-        [:td [:input {:type "text" :name "cust-email"}]]]
-       [:tr [:td {:colspan 2}
-             [:input {:type "submit" :value "Create team"}]]]]]
      (if-not (seq teams)
        [:h4 "Couldn't find any teams :("]
        (list
@@ -264,13 +254,32 @@
          [:table {:border 1}
           [:tr
            [:th "subdomain"]
+           [:th "status"]
+           [:th "creator"]
+           [:th "active"]
            [:th "members"]]
-          (for [team teams]
+          (for [team teams
+                :let [plan (:team/plan team)]]
             [:tr
              [:td [:a {:href (urls/root :subdomain (h/h (:team/subdomain team)))}
                    (h/h (:team/subdomain team))]]
+             [:td (cond (:plan/paid? plan) "paid"
+                        (not (plan-model/trial-over? plan)) "trial"
+                        :else "trial expired")]
+             [:td [:a {:href (str "/user/" (:cust/email (:team/creator team)))}
+                   (:cust/email (:team/creator team))]]
+             [:td (let [active (:plan/active-custs plan)]
+                    (interleave (map (fn [cust]
+                                       [:a {:href (str "/user/" (:cust/email cust))}
+                                        (:cust/email cust)])
+                                     active)
+                                (repeat " ")))]
              [:td (let [permissions (permission-model/find-by-team db team)]
-                    (clojure.string/join ", " (map (comp :cust/email :permission/cust-ref) permissions)))]])]])))))
+                    (interleave (map (fn [p] (let [cust (:permission/cust-ref p)]
+                                               [:a {:href (str "/user/" (:cust/email cust))}
+                                                (:cust/email cust)]))
+                                     permissions)
+                                (repeat " ")))]])]])))))
 
 (defn format-runtime [ms]
   (let [h (int (Math/floor (/ ms (* 1000 60 60))))

@@ -43,7 +43,9 @@
    :y (when-let [y (js/parseFloat (.getParameterValue parsed-uri "y"))]
         (when-not (js/isNaN y) y))
    :z (when-let [z (js/parseFloat (.getParameterValue parsed-uri "z"))]
-        (when-not (js/isNaN z) z))})
+        (when-not (js/isNaN z) z))
+   :utm-campaign (.getParameterValue parsed-uri "utm_campaign")
+   :utm-source (.getParameterValue parsed-uri "utm_source")})
 
 (defn logging-enabled? []
   (aget js/window "Precursor" "logging-enabled"))
