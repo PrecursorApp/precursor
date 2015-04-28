@@ -268,11 +268,14 @@
                "$10 per user/month."]
               [:p.price-copy.content-copy
                "Need more than just prototyping? "
-               [:a {:href "/features/team"} "Team domains"]
+               [:a {:href "/features/team"
+                    :target "_top"}
+                "Team domains"]
                " have collaboration tools to improve your productivity. "
                "Start your domain to organize team communications with private docs. "]]
              [:div.price-foot
-              [:a.bubble-button {:href "/trial"}
+              [:a.bubble-button {:href "/trial"
+                                 :target "_top"}
                [:span "Start a free trial."]]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
@@ -310,7 +313,8 @@
               "That's why we built lightweight collaboration tools, to help your team communicate effectively. "
               "Solve problems with your team in real time. "]
              [:div.calls-to-action
-              [:a.bubble-button {:href "/pricing"}
+              [:a.bubble-button {:href "/pricing"
+                                 :target "_top"}
                [:span "See our team pricing."]]]]
             [:div.feature.art-visible.content
              [:div.feature-story
@@ -320,7 +324,8 @@
                [:span.content-copy
                 "Team domains help you collaborate on ideas quickly by remembering your teammates. "
                 "New documents created in your team domain are automatically shared with your team. "]]
-              [:a.feature-link {:href "/trial"}
+              [:a.feature-link {:href "/trial"
+                                :target "_top"}
                [:span.content-copy "Try a team domain."]]]
              [:div.feature-media.reverse
               [:div.art-frame
@@ -364,7 +369,8 @@
               [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"} "made with Precursor"]
               "."]
              [:div.calls-to-action
-              [:a.bubble-button {:href "/trial"}
+              [:a.bubble-button {:href "/trial"
+                                 :target "_top"}
                [:span "Start a free trial."]]]]])))))
 
 (defn nav-head [app owner]
@@ -405,17 +411,20 @@
     [:div.nav.nav-foot
      [:a.nav-link.nav-logo
       (merge {:title "Precursor"
-              :href "/"}
+              :href "/"
+              :target "_top"}
              (when (utils/logged-in? owner)
                {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "bottom-nav-logo"}})}))
       (common/icon :logomark)]
      [:a.nav-link.nav-home
       {:title "Home"
-       :href "/home"}
+       :href "/home"
+       :target "_top"}
       "Home"]
      [:a.nav-link.nav-pricing
       {:title "Pricing"
-       :href "/pricing"}
+       :href "/pricing"
+       :target "_top"}
       "Pricing"]
      [:a.nav-link.nav-blog
       {:title "Blog"

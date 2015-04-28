@@ -296,7 +296,8 @@
             [:p.content-copy
              "Our team features are optimized to make collaborating in real-time effortless. "
              "Communicate and create new ideas with your teammates in one secure place. "]
-            [:a.feature-link {:href "/features/team"}
+            [:a.feature-link {:href "/features/team"
+                              :target "_top"}
              "See team features."]]
            [:div.feature-media artwork-voice]]
           [:div.feature-divider]
@@ -339,7 +340,9 @@
              [:div.calls-to-action
               (om/build make-button (select-keys app [:document/id])
                         {:opts {:alt "alt"}})
-              [:a.pancake-button {:href "/trial"} "Start a free trial."]]]]]])))))
+              [:a.pancake-button {:href "/trial"
+                                  :target "_top"}
+               "Start a free trial."]]]]]])))))
 
 (defn landing [app owner]
   (reify

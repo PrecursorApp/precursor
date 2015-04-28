@@ -89,7 +89,8 @@
                       (when (and (seq location)
                                  (= (.. js/window -location -hostname)
                                     (.-hostname target))
-                                 (not (or (new-window-click? %) (seq (.-target target)))))
+                                 (not (or (new-window-click? %)
+                                          (contains? #{"_blank" "_self"} (.-target target)))))
                         (when-not (re-find ignore-pattern new-token)
                           (.stopPropagation %)
                           (.preventDefault %))
@@ -98,7 +99,8 @@
                         (.setToken history-imp new-token)
                         ;; This might not be the best place for this--too much separation
                         ;; between history and routing
-                        (set! js/document.body.scrollTop 0))))))
+                        (when (= "_top" (.-target target))
+                          (set! js/document.body.scrollTop 0)))))))
 
 (defn new-history-imp [tokens-to-ignore]
   ;; need a history element, or goog will overwrite the entire dom
