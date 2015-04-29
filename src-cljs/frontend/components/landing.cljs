@@ -286,9 +286,16 @@
         (html
          [:div.the-how
           [:div.landing-learn-back {:class (when (and (:show-scroll-to-arrow app) (not (contains? active-features "1"))) " show ")}]
-          [:div.landing-learn-front {:class (when-not (contains? active-features "1") " show ")}
-           [:a {:role "button" :on-click #(cast! :scroll-to-arrow-clicked)}
-            "Learn more."]]
+
+          ; [:div.landing-learn-front {:class (when-not (contains? active-features "1") " show ")}
+          ;  [:a.landing-learn-link {:role "button" :on-click #(cast! :scroll-to-arrow-clicked)}
+          ;   "Learn more."]]
+
+          [:div.landing-learn-front.ph-override {:class (when-not (contains? active-features "1") " show ")}
+           [:a.ph-discount {:href "/pricing" :style {:width "auto"}}
+            (common/icon :ph-logo)
+            "Hi Product Hunt, here's 50% off!"]]
+
           [:div.feature.content {:class (when (contains? active-features "1") "art-visible") :ref "1"}
            [:div.feature-story
             [:h2.content-copy
