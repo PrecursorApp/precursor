@@ -275,10 +275,12 @@
                " have collaboration tools to improve your productivity. "
                "Start your domain to organize team communications with private docs. "]]
              [:div.price-foot
-              [:a.bubble-button {:href "/trial"
-                                 :target "_top"
-                                 :data-bottom "Product Hunt 50% off for 6mo"
-                                 :class " hover ph-pricing-button"}
+              [:a.bubble-button (merge {:href "/trial"
+                                        :target "_top"}
+                                       (when (get-in app state/ph-discount-path)
+                                         {:data-bottom "Product Hunt 50% off for 6mo"
+                                          :class " hover ph-pricing-button"}))
+
                [:span "Start a free trial."]]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
@@ -290,9 +292,9 @@
               [:h4.content-copy
                "Contact sales."]
               [:p.price-copy.content-copy
-                "Looking for a customized solution? "
-                "Precursor was engineered to easily set up and run on your own server. "
-                "Email sales@precursorapp.com and we will respond immediately."]]
+               "Looking for a customized solution? "
+               "Precursor was engineered to easily set up and run on your own server. "
+               "Email sales@precursorapp.com and we will respond immediately."]]
              [:div.price-foot
               [:a.bubble-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
                [:span "Email a sales rep."]]]]]]])))))
