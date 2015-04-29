@@ -74,11 +74,11 @@
     [:figure
      (common/tweet "PrecursorApp" "592941206104985600") ; export
      (common/tweet "PrecursorApp" "592801576714121216") ; voice
-     (common/tweet "PrecursorApp" "586568570298957824") ; github embed
-     (common/tweet "PrecursorApp" "585537704760324099") ; sms
-     (common/tweet "PrecursorApp" "584082725901967360") ; space pan
+     ; (common/tweet "PrecursorApp" "586568570298957824") ; github embed
+     ; (common/tweet "PrecursorApp" "585537704760324099") ; sms
+     ; (common/tweet "PrecursorApp" "584082725901967360") ; space pan
      (common/tweet "PrecursorApp" "582964084850757632") ; replay
-     (common/tweet "PrecursorApp" "582719313410326528") ; text sizing
+     ; (common/tweet "PrecursorApp" "582719313410326528") ; text sizing
      (common/tweet "PrecursorApp" "581525258764754944") ; read only
      (common/tweet "PrecursorApp" "580407786300801024") ; arrows
 
