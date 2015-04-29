@@ -49,7 +49,7 @@
                      content])]
     (h/html
      [:div.product-hunt-card
-      [:a.ph-big-link {:href "#"}]
+      [:a.ph-big-link {:href (get info "discussion_url")}]
       [:div.ph-upvote
        (make-link (get info "votes_count"))]
       [:div.ph-info
