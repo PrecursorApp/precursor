@@ -80,7 +80,10 @@
 
 (defmethod navigated-to :landing
   [history-imp navigation-point args state]
-  (handle-outer navigation-point args state))
+  (let [state (handle-outer navigation-point args state)]
+    (if (= "product-hunt" (:utm-campaign args))
+      (assoc-in state state/ph-discount-path true)
+      state)))
 
 (defmethod navigated-to :pricing
   [history-imp navigation-point args state]

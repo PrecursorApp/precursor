@@ -244,6 +244,13 @@
           color: @color_select;
         }
       }
+      // kill after ph discount is done
+      .ph-discount {
+        .icon(fill; #da552f);
+        &:hover {
+          .icon(fill; #da552f);
+        }
+      }
     }
   }
 }
@@ -273,9 +280,25 @@
   left: 0;
   width: 100%;
   transition: @run_slow @run_slow;
-  .mq_640({
-    display: none;
-  });
+  // unblock this media query when ph discount ends
+  // .mq_640({
+  //   display: none;
+  // });
+  // kill this when ph discount ends
+  &:not(.ph-override) {
+    .mq_640({
+      display: none;
+    });
+  }
+  &.ph-override {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    .mq_640({
+      .icon(fill; #da552f);
+      top: 0;
+      bottom: auto;
+    });
+  }
 }
 .feature {
   .flexy(wrap);

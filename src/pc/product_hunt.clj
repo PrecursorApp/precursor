@@ -5,6 +5,11 @@
             [clojure.tools.logging :as log]
             [hiccup.core :as h]))
 
+(def ph-comments
+  [:i {:class "icon-ph-comments"}
+   [:svg {:class "iconpile" :viewBox "0 0 100 100"}
+    [:path {:class "fill-ph-comments" :d "M11.7,70C4.4,63.3,0,54.7,0,45.4C0,24.2,22.4,7.1,50,7.1 s50,17.1,50,38.3S77.6,83.6,50,83.6c-6.9,0-13.4-1.1-19.4-3C20.9,85.9,1.9,92.9,1.9,92.9S8.2,78.6,11.7,70z"}]]])
+
 (def api-token "72790c16bb982b444377523ed715075101240cb3370f642def65551b39bf1270")
 
 (defn get-post-info* [post-id]
@@ -44,13 +49,19 @@
                      content])]
     (h/html
      [:div.product-hunt-card
-      [:div.votes-count (make-link (get info "votes_count"))]
-      [:div.post-name (make-link (get info "name"))]
-      [:div.tagline (get info "tagline")]
-      [:div.comments-count (make-link (get info "comments_count"))]
-      [:div.makers
-       (for [maker (get info "makers")]
-         [:img.avatar {:src (get-in maker ["image_url" "30px"])}])]
-      (when-let [voter (some-> info (get "votes") first (get "user"))]
-        [:div.hunter
-         [:img.avatar {:src (get-in voter ["image_url" "30px"])}]])])))
+      [:a.ph-big-link {:href "#"}]
+      [:div.ph-upvote
+       (make-link (get info "votes_count"))]
+      [:div.ph-info
+       [:div.ph-title (make-link (get info "name"))]
+       [:div.ph-tagline (get info "tagline")]]
+      [:div.ph-people
+       [:div.ph-makers
+        (for [maker (get info "makers")]
+          [:div.ph-maker
+           [:img.ph-avatar {:src (get-in maker ["image_url" "30px"])}]])]
+       (when-let [voter (some-> info (get "votes") first (get "user"))]
+         [:div.ph-hunter
+          [:img.avatar {:src (get-in voter ["image_url" "30px"])}]])]
+      [:div.ph-comments-icon ph-comments]
+      [:div.ph-comments-count (make-link (get info "comments_count"))]])))

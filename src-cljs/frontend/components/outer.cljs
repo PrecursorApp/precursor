@@ -26,7 +26,7 @@
                    [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.ui IdGenerator]))
 
-(defn submit-subdomain-form [owner]
+(defn submit-subdomain-form [app owner]
   (go
     (om/update-state! owner (fn [s]
                               (assoc s :submitting? true :error nil)))
@@ -35,7 +35,8 @@
     ;; important to get the state out of owner since we're not re-rendering on update
     (let [{:keys [subdomain]} (om/get-state owner)
           res (<! (ajax/managed-ajax :post "/api/v1/create-team" :params (merge {:subdomain subdomain}
-                                                                                (when (= "product-hunt" (:utm-campaign utils/initial-query-map))
+                                                                                (when (or (= "product-hunt" (:utm-campaign utils/initial-query-map))
+                                                                                          (get-in app state/ph-discount-path))
                                                                                   {:coupon-code "product-hunt"}))))]
       (if (= :success (:status res))
         (om/update-state! owner (fn [s]
@@ -100,7 +101,7 @@
                :on-key-down #(when (= "Enter" (.-key %))
                                (.preventDefault %)
                                ;; If they hit enter, submit the form
-                               (submit-subdomain-form owner))
+                               (submit-subdomain-form app owner))
                :on-input #(om/set-state-nr! owner :subdomain (goog.dom/getRawTextContent (.-target %)))}
               subdomain]
              [:div.subdomain-input-placeholder
@@ -116,7 +117,7 @@
               {:tab-index "5"
                :ref "submit-button"
                :disabled (or disabled? submitted?)
-               :on-click #(submit-subdomain-form owner)}
+               :on-click #(submit-subdomain-form app owner)}
               (cond submitting?
                     (html
                       [:span "Setting up your team"
@@ -274,8 +275,12 @@
                " have collaboration tools to improve your productivity. "
                "Start your domain to organize team communications with private docs. "]]
              [:div.price-foot
-              [:a.bubble-button {:href "/trial"
-                                 :target "_top"}
+              [:a.bubble-button (merge {:href "/trial"
+                                        :target "_top"}
+                                       (when (get-in app state/ph-discount-path)
+                                         {:data-bottom "Product Hunt 50% off for 6mo"
+                                          :class " hover ph-pricing-button"}))
+
                [:span "Start a free trial."]]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
@@ -287,9 +292,9 @@
               [:h4.content-copy
                "Contact sales."]
               [:p.price-copy.content-copy
-                "Looking for a customized solution? "
-                "Precursor was engineered to easily set up and run on your own server. "
-                "Email sales@precursorapp.com and we will respond immediately."]]
+               "Looking for a customized solution? "
+               "Precursor was engineered to easily set up and run on your own server. "
+               "Email sales@precursorapp.com and we will respond immediately."]]
              [:div.price-foot
               [:a.bubble-button {:href "mailto:sales@precursorapp.com?Subject=Enterprise%20Inquiry"}
                [:span "Email a sales rep."]]]]]]])))))
