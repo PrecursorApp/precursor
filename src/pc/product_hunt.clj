@@ -33,7 +33,17 @@
           "discussion_url" "http://www.producthunt.com/posts/precursor"
           "makers" [{"image_url" {"30px" "http://avatars-cdn.producthunt.com/106624/30?1430244521"}}]
           "votes" [{"user"
-                    {"image_url" {"30px" "http://avatars-cdn.producthunt.com/7824/30?1430236722"}}}]}})
+                    {"image_url" {"30px" "http://avatars-cdn.producthunt.com/7824/30?1430236722"}}}]}
+   19567 {"name" "Precursor",
+          "votes_count" 3,
+          "comments_count" 1,
+          "tagline" "We make prototyping and team collaboration quick and simple"
+          "discussion_url" "http://www.producthunt.com/posts/precursor-for-teams"
+          "makers" [{"image_url" {"30px" "http://avatars-cdn.producthunt.com/106624/30?1430244521"}}
+                    {"image_url" {"30px" "http://avatars-cdn.producthunt.com/106635/30?1430312595"}}]
+          "votes" [{"user"
+                    {"image_url" {"30px" "http://avatars-cdn.producthunt.com/2081/30?1430313498"}}}]}})
+
 
 (defn post-info [post-id]
   (try
@@ -49,7 +59,7 @@
                      content])]
     (h/html
      [:div.product-hunt-card
-      [:a.ph-big-link {:href "#"}]
+      [:a.ph-big-link {:href (get info "discussion_url")}]
       [:div.ph-upvote
        (make-link (get info "votes_count"))]
       [:div.ph-info
