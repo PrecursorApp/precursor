@@ -87,3 +87,6 @@
             :let [cust (d/entity db cust-id)]]
       (log/infof "updating %s" (:cust/email cust))
       (update-user-from-sub cust))))
+
+(defn transfer-doc-to-team [doc team]
+  @(d/transact (pcd/conn) [[:db/add (:db/id doc) :document/team (:db/id team)]]))
