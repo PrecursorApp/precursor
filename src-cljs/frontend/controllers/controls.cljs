@@ -81,8 +81,8 @@
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [previous-state current-state x y]
   (when (get-in current-state [:subscribers :mice (:client-id current-state) :show-mouse?])
-    (let [previous-info (extract-sub-info current-state x y)
-          current-info (extract-sub-info previous-state x y)]
+    (let [previous-info (extract-sub-info previous-state x y)
+          current-info (extract-sub-info current-state x y)]
       (when-not (= previous-info current-info)
         (sente/send-msg (:sente current-state)
                         [:frontend/mouse-position current-info])))))
