@@ -20,6 +20,10 @@
   (defroute home "/home" {:keys [query-params]}
     (put! nav-ch [:landing {:query-params query-params}]))
 
+  (defroute product-hunt "/product-hunt" {:keys [query-params]}
+    (put! nav-ch [:landing {:query-params query-params
+                            :utm-campaign "product-hunt"}]))
+
   (defroute pricing "/pricing" {:keys [query-params]}
     (put! nav-ch [:pricing {:query-params query-params}]))
 

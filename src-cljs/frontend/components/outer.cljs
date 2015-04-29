@@ -26,7 +26,7 @@
                    [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.ui IdGenerator]))
 
-(defn submit-subdomain-form [owner]
+(defn submit-subdomain-form [app owner]
   (go
     (om/update-state! owner (fn [s]
                               (assoc s :submitting? true :error nil)))
@@ -35,7 +35,8 @@
     ;; important to get the state out of owner since we're not re-rendering on update
     (let [{:keys [subdomain]} (om/get-state owner)
           res (<! (ajax/managed-ajax :post "/api/v1/create-team" :params (merge {:subdomain subdomain}
-                                                                                (when (= "product-hunt" (:utm-campaign utils/initial-query-map))
+                                                                                (when (or (= "product-hunt" (:utm-campaign utils/initial-query-map))
+                                                                                          (get-in app state/ph-discount-path))
                                                                                   {:coupon-code "product-hunt"}))))]
       (if (= :success (:status res))
         (om/update-state! owner (fn [s]
@@ -100,7 +101,7 @@
                :on-key-down #(when (= "Enter" (.-key %))
                                (.preventDefault %)
                                ;; If they hit enter, submit the form
-                               (submit-subdomain-form owner))
+                               (submit-subdomain-form app owner))
                :on-input #(om/set-state-nr! owner :subdomain (goog.dom/getRawTextContent (.-target %)))}
               subdomain]
              [:div.subdomain-input-placeholder
@@ -116,7 +117,7 @@
               {:tab-index "5"
                :ref "submit-button"
                :disabled (or disabled? submitted?)
-               :on-click #(submit-subdomain-form owner)}
+               :on-click #(submit-subdomain-form app owner)}
               (cond submitting?
                     (html
                       [:span "Setting up your team"

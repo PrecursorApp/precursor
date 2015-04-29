@@ -43,7 +43,7 @@
   [
    {:slug "we-made-precursor-for-teams"
     :unique-id "we-made-precursor-for-teams"
-    :display-in-overview true}
+    :display-in-overview false}
    {:slug "id-wear-that"
     :unique-id "id-wear-that"
     :display-in-overview false}

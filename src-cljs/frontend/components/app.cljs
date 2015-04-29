@@ -125,7 +125,8 @@
                                                     [:cust]
                                                     [:subscribers :info]
                                                     [:page-count]
-                                                    [:show-scroll-to-arrow]])
+                                                    [:show-scroll-to-arrow]
+                                                    state/browser-settings-path])
                         {:react-key "outer"}))
 
             (om/build rtc/rtc (select-in app [[:subscribers :info]])
