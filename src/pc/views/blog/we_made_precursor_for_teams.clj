@@ -11,7 +11,6 @@
   {:title "We made Precursor for teams."
    :blurb "We want users to know we're not going anywhere. Precursor for Teams will help us ensure your work is private and stays secure. "
    :author "Danny"
-   :image (external-cdn-path "/blog/ideas-are-made-with-precursor/lobanovskiy-placeholder.gif")
    :body
    (list
     [:article
