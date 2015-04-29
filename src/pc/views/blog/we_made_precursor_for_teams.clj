@@ -2,6 +2,7 @@
   (:require [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
             [pc.http.urls :as urls]
             [pc.views.email :as email]
+            [pc.product-hunt :as product-hunt]
             [pc.profile :as profile]
             [pc.views.common :refer (cdn-path external-cdn-path)]
             [pc.views.blog.common :as common]))
@@ -15,6 +16,9 @@
    (list
     [:article
      [:p "I'm excited to announce that today we're launching Precursor for Teams on Product Hunt. "]]
+
+    [:figure
+     (product-hunt/product-hunt-component 11067)]
 
     [:article
      [:p "Product Hunt holds a special place in our hearts. "
@@ -33,42 +37,38 @@
     [:article
      [:h3 "We're committing ourselves to helping teams communicate."]
      [:p "We want users to know we're not going anywhere. "
-         "Precursor for Teams will help us ensure your work is private and stays secure. "
-         "Your team should focus on what's important—their ideas. "
-         "Let us handle everything else. "]
-     [:p "We love building Precursor. "
-         "And we love working with product teams to find out what makes their lives easier. "
-         "Personally, there's nothing I'd rather be doing. "]]
+         "Precursor for Teams will help us ensure your work is private and stays secure. "]
+     [:p "Your team should focus on what's important—their ideas. "
+         "Let us handle everything else. "]]
 
     [:article
      [:h3 "And pricing is simple."]
      [:p "We think team collaboration should be simple, and so should pricing. "
          "The monthly cost for a team is $10 per active user, per month. "]
-     [:p "If you want access to premium features but you don't have any teammates, that's okay. "
-         "Go ahead and make a team domain anyway. "
-         "You'll get a private domain to use on Precursor and you can give people access to individual docs without adding them to your team. "
-         "It's perfect for sharing ideas with clients. "]]
+     [:p "If you prefer to work solo, that's okay too. "
+         "You can still get a private domain to use on Precursor and give people access to individual docs, without adding them to your team. "
+         "It's perfect for sharing ideas with clients."]]
 
     [:article
      [:h3 "Best of all, prototyping will still be free."]
      [:p "Our prototyping tools are staying right where they are—free for everyone. "]
      [:p "Accessibility is part of Precursor's foundation, and we still think sharing an idea should be as simple as sharing a url. "
-         "That's why we're keeping the Precursor public app free and Accessibile anywhere, on any device. "]]
+         "That's why we're keeping the Precursor public app free and accessibile anywhere, on any device. "]]
 
     [:article
      [:h3 "We're hungry for feedback."]
-     [:p "We need your feedback now, more than ever. "
+     [:p "Your feedback is invaluable to us, now more than ever. "
          "If you see something that we can do better, please let us know. "]
      [:p "Ping us in your doc's chat with \"@prcrsr\" or email us. "
          "We'll be there to answer any questions, or if you just want a sketching buddy. "]]
 
     [:article
      [:h3 "All of this means better features now and in the future."]
-     [:p "Now that Precursor has a real growth strategy, we can keep to focusing on improving our core product. "]
+     [:p "Now that Precursor has a real growth strategy, we can keep focusing on improving our core product. "]
      [:p "Our most exciting features are still ahead of us. "
-         "But more importantly, we're going to continue making our current features better and better! "]
+         "But more importantly, we're going to continue making our current features better every day! "]
      [:p "We don't ignore good ideas."
-         "Below are some of feature requests we've finished in just the last few weeks..."]
+         "Below are some of the feature requests we've finished in just the last few weeks..."]
      [:br]]
 
     [:figure
