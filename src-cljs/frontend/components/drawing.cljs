@@ -563,33 +563,40 @@
                          f identity]
                     (if (>= (inc i) post-layer-count)
                       f
-                      (let [build-count (min (- post-layer-count i) (inc i))]
+                      (let [build-count (min (- post-layer-count (inc i)) (inc i))]
                         (recur (+ i build-count)
                                (let [offset (+ vote-box-height
                                                post-layer-offset)
+                                     start-offset (if (>= i build-count)
+                                                    (- (inc i) build-count)
+                                                    0)
                                      x (+ (:start-x vote-box) (* vote-box-width (/ 2 3)))
                                      start-y (+ (:start-y vote-box)
                                                 (* vote-box-height (/ 2 3))
                                                 (* i offset))]
-                                 (comp (fn [tick-state]
-                                         (add-alt-drag tick-state (min (* build-count 15)
-                                                                       30)
-                                                       {:layers (reduce (fn [acc i]
-                                                                          (into acc (shift-post-layers post-layers (* i offset))))
-                                                                        [] (range 0 build-count))
-                                                        :start-x x
-                                                        :end-x x
-                                                        :start-y start-y
-                                                        :end-y (+ start-y (* build-count offset))}))
-                                       (fn [tick-state]
-                                         (add-mouse-transition tick-state 5
-                                                               {:end-x x
-                                                                :end-y start-y
-                                                                :tool :select}
-                                                               {:start-x x
-                                                                :start-y start-y
-                                                                :tool :select}))
-                                       f))))))]
+                                 (comp
+                                  (fn [tick-state]
+                                    (add-alt-drag tick-state (min (* build-count 15)
+                                                                  30)
+                                                  {:layers (reduce
+                                                            (fn [acc j]
+                                                              (into acc
+                                                                    (shift-post-layers post-layers
+                                                                                       (* j offset))))
+                                                            [] (range start-offset (+ start-offset build-count)))
+                                                   :start-x x
+                                                   :end-x x
+                                                   :start-y start-y
+                                                   :end-y (+ start-y (* build-count offset))}))
+                                  (fn [tick-state]
+                                    (add-mouse-transition tick-state 5
+                                                          {:end-x x
+                                                           :end-y start-y
+                                                           :tool :select}
+                                                          {:start-x x
+                                                           :start-y start-y
+                                                           :tool :select}))
+                                  f))))))]
     (-> {:tick-ms 16
          :bot state/product-hunt-bot
          :ticks {}}
