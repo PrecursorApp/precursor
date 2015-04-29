@@ -421,6 +421,14 @@
        [:td {:title "Number of clients connected right now"}
         "Client count"]
        [:td (count (get @sente/document-subs (:db/id doc)))]]
+      [:tr
+       [:td "Owner"]
+       [:td (some->> doc
+              :document/creator
+              (cust-model/find-by-uuid db)
+              :cust/email
+              ((fn [e]
+                  [:a {:href (str "/user/" e)} e])))]]
       (let [emails (d/q '{:find [[?email ...]]
                           :in [$ ?doc-id]
                           :where [[?t :transaction/document ?doc-id]
