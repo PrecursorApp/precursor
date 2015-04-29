@@ -61,7 +61,7 @@
      [:h3 "Best of all, prototyping will still be free."]
      [:p "Our prototyping tools are staying right where they are—free for everyone. "]
      [:p "Accessibility is part of Precursor's foundation, and we still think sharing an idea should be as simple as sharing a url. "
-         "That's why we're keeping the Precursor public app free and accessibile anywhere, on any device. "]]
+         "That's why we're keeping the Precursor public app free and accessible anywhere, on any device. "]]
 
     [:article
      [:h3 "We're hungry for feedback."]
