@@ -139,15 +139,15 @@
     animation: in-zoom @art_a3 @bezier_deform backwards;
   }
 }
-@art_b1: (@run_slow)   (@now);
-@art_b2: (@run)        ((extract(@art_b1, 1) * 2.33) + extract(@art_b1, 2));
-@art_b3: (@run_slower) ((extract(@art_b2, 1) * 1.44) + extract(@art_b2, 2));
-@art_b4: (@run_slow)   ((extract(@art_b3, 1) * 0.89) + extract(@art_b3, 2));
-@art_b5: (@run)        ((extract(@art_b4, 1) * 0.55) + extract(@art_b4, 2));
-@art_b6: (@run_fast)   ((extract(@art_b5, 1) * 0.34) + extract(@art_b5, 2));
-@art_b7: (@run_fast)   ((extract(@art_b6, 1) * 0.21) + extract(@art_b6, 2));
-@art_b8: (@run)        ((extract(@art_b7, 1) * 0.13) + extract(@art_b7, 2));
-@art_b9: (@run_slower) ((extract(@art_b8, 1) * 0.08) + extract(@art_b8, 2));
+@art_b1: (@run)      (@now);
+@art_b2: (@run)      ((extract(@art_b1, 1) * 0.55) + extract(@art_b1, 2));
+@art_b3: (@run)      ((extract(@art_b2, 1) * 0.55) + extract(@art_b2, 2));
+@art_b4: (@run_slow) ((extract(@art_b3, 1) * 0.55) + extract(@art_b3, 2));
+@art_b5: (@run)      ((extract(@art_b4, 1) * 0.55) + extract(@art_b4, 2));
+@art_b6: (@run_fast) ((extract(@art_b5, 1) * 0.34) + extract(@art_b5, 2));
+@art_b7: (@run_fast) ((extract(@art_b6, 1) * 0.21) + extract(@art_b6, 2));
+@art_b8: (@run)      ((extract(@art_b7, 1) * 0.13) + extract(@art_b7, 2));
+@art_b9: (@run_slow) ((extract(@art_b8, 1) * 0.08) + extract(@art_b8, 2));
 .art-interact {
   .art-interact-body {
     .property-dropdown-targets {
