@@ -275,7 +275,9 @@
                "Start your domain to organize team communications with private docs. "]]
              [:div.price-foot
               [:a.bubble-button {:href "/trial"
-                                 :target "_top"}
+                                 :target "_top"
+                                 :data-bottom "Product Hunt 50% off for 6mo"
+                                 :class " hover ph-pricing-button"}
                [:span "Start a free trial."]]]]
             [:section.price-divide.right
              [:div.price-divide-line]]
