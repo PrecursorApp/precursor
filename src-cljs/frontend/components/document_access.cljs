@@ -54,10 +54,13 @@
 
                (list
                  [:p.make
-                  "Anything you prototype here will only be visible to you.
-                  You can try to request access or even "
-                  [:a {:href "/new"} "create your own"]
-                  " document."]
+                  "Anything you prototype here will only be visible to you. "
+                  (if (:team app)
+                    "Request access below."
+                    (list
+                     "You can try to request access or even"
+                     [:a {:href "/new"} "create your own"]
+                     " document."))]
                  [:div.make
                   [:div.menu-buttons
                    [:a.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})

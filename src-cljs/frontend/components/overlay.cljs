@@ -304,9 +304,12 @@
              (if (empty? access-requests)
                (list
                 [:p.make
-                 "You can try to request full access or even "
-                 [:a {:href "/new"} "create your own"]
-                 " document."]
+                 (if (:team app)
+                   "Request full access below."
+                   (list
+                    "You can try to request full access or even "
+                    [:a {:href "/new"} "create your own"]
+                    " document."))]
                 [:div.menu-buttons
                  [:a.make.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})
                                        :role "button"}
