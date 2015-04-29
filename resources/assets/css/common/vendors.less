@@ -152,6 +152,10 @@
   font-size: 17px;
   margin: 2px 0 0 0px;
   line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 410px;
 }
 .ph-people {
   .flexy(center);
@@ -159,23 +163,26 @@
   &:hover {
     .ph-maker,
     .ph-hunter {
+      margin-left: 0;
       &:before {
         opacity: 1;
       }
     }
-    .ph-maker {
-      position: relative;
-      left: 0;
-    }
   }
 }
 .ph-makers {
+  .flexy();
   position: relative;
 }
 .ph-maker {
-  left: 20px;
-  transition: left 0.3s;
-  z-index: 2;
+  margin-left: -20px;
+  transition: 0.3s;
+  &:nth-child(1) {
+    z-index: 3;
+  }
+  &:nth-child(2) {
+    z-index: 2;
+  }
 }
 .ph-maker,
 .ph-hunter {
@@ -198,6 +205,8 @@
   }
 }
 .ph-hunter {
+  display: none;
+  margin-left: -20px;
   z-index: 1;
   &:before {
     content: "H";

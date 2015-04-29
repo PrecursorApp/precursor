@@ -18,7 +18,7 @@
      [:p "I'm excited to announce that today we're launching Precursor for Teams on Product Hunt. "]]
 
     [:figure
-     (product-hunt/product-hunt-component 11067)]
+     (product-hunt/product-hunt-component 19567)]
 
     [:article
      [:p "Product Hunt holds a special place in our hearts. "
