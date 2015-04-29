@@ -43,7 +43,9 @@
 @color_google_light: lighten(  saturate(@color_google,  5),  2);
 @color_google_dark:   darken(desaturate(@color_google, 34), 13);
 
-@color_bot: @blue;
+@color_ph: #da552f;
+
+@color_bot: @color_ph; // @blue;
 
 @color_menu_faded: @gray_light;
 @color_menu_faint: @gray_lightest;
@@ -130,7 +132,8 @@ select,     82.66px,  49.71px;
 ~"cyan",   @cyan,
 ~"blue",   @blue,
 ~"purple", @purple,
-~"pink",   @pink;
+~"pink",   @pink,
+~"ph-orange", @color_ph;
 
 @size_menu_avatar: .75 * @tile;
 

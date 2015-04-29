@@ -23,8 +23,8 @@
   (-> tick-state
     (add-tick tick (fn [owner]
                      ((om/get-shared owner :cast!)
-                      :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                           :fields (merge state/subscriber-bot {:mouse-position nil
+                      :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                           :fields (merge (:bot tick-state) {:mouse-position nil
                                                                                 :tool nil
                                                                                 :show-mouse? false})})))
     (annotate-keyframes tick)))
@@ -42,8 +42,8 @@
                                                    (/ (- end-y start-y)
                                                       (- end-tick start-tick))))]
                               ((om/get-shared owner :cast!)
-                               :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                    :fields (merge state/subscriber-bot {:mouse-position [ex ey]
+                               :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                    :fields (merge (:bot tick-state) {:mouse-position [ex ey]
                                                                                          :show-mouse? true
                                                                                          :tool tool})})))))
               tick-state
@@ -63,7 +63,7 @@
           :layer/name "placeholder"
           :layer/stroke-width 1
           :document/id doc-id
-          :db/id (- (inc (rand-int 1000)))}
+          :db/id (rand-int 10000)}
          (when (= :circle tool)
            {:layer/rx 1000
             :layer/ry 1000})
@@ -89,8 +89,8 @@
                                                      (/ (- end-y start-y)
                                                         (- end-tick start-tick pause-ticks))))]
                                 ((om/get-shared owner :cast!)
-                                 :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                      :fields (merge state/subscriber-bot {:mouse-position [ex ey]
+                                 :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                      :fields (merge (:bot tick-state) {:mouse-position [ex ey]
                                                                                            :show-mouse? true
                                                                                            :layers [(assoc base-layer
                                                                                                            :layer/current-x ex
@@ -101,7 +101,7 @@
       (add-tick end-tick
                 (fn [owner]
                   ((om/get-shared owner :cast!)
-                   :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                   :subscriber-updated {:client-id (:client-id (:bot tick-state))
                                         :fields {:mouse-position nil
                                                  :layers nil
                                                  :tool tool}})
@@ -147,8 +147,8 @@
                                               (/ y-distance
                                                  (- end-tick start-tick pause-ticks)))]
                                 ((om/get-shared owner :cast!)
-                                 :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                      :fields (merge state/subscriber-bot {:mouse-position [(+ start-x move-x)
+                                 :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                      :fields (merge (:bot tick-state) {:mouse-position [(+ start-x move-x)
                                                                                                             (+ start-y move-y)]
                                                                                            :show-mouse? true
                                                                                            :layers (map (fn [l] (move-layer l move-x move-y))
@@ -159,7 +159,7 @@
       (add-tick end-tick
                 (fn [owner]
                   ((om/get-shared owner :cast!)
-                   :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                   :subscriber-updated {:client-id (:client-id (:bot tick-state))
                                         :fields {:mouse-position nil
                                                  :layers nil
                                                  :tool :select}})
@@ -197,8 +197,8 @@
                                                          (/ (- end-tick start-tick pause-ticks)
                                                             relative-tick)))]
                                 ((om/get-shared owner :cast!)
-                                 :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                      :fields (merge state/subscriber-bot {:mouse-position [start-x (- start-y (/ text-height 2))]
+                                 :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                      :fields (merge (:bot tick-state) {:mouse-position [start-x (- start-y (/ text-height 2))]
                                                                                            :show-mouse? true
                                                                                            :layers [(assoc base-layer
                                                                                                            :layer/text (apply str (take letter-count text))
@@ -214,8 +214,8 @@
       (add-tick end-tick
                 (fn [owner]
                   ((om/get-shared owner :cast!)
-                   :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                        :fields (merge state/subscriber-bot {:mouse-position nil
+                   :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                        :fields (merge (:bot tick-state) {:mouse-position nil
                                                                              :layers nil
                                                                              :tool :text})})
                   (d/transact! (om/get-shared owner :db) [base-layer] {:bot-layer true})))
@@ -260,11 +260,11 @@
     (utils/rAF (fn [timestamp]
                  (run-animation* owner timestamp timestamp tick-state 0 max-tick)))))
 
-(defn cleanup [owner]
-  ((om/get-shared owner :cast!) :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                     :fields (merge state/subscriber-bot {:mouse-position nil
-                                                                                          :layers nil
-                                                                                          :show-mouse? false})}))
+(defn cleanup [tick-state owner]
+  ((om/get-shared owner :cast!) :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                     :fields (merge (:bot tick-state) {:mouse-position nil
+                                                                                       :layers nil
+                                                                                       :show-mouse? false})}))
 
 (defn signup-animation [document top-right]
   (let [text "Sign in with Google"
@@ -287,6 +287,7 @@
         text-start-x (+ rect-start-x (/ (- rect-width text-width) 2))
         text-start-y (+ rect-end-y text-height (/ (- rect-height text-height) 2))]
     (-> {:tick-ms 16
+         :bot state/subscriber-bot
          :ticks {}}
       (move-mouse {:tool :text
                    :start-tick 10
@@ -329,7 +330,7 @@
           (run-animation owner (signup-animation document (cameras/top-right camera viewport))))))
     om/IWillUnmount
     (will-unmount [_]
-      (cleanup owner))
+      (cleanup {:bot state/subscriber-bot} owner))
     om/IRender
     (render [_]
       ;; dummy span so that the component can be mounted
@@ -590,6 +591,7 @@
                                                                 :tool :select}))
                                        f))))))]
     (-> {:tick-ms 16
+         :bot state/product-hunt-bot
          :ticks {}}
       (add-tick 50 identity)
       ;; the mouse could be automatic
@@ -626,7 +628,7 @@
   (let [max-tick (apply max (keys (:ticks tick-state)))]
     (-> tick-state
       (add-tick (inc max-tick) (fn [owner]
-                                 (cleanup owner)
+                                 (cleanup {:bot state/product-hunt-bot} owner)
                                  ((om/get-shared owner :cast!) :landing-animation-completed)))
       (annotate-keyframes (inc max-tick)))))
 
@@ -647,7 +649,7 @@
                                                                        viewport))))))
     om/IWillUnmount
     (will-unmount [_]
-      (cleanup owner)
+      (cleanup {:bot state/product-hunt-bot} owner)
       (let [conn (om/get-shared owner :db)
             source (om/get-state owner :layer-source)]
         (d/transact! conn (mapv (fn [e] [:db/add e :layer/deleted true])

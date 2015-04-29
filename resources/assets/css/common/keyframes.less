@@ -175,6 +175,20 @@
     opacity: 0;
   }
 }
+@keyframes text-deleted {
+  0%   {
+    transform: none;
+    fill: @color_bot;
+    stroke-dasharray: 5,5;
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(50%, 100%, 0) scale3d(0,0,1);
+    fill: @color_bot;
+    stroke-dasharray: 5,5;
+    opacity: 0;
+  }
+}
 @keyframes admin-slide-down {
   0%   { transform: translate(0, -100%);}
   100% { transform: translate(0, 0);}
