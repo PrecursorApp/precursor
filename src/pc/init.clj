@@ -18,6 +18,7 @@
             pc.repl
             pc.server
             pc.statsd
+            pc.stripe
             pc.stripe.dev
             pc.utils)
   (:gen-class))
@@ -36,6 +37,7 @@
    #'pc.assets/init
    #'pc.email/init
    #'pc.cache/init
+   #'pc.stripe/init
    #'pc.server/init
    #'pc.http.webhooks/init
    #'pc.datomic.admin-db/init
