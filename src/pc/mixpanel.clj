@@ -57,7 +57,7 @@
                                                            :verbose 1}})
         success? (-> resp :body json/decode (get "status") (= 1))]
     (when (or (-> resp :status (not= 200)) (not success?))
-      (throw+ resp))
+      (throw+ (assoc resp :mixpanel-data data)))
     resp))
 
 (defn api-call [url data]
