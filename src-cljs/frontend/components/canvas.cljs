@@ -404,7 +404,8 @@
 
     (render [_]
       (if (and (:tool subscriber)
-               (:show-mouse? subscriber))
+               (:show-mouse? subscriber)
+               (:mouse-position subscriber))
         (let [color-class (name (colors/find-color uuid->cust
                                                    (:cust/uuid subscriber)
                                                    (:client-id subscriber)))]
