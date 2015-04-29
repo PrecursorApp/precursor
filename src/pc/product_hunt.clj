@@ -37,7 +37,7 @@
    19567 {"name" "Precursor",
           "votes_count" 3,
           "comments_count" 1,
-          "tagline" "We make prototyping and team collaboration quick and simple"
+          "tagline" "We make prototyping and team collaboration simple and easy"
           "discussion_url" "http://www.producthunt.com/posts/precursor-for-teams"
           "makers" [{"image_url" {"30px" "http://avatars-cdn.producthunt.com/106624/30?1430244521"}}
                     {"image_url" {"30px" "http://avatars-cdn.producthunt.com/106635/30?1430312595"}}]
@@ -56,7 +56,8 @@
   (let [info (post-info post-id)
         make-link (fn [content]
                     [:a {:href (get info "discussion_url")}
-                     content])]
+                     content])
+        maker-ids (set (map #(get % "id") (get info "makers")))]
     (h/html
      [:div.product-hunt-card
       [:a.ph-big-link {:href (get info "discussion_url")}]
@@ -70,7 +71,14 @@
         (for [maker (get info "makers")]
           [:div.ph-maker
            [:img.ph-avatar {:src (get-in maker ["image_url" "30px"])}]])]
-       (when-let [voter (some-> info (get "votes") first (get "user"))]
+       (when-let [voter (some-> info
+                          (get "votes")
+                          (#(remove (fn [u] (contains? maker-ids (get-in u ["user" "id"])))
+                                    %))
+                          (#(sort-by (fn [u] (get u "id"))
+                                     %))
+                          last
+                          (get "user"))]
          [:div.ph-hunter
           [:img.avatar {:src (get-in voter ["image_url" "30px"])}]])]
       [:div.ph-comments-icon ph-comments]
