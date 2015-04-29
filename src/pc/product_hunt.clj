@@ -3,6 +3,7 @@
             [clj-http.client :as http]
             [clojure.core.memoize :as memo]
             [clojure.tools.logging :as log]
+            [clojure.string :as str]
             [hiccup.core :as h]))
 
 (def ph-comments
@@ -52,6 +53,9 @@
       (log/infof "Error getting post info for %s" post-id)
       (fallback-info post-id))))
 
+(defn https-ify-url [url]
+  (str/replace url #"^http:" "https:"))
+
 (defn product-hunt-component [post-id]
   (let [info (post-info post-id)
         make-link (fn [content]
@@ -70,7 +74,7 @@
        [:div.ph-makers
         (for [maker (get info "makers")]
           [:div.ph-maker
-           [:img.ph-avatar {:src (get-in maker ["image_url" "30px"])}]])]
+           [:img.ph-avatar {:src (https-ify-url (get-in maker ["image_url" "30px"]))}]])]
        (when-let [voter (some-> info
                           (get "votes")
                           (#(remove (fn [u] (contains? maker-ids (get-in u ["user" "id"])))
@@ -80,6 +84,6 @@
                           last
                           (get "user"))]
          [:div.ph-hunter
-          [:img.avatar {:src (get-in voter ["image_url" "30px"])}]])]
+          [:img.avatar {:src (https-ify-url (get-in voter ["image_url" "30px"]))}]])]
       [:div.ph-comments-icon ph-comments]
       [:div.ph-comments-count (make-link (get info "comments_count"))]])))
