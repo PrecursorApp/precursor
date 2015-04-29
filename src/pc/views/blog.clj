@@ -43,7 +43,8 @@
   [
    {:slug "we-made-precursor-for-teams"
     :unique-id "we-made-precursor-for-teams"
-    :display-in-overview false}
+    :pub-date (clj-time.format/parse "Wed, 29 Apr 2015 05:00:00 -0800")
+    :display-in-overview true}
    {:slug "id-wear-that"
     :unique-id "id-wear-that"
     :display-in-overview false}
