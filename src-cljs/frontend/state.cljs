@@ -26,6 +26,15 @@
    :cust/color-name :color.name/blue
    :client-id "prcrsr-subscriber-bot"})
 
+(def product-hunt-bot
+  {:cust-name "ph"
+   :cust/name "ph"
+   :show-mouse? true
+   :hide-in-list? true
+   :cust/uuid "ph-bot"
+   :cust/color-name :color.name/ph-orange
+   :client-id "ph-bot"})
+
 (defn initial-state []
   {:camera          {:x          0
                      :y          0
