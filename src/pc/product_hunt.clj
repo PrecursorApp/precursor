@@ -35,12 +35,15 @@
           "votes" [{"user"
                     {"image_url" {"30px" "http://avatars-cdn.producthunt.com/7824/30?1430236722"}}}]}
    19567 {"name" "Precursor",
-          "votes_count" 2,
+          "votes_count" 3,
           "comments_count" 1,
           "tagline" "We make prototyping and team collaboration quick and simple"
           "discussion_url" "http://www.producthunt.com/posts/precursor-for-teams"
           "makers" [{"image_url" {"30px" "http://avatars-cdn.producthunt.com/106624/30?1430244521"}}
-                    {"image_url" {"30px" "http://avatars-cdn.producthunt.com/106635/30?1430312595"}}]}})
+                    {"image_url" {"30px" "http://avatars-cdn.producthunt.com/106635/30?1430312595"}}]
+          "votes" [{"user"
+                    {"image_url" {"30px" "http://avatars-cdn.producthunt.com/2081/30?1430313498"}}}]}})
+
 
 (defn post-info [post-id]
   (try
