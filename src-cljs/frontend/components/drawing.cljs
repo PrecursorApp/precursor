@@ -371,8 +371,9 @@
 (defn browser [document layer-source viewport]
   (let [start-x 100
         start-y 100
-        width (int (* (- (:width viewport) 200)
-                      0.9))
+        width (min (int (* (- (:width viewport) 200)
+                           0.9))
+                   1400)
         height (int (* (- (:height viewport) 200)
                        0.9))]
     {:doc-id (:db/id document) :tool :rect
@@ -485,13 +486,15 @@
      :source layer-source}))
 
 (def icon-size 30)
+(def comment-space (+ (/ icon-size 2) (* 1.25 icon-size)))
+(def icons-offset 10)
 
 (defn hunter-icon-1 [document layer-source viewport]
   (let [browser (browser document layer-source viewport)
         vote-box (vote-box document layer-source viewport)
         browser-width (Math/abs (- (:start-x browser) (:end-x browser)))
         box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
-        start-x (- (:end-x browser) (/ browser-width 4))
+        start-x (- (:end-x browser) icon-size icons-offset comment-space (:x circle-offset))
         end-x (+ start-x icon-size)
         start-y (+ (:start-y vote-box) (/ (- box-height icon-size) 2))
         end-y (+ start-y icon-size)]
@@ -504,7 +507,7 @@
 
 (defn hunter-icon-2 [document layer-source viewport]
   (let [icon-1 (hunter-icon-1 document layer-source viewport)
-        start-x (+ (:start-x icon-1) 10)
+        start-x (+ (:start-x icon-1) icons-offset)
         end-x (+ start-x icon-size)
         start-y (:start-y icon-1)
         end-y (:end-y icon-1)]
