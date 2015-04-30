@@ -68,7 +68,7 @@
                   (= "true" (.. event -target -contentEditable)))
       (when (contains? suppressed-key-combos key-set)
         (.preventDefault event))
-      (when-not (.-repeat event)
+      (when-not (and (.-repeat event) (= "keydown" (.-type event)))
         (cast! :key-state-changed [{:key-set key-set
                                     :code (.-which event)
                                     :depressed? (= direction :down)}])))))
