@@ -1453,11 +1453,25 @@
   [browser-state message _ state]
   (handle-layer-properties-submitted state))
 
-(defn handle-layer-properties-submitted-after [current-state]
-  (let [db (:db current-state)]
-    (d/transact! db [(utils/remove-map-nils
-                      (select-keys (get-in current-state [:layer-properties-menu :layer])
-                                   [:db/id :layer/ui-id :layer/ui-target]))])))
+(def sentinel (js-obj))
+
+(defn handle-layer-properties-submitted-after
+  "Saves ui-id and ui-target. Retracts old values if new values are nil. Retraction is racy."
+  [current-state]
+  (let [db (:db current-state)
+        layer (get-in current-state [:layer-properties-menu :layer])
+        new-id (:layer/ui-id layer sentinel)
+        new-target (:layer/ui-target layer sentinel)]
+    (d/transact! db (concat (when (not (identical? new-id sentinel))
+                              (if (nil? new-id)
+                                (when-let [old-id (:layer/ui-id (d/entity @db (:db/id layer)))]
+                                  [[:db/retract (:db/id layer) :layer/ui-id old-id]])
+                                [[:db/add (:db/id layer) :layer/ui-id new-id]]))
+                            (when (not (identical? new-target sentinel))
+                              (if (nil? new-target)
+                                (when-let [old-target (:layer/ui-target (d/entity @db (:db/id layer)))]
+                                  [[:db/retract (:db/id layer) :layer/ui-target old-target]])
+                                [[:db/add (:db/id layer) :layer/ui-target new-target]]))))))
 
 (defmethod post-control-event! :layer-properties-submitted
   [browser-state message _ previous-state current-state]
