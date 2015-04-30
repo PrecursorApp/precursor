@@ -283,6 +283,7 @@
           {:class (when (= :small size) "small")
            :role "button"
            :data-after "Sign in"
+           :target "_self"
            :href (auth/auth-url :source source)}
           (icon :google-logo)
           [:div.google-text "Sign in with Google"]])))))
