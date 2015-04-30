@@ -96,3 +96,6 @@
 
 (defmacro reporting-future [& body]
   `(future (with-report-exceptions ~@body)))
+
+(defn apply-map [f & args]
+  (apply f (apply concat (butlast args) (last args))))
