@@ -129,6 +129,8 @@
    :pencil      {:paths [:stroke-pencil]}
    :ellipse     {:paths [:stroke-ellipse]}
    :mic         {:paths [:stroke-mic]}
+   :mic-off     {:paths [:stroke-mic
+                         :stroke-slash-backward]}
    :user        {:paths [:stroke-user]}
    :users       {:paths [:stroke-users]}
    :bullet      {:paths [:stroke-dot]}
