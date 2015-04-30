@@ -582,7 +582,7 @@
              :role "button"}
             [:span "Twitter"]]
            [:a.vein.make
-            {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
+            {:href "mailto:hi@precursorapp.com?Subject=I%20have%20feedback"
              :target "_self"
              :role "button"}
             [:span "Email"]]
