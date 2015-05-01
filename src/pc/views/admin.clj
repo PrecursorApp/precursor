@@ -266,6 +266,7 @@
          [:table {:border 1}
           [:tr
            [:th "subdomain"]
+           [:th "doc-count"]
            [:th "status"]
            [:th "coupon"]
            [:th "creator"]
@@ -275,6 +276,7 @@
                 :let [plan (:team/plan team)]]
             [:tr
              [:td (team-link team)]
+             [:td (count (seq (d/datoms db :vaet (:db/id team) :document/team)))]
              [:td (cond (:plan/paid? plan) "paid"
                         (not (plan-model/trial-over? plan)) "trial"
                         :else "trial expired")]
