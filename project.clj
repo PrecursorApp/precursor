@@ -1,6 +1,6 @@
 (defproject pc "0.1.0-SNAPSHOT"
-  :description "CircleCI's frontend app"
-  :url "https://circleci.com"
+  :description "Precursor"
+  :url "https://precursorapp.com"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
