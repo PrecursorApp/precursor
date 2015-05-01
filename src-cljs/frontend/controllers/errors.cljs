@@ -126,12 +126,15 @@
   [container message {:keys [reason sente-event datom-group]} previous-state current-state]
   (chat-model/create-bot-chat (:db current-state)
                               current-state
-                              [:span "There was an error saving some of your recent changes. The affected shapes have been marked with dashed lines. "
+                              [:span "There was an error saving some of your recent changes. Affected shapes are marked with dashed lines. "
                                [:a {:role "button"
                                     :on-click #(put! (get-in current-state [:comms :controls])
                                                      [:retry-unsynced-datoms])}
                                 "Click here to retry"]
-                               ". You may also want to work on the document in a separate tab, in case there are any persistent problems."]
+                               ". You may also want to work on the document in a separate tab, in case there are any persistent problems. "
+                               "Email " [:a {:href "mailto:hi@precursorapp.com?subject=My+changes+aren't+saving"}
+                                         "hi@precursorapp.com"]
+                               " for help."]
                               {:error/id :error/sync-tx-error})
   (d/transact! (:db current-state)
                (mapv (fn [e] [:db/add e :unsaved true])
