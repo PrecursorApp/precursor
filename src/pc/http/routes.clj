@@ -131,6 +131,8 @@
                                                                         (urls/from-doc doc)]])
                  "Document not found")}))))
 
+(def private-layers [{:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 389.5996, :entity/type :layer, :layer/start-y 120.0, :layer/text "Please log in or request access to view it.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 100.0} {:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 373.5547, :entity/type :layer, :layer/start-y 90.0, :layer/text "Sorry, this document is private.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 70.0}])
+
 (defn image-cache-headers [db doc]
   (let [last-modified-instant (or (doc-http/last-modified-instant db doc)
                                   (java.util.Date.))]
@@ -173,13 +175,15 @@
 
           (auth/logged-in? req)
           {:status 403
-           ;; TODO: use an image here
-           :body "Please request permission to access this document"}
+           :headers {"Content-Type" "image/svg+xml"
+                     "Cache-Control" "no-cache; private"}
+           :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))}
 
           :else
           {:status 401
-           ;; TODO: use an image here
-           :body "Please log in so that we can check if you have permission to access this document"})))
+           :headers {"Content-Type" "image/svg+xml"
+                     "Cache-Control" "no-cache; private"}
+           :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))})))
 
 (defpage doc-png "/document/:document-id.png" [req]
   (let [document-id (-> req :params :document-id)
@@ -216,13 +220,19 @@
 
           (auth/logged-in? req)
           {:status 403
-           ;; TODO: use an image here
-           :body "Please request permission to access this document"}
+           :headers {"Content-Type" "image/png"
+                     "Cache-Control" "no-cache; private"}
+           :body (convert/svg->png (render/render-layers private-layers
+                                                         :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                         :size-limit 800))}
 
           :else
           {:status 401
-           ;; TODO: use an image here
-           :body "Please log in so that we can check if you have permission to access this document"})))
+           :headers {"Content-Type" "image/png"
+                     "Cache-Control" "no-cache; private"}
+           :body (convert/svg->png (render/render-layers private-layers
+                                                         :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                         :size-limit 800))})))
 
 (defpage doc-pdf "/document/:document-id.pdf" [req]
   (let [document-id (-> req :params :document-id)
@@ -253,13 +263,17 @@
 
           (auth/logged-in? req)
           {:status 403
-           ;; TODO: use an image here
-           :body "Please request permission to access this document"}
+           :headers {"Content-Type" "application/pdf"
+                     "Cache-Control" "no-cache; private"}
+           :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))
+                                   (render/svg-props private-layers))}
 
           :else
           {:status 401
-           ;; TODO: use an image here
-           :body "Please log in so that we can check if you have permission to access this document"})))
+           :headers {"Content-Type" "application/pdf"
+                     "Cache-Control" "no-cache; private"}
+           :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))
+                                   (render/svg-props private-layers))})))
 
 (defn frontend-response
   "Response to send for requests that the frontend will route"
