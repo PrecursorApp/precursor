@@ -471,6 +471,10 @@
        [:td [:a {:href (urls/svg-from-doc doc)}
              (:db/id doc)]]]
       [:tr
+       [:td "Replay helper"]
+       [:td [:a {:href (str "/replay-helper/" (:db/id doc))}
+             (:db/id doc)]]]
+      [:tr
        [:td "Live doc url"]
        [:td
         "Tiny b/c you could be intruding "
@@ -569,21 +573,34 @@
 
 (defn replay-helper [doc]
   (let [txids (replay/get-document-tx-ids (pcd/default-db) doc)
-        initial-tx (last txids)]
+        initial-tx (last txids)
+        replace-img (fn [txid]
+                      (format "document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) { return m1 + '%s'});"
+                              txid))]
     (list
      [:div {:style "display: inline-block; width: 19%; vertical-align: top;"}
       [:span "Current: " [:span#current-tx initial-tx]]
       [:ol {:style "max-height: 50vh; overflow: scroll"}
        (for [txid txids]
-         [:li {:style "cursor:pointer;"
-               :onClick (str (format "document.getElementById('current-tx').textContent = '%s';"
-                                     txid)
-                             (format "document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) { return m1 + '%s'});"
-                                     txid))}
-          txid])]]
+         [:li
+          [:input {:style "cursor:pointer;border: none;outline: none"
+                   :value txid
+                   :onClick (str (format "document.getElementById('current-tx').textContent = '%s';"
+                                         txid)
+                                 (replace-img txid)
+                                 "this.select()")}]])]]
      [:img#img {:src (urls/svg-from-doc doc :query {:as-of initial-tx})
                 :width "80%"
-                :style "border: 1px solid rgba(0,0,0,0.3)"}])))
+                :style "border: 1px solid rgba(0,0,0,0.3)"}]
+     [:script {:type "text/javascript"}
+      (format
+       "var txids = %s;
+        for (var i=0;i<txids.length;i++) {
+          window.setTimeout((function(i) {
+                             return function() { document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) {return m1 + txids[i]}); document.getElementById('current-tx').textContent = txids[i];}
+                            })(i), i * 250)
+        }"
+       (str "[" (clojure.string/join "," txids) "]"))])))
 
 (defn stripe-events []
   (list
