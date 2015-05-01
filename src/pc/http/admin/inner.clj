@@ -69,18 +69,30 @@
   {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})
 
 (defpage interesting "/interesting" [req]
-  (hiccup/html (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))))
+  (let [db (pcd/default-db)]
+    (hiccup/html (content/layout {} (admin-content/interesting (map (partial d/entity db) (db-admin/interesting-doc-ids {:layer-threshold 10})))))))
 
 (defpage interesting-count [:get "/interesting/:layer-count" {:layer-count #"[0-9]+"}] [layer-count]
-  (hiccup/html (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids (Integer/parseInt layer-count))))))
+  (let [db (pcd/default-db)]
+    (hiccup/html (content/layout {} (admin-content/interesting (map (partial d/entity db) (db-admin/interesting-doc-ids (Integer/parseInt layer-count))))))))
+
+(defpage team-info "/team/:subdomain" [req]
+  (let [team (->> req :params :subdomain (team-model/find-by-subdomain (pcd/default-db)))]
+    (if (seq team)
+      (hiccup/html
+       (content/layout {}
+                       (admin-content/team-info team)))
+      {:status 404
+       :body "Couldn't find that team"})))
 
 (defpage user-activity "/user/:email" [req]
-  (let [cust (->> req :params :email (cust-model/find-by-email (pcd/default-db)))]
+  (let [db (pcd/default-db)
+        cust (->> req :params :email (cust-model/find-by-email db))]
     (if (seq cust)
       (hiccup/html
        (content/layout {}
                        (admin-content/user-info cust)
-                       (admin-content/interesting (take 100 (doc-model/find-touched-by-cust (pcd/default-db) cust)))))
+                       (admin-content/interesting (map (partial d/entity db) (take 100 (doc-model/find-all-touched-by-cust db cust))))))
       {:status 404
        :body "Couldn't find user with that email"})))
 

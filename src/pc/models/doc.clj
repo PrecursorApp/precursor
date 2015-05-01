@@ -79,6 +79,15 @@
                  (not [?doc-id :document/team])]}
        db (:cust/uuid cust)))
 
+(defn find-all-touched-by-cust
+  "Returns document entity ids for every doc touched by the given cust, including team docs"
+  [db cust]
+  (d/q '{:find [[?doc-id ...]]
+         :in [$ ?uuid]
+         :where [[?t :cust/uuid ?uuid]
+                 [?t :transaction/document ?doc-id]]}
+       db (:cust/uuid cust)))
+
 (defn find-touched-by-cust-in-team
   "Returns document entity ids for every doc touched by the given cust in a given team"
   [db cust team]

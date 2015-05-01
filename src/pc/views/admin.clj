@@ -21,14 +21,26 @@
             [pc.stripe.dev :as stripe-dev]
             [ring.util.anti-forgery :as anti-forgery]))
 
-(defn interesting [doc-ids]
+(defn cust-link [cust]
+  [:a {:href (str "/user/" (:cust/email cust))}
+   (:cust/email cust)])
+
+(defn team-link [team]
+  [:a {:href (str "/team/" (:team/subdomain team))}
+   (:team/subdomain team)])
+
+(defn doc-link [doc]
+  [:a {:href (urls/from-doc doc)}
+   (:db/id doc)])
+
+(defn interesting [docs]
   [:div.interesting
-   (if-not (seq doc-ids)
-     [:p "No interesting docs"])
-   (for [doc-id doc-ids]
+   (if-not (seq docs)
+     [:p "Nothing to show"])
+   (for [doc docs]
      [:div.doc-preview
-      [:a {:href (str "/document/" doc-id)}
-       [:img {:src (urls/doc-svg doc-id)}]]])])
+      [:a {:href (str "/document/" (:db/id doc))}
+       [:img {:src (urls/svg-from-doc doc)}]]])])
 
 (defn count-users [db time]
   (count (seq (d/datoms (d/as-of db (clj-time.coerce/to-date time))
@@ -262,25 +274,17 @@
           (for [team teams
                 :let [plan (:team/plan team)]]
             [:tr
-             [:td [:a {:href (urls/root :subdomain (h/h (:team/subdomain team)))}
-                   (h/h (:team/subdomain team))]]
+             [:td (team-link team)]
              [:td (cond (:plan/paid? plan) "paid"
                         (not (plan-model/trial-over? plan)) "trial"
                         :else "trial expired")]
              [:td (:discount/coupon (:team/plan team))]
-             [:td [:a {:href (str "/user/" (:cust/email (:team/creator team)))}
-                   (:cust/email (:team/creator team))]]
+             [:td (cust-link (:team/creator team))]
              [:td (let [active (:plan/active-custs plan)]
-                    (interleave (map (fn [cust]
-                                       [:a {:href (str "/user/" (:cust/email cust))}
-                                        (:cust/email cust)])
-                                     active)
+                    (interleave (map cust-link active)
                                 (repeat " ")))]
              [:td (let [permissions (permission-model/find-by-team db team)]
-                    (interleave (map (fn [p] (let [cust (:permission/cust-ref p)]
-                                               [:a {:href (str "/user/" (:cust/email cust))}
-                                                (:cust/email cust)]))
-                                     permissions)
+                    (interleave (map (comp cust-link :permission/cust-ref) permissions)
                                 (repeat " ")))]])]])))))
 
 (defn format-runtime [ms]
@@ -480,6 +484,43 @@
                         email]
                        (some-> chat :session/uuid str (subs 0 5)))])
               [:td (h/h (:chat/body chat))]])]))))))
+
+(defn team-info [team]
+  (let [db (pcd/default-db)
+        team-docs (map (comp (partial d/entity db) :e)
+                       (d/datoms db :vaet (:db/id team) :document/team))]
+    (def myteamdocs team-docs)
+    (list
+     [:style "td, th { padding: 5px; text-align: left }"]
+     [:table {:border 1}
+      [:tr
+       [:td "Subdomain"]
+       [:td (:team/subdomain team)]]
+      [:tr
+       [:td "Creator"]
+       [:td (cust-link (:team/creator team))]]
+      (let [active (:plan/active-custs (:team/plan team))]
+        [:tr
+         [:td (str "Active members (" (count active) ")")]
+         [:td (interleave (map cust-link (sort-by :cust/email active))
+                          (repeat " "))]])
+      (let [members (map :permission/cust-ref (permission-model/find-by-team db team))]
+        [:tr
+         [:td (str "All members (" (count members) ")")]
+         [:td (interleave (map cust-link (sort-by :cust/email members))
+                          (repeat " "))]])
+      [:tr
+       [:td "Created instant"]
+       [:td (d/q '[:find ?inst .
+                   :in $ ?uuid
+                   :where
+                   [?e :team/uuid ?uuid ?tx]
+                   [?tx :db/txInstant ?inst]]
+                 db (:team/uuid team))]]
+      [:tr
+       [:td "Doc count"]
+       [:td (count team-docs)]]]
+     (interesting team-docs))))
 
 (defn upload-files []
   (let [bucket "precursor"
