@@ -193,6 +193,12 @@
               :db/index true
               :db/doc "invalid document/id that was migrated")
 
+   (attribute :document/tags
+              :db.type/string
+              :db/cardinality :db.cardinality/many
+              :db/index true
+              :db/doc "Tag for a doc")
+
    (attribute :chat/body
               :db.type/string
               :metadata/unescaped true)

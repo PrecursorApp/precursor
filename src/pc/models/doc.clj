@@ -113,6 +113,12 @@
                          [?t :db/txInstant ?i]]}
                db doc-id)))
 
+(defn add-tag [doc tag]
+  @(d/transact (pcd/conn) [[:db/add (:db/id doc) :document/tags tag]]))
+
+(defn remove-tag [doc tag]
+  @(d/transact (pcd/conn) [[:db/retract (:db/id doc) :document/tags tag]]))
+
 (defn read-api [doc]
   (-> doc
     (select-keys [:db/id
