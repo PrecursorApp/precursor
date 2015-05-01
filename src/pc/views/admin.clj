@@ -416,7 +416,15 @@
   (let [db (pcd/default-db)]
     (list
      [:style "td, th { padding: 5px; text-align: left }"]
+     (when-not (contains? (:document/tags doc) "admin/interesting")
+       [:form {:action (str "/document/" (:db/id doc) "/mark-interesting")
+               :method "post"}
+        (anti-forgery/anti-forgery-field)
+        [:input {:type "submit" :value "Mark interesting"}]])
      [:table {:border 1}
+      [:tr
+       [:td "Tags"]
+       [:td (:document/tags doc)]]
       [:tr
        [:td "Chat count"]
        [:td (count (seq (d/datoms db :vaet (:db/id doc) :chat/document)))]]
@@ -434,7 +442,7 @@
               (cust-model/find-by-uuid db)
               :cust/email
               ((fn [e]
-                  [:a {:href (str "/user/" e)} e])))]]
+                 [:a {:href (str "/user/" e)} e])))]]
       (let [emails (d/q '{:find [[?email ...]]
                           :in [$ ?doc-id]
                           :where [[?t :transaction/document ?doc-id]

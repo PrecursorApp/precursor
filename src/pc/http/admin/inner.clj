@@ -21,6 +21,7 @@
             [pc.views.admin :as admin-content]
             [pc.views.content :as content]
             [ring.middleware.anti-forgery]
+            [ring.util.response :refer (redirect)]
             [slingshot.slingshot :refer (try+ throw+)])
   (:import java.util.UUID))
 
@@ -35,6 +36,7 @@
                                 [:div [:a {:href "/clients"} "Clients"]]
                                 [:div [:a {:href "/occupied"} "Occupied"]]
                                 [:div [:a {:href "/interesting"} "Interesting"]]
+                                [:div [:a {:href "/tagged"} "Tagged"]]
                                 [:div [:a {:href "/upload"} "Upload to Google CDN"]]
                                 (when (profile/fetch-stripe-events?)
                                   [:div [:a {:href "/stripe-events"} "View Stripe events"]])
@@ -71,6 +73,13 @@
 (defpage interesting "/interesting" [req]
   (let [db (pcd/default-db)]
     (hiccup/html (content/layout {} (admin-content/interesting (map (partial d/entity db) (db-admin/interesting-doc-ids {:layer-threshold 10})))))))
+
+(defpage tagged "/tagged" [req]
+  (let [db (pcd/default-db)]
+    (hiccup/html
+     (content/layout {} (admin-content/interesting
+                         (map (comp (partial d/entity db) :e)
+                              (d/datoms db :avet :document/tags "admin/interesting")))))))
 
 (defpage interesting-count [:get "/interesting/:layer-count" {:layer-count #"[0-9]+"}] [layer-count]
   (let [db (pcd/default-db)]
@@ -211,6 +220,11 @@
     (billing-dev/remove-billing-cust-from-team team email)
     {:status 200
      :body (str "removed " email " from " subdomain " team")}))
+
+(defpage mark-interesting [:post "/document/:doc-id/mark-interesting"] [req]
+  (let [doc (->> req :params :doc-id (Long/parseLong) (doc-model/find-by-id (pcd/default-db)))]
+    (doc-model/add-tag doc "admin/interesting")
+    (redirect (str "/document/" (:db/id doc)))))
 
 (defn wrap-require-login [handler]
   (fn [req]
