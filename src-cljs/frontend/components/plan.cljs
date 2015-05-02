@@ -49,7 +49,7 @@
     (render-state [_ {:keys [history]}]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           (if (nil? history)
             [:div.content.make.loading {:key "loading"} "Loading..."]
             [:div.content {:key "history"}
@@ -77,7 +77,7 @@
       (let [{:keys [cast! team-db]} (om/get-shared owner)
             active (:plan/active-custs plan)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           (if (seq active)
             [:div.content {:key "active"}
              [:div.content.make
@@ -159,7 +159,7 @@
                               (sort-by :invoice/date)
                               reverse)]
         (html
-          [:div.menu-view
+          [:section.menu-view
            (if (< 0 (count sorted-invoices))
 
              [:table.invoices-table
@@ -190,7 +190,7 @@
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         [:div.menu-view.credit-card
+         [:section.menu-view.credit-card
           [:div.content.make
            [:div.disabled-input {:data-after "Credit Card"}
             [:span.secret-card-number "•••• •••• •••• "]
@@ -215,7 +215,7 @@
                            (om/set-state! owner :editing-email? false)
                            (om/set-state! owner :new-email ""))]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content.make
            [:form.menu-invite-form
             [:input {:type "text"
@@ -243,7 +243,7 @@
             {:keys [coupon/duration-in-months
                     coupon/stripe-id coupon/percent-off]} (:discount/coupon plan)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content.make
            "You have the " stripe-id " coupon, which gives you " percent-off "% off for the first "
            duration-in-months " months."]
@@ -342,7 +342,7 @@
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.divider.make]
           (if (:plan/paid? plan)
             (om/build paid-summary {:plan plan :team-uuid team-uuid} {:react-key "paid-summary"})

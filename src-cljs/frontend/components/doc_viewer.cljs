@@ -23,7 +23,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:h2.make
             "Keep track of all the ideas you make."]
@@ -86,7 +86,7 @@
                              (reverse)
                              (take 100)))]
         (html
-         [:div.menu-view
+         [:section.menu-view
           {:class (when (nil? app-docs) "loading")}
           [:div.content
            (if (seq display-docs)

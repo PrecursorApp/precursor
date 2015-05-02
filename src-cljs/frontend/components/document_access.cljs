@@ -37,7 +37,7 @@
             document (d/entity @db doc-id)
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:h2.make "This document is " (if (:document/privacy document)
                                            (name (:document/privacy document))
@@ -109,8 +109,8 @@
             {pending-requests false denied-requests true} (group-by #(= :access-request.status/denied (:access-request/status %))
                                                                     access-requests)]
         (html
-         [:div.menu-view
-          [:div.menu-view-frame
+         [:section.menu-view
+          [:section.menu-view-frame
            [:article
             [:label
              [:input {:type "checkbox"
