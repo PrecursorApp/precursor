@@ -67,8 +67,7 @@
                                                :camera (:camera app)}
                         {:react-key "signup-animation"}))
 
-            (when overlay-visible?
-              (om/build overlay/overlay app {:react-key "overlay"}))
+            (om/build overlay/overlay app {:react-key "overlay"})
 
             [:div.inner {:on-click (when overlay-visible?
                                      #(cast! :overlay-closed))
