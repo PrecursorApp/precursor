@@ -39,12 +39,20 @@
                                StandardWatchEventKinds/ENTRY_DELETE
                                StandardWatchEventKinds/ENTRY_MODIFY]))
 
+(defn strip-ansi-escape-codes [s]
+  (str/replace s #"\\[\d+m" ""))
+
+(defn cssify-newlines [s]
+  (str/replace s #"\n" "\\\\a "))
+
 (defn compile! [& {:keys [src dest]
                    :or {src less-file dest output-file}}]
   (let [cmd (format "%s %s %s" lessc-path (lessc-options dest output-dir) src dest)
         res (shell/sh "bash" "-c" cmd)]
     (if (not= 0 (:exit res))
-      (throw (Exception. (format "Couldn't compile less with %s returned exit code %s: %s %s" cmd (:exit res) (:out res) (:err res))))
+      (do
+        (spit dest (format "body:before { white-space: pre; content: \"%s\" }" (-> res :err strip-ansi-escape-codes cssify-newlines)))
+        (throw (Exception. (format "Couldn't compile less with %s returned exit code %s: %s %s" cmd (:exit res) (:out res) (:err res)))))
       (spit dest (:out res)))))
 
 (defn ->path [path]
