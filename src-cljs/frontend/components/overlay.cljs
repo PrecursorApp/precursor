@@ -153,7 +153,11 @@
              :role "button"}
             (common/icon :command)
             [:span "Shortcuts"]]
-           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
+
+
+           ; (om/build auth-link app {:opts {:source "start-overlay"}})
+
+           ])))))
 
 
 (defn private-sharing [app owner]
