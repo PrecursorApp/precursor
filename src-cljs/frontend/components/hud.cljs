@@ -73,7 +73,9 @@
                           (if roster-visible? "Close Menu" "Open Menu"))
             :title (when main-menu-learned?
                      (if roster-visible? "Close Menu" "Open Menu"))}
-           (common/icon :menu)])))))
+           (if roster-visible?
+             (common/icon :menu)
+             (common/icon :users))])))))
 
 (defn mouse-stats [_ owner]
   (reify
@@ -312,7 +314,7 @@
             :data-count (when (< 1 viewers-count) viewers-count)
             :role "button"}
            (common/icon :times)
-           (common/icon :users)]])))))
+           (common/icon :user)]])))))
 
 (defn hud [app owner]
   (reify
