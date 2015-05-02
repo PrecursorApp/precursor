@@ -6,7 +6,6 @@
     .shadow_canvas();
     cursor: pointer;
     background: @dye_outer;
-    transition: @run_slower @bezier_deform;
     &:hover {
       .shadow_canvas(hover);
       transition-duration: @run;
@@ -20,8 +19,8 @@
     pointer-events: none;
   }
   .canvas-background {
-    transform: scale3d(.6, 0, 1);
-    transition-duration: @run_slow;
+    transform: scale3d(.8, 0, 1);
+    transition-duration: @run;
   }
   .layer {
     .layer-outline,
