@@ -100,7 +100,7 @@
   left: 0;
   width: 100%;
   transition: @run_slow @bezier_deform;
-  &:not(:first-child) {
+  &:not(:first-of-type) {
     margin-left: -100%;
   }
   &:not(:last-of-type) {
@@ -108,8 +108,8 @@
     opacity: 0;
     visibility: hidden;
   }
-  &:last-child {
-    &:only-child {
+  &:last-of-type {
+    &:only-of-type {
       .make {
         animation-name: in-fade-left;
         animation-duration: @run_slow;
@@ -117,8 +117,8 @@
       }
     }
   }
-  &:not(:only-child) {
-    &:not(:first-child) {
+  &:not(:only-of-type) {
+    &:not(:first-of-type) {
       .make {
         animation-name: in-fade-right;
         animation-duration: @run_slow;
