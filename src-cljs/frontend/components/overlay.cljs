@@ -1,4 +1,4 @@
-(ns frontend.components.overlay
+(ns ^:figwheel-always frontend.components.overlay
   (:require [cemerick.url :as url]
             [clojure.set :as set]
             [clojure.string :as str]
