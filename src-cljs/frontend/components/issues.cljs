@@ -52,7 +52,12 @@
     (render [_]
       (let [issue (d/entity @issue-db issue-id)]
         (html
-         [:div (:issue/title issue)])))))
+         [:div
+          (:issue/title issue)
+          " "
+          [:span {:on-click #(d/transact! issue-db [[:db.fn/retractEntity issue-id]])
+                  :style {:cursor "pointer"}}
+           "X"]])))))
 
 (defn issues [app owner]
   (reify
@@ -83,15 +88,14 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
-            issue-ids (map :e (d/datoms @issue-db :aevt :frontend/issue-id))]
+            issue-ids (map :e (d/datoms @issue-db :aevt :issue/title))]
         (html
          [:div.menu-view
           [:div.content.make
-           [:p.make
+           [:div.make
             (om/build issue-form {} {:opts {:issue-db issue-db}})]
-           (when (seq issue-ids)
-             (om/build-all issue (map (fn [i] {:issue-id i}) issue-ids)
-                           {:key :issue-id
-                            :opts {:issue-db issue-db}}))
-           [:p.make
-            "Ids: " issue-ids]]])))))
+           [:div.make
+            (when (seq issue-ids)
+              (om/build-all issue (map (fn [i] {:issue-id i}) (sort issue-ids))
+                            {:key :issue-id
+                             :opts {:issue-db issue-db}}))]]])))))

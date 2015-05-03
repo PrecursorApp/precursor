@@ -94,9 +94,10 @@
 (defn can-modify?
   "If the user has read scope, makes sure that they don't modify existing txes"
   [db document-id scope {:keys [remainder multiple]} [type e a v :as transaction]]
-  (cond (= scope :admin) true
+  (cond (= scope :admin) (contains? #{:db/add :db/retract} type)
         (= scope :read) (and (= remainder (mod e multiple))
-                             (not (web-peer/taken-id? db document-id e)))))
+                             (not (web-peer/taken-id? db document-id e))
+                             (contains? #{:db/add :db/retract} type))))
 
 (defn remove-float-conflicts [txes]
   (vals (reduce (fn [tx-index [type e a v :as tx]]
@@ -191,11 +192,13 @@
     [type e a (:db/id cust)]
     transaction))
 
-;; XXX: some things can only be added (e.g. cust)
+;; XXX: some things can only be added (e.g. cust, created-at)
 (defn issue-can-modify? [db cust [type e a v :as transaction]]
   (and (vector? e)
        (= 2 (count e))
        (= :frontend/issue-id (first e))
+       (or (not= :frontend/issue-id a) (not= :db/retract type))
+       (contains? #{:db/add :db/retract} type)
        (if-let [ent (d/entity db (d/datoms db :avet :frontend/issue-id (second e)))]
          (or (= (:db/id cust) (:db/id (:issue/creator ent)))
              (= (:db/id cust) (:db/id (:vote/cust ent)))
@@ -250,6 +253,4 @@
                                              :transaction/broadcast true
                                              :transaction/issue-tx? true
                                              :cust/uuid (:cust/uuid cust)})])
-                            (d/transact conn)
-                            deref
-                            (pc.utils/inspect)))}}))
+                            (d/transact conn)))}}))
