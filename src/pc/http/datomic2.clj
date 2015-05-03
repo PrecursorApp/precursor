@@ -204,7 +204,7 @@
          true)))
 
 (defn add-issue-frontend-ids [txes]
-  (let [eid-map (pc.utils/inspect (zipmap (set (map (comp second second) txes)) (repeatedly #(d/tempid :db.part/user))))
+  (let [eid-map (zipmap (set (map (comp second second) txes)) (repeatedly #(d/tempid :db.part/user)))
         ;; matches tempid with issue-id
         ;; TODO: should we use value for identity type and look up ids?
         frontend-id-txes (map (fn [[frontend-id tempid]] [:db/add tempid :frontend/issue-id frontend-id]) eid-map)]
