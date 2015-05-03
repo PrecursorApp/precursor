@@ -114,7 +114,7 @@
 (defn invoice-component [{:keys [invoice-id team-uuid]} owner]
   (reify
     om/IInitState
-    (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
       (fdb/add-entity-listener (om/get-shared owner :team-db)
@@ -411,7 +411,7 @@
 (defn plan-menu [app owner {:keys [submenu]}]
   (reify
     om/IInitState
-    (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
       (fdb/add-attribute-listener (om/get-shared owner :team-db)
