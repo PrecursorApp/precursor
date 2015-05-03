@@ -61,7 +61,7 @@
             10000
             (fn [reply]
               (if (sente/cb-success? reply)
-                (d/transact! issue-db (utils/inspect (:entities reply)) {:server-update true})
+                (d/transact! issue-db (:entities reply) {:server-update true})
                 (put! (:errors comms) [:subscribe-to-issues-error])))))
 
 (defn fetch-subscribers [sente-state document-id]
@@ -85,6 +85,12 @@
 (defmethod handle-message :team/transaction [app-state message data]
   (let [datoms (:tx-data data)]
     (d/transact! (:team-db @app-state)
+                 (map ds/datom->transaction datoms)
+                 {:server-update true})))
+
+(defmethod handle-message :issue/transaction [app-state message data]
+  (let [datoms (:tx-data data)]
+    (d/transact! (:issue-db @app-state)
                  (map ds/datom->transaction datoms)
                  {:server-update true})))
 

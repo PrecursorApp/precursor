@@ -1,6 +1,7 @@
 (ns frontend.utils
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as string]
+            [datascript :as d]
             [frontend.async :refer [put!]]
             [om.core :as om :include-macros true]
             [ajax.core :as ajax]

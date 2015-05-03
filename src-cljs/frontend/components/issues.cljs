@@ -57,32 +57,32 @@
 (defn issues [app owner]
   (reify
     om/IInitState
-    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
-                     ;; Make sure we don't leak memory here
-                     :issue-db (fdb/make-initial-db nil)})
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (def _issue-db (om/get-shared owner :issue-db))
       (fdb/setup-issue-listener!
-       (om/get-state owner :issue-db)
+       (om/get-shared owner :issue-db)
        (om/get-state owner :listener-key)
        (om/get-shared owner :comms)
        (om/get-shared owner :sente))
-      (fdb/add-attribute-listener (om/get-state owner :issue-db)
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
                                   :frontend/issue-id
                                   (om/get-state owner :listener-key)
                                   (fn [tx-report]
                                     (om/refresh! owner)))
       (sente/subscribe-to-issues (:sente app)
                                  (om/get-shared owner :comms)
-                                 (om/get-state owner :issue-db)))
+                                 (om/get-shared owner :issue-db)))
     om/IWillUnmount
     (will-unmount [_]
-      (fdb/remove-attribute-listener (om/get-state owner :issue-db)
+      (d/unlisten! (om/get-shared owner :issue-db) (om/get-state owner :listener-key))
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
                                      :frontend/issue-id
                                      (om/get-state owner :listener-key)))
-    om/IRenderState
-    (render-state [_ {:keys [issue-db]}]
-      (let [{:keys [cast!]} (om/get-shared owner)
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue-ids (map :e (d/datoms @issue-db :aevt :frontend/issue-id))]
         (html
          [:div.menu-view
