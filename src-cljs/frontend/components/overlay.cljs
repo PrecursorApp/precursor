@@ -10,6 +10,7 @@
             [frontend.components.connection :as connection]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.issues :as issues]
             [frontend.components.permissions :as permissions]
             [frontend.components.plan :as plan]
             [frontend.components.team :as team]
@@ -106,54 +107,60 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-          [:div.menu-view
-           [:a.vein.make
-            {:on-click         #(cast! :overlay-info-toggled)
-             :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
-             :role "button"}
-            (common/icon :info)
-            [:span "About"]]
-           [:a.vein.make
-            {:href "/new"
-             :role "button"}
-            (common/icon :plus)
-            [:span "New"]]
-           [:a.vein.make
-            {:on-click         #(cast! :your-docs-opened)
-             :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
-             :role "button"}
-            (common/icon :docs)
-            [:span "Documents"]]
-           ;; TODO: should this use the permissions model? Would have to send some
-           ;;       info about the document
-           (if (auth/has-document-access? app (:document/id app))
-             [:a.vein.make
-              {:on-click         #(cast! :sharing-menu-opened)
-               :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
-               :role "button"}
-              (common/icon :sharing)
-              [:span "Sharing"]]
+         [:div.menu-view
+          [:a.vein.make
+           {:on-click         #(cast! :overlay-info-toggled)
+            :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
+            :role "button"}
+           (common/icon :info)
+           [:span "About"]]
+          [:a.vein.make
+           {:href "/new"
+            :role "button"}
+           (common/icon :plus)
+           [:span "New"]]
+          [:a.vein.make
+           {:on-click         #(cast! :your-docs-opened)
+            :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
+            :role "button"}
+           (common/icon :docs)
+           [:span "Documents"]]
+          [:a.vein.make
+           {:on-click         #(cast! :issues-opened)
+            :on-touch-end #(do (cast! :issues-opened) (.preventDefault %))
+            :role "button"}
+           (common/icon :docs)
+           [:span "Issues"]]
+          ;; TODO: should this use the permissions model? Would have to send some
+          ;;       info about the document
+          (if (auth/has-document-access? app (:document/id app))
+            [:a.vein.make
+             {:on-click         #(cast! :sharing-menu-opened)
+              :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
+              :role "button"}
+             (common/icon :sharing)
+             [:span "Sharing"]]
 
-             [:a.vein.make
-              {:on-click         #(cast! :document-permissions-opened)
-               :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
-               :role "button"}
-              (common/icon :users)
-              [:span "Request Access"]])
-           [:a.vein.make
-            {:on-click         #(cast! :export-menu-opened)
-             :on-touch-end #(do (cast! :export-menu-opened) (.preventDefault %))
-             :role "button"}
-            (common/icon :download)
-            [:span "Export"]]
-           [:a.vein.make
-            {:on-click         #(cast! :shortcuts-menu-opened)
-             :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
-             :class "mobile-hidden"
-             :role "button"}
-            (common/icon :command)
-            [:span "Shortcuts"]]
-           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
+            [:a.vein.make
+             {:on-click         #(cast! :document-permissions-opened)
+              :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
+              :role "button"}
+             (common/icon :users)
+             [:span "Request Access"]])
+          [:a.vein.make
+           {:on-click         #(cast! :export-menu-opened)
+            :on-touch-end #(do (cast! :export-menu-opened) (.preventDefault %))
+            :role "button"}
+           (common/icon :download)
+           [:span "Export"]]
+          [:a.vein.make
+           {:on-click         #(cast! :shortcuts-menu-opened)
+            :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
+            :class "mobile-hidden"
+            :role "button"}
+           (common/icon :command)
+           [:span "Shortcuts"]]
+          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
 
 
 (defn private-sharing [app owner]
@@ -744,7 +751,7 @@
    :sharing {:title "Sharing"
              :component sharing}
    :export {:title "Export Document"
-             :component export}
+            :component export}
    :username {:component username}
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
@@ -763,7 +770,10 @@
    :request-team-access {:title "Request Access"
                          :component team/request-access}
    :plan {:title "Billing"
-          :component plan/plan-menu}})
+          :component plan/plan-menu}
+
+   :issues {:title "Issues"
+            :component issues/issues}})
 
 (defn namespaced? [kw]
   (namespace kw))
