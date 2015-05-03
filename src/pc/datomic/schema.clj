@@ -800,7 +800,7 @@
    (attribute :issue/created-at
               :db.type/instant)
 
-   (attribute :issue/frontend-id
+   (attribute :frontend/issue-id
               :db.type/uuid
               :db/unique :db.unique/identity)
 
@@ -814,15 +814,9 @@
               :db/cardinality :db.cardinality/many
               :db/doc "Comments on an issue")
 
-
    (attribute :vote/cust
               :db.type/ref
               :db/doc "Cust who voted for the issue")
-
-   (attribute :vote/frontend-id
-              :db.type/uuid
-              :db/unique :db.unique/identity)
-
 
    (attribute :comment/cust
               :db.type/ref
@@ -839,10 +833,6 @@
 
    (attribute :comment/created-at
               :db.type/instant)
-
-   (attribute :comment/frontend-id
-              :db.type/uuid
-              :db/unique :db.unique/identity)
    ])
 
 (defonce schema-ents (atom nil))

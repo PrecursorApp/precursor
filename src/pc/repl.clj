@@ -19,6 +19,7 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.flag :as flag-model]
+            [pc.models.issue :as issue-model]
             [pc.models.layer :as layer-model]
             [pc.models.permission :as permission-model]
             [pc.models.plan :as plan-model]

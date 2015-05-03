@@ -179,15 +179,15 @@
 
 (defmethod translate-datom :comment/parent [db d]
   (-> d
-    (assoc :v [:comment/frontend-id (:comment/frontend-id (d/entity db (:v d)))])))
+    (assoc :v [:frontend/issue-id (:frontend/issue-id (d/entity db (:v d)))])))
 
 (defmethod translate-datom :issue/comments [db d]
   (-> d
-    (assoc :v [:comment/frontend-id (:comment/frontend-id (d/entity db (:v d)))])))
+    (assoc :v [:frontend/issue-id (:frontend/issue-id (d/entity db (:v d)))])))
 
 (defmethod translate-datom :issue/votes [db d]
   (-> d
-    (assoc :v [:vote/frontend-id (:vote/frontend-id (d/entity db (:v d)))])))
+    (assoc :v [:frontend/issue-id (:frontend/issue-id (d/entity db (:v d)))])))
 
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
@@ -238,20 +238,18 @@
                                 annotations)}))))
 
 (def issue-whitelist #{:vote/cust
-                       :vote/frontend-id
                        :comment/body
                        :comment/cust
                        :comment/created-at
-                       :comment/frontend-id
                        :comment/parent
                        :issue/title
                        :issue/description
                        :issue/author
                        :issue/document
                        :issue/created-at
-                       :issue/frontend-id
                        :issue/votes
-                       :issue/comments})
+                       :issue/comments
+                       :frontend/issue-id})
 
 (defn issue-whitelisted? [datom]
   (contains? issue-whitelist (:a datom)))
@@ -276,12 +274,8 @@
   (let [annotations (get-annotations transaction)
         frontend-id-memo (memoize (fn [db e]
                                     (let [ent (d/entity db e)]
-                                      (or (when-let [id (:issue/frontend-id e)]
-                                            [:issue/frontend-id id])
-                                          (when-let [id (:comment/frontend-id e)]
-                                            [:comment/frontend-id id])
-                                          (when-let [id (:vote/frontend-id e)]
-                                            [:vote/frontend-id (:vote/frontend-id e)])))))]
+                                      (when-let [id (:frontend/issue-id e)]
+                                        [:frontend/issue-id id]))))]
     (when (and (:transaction/issue-tx? annotations)
                (:transaction/broadcast annotations))
       (when-let [public-datoms (->> transaction

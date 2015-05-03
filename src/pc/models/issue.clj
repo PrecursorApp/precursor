@@ -4,12 +4,12 @@
             [datomic.api :refer [db q] :as d]))
 
 (defn all [db]
-  (map #(d/entity db (:e %)) (d/datoms db :aevt :issue/frontend-id)))
+  (map #(d/entity db (:e %)) (d/datoms db :aevt :frontend/issue-id)))
 
 (defn vote-read-api [vote]
   (-> vote
     (select-keys [:vote/cust
-                  :vote/frontend-id])
+                  :frontend/issue-id])
     (update-in [:vote/cust] :cust/email)))
 
 (defn comment-read-api [comment]
@@ -18,8 +18,9 @@
                   :comment/cust
                   :comment/created-at
                   :comment/frontend-id
-                  :comment/parent])
-    (utils/update-when-in [:comment/parent] :comment/frontend-id)))
+                  :comment/parent
+                  :frontend/issue-id])
+    (utils/update-when-in [:comment/parent] :frontend/issue-id)))
 
 (defn read-api [issue]
   (-> issue
@@ -28,9 +29,9 @@
                   :issue/author
                   :issue/document
                   :issue/created-at
-                  :issue/frontend-id
                   :issue/votes
-                  :issue/comments])
+                  :issue/comments
+                  :frontend/issue-id])
     (utils/update-when-in [:issue/document] :db/id)
     (utils/update-when-in [:issue/author] :cust/email)
     (utils/update-when-in [:issue/votes] #(set (map vote-read-api %)))
