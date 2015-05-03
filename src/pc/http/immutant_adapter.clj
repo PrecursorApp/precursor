@@ -11,7 +11,10 @@
   (send!* [im-ch msg close-after-send? on-complete]
     (let [queued? (immutant/send! im-ch msg (merge {:close? close-after-send?}
                                                    (when on-complete
-                                                     {:on-complete on-complete})))]
+                                                     {:on-success on-complete
+                                                      :on-error (fn [throwable]
+                                                                  (log/error throwable)
+                                                                  (on-complete))})))]
       (when (and (not queued?)
                  on-complete)
         (on-complete ::closed)))))

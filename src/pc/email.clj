@@ -6,7 +6,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [datomic.api :as d]
-            [fs]
+            [me.raynes.fs :as fs]
             [hiccup.core :as hiccup]
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
@@ -217,7 +217,7 @@
                        :subject "Precursor Invoice"
                        :text (str "You have a new invoice for the " (:team/subdomain team) " team.")
                        :html (view/invoice-html team invoice)
-                       :attachments (let [temp (fs/tempfile)]
+                       :attachments (let [temp (fs/temp-file)]
                                       ;; only supports files :(
                                       (invoice-view/render-pdf team invoice temp)
                                       [{:content temp

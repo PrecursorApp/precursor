@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [pc.profile]
-            [fs])
+            [me.raynes.fs :as fs])
   (:import [java.nio.file
             Path Paths FileSystems WatchEvent$Kind StandardWatchEventKinds
             Files WatchService FileVisitor FileVisitResult LinkOption]
