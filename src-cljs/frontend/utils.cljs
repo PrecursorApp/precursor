@@ -255,3 +255,26 @@
     (set-canvas-font font-size font-family)
     (.measureText text)
     (.-width)))
+
+(defn to-hex-string [n l]
+  (let [s (.toString n 16)
+        c (count s)]
+    (cond
+      (> c l) (subs s 0 l)
+      (< c l) (str (apply str (repeat (- l c) "0")) s)
+      :else   s)))
+
+(defn squuid []
+  (if js/window.crypto
+    (let [[b1 b2 b3 b4 b5 b6] (array-seq (js/window.crypto.getRandomValues (js/Uint16Array. 6)) 0)]
+      (UUID.
+       (str
+        (-> (js/Date.) (.getTime) (/ 1000) (Math/round) (to-hex-string 8))
+        "-" (-> b1 (to-hex-string 4))
+        "-" (-> b2 (bit-and 0x0FFF) (bit-or 0x4000) (to-hex-string 4))
+        "-" (-> b3 (bit-and 0x3FFF) (bit-or 0x8000) (to-hex-string 4))
+        "-" (-> b4 (to-hex-string 4))
+        (-> b5 (to-hex-string 4))
+        (-> b6 (to-hex-string 4)))))
+    ;; Generates a squuid with Math.random
+    (d/squuid)))

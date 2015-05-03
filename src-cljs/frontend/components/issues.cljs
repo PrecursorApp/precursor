@@ -16,25 +16,61 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
+(defn issue-form [_ owner {:keys [issue-db]}]
+  (reify
+    om/IInitState (init-state [_] {:issue-title ""})
+    om/IRenderState
+    (render-state [_ {:keys [issue-title]}]
+      (html
+       [:form {:on-submit #(do (utils/stop-event %)
+                               (when (seq issue-title)
+                                 (d/transact! issue-db [{:db/id -1
+                                                         :issue/title issue-title
+                                                         :frontend/issue-id (utils/squuid)}])
+                                 (om/set-state! owner :issue-title "")))}
+        [:input {:type "text"
+                 :value issue-title
+                 :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]]))))
+
+(defn issue [{:keys [issue-id]} owner {:keys [issue-db]}]
+  (reify
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-entity-listener issue-db
+                               issue-id
+                               (om/get-state owner :listener-key)
+                               (fn [tx-report]
+                                 (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-entity-listener issue-db
+                                  issue-id
+                                  (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [issue (d/entity @issue-db issue-id)]
+        (html
+         [:div (:issue/title issue)])))))
+
 (defn issues [app owner]
   (reify
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                     ;; Make sure we don't leak memory here
                      :issue-db (fdb/make-initial-db nil)})
     om/IDidMount
     (did-mount [_]
-      (fdb/setup-listener! (om/get-state owner :issue-db)
-                           (om/get-state owner :listener-key)
-                           (om/get-shared owner :comms)
-                           :issue/transaction
-                           {}
-                           (atom {})
-                           (om/get-shared owner :sente))
+      (fdb/setup-issue-listener!
+       (om/get-state owner :issue-db)
+       (om/get-state owner :listener-key)
+       (om/get-shared owner :comms)
+       (om/get-shared owner :sente))
       (fdb/add-attribute-listener (om/get-state owner :issue-db)
-                                  :issue/frontend-id
+                                  :frontend/issue-id
                                   (om/get-state owner :listener-key)
                                   (fn [tx-report]
-                                    tx-report
                                     (om/refresh! owner)))
       (sente/subscribe-to-issues (:sente app)
                                  (om/get-shared owner :comms)
@@ -42,13 +78,20 @@
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-attribute-listener (om/get-state owner :issue-db)
-                                     :issue/frontend-id
+                                     :frontend/issue-id
                                      (om/get-state owner :listener-key)))
     om/IRenderState
     (render-state [_ {:keys [issue-db]}]
       (let [{:keys [cast!]} (om/get-shared owner)
-            issue-ids (map :e (d/datoms @issue-db :aevt :issue/frontend-id))]
+            issue-ids (map :e (d/datoms @issue-db :aevt :frontend/issue-id))]
         (html
          [:div.menu-view
           [:div.content.make
-           "Ids: " issue-ids]])))))
+           [:p.make
+            (om/build issue-form {} {:opts {:issue-db issue-db}})]
+           (when (seq issue-ids)
+             (om/build-all issue (map (fn [i] {:issue-id i}) issue-ids)
+                           {:key :issue-id
+                            :opts {:issue-db issue-db}}))
+           [:p.make
+            "Ids: " issue-ids]]])))))
