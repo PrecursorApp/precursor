@@ -4,10 +4,14 @@
   position: fixed;
   color: @gray_light;
   top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  transition: @run @bezier_deform;
-  will-change: transform;
+  margin-left: 0;
+  transition+: transform @run_fast @now ease-out;
+  transition+: margin @run_fast @now ease-out;
+  will-change+: transform;
+  will-change+: margin;
   &:active {
     ~ .hud {
       user-select: none;
