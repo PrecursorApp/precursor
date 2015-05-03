@@ -257,36 +257,53 @@
 (defn has-issue-frontend-id? [db frontend-id-memo datom]
   (frontend-id-memo db (:e datom)))
 
-(defn issue-datom-read-api [db frontend-id-memo datom]
+(defn issue-datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
         a (schema/get-ident a)
         v (if (and (contains? (schema/enums) a)
                    (contains? (schema/ident-ids) v))
             (schema/get-ident v)
-            v)
-        e (frontend-id-memo db e)]
+            v)]
     (->> {:e e :a a :v v :tx tx :added added}
       (translate-datom db))))
+
+(defn add-issue-frontend-ids
+  "Converts eids to tempids that the frontend will understand and matches them up with
+   issue ids"
+  [frontend-id-memo db txes]
+  (let [eid-map (zipmap (set (map :e txes))
+                        (map (comp - inc) (range))) ; {eid-1 -1 eid-2 -2}
+        ;; matches tempid with issue-id
+        frontend-id-txes (map (fn [[eid tempid]] {:e tempid
+                                                  :a :frontend/issue-id
+                                                  :v (frontend-id-memo db eid)
+                                                  :added true})
+                              eid-map)]
+    ;; XXX: need to do something about refs
+    (concat
+     (map (fn [datom]
+            ;; replaces lookup-ref style e with tempid
+            (update-in datom [:e] eid-map))
+          txes)
+     frontend-id-txes)))
 
 (defn frontend-issue-transaction
   "Returns map of document transactions filtered for admin and filtered for read-only access"
   [transaction]
   (let [annotations (get-annotations transaction)
-        frontend-id-memo (memoize (fn [db e]
-                                    (let [ent (d/entity db e)]
-                                      (when-let [id (:frontend/issue-id e)]
-                                        [:frontend/issue-id id]))))]
+        frontend-id-memo (memoize (fn [db e] (:frontend/issue-id (d/entity db e))))]
     (when (and (:transaction/issue-tx? annotations)
                (:transaction/broadcast annotations))
-      (when-let [public-datoms (->> transaction
+      (when-let [public-datoms (some->> transaction
                                  :tx-data
                                  (filter (partial has-issue-frontend-id?
                                                   (:db-after transaction)
                                                   frontend-id-memo))
-                                 (map (partial datom-read-api
-                                               (:db-after transaction)
-                                               frontend-id-memo))
+                                 (map (partial issue-datom-read-api
+                                               (:db-after transaction)))
                                  (filter issue-whitelisted?)
+                                 (add-issue-frontend-ids frontend-id-memo
+                                                         (:db-after transaction))
                                  seq)]
         (merge {:tx-data public-datoms}
                annotations)))))
