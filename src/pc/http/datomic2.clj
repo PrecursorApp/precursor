@@ -143,12 +143,12 @@
                               uuid-attrs (get-uuid-attrs db)
                               server-timestamp (or receive-instant (java.util.Date.))]
                           (some->> datoms
-                            (map pcd/datom->transaction)
-                            (map (partial coerce-floats float-attrs))
-                            (map (partial coerce-uuids uuid-attrs))
-                            (map (partial coerce-server-timestamp server-timestamp))
-                            (map (partial coerce-session-uuid session-uuid))
-                            (map (partial coerce-cust-uuid cust-uuid))
+                            (map (comp (partial coerce-cust-uuid cust-uuid)
+                                       (partial coerce-session-uuid session-uuid)
+                                       (partial coerce-server-timestamp server-timestamp)
+                                       (partial coerce-uuids uuid-attrs)
+                                       (partial coerce-floats float-attrs)
+                                       pcd/datom->transaction))
                             (filter (partial whitelisted? access-scope))
                             (filter (partial can-modify? db document-id access-scope frontend-id-seed))
                             (remove-float-conflicts)
@@ -162,3 +162,94 @@
                                             (when team-id {:transaction/team team-id})
                                             (when cust-uuid {:cust/uuid cust-uuid}))])
                             (d/transact conn)))}}))
+
+(def issue-whitelist #{:vote/cust
+                       :comment/body
+                       :comment/cust
+                       :comment/created-at
+                       :comment/frontend-id
+                       :comment/parent
+                       :issue/title
+                       :issue/description
+                       :issue/author
+                       :issue/document
+                       :issue/created-at
+                       :issue/votes
+                       :issue/comments
+                       :frontend/issue-id})
+
+(defn issue-whitelisted? [[type e a v :as tx]]
+  (contains? issue-whitelist a))
+
+(defn coerce-times [instant [type e a v :as transaction]]
+  (if (contains? #{:issue/created-at :comment/created-at} a)
+    [type e a instant]
+    transaction))
+
+(defn coerce-cust [cust [type e a v :as transaction]]
+  (if (contains? #{:comment/cust :issue/author :vote/cust} a)
+    [type e a (:db/id cust)]
+    transaction))
+
+;; XXX: some things can only be added (e.g. cust)
+(defn issue-can-modify? [db cust [type e a v :as transaction]]
+  (and (vector? e)
+       (= 2 (count e))
+       (= :frontend/issue-id (first e))
+       (if-let [ent (d/entity db (d/datoms db :avet :frontend/issue-id (second e)))]
+         (or (= (:db/id cust) (:db/id (:issue/creator ent)))
+             (= (:db/id cust) (:db/id (:vote/cust ent)))
+             (= (:db/id cust) (:db/id (:comment/cust ent))))
+         ;; new entity
+         true)))
+
+(defn add-issue-frontend-ids [txes]
+  (let [eid-map (pc.utils/inspect (zipmap (set (map (comp second second) txes)) (repeatedly #(d/tempid :db.part/user))))
+        ;; matches tempid with issue-id
+        ;; TODO: should we use value for identity type and look up ids?
+        frontend-id-txes (map (fn [[frontend-id tempid]] [:db/add tempid :frontend/issue-id frontend-id]) eid-map)]
+    ;; XXX: need to do something about refs
+    (concat
+     (map (fn [[type e a v]]
+            ;; replaces lookup-ref style e with tempid
+            [type (get eid-map (second e)) a v])
+          txes)
+     frontend-id-txes)))
+
+(defn transact-issue!
+  "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
+   Returns backend's version of the datoms."
+  [datoms {:keys [client-id session-uuid cust receive-instant]}]
+  (cond (empty? datoms)
+        {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
+        (< 1500 (count datoms))
+        {:status 400 :body (pr-str {:error "You can only transact 1500 datoms at once"})}
+        :else
+        {:status 200
+         :body {:datoms (let [db (pcd/default-db)
+                              conn (pcd/conn)
+                              txid (d/tempid :db.part/tx)
+                              float-attrs (get-float-attrs db)
+                              uuid-attrs (get-uuid-attrs db)
+                              server-timestamp (or receive-instant (java.util.Date.))]
+                          (some->> datoms
+                            (map (comp (partial coerce-session-uuid session-uuid)
+                                       (partial coerce-times server-timestamp)
+                                       (partial coerce-uuids uuid-attrs)
+                                       (partial coerce-floats float-attrs)
+                                       (partial coerce-cust cust)
+                                       pcd/datom->transaction))
+                            (filter issue-whitelisted?)
+                            (remove-float-conflicts)
+                            (filter (partial issue-can-modify? db cust))
+                            add-issue-frontend-ids
+                            seq
+                            (concat [(merge {:db/id txid
+                                             :session/uuid session-uuid
+                                             :session/client-id client-id
+                                             :transaction/broadcast true
+                                             :transaction/issue-tx? true
+                                             :cust/uuid (:cust/uuid cust)})])
+                            (d/transact conn)
+                            deref
+                            (pc.utils/inspect)))}}))

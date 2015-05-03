@@ -22,10 +22,8 @@
                                  :db/cardinality :db.cardinality/many}
                    :issue/comments {:db/type :db.type/ref
                                     :db/cardinality :db.cardinality/many}
-                   :issue/frontend-id {:db/unique :db.unique/identity}
-                   :comment/frontend-id {:db/unique :db.unique/identity}
-                   :comment/parent {:db/type :db.type/ref}
-                   :vote/frontend-id {:db/unique :db.unique/identity}})
+                   :frontend/issue-id {:db/unique :db.unique/identity}
+                   :comment/parent {:db/type :db.type/ref}})
 
 (def schema (merge doc-schema team-schema issue-schema))
 
@@ -61,6 +59,18 @@
                                                                         :datom-group datom-group
                                                                         :annotations annotations}])))))
 
+(defn handle-callbacks [db tx-report]
+  (let [[eids attrs] (reduce (fn [[eids attrs] datom]
+                               [(conj eids (:e datom))
+                                (conj attrs (:a datom))])
+                             [#{} #{}] (:tx-data tx-report))]
+    (doseq [eid eids
+            [k callback] (get-in @listeners [db :entity-listeners (str eid)])]
+      (callback tx-report))
+    (doseq [attr attrs
+            [k callback] (get-in @listeners [db :attribute-listeners attr])]
+      (callback tx-report))))
+
 (defn setup-listener! [db key comms sente-event annotations undo-state sente-state]
   (d/listen!
    db
@@ -68,16 +78,7 @@
    (fn [tx-report]
      ;; TODO: figure out why I can send tx-report through controls ch
      ;; (cast! :db-updated {:tx-report tx-report})
-     (let [[eids attrs] (reduce (fn [[eids attrs] datom]
-                                  [(conj eids (:e datom))
-                                   (conj attrs (:a datom))])
-                                [#{} #{}] (:tx-data tx-report))]
-       (doseq [eid eids
-               [k callback] (get-in @listeners [db :entity-listeners (str eid)])]
-         (callback tx-report))
-       (doseq [attr attrs
-               [k callback] (get-in @listeners [db :attribute-listeners attr])]
-         (callback tx-report)))
+     (handle-callbacks db tx-report)
      (when (first (filter #(= :server/timestamp (:a %)) (:tx-data tx-report)))
        (put! (:controls comms) [:chat-db-updated []]))
      (when (-> tx-report :tx-meta :can-undo?)
@@ -90,6 +91,25 @@
        (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
          (doseq [datom-group (partition-all 1000 datoms)]
            (send-datoms-to-server sente-state sente-event datom-group annotations comms)))))))
+
+(defn setup-issue-listener! [db key comms sente-state]
+  (d/listen!
+   db
+   key
+   (fn [tx-report]
+     (handle-callbacks db tx-report)
+
+     (when-not (or (-> tx-report :tx-meta :server-update)
+                   (-> tx-report :tx-meta :bot-layer)
+                   (-> tx-report :tx-meta :frontend-only))
+       (let [datoms (->> tx-report :tx-data (mapv (fn [datom]
+                                                    (-> datom
+                                                      ds/datom-read-api
+                                                      (update-in [:e] (fn [e]
+                                                                        [:frontend/issue-id (or (:frontend/issue-id (d/entity (:db-after tx-report) e))
+                                                                                                (:frontend/issue-id (d/entity (:db-before tx-report) e)))]))))))]
+         (doseq [datom-group (partition-all 1000 datoms)]
+           (send-datoms-to-server sente-state :issue/transaction datom-group {} comms)))))))
 
 (defn empty-db? [db]
   (empty? (d/datoms db :eavt)))

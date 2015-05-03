@@ -529,6 +529,9 @@
       (when ?reply-fn
         (?reply-fn {:rejected-datoms rejects})))))
 
+(defmethod ws-handler :issue/transaction [{:keys [client-id ?data ?reply-fn] :as req}]
+  (issues-http/handle-transaction req))
+
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [document-id (-> ?data :document/id)
