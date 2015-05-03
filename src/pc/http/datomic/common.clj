@@ -165,6 +165,30 @@
   (-> d
     (assoc :v (web-peer/client-id (d/entity db (:v d))))))
 
+(defmethod translate-datom :vote/cust [db d]
+  (-> d
+    (assoc :v (:cust/email (d/entity db (:v d))))))
+
+(defmethod translate-datom :comment/cust [db d]
+  (-> d
+    (assoc :v (:cust/email (d/entity db (:v d))))))
+
+(defmethod translate-datom :issue/author [db d]
+  (-> d
+    (assoc :v (:cust/email (d/entity db (:v d))))))
+
+(defmethod translate-datom :comment/parent [db d]
+  (-> d
+    (assoc :v [:comment/frontend-id (:comment/frontend-id (d/entity db (:v d)))])))
+
+(defmethod translate-datom :issue/comments [db d]
+  (-> d
+    (assoc :v [:comment/frontend-id (:comment/frontend-id (d/entity db (:v d)))])))
+
+(defmethod translate-datom :issue/votes [db d]
+  (-> d
+    (assoc :v [:vote/frontend-id (:vote/frontend-id (d/entity db (:v d)))])))
+
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
         a (schema/get-ident a)
@@ -212,3 +236,63 @@
                             annotations)
          :read-only-data (merge {:tx-data (filter (partial whitelisted? :read) public-datoms)}
                                 annotations)}))))
+
+(def issue-whitelist #{:vote/cust
+                       :vote/frontend-id
+                       :comment/body
+                       :comment/cust
+                       :comment/created-at
+                       :comment/frontend-id
+                       :comment/parent
+                       :issue/title
+                       :issue/description
+                       :issue/author
+                       :issue/document
+                       :issue/created-at
+                       :issue/frontend-id
+                       :issue/votes
+                       :issue/comments})
+
+(defn issue-whitelisted? [datom]
+  (contains? issue-whitelist (:a datom)))
+
+(defn has-issue-frontend-id? [db frontend-id-memo datom]
+  (frontend-id-memo db (:e datom)))
+
+(defn issue-datom-read-api [db frontend-id-memo datom]
+  (let [{:keys [e a v tx added] :as d} datom
+        a (schema/get-ident a)
+        v (if (and (contains? (schema/enums) a)
+                   (contains? (schema/ident-ids) v))
+            (schema/get-ident v)
+            v)
+        e (frontend-id-memo db e)]
+    (->> {:e e :a a :v v :tx tx :added added}
+      (translate-datom db))))
+
+(defn frontend-issue-transaction
+  "Returns map of document transactions filtered for admin and filtered for read-only access"
+  [transaction]
+  (let [annotations (get-annotations transaction)
+        frontend-id-memo (memoize (fn [db e]
+                                    (let [ent (d/entity db e)]
+                                      (or (when-let [id (:issue/frontend-id e)]
+                                            [:issue/frontend-id id])
+                                          (when-let [id (:comment/frontend-id e)]
+                                            [:comment/frontend-id id])
+                                          (when-let [id (:vote/frontend-id e)]
+                                            [:vote/frontend-id (:vote/frontend-id e)])))))]
+    (when (and (:transaction/issue-tx? annotations)
+               (:transaction/broadcast annotations))
+      (when-let [public-datoms (->> transaction
+                                 :tx-data
+                                 (filter (partial has-issue-frontend-id?
+                                                  (:db-after transaction)
+                                                  frontend-id-memo))
+                                 (map (partial datom-read-api
+                                               (:db-after transaction)
+                                               frontend-id-memo))
+                                 (filter issue-whitelisted?)
+                                 seq)]
+        (merge {:tx-data public-datoms}
+               annotations)))))

@@ -18,6 +18,7 @@
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
             [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
+            [pc.http.issues :as issues-http]
             [pc.http.plan :as plan-http]
             [pc.http.sente.sliding-send :as sliding-send]
             [pc.http.urls :as urls]
@@ -115,6 +116,11 @@
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
       (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid admin-data) team-uuid)
       ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:team/transaction (assoc admin-data :tx-data server-timestamps)]))))
+
+(defn notify-issue-transaction [db data]
+  (doseq [uid @issues-http/issue-subs]
+    (log/infof "notifying %s about new issue transactions" uid)
+    ((:send-fn @sente-state) uid [:issue/transaction data])))
 
 (defn has-document-access? [doc-id req scope]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
@@ -222,6 +228,7 @@
     ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))
   (clean-team-subs client-id)
   (clean-document-subs client-id)
+  (issues-http/unsubscribe client-id)
   (swap! client-stats dissoc client-id))
 
 (defn subscribe-to-team [team-uuid uuid cust]
@@ -235,6 +242,7 @@
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
 
+;; additional handlers defined in pc.http.issues
 (defmulti ws-handler ws-handler-dispatch-fn)
 
 (defmethod ws-handler :default [req]
@@ -292,6 +300,14 @@
                         {:team/uuid team-uuid
                          :entities [(plan-model/read-api (:team/plan team))]
                          :entity-type :plan}])))
+
+(defmethod ws-handler :issue/subscribe [req]
+  (log/infof "subscribing to issues for %s" (:client-id req))
+  (issues-http/subscribe req))
+
+(defmethod ws-handler :issue/unsubscribe [req]
+  (log/infof "unsubscribing from issues for %s" (:client-id req))
+  (issues-http/unsubscribe (:client-id req)))
 
 (defn subscriber-read-api [subscriber]
   (-> subscriber

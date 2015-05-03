@@ -513,6 +513,10 @@
               :db.type/ref
               :db/doc "Annotates transaction with team it belongs to")
 
+   (attribute :transaction/issue-tx?
+              :db.type/boolean
+              :db/doc "Annotates that transaction was related to issues")
+
    (attribute :migration
               :db.type/ref
               :db/doc "Annotates transaction with migration")
@@ -773,7 +777,73 @@
 
    (attribute :coupon/duration-in-months
               :db.type/long
-              :db/doc "Number of months that the discount is active")])
+              :db/doc "Number of months that the discount is active")
+
+   (attribute :issue/title
+              :db.type/string
+              :db/fulltext true
+              :db/doc "Feature request title")
+
+   (attribute :issue/description
+              :db.type/string
+              :db/fulltext true
+              :db/doc "Feature request description")
+
+   (attribute :issue/author
+              :db.type/ref
+              :db/doc "User who requested the feature")
+
+   (attribute :issue/document
+              :db.type/ref
+              :db/doc "Optional document to attach to issue")
+
+   (attribute :issue/created-at
+              :db.type/instant)
+
+   (attribute :issue/frontend-id
+              :db.type/uuid
+              :db/unique :db.unique/identity)
+
+   (attribute :issue/votes
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Votes for the issue")
+
+   (attribute :issue/comments
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Comments on an issue")
+
+
+   (attribute :vote/cust
+              :db.type/ref
+              :db/doc "Cust who voted for the issue")
+
+   (attribute :vote/frontend-id
+              :db.type/uuid
+              :db/unique :db.unique/identity)
+
+
+   (attribute :comment/cust
+              :db.type/ref
+              :db/doc "Cust who made the comment")
+
+   (attribute :comment/body
+              :db.type/string
+              :db/fulltext true
+              :db/doc "Comment body")
+
+   (attribute :comment/parent
+              :db.type/ref
+              :db/doc "Optional parent comment for the comment")
+
+   (attribute :comment/created-at
+              :db.type/instant)
+
+   (attribute :comment/frontend-id
+              :db.type/uuid
+              :db/unique :db.unique/identity)
+   ])
 
 (defonce schema-ents (atom nil))
 
