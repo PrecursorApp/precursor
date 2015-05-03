@@ -108,6 +108,7 @@
                      ;; team entities go into the team namespace, so we need a separate database
                      ;; to prevent conflicts
                      :team-db (db/make-initial-db nil)
+                     :issue-db (db/make-initial-db nil)
                      :document/id document-id
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
@@ -179,6 +180,7 @@
     :shared {:comms                 comms
              :db                    (:db @state)
              :team-db               (:team-db @state)
+             :issue-db              (:issue-db @state)
              :cast!                 cast!
              :_app-state-do-not-use state
              :handlers              handlers

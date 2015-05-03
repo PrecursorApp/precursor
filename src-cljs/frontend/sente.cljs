@@ -56,6 +56,14 @@
 (defn subscribe-to-team [sente-state team-uuid]
   (send-msg sente-state [:team/subscribe {:team/uuid team-uuid}]))
 
+(defn subscribe-to-issues [sente-state comms issue-db]
+  (send-msg sente-state [:issue/subscribe {}]
+            10000
+            (fn [reply]
+              (if (sente/cb-success? reply)
+                (d/transact! issue-db (utils/inspect (:entities reply)) {:server-update true})
+                (put! (:errors comms) [:subscribe-to-issues-error])))))
+
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
             (fn [data]

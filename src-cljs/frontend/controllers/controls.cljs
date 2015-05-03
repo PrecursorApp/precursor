@@ -83,7 +83,7 @@
   (when (get-in current-state [:subscribers :mice (:client-id current-state) :show-mouse?])
     (let [previous-info (extract-sub-info previous-state x y)
           current-info (extract-sub-info current-state x y)]
-      (when-not (= previous-info current-info)
+      (when-not (utils/inspect (= previous-info current-info))
         (sente/send-msg (:sente current-state)
                         [:frontend/mouse-position current-info])))))
 
@@ -1596,6 +1596,11 @@
   (-> state
       (handle-add-menu :sharing)
       (assoc-in state/sharing-menu-learned-path true)))
+
+(defmethod control-event :issues-opened
+  [browser-state message _ state]
+  (-> state
+    (handle-add-menu :issues)))
 
 (defmethod control-event :export-menu-opened
   [browser-state message _ state]

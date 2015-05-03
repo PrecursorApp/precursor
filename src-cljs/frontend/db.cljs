@@ -8,14 +8,26 @@
             [frontend.utils.seq :refer (dissoc-in)]
             [taoensso.sente]))
 
-(def schema {:layer/child {:db/cardinality :db.cardinality/many}
-             :layer/points-to {:db/cardinality :db.cardinality/many
-                               :db/type :db.type/ref}
-             :error/id {:db/unique :db.unique/identity}
-             :team/plan {:db/type :db.type/ref}
-             :plan/active-custs {:db/cardinality :db.cardinality/many}
-             :plan/invoices {:db/cardinality :db.cardinality/many
-                             :db/type :db.type/ref}})
+(def doc-schema {:layer/child {:db/cardinality :db.cardinality/many}
+                 :layer/points-to {:db/cardinality :db.cardinality/many
+                                   :db/type :db.type/ref}
+                 :error/id {:db/unique :db.unique/identity}})
+
+(def team-schema {:team/plan {:db/type :db.type/ref}
+                  :plan/active-custs {:db/cardinality :db.cardinality/many}
+                  :plan/invoices {:db/cardinality :db.cardinality/many
+                                  :db/type :db.type/ref}})
+
+(def issue-schema {:issue/votes {:db/type :db.type/ref
+                                 :db/cardinality :db.cardinality/many}
+                   :issue/comments {:db/type :db.type/ref
+                                    :db/cardinality :db.cardinality/many}
+                   :issue/frontend-id {:db/unique :db.unique/identity}
+                   :comment/frontend-id {:db/unique :db.unique/identity}
+                   :comment/parent {:db/type :db.type/ref}
+                   :vote/frontend-id {:db/unique :db.unique/identity}})
+
+(def schema (merge doc-schema team-schema issue-schema))
 
 (defonce listeners (atom {}))
 
@@ -73,7 +85,8 @@
        (when-not (-> tx-report :tx-meta :undo)
          (swap! undo-state assoc-in [:last-undo] nil)))
      (when-not (or (-> tx-report :tx-meta :server-update)
-                   (-> tx-report :tx-meta :bot-layer))
+                   (-> tx-report :tx-meta :bot-layer)
+                   (-> tx-report :tx-meta :frontend-only))
        (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
          (doseq [datom-group (partition-all 1000 datoms)]
            (send-datoms-to-server sente-state sente-event datom-group annotations comms)))))))
