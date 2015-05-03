@@ -245,7 +245,7 @@
           [:div#canvas-size.chat-offset.holo]
           [:div.chat-window {:class (when (or (not chat-opened?)
                                               (:show-landing? app)) ["closed"])}
-           [:div.chat-background]
+           [:div.inner-backgrounds]
            (om/build log (utils/select-in app [[:document/id]
                                                [:sente-id]
                                                [:client-id]
