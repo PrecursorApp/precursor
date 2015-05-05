@@ -34,7 +34,8 @@
                     :required "true"
                     :data-adaptive ""
                     :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
-           [:label {:data-placeholder (str "Sounds good" "; 100 characters left")
+           [:label {:data-placeholder (gstring/format "Sounds good; %s characters so far"
+                                                      (count issue-title))
                     :data-placeholder-nil "How can we improve Precursor?"
                     :data-placeholder-busy "Your idea in less than 140 characters?"}]])))))
 
