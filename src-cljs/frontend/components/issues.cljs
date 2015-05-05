@@ -22,15 +22,20 @@
     om/IRenderState
     (render-state [_ {:keys [issue-title]}]
       (html
-       [:form {:on-submit #(do (utils/stop-event %)
-                               (when (seq issue-title)
-                                 (d/transact! issue-db [{:db/id -1
-                                                         :issue/title issue-title
-                                                         :frontend/issue-id (utils/squuid)}])
-                                 (om/set-state! owner :issue-title "")))}
-        [:input {:type "text"
-                 :value issue-title
-                 :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]]))))
+        [:form.menu-invite-form.make {:on-submit #(do (utils/stop-event %)
+                                                    (when (seq issue-title)
+                                                      (d/transact! issue-db [{:db/id -1
+                                                                              :issue/title issue-title
+                                                                              :frontend/issue-id (utils/squuid)}])
+                                                      (om/set-state! owner :issue-title "")))}
+         [:input {:type "text"
+                  :value issue-title
+                  :required "true"
+                  :data-adaptive ""
+                  :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
+         [:label {:data-placeholder (str "Sounds good" "; 100 characters left")
+                  :data-placeholder-nil "How can we improve Precursor?"
+                  :data-placeholder-busy "Your idea in less than 140 characters?"}]]))))
 
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
@@ -45,16 +50,18 @@
                           [?e :vote/cust ?email]]
                         @issue-db (:db/id issue) (:cust/email cust))]
         (html
-         [:div.vote-count {:style {:display "inline-block"}}
-          (when-not voted?
-            [:a {:on-click #(d/transact! issue-db
-                                         [{:db/id (:db/id issue)
-                                           :issue/votes {:db/id -1
-                                                         :frontend/issue-id (utils/squuid)
-                                                         :vote/cust (:cust/email cust)}}])
-                 :role "button"}
-             "vote"])
-          (count (:issue/votes issue))])))))
+
+          (if voted?
+            [:div.voted]
+
+            [:a.issue-vote {:role "button"
+                            :on-click #(d/transact! issue-db
+                                                    [{:db/id (:db/id issue)
+                                                      :issue/votes {:db/id -1
+                                                                    :frontend/issue-id (utils/squuid)
+                                                                    :vote/cust (:cust/email cust)}}])}
+             [:span.issue-vote-count (count (:issue/votes issue))]
+             (common/icon :north)]))))))
 
 (defn issue [{:keys [issue-id]} owner]
   (reify
@@ -121,9 +128,9 @@
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
-         [:div.content {:style {:display "inline-block"}}
+         [:div.issue
           (om/build vote-box {:issue issue})
-          [:div {:on-click #(cast! :issue-expanded {:issue-id issue-id})
+          [:div.issue-info {:on-click #(cast! :issue-expanded {:issue-id issue-id})
                  :style {:cursor "pointer"
                          :display "inline-block"}}
            (:issue/title issue)]])))))
@@ -159,7 +166,7 @@
             issue-ids (map :e (d/datoms @issue-db :aevt :issue/title))]
         (html
          [:div.menu-view
-          [:div.content.make
+          [:div.content
            (when-not submenu
              [:div.make {:key "issue-form"}
               (om/build issue-form {} {:opts {:issue-db issue-db}})])
