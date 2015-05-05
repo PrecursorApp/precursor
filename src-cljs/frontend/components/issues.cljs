@@ -16,21 +16,40 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(defn issue-form [_ owner {:keys [issue-db]}]
+(defn issue-form [_ owner]
   (reify
     om/IInitState (init-state [_] {:issue-title ""})
     om/IRenderState
     (render-state [_ {:keys [issue-title]}]
-      (html
-       [:form {:on-submit #(do (utils/stop-event %)
-                               (when (seq issue-title)
-                                 (d/transact! issue-db [{:db/id -1
-                                                         :issue/title issue-title
-                                                         :frontend/issue-id (utils/squuid)}])
-                                 (om/set-state! owner :issue-title "")))}
-        [:input {:type "text"
-                 :value issue-title
-                 :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]]))))
+      (let [issue-db (om/get-shared owner :issue-db)]
+        (html
+         [:form {:on-submit #(do (utils/stop-event %)
+                                 (when (seq issue-title)
+                                   (d/transact! issue-db [{:db/id -1
+                                                           :issue/title issue-title
+                                                           :frontend/issue-id (utils/squuid)}])
+                                   (om/set-state! owner :issue-title "")))}
+          [:input {:type "text"
+                   :value issue-title
+                   :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]])))))
+
+(defn comment-form [{:keys [issue-id]} owner {:keys [issue-db]}]
+  (reify
+    om/IInitState (init-state [_] {:comment-body ""})
+    om/IRenderState
+    (render-state [_ {:keys [comment-body]}]
+      (let [issue-db (om/get-shared owner :issue-db)]
+        (html
+         [:form {:on-submit #(do (utils/stop-event %)
+                                 (when (seq comment-body)
+                                   (d/transact! issue-db [{:db/id issue-id
+                                                           :issue/comments {:db/id -1
+                                                                            :comment/body comment-body
+                                                                            :frontend/issue-id (utils/squuid)}}])
+                                   (om/set-state! owner :comment-body "")))}
+          [:input {:type "text"
+                   :value comment-body
+                   :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]])))))
 
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
@@ -55,6 +74,39 @@
                  :role "button"}
              "vote"])
           (count (:issue/votes issue))])))))
+
+(defn single-comment [{:keys [comment-id]} owner]
+  (reify
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-entity-listener (om/get-shared owner :issue-db)
+                               comment-id
+                               (om/get-state owner :listener-key)
+                               (fn [tx-report]
+                                 (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-entity-listener (om/get-shared owner :issue-db)
+                                  comment-id
+                                  (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [issue-db cast!]} (om/get-shared owner)
+            comment (d/entity @issue-db comment-id)]
+        (html
+         [:div.comment
+          [:div (:comment/body comment)]])))))
+
+(defn comments [{:keys [issue]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (html
+       [:div.issue-comments
+        (for [{:keys [db/id]} (:issue/comments issue)]
+          (om/build single-comment {:comment-id id} {:key :comment-id}))]))))
 
 (defn issue [{:keys [issue-id]} owner]
   (reify
@@ -98,7 +150,10 @@
            " "
            [:a {:on-click #(d/transact! issue-db [[:db.fn/retractEntity issue-id]])
                 :role "button"}
-            "Delete"]]])))))
+            "Delete"]]
+          (om/build comments {:issue issue})
+          [:p "Make a new comment:"]
+          (om/build comment-form {:issue-id issue-id})])))))
 
 (defn issue-summary [{:keys [issue-id]} owner]
   (reify
@@ -162,7 +217,7 @@
           [:div.content.make
            (when-not submenu
              [:div.make {:key "issue-form"}
-              (om/build issue-form {} {:opts {:issue-db issue-db}})])
+              (om/build issue-form {})])
            [:div.make {:key (or submenu "summary")}
             (if submenu
               (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
