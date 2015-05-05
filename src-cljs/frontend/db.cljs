@@ -27,6 +27,12 @@
 
 (def schema (merge doc-schema team-schema issue-schema))
 
+(def issue-ref-attrs (reduce (fn [acc [attr props]]
+                               (if (keyword-identical? :db.type/ref (:db/type props))
+                                 (conj acc attr)
+                                 acc))
+                             #{} issue-schema))
+
 (defonce listeners (atom {}))
 
 (defn ^:export inspect-listeners []
@@ -92,6 +98,15 @@
          (doseq [datom-group (partition-all 1000 datoms)]
            (send-datoms-to-server sente-state sente-event datom-group annotations comms)))))))
 
+(defn get-issue-id [e tx-report]
+  (or (:frontend/issue-id (d/entity (:db-after tx-report) e))
+      (:frontend/issue-id (d/entity (:db-before tx-report) e))))
+
+(defn update-ref-attr [datom tx-report]
+  (if (contains? issue-ref-attrs (:a datom))
+    (update-in datom [:v] (fn [v] [:frontend/issue-id (get-issue-id v tx-report)]))
+    datom))
+
 (defn setup-issue-listener! [db key comms sente-state]
   (d/listen!
    db
@@ -102,12 +117,15 @@
      (when-not (or (-> tx-report :tx-meta :server-update)
                    (-> tx-report :tx-meta :bot-layer)
                    (-> tx-report :tx-meta :frontend-only))
-       (let [datoms (->> tx-report :tx-data (mapv (fn [datom]
-                                                    (-> datom
-                                                      ds/datom-read-api
-                                                      (update-in [:e] (fn [e]
-                                                                        [:frontend/issue-id (or (:frontend/issue-id (d/entity (:db-after tx-report) e))
-                                                                                                (:frontend/issue-id (d/entity (:db-before tx-report) e)))]))))))]
+       (let [datoms (->> tx-report
+                      :tx-data
+                      (mapv (fn [datom]
+                              (-> datom
+                                ds/datom-read-api
+                                (update-in [:e]
+                                           (fn [e]
+                                             [:frontend/issue-id (get-issue-id e tx-report)]))
+                                (update-ref-attr tx-report)))))]
          (doseq [datom-group (partition-all 1000 datoms)]
            (send-datoms-to-server sente-state :issue/transaction datom-group {} comms)))))))
 

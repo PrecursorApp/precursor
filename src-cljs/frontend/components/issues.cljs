@@ -32,40 +32,108 @@
                  :value issue-title
                  :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]]))))
 
-(defn issue [{:keys [issue-id]} owner {:keys [issue-db]}]
+;; XXX: handle logged-out users
+(defn vote-box [{:keys [issue]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! issue-db cust]} (om/get-shared owner)
+            voted? (d/q '[:find ?e .
+                          :in $ ?issue-id ?email
+                          :where
+                          [?issue-id :issue/votes ?e]
+                          [?e :vote/cust ?email]]
+                        @issue-db (:db/id issue) (:cust/email cust))]
+        (html
+         [:div.vote-count {:style {:display "inline-block"}}
+          (when-not voted?
+            [:a {:on-click #(d/transact! issue-db
+                                         [{:db/id (:db/id issue)
+                                           :issue/votes {:db/id -1
+                                                         :frontend/issue-id (utils/squuid)
+                                                         :vote/cust (:cust/email cust)}}])
+                 :role "button"}
+             "vote"])
+          (count (:issue/votes issue))])))))
+
+(defn issue [{:keys [issue-id]} owner]
+  (reify
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                     :title nil
+                     :description nil})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-entity-listener (om/get-shared owner :issue-db)
+                               issue-id
+                               (om/get-state owner :listener-key)
+                               (fn [tx-report]
+                                 ;; This should ask the user if he wants to reload
+                                 (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-entity-listener (om/get-shared owner :issue-db)
+                                  issue-id
+                                  (om/get-state owner :listener-key)))
+    om/IRenderState
+    (render-state [_ {:keys [title description]}]
+      (let [{:keys [cast! issue-db]} (om/get-shared owner)
+            issue (ds/touch+ (d/entity @issue-db issue-id))]
+        (html
+         [:div.content.make
+          (om/build vote-box {:issue issue})
+          [:p "Title "
+           [:input {:value (or title (:issue/title issue ""))
+                    :on-change #(om/set-state! owner :title (.. % -target -value))}]]
+          [:p "Description "
+           [:input {:value (or description (:issue/description issue ""))
+                    :on-change #(om/set-state! owner :description (.. % -target -value))}]]
+          [:p
+           [:a {:role "button"
+                :on-click #(d/transact! issue-db [(utils/remove-map-nils
+                                                   {:db/id issue-id
+                                                    :issue/title title
+                                                    :issue/description description})])}
+            "Save"]
+           " "
+           [:a {:on-click #(d/transact! issue-db [[:db.fn/retractEntity issue-id]])
+                :role "button"}
+            "Delete"]]])))))
+
+(defn issue-summary [{:keys [issue-id]} owner]
   (reify
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
-      (fdb/add-entity-listener issue-db
+      (fdb/add-entity-listener (om/get-shared owner :issue-db)
                                issue-id
                                (om/get-state owner :listener-key)
                                (fn [tx-report]
                                  (om/refresh! owner))))
     om/IWillUnmount
     (will-unmount [_]
-      (fdb/remove-entity-listener issue-db
+      (fdb/remove-entity-listener (om/get-shared owner :issue-db)
                                   issue-id
                                   (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [issue (d/entity @issue-db issue-id)]
+      (let [{:keys [cast! issue-db]} (om/get-shared owner)
+            issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
-         [:div
-          (:issue/title issue)
-          " "
-          [:span {:on-click #(d/transact! issue-db [[:db.fn/retractEntity issue-id]])
-                  :style {:cursor "pointer"}}
-           "X"]])))))
+         [:div.content {:style {:display "inline-block"}}
+          (om/build vote-box {:issue issue})
+          [:div {:on-click #(cast! :issue-expanded {:issue-id issue-id})
+                 :style {:cursor "pointer"
+                         :display "inline-block"}}
+           (:issue/title issue)]])))))
 
-(defn issues [app owner]
+(defn issues [app owner {:keys [submenu]}]
   (reify
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
-      (def _issue-db (om/get-shared owner :issue-db))
       (fdb/setup-issue-listener!
        (om/get-shared owner :issue-db)
        (om/get-state owner :listener-key)
@@ -92,10 +160,13 @@
         (html
          [:div.menu-view
           [:div.content.make
-           [:div.make
-            (om/build issue-form {} {:opts {:issue-db issue-db}})]
-           [:div.make
-            (when (seq issue-ids)
-              (om/build-all issue (map (fn [i] {:issue-id i}) (sort issue-ids))
-                            {:key :issue-id
-                             :opts {:issue-db issue-db}}))]]])))))
+           (when-not submenu
+             [:div.make {:key "issue-form"}
+              (om/build issue-form {} {:opts {:issue-db issue-db}})])
+           [:div.make {:key (or submenu "summary")}
+            (if submenu
+              (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
+              (when (seq issue-ids)
+                (om/build-all issue-summary (map (fn [i] {:issue-id i}) (sort issue-ids))
+                              {:key :issue-id
+                               :opts {:issue-db issue-db}})))]]])))))

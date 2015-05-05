@@ -1895,6 +1895,12 @@
   [browser-state message {:keys [submenu]} state]
   (handle-add-menu state (keyword "plan" (name submenu))))
 
+(defmethod control-event :issue-expanded
+  [browser-state message {:keys [issue-id]} state]
+  (-> state
+    (assoc :active-issue-id issue-id)
+    (handle-add-menu :issues/single-issue)))
+
 (defmethod post-control-event! :start-plan-clicked
   [browser-state message _ previous-state current-state]
   (stripe/open-checkout (get-in current-state [:cust :cust/email])

@@ -207,17 +207,23 @@
          true)))
 
 (defn add-issue-frontend-ids [txes]
-  (let [eid-map (zipmap (set (map (comp second second) txes)) (repeatedly #(d/tempid :db.part/user)))
+  (let [id-map (zipmap (set (map (comp second second) txes)) (repeatedly #(d/tempid :db.part/user)))
         ;; matches tempid with issue-id
         ;; TODO: should we use value for identity type and look up ids?
-        frontend-id-txes (map (fn [[frontend-id tempid]] [:db/add tempid :frontend/issue-id frontend-id]) eid-map)]
+        frontend-id-txes (map (fn [[frontend-id tempid]] [:db/add tempid :frontend/issue-id frontend-id]) id-map)]
     ;; XXX: need to do something about refs
     (concat
      (map (fn [[type e a v]]
             ;; replaces lookup-ref style e with tempid
-            [type (get eid-map (second e)) a v])
+            [type (get id-map (second e)) a (if (vector? v)
+                                              (get id-map (second v))
+                                              v)])
           txes)
      frontend-id-txes)))
+
+(defn debug-def [txes]
+  (def debug-txes txes)
+  txes)
 
 (defn transact-issue!
   "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
@@ -253,4 +259,5 @@
                                              :transaction/broadcast true
                                              :transaction/issue-tx? true
                                              :cust/uuid (:cust/uuid cust)})])
-                            (d/transact conn)))}}))
+                            (d/transact conn)
+                            deref))}}))

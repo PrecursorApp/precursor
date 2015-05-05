@@ -233,7 +233,7 @@
     (om/set-state! owner korks value)))
 
 (defn logged-in? [owner]
-  (om/get-shared owner :logged-in?))
+  (boolean (seq (om/get-shared owner :cust))))
 
 (defn cast-fn [controls-ch]
   (fn [message data & [transient?]]

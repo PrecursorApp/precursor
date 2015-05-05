@@ -75,7 +75,7 @@
                  [me.raynes/fs "1.4.6" :exclusions [org.apache.commons/commons-compress]]
 
                  ;; Fix for d/entity throwing on nil https://github.com/tonsky/datascript/pull/75
-                 [dwwoelfel/datascript "0.11.0-6060c5fa8d1b7294ede336508fcd705cf5506e90"]
+                 [datascript "0.11.1"]
 
                  [ankha "0.1.4"]
                  [org.clojure/clojurescript "0.0-3211"]

@@ -186,7 +186,7 @@
              :handlers              handlers
              ;; Can't log in without a page refresh, have to re-evaluate this if
              ;; that ever changes.
-             :logged-in?            (boolean (seq (:cust @state)))
+             :cust                  (:cust @state)
              :sente                 (:sente @state)
              }
     :instrument (fn [f cursor m]

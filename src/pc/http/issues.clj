@@ -9,7 +9,7 @@
 
 (defn subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
   (swap! issue-subs conj client-id)
-  (let [issues (map issue-model/read-api (issue-model/all (:db req)))]
+  (let [issues (map issue-model/read-api (issue-model/all-issues (:db req)))]
     (?reply-fn {:entities issues
                 :entity-type :issue})))
 

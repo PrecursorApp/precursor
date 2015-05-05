@@ -108,6 +108,7 @@
 
 (defmethod error :datascript/rejected-datoms
   [container message {:keys [rejects datom-group sente-event]} state]
+  (utils/mlog rejects)
   (if (and (= (count rejects) (count datom-group))
            (= :read (:max-document-scope state)))
     (-> state

@@ -177,18 +177,6 @@
   (-> d
     (assoc :v (:cust/email (d/entity db (:v d))))))
 
-(defmethod translate-datom :comment/parent [db d]
-  (-> d
-    (assoc :v [:frontend/issue-id (:frontend/issue-id (d/entity db (:v d)))])))
-
-(defmethod translate-datom :issue/comments [db d]
-  (-> d
-    (assoc :v [:frontend/issue-id (:frontend/issue-id (d/entity db (:v d)))])))
-
-(defmethod translate-datom :issue/votes [db d]
-  (-> d
-    (assoc :v [:frontend/issue-id (:frontend/issue-id (d/entity db (:v d)))])))
-
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom
         a (schema/get-ident a)
@@ -267,23 +255,33 @@
     (->> {:e e :a a :v v :tx tx :added added}
       (translate-datom db))))
 
+(defn all-eids [txes]
+  (set (concat (map :e txes)
+               ;; this could be more general to include all ref attrs, but needs some thought
+               ;; to make sure we don't break something
+               (map :v (filter #(contains? #{:comment/parent :issue/comments :issue/votes} (:a %))
+                               txes)))))
+
 (defn add-issue-frontend-ids
   "Converts eids to tempids that the frontend will understand and matches them up with
    issue ids"
   [frontend-id-memo db txes]
-  (let [eid-map (zipmap (set (map :e txes))
-                        (map (comp - inc) (range))) ; {eid-1 -1 eid-2 -2}
+  (let [eid-map (-> (zipmap (all-eids txes)
+                            (map (comp - inc) (range))))
+
+        ;; {eid-1 -1 eid-2 -2}
         ;; matches tempid with issue-id
         frontend-id-txes (map (fn [[eid tempid]] {:e tempid
                                                   :a :frontend/issue-id
                                                   :v (frontend-id-memo db eid)
                                                   :added true})
                               eid-map)]
-    ;; XXX: need to do something about refs
     (concat
      (map (fn [datom]
             ;; replaces lookup-ref style e with tempid
-            (update-in datom [:e] eid-map))
+            (-> datom
+              (update-in [:e] eid-map)
+              (update-in [:v] #(get eid-map % %))))
           txes)
      frontend-id-txes)))
 

@@ -90,23 +90,19 @@
 
 (defmethod handle-message :issue/transaction [app-state message data]
   (let [datoms (:tx-data data)]
-    (try
-      (d/transact! (:issue-db @app-state)
-                   (map ds/datom->transaction datoms)
-                   {:server-update true})
-      (catch js/Error e
-        (when (= :transact/unique (:error (ex-data e)))
-          (d/transact! (:issue-db @app-state)
-                       (let [translation-map (reduce (fn [m datom]
-                                                       (if (= :frontend/issue-id (:a datom))
-                                                         (assoc m (:e datom) (:v datom))
-                                                         m))
-                                                     {} datoms)]
-                         (map (fn [datom]
-                                (ds/datom->transaction (assoc datom :e [:frontend/issue-id
-                                                                        (translation-map (:e datom))])))
-                              datoms))
-                       {:server-update true}))))))
+    (d/transact! (:issue-db @app-state)
+                 (let [adds (->> datoms
+                              (filter :added)
+                              (group-by :e)
+                              (map (fn [[e datoms]]
+                                     (merge {:db/id e}
+                                            (reduce (fn [acc datom]
+                                                      (assoc acc (:a datom) (:v datom)))
+                                                    {} datoms)))))
+                       retracts (remove :added datoms)]
+                   (concat adds
+                           (map ds/datom->transaction retracts)))
+                 {:server-update true})))
 
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
   (swap! app-state subs/add-subscriber-data (:client-id data) data))
