@@ -1,8 +1,18 @@
 .issue {
   .flexy();
+  margin-bottom: @menu_padding;
 }
 .issue-vote {
   .flexy(center; center);
   width: @tile;
   height: @tile;
+  margin-right: @menu_padding;
+  border: 1px solid @gray_light;
+  border-radius: @tile;
+}
+.issue-info {
+  .flexy(column);
+  align-items: flex-start;
+  flex: 1;
+  padding: .5em 0;
 }
