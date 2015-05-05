@@ -22,12 +22,14 @@
     om/IInitState (init-state [_] {:issue-title ""})
     om/IRenderState
     (render-state [_ {:keys [issue-title]}]
-      (let [issue-db (om/get-shared owner :issue-db)]
+      (let [issue-db (om/get-shared owner :issue-db)
+            cust (om/get-shared owner :cust)]
         (html
           [:form.menu-invite-form.make {:on-submit #(do (utils/stop-event %)
                                                       (when (seq issue-title)
                                                         (d/transact! issue-db [{:db/id -1
                                                                                 :issue/title issue-title
+                                                                                :issue/author (:cust/email cust)
                                                                                 :frontend/issue-id (utils/squuid)}])
                                                         (om/set-state! owner :issue-title "")))}
            [:input {:type "text"
@@ -45,13 +47,15 @@
     om/IInitState (init-state [_] {:comment-body ""})
     om/IRenderState
     (render-state [_ {:keys [comment-body]}]
-      (let [issue-db (om/get-shared owner :issue-db)]
+      (let [issue-db (om/get-shared owner :issue-db)
+            cust (om/get-shared owner :cust)]
         (html
          [:form {:on-submit #(do (utils/stop-event %)
                                  (when (seq comment-body)
                                    (d/transact! issue-db [{:db/id issue-id
                                                            :issue/comments (merge {:db/id -1
                                                                                    :comment/body comment-body
+                                                                                   :comment/author (:cust/email cust)
                                                                                    :frontend/issue-id (utils/squuid)}
                                                                                   (when parent-id
                                                                                     {:comment/parent parent-id}))}])
@@ -120,7 +124,8 @@
             comment (d/entity @issue-db comment-id)]
         (html
          [:div.comment
-          [:div (:comment/body comment)]
+          [:div (:comment/body comment)
+           [:div "by " (:comment/author comment)]]
           [:div.reply
            (if replying?
              (om/build comment-form {:issue-id issue-id
@@ -174,6 +179,7 @@
         (html
          [:div.content.make
           (om/build vote-box {:issue issue})
+          [:p "by: " (:issue/author issue)]
           [:p "Title "
            [:input {:value (or title (:issue/title issue ""))
                     :on-change #(om/set-state! owner :title (.. % -target -value))}]]

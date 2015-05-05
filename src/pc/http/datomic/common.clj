@@ -169,7 +169,7 @@
   (-> d
     (assoc :v (:cust/email (d/entity db (:v d))))))
 
-(defmethod translate-datom :comment/cust [db d]
+(defmethod translate-datom :comment/author [db d]
   (-> d
     (assoc :v (:cust/email (d/entity db (:v d))))))
 
@@ -227,7 +227,7 @@
 
 (def issue-whitelist #{:vote/cust
                        :comment/body
-                       :comment/cust
+                       :comment/author
                        :comment/created-at
                        :comment/parent
                        :issue/title

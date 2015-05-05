@@ -21,7 +21,7 @@
 (defn comment-read-api [comment]
   (-> comment
     (select-keys [:comment/body
-                  :comment/cust
+                  :comment/author
                   :comment/created-at
                   :comment/frontend-id
                   :comment/parent

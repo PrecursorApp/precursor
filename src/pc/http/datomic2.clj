@@ -166,7 +166,7 @@
 
 (def issue-whitelist #{:vote/cust
                        :comment/body
-                       :comment/cust
+                       :comment/author
                        :comment/created-at
                        :comment/frontend-id
                        :comment/parent
@@ -188,7 +188,7 @@
     transaction))
 
 (defn coerce-cust [cust [type e a v :as transaction]]
-  (if (contains? #{:comment/cust :issue/author :vote/cust} a)
+  (if (contains? #{:comment/author :issue/author :vote/cust} a)
     [type e a (:db/id cust)]
     transaction))
 
@@ -200,9 +200,9 @@
        (or (not= :frontend/issue-id a) (not= :db/retract type))
        (contains? #{:db/add :db/retract} type)
        (if-let [ent (d/entity db (d/datoms db :avet :frontend/issue-id (second e)))]
-         (or (= (:db/id cust) (:db/id (:issue/creator ent)))
+         (or (= (:db/id cust) (:db/id (:issue/author ent)))
              (= (:db/id cust) (:db/id (:vote/cust ent)))
-             (= (:db/id cust) (:db/id (:comment/cust ent))))
+             (= (:db/id cust) (:db/id (:comment/author ent))))
          ;; new entity
          true)))
 

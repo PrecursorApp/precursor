@@ -818,7 +818,7 @@
               :db.type/ref
               :db/doc "Cust who voted for the issue")
 
-   (attribute :comment/cust
+   (attribute :comment/author
               :db.type/ref
               :db/doc "Cust who made the comment")
 
