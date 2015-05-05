@@ -6,6 +6,7 @@
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
             [frontend.db :as fdb]
+            [frontend.models.issue :as issue-model]
             [frontend.sente :as sente]
             [frontend.urls :as urls]
             [frontend.utils :as utils]
@@ -39,7 +40,7 @@
                     :data-placeholder-nil "How can we improve Precursor?"
                     :data-placeholder-busy "Your idea in less than 140 characters?"}]])))))
 
-(defn comment-form [{:keys [issue-id]} owner {:keys [issue-db]}]
+(defn comment-form [{:keys [issue-id parent-id]} owner {:keys [issue-db]}]
   (reify
     om/IInitState (init-state [_] {:comment-body ""})
     om/IRenderState
@@ -49,9 +50,11 @@
          [:form {:on-submit #(do (utils/stop-event %)
                                  (when (seq comment-body)
                                    (d/transact! issue-db [{:db/id issue-id
-                                                           :issue/comments {:db/id -1
-                                                                            :comment/body comment-body
-                                                                            :frontend/issue-id (utils/squuid)}}])
+                                                           :issue/comments (merge {:db/id -1
+                                                                                   :comment/body comment-body
+                                                                                   :frontend/issue-id (utils/squuid)}
+                                                                                  (when parent-id
+                                                                                    {:comment/parent parent-id}))}])
                                    (om/set-state! owner :comment-body "")))}
           [:input {:type "text"
                    :value comment-body
@@ -82,38 +85,68 @@
            [:div.issue-polls.issue-arrow (common/icon :north)]
            [:div.issue-polls.issue-guide "vote"]])))))
 
-(defn single-comment [{:keys [comment-id]} owner]
+
+(defn single-comment [{:keys [comment-id issue-id]} owner {:keys [ancestors]
+                                                           :or {ancestors #{}}}]
   (reify
     om/IInitState
-    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                     :replying? false})
     om/IDidMount
     (did-mount [_]
       (fdb/add-entity-listener (om/get-shared owner :issue-db)
                                comment-id
                                (om/get-state owner :listener-key)
                                (fn [tx-report]
-                                 (om/refresh! owner))))
+                                 (om/refresh! owner)))
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :comment/parent
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (when (first (filter #(= comment-id (:v %))
+                                                         (:tx-data tx-report)))
+                                      (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-entity-listener (om/get-shared owner :issue-db)
                                   comment-id
-                                  (om/get-state owner :listener-key)))
-    om/IRender
-    (render [_]
+                                  (om/get-state owner :listener-key))
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :comment/parent
+                                     (om/get-state owner :listener-key)))
+    om/IRenderState
+    (render-state [_ {:keys [replying?]}]
       (let [{:keys [issue-db cast!]} (om/get-shared owner)
             comment (d/entity @issue-db comment-id)]
         (html
          [:div.comment
-          [:div (:comment/body comment)]])))))
+          [:div (:comment/body comment)]
+          [:div.reply
+           (if replying?
+             (om/build comment-form {:issue-id issue-id
+                                     :parent-id comment-id})
+             [:a {:role "button"
+                  :on-click #(om/set-state! owner :replying? true)}
+              "reply"])]
+          (when-not (contains? ancestors (:db/id comment)) ; don't render cycles
+            [:div.comment-children {:style {:margin-left "5px"}}
+             (for [id (utils/inspect (issue-model/direct-descendants @issue-db comment))]
+               (om/build single-comment {:issue-id issue-id
+                                         :comment-id id}
+                         {:key :comment-id
+                          :opts {:ancestors (conj ancestors (:db/id comment))}}))])])))))
 
 (defn comments [{:keys [issue]} owner]
   (reify
     om/IRender
     (render [_]
-      (html
-       [:div.issue-comments
-        (for [{:keys [db/id]} (:issue/comments issue)]
-          (om/build single-comment {:comment-id id} {:key :comment-id}))]))))
+      (let [{:keys [issue-db]} (om/get-shared owner)]
+        (html
+         [:div.issue-comments
+          (for [{:keys [db/id]} (issue-model/top-level-comments issue)]
+            (om/build single-comment {:comment-id id
+                                      :issue-id (:db/id issue)}
+                      {:key :comment-id}))])))))
 
 (defn issue [{:keys [issue-id]} owner]
   (reify
