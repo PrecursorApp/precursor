@@ -70,18 +70,17 @@
                           [?e :vote/cust ?email]]
                         @issue-db (:db/id issue) (:cust/email cust))]
         (html
-
-          (if voted?
-            [:div.issue-vote]
-
-            [:a.issue-vote {:role "button"
+          [:div.issue-vote {:role "button"
+                            :class (str "issue-vote-" (if voted? "true" "false"))
+                            :title (when voted? "Undo vote.")
                             :on-click #(d/transact! issue-db
                                                     [{:db/id (:db/id issue)
                                                       :issue/votes {:db/id -1
                                                                     :frontend/issue-id (utils/squuid)
                                                                     :vote/cust (:cust/email cust)}}])}
-             [:span.issue-vote-count (count (:issue/votes issue))]
-             (common/icon :north)]))))))
+           [:div.issue-polls.issue-count (count (:issue/votes issue))]
+           [:div.issue-polls.issue-arrow (common/icon :north)]
+           [:div.issue-polls.issue-guide "vote"]])))))
 
 (defn single-comment [{:keys [comment-id]} owner]
   (reify
