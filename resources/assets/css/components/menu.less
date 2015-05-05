@@ -3,6 +3,13 @@
   width: 100%;
   min-height: 100vh;
   overflow-x: hidden;
+  .menu-body {
+    .menu-view {
+      .make {
+        .animation_cascade(25);
+      }
+    }
+  }
   .content {
     box-sizing: border-box;
     width: 100%;
@@ -88,9 +95,7 @@
   flex: 1;
   position: relative;
   padding: 10vh 0 0;
-  .make {
-    .animation_cascade(25);
-  }
+  overflow: hidden;
 }
 .menu-view {
   .flexy(flex-start, flex-start, column);
@@ -108,21 +113,17 @@
     opacity: 0;
     visibility: hidden;
   }
-  &:last-of-type {
-    &:only-of-type {
+  &:only-of-type {
+    &:last-of-type {
       .make {
-        animation-name: in-fade-left;
-        animation-duration: @run_slow;
-        animation-fill-mode: both;
+        animation: in-fade-left-soft @run_slower backwards;
       }
     }
   }
   &:not(:only-of-type) {
     &:not(:first-of-type) {
       .make {
-        animation-name: in-fade-right;
-        animation-duration: @run_slow;
-        animation-fill-mode: both;
+        animation: in-fade-right @run_slow backwards;
       }
     }
   }

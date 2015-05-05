@@ -164,9 +164,8 @@
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:section.menu-view
-          [:div.veins
-           (if (auth/has-team-permission? app (:team/uuid (:team app)))
-             (list
+          (if (auth/has-team-permission? app (:team/uuid (:team app)))
+            (list
               [:a.vein.make {:on-click #(cast! :team-settings-opened)
                              :role "button"}
                (common/icon :users)
@@ -179,11 +178,11 @@
                              :role "button"}
                (common/icon :credit)
                [:span "Billing"]])
-             [:a.vein.make {:on-click #(cast! :request-team-access-opened)}
-              (common/icon :sharing)
-              [:span "Request Access"]])
-           [:a.vein.make
-            {:on-click #(cast! :your-teams-opened)
-             :role "button"}
-            (common/icon :team)
-            [:span "Your Teams"]]]])))))
+            [:a.vein.make {:on-click #(cast! :request-team-access-opened)}
+             (common/icon :sharing)
+             [:span "Request Access"]])
+          [:a.vein.make
+           {:on-click #(cast! :your-teams-opened)
+            :role "button"}
+           (common/icon :team)
+           [:span "Your Teams"]]])))))

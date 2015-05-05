@@ -1,6 +1,6 @@
 .canvas {
-  flex: 1;
   position: relative;
+  min-width: 100%;
   &:not(:hover) {
     &:not(:active) {
       .hint {
@@ -18,14 +18,13 @@
   }
 }
 .canvas-frame {
-  user-select: none;
-  transform-origin: 0 0;
   position: relative;
-  transition+: all @run_slow @now @bezier_deform;
-  transition+: width @now @run_slower @bezier_deform;
-  transition+: height @now @run_slower @bezier_deform;
-  will-change: transform;
+  user-select: none;
   cursor: crosshair;
+  background: fade(@dye_outer, 0);
+  transition+: transform @run @run_fast ease-out;
+  transition+: transform-origin @run @now ease;
+  will-change: transform;
   &:not(:hover) {
     &:not(:active) {
       user-select: none;

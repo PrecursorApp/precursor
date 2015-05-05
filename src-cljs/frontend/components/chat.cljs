@@ -180,16 +180,18 @@
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
             chat-bot (:document/chat-bot (d/entity @db (ffirst (d/q '[:find ?t :where [?t :document/name]] @db))))
             dummy-chat {:chat/body [:span
-                                    "Welcome, try the "
+                                    "Welcome! "
+                                    "Try the "
                                     [:a {:href "https://precursorapp.com/document/17592197661008" :target "_blank"}
                                      "how-to"]
-                                    " doc, see other users "
+                                    " or see other users "
                                     [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"}
                                      "make"]
-                                    " things, or ask us "
+                                    " stuff. "
+                                    "Ping "
                                     [:a {:on-click #(cast! :chat-user-clicked {:id-str (:chat-bot/name chat-bot)}) :role "button"}
-                                     "anything"]
-                                    "!"]
+                                     (str "@" (:chat-bot/name chat-bot))]
+                                    " for help. "]
                         :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html
@@ -245,7 +247,7 @@
           [:div#canvas-size.chat-offset.holo]
           [:div.chat-window {:class (when (or (not chat-opened?)
                                               (:show-landing? app)) ["closed"])}
-           [:div.inner-backgrounds]
+           [:div.inner-background.chat-background]
            (om/build log (utils/select-in app [[:document/id]
                                                [:sente-id]
                                                [:client-id]

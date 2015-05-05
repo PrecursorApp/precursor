@@ -3,33 +3,41 @@
 //
 .state-menu {
   .inner {
-    transition+: transform @run @run_fast ease-out;
-    transition+: margin @run @now ease-out;
-    cursor: pointer;
-    background: @dye_outer;
-    &:hover {
-      .canvas {
-        .shadow_canvas(hover);
-        transition: box-shadow @run_fast;
+    pointer-events: none;
+  }
+  .inner-background {
+    &:after {
+      animation: out-fade @run @run_fast both;
+    }
+    &.canvas-background {
+      &:after {
+        transform: scale(.6, 0);
       }
+    }
+    &.chat-background {
+      &:after {
+        transform: scale(1, 0);
+      }
+    }
+  }
+  .inner-foreground {
+    border-color: @color_chat_border;
+    pointer-events: auto;
+    transform: scale(1);
+    &:hover {
+      .shadow_canvas(hover);
+      border-color: fade(@black, (100 * @opacity_white_lightest));
+      transition+: box-shadow @run_fast @now;
+      transition+: opacity @run_fast @run_slow;
     }
     &:active {
-      .canvas {
-        .shadow_canvas(active);
-        transition: box-shadow @run_faster;
-      }
+      .shadow_canvas(active);
+      transition+: box-shadow @run_faster @now;
+      transition+: opacity @run_fast @run_slow;
     }
   }
-  .inner-backgrounds {
-    &:after {
-      transform: scale3d(1, 0, 1);
-      transition-duration: @run;
-    }
-  }
-  .canvas {
-    .shadow_canvas();
-    pointer-events: none;
-    transition: box-shadow @run;
+  .chat {
+    display: none; // hack until chat animation is figured out
   }
   .chat-window {
     pointer-events: none;
@@ -87,7 +95,7 @@
     .hud_menu_morph();
   }
   .menu-body {
-    .size_of(chat; padding-left);
+    .size_of(chat; margin-left);
   }
 }
 //

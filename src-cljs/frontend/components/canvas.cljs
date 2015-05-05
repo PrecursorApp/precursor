@@ -1027,8 +1027,8 @@
         [:div.canvas {:onContextMenu (fn [e]
                                        (.preventDefault e)
                                        (.stopPropagation e))}
-         [:div.inner-backgrounds]
          (om/build svg-canvas app)
+         [:div.inner-foreground]
          (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
          (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
                                                      [:keyboard]

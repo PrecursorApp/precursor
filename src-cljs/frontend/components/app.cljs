@@ -74,6 +74,7 @@
                          :class (when (empty? (:frontend-id-state app)) "loading")
                          :key "inner"}
              [:style "#om-app:active{cursor:auto}"]
+             [:div.inner-background.canvas-background]
              (om/build canvas/canvas (select-in app [state/current-tool-path
                                                      state/right-click-learned-path
                                                      [:drawing :in-progress?]

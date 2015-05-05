@@ -7,11 +7,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  margin-left: 0;
-  transition+: transform @run_fast @now ease-out;
-  transition+: margin @run_fast @now ease-out;
-  will-change+: transform;
-  will-change+: margin;
+  transition: transform @run_fast @now linear;
+  will-change: transform;
   &:active {
     ~ .hud {
       user-select: none;
@@ -37,13 +34,12 @@
     }
   }
 }
-.inner-backgrounds {
+.inner-background {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: @dye_outer;
   &:after {
     content: "";
     position: absolute;
@@ -52,7 +48,27 @@
     width: 100%;
     height: 100%;
     background: @dye_inner;
-    transition: transform @run @bezier_deform;
+    transition: @run @bezier_deform;
     will-change: transform;
   }
+  &.chat-background {
+    background: @dye_outer;
+  }
+}
+.inner-foreground {
+  position: absolute;
+  top: 10%;
+  left: 20%;
+  width: 80%;
+  height: 80%;
+  border: 1px solid fade(@black, 0);
+  cursor: pointer;
+  user-select: none;
+  pointer-events: none;
+  transform: scale(1.25);
+  transform-origin: right;
+  transition+: transform @run @run_fast;
+  transition+: left @run_fast @now;
+  transition+: box-shadow @run @now;
+  will-change: transform;
 }
