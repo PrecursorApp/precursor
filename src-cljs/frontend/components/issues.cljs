@@ -72,7 +72,7 @@
         (html
 
           (if voted?
-            [:div.voted]
+            [:div.issue-vote]
 
             [:a.issue-vote {:role "button"
                             :on-click #(d/transact! issue-db
@@ -186,10 +186,11 @@
         (html
          [:div.issue
           (om/build vote-box {:issue issue})
-          [:div.issue-info {:on-click #(cast! :issue-expanded {:issue-id issue-id})
-                 :style {:cursor "pointer"
-                         :display "inline-block"}}
-           (:issue/title issue)]])))))
+          [:div.issue-info
+           [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
+                :role "button"}
+            (:issue/title issue)]
+           [:div.issue-tags "bottom-line"]]])))))
 
 (defn issues [app owner {:keys [submenu]}]
   (reify
