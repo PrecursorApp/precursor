@@ -52,7 +52,7 @@
       (let [issue-db (om/get-shared owner :issue-db)
             cust (om/get-shared owner :cust)]
         (html
-         [:form {:on-submit #(do (utils/stop-event %)
+         [:form.comment-input {:on-submit #(do (utils/stop-event %)
                                  (when (seq comment-body)
                                    (d/transact! issue-db [{:db/id issue-id
                                                            :issue/comments (merge {:db/id -1
@@ -63,9 +63,20 @@
                                                                                   (when parent-id
                                                                                     {:comment/parent parent-id}))}])
                                    (om/set-state! owner :comment-body "")))}
-          [:input {:type "text"
+
+          [:div.adaptive
+          [:textarea.adaptive-textarea {:data-adaptive ""
+                      :required true
                    :value comment-body
-                   :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]])))))
+                   :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]
+          [:label.adaptive-label {;:data-placeholder "What do you think?"
+                                  ; :data-typing "What do you want to say?"
+                                  :data-default "What do you think?"
+                                  :data-forgot "To be continued"}]
+          [:input.adaptive-submit.menu-button {:type "submit"
+                                               :value "Comment"}]]
+
+          ])))))
 
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
@@ -164,10 +175,12 @@
   (reify
     om/IRender
     (render [_]
-      (let [{:keys [issue-db]} (om/get-shared owner)]
+      (let [{:keys [issue-db]} (om/get-shared owner)
+            comments (issue-model/top-level-comments issue)]
         (html
          [:div.issue-comments
-          (for [{:keys [db/id]} (issue-model/top-level-comments issue)]
+          [:h4 (str (count comments) " comment" (when (< 1 (count comments)) "s"))]
+          (for [{:keys [db/id]} comments]
             (om/build single-comment {:comment-id id
                                       :issue-id (:db/id issue)}
                       {:key :comment-id}))])))))
@@ -199,8 +212,23 @@
          [:div
           [:div.single-issue-head
            ; (om/build vote-box {:issue issue})
+           ; [:h4 (or title (:issue/title issue ""))]
+           (om/build vote-box {:issue issue})
+           [:div.single-issue-info
            [:h4 (or title (:issue/title issue ""))]
-           (om/build vote-box {:issue issue})]
+
+           [:div.issue-tags
+            [:div.issue-tag.issue-type "feature"]
+            [:div.issue-tag.issue-status "started"]
+            [:div.issue-tag.issue-author (:issue/author issue)]
+            ]
+
+           ; [:div.comment-author
+           ;  [:span.comment-avatar (common/icon :user)]
+           ;  [:span.comment-name (str " " (:issue/author issue))]
+           ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+
+           ]]
 
           ; [:p "by: " (:issue/author issue)]
 
@@ -215,14 +243,36 @@
           ; [:input {:value (or description (:issue/description issue ""))
           ;          :on-change #(om/set-state! owner :description (.. % -target -value))}]
 
-          [:div.comment-author
-           [:span.comment-avatar (common/icon :user)]
-           [:span.comment-name (str " " (:issue/author issue))]
-           [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+          ; [:div.comment-author
+          ;  [:span.comment-avatar (common/icon :user)]
+          ;  [:span.comment-name (str " " (:issue/author issue))]
+          ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
 
-          [:div.comment-content
-           ; [:div (datetime/month-day (:issue/created-at issue))]
-           (or description (:issue/description issue ""))]
+          ; [:div.comment-content
+          ;  (or description (:issue/description issue ""))]
+
+          [:div.single-issue-body
+
+           ; [:div.comment-author
+           ;  [:span.comment-avatar (common/icon :user)]
+           ;  [:span.comment-name (str " " (:issue/author issue))]
+           ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+
+          (if description
+
+            [:div.comment-content
+             (or description (:issue/description issue ""))]
+
+            [:div.comment-content "There's no description yet."])]
+
+          [:div.single-issue-foot
+            [:a {:role "button"} "reply"]
+           ]
+
+          ; [:div.issue-tags
+          ;  ; [:div.issue-tag.issue-type "feature"]
+          ;  ; [:div.issue-tag.issue-status "started"]
+          ;  [:div.issue-tag.issue-author (:issue/author issue)]]
 
           ; [:p
           ;  [:a {:role "button"
@@ -236,12 +286,17 @@
           ;       :role "button"}
           ;   "Delete"]]
 
-          [:div.issue-comment-input.adaptive-placeholder {:contentEditable true
-                                                          :data-before "What do you think about this issue?"
-                                                          :data-after "Hit enter to submit your comment"
-                                                          :data-forgot "You forgot to submit!"}]
+          ; [:div.issue-comment-input.adaptive-placeholder {:contentEditable true
+          ;                                                 :data-before "What do you think about this issue?"
+          ;                                                 :data-after "Hit enter to submit your comment"
+          ;                                                 :data-forgot "You forgot to submit!"}]
 
-          [:h4 "Comments"]
+          (om/build comment-form {:issue-id issue-id})
+
+          ; [:div.calls-to-action
+          ; [:a.menu-button {:role "button"} "Comment"]]
+
+          ; [:h4 (str "0" " comments")]
 
           (om/build comments {:issue issue})
 

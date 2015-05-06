@@ -8,7 +8,8 @@
   width: @tile;
   min-width: @tile;
   height: @tile;
-  margin-right: @menu_padding;
+  // margin-right: @menu_padding;
+  margin-right: 1rem;
   border: 1px solid @gray_lighter;
   border-radius: @tile;
   cursor: pointer;
@@ -75,13 +76,14 @@
   opacity: 0;
 }
 .issue-info {
-  .flexy(column);
+  .flexy(column; center);
   align-items: flex-start;
   flex: 1;
-  padding: .5em 0;
+  // padding: .5em 0;
 }
 .issue-tags {
   .flexy();
+  // line-height: 1;
 }
 .issue-tag {
   color: @gray_light;
@@ -98,16 +100,38 @@
 
 .single-issue-head {
   .flexy();
-  margin-bottom: @menu_padding;
+  // margin-bottom: @menu_padding;
+  margin-bottom: @tile;
   h4 {
     align-self: center;
     margin: 0;
   }
   .issue-vote {
     // margin-left: (-@tile / 4);
-    margin-left: auto;
-    margin-right: 0;
+    // margin-left: auto;
+    // margin-right: 0;
   }
+  // .issue-tags {
+  //   margin-bottom: 1em;
+  // }
+  // .comment-author {
+  //   margin-top: .5em;
+  //   margin-bottom: 0;
+  // }
+  .issue-tags {
+    margin-top: .5em;
+  }
+}
+.single-issue-info {
+  .flexy(column; center);
+}
+.single-issue-body {
+  .comment-content {
+    // margin: @menu_padding 0;
+  }
+}
+.single-issue-foot {
+  margin-bottom: @tile;
 }
 // .issue-description {
 //   margin-bottom: @menu_padding;
@@ -126,6 +150,7 @@
 }
 .issue-comment-input {
   margin-bottom: @menu_padding;
+  // margin: @menu_padding 0;
   // max-height: @tile + (5 * @menu_padding);
   // overflow-y: auto;
   &:focus {
@@ -168,4 +193,16 @@
 .comment-children {
   border-left: 1px solid @gray_light;
   padding-left: @menu_padding;
+}
+
+
+.comment-input {
+  .menu-button {
+    margin-top: @menu_padding;
+    width: 50%;
+    &:not(:hover) {
+      color: @black;
+      background: none;
+    }
+  }
 }
