@@ -818,6 +818,11 @@
               :db.type/ref
               :db/doc "Cust who voted for the issue")
 
+   (attribute :vote/cust-issue
+              :db.type/uuid
+              :db/unique :db.unique/value
+              :db/doc "UUID constructed of cust-id and issue-id")
+
    (attribute :comment/author
               :db.type/ref
               :db/doc "Cust who made the comment")
