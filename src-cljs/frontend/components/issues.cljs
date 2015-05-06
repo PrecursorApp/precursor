@@ -401,7 +401,8 @@
                      :render-time (datetime/server-date)})
     om/IDidMount
     (did-mount [_]
-      (let [issue-db (om/get-shared owner :issue-db)]
+      (let [issue-db (om/get-shared owner :issue-db)
+            cust-email (:cust/email (om/get-shared owner :cust))]
         (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
           (om/set-state! owner :all-issue-ids issue-ids)
           (om/set-state! owner :rendered-issue-ids issue-ids))
@@ -411,9 +412,19 @@
          (om/get-state owner :listener-key)
          (fn [tx-report]
            (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
-             (when (empty? (om/get-state owner :rendered-issue-ids))
-               (om/set-state! owner :rendered-issue-ids issue-ids))
-             (om/set-state! owner :all-issue-ids issue-ids))))))
+             (if (empty? (om/get-state owner :rendered-issue-ids))
+               (om/update-state! owner #(assoc % :rendered-issue-ids issue-ids :all-issue-ids issue-ids))
+               (when cust-email
+                 (om/update-state!
+                  owner #(-> %
+                           (assoc :all-issue-ids issue-ids)
+                           (update-in [:rendered-issue-ids]
+                                      (fn [r]
+                                        (set/union r
+                                                   (set (filter
+                                                         (fn [i] (= cust-email
+                                                                    (:issue/author (d/entity (:db-after tx-report) i))))
+                                                         (set/difference issue-ids r)))))))))))))))
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
