@@ -390,7 +390,7 @@
             (:issue/title issue)]
            (issue-tags issue)]])))))
 
-(defn issues [app owner {:keys [submenu]}]
+(defn issues* [app owner {:keys [submenu]}]
   (reify
     om/IDisplayName (display-name [_] "Issues")
     om/IInitState
@@ -403,7 +403,7 @@
        (om/get-shared owner :comms)
        (om/get-shared owner :sente))
       (fdb/add-attribute-listener (om/get-shared owner :issue-db)
-                                  :frontend/issue-id
+                                  :issue/title
                                   (om/get-state owner :listener-key)
                                   (fn [tx-report]
                                     (om/refresh! owner)))
@@ -414,7 +414,7 @@
     (will-unmount [_]
       (d/unlisten! (om/get-shared owner :issue-db) (om/get-state owner :listener-key))
       (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
-                                     :frontend/issue-id
+                                     :issue/title
                                      (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
@@ -429,6 +429,14 @@
             (if submenu
               (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
               (when-let [issues (seq (map #(d/entity @issue-db (:e %)) (d/datoms @issue-db :aevt :issue/title)))]
-                (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)}) (sort (issue-model/issue-comparator cust (datetime/server-date)) issues))
+                (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)})
+                                                 (sort (issue-model/issue-comparator cust (datetime/server-date)) issues))
                               {:key :issue-id
                                :opts {:issue-db issue-db}})))]]])))))
+
+(defn issues [app owner {:keys [submenu]}]
+  (reify
+    om/IDisplayName (display-name [_] "Issues Overlay")
+    om/IRender
+    (render [_]
+      (om/build issues* (select-keys app [:active-issue-id]) {:opts {:submenu submenu}}))))
