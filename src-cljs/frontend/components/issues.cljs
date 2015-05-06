@@ -28,6 +28,7 @@
           [:form.menu-invite-form.make {:on-submit #(do (utils/stop-event %)
                                                       (when (seq issue-title)
                                                         (d/transact! issue-db [{:db/id -1
+                                                                                :issue/created-at (datetime/server-date)
                                                                                 :issue/title issue-title
                                                                                 :issue/author (:cust/email cust)
                                                                                 :frontend/issue-id (utils/squuid)}])
@@ -54,6 +55,7 @@
                                  (when (seq comment-body)
                                    (d/transact! issue-db [{:db/id issue-id
                                                            :issue/comments (merge {:db/id -1
+                                                                                   :comment/created-at (datetime/server-date)
                                                                                    :comment/body comment-body
                                                                                    :comment/author (:cust/email cust)
                                                                                    :frontend/issue-id (utils/squuid)}
@@ -125,7 +127,7 @@
         (html
          [:div.comment
           [:div (:comment/body comment)
-           [:div "by " (:comment/author comment)]]
+           [:div "by " (:comment/author comment) " on " (datetime/month-day (:comment/created-at comment))]]
           [:div.reply
            (if replying?
              (om/build comment-form {:issue-id issue-id
@@ -175,11 +177,11 @@
     om/IRenderState
     (render-state [_ {:keys [title description]}]
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
-            issue (ds/touch+ (d/entity @issue-db issue-id))]
+            issue (utils/inspect (ds/touch+ (d/entity @issue-db issue-id)))]
         (html
          [:div.content.make
           (om/build vote-box {:issue issue})
-          [:p "by: " (:issue/author issue)]
+          [:p "by: " (:issue/author issue) " on " (datetime/month-day (:issue/created-at issue))]
           [:p "Title "
            [:input {:value (or title (:issue/title issue ""))
                     :on-change #(om/set-state! owner :title (.. % -target -value))}]]
