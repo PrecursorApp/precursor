@@ -1,5 +1,6 @@
 (ns pc.models.issue
-  (:require [pc.datomic :as pcd]
+  (:require [clojure.set :as set]
+            [pc.datomic :as pcd]
             [pc.utils :as utils]
             [datomic.api :refer [db q] :as d]))
 
@@ -23,10 +24,9 @@
     (select-keys [:comment/body
                   :comment/author
                   :comment/created-at
-                  :comment/frontend-id
                   :comment/parent
                   :frontend/issue-id])
-    (utils/update-when-in [:comment/parent] :frontend/issue-id)
+    (utils/update-when-in [:comment/parent] (fn [p] {:frontend/issue-id (:frontend/issue-id p)}))
     (utils/update-when-in [:comment/author] :cust/email)))
 
 (defn read-api [issue]
@@ -43,3 +43,24 @@
     (utils/update-when-in [:issue/author] :cust/email)
     (utils/update-when-in [:issue/votes] #(set (map vote-read-api %)))
     (utils/update-when-in [:issue/comments] #(set (map comment-read-api %)))))
+
+(defn valid-issue? [?issue]
+  (let [actual-keys (set (keys (d/touch ?issue)))
+        optional-keys #{:issue/comments :issue/votes :issue/document :issue/description :db/id}
+        required-keys #{:issue/title :issue/author :issue/created-at :frontend/issue-id}]
+    (and (set/subset? required-keys actual-keys)
+         (set/subset? actual-keys (set/union optional-keys required-keys)))))
+
+(defn valid-comment? [?comment]
+  (let [actual-keys (set (keys (d/touch ?comment)))
+        optional-keys #{:comment/parent :db/id}
+        required-keys #{:comment/body :comment/author :comment/created-at :frontend/issue-id}]
+    (and (set/subset? required-keys actual-keys)
+         (set/subset? actual-keys (set/union optional-keys required-keys)))))
+
+(defn valid-vote? [?vote]
+  (let [actual-keys (set (keys (d/touch ?vote)))
+        optional-keys #{:db/id}
+        required-keys #{:vote/cust :vote/cust-issue :frontend/issue-id}]
+    (and (set/subset? required-keys actual-keys)
+         (set/subset? actual-keys (set/union optional-keys required-keys)))))

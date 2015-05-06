@@ -88,6 +88,13 @@
                  (map ds/datom->transaction datoms)
                  {:server-update true})))
 
+;; Hack to deal with datascript's design decisions: https://github.com/tonsky/datascript/issues/76
+(defn sort-datoms [datoms]
+  (let [c (fn [d1 d2]
+            (compare (count (set/intersection #{:comment/parent :issue/votes :issue/comments} (set (keys d1))))
+                     (count (set/intersection #{:comment/parent :issue/votes :issue/comments} (set (keys d2))))))]
+    (sort c datoms)))
+
 (defmethod handle-message :issue/transaction [app-state message data]
   (let [datoms (:tx-data data)]
     (d/transact! (:issue-db @app-state)
@@ -98,7 +105,8 @@
                                      (merge {:db/id e}
                                             (reduce (fn [acc datom]
                                                       (assoc acc (:a datom) (:v datom)))
-                                                    {} datoms)))))
+                                                    {} datoms))))
+                              sort-datoms)
                        retracts (remove :added datoms)]
                    (concat adds
                            (map ds/datom->transaction retracts)))

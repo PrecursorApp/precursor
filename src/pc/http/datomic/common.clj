@@ -277,13 +277,13 @@
                                                   :added true})
                               eid-map)]
     (concat
+     frontend-id-txes
      (map (fn [datom]
             ;; replaces lookup-ref style e with tempid
             (-> datom
               (update-in [:e] eid-map)
               (update-in [:v] #(get eid-map % %))))
-          txes)
-     frontend-id-txes)))
+          txes))))
 
 (defn frontend-issue-transaction
   "Returns map of document transactions filtered for admin and filtered for read-only access"
