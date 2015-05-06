@@ -6,6 +6,7 @@
   .flexy(center; center; column);
   position: relative;
   width: @tile;
+  min-width: @tile;
   height: @tile;
   margin-right: @menu_padding;
   border: 1px solid @gray_lighter;
@@ -79,13 +80,27 @@
   flex: 1;
   padding: .5em 0;
 }
+.issue-tags {
+  .flexy();
+}
+.issue-tag {
+  color: @gray_light;
+  margin-right: 1rem;
+}
+// .issue-status {
+//   border: 1px solid @gray;
+//   border-radius: @tile;
+//   margin-left: -.5em;
+//   padding: 0 .5em;
+// }
 
 
 
 .single-issue-head {
-  .flexy(center);
+  .flexy();
   margin-bottom: @menu_padding;
-  h3 {
+  h4 {
+    align-self: center;
     margin: 0;
   }
   .issue-vote {

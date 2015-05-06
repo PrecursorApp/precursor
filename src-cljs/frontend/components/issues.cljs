@@ -198,7 +198,7 @@
          [:div
           [:div.single-issue-head
            ; (om/build vote-box {:issue issue})
-           [:h3 (or title (:issue/title issue ""))]
+           [:h4 (or title (:issue/title issue ""))]
            (om/build vote-box {:issue issue})]
 
           ; [:p "by: " (:issue/author issue)]
@@ -277,7 +277,10 @@
            [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
                 :role "button"}
             (:issue/title issue)]
-           [:div.issue-tags "bottom-line"]]])))))
+           [:div.issue-tags
+            ; [:div.issue-tag.issue-type "feature"]
+            ; [:div.issue-tag.issue-status "started"]
+            [:div.issue-tag.issue-author (:issue/author issue)]]]])))))
 
 (defn issues [app owner {:keys [submenu]}]
   (reify
