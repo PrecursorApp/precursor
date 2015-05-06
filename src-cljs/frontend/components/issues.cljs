@@ -390,6 +390,38 @@
             (:issue/title issue)]
            (issue-tags issue)]])))))
 
+(defn issue-list [_ owner]
+  (reify
+    om/IDisplayName (display-name [_] "Issue List")
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :issue/title
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :issue/title
+                                     (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
+        (html
+         [:div.menu-view
+          [:div.content
+           [:div.make {:key "issue-form"}
+            (om/build issue-form {})]
+           [:div.make {:key "summary"}
+            (when-let [issues (seq (map #(d/entity @issue-db (:e %)) (d/datoms @issue-db :aevt :issue/title)))]
+              (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)})
+                                               (sort (issue-model/issue-comparator cust (datetime/server-date)) issues))
+                            {:key :issue-id
+                             :opts {:issue-db issue-db}}))]]])))))
+
 (defn issues* [app owner {:keys [submenu]}]
   (reify
     om/IDisplayName (display-name [_] "Issues")
@@ -402,37 +434,20 @@
        (om/get-state owner :listener-key)
        (om/get-shared owner :comms)
        (om/get-shared owner :sente))
-      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
-                                  :issue/title
-                                  (om/get-state owner :listener-key)
-                                  (fn [tx-report]
-                                    (om/refresh! owner)))
-      (sente/subscribe-to-issues (:sente app)
+      (sente/subscribe-to-issues (om/get-shared owner :sente)
                                  (om/get-shared owner :comms)
                                  (om/get-shared owner :issue-db)))
     om/IWillUnmount
     (will-unmount [_]
-      (d/unlisten! (om/get-shared owner :issue-db) (om/get-state owner :listener-key))
-      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
-                                     :issue/title
-                                     (om/get-state owner :listener-key)))
+      (d/unlisten! (om/get-shared owner :issue-db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
-        (html
-         [:div.menu-view
-          [:div.content
-           (when-not submenu
-             [:div.make {:key "issue-form"}
-              (om/build issue-form {})])
-           [:div.make {:key (or submenu "summary")}
-            (if submenu
-              (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
-              (when-let [issues (seq (map #(d/entity @issue-db (:e %)) (d/datoms @issue-db :aevt :issue/title)))]
-                (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)})
-                                                 (sort (issue-model/issue-comparator cust (datetime/server-date)) issues))
-                              {:key :issue-id
-                               :opts {:issue-db issue-db}})))]]])))))
+      (html
+       [:div.menu-view
+        [:div.content
+         (if submenu
+           (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
+           (om/build issue-list {} {:react-key "issue-list"}))]]))))
 
 (defn issues [app owner {:keys [submenu]}]
   (reify
