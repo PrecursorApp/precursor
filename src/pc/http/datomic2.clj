@@ -4,7 +4,8 @@
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
             [pc.datomic :as pcd]
-            [pc.datomic.web-peer :as web-peer])
+            [pc.datomic.web-peer :as web-peer]
+            [pc.models.issue :as issue-model])
   (:import [java.util UUID]))
 
 
@@ -227,12 +228,36 @@
            ;; new entity
            true))))
 
-(defn add-issue-frontend-ids [txes]
-  (let [;; better way to do this, maybe by using maps instead of vecs for txes?
-        {needs-id-txes false admin-txes true} (group-by #(= :vote/cust-issue (nth % 2)) txes)
-        id-map (zipmap (set (map (comp second second)
+(defn type-check-new-entities [find-by-frontend-id-memo db txes]
+  (doseq [[_ entity-txes] (vec (remove (fn [[[_ frontend-id] txes]]
+                                         (find-by-frontend-id-memo db frontend-id))
+                                       (group-by second txes)))]
+    (reduce (fn [acc [type e a v]]
+              (assoc acc a v))
+            {} entity-txes))
+  txes)
 
-                                 needs-id-txes))
+(defn add-vote-contraints [find-by-frontend-id-memo db txes]
+  (let [vote-txes (filterv (fn [tx] (= :vote/cust (nth tx 2))) txes)]
+    (concat txes
+            (for [[_ e _ v] vote-txes
+                  :let [issue-tx (first (filter #(and (= e (nth % 3))
+                                                      (= :issue/votes (nth % 2)))
+                                                txes))
+                        frontend-id (second (second issue-tx))
+                        issue-id (:db/id (find-by-frontend-id-memo db frontend-id))]]
+              [:db/add e :vote/cust-issue (UUID. v issue-id)]))))
+
+(defn all-frontend-ids [txes]
+  (set/union (set (map (comp second second) txes))
+             (reduce (fn [acc [type e a v]]
+                       (if (vector? v)
+                         (conj acc (second v))
+                         acc))
+                     #{} txes)))
+
+(defn add-issue-frontend-ids [find-by-frontend-id-memo db txes]
+  (let [id-map (zipmap (all-frontend-ids txes)
                        (repeatedly #(d/tempid :db.part/user)))
         ;; matches tempid with issue-id
         ;; TODO: should we use value for identity type and look up ids?
@@ -245,20 +270,22 @@
              (if (vector? v) ; replace lookup-ref in value with tempid
                (get id-map (second v))
                v)])
-          needs-id-txes)
-     admin-txes
+          txes)
      frontend-id-txes)))
 
-(defn add-vote-contraints [find-by-frontend-id-memo db txes]
-  (let [vote-txes (filterv (fn [tx] (= :vote/cust (nth tx 2))) txes)]
-    (concat txes
-            (for [[_ e _ v] vote-txes
-                  :let [issue-tx (first (filter #(and (= e (nth % 3))
-                                                      (= :issue/votes (nth % 2)))
-                                                txes))
-                        frontend-id (second (second issue-tx))
-                        issue-id (:db/id (find-by-frontend-id-memo db frontend-id))]]
-              [:db/add (d/tempid :db.part/user) :vote/cust-issue (UUID. v issue-id)]))))
+;; TODO: generalize this--probably need to start setting that entity/type field
+(defn issue-valid-entity? [ent]
+  (or (issue-model/valid-issue? ent)
+      (issue-model/valid-comment? ent)
+      (issue-model/valid-vote? ent)))
+
+(defn type-check-new-entities [db txes]
+  (let [{:keys [tempids db-after]} (d/with db txes)]
+    (doseq [id (vals tempids)
+            :let [ent (d/entity db-after id)]]
+      (assert (issue-valid-entity? ent)
+              (format "issue-tx contained txes that would have created an invalid state in the db %s for %s" txes ent))))
+  txes)
 
 (defn debug-def [txes]
   (def debug-txes txes)
@@ -294,8 +321,9 @@
                             (remove-float-conflicts)
                             (filter (partial issue-can-modify? db cust find-by-frontend-id-memo))
                             (add-vote-contraints find-by-frontend-id-memo db)
-                            add-issue-frontend-ids
+                            (add-issue-frontend-ids find-by-frontend-id-memo db)
                             seq
+                            (type-check-new-entities db)
                             (concat [(merge {:db/id txid
                                              :session/uuid session-uuid
                                              :session/client-id client-id
