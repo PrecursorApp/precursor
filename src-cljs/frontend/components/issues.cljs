@@ -1,6 +1,7 @@
 (ns frontend.components.issues
   (:require [cljs-time.core :as time]
             [cljs-time.format :as time-format]
+            [clojure.set :as set]
             [clojure.string :as str]
             [datascript :as d]
             [frontend.components.common :as common]
@@ -20,32 +21,34 @@
 
 (defn issue-form [_ owner]
   (reify
+    om/IDisplayName (display-name [_] "Issue form")
     om/IInitState (init-state [_] {:issue-title ""})
     om/IRenderState
     (render-state [_ {:keys [issue-title]}]
-      (let [issue-db (om/get-shared owner :issue-db)
-            cust (om/get-shared owner :cust)]
+      (let [{:keys [issue-db cust cast!]} (om/get-shared owner)]
         (html
-          [:form.menu-invite-form.make {:on-submit #(do (utils/stop-event %)
-                                                      (when (seq issue-title)
-                                                        (d/transact! issue-db [{:db/id -1
-                                                                                :issue/created-at (datetime/server-date)
-                                                                                :issue/title issue-title
-                                                                                :issue/author (:cust/email cust)
-                                                                                :frontend/issue-id (utils/squuid)}])
-                                                        (om/set-state! owner :issue-title "")))}
-           [:input {:type "text"
-                    :value issue-title
-                    :required "true"
-                    :data-adaptive ""
-                    :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
-           [:label {:data-placeholder (gstring/format "Sounds good; %s characters so far"
-                                                      (count issue-title))
-                    :data-placeholder-nil "How can we improve Precursor?"
-                    :data-placeholder-busy "Your idea in 64 characters or less"}]])))))
+         [:form.menu-invite-form.make {:on-submit #(do (utils/stop-event %)
+                                                       (when (seq issue-title)
+                                                         (let [tx (d/transact! issue-db [{:db/id -1
+                                                                                          :issue/created-at (datetime/server-date)
+                                                                                          :issue/title issue-title
+                                                                                          :issue/author (:cust/email cust)
+                                                                                          :frontend/issue-id (utils/squuid)}])]
+                                                           (cast! :issue-expanded {:issue-id (d/resolve-tempid (:db-after tx) (:tempids tx) -1)}))
+                                                         (om/set-state! owner :issue-title "")))}
+          [:input {:type "text"
+                   :value issue-title
+                   :required "true"
+                   :data-adaptive ""
+                   :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
+          [:label {:data-placeholder (gstring/format "Sounds good; %s characters so far"
+                                                     (count issue-title))
+                   :data-placeholder-nil "How can we improve Precursor?"
+                   :data-placeholder-busy "Your idea in 64 characters or less"}]])))))
 
 (defn comment-form [{:keys [issue-id parent-id]} owner {:keys [issue-db]}]
   (reify
+    om/IDisplayName (display-name [_] "Comment form")
     om/IInitState (init-state [_] {:comment-body ""})
     om/IRenderState
     (render-state [_ {:keys [comment-body]}]
@@ -81,6 +84,7 @@
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Vote box")
     om/IRender
     (render [_]
       (let [{:keys [cast! issue-db cust]} (om/get-shared owner)
@@ -125,6 +129,7 @@
 (defn single-comment [{:keys [comment-id issue-id]} owner {:keys [ancestors]
                                                            :or {ancestors #{}}}]
   (reify
+    om/IDisplayName (display-name [_] "Single comment")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                      :replying? false})
@@ -217,6 +222,7 @@
 
 (defn comments [{:keys [issue]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Comments")
     om/IRender
     (render [_]
       (let [{:keys [issue-db]} (om/get-shared owner)
@@ -233,6 +239,7 @@
 
 (defn issue-summary [{:keys [issue-id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Issue summary")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -253,30 +260,79 @@
             issue (ds/touch+ (d/entity @issue-db issue-id))
             comment-count (count (:issue/comments issue))]
         (html
-          [:div.issue-summary
-           [:div.issue-info
-            [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
-                             :role "button"}
-             (:issue/title issue)]
-            ; (issue-foot issue)
+         [:div.issue-summary
+          [:div.issue-info
+           [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
+                            :role "button"}
+            ; (or title (:issue/title issue ""))
+            (:issue/title issue)
+            ]
+           ; (issue-foot issue)
 
-            [:p.issue-foot
-             [:a {:role "button"}
-              (str comment-count " comment" (when (< 1 comment-count) "s"))]
-             [:span " for "]
-             [:a {:role "button"}
-              ; "feature"
-              ; "integration"
-              "bugfix"]
-             [:span " in "]
-             [:a {:role "button"}
-              ; "review"
-              ; "production"
-              "development."]]]
-           (om/build vote-box {:issue issue})])))))
+           [:p.issue-foot
+            [:a {:role "button"}
+             (str comment-count " comment" (when (< 1 comment-count) "s"))]
+            [:span " for "]
+            [:a {:role "button"}
+             ; "feature"
+             ; "integration"
+             "bugfix"]
+            [:span " in "]
+            [:a {:role "button"}
+             ; "review"
+             ; "production"
+             "development."]]]
+          (om/build vote-box {:issue issue})])))))
+
+; (defn issue-summary [{:keys [issue-id]} owner]
+;   (reify
+;     om/IInitState
+;     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+;     om/IDidMount
+;     (did-mount [_]
+;       (fdb/add-entity-listener (om/get-shared owner :issue-db)
+;                                issue-id
+;                                (om/get-state owner :listener-key)
+;                                (fn [tx-report]
+;                                  (om/refresh! owner))))
+;     om/IWillUnmount
+;     (will-unmount [_]
+;       (fdb/remove-entity-listener (om/get-shared owner :issue-db)
+;                                   issue-id
+;                                   (om/get-state owner :listener-key)))
+;     om/IRender
+;     (render [_]
+;       (let [{:keys [cast! issue-db]} (om/get-shared owner)
+;             issue (ds/touch+ (d/entity @issue-db issue-id))
+;             comment-count (count (:issue/comments issue))]
+;         (html
+;           [:div.issue-summary
+;            [:div.issue-info
+;             [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
+;                              :role "button"}
+;              ; (or title (:issue/title issue ""))
+;              (:issue/comments issue)
+;              ]
+;             ; (issue-foot issue)
+
+;             [:p.issue-foot
+;              [:a {:role "button"}
+;               (str comment-count " comment" (when (< 1 comment-count) "s"))]
+;              [:span " for "]
+;              [:a {:role "button"}
+;               ; "feature"
+;               ; "integration"
+;               "bugfix"]
+;              [:span " in "]
+;              [:a {:role "button"}
+;               ; "review"
+;               ; "production"
+;               "development."]]]
+;            (om/build vote-box {:issue issue})])))))
 
 (defn issue [{:keys [issue-id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Issue")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                      :title nil
@@ -297,7 +353,7 @@
     om/IRenderState
     (render-state [_ {:keys [title description]}]
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
-            issue (utils/inspect (ds/touch+ (d/entity @issue-db issue-id)))]
+            issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
          [:div.issue
 
@@ -412,8 +468,87 @@
 
           ])))))
 
-(defn issues [app owner {:keys [submenu]}]
+(defn issue-list [_ owner]
   (reify
+    om/IDisplayName (display-name [_] "Issue List")
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                     :rendered-issue-ids #{}
+                     :all-issue-ids #{}
+                     :render-time (datetime/server-date)})
+    om/IDidMount
+    (did-mount [_]
+      (let [issue-db (om/get-shared owner :issue-db)
+            cust-email (:cust/email (om/get-shared owner :cust))]
+        (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
+          (om/set-state! owner :all-issue-ids issue-ids)
+          (om/set-state! owner :rendered-issue-ids issue-ids))
+        (fdb/add-attribute-listener
+         issue-db
+         :issue/title
+         (om/get-state owner :listener-key)
+         (fn [tx-report]
+           (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
+             (if (empty? (om/get-state owner :rendered-issue-ids))
+               (om/update-state! owner #(assoc % :rendered-issue-ids issue-ids :all-issue-ids issue-ids))
+               (when cust-email
+                 (om/update-state!
+                  owner #(-> %
+                           (assoc :all-issue-ids issue-ids)
+                           (update-in [:rendered-issue-ids]
+                                      (fn [r]
+                                        (set/union r
+                                                   (set (filter
+                                                         (fn [i] (= cust-email
+                                                                    (:issue/author (d/entity (:db-after tx-report) i))))
+                                                         (set/difference issue-ids r)))))))))))))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :issue/title
+                                     (om/get-state owner :listener-key)))
+    om/IRenderState
+    (render-state [_ {:keys [all-issue-ids rendered-issue-ids render-time]}]
+      (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
+        (html
+         [:div.menu-view
+          [:div.issues-list
+           (let [deleted (set/difference rendered-issue-ids all-issue-ids)
+                 added (set/difference all-issue-ids rendered-issue-ids)]
+             (when (or (seq deleted) (seq added))
+               [:div.make
+                [:a {:role "button"
+                     :on-click #(om/update-state! owner (fn [s]
+                                                          (assoc s
+                                                                 :rendered-issue-ids (:all-issue-ids s)
+                                                                 :render-time (datetime/server-date))))}
+                 (cond (empty? deleted)
+                       (str (count added) (if (< 1 (count added))
+                                            " new issues were"
+                                            " new issue was")
+                            " added, click to refresh.")
+                       (empty? added)
+                       (str (count deleted) (if (< 1 (count deleted))
+                                              " issues were"
+                                              " issue was")
+                            " removed, click to refresh.")
+                       :else
+                       (str (count added) (if (< 1 (count added))
+                                            " new issues were"
+                                            " new issue was")
+                            " added, " (count deleted) " removed, click to refresh."))]]))
+           [:div.make {:key "issue-form"}
+            (om/build issue-form {})]
+           [:div.make {:key "summary"}
+            (when-let [issues (seq (map #(d/entity @issue-db %) rendered-issue-ids))]
+              (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)})
+                                               (sort (issue-model/issue-comparator cust render-time) issues))
+                            {:key :issue-id
+                             :opts {:issue-db issue-db}}))]]])))))
+
+(defn issues* [app owner {:keys [submenu]}]
+  (reify
+    om/IDisplayName (display-name [_] "Issues")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -423,33 +558,24 @@
        (om/get-state owner :listener-key)
        (om/get-shared owner :comms)
        (om/get-shared owner :sente))
-      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
-                                  :frontend/issue-id
-                                  (om/get-state owner :listener-key)
-                                  (fn [tx-report]
-                                    (om/refresh! owner)))
-      (sente/subscribe-to-issues (:sente app)
+      (sente/subscribe-to-issues (om/get-shared owner :sente)
                                  (om/get-shared owner :comms)
                                  (om/get-shared owner :issue-db)))
     om/IWillUnmount
     (will-unmount [_]
-      (d/unlisten! (om/get-shared owner :issue-db) (om/get-state owner :listener-key))
-      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
-                                     :frontend/issue-id
-                                     (om/get-state owner :listener-key)))
+      (d/unlisten! (om/get-shared owner :issue-db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
-        (html
-         [:div.menu-view
-          [:div.content
-           (when-not submenu
-             [:div.make {:key "issue-form"}
-              (om/build issue-form {})])
-           [:div.make {:key (or submenu "summary")}
-            (if submenu
-              (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
-              (when-let [issues (seq (map #(d/entity @issue-db (:e %)) (d/datoms @issue-db :aevt :issue/title)))]
-                (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)}) (sort (issue-model/issue-comparator cust (datetime/server-date)) issues))
-                              {:key :issue-id
-                               :opts {:issue-db issue-db}})))]]])))))
+      (html
+       [:div.menu-view
+        [:div.content
+         (if submenu
+           (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
+           (om/build issue-list {} {:react-key "issue-list"}))]]))))
+
+(defn issues [app owner {:keys [submenu]}]
+  (reify
+    om/IDisplayName (display-name [_] "Issues Overlay")
+    om/IRender
+    (render [_]
+      (om/build issues* (select-keys app [:active-issue-id]) {:opts {:submenu submenu}}))))
