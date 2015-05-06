@@ -26,7 +26,8 @@
                   :comment/frontend-id
                   :comment/parent
                   :frontend/issue-id])
-    (utils/update-when-in [:comment/parent] :frontend/issue-id)))
+    (utils/update-when-in [:comment/parent] :frontend/issue-id)
+    (utils/update-when-in [:comment/author] :cust/email)))
 
 (defn read-api [issue]
   (-> issue

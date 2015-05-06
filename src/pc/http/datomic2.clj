@@ -168,7 +168,6 @@
                        :comment/body
                        :comment/author
                        :comment/created-at
-                       :comment/frontend-id
                        :comment/parent
                        :issue/title
                        :issue/description
@@ -192,32 +191,56 @@
     [type e a (:db/id cust)]
     transaction))
 
+(def issue-append-only-attributes #{:vote/cust
+                                    :comment/author
+                                    :comment/created-at
+                                    :frontend/issue-id
+                                    :comment/parent
+                                    :issue/author
+                                    :issue/created-at})
+
+(def issue-author-only-attributes #{:vote/cust
+                                    :comment/body
+                                    :comment/author
+                                    :comment/created-at
+                                    :comment/parent
+                                    :issue/title
+                                    :issue/created-at
+                                    :issue/description
+                                    :issue/author
+                                    :issue/document
+                                    :frontend/issue-id})
+
 ;; XXX: some things can only be added (e.g. cust, created-at)
-(defn issue-can-modify? [db cust [type e a v :as transaction]]
+(defn issue-can-modify? [db cust find-by-frontend-id-memo [type e a v :as transaction]]
   (and (vector? e)
        (= 2 (count e))
        (= :frontend/issue-id (first e))
        (or (not= :frontend/issue-id a) (not= :db/retract type))
        (contains? #{:db/add :db/retract} type)
-       (if-let [ent (d/entity db (d/datoms db :avet :frontend/issue-id (second e)))]
-         (or (= (:db/id cust) (:db/id (:issue/author ent)))
-             (= (:db/id cust) (:db/id (:vote/cust ent)))
-             (= (:db/id cust) (:db/id (:comment/author ent))))
-         ;; new entity
-         true)))
+       (let [frontend-id (second e)]
+         (if-let [ent (find-by-frontend-id-memo db frontend-id)]
+           (if (contains? issue-author-only-attributes a)
+             (or (= (:db/id cust) (:db/id (:issue/author ent)))
+                 (= (:db/id cust) (:db/id (:vote/cust ent)))
+                 (= (:db/id cust) (:db/id (:comment/author ent))))
+             (not (contains? issue-append-only-attributes a)))
+           ;; new entity
+           true))))
 
 (defn add-issue-frontend-ids [txes]
   (let [id-map (zipmap (set (map (comp second second) txes)) (repeatedly #(d/tempid :db.part/user)))
         ;; matches tempid with issue-id
         ;; TODO: should we use value for identity type and look up ids?
         frontend-id-txes (map (fn [[frontend-id tempid]] [:db/add tempid :frontend/issue-id frontend-id]) id-map)]
-    ;; XXX: need to do something about refs
     (concat
      (map (fn [[type e a v]]
-            ;; replaces lookup-ref style e with tempid
-            [type (get id-map (second e)) a (if (vector? v)
-                                              (get id-map (second v))
-                                              v)])
+            [type
+             (get id-map (second e)) ; replace lookup-ref with tempid
+             a
+             (if (vector? v) ; replace lookup-ref in value with tempid
+               (get id-map (second v))
+               v)])
           txes)
      frontend-id-txes)))
 
@@ -240,7 +263,10 @@
                               txid (d/tempid :db.part/tx)
                               float-attrs (get-float-attrs db)
                               uuid-attrs (get-uuid-attrs db)
-                              server-timestamp (or receive-instant (java.util.Date.))]
+                              server-timestamp (or receive-instant (java.util.Date.))
+                              find-by-frontend-id-memo (memoize (fn [db frontend-id]
+                                                                  (d/entity db (:e (first (d/datoms db :avet :frontend/issue-id
+                                                                                                    frontend-id))))))]
                           (some->> datoms
                             (map (comp (partial coerce-session-uuid session-uuid)
                                        (partial coerce-times server-timestamp)
@@ -250,7 +276,7 @@
                                        pcd/datom->transaction))
                             (filter issue-whitelisted?)
                             (remove-float-conflicts)
-                            (filter (partial issue-can-modify? db cust))
+                            (filter (partial issue-can-modify? db cust find-by-frontend-id-memo))
                             add-issue-frontend-ids
                             seq
                             (concat [(merge {:db/id txid

@@ -28,6 +28,7 @@
           [:form.menu-invite-form.make {:on-submit #(do (utils/stop-event %)
                                                       (when (seq issue-title)
                                                         (d/transact! issue-db [{:db/id -1
+                                                                                :issue/created-at (datetime/server-date)
                                                                                 :issue/title issue-title
                                                                                 :issue/author (:cust/email cust)
                                                                                 :frontend/issue-id (utils/squuid)}])
@@ -54,6 +55,7 @@
                                  (when (seq comment-body)
                                    (d/transact! issue-db [{:db/id issue-id
                                                            :issue/comments (merge {:db/id -1
+                                                                                   :comment/created-at (datetime/server-date)
                                                                                    :comment/body comment-body
                                                                                    :comment/author (:cust/email cust)
                                                                                    :frontend/issue-id (utils/squuid)}
@@ -137,7 +139,8 @@
                                      :parent-id comment-id})
              [:a {:role "button"
                   :on-click #(om/set-state! owner :replying? true)}
-              "reply"])]
+              "reply"])
+           [:span (datetime/month-day (:comment/created-at comment))]]
           (when-not (contains? ancestors (:db/id comment)) ; don't render cycles
             [:div.comment-children
              (for [id (utils/inspect (issue-model/direct-descendants @issue-db comment))]
@@ -180,12 +183,12 @@
     om/IRenderState
     (render-state [_ {:keys [title description]}]
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
-            issue (ds/touch+ (d/entity @issue-db issue-id))]
+            issue (utils/inspect (ds/touch+ (d/entity @issue-db issue-id)))]
         (html
          [:div
           [:div.single-issue-head
-          (om/build vote-box {:issue issue})
-          [:h3 (or title (:issue/title issue ""))]]
+           (om/build vote-box {:issue issue})
+           [:h3 (or title (:issue/title issue ""))]]
 
           ; [:p "by: " (:issue/author issue)]
 
@@ -201,6 +204,7 @@
           ;          :on-change #(om/set-state! owner :description (.. % -target -value))}]
 
           [:div.issue-description
+           [:div (datetime/month-day (:issue/created-at issue))]
            (or description (:issue/description issue ""))]
 
           ; [:p
