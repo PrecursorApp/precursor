@@ -128,19 +128,29 @@
          [:div.issue-comment
           [:div.comment-body
            [:div.comment-author
-            [:span (common/icon :user)]
-            [:span (str " " (:comment/author comment))]]
-           [:p.comment-content (:comment/body comment)]]
-          [:p.comment-foot
+            [:span.comment-avatar (common/icon :user)]
+            [:span.comment-name (str " " (:comment/author comment))]
+            [:span.comment-datetime (str " " (datetime/month-day (:comment/created-at comment)))]]
+           [:div.comment-content (:comment/body comment)]]
+          [:div.comment-foot
            ; [:span (common/icon :user)]
            ; [:span " author "]
            (if replying?
              (om/build comment-form {:issue-id issue-id
                                      :parent-id comment-id})
-             [:a {:role "button"
-                  :on-click #(om/set-state! owner :replying? true)}
-              "reply"])
-           [:span (datetime/month-day (:comment/created-at comment))]]
+             (list
+               ; [:a {:role "button"} "Upvote"]
+               ; [:span " or "]
+               [:a {:role "button"
+                    :on-click #(om/set-state! owner :replying? true)}
+                "reply"]
+               ; [:span ", "]
+               ; [:span (str " " (datetime/month-day (:comment/created-at comment)))]
+
+             ))
+           ; [:span (str " " (datetime/month-day (:comment/created-at comment)))]
+
+           ]
           (when-not (contains? ancestors (:db/id comment)) ; don't render cycles
             [:div.comment-children
              (for [id (utils/inspect (issue-model/direct-descendants @issue-db comment))]
@@ -187,8 +197,9 @@
         (html
          [:div
           [:div.single-issue-head
-           (om/build vote-box {:issue issue})
-           [:h3 (or title (:issue/title issue ""))]]
+           ; (om/build vote-box {:issue issue})
+           [:h3 (or title (:issue/title issue ""))]
+           (om/build vote-box {:issue issue})]
 
           ; [:p "by: " (:issue/author issue)]
 
@@ -219,16 +230,16 @@
           ;       :role "button"}
           ;   "Delete"]]
 
+          [:div.issue-comment-input.adaptive-placeholder {:contentEditable true
+                                                          :data-before "What do you think about this issue?"
+                                                          :data-after "Hit enter to submit your comment"
+                                                          :data-forgot "You forgot to submit!"}]
+
           (om/build comments {:issue issue})
 
           ; [:p "Make a new comment:"]
 
           ; (om/build comment-form {:issue-id issue-id})
-
-          [:div.issue-comment-input.adaptive-placeholder {:contentEditable true
-                                                          :data-before "What do you think about this issue?"
-                                                          :data-after "Hit enter to submit your comment"
-                                                          :data-forgot "You forgot to submit!"}]
 
           ])))))
 
