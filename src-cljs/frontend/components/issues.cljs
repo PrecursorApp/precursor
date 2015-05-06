@@ -20,6 +20,7 @@
 
 (defn issue-form [_ owner]
   (reify
+    om/IDisplayName (display-name [_] "Issue form")
     om/IInitState (init-state [_] {:issue-title ""})
     om/IRenderState
     (render-state [_ {:keys [issue-title]}]
@@ -46,6 +47,7 @@
 
 (defn comment-form [{:keys [issue-id parent-id]} owner {:keys [issue-db]}]
   (reify
+    om/IDisplayName (display-name [_] "Comment form")
     om/IInitState (init-state [_] {:comment-body ""})
     om/IRenderState
     (render-state [_ {:keys [comment-body]}]
@@ -81,6 +83,7 @@
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Vote box")
     om/IRender
     (render [_]
       (let [{:keys [cast! issue-db cust]} (om/get-shared owner)
@@ -107,6 +110,7 @@
 (defn single-comment [{:keys [comment-id issue-id]} owner {:keys [ancestors]
                                                            :or {ancestors #{}}}]
   (reify
+    om/IDisplayName (display-name [_] "Single comment")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                      :replying? false})
@@ -193,6 +197,7 @@
 
 (defn comments [{:keys [issue]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Comments")
     om/IRender
     (render [_]
       (let [{:keys [issue-db]} (om/get-shared owner)
@@ -227,6 +232,7 @@
 
 (defn issue [{:keys [issue-id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Issue")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                      :title nil
@@ -356,6 +362,7 @@
 
 (defn issue-summary [{:keys [issue-id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Issue summary")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -385,6 +392,7 @@
 
 (defn issues [app owner {:keys [submenu]}]
   (reify
+    om/IDisplayName (display-name [_] "Issues")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
