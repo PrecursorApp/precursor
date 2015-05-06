@@ -25,7 +25,8 @@
        (* 1000 60 60 24 1) 7         ; 1 days
        (* 1000 60 60 12) 10          ; 12 hours
        (* 1000 60 60) 20             ; 1 hour
-       30)))
+       (* 1000 60 10) 40             ; 10 minutes
+       100)))
 
 (defn issue-comparator [cust time]
   (fn [issue-a issue-b]

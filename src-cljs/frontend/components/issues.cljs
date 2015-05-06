@@ -1,6 +1,7 @@
 (ns frontend.components.issues
   (:require [cljs-time.core :as time]
             [cljs-time.format :as time-format]
+            [clojure.set :as set]
             [clojure.string :as str]
             [datascript :as d]
             [frontend.components.common :as common]
@@ -394,31 +395,66 @@
   (reify
     om/IDisplayName (display-name [_] "Issue List")
     om/IInitState
-    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                     :rendered-issue-ids #{}
+                     :all-issue-ids #{}
+                     :render-time (datetime/server-date)})
     om/IDidMount
     (did-mount [_]
-      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
-                                  :issue/title
-                                  (om/get-state owner :listener-key)
-                                  (fn [tx-report]
-                                    (om/refresh! owner))))
+      (let [issue-db (om/get-shared owner :issue-db)]
+        (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
+          (om/set-state! owner :all-issue-ids issue-ids)
+          (om/set-state! owner :rendered-issue-ids issue-ids))
+        (fdb/add-attribute-listener
+         issue-db
+         :issue/title
+         (om/get-state owner :listener-key)
+         (fn [tx-report]
+           (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
+             (when (empty? (om/get-state owner :rendered-issue-ids))
+               (om/set-state! owner :rendered-issue-ids issue-ids))
+             (om/set-state! owner :all-issue-ids issue-ids))))))
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
                                      :issue/title
                                      (om/get-state owner :listener-key)))
-    om/IRender
-    (render [_]
+    om/IRenderState
+    (render-state [_ {:keys [all-issue-ids rendered-issue-ids render-time]}]
       (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
         (html
          [:div.menu-view
           [:div.content
+           (let [deleted (set/difference rendered-issue-ids (utils/inspect all-issue-ids))
+                 added (set/difference all-issue-ids rendered-issue-ids)]
+             (when (or (seq deleted) (seq added))
+               [:div.make
+                [:a {:role "button"
+                     :on-click #(om/update-state! owner (fn [s]
+                                                          (assoc s
+                                                                 :rendered-issue-ids (:all-issue-ids s)
+                                                                 :render-time (datetime/server-date))))}
+                 (cond (empty? deleted)
+                       (str (count added) (if (< 1 (count added))
+                                            " new issues were"
+                                            " new issue was")
+                            " added, click to refresh.")
+                       (empty? added)
+                       (str (count deleted) (if (< 1 (count deleted))
+                                              " issues were"
+                                              " issue was")
+                            " removed, click to refresh.")
+                       :else
+                       (str (count added) (if (< 1 (count added))
+                                            " new issues were"
+                                            " new issue was")
+                            " added, " (count deleted) " removed, click to refresh."))]]))
            [:div.make {:key "issue-form"}
             (om/build issue-form {})]
            [:div.make {:key "summary"}
-            (when-let [issues (seq (map #(d/entity @issue-db (:e %)) (d/datoms @issue-db :aevt :issue/title)))]
+            (when-let [issues (seq (map #(d/entity @issue-db %) rendered-issue-ids))]
               (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)})
-                                               (sort (issue-model/issue-comparator cust (datetime/server-date)) issues))
+                                               (sort (issue-model/issue-comparator cust render-time) issues))
                             {:key :issue-id
                              :opts {:issue-db issue-db}}))]]])))))
 
