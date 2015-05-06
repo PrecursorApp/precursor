@@ -139,14 +139,25 @@
         (html
          [:div.issue-comment
           [:div.comment-body
-           [:div.comment-author
-            [:span.comment-avatar (common/icon :user)]
-            [:span.comment-name (str " " (:comment/author comment))]
-            [:span.comment-datetime (str " " (datetime/month-day (:comment/created-at comment)))]]
+           ; [:div.comment-author
+           ;  [:span.comment-avatar (common/icon :user)]
+           ;  [:span.comment-name (str " " (:comment/author comment))]
+           ;  ; [:span.comment-datetime (str " " (datetime/month-day (:comment/created-at comment)))]
+           ;  ]
            [:div.comment-content (:comment/body comment)]]
           [:div.comment-foot
            ; [:span (common/icon :user)]
            ; [:span " author "]
+
+           [:a {:role "button"}
+            [:span (common/icon :user)]
+            [:span (:comment/author comment)]]
+
+           [:a {:role "button"}
+            ; [:span (common/icon :clock)]
+            [:span (datetime/month-day (:comment/created-at comment))]]
+
+
            (if replying?
              (om/build comment-form {:issue-id issue-id
                                      :parent-id comment-id})
@@ -155,12 +166,21 @@
                ; [:span " or "]
                [:a {:role "button"
                     :on-click #(om/set-state! owner :replying? true)}
-                "reply"]
+                ; [:span (common/icon :arrow-left)]
+                [:span "Reply"]]
                ; [:span ", "]
                ; [:span (str " " (datetime/month-day (:comment/created-at comment)))]
 
              ))
            ; [:span (str " " (datetime/month-day (:comment/created-at comment)))]
+           ; [:a.comment-datetime {:role "button"} (str " " (datetime/month-day (:comment/created-at comment)))]
+           ; [:span " • "]
+           ; [:a {:role "button"}
+           ;  [:span (common/icon :clock)]
+           ;  [:span (datetime/month-day (:comment/created-at comment))]]
+           ; [:a {:role "button"}
+           ;  [:span (common/icon :user)]
+           ;  [:span (:comment/author comment)]]
 
            ]
           (when-not (contains? ancestors (:db/id comment)) ; don't render cycles
@@ -179,11 +199,31 @@
             comments (issue-model/top-level-comments issue)]
         (html
          [:div.issue-comments
-          [:h4 (str (count comments) " comment" (when (< 1 (count comments)) "s"))]
+          ; [:p.comments-count (str (count comments) " comment" (when (< 1 (count comments)) "s"))]
           (for [{:keys [db/id]} comments]
             (om/build single-comment {:comment-id id
                                       :issue-id (:db/id issue)}
                       {:key :comment-id}))])))))
+
+(defn issue-tags [issue]
+  (let [author (:issue/author issue)
+        comments (count (:issue/comments issue))]
+    (html
+      [:div.comment-foot
+       [:a {:role "button"}
+        (str comments " comment" (when (< 1 comments) "s"))]
+       [:a {:role "button"}
+        author]
+       [:a {:role "button"}
+        ; "feature"
+        "bugfix"
+        ]
+       [:a {:role "button"}
+        ; "in progress"
+        "in production"
+        ; "requested"
+        ]
+       ])))
 
 (defn issue [{:keys [issue-id]} owner]
   (reify
@@ -217,11 +257,19 @@
            [:div.single-issue-info
            [:h4 (or title (:issue/title issue ""))]
 
-           [:div.issue-tags
-            [:div.issue-tag.issue-type "feature"]
-            [:div.issue-tag.issue-status "started"]
-            [:div.issue-tag.issue-author (:issue/author issue)]
-            ]
+           ; [:div.issue-tags
+           ;  [:div.issue-tag.issue-type "feature"]
+           ;  [:div.issue-tag.issue-status "started"]
+           ;  [:div.issue-tag.issue-author (:issue/author issue)]
+           ;  ]
+
+           ; [:div.comment-foot
+           ;  [:a.issue-tag.issue-type {:role "button"} "feature"]
+           ;  [:a.issue-tag.issue-status {:role "button"} "started"]
+           ;  [:a.issue-tag.issue-author {:role "button"} (:issue/author issue)]
+           ;  ]
+
+           (issue-tags issue)
 
            ; [:div.comment-author
            ;  [:span.comment-avatar (common/icon :user)]
@@ -265,9 +313,9 @@
 
             [:div.comment-content "There's no description yet."])]
 
-          [:div.single-issue-foot
-            [:a {:role "button"} "reply"]
-           ]
+          ; [:div.single-issue-foot
+          ;   [:a {:role "button"} "reply"]
+          ;  ]
 
           ; [:div.issue-tags
           ;  ; [:div.issue-tag.issue-type "feature"]
@@ -333,10 +381,7 @@
            [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
                 :role "button"}
             (:issue/title issue)]
-           [:div.issue-tags
-            ; [:div.issue-tag.issue-type "feature"]
-            ; [:div.issue-tag.issue-status "started"]
-            [:div.issue-tag.issue-author (:issue/author issue)]]]])))))
+           (issue-tags issue)]])))))
 
 (defn issues [app owner {:keys [submenu]}]
   (reify
