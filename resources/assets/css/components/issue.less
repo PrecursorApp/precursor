@@ -94,9 +94,9 @@
     margin-right: 0;
   }
 }
-.issue-description {
-  margin-bottom: @menu_padding;
-}
+// .issue-description {
+//   margin-bottom: @menu_padding;
+// }
 .issue-comments {
   margin-bottom: @menu_padding;
 }
@@ -104,9 +104,18 @@
   // margin-bottom: @menu_padding;
   padding: @menu_padding 0;
   border-bottom: 1px dashed @gray_light;
+  &:first-of-type {
+    margin-top: @menu_padding;
+    border-top: 1px dashed @gray_light;
+  }
 }
 .issue-comment-input {
-  min-height: @tile + (2.5 * @menu_padding);
+  margin-bottom: @menu_padding;
+  // max-height: @tile + (5 * @menu_padding);
+  // overflow-y: auto;
+  &:focus {
+    min-height: @tile + (2.5 * @menu_padding);
+  }
 }
 
 
@@ -115,10 +124,12 @@
 }
 .comment-author {
   .flexy(center);
+  line-height: 1;
   // margin: 0;
   // .icon(stroke; @gray_darker);
   // color: @gray_darker;
-  margin-bottom: @menu_padding / 2;
+  // margin-bottom: @menu_padding / 2;
+  margin-bottom: 1em;
 }
 .comment-avatar {
   //
@@ -132,10 +143,12 @@
 }
 .comment-content {
   // color: @gray;
-  margin-bottom: @menu_padding / 2;
+  // margin-bottom: @menu_padding / 2;
+  margin-bottom: 1em;
 }
 .comment-foot {
   // font-size: @font_size_small;
+  line-height: 1;
 }
 .comment-children {
   border-left: 1px solid @gray_light;

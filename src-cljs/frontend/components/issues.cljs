@@ -41,7 +41,7 @@
            [:label {:data-placeholder (gstring/format "Sounds good; %s characters so far"
                                                       (count issue-title))
                     :data-placeholder-nil "How can we improve Precursor?"
-                    :data-placeholder-busy "Your idea in less than 140 characters?"}]])))))
+                    :data-placeholder-busy "Your idea in 64 characters or less"}]])))))
 
 (defn comment-form [{:keys [issue-id parent-id]} owner {:keys [issue-db]}]
   (reify
@@ -214,8 +214,13 @@
           ; [:input {:value (or description (:issue/description issue ""))
           ;          :on-change #(om/set-state! owner :description (.. % -target -value))}]
 
-          [:div.issue-description
-           [:div (datetime/month-day (:issue/created-at issue))]
+          [:div.comment-author
+           [:span.comment-avatar (common/icon :user)]
+           [:span.comment-name (str " " (:issue/author issue))]
+           [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+
+          [:div.comment-content
+           ; [:div (datetime/month-day (:issue/created-at issue))]
            (or description (:issue/description issue ""))]
 
           ; [:p
@@ -234,6 +239,8 @@
                                                           :data-before "What do you think about this issue?"
                                                           :data-after "Hit enter to submit your comment"
                                                           :data-forgot "You forgot to submit!"}]
+
+          [:h4 "Comments"]
 
           (om/build comments {:issue issue})
 
