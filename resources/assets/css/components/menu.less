@@ -23,21 +23,23 @@
     a {
       display: inline-block;
       position: relative;
-      border-bottom: 1px dotted @gray_light;
+      // border-bottom: 1px dotted @gray_light;
+      box-shadow: 0 1px @gray_lighter;
       white-space: nowrap;
       cursor: pointer;
       &:not(:hover) {
         &:after {
           width: 0;
           left: 50%;
-          transition-duration: @run;
+          // transition-duration: @run;
+          transition: @run ease-out;
         }
       }
       &:active {
         &:after {
           left: -5%;
           width: 110%;
-          transition: @now;
+          // transition: @now;
         }
       }
       &:after {
@@ -48,7 +50,8 @@
         width: 100%;
         height: 100%;
         box-shadow: 0 1px @color_select;
-        transition: @run_fast @bezier_deform;
+        // transition: @run_fast @bezier_deform;
+        // transition: @run_fast ease-in;
       }
     }
   }

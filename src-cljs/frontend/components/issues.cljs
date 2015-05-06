@@ -93,15 +93,33 @@
         (html
           [:div.issue-vote {:role "button"
                             :class (str "issue-vote-" (if voted? "true" "false"))
-                            :title (when voted? "Undo vote.")
                             :on-click #(d/transact! issue-db
                                                     [{:db/id (:db/id issue)
                                                       :issue/votes {:db/id -1
                                                                     :frontend/issue-id (utils/squuid)
                                                                     :vote/cust (:cust/email cust)}}])}
-           [:div.issue-polls.issue-count (count (:issue/votes issue))]
-           [:div.issue-polls.issue-arrow (common/icon :north)]
-           [:div.issue-polls.issue-guide "vote"]])))))
+           [:div.issue-polls.issue-votes {:key (count (:issue/votes issue))}
+            (count (:issue/votes issue))]
+           [:div.issue-polls.issue-upvote
+            (common/icon :north)]])))))
+
+(defn comment-foot [comment owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [issue-db cast!]} (om/get-shared owner)]
+        (html
+          [:p.issue-foot
+           [:span (common/icon :user) " "]
+           [:a {:role "button"}
+            (:comment/author comment)]
+           [:span " on "]
+           [:a {:role "button"}
+            (datetime/month-day (:comment/created-at comment))]
+           [:span " — "]
+           [:a {:role "button"
+                :on-click #(om/set-state! owner :replying? true)}
+            "Reply"]])))))
 
 
 (defn single-comment [{:keys [comment-id issue-id]} owner {:keys [ancestors]
@@ -138,51 +156,57 @@
             comment (d/entity @issue-db comment-id)]
         (html
          [:div.issue-comment
-          [:div.comment-body
            ; [:div.comment-author
            ;  [:span.comment-avatar (common/icon :user)]
            ;  [:span.comment-name (str " " (:comment/author comment))]
            ;  ; [:span.comment-datetime (str " " (datetime/month-day (:comment/created-at comment)))]
            ;  ]
-           [:div.comment-content (:comment/body comment)]]
-          [:div.comment-foot
-           ; [:span (common/icon :user)]
-           ; [:span " author "]
+           [:p (:comment/body comment)]
 
-           [:a {:role "button"}
-            [:span (common/icon :user)]
-            [:span (:comment/author comment)]]
+          (om/build comment-foot comment)
 
-           [:a {:role "button"}
-            ; [:span (common/icon :clock)]
-            [:span (datetime/month-day (:comment/created-at comment))]]
+          ; [:div.comment-foot
+          ;  ; [:span (common/icon :user)]
+          ;  ; [:span " author "]
 
 
-           (if replying?
-             (om/build comment-form {:issue-id issue-id
-                                     :parent-id comment-id})
-             (list
-               ; [:a {:role "button"} "Upvote"]
-               ; [:span " or "]
-               [:a {:role "button"
-                    :on-click #(om/set-state! owner :replying? true)}
-                ; [:span (common/icon :arrow-left)]
-                [:span "Reply"]]
-               ; [:span ", "]
-               ; [:span (str " " (datetime/month-day (:comment/created-at comment)))]
+          ;  ; [:span "by "]
 
-             ))
-           ; [:span (str " " (datetime/month-day (:comment/created-at comment)))]
-           ; [:a.comment-datetime {:role "button"} (str " " (datetime/month-day (:comment/created-at comment)))]
-           ; [:span " • "]
-           ; [:a {:role "button"}
-           ;  [:span (common/icon :clock)]
-           ;  [:span (datetime/month-day (:comment/created-at comment))]]
-           ; [:a {:role "button"}
-           ;  [:span (common/icon :user)]
-           ;  [:span (:comment/author comment)]]
+          ;  [:a {:role "button"}
+          ;   ; [:span (common/icon :user)]
+          ;   [:span (:comment/author comment)]]
 
-           ]
+          ;  [:span " on "]
+
+          ;  [:a {:role "button"}
+          ;   (datetime/month-day (:comment/created-at comment))]
+
+          ;  ; [:span " • "]
+          ;  [:span " — "]
+
+          ;  [:a {:role "button"
+          ;       :on-click #(om/set-state! owner :replying? true)}
+          ;   "Reply"]
+
+          ;  ; [:span "?"]
+
+
+          ;    ; (om/build comment-form {:issue-id issue-id
+          ;    ;                         :parent-id comment-id})
+
+
+
+          ;  ; [:span (str " " (datetime/month-day (:comment/created-at comment)))]
+          ;  ; [:a.comment-datetime {:role "button"} (str " " (datetime/month-day (:comment/created-at comment)))]
+          ;  ; [:span " • "]
+          ;  ; [:a {:role "button"}
+          ;  ;  [:span (common/icon :clock)]
+          ;  ;  [:span (datetime/month-day (:comment/created-at comment))]]
+          ;  ; [:a {:role "button"}
+          ;  ;  [:span (common/icon :user)]
+          ;  ;  [:span (:comment/author comment)]]
+
+          ;  ]
           (when-not (contains? ancestors (:db/id comment)) ; don't render cycles
             [:div.comment-children
              (for [id (issue-model/direct-descendants @issue-db comment)]
@@ -201,29 +225,55 @@
          [:div.issue-comments
           ; [:p.comments-count (str (count comments) " comment" (when (< 1 (count comments)) "s"))]
           (for [{:keys [db/id]} comments]
+            (list
+            [:div.issue-divider]
             (om/build single-comment {:comment-id id
                                       :issue-id (:db/id issue)}
-                      {:key :comment-id}))])))))
+                      {:key :comment-id})))])))))
 
-(defn issue-tags [issue]
-  (let [author (:issue/author issue)
-        comments (count (:issue/comments issue))]
-    (html
-      [:div.comment-foot
-       [:a {:role "button"}
-        (str comments " comment" (when (< 1 comments) "s"))]
-       [:a {:role "button"}
-        author]
-       [:a {:role "button"}
-        ; "feature"
-        "bugfix"
-        ]
-       [:a {:role "button"}
-        ; "in progress"
-        "in production"
-        ; "requested"
-        ]
-       ])))
+(defn issue-summary [{:keys [issue-id]} owner]
+  (reify
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-entity-listener (om/get-shared owner :issue-db)
+                               issue-id
+                               (om/get-state owner :listener-key)
+                               (fn [tx-report]
+                                 (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-entity-listener (om/get-shared owner :issue-db)
+                                  issue-id
+                                  (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! issue-db]} (om/get-shared owner)
+            issue (ds/touch+ (d/entity @issue-db issue-id))
+            comment-count (count (:issue/comments issue))]
+        (html
+          [:div.issue-summary
+           [:div.issue-info
+            [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
+                             :role "button"}
+             (:issue/title issue)]
+            ; (issue-foot issue)
+
+            [:p.issue-foot
+             [:a {:role "button"}
+              (str comment-count " comment" (when (< 1 comment-count) "s"))]
+             [:span " for "]
+             [:a {:role "button"}
+              ; "feature"
+              ; "integration"
+              "bugfix"]
+             [:span " in "]
+             [:a {:role "button"}
+              ; "review"
+              ; "production"
+              "development."]]]
+           (om/build vote-box {:issue issue})])))))
 
 (defn issue [{:keys [issue-id]} owner]
   (reify
@@ -249,34 +299,38 @@
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue (utils/inspect (ds/touch+ (d/entity @issue-db issue-id)))]
         (html
-         [:div
-          [:div.single-issue-head
-           ; (om/build vote-box {:issue issue})
-           ; [:h4 (or title (:issue/title issue ""))]
-           (om/build vote-box {:issue issue})
-           [:div.single-issue-info
-           [:h4 (or title (:issue/title issue ""))]
+         [:div.issue
 
-           ; [:div.issue-tags
-           ;  [:div.issue-tag.issue-type "feature"]
-           ;  [:div.issue-tag.issue-status "started"]
-           ;  [:div.issue-tag.issue-author (:issue/author issue)]
-           ;  ]
+          (om/build issue-summary {:issue-id issue-id})
 
-           ; [:div.comment-foot
-           ;  [:a.issue-tag.issue-type {:role "button"} "feature"]
-           ;  [:a.issue-tag.issue-status {:role "button"} "started"]
-           ;  [:a.issue-tag.issue-author {:role "button"} (:issue/author issue)]
-           ;  ]
 
-           (issue-tags issue)
+          ; [:div.single-issue-head
+          ;  ; (om/build vote-box {:issue issue})
+          ;  ; [:h4 (or title (:issue/title issue ""))]
+          ;  (om/build vote-box {:issue issue})
+          ;  [:div.single-issue-info
+          ;  [:h4 (or title (:issue/title issue ""))]
 
-           ; [:div.comment-author
-           ;  [:span.comment-avatar (common/icon :user)]
-           ;  [:span.comment-name (str " " (:issue/author issue))]
-           ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+          ;  ; [:div.issue-tags
+          ;  ;  [:div.issue-tag.issue-type "feature"]
+          ;  ;  [:div.issue-tag.issue-status "started"]
+          ;  ;  [:div.issue-tag.issue-author (:issue/author issue)]
+          ;  ;  ]
 
-           ]]
+          ;  ; [:div.comment-foot
+          ;  ;  [:a.issue-tag.issue-type {:role "button"} "feature"]
+          ;  ;  [:a.issue-tag.issue-status {:role "button"} "started"]
+          ;  ;  [:a.issue-tag.issue-author {:role "button"} (:issue/author issue)]
+          ;  ;  ]
+
+          ;  (issue-tags issue)
+
+          ;  ; [:div.comment-author
+          ;  ;  [:span.comment-avatar (common/icon :user)]
+          ;  ;  [:span.comment-name (str " " (:issue/author issue))]
+          ;  ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+
+          ;  ]]
 
           ; [:p "by: " (:issue/author issue)]
 
@@ -299,19 +353,23 @@
           ; [:div.comment-content
           ;  (or description (:issue/description issue ""))]
 
-          [:div.single-issue-body
+          ; [:div.single-issue-body
 
-           ; [:div.comment-author
-           ;  [:span.comment-avatar (common/icon :user)]
-           ;  [:span.comment-name (str " " (:issue/author issue))]
-           ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+          ;  ; [:div.comment-author
+          ;  ;  [:span.comment-avatar (common/icon :user)]
+          ;  ;  [:span.comment-name (str " " (:issue/author issue))]
+          ;  ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
 
-          (if description
+          ; (if description
 
-            [:div.comment-content
-             (or description (:issue/description issue ""))]
+          ;   [:div.comment-content
+          ;    (or description (:issue/description issue ""))]
 
-            [:div.comment-content "There's no description yet."])]
+          ;   [:div.comment-content "There's no description yet."])]
+
+          (when description
+            [:div.issue-description (or description (:issue/description issue ""))]
+            )
 
           ; [:div.single-issue-foot
           ;   [:a {:role "button"} "reply"]
@@ -353,35 +411,6 @@
           ; (om/build comment-form {:issue-id issue-id})
 
           ])))))
-
-(defn issue-summary [{:keys [issue-id]} owner]
-  (reify
-    om/IInitState
-    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
-    om/IDidMount
-    (did-mount [_]
-      (fdb/add-entity-listener (om/get-shared owner :issue-db)
-                               issue-id
-                               (om/get-state owner :listener-key)
-                               (fn [tx-report]
-                                 (om/refresh! owner))))
-    om/IWillUnmount
-    (will-unmount [_]
-      (fdb/remove-entity-listener (om/get-shared owner :issue-db)
-                                  issue-id
-                                  (om/get-state owner :listener-key)))
-    om/IRender
-    (render [_]
-      (let [{:keys [cast! issue-db]} (om/get-shared owner)
-            issue (ds/touch+ (d/entity @issue-db issue-id))]
-        (html
-         [:div.issue
-          (om/build vote-box {:issue issue})
-          [:div.issue-info
-           [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
-                :role "button"}
-            (:issue/title issue)]
-           (issue-tags issue)]])))))
 
 (defn issues [app owner {:keys [submenu]}]
   (reify

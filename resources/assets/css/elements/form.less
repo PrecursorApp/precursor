@@ -111,8 +111,10 @@ input {
   .adaptive-textarea {
     .inline(@gray_lighter);
     order: 2;
+    height: @tile;
     min-height: @tile;
-    max-height: @tile;
+    // max-height: @tile;
+    max-height: 5 * @tile;
     padding: 1.25rem;
     outline: none;
     border: none;
@@ -121,7 +123,6 @@ input {
     &:focus,
     &:valid {
       min-height: 2 * @tile;
-      max-height: 5 * @tile;
       transition+: min-height @run_fast;
       + .adaptive-label {
         transform: translate(0, -50%);
