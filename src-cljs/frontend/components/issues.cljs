@@ -25,26 +25,26 @@
     om/IInitState (init-state [_] {:issue-title ""})
     om/IRenderState
     (render-state [_ {:keys [issue-title]}]
-      (let [issue-db (om/get-shared owner :issue-db)
-            cust (om/get-shared owner :cust)]
+      (let [{:keys [issue-db cust cast!]} (om/get-shared owner)]
         (html
-          [:form.menu-invite-form.make {:on-submit #(do (utils/stop-event %)
-                                                      (when (seq issue-title)
-                                                        (d/transact! issue-db [{:db/id -1
-                                                                                :issue/created-at (datetime/server-date)
-                                                                                :issue/title issue-title
-                                                                                :issue/author (:cust/email cust)
-                                                                                :frontend/issue-id (utils/squuid)}])
-                                                        (om/set-state! owner :issue-title "")))}
-           [:input {:type "text"
-                    :value issue-title
-                    :required "true"
-                    :data-adaptive ""
-                    :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
-           [:label {:data-placeholder (gstring/format "Sounds good; %s characters so far"
-                                                      (count issue-title))
-                    :data-placeholder-nil "How can we improve Precursor?"
-                    :data-placeholder-busy "Your idea in 64 characters or less"}]])))))
+         [:form.menu-invite-form.make {:on-submit #(do (utils/stop-event %)
+                                                       (when (seq issue-title)
+                                                         (let [tx (d/transact! issue-db [{:db/id -1
+                                                                                          :issue/created-at (datetime/server-date)
+                                                                                          :issue/title issue-title
+                                                                                          :issue/author (:cust/email cust)
+                                                                                          :frontend/issue-id (utils/squuid)}])]
+                                                           (cast! :issue-expanded {:issue-id (d/resolve-tempid (:db-after tx) (:tempids tx) -1)}))
+                                                         (om/set-state! owner :issue-title "")))}
+          [:input {:type "text"
+                   :value issue-title
+                   :required "true"
+                   :data-adaptive ""
+                   :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
+          [:label {:data-placeholder (gstring/format "Sounds good; %s characters so far"
+                                                     (count issue-title))
+                   :data-placeholder-nil "How can we improve Precursor?"
+                   :data-placeholder-busy "Your idea in 64 characters or less"}]])))))
 
 (defn comment-form [{:keys [issue-id parent-id]} owner {:keys [issue-db]}]
   (reify
@@ -254,9 +254,9 @@
     om/IRenderState
     (render-state [_ {:keys [title description]}]
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
-            issue (utils/inspect (ds/touch+ (d/entity @issue-db issue-id)))]
+            issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
-         [:div
+         [:div.make
           [:div.single-issue-head
            ; (om/build vote-box {:issue issue})
            ; [:h4 (or title (:issue/title issue ""))]
@@ -425,7 +425,7 @@
         (html
          [:div.menu-view
           [:div.content
-           (let [deleted (set/difference rendered-issue-ids (utils/inspect all-issue-ids))
+           (let [deleted (set/difference rendered-issue-ids all-issue-ids)
                  added (set/difference all-issue-ids rendered-issue-ids)]
              (when (or (seq deleted) (seq added))
                [:div.make
