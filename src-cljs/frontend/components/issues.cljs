@@ -1,5 +1,6 @@
 (ns frontend.components.issues
-  (:require [cljs-time.format :as time-format]
+  (:require [cljs-time.core :as time]
+            [cljs-time.format :as time-format]
             [clojure.string :as str]
             [datascript :as d]
             [frontend.components.common :as common]
@@ -153,7 +154,7 @@
            ]
           (when-not (contains? ancestors (:db/id comment)) ; don't render cycles
             [:div.comment-children
-             (for [id (utils/inspect (issue-model/direct-descendants @issue-db comment))]
+             (for [id (issue-model/direct-descendants @issue-db comment)]
                (om/build single-comment {:issue-id issue-id
                                          :comment-id id}
                          {:key :comment-id
@@ -277,6 +278,7 @@
            [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
                 :role "button"}
             (:issue/title issue)]
+           [:div.issue-author (:issue/author issue)]
            [:div.issue-tags "bottom-line"]]])))))
 
 (defn issues [app owner {:keys [submenu]}]
@@ -306,8 +308,7 @@
                                      (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [{:keys [cast! issue-db]} (om/get-shared owner)
-            issue-ids (map :e (d/datoms @issue-db :aevt :issue/title))]
+      (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
         (html
          [:div.menu-view
           [:div.content
@@ -317,7 +318,7 @@
            [:div.make {:key (or submenu "summary")}
             (if submenu
               (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
-              (when (seq issue-ids)
-                (om/build-all issue-summary (map (fn [i] {:issue-id i}) (sort issue-ids))
+              (when-let [issues (seq (map #(d/entity @issue-db (:e %)) (d/datoms @issue-db :aevt :issue/title)))]
+                (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)}) (sort (issue-model/issue-comparator cust (datetime/server-date)) issues))
                               {:key :issue-id
                                :opts {:issue-db issue-db}})))]]])))))
