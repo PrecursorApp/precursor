@@ -76,7 +76,7 @@
                 (get-in state [:drawing :relation]))
     :recording (get-in state (state/self-recording-path state))}
    (when (and x y)
-     {:mouse-position [(:x (:mouse state)) (:y (:mouse state))]})))
+     {:mouse-position [(:rx (:mouse state)) (:ry (:mouse state))]})))
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [previous-state current-state x y]
