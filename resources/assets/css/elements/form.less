@@ -170,7 +170,7 @@ input {
     transition: @run ease-in-out;
   }
   &:focus {
-    border: 1px solid @color_select;
+    border-color: @color_select;
     &:after {
       color: @color_select;
     }
@@ -192,6 +192,15 @@ input {
   &:empty {
     &:after {
       content: attr(data-before);
+    }
+  }
+  &:not(:empty) {
+    &:not(:focus) {
+      border-color: @red;
+      &:after {
+        content: attr(data-forgot);
+        color: @red;
+      }
     }
   }
 }

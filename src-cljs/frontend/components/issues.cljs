@@ -123,10 +123,15 @@
       (let [{:keys [issue-db cast!]} (om/get-shared owner)
             comment (d/entity @issue-db comment-id)]
         (html
-         [:div.comment
-          [:div (:comment/body comment)
-           [:div "by " (:comment/author comment)]]
-          [:div.reply
+         [:div.issue-comment
+          [:div.comment-body
+           [:div.comment-author
+            [:span (common/icon :user)]
+            [:span (str " " (:comment/author comment))]]
+           [:p.comment-content (:comment/body comment)]]
+          [:p.comment-foot
+           ; [:span (common/icon :user)]
+           ; [:span " author "]
            (if replying?
              (om/build comment-form {:issue-id issue-id
                                      :parent-id comment-id})
@@ -134,7 +139,7 @@
                   :on-click #(om/set-state! owner :replying? true)}
               "reply"])]
           (when-not (contains? ancestors (:db/id comment)) ; don't render cycles
-            [:div.comment-children {:style {:margin-left "5px"}}
+            [:div.comment-children
              (for [id (utils/inspect (issue-model/direct-descendants @issue-db comment))]
                (om/build single-comment {:issue-id issue-id
                                          :comment-id id}
@@ -177,29 +182,51 @@
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
-         [:div.content.make
+         [:div
+          [:div.single-issue-head
           (om/build vote-box {:issue issue})
-          [:p "by: " (:issue/author issue)]
-          [:p "Title "
-           [:input {:value (or title (:issue/title issue ""))
-                    :on-change #(om/set-state! owner :title (.. % -target -value))}]]
-          [:p "Description "
-           [:input {:value (or description (:issue/description issue ""))
-                    :on-change #(om/set-state! owner :description (.. % -target -value))}]]
-          [:p
-           [:a {:role "button"
-                :on-click #(d/transact! issue-db [(utils/remove-map-nils
-                                                   {:db/id issue-id
-                                                    :issue/title title
-                                                    :issue/description description})])}
-            "Save"]
-           " "
-           [:a {:on-click #(d/transact! issue-db [[:db.fn/retractEntity issue-id]])
-                :role "button"}
-            "Delete"]]
+          [:h3 (or title (:issue/title issue ""))]]
+
+          ; [:p "by: " (:issue/author issue)]
+
+          ; [:p "Title "
+          ;  [:input {:value (or title (:issue/title issue ""))
+          ;           :on-change #(om/set-state! owner :title (.. % -target -value))}]]
+
+          ; [:p "Description "
+          ;  [:input {:value (or description (:issue/description issue ""))
+          ;           :on-change #(om/set-state! owner :description (.. % -target -value))}]]
+
+          ; [:input {:value (or description (:issue/description issue ""))
+          ;          :on-change #(om/set-state! owner :description (.. % -target -value))}]
+
+          [:div.issue-description
+           (or description (:issue/description issue ""))]
+
+          ; [:p
+          ;  [:a {:role "button"
+          ;       :on-click #(d/transact! issue-db [(utils/remove-map-nils
+          ;                                          {:db/id issue-id
+          ;                                           :issue/title title
+          ;                                           :issue/description description})])}
+          ;   "Save"]
+          ;  " "
+          ;  [:a {:on-click #(d/transact! issue-db [[:db.fn/retractEntity issue-id]])
+          ;       :role "button"}
+          ;   "Delete"]]
+
           (om/build comments {:issue issue})
-          [:p "Make a new comment:"]
-          (om/build comment-form {:issue-id issue-id})])))))
+
+          ; [:p "Make a new comment:"]
+
+          ; (om/build comment-form {:issue-id issue-id})
+
+          [:div.issue-comment-input.adaptive-placeholder {:contentEditable true
+                                                          :data-before "What do you think about this issue?"
+                                                          :data-after "Hit enter to submit your comment"
+                                                          :data-forgot "You forgot to submit!"}]
+
+          ])))))
 
 (defn issue-summary [{:keys [issue-id]} owner]
   (reify

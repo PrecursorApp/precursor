@@ -79,3 +79,37 @@
   flex: 1;
   padding: .5em 0;
 }
+
+
+
+.single-issue-head {
+  .flexy(center);
+  margin-bottom: @menu_padding;
+  .issue-vote {
+    margin-left: (-@tile / 4);
+  }
+}
+.issue-description {
+  margin-bottom: @menu_padding;
+}
+.issue-comments {
+  margin-bottom: @menu_padding;
+}
+.issue-comment {
+  margin-bottom: @menu_padding;
+}
+.issue-comment-input {
+  min-height: @tile + (2.5 * @menu_padding);
+}
+
+
+.comment-body {
+  // margin-bottom: @menu_padding / 2;
+}
+.comment-foot {
+  font-size: @font_size_small;
+}
+.comment-children {
+  border-left: 1px solid @gray_light;
+  padding-left: @menu_padding;
+}
