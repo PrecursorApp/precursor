@@ -5,7 +5,7 @@
             [datomic.api :refer [db q] :as d]
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer])
-  (:import java.util.UUID))
+  (:import [java.util UUID]))
 
 
 (defn get-float-attrs [db]
@@ -211,7 +211,6 @@
                                     :issue/document
                                     :frontend/issue-id})
 
-;; XXX: some things can only be added (e.g. cust, created-at)
 (defn issue-can-modify? [db cust find-by-frontend-id-memo [type e a v :as transaction]]
   (and (vector? e)
        (= 2 (count e))
@@ -229,7 +228,12 @@
            true))))
 
 (defn add-issue-frontend-ids [txes]
-  (let [id-map (zipmap (set (map (comp second second) txes)) (repeatedly #(d/tempid :db.part/user)))
+  (let [;; better way to do this, maybe by using maps instead of vecs for txes?
+        {needs-id-txes false admin-txes true} (group-by #(= :vote/cust-issue (nth % 2)) txes)
+        id-map (zipmap (set (map (comp second second)
+
+                                 needs-id-txes))
+                       (repeatedly #(d/tempid :db.part/user)))
         ;; matches tempid with issue-id
         ;; TODO: should we use value for identity type and look up ids?
         frontend-id-txes (map (fn [[frontend-id tempid]] [:db/add tempid :frontend/issue-id frontend-id]) id-map)]
@@ -241,8 +245,20 @@
              (if (vector? v) ; replace lookup-ref in value with tempid
                (get id-map (second v))
                v)])
-          txes)
+          needs-id-txes)
+     admin-txes
      frontend-id-txes)))
+
+(defn add-vote-contraints [find-by-frontend-id-memo db txes]
+  (let [vote-txes (filterv (fn [tx] (= :vote/cust (nth tx 2))) txes)]
+    (concat txes
+            (for [[_ e _ v] vote-txes
+                  :let [issue-tx (first (filter #(and (= e (nth % 3))
+                                                      (= :issue/votes (nth % 2)))
+                                                txes))
+                        frontend-id (second (second issue-tx))
+                        issue-id (:db/id (find-by-frontend-id-memo db frontend-id))]]
+              [:db/add (d/tempid :db.part/user) :vote/cust-issue (UUID. v issue-id)]))))
 
 (defn debug-def [txes]
   (def debug-txes txes)
@@ -277,6 +293,7 @@
                             (filter issue-whitelisted?)
                             (remove-float-conflicts)
                             (filter (partial issue-can-modify? db cust find-by-frontend-id-memo))
+                            (add-vote-contraints find-by-frontend-id-memo db)
                             add-issue-frontend-ids
                             seq
                             (concat [(merge {:db/id txid
