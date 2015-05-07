@@ -1335,7 +1335,15 @@
 
 (defmethod control-event :overlay-menu-closed
   [target message _ state]
-  (overlay/pop-overlay state))
+  (-> state
+    (overlay/pop-overlay)
+    ;; TODO: Have each new overlay pop it's scroll position
+    (dissoc :previous-scroll-position)))
+
+(defmethod post-control-event! :overlay-menu-closed
+  [target message _ previous-state current-state]
+  (when-let [scroll-position (:previous-scroll-position previous-state)]
+    (set! js/document.body.scrollTop scroll-position)))
 
 (defmethod control-event :roster-closed
   [target message _ state]
@@ -1899,7 +1907,12 @@
   [browser-state message {:keys [issue-id]} state]
   (-> state
     (assoc :active-issue-id issue-id)
+    (assoc :previous-scroll-position js/document.body.scrollTop)
     (handle-add-menu :issues/single-issue)))
+
+(defmethod post-control-event! :issue-expanded
+  [browser-state message {:keys [issue-id]} previous-state current-state]
+  (set! js/document.body.scrollTop 0))
 
 (defmethod post-control-event! :start-plan-clicked
   [browser-state message _ previous-state current-state]
