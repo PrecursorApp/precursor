@@ -272,7 +272,7 @@
 
            [:p.issue-foot
             [:a {:role "button"}
-             (str comment-count " comment" (when (< 1 comment-count) "s"))]
+             (str comment-count " comment" (when (not= 1 comment-count) "s"))]
             [:span " for "]
             [:a {:role "button"}
              ; "feature"
