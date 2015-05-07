@@ -54,25 +54,27 @@
       (let [issue-db (om/get-shared owner :issue-db)
             cust (om/get-shared owner :cust)]
         (html
-          [:form.adaptive {:on-submit #(do (utils/stop-event %)
-                                         (when (seq comment-body)
-                                           (d/transact! issue-db [{:db/id issue-id
-                                                                   :issue/comments (merge {:db/id -1
-                                                                                           :comment/created-at (datetime/server-date)
-                                                                                           :comment/body comment-body
-                                                                                           :comment/author (:cust/email cust)
-                                                                                           :frontend/issue-id (utils/squuid)}
-                                                                                          (when parent-id
-                                                                                            {:comment/parent parent-id}))}])
-                                           (om/set-state! owner :comment-body "")))}
+          [:form.adaptive.make {:on-submit #(do (utils/stop-event %)
+                                              (when (seq comment-body)
+                                                (d/transact! issue-db [{:db/id issue-id
+                                                                        :issue/comments (merge {:db/id -1
+                                                                                                :comment/created-at (datetime/server-date)
+                                                                                                :comment/body comment-body
+                                                                                                :comment/author (:cust/email cust)
+                                                                                                :frontend/issue-id (utils/squuid)}
+                                                                                               (when parent-id
+                                                                                                 {:comment/parent parent-id}))}])
+                                                (om/set-state! owner :comment-body ""))
+                                              (om/set-state! owner :replying? false)
+                                              )}
 
            [:textarea {:required true
                        :value comment-body
                        :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]
            [:label {:data-label "What do you think?"
                     :data-forgot "To be continued"}]
-           [:input {:type "submit"
-                    :value "Comment."}]])))))
+           [:input.make {:type "submit"
+                         :value "Comment."}]])))))
 
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
@@ -100,23 +102,28 @@
            [:div.issue-polls.issue-upvote
             (common/icon :north)]])))))
 
-(defn comment-foot [comment owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [issue-db cast!]} (om/get-shared owner)]
-        (html
-          [:p.issue-foot
-           [:span (common/icon :user) " "]
-           [:a {:role "button"}
-            (:comment/author comment)]
-           [:span " on "]
-           [:a {:role "button"}
-            (datetime/month-day (:comment/created-at comment))]
-           [:span " — "]
-           [:a {:role "button"
-                :on-click #(om/set-state! owner :replying? true)}
-            "Reply"]])))))
+; (defn comment-foot [{:keys [comment-id issue-id]} owner]
+;   (reify
+;     om/IRender
+;     (render [_]
+;       (let [{:keys [issue-db cast!]} (om/get-shared owner)
+;             comment (d/entity @issue-db comment-id)]
+;         (html
+;           [:p.issue-foot
+;            [:span (common/icon :user) " "]
+;            [:a {:role "button"}
+;             (:comment/author comment)]
+;            [:span " on "]
+;            [:a {:role "button"}
+;             (datetime/month-day (:comment/created-at comment))]
+;            [:span " — "]
+;            [:a {:role "button"
+;                 :on-click #(om/set-state! owner :replying? true)}
+;             "Reply"]
+
+;            ; (when (om/get-state owner :replying?) (om/build comment-form {:issue-id issue-id}))
+
+;            ])))))
 
 
 (defn single-comment [{:keys [comment-id issue-id]} owner {:keys [ancestors]
@@ -153,65 +160,93 @@
       (let [{:keys [issue-db cast!]} (om/get-shared owner)
             comment (d/entity @issue-db comment-id)]
         (html
-         [:div.issue-comment.content.make
-           ; [:div.comment-author
-           ;  [:span.comment-avatar (common/icon :user)]
-           ;  [:span.comment-name (str " " (:comment/author comment))]
-           ;  ; [:span.comment-datetime (str " " (datetime/month-day (:comment/created-at comment)))]
-           ;  ]
+          [:div.issue-comment.make
+           [:div.issue-divider]
            [:p (:comment/body comment)]
 
-          (om/build comment-foot comment)
+           ; (om/build comment-foot comment)
+           ; (om/build comment-foot {:comment-id comment-id
+           ;                         :issue-id issue-id})
 
-          ; [:div.comment-foot
-          ;  ; [:span (common/icon :user)]
-          ;  ; [:span " author "]
+           [:p.issue-foot
+            [:span (common/icon :user) " "]
+            [:a {:role "button"}
+             (:comment/author comment)]
+            [:span " on "]
+            [:a {:role "button"}
+             (datetime/month-day (:comment/created-at comment))]
+            [:span " — "]
+            [:a {:role "button"
+                 :on-click #(do
+                              (if (om/get-state owner :replying?)
+                                (om/set-state! owner :replying? false)
+                                (om/set-state! owner :replying? true)))}
+             (if (om/get-state owner :replying?) "Cancel" "Reply")]
+
+            ; (when (om/get-state owner :replying?) (om/build comment-form {:issue-id issue-id}))
+
+            ]
+
+           (when (om/get-state owner :replying?)
+             (om/build comment-form {:issue-id issue-id
+                                     :parent-id comment-id}))
+
+           ; [:div.issue-divider]
+
+           ; [:div.comment-foot
+           ;  ; [:span (common/icon :user)]
+           ;  ; [:span " author "]
 
 
-          ;  ; [:span "by "]
+           ;  ; [:span "by "]
 
-          ;  [:a {:role "button"}
-          ;   ; [:span (common/icon :user)]
-          ;   [:span (:comment/author comment)]]
+           ;  [:a {:role "button"}
+           ;   ; [:span (common/icon :user)]
+           ;   [:span (:comment/author comment)]]
 
-          ;  [:span " on "]
+           ;  [:span " on "]
 
-          ;  [:a {:role "button"}
-          ;   (datetime/month-day (:comment/created-at comment))]
+           ;  [:a {:role "button"}
+           ;   (datetime/month-day (:comment/created-at comment))]
 
-          ;  ; [:span " • "]
-          ;  [:span " — "]
+           ;  ; [:span " • "]
+           ;  [:span " — "]
 
-          ;  [:a {:role "button"
-          ;       :on-click #(om/set-state! owner :replying? true)}
-          ;   "Reply"]
+           ;  [:a {:role "button"
+           ;       :on-click #(om/set-state! owner :replying? true)}
+           ;   "Reply"]
 
-          ;  ; [:span "?"]
-
-
-          ;    ; (om/build comment-form {:issue-id issue-id
-          ;    ;                         :parent-id comment-id})
+           ;  ; [:span "?"]
 
 
+           ;    ; (om/build comment-form {:issue-id issue-id
+           ;    ;                         :parent-id comment-id})
 
-          ;  ; [:span (str " " (datetime/month-day (:comment/created-at comment)))]
-          ;  ; [:a.comment-datetime {:role "button"} (str " " (datetime/month-day (:comment/created-at comment)))]
-          ;  ; [:span " • "]
-          ;  ; [:a {:role "button"}
-          ;  ;  [:span (common/icon :clock)]
-          ;  ;  [:span (datetime/month-day (:comment/created-at comment))]]
-          ;  ; [:a {:role "button"}
-          ;  ;  [:span (common/icon :user)]
-          ;  ;  [:span (:comment/author comment)]]
 
-          ;  ]
-          (when-not (contains? ancestors (:db/id comment)) ; don't render cycles
-            [:div.comment-children
-             (for [id (issue-model/direct-descendants @issue-db comment)]
-               (om/build single-comment {:issue-id issue-id
-                                         :comment-id id}
-                         {:key :comment-id
-                          :opts {:ancestors (conj ancestors (:db/id comment))}}))])])))))
+
+           ;  ; [:span (str " " (datetime/month-day (:comment/created-at comment)))]
+           ;  ; [:a.comment-datetime {:role "button"} (str " " (datetime/month-day (:comment/created-at comment)))]
+           ;  ; [:span " • "]
+           ;  ; [:a {:role "button"}
+           ;  ;  [:span (common/icon :clock)]
+           ;  ;  [:span (datetime/month-day (:comment/created-at comment))]]
+           ;  ; [:a {:role "button"}
+           ;  ;  [:span (common/icon :user)]
+           ;  ;  [:span (:comment/author comment)]]
+
+           ;  ]
+           (when (and (not (contains? ancestors (:db/id comment)))
+                      (< 0 (count (issue-model/direct-descendants @issue-db comment)))) ; don't render cycles
+             [:div.issue-comments
+              (for [id (issue-model/direct-descendants @issue-db comment)]
+                (om/build single-comment {:issue-id issue-id
+                                          :comment-id id}
+                          {:key :comment-id
+                           :opts {:ancestors (conj ancestors (:db/id comment))}}))])
+
+           ; [:div.issue-divider]
+
+           ])))))
 
 (defn comments [{:keys [issue]} owner]
   (reify
@@ -225,7 +260,7 @@
           ; [:p.comments-count (str (count comments) " comment" (when (< 1 (count comments)) "s"))]
           (for [{:keys [db/id]} comments]
             (list
-            [:div.issue-divider]
+            ; [:div.issue-divider]
             (om/build single-comment {:comment-id id
                                       :issue-id (:db/id issue)}
                       {:key :comment-id})))])))))
@@ -451,7 +486,7 @@
            ;                                                 :data-after "Hit enter to submit your comment"
            ;                                                 :data-forgot "You forgot to submit!"}]
 
-           [:div.content.make
+           [:div.content
             (om/build comment-form {:issue-id issue-id})]
 
            ; [:div.calls-to-action

@@ -176,9 +176,19 @@
   // padding-top: 1em;
 }
 .issue-comments {
-  margin-bottom: @menu_padding;
+  // margin-bottom: @menu_padding;
+  // padding: 0 @menu_padding;
 }
 .issue-comment {
+  .issue-comments {
+    // border-left: 1px dotted @gray_lighter;
+    // padding-left: @menu_padding;
+    margin-left: @menu_padding;
+    // padding-bottom: @menu_padding / 3;
+  }
+  p {
+    padding: 0 @menu_padding;
+  }
   // margin-bottom: @menu_padding;
 
   // padding: @menu_padding 0;
@@ -289,8 +299,9 @@
 //   }
 // }
 .comment-children {
-  border-left: 1px solid @gray_light;
+  border-left: 1px dotted @gray_lighter;
   padding-left: @menu_padding;
+  padding-bottom: @menu_padding / 3;
 }
 
 
