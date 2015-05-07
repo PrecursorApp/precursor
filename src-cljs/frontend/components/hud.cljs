@@ -1,5 +1,6 @@
 (ns frontend.components.hud
-  (:require [clojure.string :as str]
+  (:require [cljs.core.async :as async :refer [put!]]
+            [clojure.string :as str]
             [datascript :as d]
             [frontend.auth :as auth]
             [frontend.colors :as colors]
@@ -9,6 +10,7 @@
             [frontend.models.chat :as chat-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
+            [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
             [goog.dom.Range]
@@ -24,27 +26,29 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             main-menu-learned? (get-in app state/main-menu-learned-path)
-            menu-visibile? (frontend.overlay/menu-overlay-visible? app)]
+            menu-visibile? (frontend.overlay/menu-overlay-visible? app)
+            doc-id (:document/id app)]
         (html
-          [:a.hud-menu.hud-item.hud-toggle.menu-needed
-           {:on-click (if menu-visibile?
-                        #(cast! :overlay-menu-closed)
-                        #(cast! :main-menu-opened))
-            :on-touch-end #(do
-                             (.preventDefault %)
-                             (if menu-visibile?
-                               (cast! :overlay-menu-closed)
-                               (cast! :main-menu-opened)))
-            :role "button"
-            :class (when menu-visibile?
-                     (if (< 1 (overlay-count app))
-                       "back"
-                       "close"))
-            :data-right (when-not main-menu-learned?
-                          (if menu-visibile? "Close Menu" "Open Menu"))
-            :title (when main-menu-learned?
-                     (if menu-visibile? "Close Menu" "Open Menu"))}
-           (common/icon :menu)])))))
+         [:a.hud-menu.hud-item.hud-toggle.menu-needed (merge {:role "button"
+                                                              :class (when menu-visibile?
+                                                                       (if (< 1 (overlay-count app))
+                                                                         "back"
+                                                                         "close"))
+                                                              :data-right (when-not main-menu-learned?
+                                                                            (if menu-visibile? "Close Menu" "Open Menu"))
+                                                              :title (when main-menu-learned?
+                                                                       (if menu-visibile? "Close Menu" "Open Menu"))}
+                                                             (if menu-visibile?
+                                                               (let [f #(let [nav-ch (:nav (om/get-shared owner :comms))]
+                                                                          (if (= 1 (overlay-count app))
+                                                                            (put! nav-ch [:navigate! {:path (urls/doc-path doc-id)
+                                                                                                      :replace-token? true}])
+                                                                            (put! nav-ch [:back!]))
+                                                                          (.preventDefault %))]
+                                                                 {:on-click f
+                                                                  :on-touch-end f})
+                                                               {:href (urls/overlay-path doc-id "start")}))
+          (common/icon :menu)])))))
 
 (defn roster [app owner]
   (reify
@@ -53,29 +57,33 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             main-menu-learned? (get-in app state/main-menu-learned-path)
-            roster-visible? (frontend.overlay/roster-overlay-visible? app)]
+            roster-visible? (frontend.overlay/roster-overlay-visible? app)
+            doc-id (:document/id app)]
         (html
-          [:a.hud-roster.hud-item.hud-toggle.menu-needed
-           {:on-click (if roster-visible?
-                        #(cast! :roster-closed)
-                        #(cast! :roster-opened))
-            :on-touch-end #(do
-                             (.preventDefault %)
-                             (if roster-visible?
-                               (cast! :roster-closed)
-                               (cast! :roster-opened)))
-            :role "button"
-            :class (when roster-visible?
-                     (if (< 1 (overlay-count app))
-                       "back"
-                       "close"))
-            :data-right (when-not main-menu-learned?
-                          (if roster-visible? "Close Menu" "Open Menu"))
-            :title (when main-menu-learned?
-                     (if roster-visible? "Close Menu" "Open Menu"))}
-           (if roster-visible?
-             (common/icon :menu)
-             (common/icon :users))])))))
+         [:a.hud-roster.hud-item.hud-toggle.menu-needed (merge {:role "button"
+                                                                :class (when roster-visible?
+                                                                         (if (< 1 (overlay-count app))
+                                                                           "back"
+                                                                           "close"))
+                                                                :data-right (when-not main-menu-learned?
+                                                                              (if roster-visible? "Close Menu" "Open Menu"))
+                                                                :title (when main-menu-learned?
+                                                                         (if roster-visible? "Close Menu" "Open Menu"))}
+                                                               (if roster-visible?
+                                                                 (let [f #(let [nav-ch (:nav (om/get-shared owner :comms))]
+                                                                            (if (= 1 (overlay-count app))
+                                                                              (put! nav-ch [:navigate! {:path (urls/doc-path doc-id)
+                                                                                                        :replace-token? true}])
+                                                                              (put! nav-ch [:back!]))
+                                                                            (.preventDefault %))]
+                                                                   {:on-click f
+                                                                    :on-touch-end f})
+                                                                 {:href (urls/overlay-path doc-id (if (:team app)
+                                                                                                    "roster"
+                                                                                                    "your-teams"))}))
+          (if roster-visible?
+            (common/icon :menu)
+            (common/icon :users))])))))
 
 (defn mouse-stats [_ owner]
   (reify
@@ -129,7 +137,7 @@
           [:div.doc-stats
            (om/build mouse-stats {}
                      {:react-key "mouse-stats"})
-           [:div.privacy-stats {:on-click #(cast! :privacy-stats-clicked)
+           [:div.privacy-stats {:href (urls/overlay-path (:document/id app) "sharing")
                                 :key rejected-tx-count
                                 :class (when (pos? rejected-tx-count)
                                          (if (= 0 (mod rejected-tx-count 2))
@@ -262,13 +270,12 @@
                      [:div.viewer-symbol
                       (volume-icon (get-in sub [:recording :media-stream-volume] 0) (name self-color))]])
                   [:div.viewer-toggles
-                   [:a.viewer-toggle {:on-click #(do
-                                                   (if can-edit?
-                                                     (om/set-state! owner :editing-name? true)
-                                                     (cast! :overlay-username-toggled))
-                                                   (.stopPropagation %))
-                                      :role "button"
-                                      :title "Change your display name."}
+                   [:a.viewer-toggle (merge {:role "button"
+                                             :title "Change your display name."}
+                                            (if can-edit?
+                                              {:on-click #(do (om/set-state! owner :editing-name? true)
+                                                              (.stopPropagation %))}
+                                              {:href (urls/overlay-path (:document/id app) "username")}))
                     (common/icon :pencil)]
                    (when config/subdomain
                      [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
@@ -331,14 +338,18 @@
                                                 [:client-id]
                                                 [:cust]
                                                 [:mouse-type]
-                                                [:cust-data]])
+                                                [:cust-data]
+                                                [:document/id]])
                   {:react-key "viewers"})
         (om/build menu (utils/select-in app [state/main-menu-learned-path
-                                             state/overlays-path])
+                                             state/overlays-path
+                                             [:document/id]])
                   {:react-key "menu"})
         (when (utils/logged-in? owner)
           (om/build roster (utils/select-in app [state/main-menu-learned-path
-                                                 state/overlays-path])
+                                                 state/overlays-path
+                                                 [:document/id]
+                                                 [:team]])
                     {:react-key "roster"}))
         (om/build chat (utils/select-in app [state/chat-opened-path
                                              state/chat-button-learned-path

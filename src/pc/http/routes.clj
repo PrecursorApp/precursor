@@ -109,7 +109,7 @@
                                                              :transaction/broadcast true})
         (redirect "/"))))
 
-(defpage document [:get "/document/:document-id" {:document-id #"[0-9]+"}] [req]
+(defn handle-doc [req]
   (let [document-id (some-> req :params :document-id Long/parseLong)
         db (pcd/default-db)
         doc (doc-model/find-by-team-and-id db (:team req) document-id)]
@@ -130,6 +130,12 @@
                   [:body "This document lives on a different domain: " [:a {:href (urls/from-doc doc)}
                                                                         (urls/from-doc doc)]])
                  "Document not found")}))))
+
+(defpage document [:get "/document/:document-id" {:document-id #"[0-9]+"}] [req]
+  (handle-doc req))
+
+(defpage document-overlay [:get "/document/:document-id/:overlay" {:document-id #"[0-9]+" :overlay #"[\w-]+"}] [req]
+  (handle-doc req))
 
 (def private-layers [{:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 389.5996, :entity/type :layer, :layer/start-y 120.0, :layer/text "Please log in or request access to view it.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 100.0} {:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 373.5547, :entity/type :layer, :layer/start-y 90.0, :layer/text "Sorry, this document is private.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 70.0}])
 

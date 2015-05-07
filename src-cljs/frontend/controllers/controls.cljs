@@ -29,6 +29,7 @@
             [frontend.stripe :as stripe]
             [frontend.subscribers :as subs]
             [frontend.svg :as svg]
+            [frontend.urls :as urls]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
@@ -158,28 +159,10 @@
       (swap! (:undo-state state) assoc :last-undo transaction-to-undo))
     state))
 
-(defn handle-add-menu [state menu]
-  (-> state
-      (assoc-in [:layer-properties-menu :opened?] false)
-      (assoc-in [:radial :open?] false)
-      (overlay/add-overlay menu)))
-
-(defn handle-replace-menu [state menu]
-  (-> state
-      (assoc-in [:layer-properties-menu :opened?] false)
-      (assoc-in [:radial :open?] false)
-      (overlay/replace-overlay menu)))
-
 ;; TODO: have some way to handle pre-and-post
 (defmethod handle-keyboard-shortcut :undo
   [state shortcut-name]
   (handle-undo state))
-
-(defmethod handle-keyboard-shortcut :shortcuts-menu
-  [state shortcut-name]
-  (if (= :shortcuts (overlay/current-overlay state))
-    (overlay/clear-overlays state)
-    (handle-replace-menu state :shortcuts)))
 
 (defn close-radial [state]
   (assoc-in state [:radial :open?] false))
@@ -234,6 +217,14 @@
   [state shortcut-name]
   nil)
 
+(defmethod handle-keyboard-shortcut-after :shortcuts-menu
+  [state shortcut-name]
+  (when-let [doc-id (:document/id state)]
+    (if (keyword-identical? :shortcuts (overlay/current-overlay state))
+      (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc-id)
+                                                      :replace-token? true}])
+      (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc-id "shortcuts")}]))))
+
 (defmethod handle-keyboard-shortcut-after :record
   [state shortcut-name]
   (rtc/setup-stream (get-in state [:comms :controls])))
@@ -272,7 +263,10 @@
   (when (and (:replay-interrupt-chan state)
              (put! (:replay-interrupt-chan state) :interrupt))
     (frontend.db/reset-db! (:db state) nil)
-    (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state))))
+    (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state)))
+  (when-let [doc-id (:document/id state)]
+    (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc-id)
+                                                    :replace-token? true}])))
 
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
@@ -1312,43 +1306,6 @@
         (favicon/set-normal!))
     (analytics/track "Chat closed")))
 
-(defmethod control-event :overlay-info-toggled
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :info)
-      (assoc-in state/info-button-learned-path true)))
-
-(defmethod control-event :overlay-username-toggled
-  [browser-state message _ state]
-  (-> state
-      (handle-replace-menu :username)))
-
-(defmethod post-control-event! :overlay-info-toggled
-  [browser-state message _ previous-state current-state]
-  (when (and (not (get-in previous-state state/info-button-learned-path))
-             (get-in current-state state/info-button-learned-path))
-    (analytics/track "What's this learned")))
-
-(defmethod control-event :overlay-closed
-  [target message _ state]
-  (overlay/clear-overlays state))
-
-(defmethod control-event :overlay-menu-closed
-  [target message _ state]
-  (-> state
-    (overlay/pop-overlay)
-    ;; TODO: Have each new overlay pop it's scroll position
-    (dissoc :previous-scroll-position)))
-
-(defmethod post-control-event! :overlay-menu-closed
-  [target message _ previous-state current-state]
-  (when-let [scroll-position (:previous-scroll-position previous-state)]
-    (set! js/document.body.scrollTop scroll-position)))
-
-(defmethod control-event :roster-closed
-  [target message _ state]
-  (overlay/pop-overlay state))
-
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
@@ -1357,30 +1314,6 @@
   [browser-state message _ state]
   (-> state
       (update-in state/chat-mobile-opened-path not)))
-
-(defmethod control-event :chat-link-clicked
-  [browser-state message _ state]
-   (-> state
-     (overlay/clear-overlays)
-     (assoc-in state/chat-opened-path true)
-     (assoc-in state/chat-mobile-opened-path true)
-     (assoc-in [:chat :body] "@prcrsr ")))
-
-(defmethod post-control-event! :chat-link-clicked
-  [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-input")))
-
-(defmethod control-event :invite-link-clicked
-  [browser-state message _ state]
-   (-> state
-     (overlay/clear-overlays)
-     (assoc-in state/chat-opened-path true)
-     (assoc-in state/chat-mobile-opened-path true)
-     (assoc-in [:chat :body] "/invite ")))
-
-(defmethod post-control-event! :invite-link-clicked
-  [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :chat-user-clicked
   [browser-state message {:keys [id-str]} state]
@@ -1550,109 +1483,6 @@
                      layer-group)
                    {:can-undo? true}))))
 
-(defmethod control-event :your-docs-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :doc-viewer)
-    (assoc-in state/your-docs-learned-path true)))
-
-(defmethod post-control-event! :your-docs-opened
-  [browser-state message _ previous-state current-state]
-  (when (:cust current-state)
-    (sente/send-msg
-     (:sente current-state)
-     [:frontend/fetch-touched]
-     10000
-     (fn [{:keys [docs]}]
-       (when docs
-         (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
-
-(defmethod control-event :team-docs-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :team-doc-viewer)))
-
-(defmethod post-control-event! :team-docs-opened
-  [browser-state message _ previous-state current-state]
-  (sente/send-msg
-   (:sente current-state)
-   [:team/fetch-touched {:team/uuid (get-in current-state [:team :team/uuid])}]
-   10000
-   (fn [{:keys [docs]}]
-     (when docs
-       (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}])))))
-
-(defmethod control-event :plan-settings-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :plan)))
-
-(defmethod control-event :main-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-replace-menu :start)
-      (assoc-in state/main-menu-learned-path true)))
-
-(defmethod control-event :roster-opened
-  [browser-state message _ state]
-  (if (:team state)
-    (handle-replace-menu state :roster)
-    (handle-replace-menu state :your-teams)))
-
-(defmethod control-event :sharing-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :sharing)
-      (assoc-in state/sharing-menu-learned-path true)))
-
-(defmethod control-event :issues-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :issues)))
-
-(defmethod control-event :export-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :export)
-      (assoc-in state/export-menu-learned-path true)))
-
-(defmethod control-event :shortcuts-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :shortcuts)
-      (assoc-in state/shortcuts-menu-learned-path true)))
-
-
-(defmethod control-event :document-permissions-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :document-permissions)))
-
-(defmethod control-event :manage-permissions-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :manage-permissions)))
-
-(defmethod control-event :team-settings-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :team-settings)))
-
-(defmethod control-event :your-teams-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :your-teams)))
-
-(defmethod control-event :connection-info-opened
-  [browser-state message _ state]
-  (-> state
-    (overlay/add-overlay :connection-info)))
-
-(defmethod control-event :request-team-access-opened
-  [browser-state message _ state]
-  (-> state
-    (overlay/add-overlay :request-team-access)))
-
 (defmethod control-event :invite-to-changed
   [browser-state message {:keys [value]} state]
   (-> state
@@ -1780,11 +1610,6 @@
                                 #js [(.-scrollLeft body) vh]
                                 375))))
 
-(defmethod control-event :privacy-stats-clicked
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :sharing)))
-
 (defmethod post-control-event! :mouse-stats-clicked
   [browser-state message _ previous-state current-state]
   (let [canvas-size (utils/canvas-size)
@@ -1898,21 +1723,6 @@
                              (utils/inspect (:datom-group %)))
                        (:unsynced-datoms previous-state))
                {:bot-layer true}))
-
-(defmethod control-event :plan-submenu-opened
-  [browser-state message {:keys [submenu]} state]
-  (handle-add-menu state (keyword "plan" (name submenu))))
-
-(defmethod control-event :issue-expanded
-  [browser-state message {:keys [issue-id]} state]
-  (-> state
-    (assoc :active-issue-id issue-id)
-    (assoc :previous-scroll-position js/document.body.scrollTop)
-    (handle-add-menu :issues/single-issue)))
-
-(defmethod post-control-event! :issue-expanded
-  [browser-state message {:keys [issue-id]} previous-state current-state]
-  (set! js/document.body.scrollTop 0))
 
 (defmethod post-control-event! :start-plan-clicked
   [browser-state message _ previous-state current-state]

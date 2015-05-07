@@ -1,5 +1,6 @@
 (ns frontend.components.issues
-  (:require [cljs-time.core :as time]
+  (:require [cljs.core.async :as async :refer [put!]]
+            [cljs-time.core :as time]
             [cljs-time.format :as time-format]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -27,17 +28,18 @@
     (render-state [_ {:keys [issue-title]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)]
         (html
-          [:div.content.make
+         [:div.content.make
           [:form.adaptive {:on-submit #(do (utils/stop-event %)
-                                         (when (seq issue-title)
-                                           (let [tx (d/transact! issue-db [{:db/id -1
-                                                                            :issue/created-at (datetime/server-date)
-                                                                            :issue/title issue-title
-                                                                            :issue/author (:cust/email cust)
-                                                                            :issue/document :none
-                                                                            :frontend/issue-id (utils/squuid)}])]
-                                             (cast! :issue-expanded {:issue-id (d/resolve-tempid (:db-after tx) (:tempids tx) -1)}))
-                                           (om/set-state! owner :issue-title "")))}
+                                           (when (seq issue-title)
+                                             (let [fe-id (utils/squuid)]
+                                               (d/transact! issue-db [{:db/id -1
+                                                                       :issue/created-at (datetime/server-date)
+                                                                       :issue/title issue-title
+                                                                       :issue/author (:cust/email cust)
+                                                                       :issue/document :none
+                                                                       :frontend/issue-id fe-id}])
+                                               (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
+                                             (om/set-state! owner :issue-title "")))}
            [:textarea {:value issue-title
                        :required "true"
                        :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
@@ -289,7 +291,8 @@
         (html
          [:div.issue-summary.content.make
           [:div.issue-info
-           [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
+           [:a.issue-title {:href (urls/issue-url issue)
+                            :target "_top"
                             :role "button"}
             ; (or title (:issue/title issue ""))
             (:issue/title issue)

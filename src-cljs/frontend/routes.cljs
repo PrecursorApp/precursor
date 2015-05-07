@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [frontend.async :refer [put!]]
             [frontend.utils :as utils :include-macros true]
+            [frontend.urls :as urls]
             [goog.events :as events]
             [secretary.core :as secretary :include-macros true :refer-macros [defroute]])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
@@ -38,9 +39,30 @@
   (defroute new-doc "/new" {:keys [query-params]}
     (put! nav-ch [:new {:query-params query-params}]))
 
+  (defroute issue-list "/issues" {:keys [query-params]}
+    (put! nav-ch [:issues-list {:query-params query-params}]))
+
+  (defroute issue "/issues/:frontend-id" {:keys [query-params frontend-id]}
+    (put! nav-ch [:single-issue {:query-params query-params
+                                 :frontend-id frontend-id}]))
+
   (defroute document #"/document/(\d+)" [doc-id args]
-    (put! nav-ch [:document {:document/id (long doc-id)
-                             :query-params (:query-params args)}])))
+    (let [params (:query-params args)]
+      (if-let [overlay (:overlay params)]
+        (put! nav-ch [:navigate! {:path (urls/overlay-path doc-id overlay
+                                                           :query-params (dissoc params :overlay))
+                                  :replace-token? true}])
+        (put! nav-ch [:document {:document/id (long doc-id)
+                                 :query-params params}]))))
+  (defroute plan-submenu #"/document/(\d+)/plan/([\w-]+)" [doc-id submenu args]
+    (put! nav-ch [:plan-submenu {:document/id (long doc-id)
+                                 :submenu submenu
+                                 :query-params (:query-params args)}]))
+
+  (defroute overlay #"/document/(\d+)/([\w-]+)" [doc-id overlay args]
+    (put! nav-ch [:overlay {:document/id (long doc-id)
+                            :overlay overlay
+                            :query-params (:query-params args)}])))
 
 (defn define-routes! [state]
   (let [nav-ch (get-in @state [:comms :nav])]
