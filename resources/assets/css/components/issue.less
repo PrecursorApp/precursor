@@ -40,6 +40,10 @@
     color: @color_select;
     .issue-votes {
       animation: in-bounce @run @run_fast ease-in backwards;
+      transition: none;
+    }
+    .issue-upvote {
+      display: none;
     }
   }
   &.novote {
