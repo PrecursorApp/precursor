@@ -108,19 +108,21 @@
   padding-top: @menu_padding;
 }
 .issue-comments {
-  .issue-comments {
-    .issue-comments {
-      .issue-comments {
-        .issue-comments {
-          .issue-comments {
-            margin-left: 0;
-          }
-        }
+  & & & & & & { // selects parent 6 times
+    margin-left: 0; // prevents comments from nesting too far
+    .issue-foot {
+      &:before {
+        content: "• "; // indicates when comment is nested too far
       }
     }
   }
 }
 .issue-comment {
+  .issue-comment {
+    && {
+      animation: none;
+    }
+  }
   .issue-comments {
     margin-left: @menu_padding;
     // uncomment these to use side borders on child comments
