@@ -33,6 +33,7 @@
                                                                             :issue/created-at (datetime/server-date)
                                                                             :issue/title issue-title
                                                                             :issue/author (:cust/email cust)
+                                                                            :issue/document :none
                                                                             :frontend/issue-id (utils/squuid)}])]
                                              (cast! :issue-expanded {:issue-id (d/resolve-tempid (:db-after tx) (:tempids tx) -1)}))
                                            (om/set-state! owner :issue-title "")))}
@@ -263,7 +264,7 @@
 
            [:p.issue-foot
             [:a {:role "button"}
-             (str comment-count " comment" (when (< 1 comment-count) "s"))]
+             (str comment-count " comment" (when (not= 1 comment-count) "s"))]
             [:span " for "]
             [:a {:role "button"}
              ; "feature"
@@ -347,119 +348,124 @@
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
-         [:div.menu-view.issue
+          [:div.menu-view.issue
 
-          (om/build issue-summary {:issue-id issue-id})
+           #_(when-not (keyword-identical? :none (:issue/document issue :none))
+               [:a {:href (urls/absolute-doc-url (:issue/document issue) :subdomain nil)
+                    :target "_blank"}
+                [:img {:src (urls/absolute-doc-svg (:issue/document issue) :subdomain nil)}]])
+
+           (om/build issue-summary {:issue-id issue-id})
 
 
-          ; [:div.single-issue-head
-          ;  ; (om/build vote-box {:issue issue})
-          ;  ; [:h4 (or title (:issue/title issue ""))]
-          ;  (om/build vote-box {:issue issue})
-          ;  [:div.single-issue-info
-          ;  [:h4 (or title (:issue/title issue ""))]
+           ; [:div.single-issue-head
+           ;  ; (om/build vote-box {:issue issue})
+           ;  ; [:h4 (or title (:issue/title issue ""))]
+           ;  (om/build vote-box {:issue issue})
+           ;  [:div.single-issue-info
+           ;  [:h4 (or title (:issue/title issue ""))]
 
-          ;  ; [:div.issue-tags
-          ;  ;  [:div.issue-tag.issue-type "feature"]
-          ;  ;  [:div.issue-tag.issue-status "started"]
-          ;  ;  [:div.issue-tag.issue-author (:issue/author issue)]
-          ;  ;  ]
+           ;  ; [:div.issue-tags
+           ;  ;  [:div.issue-tag.issue-type "feature"]
+           ;  ;  [:div.issue-tag.issue-status "started"]
+           ;  ;  [:div.issue-tag.issue-author (:issue/author issue)]
+           ;  ;  ]
 
-          ;  ; [:div.comment-foot
-          ;  ;  [:a.issue-tag.issue-type {:role "button"} "feature"]
-          ;  ;  [:a.issue-tag.issue-status {:role "button"} "started"]
-          ;  ;  [:a.issue-tag.issue-author {:role "button"} (:issue/author issue)]
-          ;  ;  ]
+           ;  ; [:div.comment-foot
+           ;  ;  [:a.issue-tag.issue-type {:role "button"} "feature"]
+           ;  ;  [:a.issue-tag.issue-status {:role "button"} "started"]
+           ;  ;  [:a.issue-tag.issue-author {:role "button"} (:issue/author issue)]
+           ;  ;  ]
 
-          ;  (issue-tags issue)
+           ;  (issue-tags issue)
 
-          ;  ; [:div.comment-author
-          ;  ;  [:span.comment-avatar (common/icon :user)]
-          ;  ;  [:span.comment-name (str " " (:issue/author issue))]
-          ;  ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+           ;  ; [:div.comment-author
+           ;  ;  [:span.comment-avatar (common/icon :user)]
+           ;  ;  [:span.comment-name (str " " (:issue/author issue))]
+           ;  ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
 
-          ;  ]]
+           ;  ]]
 
-          ; [:p "by: " (:issue/author issue)]
+           ; [:p "by: " (:issue/author issue)]
 
-          ; [:p "Title "
-          ;  [:input {:value (or title (:issue/title issue ""))
-          ;           :on-change #(om/set-state! owner :title (.. % -target -value))}]]
+           ; [:p "Title "
+           ;  [:input {:value (or title (:issue/title issue ""))
+           ;           :on-change #(om/set-state! owner :title (.. % -target -value))}]]
 
-          ; [:p "Description "
-          ;  [:input {:value (or description (:issue/description issue ""))
-          ;           :on-change #(om/set-state! owner :description (.. % -target -value))}]]
+           ; [:p "Description "
+           ;  [:input {:value (or description (:issue/description issue ""))
+           ;           :on-change #(om/set-state! owner :description (.. % -target -value))}]]
 
-          ; [:input {:value (or description (:issue/description issue ""))
-          ;          :on-change #(om/set-state! owner :description (.. % -target -value))}]
+           ; [:input {:value (or description (:issue/description issue ""))
+           ;          :on-change #(om/set-state! owner :description (.. % -target -value))}]
 
-          ; [:div.comment-author
-          ;  [:span.comment-avatar (common/icon :user)]
-          ;  [:span.comment-name (str " " (:issue/author issue))]
-          ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+           ; [:div.comment-author
+           ;  [:span.comment-avatar (common/icon :user)]
+           ;  [:span.comment-name (str " " (:issue/author issue))]
+           ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
 
-          ; [:div.comment-content
-          ;  (or description (:issue/description issue ""))]
+           ; [:div.comment-content
+           ;  (or description (:issue/description issue ""))]
 
-          ; [:div.single-issue-body
+           ; [:div.single-issue-body
 
-          ;  ; [:div.comment-author
-          ;  ;  [:span.comment-avatar (common/icon :user)]
-          ;  ;  [:span.comment-name (str " " (:issue/author issue))]
-          ;  ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
+           ;  ; [:div.comment-author
+           ;  ;  [:span.comment-avatar (common/icon :user)]
+           ;  ;  [:span.comment-name (str " " (:issue/author issue))]
+           ;  ;  [:span.comment-datetime (str " " (datetime/month-day (:issue/created-at issue)))]]
 
-          ; (if description
+           ; (if description
 
-          ;   [:div.comment-content
-          ;    (or description (:issue/description issue ""))]
+           ;   [:div.comment-content
+           ;    (or description (:issue/description issue ""))]
 
-          ;   [:div.comment-content "There's no description yet."])]
+           ;   [:div.comment-content "There's no description yet."])]
 
-          (when description
-            [:div.issue-description (or description (:issue/description issue ""))]
-            )
+           (when description
+             [:div.issue-description (or description (:issue/description issue ""))]
+             )
 
-          ; [:div.single-issue-foot
-          ;   [:a {:role "button"} "reply"]
-          ;  ]
+           ; [:div.single-issue-foot
+           ;   [:a {:role "button"} "reply"]
+           ;  ]
 
-          ; [:div.issue-tags
-          ;  ; [:div.issue-tag.issue-type "feature"]
-          ;  ; [:div.issue-tag.issue-status "started"]
-          ;  [:div.issue-tag.issue-author (:issue/author issue)]]
+           ; [:div.issue-tags
+           ;  ; [:div.issue-tag.issue-type "feature"]
+           ;  ; [:div.issue-tag.issue-status "started"]
+           ;  [:div.issue-tag.issue-author (:issue/author issue)]]
 
-          ; [:p
-          ;  [:a {:role "button"
-          ;       :on-click #(d/transact! issue-db [(utils/remove-map-nils
-          ;                                          {:db/id issue-id
-          ;                                           :issue/title title
-          ;                                           :issue/description description})])}
-          ;   "Save"]
-          ;  " "
-          ;  [:a {:on-click #(d/transact! issue-db [[:db.fn/retractEntity issue-id]])
-          ;       :role "button"}
-          ;   "Delete"]]
+           ; [:p
+           ;  [:a {:role "button"
+           ;       :on-click #(d/transact! issue-db [(utils/remove-map-nils
+           ;                                          {:db/id issue-id
+           ;                                           :issue/title title
+           ;                                           :issue/description description})])}
+           ;   "Save"]
+           ;  " "
+           ;  [:a {:on-click #(d/transact! issue-db [[:db.fn/retractEntity issue-id]])
+           ;       :role "button"}
+           ;   "Delete"]]
 
-          ; [:div.issue-comment-input.adaptive-placeholder {:contentEditable true
-          ;                                                 :data-before "What do you think about this issue?"
-          ;                                                 :data-after "Hit enter to submit your comment"
-          ;                                                 :data-forgot "You forgot to submit!"}]
+           ; [:div.issue-comment-input.adaptive-placeholder {:contentEditable true
+           ;                                                 :data-before "What do you think about this issue?"
+           ;                                                 :data-after "Hit enter to submit your comment"
+           ;                                                 :data-forgot "You forgot to submit!"}]
 
-          [:div.content.make
-          (om/build comment-form {:issue-id issue-id})]
+           [:div.content.make
+            (om/build comment-form {:issue-id issue-id})]
 
-          ; [:div.calls-to-action
-          ; [:a.menu-button {:role "button"} "Comment"]]
+           ; [:div.calls-to-action
+           ; [:a.menu-button {:role "button"} "Comment"]]
 
-          ; [:h4 (str "0" " comments")]
+           ; [:h4 (str "0" " comments")]
 
-          (om/build comments {:issue issue})
+           (om/build comments {:issue issue})
 
-          ; [:p "Make a new comment:"]
+           ; [:p "Make a new comment:"]
 
-          ; (om/build comment-form {:issue-id issue-id})
+           ; (om/build comment-form {:issue-id issue-id})
 
-          ])))))
+           ])))))
 
 (defn issue-list [_ owner]
   (reify
