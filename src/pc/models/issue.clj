@@ -64,3 +64,10 @@
         required-keys #{:vote/cust :vote/cust-issue :frontend/issue-id}]
     (and (set/subset? required-keys actual-keys)
          (set/subset? actual-keys (set/union optional-keys required-keys)))))
+
+(defn valid-document? [?doc]
+  (let [actual-keys (set (keys (d/touch ?doc)))
+        optional-keys #{:db/id}
+        required-keys #{:document/name :document/creator :document/privacy}]
+    (and (set/subset? required-keys actual-keys)
+         (set/subset? actual-keys (set/union optional-keys required-keys)))))

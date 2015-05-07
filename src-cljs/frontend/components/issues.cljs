@@ -33,6 +33,7 @@
                                                                                           :issue/created-at (datetime/server-date)
                                                                                           :issue/title issue-title
                                                                                           :issue/author (:cust/email cust)
+                                                                                          :issue/document :none
                                                                                           :frontend/issue-id (utils/squuid)}])]
                                                            (cast! :issue-expanded {:issue-id (d/resolve-tempid (:db-after tx) (:tempids tx) -1)}))
                                                          (om/set-state! owner :issue-title "")))}
@@ -356,6 +357,10 @@
             issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
          [:div.issue
+          #_(when-not (keyword-identical? :none (:issue/document issue :none))
+              [:a {:href (urls/absolute-doc-url (:issue/document issue) :subdomain nil)
+                   :target "_blank"}
+               [:img {:src (urls/absolute-doc-svg (:issue/document issue) :subdomain nil)}]])
 
           (om/build issue-summary {:issue-id issue-id})
 
