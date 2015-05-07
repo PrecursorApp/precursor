@@ -55,6 +55,9 @@
       }
     }
   }
+  input[type="submit"] {
+    .menu-button();
+  }
 }
 .menu-header {
   .flexy(center, center);
@@ -197,6 +200,11 @@
     font-size: @font_size_small;
     margin-left: auto;
   }
+}
+.menu-form {
+  .flexy(column);
+  // margin: @menu_padding 0;
+  width: 100%;
 }
 .menu-invite-form {
   .flexy(column);
@@ -517,10 +525,11 @@
 .menu-button {
   .flexy(center, center);
   height: @tile;
-  margin-bottom: @tile;
+  // margin-bottom: @tile;
   padding: 0 @menu_padding;
   transition: @run_fast @bezier_fadein;
-  border: 1px solid @font_color;
+  border: 1px solid @gray_lighter;
+  background: fade(@font_color, 0);
   &:hover {
     color: @white;
     background: @font_color;

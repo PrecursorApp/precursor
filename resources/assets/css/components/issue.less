@@ -9,6 +9,12 @@
   }
 }
 .issues-list {
+  // .menu-form {
+  //   margin: @menu_padding 0;
+  // }
+  // .adaptive-textarea {
+  //   margin: @menu_padding 0;
+  // }
   .issue-summary {
     .issue-divider();
     margin: 0;
@@ -25,6 +31,7 @@
 
 .issue-summary {
   .flexy();
+  width: 100%;
   // margin-bottom: @menu_padding;
 }
 .issue-vote {
@@ -162,7 +169,7 @@
 //   margin-bottom: @menu_padding;
 // }
 .issue-divider {
-  margin-top: @menu_padding;
+  // margin-top: @menu_padding;
   border-top: 1px dotted @gray_lighter;
   // box-shadow: 0 1px @gray_lighter inset;
   padding-top: @menu_padding;
@@ -187,15 +194,15 @@
   // // padding-top: @menu_padding;
   // padding-top: 1em;
 }
-.issue-comment-input {
-  margin-bottom: @menu_padding;
-  // margin: @menu_padding 0;
-  // max-height: @tile + (5 * @menu_padding);
-  // overflow-y: auto;
-  &:focus {
-    min-height: @tile + (2.5 * @menu_padding);
-  }
-}
+// .issue-comment-input {
+//   margin-bottom: @menu_padding;
+//   // margin: @menu_padding 0;
+//   // max-height: @tile + (5 * @menu_padding);
+//   // overflow-y: auto;
+//   &:focus {
+//     min-height: @tile + (2.5 * @menu_padding);
+//   }
+// }
 
 
 .comments-count {
@@ -287,16 +294,10 @@
 }
 
 
-.comment-input {
-  .menu-button {
-    width: 50%;
-    // margin-top: @menu_padding;
-    // margin: @menu_padding 0;
-    margin: 1.5rem 0 0;
-    border-color: @gray_lighter;
-    &:not(:hover) {
-      color: @black;
-      background: none;
-    }
-  }
-}
+// .adaptive {
+//   .menu-button {
+//     width: 50%;
+//     // margin: 1.5rem 0 0;
+//     // border-color: @gray_lighter;
+//   }
+// }
