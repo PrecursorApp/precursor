@@ -1,5 +1,4 @@
 .issue {
-  //
   .issue-title {
     .h4();
   }
@@ -7,14 +6,13 @@
     width: @tile;
     height: @tile;
   }
+  .issue-summary {
+    .issue-foot {
+      padding: 0;
+    }
+  }
 }
 .issues-list {
-  // .menu-form {
-  //   margin: @menu_padding 0;
-  // }
-  // .adaptive-textarea {
-  //   margin: @menu_padding 0;
-  // }
   .issue-summary {
     .issue-divider();
     margin: 0;
@@ -23,16 +21,9 @@
 .issue-description {
   margin-bottom: @menu_padding;
 }
-// .issue-title {
-//   margin-bottom: @menu_padding;
-// }
-
-
-
 .issue-summary {
   .flexy();
   width: 100%;
-  // margin-bottom: @menu_padding;
 }
 .issue-vote {
   @size: 2 * @menu_padding;
@@ -41,39 +32,38 @@
   width: @size;
   min-width: @size;
   height: @size;
-  // margin-right: @menu_padding;
-  // margin-right: 1rem;
   margin-left: 1rem;
   border: 1px solid @gray_lighter;
   border-radius: @tile;
   overflow: hidden;
   transition: border @run @bezier_fadein;
-  &:not(.issue-vote-true) {
+  &.voted {
+    color: @color_select;
+    .issue-votes {
+      animation: in-bounce @run @run_fast ease-in backwards;
+    }
+  }
+  &.novote {
+    &:hover {
+      border-color: @color_select;
+      .issue-votes {
+        opacity: 0;
+        transform: translate(0, -100%);
+        transition: @run @run_fast @bezier_deform;
+      }
+      .issue-upvote {
+        opacity: 1;
+        transform: translate(0, -100%);
+        transition: @run (@run_fast / 2) @bezier_deform;
+      }
+    }
+  }
+  &:not(.voted) {
     cursor: pointer;
   }
 }
-.issue-vote-true {
-  color: @color_select;
-  .issue-votes {
-    animation: in-bounce @run @run_fast ease-in backwards;
-  }
-}
-.issue-vote-false {
-  &:hover {
-    border-color: @color_select;
-    .issue-votes {
-      opacity: 0;
-      transform: translate(0, -100%);
-      transition: @run @run_fast @bezier_deform;
-    }
-    .issue-upvote {
-      opacity: 1;
-      transform: translate(0, -100%);
-      transition: @run (@run_fast / 2) @bezier_deform;
-    }
-  }
-}
-.issue-polls {
+.issue-votes,
+.issue-upvote {
   .flexy(center; center);
   .icon(stroke; @color_select);
   .icon(fill; @color_select);
@@ -97,6 +87,8 @@
   .flexy(column; center);
   align-items: flex-start;
   flex: 1;
+  .issue-foot {
+  }
 }
 .issue-tag {
   &:not(:first-of-type) {
@@ -112,152 +104,45 @@
     }
   }
 }
-// .issue-tags {
-//   // .flexy();
-//   // line-height: 1;
-// }
-// .issue-tag {
-//   // color: @gray_light;
-//   // margin-right: 1rem;
-// }
-// // .issue-status {
-// //   border: 1px solid @gray;
-// //   border-radius: @tile;
-// //   margin-left: -.5em;
-// //   padding: 0 .5em;
-// // }
-
-
-
-// .single-issue-head {
-//   .flexy();
-//   margin-bottom: @menu_padding;
-//   // margin-bottom: @tile;
-//   h4 {
-//     align-self: center;
-//     margin: 0;
-//   }
-//   .issue-vote {
-//     // margin-left: (-@tile / 4);
-//     // margin-left: auto;
-//     // margin-right: 0;
-//   }
-//   // .issue-tags {
-//   //   margin-bottom: 1em;
-//   // }
-//   // .comment-author {
-//   //   margin-top: .5em;
-//   //   margin-bottom: 0;
-//   // }
-//   // .issue-tags {
-//   //   margin-top: .5em;
-//   // }
-// }
-.single-issue-info {
-  .flexy(column; center);
-}
-.single-issue-body {
-  .comment-content {
-    // margin: @menu_padding 0;
-    margin-bottom: @menu_padding;
-  }
-}
-.single-issue-foot {
-  margin-bottom: @tile;
-}
-// .issue-description {
-//   margin-bottom: @menu_padding;
-// }
 .issue-divider {
-  // margin-top: @menu_padding;
   border-top: 1px dotted @gray_lighter;
-  // box-shadow: 0 1px @gray_lighter inset;
   padding-top: @menu_padding;
-  // padding-top: 1em;
 }
 .issue-comments {
-  // margin-bottom: @menu_padding;
-  // padding: 0 @menu_padding;
+  .issue-comments {
+    .issue-comments {
+      .issue-comments {
+        .issue-comments {
+          .issue-comments {
+            margin-left: 0;
+          }
+        }
+      }
+    }
+  }
 }
 .issue-comment {
   .issue-comments {
-    // border-left: 1px dotted @gray_lighter;
-    // padding-left: @menu_padding;
     margin-left: @menu_padding;
-    // padding-bottom: @menu_padding / 3;
+    // uncomment these to use side borders on child comments
+    // border-left: 1px dotted #ddd;
+    // .issue-divider {
+    //   display: none;
+    // }
   }
   p {
-    padding: 0 @menu_padding;
+    padding-left: @menu_padding;
+    padding-right: @menu_padding;
   }
-  // margin-bottom: @menu_padding;
-
-  // padding: @menu_padding 0;
-  // border-bottom: 1px dotted @gray_lighter;
-  // &:first-of-type {
-  //   margin-top: @menu_padding / 3;
-  //   border-top: 1px dotted @gray_lighter;
-  // }
-
-  // margin-top: @menu_padding;
-  // border-top: 1px dotted @gray_lighter;
-  // // box-shadow: 0 1px @gray_lighter inset;
-  // // padding-top: @menu_padding;
-  // padding-top: 1em;
-}
-// .issue-comment-input {
-//   margin-bottom: @menu_padding;
-//   // margin: @menu_padding 0;
-//   // max-height: @tile + (5 * @menu_padding);
-//   // overflow-y: auto;
-//   &:focus {
-//     min-height: @tile + (2.5 * @menu_padding);
-//   }
-// }
-
-
-.comments-count {
-  color: @gray_light;
-}
-.comment-body {
-  // margin-bottom: @menu_padding / 2;
-}
-.comment-author {
-  .flexy(center);
-  .icon(stroke; @gray_light);
-  color: @gray_light;
-  line-height: 1;
-  // margin: 0;
-  // .icon(stroke; @gray_darker);
-  // color: @gray_darker;
-  margin-bottom: @menu_padding / 2;
-  // margin-bottom: 1em;
-}
-.comment-avatar {
-  //
-}
-.comment-name {
-  margin: 0 .5rem;
-}
-.comment-datetime {
-  color: @gray_light;
-  font-size: @font_size_small;
-}
-.comment-content {
-  // color: @gray;
-  margin-bottom: @menu_padding / 2;
-  // margin-bottom: 1em;
-  // margin-bottom: @menu_padding;
 }
 .issue-foot {
   .icon(stroke; @gray_light);
   .icon(fill; @gray_light);
   color: @gray_light;
-
   font-size: @font_size_small;
   line-height: @tile / 4;
-
-  margin: .5rem 0 @menu_padding;
-
+  margin-bottom: @menu_padding;
+  padding-bottom: @menu_padding / 3;
   a {
     // > span {
     //   + span {
@@ -290,25 +175,8 @@
     // }
   }
 }
-// .issue-foot {
-//   // opacity: .5;
-//   a {
-//     &:not(:hover) {
-//       color: @gray_dark;
-//     }
-//   }
-// }
 .comment-children {
   border-left: 1px dotted @gray_lighter;
   padding-left: @menu_padding;
   padding-bottom: @menu_padding / 3;
 }
-
-
-// .adaptive {
-//   .menu-button {
-//     width: 50%;
-//     // margin: 1.5rem 0 0;
-//     // border-color: @gray_lighter;
-//   }
-// }

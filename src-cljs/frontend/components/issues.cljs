@@ -27,6 +27,7 @@
     (render-state [_ {:keys [issue-title]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)]
         (html
+          [:div.content.make
           [:form.adaptive {:on-submit #(do (utils/stop-event %)
                                          (when (seq issue-title)
                                            (let [tx (d/transact! issue-db [{:db/id -1
@@ -43,7 +44,7 @@
            [:label {:data-label (gstring/format "Sounds good so far—%s characters left" (count issue-title))
                     :data-placeholder "How can we improve Precursor?"}]
            [:input {:type "submit"
-                    :value "Submit idea."}]])))))
+                    :value "Submit idea."}]]])))))
 
 (defn comment-form [{:keys [issue-id parent-id]} owner {:keys [issue-db]}]
   (reify
@@ -54,7 +55,8 @@
       (let [issue-db (om/get-shared owner :issue-db)
             cust (om/get-shared owner :cust)]
         (html
-          [:form.adaptive.make {:on-submit #(do (utils/stop-event %)
+          [:div.content.make
+          [:form.adaptive {:on-submit #(do (utils/stop-event %)
                                               (when (seq comment-body)
                                                 (d/transact! issue-db [{:db/id issue-id
                                                                         :issue/comments (merge {:db/id -1
@@ -73,8 +75,8 @@
                        :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]
            [:label {:data-label "What do you think?"
                     :data-forgot "To be continued"}]
-           [:input.make {:type "submit"
-                         :value "Comment."}]])))))
+           [:input {:type "submit"
+                         :value "Comment."}]]])))))
 
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
@@ -91,15 +93,15 @@
                         @issue-db (:db/id issue) (:cust/email cust))]
         (html
           [:div.issue-vote {:role "button"
-                            :class (str "issue-vote-" (if voted? "true" "false"))
+                            :class (if voted? " voted " " novote ")
                             :on-click #(d/transact! issue-db
                                                     [{:db/id (:db/id issue)
                                                       :issue/votes {:db/id -1
                                                                     :frontend/issue-id (utils/squuid)
                                                                     :vote/cust (:cust/email cust)}}])}
-           [:div.issue-polls.issue-votes {:key (count (:issue/votes issue))}
+           [:div.issue-votes {:key (count (:issue/votes issue))}
             (count (:issue/votes issue))]
-           [:div.issue-polls.issue-upvote
+           [:div.issue-upvote
             (common/icon :north)]])))))
 
 ; (defn comment-foot [{:keys [comment-id issue-id]} owner]
@@ -256,14 +258,11 @@
       (let [{:keys [issue-db]} (om/get-shared owner)
             comments (issue-model/top-level-comments issue)]
         (html
-         [:div.issue-comments
-          ; [:p.comments-count (str (count comments) " comment" (when (< 1 (count comments)) "s"))]
-          (for [{:keys [db/id]} comments]
-            (list
-            ; [:div.issue-divider]
-            (om/build single-comment {:comment-id id
-                                      :issue-id (:db/id issue)}
-                      {:key :comment-id})))])))))
+          [:div.issue-comments
+           (for [{:keys [db/id]} comments]
+             (om/build single-comment {:comment-id id
+                                       :issue-id (:db/id issue)}
+                       {:key :comment-id}))])))))
 
 (defn issue-summary [{:keys [issue-id]} owner]
   (reify
@@ -486,8 +485,10 @@
            ;                                                 :data-after "Hit enter to submit your comment"
            ;                                                 :data-forgot "You forgot to submit!"}]
 
-           [:div.content
-            (om/build comment-form {:issue-id issue-id})]
+           ; [:div.content
+           ;  (om/build comment-form {:issue-id issue-id})]
+
+           (om/build comment-form {:issue-id issue-id})
 
            ; [:div.calls-to-action
            ; [:a.menu-button {:role "button"} "Comment"]]
@@ -571,8 +572,11 @@
                             " added, " (count deleted) " removed, click to refresh."))]))
            ; [:div.make {:key "issue-form"}
            ;  (om/build issue-form {})]
-           [:div.content.make
-           (om/build issue-form {})]
+           ; [:div.content.make
+           ; (om/build issue-form {})]
+
+           (om/build issue-form {})
+
            ; :div.make {:key "summary"}
             (when-let [issues (seq (map #(d/entity @issue-db %) rendered-issue-ids))]
               (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)})
