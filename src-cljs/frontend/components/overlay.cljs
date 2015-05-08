@@ -16,6 +16,7 @@
             [frontend.components.team :as team]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
+            [frontend.models.issue :as issue-model]
             [frontend.state :as state]
             [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
@@ -775,9 +776,15 @@
                  :let [component (get-component overlay-key)]]
              (html
               [:h4.menu-heading {:title (:title component) :react-key (:title component)}
-               (if (namespaced? overlay-key)
-                 (str (:title component) " " (str/capitalize (name overlay-key)))
-                 (:title component))]))]
+               ;; TODO: better way to handle custom titles
+               (cond (keyword-identical? :issues/single-issue overlay-key)
+                     (:issue/title (issue-model/find-by-frontend-id @(om/get-shared owner :issue-db) (:active-issue-uuid app)))
+
+                     (namespaced? overlay-key)
+                     (str (:title component) " " (str/capitalize (name overlay-key)))
+
+
+                     :else (:title component))]))]
           [:div.menu-body
            (for [overlay-key (get-in app state/overlays-path)
                  :let [component (get-component overlay-key)]]
