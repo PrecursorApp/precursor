@@ -28,27 +28,33 @@
     (render-state [_ {:keys [issue-title]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)]
         (html
-         [:div.content.make
-          [:form.adaptive {:on-submit #(do (utils/stop-event %)
-                                         (when (seq issue-title)
-                                           (let [fe-id (utils/squuid)]
-                                             (d/transact! issue-db [{:db/id -1
-                                                                     :issue/created-at (datetime/server-date)
-                                                                     :issue/title issue-title
-                                                                     :issue/author (:cust/email cust)
-                                                                     :issue/document :none
-                                                                     :frontend/issue-id fe-id}])
-                                             (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
-                                           (om/set-state! owner :issue-title "")))}
+         [:form.issue-form {:on-submit #(do (utils/stop-event %)
+                                          (when (seq issue-title)
+                                            (let [fe-id (utils/squuid)]
+                                              (d/transact! issue-db [{:db/id -1
+                                                                      :issue/created-at (datetime/server-date)
+                                                                      :issue/title issue-title
+                                                                      :issue/author (:cust/email cust)
+                                                                      :issue/document :none
+                                                                      :frontend/issue-id fe-id}])
+                                              (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
+                                            (om/set-state! owner :issue-title "")))}
+          [:div.adaptive
            [:textarea {:value issue-title
                        :required "true"
                        :disabled (when-not (utils/logged-in? owner) true)
                        :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
            [:label {:data-typing (gstring/format "Sounds good so far—%s characters left" (count issue-title))
-                    :data-label "How can we improve Precursor?"}]
-           [:input {:type "submit"
-                    :value "Submit idea."
-                    :disabled (when-not (utils/logged-in? owner) true)}]]])))))
+                    :data-label (if (utils/logged-in? owner)
+                                  "How can we improve Precursor?"
+                                  "Sign in to make an issue.")}]]
+          [:div.menu-buttons
+           (if (utils/logged-in? owner)
+             [:input.menu-button {:type "submit"
+                                  :value "Submit idea."
+                                  :disabled (when-not (utils/logged-in? owner) true)}]
+
+             (om/build common/google-login {:source "Issue form"}))]])))))
 
 (defn comment-form [{:keys [issue-id parent-id close-callback]} owner {:keys [issue-db]}]
   (reify
@@ -59,29 +65,35 @@
       (let [issue-db (om/get-shared owner :issue-db)
             cust (om/get-shared owner :cust)]
         (html
-         [:div.content.make
-          [:form.adaptive {:on-submit #(do (utils/stop-event %)
-                                           (when (seq comment-body)
-                                             (d/transact! issue-db [{:db/id issue-id
-                                                                     :issue/comments (merge {:db/id -1
-                                                                                             :comment/created-at (datetime/server-date)
-                                                                                             :comment/body comment-body
-                                                                                             :comment/author (:cust/email cust)
-                                                                                             :frontend/issue-id (utils/squuid)}
-                                                                                            (when parent-id
-                                                                                              {:comment/parent parent-id}))}])
-                                             (om/set-state! owner :comment-body ""))
-                                           (when (fn? close-callback)
-                                             (close-callback)))}
-             [:textarea {:required true
-                         :value comment-body
-                         :disabled (when-not (utils/logged-in? owner) true)
-                         :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]
-             [:label {:data-label "What do you think?"
-                      :data-forgot "To be continued"}]
-             [:input {:type "submit"
-                      :value "Add comment."
-                      :disabled (when-not (utils/logged-in? owner) true)}]]])))))
+         [:form.comment-form {:on-submit #(do (utils/stop-event %)
+                                            (when (seq comment-body)
+                                              (d/transact! issue-db [{:db/id issue-id
+                                                                      :issue/comments (merge {:db/id -1
+                                                                                              :comment/created-at (datetime/server-date)
+                                                                                              :comment/body comment-body
+                                                                                              :comment/author (:cust/email cust)
+                                                                                              :frontend/issue-id (utils/squuid)}
+                                                                                             (when parent-id
+                                                                                               {:comment/parent parent-id}))}])
+                                              (om/set-state! owner :comment-body ""))
+                                            (when (fn? close-callback)
+                                              (close-callback)))}
+          [:div.adaptive
+           [:textarea {:required true
+                       :value comment-body
+                       :disabled (when-not (utils/logged-in? owner) true)
+                       :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]
+           [:label {:data-label (if (utils/logged-in? owner)
+                                  "What do you think?"
+                                  "Sign in to comment on this issue.")
+                    :data-forgot "To be continued"}]]
+          [:div.menu-buttons
+           (if (utils/logged-in? owner)
+             [:input.menu-button {:type "submit"
+                                  :value "Add comment."
+                                  :disabled (when-not (utils/logged-in? owner) true)}]
+
+             (om/build common/google-login {:source "Comment form"}))]])))))
 
 (defn description-form [{:keys [issue issue-id]} owner]
   (reify
@@ -103,14 +115,15 @@
         (html
          (if editing?
            [:div.content {:class (when-not (:issue/description issue) " make ")}
-            [:form.adaptive {:on-submit submit}
-             [:textarea.issue-description {:class (when (:issue/description issue) " to-edit ")
-                                           :value (or issue-description (:issue/description issue ""))
-                                           :required "true"
-                                           :on-change #(om/set-state! owner :issue-description (.. % -target -value))
-                                           :on-blur submit}]
-             [:label {:data-label "Issue Description"
-                      :data-placeholder "Want to elaborate on your idea?"}]
+            [:form.description-form {:on-submit submit}
+             [:div.adaptive
+              [:textarea.issue-description {:class (when (:issue/description issue) " to-edit ")
+                                            :value (or issue-description (:issue/description issue ""))
+                                            :required "true"
+                                            :on-change #(om/set-state! owner :issue-description (.. % -target -value))
+                                            :on-blur submit}]
+              [:label {:data-label "Issue Description"
+                       :data-placeholder "Want to elaborate on your idea?"}]]
              [:p.issue-foot
               ;; hide avatars for now
               ;; [:span (common/icon :user) " "]
@@ -273,10 +286,11 @@
                 (if (om/get-state owner :replying?) "Cancel" "Reply")]))]
 
           (when (om/get-state owner :replying?)
-            (om/build comment-form {:issue-id issue-id
-                                    :parent-id comment-id
-                                    :close-callback #(om/set-state! owner :replying? false)}
-                      {:react-key "comment-form"}))
+            [:div.content.make
+             (om/build comment-form {:issue-id issue-id
+                                     :parent-id comment-id
+                                     :close-callback #(om/set-state! owner :replying? false)}
+                       {:react-key "comment-form"})])
           (unrendered-comments-notice all-child-ids rendered-child-ids #(om/update-state! owner (fn [s]
                                                                                                   (assoc s :rendered-child-ids (:all-child-ids s)))))
           (when (and (not (contains? ancestors (:db/id comment))) ; don't render cycles
@@ -407,7 +421,8 @@
            (om/build description-form {:issue issue :issue-id issue-id})]
 
           [:div.issue-comments {:key "issue-comments"}
-           (om/build comment-form {:issue-id issue-id} {:react-key "comment-form"})
+           [:div.content.make
+            (om/build comment-form {:issue-id issue-id} {:react-key "comment-form"})]
            (om/build comments {:issue-id issue-id} {:react-key "comments"})]])))))
 
 (defn issue-list [_ owner]
@@ -477,7 +492,8 @@
                                           " new issues were"
                                           " new issue was")
                           " added, " (count deleted) " removed, click to refresh."))]))
-          (om/build issue-form {})
+          [:div.content.make
+           (om/build issue-form {})]
           (when-let [issues (seq (map #(d/entity @issue-db %) rendered-issue-ids))]
             (om/build-all issue-card (map (fn [i] {:issue-id (:db/id i)})
                                           (sort (issue-model/issue-comparator cust render-time) issues))

@@ -109,7 +109,7 @@ input {
   .flexy(column);
   position: relative;
   width: 100%;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1em;
   textarea {
     min-height: @tile;
     max-height: 5 * @tile;
@@ -129,9 +129,6 @@ input {
     outline: none;
     border: none;
     resize: vertical;
-    &:not(:last-child) {
-      margin-bottom: 1.5rem;
-    }
     &:focus,
     &:valid {
       + label {
@@ -204,17 +201,6 @@ input {
       background-position: center;
       user-select: none;
     }
-  }
-  .issue-foot {
-    order: 3;
-  }
-  input[type="submit"] {
-    order: 4;
-    width: @tile_xl;
-    outline: none;
-    .mq_640({
-      width: 100%;
-    });
   }
 }
 .menu {
