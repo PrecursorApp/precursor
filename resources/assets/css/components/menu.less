@@ -58,6 +58,18 @@
   input[type="submit"] {
     .menu-button();
   }
+  input,
+  textarea {
+    &[disabled] {
+      color: @gray_light;
+      box-shadow: none;
+      border: 1px dashed @gray_lighter;
+      resize: none;
+      overflow: hidden;
+      user-select: none;
+      pointer-events: none;
+    }
+  }
 }
 .menu-header {
   .flexy(center, center);

@@ -42,11 +42,13 @@
                                            (om/set-state! owner :issue-title "")))}
            [:textarea {:value issue-title
                        :required "true"
+                       :disabled (when-not (utils/logged-in? owner) true)
                        :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
-           [:label {:data-label (gstring/format "Sounds good so far—%s characters left" (count issue-title))
-                    :data-placeholder "How can we improve Precursor?"}]
+           [:label {:data-typing (gstring/format "Sounds good so far—%s characters left" (count issue-title))
+                    :data-label "How can we improve Precursor?"}]
            [:input {:type "submit"
-                    :value "Submit idea."}]]])))))
+                    :value "Submit idea."
+                    :disabled (when-not (utils/logged-in? owner) true)}]]])))))
 
 (defn comment-form [{:keys [issue-id parent-id close-callback]} owner {:keys [issue-db]}]
   (reify
