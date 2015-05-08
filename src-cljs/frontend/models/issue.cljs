@@ -1,15 +1,22 @@
 (ns frontend.models.issue
-  (:require [datascript :as d]
+  (:require [clojure.set :as set]
+            [datascript :as d]
             [frontend.utils :as utils :include-macros true]))
 
-(defn top-level-comments [issue]
-  (remove :comment/parent (:issue/comments issue)))
+(defn top-level-comment-ids [db issue-id]
+  (let [all-ids (set (map :v (d/datoms db :aevt :issue/comments issue-id)))
+        children-ids (set (d/q '{:find [[?e ...]]
+                                 :in [$ ?issue-id]
+                                 :where [[?issue-id :issue/comments ?e]
+                                         [?e :comment/parent]]}
+                               db issue-id))]
+    (set/difference all-ids children-ids)))
 
 (defn direct-descendants [db comment]
-  (d/q '{:find [[?e ...]]
-         :in [$ ?comment-id]
-         :where [[?e :comment/parent ?comment-id]]}
-       db (:db/id comment)))
+  (set (d/q '{:find [[?e ...]]
+              :in [$ ?comment-id]
+              :where [[?e :comment/parent ?comment-id]]}
+            db (:db/id comment))))
 
 (defn issue-score [issue cust time]
   (+ (count (:issue/votes issue))
