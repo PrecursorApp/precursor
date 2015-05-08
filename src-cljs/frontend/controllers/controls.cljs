@@ -1575,7 +1575,7 @@
 (defn navigate-to-lazy-doc [current-state]
   (go
     (landing-doc/maybe-fetch-doc-id current-state)
-    (let [doc-id (<! landing-doc/doc-id-ch)]
+    (let [doc-id (<! (landing-doc/get-doc-id current-state))]
       (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" doc-id)}]))))
 
 (defmethod post-control-event! :make-button-clicked

@@ -22,3 +22,7 @@
                                 ;; something went wrong, notifying error channel
                                 (async/put! (get-in state [:comms :errors]) [:api-error result]))))]
         (async/put! doc-id-ch doc-id)))))
+
+(defn get-doc-id [state]
+  (go (or (:document/id state)
+          (async/<! doc-id-ch))))
