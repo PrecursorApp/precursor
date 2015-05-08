@@ -12,12 +12,14 @@
             [frontend.models.issue :as issue-model]
             [frontend.sente :as sente]
             [frontend.urls :as urls]
+            [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils]
             [goog.string :as gstring]
             [goog.string.format]
             [om.core :as om]
             [om.dom :as dom])
-  (:require-macros [sablono.core :refer (html)])
+  (:require-macros [sablono.core :refer (html)]
+                   [cljs.core.async.macros :as am :refer [go]])
   (:import [goog.ui IdGenerator]))
 
 (defn issue-form [_ owner]
@@ -25,24 +27,36 @@
     om/IDisplayName (display-name [_] "Issue form")
     om/IInitState (init-state [_] {:issue-title ""})
     om/IRenderState
-    (render-state [_ {:keys [issue-title]}]
+    (render-state [_ {:keys [issue-title submitting?]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)]
         (html
          [:form.issue-form {:on-submit #(do (utils/stop-event %)
-                                          (when (seq issue-title)
-                                            (let [fe-id (utils/squuid)]
-                                              (d/transact! issue-db [{:db/id -1
-                                                                      :issue/created-at (datetime/server-date)
-                                                                      :issue/title issue-title
-                                                                      :issue/author (:cust/email cust)
-                                                                      :issue/document :none
-                                                                      :frontend/issue-id fe-id}])
-                                              (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
-                                            (om/set-state! owner :issue-title "")))}
+                                            (go
+                                              (try
+                                                (om/set-state! owner :submitting? true)
+                                                (when (seq issue-title)
+                                                  (let [fe-id (utils/squuid)
+                                                        doc-id (let [result (async/<! (ajax/managed-ajax :post "/api/v1/document/new"
+                                                                                                         :params {:read-only true}))]
+                                                                 (if (= :success (:status result))
+                                                                   (get-in result [:document :db/id])
+                                                                   ;; something went wrong, notifying error channel
+                                                                   (do (async/put! (om/get-shared owner [:comms :errors]) [:api-error result])
+                                                                       (throw "Couldn't create doc."))))]
+                                                    (d/transact! issue-db [{:db/id -1
+                                                                            :issue/created-at (datetime/server-date)
+                                                                            :issue/title issue-title
+                                                                            :issue/author (:cust/email cust)
+                                                                            :issue/document doc-id
+                                                                            :frontend/issue-id fe-id}])
+                                                    (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
+                                                  (om/set-state! owner :issue-title ""))
+                                                (finally
+                                                  (om/set-state! owner :submitting? false)))))}
           [:div.adaptive
            [:textarea {:value issue-title
                        :required "true"
-                       :disabled (when-not (utils/logged-in? owner) true)
+                       :disabled (or submitting? (not (utils/logged-in? owner)))
                        :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
            [:label {:data-typing (gstring/format "Sounds good so far—%s characters left" (count issue-title))
                     :data-label (if (utils/logged-in? owner)
@@ -51,7 +65,9 @@
           [:div.menu-buttons
            (if (utils/logged-in? owner)
              [:input.menu-button {:type "submit"
-                                  :value "Submit idea."
+                                  :value (if submitting?
+                                           "Submitting..."
+                                           "Submit idea.")
                                   :disabled (when-not (utils/logged-in? owner) true)}]
 
              (om/build common/google-login {:source "Issue form"}))]])))))

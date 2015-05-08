@@ -274,25 +274,11 @@
           txes)
      frontend-id-txes)))
 
-(defn add-document [cust txes]
-  (reduce (fn [acc [type e a v :as tx]]
-            (if (pc.utils/inspect (= :issue/document a))
-              (let [doc-id (d/tempid :db.part/user)]
-                (conj acc [type e a doc-id] {:db/id doc-id
-                                             :document/creator (:cust/uuid cust)
-                                             :document/privacy :document.privacy/read-only
-                                             :document/name "Untitled"}))
-              (conj acc tx)))
-          [] txes))
-
-
-
 ;; TODO: generalize this--probably need to start setting that entity/type field
 (defn issue-valid-entity? [ent]
   (or (issue-model/valid-issue? ent)
       (issue-model/valid-comment? ent)
-      (issue-model/valid-vote? ent)
-      (issue-model/valid-document? ent)))
+      (issue-model/valid-vote? ent)))
 
 (defn type-check-new-entities [db txes]
   (let [{:keys [tempids db-after]} (d/with db txes)]
@@ -337,7 +323,6 @@
                             (filter (partial issue-can-modify? db cust find-by-frontend-id-memo))
                             (add-vote-contraints find-by-frontend-id-memo db)
                             (add-issue-frontend-ids find-by-frontend-id-memo db)
-                            (add-document cust)
                             seq
                             (type-check-new-entities db)
                             (concat [(merge {:db/id txid
