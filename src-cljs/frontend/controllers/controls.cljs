@@ -1571,13 +1571,35 @@
                                            :request-id request-id
                                            :invite-loc :overlay}]))
 
+(defn get-doc-id [ch comms]
+  (go (let [result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
+        (if (= :success (:status result))
+          (>! ch (get-in result [:document :db/id]))
+          (if (and (= :unauthorized-to-team (get-in result [:response :error]))
+                   (get-in result [:response :redirect-url]))
+            (set! js/window.location (get-in result [:response :redirect-url]))
+            (put! (:errors comms) [:api-error result])))))
+  ch)
+
+(defn navigate-to-lazy-doc [current-state]
+  (go
+    (when-let [doc-id (or (:document/id current-state)
+                          (let [result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
+                            (if (= :success (:status result))
+                              (get-in result [:document :db/id])
+                              (if (and (= :unauthorized-to-team (get-in result [:response :error]))
+                                       (get-in result [:response :redirect-url]))
+                                (set! js/window.location (get-in result [:response :redirect-url]))
+                                (put! (get-in current-state [:comms :errors]) [:api-error result])))))]
+      (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" doc-id)}]))))
+
 (defmethod post-control-event! :make-button-clicked
   [browser-state message _ previous-state current-state]
-  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
+  (navigate-to-lazy-doc current-state))
 
 (defmethod post-control-event! :launch-app-clicked
   [browser-state message _ previous-state current-state]
-  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
+  (navigate-to-lazy-doc current-state))
 
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]

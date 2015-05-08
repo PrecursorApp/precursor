@@ -143,7 +143,7 @@
         [:div.art-voice-name.d "Mikey"]
         [:div.art-voice-talk.d (common/icon :sound-mute)]]]]]]))
 
-(defn make-button [{:keys [document/id]} owner {:keys [alt]}]
+(defn make-button [_ owner {:keys [alt]}]
   (reify
     om/IDisplayName (display-name [_] "Landing Make Button")
     om/IInitState
@@ -198,17 +198,15 @@
             chosen-word (first word-list)
             [before-words after-words] (partition-all (- (count word-list) 3) (rest word-list))]
         (html
-         [:div.make-button
-          {:class (when alt "alt")
-           :role "button"
-           :on-click #(do
-                        (cast! :make-button-clicked))
-           :on-touch-end #(do
-                            (.preventDefault %)
-                            (cast! :make-button-clicked))
-           :on-mouse-enter #(om/set-state! owner :word-list (shuffle word-list))}
-          [:div.make-prepend
-           {:data-before "Or "}
+         [:div.make-button {:class (when alt "alt")
+                            :role "button"
+                            :on-click #(do
+                                         (cast! :make-button-clicked))
+                            :on-touch-end #(do
+                                             (.preventDefault %)
+                                             (cast! :make-button-clicked))
+                            :on-mouse-enter #(om/set-state! owner :word-list (shuffle word-list))}
+          [:div.make-prepend {:data-before "Or "}
            "Make "]
           [:div.make-something
            [:div.something-default (when widths
@@ -243,7 +241,7 @@
              [:h1.content-copy "Prototyping and team collaboration should be simple. "]
              [:p.content-copy "That's why we made Precursor."]
              [:div.calls-to-action
-              (om/build make-button (select-keys app [:document/id]))]]]]
+              (om/build make-button {})]]]]
           [:div.our-proof
            ;; Hide this until we get testimonials/stats figured out
            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
@@ -345,8 +343,7 @@
              [:h1.content-copy "It's a blackboard designed to help teams brainstorm."]
              [:p.content-copy "Precursor is no-nonsense prototyping."]
              [:div.calls-to-action
-              (om/build make-button (select-keys app [:document/id])
-                        {:opts {:alt "alt"}})
+              (om/build make-button {} {:opts {:alt "alt"}})
               [:a.pancake-button {:href "/trial"
                                   :target "_top"}
                "Start a free trial."]]]]]])))))
@@ -359,8 +356,7 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.landing.page
-          (om/build drawing/landing-background {:doc-id (:document/id app)
-                                                :subscribers (get-in app [:subscribers :info])}
+          (om/build drawing/landing-background {:subscribers (get-in app [:subscribers :info])}
                     {:react-key "landing-background"})
           (om/build the-why app)
           (om/build the-how app)

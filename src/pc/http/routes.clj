@@ -318,13 +318,8 @@
     ;; TODO: figure out what to do with outer pages on subdomains, need to
     ;;       solve the extraneous entity-id problem first
     (custom-domain/redirect-to-main req)
-    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-          ;; TODO: Have to figure out a way to create outer pages without creating extraneous entity-ids
-          doc (doc-model/create-public-doc!
-               (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                      (when cust-uuid {:document/creator cust-uuid})))]
-      (content/app (merge (common-view-data req)
-                          {:initial-document-id (:db/id doc)})))))
+    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])]
+      (content/app (common-view-data req)))))
 
 (defpage pricing "/pricing" [req]
   (outer-page req))
