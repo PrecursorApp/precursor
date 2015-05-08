@@ -97,6 +97,8 @@
                (reader/read-string))
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
                            (reader/read-string))
+        initial-issue-entities (some-> (aget js/window "Precursor" "initial-issue-entities")
+                                 (reader/read-string))
         tab-id (utils/uuid)
         sente-id (aget js/window "Precursor" "sente-id")]
     (atom (-> (assoc initial-state
@@ -108,7 +110,7 @@
                      ;; team entities go into the team namespace, so we need a separate database
                      ;; to prevent conflicts
                      :team-db (db/make-initial-db nil)
-                     :issue-db (db/make-initial-db nil)
+                     :issue-db (db/make-initial-db (utils/inspect initial-issue-entities))
                      :document/id document-id
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true

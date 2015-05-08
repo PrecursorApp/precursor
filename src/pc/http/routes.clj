@@ -110,7 +110,7 @@
                                                              :transaction/broadcast true})
         (redirect "/"))))
 
-(defn doc-resp [doc req]
+(defn doc-resp [doc req & {:keys [view-data]}]
   (content/app (merge (common-view-data req)
                       {:initial-document-id (:db/id doc)
                        :meta-image (urls/png-from-doc doc)
@@ -118,7 +118,7 @@
                       ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
                       ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
                       ;;   {:initial-entities (layer/find-by-document db doc)})
-                      )))
+                      view-data)))
 
 (defn handle-doc [req]
   (let [document-id (some-> req :params :document-id Long/parseLong)
@@ -319,7 +319,7 @@
         {:body "Sorry, we couldn't find that issue."
          :status 404}
         (let [doc (:issue/document issue)]
-          (doc-resp doc req))))))
+          (doc-resp doc req :view-data {:initial-issue-entities [(issue-model/read-api issue)]}))))))
 
 (defpage issue "/issues" [req]
   (outer-page req))
