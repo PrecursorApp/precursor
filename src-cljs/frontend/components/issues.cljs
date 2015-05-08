@@ -59,25 +59,25 @@
         (html
          [:div.content.make
           [:form.adaptive {:on-submit #(do (utils/stop-event %)
-                                         (when (seq comment-body)
-                                           (d/transact! issue-db [{:db/id issue-id
-                                                                   :issue/comments (merge {:db/id -1
-                                                                                           :comment/created-at (datetime/server-date)
-                                                                                           :comment/body comment-body
-                                                                                           :comment/author (:cust/email cust)
-                                                                                           :frontend/issue-id (utils/squuid)}
-                                                                                          (when parent-id
-                                                                                            {:comment/parent parent-id}))}])
-                                           (om/set-state! owner :comment-body ""))
-                                         (close-callback))}
-
-           [:textarea {:required true
-                       :value comment-body
-                       :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]
-           [:label {:data-label "What do you think?"
-                    :data-forgot "To be continued"}]
-           [:input {:type "submit"
-                    :value "Add comment."}]]])))))
+                                           (when (seq comment-body)
+                                             (d/transact! issue-db [{:db/id issue-id
+                                                                     :issue/comments (merge {:db/id -1
+                                                                                             :comment/created-at (datetime/server-date)
+                                                                                             :comment/body comment-body
+                                                                                             :comment/author (:cust/email cust)
+                                                                                             :frontend/issue-id (utils/squuid)}
+                                                                                            (when parent-id
+                                                                                              {:comment/parent parent-id}))}])
+                                             (om/set-state! owner :comment-body ""))
+                                           (when (fn? close-callback)
+                                             (close-callback)))}
+             [:textarea {:required true
+                         :value comment-body
+                         :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]
+             [:label {:data-label "What do you think?"
+                      :data-forgot "To be continued"}]
+             [:input {:type "submit"
+                      :value "Add comment."}]]])))))
 
 (defn description-form [{:keys [issue issue-id]} owner]
   (reify
@@ -91,11 +91,11 @@
             editable? (= (:cust/email cust) (:issue/author issue))
             editing? (and editable? (om/get-state owner :editing?))
             submit #(do (utils/stop-event %)
-                      (when issue-description
-                        (d/transact! issue-db [{:db/id (:db/id issue)
-                                                :issue/description issue-description}]))
-                      (om/set-state! owner :issue-description nil)
-                      (om/set-state! owner :editing? false))]
+                        (when issue-description
+                          (d/transact! issue-db [{:db/id (:db/id issue)
+                                                  :issue/description issue-description}]))
+                        (om/set-state! owner :issue-description nil)
+                        (om/set-state! owner :editing? false))]
         (html
          (if editing?
            [:div.content {:class (when-not (:issue/description issue) " make ")}
@@ -161,20 +161,21 @@
                           [?e :vote/cust ?email]]
                         @issue-db (:db/id issue) (:cust/email cust))]
         (html
-         [:div.issue-vote {:role "button"
-                           :class (if voted? " voted " " novote ")
-                           :on-click #(d/transact! issue-db
-                                                   [{:db/id (:db/id issue)
-                                                     :issue/votes {:db/id -1
-                                                                   :frontend/issue-id (utils/squuid)
-                                                                   :vote/cust (:cust/email cust)}}])}
+         [:div.issue-vote (merge {:role "button"
+                                  :class (if voted? " voted " " novote ")}
+                                 (when-not voted?
+                                   {:on-click #(d/transact! issue-db
+                                                            [{:db/id (:db/id issue)
+                                                              :issue/votes {:db/id -1
+                                                                            :frontend/issue-id (utils/squuid)
+                                                                            :vote/cust (:cust/email cust)}}])}))
           [:div.issue-votes {:key (count (:issue/votes issue))}
            (count (:issue/votes issue))]
           [:div.issue-upvote
            (common/icon :north)]])))))
 
-(defn single-comment [{:keys [comment-id issue-id]} owner {:keys [ancestors]
-                                                           :or {ancestors #{}}}]
+(defn single-comment [{:keys [comment-id issue-id rendered-comment-ids]} owner {:keys [ancestors]
+                                                                                :or {ancestors #{}}}]
   (reify
     om/IDisplayName (display-name [_] "Single comment")
     om/IInitState
@@ -205,7 +206,8 @@
     om/IRenderState
     (render-state [_ {:keys [replying?]}]
       (let [{:keys [issue-db cast!]} (om/get-shared owner)
-            comment (d/entity @issue-db comment-id)]
+            comment (d/entity @issue-db comment-id)
+            child-ids (set/intersection rendered-comment-ids (issue-model/direct-descendants @issue-db comment))]
         (html
          [:div.comment.make
           [:div.issue-divider]
@@ -227,27 +229,30 @@
             (om/build comment-form {:issue-id issue-id
                                     :parent-id comment-id
                                     :close-callback #(om/set-state! owner :replying? false)}))
-          (when (and (not (contains? ancestors (:db/id comment)))
-                     (< 0 (count (issue-model/direct-descendants @issue-db comment)))) ; don't render cycles
-            [:div.comments
-             (for [id (issue-model/direct-descendants @issue-db comment)]
+          (when (and (not (contains? ancestors (:db/id comment))) ; don't render cycles
+                     (pos? (count child-ids)))
+            [:div.comments {:key "child-comments"}
+             (for [id child-ids]
                (om/build single-comment {:issue-id issue-id
-                                         :comment-id id}
+                                         :comment-id id
+                                         :rendered-comment-ids rendered-comment-ids}
                          {:key :comment-id
                           :opts {:ancestors (conj ancestors (:db/id comment))}}))])])))))
 
-(defn comments [{:keys [issue]} owner]
+
+(defn comments [{:keys [issue-id rendered-comment-ids]} owner]
   (reify
     om/IDisplayName (display-name [_] "Comments")
     om/IRender
     (render [_]
       (let [{:keys [issue-db]} (om/get-shared owner)
-            comments (issue-model/top-level-comments issue)]
+            comment-ids (issue-model/top-level-comment-ids @issue-db issue-id)]
         (html
          [:div.comments
-          (for [{:keys [db/id]} comments]
+          (for [id (set/intersection comment-ids rendered-comment-ids)]
             (om/build single-comment {:comment-id id
-                                      :issue-id (:db/id issue)}
+                                      :issue-id issue-id
+                                      :rendered-comment-ids rendered-comment-ids}
                       {:key :comment-id}))])))))
 
 (defn issue-card [{:keys [issue-id]} owner]
@@ -292,39 +297,77 @@
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                      :title nil
-                     :description nil})
+                     :description nil
+                     :rendered-comment-ids #{}
+                     :all-comment-ids #{}})
     om/IDidMount
     (did-mount [_]
-      (fdb/add-entity-listener (om/get-shared owner :issue-db)
-                               issue-id
-                               (om/get-state owner :listener-key)
-                               (fn [tx-report]
-                                 ;; This should ask the user if he wants to reload
-                                 (om/refresh! owner))))
+      (let [issue-db (om/get-shared owner :issue-db)
+            comment-ids (set (map :v (d/datoms @issue-db :aevt :issue/comments issue-id)))
+            cust-email (:cust/email (om/get-shared owner :cust))]
+        (om/set-state! owner :all-comment-ids comment-ids)
+        (om/set-state! owner :rendered-comment-ids comment-ids)
+        (fdb/add-entity-listener issue-db
+                                 issue-id
+                                 (om/get-state owner :listener-key)
+                                 (fn [tx-report]
+                                   (let [comment-ids (set (map :v (d/datoms @issue-db :aevt :issue/comments issue-id)))]
+                                     (if (empty? (om/get-state owner :rendered-comment-ids))
+                                       (om/update-state! owner #(assoc % :rendered-comment-ids comment-ids :all-comment-ids comment-ids))
+                                       (when cust-email
+                                         (om/update-state!
+                                          owner #(-> %
+                                                   (assoc :all-comment-ids comment-ids)
+                                                   (update-in [:rendered-comment-ids]
+                                                              (fn [r]
+                                                                (set/union r
+                                                                           (set (filter
+                                                                                 (fn [i] (= cust-email
+                                                                                            (:comment/author (d/entity (:db-after tx-report) i))))
+                                                                                 (set/difference comment-ids r)))))))))))
+                                   (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-entity-listener (om/get-shared owner :issue-db)
                                   issue-id
                                   (om/get-state owner :listener-key)))
     om/IRenderState
-    (render-state [_ {:keys [title description]}]
+    (render-state [_ {:keys [title description all-comment-ids rendered-comment-ids]}]
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
          [:div.menu-view.issue
-
-          #_(when-not (keyword-identical? :none (:issue/document issue :none))
-              [:a {:href (urls/absolute-doc-url (:issue/document issue) :subdomain nil)
-                   :target "_blank"}
-               [:img {:src (urls/absolute-doc-svg (:issue/document issue) :subdomain nil)}]])
-
           [:div.issue-summary
            (om/build issue-card {:issue-id issue-id})
            (om/build description-form {:issue issue :issue-id issue-id})]
 
           [:div.issue-comments
-           (om/build comment-form {:issue-id issue-id})
-           (om/build comments {:issue issue})]])))))
+           (om/build comment-form {:issue-id issue-id} {:react-key "comment-form"})
+           (let [deleted (set/difference rendered-comment-ids all-comment-ids)
+                 added (set/difference all-comment-ids rendered-comment-ids)]
+             (when (or (seq deleted) (seq added))
+               [:div.make {:key "new-comments-notice"}
+                [:a {:role "button"
+                     :on-click #(om/update-state! owner (fn [s]
+                                                          (assoc s
+                                                                 :rendered-comment-ids (:all-comment-ids s))))}
+                 (cond (empty? deleted)
+                       (str (count added) (if (< 1 (count added))
+                                            " new comments were"
+                                            " new comment was")
+                            " added, click to refresh.")
+                       (empty? added)
+                       (str (count deleted) (if (< 1 (count deleted))
+                                              " comments were"
+                                              " comment was")
+                            " removed, click to refresh.")
+                       :else
+                       (str (count added) (if (< 1 (count added))
+                                            " new comments were"
+                                            " new comment was")
+                            " added, " (count deleted) " removed, click to refresh."))]]))
+           (om/build comments {:issue-id issue-id :rendered-comment-ids rendered-comment-ids}
+                     {:react-key "issue-comments"})]])))))
 
 (defn issue-list [_ owner]
   (reify
@@ -419,7 +462,7 @@
                                      (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [issue-id (:e (first (d/datoms @(om/get-shared owner :issue-db) :avet :frontend/issue-id (utils/inspect issue-uuid))))]
+      (let [issue-id (:e (first (d/datoms @(om/get-shared owner :issue-db) :avet :frontend/issue-id issue-uuid)))]
         (if issue-id
           (om/build issue* {:issue-id issue-id})
           (dom/div #js {:className "loading"} "Loading..."))))))
