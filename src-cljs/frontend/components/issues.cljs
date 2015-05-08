@@ -49,6 +49,10 @@
                                                                             :issue/author (:cust/email cust)
                                                                             :issue/document doc-id
                                                                             :frontend/issue-id fe-id}])
+                                                    (d/transact! issue-db [{:frontend/issue-id fe-id
+                                                                            :issue/votes {:db/id -1
+                                                                                          :frontend/issue-id (utils/squuid)
+                                                                                          :vote/cust (:cust/email cust)}}])
                                                     (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
                                                   (om/set-state! owner :issue-title ""))
                                                 (finally
