@@ -403,17 +403,32 @@
                                      (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [{:keys [cast! issue-db]} (om/get-shared owner)]
+      (let [{:keys [cast! issue-db cust]} (om/get-shared owner)
+            font-size 24]
         (dom/g nil
           (when-let [issue (issue-model/find-by-doc-id @issue-db document-id)]
-            (svg-element {:layer/type :layer.type/text
-                          :layer/text (str "Feature request -- " (:issue/title issue))
-                          :layer/start-x 100
-                          :layer/end-x 100
-                          :layer/start-y 100
-                          :layer/end-y 100
-                          :className "text-layer issue-layer"
-                          :onClick #(cast! :issue-layer-clicked {:frontend/issue-id (:frontend/issue-id issue)})})))))))
+            (dom/g nil
+              (svg-element {:layer/type :layer.type/text
+                            :layer/text (str "Feature request -- " (:issue/title issue))
+                            :layer/start-x 100
+                            :layer/end-x 100
+                            :layer/start-y 100
+                            :layer/end-y 100
+                            :layer/font-size font-size
+                            :key "issue-title"
+                            :className "text-layer issue-layer"
+                            :onClick #(cast! :issue-layer-clicked {:frontend/issue-id (:frontend/issue-id issue)})})
+              (when (= (:cust/email cust) (:issue/author issue))
+                (svg-element {:layer/type :layer.type/text
+                              :layer/text "Draw anything here to help illustrate your idea."
+                              :layer/start-x 100
+                              :layer/end-x 100
+                              :layer/start-y (+ 100 font-size)
+                              :layer/end-y (+ 100 font-size)
+                              :layer/font-size 16
+                              :key "doc-instructions"
+                              :className "text-layer issue-layer"
+                              :onClick #(cast! :issue-layer-clicked {:frontend/issue-id (:frontend/issue-id issue)})})))))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
