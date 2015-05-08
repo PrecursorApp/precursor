@@ -113,12 +113,6 @@ input {
   textarea {
     min-height: @tile;
     max-height: 5 * @tile;
-    transition: min-height @run_slower;
-    &:focus,
-    &:valid {
-      min-height: 2 * @tile;
-      transition: min-height @run_fast;
-    }
   }
   textarea,
   input[type="text"] {
@@ -132,7 +126,7 @@ input {
     &:focus,
     &:valid {
       + label {
-        transform: translate(0, -50%);
+        transform: translate(-12.5%, -50%) scale(.75);
         transition-duration: @run_fast;
         &:before {
           background-size: 100% 5px;

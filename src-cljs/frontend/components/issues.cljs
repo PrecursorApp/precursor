@@ -142,16 +142,18 @@
             [:p.comment-foot
              ;; hide avatars for now
              ;; [:span (common/icon :user) " "]
-             [:span (:issue/author issue)]
-             [:span " on "]
-             [:span (datetime/month-day (:issue/created-at issue))]
+             (when (:issue/description issue)
+               (list
+                 [:span (:issue/author issue)]
+                 [:span " on "]
+                 [:span (datetime/month-day (:issue/created-at issue))]))
              (when editable?
                (list
                  [:span.pre "  •  "]
                  [:a.issue-description-edit {:role "button"
                                              :key "Cancel"
                                              :on-click submit}
-                  "Save"]))]]
+                  [:span "Save"]]))]]
 
            [:div.comment {:class (when-not (om/get-state owner :to-not-edit?) " make ")}
             [:div.issue-description-out {:class (when (om/get-state owner :to-not-edit?) " to-not-edit ")}
@@ -169,9 +171,11 @@
             [:p.comment-foot
              ;; hide avatars for now
              ;; [:span (common/icon :user) " "]
-             [:span (:issue/author issue)]
-             [:span " on "]
-             [:span (datetime/month-day (:issue/created-at issue))]
+             (when (:issue/description issue)
+               (list
+                 [:span (:issue/author issue)]
+                 [:span " on "]
+                 [:span (datetime/month-day (:issue/created-at issue))]))
              (when editable?
                (list
                  [:span.pre "  •  "]
@@ -180,7 +184,7 @@
                                              :on-click #(do
                                                           (om/set-state! owner :editing? true)
                                                           (om/set-state! owner :to-not-edit? true))}
-                  "Edit"]))]]))))))
+                  [:span "Edit"]]))]]))))))
 
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
