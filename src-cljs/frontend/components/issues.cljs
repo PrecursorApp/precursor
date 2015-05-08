@@ -174,27 +174,64 @@
           [:div.issue-upvote
            (common/icon :north)]])))))
 
-(defn single-comment [{:keys [comment-id issue-id rendered-comment-ids]} owner {:keys [ancestors]
-                                                                                :or {ancestors #{}}}]
+(defn unrendered-comments-notice [all-ids rendered-ids refresh-callback]
+  (let [added (set/difference all-ids rendered-ids)
+        deleted (set/difference rendered-ids all-ids)]
+    (when (or (seq deleted) (seq added))
+      [:div.make {:key "new-comments-notice"}
+       [:a {:role "button"
+            :on-click refresh-callback}
+        (cond (empty? deleted)
+              (str (count added) (if (< 1 (count added))
+                                   " new comments were"
+                                   " new comment was")
+                   " added, click to refresh.")
+              (empty? added)
+              (str (count deleted) (if (< 1 (count deleted))
+                                     " comments were"
+                                     " comment was")
+                   " removed, click to refresh.")
+              :else
+              (str (count added) (if (< 1 (count added))
+                                   " new comments were"
+                                   " new comment was")
+                   " added, " (count deleted) " removed, click to refresh."))]])))
+
+(defn single-comment [{:keys [comment-id issue-id]} owner {:keys [ancestors]
+                                                           :or {ancestors #{}}}]
   (reify
     om/IDisplayName (display-name [_] "Single comment")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
-                     :replying? false})
+                     :replying? false
+                     :all-child-ids #{}
+                     :rendered-child-ids #{}})
     om/IDidMount
     (did-mount [_]
-      (fdb/add-entity-listener (om/get-shared owner :issue-db)
-                               comment-id
-                               (om/get-state owner :listener-key)
-                               (fn [tx-report]
-                                 (om/refresh! owner)))
-      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
-                                  :comment/parent
-                                  (om/get-state owner :listener-key)
-                                  (fn [tx-report]
-                                    (when (first (filter #(= comment-id (:v %))
-                                                         (:tx-data tx-report)))
-                                      (om/refresh! owner)))))
+      (let [issue-db (om/get-shared owner :issue-db)
+            cust-email (:cust/email (om/get-shared owner :cust))]
+        (let [child-ids (issue-model/direct-descendant-ids @issue-db comment-id)]
+          (om/set-state! owner :all-child-ids child-ids)
+          (om/set-state! owner :rendered-child-ids child-ids))
+        (fdb/add-entity-listener issue-db comment-id (om/get-state owner :listener-key)
+                                 (fn [tx-report]
+                                   (om/refresh! owner)))
+        (fdb/add-attribute-listener issue-db
+                                    :comment/parent
+                                    (om/get-state owner :listener-key)
+                                    (fn [tx-report]
+                                      (when (first (filter #(= comment-id (:v %))
+                                                           (:tx-data tx-report)))
+                                        (let [child-ids (issue-model/direct-descendant-ids @issue-db comment-id)]
+                                          (om/update-state! owner
+                                                            #(-> %
+                                                               (assoc :all-child-ids child-ids)
+                                                               (update-in [:rendered-child-ids]
+                                                                          (fn [r]
+                                                                            (set/union (set/intersection r child-ids)
+                                                                                       (set (filter
+                                                                                             (fn [i] (= cust-email (:comment/author (d/entity (:db-after tx-report) i))))
+                                                                                             (set/difference child-ids r))))))))))))))
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-entity-listener (om/get-shared owner :issue-db)
@@ -204,12 +241,11 @@
                                      :comment/parent
                                      (om/get-state owner :listener-key)))
     om/IRenderState
-    (render-state [_ {:keys [replying?]}]
+    (render-state [_ {:keys [replying? all-child-ids rendered-child-ids]}]
       (let [{:keys [issue-db cast!]} (om/get-shared owner)
-            comment (d/entity @issue-db comment-id)
-            child-ids (set/intersection rendered-comment-ids (issue-model/direct-descendants @issue-db comment))]
+            comment (d/entity @issue-db comment-id)]
         (html
-         [:div.comment.make
+         [:div.comment.make {:key comment-id}
           [:div.issue-divider]
           [:p (:comment/body comment)]
           [:p.issue-foot
@@ -229,30 +265,67 @@
             (om/build comment-form {:issue-id issue-id
                                     :parent-id comment-id
                                     :close-callback #(om/set-state! owner :replying? false)}))
+          (unrendered-comments-notice all-child-ids rendered-child-ids #(om/update-state! owner (fn [s]
+                                                                                                  (assoc s :rendered-child-ids (:all-child-ids s)))))
           (when (and (not (contains? ancestors (:db/id comment))) ; don't render cycles
-                     (pos? (count child-ids)))
+                     (pos? (count rendered-child-ids)))
             [:div.comments {:key "child-comments"}
-             (for [id child-ids]
+             (for [id rendered-child-ids]
                (om/build single-comment {:issue-id issue-id
-                                         :comment-id id
-                                         :rendered-comment-ids rendered-comment-ids}
+                                         :comment-id id}
                          {:key :comment-id
                           :opts {:ancestors (conj ancestors (:db/id comment))}}))])])))))
 
 
-(defn comments [{:keys [issue-id rendered-comment-ids]} owner]
+(defn comments [{:keys [issue-id]} owner]
   (reify
     om/IDisplayName (display-name [_] "Comments")
-    om/IRender
-    (render [_]
-      (let [{:keys [issue-db]} (om/get-shared owner)
-            comment-ids (issue-model/top-level-comment-ids @issue-db issue-id)]
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                     :replying? false
+                     :all-top-level-ids #{}
+                     :rendered-top-level-ids #{}})
+    om/IDidMount
+    (did-mount [_]
+      (let [issue-db (om/get-shared owner :issue-db)
+            cust-email (:cust/email (om/get-shared owner :cust))]
+        (let [top-level-ids (issue-model/top-level-comment-ids @issue-db issue-id)]
+          (om/set-state! owner :all-top-level-ids top-level-ids)
+          (om/set-state! owner :rendered-top-level-ids top-level-ids))
+        (fdb/add-entity-listener issue-db
+                                 issue-id
+                                 (om/get-state owner :listener-key)
+                                 (fn [tx-report]
+                                   (when (first (filter #(= :issue/comments (:a %))
+                                                        (:tx-data tx-report)))
+                                     (let [top-level-ids (utils/inspect (issue-model/top-level-comment-ids @issue-db issue-id))]
+                                       (om/update-state! owner
+                                                         #(-> %
+                                                            (assoc :all-top-level-ids top-level-ids)
+                                                            (update-in [:rendered-top-level-ids]
+                                                                       (fn [r]
+                                                                         (if (empty? r)
+                                                                           top-level-ids
+                                                                           (set/union (set/intersection r top-level-ids)
+                                                                                      (set (filter
+                                                                                            (fn [i] (= cust-email (:comment/author (d/entity (:db-after tx-report) i))))
+                                                                                            (set/difference top-level-ids r)))))))))))))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-entity-listener (om/get-shared owner :issue-db)
+                                  issue-id
+                                  (om/get-state owner :listener-key)))
+    om/IRenderState
+    (render-state [_ {:keys [all-top-level-ids rendered-top-level-ids]}]
+      (let [{:keys [issue-db]} (om/get-shared owner)]
         (html
-         [:div.comments
-          (for [id (set/intersection comment-ids rendered-comment-ids)]
+         [:div.comments {:key issue-id}
+          (unrendered-comments-notice all-top-level-ids rendered-top-level-ids
+                                      #(om/update-state! owner (fn [s]
+                                                                 (assoc s :rendered-top-level-ids (:all-top-level-ids s)))))
+          (for [id rendered-top-level-ids]
             (om/build single-comment {:comment-id id
-                                      :issue-id issue-id
-                                      :rendered-comment-ids rendered-comment-ids}
+                                      :issue-id issue-id}
                       {:key :comment-id}))])))))
 
 (defn issue-card [{:keys [issue-id]} owner]
@@ -297,34 +370,14 @@
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                      :title nil
-                     :description nil
-                     :rendered-comment-ids #{}
-                     :all-comment-ids #{}})
+                     :description nil})
     om/IDidMount
     (did-mount [_]
-      (let [issue-db (om/get-shared owner :issue-db)
-            comment-ids (set (map :v (d/datoms @issue-db :aevt :issue/comments issue-id)))
-            cust-email (:cust/email (om/get-shared owner :cust))]
-        (om/set-state! owner :all-comment-ids comment-ids)
-        (om/set-state! owner :rendered-comment-ids comment-ids)
+      (let [issue-db (om/get-shared owner :issue-db)]
         (fdb/add-entity-listener issue-db
                                  issue-id
                                  (om/get-state owner :listener-key)
                                  (fn [tx-report]
-                                   (let [comment-ids (set (map :v (d/datoms @issue-db :aevt :issue/comments issue-id)))]
-                                     (if (empty? (om/get-state owner :rendered-comment-ids))
-                                       (om/update-state! owner #(assoc % :rendered-comment-ids comment-ids :all-comment-ids comment-ids))
-                                       (when cust-email
-                                         (om/update-state!
-                                          owner #(-> %
-                                                   (assoc :all-comment-ids comment-ids)
-                                                   (update-in [:rendered-comment-ids]
-                                                              (fn [r]
-                                                                (set/union r
-                                                                           (set (filter
-                                                                                 (fn [i] (= cust-email
-                                                                                            (:comment/author (d/entity (:db-after tx-report) i))))
-                                                                                 (set/difference comment-ids r)))))))))))
                                    (om/refresh! owner)))))
     om/IWillUnmount
     (will-unmount [_]
@@ -332,42 +385,18 @@
                                   issue-id
                                   (om/get-state owner :listener-key)))
     om/IRenderState
-    (render-state [_ {:keys [title description all-comment-ids rendered-comment-ids]}]
+    (render-state [_ {:keys [title description]}]
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
          [:div.menu-view.issue
-          [:div.issue-summary
+          [:div.issue-summary {:key "summary"}
            (om/build issue-card {:issue-id issue-id})
            (om/build description-form {:issue issue :issue-id issue-id})]
 
-          [:div.issue-comments
+          [:div.issue-comments {:key "issue-comments"}
            (om/build comment-form {:issue-id issue-id} {:react-key "comment-form"})
-           (let [deleted (set/difference rendered-comment-ids all-comment-ids)
-                 added (set/difference all-comment-ids rendered-comment-ids)]
-             (when (or (seq deleted) (seq added))
-               [:div.make {:key "new-comments-notice"}
-                [:a {:role "button"
-                     :on-click #(om/update-state! owner (fn [s]
-                                                          (assoc s
-                                                                 :rendered-comment-ids (:all-comment-ids s))))}
-                 (cond (empty? deleted)
-                       (str (count added) (if (< 1 (count added))
-                                            " new comments were"
-                                            " new comment was")
-                            " added, click to refresh.")
-                       (empty? added)
-                       (str (count deleted) (if (< 1 (count deleted))
-                                              " comments were"
-                                              " comment was")
-                            " removed, click to refresh.")
-                       :else
-                       (str (count added) (if (< 1 (count added))
-                                            " new comments were"
-                                            " new comment was")
-                            " added, " (count deleted) " removed, click to refresh."))]]))
-           (om/build comments {:issue-id issue-id :rendered-comment-ids rendered-comment-ids}
-                     {:react-key "issue-comments"})]])))))
+           (om/build comments {:issue-id issue-id} {:react-key "comments"})]])))))
 
 (defn issue-list [_ owner]
   (reify
