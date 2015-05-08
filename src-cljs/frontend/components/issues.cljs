@@ -264,7 +264,8 @@
           (when (om/get-state owner :replying?)
             (om/build comment-form {:issue-id issue-id
                                     :parent-id comment-id
-                                    :close-callback #(om/set-state! owner :replying? false)}))
+                                    :close-callback #(om/set-state! owner :replying? false)}
+                      {:react-key "comment-form"}))
           (unrendered-comments-notice all-child-ids rendered-child-ids #(om/update-state! owner (fn [s]
                                                                                                   (assoc s :rendered-child-ids (:all-child-ids s)))))
           (when (and (not (contains? ancestors (:db/id comment))) ; don't render cycles
