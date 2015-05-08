@@ -310,7 +310,7 @@
           (when (and (not (contains? ancestors (:db/id comment))) ; don't render cycles
                      (pos? (count rendered-child-ids)))
             [:div.comments {:key "child-comments"}
-             (for [id rendered-child-ids]
+             (for [id (reverse (sort-by (fn [i] (:comment/created-at (d/entity @issue-db i))) rendered-child-ids))]
                (om/build single-comment {:issue-id issue-id
                                          :comment-id id}
                          {:key :comment-id
@@ -363,7 +363,7 @@
           (unrendered-comments-notice all-top-level-ids rendered-top-level-ids
                                       #(om/update-state! owner (fn [s]
                                                                  (assoc s :rendered-top-level-ids (:all-top-level-ids s)))))
-          (for [id rendered-top-level-ids]
+          (for [id (reverse (sort-by (fn [i] (:comment/created-at (d/entity @issue-db i))) rendered-top-level-ids))]
             (om/build single-comment {:comment-id id
                                       :issue-id issue-id}
                       {:key :comment-id}))])))))
