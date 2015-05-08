@@ -29,7 +29,7 @@
     om/IRenderState
     (render-state [_ {:keys [issue-title submitting?]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
-            char-limit 140
+            char-limit 120
             chars-left (- char-limit (count issue-title))
             input-disabled? (or submitting?
                                 (not (utils/logged-in? owner))
