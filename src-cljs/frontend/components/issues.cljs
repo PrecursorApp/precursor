@@ -67,17 +67,16 @@
                        :required "true"
                        :disabled (or submitting? (not (utils/logged-in? owner)))
                        :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
-           [:label {:data-typing (let [chars-left (- char-limit (count issue-title))]
-                                   (if (neg? chars-left)
-                                     (gstring/format "%s character%s too many"
-                                                     (- chars-left)
-                                                     (if (= -1 chars-left) "" "s"))
-                                     (gstring/format "Sounds good so far; %s character%s left"
-                                                     chars-left
-                                                     (if (= 1 chars-left) "" "s"))))
-                    :data-label (if (utils/logged-in? owner)
-                                  "How can we improve Precursor?"
-                                  "Sign in to make an issue.")}]]
+           [:label (merge {:data-label (if (utils/logged-in? owner)
+                                         "How can we improve Precursor?"
+                                         "Sign in to make an issue.")}
+                          (if (neg? chars-left)
+                            {:data-warning (gstring/format "%s character%s too many"
+                                                           (- chars-left)
+                                                           (if (= -1 chars-left) "" "s"))}
+                            {:data-typing (gstring/format "Sounds good so far; %s character%s left"
+                                                          chars-left
+                                                          (if (= 1 chars-left) "" "s"))}))]]
           [:div.menu-buttons
            (if (utils/logged-in? owner)
              [:input.menu-button {:type "submit"
