@@ -16,6 +16,7 @@
             [frontend.db]
             [frontend.favicon :as favicon]
             [frontend.keyboard :as keyboard]
+            [frontend.landing-doc :as landing-doc]
             [frontend.layers :as layers]
             [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
@@ -1571,26 +1572,10 @@
                                            :request-id request-id
                                            :invite-loc :overlay}]))
 
-(defn get-doc-id [ch comms]
-  (go (let [result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
-        (if (= :success (:status result))
-          (>! ch (get-in result [:document :db/id]))
-          (if (and (= :unauthorized-to-team (get-in result [:response :error]))
-                   (get-in result [:response :redirect-url]))
-            (set! js/window.location (get-in result [:response :redirect-url]))
-            (put! (:errors comms) [:api-error result])))))
-  ch)
-
 (defn navigate-to-lazy-doc [current-state]
   (go
-    (when-let [doc-id (or (:document/id current-state)
-                          (let [result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
-                            (if (= :success (:status result))
-                              (get-in result [:document :db/id])
-                              (if (and (= :unauthorized-to-team (get-in result [:response :error]))
-                                       (get-in result [:response :redirect-url]))
-                                (set! js/window.location (get-in result [:response :redirect-url]))
-                                (put! (get-in current-state [:comms :errors]) [:api-error result])))))]
+    (landing-doc/maybe-fetch-doc-id current-state)
+    (let [doc-id (<! landing-doc/doc-id-ch)]
       (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" doc-id)}]))))
 
 (defmethod post-control-event! :make-button-clicked
@@ -1600,6 +1585,10 @@
 (defmethod post-control-event! :launch-app-clicked
   [browser-state message _ previous-state current-state]
   (navigate-to-lazy-doc current-state))
+
+(defmethod post-control-event! :navigate-to-landing-doc-hovered
+  [browser-state message _ previous-state current-state]
+  (landing-doc/maybe-fetch-doc-id current-state))
 
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]

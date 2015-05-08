@@ -40,7 +40,8 @@
                           :layer-ui-target-edited
                           :subscriber-updated
                           :handle-camera-query-params
-                          :media-stream-volume})
+                          :media-stream-volume
+                          :navigate-to-landing-doc-hovered})
 
 (defn track-control [event data state]
   (when-not (contains? controls-blacklist event)

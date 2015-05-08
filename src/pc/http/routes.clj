@@ -351,7 +351,6 @@
   (swap! bucket-doc-ids (fn [b]
                           (set/intersection b (set (keys @sente/document-subs))))))
 
-
 (defpage bucket [:get "/bucket/:bucket-count" {:bucket-count #"[0-9]+"}] [req]
   (if (:subdomain req)
     (custom-domain/redirect-to-main req)

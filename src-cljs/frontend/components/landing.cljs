@@ -205,7 +205,8 @@
                             :on-touch-end #(do
                                              (.preventDefault %)
                                              (cast! :make-button-clicked))
-                            :on-mouse-enter #(om/set-state! owner :word-list (shuffle word-list))}
+                            :on-mouse-enter #(do (om/set-state! owner :word-list (shuffle word-list))
+                                                 (cast! :navigate-to-landing-doc-hovered))}
           [:div.make-prepend {:data-before "Or "}
            "Make "]
           [:div.make-something
