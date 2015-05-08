@@ -196,3 +196,19 @@
 @keyframes rejected-pulse {
   50% { opacity: 1;}
 }
+// @keyframes in-issue-description {
+//   0%   { padding: 0 0; min-height: 1 * @tile;}
+//   100% { padding: 1.25rem (0 + 1.25rem); min-height: 2 * @tile;}
+// }
+@keyframes in-issue-description {
+  0%   { transform: translate(-1.25rem, -1.25rem);}
+  100% { transform: none;}
+}
+// @keyframes out-issue-description {
+//   0%   { padding: 1.25rem (@menu_padding + 1.25rem);}
+//   100% { padding: 0 @menu_padding;}
+// }
+@keyframes out-issue-description {
+  0%   { transform: translate(1.25rem, 1.25rem);}
+  100% { transform: none;}
+}

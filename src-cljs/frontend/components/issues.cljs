@@ -125,46 +125,37 @@
            [:label {:data-label "What do you think?"
                     :data-forgot "To be continued"}]
            [:input {:type "submit"
-                         :value "Comment."}]]])))))
+                         :value "Add comment."}]]])))))
 
 (defn description-form [{:keys [issue issue-id]} owner]
   (reify
     om/IDisplayName (display-name [_] "Description form")
     om/IInitState (init-state [_] {:issue-description nil
-                                   :editing? false})
+                                   :editing? false
+                                   :to-not-edit? false})
     om/IRenderState
     (render-state [_ {:keys [issue-description]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
             editable? (= (:cust/email cust) (:issue/author issue))
-            editing? (and editable? (om/get-state owner :editing?))]
+            editing? (and editable? (om/get-state owner :editing?))
+            submit #(do (utils/stop-event %)
+                      (when issue-description
+                        (d/transact! issue-db [{:db/id (:db/id issue)
+                                                :issue/description issue-description}]))
+                      (om/set-state! owner :issue-description nil)
+                      (om/set-state! owner :editing? false))]
         (html
-          ; if editable? ; (:issue/description issue)
-
-          [:div.original-comment
-
-           (when editing?
-             [:div.content.make
-              [:form.adaptive {:on-submit #(do (utils/stop-event %)
-                                             (when issue-description
-                                               (d/transact! issue-db [{:db/id (:db/id issue)
-                                                                       :issue/description issue-description}]))
-                                             (om/set-state! owner :issue-description nil)
-                                             (om/set-state! owner :editing? false))}
-               [:textarea {:value (or issue-description (:issue/description issue ""))
-                           :required "true"
-                           :onChange #(om/set-state! owner :issue-description (.. % -target -value))}]
-               [:label {:data-label "label here"
-                        :data-placeholder "How can we improve Precursor?"}]
-               [:input {:type "submit"
-                        :value "Make description."}]]]
-             )
-
-           (when (and (not editing?)
-                      (:issue/description issue))
-
-             [:div.issue-comment
-              [:p.make (:issue/description issue)]
-              [:p.issue-foot.make
+          (if editing?
+            [:div.content {:class (when-not (:issue/description issue) " make ")}
+             [:form.adaptive {:on-submit submit}
+              [:textarea.issue-description {:class (when (:issue/description issue) " to-edit ")
+                                            :value (or issue-description (:issue/description issue ""))
+                                            :required "true"
+                                            :on-change #(om/set-state! owner :issue-description (.. % -target -value))
+                                            :on-blur submit}]
+              [:label {:data-label "Issue Description"
+                       :data-placeholder "Want to elaborate on your idea?"}]
+              [:p.issue-foot
                [:span (common/icon :user) " "]
                [:a {:role "button"}
                 (:issue/author issue)]
@@ -172,23 +163,41 @@
                [:a {:role "button"}
                 (datetime/month-day (:issue/created-at issue))]
                [:span " — "]
-               [:a {:role "button"
-                    :on-click #(do
-                                 (if editing?
-                                   (om/set-state! owner :editing? false)
-                                   (om/set-state! owner :editing? true)))}
-                "Edit"]]])
+               (when editable?
+                 [:a.issue-description-edit {:role "button"
+                                             :key "Cancel"
+                                             :on-click submit}
+                  "Save"])]]]
 
-           (when (and (not editing?)
-                      (not (:issue/description issue)))
+            [:div.comment {:class (when-not (om/get-state owner :to-not-edit?) " make ")}
+             [:p.issue-description {:class (when (om/get-state owner :to-not-edit?) " to-not-edit ")}
+              (if (:issue/description issue)
+                (:issue/description issue)
 
-             (om/build comment-form {:issue-id issue-id}))]
+                (if editable?
+                  [:a {:role "button"
+                       :on-click #(do
+                                    (om/set-state! owner :editing? true)
+                                    (om/set-state! owner :to-not-edit? true))}
+                   [:span (common/icon :plus)]
+                   [:span " Add a description."]]
 
-
-
-          ; (om/build comment-form {:issue-id issue-id})
-
-          )))))
+                  [:span "No description yet."]))]
+             [:p.issue-foot
+              [:span (common/icon :user) " "]
+              [:a {:role "button"}
+               (:issue/author issue)]
+              [:span " on "]
+              [:a {:role "button"}
+               (datetime/month-day (:issue/created-at issue))]
+              [:span " — "]
+              (when editable?
+                [:a.issue-description-edit {:role "button"
+                                            :key "Edit"
+                                            :on-click #(do
+                                                         (om/set-state! owner :editing? true)
+                                                         (om/set-state! owner :to-not-edit? true))}
+                 "Edit"])]]))))))
 
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
@@ -274,7 +283,7 @@
       (let [{:keys [issue-db cast!]} (om/get-shared owner)
             comment (d/entity @issue-db comment-id)]
         (html
-          [:div.issue-comment.make
+          [:div.comment.make
            [:div.issue-divider]
            [:p (:comment/body comment)]
 
@@ -348,7 +357,7 @@
            ;  ]
            (when (and (not (contains? ancestors (:db/id comment)))
                       (< 0 (count (issue-model/direct-descendants @issue-db comment)))) ; don't render cycles
-             [:div.issue-comments
+             [:div.comments
               (for [id (issue-model/direct-descendants @issue-db comment)]
                 (om/build single-comment {:issue-id issue-id
                                           :comment-id id}
@@ -367,13 +376,13 @@
       (let [{:keys [issue-db]} (om/get-shared owner)
             comments (issue-model/top-level-comments issue)]
         (html
-          [:div.issue-comments
+          [:div.comments
            (for [{:keys [db/id]} comments]
              (om/build single-comment {:comment-id id
                                        :issue-id (:db/id issue)}
                        {:key :comment-id}))])))))
 
-(defn issue-summary [{:keys [issue-id]} owner]
+(defn issue-card [{:keys [issue-id]} owner]
   (reify
     om/IDisplayName (display-name [_] "Issue summary")
     om/IInitState
@@ -396,7 +405,7 @@
             issue (ds/touch+ (d/entity @issue-db issue-id))
             comment-count (count (:issue/comments issue))]
         (html
-         [:div.issue-summary.content.make
+         [:div.issue-card.content.make
           [:div.issue-info
            [:a.issue-title {:href (urls/issue-url issue)
                             :target "_top"
@@ -499,7 +508,13 @@
                     :target "_blank"}
                 [:img {:src (urls/absolute-doc-svg (:issue/document issue) :subdomain nil)}]])
 
-           (om/build issue-summary {:issue-id issue-id})
+           [:div.issue-summary
+           (om/build issue-card {:issue-id issue-id})
+           (om/build description-form {:issue issue :issue-id issue-id})]
+
+           [:div.issue-comments
+           (om/build comment-form {:issue-id issue-id})
+           (om/build comments {:issue issue})]
 
 
            ; [:div.single-issue-head
@@ -543,8 +558,8 @@
            ; [:input {:value (or description (:issue/description issue ""))
            ;          :on-change #(om/set-state! owner :description (.. % -target -value))}]
 
-           (om/build description-form {:issue issue
-                                       :issue-id issue-id})
+           ; (om/build description-form {:issue issue
+           ;                             :issue-id issue-id})
 
            ; (om/build comment-form {:issue-id issue-id})
 
@@ -610,7 +625,9 @@
 
            ; [:h4 (str "0" " comments")]
 
-           (om/build comments {:issue issue})
+           ; (om/build comment-form {:issue-id issue-id}) ; needed
+
+           ; (om/build comments {:issue issue}) ; needed
 
            ; [:p "Make a new comment:"]
 
@@ -694,7 +711,7 @@
 
            ; :div.make {:key "summary"}
             (when-let [issues (seq (map #(d/entity @issue-db %) rendered-issue-ids))]
-              (om/build-all issue-summary (map (fn [i] {:issue-id (:db/id i)})
+              (om/build-all issue-card (map (fn [i] {:issue-id (:db/id i)})
                                                (sort (issue-model/issue-comparator cust render-time) issues))
                             {:key :issue-id
                              :opts {:issue-db issue-db}}))])))))
