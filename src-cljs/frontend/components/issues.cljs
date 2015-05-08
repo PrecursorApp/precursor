@@ -1,5 +1,6 @@
 (ns frontend.components.issues
-  (:require [cljs-time.core :as time]
+  (:require [cljs.core.async :as async :refer [put!]]
+            [cljs-time.core :as time]
             [cljs-time.format :as time-format]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -75,17 +76,18 @@
     (render-state [_ {:keys [issue-title]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)]
         (html
-          [:div.content.make
+         [:div.content.make
           [:form.adaptive {:on-submit #(do (utils/stop-event %)
-                                         (when (seq issue-title)
-                                           (let [tx (d/transact! issue-db [{:db/id -1
-                                                                            :issue/created-at (datetime/server-date)
-                                                                            :issue/title issue-title
-                                                                            :issue/author (:cust/email cust)
-                                                                            :issue/document :none
-                                                                            :frontend/issue-id (utils/squuid)}])]
-                                             (cast! :issue-expanded {:issue-id (d/resolve-tempid (:db-after tx) (:tempids tx) -1)}))
-                                           (om/set-state! owner :issue-title "")))}
+                                           (when (seq issue-title)
+                                             (let [fe-id (utils/squuid)]
+                                               (d/transact! issue-db [{:db/id -1
+                                                                       :issue/created-at (datetime/server-date)
+                                                                       :issue/title issue-title
+                                                                       :issue/author (:cust/email cust)
+                                                                       :issue/document :none
+                                                                       :frontend/issue-id fe-id}])
+                                               (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
+                                             (om/set-state! owner :issue-title "")))}
            [:textarea {:value issue-title
                        :required "true"
                        :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
@@ -396,7 +398,8 @@
         (html
          [:div.issue-summary.content.make
           [:div.issue-info
-           [:a.issue-title {:on-click #(cast! :issue-expanded {:issue-id issue-id})
+           [:a.issue-title {:href (urls/issue-url issue)
+                            :target "_top"
                             :role "button"}
             ; (or title (:issue/title issue ""))
             (:issue/title issue)
@@ -464,7 +467,7 @@
 ;               "development."]]]
 ;            (om/build vote-box {:issue issue})])))))
 
-(defn issue [{:keys [issue-id]} owner]
+(defn issue* [{:keys [issue-id]} owner]
   (reify
     om/IDisplayName (display-name [_] "Issue")
     om/IInitState
@@ -696,6 +699,30 @@
                             {:key :issue-id
                              :opts {:issue-db issue-db}}))])))))
 
+(defn issue [{:keys [issue-uuid]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Issue Wrapper")
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :frontend/issue-id
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :frontend/issue-id
+                                     (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [issue-id (:e (first (d/datoms @(om/get-shared owner :issue-db) :avet :frontend/issue-id (utils/inspect issue-uuid))))]
+        (if issue-id
+          (om/build issue* {:issue-id issue-id})
+          (dom/div #js {:className "loading"} "Loading..."))))))
+
 (defn issues* [app owner {:keys [submenu]}]
   (reify
     om/IDisplayName (display-name [_] "Issues")
@@ -717,13 +744,13 @@
     om/IRender
     (render [_]
       (html
-         (if submenu
-           (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
-           (om/build issue-list {} {:react-key "issue-list"}))))))
+       (if submenu
+         (om/build issue {:issue-uuid (:active-issue-uuid app)} {:key :issue-uuid})
+         (om/build issue-list {} {:react-key "issue-list"}))))))
 
 (defn issues [app owner {:keys [submenu]}]
   (reify
     om/IDisplayName (display-name [_] "Issues Overlay")
     om/IRender
     (render [_]
-      (om/build issues* (select-keys app [:active-issue-id]) {:opts {:submenu submenu}}))))
+      (om/build issues* (select-keys app [:active-issue-uuid]) {:opts {:submenu submenu}}))))

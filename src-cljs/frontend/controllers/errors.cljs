@@ -9,6 +9,7 @@
             [frontend.rtc.stats :as rtc-stats]
             [frontend.sente :as sente]
             [frontend.state :as state]
+            [frontend.urls :as urls]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils :as utils :include-macros true]
@@ -70,8 +71,12 @@
   ;; When we have more fine-grained permissions, we'll put more info
   ;; into the state
   (-> state
-      (overlay/replace-overlay :document-permissions)
       (assoc-in (state/document-access-path (:document/id state)) :none)))
+
+(defmethod post-error! :document/permission-error
+  [container message data previous-state current-state]
+  (when-let [doc-id (:document/id current-state)]
+    (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc-id "document-permissions")}])))
 
 (defmethod error :team/permission-error
   [container message data state]
@@ -113,10 +118,13 @@
            (= :read (:max-document-scope state)))
     (-> state
       (assoc-in (state/notified-read-only-path (:document/id state)) true)
-      (update-in (state/doc-tx-rejected-count-path (:document/id state)) (fnil inc 0))
-      (cond-> (nil? (get-in state (state/notified-read-only-path (:document/id state))))
-        (overlay/replace-overlay :sharing)))
+      (update-in (state/doc-tx-rejected-count-path (:document/id state)) (fnil inc 0)))
     state))
+
+(defmethod post-error! :datascript/rejected-datoms
+  [container message {:keys [rejects datom-group sente-event]} previous-state current-state]
+  (when (nil? (get-in previous-state (state/notified-read-only-path (:document/id previous-state))))
+    (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path (:document/id previous-state) "sharing")}])))
 
 (defmethod error :datascript/sync-tx-error
   [container message {:keys [reason sente-event datom-group annotations]} state]

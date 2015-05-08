@@ -11,7 +11,9 @@
   (map #(d/entity db (:e %)) (d/datoms db :aevt :vote/cust)))
 
 (defn find-by-frontend-id [db frontend-id]
-  (d/entity db (:e (first (d/datoms db :avet :frontend/issue-id frontend-id)))))
+  (let [candidate (d/entity db (:e (first (d/datoms db :avet :frontend/issue-id frontend-id))))]
+    (when (:issue/title candidate)
+      candidate)))
 
 (defn vote-read-api [vote]
   (-> vote

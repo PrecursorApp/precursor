@@ -105,59 +105,45 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            doc (doc-model/find-by-id @db (:document/id app))]
+            doc-id (:document/id app)
+            doc (doc-model/find-by-id @db doc-id)]
         (html
          [:div.menu-view
-          [:a.vein.make
-           {:on-click         #(cast! :overlay-info-toggled)
-            :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
-            :role "button"}
+          [:a.vein.make {:href (urls/overlay-path doc-id "info")
+                         :role "button"}
            (common/icon :info)
            [:span "About"]]
-          [:a.vein.make
-           {:href "/new"
-            :role "button"}
+          [:a.vein.make {:href "/new"
+                         :role "button"}
            (common/icon :plus)
            [:span "New"]]
-          [:a.vein.make
-           {:on-click         #(cast! :your-docs-opened)
-            :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
-            :role "button"}
+          [:a.vein.make {:href (urls/overlay-path doc-id "doc-viewer")
+                         :role "button"}
            (common/icon :docs)
            [:span "Documents"]]
-          [:a.vein.make
-           {:on-click         #(cast! :issues-opened)
-            :on-touch-end #(do (cast! :issues-opened) (.preventDefault %))
-            :role "button"}
+          [:a.vein.make {:href "/issues"
+                         :role "button"}
            (common/icon :docs)
            [:span "Issues"]]
           ;; TODO: should this use the permissions model? Would have to send some
           ;;       info about the document
           (if (auth/has-document-access? app (:document/id app))
-            [:a.vein.make
-             {:on-click         #(cast! :sharing-menu-opened)
-              :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
-              :role "button"}
+            [:a.vein.make {:href (urls/overlay-path doc-id "sharing")
+                           :role "button"}
              (common/icon :sharing)
              [:span "Sharing"]]
 
-            [:a.vein.make
-             {:on-click         #(cast! :document-permissions-opened)
-              :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
-              :role "button"}
+            [:a.vein.make {:href (urls/overlay-path doc-id "document-permissions")
+                           :role "button"}
              (common/icon :users)
              [:span "Request Access"]])
-          [:a.vein.make
-           {:on-click         #(cast! :export-menu-opened)
-            :on-touch-end #(do (cast! :export-menu-opened) (.preventDefault %))
-            :role "button"}
+          [:a.vein.make {:href (urls/overlay-path doc-id "export")
+                         :role "button"}
            (common/icon :download)
            [:span "Export"]]
-          [:a.vein.make
-           {:on-click         #(cast! :shortcuts-menu-opened)
-            :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
-            :class "mobile-hidden"
-            :role "button"}
+          [:a.vein.make {:href (urls/overlay-path doc-id "shortcuts")
+                         :class "mobile-hidden"
+                         :role "button"}
            (common/icon :command)
            [:span "Shortcuts"]]
           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
@@ -550,7 +536,8 @@
     om/IDisplayName (display-name [_] "Overlay Info")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [cast! (om/get-shared owner :cast!)
+            doc-id (:document/id app)]
         (html
          [:div.menu-view
           [:div.content
@@ -593,10 +580,8 @@
              :target "_self"
              :role "button"}
             [:span "Email"]]
-           [:a.vein.make
-            {:on-click #(cast! :connection-info-opened)
-             :on-touch-end #(do (cast! :connection-stats-opened) (.preventDefault %))
-             :role "button"}
+           [:a.vein.make {:href (urls/overlay-path doc-id "connection-info")
+                          :role "button"}
             [:span "Connection Info"]]]
           (common/mixpanel-badge)])))))
 

@@ -23,6 +23,7 @@
             [frontend.keyboard :as keyboard]
             [frontend.overlay]
             [frontend.state :as state]
+            [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in select-in]]
             [om.core :as om :include-macros true]
@@ -71,7 +72,7 @@
               (om/build overlay/overlay app {:react-key "overlay"}))
 
             [:div.inner {:on-click (when overlay-visible?
-                                     #(cast! :overlay-closed))
+                                     #(put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (urls/doc-path (:document/id app))}]))
                          :class (when (empty? (:frontend-id-state app)) "loading")
                          :key "inner"}
              [:style "#om-app:active{cursor:auto}"]
