@@ -340,7 +340,7 @@
                                  (fn [tx-report]
                                    (when (first (filter #(= :issue/comments (:a %))
                                                         (:tx-data tx-report)))
-                                     (let [top-level-ids (utils/inspect (issue-model/top-level-comment-ids @issue-db issue-id))]
+                                     (let [top-level-ids (issue-model/top-level-comment-ids @issue-db issue-id)]
                                        (om/update-state! owner
                                                          #(-> %
                                                             (assoc :all-top-level-ids top-level-ids)
@@ -547,17 +547,9 @@
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
-      (fdb/setup-issue-listener!
-       (om/get-shared owner :issue-db)
-       (om/get-state owner :listener-key)
-       (om/get-shared owner :comms)
-       (om/get-shared owner :sente))
       (sente/subscribe-to-issues (om/get-shared owner :sente)
                                  (om/get-shared owner :comms)
                                  (om/get-shared owner :issue-db)))
-    om/IWillUnmount
-    (will-unmount [_]
-      (d/unlisten! (om/get-shared owner :issue-db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
       (html

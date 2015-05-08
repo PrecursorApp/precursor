@@ -15,6 +15,7 @@
             [frontend.keyboard :as keyboard]
             [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
+            [frontend.models.issue :as issue-model]
             [frontend.settings :as settings]
             [frontend.state :as state]
             [frontend.svg :as svg]
@@ -374,6 +375,45 @@
                                                       :layer-id id}))
                                                  (sort live-ids))
                                {:key :layer-id})))))))
+
+(defn issue [{:keys [document-id]} owner]
+  (reify
+    om/IInitState (init-state [_] {:layer-source (utils/uuid)
+                                   :listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDisplayName (display-name [_] "Issue layer")
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :issue/document
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner)))
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :issue/title
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :issue/document
+                                     (om/get-state owner :listener-key))
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :issue/title
+                                     (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! issue-db]} (om/get-shared owner)]
+        (dom/g nil
+          (when-let [issue (issue-model/find-by-doc-id @issue-db document-id)]
+            (svg-element {:layer/type :layer.type/text
+                          :layer/text (str "Feature request -- " (:issue/title issue))
+                          :layer/start-x 100
+                          :layer/end-x 100
+                          :layer/start-y 100
+                          :layer/end-y 100
+                          :className "text-layer issue-layer"
+                          :onClick #(cast! :issue-layer-clicked {:frontend/issue-id (:frontend/issue-id issue)})})))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
@@ -1001,6 +1041,8 @@
 
                  (dom/g
                    #js {:transform (cameras/->svg-transform camera)}
+                   (om/build issue {:document-id (:document/id app)} {:react-key "issue"})
+
                    (om/build cursors {:client-id (:client-id app)
                                       :uuid->cust (get-in app [:cust-data :uuid->cust])}
                              {:react-key "cursors"})

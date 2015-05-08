@@ -256,7 +256,7 @@
 
 (defmethod navigated-to :issues-list
   [history-imp navigation-point args state]
-  (let [issues-list-id (when (= (utils/inspect (:navigation-point state))
+  (let [issues-list-id (when (= (:navigation-point state)
                                 :single-issue)
                          (:issues-list-id state))]
     (-> (navigated-default navigation-point args state)
@@ -267,9 +267,9 @@
 
 (defmethod post-navigated-to! :issues-list
   [history-imp navigation-point args previous-state current-state]
-  (when-let [issues-list-id (utils/inspect (when (= (:navigation-point previous-state)
-                                                    :single-issue)
-                                             (:issues-list-id previous-state)))]
+  (when-let [issues-list-id (when (= (:navigation-point previous-state)
+                                     :single-issue)
+                              (:issues-list-id previous-state))]
     (handle-post-doc-navigation navigation-point (assoc args :document/id issues-list-id) previous-state current-state)))
 
 (defmethod navigated-to :single-issue
@@ -280,7 +280,7 @@
                                 :issues-list)
                          (:document/id state))]
     (-> (handle-doc-navigation navigation-point
-                               (assoc args :document/id (or (utils/inspect (:issue/document (utils/inspect issue)))
+                               (assoc args :document/id (or (:issue/document issue)
                                                             (:document/id state)))
                                state)
       (assoc :active-issue-uuid issue-uuid)

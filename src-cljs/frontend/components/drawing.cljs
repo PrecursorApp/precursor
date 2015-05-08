@@ -1,7 +1,7 @@
 (ns frontend.components.drawing
   (:require [datascript :as d]
             [frontend.camera :as cameras]
-            [frontend.db :as ds]
+            [frontend.db :as fdb]
             [frontend.db.trans :as trans]
             [frontend.state :as state]
             [frontend.svg :as svg]
@@ -9,7 +9,8 @@
             [goog.dom]
             [goog.style]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]))
+            [om.dom :as dom :include-macros true])
+  (:import [goog.ui IdGenerator]))
 
 (defn add-tick [tick-state tick tick-fn]
   (update-in tick-state [:ticks tick] (fn [f] (fn [owner]
@@ -650,7 +651,7 @@
       (let [viewport (utils/canvas-size)]
         (when (and (< 640 (:width viewport)) ;; only if not on mobile
                    (< 640 (:height viewport))
-                   (ds/empty-db? @(om/get-shared owner :db))
+                   (fdb/empty-db? @(om/get-shared owner :db))
                    (zero? (count (remove (comp :hide-in-list? second) subscribers))))
           (run-animation owner (add-landing-cleanup (landing-animation (om/get-state owner :layer-source)
                                                                        viewport))))))
