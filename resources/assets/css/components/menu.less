@@ -93,7 +93,7 @@
   box-sizing: content-box;
   flex: 1;
   position: relative;
-  padding: 10vh 0 0;
+  margin-top: 10vh;
   .make {
     .animation_cascade(25);
   }
@@ -106,13 +106,9 @@
   left: 0;
   width: 100%;
   transition: @run_slow @bezier_deform;
-  &:not(:first-child) {
-    margin-left: -100%;
-  }
   &:not(:last-of-type) {
+    position: absolute;
     transform: translate3d(-100%, 0, 0);
-    opacity: 0;
-    visibility: hidden;
   }
   &:last-child {
     &:only-child {
