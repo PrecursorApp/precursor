@@ -41,13 +41,14 @@
                                                              (if menu-visibile?
                                                                (let [f #(let [nav-ch (:nav (om/get-shared owner :comms))]
                                                                           (if (= 1 (overlay-count app))
-                                                                            (put! nav-ch [:navigate! {:path (urls/doc-path doc-id)
-                                                                                                      :replace-token? true}])
+                                                                            (cast! :overlay-menu-closed)
                                                                             (put! nav-ch [:back!]))
                                                                           (.preventDefault %))]
                                                                  {:on-click f
                                                                   :on-touch-end f})
-                                                               {:href (urls/overlay-path doc-id "start")}))
+                                                               {:href (urls/overlay-path doc-id "start")})
+                                                             (when-not doc-id
+                                                               {:on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
           (common/icon :menu)])))))
 
 (defn roster [app owner]
@@ -72,15 +73,16 @@
                                                                (if roster-visible?
                                                                  (let [f #(let [nav-ch (:nav (om/get-shared owner :comms))]
                                                                             (if (= 1 (overlay-count app))
-                                                                              (put! nav-ch [:navigate! {:path (urls/doc-path doc-id)
-                                                                                                        :replace-token? true}])
+                                                                              (cast! :overlay-menu-closed)
                                                                               (put! nav-ch [:back!]))
                                                                             (.preventDefault %))]
                                                                    {:on-click f
                                                                     :on-touch-end f})
                                                                  {:href (urls/overlay-path doc-id (if (:team app)
                                                                                                     "roster"
-                                                                                                    "your-teams"))}))
+                                                                                                    "your-teams"))})
+                                                               (when-not doc-id
+                                                                 {:on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
           (if roster-visible?
             (common/icon :menu)
             (common/icon :users))])))))

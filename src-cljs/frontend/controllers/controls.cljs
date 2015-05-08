@@ -1572,28 +1572,32 @@
                                            :request-id request-id
                                            :invite-loc :overlay}]))
 
-(defn navigate-to-lazy-doc [current-state]
+(defn navigate-to-lazy-doc [current-state replace-token?]
   (go
     (landing-doc/maybe-fetch-doc-id current-state)
     (let [doc-id (<! (landing-doc/get-doc-id current-state))]
-      (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" doc-id)}]))))
+      (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" doc-id)
+                                                              :replace-token? replace-token?}]))))
 
 (defmethod post-control-event! :make-button-clicked
   [browser-state message _ previous-state current-state]
-  (navigate-to-lazy-doc current-state))
+  (navigate-to-lazy-doc current-state false))
 
 (defmethod post-control-event! :launch-app-clicked
   [browser-state message _ previous-state current-state]
-  (navigate-to-lazy-doc current-state))
+  (navigate-to-lazy-doc current-state false))
 
 (defmethod post-control-event! :overlay-escape-clicked
   [browser-state message _ previous-state current-state]
-  (navigate-to-lazy-doc current-state))
-
+  (navigate-to-lazy-doc current-state false))
 
 (defmethod post-control-event! :navigate-to-landing-doc-hovered
   [browser-state message _ previous-state current-state]
   (landing-doc/maybe-fetch-doc-id current-state))
+
+(defmethod post-control-event! :overlay-menu-closed
+  [browser-state message _ previous-state current-state]
+  (navigate-to-lazy-doc current-state true))
 
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]
