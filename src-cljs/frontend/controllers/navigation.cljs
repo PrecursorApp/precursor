@@ -192,17 +192,6 @@
             (set! js/window.location (get-in result [:response :redirect-url]))
             (put! (:errors comms) [:api-error result]))))))
 
-(defmethod navigated-to :issues-list
-  [history-imp navigation-point args state]
-  (-> (navigated-default navigation-point args state)
-    (overlay/add-issues-overlay)))
-
-(defmethod navigated-to :single-issue
-  [history-imp navigation-point args state]
-  (-> (navigated-default navigation-point args state)
-    (assoc :active-issue-id (:e (first (d/datoms @(:issue-db state) :avet :frontend/issue-id (:issue-id args)))))
-    (overlay/handle-add-menu :issues/single-issue)))
-
 (defmulti overlay-extra (fn [state overlay] overlay))
 (defmethod overlay-extra :default [state overlay] state)
 (defmethod overlay-extra :start [state overlay] (assoc-in state state/main-menu-learned-path true))
@@ -258,3 +247,18 @@
   ;; this may be the landing page, in which case we need to load the doc
   (-> (handle-doc-navigation navigation-point args state)
     (overlay/handle-add-menu (keyword "plan" (:submenu args)))))
+
+(defmethod navigated-to :issues-list
+  [history-imp navigation-point args state]
+  (-> (navigated-default navigation-point args state)
+    (overlay/add-issues-overlay)))
+
+(defmethod navigated-to :single-issue
+  [history-imp navigation-point args state]
+  (-> (handle-doc-navigation navigation-point (assoc args :document/id (:document/id state)) state)
+    (assoc :active-issue-uuid (UUID. (:issue-uuid args)))
+    (overlay/handle-add-menu :issues/single-issue)))
+
+(defmethod post-navigated-to! :single-issue
+  [history-imp navigation-point args previous-state current-state]
+  (handle-post-doc-navigation navigation-point (assoc args :document/id (:document/id current-state)) previous-state current-state))

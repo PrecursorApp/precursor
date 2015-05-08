@@ -360,7 +360,7 @@
 ;               "development."]]]
 ;            (om/build vote-box {:issue issue})])))))
 
-(defn issue [{:keys [issue-id]} owner]
+(defn issue* [{:keys [issue-id]} owner]
   (reify
     om/IDisplayName (display-name [_] "Issue")
     om/IInitState
@@ -587,6 +587,30 @@
                             {:key :issue-id
                              :opts {:issue-db issue-db}}))])))))
 
+(defn issue [{:keys [issue-uuid]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Issue Wrapper")
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :frontend/issue-id
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :frontend/issue-id
+                                     (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [issue-id (:e (first (d/datoms @(om/get-shared owner :issue-db) :avet :frontend/issue-id (utils/inspect issue-uuid))))]
+        (if issue-id
+          (om/build issue* {:issue-id issue-id})
+          (dom/div #js {:className "loading"} "Loading..."))))))
+
 (defn issues* [app owner {:keys [submenu]}]
   (reify
     om/IDisplayName (display-name [_] "Issues")
@@ -608,13 +632,13 @@
     om/IRender
     (render [_]
       (html
-         (if submenu
-           (om/build issue {:issue-id (:active-issue-id app)} {:key :issue-id})
-           (om/build issue-list {} {:react-key "issue-list"}))))))
+       (if submenu
+         (om/build issue {:issue-uuid (:active-issue-uuid app)} {:key :issue-uuid})
+         (om/build issue-list {} {:react-key "issue-list"}))))))
 
 (defn issues [app owner {:keys [submenu]}]
   (reify
     om/IDisplayName (display-name [_] "Issues Overlay")
     om/IRender
     (render [_]
-      (om/build issues* (select-keys app [:active-issue-id]) {:opts {:submenu submenu}}))))
+      (om/build issues* (select-keys app [:active-issue-uuid]) {:opts {:submenu submenu}}))))

@@ -42,9 +42,9 @@
   (defroute issue-list "/issues" {:keys [query-params]}
     (put! nav-ch [:issues-list {:query-params query-params}]))
 
-  (defroute issue "/issues/:frontend-id" {:keys [query-params frontend-id]}
+  (defroute issue "/issues/:issue-uuid" {:keys [query-params issue-uuid]}
     (put! nav-ch [:single-issue {:query-params query-params
-                                 :frontend-id frontend-id}]))
+                                 :issue-uuid issue-uuid}]))
 
   (defroute document #"/document/(\d+)" [doc-id args]
     (let [params (:query-params args)]
