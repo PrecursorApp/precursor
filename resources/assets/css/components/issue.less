@@ -104,12 +104,27 @@
     }
   }
 }
-.issue-description {
-  &.to-edit {
-    animation: in-issue-description @run_fast ease-out;
+.issue-description-form {
+  padding-left: @menu_padding;
+  padding-right: @menu_padding;
+}
+.issue-description-in {
+  margin-bottom: 0;
+  animation: in-issue-description @run_slow ease-out;
+  textarea {
+    .scrollbar({width: 0;});
+    margin-bottom: .5rem;
+    padding: (@menu_padding / 2) 0 (@menu_padding / 2) (@menu_padding / 2);
+    resize: none;
   }
+  label {
+    animation: in-issue-description @run_slower ease-out;
+  }
+}
+.issue-description-out {
+  padding: 0 (@menu_padding + 1) 0 @menu_padding;
   &.to-not-edit {
-    animation: out-issue-description @run_fast ease-in;
+    animation: out-issue-description @run ease-in;
   }
 }
 .issue-description-edit {
@@ -127,7 +142,8 @@
 .comments {
   & & & & & & { // selects parent 6 times
     margin-left: 0; // prevents comments from nesting too far
-    .issue-foot {
+    .issue-foot,
+    .comment-foot {
       &:before {
         content: "• "; // indicates when comment is nested too far
       }
@@ -153,13 +169,20 @@
     padding-right: @menu_padding;
   }
 }
-.issue-foot {
+.comment-body {
+  padding-left: @menu_padding;
+  padding-right: @menu_padding;
+}
+.issue-foot,
+.comment-foot {
   .icon(stroke; @gray_light);
   .icon(fill; @gray_light);
   color: @gray_light;
   font-size: @font_size_small;
   line-height: @tile / 4;
   margin-bottom: @menu_padding;
+}
+.issue-foot {
   padding-bottom: @menu_padding / 3;
 }
 .comment-children {

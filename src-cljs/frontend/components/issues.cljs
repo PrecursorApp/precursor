@@ -130,32 +130,31 @@
                         (om/set-state! owner :editing? false))]
         (html
          (if editing?
-           [:div.content {:class (when-not (:issue/description issue) " make ")}
-            [:form.description-form {:on-submit submit}
-             [:div.adaptive
-              [:textarea.issue-description {:class (when (:issue/description issue) " to-edit ")
-                                            :value (or issue-description (:issue/description issue ""))
-                                            :required "true"
-                                            :on-change #(om/set-state! owner :issue-description (.. % -target -value))
-                                            :on-blur submit}]
-              [:label {:data-label "Issue Description"
-                       :data-placeholder "Want to elaborate on your idea?"}]]
-             [:p.issue-foot
-              ;; hide avatars for now
-              ;; [:span (common/icon :user) " "]
-              [:span (:issue/author issue)]
-              [:span " on "]
-              [:span (datetime/month-day (:issue/created-at issue))]
-              (when editable?
-                (list
-                  [:span.pre "  •  "]
-                  [:a.issue-description-edit {:role "button"
-                                              :key "Cancel"
-                                              :on-click submit}
-                   "Save"]))]]]
+           [:form.issue-description-form {:on-submit submit}
+            [:div.adaptive.issue-description-in ;{:class (when (:issue/description issue) " to-edit ")}
+             [:textarea {;:class (when (:issue/description issue) " to-edit ")
+                         :value (or issue-description (:issue/description issue ""))
+                         :required "true"
+                         :on-change #(om/set-state! owner :issue-description (.. % -target -value))
+                         :on-blur submit}]
+             [:label {:data-label "Description"
+                      :data-placeholder "+ Add a description."}]]
+            [:p.comment-foot
+             ;; hide avatars for now
+             ;; [:span (common/icon :user) " "]
+             [:span (:issue/author issue)]
+             [:span " on "]
+             [:span (datetime/month-day (:issue/created-at issue))]
+             (when editable?
+               (list
+                 [:span.pre "  •  "]
+                 [:a.issue-description-edit {:role "button"
+                                             :key "Cancel"
+                                             :on-click submit}
+                  "Save"]))]]
 
            [:div.comment {:class (when-not (om/get-state owner :to-not-edit?) " make ")}
-            [:p.issue-description {:class (when (om/get-state owner :to-not-edit?) " to-not-edit ")}
+            [:div.issue-description-out {:class (when (om/get-state owner :to-not-edit?) " to-not-edit ")}
              (if (:issue/description issue)
                (:issue/description issue)
 
@@ -164,11 +163,10 @@
                       :on-click #(do
                                    (om/set-state! owner :editing? true)
                                    (om/set-state! owner :to-not-edit? true))}
-                  [:span (common/icon :plus)]
-                  [:span " Add a description."]]
+                  [:span "+ Add a description."]]
 
                  [:span "No description yet."]))]
-            [:p.issue-foot
+            [:p.comment-foot
              ;; hide avatars for now
              ;; [:span (common/icon :user) " "]
              [:span (:issue/author issue)]
@@ -284,8 +282,8 @@
         (html
          [:div.comment.make {:key comment-id}
           [:div.issue-divider]
-          [:p (:comment/body comment)]
-          [:p.issue-foot
+          [:div.comment-body (:comment/body comment)]
+          [:p.comment-foot
            ;; hide avatars for now
            ;; [:span (common/icon :user) " "]
            [:span (:comment/author comment)]
