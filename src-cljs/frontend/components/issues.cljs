@@ -75,11 +75,13 @@
                                              (close-callback)))}
              [:textarea {:required true
                          :value comment-body
+                         :disabled (when-not (utils/logged-in? owner) true)
                          :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]
              [:label {:data-label "What do you think?"
                       :data-forgot "To be continued"}]
              [:input {:type "submit"
-                      :value "Add comment."}]]])))))
+                      :value "Add comment."
+                      :disabled (when-not (utils/logged-in? owner) true)}]]])))))
 
 (defn description-form [{:keys [issue issue-id]} owner]
   (reify
@@ -110,16 +112,18 @@
              [:label {:data-label "Issue Description"
                       :data-placeholder "Want to elaborate on your idea?"}]
              [:p.issue-foot
-              [:span (common/icon :user) " "]
-              [:a {:role "button"} (:issue/author issue)]
+              ;; hide avatars for now
+              ;; [:span (common/icon :user) " "]
+              [:span (:issue/author issue)]
               [:span " on "]
-              [:a {:role "button"} (datetime/month-day (:issue/created-at issue))]
-              [:span " — "]
+              [:span (datetime/month-day (:issue/created-at issue))]
               (when editable?
-                [:a.issue-description-edit {:role "button"
-                                            :key "Cancel"
-                                            :on-click submit}
-                 "Save"])]]]
+                (list
+                  [:span.pre "  •  "]
+                  [:a.issue-description-edit {:role "button"
+                                              :key "Cancel"
+                                              :on-click submit}
+                   "Save"]))]]]
 
            [:div.comment {:class (when-not (om/get-state owner :to-not-edit?) " make ")}
             [:p.issue-description {:class (when (om/get-state owner :to-not-edit?) " to-not-edit ")}
@@ -136,18 +140,20 @@
 
                  [:span "No description yet."]))]
             [:p.issue-foot
-             [:span (common/icon :user) " "]
-             [:a {:role "button"} (:issue/author issue)]
+             ;; hide avatars for now
+             ;; [:span (common/icon :user) " "]
+             [:span (:issue/author issue)]
              [:span " on "]
-             [:a {:role "button"} (datetime/month-day (:issue/created-at issue))]
-             [:span " — "]
+             [:span (datetime/month-day (:issue/created-at issue))]
              (when editable?
-               [:a.issue-description-edit {:role "button"
-                                           :key "Edit"
-                                           :on-click #(do
-                                                        (om/set-state! owner :editing? true)
-                                                        (om/set-state! owner :to-not-edit? true))}
-                "Edit"])]]))))))
+               (list
+                 [:span.pre "  •  "]
+                 [:a.issue-description-edit {:role "button"
+                                             :key "Edit"
+                                             :on-click #(do
+                                                          (om/set-state! owner :editing? true)
+                                                          (om/set-state! owner :to-not-edit? true))}
+                  "Edit"]))]]))))))
 
 ;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
@@ -251,17 +257,20 @@
           [:div.issue-divider]
           [:p (:comment/body comment)]
           [:p.issue-foot
-           [:span (common/icon :user) " "]
-           [:a {:role "button"} (:comment/author comment)]
+           ;; hide avatars for now
+           ;; [:span (common/icon :user) " "]
+           [:span (:comment/author comment)]
            [:span " on "]
-           [:a {:role "button"} (datetime/month-day (:comment/created-at comment))]
-           [:span " — "]
-           [:a {:role "button"
-                :on-click #(do
-                             (if (om/get-state owner :replying?)
-                               (om/set-state! owner :replying? false)
-                               (om/set-state! owner :replying? true)))}
-            (if (om/get-state owner :replying?) "Cancel" "Reply")]]
+           [:span (datetime/month-day (:comment/created-at comment))]
+           (when (utils/logged-in? owner)
+             (list
+               [:span.pre "  •  "]
+               [:a {:role "button"
+                    :on-click #(do
+                                 (if (om/get-state owner :replying?)
+                                   (om/set-state! owner :replying? false)
+                                   (om/set-state! owner :replying? true)))}
+                (if (om/get-state owner :replying?) "Cancel" "Reply")]))]
 
           (when (om/get-state owner :replying?)
             (om/build comment-form {:issue-id issue-id
@@ -360,11 +369,11 @@
                             :target "_top"}
             (:issue/title issue)]
            [:p.issue-foot
-            [:a {:role "button"} (str comment-count " comment" (when (not= 1 comment-count) "s"))]
+            [:span (str comment-count " comment" (when (not= 1 comment-count) "s"))]
             [:span " for "]
-            [:a {:role "button"} "bugfix"]
+            [:span "bugfix"]
             [:span " in "]
-            [:a {:role "button"} "development."]]]
+            [:span "development."]]]
           (om/build vote-box {:issue issue})])))))
 
 (defn issue* [{:keys [issue-id]} owner]
