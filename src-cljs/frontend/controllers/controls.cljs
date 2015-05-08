@@ -1586,6 +1586,11 @@
   [browser-state message _ previous-state current-state]
   (navigate-to-lazy-doc current-state))
 
+(defmethod post-control-event! :overlay-escape-clicked
+  [browser-state message _ previous-state current-state]
+  (navigate-to-lazy-doc current-state))
+
+
 (defmethod post-control-event! :navigate-to-landing-doc-hovered
   [browser-state message _ previous-state current-state]
   (landing-doc/maybe-fetch-doc-id current-state))
