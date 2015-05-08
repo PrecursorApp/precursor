@@ -109,41 +109,32 @@
             doc (doc-model/find-by-id @db doc-id)]
         (html
          [:div.menu-view
-          [:a.vein.make {:href (urls/overlay-path doc-id "info")
-                         :role "button"}
+          [:a.vein.make {:href (urls/overlay-path doc-id "info")}
            (common/icon :info)
            [:span "About"]]
-          [:a.vein.make {:href "/new"
-                         :role "button"}
+          [:a.vein.make {:href "/new"}
            (common/icon :plus)
            [:span "New"]]
-          [:a.vein.make {:href (urls/overlay-path doc-id "doc-viewer")
-                         :role "button"}
+          [:a.vein.make {:href (urls/overlay-path doc-id "doc-viewer")}
            (common/icon :docs)
            [:span "Documents"]]
-          [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)
-                         :role "button"}
-           (common/icon :docs)
-           [:span "Issues"]]
+          [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)}
+           (common/icon :requests)
+           [:span "Feature Requests"]]
           ;; TODO: should this use the permissions model? Would have to send some
           ;;       info about the document
           (if (auth/has-document-access? app (:document/id app))
-            [:a.vein.make {:href (urls/overlay-path doc-id "sharing")
-                           :role "button"}
+            [:a.vein.make {:href (urls/overlay-path doc-id "sharing")}
              (common/icon :sharing)
              [:span "Sharing"]]
 
-            [:a.vein.make {:href (urls/overlay-path doc-id "document-permissions")
-                           :role "button"}
+            [:a.vein.make {:href (urls/overlay-path doc-id "document-permissions")}
              (common/icon :users)
              [:span "Request Access"]])
-          [:a.vein.make {:href (urls/overlay-path doc-id "export")
-                         :role "button"}
+          [:a.vein.make {:href (urls/overlay-path doc-id "export")}
            (common/icon :download)
            [:span "Export"]]
-          [:a.vein.make {:href (urls/overlay-path doc-id "shortcuts")
-                         :class "mobile-hidden"
-                         :role "button"}
+          [:a.vein.make.mobile-hidden {:href (urls/overlay-path doc-id "shortcuts")}
            (common/icon :command)
            [:span "Shortcuts"]]
           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
@@ -757,7 +748,7 @@
    :plan {:title "Billing"
           :component plan/plan-menu}
 
-   :issues {:title "Issues"
+   :issues {:title "Feature Requests"
             :component issues/issues}})
 
 (defn namespaced? [kw]

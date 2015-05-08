@@ -174,7 +174,7 @@
                [:span "Add Teammates"]]
               [:a.vein.make {:href (urls/overlay-path doc-id "team-doc-viewer")
                              :role "button"}
-               (common/icon :docs)
+               (common/icon :docs-team)
                [:span "Team Documents"]]
               [:a.vein.make {:href (urls/overlay-path doc-id "plan")
                              :role "button"}
