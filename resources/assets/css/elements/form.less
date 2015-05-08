@@ -162,6 +162,18 @@ input {
         }
       }
     }
+    &:focus {
+      &:valid {
+        + label {
+          &[data-warning] {
+            &:before {
+              color: @red;
+              content: attr(data-warning);
+            }
+          }
+        }
+      }
+    }
     &:valid {
       &:not(:focus) {
         + label {
