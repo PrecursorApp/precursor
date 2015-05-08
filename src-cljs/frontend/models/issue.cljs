@@ -12,11 +12,8 @@
                                db issue-id))]
     (set/difference all-ids children-ids)))
 
-(defn direct-descendants [db comment]
-  (set (d/q '{:find [[?e ...]]
-              :in [$ ?comment-id]
-              :where [[?e :comment/parent ?comment-id]]}
-            db (:db/id comment))))
+(defn direct-descendant-ids [db comment-id]
+  (set (map :e (d/datoms db :avet :comment/parent comment-id))))
 
 (defn issue-score [issue cust time]
   (+ (count (:issue/votes issue))
