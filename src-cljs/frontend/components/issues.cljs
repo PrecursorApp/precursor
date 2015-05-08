@@ -28,7 +28,12 @@
     om/IInitState (init-state [_] {:issue-title ""})
     om/IRenderState
     (render-state [_ {:keys [issue-title submitting?]}]
-      (let [{:keys [issue-db cust cast!]} (om/get-shared owner)]
+      (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
+            char-limit 140
+            chars-left (- char-limit (count issue-title))
+            input-disabled? (or submitting?
+                                (not (utils/logged-in? owner))
+                                (neg? chars-left))]
         (html
          [:form.issue-form {:on-submit #(do (utils/stop-event %)
                                             (go
@@ -49,6 +54,10 @@
                                                                             :issue/author (:cust/email cust)
                                                                             :issue/document doc-id
                                                                             :frontend/issue-id fe-id}])
+                                                    (d/transact! issue-db [{:frontend/issue-id fe-id
+                                                                            :issue/votes {:db/id -1
+                                                                                          :frontend/issue-id (utils/squuid)
+                                                                                          :vote/cust (:cust/email cust)}}])
                                                     (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
                                                   (om/set-state! owner :issue-title ""))
                                                 (finally
@@ -58,7 +67,14 @@
                        :required "true"
                        :disabled (or submitting? (not (utils/logged-in? owner)))
                        :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
-           [:label {:data-typing (gstring/format "Sounds good so far—%s characters left" (count issue-title))
+           [:label {:data-typing (let [chars-left (- char-limit (count issue-title))]
+                                   (if (neg? chars-left)
+                                     (gstring/format "%s character%s too many"
+                                                     (- chars-left)
+                                                     (if (= -1 chars-left) "" "s"))
+                                     (gstring/format "Sounds good so far; %s character%s left"
+                                                     chars-left
+                                                     (if (= 1 chars-left) "" "s"))))
                     :data-label (if (utils/logged-in? owner)
                                   "How can we improve Precursor?"
                                   "Sign in to make an issue.")}]]
@@ -68,7 +84,7 @@
                                   :value (if submitting?
                                            "Submitting..."
                                            "Submit idea.")
-                                  :disabled (when-not (utils/logged-in? owner) true)}]
+                                  :disabled input-disabled?}]
 
              (om/build common/google-login {:source "Issue form"}))]])))))
 
@@ -314,7 +330,7 @@
           (when (and (not (contains? ancestors (:db/id comment))) ; don't render cycles
                      (pos? (count rendered-child-ids)))
             [:div.comments {:key "child-comments"}
-             (for [id rendered-child-ids]
+             (for [id (reverse (sort-by (fn [i] (:comment/created-at (d/entity @issue-db i))) rendered-child-ids))]
                (om/build single-comment {:issue-id issue-id
                                          :comment-id id}
                          {:key :comment-id
@@ -367,7 +383,7 @@
           (unrendered-comments-notice all-top-level-ids rendered-top-level-ids
                                       #(om/update-state! owner (fn [s]
                                                                  (assoc s :rendered-top-level-ids (:all-top-level-ids s)))))
-          (for [id rendered-top-level-ids]
+          (for [id (reverse (sort-by (fn [i] (:comment/created-at (d/entity @issue-db i))) rendered-top-level-ids))]
             (om/build single-comment {:comment-id id
                                       :issue-id issue-id}
                       {:key :comment-id}))])))))

@@ -778,7 +778,7 @@
               [:h4.menu-heading {:title (:title component) :react-key (:title component)}
                ;; TODO: better way to handle custom titles
                (cond (keyword-identical? :issues/single-issue overlay-key)
-                     (:issue/title (issue-model/find-by-frontend-id @(om/get-shared owner :issue-db) (:active-issue-uuid app)))
+                     "Feature Request"
 
                      (namespaced? overlay-key)
                      (str (:title component) " " (str/capitalize (name overlay-key)))
