@@ -6,6 +6,7 @@
             [frontend.async :refer [put!]]
             [frontend.camera :as cameras]
             [frontend.db :as db]
+            [frontend.models.issue :as issue-model]
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
             [frontend.state :as state]
@@ -74,6 +75,10 @@
       (.replaceToken history-imp path)
       (.setToken history-imp path))))
 
+(defmethod navigated-to :back!
+  [history-imp navigation-point _ state]
+  state)
+
 (defmethod post-navigated-to! :back!
   [history-imp navigation-point _ previous-state current-state]
   (.back js/window.history))
@@ -127,6 +132,7 @@
                :frontend-id-state {}
                :replay-interrupt-chan (when (play-replay? args)
                                         (async/chan)))
+        (state/reset-camera)
         (state/clear-subscribers)
         (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
         (assoc :initial-state false)
@@ -250,14 +256,36 @@
 
 (defmethod navigated-to :issues-list
   [history-imp navigation-point args state]
-  (-> (navigated-default navigation-point args state)
-    (overlay/add-issues-overlay)))
+  (let [issues-list-id (when (= (:navigation-point state)
+                                :single-issue)
+                         (:issues-list-id state))]
+    (-> (navigated-default navigation-point args state)
+      (#(if issues-list-id
+          (handle-doc-navigation navigation-point (assoc args :document/id issues-list-id) %)
+          %))
+      (overlay/add-issues-overlay))))
+
+(defmethod post-navigated-to! :issues-list
+  [history-imp navigation-point args previous-state current-state]
+  (when-let [issues-list-id (when (= (:navigation-point previous-state)
+                                     :single-issue)
+                              (:issues-list-id previous-state))]
+    (handle-post-doc-navigation navigation-point (assoc args :document/id issues-list-id) previous-state current-state)))
 
 (defmethod navigated-to :single-issue
   [history-imp navigation-point args state]
-  (-> (handle-doc-navigation navigation-point (assoc args :document/id (:document/id state)) state)
-    (assoc :active-issue-uuid (UUID. (:issue-uuid args)))
-    (overlay/handle-add-menu :issues/single-issue)))
+  (let [issue-uuid (UUID. (:issue-uuid args))
+        issue (issue-model/find-by-frontend-id @(:issue-db state) issue-uuid)
+        issues-list-id (when (= (:navigation-point state)
+                                :issues-list)
+                         (:document/id state))]
+    (-> (handle-doc-navigation navigation-point
+                               (assoc args :document/id (or (:issue/document issue)
+                                                            (:document/id state)))
+                               state)
+      (assoc :active-issue-uuid issue-uuid)
+      (overlay/handle-add-menu :issues/single-issue)
+      (cond-> issues-list-id (assoc :issues-list-id issues-list-id)))))
 
 (defmethod post-navigated-to! :single-issue
   [history-imp navigation-point args previous-state current-state]

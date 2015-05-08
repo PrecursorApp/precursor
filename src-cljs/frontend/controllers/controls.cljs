@@ -1595,6 +1595,10 @@
   [browser-state message _ previous-state current-state]
   (landing-doc/maybe-fetch-doc-id current-state))
 
+(defmethod post-control-event! :issue-layer-clicked
+  [browser-state message {:keys [frontend/issue-id]} previous-state current-state]
+  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/issues/" issue-id)}]))
+
 (defmethod post-control-event! :overlay-menu-closed
   [browser-state message _ previous-state current-state]
   (navigate-to-lazy-doc current-state true))

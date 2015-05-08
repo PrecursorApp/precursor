@@ -136,6 +136,11 @@
                  (:entities data)
                  {:server-update true})))
 
+(defmethod handle-message :issue/db-entities [app-state message data]
+  (d/transact! (:issue-db @app-state)
+               (:entities data)
+               {:server-update true}))
+
 (defmethod handle-message :frontend/custs [app-state message data]
   (swap! app-state update-in [:cust-data :uuid->cust] merge (:uuid->cust data)))
 

@@ -3,6 +3,12 @@
             [datascript :as d]
             [frontend.utils :as utils :include-macros true]))
 
+(defn find-by-frontend-id [db frontend-id]
+  (d/entity db (:e (first (d/datoms db :avet :frontend/issue-id frontend-id)))))
+
+(defn find-by-doc-id [db doc-id]
+  (d/entity db (:e (first (d/datoms db :avet :issue/document doc-id)))))
+
 (defn top-level-comment-ids [db issue-id]
   (let [all-ids (set (map :v (d/datoms db :aevt :issue/comments issue-id)))
         children-ids (set (d/q '{:find [[?e ...]]

@@ -100,7 +100,8 @@
         initial-issue-entities (some-> (aget js/window "Precursor" "initial-issue-entities")
                                  (reader/read-string))
         tab-id (utils/uuid)
-        sente-id (aget js/window "Precursor" "sente-id")]
+        sente-id (aget js/window "Precursor" "sente-id")
+        issue-db (db/make-initial-db initial-issue-entities)]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
                      :tab-id tab-id
@@ -110,7 +111,7 @@
                      ;; team entities go into the team namespace, so we need a separate database
                      ;; to prevent conflicts
                      :team-db (db/make-initial-db nil)
-                     :issue-db (db/make-initial-db (utils/inspect initial-issue-entities))
+                     :issue-db issue-db
                      :document/id document-id
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
@@ -226,6 +227,8 @@
                                                                            :handle-mouse-move  handle-mouse-move
                                                                            :handle-key-down    handle-key-down
                                                                            :handle-key-up      handle-key-up})]
+
+    (db/setup-issue-listener! (:issue-db @state) "issue-db" comms (:sente @state))
 
     ;; allow figwheel in dev-cljs access to this function
     (reset! frontend.careful/om-setup-debug om-setup)

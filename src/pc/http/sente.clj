@@ -27,6 +27,7 @@
             [pc.models.chat :as chat]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
+            [pc.models.issue :as issue-model]
             [pc.models.layer :as layer-model]
             [pc.models.permission :as permission-model]
             [pc.models.plan :as plan-model]
@@ -386,6 +387,12 @@
                          :subscribers (reduce (fn [acc [client-id subscriber]]
                                                 (assoc acc client-id (subscriber-read-api subscriber)))
                                               {} (get subs document-id))}])
+
+    (when-let [issue (issue-model/find-by-doc (:db req) {:db/id document-id})]
+      (log/infof "sending issue for %s to %s" document-id client-id)
+      (send-fn client-id [:issue/db-entities
+                          {:entities [(issue-model/summary-read-api issue)]
+                           :entity-type :issue}]))
 
     ;; These are interesting b/c they're read-only. And by "interesting", I mean "bad"
     ;; We should find a way to let the frontend edit things
