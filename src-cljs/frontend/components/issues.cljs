@@ -28,7 +28,12 @@
     om/IInitState (init-state [_] {:issue-title ""})
     om/IRenderState
     (render-state [_ {:keys [issue-title submitting?]}]
-      (let [{:keys [issue-db cust cast!]} (om/get-shared owner)]
+      (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
+            char-limit 140
+            chars-left (- char-limit (count issue-title))
+            input-disabled? (or submitting?
+                                (not (utils/logged-in? owner))
+                                (neg? chars-left))]
         (html
          [:form.issue-form {:on-submit #(do (utils/stop-event %)
                                             (go
@@ -62,7 +67,14 @@
                        :required "true"
                        :disabled (or submitting? (not (utils/logged-in? owner)))
                        :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
-           [:label {:data-typing (gstring/format "Sounds good so far—%s characters left" (count issue-title))
+           [:label {:data-typing (let [chars-left (- char-limit (count issue-title))]
+                                   (if (neg? chars-left)
+                                     (gstring/format "%s character%s too many"
+                                                     (- chars-left)
+                                                     (if (= -1 chars-left) "" "s"))
+                                     (gstring/format "Sounds good so far; %s character%s left"
+                                                     chars-left
+                                                     (if (= 1 chars-left) "" "s"))))
                     :data-label (if (utils/logged-in? owner)
                                   "How can we improve Precursor?"
                                   "Sign in to make an issue.")}]]
@@ -72,7 +84,7 @@
                                   :value (if submitting?
                                            "Submitting..."
                                            "Submit idea.")
-                                  :disabled (when-not (utils/logged-in? owner) true)}]
+                                  :disabled input-disabled?}]
 
              (om/build common/google-login {:source "Issue form"}))]])))))
 
