@@ -141,18 +141,6 @@
 (defpage document-overlay [:get "/document/:document-id/:overlay" {:document-id #"[0-9]+" :overlay #"[\w-]+"}] [req]
   (handle-doc req))
 
-(defpage single-issue "/issues/:issue-uuid" [req]
-  (if (:subdomain req)
-    (custom-domain/redirect-to-main req)
-    (let [db (pcd/default-db)
-          frontend-id (-> req :params :issue-uuid (UUID/fromString))
-          issue (issue-model/find-by-frontend-id db frontend-id)]
-      (if-not issue
-        {:body "Sorry, we couldn't find that issue."
-         :status 404}
-        (let [doc (:issue/document issue)]
-          (doc-resp doc req))))))
-
 (def private-layers [{:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 389.5996, :entity/type :layer, :layer/start-y 120.0, :layer/text "Please log in or request access to view it.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 100.0} {:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 373.5547, :entity/type :layer, :layer/start-y 90.0, :layer/text "Sorry, this document is private.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 70.0}])
 
 (defn image-cache-headers [db doc]
@@ -318,13 +306,23 @@
     ;; TODO: figure out what to do with outer pages on subdomains, need to
     ;;       solve the extraneous entity-id problem first
     (custom-domain/redirect-to-main req)
-    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-          ;; TODO: Have to figure out a way to create outer pages without creating extraneous entity-ids
-          doc (doc-model/create-public-doc!
-               (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                      (when cust-uuid {:document/creator cust-uuid})))]
-      (content/app (merge (common-view-data req)
-                          {:initial-document-id (:db/id doc)})))))
+    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])]
+      (content/app (common-view-data req)))))
+
+(defpage single-issue "/issues/:issue-uuid" [req]
+  (if (:subdomain req)
+    (custom-domain/redirect-to-main req)
+    (let [db (pcd/default-db)
+          frontend-id (-> req :params :issue-uuid (UUID/fromString))
+          issue (issue-model/find-by-frontend-id db frontend-id)]
+      (if-not issue
+        {:body "Sorry, we couldn't find that issue."
+         :status 404}
+        (let [doc (:issue/document issue)]
+          (doc-resp doc req))))))
+
+(defpage issue "/issues" [req]
+  (outer-page req))
 
 (defpage pricing "/pricing" [req]
   (outer-page req))
@@ -355,7 +353,6 @@
 (defn clean-bucket-doc-ids []
   (swap! bucket-doc-ids (fn [b]
                           (set/intersection b (set (keys @sente/document-subs))))))
-
 
 (defpage bucket [:get "/bucket/:bucket-count" {:bucket-count #"[0-9]+"}] [req]
   (if (:subdomain req)

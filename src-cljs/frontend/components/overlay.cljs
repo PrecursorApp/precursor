@@ -121,7 +121,7 @@
                          :role "button"}
            (common/icon :docs)
            [:span "Documents"]]
-          [:a.vein.make {:href "/issues"
+          [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)
                          :role "button"}
            (common/icon :docs)
            [:span "Issues"]]

@@ -380,76 +380,82 @@
 
 (defn nav-head [app owner]
   (om/component
-   (html
-    [:div.nav.nav-head
-     [:a.nav-link.nav-logo
-      (merge {:href "/"
-              :title "Precursor"}
-             (when (utils/logged-in? owner)
-               {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "top-left-nav"}})}))
-      "Precursor"]
-     [:a.nav-link.nav-home
-      {:href "/home"
-       :title "Home"}
-      "Home"]
-     [:a.nav-link.nav-pricing
-      {:href "/pricing"
-       :title "Pricing"}
-      "Pricing"]
-     [:a.nav-link.nav-blog
-      {:href "/blog"
-       :title "Blog"
-       :target "_self"}
-      "Blog"]
-     (if (utils/logged-in? owner)
-       [:a.nav-link.nav-app
-        {:role "button"
-         :title "Launch Precursor"
-         :on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "top-right-nav"}})}
-        "App"]
-       [:div.nav-link.nav-google
-        (om/build common/google-login {:source "Nav" :size :small})])])))
+   (let [cast! (om/get-shared owner :cast!)]
+     (html
+      [:div.nav.nav-head
+       [:a.nav-link.nav-logo
+        (merge {:href "/"
+                :title "Precursor"}
+               (when (utils/logged-in? owner)
+                 {:on-click #(cast! :launch-app-clicked {:analytics-data {:source "top-left-nav"}})
+                  :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
+        "Precursor"]
+       [:a.nav-link.nav-home
+        {:href "/home"
+         :title "Home"}
+        "Home"]
+       [:a.nav-link.nav-pricing
+        {:href "/pricing"
+         :title "Pricing"}
+        "Pricing"]
+       [:a.nav-link.nav-blog
+        {:href "/blog"
+         :title "Blog"
+         :target "_self"}
+        "Blog"]
+       (if (utils/logged-in? owner)
+         [:a.nav-link.nav-app
+          {:role "button"
+           :title "Launch Precursor"
+           :on-click #(cast! :launch-app-clicked {:analytics-data {:source "top-right-nav"}})
+           :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}
+          "App"]
+         [:div.nav-link.nav-google
+          (om/build common/google-login {:source "Nav" :size :small})])]))))
 
 (defn nav-foot [app owner]
   (om/component
-   (html
-    [:div.nav.nav-foot
-     [:a.nav-link.nav-logo
-      (merge {:title "Precursor"
-              :href "/"
-              :target "_top"}
-             (when (utils/logged-in? owner)
-               {:on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "bottom-nav-logo"}})}))
-      (common/icon :logomark)]
-     [:a.nav-link.nav-home
-      {:title "Home"
-       :href "/home"
-       :target "_top"}
-      "Home"]
-     [:a.nav-link.nav-pricing
-      {:title "Pricing"
-       :href "/pricing"
-       :target "_top"}
-      "Pricing"]
-     [:a.nav-link.nav-blog
-      {:title "Blog"
-       :href "/blog"
-       :target "_self"}
-      "Blog"]
-     (if (utils/logged-in? owner)
-       [:a.nav-link.nav-app
-        {:title "Launch Precursor"
-         :on-click #((om/get-shared owner :cast!) :launch-app-clicked {:analytics-data {:source "bottom-nav"}})
-         :role "button"}
-        "App"]
-       [:a.nav-link {:title "Sign in with Google"
-                     :href (auth/auth-url :source "bottom-nav")
-                     :role "button"}
-        "Sign in"])
-     [:a.nav-link.nav-twitter
-      {:title "@PrecursorApp"
-       :href "https://twitter.com/PrecursorApp"}
-      (common/icon :twitter)]])))
+   (let [cast! (om/get-shared owner :cast!)]
+     (html
+      [:div.nav.nav-foot
+       [:a.nav-link.nav-logo
+        (merge {:title "Precursor"
+                :href "/"
+                :target "_top"}
+               (when (utils/logged-in? owner)
+                 {:on-click #(cast! :launch-app-clicked {:analytics-data {:source "bottom-nav-logo"}})
+                  :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
+        (common/icon :logomark)]
+       [:a.nav-link.nav-home
+        {:title "Home"
+         :href "/home"
+         :target "_top"}
+        "Home"]
+       [:a.nav-link.nav-pricing
+        {:title "Pricing"
+         :href "/pricing"
+         :target "_top"}
+        "Pricing"]
+       [:a.nav-link.nav-blog
+        {:title "Blog"
+         :href "/blog"
+         :target "_self"}
+        "Blog"]
+       (if (utils/logged-in? owner)
+         [:a.nav-link.nav-app
+          {:title "Launch Precursor"
+           :on-click #(cast! :launch-app-clicked {:analytics-data {:source "bottom-nav"}})
+           :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)
+           :role "button"}
+          "App"]
+         [:a.nav-link {:title "Sign in with Google"
+                       :href (auth/auth-url :source "bottom-nav")
+                       :role "button"}
+          "Sign in"])
+       [:a.nav-link.nav-twitter
+        {:title "@PrecursorApp"
+         :href "https://twitter.com/PrecursorApp"}
+        (common/icon :twitter)]]))))
 
 (def outer-components
   {:landing landing/landing

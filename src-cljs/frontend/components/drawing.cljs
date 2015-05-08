@@ -62,7 +62,6 @@
                                               (name tool)))
           :layer/name "placeholder"
           :layer/stroke-width 1
-          :document/id doc-id
           :db/id (rand-int 10000)}
          (when (= :circle tool)
            {:layer/rx 1000
@@ -182,7 +181,6 @@
                            :layer/name "placeholder"
                            :layer/text text
                            :layer/stroke-width 1
-                           :layer/document doc-id
                            :db/id (inc (rand-int 1000))}
                           (when source
                             {:layer/source source})
@@ -368,7 +366,7 @@
                             :end-x (:start-x next-shape)
                             :end-y (:start-y next-shape)})))
 
-(defn browser [document layer-source viewport]
+(defn browser [layer-source viewport]
   (let [start-x 100
         start-y 100
         width (min (int (* (- (:width viewport) 200)
@@ -376,7 +374,7 @@
                    1400)
         height (int (* (- (:height viewport) 200)
                        0.9))]
-    {:doc-id (:db/id document) :tool :rect
+    {:tool :rect
      :start-x start-x :end-x (+ start-x width)
      :start-y start-y :end-y (+ start-y height)
      :source layer-source}))
@@ -384,18 +382,18 @@
 (def circle-offset {:x 30 :y 20})
 (def circle-size 40)
 
-(defn ph-circle [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :circle
+(defn ph-circle [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :circle
      :start-x (+ (:start-x browser) (:x circle-offset))
      :end-x (+ (:start-x browser) (:x circle-offset) circle-size)
      :start-y (+ (:start-y browser) (:y circle-offset))
      :end-y (+ (:start-y browser) (:y circle-offset) circle-size)
      :source layer-source}))
 
-(defn ph-p [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :text
+(defn ph-p [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :text
      :start-x (+ (:start-x browser) (:x circle-offset) 10)
      :end-x (+ (:start-x browser) (:x circle-offset) 10)
      :start-y (+ (:start-y browser) (:y circle-offset) (- circle-size 10))
@@ -406,21 +404,21 @@
 
 (def vote-box-offset {:x 30 :y (+ (:y circle-offset) circle-size 30)})
 
-(defn vote-box [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :rect
+(defn vote-box [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :rect
      :start-x (+ (:start-x browser) (:x vote-box-offset))
      :end-x (+ (:start-x browser) (:x vote-box-offset) 34)
      :start-y (+ (:start-y browser) (:y vote-box-offset))
      :end-y (+ (:start-y browser) (:y vote-box-offset) 44)
      :source layer-source}))
 
-(defn vote-left [document layer-source viewport]
-  (let [vote-box (vote-box document layer-source viewport)
+(defn vote-left [layer-source viewport]
+  (let [vote-box (vote-box layer-source viewport)
         box-width (Math/abs (- (:start-x vote-box) (:end-x vote-box)))
         box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
         start-y (+ (:start-y vote-box) (/ box-height 2))]
-    {:doc-id (:db/id document) :tool :line
+    {:tool :line
      :start-x (- (+ (:start-x vote-box)
                     (/ box-width 2))
                  5)
@@ -429,12 +427,12 @@
      :end-y (- start-y 10)
      :source layer-source}))
 
-(defn vote-right [document layer-source viewport]
-  (let [vote-box (vote-box document layer-source viewport)
+(defn vote-right [layer-source viewport]
+  (let [vote-box (vote-box layer-source viewport)
         box-width (Math/abs (- (:start-x vote-box) (:end-x vote-box)))
         box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
         start-y (+ (:start-y vote-box) (/ box-height 2))]
-    {:doc-id (:db/id document) :tool :line
+    {:tool :line
      :start-x (+ (:start-x vote-box) (/ box-width 2))
      :end-x (+ (+ (:start-x vote-box)
                   (/ box-width 2))
@@ -443,42 +441,42 @@
      :end-y start-y
      :source layer-source}))
 
-(defn vote-count [document layer-source viewport]
-  (let [vote-box (vote-box document layer-source viewport)
+(defn vote-count [layer-source viewport]
+  (let [vote-box (vote-box layer-source viewport)
         box-width (Math/abs (- (:start-x vote-box) (:end-x vote-box)))
         box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
         y (+ (:start-y vote-box) (* 3 (/ box-height 4)))]
-    {:doc-id (:db/id document) :tool :line
+    {:tool :line
      :start-x (+ (:start-x vote-box) (/ box-width 3))
      :end-x (+ (:start-x vote-box) (* 2 (/ box-width 3)))
      :start-y y
      :end-y y
      :source layer-source}))
 
-(defn post-title [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        vote-box (vote-box document layer-source viewport)
+(defn post-title [layer-source viewport]
+  (let [browser (browser layer-source viewport)
+        vote-box (vote-box layer-source viewport)
         browser-width (Math/abs (- (:start-x browser) (:end-x browser)))
         box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
         start-x (+ (:end-x vote-box) 20)
         end-x (+ start-x (/ browser-width 4))
         y (+ (:start-y vote-box) (/ box-height 3))]
-    {:doc-id (:db/id document) :tool :line
+    {:tool :line
      :start-x start-x
      :end-x end-x
      :start-y y
      :end-y y
      :source layer-source}))
 
-(defn post-tagline [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        vote-box (vote-box document layer-source viewport)
+(defn post-tagline [layer-source viewport]
+  (let [browser (browser layer-source viewport)
+        vote-box (vote-box layer-source viewport)
         browser-width (Math/abs (- (:start-x browser) (:end-x browser)))
         box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
         start-x (+ (:end-x vote-box) 20)
         end-x (+ start-x (/ browser-width 3))
         y (+ (:start-y vote-box) (* 2 (/ box-height 3)))]
-    {:doc-id (:db/id document) :tool :line
+    {:tool :line
      :start-x start-x
      :end-x end-x
      :start-y y
@@ -489,42 +487,42 @@
 (def comment-space (+ (/ icon-size 2) (* 1.25 icon-size)))
 (def icons-offset 10)
 
-(defn hunter-icon-1 [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        vote-box (vote-box document layer-source viewport)
+(defn hunter-icon-1 [layer-source viewport]
+  (let [browser (browser layer-source viewport)
+        vote-box (vote-box layer-source viewport)
         browser-width (Math/abs (- (:start-x browser) (:end-x browser)))
         box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
         start-x (- (:end-x browser) icon-size icons-offset comment-space (:x circle-offset))
         end-x (+ start-x icon-size)
         start-y (+ (:start-y vote-box) (/ (- box-height icon-size) 2))
         end-y (+ start-y icon-size)]
-    {:doc-id (:db/id document) :tool :circle
+    {:tool :circle
      :start-x start-x
      :end-x end-x
      :start-y start-y
      :end-y end-y
      :source layer-source}))
 
-(defn hunter-icon-2 [document layer-source viewport]
-  (let [icon-1 (hunter-icon-1 document layer-source viewport)
+(defn hunter-icon-2 [layer-source viewport]
+  (let [icon-1 (hunter-icon-1 layer-source viewport)
         start-x (+ (:start-x icon-1) icons-offset)
         end-x (+ start-x icon-size)
         start-y (:start-y icon-1)
         end-y (:end-y icon-1)]
-    {:doc-id (:db/id document) :tool :circle
+    {:tool :circle
      :start-x start-x
      :end-x end-x
      :start-y start-y
      :end-y end-y
      :source layer-source}))
 
-(defn comment-count [document layer-source viewport]
-  (let [icon-2 (hunter-icon-2 document layer-source viewport)
+(defn comment-count [layer-source viewport]
+  (let [icon-2 (hunter-icon-2 layer-source viewport)
         start-x (+ (:end-x icon-2) (/ icon-size 2))
         end-x (+ start-x (* 1.25 icon-size))
 
         y (+ (:start-y icon-2) (/ icon-size 2))]
-    {:doc-id (:db/id document) :tool :line
+    {:tool :line
      :start-x start-x
      :end-x end-x
      :start-y y
@@ -540,19 +538,19 @@
   (map (fn [l] (shift-post-layer l x))
        post-layers))
 
-(defn landing-animation [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        ph-circle (ph-circle document layer-source viewport)
-        ph-p (ph-p document layer-source viewport)
-        vote-box (vote-box document layer-source viewport)
-        vote-left (vote-left document layer-source viewport)
-        vote-right (vote-right document layer-source viewport)
-        vote-count (vote-count document layer-source viewport)
-        post-title (post-title document layer-source viewport)
-        post-tagline (post-tagline document layer-source viewport)
-        hunter-icon-1 (hunter-icon-1 document layer-source viewport)
-        hunter-icon-2 (hunter-icon-2 document layer-source viewport)
-        comment-count (comment-count document layer-source viewport)
+(defn landing-animation [layer-source viewport]
+  (let [browser (browser layer-source viewport)
+        ph-circle (ph-circle layer-source viewport)
+        ph-p (ph-p layer-source viewport)
+        vote-box (vote-box layer-source viewport)
+        vote-left (vote-left layer-source viewport)
+        vote-right (vote-right layer-source viewport)
+        vote-count (vote-count layer-source viewport)
+        post-title (post-title layer-source viewport)
+        post-tagline (post-tagline layer-source viewport)
+        hunter-icon-1 (hunter-icon-1 layer-source viewport)
+        hunter-icon-2 (hunter-icon-2 layer-source viewport)
+        comment-count (comment-count layer-source viewport)
         post-layers [vote-box vote-left vote-right vote-count post-title post-tagline
                      hunter-icon-1 hunter-icon-2 comment-count]
         vote-box-height (Math/abs (- (:end-y vote-box) (:start-y vote-box)))
@@ -642,7 +640,7 @@
                                  ((om/get-shared owner :cast!) :landing-animation-completed)))
       (annotate-keyframes (inc max-tick)))))
 
-(defn landing-background [{:keys [doc-id subscribers]} owner]
+(defn landing-background [{:keys [subscribers]} owner]
   (reify
     om/IInitState (init-state [_] {:layer-source (utils/uuid)})
     om/IDisplayName (display-name [_] "Landing Animation")
@@ -654,8 +652,7 @@
                    (< 640 (:height viewport))
                    (ds/empty-db? @(om/get-shared owner :db))
                    (zero? (count (remove (comp :hide-in-list? second) subscribers))))
-          (run-animation owner (add-landing-cleanup (landing-animation {:db/id doc-id}
-                                                                       (om/get-state owner :layer-source)
+          (run-animation owner (add-landing-cleanup (landing-animation (om/get-state owner :layer-source)
                                                                        viewport))))))
     om/IWillUnmount
     (will-unmount [_]
