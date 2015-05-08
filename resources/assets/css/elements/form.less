@@ -164,6 +164,9 @@ input {
     }
     &:focus {
       &:valid {
+        &[data-warning] {
+          .inline(@red);
+        }
         + label {
           &[data-warning] {
             &:before {
