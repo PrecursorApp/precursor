@@ -15,6 +15,9 @@
     (when (:issue/title candidate)
       candidate)))
 
+(defn find-by-doc [db doc]
+  (d/entity db (:e (first (d/datoms db :vaet (:db/id doc) :issue/document)))))
+
 (defn vote-read-api [vote]
   (-> vote
     (select-keys [:vote/cust
@@ -45,6 +48,17 @@
     (utils/update-when-in [:issue/author] :cust/email)
     (utils/update-when-in [:issue/votes] #(set (map vote-read-api %)))
     (utils/update-when-in [:issue/comments] #(set (map comment-read-api %)))))
+
+(defn summary-read-api [issue]
+  (-> issue
+    (select-keys [:issue/title
+                  :issue/description
+                  :issue/author
+                  :issue/document
+                  :issue/created-at
+                  :frontend/issue-id])
+    (utils/update-when-in [:issue/document] :db/id)
+    (utils/update-when-in [:issue/author] :cust/email)))
 
 (defn valid-issue? [?issue]
   (let [actual-keys (set (keys (d/touch ?issue)))
