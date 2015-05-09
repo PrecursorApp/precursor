@@ -64,7 +64,7 @@
 
 (defn valid-issue? [?issue]
   (let [actual-keys (set (keys (d/touch ?issue)))
-        optional-keys #{:issue/comments :issue/votes :issue/document :issue/description :db/id}
+        optional-keys #{:issue/comments :issue/votes :issue/document :issue/description :db/id :issue/status}
         required-keys #{:issue/title :issue/author :issue/created-at :frontend/issue-id}]
     (and (set/subset? required-keys actual-keys)
          (set/subset? actual-keys (set/union optional-keys required-keys)))))
