@@ -27,9 +27,10 @@
 (defn issue-form [_ owner]
   (reify
     om/IDisplayName (display-name [_] "Issue form")
-    om/IInitState (init-state [_] {:issue-title ""})
+    om/IInitState (init-state [_] {:issue-title ""
+                                   :input-height 64})
     om/IRenderState
-    (render-state [_ {:keys [issue-title submitting?]}]
+    (render-state [_ {:keys [issue-title submitting? input-height]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
             char-limit 120
             chars-left (- char-limit (count issue-title))
@@ -66,9 +67,13 @@
                                                   (om/set-state! owner :submitting? false)))))}
           [:div.adaptive
            [:textarea (merge {:value issue-title
+                              :style {:height input-height}
                               :required "true"
                               :disabled (or submitting? (not (utils/logged-in? owner)))
-                              :onChange #(om/set-state! owner :issue-title (.. % -target -value))}
+                              :onChange #(do (om/set-state! owner :issue-title (.. % -target -value))
+                                             (let [node (.-target %)]
+                                               (when (not= (.-scrollHeight node) (.-clientHeight node))
+                                                 (om/set-state! owner :input-height (max 64 (.-scrollHeight node))))))}
                              (when (neg? chars-left)
                                {:data-warning "true"}))]
            [:label (merge {:data-label (if (utils/logged-in? owner)
