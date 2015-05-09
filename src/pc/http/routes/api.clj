@@ -21,8 +21,7 @@
             [slingshot.slingshot :refer (try+ throw+)]))
 
 (defpage new [:post "/api/v1/document/new"] [req]
-  (def debug-req req)
-  (let [read-only? (get-in req [:params :read-only])]
+  (let [read-only? (some-> req :body slurp edn/read-string :read-only)]
     (if (:subdomain req)
       (if (and (:team req)
                (auth/logged-in? req)

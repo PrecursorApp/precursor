@@ -53,7 +53,7 @@
                                                                        (throw "Couldn't create doc."))))]
                                                     (d/transact! issue-db [{:db/id -1
                                                                             :issue/created-at (datetime/server-date)
-                                                                            :issue/title issue-title
+                                                                            :issue/title (str/trim issue-title)
                                                                             :issue/author (:cust/email cust)
                                                                             :issue/document doc-id
                                                                             :frontend/issue-id fe-id}])
@@ -110,7 +110,7 @@
                                               (d/transact! issue-db [{:db/id issue-id
                                                                       :issue/comments (merge {:db/id -1
                                                                                               :comment/created-at (datetime/server-date)
-                                                                                              :comment/body comment-body
+                                                                                              :comment/body (str/trim comment-body)
                                                                                               :comment/author (:cust/email cust)
                                                                                               :frontend/issue-id (utils/squuid)}
                                                                                              (when parent-id
@@ -151,12 +151,12 @@
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
             editable? (= (:cust/email cust) (:issue/author issue))
             editing? (and editable? (om/get-state owner :editing?))
+            clear-form #(om/update-state! owner (fn [s] (assoc s :issue-description nil :editing? false)))
             submit #(do (utils/stop-event %)
                         (when issue-description
                           (d/transact! issue-db [{:db/id (:db/id issue)
-                                                  :issue/description issue-description}]))
-                        (om/set-state! owner :issue-description nil)
-                        (om/set-state! owner :editing? false))]
+                                                  :issue/description (str/trim issue-description)}]))
+                        (clear-form))]
         (html
          (if editing?
            [:form.issue-description-form {:on-submit submit}
@@ -164,6 +164,9 @@
              [:textarea {:ref "description-input"
                          :value (or issue-description (:issue/description issue ""))
                          :required "true"
+                         :on-key-down #(if (= "Escape" (.-key %))
+                                         (clear-form)
+                                         true)
                          :on-change #(om/set-state! owner :issue-description (.. % -target -value))
                          :on-blur submit}]
              [:label {:data-label "Description"
