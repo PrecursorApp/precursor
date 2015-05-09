@@ -325,13 +325,13 @@
            [:span (datetime/month-day (:comment/created-at comment))]
            (when (utils/logged-in? owner)
              (list
-               [:span.pre "  •  "]
-               [:a {:role "button"
-                    :on-click #(do
-                                 (if (om/get-state owner :replying?)
-                                   (om/set-state! owner :replying? false)
-                                   (om/set-state! owner :replying? true)))}
-                (if (om/get-state owner :replying?) "Cancel" "Reply")]))]
+              [:span.pre "  •  "]
+              [:a {:role "button"
+                   :on-click #(do
+                                (if (om/get-state owner :replying?)
+                                  (om/set-state! owner :replying? false)
+                                  (om/set-state! owner :replying? true)))}
+               (if (om/get-state owner :replying?) "Cancel" "Reply")]))]
 
           (when (om/get-state owner :replying?)
             [:div.content
@@ -339,16 +339,19 @@
                                      :parent-id comment-id
                                      :close-callback #(om/set-state! owner :replying? false)}
                        {:react-key "comment-form"})])
-          (when (and (not (contains? ancestors (:db/id comment))) ; don't render cycles
-                     (pos? (count rendered-child-ids)))
-            [:div.comments {:key "child-comments"}
-             (unrendered-comments-notice all-child-ids rendered-child-ids #(om/update-state! owner (fn [s]
-                                                                                                     (assoc s :rendered-child-ids (:all-child-ids s)))))
+          [:div.comments {:key "child-comments"}
+           (unrendered-comments-notice all-child-ids rendered-child-ids
+                                       #(om/update-state! owner (fn [s]
+                                                                  (assoc s :rendered-child-ids (:all-child-ids s)))))
+
+
+           (when (and (not (contains? ancestors (:db/id comment))) ; don't render cycles
+                      (pos? (count rendered-child-ids)))
              (for [id (reverse (sort-by (fn [i] (:comment/created-at (d/entity @issue-db i))) rendered-child-ids))]
                (om/build single-comment {:issue-id issue-id
                                          :comment-id id}
                          {:key :comment-id
-                          :opts {:ancestors (conj ancestors (:db/id comment))}}))])])))))
+                          :opts {:ancestors (conj ancestors (:db/id comment))}})))]])))))
 
 
 (defn comments [{:keys [issue-id]} owner]
