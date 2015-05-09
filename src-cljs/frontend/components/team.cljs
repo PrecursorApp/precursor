@@ -50,7 +50,7 @@
                           (om/set-state! owner :permission-grant-email "")
                           (utils/stop-event e))]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:p.make
             "Any docs you create in the " (:team/subdomain team)
@@ -101,7 +101,7 @@
                                             :where [?t :access-request/team ?team-uuid]]
                                           @team-db (:team/uuid team))]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:h2.make
             "Join your team"]
@@ -135,7 +135,7 @@
     om/IRenderState
     (render-state [_ {:keys [teams]}]
       (html
-        [:div.menu-view
+        [:section.menu-view
 
          [:a.vein.make.menu-new-team {:href (if (empty? teams) "/pricing" "/trial")}
           (common/icon :plus)
@@ -164,7 +164,7 @@
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.veins
            (if (auth/has-team-permission? app (:team/uuid (:team app)))
              (list

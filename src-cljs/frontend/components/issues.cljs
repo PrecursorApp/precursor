@@ -481,7 +481,7 @@
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
-         [:div.menu-view.issue.make
+         [:section.menu-view.issue.make
           [:div.issue-summary {:key "summary"}
            (om/build issue-card {:issue-id issue-id})
            (om/build description-form {:issue issue :issue-id issue-id})]
@@ -534,7 +534,7 @@
     (render-state [_ {:keys [all-issue-ids rendered-issue-ids render-time]}]
       (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
         (html
-         [:div.menu-view.issues-list.make
+         [:section.menu-view.issues-list.make
           [:div.content
            (om/build issue-form {})]
           [:div.issue-cards

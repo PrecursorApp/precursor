@@ -109,7 +109,7 @@
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:a.vein.make {:href (urls/overlay-path doc-id "info")}
            (common/icon :info)
            [:span "About"]]
@@ -422,7 +422,7 @@
                                    (not (auth/owner? @db doc (get-in app [:cust])))
                                    :not-creator)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           (case (:document/privacy doc)
             :document.privacy/public (om/build public-sharing app)
             :document.privacy/private (om/build private-sharing app)
@@ -504,7 +504,7 @@
       (let [cast! (om/get-shared owner :cast!)
             doc-id (:document/id app)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:a.vein.make {:href (urls/absolute-doc-svg doc-id :query {:dl true})
                          :target "_self"}
            (common/icon :file-svg) "Download as SVG"]
@@ -531,7 +531,7 @@
       (let [cast! (om/get-shared owner :cast!)
             doc-id (:document/id app)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:h2.make
             "What is Precursor?"]
@@ -585,7 +585,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:table.shortcuts-items
             [:tbody
@@ -708,7 +708,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:h2.make
             "Let's change that name."]
