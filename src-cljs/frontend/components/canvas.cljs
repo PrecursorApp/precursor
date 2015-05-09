@@ -408,7 +408,7 @@
             font-size 24]
         (dom/g nil
           (when-let [issue (issue-model/find-by-doc-id @issue-db document-id)]
-            (dom/g nil
+            (dom/g #js {:className "layer"}
               (svg-element {:layer/type :layer.type/text
                             :layer/text (str "Feature request -- " (gstring/truncate (:issue/title issue) 40))
                             :layer/start-x 100
