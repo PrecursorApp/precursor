@@ -131,6 +131,8 @@
 }
 .issue-description-in,
 .issue-description-out {
+  white-space: pre-wrap; // honors new line
+  word-break: break-word;
   + .comment-foot {
     span {
       animation: in-fade @run_slow @run_fast backwards;
@@ -196,6 +198,8 @@
 .comment-body {
   padding-left: @menu_padding;
   padding-right: @menu_padding;
+  white-space: pre-wrap; // honors new line
+  word-break: break-word;
 }
 .issue-foot,
 .comment-foot {
