@@ -132,8 +132,7 @@
   (reify
     om/IDisplayName (display-name [_] "Description form")
     om/IInitState (init-state [_] {:issue-description nil
-                                   :editing? false
-                                   :to-not-edit? false})
+                                   :editing? nil})
     om/IRenderState
     (render-state [_ {:keys [issue-description]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
@@ -172,16 +171,15 @@
                                              :on-click submit}
                   [:span "Save"]]))]]
 
-           [:div.comment {:class (when-not (om/get-state owner :to-not-edit?) " make ")}
-            [:div.issue-description-out {:class (when (om/get-state owner :to-not-edit?) " to-not-edit ")}
+           ;; Don't show sliding animation when the description replaces the form after an edit
+           [:div.comment {:class (when (nil? (om/get-state owner :editing?)) " make ")}
+            [:div.issue-description-out {:class (when (nil? (om/get-state owner :editing?)) " to-not-edit ")}
              (if (:issue/description issue)
                (:issue/description issue)
 
                (if editable?
                  [:a {:role "button"
-                      :on-click #(do
-                                   (om/set-state! owner :editing? true)
-                                   (om/set-state! owner :to-not-edit? true))}
+                      :on-click #(om/set-state! owner :editing? true)}
                   [:span "+ Add a description."]]
 
                  [:span "No description yet."]))]
@@ -198,9 +196,7 @@
                  [:span.pre "  •  "]
                  [:a.issue-description-edit {:role "button"
                                              :key "Edit"
-                                             :on-click #(do
-                                                          (om/set-state! owner :editing? true)
-                                                          (om/set-state! owner :to-not-edit? true))}
+                                             :on-click #(om/set-state! owner :editing? true)}
                   [:span "Edit"]]))]]))))))
 
 ;; XXX: handle logged-out users
