@@ -62,7 +62,8 @@
                                                                                           :frontend/issue-id (utils/squuid)
                                                                                           :vote/cust (:cust/email cust)}}])
                                                     (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
-                                                  (om/set-state! owner :issue-title ""))
+                                                  (om/set-state! owner :issue-title "")
+                                                  (om/set-state! owner :input-height 64))
                                                 (finally
                                                   (om/set-state! owner :submitting? false)))))}
           [:div.adaptive
