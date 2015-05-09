@@ -222,23 +222,26 @@
                                              :on-click #(om/set-state! owner :editing? true)}
                   [:span "Edit"]]))]]))))))
 
-;; XXX: handle logged-out users
 (defn vote-box [{:keys [issue]} owner]
   (reify
     om/IDisplayName (display-name [_] "Vote box")
     om/IRender
     (render [_]
       (let [{:keys [cast! issue-db cust]} (om/get-shared owner)
-            voted? (d/q '[:find ?e .
-                          :in $ ?issue-id ?email
-                          :where
-                          [?issue-id :issue/votes ?e]
-                          [?e :vote/cust ?email]]
-                        @issue-db (:db/id issue) (:cust/email cust))]
+            can-vote? (utils/logged-in? owner)
+            voted? (when can-vote?
+                     (d/q '[:find ?e .
+                            :in $ ?issue-id ?email
+                            :where
+                            [?issue-id :issue/votes ?e]
+                            [?e :vote/cust ?email]]
+                          @issue-db (:db/id issue) (:cust/email cust)))]
         (html
          [:div.issue-vote (merge {:role "button"
-                                  :class (if voted? " voted " " novote ")}
-                                 (when-not voted?
+                                  :class (when can-vote? (if voted? " voted " " novote "))}
+                                 (when-not can-vote?
+                                   {:title "Please log in to vote."})
+                                 (when (and (not voted?) can-vote?)
                                    {:on-click #(d/transact! issue-db
                                                             [{:db/id (:db/id issue)
                                                               :issue/votes {:db/id -1

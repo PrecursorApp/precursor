@@ -65,6 +65,7 @@
     }
   }
   &.novote {
+    cursor: pointer;
     &:hover {
       border-color: @color_select;
       .issue-votes {
@@ -78,9 +79,6 @@
         transition: @run (@run_fast / 2) @bezier_deform;
       }
     }
-  }
-  &:not(.voted) {
-    cursor: pointer;
   }
 }
 .issue-votes,
