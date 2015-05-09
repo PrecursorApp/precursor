@@ -20,7 +20,7 @@
                                      ;; probably a uuid type
                                      :cust/http-sesion-key String}))
 
-(def admin-emails #{"dwwoelfel@gmail.com" "danny.newidea@gmail.com"})
+(def admin-emails #{"daniel@precursorapp.com" "danny@precursorapp.com"})
 
 (defn all [db]
   (d/q '{:find [[?e ...]]

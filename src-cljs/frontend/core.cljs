@@ -95,6 +95,7 @@
                (reader/read-string))
         team (some-> (aget js/window "Precursor" "team")
                (reader/read-string))
+        admin? (aget js/window "Precursor" "admin?")
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
                            (reader/read-string))
         initial-issue-entities (some-> (aget js/window "Precursor" "initial-issue-entities")
@@ -104,6 +105,7 @@
         issue-db (db/make-initial-db initial-issue-entities)]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
+                     :admin? admin?
                      :tab-id tab-id
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
@@ -191,6 +193,7 @@
              ;; that ever changes.
              :cust                  (:cust @state)
              :sente                 (:sente @state)
+             :admin?                (:admin? @state)
              }
     :instrument (fn [f cursor m]
                   (om/build* f cursor (assoc m :descriptor instrumentation/instrumentation-methods)))}))
