@@ -100,30 +100,35 @@
 (defn comment-form [{:keys [issue-id parent-id close-callback]} owner {:keys [issue-db]}]
   (reify
     om/IDisplayName (display-name [_] "Comment form")
-    om/IInitState (init-state [_] {:comment-body ""})
+    om/IInitState (init-state [_] {:comment-body ""
+                                   :input-height 64})
     om/IRenderState
-    (render-state [_ {:keys [comment-body]}]
+    (render-state [_ {:keys [comment-body input-height]}]
       (let [issue-db (om/get-shared owner :issue-db)
             cust (om/get-shared owner :cust)]
         (html
          [:form.comment-form {:on-submit #(do (utils/stop-event %)
-                                            (when (seq comment-body)
-                                              (d/transact! issue-db [{:db/id issue-id
-                                                                      :issue/comments (merge {:db/id -1
-                                                                                              :comment/created-at (datetime/server-date)
-                                                                                              :comment/body (str/trim comment-body)
-                                                                                              :comment/author (:cust/email cust)
-                                                                                              :frontend/issue-id (utils/squuid)}
-                                                                                             (when parent-id
-                                                                                               {:comment/parent parent-id}))}])
-                                              (om/set-state! owner :comment-body ""))
-                                            (when (fn? close-callback)
-                                              (close-callback)))}
+                                              (when (seq comment-body)
+                                                (d/transact! issue-db [{:db/id issue-id
+                                                                        :issue/comments (merge {:db/id -1
+                                                                                                :comment/created-at (datetime/server-date)
+                                                                                                :comment/body (str/trim comment-body)
+                                                                                                :comment/author (:cust/email cust)
+                                                                                                :frontend/issue-id (utils/squuid)}
+                                                                                               (when parent-id
+                                                                                                 {:comment/parent parent-id}))}])
+                                                (om/set-state! owner :comment-body ""))
+                                              (when (fn? close-callback)
+                                                (close-callback)))}
           [:div.adaptive
            [:textarea {:required true
+                       :style {:height input-height}
                        :value comment-body
                        :disabled (when-not (utils/logged-in? owner) true)
-                       :onChange #(om/set-state! owner :comment-body (.. % -target -value))}]
+                       :onChange #(do (om/set-state! owner :comment-body (.. % -target -value))
+                                      (let [node (.-target %)]
+                                        (when (not= (.-scrollHeight node) (.-clientHeight node))
+                                          (om/set-state! owner :input-height (max 64 (.-scrollHeight node))))))}]
            [:label {:data-label (if (utils/logged-in? owner)
                                   "What do you think?"
                                   "Sign in to comment on this issue.")
@@ -324,7 +329,8 @@
            [:span (:comment/author comment)]
            [:span " on "]
            [:span (datetime/month-day (:comment/created-at comment))]
-           (when (utils/logged-in? owner)
+           (when (and (utils/logged-in? owner)
+                      (> 4 (count ancestors)))
              (list
               [:span.pre "  •  "]
               [:a {:role "button"
