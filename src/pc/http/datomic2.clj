@@ -4,8 +4,9 @@
             [clojure.tools.logging :as log]
             [datomic.api :refer [db q] :as d]
             [pc.datomic :as pcd]
-            [pc.datomic.web-peer :as web-peer])
-  (:import java.util.UUID))
+            [pc.datomic.web-peer :as web-peer]
+            [pc.models.issue :as issue-model])
+  (:import [java.util UUID]))
 
 
 (defn get-float-attrs [db]
@@ -94,9 +95,10 @@
 (defn can-modify?
   "If the user has read scope, makes sure that they don't modify existing txes"
   [db document-id scope {:keys [remainder multiple]} [type e a v :as transaction]]
-  (cond (= scope :admin) true
+  (cond (= scope :admin) (contains? #{:db/add :db/retract} type)
         (= scope :read) (and (= remainder (mod e multiple))
-                             (not (web-peer/taken-id? db document-id e)))))
+                             (not (web-peer/taken-id? db document-id e))
+                             (contains? #{:db/add :db/retract} type))))
 
 (defn remove-float-conflicts [txes]
   (vals (reduce (fn [tx-index [type e a v :as tx]]
@@ -143,12 +145,12 @@
                               uuid-attrs (get-uuid-attrs db)
                               server-timestamp (or receive-instant (java.util.Date.))]
                           (some->> datoms
-                            (map pcd/datom->transaction)
-                            (map (partial coerce-floats float-attrs))
-                            (map (partial coerce-uuids uuid-attrs))
-                            (map (partial coerce-server-timestamp server-timestamp))
-                            (map (partial coerce-session-uuid session-uuid))
-                            (map (partial coerce-cust-uuid cust-uuid))
+                            (map (comp (partial coerce-cust-uuid cust-uuid)
+                                       (partial coerce-session-uuid session-uuid)
+                                       (partial coerce-server-timestamp server-timestamp)
+                                       (partial coerce-uuids uuid-attrs)
+                                       (partial coerce-floats float-attrs)
+                                       pcd/datom->transaction))
                             (filter (partial whitelisted? access-scope))
                             (filter (partial can-modify? db document-id access-scope frontend-id-seed))
                             (remove-float-conflicts)
@@ -162,3 +164,172 @@
                                             (when team-id {:transaction/team team-id})
                                             (when cust-uuid {:cust/uuid cust-uuid}))])
                             (d/transact conn)))}}))
+
+(def issue-whitelist #{:vote/cust
+                       :comment/body
+                       :comment/author
+                       :comment/created-at
+                       :comment/parent
+                       :issue/title
+                       :issue/description
+                       :issue/author
+                       :issue/document
+                       :issue/created-at
+                       :issue/votes
+                       :issue/comments
+                       :frontend/issue-id})
+
+(defn issue-whitelisted? [[type e a v :as tx]]
+  (contains? issue-whitelist a))
+
+(defn coerce-times [instant [type e a v :as transaction]]
+  (if (contains? #{:issue/created-at :comment/created-at} a)
+    [type e a instant]
+    transaction))
+
+(defn coerce-cust [cust [type e a v :as transaction]]
+  (if (contains? #{:comment/author :issue/author :vote/cust} a)
+    [type e a (:db/id cust)]
+    transaction))
+
+(def issue-append-only-attributes #{:vote/cust
+                                    :comment/author
+                                    :comment/created-at
+                                    :frontend/issue-id
+                                    :comment/parent
+                                    :issue/author
+                                    :issue/created-at
+                                    :issue/document})
+
+(def issue-author-only-attributes #{:vote/cust
+                                    :comment/body
+                                    :comment/author
+                                    :comment/created-at
+                                    :comment/parent
+                                    :issue/title
+                                    :issue/created-at
+                                    :issue/description
+                                    :issue/author
+                                    :issue/document
+                                    :frontend/issue-id})
+
+(defn issue-can-modify? [db cust find-by-frontend-id-memo [type e a v :as transaction]]
+  (and (vector? e)
+       (= 2 (count e))
+       (= :frontend/issue-id (first e))
+       (or (not= :frontend/issue-id a) (not= :db/retract type))
+       (contains? #{:db/add :db/retract} type)
+       (let [frontend-id (second e)]
+         (if-let [ent (find-by-frontend-id-memo db frontend-id)]
+           (if (contains? issue-author-only-attributes a)
+             (or (= (:db/id cust) (:db/id (:issue/author ent)))
+                 (= (:db/id cust) (:db/id (:vote/cust ent)))
+                 (= (:db/id cust) (:db/id (:comment/author ent))))
+             (not (contains? issue-append-only-attributes a)))
+           ;; new entity
+           true))))
+
+(defn type-check-new-entities [find-by-frontend-id-memo db txes]
+  (doseq [[_ entity-txes] (vec (remove (fn [[[_ frontend-id] txes]]
+                                         (find-by-frontend-id-memo db frontend-id))
+                                       (group-by second txes)))]
+    (reduce (fn [acc [type e a v]]
+              (assoc acc a v))
+            {} entity-txes))
+  txes)
+
+(defn add-vote-contraints [find-by-frontend-id-memo db txes]
+  (let [vote-txes (filterv (fn [tx] (= :vote/cust (nth tx 2))) txes)]
+    (concat txes
+            (for [[_ e _ v] vote-txes
+                  :let [issue-tx (first (filter #(and (= e (nth % 3))
+                                                      (= :issue/votes (nth % 2)))
+                                                txes))
+                        frontend-id (second (second issue-tx))
+                        issue-id (:db/id (find-by-frontend-id-memo db frontend-id))]]
+              [:db/add e :vote/cust-issue (UUID. v issue-id)]))))
+
+(defn all-frontend-ids [txes]
+  (set/union (set (map (comp second second) txes))
+             (reduce (fn [acc [type e a v]]
+                       (if (vector? v)
+                         (conj acc (second v))
+                         acc))
+                     #{} txes)))
+
+(defn add-issue-frontend-ids [find-by-frontend-id-memo db txes]
+  (let [id-map (zipmap (all-frontend-ids txes)
+                       (repeatedly #(d/tempid :db.part/user)))
+        ;; matches tempid with issue-id
+        ;; TODO: should we use value for identity type and look up ids?
+        frontend-id-txes (map (fn [[frontend-id tempid]] [:db/add tempid :frontend/issue-id frontend-id]) id-map)]
+    (concat
+     (map (fn [[type e a v]]
+            [type
+             (get id-map (second e)) ; replace lookup-ref with tempid
+             a
+             (if (vector? v) ; replace lookup-ref in value with tempid
+               (get id-map (second v))
+               v)])
+          txes)
+     frontend-id-txes)))
+
+;; TODO: generalize this--probably need to start setting that entity/type field
+(defn issue-valid-entity? [ent]
+  (or (issue-model/valid-issue? ent)
+      (issue-model/valid-comment? ent)
+      (issue-model/valid-vote? ent)))
+
+(defn type-check-new-entities [db txes]
+  (let [{:keys [tempids db-after]} (d/with db txes)]
+    (doseq [id (vals tempids)
+            :let [ent (d/entity db-after id)]]
+      (assert (issue-valid-entity? ent)
+              (format "issue-tx contained txes that would have created an invalid state in the db %s for %s" txes ent))))
+  txes)
+
+(defn debug-def [txes]
+  (def debug-txes txes)
+  txes)
+
+(defn transact-issue!
+  "Takes datoms from tx-data on the frontend and applies them to the backend. Expects datoms to be maps.
+   Returns backend's version of the datoms."
+  [datoms {:keys [client-id session-uuid cust receive-instant]}]
+  (cond (empty? datoms)
+        {:status 400 :body (pr-str {:error "datoms is required and should be non-empty"})}
+        (< 1500 (count datoms))
+        {:status 400 :body (pr-str {:error "You can only transact 1500 datoms at once"})}
+        :else
+        {:status 200
+         :body {:datoms (let [db (pcd/default-db)
+                              conn (pcd/conn)
+                              txid (d/tempid :db.part/tx)
+                              float-attrs (get-float-attrs db)
+                              uuid-attrs (get-uuid-attrs db)
+                              server-timestamp (or receive-instant (java.util.Date.))
+                              find-by-frontend-id-memo (memoize (fn [db frontend-id]
+                                                                  (d/entity db (:e (first (d/datoms db :avet :frontend/issue-id
+                                                                                                    frontend-id))))))]
+                          (some->> datoms
+                            (map (comp (partial coerce-session-uuid session-uuid)
+                                       (partial coerce-times server-timestamp)
+                                       (partial coerce-uuids uuid-attrs)
+                                       (partial coerce-floats float-attrs)
+                                       (partial coerce-cust cust)
+                                       pcd/datom->transaction))
+                            (filter issue-whitelisted?)
+                            (remove-float-conflicts)
+                            (filter (partial issue-can-modify? db cust find-by-frontend-id-memo))
+                            (add-vote-contraints find-by-frontend-id-memo db)
+                            (add-issue-frontend-ids find-by-frontend-id-memo db)
+                            seq
+                            (type-check-new-entities db)
+                            (concat [(merge {:db/id txid
+                                             :session/uuid session-uuid
+                                             :session/client-id client-id
+                                             :transaction/broadcast true
+                                             :transaction/issue-tx? true
+                                             :cust/uuid (:cust/uuid cust)})])
+                            (d/transact conn)
+                            deref))}}))

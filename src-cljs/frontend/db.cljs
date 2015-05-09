@@ -8,14 +8,30 @@
             [frontend.utils.seq :refer (dissoc-in)]
             [taoensso.sente]))
 
-(def schema {:layer/child {:db/cardinality :db.cardinality/many}
-             :layer/points-to {:db/cardinality :db.cardinality/many
-                               :db/type :db.type/ref}
-             :error/id {:db/unique :db.unique/identity}
-             :team/plan {:db/type :db.type/ref}
-             :plan/active-custs {:db/cardinality :db.cardinality/many}
-             :plan/invoices {:db/cardinality :db.cardinality/many
-                             :db/type :db.type/ref}})
+(def doc-schema {:layer/child {:db/cardinality :db.cardinality/many}
+                 :layer/points-to {:db/cardinality :db.cardinality/many
+                                   :db/type :db.type/ref}
+                 :error/id {:db/unique :db.unique/identity}})
+
+(def team-schema {:team/plan {:db/type :db.type/ref}
+                  :plan/active-custs {:db/cardinality :db.cardinality/many}
+                  :plan/invoices {:db/cardinality :db.cardinality/many
+                                  :db/type :db.type/ref}})
+
+(def issue-schema {:issue/votes {:db/type :db.type/ref
+                                 :db/cardinality :db.cardinality/many}
+                   :issue/comments {:db/type :db.type/ref
+                                    :db/cardinality :db.cardinality/many}
+                   :frontend/issue-id {:db/unique :db.unique/identity}
+                   :comment/parent {:db/type :db.type/ref}})
+
+(def schema (merge doc-schema team-schema issue-schema))
+
+(def issue-ref-attrs (reduce (fn [acc [attr props]]
+                               (if (keyword-identical? :db.type/ref (:db/type props))
+                                 (conj acc attr)
+                                 acc))
+                             #{} issue-schema))
 
 (defonce listeners (atom {}))
 
@@ -49,6 +65,18 @@
                                                                         :datom-group datom-group
                                                                         :annotations annotations}])))))
 
+(defn handle-callbacks [db tx-report]
+  (let [[eids attrs] (reduce (fn [[eids attrs] datom]
+                               [(conj eids (:e datom))
+                                (conj attrs (:a datom))])
+                             [#{} #{}] (:tx-data tx-report))]
+    (doseq [eid eids
+            [k callback] (get-in @listeners [db :entity-listeners (str eid)])]
+      (callback tx-report))
+    (doseq [attr attrs
+            [k callback] (get-in @listeners [db :attribute-listeners attr])]
+      (callback tx-report))))
+
 (defn setup-listener! [db key comms sente-event annotations undo-state sente-state]
   (d/listen!
    db
@@ -56,16 +84,7 @@
    (fn [tx-report]
      ;; TODO: figure out why I can send tx-report through controls ch
      ;; (cast! :db-updated {:tx-report tx-report})
-     (let [[eids attrs] (reduce (fn [[eids attrs] datom]
-                                  [(conj eids (:e datom))
-                                   (conj attrs (:a datom))])
-                                [#{} #{}] (:tx-data tx-report))]
-       (doseq [eid eids
-               [k callback] (get-in @listeners [db :entity-listeners (str eid)])]
-         (callback tx-report))
-       (doseq [attr attrs
-               [k callback] (get-in @listeners [db :attribute-listeners attr])]
-         (callback tx-report)))
+     (handle-callbacks db tx-report)
      (when (first (filter #(= :server/timestamp (:a %)) (:tx-data tx-report)))
        (put! (:controls comms) [:chat-db-updated []]))
      (when (-> tx-report :tx-meta :can-undo?)
@@ -73,10 +92,42 @@
        (when-not (-> tx-report :tx-meta :undo)
          (swap! undo-state assoc-in [:last-undo] nil)))
      (when-not (or (-> tx-report :tx-meta :server-update)
-                   (-> tx-report :tx-meta :bot-layer))
+                   (-> tx-report :tx-meta :bot-layer)
+                   (-> tx-report :tx-meta :frontend-only))
        (let [datoms (->> tx-report :tx-data (mapv ds/datom-read-api))]
          (doseq [datom-group (partition-all 1000 datoms)]
            (send-datoms-to-server sente-state sente-event datom-group annotations comms)))))))
+
+(defn get-issue-id [e tx-report]
+  (or (:frontend/issue-id (d/entity (:db-after tx-report) e))
+      (:frontend/issue-id (d/entity (:db-before tx-report) e))))
+
+(defn update-ref-attr [datom tx-report]
+  (if (contains? issue-ref-attrs (:a datom))
+    (update-in datom [:v] (fn [v] [:frontend/issue-id (get-issue-id v tx-report)]))
+    datom))
+
+(defn setup-issue-listener! [db key comms sente-state]
+  (d/listen!
+   db
+   key
+   (fn [tx-report]
+     (handle-callbacks db tx-report)
+
+     (when-not (or (-> tx-report :tx-meta :server-update)
+                   (-> tx-report :tx-meta :bot-layer)
+                   (-> tx-report :tx-meta :frontend-only))
+       (let [datoms (->> tx-report
+                      :tx-data
+                      (mapv (fn [datom]
+                              (-> datom
+                                ds/datom-read-api
+                                (update-in [:e]
+                                           (fn [e]
+                                             [:frontend/issue-id (get-issue-id e tx-report)]))
+                                (update-ref-attr tx-report)))))]
+         (doseq [datom-group (partition-all 1000 datoms)]
+           (send-datoms-to-server sente-state :issue/transaction datom-group {} comms)))))))
 
 (defn empty-db? [db]
   (empty? (d/datoms db :eavt)))

@@ -18,6 +18,7 @@
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
             [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
+            [pc.http.issues :as issues-http]
             [pc.http.plan :as plan-http]
             [pc.http.sente.sliding-send :as sliding-send]
             [pc.http.urls :as urls]
@@ -26,6 +27,7 @@
             [pc.models.chat :as chat]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
+            [pc.models.issue :as issue-model]
             [pc.models.layer :as layer-model]
             [pc.models.permission :as permission-model]
             [pc.models.plan :as plan-model]
@@ -115,6 +117,11 @@
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
       (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid admin-data) team-uuid)
       ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:team/transaction (assoc admin-data :tx-data server-timestamps)]))))
+
+(defn notify-issue-transaction [db data]
+  (doseq [uid @issues-http/issue-subs]
+    (log/infof "notifying %s about new issue transactions" uid)
+    ((:send-fn @sente-state) uid [:issue/transaction data])))
 
 (defn has-document-access? [doc-id req scope]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
@@ -222,6 +229,7 @@
     ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))
   (clean-team-subs client-id)
   (clean-document-subs client-id)
+  (issues-http/unsubscribe client-id)
   (swap! client-stats dissoc client-id))
 
 (defn subscribe-to-team [team-uuid uuid cust]
@@ -235,6 +243,7 @@
 (defn ws-handler-dispatch-fn [req]
   (-> req :event first))
 
+;; additional handlers defined in pc.http.issues
 (defmulti ws-handler ws-handler-dispatch-fn)
 
 (defmethod ws-handler :default [req]
@@ -292,6 +301,14 @@
                         {:team/uuid team-uuid
                          :entities [(plan-model/read-api (:team/plan team))]
                          :entity-type :plan}])))
+
+(defmethod ws-handler :issue/subscribe [req]
+  (log/infof "subscribing to issues for %s" (:client-id req))
+  (issues-http/subscribe req))
+
+(defmethod ws-handler :issue/unsubscribe [req]
+  (log/infof "unsubscribing from issues for %s" (:client-id req))
+  (issues-http/unsubscribe (:client-id req)))
 
 (defn subscriber-read-api [subscriber]
   (-> subscriber
@@ -370,6 +387,12 @@
                          :subscribers (reduce (fn [acc [client-id subscriber]]
                                                 (assoc acc client-id (subscriber-read-api subscriber)))
                                               {} (get subs document-id))}])
+
+    (when-let [issue (issue-model/find-by-doc (:db req) {:db/id document-id})]
+      (log/infof "sending issue for %s to %s" document-id client-id)
+      (send-fn client-id [:issue/db-entities
+                          {:entities [(issue-model/summary-read-api issue)]
+                           :entity-type :issue}]))
 
     ;; These are interesting b/c they're read-only. And by "interesting", I mean "bad"
     ;; We should find a way to let the frontend edit things
@@ -512,6 +535,12 @@
                            :timestamp (:receive-instant req)})
       (when ?reply-fn
         (?reply-fn {:rejected-datoms rejects})))))
+
+(defmethod ws-handler :issue/transaction [{:keys [client-id ?data ?reply-fn] :as req}]
+  (issues-http/handle-transaction req))
+
+(defmethod ws-handler :issue/set-status [{:keys [client-id ?data ?reply-fn] :as req}]
+  (issues-http/set-status req))
 
 (defmethod ws-handler :frontend/mouse-position [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)

@@ -100,6 +100,10 @@
                          :show-landing? :overlays
                          :frontend-id-state]))))
 
+(defn reset-camera [state]
+  (-> state
+    (merge (select-keys (initial-state) [:camera]))))
+
 (defn clear-subscribers [state]
   (assoc state :subscribers (:subscribers (initial-state))))
 

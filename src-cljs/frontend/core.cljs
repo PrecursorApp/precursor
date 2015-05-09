@@ -95,12 +95,17 @@
                (reader/read-string))
         team (some-> (aget js/window "Precursor" "team")
                (reader/read-string))
+        admin? (aget js/window "Precursor" "admin?")
         initial-entities (some-> (aget js/window "Precursor" "initial-entities")
                            (reader/read-string))
+        initial-issue-entities (some-> (aget js/window "Precursor" "initial-issue-entities")
+                                 (reader/read-string))
         tab-id (utils/uuid)
-        sente-id (aget js/window "Precursor" "sente-id")]
+        sente-id (aget js/window "Precursor" "sente-id")
+        issue-db (db/make-initial-db initial-issue-entities)]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
+                     :admin? admin?
                      :tab-id tab-id
                      :sente-id sente-id
                      :client-id (str sente-id "-" tab-id)
@@ -108,6 +113,7 @@
                      ;; team entities go into the team namespace, so we need a separate database
                      ;; to prevent conflicts
                      :team-db (db/make-initial-db nil)
+                     :issue-db issue-db
                      :document/id document-id
                      ;; Communicate to nav channel that we shouldn't reset db
                      :initial-state true
@@ -179,13 +185,15 @@
     :shared {:comms                 comms
              :db                    (:db @state)
              :team-db               (:team-db @state)
+             :issue-db              (:issue-db @state)
              :cast!                 cast!
              :_app-state-do-not-use state
              :handlers              handlers
              ;; Can't log in without a page refresh, have to re-evaluate this if
              ;; that ever changes.
-             :logged-in?            (boolean (seq (:cust @state)))
+             :cust                  (:cust @state)
              :sente                 (:sente @state)
+             :admin?                (:admin? @state)
              }
     :instrument (fn [f cursor m]
                   (om/build* f cursor (assoc m :descriptor instrumentation/instrumentation-methods)))}))
@@ -222,6 +230,8 @@
                                                                            :handle-mouse-move  handle-mouse-move
                                                                            :handle-key-down    handle-key-down
                                                                            :handle-key-up      handle-key-up})]
+
+    (db/setup-issue-listener! (:issue-db @state) "issue-db" comms (:sente @state))
 
     ;; allow figwheel in dev-cljs access to this function
     (reset! frontend.careful/om-setup-debug om-setup)

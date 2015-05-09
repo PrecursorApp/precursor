@@ -5,8 +5,20 @@
 (defn clear-overlays [state]
   (assoc-in state state/overlays-path []))
 
-(defn add-overlay [state overlay]
-  (update-in state state/overlays-path conj overlay))
+(defn add-overlay
+  "Adds overlay, or takes the overlay state back to the point where the
+   given overlay appears in the stack.
+  [:a :b :c] -> add :b -> [:a :b]
+  [:a :b :c] -> add :e -> [:a :b :c :e]"
+  [state overlay]
+  (let [overlays (get-in state state/overlays-path)]
+    (loop [next-overlays []
+           remaining-overlays overlays]
+      (if (or (= overlay (first remaining-overlays))
+              (empty? remaining-overlays))
+        (assoc-in state state/overlays-path (conj next-overlays overlay))
+        (recur (conj next-overlays (first remaining-overlays))
+               (rest remaining-overlays))))))
 
 (defn safe-pop [v]
   (if (empty? v)
@@ -48,3 +60,25 @@
 (defn menu-overlay-visible? [state]
   (and (overlay-visible? state)
        (seq (set/difference (set (get-in state state/overlays-path)) roster-overlays))))
+
+(defn add-issues-overlay [state]
+  (let [overlays (conj (vec (remove #(or (keyword-identical? % :issues)
+                                         (= "issues" (namespace %)))
+                                    (get-in state state/overlays-path)))
+                       :issues)]
+    (-> state
+      (assoc-in [:layer-properties-menu :opened?] false)
+      (assoc-in [:radial :open?] false)
+      (assoc-in state/overlays-path overlays))))
+
+(defn handle-add-menu [state menu]
+  (-> state
+      (assoc-in [:layer-properties-menu :opened?] false)
+      (assoc-in [:radial :open?] false)
+      (add-overlay menu)))
+
+(defn handle-replace-menu [state menu]
+  (-> state
+      (assoc-in [:layer-properties-menu :opened?] false)
+      (assoc-in [:radial :open?] false)
+      (replace-overlay menu)))

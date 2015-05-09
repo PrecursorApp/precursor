@@ -56,6 +56,14 @@
 (defn subscribe-to-team [sente-state team-uuid]
   (send-msg sente-state [:team/subscribe {:team/uuid team-uuid}]))
 
+(defn subscribe-to-issues [sente-state comms issue-db]
+  (send-msg sente-state [:issue/subscribe {}]
+            10000
+            (fn [reply]
+              (if (sente/cb-success? reply)
+                (d/transact! issue-db (:entities reply) {:server-update true})
+                (put! (:errors comms) [:subscribe-to-issues-error])))))
+
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
             (fn [data]
@@ -78,6 +86,30 @@
   (let [datoms (:tx-data data)]
     (d/transact! (:team-db @app-state)
                  (map ds/datom->transaction datoms)
+                 {:server-update true})))
+
+;; Hack to deal with datascript's design decisions: https://github.com/tonsky/datascript/issues/76
+(defn sort-datoms [datoms]
+  (let [c (fn [d1 d2]
+            (compare (count (set/intersection #{:comment/parent :issue/votes :issue/comments} (set (keys d1))))
+                     (count (set/intersection #{:comment/parent :issue/votes :issue/comments} (set (keys d2))))))]
+    (sort c datoms)))
+
+(defmethod handle-message :issue/transaction [app-state message data]
+  (let [datoms (:tx-data data)]
+    (d/transact! (:issue-db @app-state)
+                 (let [adds (->> datoms
+                              (filter :added)
+                              (group-by :e)
+                              (map (fn [[e datoms]]
+                                     (merge {:db/id e}
+                                            (reduce (fn [acc datom]
+                                                      (assoc acc (:a datom) (:v datom)))
+                                                    {} datoms))))
+                              sort-datoms)
+                       retracts (remove :added datoms)]
+                   (concat adds
+                           (map ds/datom->transaction retracts)))
                  {:server-update true})))
 
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
@@ -103,6 +135,11 @@
     (d/transact! (:team-db @app-state)
                  (:entities data)
                  {:server-update true})))
+
+(defmethod handle-message :issue/db-entities [app-state message data]
+  (d/transact! (:issue-db @app-state)
+               (:entities data)
+               {:server-update true}))
 
 (defmethod handle-message :frontend/custs [app-state message data]
   (swap! app-state update-in [:cust-data :uuid->cust] merge (:uuid->cust data)))

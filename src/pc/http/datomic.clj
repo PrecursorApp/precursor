@@ -29,6 +29,10 @@
   (when-let [frontend-tx (datomic-common/frontend-team-transaction transaction)]
     (sente/notify-team-transaction (:db-after transaction) frontend-tx)))
 
+(defn notify-issue-subscribers [transaction]
+  (when-let [frontend-tx (datomic-common/frontend-issue-transaction transaction)]
+    (sente/notify-issue-transaction (:db-after transaction) frontend-tx)))
+
 ;; TODO: this should use a channel instead of a future
 (defn send-emails [transaction]
   (let [annotations (delay (datomic-common/get-annotations transaction))]
@@ -131,6 +135,8 @@
     (notify-document-subscribers transaction))
   (utils/with-report-exceptions
     (notify-team-subscribers transaction))
+  (utils/with-report-exceptions
+    (notify-issue-subscribers transaction))
   (utils/with-report-exceptions
     (forward-to-admin-ch admin-ch transaction)))
 

@@ -105,6 +105,113 @@ input {
     }
   }
 }
+.adaptive {
+  .flexy(column);
+  position: relative;
+  width: 100%;
+  margin-bottom: 1em;
+  textarea {
+    min-height: @tile;
+    max-height: 5 * @tile;
+  }
+  textarea,
+  input[type="text"] {
+    .inline(@gray_lighter);
+    order: 2;
+    height: @tile;
+    padding: 1.25rem;
+    outline: none;
+    border: none;
+    resize: vertical;
+    &:focus,
+    &:valid {
+      + label {
+        transform: translate(-12.5%, -50%) scale(.75);
+        transition-duration: @run_fast;
+        &:before {
+          background-size: 100% 5px;
+          transition-duration: @run;
+        }
+      }
+    }
+    &:invalid {
+      + label {
+        &[data-placeholder] {
+          &:before {
+            content: attr(data-placeholder);
+          }
+        }
+      }
+    }
+    &:focus {
+      .inline(@color_select);
+      + label {
+        &:before {
+          color: @color_select;
+        }
+      }
+    }
+    &:focus {
+      &:valid {
+        + label {
+          &[data-typing] {
+            &:before {
+              content: attr(data-typing);
+            }
+          }
+        }
+      }
+    }
+    &:focus {
+      &:valid {
+        &[data-warning] {
+          .inline(@red);
+        }
+        + label {
+          &[data-warning] {
+            &:before {
+              color: @red;
+              content: attr(data-warning);
+            }
+          }
+        }
+      }
+    }
+    &:valid {
+      &:not(:focus) {
+        + label {
+          &[data-forgot] {
+            &:before {
+              content: attr(data-forgot);
+            }
+          }
+        }
+      }
+    }
+  }
+  label {
+    position: absolute;
+    order: 1;
+    top: 0;
+    left: 0;
+    padding: 1.25rem;
+    user-select: none;
+    pointer-events: none;
+    transition: @run_slow @bezier_deform;
+    &:before {
+      .flexy();
+      content: attr(data-label);
+      color: @gray_light;
+      padding: 0 3px;
+      transition: @run_slow @bezier_deform;
+      background-image: linear-gradient(to bottom, @dye_outer, @dye_outer);
+      background-size: 100% 0;
+      background-repeat: no-repeat;
+      background-position: center;
+      user-select: none;
+    }
+  }
+}
 .menu {
   input {
     &[data-adaptive] {
@@ -170,7 +277,7 @@ input {
     transition: @run ease-in-out;
   }
   &:focus {
-    border: 1px solid @color_select;
+    border-color: @color_select;
     &:after {
       color: @color_select;
     }
@@ -192,6 +299,15 @@ input {
   &:empty {
     &:after {
       content: attr(data-before);
+    }
+  }
+  &:not(:empty) {
+    &:not(:focus) {
+      border-color: @red;
+      &:after {
+        content: attr(data-forgot);
+        color: @red;
+      }
     }
   }
 }

@@ -513,6 +513,10 @@
               :db.type/ref
               :db/doc "Annotates transaction with team it belongs to")
 
+   (attribute :transaction/issue-tx?
+              :db.type/boolean
+              :db/doc "Annotates that transaction was related to issues")
+
    (attribute :migration
               :db.type/ref
               :db/doc "Annotates transaction with migration")
@@ -577,15 +581,18 @@
 
    (attribute :early-access-request/company-name
               :db.type/string
-              :db/doc "Early access request form field.")
+              :db/doc "Early access request form field."
+              :metadata/unescaped true)
 
    (attribute :early-access-request/employee-count
               :db.type/string
-              :db/doc "Early access request form field.")
+              :db/doc "Early access request form field."
+              :metadata/unescaped true)
 
    (attribute :early-access-request/use-case
               :db.type/string
-              :db/doc "Early access request form field.")
+              :db/doc "Early access request form field."
+              :metadata/unescaped true)
 
    (function :pc.datomic.web-peer/retract-entity
              '{:lang :clojure
@@ -611,7 +618,8 @@
    (attribute :team/subdomain
               :db.type/string
               :db/unique :db.unique/value
-              :db/doc "precursor subdomain for a team")
+              :db/doc "precursor subdomain for a team"
+              :metadata/unescaped true)
 
    (attribute :team/uuid
               :db.type/uuid
@@ -658,7 +666,8 @@
 
    (attribute :plan/billing-email
               :db.type/string
-              :db/doc "Stripe customer id for the plan")
+              :db/doc "Email address that receives into about the plan"
+              :metadata/unescaped true)
 
    (attribute :plan/paid?
               :db.type/boolean
@@ -685,15 +694,18 @@
 
    (attribute :credit-card/last4
               :db.type/string
-              :db/doc "last 4 digits of card")
+              :db/doc "last 4 digits of card"
+              :metadata/unescaped true)
 
    (attribute :credit-card/brand
               :db.type/string
-              :db/doc "card brand, e.g. Visa")
+              :db/doc "card brand, e.g. Visa"
+              :metadata/unescaped true)
 
    (attribute :credit-card/fingerprint
               :db.type/string
-              :db/doc "Unique fingerprint for the card")
+              :db/doc "Unique fingerprint for the card"
+              :metadata/unescaped true)
 
    (attribute :credit-card/stripe-id
               :db.type/string
@@ -773,7 +785,78 @@
 
    (attribute :coupon/duration-in-months
               :db.type/long
-              :db/doc "Number of months that the discount is active")])
+              :db/doc "Number of months that the discount is active")
+
+   (attribute :issue/title
+              :db.type/string
+              :db/fulltext true
+              :db/doc "Feature request title"
+              :metadata/unescaped true)
+
+   (attribute :issue/description
+              :db.type/string
+              :db/fulltext true
+              :db/doc "Feature request description"
+              :metadata/unescaped true)
+
+   (attribute :issue/author
+              :db.type/ref
+              :db/doc "User who requested the feature")
+
+   (attribute :issue/document
+              :db.type/ref
+              :db/doc "Optional document to attach to issue")
+
+   (attribute :issue/created-at
+              :db.type/instant)
+
+   (attribute :issue/status
+              :db.type/ref
+              :db/index true)
+
+   (enum :issue.status/completed)
+
+
+   (attribute :frontend/issue-id
+              :db.type/uuid
+              :db/unique :db.unique/identity)
+
+   (attribute :issue/votes
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Votes for the issue")
+
+   (attribute :issue/comments
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Comments on an issue")
+
+   (attribute :vote/cust
+              :db.type/ref
+              :db/doc "Cust who voted for the issue")
+
+   (attribute :vote/cust-issue
+              :db.type/uuid
+              :db/unique :db.unique/value
+              :db/doc "UUID constructed of cust-id and issue-id")
+
+   (attribute :comment/author
+              :db.type/ref
+              :db/doc "Cust who made the comment")
+
+   (attribute :comment/body
+              :db.type/string
+              :db/fulltext true
+              :db/doc "Comment body"
+              :metadata/unescaped true)
+
+   (attribute :comment/parent
+              :db.type/ref
+              :db/doc "Optional parent comment for the comment")
+
+   (attribute :comment/created-at
+              :db.type/instant)
+   ])
 
 (defonce schema-ents (atom nil))
 
