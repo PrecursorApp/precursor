@@ -132,7 +132,7 @@
                                           (om/set-state! owner :input-height (max 64 (.-scrollHeight node))))))}]
            [:label {:data-label (if (utils/logged-in? owner)
                                   "What do you think?"
-                                  "Sign in to comment on this issue.")
+                                  "Sign in to add comments.")
                     :data-forgot "To be continued"}]]
           [:div.menu-buttons
            (if (utils/logged-in? owner)
