@@ -111,11 +111,14 @@
                          "There was an error connecting to the server.\nPlease refresh to try again.")
   (js/Rollbar.error "entity ids request failed :("))
 
+(defn read-only-rejected? [state rejects datom-group]
+  (and (= (count rejects) (count datom-group))
+       (= :read (:max-document-scope state))))
+
 (defmethod error :datascript/rejected-datoms
   [container message {:keys [rejects datom-group sente-event]} state]
   (utils/mlog rejects)
-  (if (and (= (count rejects) (count datom-group))
-           (= :read (:max-document-scope state)))
+  (if (read-only-rejected? state rejects datom-group)
     (-> state
       (assoc-in (state/notified-read-only-path (:document/id state)) true)
       (update-in (state/doc-tx-rejected-count-path (:document/id state)) (fnil inc 0)))
@@ -123,7 +126,8 @@
 
 (defmethod post-error! :datascript/rejected-datoms
   [container message {:keys [rejects datom-group sente-event]} previous-state current-state]
-  (when (nil? (get-in previous-state (state/notified-read-only-path (:document/id previous-state))))
+  (when (and (read-only-rejected? previous-state rejects datom-group)
+             (nil? (get-in previous-state (state/notified-read-only-path (:document/id previous-state)))))
     (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path (:document/id previous-state) "sharing")}])))
 
 (defmethod error :datascript/sync-tx-error
