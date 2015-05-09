@@ -40,5 +40,9 @@
 
 (defn issue-comparator [cust time]
   (fn [issue-a issue-b]
-    (compare (issue-score issue-b cust time)
-             (issue-score issue-a cust time))))
+    (let [score-res (compare (issue-score issue-b cust time)
+                             (issue-score issue-a cust time))]
+      (if (zero? score-res)
+        (compare (:issue/created-at issue-b)
+                 (:issue/created-at issue-a))
+        score-res))))
