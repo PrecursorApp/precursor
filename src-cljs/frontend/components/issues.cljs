@@ -442,11 +442,15 @@
                             :target "_top"}
             (:issue/title issue)]
            [:p.issue-foot
-            [:span (str comment-count " comment" (when (not= 1 comment-count) "s"))]
-            [:span " for "]
-            [:span "feature"]
-            [:span " in "]
-            [:span "development."]]]
+            [:span (str comment-count " comment" (if (not= 1 comment-count) "s"))]
+            (if (= :issue.status/completed (:issue/status issue))
+              ", completed"
+              (when (utils/admin? owner)
+                (list
+                 " "
+                 [:a.issue-edit-status {:on-click #(cast! :marked-issue-completed
+                                                          {:issue-uuid (:frontend/issue-id issue)})}
+                  "mark completed"])))]]
           (om/build vote-box {:issue issue})])))))
 
 (defn issue* [{:keys [issue-id]} owner]

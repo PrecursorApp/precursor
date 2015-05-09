@@ -1,6 +1,8 @@
 (ns pc.http.issues
   (:require [clojure.tools.logging :as log]
+            [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.models.cust :as cust-model]
             [pc.models.issue :as issue-model]
             [pc.http.datomic2 :as datomic2])
   (:import [java.util UUID]))
@@ -36,3 +38,17 @@
       (when ?reply-fn
         (?reply-fn {:rejected-datoms rejects})))
     (comment "Handle logged out users")))
+
+(defn set-status [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [cust (some-> req :ring-req :auth :cust)]
+    (when (contains? cust-model/admin-emails (:cust/email cust))
+      (let [issue-uuid (pc.utils/inspect (:frontend/issue-id ?data))
+            status (:issue/status ?data)]
+        (assert (= "issue.status" (namespace status)))
+        @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                  :transaction/broadcast true
+                                  :transaction/issue-tx? true
+                                  :cust/uuid (:cust/uuid cust)}
+                                 {:frontend/issue-id issue-uuid
+                                  :db/id (d/tempid :db.part/user)
+                                  :issue/status status}])))))

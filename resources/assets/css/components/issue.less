@@ -217,6 +217,14 @@
 }
 .issue-foot {
   padding-bottom: @menu_padding / 3;
+  .issue-edit-status {
+    display: none;
+  }
+  &:hover {
+    .issue-edit-status {
+      display: inline-block;
+    }
+  }
 }
 .comment-children {
   border-left: 1px dotted @gray_lighter;

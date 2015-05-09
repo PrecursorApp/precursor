@@ -235,6 +235,9 @@
 (defn logged-in? [owner]
   (boolean (seq (om/get-shared owner :cust))))
 
+(defn admin? [owner]
+  (boolean (om/get-shared owner :admin?)))
+
 (defn cast-fn [controls-ch]
   (fn [message data & [transient?]]
     (put! controls-ch [message data transient?])))

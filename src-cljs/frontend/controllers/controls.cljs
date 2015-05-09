@@ -1780,3 +1780,8 @@
   [browser-state message {:keys [plan-id email]} previous-state current-state]
   (d/transact! (:team-db current-state)
                [[:db/add plan-id :plan/billing-email email]]))
+
+(defmethod post-control-event! :marked-issue-completed
+  [browser-state message {:keys [issue-uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:issue/set-status {:frontend/issue-id issue-uuid
+                                                             :issue/status :issue.status/completed}]))

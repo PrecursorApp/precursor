@@ -43,6 +43,7 @@
                   :issue/created-at
                   :issue/votes
                   :issue/comments
+                  :issue/status
                   :frontend/issue-id])
     (utils/update-when-in [:issue/document] :db/id)
     (utils/update-when-in [:issue/author] :cust/email)
@@ -56,6 +57,7 @@
                   :issue/author
                   :issue/document
                   :issue/created-at
+                  :issue/status
                   :frontend/issue-id])
     (utils/update-when-in [:issue/document] :db/id)
     (utils/update-when-in [:issue/author] :cust/email)))

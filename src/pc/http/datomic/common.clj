@@ -237,6 +237,7 @@
                        :issue/created-at
                        :issue/votes
                        :issue/comments
+                       :issue/status
                        :frontend/issue-id})
 
 (defn issue-whitelisted? [datom]
