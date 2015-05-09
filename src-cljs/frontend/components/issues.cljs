@@ -63,10 +63,12 @@
                                                 (finally
                                                   (om/set-state! owner :submitting? false)))))}
           [:div.adaptive
-           [:textarea {:value issue-title
-                       :required "true"
-                       :disabled (or submitting? (not (utils/logged-in? owner)))
-                       :onChange #(om/set-state! owner :issue-title (.. % -target -value))}]
+           [:textarea (merge {:value issue-title
+                              :required "true"
+                              :disabled (or submitting? (not (utils/logged-in? owner)))
+                              :onChange #(om/set-state! owner :issue-title (.. % -target -value))}
+                             (when (neg? chars-left)
+                               {:data-warning "true"}))]
            [:label (merge {:data-label (if (utils/logged-in? owner)
                                          "How can we improve Precursor?"
                                          "Sign in to make an issue.")}
