@@ -172,7 +172,7 @@
                                              :on-click submit}
                   [:span "Save"]]))]]
 
-           [:div.comment {:class (when-not (om/get-state owner :to-not-edit?) " make ")}
+           [:div.comment
             [:div.issue-description-out {:class (when (om/get-state owner :to-not-edit?) " to-not-edit ")}
              (if (:issue/description issue)
                (:issue/description issue)
@@ -301,7 +301,7 @@
       (let [{:keys [issue-db cast!]} (om/get-shared owner)
             comment (d/entity @issue-db comment-id)]
         (html
-         [:div.comment.make {:key comment-id}
+         [:div.comment {:key comment-id}
           [:div.issue-divider]
           [:div.comment-body (:comment/body comment)]
           [:p.comment-foot
@@ -321,7 +321,7 @@
                 (if (om/get-state owner :replying?) "Cancel" "Reply")]))]
 
           (when (om/get-state owner :replying?)
-            [:div.content.make
+            [:div.content
              (om/build comment-form {:issue-id issue-id
                                      :parent-id comment-id
                                      :close-callback #(om/set-state! owner :replying? false)}
@@ -412,7 +412,7 @@
             issue (ds/touch+ (d/entity @issue-db issue-id))
             comment-count (count (:issue/comments issue))]
         (html
-         [:div.issue-card.content.make
+         [:div.issue-card.content
           [:div.issue-info
            [:a.issue-title {:href (urls/issue-url issue)
                             :target "_top"}
@@ -450,13 +450,13 @@
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
-         [:div.menu-view.issue
+         [:div.menu-view.issue.make
           [:div.issue-summary {:key "summary"}
            (om/build issue-card {:issue-id issue-id})
            (om/build description-form {:issue issue :issue-id issue-id})]
 
           [:div.issue-comments {:key "issue-comments"}
-           [:div.content.make
+           [:div.content
             (om/build comment-form {:issue-id issue-id} {:react-key "comment-form"})]
            (om/build comments {:issue-id issue-id} {:react-key "comments"})]])))))
 
@@ -503,7 +503,7 @@
     (render-state [_ {:keys [all-issue-ids rendered-issue-ids render-time]}]
       (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
         (html
-         [:div.menu-view.issues-list
+         [:div.menu-view.issues-list.make
           (let [deleted (set/difference rendered-issue-ids all-issue-ids)
                 added (set/difference all-issue-ids rendered-issue-ids)]
             (when (or (seq deleted) (seq added))
@@ -527,7 +527,7 @@
                                           " new issues were"
                                           " new issue was")
                           " added, " (count deleted) " removed, click to refresh."))]))
-          [:div.content.make
+          [:div.content
            (om/build issue-form {})]
           (when-let [issues (seq (map #(d/entity @issue-db %) rendered-issue-ids))]
             (om/build-all issue-card (map (fn [i] {:issue-id (:db/id i)})
