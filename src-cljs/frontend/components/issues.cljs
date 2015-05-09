@@ -117,7 +117,8 @@
                                                                                                 :frontend/issue-id (utils/squuid)}
                                                                                                (when parent-id
                                                                                                  {:comment/parent parent-id}))}])
-                                                (om/set-state! owner :comment-body ""))
+                                                (om/set-state! owner :comment-body "")
+                                                (om/set-state! owner :input-height 64))
                                               (when (fn? close-callback)
                                                 (close-callback)))}
           [:div.adaptive
