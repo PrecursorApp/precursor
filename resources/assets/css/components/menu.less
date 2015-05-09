@@ -121,8 +121,8 @@
     position: absolute;
     transform: translate(-100%);
   }
-  &:last-child {
-    &:only-child {
+  &:last-of-type {
+    &:only-of-type {
       &.make {
         animation: in-fade-left @run_slow @now;
       }
@@ -133,8 +133,8 @@
       }
     }
   }
-  &:not(:only-child) {
-    &:not(:first-child) {
+  &:not(:only-of-type) {
+    &:not(:first-of-type) {
       &.make {
         animation: in-fade-right @run_slow @now;
       }
