@@ -21,6 +21,7 @@
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
+            [goog.string :as gstring]
             [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -409,7 +410,7 @@
           (when-let [issue (issue-model/find-by-doc-id @issue-db document-id)]
             (dom/g nil
               (svg-element {:layer/type :layer.type/text
-                            :layer/text (str "Feature request -- " (:issue/title issue))
+                            :layer/text (str "Feature request -- " (gstring/truncate (:issue/title issue) 40))
                             :layer/start-x 100
                             :layer/end-x 100
                             :layer/start-y 100

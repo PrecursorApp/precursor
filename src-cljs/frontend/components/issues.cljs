@@ -14,6 +14,8 @@
             [frontend.urls :as urls]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils]
+            [goog.dom]
+            [goog.dom.forms :as gforms]
             [goog.string :as gstring]
             [goog.string.format]
             [om.core :as om]
@@ -25,9 +27,10 @@
 (defn issue-form [_ owner]
   (reify
     om/IDisplayName (display-name [_] "Issue form")
-    om/IInitState (init-state [_] {:issue-title ""})
+    om/IInitState (init-state [_] {:issue-title ""
+                                   :input-height 64})
     om/IRenderState
-    (render-state [_ {:keys [issue-title submitting?]}]
+    (render-state [_ {:keys [issue-title submitting? input-height]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
             char-limit 120
             chars-left (- char-limit (count issue-title))
@@ -64,9 +67,13 @@
                                                   (om/set-state! owner :submitting? false)))))}
           [:div.adaptive
            [:textarea (merge {:value issue-title
+                              :style {:height input-height}
                               :required "true"
                               :disabled (or submitting? (not (utils/logged-in? owner)))
-                              :onChange #(om/set-state! owner :issue-title (.. % -target -value))}
+                              :onChange #(do (om/set-state! owner :issue-title (.. % -target -value))
+                                             (let [node (.-target %)]
+                                               (when (not= (.-scrollHeight node) (.-clientHeight node))
+                                                 (om/set-state! owner :input-height (max 64 (.-scrollHeight node))))))}
                              (when (neg? chars-left)
                                {:data-warning "true"}))]
            [:label (merge {:data-label (if (utils/logged-in? owner)
@@ -132,8 +139,13 @@
   (reify
     om/IDisplayName (display-name [_] "Description form")
     om/IInitState (init-state [_] {:issue-description nil
-                                   :editing? false
-                                   :to-not-edit? false})
+                                   :editing? nil})
+    om/IDidUpdate
+    (did-update [_ _ prev-props]
+      (when (and (not (:editing? prev-props))
+                 (om/get-state owner :editing?)
+                 (om/get-node owner "description-input"))
+        (gforms/focusAndSelect (om/get-node owner "description-input"))))
     om/IRenderState
     (render-state [_ {:keys [issue-description]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
@@ -150,6 +162,7 @@
            [:form.issue-description-form {:on-submit submit}
             [:div.adaptive.issue-description-in ;{:class (when (:issue/description issue) " to-edit ")}
              [:textarea {;:class (when (:issue/description issue) " to-edit ")
+                         :ref "description-input"
                          :value (or issue-description (:issue/description issue ""))
                          :required "true"
                          :on-change #(om/set-state! owner :issue-description (.. % -target -value))
@@ -172,16 +185,15 @@
                                              :on-click submit}
                   [:span "Save"]]))]]
 
+           ;; Don't show sliding animation when the description replaces the form after an edit
            [:div.comment
-            [:div.issue-description-out {:class (when (om/get-state owner :to-not-edit?) " to-not-edit ")}
+            [:div.issue-description-out {:class (when (nil? (om/get-state owner :editing?)) " to-not-edit ")}
              (if (:issue/description issue)
                (:issue/description issue)
 
                (if editable?
                  [:a {:role "button"
-                      :on-click #(do
-                                   (om/set-state! owner :editing? true)
-                                   (om/set-state! owner :to-not-edit? true))}
+                      :on-click #(om/set-state! owner :editing? true)}
                   [:span "+ Add a description."]]
 
                  [:span "No description yet."]))]
@@ -198,9 +210,7 @@
                  [:span.pre "  •  "]
                  [:a.issue-description-edit {:role "button"
                                              :key "Edit"
-                                             :on-click #(do
-                                                          (om/set-state! owner :editing? true)
-                                                          (om/set-state! owner :to-not-edit? true))}
+                                             :on-click #(om/set-state! owner :editing? true)}
                   [:span "Edit"]]))]]))))))
 
 ;; XXX: handle logged-out users
