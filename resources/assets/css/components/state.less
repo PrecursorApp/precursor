@@ -3,24 +3,30 @@
 //
 .state-menu {
   .inner {
-    .shadow_canvas();
+    transition+: transform @run @run_fast ease-out;
+    transition+: margin @run @now ease-out;
     cursor: pointer;
     background: @dye_outer;
-    // transition: @run_slower @bezier_deform;
     &:hover {
-      .shadow_canvas(hover);
-      transition-duration: @run;
+      .canvas {
+        .shadow_canvas(hover);
+        transition: box-shadow @run_fast;
+      }
     }
     &:active {
-      .shadow_canvas(active);
-      transition-duration: @run_fast;
+      .canvas {
+        .shadow_canvas(active);
+        transition: box-shadow @run_faster;
+      }
     }
   }
   .canvas {
+    .shadow_canvas();
     pointer-events: none;
+    transition: box-shadow @run;
   }
   .canvas-background {
-    transform: scale3d(.8, 0, 1);
+    transform: scale3d(.6, 0, 1);
     transition-duration: @run;
   }
   .layer {

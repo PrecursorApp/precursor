@@ -481,12 +481,12 @@
       (let [{:keys [cast! issue-db]} (om/get-shared owner)
             issue (ds/touch+ (d/entity @issue-db issue-id))]
         (html
-         [:section.menu-view.issue.make
-          [:div.issue-summary {:key "summary"}
+         [:section.menu-view.issue
+          [:div.issue-summary.make {:key "summary"}
            (om/build issue-card {:issue-id issue-id})
            (om/build description-form {:issue issue :issue-id issue-id})]
 
-          [:div.issue-comments {:key "issue-comments"}
+          [:div.issue-comments.make {:key "issue-comments"}
            [:div.content
             (om/build comment-form {:issue-id issue-id} {:react-key "comment-form"})]
            (om/build comments {:issue-id issue-id} {:react-key "comments"})]])))))
@@ -534,10 +534,10 @@
     (render-state [_ {:keys [all-issue-ids rendered-issue-ids render-time]}]
       (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
         (html
-         [:section.menu-view.issues-list.make
-          [:div.content
+         [:section.menu-view.issues-list
+          [:div.content.make
            (om/build issue-form {})]
-          [:div.issue-cards
+          [:div.issue-cards.make
            (let [deleted (set/difference rendered-issue-ids all-issue-ids)
                  added (set/difference all-issue-ids rendered-issue-ids)]
              (when (or (seq deleted) (seq added))
