@@ -307,8 +307,13 @@
     ;; TODO: figure out what to do with outer pages on subdomains, need to
     ;;       solve the extraneous entity-id problem first
     (custom-domain/redirect-to-main req)
-    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])]
-      (content/app (common-view-data req)))))
+    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+          ;;TODO: remove this once frontend is deployed
+          doc (doc-model/create-public-doc!
+               (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                      (when cust-uuid {:document/creator cust-uuid})))]
+      (content/app (merge (common-view-data req)
+                          {:initial-document-id (:db/id doc)})))))
 
 (defpage single-issue "/issues/:issue-uuid" [req]
   (if (:subdomain req)
