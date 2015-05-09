@@ -810,6 +810,13 @@
    (attribute :issue/created-at
               :db.type/instant)
 
+   (attribute :issue/status
+              :db.type/ref
+              :db/index true)
+
+   (enum :issue.status/completed)
+
+
    (attribute :frontend/issue-id
               :db.type/uuid
               :db/unique :db.unique/identity)
