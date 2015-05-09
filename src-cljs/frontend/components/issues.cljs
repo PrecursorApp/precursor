@@ -53,7 +53,7 @@
                                                                        (throw "Couldn't create doc."))))]
                                                     (d/transact! issue-db [{:db/id -1
                                                                             :issue/created-at (datetime/server-date)
-                                                                            :issue/title (str/trim issue-title)
+                                                                            :issue/title (gstring/normalizeWhitespace (str/trim issue-title))
                                                                             :issue/author (:cust/email cust)
                                                                             :issue/document doc-id
                                                                             :frontend/issue-id fe-id}])
