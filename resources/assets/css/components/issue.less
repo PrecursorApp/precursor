@@ -18,8 +18,29 @@
     margin: 0;
   }
 }
+.issue-cards {
+  position: relative;
+}
 .issue-card {
   .flexy();
+}
+.issue-missing {
+  .flexy(center; center;);
+  color: @color_select;
+  font-size: @font_size_small;
+  line-height: 1rem;
+  position: absolute;
+  top: -.5rem;
+  left: 0;
+  width: 100%;
+  animation: in-fade-bottom @run_slower @bezier_deform;
+  span {
+    padding: 0 .25em;
+    background-image: linear-gradient(to bottom, @dye_outer, @dye_outer);
+    background-size: 100% 5px;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
 }
 .issue-vote {
   @size: 2 * @menu_padding;
@@ -149,6 +170,7 @@
   padding-bottom: .5em;
 }
 .comments {
+  position: relative;
   & & & & & & { // selects parent 6 times
     margin-left: 0; // prevents comments from nesting too far
     .issue-foot,

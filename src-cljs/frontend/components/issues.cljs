@@ -246,9 +246,10 @@
   (let [added (set/difference all-ids rendered-ids)
         deleted (set/difference rendered-ids all-ids)]
     (when (or (seq deleted) (seq added))
-      [:div.make {:key "new-comments-notice"}
-       [:a {:role "button"
-            :on-click refresh-callback}
+      [:a.issue-missing {:role "button"
+                         :key "new-comments-notice"
+                         :on-click refresh-callback}
+       [:span
         (cond (empty? deleted)
               (str (count added) (if (< 1 (count added))
                                    " new comments were"
@@ -516,36 +517,38 @@
       (let [{:keys [cast! issue-db cust]} (om/get-shared owner)]
         (html
          [:div.menu-view.issues-list.make
-          (let [deleted (set/difference rendered-issue-ids all-issue-ids)
-                added (set/difference all-issue-ids rendered-issue-ids)]
-            (when (or (seq deleted) (seq added))
-              [:a {:role "button"
-                   :on-click #(om/update-state! owner (fn [s]
-                                                        (assoc s
-                                                          :rendered-issue-ids (:all-issue-ids s)
-                                                          :render-time (datetime/server-date))))}
-               (cond (empty? deleted)
-                     (str (count added) (if (< 1 (count added))
-                                          " new issues were"
-                                          " new issue was")
-                          " added, click to refresh.")
-                     (empty? added)
-                     (str (count deleted) (if (< 1 (count deleted))
-                                            " issues were"
-                                            " issue was")
-                          " removed, click to refresh.")
-                     :else
-                     (str (count added) (if (< 1 (count added))
-                                          " new issues were"
-                                          " new issue was")
-                          " added, " (count deleted) " removed, click to refresh."))]))
           [:div.content
            (om/build issue-form {})]
-          (when-let [issues (seq (map #(d/entity @issue-db %) rendered-issue-ids))]
-            (om/build-all issue-card (map (fn [i] {:issue-id (:db/id i)})
-                                          (sort (issue-model/issue-comparator cust render-time) issues))
-                          {:key :issue-id
-                           :opts {:issue-db issue-db}}))])))))
+          [:div.issue-cards
+           (let [deleted (set/difference rendered-issue-ids all-issue-ids)
+                 added (set/difference all-issue-ids rendered-issue-ids)]
+             (when (or (seq deleted) (seq added))
+               [:a.issue-missing {:role "button"
+                                  :on-click #(om/update-state! owner (fn [s]
+                                                                       (assoc s
+                                                                         :rendered-issue-ids (:all-issue-ids s)
+                                                                         :render-time (datetime/server-date))))}
+                [:span
+                 (cond (empty? deleted)
+                       (str (count added) (if (< 1 (count added))
+                                            " new issues were"
+                                            " new issue was")
+                            " added, click to refresh.")
+                       (empty? added)
+                       (str (count deleted) (if (< 1 (count deleted))
+                                              " issues were"
+                                              " issue was")
+                            " removed, click to refresh.")
+                       :else
+                       (str (count added) (if (< 1 (count added))
+                                            " new issues were"
+                                            " new issue was")
+                            " added, " (count deleted) " removed, click to refresh."))]]))
+           (when-let [issues (seq (map #(d/entity @issue-db %) rendered-issue-ids))]
+             (om/build-all issue-card (map (fn [i] {:issue-id (:db/id i)})
+                                           (sort (issue-model/issue-comparator cust render-time) issues))
+                           {:key :issue-id
+                            :opts {:issue-db issue-db}}))]])))))
 
 (defn issue [{:keys [issue-uuid]} owner]
   (reify
