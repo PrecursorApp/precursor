@@ -160,9 +160,8 @@
         (html
          (if editing?
            [:form.issue-description-form {:on-submit submit}
-            [:div.adaptive.issue-description-in ;{:class (when (:issue/description issue) " to-edit ")}
-             [:textarea {;:class (when (:issue/description issue) " to-edit ")
-                         :ref "description-input"
+            [:div.adaptive.issue-description-in
+             [:textarea {:ref "description-input"
                          :value (or issue-description (:issue/description issue ""))
                          :required "true"
                          :on-change #(om/set-state! owner :issue-description (.. % -target -value))
