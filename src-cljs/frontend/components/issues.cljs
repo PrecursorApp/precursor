@@ -420,7 +420,7 @@
            [:p.issue-foot
             [:span (str comment-count " comment" (when (not= 1 comment-count) "s"))]
             [:span " for "]
-            [:span "bugfix"]
+            [:span "feature"]
             [:span " in "]
             [:span "development."]]]
           (om/build vote-box {:issue issue})])))))
