@@ -14,6 +14,8 @@
             [frontend.urls :as urls]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils]
+            [goog.dom]
+            [goog.dom.forms :as gforms]
             [goog.string :as gstring]
             [goog.string.format]
             [om.core :as om]
@@ -133,6 +135,12 @@
     om/IDisplayName (display-name [_] "Description form")
     om/IInitState (init-state [_] {:issue-description nil
                                    :editing? nil})
+    om/IDidUpdate
+    (did-update [_ _ prev-props]
+      (when (and (not (:editing? prev-props))
+                 (om/get-state owner :editing?)
+                 (om/get-node owner "description-input"))
+        (gforms/focusAndSelect (om/get-node owner "description-input"))))
     om/IRenderState
     (render-state [_ {:keys [issue-description]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
@@ -149,6 +157,7 @@
            [:form.issue-description-form {:on-submit submit}
             [:div.adaptive.issue-description-in ;{:class (when (:issue/description issue) " to-edit ")}
              [:textarea {;:class (when (:issue/description issue) " to-edit ")
+                         :ref "description-input"
                          :value (or issue-description (:issue/description issue ""))
                          :required "true"
                          :on-change #(om/set-state! owner :issue-description (.. % -target -value))
