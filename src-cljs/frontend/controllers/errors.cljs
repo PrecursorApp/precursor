@@ -127,31 +127,30 @@
     (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path (:document/id previous-state) "sharing")}])))
 
 (defmethod error :datascript/sync-tx-error
-  [container message {:keys [reason sente-event datom-group annotations]} state]
-  (update-in state [:unsynced-datoms] (fnil conj []) {:datom-group datom-group
-                                                      :annotations annotations}))
+  [container message {:keys [reason sente-event datom-group annotations] :as data} state]
+  (update-in state [:unsynced-datoms sente-event] (fnil conj []) {:datom-group datom-group
+                                                                  :annotations annotations}))
 
 (defmethod post-error! :datascript/sync-tx-error
-  [container message {:keys [reason sente-event datom-group]} previous-state current-state]
-  (chat-model/create-bot-chat (:db current-state)
-                              current-state
-                              [:span "There was an error saving some of your recent changes. Affected shapes are marked with dashed lines. "
-                               [:a {:role "button"
-                                    :on-click #(put! (get-in current-state [:comms :controls])
-                                                     [:retry-unsynced-datoms])}
-                                "Click here to retry"]
-                               ". You may also want to work on the document in a separate tab, in case there are any persistent problems. "
-                               "Email " [:a {:href "mailto:hi@precursorapp.com?subject=My+changes+aren't+saving"}
-                                         "hi@precursorapp.com"]
-                               " for help."]
-                              {:error/id :error/sync-tx-error})
-  (d/transact! (:db current-state)
-               (mapv (fn [e] [:db/add e :unsaved true])
-                     (set (map :e datom-group)))
-               {:bot-layer true})
-  (js/Rollbar.error "sync-tx-error" #js {:reason reason
-                                         :sente-event sente-event
-                                         :datom-count (count datom-group)}))
+  [container message {:keys [reason sente-event datom-group] :as data} previous-state current-state]
+  (when (= :frontend/transaction sente-event)
+    (chat-model/create-bot-chat (:db current-state)
+                                current-state
+                                [:span "There was an error saving some of your recent changes. Affected shapes are marked with dashed lines. "
+                                 [:a {:role "button"
+                                      :on-click #(put! (get-in current-state [:comms :controls])
+                                                       [:retry-unsynced-datoms {:sente-event :frontend/transaction}])}
+                                  "Click here to retry"]
+                                 ". You may also want to work on the document in a separate tab, in case there are any persistent problems. "
+                                 "Email " [:a {:href "mailto:hi@precursorapp.com?subject=My+changes+aren't+saving"}
+                                           "hi@precursorapp.com"]
+                                 " for help."]
+                                {:error/id :error/sync-tx-error})
+    (d/transact! (:db current-state)
+                 (mapv (fn [e] [:db/add e :unsaved true])
+                       (set (map :e datom-group)))
+                 {:bot-layer true}))
+  (js/Rollbar.error "sync-tx-error" (clj->js data)))
 
 (defmethod post-error! :rtc-error
   [container message {:keys [type error signal-data]} previous-state current-state]

@@ -614,4 +614,6 @@
     om/IDisplayName (display-name [_] "Issues Overlay")
     om/IRender
     (render [_]
-      (om/build issues* (select-keys app [:active-issue-uuid]) {:opts {:submenu submenu}}))))
+      (om/build issues* (select-keys app [:active-issue-uuid
+                                          :unsynced-datoms])
+                {:opts {:submenu submenu}}))))

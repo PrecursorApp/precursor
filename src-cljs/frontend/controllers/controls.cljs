@@ -1735,18 +1735,18 @@
   (utils/update-when-in state [:subscribers :info producer] assoc :stream-url stream-url))
 
 (defmethod control-event :retry-unsynced-datoms
-  [browser-state message {:keys [stream-url producer]} state]
-  (assoc state :unsynced-datoms nil))
+  [browser-state message {:keys [sente-event]} state]
+  (assoc-in state [:unsynced-datoms sente-event] nil))
 
 (defmethod post-control-event! :retry-unsynced-datoms
-  [browser-state message {:keys [stream-url producer]} previous-state current-state]
-  (doseq [{:keys [datom-group annotations]} (:unsynced-datoms previous-state)]
+  [browser-state message {:keys [sente-event]} previous-state current-state]
+  (doseq [{:keys [datom-group annotations]} (get-in previous-state [:unsynced-datoms sente-event])]
     (frontend.db/send-datoms-to-server (:sente current-state) :frontend/transaction datom-group annotations (:comms current-state)))
   (d/transact! (:db current-state)
                (mapcat #(map (fn [d] [:db/add (:e d) :unsaved false])
                              (utils/inspect (:datom-group %)))
-                       (:unsynced-datoms previous-state))
-               {:bot-layer true}))
+                       (get-in previous-state [:unsynced-datoms sente-event]))
+               {:server-update true}))
 
 (defmethod post-control-event! :start-plan-clicked
   [browser-state message _ previous-state current-state]
