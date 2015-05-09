@@ -339,11 +339,11 @@
                                      :parent-id comment-id
                                      :close-callback #(om/set-state! owner :replying? false)}
                        {:react-key "comment-form"})])
-          (unrendered-comments-notice all-child-ids rendered-child-ids #(om/update-state! owner (fn [s]
-                                                                                                  (assoc s :rendered-child-ids (:all-child-ids s)))))
           (when (and (not (contains? ancestors (:db/id comment))) ; don't render cycles
                      (pos? (count rendered-child-ids)))
             [:div.comments {:key "child-comments"}
+             (unrendered-comments-notice all-child-ids rendered-child-ids #(om/update-state! owner (fn [s]
+                                                                                                     (assoc s :rendered-child-ids (:all-child-ids s)))))
              (for [id (reverse (sort-by (fn [i] (:comment/created-at (d/entity @issue-db i))) rendered-child-ids))]
                (om/build single-comment {:issue-id issue-id
                                          :comment-id id}
