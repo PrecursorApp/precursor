@@ -20,6 +20,7 @@
             [frontend.state :as state]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
+            [frontend.utils.state :as state-utils]
             [goog.dom]
             [goog.string :as gstring]
             [goog.style]
@@ -876,7 +877,7 @@
                        (svg-element (assoc props
                                            :className "layer-outline")))))))))))
 
-(defn defs [camera]
+(defn defs [{:keys [camera chat-opened? viewport-size]}]
   (dom/defs nil
     (dom/marker #js {:id "arrow-point"
                      :viewBox "0 0 10 10"
@@ -911,7 +912,14 @@
                                 :height (str (* 10 (cameras/grid-height camera)))
                                 :fill   "url(#small-grid)"})
                  (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
-                                :className   "grid-lines-large"}))))
+                                :className   "grid-lines-large"}))
+    (dom/mask #js {:id "canvas-mask"}
+              (dom/rect #js {:className "canvas-mask"}))
+
+    ; (dom/clipPath #js {:id "chat-mask"}
+    ;               (dom/polygon #js {:points "10 10 100 100"}))
+
+    ))
 
 (defn touches->clj [touches]
   (mapv (fn [t]
@@ -947,7 +955,9 @@
             tool (get-in app state/current-tool-path)
             mouse-down? (get-in app [:mouse-down])
             right-click-learned? (get-in app state/right-click-learned-path)]
-        (dom/svg #js {:width "100%"
+        (dom/svg #js {;:style #js {:mask "url(#chat-mask)"}
+                      ;:mask "url(#canvas-mask)"
+                      :width "100%"
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
@@ -1046,7 +1056,9 @@
                                                             (cameras/set-zoom c (cameras/screen-event-coords event) (partial + (* -0.002 dy)))
                                                             (cameras/move-camera c dx (- dy))))))
                                  (utils/stop-event event))}
-                 (defs camera)
+                 (defs {:camera camera
+                        :chat-opened? (get-in app state/chat-opened-path)
+                        :viewport-size (:viewport-size app)})
 
                  (when (cameras/show-grid? camera)
                    (dom/rect #js {:id        "background-grid"

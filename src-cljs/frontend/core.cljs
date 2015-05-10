@@ -121,6 +121,7 @@
                      :team team
                      :subdomain config/subdomain
                      :show-landing? (:show-landing? utils/initial-query-map)
+                     :viewport-size (utils/viewport-size)
                      :comms {:controls      controls-ch
                              :api           api-ch
                              :errors        errors-ch
@@ -248,6 +249,8 @@
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
     (js/window.addEventListener "copy" #(clipboard/handle-copy! @state %))
     (js/window.addEventListener "paste" #(clipboard/handle-paste! @state %))
+    ;; xxx figure out how to do this
+    ;; (js/window.addEventListener "resize" #(clipboard/handle-paste! @state %))
     (.listen visibility-monitor
              goog.events.EventType/VISIBILITYCHANGE
              #(cast! :visibility-changed {:hidden? (.-hidden %)

@@ -212,6 +212,11 @@
   (str "https://www.gravatar.com/avatar/" (md5 (string/lower-case email))
        "?d=" (js/encodeURIComponent default)))
 
+(defn viewport-size []
+  (let [size (goog.dom/getViewportSize)]
+  {:width (.-width size)
+   :height (.-height size)}))
+
 (defn canvas-size []
   (let [node (goog.dom/getElement "canvas-size")]
     (let [size (if node

@@ -12,6 +12,7 @@
             [frontend.models.chat :as chat-model]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
+            [frontend.utils.state :as state-utils]
             [goog.date]
             [goog.dom]
             [om.core :as om :include-macros true]
@@ -245,7 +246,7 @@
           [:div#canvas-size.chat-offset.holo]
           [:div.chat-window {:class (when (or (not chat-opened?)
                                               (:show-landing? app)) ["closed"])}
-           [:div.chat-background]
+           ; [:div.chat-background]
            (om/build log (utils/select-in app [[:document/id]
                                                [:sente-id]
                                                [:client-id]

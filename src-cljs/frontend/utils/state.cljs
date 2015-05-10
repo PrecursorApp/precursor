@@ -10,3 +10,9 @@
     "you"
     (let [cust-uuid (get-in app [:subscribers :info client-id :cust/uuid])]
       (get-in app [:cust-data :uuid->cust cust-uuid :cust/name] (apply str (take 6 client-id))))))
+
+(defn chat-width [viewport-size]
+  25)
+
+(defn canvas-width [viewport-size]
+  (- 100 (chat-width viewport-size)))

@@ -27,7 +27,14 @@
   will-change: transform;
   transition: @run @bezier_deform;
 }
+.canvas-mask {
+  .size_of(canvas; width);
+  height: 100%;
+  fill: @white;
+}
 .canvas-frame {
+  // mask: url(#canvas-mask);
+  -webkit-mask-image: linear-gradient(to left, fade(@black, 0) 25%, @black 25%);
   user-select: none;
   transform-origin: 0 0;
   position: relative;

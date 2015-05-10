@@ -76,7 +76,8 @@
                                  {:on-click #(cast! :overlay-escape-clicked)
                                   :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
              [:style "#om-app:active{cursor:auto}"]
-             (om/build canvas/canvas (select-in app [state/current-tool-path
+             (om/build canvas/canvas (select-in app [state/chat-opened-path
+                                                     state/current-tool-path
                                                      state/right-click-learned-path
                                                      [:drawing :in-progress?]
                                                      [:drawing :relation-in-progress?]
@@ -87,7 +88,8 @@
                                                      [:cust-data]
                                                      [:document/id]
                                                      [:keyboard]
-                                                     [:keyboard-shortcuts]])
+                                                     [:keyboard-shortcuts]
+                                                     [:viewport-size]])
                        {:react-key "canvas"})
 
              (om/build chat/chat (select-in app [state/chat-opened-path
@@ -98,7 +100,8 @@
                                                  [:client-id]
                                                  [:show-landing?]
                                                  [:cust-data]
-                                                 [:navigation-data]])
+                                                 [:navigation-data]
+                                                 [:viewport-size]])
                        {:react-key "chat"})]
 
             (om/build hud/hud (select-in app [state/chat-opened-path
