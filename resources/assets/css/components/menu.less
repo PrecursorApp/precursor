@@ -3,6 +3,13 @@
   width: 100%;
   min-height: 100vh;
   overflow: hidden;
+  .menu-body {
+    .menu-view {
+      .make {
+        .animation_cascade(25);
+      }
+    }
+  }
   .content {
     box-sizing: border-box;
     width: 100%;
@@ -101,12 +108,10 @@
   flex: 1;
   position: relative;
   margin-top: 10vh;
+  overflow: hidden;
   .mq_640({
     padding-top: @menu_padding;
   });
-  .make {
-    .animation_cascade(25);
-  }
 }
 .menu-view {
   .flexy(stretch, flex-start, column);
@@ -115,33 +120,24 @@
   top: 0;
   left: 0;
   width: 100%;
-  transition: @run_slow @bezier_deform;
+  transition: transform @run_slow linear;
   will-change: transform;
   &:not(:last-of-type) {
     position: absolute;
     transform: translate(-100%);
+    transition-duration: @run_fast;
   }
-  &:last-child {
-    &:only-child {
-      &.make {
-        animation: in-fade-left @run_slow @now;
-      }
+  &:only-of-type {
+    &:last-of-type {
       .make {
-        animation-name: in-fade-left;
-        animation-duration: @run_slow;
-        animation-fill-mode: backwards;
+        animation: in-fade-left-soft @run_slower backwards;
       }
     }
   }
-  &:not(:only-child) {
-    &:not(:first-child) {
-      &.make {
-        animation: in-fade-right @run_slow @now;
-      }
+  &:not(:only-of-type) {
+    &:not(:first-of-type) {
       .make {
-        animation-name: in-fade-right;
-        animation-duration: @run_slow;
-        animation-fill-mode: backwards;
+        animation: in-fade-right-hard @run_slower backwards;
       }
     }
   }

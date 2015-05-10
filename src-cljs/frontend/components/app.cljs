@@ -68,8 +68,7 @@
                                                :camera (:camera app)}
                         {:react-key "signup-animation"}))
 
-            (when overlay-visible?
-              (om/build overlay/overlay app {:react-key "overlay"}))
+            (om/build overlay/overlay app {:react-key "overlay"})
 
             [:div.inner (merge {:class (when (empty? (:frontend-id-state app)) "loading")
                                 :key "inner"}
