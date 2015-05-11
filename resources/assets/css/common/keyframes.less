@@ -212,3 +212,24 @@
   0%   { transform: translate(.75rem, .75rem);}
   100% { transform: none;}
 }
+@keyframes in-inner-background {
+  0%   { transform: scale(.5); opacity: 0; }
+  75%  { opacity: 1; }
+  100% { transform: none;}
+}
+@keyframes tween-transform {
+  0% { transform: none; }
+}
+@keyframes in-canvas-chat {
+  //
+}
+@keyframes canvas-chat-left {
+  100% {
+    .mq_1920({ transform: translate(@canvas_pull_1920 - 10) scale(.8); });
+    .mq_1600({ transform: translate(@canvas_pull_1600 - 10) scale(.8); });
+    .mq_1280({ transform: translate(@canvas_pull_1280 - 10) scale(.8); });
+     .mq_960({ transform: translate(@canvas_pull_0960 - 10) scale(.8); });
+     .mq_640({ transform: translate(@canvas_pull_0640 - 10) scale(.8); });
+               transform: translate(@canvas_pull_init - 10) scale(.8);
+  }
+}

@@ -154,8 +154,9 @@ select,     82.66px,  49.71px;
 @chat_0960: @size_chat + @chat_step_0960;
 @chat_0640: @size_chat + @chat_step_0640;
 
-@canvas_pull_1920: 5% + @chat_step_1920;
-@canvas_pull_1600: 5% + @chat_step_1600;
-@canvas_pull_1280: 5% + @chat_step_1280;
-@canvas_pull_0960: 5% + @chat_step_0960;
-@canvas_pull_0640: 5% + @chat_step_0640;
+@canvas_pull_1920: @canvas_pull_init + @chat_step_1920;
+@canvas_pull_1600: @canvas_pull_init + @chat_step_1600;
+@canvas_pull_1280: @canvas_pull_init + @chat_step_1280;
+@canvas_pull_0960: @canvas_pull_init + @chat_step_0960;
+@canvas_pull_0640: @canvas_pull_init + @chat_step_0640;
+@canvas_pull_init: 1% * @size_chat;

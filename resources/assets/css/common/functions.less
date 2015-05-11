@@ -255,39 +255,8 @@
   .mq_960({ @{property}: abs(@value - @chat_0960);});
   .mq_640({ @{property}: abs(@value - @chat_0640);});
 }
-//
-// transform canvas when left/right menu is active
-//
-.canvas_off(...) {
-  .left(@a) when not (@a = left) {
-    @init: 5% + 10;
-    @1920: @canvas_pull_1920 + 10;
-    @1600: @canvas_pull_1600 + 10;
-    @1280: @canvas_pull_1280 + 10;
-    @0960: @canvas_pull_0960 + 10;
-    @0640: @canvas_pull_0640 + 10;
-  }.left(@arguments);
-  .right(@a) when (@a = left) {
-    @init: -5% - 10;
-    @1920: -@canvas_pull_1920 - 10;
-    @1600: -@canvas_pull_1600 - 10;
-    @1280: -@canvas_pull_1280 - 10;
-    @0960: -@canvas_pull_0960 - 10;
-    @0640: -@canvas_pull_0640 - 10;
-  }.right(@arguments);
-  .inner {
-     transform: scale(.8);
-     margin-left: @init;
-     .mq_1920({ margin-left: @1920;});
-     .mq_1600({ margin-left: @1600;});
-     .mq_1280({ margin-left: @1280;});
-      .mq_960({ margin-left: @0960;});
-      .mq_640({ margin-left: @0640;});
-  }
-}
 .shadow_canvas(@state: default) {
   @shadow: fade(@black, (100 * @opacity_white_light));
-  .inline(@gray_lightest);
   .default(@state) when (@state = default) {
     box-shadow+: 0 8px 21px 0 @shadow;
   }.default(@state);

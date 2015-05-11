@@ -71,12 +71,9 @@
             (om/build overlay/overlay app {:react-key "overlay"})
 
             [:div.inner (merge {:class (when (empty? (:frontend-id-state app)) "loading")
-                                :key "inner"}
-                               (when overlay-visible?
-                                 {:on-click #(cast! :overlay-escape-clicked)
-                                  :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
+                                :key "inner"})
              [:style "#om-app:active{cursor:auto}"]
-             [:div.inner-background]
+             ; [:div.inner-background]
              (om/build canvas/canvas (select-in app [state/chat-opened-path
                                                      state/current-tool-path
                                                      state/right-click-learned-path
@@ -101,7 +98,10 @@
                                                  [:show-landing?]
                                                  [:cust-data]
                                                  [:navigation-data]])
-                       {:react-key "chat"})]
+                       {:react-key "chat"})
+             (when overlay-visible?
+               [:div.inner-border {:on-click #(cast! :overlay-escape-clicked)
+                                   :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}])]
 
             (om/build hud/hud (select-in app [state/chat-opened-path
                                               state/overlays-path
