@@ -27,4 +27,9 @@
 #om-app:active {
   cursor: wait;
 }
+@-moz-document url-prefix() {
+  .canvas-frame {
+    mask: url(#canvas-mask);
+  }
+}
 ")

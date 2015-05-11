@@ -76,7 +76,9 @@
                                  {:on-click #(cast! :overlay-escape-clicked)
                                   :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
              [:style "#om-app:active{cursor:auto}"]
-             (om/build canvas/canvas (select-in app [state/current-tool-path
+             [:div.inner-background]
+             (om/build canvas/canvas (select-in app [state/chat-opened-path
+                                                     state/current-tool-path
                                                      state/right-click-learned-path
                                                      [:drawing :in-progress?]
                                                      [:drawing :relation-in-progress?]

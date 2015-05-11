@@ -20,17 +20,13 @@
   min-width: @tile;
   max-width: calc(~"100% -" @tile);
   height: 100%;
-  background: @dye_outer;
   pointer-events: auto;
   user-select: auto;
   will-change: transform;
   animation: in-fade-right @run_slow @bezier_fadein;
   top: 0;   //
   right: 0; // needed for closing animation
-  box-shadow+: 0    1px @color_menu_faint;
-  box-shadow+: 0   -1px @color_menu_faint;
-  box-shadow+: 1px  0   @color_menu_faint;
-  box-shadow+: 1px  0   @color_menu_faint inset;
+  border-left: 1px solid fade(@white, (100 * @opacity_darker_dark));
   &.closed {
     animation-name: none;
     transform: translate3d(100%, 0, 0);
@@ -38,21 +34,10 @@
     position: absolute;
   }
 }
-.chat-background {
-  transform-origin: left;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: @dye_inner;
-  border-left: 1px solid @gray_dark;
-  will-change: transform;
-  transition: @run @bezier_deform;
-}
 .chat-log {
   .flexy(column; flex-end);
   flex: 1;
+  border-bottom: 1px solid fade(@white, (100 * @opacity_darker_dark));
 }
 .chat-messages {
   .scrollbar_inner();
@@ -74,8 +59,6 @@
 }
 .chat-box {
   position: relative;
-  box-shadow: 0 1px @gray_dark inset;
-  transition: box-shadow @run_fast @run_fast @bezier_fadein;
 }
 .chat-input {
   .scrollbar_inner();

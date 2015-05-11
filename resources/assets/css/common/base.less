@@ -20,13 +20,19 @@ body {
     .width-chat {
       .size_of(chat; width);
     }
+    .canvas-frame {
+      .mask_canvas(true);
+    }
   }
   &.chat-closed {
-    .width-of-canvas {
+    .width-canvas {
       width: 100%;
     }
-    .width-of-chat {
+    .width-chat {
       width: 0;
+    }
+    .canvas-frame {
+      .mask_canvas(false);
     }
   }
 }

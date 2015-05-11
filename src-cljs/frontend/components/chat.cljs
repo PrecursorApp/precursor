@@ -242,10 +242,13 @@
             document-id (get-in app [:document/id])]
         (html
          [:div.chat
-          [:div#canvas-size.chat-offset.holo]
+          [:div#canvas-size.chat-offset.holo
+           [:svg {:width "100%" :height "100%"}
+            [:defs
+             [:mask#canvas-mask
+              [:rect {:width "100%" :height "100%" :fill "#fff"}]]]]]
           [:div.chat-window {:class (when (or (not chat-opened?)
                                               (:show-landing? app)) ["closed"])}
-           [:div.chat-background]
            (om/build log (utils/select-in app [[:document/id]
                                                [:sente-id]
                                                [:client-id]
