@@ -51,9 +51,7 @@
         document (delay (:transaction/document (datomic-common/get-annotations transaction)))
         chat-body-eid (d/entid db :chat/body)]
     (when-let [chat-datom (first (filter #(= chat-body-eid (:a %)) datoms))]
-      (let [slack-url (if (profile/prod?)
-                        "https://hooks.slack.com/services/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"
-                        "https://hooks.slack.com/services/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")
+      (let [slack-url (profile/slack-customer-ping-url)
             cust (some->> chat-datom :e (#(d/datoms db :eavt % :cust/uuid)) first :v (cust-model/find-by-uuid db))
             username (:cust/email cust "ping-bot")
             icon_url (str (:google-account/avatar cust))]
@@ -80,9 +78,7 @@
         datoms (:tx-data transaction)
         team-eid (d/entid db :team/subdomain)]
     (when-let [team-datom (first (filter #(= team-eid (:a %)) datoms))]
-      (let [slack-url (if (profile/prod?)
-                        "https://hooks.slack.com/services/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"
-                        "https://hooks.slack.com/services/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")
+      (let [slack-url (profile/slack-customer-ping-url)
             team (some->> team-datom :e (d/entity db))
             cust (:team/creator team)
             username (:cust/email cust "ping-bot")
@@ -96,9 +92,7 @@
         datoms (:tx-data transaction)
         private-docs-eid (d/entid db :flags/private-docs)]
     (when-let [flag-datom (first (filter #(= private-docs-eid (:v %)) datoms))]
-      (let [slack-url (if (profile/prod?)
-                        "https://hooks.slack.com/services/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"
-                        "https://hooks.slack.com/services/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")
+      (let [slack-url (profile/slack-customer-ping-url)
             cust (d/entity db (:e flag-datom))
             username (:cust/email cust "ping-bot")
             icon_url (str (:google-account/avatar cust))]

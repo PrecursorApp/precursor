@@ -1,13 +1,16 @@
 (ns pc.http.routes.stripe
   (:require [cheshire.core :as json]
+            [clj-http.client :as http]
             [clojure.tools.logging :as log]
             [datomic.api :as d]
             [defpage.core :as defpage :refer (defpage)]
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
+            [pc.models.cust :as cust-model]
             [pc.models.invoice :as invoice-model]
             [pc.models.plan :as plan-model]
             [pc.models.team :as team-model]
+            [pc.profile :as profile]
             [pc.rollbar :as rollbar]
             [pc.stripe :as stripe]
             [slingshot.slingshot :refer (try+ throw+)]))
@@ -42,6 +45,22 @@
   [hook-json]
   (log/infof "%s hook from Stripe with no handler" (get hook-json "type"))
   (swap! examples assoc (get hook-json "type") hook-json))
+
+(defmethod handle-hook "customer.created"
+  [hook-json]
+  (let [db (pcd/default-db)
+        _ (def mycustomer-created-json hook-json)
+        plan (plan-model/find-by-stripe-customer db (get-in hook-json ["data" "object" "id"]))]
+    (with-hook-accounting plan hook-json
+      (let [team (team-model/find-by-plan db plan)]
+        (http/post (profile/slack-customer-ping-url)
+                   {:form-params
+                    {"payload"
+                     (json/encode {:text (format "The <%s|%s> team created a plan!"
+                                                 (str "https://admin.precursorapp.com/team/" (:team/subdomain team))
+                                                 (:team/subdomain team))
+                                   :username (:plan/billing-email plan)
+                                   :icon_url (some->> plan :plan/billing-email (cust-model/find-by-email db) :google-account/avatar str)})}})))))
 
 (defmethod handle-hook "customer.updated"
   [hook-json]

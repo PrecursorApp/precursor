@@ -5,6 +5,7 @@
             [pc.auth.google :refer [google-api-key]]
             [pc.datomic :as pcd]
             [pc.models.cust :as cust-model]
+            [pc.profile :as profile]
             [pc.utils :as utils]))
 
 (def dribbble-custom-search-id "013431191107512616255:bbjymp3bqby")
@@ -58,7 +59,7 @@
                                  (get dribbble-profile "html_url")
                                  (get dribbble-profile "username")
                                  (get dribbble-profile "followers_count"))))]
-      (http/post "https://hooks.slack.com/services/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"
+      (http/post (profile/slack-customer-ping-url)
                  {:form-params {"payload" (json/encode {:text message
                                                         :username (:cust/email cust)
                                                         :icon_url (str (:google-account/avatar cust))})}}))))
