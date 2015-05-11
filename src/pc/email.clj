@@ -218,7 +218,7 @@
                        :text (str "You have a new invoice for the " (:team/subdomain team) " team.")
                        :html (view/invoice-html team invoice)
                        :attachments (let [temp (fs/temp-file (str "invoice-"
-                                                                  (:team/subscribe team)
+                                                                  (:team/subdomain team)
                                                                   "-"
                                                                   (:db/id invoice)))
                                           os (io/output-stream temp)]
