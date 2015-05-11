@@ -81,6 +81,7 @@
                  [org.clojure/clojurescript "0.0-3211"]
                  [precursor/core.async "0.1.361.0-d8047c-alpha"]
                  [cljs-ajax "0.2.6"]
+                 [com.cognitect/transit-cljs "0.8.207"]
 
                  ;; Use yaks/om for the pattern tag (it's in React,
                  ;; but not Om yet)

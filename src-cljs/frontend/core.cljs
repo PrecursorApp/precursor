@@ -25,6 +25,7 @@
             [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.state :as state]
+            [frontend.talaria :as talaria]
             [frontend.team :as team]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :refer [mlog merror third] :include-macros true]

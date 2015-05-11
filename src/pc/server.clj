@@ -15,6 +15,7 @@
             [pc.http.routes.api :as api]
             [pc.http.routes :as routes]
             [pc.http.routes.blog :as blog]
+            [pc.http.routes.talaria :as talaria-routes]
             [pc.http.sente :as sente]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust-model]
@@ -76,6 +77,7 @@
   (-> (compojure.core/routes #'routes/app
                              #'api/app
                              #'blog/app
+                             #'talaria-routes/app
                              (compojure.route/resources "/" {:root "public"
                                                              :mime-types {:svg "image/svg"}})
                              #'catch-all)
