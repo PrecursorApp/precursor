@@ -20,13 +20,12 @@
   min-width: @tile;
   max-width: calc(~"100% -" @tile);
   height: 100%;
-  pointer-events: auto;
-  user-select: auto;
-  will-change: transform;
-  animation: in-fade-right @run_slow @bezier_fadein;
   top: 0;   //
   right: 0; // needed for closing animation
-  border-left: 1px solid fade(@white, (100 * @opacity_darker_dark));
+  pointer-events: auto;
+  user-select: auto;
+  border-left: 1px solid @color_chat_border;
+  animation: in-fade-right @run_slow @bezier_fadein;
   &.closed {
     animation-name: none;
     transform: translate3d(100%, 0, 0);
@@ -37,7 +36,6 @@
 .chat-log {
   .flexy(column; flex-end);
   flex: 1;
-  border-bottom: 1px solid fade(@white, (100 * @opacity_darker_dark));
 }
 .chat-messages {
   .scrollbar_inner();
@@ -59,6 +57,7 @@
 }
 .chat-box {
   position: relative;
+  border-top: 1px solid @color_chat_border;
 }
 .chat-input {
   .scrollbar_inner();
@@ -119,6 +118,17 @@
   &:before {
     transition: opacity @run_fast @run @bezier_fadein;
   }
+  &:after {
+    display: none;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: .125em;
+    height: 100%;
+    background: @color_menu_faint;
+    animation: in-fade @run_slower @run backwards;
+  }
 }
 .chat-placeholder {
   color: @gray_dark;
@@ -142,12 +152,11 @@
 .chat-date {
   padding-top: (@tile / 4);
   &.divider-small {
-    user-select: auto;
+    color: fade(@white, (100 * @opacity_darker_dark));
     line-height: 1;
-    opacity: .21;
+    user-select: auto;
     &:before,
     &:after {
-      opacity: .55;
       height: 1px;
     }
   }
@@ -166,6 +175,7 @@
 }
 .message-avatar {
   flex: 0 0 auto;
+  animation: in-fade @run_fast @run_fast backwards;
   .iconpile {
     height: .75em;
     width: .75em;
@@ -180,12 +190,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  animation: in-fade @run_fast @run backwards;
 }
 .message-time {
-  user-select: auto;
   flex: 0 0 auto;
-  color: @gray_dark;
+  color: fade(@white, (100 * @opacity_darker_dark));
   font-size: .75rem;
   text-transform: lowercase;
+  padding: .25em 0;
   white-space: nowrap;
+  user-select: auto;
 }

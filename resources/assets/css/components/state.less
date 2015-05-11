@@ -20,14 +20,13 @@
       }
     }
   }
+  .inner-background {
+    opacity: 0;
+  }
   .canvas {
     .shadow_canvas();
     pointer-events: none;
     transition: box-shadow @run;
-  }
-  .canvas-background {
-    transform: scale3d(.6, 0, 1);
-    transition-duration: @run;
   }
   .layer {
     .layer-outline,
@@ -39,68 +38,30 @@
       fill: @gray_light;
     }
   }
-  .chat-background {
-    transform: scale3d(0, 0, 1);
-    transition-duration: @run;
-  }
-  .chat-log {
-    color: @color_menu_faded;
-    opacity: .5;
-    transition: @run_fast @now @bezier_fadein;
-    .message-head, // TODO this can be cleaner
-    .stroke-user,
-    .message-time,
-    .chat-date,
-    a {
-      color: @color_menu_faded;
-      stroke: @color_menu_faded !important;
-      transition+: color @now @run_fast;
-      transition+: stroke @now @run_fast;
-    }
-  }
-  .chat-box {
-    box-shadow: 0 1px @color_menu_faint inset;
-    transition: box-shadow @now @run_faster @bezier_fadein;
-    &:after {
-      opacity: 0;
-      transition: @now;
-    }
-  }
-  .chat-placeholder,
-  .chat-teach-enter {
-    &:before {
-      opacity: 0;
-      transition: opacity @now @now @bezier_fadein;
-    }
-    &:after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: .125em;
-      height: 100%;
-      background: @color_menu_faint;
-      animation: in-fade @run_slower @run backwards;
-    }
-  }
   .hud-item {
     &:not(.menu-needed) {
-      opacity: 0;
-      visibility: hidden;
-      transition: @now;
+      display: none;
     }
   }
   .hud-menu,
   .hud-roster {
     .icon(stroke; @black);
   }
+  .message-avatar,
+  .message-author,
   .unseen-eids {
     display: none;
   }
+  .chat-placeholder,
+  .chat-teach-enter {
+    &:before {
+      display: none;
+    }
+    &:after {
+      display: block;
+    }
+  }
 }
-//
-// IMPORTANT VISUAL CHANGES WHILE MENU IS ON THE LEFT
-//
 .state-menu-left {
   .canvas_off(right);
   .hud-menu {
@@ -110,9 +71,6 @@
     .size_of(chat; width);
   }
 }
-//
-// IMPORTANT VISUAL CHANGES WHILE MENU IS ON THE RIGHT
-//
 .state-menu-right {
   .canvas_off(left);
   .hud-roster {
