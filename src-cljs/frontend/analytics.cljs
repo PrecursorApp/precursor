@@ -61,4 +61,5 @@
                                                {:logged-in? (boolean (get-in state [:cust :cust/email]))}
                                                (when (:document/id state)
                                                  {:doc-id (:document/id state)
-                                                  :subscriber-count (count (get-in state [:subscribers :info]))}))))
+                                                  :subscriber-count (count (get-in state [:subscribers :info]))})))
+  (mixpanel/set-people-props {(str "Navigated to " event) true}))
