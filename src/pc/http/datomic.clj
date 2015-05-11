@@ -99,6 +99,39 @@
         (let [message "started a solo trial"]
           (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))))))
 
+(defn admin-notify-issues [transaction]
+  (let [annotations (datomic-common/get-annotations transaction)]
+    (when (:transaction/issue-tx? annotations)
+      (let [db (:db-after transaction)
+            datoms (:tx-data transaction)
+            issue-author-eid (d/entid db :issue/author)
+            comment-author-eid (d/entid db :comment/author)]
+        (when-let [new-issue-datom (first (filter #(= issue-author-eid (:a %)) datoms))]
+          (let [slack-url (profile/slack-customer-ping-url)
+                issue (d/entity db (:e new-issue-datom))
+                cust (:issue/author issue)
+                username (:cust/email cust "ping-bot")
+                icon_url (str (:google-account/avatar cust))]
+            (let [message (format "Created a new issue <%s|%s>"
+                                  (urls/from-issue issue)
+                                  (:issue/title issue))]
+              (http/post slack-url {:form-params {"payload" (json/encode {:text message
+                                                                          :username username
+                                                                          :icon_url icon_url})}}))))
+        (when-let [new-comment-datom (first (filter #(= comment-author-eid (:a %)) datoms))]
+          (let [slack-url (profile/slack-customer-ping-url)
+                comment (d/entity db (:e new-comment-datom))
+                issue (d/entity db (:e (first (d/datoms db :vaet (:db/id comment) :issue/comments))))
+                cust (:comment/author comment)
+                username (:cust/email cust "ping-bot")
+                icon_url (str (:google-account/avatar cust))]
+            (let [message (format "Created a new comment on <%s|%s>"
+                                  (urls/from-issue issue)
+                                  (:issue/title issue))]
+              (http/post slack-url {:form-params {"payload" (json/encode {:text message
+                                                                          :username username
+                                                                          :icon_url icon_url})}}))))))))
+
 (defn handle-admin [transaction]
   (utils/with-report-exceptions
     (send-emails transaction))
@@ -109,7 +142,9 @@
   (utils/with-report-exceptions
     (admin-notify-subdomains transaction))
   (utils/with-report-exceptions
-    (admin-notify-solo-trials transaction)))
+    (admin-notify-solo-trials transaction))
+  (utils/with-report-exceptions
+    (admin-notify-issues transaction)))
 
 (defonce raised-full-channel-exception? (atom nil))
 (defn forward-to-admin-ch [admin-ch transaction]
