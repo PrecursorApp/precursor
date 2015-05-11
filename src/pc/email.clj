@@ -217,9 +217,13 @@
                        :subject "Precursor Invoice"
                        :text (str "You have a new invoice for the " (:team/subdomain team) " team.")
                        :html (view/invoice-html team invoice)
-                       :attachments (let [temp (fs/temp-file)]
+                       :attachments (let [temp (fs/temp-file (str "invoice-"
+                                                                  (:team/subscribe team)
+                                                                  "-"
+                                                                  (:db/id invoice)))
+                                          os (io/output-stream temp)]
                                       ;; only supports files :(
-                                      (invoice-view/render-pdf team invoice temp)
+                                      (invoice-view/render-pdf team invoice os)
                                       [{:content temp
                                         :content-type "application/pdf"
                                         :file-name (str "Precursor invoice #" (web-peer/client-id invoice))}])})))
