@@ -245,10 +245,10 @@
         }
       }
       // kill after ph discount is done
-      .ph-discount {
-        .icon(fill; @color_ph);
+      .dn-discount {
+        .icon(fill; @color_dn);
         &:hover {
-          .icon(fill; @color_ph);
+          .icon(fill; @color_dn);
         }
       }
     }
@@ -285,12 +285,12 @@
   //   display: none;
   // });
   // kill this when ph discount ends
-  &:not(.ph-override) {
+  &:not(.dn-override) {
     .mq_640({
       display: none;
     });
   }
-  &.ph-override {
+  &.dn-override {
       opacity: 1 !important;
       pointer-events: auto !important;
     .mq_640({

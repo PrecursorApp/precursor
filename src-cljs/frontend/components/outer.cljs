@@ -35,9 +35,8 @@
     ;; important to get the state out of owner since we're not re-rendering on update
     (let [{:keys [subdomain]} (om/get-state owner)
           res (<! (ajax/managed-ajax :post "/api/v1/create-team" :params (merge {:subdomain subdomain}
-                                                                                (when (or (= "product-hunt" (:utm-campaign utils/initial-query-map))
-                                                                                          (get-in app state/ph-discount-path))
-                                                                                  {:coupon-code "product-hunt"}))))]
+                                                                                (when (get-in app state/dn-discount-path)
+                                                                                  {:coupon-code "designer-news"}))))]
       (if (= :success (:status res))
         (om/update-state! owner (fn [s]
                                   (assoc s
@@ -277,9 +276,9 @@
              [:div.price-foot
               [:a.bubble-button (merge {:href "/trial"
                                         :target "_top"}
-                                       (when (get-in app state/ph-discount-path)
-                                         {:data-bottom "Product Hunt 50% off for 6mo"
-                                          :class " hover ph-pricing-button"}))
+                                       (when (get-in app state/dn-discount-path)
+                                         {:data-bottom "DN 50% discount"
+                                          :class " hover dn-pricing-button"}))
 
                [:span "Start a free trial."]]]]
             [:section.price-divide.right

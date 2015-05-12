@@ -152,7 +152,7 @@
 
 (def chat-submit-learned-path (conj browser-settings-path :chat-submit-learned))
 
-(def ph-discount-path (conj browser-settings-path :ph-discount))
+(def dn-discount-path (conj browser-settings-path :dn-discount))
 
 (defn doc-settings-path [doc-id]
   (conj browser-settings-path :document-settings doc-id))

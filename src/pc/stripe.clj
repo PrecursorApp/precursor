@@ -159,7 +159,7 @@
        (log/infof "team plan already exists in Stripe")
        (throw+)))))
 
-(defn ensure-coupons []
+(defn ensure-ph-coupon []
   (try+
    (api-call :post
              "coupons"
@@ -171,6 +171,23 @@
      (if (some-> e :body json/decode (get-in ["error" "message"]) (= "Coupon already exists."))
        (log/infof "product-hunt coupon already exists in Stripe")
        (throw+)))))
+
+(defn ensure-dn-coupon []
+  (try+
+   (api-call :post
+             "coupons"
+             {:form-params {:id "designer-news"
+                            :percent_off "50"
+                            :duration "repeating"
+                            :duration_in_months 3}})
+   (catch [:status 400] e
+     (if (some-> e :body json/decode (get-in ["error" "message"]) (= "Coupon already exists."))
+       (log/infof "designer-news coupon already exists in Stripe")
+       (throw+)))))
+
+(defn ensure-coupons []
+  (ensure-ph-coupon)
+  (ensure-dn-coupon))
 
 (defn init []
   (ensure-plans)
