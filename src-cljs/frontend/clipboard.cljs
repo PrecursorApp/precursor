@@ -185,18 +185,18 @@
                             (map #(dissoc (ds/touch+ (d/entity @(:db app-state) %))
                                           :unsaved)
                                  (get-in app-state [:selected-eids :selected-eids]))))]
-      (let [mouse (:mouse app-state)
-            [rx ry] (cameras/screen->point (:camera app-state) (:x mouse) (:y mouse))]
-        (.preventDefault event)
-        (.setData (.-clipboardData event) "text"
-                  (render-layers {:layers layers
-                                  :rx rx
-                                  :ry ry}))))))
+      (.preventDefault event)
+      (.setData (utils/inspect (.-clipboardData event)) "text"
+                (render-layers {:layers layers})))))
+
+(defn parse-pasted [pasted-data]
+  (some->> pasted-data
+      (re-find #"<metadata>(.+)</metadata>")
+    last
+    reader/read-string))
 
 (defn handle-paste! [app-state event]
   (when-let [layer-data (some->> (.getData (.-clipboardData event) "text")
-                                 (re-find #"<metadata>(.+)</metadata>")
-                                 last
-                                 reader/read-string)]
+                          (parse-pasted))]
     (let [canvas-size (utils/canvas-size)]
       (put! (get-in app-state [:comms :controls]) [:layers-pasted (assoc layer-data :canvas-size canvas-size)]))))
