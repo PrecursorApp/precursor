@@ -52,7 +52,7 @@
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head
-                  [:div.message-avatar (common/icon :user {:path-props {:className color-class}})]
+                  [:div.message-avatar.hide-from-menu (common/icon :user {:path-props {:className color-class}})]
                   [:div.message-author cust-name]
                   [:div.message-time short-time]])
                [:div.message-body
@@ -131,11 +131,11 @@
                                                 (when (not= (.-scrollHeight node) (.-clientHeight node))
                                                   (om/set-state! owner :chat-height (max 64 (.-scrollHeight node)))))}]
            (if chat-submit-learned?
-             [:div.chat-placeholder {:data-before "Chat."}]
-             [:div.chat-teach-enter {:data-step-1 "Click here."
-                                     :data-step-2 "Type something."
-                                     :data-step-3 "Send with enter."
-                                     :data-remind "Don't forget to hit enter."}])])))))
+             [:div.chat-placeholder.hide-from-menu {:data-before "Chat."}]
+             [:div.chat-teach-enter.hide-from-menu {:data-step-1 "Click here."
+                                                    :data-step-2 "Type something."
+                                                    :data-step-3 "Send with enter."
+                                                    :data-remind "Don't forget to hit enter."}])])))))
 
 (defn log [{:keys [sente-id client-id] :as app} owner]
   (reify

@@ -13,6 +13,9 @@ body {
   min-height: 100vh;
   background: @dye_outer;
   animation: in-fade @run_slower;
+  &:not(.entry) {
+    .animate_menu_closed();
+  }
   &.chat-opened {
     .width-canvas {
       .size_of(canvas; width);

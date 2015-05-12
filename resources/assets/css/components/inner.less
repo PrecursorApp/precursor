@@ -46,20 +46,23 @@
     }
   }
 }
-.inner-background {
+.background {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background: @dye_inner;
-  animation: in-inner-background @run;
 }
-.inner-border {
+.foreground {
   position: absolute;
-  top: 10%;
-  width: 80%;
-  height: 80%;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  margin: auto;
   cursor: pointer;
   pointer-events: auto;
   transition: box-shadow @run_slower;
@@ -92,13 +95,13 @@
   &:before {
     border-top: 1px solid @color_chat_border;
     border-bottom: 1px solid @color_chat_border;
-    animation: in-expand @run_slower (2 * @run) backwards;
-    transform-origin: left;
+    // animation: in-expand @run_slower @run_fast backwards;
+    transform-origin: right;
   }
   &:after {
     border-left: 1px solid @color_chat_border;
     border-right: 1px solid @color_chat_border;
-    animation: in-stand @run @run backwards;
-    transform-origin: center;
+    // animation: in-stand @run (@run_slower + @run_fast) backwards;
+    transform-origin: top;
   }
 }

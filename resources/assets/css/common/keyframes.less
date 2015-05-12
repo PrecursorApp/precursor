@@ -212,24 +212,30 @@
   0%   { transform: translate(.75rem, .75rem);}
   100% { transform: none;}
 }
-@keyframes in-inner-background {
-  0%   { transform: scale(.5); opacity: 0; }
-  75%  { opacity: 1; }
-  100% { transform: none;}
+@keyframes opened-menu-background {
+  0%  { opacity: 1; transform: scale(1); }
+  50% { opacity: 1; }
+  75% { opacity: 0; }
 }
-@keyframes tween-transform {
-  0% { transform: none; }
+@keyframes closed-menu-background {
+  0%  { opacity: 0; transform: scale(.5); }
+  50% { opacity: 1; }
 }
-@keyframes in-canvas-chat {
-  //
+@keyframes opened-menu-canvas {
+  0% { transform: scale(1); }
 }
-@keyframes canvas-chat-left {
-  100% {
-    .mq_1920({ transform: translate(@canvas_pull_1920 - 10) scale(.8); });
-    .mq_1600({ transform: translate(@canvas_pull_1600 - 10) scale(.8); });
-    .mq_1280({ transform: translate(@canvas_pull_1280 - 10) scale(.8); });
-     .mq_960({ transform: translate(@canvas_pull_0960 - 10) scale(.8); });
-     .mq_640({ transform: translate(@canvas_pull_0640 - 10) scale(.8); });
-               transform: translate(@canvas_pull_init - 10) scale(.8);
-  }
+@keyframes closed-menu-canvas {
+  0% { transform: scale(.8); }
+}
+@keyframes opened-menu-chat {
+  0% { width: 100%; height: 100%; }
+}
+@keyframes closed-menu-chat {
+  0% { height: 80%; }
+}
+@keyframes opened-menu-foreground {
+  0% { opacity: 0; }
+}
+@keyframes opened-menu-inner {
+  0% { transform: translate(0); }
 }

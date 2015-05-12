@@ -58,7 +58,8 @@
            [:div#app.app {:class (str (frontend.overlay/app-overlay-class app)
                                       (when (:show-landing? app) " state-outer ")
                                       (if chat-opened? " chat-opened " " chat-closed ")
-                                      (when (keyboard/pan-shortcut-active? app) " state-pan "))}
+                                      (when (keyboard/pan-shortcut-active? app) " state-pan ")
+                                      (when (= (:page-count app) 1) "entry"))}
             (om/build text-sizer {})
 
             (when (and (keyword-identical? :document nav-point)
@@ -73,7 +74,7 @@
             [:div.inner (merge {:class (when (empty? (:frontend-id-state app)) "loading")
                                 :key "inner"})
              [:style "#om-app:active{cursor:auto}"]
-             ; [:div.inner-background]
+             [:div.background]
              (om/build canvas/canvas (select-in app [state/chat-opened-path
                                                      state/current-tool-path
                                                      state/right-click-learned-path
@@ -100,8 +101,8 @@
                                                  [:navigation-data]])
                        {:react-key "chat"})
              (when overlay-visible?
-               [:div.inner-border {:on-click #(cast! :overlay-escape-clicked)
-                                   :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}])]
+               [:div.foreground {:on-click #(cast! :overlay-escape-clicked)
+                                 :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}])]
 
             (om/build hud/hud (select-in app [state/chat-opened-path
                                               state/overlays-path

@@ -267,6 +267,16 @@
     box-shadow+: 0 5px 13px 0 @shadow;
   }.active(@state);
 }
+.inner_offset(...) {
+  .left(@a)  when (@a = left)  { @direction:  1%; @amount:  1; }.left(@arguments);
+  .right(@a) when (@a = right) { @direction: -1%; @amount: -1; }.right(@arguments);
+  .mq_1920({ transform: translate((@direction * @canvas_pull_1920) - (@amount * 10)) });
+  .mq_1600({ transform: translate((@direction * @canvas_pull_1600) - (@amount * 10)) });
+  .mq_1280({ transform: translate((@direction * @canvas_pull_1280) - (@amount * 10)) });
+   .mq_960({ transform: translate((@direction * @canvas_pull_0960) - (@amount * 10)) });
+   .mq_640({ transform: translate((@direction * @canvas_pull_0640) - (@amount * 10)) });
+             transform: translate((@direction * @canvas_pull_init) - (@amount * 10));
+}
 .mask_canvas(...) {
   .true(@a) when (@a = true) {
     // firefox mask css is in pc.views.commonhead-styl.head-style
