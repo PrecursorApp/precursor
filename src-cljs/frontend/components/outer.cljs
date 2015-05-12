@@ -35,9 +35,8 @@
     ;; important to get the state out of owner since we're not re-rendering on update
     (let [{:keys [subdomain]} (om/get-state owner)
           res (<! (ajax/managed-ajax :post "/api/v1/create-team" :params (merge {:subdomain subdomain}
-                                                                                (when (or (= "product-hunt" (:utm-campaign utils/initial-query-map))
-                                                                                          (get-in app state/dn-discount-path))
-                                                                                  {:coupon-code "product-hunt"}))))]
+                                                                                (when (get-in app state/dn-discount-path)
+                                                                                  {:coupon-code "designer-news"}))))]
       (if (= :success (:status res))
         (om/update-state! owner (fn [s]
                                   (assoc s
