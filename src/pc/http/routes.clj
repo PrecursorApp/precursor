@@ -354,6 +354,9 @@
 (defpage product-hunt "/product-hunt" [req]
   (outer-page req))
 
+(defpage product-hunt "/designer-news" [req]
+  (outer-page req))
+
 (def bucket-doc-ids (atom #{}))
 
 (defn clean-bucket-doc-ids []
