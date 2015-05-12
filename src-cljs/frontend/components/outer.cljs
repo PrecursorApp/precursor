@@ -278,8 +278,8 @@
               [:a.bubble-button (merge {:href "/trial"
                                         :target "_top"}
                                        (when (get-in app state/ph-discount-path)
-                                         {:data-bottom "Product Hunt 50% off for 6mo"
-                                          :class " hover ph-pricing-button"}))
+                                         {:data-bottom "DN 50% discount"
+                                          :class " hover dn-pricing-button"}))
 
                [:span "Start a free trial."]]]]
             [:section.price-divide.right
