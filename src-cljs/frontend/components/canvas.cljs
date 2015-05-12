@@ -559,7 +559,7 @@
                                   :height "100%"
                                   :x (:layer/start-x layer)
                                   ;; TODO: defaults for each layer when we create them
-                                  :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
+                                  :y (- (:layer/start-y layer) (:layer/font-size layer state/default-font-size))}
             (dom/form #js {:className "svg-text-form"
                            :onMouseDown #(.stopPropagation %)
                            :onWheel #(.stopPropagation %)
