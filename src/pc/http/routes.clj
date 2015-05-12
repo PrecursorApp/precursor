@@ -292,7 +292,7 @@
   (content/app (common-view-data req)))
 
 (defpage new-doc "/new" [req]
-  (if (:subdomain req)
+   (if (:subdomain req)
     (if (and (:team req)
              (auth/logged-in? req)
              (auth/has-team-permission? (pcd/default-db) (:team req) (:auth req) :admin))

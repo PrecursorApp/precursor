@@ -22,7 +22,9 @@
 (defn redirect-to-main [req]
   {:status 302
    :headers {"Location" (str (url/map->URL {:host (profile/hostname)
-                                            :protocol (name (:scheme req))
+                                            :protocol (if (profile/force-ssl?)
+                                                        "https"
+                                                        (name (:scheme req)))
                                             :port (if (profile/force-ssl?)
                                                     (profile/https-port)
                                                     (profile/http-port))
