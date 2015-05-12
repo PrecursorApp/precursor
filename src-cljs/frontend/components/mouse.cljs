@@ -42,5 +42,10 @@
                 grabbing-cursor
                 grab-cursor)))
 
+          (when (and (keyboard/arrow-shortcut-active? app)
+                     (not (get-in app [:drawing :relation-in-progress?])))
+            (dom/div #js {:className " mouse-cursor holo "}
+              grab-cursor))
+
           (when-not (get-in app state/right-click-learned-path)
             (dom/div (get hints :dial))))))))

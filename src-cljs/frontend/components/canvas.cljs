@@ -1137,5 +1137,7 @@
         (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
         (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
                                                     [:keyboard]
-                                                    [:mouse-down]])
+                                                    [:keyboard-shortcuts]
+                                                    [:mouse-down]
+                                                    [:drawing :relation-in-progress?]])
                   {:react-key "mouse"})]))))

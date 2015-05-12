@@ -57,7 +57,8 @@
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
                         :return-from-origin #{#{"2"}}
-                        :arrow-tool #{#{"ctrl" "shift"}}
+                        :arrow-tool #{#{"ctrl" "shift"}
+                                      #{"a"}}
                         :shrink-text #{#{"-"} #{"["}}
                         :grow-text #{#{"shift" "="}
                                      #{"="}
