@@ -537,7 +537,7 @@
          [:section.menu-view.issues-list
           [:div.content.make
            (om/build issue-form {})]
-          [:div.issue-cards.make
+          [:div.issue-cards.make {:key "issue-cards"}
            (let [deleted (set/difference rendered-issue-ids all-issue-ids)
                  added (set/difference all-issue-ids rendered-issue-ids)]
              (when (or (seq deleted) (seq added))
