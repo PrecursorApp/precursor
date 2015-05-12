@@ -179,18 +179,18 @@
        (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))
 
 (defn handle-copy! [app-state e]
-  (when (and (str/blank? (js/window.getSelection)) ; don't break copy/paste
-             (let [target (.-target e)]
-               ;; don't apply if input or textarea is focused, unless the copy-hack
-               ;; element is selected (see components.canvas)
-               (or (= "_copy-hack" (.-id target))
+  (when (let [target (.-target e)]
+          ;; don't apply if input or textarea is focused, unless the copy-hack
+          ;; element is selected (see components.canvas)
+          (or (= "_copy-hack" (.-id target))
+              (and (str/blank? (js/window.getSelection))
                    (not (contains? #{"input" "textarea"} (str/lower-case (.-tagName target)))))))
+    (.preventDefault e)
     (when-let [layers (seq (remove
                             #(= :layer.type/group (:layer/type %))
                             (map #(dissoc (ds/touch+ (d/entity @(:db app-state) %))
                                           :unsaved)
                                  (get-in app-state [:selected-eids :selected-eids]))))]
-      (.preventDefault e)
       (.setData (.-clipboardData e) "text"
                 (render-layers {:layers layers})))))
 

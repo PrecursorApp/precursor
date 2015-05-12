@@ -1097,6 +1097,17 @@
                                        :left "-100px"
                                        :width "0px"
                                        :height "0px"}
+                           :onKeyDown #(do (utils/swallow-errors
+                                            (let [key-set (keyq/event->key %)]
+                                              (when-not (contains? #{#{"ctrl" "v"}
+                                                                     #{"ctrl" "c"}
+                                                                     #{"meta" "v"}
+                                                                     #{"meta" "c"}} key-set)
+                                                (.focus (.. % -target -parentNode)))))
+                                           true)
+                           :onKeyUp #(do (utils/swallow-errors (.focus (.. % -target -parentNode)))
+                                         true)
+                           ;; need a value here, or Firefox and Safari won't run copy
                            :value "some value"})))))
 
 (defn canvas [app owner]
@@ -1112,22 +1123,13 @@
                       :tabIndex 1}
                      (when (needs-copy-paste-hack?)
                        ;; gives focus to our copy/paste element, so that we can copy
-                       {:onKeyDown #(let [key-set (keyq/event->key %)]
-                                      (when (and (= (.-target %)
-                                                    js/document.activeElement)
-                                                 (contains? #{#{"ctrl" "c"}
-                                                              #{"meta" "c"}
-                                                              #{"ctrl" "v"}
-                                                              #{"meta" "v"}} key-set))
-                                        (when-let [hack-node (goog.dom/getElement "_copy-hack")]
-                                          (om/set-state-nr! owner :refocus-on-key-up true)
-                                          (gforms/focusAndSelect hack-node)))
-                                      true)
-                        :onKeyUp (fn [e]
-                                   (when (om/get-state owner :refocus-on-key-up)
-                                     (.focus (.-target e))
-                                     (om/set-state-nr! owner :previous-focus-node nil))
-                                   true)}))
+                       {:onKeyDown #(do (utils/swallow-errors
+                                         (let [key-set (keyq/event->key %)
+                                               hack-node (goog.dom/getElement "_copy-hack")]
+                                           (when (contains? #{#{"ctrl"} #{"meta"}} key-set)
+                                             (when-let [hack-node (goog.dom/getElement "_copy-hack")]
+                                               (gforms/focusAndSelect hack-node)))))
+                                        true)}))
         [:div.canvas-background]
         (when (needs-copy-paste-hack?)
           (om/build copy-paste-hack app))
