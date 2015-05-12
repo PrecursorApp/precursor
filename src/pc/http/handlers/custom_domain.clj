@@ -23,7 +23,9 @@
   {:status 302
    :headers {"Location" (str (url/map->URL {:host (profile/hostname)
                                             :protocol (name (:scheme req))
-                                            :port (:server-port req)
+                                            :port (if (profile/force-ssl?)
+                                                    (profile/https-port)
+                                                    (profile/http-port))
                                             :path (:uri req)
                                             :query (:query-string req)}))}
    :body ""})
