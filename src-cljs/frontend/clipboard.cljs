@@ -178,15 +178,20 @@
       [:g {:transform (gstring/format "translate(%s, %s)" offset-left offset-top)}
        (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))
 
-(defn handle-copy! [app-state event]
-  (when (str/blank? (js/window.getSelection)) ;; don't break normal copy/paste
+(defn handle-copy! [app-state e]
+  (when (and (str/blank? (js/window.getSelection)) ; don't break copy/paste
+             (let [target (.-target e)]
+               ;; don't apply if input or textarea is focused, unless the copy-hack
+               ;; element is selected (see components.canvas)
+               (or (= "_copy-hack" (.-id target))
+                   (not (contains? #{"input" "textarea"} (str/lower-case (.-tagName target)))))))
     (when-let [layers (seq (remove
                             #(= :layer.type/group (:layer/type %))
                             (map #(dissoc (ds/touch+ (d/entity @(:db app-state) %))
                                           :unsaved)
                                  (get-in app-state [:selected-eids :selected-eids]))))]
-      (.preventDefault event)
-      (.setData (utils/inspect (.-clipboardData event)) "text"
+      (.preventDefault e)
+      (.setData (.-clipboardData e) "text"
                 (render-layers {:layers layers})))))
 
 (defn parse-pasted [pasted-data]
@@ -195,8 +200,13 @@
     last
     reader/read-string))
 
-(defn handle-paste! [app-state event]
-  (when-let [layer-data (some->> (.getData (.-clipboardData event) "text")
-                          (parse-pasted))]
-    (let [canvas-size (utils/canvas-size)]
-      (put! (get-in app-state [:comms :controls]) [:layers-pasted (assoc layer-data :canvas-size canvas-size)]))))
+(defn handle-paste! [app-state e]
+  (when (let [target (.-target e)]
+          ;; don't apply if input or textarea is focused, unless the copy-hack
+          ;; element is selected (see components.canvas)
+          (or (= "_copy-hack" (.-id target))
+              (not (contains? #{"input" "textarea"} (str/lower-case (.-tagName target))))))
+    (when-let [layer-data (some->> (.getData (.-clipboardData e) "text")
+                            (parse-pasted))]
+      (let [canvas-size (utils/canvas-size)]
+        (put! (get-in app-state [:comms :controls]) [:layers-pasted (assoc layer-data :canvas-size canvas-size)])))))
