@@ -5,9 +5,11 @@
             [datascript :as d]
             [frontend.auth :as auth]
             [frontend.camera :as cameras]
+            [frontend.clipboard :as clipboard]
             [frontend.colors :as colors]
             [frontend.components.common :as common]
             [frontend.components.context :as context]
+            [frontend.components.key-queue :as keyq]
             [frontend.components.mouse :as mouse]
             [frontend.cursors :as cursors]
             [frontend.db :as fdb]
@@ -21,6 +23,8 @@
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
+            [goog.dom.forms :as gforms]
+            [goog.labs.userAgent.browser :as ua-browser]
             [goog.string :as gstring]
             [goog.style]
             [om.core :as om :include-macros true]
@@ -1076,20 +1080,62 @@
 
                    (om/build arrows app {:react-key "arrows"})))))))
 
+(defn needs-copy-paste-hack? []
+  (not (ua-browser/isChrome)))
+
+(defn copy-paste-hack
+  "Creates a special element that we can give focus to on copy and paste"
+  [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [eids (:selected-eids (cursors/observe-selected-eids owner))
+            {:keys [cast! db]} (om/get-shared owner)]
+        (dom/textarea #js {:id "_copy-hack"
+                           :style #js {:position "fixed"
+                                       :top "-100px"
+                                       :left "-100px"
+                                       :width "0px"
+                                       :height "0px"}
+                           :onKeyDown #(do (utils/swallow-errors
+                                            (let [key-set (keyq/event->key %)]
+                                              (when-not (contains? #{#{"ctrl" "v"}
+                                                                     #{"ctrl" "c"}
+                                                                     #{"meta" "v"}
+                                                                     #{"meta" "c"}} key-set)
+                                                (.focus (.. % -target -parentNode)))))
+                                           true)
+                           :onKeyUp #(do (utils/swallow-errors (.focus (.. % -target -parentNode)))
+                                         true)
+                           ;; need a value here, or Firefox and Safari won't run copy
+                           :value "some value"})))))
+
 (defn canvas [app owner]
   (reify
     om/IDisplayName (display-name [_] "Canvas")
     om/IRender
     (render [_]
       (html
-        [:div.canvas {:onContextMenu (fn [e]
+       [:div.canvas (merge
+                     {:onContextMenu (fn [e]
                                        (.preventDefault e)
-                                       (.stopPropagation e))}
-         [:div.canvas-background]
-         (om/build svg-canvas app)
-         (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
-         (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
-                                                     [:keyboard]
-                                                     [:mouse-down]])
-                   {:react-key "mouse"})
-         ]))))
+                                       (.stopPropagation e))
+                      :tabIndex 1}
+                     (when (needs-copy-paste-hack?)
+                       ;; gives focus to our copy/paste element, so that we can copy
+                       {:onKeyDown #(do (utils/swallow-errors
+                                         (let [key-set (keyq/event->key %)
+                                               hack-node (goog.dom/getElement "_copy-hack")]
+                                           (when (contains? #{#{"ctrl"} #{"meta"}} key-set)
+                                             (when-let [hack-node (goog.dom/getElement "_copy-hack")]
+                                               (gforms/focusAndSelect hack-node)))))
+                                        true)}))
+        [:div.canvas-background]
+        (when (needs-copy-paste-hack?)
+          (om/build copy-paste-hack app))
+        (om/build svg-canvas app)
+        (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
+        (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
+                                                    [:keyboard]
+                                                    [:mouse-down]])
+                  {:react-key "mouse"})]))))
