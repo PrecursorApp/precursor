@@ -748,7 +748,17 @@
                              :y2 ry
                              :markerEnd "url(#arrow-point)"})))
           (svg-element (assoc layer
-                              :className "arrow-handle"
+                              :className (str "arrow-handle "
+                                              (when (om/get-state owner :hovered?)
+                                                "hovered "))
+                              ;; hack to workaround missing hover effect when holding "a"
+                              ;; and click->drag from one handle to the other.
+                              :onMouseEnter (fn [e]
+                                              (om/set-state! owner :hovered? true))
+
+                              :onMouseLeave (fn [e]
+                                              (om/set-state! owner :hovered? false))
+
                               :onMouseMove (fn [e]
                                              (om/set-state! owner
                                                             :mouse-pos
