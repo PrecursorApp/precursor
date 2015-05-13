@@ -44,8 +44,8 @@
 
           (when (and (keyboard/arrow-shortcut-active? app)
                      (not (get-in app [:drawing :relation-in-progress?])))
-            (dom/div #js {:className " mouse-cursor holo "}
-              grab-cursor))
+            (dom/div #js {:className " mouse-cursor arrow-cursor holo "}
+              (common/icon :cursor)))
 
           (when-not (get-in app state/right-click-learned-path)
             (dom/div (get hints :dial))))))))
