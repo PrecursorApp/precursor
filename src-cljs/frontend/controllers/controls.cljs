@@ -219,6 +219,57 @@
   [state shortcut-name]
   nil)
 
+(defn nudge-points [points move-x move-y]
+  (map (fn [{:keys [rx ry]}]
+         {:rx (+ rx move-x)
+          :ry (+ ry move-y)})
+       points))
+
+(defn nudge-layer [layer {:keys [x y]}]
+  (-> layer
+    (select-keys [:db/id
+                  :layer/start-x :layer/end-x
+                  :layer/start-y :layer/end-y
+                  :layer/type :layer/path])
+    (update-in [:layer/start-x] + x)
+    (update-in [:layer/end-x] + x)
+    (update-in [:layer/start-y] + y)
+    (update-in [:layer/end-y] + y)
+    (cond-> (= :layer.type/path (:layer/type layer))
+      (assoc :layer/path (svg/points->path (nudge-points (:points layer) x y))))))
+
+(defn nudge-shapes [state direction]
+  (let [db (:db state)
+        layers (map (partial d/entity @db) (get-in state [:selected-eids :selected-eids]))
+        increment (cameras/grid-size->snap-increment (cameras/grid-width (:camera state)))
+        x (case direction
+            :left (- increment)
+            :right increment
+            0)
+        y (case direction
+            :up (- increment)
+            :down increment
+            0)]
+    (when (seq layers)
+      (d/transact! db (mapv #(nudge-layer % {:x x :y y}) layers)
+                   {:can-undo? true}))))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-left
+  [state shortcut-name]
+  (nudge-shapes state :left))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-right
+  [state shortcut-name]
+  (nudge-shapes state :right))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-up
+  [state shortcut-name]
+  (nudge-shapes state :up))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-down
+  [state shortcut-name]
+  (nudge-shapes state :down))
+
 (defmethod handle-keyboard-shortcut-after :shortcuts-menu
   [state shortcut-name]
   (when-let [doc-id (:document/id state)]

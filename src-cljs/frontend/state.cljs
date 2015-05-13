@@ -62,7 +62,11 @@
                         :grow-text #{#{"shift" "="}
                                      #{"="}
                                      #{"]"}}
-                        :record #{#{"shift" "ctrl" "alt" "r"}}}
+                        :record #{#{"shift" "ctrl" "alt" "r"}}
+                        :nudge-shapes-left #{#{"left"}}
+                        :nudge-shapes-right #{#{"right"}}
+                        :nudge-shapes-up #{#{"up"}}
+                        :nudge-shapes-down #{#{"down"}}}
    :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}
