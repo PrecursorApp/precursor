@@ -76,12 +76,18 @@
   }
   .arrow-handle-group {
     transition: @run @bezier_deform;
-    opacity: 0;
+    .arrow-hint {
+      opacity: 0;
+    }
     &:hover {
-      opacity: 1;
+      .arrow-hint {
+        opacity: 1;
+      }
     }
     &:active {
-      opacity: 0.5;
+      .arrow-hint {
+        opacity: 0.5;
+      }
     }
   }
 }
