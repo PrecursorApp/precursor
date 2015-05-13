@@ -19,8 +19,12 @@
                           :client-id client-id)
         info-data (assoc (select-keys subscriber-data [:color :cust-name :show-mouse? :hide-in-list? :frontend-id-seed :cust/uuid :recording :chat-body])
                          :client-id client-id)
-        chat-data (assoc (select-keys subscriber-data [:cust/uuid :chat-body])
-                         :client-id client-id)
+        chat-data (let [data (select-keys subscriber-data [:cust/uuid :chat-body])]
+                    (-> data
+                      (assoc :client-id client-id)
+                      ;; keep track of last update, so we can stop showing chatting
+                      (cond-> (not= (:chat-body data) (get-in app-state [:subscribers :chats client-id :chat-body]))
+                        (assoc :last-update (js/Date.)))))
         cust-data (select-keys subscriber-data [:cust/uuid :cust/name :cust/color-name])]
     (cond-> app-state
       (seq mouse-data) (update-in [:subscribers :mice client-id] merge mouse-data)

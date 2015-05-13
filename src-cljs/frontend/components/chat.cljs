@@ -110,7 +110,12 @@
                           (om/set-state! owner :chat-height 64)
                           (utils/stop-event e))
             chats (cursors/observe-chats owner)
-            chatting (filter (comp seq :chat-body) (vals chats))]
+            now (js/Date.)
+            chatting (filter (fn [info]
+                               (and (seq (:chat-body info))
+                                    (> (* 1000 30) (utils/inspect (- (.getTime now)
+                                                                     (.getTime (:last-update info)))))))
+                             (vals chats))]
         (html
          [:form.chat-box {:on-submit submit-chat
                           :on-key-down #(when (and (= "Enter" (.-key %))
