@@ -49,15 +49,17 @@
    :ctrl? (.-ctrlKey event)
    :shift? (.-shiftKey event)})
 
-(defn handle-mouse-move [cast! event]
-  (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (event-props event))
+(defn handle-mouse-move [cast! event & {:keys [props]}]
+  (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (merge (event-props event) props))
          true))
 
-(defn handle-mouse-down [cast! event]
-  (cast! :mouse-depressed (conj (camera-helper/screen-event-coords event) (event-props event)) false))
+(defn handle-mouse-down [cast! event & {:keys [props]}]
+  (cast! :mouse-depressed (conj (camera-helper/screen-event-coords event) (merge (event-props event) props))
+         false))
 
-(defn handle-mouse-up [cast! event]
-  (cast! :mouse-released (conj (camera-helper/screen-event-coords event) (event-props event)) false))
+(defn handle-mouse-up [cast! event & {:keys [props]}]
+  (cast! :mouse-released (conj (camera-helper/screen-event-coords event) (merge (event-props event) props))
+         false))
 
 (defn disable-mouse-wheel [event]
   (.stopPropagation event))
@@ -252,7 +254,8 @@
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
-    (js/window.addEventListener "mouseup"   handle-canvas-mouse-up false)
+    (js/window.addEventListener "mouseup" #(handle-mouse-up   cast! % :props {:outside-canvas? true}) false)
+    (js/window.addEventListener "mousedown" #(handle-mouse-down cast! % :props {:outside-canvas? true}) false)
     (js/window.addEventListener "beforeunload" handle-close!)
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
     (js/window.addEventListener "copy" #(clipboard/handle-copy! @state %))

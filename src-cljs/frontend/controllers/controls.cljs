@@ -850,7 +850,7 @@
   (-> state
     (assoc-in [:pan :position] {:x x :y y})))
 
-(defn mouse-depressed-intents [state button ctrl? shift?]
+(defn mouse-depressed-intents [state button ctrl? shift? outside-canvas?]
   (let [tool (get-in state state/current-tool-path)
         drawing-text? (and (keyword-identical? :text tool)
                            (get-in state [:drawing :in-progress?]))]
@@ -859,6 +859,7 @@
      ;; You also want the right-click menu to open
      (when drawing-text? [:finish-text-layer])
      (cond
+       outside-canvas? nil
        (keyboard/pan-shortcut-active? state) [:pan]
        (= button 2) [:open-radial]
        (and (= button 0) ctrl? (not shift?)) [:open-radial]
@@ -875,10 +876,10 @@
 (declare handle-text-layer-finished-after)
 
 (defmethod control-event :mouse-depressed
-  [browser-state message [x y {:keys [button type ctrl? shift?]}] state]
+  [browser-state message [x y {:keys [button type ctrl? shift? outside-canvas?]}] state]
   (if (empty? (:frontend-id-state state))
     state
-    (let [intents (mouse-depressed-intents state button ctrl? shift?)
+    (let [intents (mouse-depressed-intents state button ctrl? shift? outside-canvas?)
           new-state (-> state
                       (update-mouse x y)
                       (assoc-in [:mouse-down] true)
@@ -894,10 +895,10 @@
               new-state intents))))
 
 (defmethod post-control-event! :mouse-depressed
-  [browser-state message [x y {:keys [button ctrl? shift?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button ctrl? shift? outside-canvas?]}] previous-state current-state]
   (when-not (empty? (:frontend-id-state previous-state))
     ;; use previous state so that we're consistent with the control-event
-    (let [intents (mouse-depressed-intents previous-state button ctrl? shift?)]
+    (let [intents (mouse-depressed-intents previous-state button ctrl? shift? outside-canvas?)]
       (doseq [intent intents]
         (case intent
           :finish-text-layer (handle-text-layer-finished-after previous-state current-state)
@@ -1362,8 +1363,7 @@
     (-> state
         (assoc-in state/chat-opened-path chat-open?)
         (assoc-in state/chat-button-learned-path true)
-        (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time)
-        (assoc-in [:drawing :in-progress?] false))))
+        (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time))))
 
 (defmethod post-control-event! :chat-toggled
   [browser-state message _ previous-state current-state]
