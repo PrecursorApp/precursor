@@ -1184,7 +1184,7 @@
   (if (get-in state state/chat-opened-path)
     (let [db @(:db state)
           last-chat-time (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))]
-      (assoc-in state (state/last-read-chat-time-path (:document/id state)) last-chat-time))
+      (update-in state (state/last-read-chat-time-path (:document/id state)) max last-chat-time))
     state))
 
 (defmethod post-control-event! :chat-db-updated
