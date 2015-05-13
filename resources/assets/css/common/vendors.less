@@ -236,7 +236,7 @@
     line-height: 19px;
   }
 }
-.ph-discount {
+.dn-discount {
   .flexy();
   .icon(fill; @gray_dark);
   white-space: nowrap;
@@ -244,18 +244,21 @@
     .icon(fill; @white);
   }
   &:not(:hover) {
-    .icon(fill; #da552f);
-    color: #da552f !important;
+    .icon(fill; @color_dn);
+    color: @color_dn !important;
   }
   .iconpile {
     margin-right: .5rem;
   }
 }
-.ph-pricing-button {
+.dn-pricing-button {
   &:before {
-    border-bottom-color: @color_ph !important;
+    margin-top: 0rem  !important;
+    border-bottom-color: @color_dn !important;
   }
   &:after {
-    background: @color_ph !important;
+    margin-top: 1.0rem !important;
+    padding: 1.5rem !important;
+    background: @color_dn !important;
   }
 }

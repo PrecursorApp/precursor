@@ -76,7 +76,8 @@
               (map #(dissoc % :points) (get-in state [:drawing :layers])))
     :relation (when (get-in state [:drawing :relation :layer])
                 (get-in state [:drawing :relation]))
-    :recording (get-in state (state/self-recording-path state))}
+    :recording (get-in state (state/self-recording-path state))
+    :chat-body (get-in state [:chat :body])}
    (when (and x y)
      {:mouse-position [(:rx (:mouse state)) (:ry (:mouse state))]})))
 
@@ -218,6 +219,61 @@
   [state shortcut-name]
   nil)
 
+(defn nudge-points [points move-x move-y]
+  (map (fn [{:keys [rx ry]}]
+         {:rx (+ rx move-x)
+          :ry (+ ry move-y)})
+       points))
+
+(defn parse-points-from-path [path]
+  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
+    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
+
+(defn nudge-layer [layer {:keys [x y]}]
+  (-> layer
+    (select-keys [:db/id
+                  :layer/start-x :layer/end-x
+                  :layer/start-y :layer/end-y
+                  :layer/type :layer/path])
+    (update-in [:layer/start-x] + x)
+    (update-in [:layer/end-x] + x)
+    (update-in [:layer/start-y] + y)
+    (update-in [:layer/end-y] + y)
+    (cond-> (= :layer.type/path (:layer/type layer))
+      (assoc :layer/path (svg/points->path (nudge-points (parse-points-from-path (:layer/path layer)) x y))))))
+
+(defn nudge-shapes [state direction]
+  (let [db (:db state)
+        layers (map (partial d/entity @db) (get-in state [:selected-eids :selected-eids]))
+        increment (cameras/grid-size->snap-increment (cameras/grid-width (:camera state)))
+        x (case direction
+            :left (- increment)
+            :right increment
+            0)
+        y (case direction
+            :up (- increment)
+            :down increment
+            0)]
+    (when (seq layers)
+      (d/transact! db (mapv #(nudge-layer % {:x x :y y}) layers)
+                   {:can-undo? true}))))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-left
+  [state shortcut-name]
+  (nudge-shapes state :left))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-right
+  [state shortcut-name]
+  (nudge-shapes state :right))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-up
+  [state shortcut-name]
+  (nudge-shapes state :up))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-down
+  [state shortcut-name]
+  (nudge-shapes state :down))
+
 (defmethod handle-keyboard-shortcut-after :shortcuts-menu
   [state shortcut-name]
   (when-let [doc-id (:document/id state)]
@@ -289,10 +345,6 @@
     (do
       (utils/mlog "Called update-mouse without x and y coordinates")
       state)))
-
-(defn parse-points-from-path [path]
-  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
-    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
 
 (defn handle-drawing-started [state x y]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
@@ -1226,11 +1278,22 @@
   [state cmd chat]
   (update-in state [:db] frontend.db/reset-db!))
 
-(defmethod control-event :chat-submitted
+(defmethod control-event :chat-body-changed
   [browser-state message {:keys [chat-body]} state]
-  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)]
+  (-> state
+    (assoc-in [:chat :body] chat-body)))
+
+(defmethod post-control-event! :chat-body-changed
+  [browser-state message {:keys [chat-body]} previous-state current-state]
+  (maybe-notify-subscribers! previous-state current-state nil nil))
+
+(defmethod control-event :chat-submitted
+  [browser-state message _ state]
+  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)
+        chat-body (get-in state [:chat :body])]
     (-> state
       (assoc-in state/chat-submit-learned-path true)
+      (dissoc-in [:chat :body])
       (handle-cmd-chat (chat-cmd chat-body) chat-body)
       (assoc-in [:chat :entity-id] entity-id))))
 
@@ -1271,10 +1334,11 @@
   ::stop-save)
 
 (defmethod post-control-event! :chat-submitted
-  [browser-state message {:keys [chat-body]} previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
         client-id (:client-id previous-state)
         color (get-in previous-state [:subscribers :info client-id :color])
+        chat-body (get-in previous-state [:chat :body])
         stop-save? (= ::stop-save (when-let [cmd (chat-cmd chat-body)]
                                     (post-handle-cmd-chat current-state cmd chat-body)))]
     (when-not stop-save?
@@ -1286,7 +1350,8 @@
                                                :chat/document (:document/id previous-state)
                                                :client/timestamp (datetime/server-date)
                                                ;; server will overwrite this
-                                               :server/timestamp (datetime/server-date)})]))))
+                                               :server/timestamp (datetime/server-date)})]))
+    (maybe-notify-subscribers! previous-state current-state nil nil)))
 
 (defmethod control-event :chat-toggled
   [browser-state message _ state]

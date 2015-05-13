@@ -22,6 +22,9 @@
 (defn observe-subscriber-entity-ids [owner]
   (observe owner [:subscribers :entity-ids]))
 
+(defn observe-chats [owner]
+  (observe owner [:subscribers :chats]))
+
 (defn observe-selected-eids [owner]
   (observe owner [:selected-eids]))
 

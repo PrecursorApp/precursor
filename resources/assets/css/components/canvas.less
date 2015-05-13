@@ -1,6 +1,7 @@
 .canvas {
   flex: 1;
   position: relative;
+  outline: none;
   &:not(:hover) {
     &:not(:active) {
       .hint {
@@ -48,12 +49,6 @@
       cursor: move;
     }
   }
-  &.arrow-tool {
-    cursor: default;
-  }
-  &.pan-tool {
-    cursor: none;
-  }
   &.relation-in-progress {
     cursor: none;
     .arrow-hint {
@@ -63,14 +58,26 @@
   &.radial-not-learned {
     cursor: context-menu;
   }
+  &.arrow-tool {
+    cursor: none;
+  }
+  &.pan-tool {
+    cursor: none;
+  }
   .arrow-handle-group {
     transition: @run @bezier_deform;
-    opacity: 0;
+    .arrow-hint {
+      opacity: 0;
+    }
     &:hover {
-      opacity: 1;
+      .arrow-hint {
+        opacity: 1;
+      }
     }
     &:active {
-      opacity: 0.5;
+      .arrow-hint {
+        opacity: 0.5;
+      }
     }
   }
 }
@@ -128,7 +135,7 @@
   .arrow-handle {
     stroke: transparent;
     stroke-width: 20;
-    &:hover {
+    &:hover, &.hovered {
       ~ .arrow-outline {
         stroke: @white;
         stroke-width: 4;
@@ -165,7 +172,8 @@
     stroke: @gray_light;
     stroke-width: 2;
     pointer-events: none;
-    transition: @run @bezier_deform;
+    transition+: stroke @run @bezier_deform;
+    transition+: stroke-width @run @bezier_deform;
     &.selected {
       stroke-width: 2;
       stroke: @color_select;

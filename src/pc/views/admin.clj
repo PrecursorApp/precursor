@@ -268,6 +268,7 @@
            [:th "subdomain"]
            [:th "doc-count"]
            [:th "status"]
+           [:th "trial-end"]
            [:th "coupon"]
            [:th "creator"]
            [:th "active"]
@@ -280,6 +281,7 @@
              [:td (cond (:plan/paid? plan) "paid"
                         (not (plan-model/trial-over? plan)) "trial"
                         :else "trial expired")]
+             [:td (:plan/trial-end plan)]
              [:td (:discount/coupon (:team/plan team))]
              [:td (cust-link (:team/creator team))]
              [:td (let [active (:plan/active-custs plan)]

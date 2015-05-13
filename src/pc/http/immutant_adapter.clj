@@ -17,7 +17,7 @@
                                                                   (on-complete))})))]
       (when (and (not queued?)
                  on-complete)
-        (on-complete ::closed)))))
+        (on-complete)))))
 
 (deftype ImmutantAsyncNetworkChannelAdapter []
   i/IAsyncNetworkChannelAdapter

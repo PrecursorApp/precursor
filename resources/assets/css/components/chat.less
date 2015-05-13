@@ -85,6 +85,14 @@
       background-size: 100% .25em;
     }
   }
+  ~ .chat-typing-notice {
+    font-size: @font_size_small;
+    transform: translate3d(0, -2em, 0);
+    background-size: 100% .25em;
+    &:before {
+      content: attr(data-typing-notice);
+    }
+  }
   &:focus {
     ~ .chat-teach-enter {
       color: @color_select;
@@ -112,7 +120,8 @@
   }
 }
 .chat-placeholder,
-.chat-teach-enter  {
+.chat-teach-enter,
+.chat-typing-notice  {
   position: absolute;
   top: 0;
   left: 0;
@@ -153,6 +162,16 @@
   &:before {
     content: attr(data-step-1);
   }
+}
+.chat-typing-notice {
+  .gradient(to bottom, @dye_inner, @dye_inner);
+  color: @gray;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 0% .25em;
+  transition+: color @run @bezier_deform;
+  transition+: background @run_slow @bezier_deform;
+  transition+: transform @run @bezier_deform;
 }
 .chat-date {
   padding-top: (@tile / 4);

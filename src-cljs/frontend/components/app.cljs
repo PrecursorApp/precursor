@@ -98,6 +98,7 @@
                                                  [:client-id]
                                                  [:show-landing?]
                                                  [:cust-data]
+                                                 [:chat]
                                                  [:navigation-data]])
                        {:react-key "chat"})
              (when overlay-visible?
