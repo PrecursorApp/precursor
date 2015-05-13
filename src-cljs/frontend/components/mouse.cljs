@@ -48,7 +48,7 @@
                               :key "arrow"}
                   (common/icon :cursor))
 
-                :else nil)
+                (not (get-in app state/right-click-learned-path))
+                (dom/div (get hints :dial))
 
-          (when-not (get-in app state/right-click-learned-path)
-            (dom/div (get hints :dial))))))))
+                :else nil))))))

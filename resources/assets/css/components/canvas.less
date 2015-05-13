@@ -59,12 +59,6 @@
       cursor: move;
     }
   }
-  &.arrow-tool {
-    cursor: none;
-  }
-  &.pan-tool {
-    cursor: none;
-  }
   &.relation-in-progress {
     cursor: none;
     .arrow-hint {
@@ -73,6 +67,12 @@
   }
   &.radial-not-learned {
     cursor: context-menu;
+  }
+  &.arrow-tool {
+    cursor: none;
+  }
+  &.pan-tool {
+    cursor: none;
   }
   .arrow-handle-group {
     transition: @run @bezier_deform;
