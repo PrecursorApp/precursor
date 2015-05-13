@@ -71,6 +71,7 @@
    :subscribers     {:mice {}
                      :layers {}
                      :info {}
+                     :chats {}
                      ;; used to keep track of which entities are being edited
                      ;; so that we can lock them
                      ;; We have to be a little silly here and below so that Om will let

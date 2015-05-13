@@ -17,16 +17,22 @@
                           :client-id client-id)
         layer-data (assoc (select-keys subscriber-data [:layers :color :cust/uuid :relation])
                           :client-id client-id)
-        info-data (assoc (select-keys subscriber-data [:color :cust-name :show-mouse? :hide-in-list? :frontend-id-seed :cust/uuid :recording])
+        info-data (assoc (select-keys subscriber-data [:color :cust-name :show-mouse? :hide-in-list? :frontend-id-seed :cust/uuid :recording :chat-body])
                          :client-id client-id)
+        chat-data (let [data (select-keys subscriber-data [:cust/uuid :chat-body])]
+                    (-> data
+                      (assoc :client-id client-id)
+                      ;; keep track of last update, so we can stop showing chatting
+                      (cond-> (not= (:chat-body data) (get-in app-state [:subscribers :chats client-id :chat-body]))
+                        (assoc :last-update (js/Date.)))))
         cust-data (select-keys subscriber-data [:cust/uuid :cust/name :cust/color-name])]
     (cond-> app-state
       (seq mouse-data) (update-in [:subscribers :mice client-id] merge mouse-data)
       (seq layer-data) (update-in [:subscribers :layers client-id] merge layer-data)
       (seq info-data) (update-in [:subscribers :info client-id] merge info-data)
+      (seq chat-data) (update-in [:subscribers :chats client-id] merge chat-data)
       true update-subscriber-entity-ids
       (:cust/uuid subscriber-data) (update-in [:cust-data :uuid->cust (:cust/uuid subscriber-data)] merge cust-data))))
-
 
 (defn maybe-add-subscriber-data [app-state client-id subscriber-data]
   (if (get-in app-state [:subscribers :info client-id])
@@ -38,6 +44,7 @@
     (update-in [:subscribers :mice] dissoc client-id)
     (update-in [:subscribers :layers] dissoc client-id)
     (update-in [:subscribers :info] dissoc client-id)
+    (update-in [:subscribers :chats] dissoc client-id)
     (update-subscriber-entity-ids)))
 
 (defn add-recording-watcher [app-state signal-fn]

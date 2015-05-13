@@ -76,7 +76,8 @@
               (map #(dissoc % :points) (get-in state [:drawing :layers])))
     :relation (when (get-in state [:drawing :relation :layer])
                 (get-in state [:drawing :relation]))
-    :recording (get-in state (state/self-recording-path state))}
+    :recording (get-in state (state/self-recording-path state))
+    :chat-body (get-in state [:chat :body])}
    (when (and x y)
      {:mouse-position [(:rx (:mouse state)) (:ry (:mouse state))]})))
 
@@ -1226,11 +1227,22 @@
   [state cmd chat]
   (update-in state [:db] frontend.db/reset-db!))
 
-(defmethod control-event :chat-submitted
+(defmethod control-event :chat-body-changed
   [browser-state message {:keys [chat-body]} state]
-  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)]
+  (-> state
+    (assoc-in [:chat :body] chat-body)))
+
+(defmethod post-control-event! :chat-body-changed
+  [browser-state message {:keys [chat-body]} previous-state current-state]
+  (maybe-notify-subscribers! previous-state current-state nil nil))
+
+(defmethod control-event :chat-submitted
+  [browser-state message _ state]
+  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)
+        chat-body (get-in state [:chat :body])]
     (-> state
       (assoc-in state/chat-submit-learned-path true)
+      (dissoc-in [:chat :body])
       (handle-cmd-chat (chat-cmd chat-body) chat-body)
       (assoc-in [:chat :entity-id] entity-id))))
 
@@ -1271,10 +1283,11 @@
   ::stop-save)
 
 (defmethod post-control-event! :chat-submitted
-  [browser-state message {:keys [chat-body]} previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
         client-id (:client-id previous-state)
         color (get-in previous-state [:subscribers :info client-id :color])
+        chat-body (get-in previous-state [:chat :body])
         stop-save? (= ::stop-save (when-let [cmd (chat-cmd chat-body)]
                                     (post-handle-cmd-chat current-state cmd chat-body)))]
     (when-not stop-save?
@@ -1286,7 +1299,8 @@
                                                :chat/document (:document/id previous-state)
                                                :client/timestamp (datetime/server-date)
                                                ;; server will overwrite this
-                                               :server/timestamp (datetime/server-date)})]))))
+                                               :server/timestamp (datetime/server-date)})]))
+    (maybe-notify-subscribers! previous-state current-state nil nil)))
 
 (defmethod control-event :chat-toggled
   [browser-state message _ state]
