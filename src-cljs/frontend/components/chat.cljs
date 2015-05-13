@@ -113,8 +113,8 @@
             now (js/Date.)
             chatting (filter (fn [info]
                                (and (seq (:chat-body info))
-                                    (> (* 1000 30) (utils/inspect (- (.getTime now)
-                                                                     (.getTime (:last-update info)))))))
+                                    (> (* 1000 30) (- (.getTime now)
+                                                      (.getTime (:last-update info))))))
                              (vals chats))]
         (html
          [:form.chat-box {:on-submit submit-chat
@@ -134,7 +134,7 @@
                                  :value (or (get-in app [:chat :body])
                                             "")
                                  :on-change #(let [node (.-target %)]
-                                               (cast! :chat-body-changed {:chat-body (utils/inspect (.-value node))})
+                                               (cast! :chat-body-changed {:chat-body (.-value node)})
                                                (when (not= (.-scrollHeight node) (.-clientHeight node))
                                                  (om/set-state! owner :chat-height (max 64 (.-scrollHeight node)))))}]
           (if chat-submit-learned?
