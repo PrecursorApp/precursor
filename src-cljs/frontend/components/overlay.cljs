@@ -1,4 +1,4 @@
-(ns frontend.components.overlay
+(ns ^:figwheel-always frontend.components.overlay
   (:require [cemerick.url :as url]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -10,11 +10,13 @@
             [frontend.components.connection :as connection]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.issues :as issues]
             [frontend.components.permissions :as permissions]
             [frontend.components.plan :as plan]
             [frontend.components.team :as team]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
+            [frontend.models.issue :as issue-model]
             [frontend.state :as state]
             [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
@@ -104,56 +106,39 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
-            doc (doc-model/find-by-id @db (:document/id app))]
+            doc-id (:document/id app)
+            doc (doc-model/find-by-id @db doc-id)]
         (html
-          [:div.menu-view
-           [:a.vein.make
-            {:on-click         #(cast! :overlay-info-toggled)
-             :on-touch-end #(do (cast! :overlay-info-toggled) (.preventDefault %))
-             :role "button"}
-            (common/icon :info)
-            [:span "About"]]
-           [:a.vein.make
-            {:href "/new"
-             :role "button"}
-            (common/icon :plus)
-            [:span "New"]]
-           [:a.vein.make
-            {:on-click         #(cast! :your-docs-opened)
-             :on-touch-end #(do (cast! :your-docs-opened) (.preventDefault %))
-             :role "button"}
-            (common/icon :docs)
-            [:span "Documents"]]
-           ;; TODO: should this use the permissions model? Would have to send some
-           ;;       info about the document
-           (if (auth/has-document-access? app (:document/id app))
-             [:a.vein.make
-              {:on-click         #(cast! :sharing-menu-opened)
-               :on-touch-end #(do (cast! :sharing-menu-opened) (.preventDefault %))
-               :role "button"}
-              (common/icon :sharing)
-              [:span "Sharing"]]
+         [:section.menu-view
+          [:a.vein.make {:href (urls/overlay-path doc-id "info")}
+           (common/icon :info)
+           [:span "About"]]
+          [:a.vein.make {:href "/new"}
+           (common/icon :plus)
+           [:span "New"]]
+          [:a.vein.make {:href (urls/overlay-path doc-id "doc-viewer")}
+           (common/icon :docs)
+           [:span "Documents"]]
+          [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)}
+           (common/icon :requests)
+           [:span "Feature Requests"]]
+          ;; TODO: should this use the permissions model? Would have to send some
+          ;;       info about the document
+          (if (auth/has-document-access? app (:document/id app))
+            [:a.vein.make {:href (urls/overlay-path doc-id "sharing")}
+             (common/icon :sharing)
+             [:span "Sharing"]]
 
-             [:a.vein.make
-              {:on-click         #(cast! :document-permissions-opened)
-               :on-touch-end #(do (cast! :document-permissions-opened) (.preventDefault %))
-               :role "button"}
-              (common/icon :users)
-              [:span "Request Access"]])
-           [:a.vein.make
-            {:on-click         #(cast! :export-menu-opened)
-             :on-touch-end #(do (cast! :export-menu-opened) (.preventDefault %))
-             :role "button"}
-            (common/icon :download)
-            [:span "Export"]]
-           [:a.vein.make
-            {:on-click         #(cast! :shortcuts-menu-opened)
-             :on-touch-end #(do (cast! :shortcuts-menu-opened) (.preventDefault %))
-             :class "mobile-hidden"
-             :role "button"}
-            (common/icon :command)
-            [:span "Shortcuts"]]
-           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
+            [:a.vein.make {:href (urls/overlay-path doc-id "document-permissions")}
+             (common/icon :users)
+             [:span "Request Access"]])
+          [:a.vein.make {:href (urls/overlay-path doc-id "export")}
+           (common/icon :download)
+           [:span "Export"]]
+          [:a.vein.make.mobile-hidden {:href (urls/overlay-path doc-id "shortcuts")}
+           (common/icon :command)
+           [:span "Shortcuts"]]
+          (om/build auth-link app {:opts {:source "start-overlay"}})])))))
 
 
 (defn private-sharing [app owner]
@@ -432,7 +417,7 @@
             cant-edit-privacy? (when-not (:team app)
                                  (not (auth/owner? @db doc (get-in app [:cust]))))]
         (html
-         [:div.menu-view
+         [:section.menu-view
           (case (:document/privacy doc)
             :document.privacy/public (om/build public-sharing app)
             :document.privacy/private (om/build private-sharing app)
@@ -514,7 +499,7 @@
       (let [cast! (om/get-shared owner :cast!)
             doc-id (:document/id app)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:a.vein.make {:href (urls/absolute-doc-svg doc-id :query {:dl true})
                          :target "_self"}
            (common/icon :file-svg) "Download as SVG"]
@@ -538,9 +523,10 @@
     om/IDisplayName (display-name [_] "Overlay Info")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [cast! (om/get-shared owner :cast!)
+            doc-id (:document/id app)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:h2.make
             "What is Precursor?"]
@@ -577,14 +563,12 @@
              :role "button"}
             [:span "Twitter"]]
            [:a.vein.make
-            {:href "mailto:hi@prcrsr.com?Subject=I%20have%20feedback"
+            {:href "mailto:hi@precursorapp.com?Subject=I%20have%20feedback"
              :target "_self"
              :role "button"}
             [:span "Email"]]
-           [:a.vein.make
-            {:on-click #(cast! :connection-info-opened)
-             :on-touch-end #(do (cast! :connection-stats-opened) (.preventDefault %))
-             :role "button"}
+           [:a.vein.make {:href (urls/overlay-path doc-id "connection-info")
+                          :role "button"}
             [:span "Connection Info"]]]
           (common/mixpanel-badge)])))))
 
@@ -596,7 +580,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:table.shortcuts-items
             [:tbody
@@ -719,7 +703,7 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:h2.make
             "Let's change that name."]
@@ -739,7 +723,7 @@
    :sharing {:title "Sharing"
              :component sharing}
    :export {:title "Export Document"
-             :component export}
+            :component export}
    :username {:component username}
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
@@ -758,7 +742,10 @@
    :request-team-access {:title "Request Access"
                          :component team/request-access}
    :plan {:title "Billing"
-          :component plan/plan-menu}})
+          :component plan/plan-menu}
+
+   :issues {:title "Feature Requests"
+            :component issues/issues}})
 
 (defn namespaced? [kw]
   (namespace kw))
@@ -784,9 +771,15 @@
                  :let [component (get-component overlay-key)]]
              (html
               [:h4.menu-heading {:title (:title component) :react-key (:title component)}
-               (if (namespaced? overlay-key)
-                 (str (:title component) " " (str/capitalize (name overlay-key)))
-                 (:title component))]))]
+               ;; TODO: better way to handle custom titles
+               (cond (keyword-identical? :issues/single-issue overlay-key)
+                     "Feature Request"
+
+                     (namespaced? overlay-key)
+                     (str (:title component) " " (str/capitalize (name overlay-key)))
+
+
+                     :else (:title component))]))]
           [:div.menu-body
            (for [overlay-key (get-in app state/overlays-path)
                  :let [component (get-component overlay-key)]]

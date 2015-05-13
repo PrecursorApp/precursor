@@ -57,12 +57,17 @@
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
                         :return-from-origin #{#{"2"}}
-                        :arrow-tool #{#{"ctrl" "shift"}}
+                        :arrow-tool #{#{"ctrl" "shift"}
+                                      #{"a"}}
                         :shrink-text #{#{"-"} #{"["}}
                         :grow-text #{#{"shift" "="}
                                      #{"="}
                                      #{"]"}}
-                        :record #{#{"shift" "ctrl" "alt" "r"}}}
+                        :record #{#{"shift" "ctrl" "alt" "r"}}
+                        :nudge-shapes-left #{#{"left"}}
+                        :nudge-shapes-right #{#{"right"}}
+                        :nudge-shapes-up #{#{"up"}}
+                        :nudge-shapes-down #{#{"down"}}}
    :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}
@@ -71,6 +76,7 @@
    :subscribers     {:mice {}
                      :layers {}
                      :info {}
+                     :chats {}
                      ;; used to keep track of which entities are being edited
                      ;; so that we can lock them
                      ;; We have to be a little silly here and below so that Om will let
@@ -99,6 +105,10 @@
                          :editing-eids :mouse
                          :show-landing? :overlays
                          :frontend-id-state]))))
+
+(defn reset-camera [state]
+  (-> state
+    (merge (select-keys (initial-state) [:camera]))))
 
 (defn clear-subscribers [state]
   (assoc state :subscribers (:subscribers (initial-state))))
@@ -148,7 +158,7 @@
 
 (def chat-submit-learned-path (conj browser-settings-path :chat-submit-learned))
 
-(def ph-discount-path (conj browser-settings-path :ph-discount))
+(def dn-discount-path (conj browser-settings-path :dn-discount))
 
 (defn doc-settings-path [doc-id]
   (conj browser-settings-path :document-settings doc-id))

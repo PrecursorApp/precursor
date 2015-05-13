@@ -16,6 +16,7 @@
             [frontend.db]
             [frontend.favicon :as favicon]
             [frontend.keyboard :as keyboard]
+            [frontend.landing-doc :as landing-doc]
             [frontend.layers :as layers]
             [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
@@ -29,6 +30,7 @@
             [frontend.stripe :as stripe]
             [frontend.subscribers :as subs]
             [frontend.svg :as svg]
+            [frontend.urls :as urls]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
@@ -74,9 +76,10 @@
               (map #(dissoc % :points) (get-in state [:drawing :layers])))
     :relation (when (get-in state [:drawing :relation :layer])
                 (get-in state [:drawing :relation]))
-    :recording (get-in state (state/self-recording-path state))}
+    :recording (get-in state (state/self-recording-path state))
+    :chat-body (get-in state [:chat :body])}
    (when (and x y)
-     {:mouse-position [(:x (:mouse state)) (:y (:mouse state))]})))
+     {:mouse-position [(:rx (:mouse state)) (:ry (:mouse state))]})))
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [previous-state current-state x y]
@@ -158,28 +161,10 @@
       (swap! (:undo-state state) assoc :last-undo transaction-to-undo))
     state))
 
-(defn handle-add-menu [state menu]
-  (-> state
-      (assoc-in [:layer-properties-menu :opened?] false)
-      (assoc-in [:radial :open?] false)
-      (overlay/add-overlay menu)))
-
-(defn handle-replace-menu [state menu]
-  (-> state
-      (assoc-in [:layer-properties-menu :opened?] false)
-      (assoc-in [:radial :open?] false)
-      (overlay/replace-overlay menu)))
-
 ;; TODO: have some way to handle pre-and-post
 (defmethod handle-keyboard-shortcut :undo
   [state shortcut-name]
   (handle-undo state))
-
-(defmethod handle-keyboard-shortcut :shortcuts-menu
-  [state shortcut-name]
-  (if (= :shortcuts (overlay/current-overlay state))
-    (overlay/clear-overlays state)
-    (handle-replace-menu state :shortcuts)))
 
 (defn close-radial [state]
   (assoc-in state [:radial :open?] false))
@@ -234,6 +219,69 @@
   [state shortcut-name]
   nil)
 
+(defn nudge-points [points move-x move-y]
+  (map (fn [{:keys [rx ry]}]
+         {:rx (+ rx move-x)
+          :ry (+ ry move-y)})
+       points))
+
+(defn parse-points-from-path [path]
+  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
+    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
+
+(defn nudge-layer [layer {:keys [x y]}]
+  (-> layer
+    (select-keys [:db/id
+                  :layer/start-x :layer/end-x
+                  :layer/start-y :layer/end-y
+                  :layer/type :layer/path])
+    (update-in [:layer/start-x] + x)
+    (update-in [:layer/end-x] + x)
+    (update-in [:layer/start-y] + y)
+    (update-in [:layer/end-y] + y)
+    (cond-> (= :layer.type/path (:layer/type layer))
+      (assoc :layer/path (svg/points->path (nudge-points (parse-points-from-path (:layer/path layer)) x y))))))
+
+(defn nudge-shapes [state direction]
+  (let [db (:db state)
+        layers (map (partial d/entity @db) (get-in state [:selected-eids :selected-eids]))
+        increment (cameras/grid-size->snap-increment (cameras/grid-width (:camera state)))
+        x (case direction
+            :left (- increment)
+            :right increment
+            0)
+        y (case direction
+            :up (- increment)
+            :down increment
+            0)]
+    (when (seq layers)
+      (d/transact! db (mapv #(nudge-layer % {:x x :y y}) layers)
+                   {:can-undo? true}))))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-left
+  [state shortcut-name]
+  (nudge-shapes state :left))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-right
+  [state shortcut-name]
+  (nudge-shapes state :right))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-up
+  [state shortcut-name]
+  (nudge-shapes state :up))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-down
+  [state shortcut-name]
+  (nudge-shapes state :down))
+
+(defmethod handle-keyboard-shortcut-after :shortcuts-menu
+  [state shortcut-name]
+  (when-let [doc-id (:document/id state)]
+    (if (keyword-identical? :shortcuts (overlay/current-overlay state))
+      (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc-id)
+                                                      :replace-token? true}])
+      (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc-id "shortcuts")}]))))
+
 (defmethod handle-keyboard-shortcut-after :record
   [state shortcut-name]
   (rtc/setup-stream (get-in state [:comms :controls])))
@@ -272,7 +320,10 @@
   (when (and (:replay-interrupt-chan state)
              (put! (:replay-interrupt-chan state) :interrupt))
     (frontend.db/reset-db! (:db state) nil)
-    (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state))))
+    (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state)))
+  (when-let [doc-id (:document/id state)]
+    (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc-id)
+                                                    :replace-token? true}])))
 
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
@@ -294,10 +345,6 @@
     (do
       (utils/mlog "Called update-mouse without x and y coordinates")
       state)))
-
-(defn parse-points-from-path [path]
-  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
-    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
 
 (defn handle-drawing-started [state x y]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
@@ -1231,11 +1278,22 @@
   [state cmd chat]
   (update-in state [:db] frontend.db/reset-db!))
 
-(defmethod control-event :chat-submitted
+(defmethod control-event :chat-body-changed
   [browser-state message {:keys [chat-body]} state]
-  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)]
+  (-> state
+    (assoc-in [:chat :body] chat-body)))
+
+(defmethod post-control-event! :chat-body-changed
+  [browser-state message {:keys [chat-body]} previous-state current-state]
+  (maybe-notify-subscribers! previous-state current-state nil nil))
+
+(defmethod control-event :chat-submitted
+  [browser-state message _ state]
+  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)
+        chat-body (get-in state [:chat :body])]
     (-> state
       (assoc-in state/chat-submit-learned-path true)
+      (dissoc-in [:chat :body])
       (handle-cmd-chat (chat-cmd chat-body) chat-body)
       (assoc-in [:chat :entity-id] entity-id))))
 
@@ -1276,10 +1334,11 @@
   ::stop-save)
 
 (defmethod post-control-event! :chat-submitted
-  [browser-state message {:keys [chat-body]} previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
         client-id (:client-id previous-state)
         color (get-in previous-state [:subscribers :info client-id :color])
+        chat-body (get-in previous-state [:chat :body])
         stop-save? (= ::stop-save (when-let [cmd (chat-cmd chat-body)]
                                     (post-handle-cmd-chat current-state cmd chat-body)))]
     (when-not stop-save?
@@ -1291,7 +1350,8 @@
                                                :chat/document (:document/id previous-state)
                                                :client/timestamp (datetime/server-date)
                                                ;; server will overwrite this
-                                               :server/timestamp (datetime/server-date)})]))))
+                                               :server/timestamp (datetime/server-date)})]))
+    (maybe-notify-subscribers! previous-state current-state nil nil)))
 
 (defmethod control-event :chat-toggled
   [browser-state message _ state]
@@ -1312,35 +1372,6 @@
         (favicon/set-normal!))
     (analytics/track "Chat closed")))
 
-(defmethod control-event :overlay-info-toggled
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :info)
-      (assoc-in state/info-button-learned-path true)))
-
-(defmethod control-event :overlay-username-toggled
-  [browser-state message _ state]
-  (-> state
-      (handle-replace-menu :username)))
-
-(defmethod post-control-event! :overlay-info-toggled
-  [browser-state message _ previous-state current-state]
-  (when (and (not (get-in previous-state state/info-button-learned-path))
-             (get-in current-state state/info-button-learned-path))
-    (analytics/track "What's this learned")))
-
-(defmethod control-event :overlay-closed
-  [target message _ state]
-  (overlay/clear-overlays state))
-
-(defmethod control-event :overlay-menu-closed
-  [target message _ state]
-  (overlay/pop-overlay state))
-
-(defmethod control-event :roster-closed
-  [target message _ state]
-  (overlay/pop-overlay state))
-
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/close-connection]))
@@ -1349,30 +1380,6 @@
   [browser-state message _ state]
   (-> state
       (update-in state/chat-mobile-opened-path not)))
-
-(defmethod control-event :chat-link-clicked
-  [browser-state message _ state]
-   (-> state
-     (overlay/clear-overlays)
-     (assoc-in state/chat-opened-path true)
-     (assoc-in state/chat-mobile-opened-path true)
-     (assoc-in [:chat :body] "@prcrsr ")))
-
-(defmethod post-control-event! :chat-link-clicked
-  [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-input")))
-
-(defmethod control-event :invite-link-clicked
-  [browser-state message _ state]
-   (-> state
-     (overlay/clear-overlays)
-     (assoc-in state/chat-opened-path true)
-     (assoc-in state/chat-mobile-opened-path true)
-     (assoc-in [:chat :body] "/invite ")))
-
-(defmethod post-control-event! :invite-link-clicked
-  [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :chat-user-clicked
   [browser-state message {:keys [id-str]} state]
@@ -1453,11 +1460,25 @@
   [browser-state message _ state]
   (handle-layer-properties-submitted state))
 
-(defn handle-layer-properties-submitted-after [current-state]
-  (let [db (:db current-state)]
-    (d/transact! db [(utils/remove-map-nils
-                      (select-keys (get-in current-state [:layer-properties-menu :layer])
-                                   [:db/id :layer/ui-id :layer/ui-target]))])))
+(def sentinel (js-obj))
+
+(defn handle-layer-properties-submitted-after
+  "Saves ui-id and ui-target. Retracts old values if new values are nil. Retraction is racy."
+  [current-state]
+  (let [db (:db current-state)
+        layer (get-in current-state [:layer-properties-menu :layer])
+        new-id (:layer/ui-id layer sentinel)
+        new-target (:layer/ui-target layer sentinel)]
+    (d/transact! db (concat (when (not (identical? new-id sentinel))
+                              (if (nil? new-id)
+                                (when-let [old-id (:layer/ui-id (d/entity @db (:db/id layer)))]
+                                  [[:db/retract (:db/id layer) :layer/ui-id old-id]])
+                                [[:db/add (:db/id layer) :layer/ui-id new-id]]))
+                            (when (not (identical? new-target sentinel))
+                              (if (nil? new-target)
+                                (when-let [old-target (:layer/ui-target (d/entity @db (:db/id layer)))]
+                                  [[:db/retract (:db/id layer) :layer/ui-target old-target]])
+                                [[:db/add (:db/id layer) :layer/ui-target new-target]]))))))
 
 (defmethod post-control-event! :layer-properties-submitted
   [browser-state message _ previous-state current-state]
@@ -1527,104 +1548,6 @@
                      (map #(assoc % :unsaved true) layer-group)
                      layer-group)
                    {:can-undo? true}))))
-
-(defmethod control-event :your-docs-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :doc-viewer)
-    (assoc-in state/your-docs-learned-path true)))
-
-(defmethod post-control-event! :your-docs-opened
-  [browser-state message _ previous-state current-state]
-  (when (:cust current-state)
-    (sente/send-msg
-     (:sente current-state)
-     [:frontend/fetch-touched]
-     10000
-     (fn [{:keys [docs]}]
-       (when docs
-         (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
-
-(defmethod control-event :team-docs-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :team-doc-viewer)))
-
-(defmethod post-control-event! :team-docs-opened
-  [browser-state message _ previous-state current-state]
-  (sente/send-msg
-   (:sente current-state)
-   [:team/fetch-touched {:team/uuid (get-in current-state [:team :team/uuid])}]
-   10000
-   (fn [{:keys [docs]}]
-     (when docs
-       (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}])))))
-
-(defmethod control-event :plan-settings-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :plan)))
-
-(defmethod control-event :main-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-replace-menu :start)
-      (assoc-in state/main-menu-learned-path true)))
-
-(defmethod control-event :roster-opened
-  [browser-state message _ state]
-  (if (:team state)
-    (handle-replace-menu state :roster)
-    (handle-replace-menu state :your-teams)))
-
-(defmethod control-event :sharing-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :sharing)
-      (assoc-in state/sharing-menu-learned-path true)))
-
-(defmethod control-event :export-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :export)
-      (assoc-in state/export-menu-learned-path true)))
-
-(defmethod control-event :shortcuts-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :shortcuts)
-      (assoc-in state/shortcuts-menu-learned-path true)))
-
-
-(defmethod control-event :document-permissions-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :document-permissions)))
-
-(defmethod control-event :manage-permissions-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :manage-permissions)))
-
-(defmethod control-event :team-settings-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :team-settings)))
-
-(defmethod control-event :your-teams-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :your-teams)))
-
-(defmethod control-event :connection-info-opened
-  [browser-state message _ state]
-  (-> state
-    (overlay/add-overlay :connection-info)))
-
-(defmethod control-event :request-team-access-opened
-  [browser-state message _ state]
-  (-> state
-    (overlay/add-overlay :request-team-access)))
 
 (defmethod control-event :invite-to-changed
   [browser-state message {:keys [value]} state]
@@ -1712,13 +1635,36 @@
                                            :request-id request-id
                                            :invite-loc :overlay}]))
 
+(defn navigate-to-lazy-doc [current-state replace-token?]
+  (go
+    (landing-doc/maybe-fetch-doc-id current-state)
+    (let [doc-id (<! (landing-doc/get-doc-id current-state))]
+      (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" doc-id)
+                                                              :replace-token? replace-token?}]))))
+
 (defmethod post-control-event! :make-button-clicked
   [browser-state message _ previous-state current-state]
-  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
+  (navigate-to-lazy-doc current-state false))
 
 (defmethod post-control-event! :launch-app-clicked
   [browser-state message _ previous-state current-state]
-  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
+  (navigate-to-lazy-doc current-state false))
+
+(defmethod post-control-event! :overlay-escape-clicked
+  [browser-state message _ previous-state current-state]
+  (navigate-to-lazy-doc current-state false))
+
+(defmethod post-control-event! :navigate-to-landing-doc-hovered
+  [browser-state message _ previous-state current-state]
+  (landing-doc/maybe-fetch-doc-id current-state))
+
+(defmethod post-control-event! :issue-layer-clicked
+  [browser-state message {:keys [frontend/issue-id]} previous-state current-state]
+  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/issues/" issue-id)}]))
+
+(defmethod post-control-event! :overlay-menu-closed
+  [browser-state message _ previous-state current-state]
+  (navigate-to-lazy-doc current-state true))
 
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]
@@ -1750,11 +1696,6 @@
                                 #js [(.-scrollLeft body) (.-scrollTop body)]
                                 #js [(.-scrollLeft body) vh]
                                 375))))
-
-(defmethod control-event :privacy-stats-clicked
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :sharing)))
 
 (defmethod post-control-event! :mouse-stats-clicked
   [browser-state message _ previous-state current-state]
@@ -1857,22 +1798,18 @@
   (utils/update-when-in state [:subscribers :info producer] assoc :stream-url stream-url))
 
 (defmethod control-event :retry-unsynced-datoms
-  [browser-state message {:keys [stream-url producer]} state]
-  (assoc state :unsynced-datoms nil))
+  [browser-state message {:keys [sente-event]} state]
+  (assoc-in state [:unsynced-datoms sente-event] nil))
 
 (defmethod post-control-event! :retry-unsynced-datoms
-  [browser-state message {:keys [stream-url producer]} previous-state current-state]
-  (doseq [{:keys [datom-group annotations]} (:unsynced-datoms previous-state)]
+  [browser-state message {:keys [sente-event]} previous-state current-state]
+  (doseq [{:keys [datom-group annotations]} (get-in previous-state [:unsynced-datoms sente-event])]
     (frontend.db/send-datoms-to-server (:sente current-state) :frontend/transaction datom-group annotations (:comms current-state)))
   (d/transact! (:db current-state)
                (mapcat #(map (fn [d] [:db/add (:e d) :unsaved false])
                              (utils/inspect (:datom-group %)))
-                       (:unsynced-datoms previous-state))
-               {:bot-layer true}))
-
-(defmethod control-event :plan-submenu-opened
-  [browser-state message {:keys [submenu]} state]
-  (handle-add-menu state (keyword "plan" (name submenu))))
+                       (get-in previous-state [:unsynced-datoms sente-event]))
+               {:server-update true}))
 
 (defmethod post-control-event! :start-plan-clicked
   [browser-state message _ previous-state current-state]
@@ -1906,3 +1843,8 @@
   [browser-state message {:keys [plan-id email]} previous-state current-state]
   (d/transact! (:team-db current-state)
                [[:db/add plan-id :plan/billing-email email]]))
+
+(defmethod post-control-event! :marked-issue-completed
+  [browser-state message {:keys [issue-uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:issue/set-status {:frontend/issue-id issue-uuid
+                                                             :issue/status :issue.status/completed}]))

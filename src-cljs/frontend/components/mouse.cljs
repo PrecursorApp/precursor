@@ -36,11 +36,19 @@
                       :style #js {:top (:y mouse)
                                   :left (:x mouse)}}
 
-          (when (keyboard/pan-shortcut-active? app)
-            (dom/div #js {:className " mouse-cursor holo "}
-              (if (:mouse-down app)
-                grabbing-cursor
-                grab-cursor)))
+          (cond (keyboard/pan-shortcut-active? app)
+                (dom/div #js {:className " mouse-cursor holo "
+                              :key "pan"}
+                  (if (:mouse-down app)
+                    grabbing-cursor
+                    grab-cursor))
 
-          (when-not (get-in app state/right-click-learned-path)
-            (dom/div (get hints :dial))))))))
+                (keyboard/arrow-shortcut-active? app)
+                (dom/div #js {:className " mouse-cursor arrow-cursor holo "
+                              :key "arrow"}
+                  (common/icon :cursor))
+
+                (not (get-in app state/right-click-learned-path))
+                (dom/div (get hints :dial))
+
+                :else nil))))))

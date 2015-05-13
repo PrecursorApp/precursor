@@ -63,7 +63,9 @@
   with the same var."
   [schedule f]
   (assert (var? f))
-  (let [new-job (schejulure/schedule schedule (fn [] (future (f))))]
+  (let [new-job (schejulure/schedule schedule (fn []
+                                                (log/infof "running %s" f)
+                                                (future (f))))]
     (dosync
      (alter safe-scheduled-jobs
             (fn [jobs]
@@ -96,3 +98,6 @@
 
 (defmacro reporting-future [& body]
   `(future (with-report-exceptions ~@body)))
+
+(defn apply-map [f & args]
+  (apply f (apply concat (butlast args) (last args))))

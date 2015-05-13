@@ -1,6 +1,5 @@
 (ns ^:figwheel-no-load frontend.dev
-    (:require [figwheel.client :as figwheel :include-macros true]
-              [frontend.careful]
+    (:require [frontend.careful]
               [frontend.core :as core]
               [frontend.utils :as utils :include-macros true]
               [weasel.repl :as ws-repl]))
@@ -12,9 +11,6 @@
   ;; https://github.com/cemerick/austin/issues/49
   (js/setInterval #(cljs.core/enable-console-print!) 1000))
 
-(defn setup-figwheel [{:keys [js-callback]}]
-  (figwheel/start {:on-jsload js-callback
-                   :websocket-url "ws://localhost:3448/figwheel-ws"}))
-
 (utils/swallow-errors (setup-browser-repl))
-(utils/swallow-errors (frontend.dev/setup-figwheel {:js-callback @frontend.careful/om-setup-debug}))
+(defn jsload []
+  (@frontend.careful/om-setup-debug))

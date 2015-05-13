@@ -23,6 +23,7 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.invoice :as invoice-model]
+            [pc.models.issue :as issue-model]
             [pc.models.layer :as layer-model]
             [pc.models.team :as team-model]
             [pc.profile :as profile]
@@ -43,7 +44,8 @@
     :sente-id (-> req :session :sente-id)
     :hostname (profile/hostname)}
    (when-let [cust (-> req :auth :cust)]
-     {:cust (cust-model/read-api cust)})
+     {:cust (cust-model/read-api cust)
+      :admin? (contains? cust-model/admin-emails (:cust/email cust))})
    (when-let [team (-> req :team)]
      {:team (team-model/public-read-api team)})
    (when-let [subdomain (-> req :subdomain)]
@@ -109,19 +111,22 @@
                                                              :transaction/broadcast true})
         (redirect "/"))))
 
-(defpage document [:get "/document/:document-id" {:document-id #"[0-9]+"}] [req]
+(defn doc-resp [doc req & {:keys [view-data]}]
+  (content/app (merge (common-view-data req)
+                      {:initial-document-id (:db/id doc)
+                       :meta-image (urls/png-from-doc doc)
+                       :meta-url (urls/from-doc doc)}
+                      ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
+                      ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
+                      ;;   {:initial-entities (layer/find-by-document db doc)})
+                      view-data)))
+
+(defn handle-doc [req]
   (let [document-id (some-> req :params :document-id Long/parseLong)
         db (pcd/default-db)
         doc (doc-model/find-by-team-and-id db (:team req) document-id)]
     (if doc
-      (content/app (merge (common-view-data req)
-                          {:initial-document-id (:db/id doc)
-                           :meta-image (urls/png-from-doc doc)
-                           :meta-url (urls/from-doc doc)}
-                          ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
-                          ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
-                          ;;   {:initial-entities (layer/find-by-document db doc)})
-                          ))
+      (doc-resp doc req)
       (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) document-id)]
         (redirect (str "/document/" (:db/id redirect-doc)))
         {:status 404
@@ -130,6 +135,14 @@
                   [:body "This document lives on a different domain: " [:a {:href (urls/from-doc doc)}
                                                                         (urls/from-doc doc)]])
                  "Document not found")}))))
+
+(defpage document [:get "/document/:document-id" {:document-id #"[0-9]+"}] [req]
+  (handle-doc req))
+
+(defpage document-overlay [:get "/document/:document-id/:overlay" {:document-id #"[0-9]+" :overlay #"[\w-]+"}] [req]
+  (handle-doc req))
+
+(def private-layers [{:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 389.5996, :entity/type :layer, :layer/start-y 120.0, :layer/text "Please log in or request access to view it.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 100.0} {:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 373.5547, :entity/type :layer, :layer/start-y 90.0, :layer/text "Sorry, this document is private.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 70.0}])
 
 (defn image-cache-headers [db doc]
   (let [last-modified-instant (or (doc-http/last-modified-instant db doc)
@@ -173,13 +186,15 @@
 
           (auth/logged-in? req)
           {:status 403
-           ;; TODO: use an image here
-           :body "Please request permission to access this document"}
+           :headers {"Content-Type" "image/svg+xml"
+                     "Cache-Control" "no-cache; private"}
+           :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))}
 
           :else
           {:status 401
-           ;; TODO: use an image here
-           :body "Please log in so that we can check if you have permission to access this document"})))
+           :headers {"Content-Type" "image/svg+xml"
+                     "Cache-Control" "no-cache; private"}
+           :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))})))
 
 (defpage doc-png "/document/:document-id.png" [req]
   (let [document-id (-> req :params :document-id)
@@ -216,13 +231,19 @@
 
           (auth/logged-in? req)
           {:status 403
-           ;; TODO: use an image here
-           :body "Please request permission to access this document"}
+           :headers {"Content-Type" "image/png"
+                     "Cache-Control" "no-cache; private"}
+           :body (convert/svg->png (render/render-layers private-layers
+                                                         :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                         :size-limit 800))}
 
           :else
           {:status 401
-           ;; TODO: use an image here
-           :body "Please log in so that we can check if you have permission to access this document"})))
+           :headers {"Content-Type" "image/png"
+                     "Cache-Control" "no-cache; private"}
+           :body (convert/svg->png (render/render-layers private-layers
+                                                         :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                         :size-limit 800))})))
 
 (defpage doc-pdf "/document/:document-id.pdf" [req]
   (let [document-id (-> req :params :document-id)
@@ -253,13 +274,17 @@
 
           (auth/logged-in? req)
           {:status 403
-           ;; TODO: use an image here
-           :body "Please request permission to access this document"}
+           :headers {"Content-Type" "application/pdf"
+                     "Cache-Control" "no-cache; private"}
+           :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))
+                                   (render/svg-props private-layers))}
 
           :else
           {:status 401
-           ;; TODO: use an image here
-           :body "Please log in so that we can check if you have permission to access this document"})))
+           :headers {"Content-Type" "application/pdf"
+                     "Cache-Control" "no-cache; private"}
+           :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))
+                                   (render/svg-props private-layers))})))
 
 (defn frontend-response
   "Response to send for requests that the frontend will route"
@@ -267,7 +292,7 @@
   (content/app (common-view-data req)))
 
 (defpage new-doc "/new" [req]
-  (if (:subdomain req)
+   (if (:subdomain req)
     (if (and (:team req)
              (auth/logged-in? req)
              (auth/has-team-permission? (pcd/default-db) (:team req) (:auth req) :admin))
@@ -283,12 +308,27 @@
     ;;       solve the extraneous entity-id problem first
     (custom-domain/redirect-to-main req)
     (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-          ;; TODO: Have to figure out a way to create outer pages without creating extraneous entity-ids
+          ;;TODO: remove this once frontend is deployed
           doc (doc-model/create-public-doc!
                (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                       (when cust-uuid {:document/creator cust-uuid})))]
       (content/app (merge (common-view-data req)
                           {:initial-document-id (:db/id doc)})))))
+
+(defpage single-issue "/issues/:issue-uuid" [req]
+  (if (:subdomain req)
+    (custom-domain/redirect-to-main req)
+    (let [db (pcd/default-db)
+          frontend-id (-> req :params :issue-uuid (UUID/fromString))
+          issue (issue-model/find-by-frontend-id db frontend-id)]
+      (if-not issue
+        {:body "Sorry, we couldn't find that issue."
+         :status 404}
+        (let [doc (:issue/document issue)]
+          (doc-resp doc req :view-data {:initial-issue-entities [(issue-model/read-api issue)]}))))))
+
+(defpage issue "/issues" [req]
+  (outer-page req))
 
 (defpage pricing "/pricing" [req]
   (outer-page req))
@@ -314,12 +354,14 @@
 (defpage product-hunt "/product-hunt" [req]
   (outer-page req))
 
+(defpage product-hunt "/designer-news" [req]
+  (outer-page req))
+
 (def bucket-doc-ids (atom #{}))
 
 (defn clean-bucket-doc-ids []
   (swap! bucket-doc-ids (fn [b]
                           (set/intersection b (set (keys @sente/document-subs))))))
-
 
 (defpage bucket [:get "/bucket/:bucket-count" {:bucket-count #"[0-9]+"}] [req]
   (if (:subdomain req)

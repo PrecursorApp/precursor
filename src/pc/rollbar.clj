@@ -36,8 +36,9 @@
 (defonce rollbar-agent (agent nil
                               :error-mode :continue
                               :error-handler (fn [a e]
-                                               (log/error "Error in rollbar agent" e)
-                                               (.printStackTrace e))))
+                                               (when (profile/prod?)
+                                                 (log/error "Error in rollbar agent" e)
+                                                 (.printStackTrace e)))))
 
 (defn send-payload* [_ payload]
   (clj-http/post endpoint

@@ -1,6 +1,7 @@
 (ns pc.billing
   (:require [clj-time.coerce :refer (to-date)]
             [clj-time.core :as time]
+            [clojure.tools.logging :as log]
             [datomic.api :as d]
             [pc.datomic :as pcd]
             [pc.models.cust :as cust-model]
@@ -84,6 +85,7 @@
         db (pcd/default-db)]
     (doseq [team (team-model/all db)]
       (utils/straight-jacket
+       (log/infof "setting active users for %s" (:team/subdomain team))
        (set-active-users db team :now now)))))
 
 (defn init []

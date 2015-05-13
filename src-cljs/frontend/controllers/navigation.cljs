@@ -2,9 +2,11 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as str]
             [datascript :as d]
+            [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.camera :as cameras]
             [frontend.db :as db]
+            [frontend.models.issue :as issue-model]
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
             [frontend.state :as state]
@@ -73,6 +75,14 @@
       (.replaceToken history-imp path)
       (.setToken history-imp path))))
 
+(defmethod navigated-to :back!
+  [history-imp navigation-point _ state]
+  state)
+
+(defmethod post-navigated-to! :back!
+  [history-imp navigation-point _ previous-state current-state]
+  (.back js/window.history))
+
 (defn handle-outer [navigation-point args state]
   (-> (navigated-default navigation-point args state)
     (assoc :overlays [])
@@ -81,8 +91,8 @@
 (defmethod navigated-to :landing
   [history-imp navigation-point args state]
   (let [state (handle-outer navigation-point args state)]
-    (if (= "product-hunt" (:utm-campaign args))
-      (assoc-in state state/ph-discount-path true)
+    (if (= "designer-news" (:utm-campaign args))
+      (assoc-in state state/dn-discount-path true)
       state)))
 
 (defmethod navigated-to :pricing
@@ -105,12 +115,16 @@
             min-width)
          true)))
 
-(defmethod navigated-to :document
-  [history-imp navigation-point args state]
+(defn handle-doc-navigation [navigation-point args state]
   (let [doc-id (:document/id args)
-        initial-entities []]
-    (-> (navigated-default navigation-point args state)
+        initial-entities []
+        state (navigated-default navigation-point args state)]
+    (if (= doc-id (:loaded-doc state))
+      (-> state
+        (assoc :show-landing? false))
+      (-> state
         (assoc :document/id doc-id
+               :loaded-doc doc-id
                :undo-state (atom {:transactions []
                                   :last-undo nil})
                :db-listener-key (utils/uuid)
@@ -118,47 +132,54 @@
                :frontend-id-state {}
                :replay-interrupt-chan (when (play-replay? args)
                                         (async/chan)))
+        (state/reset-camera)
         (state/clear-subscribers)
         (subs/add-subscriber-data (:client-id state/subscriber-bot) state/subscriber-bot)
-        (#(if-let [overlay (get-in args [:query-params :overlay])]
-            (overlay/replace-overlay % (keyword overlay))
-            %))
         (assoc :initial-state false)
         ;; TODO: at some point we'll only want to get rid of the layers. Maybe have multiple dbs or
         ;;       find them by doc-id? Will still need a way to clean out old docs.
         (update-in [:db] (fn [db] (if (:initial-state state)
                                     db
-                                    (db/reset-db! db initial-entities)))))))
+                                    (db/reset-db! db initial-entities))))))))
+
+(defn handle-post-doc-navigation [navigation-point args previous-state current-state]
+  (let [sente-state (:sente current-state)
+        doc-id (:document/id current-state)]
+    (when-not (= doc-id (:loaded-doc previous-state))
+      (when-let [prev-doc-id (:document/id previous-state)]
+        (when (not= prev-doc-id doc-id)
+          (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}])))
+      (if (play-replay? args)
+        (utils/apply-map replay/replay-and-subscribe
+                         current-state
+                         (-> {:sleep-ms 25
+                              :interrupt-ch (:replay-interrupt-chan current-state)}
+                           (merge
+                            (select-keys (:query-params args)
+                                         [:delay-ms :sleep-ms :tx-count]))
+                           (utils/update-when-in [:tx-count] js/parseInt)))
+        (sente/subscribe-to-document sente-state (:comms current-state) doc-id))
+      ;; TODO: probably only need one listener key here, and can write a fn replace-listener
+      (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
+      (db/setup-listener! (:db current-state)
+                          (:db-listener-key current-state)
+                          (:comms current-state)
+                          :frontend/transaction
+                          {:document/id doc-id}
+                          (:undo-state current-state)
+                          sente-state)
+      (sente/update-server-offset sente-state)
+      (put! (get-in current-state [:comms :controls]) [:handle-camera-query-params (select-keys (:query-params args)
+                                                                                                [:cx :cy :x :y :z])]))))
+
+(defmethod navigated-to :document
+  [history-imp navigation-point args state]
+  (-> (handle-doc-navigation navigation-point args state)
+    overlay/clear-overlays))
 
 (defmethod post-navigated-to! :document
   [history-imp navigation-point args previous-state current-state]
-  (let [sente-state (:sente current-state)
-        doc-id (:document/id current-state)]
-    (when-let [prev-doc-id (:document/id previous-state)]
-      (when (not= prev-doc-id doc-id)
-        (sente/send-msg (:sente current-state) [:frontend/unsubscribe {:document-id prev-doc-id}])))
-    (if (play-replay? args)
-      (utils/apply-map replay/replay-and-subscribe
-                       current-state
-                       (-> {:sleep-ms 25
-                            :interrupt-ch (:replay-interrupt-chan current-state)}
-                         (merge
-                          (select-keys (:query-params args)
-                                       [:delay-ms :sleep-ms :tx-count]))
-                         (utils/update-when-in [:tx-count] js/parseInt)))
-      (sente/subscribe-to-document sente-state (:comms current-state) doc-id))
-    ;; TODO: probably only need one listener key here, and can write a fn replace-listener
-    (d/unlisten! (:db previous-state) (:db-listener-key previous-state))
-    (db/setup-listener! (:db current-state)
-                        (:db-listener-key current-state)
-                        (:comms current-state)
-                        :frontend/transaction
-                        {:document/id doc-id}
-                        (:undo-state current-state)
-                        sente-state)
-    (sente/update-server-offset sente-state)
-    (put! (get-in current-state [:comms :controls]) [:handle-camera-query-params (select-keys (:query-params args)
-                                                                                              [:cx :cy :x :y :z])])))
+  (handle-post-doc-navigation navigation-point args previous-state current-state))
 
 (defmethod navigated-to :new
   [history-imp navigation-point args state]
@@ -176,3 +197,96 @@
                    (get-in result [:response :redirect-url]))
             (set! js/window.location (get-in result [:response :redirect-url]))
             (put! (:errors comms) [:api-error result]))))))
+
+(defmulti overlay-extra (fn [state overlay] overlay))
+(defmethod overlay-extra :default [state overlay] state)
+(defmethod overlay-extra :start [state overlay] (assoc-in state state/main-menu-learned-path true))
+(defmethod overlay-extra :info [state overlay] (assoc-in state state/info-button-learned-path true))
+(defmethod overlay-extra :doc-viewer [state overlay] (assoc-in state state/your-docs-learned-path true))
+(defmethod overlay-extra :sharing [state overlay] (assoc-in state state/sharing-menu-learned-path true))
+(defmethod overlay-extra :export [state overlay] (assoc-in state state/export-menu-learned-path true))
+(defmethod overlay-extra :shortcuts [state overlay] (assoc-in state state/shortcuts-menu-learned-path true))
+
+
+(defmulti overlay-extra-post! (fn [previous-state current-state overlay] overlay))
+(defmethod overlay-extra-post! :default [previous-state current-state overlay] nil)
+(defmethod overlay-extra-post! :info [previous-state current-state overlay]
+  (when (and (not (get-in previous-state state/info-button-learned-path))
+             (get-in current-state state/info-button-learned-path))
+    (analytics/track "What's this learned")))
+(defmethod overlay-extra-post! :doc-viewer [previous-state current-state overlay]
+  (when (:cust current-state)
+    (sente/send-msg
+     (:sente current-state)
+     [:frontend/fetch-touched]
+     10000
+     (fn [{:keys [docs]}]
+       (when docs
+         (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
+
+(defmethod overlay-extra-post! :team-doc-viewer [previous-state current-state overlay]
+  (when (:cust current-state)
+  (sente/send-msg
+   (:sente current-state)
+   [:team/fetch-touched {:team/uuid (get-in current-state [:team :team/uuid])}]
+   10000
+   (fn [{:keys [docs]}]
+     (when docs
+       (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}]))))))
+
+(defmethod navigated-to :overlay
+  [history-imp navigation-point args state]
+  ;; this may be the landing page, in which case we need to load the doc
+  (let [overlay (keyword (:overlay args))]
+    (-> (handle-doc-navigation navigation-point args state)
+      (overlay/handle-add-menu overlay)
+      (overlay-extra overlay))))
+
+(defmethod post-navigated-to! :overlay
+  [history-imp navigation-point args previous-state current-state]
+  (handle-post-doc-navigation navigation-point args previous-state current-state)
+  (let [overlay (keyword (:overlay args))]
+    (overlay-extra-post! previous-state current-state overlay)))
+
+(defmethod navigated-to :plan-submenu
+  [history-imp navigation-point args state]
+  ;; this may be the landing page, in which case we need to load the doc
+  (-> (handle-doc-navigation navigation-point args state)
+    (overlay/handle-add-menu (keyword "plan" (:submenu args)))))
+
+(defmethod navigated-to :issues-list
+  [history-imp navigation-point args state]
+  (let [issues-list-id (when (= (:navigation-point state)
+                                :single-issue)
+                         (:issues-list-id state))]
+    (-> (navigated-default navigation-point args state)
+      (#(if issues-list-id
+          (handle-doc-navigation navigation-point (assoc args :document/id issues-list-id) %)
+          %))
+      (overlay/add-issues-overlay))))
+
+(defmethod post-navigated-to! :issues-list
+  [history-imp navigation-point args previous-state current-state]
+  (when-let [issues-list-id (when (= (:navigation-point previous-state)
+                                     :single-issue)
+                              (:issues-list-id previous-state))]
+    (handle-post-doc-navigation navigation-point (assoc args :document/id issues-list-id) previous-state current-state)))
+
+(defmethod navigated-to :single-issue
+  [history-imp navigation-point args state]
+  (let [issue-uuid (UUID. (:issue-uuid args))
+        issue (issue-model/find-by-frontend-id @(:issue-db state) issue-uuid)
+        issues-list-id (when (= (:navigation-point state)
+                                :issues-list)
+                         (:document/id state))]
+    (-> (handle-doc-navigation navigation-point
+                               (assoc args :document/id (or (:issue/document issue)
+                                                            (:document/id state)))
+                               state)
+      (assoc :active-issue-uuid issue-uuid)
+      (overlay/handle-add-menu :issues/single-issue)
+      (cond-> issues-list-id (assoc :issues-list-id issues-list-id)))))
+
+(defmethod post-navigated-to! :single-issue
+  [history-imp navigation-point args previous-state current-state]
+  (handle-post-doc-navigation navigation-point (assoc args :document/id (:document/id current-state)) previous-state current-state))

@@ -27,3 +27,18 @@
 
 (defn invoice-url [team-uuid invoice-id & {:as args}]
   (utils/apply-map absolute-url (str "/team/" team-uuid "/plan/invoice/" invoice-id) args))
+
+(defn issue-url [issue]
+  (str "/issues/" (:frontend/issue-id issue)))
+
+(defn doc-path [doc-id & {:keys [query-params]}]
+  (str "/document/" doc-id (when (seq query-params)
+                             (str "?" (url/map->query query-params)))))
+
+(defn overlay-path [doc-id overlay & {:keys [query-params]}]
+  (str "/document/" doc-id "/" overlay (when (seq query-params)
+                                         (str "?" (url/map->query query-params)))))
+
+(defn plan-submenu-path [doc-id submenu & {:keys [query-params]}]
+  (str "/document/" doc-id "/plan/" submenu (when (seq query-params)
+                                              (str "?" (url/map->query query-params)))))

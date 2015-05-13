@@ -21,14 +21,26 @@
             [pc.stripe.dev :as stripe-dev]
             [ring.util.anti-forgery :as anti-forgery]))
 
-(defn interesting [doc-ids]
+(defn cust-link [cust]
+  [:a {:href (str "/user/" (:cust/email cust))}
+   (:cust/email cust)])
+
+(defn team-link [team]
+  [:a {:href (str "/team/" (:team/subdomain team))}
+   (:team/subdomain team)])
+
+(defn doc-link [doc]
+  [:a {:href (urls/from-doc doc)}
+   (:db/id doc)])
+
+(defn interesting [docs]
   [:div.interesting
-   (if-not (seq doc-ids)
-     [:p "No interesting docs"])
-   (for [doc-id doc-ids]
+   (if-not (seq docs)
+     [:p "Nothing to show"])
+   (for [doc docs]
      [:div.doc-preview
-      [:a {:href (str "/document/" doc-id)}
-       [:img {:src (urls/doc-svg doc-id)}]]])])
+      [:a {:href (str "/document/" (:db/id doc))}
+       [:img {:src (urls/svg-from-doc doc)}]]])])
 
 (defn count-users [db time]
   (count (seq (d/datoms (d/as-of db (clj-time.coerce/to-date time))
@@ -254,7 +266,9 @@
          [:table {:border 1}
           [:tr
            [:th "subdomain"]
+           [:th "doc-count"]
            [:th "status"]
+           [:th "trial-end"]
            [:th "coupon"]
            [:th "creator"]
            [:th "active"]
@@ -262,25 +276,19 @@
           (for [team teams
                 :let [plan (:team/plan team)]]
             [:tr
-             [:td [:a {:href (urls/root :subdomain (h/h (:team/subdomain team)))}
-                   (h/h (:team/subdomain team))]]
+             [:td (team-link team)]
+             [:td (count (seq (d/datoms db :vaet (:db/id team) :document/team)))]
              [:td (cond (:plan/paid? plan) "paid"
                         (not (plan-model/trial-over? plan)) "trial"
                         :else "trial expired")]
+             [:td (:plan/trial-end plan)]
              [:td (:discount/coupon (:team/plan team))]
-             [:td [:a {:href (str "/user/" (:cust/email (:team/creator team)))}
-                   (:cust/email (:team/creator team))]]
+             [:td (cust-link (:team/creator team))]
              [:td (let [active (:plan/active-custs plan)]
-                    (interleave (map (fn [cust]
-                                       [:a {:href (str "/user/" (:cust/email cust))}
-                                        (:cust/email cust)])
-                                     active)
+                    (interleave (map cust-link active)
                                 (repeat " ")))]
              [:td (let [permissions (permission-model/find-by-team db team)]
-                    (interleave (map (fn [p] (let [cust (:permission/cust-ref p)]
-                                               [:a {:href (str "/user/" (:cust/email cust))}
-                                                (:cust/email cust)]))
-                                     permissions)
+                    (interleave (map (comp cust-link :permission/cust-ref) permissions)
                                 (repeat " ")))]])]])))))
 
 (defn format-runtime [ms]
@@ -410,7 +418,15 @@
   (let [db (pcd/default-db)]
     (list
      [:style "td, th { padding: 5px; text-align: left }"]
+     (when-not (contains? (:document/tags doc) "admin/interesting")
+       [:form {:action (str "/document/" (:db/id doc) "/mark-interesting")
+               :method "post"}
+        (anti-forgery/anti-forgery-field)
+        [:input {:type "submit" :value "Mark interesting"}]])
      [:table {:border 1}
+      [:tr
+       [:td "Tags"]
+       [:td (:document/tags doc)]]
       [:tr
        [:td "Chat count"]
        [:td (count (seq (d/datoms db :vaet (:db/id doc) :chat/document)))]]
@@ -428,7 +444,7 @@
               (cust-model/find-by-uuid db)
               :cust/email
               ((fn [e]
-                  [:a {:href (str "/user/" e)} e])))]]
+                 [:a {:href (str "/user/" e)} e])))]]
       (let [emails (d/q '{:find [[?email ...]]
                           :in [$ ?doc-id]
                           :where [[?t :transaction/document ?doc-id]
@@ -457,6 +473,10 @@
        [:td [:a {:href (urls/svg-from-doc doc)}
              (:db/id doc)]]]
       [:tr
+       [:td "Replay helper"]
+       [:td [:a {:href (str "/replay-helper/" (:db/id doc))}
+             (:db/id doc)]]]
+      [:tr
        [:td "Live doc url"]
        [:td
         "Tiny b/c you could be intruding "
@@ -480,6 +500,43 @@
                         email]
                        (some-> chat :session/uuid str (subs 0 5)))])
               [:td (h/h (:chat/body chat))]])]))))))
+
+(defn team-info [team]
+  (let [db (pcd/default-db)
+        team-docs (map (comp (partial d/entity db) :e)
+                       (d/datoms db :vaet (:db/id team) :document/team))]
+    (def myteamdocs team-docs)
+    (list
+     [:style "td, th { padding: 5px; text-align: left }"]
+     [:table {:border 1}
+      [:tr
+       [:td "Subdomain"]
+       [:td (:team/subdomain team)]]
+      [:tr
+       [:td "Creator"]
+       [:td (cust-link (:team/creator team))]]
+      (let [active (:plan/active-custs (:team/plan team))]
+        [:tr
+         [:td (str "Active members (" (count active) ")")]
+         [:td (interleave (map cust-link (sort-by :cust/email active))
+                          (repeat " "))]])
+      (let [members (map :permission/cust-ref (permission-model/find-by-team db team))]
+        [:tr
+         [:td (str "All members (" (count members) ")")]
+         [:td (interleave (map cust-link (sort-by :cust/email members))
+                          (repeat " "))]])
+      [:tr
+       [:td "Created instant"]
+       [:td (d/q '[:find ?inst .
+                   :in $ ?uuid
+                   :where
+                   [?e :team/uuid ?uuid ?tx]
+                   [?tx :db/txInstant ?inst]]
+                 db (:team/uuid team))]]
+      [:tr
+       [:td "Doc count"]
+       [:td (count team-docs)]]]
+     (interesting team-docs))))
 
 (defn upload-files []
   (let [bucket "precursor"
@@ -518,21 +575,34 @@
 
 (defn replay-helper [doc]
   (let [txids (replay/get-document-tx-ids (pcd/default-db) doc)
-        initial-tx (last txids)]
+        initial-tx (last txids)
+        replace-img (fn [txid]
+                      (format "document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) { return m1 + '%s'});"
+                              txid))]
     (list
      [:div {:style "display: inline-block; width: 19%; vertical-align: top;"}
       [:span "Current: " [:span#current-tx initial-tx]]
       [:ol {:style "max-height: 50vh; overflow: scroll"}
        (for [txid txids]
-         [:li {:style "cursor:pointer;"
-               :onClick (str (format "document.getElementById('current-tx').textContent = '%s';"
-                                     txid)
-                             (format "document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) { return m1 + '%s'});"
-                                     txid))}
-          txid])]]
+         [:li
+          [:input {:style "cursor:pointer;border: none;outline: none"
+                   :value txid
+                   :onClick (str (format "document.getElementById('current-tx').textContent = '%s';"
+                                         txid)
+                                 (replace-img txid)
+                                 "this.select()")}]])]]
      [:img#img {:src (urls/svg-from-doc doc :query {:as-of initial-tx})
                 :width "80%"
-                :style "border: 1px solid rgba(0,0,0,0.3)"}])))
+                :style "border: 1px solid rgba(0,0,0,0.3)"}]
+     [:script {:type "text/javascript"}
+      (format
+       "var txids = %s;
+        for (var i=0;i<txids.length;i++) {
+          window.setTimeout((function(i) {
+                             return function() { document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) {return m1 + txids[i]}); document.getElementById('current-tx').textContent = txids[i];}
+                            })(i), i * 250)
+        }"
+       (str "[" (clojure.string/join "," txids) "]"))])))
 
 (defn stripe-events []
   (list

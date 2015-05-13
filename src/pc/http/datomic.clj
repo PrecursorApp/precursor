@@ -29,6 +29,10 @@
   (when-let [frontend-tx (datomic-common/frontend-team-transaction transaction)]
     (sente/notify-team-transaction (:db-after transaction) frontend-tx)))
 
+(defn notify-issue-subscribers [transaction]
+  (when-let [frontend-tx (datomic-common/frontend-issue-transaction transaction)]
+    (sente/notify-issue-transaction (:db-after transaction) frontend-tx)))
+
 ;; TODO: this should use a channel instead of a future
 (defn send-emails [transaction]
   (let [annotations (delay (datomic-common/get-annotations transaction))]
@@ -47,9 +51,7 @@
         document (delay (:transaction/document (datomic-common/get-annotations transaction)))
         chat-body-eid (d/entid db :chat/body)]
     (when-let [chat-datom (first (filter #(= chat-body-eid (:a %)) datoms))]
-      (let [slack-url (if (profile/prod?)
-                        "https://hooks.slack.com/services/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"
-                        "https://hooks.slack.com/services/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")
+      (let [slack-url (profile/slack-customer-ping-url)
             cust (some->> chat-datom :e (#(d/datoms db :eavt % :cust/uuid)) first :v (cust-model/find-by-uuid db))
             username (:cust/email cust "ping-bot")
             icon_url (str (:google-account/avatar cust))]
@@ -76,9 +78,7 @@
         datoms (:tx-data transaction)
         team-eid (d/entid db :team/subdomain)]
     (when-let [team-datom (first (filter #(= team-eid (:a %)) datoms))]
-      (let [slack-url (if (profile/prod?)
-                        "https://hooks.slack.com/services/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"
-                        "https://hooks.slack.com/services/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")
+      (let [slack-url (profile/slack-customer-ping-url)
             team (some->> team-datom :e (d/entity db))
             cust (:team/creator team)
             username (:cust/email cust "ping-bot")
@@ -92,14 +92,45 @@
         datoms (:tx-data transaction)
         private-docs-eid (d/entid db :flags/private-docs)]
     (when-let [flag-datom (first (filter #(= private-docs-eid (:v %)) datoms))]
-      (let [slack-url (if (profile/prod?)
-                        "https://hooks.slack.com/services/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"
-                        "https://hooks.slack.com/services/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")
+      (let [slack-url (profile/slack-customer-ping-url)
             cust (d/entity db (:e flag-datom))
             username (:cust/email cust "ping-bot")
             icon_url (str (:google-account/avatar cust))]
         (let [message "started a solo trial"]
           (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))))))
+
+(defn admin-notify-issues [transaction]
+  (let [annotations (datomic-common/get-annotations transaction)]
+    (when (:transaction/issue-tx? annotations)
+      (let [db (:db-after transaction)
+            datoms (:tx-data transaction)
+            issue-author-eid (d/entid db :issue/author)
+            comment-author-eid (d/entid db :comment/author)]
+        (when-let [new-issue-datom (first (filter #(= issue-author-eid (:a %)) datoms))]
+          (let [slack-url (profile/slack-customer-ping-url)
+                issue (d/entity db (:e new-issue-datom))
+                cust (:issue/author issue)
+                username (:cust/email cust "ping-bot")
+                icon_url (str (:google-account/avatar cust))]
+            (let [message (format "Created a new issue <%s|%s>"
+                                  (urls/from-issue issue)
+                                  (:issue/title issue))]
+              (http/post slack-url {:form-params {"payload" (json/encode {:text message
+                                                                          :username username
+                                                                          :icon_url icon_url})}}))))
+        (when-let [new-comment-datom (first (filter #(= comment-author-eid (:a %)) datoms))]
+          (let [slack-url (profile/slack-customer-ping-url)
+                comment (d/entity db (:e new-comment-datom))
+                issue (d/entity db (:e (first (d/datoms db :vaet (:db/id comment) :issue/comments))))
+                cust (:comment/author comment)
+                username (:cust/email cust "ping-bot")
+                icon_url (str (:google-account/avatar cust))]
+            (let [message (format "Created a new comment on <%s|%s>"
+                                  (urls/from-issue issue)
+                                  (:issue/title issue))]
+              (http/post slack-url {:form-params {"payload" (json/encode {:text message
+                                                                          :username username
+                                                                          :icon_url icon_url})}}))))))))
 
 (defn handle-admin [transaction]
   (utils/with-report-exceptions
@@ -111,7 +142,9 @@
   (utils/with-report-exceptions
     (admin-notify-subdomains transaction))
   (utils/with-report-exceptions
-    (admin-notify-solo-trials transaction)))
+    (admin-notify-solo-trials transaction))
+  (utils/with-report-exceptions
+    (admin-notify-issues transaction)))
 
 (defonce raised-full-channel-exception? (atom nil))
 (defn forward-to-admin-ch [admin-ch transaction]
@@ -131,6 +164,8 @@
     (notify-document-subscribers transaction))
   (utils/with-report-exceptions
     (notify-team-subscribers transaction))
+  (utils/with-report-exceptions
+    (notify-issue-subscribers transaction))
   (utils/with-report-exceptions
     (forward-to-admin-ch admin-ch transaction)))
 

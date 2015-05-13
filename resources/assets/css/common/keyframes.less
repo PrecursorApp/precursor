@@ -10,12 +10,20 @@
   0%   { opacity: 0; transform: translate3d(-@tile, 0, 0);}
   100% { opacity: 1; transform: none;}
 }
+@keyframes in-fade-left-hard {
+  0%   { opacity: 0; transform: translate3d((2 * -@tile), 0, 0);}
+  100% { opacity: 1; transform: none;}
+}
 @keyframes in-fade-right {
   0%   { opacity: 0; transform: translate3d(100%, 0, 0);}
   100% { opacity: 1; transform: none;}
 }
 @keyframes in-fade-right-soft {
   0%   { opacity: 0; transform: translate3d(@tile, 0, 0);}
+  100% { opacity: 1; transform: none;}
+}
+@keyframes in-fade-right-hard {
+  0%   { opacity: 0; transform: translate3d((2 * @tile), 0, 0);}
   100% { opacity: 1; transform: none;}
 }
 @keyframes in-fade-top {
@@ -195,4 +203,12 @@
 }
 @keyframes rejected-pulse {
   50% { opacity: 1;}
+}
+@keyframes in-issue-description {
+  0%   { transform: translate(-.75rem, -.75rem);}
+  100% { transform: none;}
+}
+@keyframes out-issue-description {
+  0%   { transform: translate(.75rem, .75rem);}
+  100% { transform: none;}
 }

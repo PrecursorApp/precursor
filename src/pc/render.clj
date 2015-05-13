@@ -3,6 +3,7 @@
             [pc.layers :as layers]
             [pc.svg :as svg]
             [pc.util.base64 :as base64]
+            [pc.utils :as utils]
             [hiccup.core :refer (h html)])
   (:import [org.apache.commons.io IOUtils]))
 
@@ -79,10 +80,10 @@
 ;; If they've only drawn in positive x and y coordinates, then we're good
 ;; If they've drawn in negative directions, then we to shift the viewport in the
 ;; that direction with a transform.
-(defn render-layers [layers & {:keys [invert-colors? size-limit]}]
+(defn render-layers [layers & {:keys [invert-colors? size-limit] :as args}]
   (let [layers (map #(into {} %) (filter #(and (:layer/type %)
                                                (not= :layer.type/group (:layer/type %))) layers))
-        {:keys [width height offset-top offset-left padding scale-factor]} (svg-props layers)]
+        {:keys [width height offset-top offset-left padding scale-factor]} (utils/apply-map svg-props layers args)]
     (html [:svg (merge
                  {:width width
                   :height height

@@ -5,9 +5,11 @@
             [datascript :as d]
             [frontend.auth :as auth]
             [frontend.camera :as cameras]
+            [frontend.clipboard :as clipboard]
             [frontend.colors :as colors]
             [frontend.components.common :as common]
             [frontend.components.context :as context]
+            [frontend.components.key-queue :as keyq]
             [frontend.components.mouse :as mouse]
             [frontend.cursors :as cursors]
             [frontend.db :as fdb]
@@ -15,11 +17,15 @@
             [frontend.keyboard :as keyboard]
             [frontend.layers :as layers]
             [frontend.models.layer :as layer-model]
+            [frontend.models.issue :as issue-model]
             [frontend.settings :as settings]
             [frontend.state :as state]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
+            [goog.dom.forms :as gforms]
+            [goog.labs.userAgent.browser :as ua-browser]
+            [goog.string :as gstring]
             [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -375,6 +381,60 @@
                                                  (sort live-ids))
                                {:key :layer-id})))))))
 
+(defn issue [{:keys [document-id]} owner]
+  (reify
+    om/IInitState (init-state [_] {:layer-source (utils/uuid)
+                                   :listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDisplayName (display-name [_] "Issue layer")
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :issue/document
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner)))
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :issue/title
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :issue/document
+                                     (om/get-state owner :listener-key))
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :issue/title
+                                     (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! issue-db cust]} (om/get-shared owner)
+            font-size 24]
+        (dom/g nil
+          (when-let [issue (issue-model/find-by-doc-id @issue-db document-id)]
+            (dom/g #js {:className "layer"}
+              (svg-element {:layer/type :layer.type/text
+                            :layer/text (str "Feature request -- " (gstring/truncate (:issue/title issue) 40))
+                            :layer/start-x 100
+                            :layer/end-x 100
+                            :layer/start-y 100
+                            :layer/end-y 100
+                            :layer/font-size font-size
+                            :key "issue-title"
+                            :className "text-layer issue-layer"
+                            :onClick #(cast! :issue-layer-clicked {:frontend/issue-id (:frontend/issue-id issue)})})
+              (when (= (:cust/email cust) (:issue/author issue))
+                (svg-element {:layer/type :layer.type/text
+                              :layer/text "Draw anything here to help illustrate your idea."
+                              :layer/start-x 100
+                              :layer/end-x 100
+                              :layer/start-y (+ 100 font-size)
+                              :layer/end-y (+ 100 font-size)
+                              :layer/font-size 16
+                              :key "doc-instructions"
+                              :className "text-layer issue-layer"
+                              :onClick #(cast! :issue-layer-clicked {:frontend/issue-id (:frontend/issue-id issue)})})))))))))
+
 (defn subscriber-cursor-icon [tool]
   (case (name tool)
     "pen" :crosshair
@@ -499,7 +559,7 @@
                                   :height "100%"
                                   :x (:layer/start-x layer)
                                   ;; TODO: defaults for each layer when we create them
-                                  :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
+                                  :y (- (:layer/start-y layer) (:layer/font-size layer state/default-font-size))}
             (dom/form #js {:className "svg-text-form"
                            :onMouseDown #(.stopPropagation %)
                            :onWheel #(.stopPropagation %)
@@ -688,7 +748,17 @@
                              :y2 ry
                              :markerEnd "url(#arrow-point)"})))
           (svg-element (assoc layer
-                              :className "arrow-handle"
+                              :className (str "arrow-handle "
+                                              (when (om/get-state owner :hovered?)
+                                                "hovered "))
+                              ;; hack to workaround missing hover effect when holding "a"
+                              ;; and click->drag from one handle to the other.
+                              :onMouseEnter (fn [e]
+                                              (om/set-state! owner :hovered? true))
+
+                              :onMouseLeave (fn [e]
+                                              (om/set-state! owner :hovered? false))
+
                               :onMouseMove (fn [e]
                                              (om/set-state! owner
                                                             :mouse-pos
@@ -740,13 +810,14 @@
                                                                          :layer/end-x (:layer/current-x layer)
                                                                          :layer/end-y (:layer/current-y layer))))
                                       {} (mapcat :layers (vals (cursors/observe-subscriber-layers owner))))
-            pointer-datoms (concat (seq (d/datoms db :aevt :layer/points-to))
-                                   (mapcat (fn [l]
-                                             (map (fn [p] {:e (:db/id l) :v (:db/id p)})
-                                                  (:layer/points-to l)))
-                                           (filter :layer/points-to
-                                                   (concat (:layers drawing)
-                                                           (vals subscriber-layers)))))
+            pointer-datoms (set (concat (map (fn [d] {:e (:e d) :v (:v d)})
+                                             (d/datoms db :aevt :layer/points-to))
+                                        (mapcat (fn [l]
+                                                  (map (fn [p] {:e (:db/id l) :v (:db/id p)})
+                                                       (:layer/points-to l)))
+                                                (filter :layer/points-to
+                                                        (concat (:layers drawing)
+                                                                (vals subscriber-layers))))))
 
             selected-eids (:selected-eids (cursors/observe-selected-eids owner))
 
@@ -1001,6 +1072,8 @@
 
                  (dom/g
                    #js {:transform (cameras/->svg-transform camera)}
+                   (om/build issue {:document-id (:document/id app)} {:react-key "issue"})
+
                    (om/build cursors {:client-id (:client-id app)
                                       :uuid->cust (get-in app [:cust-data :uuid->cust])}
                              {:react-key "cursors"})
@@ -1018,20 +1091,64 @@
 
                    (om/build arrows app {:react-key "arrows"})))))))
 
+(defn needs-copy-paste-hack? []
+  (not (ua-browser/isChrome)))
+
+(defn copy-paste-hack
+  "Creates a special element that we can give focus to on copy and paste"
+  [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [eids (:selected-eids (cursors/observe-selected-eids owner))
+            {:keys [cast! db]} (om/get-shared owner)]
+        (dom/textarea #js {:id "_copy-hack"
+                           :style #js {:position "fixed"
+                                       :top "-100px"
+                                       :left "-100px"
+                                       :width "0px"
+                                       :height "0px"}
+                           :onKeyDown #(do (utils/swallow-errors
+                                            (let [key-set (keyq/event->key %)]
+                                              (when-not (contains? #{#{"ctrl" "v"}
+                                                                     #{"ctrl" "c"}
+                                                                     #{"meta" "v"}
+                                                                     #{"meta" "c"}} key-set)
+                                                (.focus (.. % -target -parentNode)))))
+                                           true)
+                           :onKeyUp #(do (utils/swallow-errors (.focus (.. % -target -parentNode)))
+                                         true)
+                           ;; need a value here, or Firefox and Safari won't run copy
+                           :value "some value"})))))
+
 (defn canvas [app owner]
   (reify
     om/IDisplayName (display-name [_] "Canvas")
     om/IRender
     (render [_]
       (html
-        [:div.canvas {:onContextMenu (fn [e]
+       [:div.canvas (merge
+                     {:onContextMenu (fn [e]
                                        (.preventDefault e)
-                                       (.stopPropagation e))}
-         [:div.canvas-background]
-         (om/build svg-canvas app)
-         (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
-         (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
-                                                     [:keyboard]
-                                                     [:mouse-down]])
-                   {:react-key "mouse"})
-         ]))))
+                                       (.stopPropagation e))
+                      :tabIndex 1}
+                     (when (needs-copy-paste-hack?)
+                       ;; gives focus to our copy/paste element, so that we can copy
+                       {:onKeyDown #(do (utils/swallow-errors
+                                         (let [key-set (keyq/event->key %)
+                                               hack-node (goog.dom/getElement "_copy-hack")]
+                                           (when (contains? #{#{"ctrl"} #{"meta"}} key-set)
+                                             (when-let [hack-node (goog.dom/getElement "_copy-hack")]
+                                               (gforms/focusAndSelect hack-node)))))
+                                        true)}))
+        [:div.canvas-background]
+        (when (needs-copy-paste-hack?)
+          (om/build copy-paste-hack app))
+        (om/build svg-canvas app)
+        (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
+        (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
+                                                    [:keyboard]
+                                                    [:keyboard-shortcuts]
+                                                    [:mouse-down]
+                                                    [:drawing :relation-in-progress?]])
+                  {:react-key "mouse"})]))))

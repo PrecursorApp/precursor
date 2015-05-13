@@ -70,7 +70,7 @@
       @(d/transact (pcd/conn)
                    (concat [(assoc annotations :db/id txid)]
                            (for [permission permissions]
-                             (pc.utils/inspect (web-peer/retract-entity (:db/id permission)))))))))
+                             (web-peer/retract-entity (:db/id permission))))))))
 
 (defn grant-first-team-permit [team cust permit]
   (let [txid (d/tempid :db.part/tx)

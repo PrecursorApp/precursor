@@ -23,6 +23,7 @@
             [frontend.keyboard :as keyboard]
             [frontend.overlay]
             [frontend.state :as state]
+            [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in select-in]]
             [om.core :as om :include-macros true]
@@ -67,13 +68,13 @@
                                                :camera (:camera app)}
                         {:react-key "signup-animation"}))
 
-            (when overlay-visible?
-              (om/build overlay/overlay app {:react-key "overlay"}))
+            (om/build overlay/overlay app {:react-key "overlay"})
 
-            [:div.inner {:on-click (when overlay-visible?
-                                     #(cast! :overlay-closed))
-                         :class (when (empty? (:frontend-id-state app)) "loading")
-                         :key "inner"}
+            [:div.inner (merge {:class (when (empty? (:frontend-id-state app)) "loading")
+                                :key "inner"}
+                               (when overlay-visible?
+                                 {:on-click #(cast! :overlay-escape-clicked)
+                                  :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
              [:style "#om-app:active{cursor:auto}"]
              (om/build canvas/canvas (select-in app [state/current-tool-path
                                                      state/right-click-learned-path
@@ -97,6 +98,7 @@
                                                  [:client-id]
                                                  [:show-landing?]
                                                  [:cust-data]
+                                                 [:chat]
                                                  [:navigation-data]])
                        {:react-key "chat"})]
 

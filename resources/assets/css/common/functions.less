@@ -136,6 +136,45 @@
     -moz-osx-font-smoothing: grayscale; //
   }.aa(@a);
 }
+.h1() {
+  font-size: 4.0em;
+  font-weight: 300;
+  line-height: 1.25;
+  .mq_640({
+    font-size: 3.0em;
+  });
+}
+.h2() {
+  font-size: 2em + (2 * (1 / 3));
+  font-weight: 300;
+  line-height: 1.5;
+  .mq_640({
+    font-size: 2.0em;
+  });
+}
+.h3() {
+  font-size: 2.0em;
+  line-height: 1 + (1 / 3);
+  font-weight: 400;
+  .mq_640({
+    font-size: 1.5em;
+  });
+}
+.h4() {
+  font-size: 1.5em;
+  line-height: 1 + (1 / 3);
+  font-weight: 400;
+}
+.h5() {
+  font-size: 1.0em;
+  line-height: 1.5;
+  font-weight: 400;
+}
+.h6() {
+  font-size: .75em;
+  line-height: 1.5;
+  font-weight: 400;
+}
 //
 // positions icons in radial menu
 //
@@ -221,30 +260,29 @@
 //
 .canvas_off(...) {
   .left(@a) when not (@a = left) {
-    @init: 5%;
-    @1920: @canvas_pull_1920;
-    @1600: @canvas_pull_1600;
-    @1280: @canvas_pull_1280;
-    @0960: @canvas_pull_0960;
-    @0640: @canvas_pull_0640;
+    @init: 5% + 10;
+    @1920: @canvas_pull_1920 + 10;
+    @1600: @canvas_pull_1600 + 10;
+    @1280: @canvas_pull_1280 + 10;
+    @0960: @canvas_pull_0960 + 10;
+    @0640: @canvas_pull_0640 + 10;
   }.left(@arguments);
   .right(@a) when (@a = left) {
-    @init: -5%;
-    @1920: -@canvas_pull_1920;
-    @1600: -@canvas_pull_1600;
-    @1280: -@canvas_pull_1280;
-    @0960: -@canvas_pull_0960;
-    @0640: -@canvas_pull_0640;
+    @init: -5% - 10;
+    @1920: -@canvas_pull_1920 - 10;
+    @1600: -@canvas_pull_1600 - 10;
+    @1280: -@canvas_pull_1280 - 10;
+    @0960: -@canvas_pull_0960 - 10;
+    @0640: -@canvas_pull_0640 - 10;
   }.right(@arguments);
   .inner {
-    transform: translate3d(@init, 0, 0) scale3d(.8, .8, 1);
-    transform-origin: @arguments;
-    @{arguments}: 0;
-    .mq_1920({ transform: translate3d(@1920, 0, 0) scale3d(.8, .8, 1);});
-    .mq_1600({ transform: translate3d(@1600, 0, 0) scale3d(.8, .8, 1);});
-    .mq_1280({ transform: translate3d(@1280, 0, 0) scale3d(.8, .8, 1);});
-     .mq_960({ transform: translate3d(@0960, 0, 0) scale3d(.8, .8, 1);});
-     .mq_640({ transform: translate3d(@0640, 0, 0) scale3d(.8, .8, 1);});
+     transform: scale(.8);
+     margin-left: @init;
+     .mq_1920({ margin-left: @1920;});
+     .mq_1600({ margin-left: @1600;});
+     .mq_1280({ margin-left: @1280;});
+      .mq_960({ margin-left: @0960;});
+      .mq_640({ margin-left: @0640;});
   }
 }
 .shadow_canvas(@state: default) {

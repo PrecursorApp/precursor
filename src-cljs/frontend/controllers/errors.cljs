@@ -9,6 +9,7 @@
             [frontend.rtc.stats :as rtc-stats]
             [frontend.sente :as sente]
             [frontend.state :as state]
+            [frontend.urls :as urls]
             [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils :as utils :include-macros true]
@@ -70,8 +71,12 @@
   ;; When we have more fine-grained permissions, we'll put more info
   ;; into the state
   (-> state
-      (overlay/replace-overlay :document-permissions)
       (assoc-in (state/document-access-path (:document/id state)) :none)))
+
+(defmethod post-error! :document/permission-error
+  [container message data previous-state current-state]
+  (when-let [doc-id (:document/id current-state)]
+    (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc-id "document-permissions")}])))
 
 (defmethod error :team/permission-error
   [container message data state]
@@ -106,40 +111,50 @@
                          "There was an error connecting to the server.\nPlease refresh to try again.")
   (js/Rollbar.error "entity ids request failed :("))
 
+(defn read-only-rejected? [state rejects datom-group]
+  (and (= (count rejects) (count datom-group))
+       (= :read (:max-document-scope state))))
+
 (defmethod error :datascript/rejected-datoms
   [container message {:keys [rejects datom-group sente-event]} state]
-  (if (and (= (count rejects) (count datom-group))
-           (= :read (:max-document-scope state)))
+  (utils/mlog rejects)
+  (if (read-only-rejected? state rejects datom-group)
     (-> state
       (assoc-in (state/notified-read-only-path (:document/id state)) true)
-      (update-in (state/doc-tx-rejected-count-path (:document/id state)) (fnil inc 0))
-      (cond-> (nil? (get-in state (state/notified-read-only-path (:document/id state))))
-        (overlay/replace-overlay :sharing)))
+      (update-in (state/doc-tx-rejected-count-path (:document/id state)) (fnil inc 0)))
     state))
 
+(defmethod post-error! :datascript/rejected-datoms
+  [container message {:keys [rejects datom-group sente-event]} previous-state current-state]
+  (when (and (read-only-rejected? previous-state rejects datom-group)
+             (nil? (get-in previous-state (state/notified-read-only-path (:document/id previous-state)))))
+    (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path (:document/id previous-state) "sharing")}])))
+
 (defmethod error :datascript/sync-tx-error
-  [container message {:keys [reason sente-event datom-group annotations]} state]
-  (update-in state [:unsynced-datoms] (fnil conj []) {:datom-group datom-group
-                                                      :annotations annotations}))
+  [container message {:keys [reason sente-event datom-group annotations] :as data} state]
+  (update-in state [:unsynced-datoms sente-event] (fnil conj []) {:datom-group datom-group
+                                                                  :annotations annotations}))
 
 (defmethod post-error! :datascript/sync-tx-error
-  [container message {:keys [reason sente-event datom-group]} previous-state current-state]
-  (chat-model/create-bot-chat (:db current-state)
-                              current-state
-                              [:span "There was an error saving some of your recent changes. The affected shapes have been marked with dashed lines. "
-                               [:a {:role "button"
-                                    :on-click #(put! (get-in current-state [:comms :controls])
-                                                     [:retry-unsynced-datoms])}
-                                "Click here to retry"]
-                               ". You may also want to work on the document in a separate tab, in case there are any persistent problems."]
-                              {:error/id :error/sync-tx-error})
-  (d/transact! (:db current-state)
-               (mapv (fn [e] [:db/add e :unsaved true])
-                     (set (map :e datom-group)))
-               {:bot-layer true})
-  (js/Rollbar.error "sync-tx-error" #js {:reason reason
-                                         :sente-event sente-event
-                                         :datom-count (count datom-group)}))
+  [container message {:keys [reason sente-event datom-group] :as data} previous-state current-state]
+  (when (= :frontend/transaction sente-event)
+    (chat-model/create-bot-chat (:db current-state)
+                                current-state
+                                [:span "There was an error saving some of your recent changes. Affected shapes are marked with dashed lines. "
+                                 [:a {:role "button"
+                                      :on-click #(put! (get-in current-state [:comms :controls])
+                                                       [:retry-unsynced-datoms {:sente-event :frontend/transaction}])}
+                                  "Click here to retry"]
+                                 ". You may also want to work on the document in a separate tab, in case there are any persistent problems. "
+                                 "Email " [:a {:href "mailto:hi@precursorapp.com?subject=My+changes+aren't+saving"}
+                                           "hi@precursorapp.com"]
+                                 " for help."]
+                                {:error/id :error/sync-tx-error})
+    (d/transact! (:db current-state)
+                 (mapv (fn [e] [:db/add e :unsaved true])
+                       (set (map :e datom-group)))
+                 {:bot-layer true}))
+  (js/Rollbar.error "sync-tx-error" (clj->js data)))
 
 (defmethod post-error! :rtc-error
   [container message {:keys [type error signal-data]} previous-state current-state]

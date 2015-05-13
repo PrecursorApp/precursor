@@ -9,7 +9,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [clojure.tools.reader.edn :as edn]
-            [fs]
+            [me.raynes.fs :as fs]
             [pantomime.mime :refer [mime-type-of]]
             [pc.util.md5 :as md5]
             [pc.gzip :as gzip]
@@ -120,7 +120,7 @@
         file-string (slurp js-full-path)
         mapping-re #"(\/\/# sourceMappingURL=)(.+)"
         map-path (last (re-find mapping-re file-string))
-        md5 (md5/md5 (str (fs/dirname js-full-path) "/" map-path))]
+        md5 (md5/md5 (str (fs/parent js-full-path) "/" map-path))]
     (spit js-full-path (str/replace file-string mapping-re (fn [[_ start _]]
                                                              (str start (assetify map-path md5)))))))
 
@@ -134,7 +134,7 @@
                                     {:name "source_map" :content (io/file source-map)}]
                                    (for [source sources]
                                      (do (println source)
-                                         {:name source :content (io/file (fs/join (fs/dirname source-map) source))})))})))
+                                         {:name source :content (io/file (str (fs/parent source-map) "/" source))})))})))
 
 (defn make-manifest-key [sha1]
   (str "releases/" sha1))

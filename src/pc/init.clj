@@ -27,7 +27,6 @@
   [#'pc.logging/init
    #'pc.nrepl/init
    #'pc.statsd/init
-   #'pc.less/init
    #'pc.datomic/init
    #'pc.datomic.schema/init
    #'pc.datomic.migrations/init
@@ -39,6 +38,7 @@
    #'pc.cache/init
    #'pc.stripe/init
    #'pc.server/init
+   #'pc.less/init
    #'pc.http.webhooks/init
    #'pc.datomic.admin-db/init
    #'pc.http.admin/init

@@ -31,7 +31,7 @@
 (defn format-access-date [date]
   (date->bucket date :sentence? true))
 
-(defn active-history [{:keys [plan team-uuid]} owner]
+(defn active-history [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IInitState (init-state [_] {:history nil})
     om/IDidMount
@@ -49,7 +49,7 @@
     (render-state [_ {:keys [history]}]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           (if (nil? history)
             [:div.content.make.loading {:key "loading"} "Loading..."]
             [:div.content {:key "history"}
@@ -68,16 +68,18 @@
                [:div.menu-empty.content {:key "empty"}
                 [:p.make (common/icon :activity)]
                 [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
-                [:a.make.feature-link {:on-click #(cast! :team-settings-opened) :role "button"} "Add a teammate."]])])])))))
+                [:a.make.feature-link {:href (urls/overlay-path doc-id "team-settings")
+                                       :role "button"}
+                 "Add a teammate."]])])])))))
 
-(defn active-custs [{:keys [plan team-uuid]} owner]
+(defn active-custs [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IRender
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)
             active (:plan/active-custs plan)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           (if (seq active)
             [:div.content {:key "active"}
              [:div.content.make
@@ -97,7 +99,9 @@
              [:div.menu-empty.content
               [:p.make (common/icon :activity)]
               [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
-              [:a.make.feature-link {:on-click #(cast! :team-settings-opened) :role "button"} "Add a teammate."]]])])))))
+              [:a.make.feature-link {:href (urls/overlay-path doc-id "team-settings")
+                                     :role "button"}
+               "Add a teammate."]]])])))))
 
 (defn format-stripe-cents
   "Formats Stripe's currency values into ordinary dollar format
@@ -114,7 +118,7 @@
 (defn invoice-component [{:keys [invoice-id team-uuid]} owner]
   (reify
     om/IInitState
-    (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
       (fdb/add-entity-listener (om/get-shared owner :team-db)
@@ -147,7 +151,7 @@
                   (str "Charging " (datetime/month-day (:invoice/next-payment-attempt invoice)))
                   :else "Unpaid")]])))))
 
-(defn invoices [{:keys [plan team-uuid]} owner]
+(defn invoices [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IRender
     (render [_]
@@ -159,7 +163,7 @@
                               (sort-by :invoice/date)
                               reverse)]
         (html
-          [:div.menu-view
+          [:section.menu-view
            (if (< 0 (count sorted-invoices))
 
              [:table.invoices-table
@@ -179,18 +183,16 @@
               [:p.make (common/icon :docs)]
               [:p.make "We'll list your first invoice here when it's ready."]
               [:a.make.feature-link {:role "button"
-                                     :on-click #(cast! :plan-submenu-opened {:submenu :activity})
-                                     :on-touch-end #(do (cast! :plan-submenu-opened {:submenu :activity})
-                                                      (.preventDefault %))}
+                                     :href (urls/plan-submenu-path doc-id "activity")}
                "View team activity."]])])))))
 
-(defn payment [{:keys [plan team-uuid]} owner]
+(defn payment [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IRender
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         [:div.menu-view.credit-card
+         [:section.menu-view.credit-card
           [:div.content.make
            [:div.disabled-input {:data-after "Credit Card"}
             [:span.secret-card-number "•••• •••• •••• "]
@@ -204,7 +206,7 @@
                              :on-click #(cast! :change-card-clicked)}
              "Change card."]]]])))))
 
-(defn info [{:keys [plan team-uuid]} owner]
+(defn info [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IRender
     (render [_]
@@ -215,7 +217,7 @@
                            (om/set-state! owner :editing-email? false)
                            (om/set-state! owner :new-email ""))]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content.make
            [:form.menu-invite-form
             [:input {:type "text"
@@ -235,7 +237,7 @@
                                           (utils/stop-event %))}
              "Save information."]]]])))))
 
-(defn discount [{:keys [plan team-uuid]} owner]
+(defn discount [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IRender
     (render [_]
@@ -243,7 +245,7 @@
             {:keys [coupon/duration-in-months
                     coupon/stripe-id coupon/percent-off]} (:discount/coupon plan)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content.make
            "You have the " stripe-id " coupon, which gives you " percent-off "% off for the first "
            duration-in-months " months."]
@@ -251,12 +253,7 @@
             [:div.content.make
              "Your discount expires on " (datetime/month-day (:discount/end plan)) "."])])))))
 
-(defn open-menu-props [cast! submenu]
-  {:on-click #(cast! :plan-submenu-opened {:submenu submenu})
-   :on-touch-end #(do (cast! :plan-submenu-opened {:submenu submenu})
-                      (.preventDefault %))})
-
-(defn activity-summary [{:keys [plan team-uuid]} owner]
+(defn activity-summary [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IRender
     (render [_]
@@ -264,23 +261,23 @@
         (html
          (case (count (:plan/active-custs plan))
            0 [:span
-              [:a (merge {:role "button"}
-                         (open-menu-props cast! :active))
+              [:a {:role "button"
+                   :href (urls/plan-submenu-path doc-id "active")}
                "No users"]
               " are active on your team, yet."]
            1 [:span
-              [:a (merge {:role "button"}
-                         (open-menu-props cast! :active))
+              [:a {:role "button"
+                   :href (urls/plan-submenu-path doc-id "active")}
                "One user"]
               " is active on your team."]
            [:span
-            [:a (merge {:role "button"}
-                       (open-menu-props cast! :active))
+            [:a {:role "button"
+                 :href (urls/plan-submenu-path doc-id "active")}
              (str (count (:plan/active-custs plan)) " users")]
 
             " are active on your team."]))))))
 
-(defn paid-summary [{:keys [plan team-uuid]} owner]
+(defn paid-summary [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IRender
     (render [_]
@@ -297,7 +294,7 @@
             " for " (format-stripe-cents (plan-model/cost plan)) "."]])
         [:div.content.make
          [:p
-          (om/build activity-summary {:plan plan :team-uuid team-uuid})
+          (om/build activity-summary data)
           " Your plan renews monthly. "
           ;; discount
           (when-let [coupon (:discount/coupon plan)]
@@ -307,7 +304,7 @@
           (when (plan-model/in-trial? plan)
             (str "The " (time-left plan) " left in your trial are included in the start date."))]]]))))
 
-(defn trial-summary [{:keys [plan team-uuid]} owner]
+(defn trial-summary [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IRender
     (render [_]
@@ -321,7 +318,7 @@
            [:h4 "Your free trial has expired."]])
         [:div.content.make
          [:p
-          (om/build activity-summary {:plan plan :team-uuid team-uuid})
+          (om/build activity-summary data)
           " Your plan will cost " (format-stripe-cents (plan-model/cost plan)) "/mo. "
           ;; discount
           (when-let [coupon (:discount/coupon plan)]
@@ -332,7 +329,7 @@
             "We won't start charging until your trial ends."
             "Add payment below to keep using Precursor with your team.")]]]))))
 
-(defn start [{:keys [plan team-uuid]} owner]
+(defn start [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IDidMount
     (did-mount [_]
@@ -342,31 +339,31 @@
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.divider.make]
           (if (:plan/paid? plan)
-            (om/build paid-summary {:plan plan :team-uuid team-uuid} {:react-key "paid-summary"})
-            (om/build trial-summary {:plan plan :team-uuid team-uuid} {:react-key "trial-summary"}))
+            (om/build paid-summary data {:react-key "paid-summary"})
+            (om/build trial-summary data {:react-key "trial-summary"}))
           [:div.divider.make]
           (if-not (:plan/paid? plan)
             [:a.vein.make {:on-click #(cast! :start-plan-clicked)}
              (common/icon :credit)
              [:span "Add payment"]]
             (list
-             [:a.vein.make (open-menu-props cast! :info)
+             [:a.vein.make {:href (urls/plan-submenu-path doc-id "info")}
               (common/icon :info)
               [:span "Information"]]
-             [:a.vein.make (open-menu-props cast! :payment)
+             [:a.vein.make {:href (urls/plan-submenu-path doc-id "payment")}
               (common/icon :credit)
               [:span "Payment"]]
-             [:a.vein.make (open-menu-props cast! :invoices)
+             [:a.vein.make {:href (urls/plan-submenu-path doc-id "invoices")}
               (common/icon :docs)
               [:span "Invoices"]]
-             [:a.vein.make (open-menu-props cast! :activity)
+             [:a.vein.make {:href (urls/plan-submenu-path doc-id "activity")}
               (common/icon :activity)
               [:span "Activity"]]
              (when (plan-model/active-discount? plan)
-               [:a.vein.make (open-menu-props cast! :discount)
+               [:a.vein.make {:href (urls/plan-submenu-path doc-id "discount")}
                 (common/icon :heart)
                 [:span "Discount"]])
              (when (neg? (:plan/account-balance plan))
@@ -382,7 +379,7 @@
    :active active-custs
    :discount discount})
 
-(defn plan-menu* [{:keys [plan-id team-uuid submenu]} owner]
+(defn plan-menu* [{:keys [plan-id team-uuid doc-id submenu] :as data} owner]
   (reify
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -405,13 +402,13 @@
             component-key (or submenu :start)
             component (get plan-components component-key)]
         (if (:plan/trial-end plan) ;; wait for plan to load
-          (om/build component {:plan plan :team-uuid team-uuid} {:react-key component-key})
+          (om/build component (assoc data :plan plan) {:react-key component-key})
           (dom/div {:className "loading"}))))))
 
 (defn plan-menu [app owner {:keys [submenu]}]
   (reify
     om/IInitState
-    (init-state [_] {:watch-key (.getNextUniqueId (.getInstance IdGenerator))})
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
       (fdb/add-attribute-listener (om/get-shared owner :team-db)
@@ -431,6 +428,7 @@
         (if (:team/plan team)
           (om/build plan-menu* {:plan-id (:db/id (:team/plan team))
                                 :team-uuid (:team/uuid team)
+                                :doc-id (:document/id app)
                                 :submenu submenu}
                     {:react-key "plan-menu*"})
           (dom/div {:className "loading"}))))))

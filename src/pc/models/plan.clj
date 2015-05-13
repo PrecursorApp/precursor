@@ -25,11 +25,19 @@
 (defn add-coupon [plan coupon-ident]
   @(d/transact (pcd/conn) [[:db/add (:db/id plan) :discount/coupon coupon-ident]]))
 
+(defn extend-trial [plan days]
+  @(d/transact (pcd/conn) [[:db/add (:db/id plan) :plan/trial-end (clj-time.coerce/to-date
+                                                                   (time/plus (time/now) (time/days days)))]]))
+
 (def coupons
   #{{:coupon/stripe-id "product-hunt"
      :coupon/percent-off 50
      :coupon/duration-in-months 6
-     :db/ident :coupon/product-hunt}})
+     :db/ident :coupon/product-hunt}
+    {:coupon/stripe-id "designer-news"
+     :coupon/percent-off 50
+     :coupon/duration-in-months 3
+     :db/ident :coupon/designer-news}})
 
 (defn coupon-by-code [coupon-code]
   (first (filter #(= (:coupon/stripe-id %) coupon-code) coupons)))

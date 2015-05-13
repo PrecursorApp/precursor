@@ -1,7 +1,7 @@
 (ns frontend.components.drawing
   (:require [datascript :as d]
             [frontend.camera :as cameras]
-            [frontend.db :as ds]
+            [frontend.db :as fdb]
             [frontend.db.trans :as trans]
             [frontend.state :as state]
             [frontend.svg :as svg]
@@ -9,7 +9,8 @@
             [goog.dom]
             [goog.style]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]))
+            [om.dom :as dom :include-macros true])
+  (:import [goog.ui IdGenerator]))
 
 (defn add-tick [tick-state tick tick-fn]
   (update-in tick-state [:ticks tick] (fn [f] (fn [owner]
@@ -62,7 +63,6 @@
                                               (name tool)))
           :layer/name "placeholder"
           :layer/stroke-width 1
-          :document/id doc-id
           :db/id (rand-int 10000)}
          (when (= :circle tool)
            {:layer/rx 1000
@@ -182,7 +182,6 @@
                            :layer/name "placeholder"
                            :layer/text text
                            :layer/stroke-width 1
-                           :layer/document doc-id
                            :db/id (inc (rand-int 1000))}
                           (when source
                             {:layer/source source})
@@ -364,244 +363,155 @@
                             :end-tick (+ start-tick (int (* 1.5 tick-count)))
                             :start-x (:end-x previous-shape)
                             :start-y (:end-y previous-shape)
-                            :tool (:tool previous-shape)
+                            :tool (:tool next-shape)
                             :end-x (:start-x next-shape)
                             :end-y (:start-y next-shape)})))
 
-(defn browser [document layer-source viewport]
-  (let [start-x 100
-        start-y 100
-        width (min (int (* (- (:width viewport) 200)
-                           0.9))
-                   1400)
-        height (int (* (- (:height viewport) 200)
-                       0.9))]
-    {:doc-id (:db/id document) :tool :rect
+(defn browser [layer-source viewport]
+  (let [width 800
+        height 600
+        start-y (/ (- (:height viewport) height)
+                   3)
+        start-x (/ (- (:width viewport) width)
+                   2)]
+    {:tool :rect
      :start-x start-x :end-x (+ start-x width)
      :start-y start-y :end-y (+ start-y height)
      :source layer-source}))
 
-(def circle-offset {:x 30 :y 20})
-(def circle-size 40)
-
-(defn ph-circle [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :circle
-     :start-x (+ (:start-x browser) (:x circle-offset))
-     :end-x (+ (:start-x browser) (:x circle-offset) circle-size)
-     :start-y (+ (:start-y browser) (:y circle-offset))
-     :end-y (+ (:start-y browser) (:y circle-offset) circle-size)
+(defn margins-box [layer-source viewport]
+  (let [browser (browser layer-source viewport)
+        width 600]
+    {:tool :rect
+     :start-x (- (:end-x browser) 100)
+     :end-x (- (:end-x browser) 100 600)
+     :start-y (:end-y browser)
+     :end-y (:start-y browser)
      :source layer-source}))
 
-(defn ph-p [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :text
-     :start-x (+ (:start-x browser) (:x circle-offset) 10)
-     :end-x (+ (:start-x browser) (:x circle-offset) 10)
-     :start-y (+ (:start-y browser) (:y circle-offset) (- circle-size 10))
-     :end-y (+ (:start-y browser) (:y circle-offset) (- circle-size 10))
-     :source layer-source
-     :text "P"
-     :props {:layer/font-size 30}}))
-
-(def vote-box-offset {:x 30 :y (+ (:y circle-offset) circle-size 30)})
-
-(defn vote-box [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :rect
-     :start-x (+ (:start-x browser) (:x vote-box-offset))
-     :end-x (+ (:start-x browser) (:x vote-box-offset) 34)
-     :start-y (+ (:start-y browser) (:y vote-box-offset))
-     :end-y (+ (:start-y browser) (:y vote-box-offset) 44)
+(defn header-line [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :line
+     :start-x (:start-x browser)
+     :end-x (:end-x browser)
+     :start-y (+ (:start-y browser) 50)
+     :end-y (+ (:start-y browser) 50)
      :source layer-source}))
 
-(defn vote-left [document layer-source viewport]
-  (let [vote-box (vote-box document layer-source viewport)
-        box-width (Math/abs (- (:start-x vote-box) (:end-x vote-box)))
-        box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
-        start-y (+ (:start-y vote-box) (/ box-height 2))]
-    {:doc-id (:db/id document) :tool :line
-     :start-x (- (+ (:start-x vote-box)
-                    (/ box-width 2))
-                 5)
-     :end-x (+ (:start-x vote-box) (/ box-width 2))
-     :start-y start-y
-     :end-y (- start-y 10)
+(defn dn-text [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :text
+     :text "DN"
+     :start-x (+ (:start-x browser) 44)
+     :end-x (+ (:start-x browser) 44)
+     :start-y (+ (:start-y browser) 36)
+     :end-y (+ (:start-y browser) 36)
+     :props {:layer/font-size 32}
      :source layer-source}))
 
-(defn vote-right [document layer-source viewport]
-  (let [vote-box (vote-box document layer-source viewport)
-        box-width (Math/abs (- (:start-x vote-box) (:end-x vote-box)))
-        box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
-        start-y (+ (:start-y vote-box) (/ box-height 2))]
-    {:doc-id (:db/id document) :tool :line
-     :start-x (+ (:start-x vote-box) (/ box-width 2))
-     :end-x (+ (+ (:start-x vote-box)
-                  (/ box-width 2))
-               5)
-     :start-y (- start-y 10)
-     :end-y start-y
+(defn stories-text [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :text
+     :text "Stories"
+     :start-x (+ (:start-x browser) 100 15)
+     :end-x (+ (:start-x browser) 100 15)
+     :start-y (+ (:start-y browser) 30)
+     :end-y (+ (:start-y browser) 30)
+     :props {:layer/font-size 16}
      :source layer-source}))
 
-(defn vote-count [document layer-source viewport]
-  (let [vote-box (vote-box document layer-source viewport)
-        box-width (Math/abs (- (:start-x vote-box) (:end-x vote-box)))
-        box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
-        y (+ (:start-y vote-box) (* 3 (/ box-height 4)))]
-    {:doc-id (:db/id document) :tool :line
-     :start-x (+ (:start-x vote-box) (/ box-width 3))
-     :end-x (+ (:start-x vote-box) (* 2 (/ box-width 3)))
-     :start-y y
-     :end-y y
+(defn jobs-text [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :text
+     :text "Jobs"
+     :start-x (+ (:start-x browser) 100 88)
+     :end-x (+ (:start-x browser) 100 88)
+     :start-y (+ (:start-y browser) 30)
+     :end-y (+ (:start-y browser) 30)
+     :props {:layer/font-size 16}
      :source layer-source}))
 
-(defn post-title [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        vote-box (vote-box document layer-source viewport)
-        browser-width (Math/abs (- (:start-x browser) (:end-x browser)))
-        box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
-        start-x (+ (:end-x vote-box) 20)
-        end-x (+ start-x (/ browser-width 4))
-        y (+ (:start-y vote-box) (/ box-height 3))]
-    {:doc-id (:db/id document) :tool :line
-     :start-x start-x
-     :end-x end-x
-     :start-y y
-     :end-y y
+(defn story-one-a [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :rect
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 480)
+     :start-y (+ (:start-y browser) 160)
+     :end-y (+ (:start-y browser) 160 5)
      :source layer-source}))
 
-(defn post-tagline [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        vote-box (vote-box document layer-source viewport)
-        browser-width (Math/abs (- (:start-x browser) (:end-x browser)))
-        box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
-        start-x (+ (:end-x vote-box) 20)
-        end-x (+ start-x (/ browser-width 3))
-        y (+ (:start-y vote-box) (* 2 (/ box-height 3)))]
-    {:doc-id (:db/id document) :tool :line
-     :start-x start-x
-     :end-x end-x
-     :start-y y
-     :end-y y
+(defn story-one-b [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :rect
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 310)
+     :start-y (+ (:start-y browser) 190)
+     :end-y (+ (:start-y browser) 190 -5) ; go opposite
      :source layer-source}))
 
-(def icon-size 30)
-(def comment-space (+ (/ icon-size 2) (* 1.25 icon-size)))
-(def icons-offset 10)
-
-(defn hunter-icon-1 [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        vote-box (vote-box document layer-source viewport)
-        browser-width (Math/abs (- (:start-x browser) (:end-x browser)))
-        box-height (Math/abs (- (:start-y vote-box) (:end-y vote-box)))
-        start-x (- (:end-x browser) icon-size icons-offset comment-space (:x circle-offset))
-        end-x (+ start-x icon-size)
-        start-y (+ (:start-y vote-box) (/ (- box-height icon-size) 2))
-        end-y (+ start-y icon-size)]
-    {:doc-id (:db/id document) :tool :circle
-     :start-x start-x
-     :end-x end-x
-     :start-y start-y
-     :end-y end-y
+(defn story-two-a [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :line
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 500)
+     :start-y (+ (:start-y browser) 300)
+     :end-y (+ (:start-y browser) 300)
      :source layer-source}))
 
-(defn hunter-icon-2 [document layer-source viewport]
-  (let [icon-1 (hunter-icon-1 document layer-source viewport)
-        start-x (+ (:start-x icon-1) icons-offset)
-        end-x (+ start-x icon-size)
-        start-y (:start-y icon-1)
-        end-y (:end-y icon-1)]
-    {:doc-id (:db/id document) :tool :circle
-     :start-x start-x
-     :end-x end-x
-     :start-y start-y
-     :end-y end-y
+(defn story-two-b [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :rect
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 280)
+     :start-y (+ (:start-y browser) 340)
+     :end-y (+ (:start-y browser) 340 -5)
      :source layer-source}))
 
-(defn comment-count [document layer-source viewport]
-  (let [icon-2 (hunter-icon-2 document layer-source viewport)
-        start-x (+ (:end-x icon-2) (/ icon-size 2))
-        end-x (+ start-x (* 1.25 icon-size))
-
-        y (+ (:start-y icon-2) (/ icon-size 2))]
-    {:doc-id (:db/id document) :tool :line
-     :start-x start-x
-     :end-x end-x
-     :start-y y
-     :end-y y
+(defn story-two-c [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :rect
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 255)
+     :start-y (+ (:start-y browser) 360)
+     :end-y (+ (:start-y browser) 360 5)
      :source layer-source}))
 
-(defn shift-post-layer [post-layer y]
-  (-> post-layer
-    (update-in [:start-y] + y)
-    (update-in [:end-y] + y)))
+(defn story-two-d [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :line
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 500)
+     :start-y (+ (:start-y browser) 400)
+     :end-y (+ (:start-y browser) 400)
+     :source layer-source}))
 
-(defn shift-post-layers [post-layers x]
-  (map (fn [l] (shift-post-layer l x))
-       post-layers))
+(defn circle-one [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :circle
+     :start-x (+ (:start-x browser) 80)
+     :end-x (+ (:start-x browser) 80 40)
+     :start-y (+ (:start-y browser) 330)
+     :end-y (+ (:start-y browser) 330 40)
+     :source layer-source}))
 
-(defn landing-animation [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        ph-circle (ph-circle document layer-source viewport)
-        ph-p (ph-p document layer-source viewport)
-        vote-box (vote-box document layer-source viewport)
-        vote-left (vote-left document layer-source viewport)
-        vote-right (vote-right document layer-source viewport)
-        vote-count (vote-count document layer-source viewport)
-        post-title (post-title document layer-source viewport)
-        post-tagline (post-tagline document layer-source viewport)
-        hunter-icon-1 (hunter-icon-1 document layer-source viewport)
-        hunter-icon-2 (hunter-icon-2 document layer-source viewport)
-        comment-count (comment-count document layer-source viewport)
-        post-layers [vote-box vote-left vote-right vote-count post-title post-tagline
-                     hunter-icon-1 hunter-icon-2 comment-count]
-        vote-box-height (Math/abs (- (:end-y vote-box) (:start-y vote-box)))
-        vote-box-width (Math/abs (- (:end-x vote-box) (:start-x vote-box)))
-        browser-height (Math/abs (- (:end-y browser) (:start-y browser)))
-        post-layer-offset (* vote-box-height (/ 4 5))
-        post-layer-count (Math/floor (/ (- browser-height
-                                           (:y vote-box-offset))
-                                        (+ vote-box-height post-layer-offset)))
-        alt-drags (loop [i 0
-                         f identity]
-                    (if (>= (inc i) post-layer-count)
-                      f
-                      (let [build-count (min (- post-layer-count (inc i)) (inc i))]
-                        (recur (+ i build-count)
-                               (let [offset (+ vote-box-height
-                                               post-layer-offset)
-                                     start-offset (if (>= i build-count)
-                                                    (- (inc i) build-count)
-                                                    0)
-                                     x (+ (:start-x vote-box) (* vote-box-width (/ 2 3)))
-                                     start-y (+ (:start-y vote-box)
-                                                (* vote-box-height (/ 2 3))
-                                                (* i offset))]
-                                 (comp
-                                  (fn [tick-state]
-                                    (add-alt-drag tick-state (min (* build-count 15)
-                                                                  30)
-                                                  {:layers (reduce
-                                                            (fn [acc j]
-                                                              (into acc
-                                                                    (shift-post-layers post-layers
-                                                                                       (* j offset))))
-                                                            [] (range start-offset (+ start-offset build-count)))
-                                                   :start-x x
-                                                   :end-x x
-                                                   :start-y start-y
-                                                   :end-y (+ start-y (* build-count offset))}))
-                                  (fn [tick-state]
-                                    (add-mouse-transition tick-state 5
-                                                          {:end-x x
-                                                           :end-y start-y
-                                                           :tool :select}
-                                                          {:start-x x
-                                                           :start-y start-y
-                                                           :tool :select}))
-                                  f))))))]
+(defn landing-animation [layer-source viewport]
+  (let [browser (browser layer-source viewport)
+        margins-box (margins-box layer-source viewport)
+        header-line (header-line layer-source viewport)
+        dn-text (dn-text layer-source viewport)
+        stories-text (stories-text layer-source viewport)
+        jobs-text (jobs-text layer-source viewport)
+        story-one-a (story-one-a layer-source viewport)
+        story-one-b (story-one-b layer-source viewport)
+        story-two-a (story-two-a layer-source viewport)
+        story-two-b (story-two-b layer-source viewport)
+        story-two-c (story-two-c layer-source viewport)
+        story-two-d (story-two-d layer-source viewport)
+        circle-one (circle-one layer-source viewport)
+        story-one-layers [story-one-a story-one-b]
+        story-two-layers [story-two-a story-two-b story-two-c story-two-d]]
     (-> {:tick-ms 16
-         :bot state/product-hunt-bot
+         :bot state/subscriber-bot
          :ticks {}}
       (add-tick 50 identity)
       ;; the mouse could be automatic
@@ -610,39 +520,77 @@
                              :end-y 0
                              :tool :rect}
                             browser)
-      (add-shape 60 browser)
-      (add-mouse-transition 30 browser ph-circle)
-      (add-shape 10 ph-circle)
-      (add-mouse-transition 5 ph-circle ph-p)
-      (add-text 7 ph-p)
-      (add-mouse-transition 7 (assoc ph-p :tool :rect) vote-box)
-      (add-shape 10 vote-box)
-      (add-mouse-transition 5 vote-box vote-left)
-      (add-shape 3 vote-left)
-      (add-shape 3 vote-right)
-      (add-mouse-transition 5 vote-right vote-count)
-      (add-shape 7 vote-count)
-      (add-mouse-transition 7 vote-count post-title)
-      (add-shape 10 post-title)
-      (add-mouse-transition 7 post-title post-tagline)
-      (add-shape 15 post-tagline)
-      (add-mouse-transition 10 post-tagline hunter-icon-1)
-      (add-shape 7 hunter-icon-1)
-      (add-mouse-transition 10 hunter-icon-1 hunter-icon-2)
-      (add-shape 7 hunter-icon-2)
-      (add-mouse-transition 5 hunter-icon-2 comment-count)
-      (add-shape 5 comment-count)
-      (alt-drags))))
+      (add-shape 50 browser)
+      (add-mouse-transition 7 browser margins-box)
+      (add-shape 40 margins-box)
+      (add-mouse-transition 7 margins-box header-line)
+      (add-shape 25 header-line)
+      (add-mouse-transition 10 header-line dn-text)
+      (add-text 10 dn-text)
+      (add-mouse-transition 7 dn-text stories-text)
+      (add-text 10 stories-text)
+      (add-mouse-transition 5 stories-text jobs-text)
+      (add-text 10 jobs-text)
+      (add-mouse-transition 15 jobs-text story-one-a)
+      (add-shape 15 story-one-a)
+      (add-mouse-transition 5 story-one-a story-one-b)
+      (add-shape 15 story-one-b)
+      (add-mouse-transition 15 story-one-b story-two-a)
+      (add-shape 18 story-two-a)
+      (add-mouse-transition 5 story-two-a story-two-b)
+      (add-shape 10 story-two-b)
+      (add-mouse-transition 7 story-two-b story-two-c)
+      (add-shape 10 story-two-c)
+      (add-mouse-transition 5 story-two-c story-two-d)
+      (add-shape 18 story-two-d)
+
+      (add-mouse-transition 10 story-two-d {:tool :select
+                                           :start-x (+ 100 (:start-x story-one-b))
+                                           :start-y (:start-y story-one-b)})
+      (add-alt-drag 18
+                    {:layers story-one-layers
+                     :start-x (+ 100 (:start-x story-one-b))
+                     :end-x (+ 100 (:start-x story-one-b))
+                     :start-y (:start-y story-one-b)
+                     :end-y (+ (:start-y story-one-b) 275)})
+
+      (add-mouse-transition 7
+                            {:tool :select
+                             :end-x (+ 100 (:start-x story-one-b))
+                             :end-y (+ (:start-y story-one-b) 275)}
+                            {:tool :select
+                             :start-x (+ 100 (:start-x story-two-d))
+                             :start-y (:start-y story-two-d)})
+
+      (add-alt-drag 18
+                    {:layers story-two-layers
+                     :start-x (+ 100 (:start-x story-two-d))
+                     :end-x (+ 100 (:start-x story-two-d))
+                     :start-y (:start-y story-two-d)
+                     :end-y (+ (:start-y story-two-d) 200)})
+
+      (add-mouse-transition 8
+                            {:tool :select
+                             :end-x (+ 100 (:start-x story-two-d))
+                             :end-y (+ (:start-y story-two-d) 200)}
+                            circle-one)
+      (add-shape 10 circle-one)
+      (add-alt-drag 18
+                    {:layers [circle-one]
+                     :start-x (:end-x circle-one)
+                     :end-x (:end-x circle-one)
+                     :start-y (:end-y circle-one)
+                     :end-y (+ (:end-y circle-one) 200)}))))
 
 (defn add-landing-cleanup [tick-state]
   (let [max-tick (apply max (keys (:ticks tick-state)))]
     (-> tick-state
       (add-tick (inc max-tick) (fn [owner]
-                                 (cleanup {:bot state/product-hunt-bot} owner)
+                                 (cleanup {:bot state/subscriber-bot} owner)
                                  ((om/get-shared owner :cast!) :landing-animation-completed)))
       (annotate-keyframes (inc max-tick)))))
 
-(defn landing-background [{:keys [doc-id subscribers]} owner]
+(defn landing-background [{:keys [subscribers]} owner]
   (reify
     om/IInitState (init-state [_] {:layer-source (utils/uuid)})
     om/IDisplayName (display-name [_] "Landing Animation")
@@ -650,16 +598,15 @@
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(
       (let [viewport (utils/canvas-size)]
-        (when (and (< 640 (:width viewport)) ;; only if not on mobile
-                   (< 640 (:height viewport))
-                   (ds/empty-db? @(om/get-shared owner :db))
+        (when (and (< 800 (:width viewport)) ;; only if not on mobile
+                   (< 600 (:height viewport))
+                   (fdb/empty-db? @(om/get-shared owner :db))
                    (zero? (count (remove (comp :hide-in-list? second) subscribers))))
-          (run-animation owner (add-landing-cleanup (landing-animation {:db/id doc-id}
-                                                                       (om/get-state owner :layer-source)
+          (run-animation owner (add-landing-cleanup (landing-animation (om/get-state owner :layer-source)
                                                                        viewport))))))
     om/IWillUnmount
     (will-unmount [_]
-      (cleanup {:bot state/product-hunt-bot} owner)
+      (cleanup {:bot state/subscriber-bot} owner)
       (let [conn (om/get-shared owner :db)
             source (om/get-state owner :layer-source)]
         (d/transact! conn (mapv (fn [e] [:db/add e :layer/deleted true])
@@ -669,6 +616,7 @@
                                                 (map :e (d/datoms @conn :avet :layer/source source)))
                                      {:bot-layer true})
                        1000)))
+
     om/IRender
     (render [_]
       ;; dummy span so that the component can be mounted
