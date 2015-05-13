@@ -40,6 +40,7 @@
     (update-in [:subscribers :mice] dissoc client-id)
     (update-in [:subscribers :layers] dissoc client-id)
     (update-in [:subscribers :info] dissoc client-id)
+    (update-in [:subscribers :chats] dissoc client-id)
     (update-subscriber-entity-ids)))
 
 (defn add-recording-watcher [app-state signal-fn]
