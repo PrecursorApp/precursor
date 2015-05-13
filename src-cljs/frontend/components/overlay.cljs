@@ -472,7 +472,7 @@
                                                       {:doc-id doc-id
                                                        :setting :document.privacy/read-only}))}]
            [:label.privacy-label {:class (when cant-edit-privacy? "disabled")
-                                  p:title (when cant-edit-privacy? "You must be the owner of this doc to change its privacy.")
+                                  :title (when cant-edit-privacy? "You must be the owner of this doc to change its privacy.")
                                   :for "privacy-read-only"
                                   :role "button"}
             (common/icon :read-only)
@@ -480,8 +480,10 @@
             (when cant-edit-privacy?
               [:small "(privacy change requires owner)"])]
            (if no-private-docs?
-             [:a.vein.make.stick.external {:href "/pricing"}
-              [:span "Need private docs? Start a free trial."]
+             [:a.vein.external {:href "/pricing"}
+              (common/icon :private)
+              [:span "Private"]
+              [:small "(start a free trial)"]
               (common/icon :arrow-right)]
              (list
               [:input.privacy-radio {:type "radio"
