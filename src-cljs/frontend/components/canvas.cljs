@@ -748,7 +748,17 @@
                              :y2 ry
                              :markerEnd "url(#arrow-point)"})))
           (svg-element (assoc layer
-                              :className "arrow-handle"
+                              :className (str "arrow-handle "
+                                              (when (om/get-state owner :hovered?)
+                                                "hovered "))
+                              ;; hack to workaround missing hover effect when holding "a"
+                              ;; and click->drag from one handle to the other.
+                              :onMouseEnter (fn [e]
+                                              (om/set-state! owner :hovered? true))
+
+                              :onMouseLeave (fn [e]
+                                              (om/set-state! owner :hovered? false))
+
                               :onMouseMove (fn [e]
                                              (om/set-state! owner
                                                             :mouse-pos
@@ -800,13 +810,14 @@
                                                                          :layer/end-x (:layer/current-x layer)
                                                                          :layer/end-y (:layer/current-y layer))))
                                       {} (mapcat :layers (vals (cursors/observe-subscriber-layers owner))))
-            pointer-datoms (concat (seq (d/datoms db :aevt :layer/points-to))
-                                   (mapcat (fn [l]
-                                             (map (fn [p] {:e (:db/id l) :v (:db/id p)})
-                                                  (:layer/points-to l)))
-                                           (filter :layer/points-to
-                                                   (concat (:layers drawing)
-                                                           (vals subscriber-layers)))))
+            pointer-datoms (set (concat (map (fn [d] {:e (:e d) :v (:v d)})
+                                             (d/datoms db :aevt :layer/points-to))
+                                        (mapcat (fn [l]
+                                                  (map (fn [p] {:e (:db/id l) :v (:db/id p)})
+                                                       (:layer/points-to l)))
+                                                (filter :layer/points-to
+                                                        (concat (:layers drawing)
+                                                                (vals subscriber-layers))))))
 
             selected-eids (:selected-eids (cursors/observe-selected-eids owner))
 
@@ -1137,5 +1148,7 @@
         (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
         (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
                                                     [:keyboard]
-                                                    [:mouse-down]])
+                                                    [:keyboard-shortcuts]
+                                                    [:mouse-down]
+                                                    [:drawing :relation-in-progress?]])
                   {:react-key "mouse"})]))))
