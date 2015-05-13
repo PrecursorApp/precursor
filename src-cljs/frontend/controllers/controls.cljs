@@ -1299,7 +1299,8 @@
                                                :chat/document (:document/id previous-state)
                                                :client/timestamp (datetime/server-date)
                                                ;; server will overwrite this
-                                               :server/timestamp (datetime/server-date)})]))))
+                                               :server/timestamp (datetime/server-date)})]))
+    (maybe-notify-subscribers! previous-state current-state nil nil)))
 
 (defmethod control-event :chat-toggled
   [browser-state message _ state]
