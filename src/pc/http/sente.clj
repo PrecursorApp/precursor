@@ -322,7 +322,8 @@
                   :layers
                   :relation
                   :recording
-                  :show-mouse?])
+                  :show-mouse?
+                  :chat-body])
     (merge (when (:mouse-position subscriber)
              (select-keys subscriber [:mouse-position])))))
 
@@ -550,12 +551,14 @@
         layers (-> ?data :layers)
         relation (-> ?data :relation)
         recording (-> ?data :recording)
+        chat-body (-> ?data :chat-body)
         message [:frontend/mouse-move (subscriber-read-api {:client-id client-id
                                                             :tool tool
                                                             :layers layers
                                                             :relation relation
                                                             :recording recording
-                                                            :mouse-position mouse-position})]]
+                                                            :mouse-position mouse-position
+                                                            :chat-body chat-body})]]
     (swap! document-subs utils/update-when-in [document-id client-id] merge {:mouse-position mouse-position
                                                                              :tool tool
                                                                              :recording recording})
