@@ -800,13 +800,14 @@
                                                                          :layer/end-x (:layer/current-x layer)
                                                                          :layer/end-y (:layer/current-y layer))))
                                       {} (mapcat :layers (vals (cursors/observe-subscriber-layers owner))))
-            pointer-datoms (concat (seq (d/datoms db :aevt :layer/points-to))
-                                   (mapcat (fn [l]
-                                             (map (fn [p] {:e (:db/id l) :v (:db/id p)})
-                                                  (:layer/points-to l)))
-                                           (filter :layer/points-to
-                                                   (concat (:layers drawing)
-                                                           (vals subscriber-layers)))))
+            pointer-datoms (set (concat (map (fn [d] {:e (:e d) :v (:v d)})
+                                             (d/datoms db :aevt :layer/points-to))
+                                        (mapcat (fn [l]
+                                                  (map (fn [p] {:e (:db/id l) :v (:db/id p)})
+                                                       (:layer/points-to l)))
+                                                (filter :layer/points-to
+                                                        (concat (:layers drawing)
+                                                                (vals subscriber-layers))))))
 
             selected-eids (:selected-eids (cursors/observe-selected-eids owner))
 
