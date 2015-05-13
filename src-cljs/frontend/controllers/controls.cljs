@@ -225,6 +225,10 @@
           :ry (+ ry move-y)})
        points))
 
+(defn parse-points-from-path [path]
+  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
+    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
+
 (defn nudge-layer [layer {:keys [x y]}]
   (-> layer
     (select-keys [:db/id
@@ -236,7 +240,7 @@
     (update-in [:layer/start-y] + y)
     (update-in [:layer/end-y] + y)
     (cond-> (= :layer.type/path (:layer/type layer))
-      (assoc :layer/path (svg/points->path (nudge-points (:points layer) x y))))))
+      (assoc :layer/path (svg/points->path (nudge-points (parse-points-from-path (:layer/path layer)) x y))))))
 
 (defn nudge-shapes [state direction]
   (let [db (:db state)
@@ -341,10 +345,6 @@
     (do
       (utils/mlog "Called update-mouse without x and y coordinates")
       state)))
-
-(defn parse-points-from-path [path]
-  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
-    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
 
 (defn handle-drawing-started [state x y]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
