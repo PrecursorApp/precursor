@@ -15,6 +15,7 @@
             [frontend.utils :as utils :include-macros true]
             [goog.date]
             [goog.dom]
+            [goog.string :as gstring]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -132,19 +133,27 @@
                                                (when (not= (.-scrollHeight node) (.-clientHeight node))
                                                  (om/set-state! owner :chat-height (max 64 (.-scrollHeight node)))))}]
           (if chat-submit-learned?
-            [:div.chat-placeholder (when (empty? chatting) {:data-before "Chat."})
+            (list
              (when (seq chatting)
-               (let [uuid->cust (get-in app [:cust-data :uuid->cust])
-                     cust-names (reduce (fn [acc chatter]
-                                          (conj acc
-                                                (or (get-in uuid->cust [(:cust/uuid (utils/inspect chatter)) :cust/name])
-                                                    (apply str (take 6 (:client-id chatter))))))
-                                        #{} chatting)]
-                 (str (str/join ", " (sort cust-names))
-                      (if (= 1 (count cust-names))
-                        " is "
-                        " are ")
-                      "typing...")))]
+               [:div.chat-typing-notice {:data-typing-notice (let [uuid->cust (get-in app [:cust-data :uuid->cust])
+                                                                   cust-names (reduce (fn [acc chatter]
+                                                                                        (conj acc
+                                                                                              (gstring/truncate
+                                                                                               (or (get-in uuid->cust [(:cust/uuid chatter) :cust/name])
+                                                                                                   (apply str (take 6 (:client-id chatter))))
+                                                                                               10)))
+                                                                                      #{} chatting)
+                                                                   name-string (str/join ", " (sort cust-names))]
+                                                               (str (if (> (count name-string) 30)
+                                                                      ;; show number of people chatting if it starts to get too long
+                                                                      (str (count cust-names) " people")
+                                                                      name-string)
+                                                                    (if (= 1 (count cust-names))
+                                                                      " is "
+                                                                      " are ")
+                                                                    "typing..."))}])
+
+             [:div.chat-placeholder {:data-before "Chat."}])
             [:div.chat-teach-enter {:data-step-1 "Click here."
                                     :data-step-2 "Type something."
                                     :data-step-3 "Send with enter."
