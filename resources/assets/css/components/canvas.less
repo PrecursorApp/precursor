@@ -176,7 +176,8 @@
     stroke: @gray_light;
     stroke-width: 2;
     pointer-events: none;
-    transition: @run @bezier_deform;
+    transition+: stroke @run @bezier_deform;
+    transition+: stroke-width @run @bezier_deform;
     &.selected {
       stroke-width: 2;
       stroke: @color_select;
