@@ -336,9 +336,19 @@
         }
       }
     }
+    .vein {
+      height: 0;
+      opacity: 0;
+    }
   }
   &.vein {
     height: auto;
+  }
+  .vein {
+    transition: height @run;
+    small {
+      padding-left: .5em;
+    }
   }
 }
 .privacy-radio {

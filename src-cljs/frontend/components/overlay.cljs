@@ -413,14 +413,9 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)
-            cant-edit-reason (cond (:team app)
-                                   nil
-
-                                   (not (contains? (get-in app [:cust :flags]) :flags/private-docs))
-                                   :no-private-docs-flag
-
-                                   (not (auth/owner? @db doc (get-in app [:cust])))
-                                   :not-creator)]
+            no-private-docs? (not (contains? (get-in app [:cust :flags]) :flags/private-docs))
+            cant-edit-privacy? (when-not (:team app)
+                                 (not (auth/owner? @db doc (get-in app [:cust]))))]
         (html
          [:section.menu-view
           (case (:document/privacy doc)
@@ -430,71 +425,71 @@
             :document.privacy/read-only (om/build read-only-sharing app)
             (om/build unknown-sharing app))
 
-          (case cant-edit-reason
-            :no-private-docs-flag
-            [:a.vein.make.stick.external {:href "/pricing"}
-             [:span "Need private docs? Start a free trial."]
-             (common/icon :arrow-right)]
-
-
-            [:form.privacy-select.vein.make.stick
-             [:input.privacy-radio {:type "radio"
-                                    :hidden "true"
-                                    :id "privacy-public"
-                                    :name "privacy"
-                                    :checked (keyword-identical? :document.privacy/public (:document/privacy doc))
-                                    :disabled (boolean cant-edit-reason)
-                                    :onChange #(if cant-edit-reason
-                                                 (utils/stop-event %)
-                                                 (cast! :document-privacy-changed
-                                                        {:doc-id doc-id
-                                                         :setting :document.privacy/public}))}]
-             [:label.privacy-label {:class (when cant-edit-reason "disabled")
-                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
-                                    :for "privacy-public"
-                                    :role "button"}
-              (common/icon :public)
-              [:span "Public"]
-              (when (= :not-creator cant-edit-reason)
-                [:small "(privacy change requires owner)"])]
-             [:input.privacy-radio {:type "radio"
-                                    :hidden "true"
-                                    :id "privacy-read-only"
-                                    :name "privacy"
-                                    :checked (keyword-identical? :document.privacy/read-only (:document/privacy doc))
-                                    :disabled (boolean cant-edit-reason)
-                                    :onChange #(if cant-edit-reason
-                                                 (utils/stop-event %)
-                                                 (cast! :document-privacy-changed
-                                                        {:doc-id doc-id
-                                                         :setting :document.privacy/read-only}))}]
-             [:label.privacy-label {:class (when cant-edit-reason "disabled")
-                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
-                                    :for "privacy-read-only"
-                                    :role "button"}
-              (common/icon :read-only)
-              [:span "Read-only"]
-              (when (= :not-creator cant-edit-reason)
-                [:small "(privacy change requires owner)"])]
-             [:input.privacy-radio {:type "radio"
-                                    :hidden "true"
-                                    :id "privacy-private"
-                                    :name "privacy"
-                                    :checked (keyword-identical? :document.privacy/private (:document/privacy doc))
-                                    :disabled (boolean cant-edit-reason)
-                                    :onChange #(if cant-edit-reason
-                                                 (utils/stop-event %)
-                                                 (cast! :document-privacy-changed
-                                                        {:doc-id doc-id
-                                                         :setting :document.privacy/private}))}]
-             [:label.privacy-label {:class (when cant-edit-reason "disabled")
-                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
-                                    :for "privacy-private"
-                                    :role "button"}
+          [:form.privacy-select.vein.make.stick
+           [:input.privacy-radio {:type "radio"
+                                  :hidden "true"
+                                  :id "privacy-public"
+                                  :name "privacy"
+                                  :checked (keyword-identical? :document.privacy/public (:document/privacy doc))
+                                  :disabled (keyword-identical? :document.privacy/public (:document/privacy doc))
+                                  :onChange #(if cant-edit-privacy?
+                                               (utils/stop-event %)
+                                               (cast! :document-privacy-changed
+                                                      {:doc-id doc-id
+                                                       :setting :document.privacy/public}))}]
+           [:label.privacy-label {:class (when cant-edit-privacy? "disabled")
+                                  :title (when cant-edit-privacy? "You must be the owner of this doc to change its privacy.")
+                                  :for "privacy-public"
+                                  :role "button"}
+            (common/icon :public)
+            [:span "Public"]
+            (when cant-edit-privacy?
+              [:small "(privacy change requires owner)"])]
+           [:input.privacy-radio {:type "radio"
+                                  :hidden "true"
+                                  :id "privacy-read-only"
+                                  :name "privacy"
+                                  :checked (keyword-identical? :document.privacy/read-only (:document/privacy doc))
+                                  :disabled cant-edit-privacy?
+                                  :onChange #(if cant-edit-privacy?
+                                               (utils/stop-event %)
+                                               (cast! :document-privacy-changed
+                                                      {:doc-id doc-id
+                                                       :setting :document.privacy/read-only}))}]
+           [:label.privacy-label {:class (when cant-edit-privacy? "disabled")
+                                  :title (when cant-edit-privacy? "You must be the owner of this doc to change its privacy.")
+                                  :for "privacy-read-only"
+                                  :role "button"}
+            (common/icon :read-only)
+            [:span "Read-only"]
+            (when cant-edit-privacy?
+              [:small "(privacy change requires owner)"])]
+           (if no-private-docs?
+             [:a.vein.external {:href "/pricing"}
               (common/icon :private)
               [:span "Private"]
-              (when (= :not-creator cant-edit-reason)
-                [:small "(privacy change requires owner)"])]])])))))
+              [:small "(start a free trial)"]
+              (common/icon :arrow-right)]
+             (list
+              [:input.privacy-radio {:type "radio"
+                                     :hidden "true"
+                                     :id "privacy-private"
+                                     :name "privacy"
+                                     :checked (keyword-identical? :document.privacy/private (:document/privacy doc))
+                                     :disabled (boolean cant-edit-privacy?)
+                                     :onChange #(if cant-edit-privacy?
+                                                  (utils/stop-event %)
+                                                  (cast! :document-privacy-changed
+                                                         {:doc-id doc-id
+                                                          :setting :document.privacy/private}))}]
+              [:label.privacy-label {:class (when cant-edit-privacy? "disabled")
+                                     :title (when cant-edit-privacy? "You must be the owner of this doc to change its privacy.")
+                                     :for "privacy-private"
+                                     :role "button"}
+               (common/icon :private)
+               [:span "Private"]
+               (when cant-edit-privacy?
+                 [:small "(privacy change requires owner)"])]))]])))))
 
 (defn export [app owner]
   (reify
