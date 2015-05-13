@@ -1181,11 +1181,11 @@
 
 (defmethod control-event :chat-db-updated
   [browser-state message _ state]
-  (if (get-in state state/chat-opened-path)
-    (let [db @(:db state)
-          last-chat-time (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))]
-      (update-in state (state/last-read-chat-time-path (:document/id state)) max last-chat-time))
-    state))
+  (let [db @(:db state)
+        last-chat-time (last (sort (map second (chat-model/chat-timestamps-since db (js/Date. 0)))))]
+    (if (get-in state state/chat-opened-path)
+      (update-in state (state/last-read-chat-time-path (:document/id state)) max last-chat-time)
+      state)))
 
 (defmethod post-control-event! :chat-db-updated
   [browser-state message _ previous-state current-state]
@@ -1306,7 +1306,7 @@
   [browser-state message _ state]
   (let [chat-open? (not (get-in state state/chat-opened-path))
         db @(:db state)
-        last-chat-time (or (last (sort (chat-model/chat-timestamps-since db (js/Date. 0))))
+        last-chat-time (or (last (sort (map second (chat-model/chat-timestamps-since db (js/Date. 0)))))
                            (js/Date. 0))]
     (-> state
         (assoc-in state/chat-opened-path chat-open?)

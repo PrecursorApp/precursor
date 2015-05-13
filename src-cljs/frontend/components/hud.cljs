@@ -195,6 +195,51 @@
              [:i.unseen-eids
               (str unread-chat-count)])])))))
 
+(defn chat-popups [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Chat Popups")
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (d/listen! (om/get-shared owner :db)
+                 (om/get-state owner :listener-key)
+                 (fn [tx-report]
+                   ;; TODO: better way to check if state changed
+                   (when-let [chat-datoms (seq (filter #(or (= :chat/body (:a %))
+                                                            (= :document/chat-bot (:a %))) (:tx-data tx-report)))]
+                     (om/refresh! owner)))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            chat-opened? (get-in app state/chat-opened-path)
+            last-read-time (get-in app (state/last-read-chat-time-path (:document/id app)))
+            last-unread-chat (d/entity @db (first (map first (reverse (sort-by second (chat-model/chat-timestamps-since @db last-read-time))))))
+            show-popup? (and (not chat-opened?) last-unread-chat)]
+        (html
+         [:div {:on-click #(cast! :chat-toggled)
+                :on-touch-end #(do
+                                 (.preventDefault %)
+                                 (cast! :chat-toggled))
+                :role "button"
+                :style (merge {:position "fixed"
+                               :bottom 0
+                               :right 64
+                               :background "#333"
+                               :border "1px solid #555"
+                               :padding "1em"
+                               :color "#ccc"
+                               :width 300
+                               :cursor "pointer"}
+                              (when-not show-popup?
+                                {:display "none"}))}
+          (when show-popup?
+            [:div.unread-chat {:key (:db/id last-unread-chat)}
+             (:chat/body last-unread-chat)])])))))
+
 (defn volume-icon [level color-class]
   (common/icon (common/volume-icon-kw level)
                {:path-props {:className color-class}}))
@@ -359,12 +404,16 @@
                                              [:document/id]])
                   {:react-key "chat"})
 
+        (om/build chat-popups (utils/select-in app [state/chat-opened-path
+                                                    state/chat-button-learned-path
+                                                    state/browser-settings-path
+                                                    [:document/id]])
+                  {:react-key "chat-popups"})
+
         (om/build tray (utils/select-in app [state/chat-opened-path
                                              state/info-button-learned-path
                                              [:document/id]
                                              [:cust]
                                              [:max-document-scope]
                                              (state/doc-tx-rejected-count-path (:document/id app))])
-                  {:react-key "tray"})
-
-        ]))))
+                  {:react-key "tray"})]))))

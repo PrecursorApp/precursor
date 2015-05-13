@@ -9,14 +9,12 @@
   (count (d/datoms db :aevt :chat/body)))
 
 (defn chat-timestamps-since [db time]
-  (map first
-       (d/q '{:find [?server-timestamp]
-              :in [$ ?last-time]
-              :with [?t]
-              :where [[?t :chat/body]
-                      [?t :server/timestamp ?server-timestamp]
-                      [(> ?server-timestamp ?last-time)]]}
-            db time)))
+  (d/q '{:find [?t ?server-timestamp]
+         :in [$ ?last-time]
+         :where [[?t :chat/body]
+                 [?t :server/timestamp ?server-timestamp]
+                 [(> ?server-timestamp ?last-time)]]}
+       db time))
 
 (defn compute-unread-chat-count [db last-read-time]
   (if-not last-read-time
