@@ -118,10 +118,14 @@
 (defn handle-doc-navigation [navigation-point args state]
   (let [doc-id (:document/id args)
         initial-entities []
+        previous-point (:navigation-point state)
         state (navigated-default navigation-point args state)]
     (if (= doc-id (:loaded-doc state))
       (-> state
-        (assoc :show-landing? false))
+        (assoc :show-landing? false
+               :outer-to-inner? (:show-landing? state)
+               :menu-to-inner? (and (= :overlay previous-point)
+                                    (not= :overlay navigation-point))))
       (-> state
         (assoc :document/id doc-id
                :loaded-doc doc-id
@@ -129,6 +133,9 @@
                                   :last-undo nil})
                :db-listener-key (utils/uuid)
                :show-landing? false
+               :outer-to-inner? (:show-landing? state)
+               :menu-to-inner? (and (= :overlay previous-point)
+                                    (not= :overlay navigation-point))
                :frontend-id-state {}
                :replay-interrupt-chan (when (play-replay? args)
                                         (async/chan)))
