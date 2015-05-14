@@ -72,13 +72,17 @@
                   (= "true" (.. event -target -contentEditable)))
       (when (contains? suppressed-key-combos key-set)
         (.preventDefault event))
-      (when-not (and (and (not (contains? #{#{"left"}
+      (when-not (and (and (.-repeat event)
+                          ;; allow repeat for arrows
+                          (not (contains? #{#{"left"}
                                             #{"right"}
                                             #{"up"}
-                                            #{"down"}}
-                                          key-set))
-                          ;; allow repeat for arrows
-                          (.-repeat event))
+                                            #{"down"}
+                                            #{"shift" "left"}
+                                            #{"shift" "right"}
+                                            #{"shift" "up"}
+                                            #{"shift" "down"}}
+                                          key-set)))
                      (= "keydown" (.-type event)))
         (cast! :key-state-changed [{:key-set key-set
                                     :code (.-which event)
