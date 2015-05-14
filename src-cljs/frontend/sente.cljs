@@ -3,6 +3,7 @@
             [cljs.core.async :as async :refer (<! >! put! chan)]
             [cljs-time.core :as time]
             [clojure.set :as set]
+            [clojure.walk :as walk]
             [datascript :as d]
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
@@ -61,7 +62,20 @@
             10000
             (fn [reply]
               (if (sente/cb-success? reply)
-                (d/transact! issue-db (:entities reply) {:server-update true})
+                (let [ents (:entities reply)
+                      uuids (atom #{})]
+                  (walk/postwalk (fn [x]
+                                   (when (map? x)
+                                     (when-let [u (:issue/author x)]
+                                       (swap! uuids conj u))
+                                     (when-let [u (:comment/author x)]
+                                       (swap! uuids conj u))
+                                     (when-let [u (:vote/cust x)]
+                                       (swap! uuids conj u)))
+                                   x)
+                                 ents)
+                  (put! (:controls comms) [:new-cust-uuids {:uuids @uuids}])
+                  (d/transact! issue-db ents {:server-update true}))
                 (put! (:errors comms) [:subscribe-to-issues-error])))))
 
 (defn fetch-subscribers [sente-state document-id]
@@ -97,10 +111,13 @@
 
 (defmethod handle-message :issue/transaction [app-state message data]
   (let [datoms (:tx-data data)]
-    (when-let [missing-uuids (set/difference (set (map :v (filter #(contains? #{:issue/author :comment/author :vote/cust} (:a %))
-                                                                  datoms)))
-                                             (set (keys (get-in @app-state [:cust-data :uuid->cust]))))]
-      (sente/send-msg (:sente @app-state) [:frontend/fetch-custs {:uuids missing-uuids}]))
+    (let [cust-uuids (reduce (fn [acc d]
+                               (if (contains? #{:issue/author :comment/author :vote/cust} (:a d))
+                                 (conj acc (:v d))
+                                 acc))
+                             #{} datoms)]
+      (when (seq cust-uuids)
+        (put! (get-in @app-state [:comms :controls]) [:new-cust-uuids {:uuids cust-uuids}])))
     (d/transact! (:issue-db @app-state)
                  (let [adds (->> datoms
                               (filter :added)

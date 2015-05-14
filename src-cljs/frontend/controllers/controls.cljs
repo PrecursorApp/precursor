@@ -1848,3 +1848,10 @@
   [browser-state message {:keys [issue-uuid]} previous-state current-state]
   (sente/send-msg (:sente current-state) [:issue/set-status {:frontend/issue-id issue-uuid
                                                              :issue/status :issue.status/completed}]))
+
+(defmethod post-control-event! :new-cust-uuids
+  [browser-state message {:keys [uuids]} previous-state current-state]
+  (let [current-uuids (set (keys (get-in current-state [:cust-data :uuid->cust])))
+        new-uuids (set/difference uuids current-uuids)]
+    (when (seq new-uuids)
+      (sente/send-msg (:sente current-state) [:frontend/fetch-custs {:uuids new-uuids}]))))

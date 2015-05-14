@@ -429,7 +429,7 @@
 (defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [uuids (->> ?data :uuids)]
     (assert (>= 100 (count uuids)) "Can only fetch 100 uuids at once")
-    ((:send-fn @sente-state) [:frontend/custs {:uuid->cust (cust/public-read-api-per-uuids uuids (:db req))}])))
+    ((:send-fn @sente-state) client-id [:frontend/custs {:uuid->cust (cust/public-read-api-per-uuids (:db req) uuids)}])))
 
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
