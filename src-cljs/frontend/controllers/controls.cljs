@@ -130,10 +130,10 @@
   [browser-state message _ state]
   (cancel-drawing state))
 
-(defmulti handle-keyboard-shortcut (fn [state shortcut-name] shortcut-name))
+(defmulti handle-keyboard-shortcut (fn [state shortcut-name key-set] shortcut-name))
 
 (defmethod handle-keyboard-shortcut :default
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (if (contains? state/tools shortcut-name)
     (assoc-in state state/current-tool-path shortcut-name)
     state))
@@ -163,7 +163,7 @@
 
 ;; TODO: have some way to handle pre-and-post
 (defmethod handle-keyboard-shortcut :undo
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (handle-undo state))
 
 (defn close-radial [state]
@@ -173,7 +173,7 @@
   (assoc-in state [:keyboard] {}))
 
 (defmethod handle-keyboard-shortcut :escape-interaction
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (-> state
     overlay/clear-overlays
     close-radial
@@ -181,17 +181,17 @@
     clear-shortcuts))
 
 (defmethod handle-keyboard-shortcut :reset-canvas-position
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (-> state
     (update-in [:camera] cameras/reset)))
 
 (defmethod handle-keyboard-shortcut :return-from-origin
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (-> state
     (update-in [:camera] cameras/previous)))
 
 (defmethod handle-keyboard-shortcut :arrow-tool
-  [state shortcut-name]
+  [state shortcut-name key-set]
   state)
 
 (defmethod control-event :key-state-changed
@@ -201,7 +201,8 @@
     (-> new-state
       (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
         (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key-set))
-                                                 (keys shortcuts))))
+                                                 (keys shortcuts)))
+                                  key-set)
         (and (= #{"shift"} key-set) (settings/drawing-in-progress? state))
         (assoc-in [:drawing :layers 0 :force-even?] depressed?)
 
@@ -213,10 +214,10 @@
              (not (keyboard/arrow-shortcut-active? new-state)))
         cancel-drawing))))
 
-(defmulti handle-keyboard-shortcut-after (fn [state shortcut-name] shortcut-name))
+(defmulti handle-keyboard-shortcut-after (fn [state shortcut-name key-set] shortcut-name))
 
 (defmethod handle-keyboard-shortcut-after :default
-  [state shortcut-name]
+  [state shortcut-name key-set]
   nil)
 
 (defn nudge-points [points move-x move-y]
@@ -242,40 +243,43 @@
     (cond-> (= :layer.type/path (:layer/type layer))
       (assoc :layer/path (svg/points->path (nudge-points (parse-points-from-path (:layer/path layer)) x y))))))
 
-(defn nudge-shapes [state direction]
+(defn nudge-shapes [state key-set direction]
   (let [db (:db state)
         layers (map (partial d/entity @db) (get-in state [:selected-eids :selected-eids]))
         increment (cameras/grid-size->snap-increment (cameras/grid-width (:camera state)))
-        x (case direction
-            :left (- increment)
-            :right increment
-            0)
-        y (case direction
-            :up (- increment)
-            :down increment
-            0)]
+        shift? (contains? key-set "shift")
+        x (* (if shift? 10 1)
+             (case direction
+               :left (- increment)
+               :right increment
+               0))
+        y (* (if shift? 10 1)
+             (case direction
+               :up (- increment)
+               :down increment
+               0))]
     (when (seq layers)
       (d/transact! db (mapv #(nudge-layer % {:x x :y y}) layers)
                    {:can-undo? true}))))
 
 (defmethod handle-keyboard-shortcut-after :nudge-shapes-left
-  [state shortcut-name]
-  (nudge-shapes state :left))
+  [state shortcut-name key-set]
+  (nudge-shapes state key-set :left))
 
 (defmethod handle-keyboard-shortcut-after :nudge-shapes-right
-  [state shortcut-name]
-  (nudge-shapes state :right))
+  [state shortcut-name key-set]
+  (nudge-shapes state key-set :right))
 
 (defmethod handle-keyboard-shortcut-after :nudge-shapes-up
-  [state shortcut-name]
-  (nudge-shapes state :up))
+  [state shortcut-name key-set]
+  (nudge-shapes state key-set :up))
 
 (defmethod handle-keyboard-shortcut-after :nudge-shapes-down
-  [state shortcut-name]
-  (nudge-shapes state :down))
+  [state shortcut-name key-set]
+  (nudge-shapes state key-set :down))
 
 (defmethod handle-keyboard-shortcut-after :shortcuts-menu
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (when-let [doc-id (:document/id state)]
     (if (keyword-identical? :shortcuts (overlay/current-overlay state))
       (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc-id)
@@ -283,7 +287,7 @@
       (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc-id "shortcuts")}]))))
 
 (defmethod handle-keyboard-shortcut-after :record
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (rtc/setup-stream (get-in state [:comms :controls])))
 
 (defn next-font-size [current-size direction]
@@ -308,15 +312,15 @@
     (#(d/transact! (:db state) % {:can-undo? true}))))
 
 (defmethod handle-keyboard-shortcut-after :shrink-text
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (set-text-font-sizes state :shrink))
 
 (defmethod handle-keyboard-shortcut-after :grow-text
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (set-text-font-sizes state :grow))
 
 (defmethod handle-keyboard-shortcut-after :escape-interaction
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (when (and (:replay-interrupt-chan state)
              (put! (:replay-interrupt-chan state) :interrupt))
     (frontend.db/reset-db! (:db state) nil)
@@ -335,7 +339,8 @@
   (let [shortcuts (get-in current-state state/keyboard-shortcuts-path)]
     (when (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
       (handle-keyboard-shortcut-after current-state (first (filter #(-> shortcuts % (contains? key-set))
-                                                                   (keys shortcuts))))))
+                                                                   (keys shortcuts)))
+                                      key-set)))
   (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defn update-mouse [state x y]

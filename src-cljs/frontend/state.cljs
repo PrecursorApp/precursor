@@ -64,10 +64,11 @@
                                      #{"="}
                                      #{"]"}}
                         :record #{#{"shift" "ctrl" "alt" "r"}}
-                        :nudge-shapes-left #{#{"left"}}
-                        :nudge-shapes-right #{#{"right"}}
-                        :nudge-shapes-up #{#{"up"}}
-                        :nudge-shapes-down #{#{"down"}}}
+                        ;; The handler is responsible for figuring out if shift is held
+                        :nudge-shapes-left #{#{"left"} #{"shift" "left"}}
+                        :nudge-shapes-right #{#{"right"} #{"shift" "right"}}
+                        :nudge-shapes-up #{#{"up"} #{"shift" "up"}}
+                        :nudge-shapes-down #{#{"down"} #{"shift" "down"}}}
    :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}
