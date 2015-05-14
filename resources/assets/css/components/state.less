@@ -40,9 +40,6 @@
 }
 .state-inner {
   &:not(.entry) {
-    &:not(.menu-to-inner) {
-      .animate_chat_closed();
-    }
     &:not(.outer-to-inner) {
       .animate_menu_closed();
     }
@@ -108,4 +105,7 @@
 }
 .chat-opened {
   .animate_chat_opened();
+}
+.chat-closed {
+  .animate_chat_closed();
 }

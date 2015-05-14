@@ -156,10 +156,10 @@
 }
 .animate_chat_opened() {
   &:not(.chat-closed) {
-    @run1: (@run_fast)   (@now);
-    @run2: (@run_slower) ((extract(@run1, 1) * 0.34) + extract(@run1, 2));
-    @run3: (@run)        ((extract(@run2, 1) * 0.21) + extract(@run2, 2));
-    @run4: (@run_slow)   ((extract(@run3, 1) * 0.13) + extract(@run3, 2));
+    @run1: (@run)      (@now);
+    @run2: (@run_slow) ((extract(@run1, 1) * 0.34) + extract(@run1, 2));
+    @run3: (@run)      ((extract(@run2, 1) * 0.21) + extract(@run2, 2));
+    @run4: (@run_slow) ((extract(@run3, 1) * 0.13) + extract(@run3, 2));
     .chat-window    {animation: opened-chat         @run1 backwards;}
     .chat-log       {animation: in-fade-right-soft  @run2 backwards;}
     .chat-box       {animation: in-fade-bottom-soft @run3 backwards;}
