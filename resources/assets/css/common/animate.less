@@ -155,26 +155,22 @@
   .chat       {animation: closed-menu-chat       @run3 backwards;}
 }
 .animate_chat_opened() {
-  &:not(.chat-closed) {
-    @run1: (@run)      (@now);
-    @run2: (@run_slow) ((extract(@run1, 1) * 0.34) + extract(@run1, 2));
-    @run3: (@run)      ((extract(@run2, 1) * 0.21) + extract(@run2, 2));
-    @run4: (@run_slow) ((extract(@run3, 1) * 0.13) + extract(@run3, 2));
-    .chat-window    {animation: opened-chat         @run1 backwards;}
-    .chat-log       {animation: in-fade-right-soft  @run2 backwards;}
-    .chat-box       {animation: in-fade-bottom-soft @run3 backwards;}
-    .chat-box label {animation: in-fade-bottom-soft @run4 backwards;}
-  }
+  @run1: (@run)      (@now);
+  @run2: (@run_slow) ((extract(@run1, 1) * 0.34) + extract(@run1, 2));
+  @run3: (@run)      ((extract(@run2, 1) * 0.21) + extract(@run2, 2));
+  @run4: (@run_slow) ((extract(@run3, 1) * 0.13) + extract(@run3, 2));
+  .chat-window    {animation: opened-chat         @run1 backwards;}
+  .chat-log       {animation: in-fade-right-soft  @run2 backwards;}
+  .chat-box       {animation: in-fade-bottom-soft @run3 backwards;}
+  .chat-box label {animation: in-fade-bottom-soft @run4 backwards;}
 }
 .animate_chat_closed() {
-  &:not(.chat-opened) {
-    @run1: (@run)      (@now);
-    @run2: (@run)      ((extract(@run1, 1) * 0.55) + extract(@run1, 2));
-    @run3: (@run_fast) ((extract(@run2, 1) * 0.34) + extract(@run2, 2));
-    .chat-window       {animation: closed-chat @run1 backwards;}
-    // TODO come back to smooth this out
-    // .chat-log          {animation: closed-chat      @run2 backwards;}
-    // .chat-box          {animation: closed-chat  @run3 backwards;}
-    // .chat-box label    {animation: closed-chat-window  @run4 backwards;}
-  }
+  @run1: (@run)      (@now);
+  @run2: (@run)      ((extract(@run1, 1) * 0.55) + extract(@run1, 2));
+  @run3: (@run_fast) ((extract(@run2, 1) * 0.34) + extract(@run2, 2));
+  .chat-window       {animation: closed-chat @run1 backwards;}
+  // TODO come back to smooth this out
+  // .chat-log          {animation: closed-chat      @run2 backwards;}
+  // .chat-box          {animation: closed-chat  @run3 backwards;}
+  // .chat-box label    {animation: closed-chat-window  @run4 backwards;}
 }

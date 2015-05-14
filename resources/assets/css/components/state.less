@@ -44,6 +44,13 @@
       .animate_menu_closed();
     }
   }
+  &.outer-to-inner {
+    &.chat-opened {
+      .canvas-frame {
+        transition: transform @run;
+      }
+    }
+  }
 }
 //
 // IMPORTANT VISUAL CHANGES WHILE OUTER IS ACTIVE
@@ -62,7 +69,7 @@
     }
   }
   .canvas-frame {
-    transform: scale3d(.8, .8, 1);
+    transform: scale(.8);
     width: 125%;
     height: 125%;
     transition+: all @run_slower @bezier_deform;
@@ -91,7 +98,7 @@
     }
   }
   .chat {
-    opacity: 0; // `display:none` breaks grid in ff so use opacity
+    opacity: 0; // display:none makes chat flicker
     transition: opacity @now @now;
   }
   .hud {
@@ -104,8 +111,27 @@
   }
 }
 .chat-opened {
-  .animate_chat_opened();
+  &:not(.state-outer) {
+    .animate_chat_opened();
+  }
+  &:not(.state-outer) {
+    .canvas-frame {
+      .mask_canvas();
+    }
+  }
+  .width-canvas {
+    .size_of(canvas; width);
+  }
+  .width-chat {
+    .size_of(chat; width);
+  }
 }
 .chat-closed {
   .animate_chat_closed();
+  .width-canvas {
+    width: 100%;
+  }
+  .width-chat {
+    width: 0;
+  }
 }

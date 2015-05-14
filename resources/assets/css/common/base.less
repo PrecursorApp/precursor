@@ -13,28 +13,6 @@ body {
   min-height: 100vh;
   background: @dye_outer;
   animation: in-fade @run_slower;
-  &.chat-opened {
-    .width-canvas {
-      .size_of(canvas; width);
-    }
-    .width-chat {
-      .size_of(chat; width);
-    }
-    .canvas-frame {
-      .mask_canvas(true);
-    }
-  }
-  &.chat-closed {
-    .width-canvas {
-      width: 100%;
-    }
-    .width-chat {
-      width: 0;
-    }
-    .canvas-frame {
-      .mask_canvas(false);
-    }
-  }
 }
 button {
   background: fade(@white, 0);
