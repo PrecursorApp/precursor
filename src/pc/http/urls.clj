@@ -54,3 +54,7 @@
 
 (defn twilio-status-callback []
   (make-url "/hooks/twilio"))
+
+(defn team-plan [team]
+  (let [team-doc (:team/intro-doc team)]
+    (make-url (str "/document/" (:db/id team-doc) "/plan") :subdomain (:team/subdomain team))))

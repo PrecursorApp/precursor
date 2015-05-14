@@ -543,7 +543,11 @@
                  db (:team/uuid team))]]
       [:tr
        [:td "Doc count"]
-       [:td (count team-docs)]]]
+       [:td (count team-docs)]]
+      [:tr
+       [:td "Plan url"]
+       [:td (let [url (urls/team-plan team)]
+              [:a {:href url} url])]]]
      (interesting team-docs))))
 
 (defn upload-files []
