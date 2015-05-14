@@ -54,7 +54,7 @@
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
                  [:div.message-head
-                  [:div.message-avatar.hide-from-menu (common/icon :user {:path-props {:className color-class}})]
+                  [:div.message-avatar (common/icon :user {:path-props {:className color-class}})]
                   [:div.message-author cust-name]
                   [:div.message-time short-time]])
                [:div.message-body

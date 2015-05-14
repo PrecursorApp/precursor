@@ -17,7 +17,7 @@
   position: relative;
 }
 .chat-window {
-  .size_of(chat; width);
+  .size_of(chat; width; vw);
   .flexy(stretch; flex-end; column);
   position: relative;
   min-width: @tile;
@@ -215,7 +215,7 @@
 }
 .message-time {
   flex: 0 0 auto;
-  color: fade(@white, (100 * @opacity_darker_dark));
+  color: @color_chat_border;
   font-size: .75rem;
   text-transform: lowercase;
   padding: .25em 0;
