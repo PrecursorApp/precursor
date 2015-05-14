@@ -76,14 +76,11 @@
   }
   &:hover,
   &:active {
-    &:before,
-    &:after {
+    .border {
       border-color: fadeout(@color_chat_border, 8);
     }
   }
-  &:before,
-  &:after {
-    content: "";
+  .border {
     position: absolute;
     top: 0;
     left: 0;
@@ -92,16 +89,16 @@
     user-select: none;
     pointer-events: none;
   }
-  &:before {
+  .border-top {
     border-top: 1px solid @color_chat_border;
-    border-bottom: 1px solid @color_chat_border;
-    // animation: in-expand @run_slower @run_fast backwards;
-    transform-origin: right;
   }
-  &:after {
+  .border-bottom {
+    border-bottom: 1px solid @color_chat_border;
+  }
+  .border-left {
     border-left: 1px solid @color_chat_border;
+  }
+  .border-right {
     border-right: 1px solid @color_chat_border;
-    // animation: in-stand @run (@run_slower + @run_fast) backwards;
-    transform-origin: top;
   }
 }

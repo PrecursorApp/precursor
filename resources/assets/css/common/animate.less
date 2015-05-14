@@ -174,3 +174,23 @@
   // .chat-box          {animation: closed-chat  @run3 backwards;}
   // .chat-box label    {animation: closed-chat-window  @run4 backwards;}
 }
+.animate_foreground_left() {
+  @run1: (@run_slower)      (@run);
+  @run2: (2 * @run_slower) ((extract(@run1, 1) * 0.34) + extract(@run1, 2));
+  @run3: (2 * @run_slower)      ((extract(@run2, 1) * 0.21) + extract(@run2, 2));
+  @run4: (@run_slower) ((extract(@run3, 1) * 0.13) + extract(@run3, 2));
+  .border-top    {animation: in-expand @run2 backwards;}
+  .border-bottom {animation: in-expand @run3 backwards;}
+  .border-left   {animation: in-stand @run1 backwards;}
+  .border-right  {animation: in-stand @run4 backwards;}
+}
+.animate_foreground_right() {
+  @run1: (@run_slower)      (@run);
+  @run2: (2 * @run_slower) ((extract(@run1, 1) * 0.34) + extract(@run1, 2));
+  @run3: (2 * @run_slower)      ((extract(@run2, 1) * 0.21) + extract(@run2, 2));
+  @run4: (@run_slower) ((extract(@run3, 1) * 0.13) + extract(@run3, 2));
+  .border-top    {animation: in-expand @run2 backwards;}
+  .border-bottom {animation: in-expand @run3 backwards;}
+  .border-left   {animation: in-stand @run4 backwards;}
+  .border-right  {animation: in-stand @run1 backwards;}
+}

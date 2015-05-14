@@ -7,11 +7,15 @@
     .inner { .inner_offset(left); }
     .hud-menu { .hud_menu_morph(); }
     .menu-body { .size_of(chat; width); }
+    .foreground { .animate_foreground_left(); }
+    .border { transform-origin: left top; }
   }
   &.menu-right {
     .inner { .inner_offset(right); }
     .hud-roster { .hud_menu_morph(); }
     .menu-body { .size_of(chat; margin-left); }
+    .foreground { .animate_foreground_right(); }
+    .border { transform-origin: right top; }
   }
   .inner {
     pointer-events: none;

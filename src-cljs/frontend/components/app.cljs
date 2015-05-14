@@ -106,7 +106,11 @@
                        {:react-key "chat"})
              (when overlay-visible?
                [:div.foreground {:on-click #(cast! :overlay-escape-clicked)
-                                 :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}])]
+                                 :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}
+                [:div.border.border-top]
+                [:div.border.border-bottom]
+                [:div.border.border-left]
+                [:div.border.border-right]])]
 
             (om/build hud/hud (select-in app [state/chat-opened-path
                                               state/overlays-path
