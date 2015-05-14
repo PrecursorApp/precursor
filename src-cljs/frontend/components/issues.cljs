@@ -16,6 +16,7 @@
             [frontend.utils :as utils]
             [goog.dom]
             [goog.dom.forms :as gforms]
+            [goog.dom.Range]
             [goog.string :as gstring]
             [goog.string.format]
             [om.core :as om]
@@ -144,35 +145,48 @@
 
 (defn cust-name-form [{:keys [cust-name]} owner]
   (reify
-    om/IInitState (init-state [_] {:editing? false :editing-name nil})
+    om/IInitState (init-state [_] {:editing? true :editing-name nil})
     om/IDidUpdate
     (did-update [_ _ prev-state]
       (when (and (not (:editing? prev-state))
                  (om/get-state owner :editing?)
                  (om/get-node owner "name-input"))
-        (gforms/focusAndSelect (om/get-node owner "name-input"))))
+        (.focus (om/get-node owner "name-input"))
+        (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "name-input")))))
     om/IRenderState
     (render-state [_ {:keys [editing? editing-name]}]
       (let [cast! (om/get-shared owner :cast!)
             reset-form (fn []
                          (om/set-state! owner :editing? false)
-                         (om/set-state! owner :editing-name nil))]
+                         (om/set-state! owner :editing-name nil))
+            submit-form (fn []
+                          ;; be sure to pull it out of the state, since we're not
+                          ;; re-rendering on change
+                          (when (seq (om/get-state owner :editing-name))
+                            (cast! :self-updated {:name (om/get-state owner :editing-name)}))
+                          ;; This is a terrible hack, should find a way to wait for the cast!
+                          ;; to complete :(
+                          (js/setTimeout #(reset-form) 0))]
         (html
-         (if-not editing?
-           [:a {:on-click #(om/set-state! owner :editing? true)}
-            (or cust-name "Add your name")]
-           [:input {:type "text"
-                    :ref "name-input"
-                    :value (if editing-name
-                             editing-name
-                             (or cust-name ""))
-                    :onChange #(om/set-state! owner :editing-name (.. % -target -value))
-                    :onKeyDown #(cond (= "Enter" (.-key %)) (do
-                                                              (utils/stop-event %)
-                                                              (when (seq editing-name)
-                                                                (cast! :self-updated {:name editing-name}))
-                                                              (reset-form))
-                                      (= "Esc" (.-key %)) (reset-form))}]))))))
+         [:span
+          [:span {:contentEditable editing?
+                  :onClick #(do (om/set-state! owner :editing? true)
+                                (om/set-state! owner :editing-name (or cust-name "")))
+                  :class (str "issue-name-input " (when-not (seq cust-name) "empty "))
+                  :type "text"
+                  :ref "name-input"
+                  :value (or editing-name cust-name "")
+                  :onBlur #(submit-form)
+                  ;;:onChange #(om/set-state! owner :editing-name (.. % -target -value))
+                  :onInput #(om/set-state-nr! owner :editing-name (goog.dom/getRawTextContent (.-target %)))
+                  :onKeyDown #(cond (= "Enter" (.-key %)) (do
+                                                            (utils/stop-event %)
+                                                            (submit-form))
+                                    (= "Escape" (.-key %)) (reset-form))}
+           (or editing-name (if (seq cust-name)
+                              cust-name
+                              "+ Add your name"))]
+          [:span " on"]])))))
 
 (defn author-byline
   "Shows author's name or empty span
