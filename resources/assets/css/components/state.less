@@ -42,7 +42,7 @@
 // IMPORTANT VISUAL CHANGES WHILE OUTER IS ACTIVE
 //
 .state-outer {
-  .canvas-background {
+  .background {
     &:after {
       animation: in-fade @run @run_fast @bezier_fadein backwards;
       .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
