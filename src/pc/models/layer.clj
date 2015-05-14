@@ -18,9 +18,12 @@
                    :where [[?t :layer/name]]}
                  db))
 
+(defn find-ids-by-document [db document]
+  (map :e (d/datoms db :vaet (:db/id document) :layer/document)))
+
 (defn find-by-document [db document]
-  (map (comp (partial d/entity db) :e)
-       (d/datoms db :vaet (:db/id document) :layer/document)))
+  (map (partial d/entity db)
+       (find-ids-by-document db document)))
 
 ;; TODO: can use pull API here
 (defn read-api [layer]

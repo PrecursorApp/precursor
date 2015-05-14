@@ -13,6 +13,7 @@
             [pc.auth.google :as google-auth]
             [pc.convert :as convert]
             [pc.datomic :as pcd]
+            [pc.diff :as diff]
             [pc.http.doc :as doc-http]
             [pc.http.handlers.custom-domain :as custom-domain]
             [pc.http.lb :as lb]
@@ -152,6 +153,76 @@
      "Last-Modified" (->> last-modified-instant
                        (clj-time.coerce/from-date)
                        (clj-time.format/unparse (clj-time.format/formatters :rfc822)))}))
+
+(defpage doc-diff-svg "/document/diff/:document-id.svg" [req]
+  (let [document-id (-> req :params :document-id)
+        tx-before (-> req :params :tx-before (Long/parseLong))
+        tx-after (-> req :params :tx-after (Long/parseLong))
+        db (pcd/default-db)
+        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
+    (cond (nil? doc)
+          (if-let [doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
+            (redirect (str "/document/" (:db/id doc) ".svg"))
+
+            {:status 404
+             ;; TODO: Maybe return a "not found" image.
+             :body "Document not found."})
+
+          (auth/has-document-permission? db doc (-> req :auth) :read)
+          {:status 200
+           :headers (merge {"Content-Type" "image/svg+xml"}
+                           (when (-> req :params :dl)
+                             {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.svg\""
+                                                            (:db/id doc))}))
+           :pc/doc doc
+           :body (diff/render-diff db doc tx-before tx-after)}
+
+          (auth/logged-in? req)
+          {:status 403
+           :headers {"Content-Type" "image/svg+xml"
+                     "Cache-Control" "no-cache; private"}
+           :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))}
+
+          :else
+          {:status 401
+           :headers {"Content-Type" "image/svg+xml"
+                     "Cache-Control" "no-cache; private"}
+           :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))})))
+
+(defpage doc-diff-png "/document/diff/:document-id.png" [req]
+  (let [document-id (-> req :params :document-id)
+        tx-before (-> req :params :tx-before (Long/parseLong))
+        tx-after (-> req :params :tx-after (Long/parseLong))
+        db (pcd/default-db)
+        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
+    (cond (nil? doc)
+          (if-let [doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
+            (redirect (str "/document/" (:db/id doc) ".svg"))
+
+            {:status 404
+             ;; TODO: Maybe return a "not found" image.
+             :body "Document not found."})
+
+          (auth/has-document-permission? db doc (-> req :auth) :read)
+          {:status 200
+           :headers (merge {"Content-Type" "image/png"}
+                           (when (-> req :params :dl)
+                             {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.svg\""
+                                                            (:db/id doc))}))
+           :pc/doc doc
+           :body (convert/svg->png (diff/render-diff db doc tx-before tx-after))}
+
+          (auth/logged-in? req)
+          {:status 403
+           :headers {"Content-Type" "image/png"
+                     "Cache-Control" "no-cache; private"}
+           :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))}
+
+          :else
+          {:status 401
+           :headers {"Content-Type" "image/png"
+                     "Cache-Control" "no-cache; private"}
+           :body (convert/svg->png (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false"))))})))
 
 (defpage doc-svg "/document/:document-id.svg" [req]
   (let [document-id (-> req :params :document-id)

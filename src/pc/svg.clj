@@ -17,7 +17,7 @@
                             (:layer/end-y layer)) (:layer/start-y layer))
       :fill          "none"
       :key           (:layer/id layer)
-      :stroke        (if invert-colors? "#ccc" "black")
+      :stroke        (:layer/stroke layer (if invert-colors? "#ccc" "black"))
       :stroke-width   2
       :rx            (:layer/rx layer)
       :ry            (:layer/ry layer)}
@@ -26,7 +26,7 @@
 (defn layer->svg-text [layer {:keys [invert-colors? layer-props]}]
   (merge {:x (:layer/start-x layer)
           :y (:layer/start-y layer)
-          :fill (if invert-colors? "#ccc" "black")
+          :fill (:layer/fill layer (if invert-colors? "#ccc" "black"))
           :stroke-width 0
           :font-family (h/h (:layer/font-family layer "Roboto"))
           :font-size   (:layer/font-size layer 20)}
@@ -38,13 +38,13 @@
     :y1          (:layer/start-y layer)
     :x2          (:layer/end-x layer)
     :y2          (:layer/end-y layer)
-    :stroke (if invert-colors? "#ccc" "black")
+    :stroke (:layer/stroke layer (if invert-colors? "#ccc" "black"))
     :stroke-width 2}
    layer-props))
 
 (defn layer->svg-path [layer {:keys [invert-colors? layer-props]}]
   (merge {:d (h/h (:layer/path layer))
-          :stroke (if invert-colors? "#ccc" "black")
+          :stroke (:layer/stroke layer (if invert-colors? "#ccc" "black"))
           :fill "none"
           :stroke-width 2}
          layer-props))
