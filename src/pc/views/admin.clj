@@ -412,7 +412,15 @@
     (for [[k v] (sort-by first (into {} cust))]
       [:tr
        [:td (h/h (str k))]
-       [:td (render-cust-prop k v)]])]))
+       [:td (render-cust-prop k v)]])
+    [:tr
+     [:td "Teams"]
+     [:td (interleave (->> cust
+                        (permission-model/find-team-permissions-for-cust (pcd/default-db))
+                        (map :permission/team)
+                        (sort-by :team/subdomain)
+                        (map team-link))
+                      (repeat " "))]]]))
 
 (defn doc-info [doc auth]
   (let [db (pcd/default-db)]
