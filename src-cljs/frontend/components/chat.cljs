@@ -140,7 +140,7 @@
           (if chat-submit-learned?
             (list
               (when (seq chatting)
-                [:div.chat-typing-notice {:data-typing-notice (let [uuid->cust (get-in app [:cust-data :uuid->cust])
+                [:label.chat-typing-notice {:data-typing-notice (let [uuid->cust (get-in app [:cust-data :uuid->cust])
                                                                     cust-names (reduce (fn [acc chatter]
                                                                                          (conj acc
                                                                                                (gstring/truncate
@@ -158,8 +158,8 @@
                                                                        " are ")
                                                                      "typing..."))}])
 
-              [:div.chat-placeholder.hide-from-menu {:data-before "Chat."}])
-            [:div.chat-teach-enter.hide-from-menu {:data-step-1 "Click here."
+              [:label.chat-placeholder.hide-from-menu {:data-before "Chat."}])
+            [:label.chat-teach-enter.hide-from-menu {:data-step-1 "Click here."
                                                    :data-step-2 "Type something."
                                                    :data-step-3 "Send with enter."
                                                    :data-remind "Don't forget to hit enter."}])])))))

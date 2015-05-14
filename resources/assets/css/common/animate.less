@@ -135,22 +135,46 @@
   }
 }
 .animate_menu_opened() {
-    @run1: (@run)      (@now);
-    @run2: (@run_slow) ((extract(@run1, 1) * 0.21) + extract(@run1, 2));
-    @run3: (@run)      ((extract(@run2, 1) * 0.13) + extract(@run2, 2));
-    @run4: (@run)      ((extract(@run3, 1) * 0.08) + extract(@run3, 2));
-    @run5: (@run)      ((extract(@run4, 1) * 0.05) + extract(@run4, 2));
-    .inner      {animation: opened-menu-inner      @run1 backwards;}
-    .background {animation: opened-menu-background @run2 backwards;}
-    .canvas     {animation: opened-menu-canvas     @run3 backwards;}
-    .chat       {animation: opened-menu-chat       @run4 backwards;}
-    .foreground {animation: opened-menu-foreground @run5 backwards;}
+  @run1: (@run)      (@now);
+  @run2: (@run_slow) ((extract(@run1, 1) * 0.21) + extract(@run1, 2));
+  @run3: (@run)      ((extract(@run2, 1) * 0.13) + extract(@run2, 2));
+  @run4: (@run)      ((extract(@run3, 1) * 0.08) + extract(@run3, 2));
+  @run5: (@run)      ((extract(@run4, 1) * 0.05) + extract(@run4, 2));
+  .inner      {animation: opened-menu-inner      @run1 backwards;}
+  .background {animation: opened-menu-background @run2 backwards;}
+  .canvas     {animation: opened-menu-canvas     @run3 backwards;}
+  .chat       {animation: opened-menu-chat       @run4 backwards;}
+  .foreground {animation: opened-menu-foreground @run5 backwards;}
 }
 .animate_menu_closed() {
-    @run1: (@run_fast) (@now);
+  @run1: (@run_fast) (@now);
+  @run2: (@run)      ((extract(@run1, 1) * 0.55) + extract(@run1, 2));
+  @run3: (@run_fast) ((extract(@run2, 1) * 0.34) + extract(@run2, 2));
+  .background {animation: closed-menu-background @run1 backwards;}
+  .canvas     {animation: closed-menu-canvas     @run2 backwards;}
+  .chat       {animation: closed-menu-chat       @run3 backwards;}
+}
+.animate_chat_opened() {
+  &:not(.chat-closed) {
+    @run1: (@run)        (@now);
+    @run2: (@run_slower) ((extract(@run1, 1) * 0.34) + extract(@run1, 2));
+    @run3: (@run)        ((extract(@run2, 1) * 0.21) + extract(@run2, 2));
+    @run4: (@run_slow)   ((extract(@run3, 1) * 0.13) + extract(@run3, 2));
+    .chat-window    {animation: opened-chat         @run1 backwards;}
+    .chat-log       {animation: in-fade-right-soft  @run2 backwards;}
+    .chat-box       {animation: in-fade-bottom-soft @run3 backwards;}
+    .chat-box label {animation: in-fade-bottom-soft @run4 backwards;}
+  }
+}
+.animate_chat_closed() {
+  &:not(.chat-opened) {
+    @run1: (@run)      (@now);
     @run2: (@run)      ((extract(@run1, 1) * 0.55) + extract(@run1, 2));
     @run3: (@run_fast) ((extract(@run2, 1) * 0.34) + extract(@run2, 2));
-    .background {animation: closed-menu-background @run1 backwards;}
-    .canvas     {animation: closed-menu-canvas     @run2 backwards;}
-    .chat       {animation: closed-menu-chat       @run3 backwards;}
+    .chat-window       {animation: closed-chat @run1 backwards;}
+    // TODO come back to smooth this out
+    // .chat-log          {animation: closed-chat      @run2 backwards;}
+    // .chat-box          {animation: closed-chat  @run3 backwards;}
+    // .chat-box label    {animation: closed-chat-window  @run4 backwards;}
+  }
 }

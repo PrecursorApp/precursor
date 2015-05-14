@@ -56,11 +56,14 @@
         (if-let [nav-point (:navigation-point app)]
           (html
            [:div#app.app {:class (str (frontend.overlay/app-overlay-class app)
+                                      (when-not (or (:show-landing? app) overlay-visible?) " state-inner ")
                                       (when (:show-landing? app) " state-outer ")
                                       (if chat-opened? " chat-opened " " chat-closed ")
                                       (when (keyboard/pan-shortcut-active? app) " state-pan ")
                                       (when (= (:page-count app) 1) " entry ")
-                                      " outer-to-inner ")}
+                                      " outer-to-inner "
+                                      " menu-to-inner "
+                                      )}
             (om/build text-sizer {})
 
             (when (and (keyword-identical? :document nav-point)
