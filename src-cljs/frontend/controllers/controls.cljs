@@ -1257,6 +1257,14 @@
      (when unread-chats?
        (favicon/set-unread!)))))
 
+(defmethod control-event :visibility-changed
+  [browser-state message {:keys [hidden?]} state]
+  (if hidden?
+    ;; reset key state when losing visibility, prevents
+    ;; shortcuts from getting stuck
+    (dissoc state :keyboard)
+    state))
+
 (defmethod post-control-event! :visibility-changed
   [browser-state message {:keys [hidden?]} previous-state current-state]
   (when (and (not hidden?)
