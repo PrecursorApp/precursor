@@ -142,14 +142,61 @@
 
              (om/build common/google-login {:source "Comment form"}))]])))))
 
+(defn cust-name-form [{:keys [cust-name]} owner]
+  (reify
+    om/IInitState (init-state [_] {:editing? false :editing-name nil})
+    om/IDidUpdate
+    (did-update [_ _ prev-state]
+      (when (and (not (:editing? prev-state))
+                 (om/get-state owner :editing?)
+                 (om/get-node owner "name-input"))
+        (gforms/focusAndSelect (om/get-node owner "name-input"))))
+    om/IRenderState
+    (render-state [_ {:keys [editing? editing-name]}]
+      (let [cast! (om/get-shared owner :cast!)
+            reset-form (fn []
+                         (om/set-state! owner :editing? false)
+                         (om/set-state! owner :editing-name nil))]
+        (html
+         (if-not editing?
+           [:a {:on-click #(om/set-state! owner :editing? true)}
+            (or cust-name "Add your name")]
+           [:input {:type "text"
+                    :ref "name-input"
+                    :value (if editing-name
+                             editing-name
+                             (or cust-name ""))
+                    :onChange #(om/set-state! owner :editing-name (.. % -target -value))
+                    :onKeyDown #(cond (= "Enter" (.-key %)) (do
+                                                              (utils/stop-event %)
+                                                              (when (seq editing-name)
+                                                                (cast! :self-updated {:name editing-name}))
+                                                              (reset-form))
+                                      (= "Esc" (.-key %)) (reset-form))}]))))))
+
+(defn author-byline
+  "Shows author's name or empty span
+  If current cust authored the post and has no name, shows a set name form"
+  [{:keys [author-uuid uuid->cust]} owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [cust-name (get-in uuid->cust [author-uuid :cust/name])]
+        (html
+         (if (= author-uuid (om/get-shared owner [:cust :cust/uuid]))
+           (om/build cust-name-form {:cust-name cust-name})
+           (if (seq cust-name)
+             [:span [:span (str cust-name)] [:span " on"]]
+             [:span])))))))
+
 (defn description-form [{:keys [issue issue-id uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Description form")
     om/IInitState (init-state [_] {:issue-description nil
                                    :editing? nil})
     om/IDidUpdate
-    (did-update [_ _ prev-props]
-      (when (and (not (:editing? prev-props))
+    (did-update [_ _ prev-state]
+      (when (and (not (:editing? prev-state))
                  (om/get-state owner :editing?)
                  (om/get-node owner "description-input"))
         (gforms/focusAndSelect (om/get-node owner "description-input"))))
@@ -183,8 +230,8 @@
              ;; [:span (common/icon :user) " "]
              (when (:issue/description issue)
                (list
-                [:span (get-in (utils/inspect uuid->cust) [(:issue/author issue) :cust/name])]
-                [:span " on "]
+                (om/build author-byline {:author-uuid (:issue/author issue) :uuid->cust uuid->cust})
+                [:span " "]
                 [:span (datetime/month-day (:issue/created-at issue))]))
              (when editable?
                (list
@@ -211,8 +258,8 @@
              ;; [:span (common/icon :user) " "]
              (when (:issue/description issue)
                (list
-                [:span (get-in uuid->cust [(:issue/author issue) :cust/name])]
-                [:span " on "]
+                (om/build author-byline {:author-uuid (:issue/author issue) :uuid->cust uuid->cust})
+                [:span " "]
                 [:span (datetime/month-day (:issue/created-at issue))]))
              (when editable?
                (list
@@ -330,8 +377,8 @@
           [:p.comment-foot
            ;; hide avatars for now
            ;; [:span (common/icon :user) " "]
-           [:span (get-in uuid->cust [(:comment/author comment) :cust/name])]
-           [:span " on "]
+           (om/build author-byline {:author-uuid (:comment/author comment) :uuid->cust uuid->cust})
+           [:span " "]
            [:span (datetime/month-day (:comment/created-at comment))]
            (when (and (utils/logged-in? owner)
                       (> 4 (count ancestors)))
