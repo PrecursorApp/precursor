@@ -205,8 +205,8 @@
     om/IInitState (init-state [_] {:editing-name? false
                                    :new-name ""})
     om/IDidUpdate
-    (did-update [_ _ prev-props]
-      (when (and (not (:editing-name? prev-props))
+    (did-update [_ _ prev-state]
+      (when (and (not (:editing-name? prev-state))
                  (om/get-state owner :editing-name?)
                  (om/get-node owner "name-edit"))
         (.focus (om/get-node owner "name-edit"))

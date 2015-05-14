@@ -180,6 +180,18 @@
   margin-bottom: @menu_padding;
   padding-bottom: .5em;
 }
+.issue-name-input {
+  outline: none;
+  border: none;
+  &:focus {
+    color: @gray_dark;
+    border-bottom: 1px solid @gray_light;
+    min-width: 3em;
+  }
+  &.empty {
+    color: @gray_dark;
+  }
+}
 .comments {
   position: relative;
   .comments {

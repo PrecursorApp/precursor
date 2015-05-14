@@ -167,15 +167,15 @@
 
 (defmethod translate-datom :vote/cust [db d]
   (-> d
-    (assoc :v (:cust/email (d/entity db (:v d))))))
+    (assoc :v (:cust/uuid (d/entity db (:v d))))))
 
 (defmethod translate-datom :comment/author [db d]
   (-> d
-    (assoc :v (:cust/email (d/entity db (:v d))))))
+    (assoc :v (:cust/uuid (d/entity db (:v d))))))
 
 (defmethod translate-datom :issue/author [db d]
   (-> d
-    (assoc :v (:cust/email (d/entity db (:v d))))))
+    (assoc :v (:cust/uuid (d/entity db (:v d))))))
 
 (defn datom-read-api [db datom]
   (let [{:keys [e a v tx added] :as d} datom

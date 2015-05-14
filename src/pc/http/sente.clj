@@ -426,6 +426,11 @@
   (when-let [cust (-> req :ring-req :auth :cust)]
     (?reply-fn {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
 
+(defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [uuids (->> ?data :uuids)]
+    (assert (>= 100 (count uuids)) "Can only fetch 100 uuids at once")
+    ((:send-fn @sente-state) client-id [:frontend/custs {:uuid->cust (cust/public-read-api-per-uuids (:db req) uuids)}])))
+
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [;; TODO: at some point we may want to limit, but it's just a
@@ -595,14 +600,19 @@
       (log/infof "updating self for %s" (:cust/uuid cust))
       (when (:cust/color-name ?data)
         (assert (contains? (schema/color-enums) (:cust/color-name ?data))))
-      (let [new-cust (cust/update! cust (select-keys ?data [:cust/name :cust/color-name]))]
-        (doseq [uid (reduce (fn [acc subs]
-                              (if (first (filter #(= (:cust/uuid (second %)) (:cust/uuid new-cust))
-                                                 subs))
-                                (concat acc (keys subs))
-                                acc))
-                            () (vals @document-subs))]
-          ((:send-fn @sente-state) uid [:frontend/custs {:uuid->cust {(:cust/uuid new-cust) (cust/public-read-api new-cust)}}]))))))
+      (let [new-cust (cust/update! cust (select-keys ?data [:cust/name :cust/color-name]))
+            collab-uuids (reduce (fn [acc subs]
+                                   (if (first (filter #(= (:cust/uuid (second %)) (:cust/uuid new-cust))
+                                                      subs))
+                                     (concat acc (keys subs))
+                                     acc))
+                                 () (vals @document-subs))
+            msg [:frontend/custs {:uuid->cust {(:cust/uuid new-cust) (cust/public-read-api new-cust)}}]]
+        (doseq [uid collab-uuids]
+          ((:send-fn @sente-state) uid msg))
+        (when (contains? @issues-http/issue-subs client-id)
+          (doseq [uid (set/difference @issues-http/issue-subs (set collab-uuids))]
+            ((:send-fn @sente-state) uid msg)))))))
 
 (defmethod ws-handler :frontend/send-invite [{:keys [client-id ?data ?reply-fn] :as req}]
   ;; This may turn out to be a bad idea, but error handling is done through creating chats
