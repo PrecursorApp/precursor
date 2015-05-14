@@ -575,7 +575,6 @@
 (defn shortcuts [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Shortcuts")
-    om/IInitState (init-state [_] {:copy-paste-works? (ua/isChrome)})
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
@@ -625,22 +624,18 @@
              ;;
              [:tr.make
               [:td {:col-span "2"}]]
-             (when (om/get-state owner [:copy-paste-works?])
-               (list
-                (html
-                 [:tr.make
-                  [:td
-                   [:div.shortcuts-keys
-                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                    [:div.shortcuts-key {:title "C Key"} "C"]]]
-                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]])
-                (html
-                 [:tr.make
-                  [:td
-                   [:div.shortcuts-keys
-                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                    [:div.shortcuts-key {:title "V Key"} "V"]]]
-                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]])))
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                [:div.shortcuts-key {:title "C Key"} "C"]]]
+              [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                [:div.shortcuts-key {:title "V Key"} "V"]]]
+              [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]
              [:tr.make
               [:td
                [:div.shortcuts-keys
