@@ -97,6 +97,10 @@
 
 (defmethod handle-message :issue/transaction [app-state message data]
   (let [datoms (:tx-data data)]
+    (when-let [missing-uuids (set/difference (set (map :v (filter #(contains? #{:issue/author :comment/author :vote/cust} (:a %))
+                                                                  datoms)))
+                                             (set (keys (get-in @app-state [:cust-data :uuid->cust]))))]
+      (sente/send-msg (:sente @app-state) [:frontend/fetch-custs {:uuids missing-uuids}]))
     (d/transact! (:issue-db @app-state)
                  (let [adds (->> datoms
                               (filter :added)

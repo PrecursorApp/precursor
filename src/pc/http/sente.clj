@@ -426,6 +426,11 @@
   (when-let [cust (-> req :ring-req :auth :cust)]
     (?reply-fn {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
 
+(defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [uuids (->> ?data :uuids)]
+    (assert (>= 100 (count uuids)) "Can only fetch 100 uuids at once")
+    ((:send-fn @sente-state) [:frontend/custs {:uuid->cust (cust/public-read-api-per-uuids uuids (:db req))}])))
+
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [;; TODO: at some point we may want to limit, but it's just a
