@@ -11,6 +11,7 @@
   pointer-events: none;
   overflow: hidden;
   user-select: none;
+  will-change: transform;
 }
 .chat-offset {
   flex: 1;
@@ -44,7 +45,7 @@
   .scrollbar_inner();
   position: relative;
   padding: 1em 0;
-  overflow-y: auto;
+  overflow-y: overlay;
   user-select: none; // so you only select text and not entire chat menu
   span {
     user-select: auto; // so you only select text and not entire chat menu

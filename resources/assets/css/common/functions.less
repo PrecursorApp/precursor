@@ -46,9 +46,9 @@
   }
 }
 .scrollbar_inner() {
-                  .scrollbar({ width: .5em;                     });
-            .scrollbar_thumb({ border: .125em solid @dye_inner; });
-  &:hover { .scrollbar_thumb({ background: @gray_dark;          }); }
+                  .scrollbar({ width: .5em;                    });
+            .scrollbar_thumb({ background: fade(@white, 0);    });
+  &:hover { .scrollbar_thumb({ background: @color_chat_border; }); }
 }
 .icon(@type; @value) {
   .iconpile {
