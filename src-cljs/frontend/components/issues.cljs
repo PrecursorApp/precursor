@@ -175,6 +175,7 @@
                   :class (str "issue-name-input " (when-not (seq cust-name) "empty "))
                   :type "text"
                   :ref "name-input"
+                  :spell-check false
                   :value (or editing-name cust-name "")
                   :onBlur #(submit-form)
                   ;;:onChange #(om/set-state! owner :editing-name (.. % -target -value))
