@@ -61,9 +61,8 @@
                                       (if chat-opened? " chat-opened " " chat-closed ")
                                       (when (keyboard/pan-shortcut-active? app) " state-pan ")
                                       (when (= (:page-count app) 1) " entry ")
-                                      " outer-to-inner "
-                                      " menu-to-inner "
-                                      )}
+                                      (when (:outer-to-inner? app) " outer-to-inner ")
+                                      (when (:menu-to-inner? app) " menu-to-inner "))}
             (om/build text-sizer {})
 
             (when (and (keyword-identical? :document nav-point)
