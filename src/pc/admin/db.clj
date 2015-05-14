@@ -46,47 +46,5 @@
                                  layers))
     new-doc))
 
-(defn custs-without-avatars [db]
-  (d/q '{:find [[?e ...]]
-         :where [[?e :google-account/sub]
-                 (not [?e :google-account/avatar])]}
-       db))
-
-(defn track-user-info [cust]
-  (mixpanel/engage (:cust/uuid cust) {:$set {:$first_name (:cust/first-name cust)
-                                             :$last_name (:cust/last-name cust)
-                                             :$email (:cust/email cust)
-                                             :gender (:cust/gender cust)
-                                             :birthday (some-> cust
-                                                         :cust/birthday
-                                                         clj-time.coerce/from-date
-                                                         mixpanel/->mixpanel-date)
-                                             :verified_email (:cust/verified-email cust)
-                                             :occupation (:cust/occupation cust)
-                                             :$ignore_time true}}))
-
-(defn update-user-from-sub [cust]
-  (let [user-info (google-auth/user-info-from-sub (:google-account/sub cust))]
-    (when (seq user-info)
-      (let [{:keys [first-name last-name gender
-                    avatar-url birthday occupation]} user-info
-            cust (-> cust
-                   (cust-model/update! (utils/remove-map-nils {:cust/first-name first-name
-                                                               :cust/last-name last-name
-                                                               :cust/birthday birthday
-                                                               :cust/gender gender
-                                                               :cust/occupation occupation
-                                                               :google-account/avatar avatar-url})))]
-        (utils/with-report-exceptions
-          (analytics/track-user-info cust))
-        cust))))
-
-(defn update-custs-without-avatars []
-  (let [db (pcd/default-db)]
-    (doseq [cust-id (custs-without-avatars db)
-            :let [cust (d/entity db cust-id)]]
-      (log/infof "updating %s" (:cust/email cust))
-      (update-user-from-sub cust))))
-
 (defn transfer-doc-to-team [doc team]
   @(d/transact (pcd/conn) [[:db/add (:db/id doc) :document/team (:db/id team)]]))
