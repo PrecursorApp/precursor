@@ -140,7 +140,7 @@
           (if chat-submit-learned?
             (list
               (when (seq chatting)
-                [:label.chat-typing-notice {:data-typing-notice (let [uuid->cust (get-in app [:cust-data :uuid->cust])
+                [:div.chat-typing-notice {:data-typing-notice (let [uuid->cust (get-in app [:cust-data :uuid->cust])
                                                                     cust-names (reduce (fn [acc chatter]
                                                                                          (conj acc
                                                                                                (gstring/truncate
