@@ -17,7 +17,7 @@
   position: relative;
 }
 .chat-window {
-  .size_of(chat; width; vw);
+  .size_of(chat; width);
   .flexy(stretch; flex-end; column);
   position: relative;
   min-width: @tile;
@@ -46,7 +46,6 @@
   padding: 1em 0;
   overflow-y: auto;
   user-select: none; // so you only select text and not entire chat menu
-  transition: @run_fast @run @bezier_fadein;
   span {
     user-select: auto; // so you only select text and not entire chat menu
     white-space: pre-wrap; // honors new line (shift + enter)
