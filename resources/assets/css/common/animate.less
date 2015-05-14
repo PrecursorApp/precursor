@@ -142,14 +142,14 @@
   @run5: (@run)      ((extract(@run4, 1) * 0.05) + extract(@run4, 2));
   .inner      {animation: opened-menu-inner      @run1 backwards;}
   .background {animation: opened-menu-background @run2 backwards;}
-  .canvas     {animation: opened-menu-canvas     @run3 backwards;}
-  .chat       {animation: opened-menu-chat       @run4 backwards;}
+  .chat       {animation: opened-menu-chat       @run3 backwards;}
+  .canvas     {animation: opened-menu-canvas     @run4 backwards;}
   .foreground {animation: opened-menu-foreground @run5 backwards;}
 }
 .animate_menu_closed() {
-  @run1: (@run_fast) (@now);
-  @run2: (@run)      ((extract(@run1, 1) * 0.55) + extract(@run1, 2));
-  @run3: (@run_fast) ((extract(@run2, 1) * 0.34) + extract(@run2, 2));
+  @run1: (@run) (@now);
+  @run2: (@run) ((extract(@run1, 1) * 0.55) + extract(@run1, 2));
+  @run3: (@run) ((extract(@run2, 1) * 0.21) + extract(@run2, 2));
   .background {animation: closed-menu-background @run1 backwards;}
   .canvas     {animation: closed-menu-canvas     @run2 backwards;}
   .chat       {animation: closed-menu-chat       @run3 backwards;}
