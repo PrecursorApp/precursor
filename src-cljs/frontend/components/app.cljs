@@ -59,7 +59,8 @@
                                       (when (:show-landing? app) " state-outer ")
                                       (if chat-opened? " chat-opened " " chat-closed ")
                                       (when (keyboard/pan-shortcut-active? app) " state-pan ")
-                                      (when (= (:page-count app) 1) "entry"))}
+                                      (when (= (:page-count app) 1) " entry ")
+                                      " outer-to-inner ")}
             (om/build text-sizer {})
 
             (when (and (keyword-identical? :document nav-point)
@@ -74,7 +75,7 @@
             [:div.inner (merge {:class (when (empty? (:frontend-id-state app)) "loading")
                                 :key "inner"})
              [:style "#om-app:active{cursor:auto}"]
-             [:div.background]
+             [:div.background {:key "inner-background"}]
              (om/build canvas/canvas (select-in app [state/chat-opened-path
                                                      state/current-tool-path
                                                      state/right-click-learned-path

@@ -966,6 +966,7 @@
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
+                      :key "svg-canvas"
                       :className (str "canvas-frame "
                                       (cond (keyboard/arrow-shortcut-active? app) " arrow-tool "
                                             (keyboard/pan-shortcut-active? app) " pan-tool "

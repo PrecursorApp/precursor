@@ -14,7 +14,9 @@ body {
   background: @dye_outer;
   animation: in-fade @run_slower;
   &:not(.entry) {
-    .animate_menu_closed();
+    &:not(.outer-to-inner) {
+      .animate_menu_closed();
+    }
   }
   &.chat-opened {
     .width-canvas {
