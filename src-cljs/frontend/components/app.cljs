@@ -60,7 +60,9 @@
                                       (when (:show-landing? app) " state-outer ")
                                       (if chat-opened? " chat-opened " " chat-closed ")
                                       (when (keyboard/pan-shortcut-active? app) " state-pan ")
-                                      (when (<= (:page-count app) 1) " entry ")
+                                      (when (and (not= (:navigation-point app) :issues-list)
+                                                 (<= (:page-count app) 1))
+                                        " entry ")
                                       (when (:outer-to-inner? app) " outer-to-inner ")
                                       (when (:menu-to-inner? app) " menu-to-inner "))}
             (om/build text-sizer {})
