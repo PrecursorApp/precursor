@@ -191,7 +191,8 @@
 (defmethod navigated-to :new
   [history-imp navigation-point args state]
   (-> (navigated-default navigation-point args state)
-    state/reset-state))
+    state/reset-state
+    (assoc :page-count 0)))
 
 (defmethod post-navigated-to! :new
   [history-imp navigation-point _ previous-state current-state]
