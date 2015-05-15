@@ -98,6 +98,9 @@
   overflow: hidden;
   cursor: default;
   animation: in-fade-bottom-soft @run_slow @bezier_deform;
+  .mq_640({
+    animation-name: in-fade-top-soft;
+  });
   &:not(:last-of-type) {
     display: none;
   }
@@ -110,6 +113,7 @@
   padding-top: 10vh;
   overflow: hidden;
   .mq_640({
+    margin-top: @tile;
     padding-top: @menu_padding;
   });
 }
