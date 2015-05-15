@@ -51,8 +51,8 @@
   (when (overlay-visible? state)
     (str " state-menu "
          (if (roster-overlay? (current-overlay state))
-           " state-menu-right "
-           " state-menu-left "))))
+           " menu-right "
+           " menu-left "))))
 
 (defn roster-overlay-visible? [state]
   (some roster-overlays (get-in state state/overlays-path)))

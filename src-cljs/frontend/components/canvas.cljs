@@ -966,6 +966,7 @@
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
+                      :key "svg-canvas"
                       :className (str "canvas-frame "
                                       (cond (keyboard/arrow-shortcut-active? app) " arrow-tool "
                                             (keyboard/pan-shortcut-active? app) " pan-tool "
@@ -1128,20 +1129,19 @@
     (render [_]
       (html
        [:div.canvas (merge
-                     {:onContextMenu (fn [e]
-                                       (.preventDefault e)
-                                       (.stopPropagation e))
-                      :tabIndex 1}
-                     (when (needs-copy-paste-hack?)
-                       ;; gives focus to our copy/paste element, so that we can copy
-                       {:onKeyDown #(do (utils/swallow-errors
-                                         (let [key-set (keyq/event->key %)
-                                               hack-node (goog.dom/getElement "_copy-hack")]
-                                           (when (contains? #{#{"ctrl"} #{"meta"}} key-set)
-                                             (when-let [hack-node (goog.dom/getElement "_copy-hack")]
-                                               (gforms/focusAndSelect hack-node)))))
-                                        true)}))
-        [:div.canvas-background]
+                      {:onContextMenu (fn [e]
+                                        (.preventDefault e)
+                                        (.stopPropagation e))
+                       :tabIndex 1}
+                      (when (needs-copy-paste-hack?)
+                        ;; gives focus to our copy/paste element, so that we can copy
+                        {:onKeyDown #(do (utils/swallow-errors
+                                           (let [key-set (keyq/event->key %)
+                                                 hack-node (goog.dom/getElement "_copy-hack")]
+                                             (when (contains? #{#{"ctrl"} #{"meta"}} key-set)
+                                               (when-let [hack-node (goog.dom/getElement "_copy-hack")]
+                                                 (gforms/focusAndSelect hack-node)))))
+                                       true)}))
         (when (needs-copy-paste-hack?)
           (om/build copy-paste-hack app))
         (om/build svg-canvas app)

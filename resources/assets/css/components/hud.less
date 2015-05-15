@@ -374,7 +374,6 @@
   max-width: 100%;
   height: @tile;
   pointer-events: none;
-  transition: width @run_slow @run @bezier_deform;
   .mq_640({
     display: none;
   });
@@ -429,7 +428,7 @@
   margin: auto;
   &:before,
   &:after {
-    animation: in-fade-bottom @run_slower @bezier_deform;
+    animation: in-fade-bottom @run_slow @bezier_deform;
   }
   &:hover {
     color: @white;
@@ -452,11 +451,7 @@
   left: 0;
   width: 100%;
   height: 1.125rem;
-  transition: opacity @run_slower @bezier_fadein;
-  &:before,
-  &:after {
-    animation: in-fade-bottom @run_slower @run_fast @bezier_deform backwards;
-  }
+  animation: in-fade-bottom @run_slow @run @bezier_deform backwards;
   .mouse-stats {
     opacity: @opacity_darker_dark;
     pointer-events: auto;

@@ -122,7 +122,7 @@
             document (d/entity @(om/get-shared owner :db) (:document/id app))
             rejected-tx-count (get-in app (state/doc-tx-rejected-count-path (:document/id app)))]
         (html
-         [:div.hud-tray.hud-item.width-canvas
+         [:div.hud-tray.hud-item.width-canvas {:key (str "hud-tray-" chat-opened?)}
           (when new-here?
             (html
              [:div.new-here
