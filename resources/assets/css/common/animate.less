@@ -147,7 +147,7 @@
   .foreground {animation: opened-menu-foreground @run5 ease-in backwards;}
 }
 .animate_menu_closed() {
-  @run1: (@run) (@now);
+  @run1: (@run) (@run_faster);
   @run2: (@run) ((extract(@run1, 1) * 0.21) + extract(@run1, 2));
   @run3: (@run) ((extract(@run2, 1) * 0.13) + extract(@run2, 2));
   .background {animation: closed-menu-background @run1 ease-out backwards;}

@@ -143,7 +143,9 @@
   }
 }
 .chat-closed {
-  .animate_chat_closed();
+  &:not(.entry) {
+    .animate_chat_closed();
+  }
   .width-canvas {
     width: 100%;
   }
