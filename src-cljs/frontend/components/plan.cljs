@@ -192,7 +192,7 @@
 
 (defn payment [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
-    om/IDisplayName (display-name "Plan payment")
+    om/IDisplayName (display-name [_] "Plan payment")
     om/IRender
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
