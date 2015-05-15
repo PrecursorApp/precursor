@@ -124,6 +124,7 @@
 
 (defn your-teams [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Your Teams Overlay")
     om/IDidMount
     (did-mount [_]
       (sente/send-msg (om/get-shared owner :sente) [:cust/fetch-teams]

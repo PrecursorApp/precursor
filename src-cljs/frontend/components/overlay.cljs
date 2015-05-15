@@ -34,6 +34,7 @@
 (defn share-input [{:keys [url placeholder]
                     :or {placeholder "Copy the url to share"}} owner]
   (reify
+    om/IDisplayName (display-name [_] "Share input")
     om/IRender
     (render [_]
       (html

@@ -57,13 +57,13 @@
 
 (defn team-signup [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Team Signup")
     om/IInitState (init-state [_] {:subdomain ""
                                    :error nil
                                    :submitting? false
                                    :submitted? false
                                    :team-created? false
                                    :team nil})
-    om/IDisplayName (display-name [_] "Team Signup")
     om/IRenderState
     (render-state [_ {:keys [subdomain submitting? error submitted? team-created? team]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)

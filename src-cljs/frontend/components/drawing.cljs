@@ -592,8 +592,8 @@
 
 (defn landing-background [{:keys [subscribers]} owner]
   (reify
-    om/IInitState (init-state [_] {:layer-source (utils/uuid)})
     om/IDisplayName (display-name [_] "Landing Animation")
+    om/IInitState (init-state [_] {:layer-source (utils/uuid)})
     om/IDidMount
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(
