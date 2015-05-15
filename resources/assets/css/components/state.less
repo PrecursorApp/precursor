@@ -2,7 +2,9 @@
 // IMPORTANT VISUAL CHANGES WHILE MENU IS ACTIVE
 //
 .state-menu {
-  .animate_menu_opened();
+  &:not(.entry) {
+    .animate_menu_opened();
+  }
   &.menu-left {
     .inner { .inner_offset(left); }
     .hud-menu { .hud_menu_morph(); }
