@@ -242,9 +242,7 @@
                             "Change your color."
                             "Login to change your color.")
                    :key self-color}
-                  (if (= :touch (get-in app [:mouse-type]))
-                    (common/icon :phone (when show-mouse? {:path-props {:className (name self-color)}}))
-                    (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}})))]
+                  (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}}))]
                  [:div.viewer-name.viewer-tag
                   (let [submit-fn #(do (when-not (str/blank? (om/get-state owner :new-name))
                                          (cast! :self-updated {:name (om/get-state owner :new-name)}))
