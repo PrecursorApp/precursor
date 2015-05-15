@@ -737,7 +737,6 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             [rx ry] (om/get-state owner :mouse-pos)
-            camera (cursors/observe-camera owner)
             center (layers/center layer)]
         (dom/g #js {:className "arrow-handle-group"}
           (when (and rx ry)
@@ -749,6 +748,7 @@
                              :y2 ry
                              :markerEnd "url(#arrow-point)"})))
           (svg-element (assoc layer
+                              :key (str (:db/id layer) "-handler")
                               :className (str "arrow-handle "
                                               (when (om/get-state owner :hovered?)
                                                 "hovered "))
@@ -764,7 +764,8 @@
                                              (om/set-state! owner
                                                             :mouse-pos
                                                             (apply cameras/screen->point
-                                                                   camera
+                                                                   ;; bad idea in general, but without this panning is completely broken
+                                                                   (:camera @(om/get-shared owner :_app-state-do-not-use))
                                                                    (cameras/screen-event-coords e))))
                               :onMouseDown (fn [e]
                                              (utils/stop-event e)
@@ -778,7 +779,8 @@
                                                   {:dest layer
                                                    :x (first (cameras/screen-event-coords e))
                                                    :y (second (cameras/screen-event-coords e))}))))
-          (svg-element (assoc layer :className "arrow-outline")))))))
+          (svg-element (assoc layer :className "arrow-outline"
+                              :key (str (:db/id layer) "-outline"))))))))
 
 (defn arrows [app owner]
   (reify
