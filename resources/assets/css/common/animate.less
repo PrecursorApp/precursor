@@ -155,7 +155,7 @@
   .chat       {animation: closed-menu-canvas     @run3 ease-out backwards;}
 }
 .animate_chat_opened() {
-  @run1: (@run)      (@now);
+  @run1: (@run)      (@run_faster);
   @run2: (@run_slow) ((extract(@run1, 1) * 0.34) + extract(@run1, 2));
   @run3: (@run)      ((extract(@run2, 1) * 0.21) + extract(@run2, 2));
   @run4: (@run_slow) ((extract(@run3, 1) * 0.13) + extract(@run3, 2));
