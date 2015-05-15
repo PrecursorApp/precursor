@@ -653,3 +653,38 @@
      [:div
       [:input {:type "submit" :value "Remove"}]]]]
    ])
+
+(defn issue-info [issue]
+  (list
+   [:style "body { padding: 2em; }td, th { padding: 5px; text-align: left }"]
+   [:table {:border 1}
+    [:tr
+     [:td "Title"]
+     [:td (h/h (:issue/title issue))]]
+    [:tr
+     [:td "Description"]
+     [:td (h/h (:issue/description issue))]]
+    [:tr
+     [:td "Created"]
+     [:td (:issue/created-at issue)]]
+    [:tr
+     [:td "Author"]
+     [:td (cust-link (:issue/author issue))]]
+    [:tr
+     [:td "Voters"]
+     [:td (interleave (map (comp cust-link :vote/cust) (:issue/votes issue))
+                      (repeat " "))]]]
+   [:h4 "Comments"]
+   (if (empty? (:issue/comments issue))
+     [:p "no comments :("]
+     (for [comment (reverse (sort-by :comment/created-at (:issue/comments issue)))]
+       [:table {:border 1}
+        [:tr
+         [:td "Author"]
+         [:td (cust-link (:comment/author comment))]]
+        [:tr
+         [:td "Created"]
+         [:td (h/h (:comment/created-at comment))]]
+        [:tr
+         [:td "Body"]
+         [:td (h/h (:comment/body comment))]]]))))
