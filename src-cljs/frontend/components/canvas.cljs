@@ -156,6 +156,7 @@
 
 (defn layer-group [{:keys [layer-id tool selected? part-of-group? live?]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Layer Group")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -185,7 +186,6 @@
       (fdb/remove-attribute-listener (om/get-shared owner :db)
                                      :layer/ui-id
                                      (om/get-state owner :listener-key)))
-    om/IDisplayName (display-name [_] "Layer Group")
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -383,9 +383,9 @@
 
 (defn issue [{:keys [document-id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Issue layer")
     om/IInitState (init-state [_] {:layer-source (utils/uuid)
                                    :listener-key (.getNextUniqueId (.getInstance IdGenerator))})
-    om/IDisplayName (display-name [_] "Issue layer")
     om/IDidMount
     (did-mount [_]
       (fdb/add-attribute-listener (om/get-shared owner :issue-db)
@@ -726,6 +726,7 @@
 
 (defn arrow-handle [layer owner]
   (reify
+    om/IDisplayName (display-name [_] "Arrow handle")
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
       ;; prevent arrow-hint popping up right after we make a new relation
@@ -736,7 +737,6 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             [rx ry] (om/get-state owner :mouse-pos)
-            camera (cursors/observe-camera owner)
             center (layers/center layer)]
         (dom/g #js {:className "arrow-handle-group"}
           (when (and rx ry)
@@ -748,6 +748,7 @@
                              :y2 ry
                              :markerEnd "url(#arrow-point)"})))
           (svg-element (assoc layer
+                              :key (str (:db/id layer) "-handler")
                               :className (str "arrow-handle "
                                               (when (om/get-state owner :hovered?)
                                                 "hovered "))
@@ -763,7 +764,8 @@
                                              (om/set-state! owner
                                                             :mouse-pos
                                                             (apply cameras/screen->point
-                                                                   camera
+                                                                   ;; bad idea in general, but without this panning is completely broken
+                                                                   (:camera @(om/get-shared owner :_app-state-do-not-use))
                                                                    (cameras/screen-event-coords e))))
                               :onMouseDown (fn [e]
                                              (utils/stop-event e)
@@ -777,10 +779,12 @@
                                                   {:dest layer
                                                    :x (first (cameras/screen-event-coords e))
                                                    :y (second (cameras/screen-event-coords e))}))))
-          (svg-element (assoc layer :className "arrow-outline")))))))
+          (svg-element (assoc layer :className "arrow-outline"
+                              :key (str (:db/id layer) "-outline"))))))))
 
 (defn arrows [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Arrows")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                                    :arrow-eids (find-arrow-eids @(om/get-shared owner :db))})
     om/IDidMount
@@ -1099,6 +1103,7 @@
   "Creates a special element that we can give focus to on copy and paste"
   [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Copy/paste hack")
     om/IRender
     (render [_]
       (let [eids (:selected-eids (cursors/observe-selected-eids owner))

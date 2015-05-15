@@ -25,7 +25,7 @@
     (put! nav-ch [:landing {:query-params query-params
                             :utm-campaign "product-hunt"}]))
 
-  (defroute product-hunt "/designer-news" {:keys [query-params]}
+  (defroute designer-news "/designer-news" {:keys [query-params]}
     (put! nav-ch [:landing {:query-params query-params
                             :utm-campaign "designer-news"}]))
 

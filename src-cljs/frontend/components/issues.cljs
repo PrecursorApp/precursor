@@ -145,6 +145,7 @@
 
 (defn cust-name-form [{:keys [cust-name]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Cust name form")
     om/IInitState (init-state [_] {:editing? true :editing-name nil})
     om/IDidUpdate
     (did-update [_ _ prev-state]
@@ -194,6 +195,7 @@
   If current cust authored the post and has no name, shows a set name form"
   [{:keys [author-uuid uuid->cust]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Author byline")
     om/IRender
     (render [_]
       (let [cust-name (get-in uuid->cust [author-uuid :cust/name])]

@@ -25,6 +25,7 @@
             [goog.dom.Range]
             [goog.dom.selection]
             [goog.labs.userAgent.browser :as ua]
+            [goog.userAgent]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -33,6 +34,7 @@
 (defn share-input [{:keys [url placeholder]
                     :or {placeholder "Copy the url to share"}} owner]
   (reify
+    om/IDisplayName (display-name [_] "Share input")
     om/IRender
     (render [_]
       (html
@@ -577,8 +579,9 @@
 (defn shortcuts [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Shortcuts")
-    om/IRender
-    (render [_]
+    om/IInitState (init-state [_] {:mac? goog.userAgent/MAC})
+    om/IRenderState
+    (render-state [_ {:keys [mac?]}]
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:section.menu-view
@@ -629,19 +632,25 @@
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                (if mac?
+                  [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                  [:div.shortcuts-key {:title "Control Key"} "Ctrl"])
                 [:div.shortcuts-key {:title "C Key"} "C"]]]
               [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                (if mac?
+                  [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                  [:div.shortcuts-key {:title "Control Key"} "Ctrl"])
                 [:div.shortcuts-key {:title "V Key"} "V"]]]
               [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                (if mac?
+                  [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                  [:div.shortcuts-key {:title "Control Key"} "Ctrl"])
                 [:div.shortcuts-key {:title "Z Key"} "Z"]]]
               [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
              ;;
@@ -652,7 +661,9 @@
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                (if mac?
+                  [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                  [:div.shortcuts-key  {:title "Alt Key"} "Alt"])
                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
               [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
              [:tr.make
@@ -681,16 +692,17 @@
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                (if mac?
+                  [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                  [:div.shortcuts-key  {:title "Alt Key"} "Alt"])
                 [:div.shortcuts-misc {:title "Left Click + Drag"} (common/icon :click)]]]
               [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Control Key"} (common/icon :control)]
-                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-key {:title "A key"} "A"]
                 [:div.shortcuts-misc {:title "Left Click + Drag"} (common/icon :click)]]]
-              [:td [:div.shortcuts-result {:title "Hold control & shift, drag shape."} "Connect"]]]
+              [:td [:div.shortcuts-result {:title "Hold A, click shape borders."} "Connect"]]]
              ]]]])))))
 
 (defn username [app owner]

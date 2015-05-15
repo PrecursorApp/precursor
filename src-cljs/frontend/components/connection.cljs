@@ -13,6 +13,7 @@
 
 (defn connection-info [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Connection Info")
     om/IDidMount
     (did-mount [_]
       (add-watch (get-in app [:sente :state])
