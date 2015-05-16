@@ -224,9 +224,7 @@
       width: @tile_viewers - @tile; // VETO
       padding-bottom: 1rem;
       .mq_640({
-        box-sizing: border-box;         // VETO
-        width: ~"calc(100vw - @{tile})"; // VETO
-        padding-bottom: 0;               // VETO
+        width: ~"calc(100vw -" (2 * @tile) ~")"; // VETO
       });
     }
   }
@@ -236,9 +234,7 @@
       width: @tile_viewers - @tile; // VETO
       padding-bottom: 1rem;
       .mq_640({
-        box-sizing: border-box;         // VETO
-        width: ~"calc(100vw - @{tile})"; // VETO
-        padding-bottom: 0;               // VETO
+        width: ~"calc(100vw -" (2 * @tile) ~")"; // VETO
       });
     }
   }
