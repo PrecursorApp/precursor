@@ -143,6 +143,20 @@
   .width-chat {
     .size_of(chat; width);
   }
+  .hud-viewers {
+    &:after {
+      .mq_640({
+        top: -@menu_padding;
+        left: 0;
+        animation: in-fade-bottom @run;
+      });
+    }
+  }
+  .viewers-list {
+    .mq_640({
+      display: none;
+    });
+  }
 }
 .chat-closed {
   &:not(.entry) {
