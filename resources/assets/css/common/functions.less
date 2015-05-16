@@ -279,10 +279,11 @@
 }
 .mask_canvas() {
   // firefox mask css is in pc.views.commonhead-styl.head-style
+  @mask_left_margin: ~"calc(" (1% * @chat_0640) ~"-" @tile ~")";
   .mq_1920({ mask-image: linear-gradient(to left, fade(@black, 0) (1% * @chat_1920), @black (1% * @chat_1920)); });
   .mq_1600({ mask-image: linear-gradient(to left, fade(@black, 0) (1% * @chat_1600), @black (1% * @chat_1600)); });
   .mq_1280({ mask-image: linear-gradient(to left, fade(@black, 0) (1% * @chat_1280), @black (1% * @chat_1280)); });
   .mq_960({  mask-image: linear-gradient(to left, fade(@black, 0) (1% * @chat_0960), @black (1% * @chat_0960)); });
-  .mq_640({  mask-image: linear-gradient(to left, fade(@black, 0) (1% * @chat_0640), @black (1% * @chat_0640)); });
+  .mq_640({  mask-image: linear-gradient(to left, fade(@black, 0) @mask_left_margin, @black @mask_left_margin); });
              mask-image: linear-gradient(to left, fade(@black, 0) (1% * @size_chat), @black (1% * @size_chat));
 }
