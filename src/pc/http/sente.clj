@@ -1020,6 +1020,19 @@
   [client-id]
   ((:send-fn @sente-state) client-id [:frontend/stats]))
 
+(defn cleanup-stale [doc-id]
+  (let [subs @document-subs
+        now (pc.utils/inspect (time/now))
+        doc-uids (keys (get subs doc-id))]
+    (doseq [uid doc-uids]
+      (fetch-stats uid))
+    (Thread/sleep 3000)
+    (doseq [[uid stats] (remove (fn [[_ s]]
+                                  (and (:last-update s)
+                                       (time/after? (:last-update s) now)))
+                                (select-keys @client-stats doc-uids))]
+      (close-ws uid))))
+
 (defn init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket!
