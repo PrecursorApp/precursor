@@ -737,7 +737,8 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             [rx ry] (om/get-state owner :mouse-pos)
-            center (layers/center layer)]
+            center (layers/center layer)
+            text? (keyword-identical? :layer.type/text (:layer/type layer))]
         (dom/g #js {:className "arrow-handle-group"}
           (when (and rx ry)
             (dom/g nil
@@ -750,6 +751,7 @@
           (svg-element (assoc layer
                               :key (str (:db/id layer) "-handler")
                               :className (str "arrow-handle "
+                                              (when text? "arrow-outline ")
                                               (when (om/get-state owner :hovered?)
                                                 "hovered "))
                               ;; hack to workaround missing hover effect when holding "a"
@@ -779,8 +781,12 @@
                                                   {:dest layer
                                                    :x (first (cameras/screen-event-coords e))
                                                    :y (second (cameras/screen-event-coords e))}))))
-          (svg-element (assoc layer :className "arrow-outline"
-                              :key (str (:db/id layer) "-outline"))))))))
+          (when-not text?
+            (svg-element (assoc layer :className "arrow-outline"
+                                :onMouseEnter (fn [e]
+                                                (utils/inspect e)
+                                                (om/set-state! owner :hovered? true))
+                                :key (str (:db/id layer) "-outline")))))))))
 
 (defn arrows [app owner]
   (reify
