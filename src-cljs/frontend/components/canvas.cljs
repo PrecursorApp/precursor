@@ -39,7 +39,7 @@
 
 (defmethod svg-element :default
   [layer]
-  (print "No svg element for " layer))
+  (utils/mlog "No svg element for " layer))
 
 (defn maybe-add-selected [svg-layer layer]
   (if (:selected? layer)
