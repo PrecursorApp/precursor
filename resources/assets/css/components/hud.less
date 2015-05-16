@@ -145,7 +145,7 @@
     .flexy(center; center);
     content: attr(data-count);
     font-family: @font_mono;
-    font-size: .875rem;
+    font-size: .75rem;
     color: fade(@white, 50);
     position: absolute;
     top: 0;
@@ -165,7 +165,7 @@
     font-size: 1rem;
     .icon(stroke; 10);
     &:after {
-      left: 1.5rem;
+      left: @menu_padding;
     }
     .icon-user {
       display: none;
@@ -181,11 +181,6 @@
   animation: in-fade-bottom @run_slow @bezier_deform backwards;
   width: @tile_viewers;
   overflow: hidden;
-  .mq_640({
-    width: 100vw;
-    background: @dye_inner;
-    border-top: 1px solid @gray_dark;
-  });
   &:hover {
     .viewer {
       animation-duration: @now;
@@ -199,9 +194,6 @@
   max-height: ((@tile_viewers_height * 5) - (@tile_viewers_height / 2));
   overflow-y: scroll;
   overflow-x: hidden;
-  .mq_640({
-    max-height: @tile * 4;
-  });
   &:hover {
     .viewer-self {
       &:not(:hover) {
@@ -215,13 +207,12 @@
 .viewer {
   .selection(@white; (100 * @opacity_darker_dark)); // TODO move viewer list into canvas div
   .animation_cascade(10);
+  .flexy(center);
   animation: in-fade-bottom @run_fast @bezier_deform backwards;
   flex: 0 0 @tile_viewers_height;
-  .flexy(center);
   width: @tile_viewers;
   padding-left: @tile;
   .mq_640({
-    flex: 0 0 @tile;
     width: ~"calc(100vw - @{tile})";
   });
   &:nth-child(2)   {
