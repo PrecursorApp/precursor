@@ -184,11 +184,7 @@
                                 ;; add one for the dummy message
                                 (+ (if dummy-chat? 1 0) unread-chat-count))]
         (html
-          [:a.hud-chat.hud-item.hud-toggle {:on-click (if show-viewers?
-                                                        #(do
-                                                           (cast! :chat-toggled)
-                                                           (cast! :viewers-closed))
-                                                        #(cast! :chat-toggled))
+          [:a.hud-chat.hud-item.hud-toggle {:on-click #(cast! :chat-toggled)
                                             :on-touch-end #(do
                                                              (.preventDefault %)
                                                              (if show-viewers?
@@ -318,11 +314,7 @@
 
           [:a.hud-viewers.hud-item.hud-toggle {:on-click (if show-viewers?
                                                            #(cast! :viewers-closed)
-                                                           (if chat-opened?
-                                                             #(do
-                                                                (cast! :chat-toggled)
-                                                                (cast! :viewers-opened))
-                                                             #(cast! :viewers-opened)))
+                                                           #(cast! :viewers-opened))
                                                :on-touch-end #(do
                                                                 (.preventDefault %)
                                                                 (if show-viewers?

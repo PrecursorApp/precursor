@@ -144,15 +144,18 @@
     .size_of(chat; width);
   }
   .hud-viewers {
-    &:not(.close) {
-      &:after {
-        .mq_640({
-          top: -@menu_padding;
-          left: 0;
-          animation: in-fade-bottom @run;
-        });
-      }
+    &:after {
+      .mq_640({
+        top: -@menu_padding;
+        left: 0;
+        animation: in-fade-bottom @run;
+      });
     }
+  }
+  .viewers-list {
+    .mq_640({
+      display: none;
+    });
   }
 }
 .chat-closed {
