@@ -14,9 +14,9 @@
 (defn init []
   (dosync (ref-set talaria-state (let [ch (async/chan (async/sliding-buffer 1024))]
                                    {:connections {}
-                                    :stats {}
                                     :msg-ch ch
-                                    :msg-mult (async/mult ch)})))
+                                    :msg-mult (async/mult ch)
+                                    :stats {}})))
   talaria-state)
 
 (defn tap-msg-ch [talaria-state]
@@ -168,3 +168,12 @@
       (when res
         (record-send tal-state ch-id msg))
       res)))
+
+
+;; debug methods
+(defn send-all [tal-state msg]
+  (doseq [[id _] (:connections @talaria-state)]
+    (send! tal-state id msg)))
+
+(defn all-channels [talaria-state]
+  (map (comp :channel second) (:connections @talaria-state)))
