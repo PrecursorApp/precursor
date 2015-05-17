@@ -1022,7 +1022,7 @@
 
 (defn cleanup-stale [doc-id]
   (let [subs @document-subs
-        now (pc.utils/inspect (time/now))
+        now (time/now)
         doc-uids (keys (get subs doc-id))]
     (doseq [uid doc-uids]
       (fetch-stats uid))
