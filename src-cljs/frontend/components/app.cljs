@@ -23,6 +23,7 @@
             [frontend.keyboard :as keyboard]
             [frontend.overlay]
             [frontend.state :as state]
+            [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in select-in]]
             [om.core :as om :include-macros true]
@@ -55,9 +56,15 @@
         (if-let [nav-point (:navigation-point app)]
           (html
            [:div#app.app {:class (str (frontend.overlay/app-overlay-class app)
+                                      (when-not (or (:show-landing? app) overlay-visible?) " state-inner ")
                                       (when (:show-landing? app) " state-outer ")
                                       (if chat-opened? " chat-opened " " chat-closed ")
-                                      (when (keyboard/pan-shortcut-active? app) " state-pan "))}
+                                      (when (keyboard/pan-shortcut-active? app) " state-pan ")
+                                      (when (and (not= (:navigation-point app) :issues-list)
+                                                 (<= (:page-count app) 1))
+                                        " entry ")
+                                      (when (:outer-to-inner? app) " outer-to-inner ")
+                                      (when (:menu-to-inner? app) " menu-to-inner "))}
             (om/build text-sizer {})
 
             (when (and (keyword-identical? :document nav-point)
@@ -67,15 +74,14 @@
                                                :camera (:camera app)}
                         {:react-key "signup-animation"}))
 
-            (when overlay-visible?
-              (om/build overlay/overlay app {:react-key "overlay"}))
+            (om/build overlay/overlay app {:react-key "overlay"})
 
-            [:div.inner {:on-click (when overlay-visible?
-                                     #(cast! :overlay-closed))
-                         :class (when (empty? (:frontend-id-state app)) "loading")
-                         :key "inner"}
+            [:div.inner (merge {:class (when (empty? (:frontend-id-state app)) "loading")
+                                :key "inner"})
              [:style "#om-app:active{cursor:auto}"]
-             (om/build canvas/canvas (select-in app [state/current-tool-path
+             [:div.background {:key "inner-background"}]
+             (om/build canvas/canvas (select-in app [state/chat-opened-path
+                                                     state/current-tool-path
                                                      state/right-click-learned-path
                                                      [:drawing :in-progress?]
                                                      [:drawing :relation-in-progress?]
@@ -97,8 +103,16 @@
                                                  [:client-id]
                                                  [:show-landing?]
                                                  [:cust-data]
+                                                 [:chat]
                                                  [:navigation-data]])
-                       {:react-key "chat"})]
+                       {:react-key "chat"})
+             (when overlay-visible?
+               [:div.foreground {:on-click #(cast! :overlay-escape-clicked)
+                                 :on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}
+                [:div.border.border-top]
+                [:div.border.border-bottom]
+                [:div.border.border-left]
+                [:div.border.border-right]])]
 
             (om/build hud/hud (select-in app [state/chat-opened-path
                                               state/overlays-path
@@ -125,7 +139,8 @@
                                                     [:cust]
                                                     [:subscribers :info]
                                                     [:page-count]
-                                                    [:show-scroll-to-arrow]])
+                                                    [:show-scroll-to-arrow]
+                                                    state/browser-settings-path])
                         {:react-key "outer"}))
 
             (om/build rtc/rtc (select-in app [[:subscribers :info]])

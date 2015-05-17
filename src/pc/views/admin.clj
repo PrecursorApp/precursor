@@ -1,5 +1,6 @@
 (ns pc.views.admin
-  (:require [clj-time.coerce]
+  (:require [cheshire.core :as json]
+            [clj-time.coerce]
             [clj-time.format]
             [clj-time.core :as time]
             [clojure.string]
@@ -14,18 +15,32 @@
             [pc.models.cust :as cust-model]
             [pc.models.chat :as chat-model]
             [pc.models.doc :as doc-model]
+            [pc.models.plan :as plan-model]
             [pc.models.permission :as permission-model]
             [pc.replay :as replay]
+            [pc.stripe.dev :as stripe-dev]
             [ring.util.anti-forgery :as anti-forgery]))
 
-(defn interesting [doc-ids]
+(defn cust-link [cust]
+  [:a {:href (str "/user/" (:cust/email cust))}
+   (:cust/email cust)])
+
+(defn team-link [team]
+  [:a {:href (str "/team/" (:team/subdomain team))}
+   (:team/subdomain team)])
+
+(defn doc-link [doc]
+  [:a {:href (urls/from-doc doc)}
+   (:db/id doc)])
+
+(defn interesting [docs]
   [:div.interesting
-   (if-not (seq doc-ids)
-     [:p "No interesting docs"])
-   (for [doc-id doc-ids]
+   (if-not (seq docs)
+     [:p "Nothing to show"])
+   (for [doc docs]
      [:div.doc-preview
-      [:a {:href (str "/document/" doc-id)}
-       [:img {:src (urls/doc-svg doc-id)}]]])])
+      [:a {:href (str "/document/" (:db/id doc))}
+       [:img {:src (urls/svg-from-doc doc)}]]])])
 
 (defn count-users [db time]
   (count (seq (d/datoms (d/as-of db (clj-time.coerce/to-date time))
@@ -244,17 +259,6 @@
                    (d/datoms db :aevt :team/subdomain))]
     (list
      [:style "td, th { padding: 5px; text-align: left }"]
-     [:form {:action "/create-team" :method "post"}
-      (anti-forgery/anti-forgery-field)
-      [:table
-       [:tr
-        [:td "Subdomain"]
-        [:td [:input {:type "text" :name "subdomain"}]]]
-       [:tr
-        [:td "Customer email address"]
-        [:td [:input {:type "text" :name "cust-email"}]]]
-       [:tr [:td {:colspan 2}
-             [:input {:type "submit" :value "Create team"}]]]]]
      (if-not (seq teams)
        [:h4 "Couldn't find any teams :("]
        (list
@@ -262,13 +266,30 @@
          [:table {:border 1}
           [:tr
            [:th "subdomain"]
+           [:th "doc-count"]
+           [:th "status"]
+           [:th "trial-end"]
+           [:th "coupon"]
+           [:th "creator"]
+           [:th "active"]
            [:th "members"]]
-          (for [team teams]
+          (for [team teams
+                :let [plan (:team/plan team)]]
             [:tr
-             [:td [:a {:href (urls/root :subdomain (h/h (:team/subdomain team)))}
-                   (h/h (:team/subdomain team))]]
+             [:td (team-link team)]
+             [:td (count (seq (d/datoms db :vaet (:db/id team) :document/team)))]
+             [:td (cond (:plan/paid? plan) "paid"
+                        (not (plan-model/trial-over? plan)) "trial"
+                        :else "trial expired")]
+             [:td (:plan/trial-end plan)]
+             [:td (:discount/coupon (:team/plan team))]
+             [:td (cust-link (:team/creator team))]
+             [:td (let [active (:plan/active-custs plan)]
+                    (interleave (map cust-link active)
+                                (repeat " ")))]
              [:td (let [permissions (permission-model/find-by-team db team)]
-                    (clojure.string/join ", " (map (comp :cust/email :permission/cust-ref) permissions)))]])]])))))
+                    (interleave (map (comp cust-link :permission/cust-ref) permissions)
+                                (repeat " ")))]])]])))))
 
 (defn format-runtime [ms]
   (let [h (int (Math/floor (/ ms (* 1000 60 60))))
@@ -391,13 +412,29 @@
     (for [[k v] (sort-by first (into {} cust))]
       [:tr
        [:td (h/h (str k))]
-       [:td (render-cust-prop k v)]])]))
+       [:td (render-cust-prop k v)]])
+    [:tr
+     [:td "Teams"]
+     [:td (interleave (->> cust
+                        (permission-model/find-team-permissions-for-cust (pcd/default-db))
+                        (map :permission/team)
+                        (sort-by :team/subdomain)
+                        (map team-link))
+                      (repeat " "))]]]))
 
 (defn doc-info [doc auth]
   (let [db (pcd/default-db)]
     (list
      [:style "td, th { padding: 5px; text-align: left }"]
+     (when-not (contains? (:document/tags doc) "admin/interesting")
+       [:form {:action (str "/document/" (:db/id doc) "/mark-interesting")
+               :method "post"}
+        (anti-forgery/anti-forgery-field)
+        [:input {:type "submit" :value "Mark interesting"}]])
      [:table {:border 1}
+      [:tr
+       [:td "Tags"]
+       [:td (:document/tags doc)]]
       [:tr
        [:td "Chat count"]
        [:td (count (seq (d/datoms db :vaet (:db/id doc) :chat/document)))]]
@@ -408,6 +445,14 @@
        [:td {:title "Number of clients connected right now"}
         "Client count"]
        [:td (count (get @sente/document-subs (:db/id doc)))]]
+      [:tr
+       [:td "Owner"]
+       [:td (some->> doc
+              :document/creator
+              (cust-model/find-by-uuid db)
+              :cust/email
+              ((fn [e]
+                 [:a {:href (str "/user/" e)} e])))]]
       (let [emails (d/q '{:find [[?email ...]]
                           :in [$ ?doc-id]
                           :where [[?t :transaction/document ?doc-id]
@@ -436,6 +481,10 @@
        [:td [:a {:href (urls/svg-from-doc doc)}
              (:db/id doc)]]]
       [:tr
+       [:td "Replay helper"]
+       [:td [:a {:href (str "/replay-helper/" (:db/id doc))}
+             (:db/id doc)]]]
+      [:tr
        [:td "Live doc url"]
        [:td
         "Tiny b/c you could be intruding "
@@ -459,6 +508,50 @@
                         email]
                        (some-> chat :session/uuid str (subs 0 5)))])
               [:td (h/h (:chat/body chat))]])]))))))
+
+(defn team-info [team]
+  (let [db (pcd/default-db)
+        team-docs (map (comp (partial d/entity db) :e)
+                       (d/datoms db :vaet (:db/id team) :document/team))]
+    (def myteamdocs team-docs)
+    (list
+     [:style "td, th { padding: 5px; text-align: left }"]
+     [:table {:border 1}
+      [:tr
+       [:td "Subdomain"]
+       [:td (:team/subdomain team)]]
+      [:tr
+       [:td "Creator"]
+       [:td (cust-link (:team/creator team))]]
+      (let [active (:plan/active-custs (:team/plan team))]
+        [:tr
+         [:td (str "Active members (" (count active) ")")]
+         [:td (interleave (map cust-link (sort-by :cust/email active))
+                          (repeat " "))]])
+      (let [members (map :permission/cust-ref (permission-model/find-by-team db team))]
+        [:tr
+         [:td (str "All members (" (count members) ")")]
+         [:td (interleave (map cust-link (sort-by :cust/email members))
+                          (repeat " "))]])
+      [:tr
+       [:td "Created instant"]
+       [:td (d/q '[:find ?inst .
+                   :in $ ?uuid
+                   :where
+                   [?e :team/uuid ?uuid ?tx]
+                   [?tx :db/txInstant ?inst]]
+                 db (:team/uuid team))]]
+      [:tr
+       [:td "Doc count"]
+       [:td (count team-docs)]]
+      [:tr
+       [:td "Plan url"]
+       [:td (let [url (urls/team-plan team)]
+              [:a {:href url} url])]]
+      [:tr
+       [:td "Trial end"]
+       [:td (:plan/trial-end (:team/plan team))]]]
+     (interesting team-docs))))
 
 (defn upload-files []
   (let [bucket "precursor"
@@ -497,18 +590,104 @@
 
 (defn replay-helper [doc]
   (let [txids (replay/get-document-tx-ids (pcd/default-db) doc)
-        initial-tx (last txids)]
+        initial-tx (last txids)
+        replace-img (fn [txid]
+                      (format "document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) { return m1 + '%s'});"
+                              txid))]
     (list
      [:div {:style "display: inline-block; width: 19%; vertical-align: top;"}
       [:span "Current: " [:span#current-tx initial-tx]]
       [:ol {:style "max-height: 50vh; overflow: scroll"}
        (for [txid txids]
-         [:li {:style "cursor:pointer;"
-               :onClick (str (format "document.getElementById('current-tx').textContent = '%s';"
-                                     txid)
-                             (format "document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) { return m1 + '%s'});"
-                                     txid))}
-          txid])]]
+         [:li
+          [:input {:style "cursor:pointer;border: none;outline: none"
+                   :value txid
+                   :onClick (str (format "document.getElementById('current-tx').textContent = '%s';"
+                                         txid)
+                                 (replace-img txid)
+                                 "this.select()")}]])]]
      [:img#img {:src (urls/svg-from-doc doc :query {:as-of initial-tx})
                 :width "80%"
-                :style "border: 1px solid rgba(0,0,0,0.3)"}])))
+                :style "border: 1px solid rgba(0,0,0,0.3)"}]
+     [:script {:type "text/javascript"}
+      (format
+       "var txids = %s;
+        for (var i=0;i<txids.length;i++) {
+          window.setTimeout((function(i) {
+                             return function() { document.getElementById('img').src = document.getElementById('img').src.replace(/(as-of=)(\\d+)/, function(s, m1, m2) {return m1 + txids[i]}); document.getElementById('current-tx').textContent = txids[i];}
+                            })(i), i * 250)
+        }"
+       (str "[" (clojure.string/join "," txids) "]"))])))
+
+(defn stripe-events []
+  (list
+   [:style "body { padding: 1em }"]
+   (for [event (reverse @stripe-dev/events)]
+     [:div.event
+      [:div.event-type
+       [:span (get-in event ["type"])]
+       [:form {:style "display: inline-block; padding-left: 1em"
+               :method "post"
+               :action (str "/retry-stripe-event/" (get-in event ["id"]))}
+        (anti-forgery/anti-forgery-field)
+        [:input {:type "submit" :value "retry"}]]]
+      [:pre.event-body (h/h (json/encode event {:pretty true}))]])))
+
+(defn modify-billing []
+  [:div {:style "padding: 40px"}
+   [:div {:style "margin-top: 1em"}
+    "Add team member to team"
+    [:form {:method "post" :action "/add-team-cust"}
+     (anti-forgery/anti-forgery-field)
+     [:label "Team subdomain "]
+     [:input {:type "text" :name "team-subdomain"}]
+     [:label "Cust email "]
+     [:input {:type "text" :name "email"}]
+     [:div
+      [:input {:type "submit" :value "Add"}]]]]
+   [:div {:style "margin-top: 1em"}
+    "Remove team member from team"
+    [:form {:method "post" :action "/remove-team-cust"}
+     (anti-forgery/anti-forgery-field)
+     [:label "Team subdomain "]
+     [:input {:type "text" :name "team-subdomain"}]
+     [:label "Cust email "]
+     [:input {:type "text" :name "email"}]
+     [:div
+      [:input {:type "submit" :value "Remove"}]]]]
+   ])
+
+(defn issue-info [issue]
+  (list
+   [:style "body { padding: 2em; }td, th { padding: 5px; text-align: left }"]
+   [:table {:border 1}
+    [:tr
+     [:td "Title"]
+     [:td (h/h (:issue/title issue))]]
+    [:tr
+     [:td "Description"]
+     [:td (h/h (:issue/description issue))]]
+    [:tr
+     [:td "Created"]
+     [:td (:issue/created-at issue)]]
+    [:tr
+     [:td "Author"]
+     [:td (cust-link (:issue/author issue))]]
+    [:tr
+     [:td "Voters"]
+     [:td (interleave (map (comp cust-link :vote/cust) (:issue/votes issue))
+                      (repeat " "))]]]
+   [:h4 "Comments"]
+   (if (empty? (:issue/comments issue))
+     [:p "no comments :("]
+     (for [comment (reverse (sort-by :comment/created-at (:issue/comments issue)))]
+       [:table {:border 1}
+        [:tr
+         [:td "Author"]
+         [:td (cust-link (:comment/author comment))]]
+        [:tr
+         [:td "Created"]
+         [:td (h/h (:comment/created-at comment))]]
+        [:tr
+         [:td "Body"]
+         [:td (h/h (:comment/body comment))]]]))))

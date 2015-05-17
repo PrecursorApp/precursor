@@ -26,6 +26,15 @@
    :cust/color-name :color.name/blue
    :client-id "prcrsr-subscriber-bot"})
 
+(def product-hunt-bot
+  {:cust-name "ph"
+   :cust/name "ph"
+   :show-mouse? true
+   :hide-in-list? true
+   :cust/uuid "ph-bot"
+   :cust/color-name :color.name/ph-orange
+   :client-id "ph-bot"})
+
 (defn initial-state []
   {:camera          {:x          0
                      :y          0
@@ -48,12 +57,18 @@
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
                         :return-from-origin #{#{"2"}}
-                        :arrow-tool #{#{"ctrl" "shift"}}
+                        :arrow-tool #{#{"ctrl" "shift"}
+                                      #{"a"}}
                         :shrink-text #{#{"-"} #{"["}}
                         :grow-text #{#{"shift" "="}
                                      #{"="}
                                      #{"]"}}
-                        :record #{#{"shift" "ctrl" "alt" "r"}}}
+                        :record #{#{"shift" "ctrl" "alt" "r"}}
+                        ;; The handler is responsible for figuring out if shift is held
+                        :nudge-shapes-left #{#{"left"} #{"shift" "left"}}
+                        :nudge-shapes-right #{#{"right"} #{"shift" "right"}}
+                        :nudge-shapes-up #{#{"up"} #{"shift" "up"}}
+                        :nudge-shapes-down #{#{"down"} #{"shift" "down"}}}
    :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}
@@ -62,6 +77,7 @@
    :subscribers     {:mice {}
                      :layers {}
                      :info {}
+                     :chats {}
                      ;; used to keep track of which entities are being edited
                      ;; so that we can lock them
                      ;; We have to be a little silly here and below so that Om will let
@@ -72,7 +88,8 @@
    :editing-eids    {:editing-eids #{}}
    ;; Info about contributors to the doc
    ;; Combines sessions with custs, which might turn out to be a bad idea
-   :cust-data {:uuid->cust {(:cust/uuid subscriber-bot) (select-keys subscriber-bot [:cust/uuid :cust/name :cust/color-name])}}
+   :cust-data {:uuid->cust {(:cust/uuid subscriber-bot) (select-keys subscriber-bot [:cust/uuid :cust/name :cust/color-name])
+                            (:cust/uuid product-hunt-bot) (select-keys product-hunt-bot [:cust/uuid :cust/name :cust/color-name])}}
    :show-landing? false
    :overlays []
    :frontend-id-state nil
@@ -89,6 +106,10 @@
                          :editing-eids :mouse
                          :show-landing? :overlays
                          :frontend-id-state]))))
+
+(defn reset-camera [state]
+  (-> state
+    (merge (select-keys (initial-state) [:camera]))))
 
 (defn clear-subscribers [state]
   (assoc state :subscribers (:subscribers (initial-state))))
@@ -130,11 +151,15 @@
 
 (def sharing-menu-learned-path (conj browser-settings-path :sharing-menu-learned))
 
+(def export-menu-learned-path (conj browser-settings-path :export-menu-learned))
+
 (def shortcuts-menu-learned-path (conj browser-settings-path :shortcuts-menu-learned))
 
 (def chat-button-learned-path (conj browser-settings-path :chat-button-learned))
 
 (def chat-submit-learned-path (conj browser-settings-path :chat-submit-learned))
+
+(def dn-discount-path (conj browser-settings-path :dn-discount))
 
 (defn doc-settings-path [doc-id]
   (conj browser-settings-path :document-settings doc-id))
@@ -169,3 +194,6 @@
 
 (defn self-recording-path [state]
   [:subscribers :info (:client-id state) :recording])
+
+(defn team-access-path [team-uuid]
+  [:team-settings team-uuid :access])

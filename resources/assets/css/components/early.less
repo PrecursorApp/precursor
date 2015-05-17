@@ -14,9 +14,8 @@
         overflow: hidden;
         transition: @run_slower @run_slower;
       }
-      .outer-form-button {
+      .bubble-button {
         margin-top: -@tile;
-        border-color: @color_select;
         transition+: margin-top @run_slower @run_slower;
         transition+: width @run @bezier_fadein;
       }
@@ -38,11 +37,15 @@
         margin: 0;
         transition: @run_slow @run_slower @bezier_deform;
       }
-      .outer-form-button {
-        border-color: @color_select;
+      .bubble-button {
+        transition: @run @bezier_deform;
+        &:hover {
+          background: none;
+        }
       }
       .trial-success {
         color: @color_select;
+        animation: in-fade-bottom-soft @run_slow @run_slow @bezier_fadein backwards;
         &:hover {
           color: @black;
         }
@@ -51,9 +54,6 @@
   }
   .adaptive-placeholder {
     margin-bottom: @menu_padding;
-  }
-  .content {
-    max-width: @tile * 10; // VETO
   }
 }
 .page-early-access {
@@ -73,15 +73,17 @@
 }
 .outer-form-copy {
   margin-bottom: @menu_padding;
+  max-width: @tile_content / 2;
 }
 .outer-form-sign {
   .flexy();
   margin-bottom: @menu_padding;
 }
 .outer-form {
+  max-width: @tile_content / 2;
   &.disabled {
     .adaptive-placeholder,
-    .outer-form-button,
+    .bubble-button,
     .subdomain-input-placeholder,
     .subdomain-input-prepend,
     .subdomain-input-append {
@@ -91,9 +93,10 @@
     .adaptive-placeholder {
       border: 1px dashed @gray_lighter;
     }
-    .outer-form-button {
+    .bubble-button {
       color: @gray_light;
       border: 1px dashed @gray_lighter;
+      box-shadow: none;
     }
     .subdomain-input-placeholder {
       box-shadow: none;
@@ -106,7 +109,7 @@
   }
   // TODO
   // &.submitting {
-  //   .outer-form-button {
+  //   .bubble-button {
   //     color: @color_select;
   //     border-color: @color_select;
   //     background-color: @dye_outer;
@@ -123,9 +126,10 @@
       cursor: default;
       pointer-events: none;
     }
-    .outer-form-button {
+    .bubble-button {
+      .inline(@gray_lightest);
       width: 100%;
-      border-color: @gray_lightest;
+      // border-color: @gray_lightest;
       background-color: @dye_outer;
       pointer-events: none;
       transition: width @run @bezier_fadein;
@@ -139,27 +143,9 @@
     margin-top: @menu_padding;
   }
   &.submitted {
-    .outer-form-button {
+    .bubble-button {
       color: @color_select;
     }
-  }
-}
-.outer-form-button {
-  line-height: 1;
-  width: 40%;
-  height: @tile;
-  padding: @menu_padding 0;
-  background-color: @dye_outer;
-  border: 1px solid @gray_light;
-  .mq_640({
-    width: 100%;
-  });
-  &:hover,
-  &:focus {
-    background: @gray_light;
-  }
-  &[disabled="true"] {
-    pointer-events: none;
   }
 }
 .outer-form-granted {

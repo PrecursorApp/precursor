@@ -68,10 +68,11 @@
           (loop [message (async/<! send-ch)]
             (when (seq message)
               (swap! sends update-in [:actual-sends] inc)
-              ((:send-fn @sente-state) uid message {:on-complete (fn [throwable]
-                                                                   (if-let [latest-message (pop-or-unlock sliding-send-state msg-type uid)]
-                                                                     (async/put! send-ch latest-message)
-                                                                     (async/close! send-ch)))})
+              ((:send-fn @sente-state) uid message
+               {:on-complete (fn []
+                               (if-let [latest-message (pop-or-unlock sliding-send-state msg-type uid)]
+                                 (async/put! send-ch latest-message)
+                                 (async/close! send-ch)))})
               (recur (async/<! send-ch))))
           (catch Object t
             (release-send sliding-send-state msg-type uid)

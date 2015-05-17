@@ -1,38 +1,43 @@
 (defproject pc "0.1.0-SNAPSHOT"
-  :description "CircleCI's frontend app"
-  :url "https://circleci.com"
+  :description "Precursor"
+  :url "https://precursorapp.com"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [inflections "0.8.2"]
+                 [inflections "0.9.13"]
 
                  [defpage "0.1.3" :exclusions [ring
                                                clout
                                                compojure]]
-                 [compojure "1.3.1"]
+                 [compojure "1.3.3"]
                  [cheshire "5.4.0"]
-                 [clj-time "0.6.0"]
+                 [clj-time "0.9.0"]
                  [org.clojure/tools.nrepl "0.2.10"]
                  [javax.servlet/servlet-api "2.5"]
-                 [slingshot "0.12.1"]
-                 [hiccup "1.0.4"]
+                 [slingshot "0.12.2"]
+                 [hiccup "1.0.5"]
+                 [clj-pdf "2.0.3"]
+
                  [org.clojure/tools.logging "0.3.1"]
                  [log4j "1.2.17"]
                  [log4j/apache-log4j-extras "1.1"]
                  [org.slf4j/slf4j-api "1.7.10"]
                  [org.slf4j/slf4j-log4j12 "1.7.10" :exclusions [log4j]]
 
-                 [clj-statsd "0.3.10"]
+                 [clj-statsd "0.3.11"]
 
                  [cider/cider-nrepl "0.8.2" :exclusions [org.clojure/tools.reader]]
-                 [clj-http "1.0.1" :exclusions [commons-codec clj-tuple potemkin]]
+                 [clj-http "1.1.1" :exclusions [commons-codec
+                                                clj-tuple potemkin
+                                                org.jsoup/jsoup]]
                  [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
                                                                   org.slf4j/slf4j-api
                                                                   com.amazonaws/aws-java-sdk]]
                  [org.postgresql/postgresql "9.4-1200-jdbc41" :exclusions [org.slf4j/slf4j-simple]]
                  [clojurewerkz/spyglass "1.1.0"]
 
-                 [amazonica "0.3.12"]
+                 [amazonica "0.3.22"]
+                 [com.draines/postal "1.11.3" :exclusions [commons-codec]]
 
                  [ring/ring "1.3.2" :exclusions [hiccup
                                                  org.clojure/java.classpath]]
@@ -43,15 +48,15 @@
                  ;; adds support for on-complete callback
                  [precursor/sente "1.4.1-a28061fff118ea3313f99ae6afb89f064c35c9b2"]
                  [clj-stacktrace "0.2.8"]
-                 [org.immutant/web "2.x.incremental.539" :exclusions [org.clojure/java.classpath
-                                                                      org.jboss.logging/jboss-logging
-                                                                      org.slf4j/slf4j-nop
-                                                                      org.slf4j/slf4j-api
-                                                                      org.slf4j/slf4j-simple
-                                                                      org.slf4j/slf4j-log4j12
-                                                                      ch.qos.logback/logback-classic]]
+                 [org.immutant/web "2.0.0" :exclusions [org.clojure/java.classpath
+                                                        org.jboss.logging/jboss-logging
+                                                        org.slf4j/slf4j-nop
+                                                        org.slf4j/slf4j-api
+                                                        org.slf4j/slf4j-simple
+                                                        org.slf4j/slf4j-log4j12
+                                                        ch.qos.logback/logback-classic]]
 
-                 [org.clojure/tools.reader "0.8.16"]
+                 [org.clojure/tools.reader "0.9.2"]
                  [com.google.guava/guava "18.0"]
 
                  [schejulure "1.0.1"]
@@ -60,19 +65,21 @@
 
                  ;; needed to make lein pedantic happy
                  [org.codehaus.plexus/plexus-utils "2.0.6"]
-                 [com.cemerick/pomegranate "0.3.0"  :exclusions [org.codehaus.plexus/plexus-utils]]
+                 [com.cemerick/pomegranate "0.3.0"  :exclusions [org.codehaus.plexus/plexus-utils
+                                                                 org.jsoup/jsoup]]
 
-                 [com.novemberain/pantomime "2.3.0"]
+                 [com.novemberain/pantomime "2.6.0"]
 
                  [crypto-equality "1.0.0"]
 
-                 [fs "0.11.1"]
+                 [me.raynes/fs "1.4.6" :exclusions [org.apache.commons/commons-compress]]
 
-                 [datascript "0.8.1"]
+                 ;; Fix for d/entity throwing on nil https://github.com/tonsky/datascript/pull/75
+                 [datascript "0.11.1"]
 
                  [ankha "0.1.4"]
-                 [org.clojure/clojurescript "0.0-3126"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+                 [org.clojure/clojurescript "0.0-3211"]
+                 [precursor/core.async "0.1.361.0-d8047c-alpha"]
                  [cljs-ajax "0.2.6"]
 
                  ;; Use yaks/om for the pattern tag (it's in React,
@@ -82,8 +89,8 @@
                  [precursor/react "0.12.2-7-4-new-tags"]
 
                  [sablono "0.3.4" :exclusions [cljsjs/react]]
-                 [secretary "1.2.2"]
-                 [com.andrewmcveigh/cljs-time "0.2.4"]
+                 [secretary "1.2.3"]
+                 [com.andrewmcveigh/cljs-time "0.3.4"]
                  [com.cemerick/url "0.1.1"]
                  [hiccups "0.3.0"]
 
@@ -91,8 +98,8 @@
                  [com.cemerick/piggieback "0.1.5"]
 
                  ;; needed to make lein pedantic happy
-                 [commons-codec "1.6"]
-                 [figwheel "0.2.5" :exclusions [org.codehaus.plexus/plexus-utils
+                 [commons-codec "1.10"]
+                 [figwheel "0.2.9" :exclusions [org.codehaus.plexus/plexus-utils
                                                 commons-codec]]
 
                  ;; Frontend tests
@@ -118,15 +125,14 @@
                                                                 "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
                                                    :snapshots true}]
                            ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
-                           ["clojars" {:url "https://clojars.org/repo/"}]
-                           ["Immutant incremental builds" {:url "http://downloads.immutant.org/incremental/"}]]
+                           ["clojars" {:url "https://clojars.org/repo/"}]]
 
   :figwheel {:http-server-root "public"
              :server-port 3448
              :css-dirs ["resources/public/css"]}
 
   :plugins [[lein-cljsbuild "1.0.5"]
-            [lein-figwheel "0.2.5" :exclusions [org.codehaus.plexus/plexus-utils
+            [lein-figwheel "0.2.9" :exclusions [org.codehaus.plexus/plexus-utils
                                                 org.clojure/clojure
                                                 commons-codec]]
             [circle/lein-deploy-deps "0.1.3"]
@@ -140,7 +146,7 @@
 
   ;; prevent leiningen from loading its version of nrepl (!)
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.10"
-                                 :exclusions [org.clojure/clojure]]]}}
+                                   :exclusions [org.clojure/clojure]]]}}
 
   :pedantic? :abort
 
@@ -167,13 +173,19 @@
                         :source-paths ["src-cljs"
                                        "dev-cljs"
                                        "yaks/om/src"]
-                        :compiler {:output-to "resources/public/cljs/out/frontend-dev.js"
+                        :figwheel {:websocket-host "localhost"
+                                   :on-jsload "frontend.dev/jsload"}
+                        :compiler {;; Datascript https://github.com/tonsky/datascript/issues/57
+                                   :warnings {:single-segment-namespace false}
+                                   :output-to "resources/public/cljs/out/frontend-dev.js"
                                    :output-dir "resources/public/cljs/out"
                                    :optimizations :none
                                    :source-map "resources/public/cljs/out/sourcemap-frontend.map"}}
                        {:id "production"
                         :source-paths ["src-cljs" "yaks/om/src"]
                         :compiler {:pretty-print false
+                                   ;; Datascript https://github.com/tonsky/datascript/issues/57
+                                   :warnings {:single-segment-namespace false}
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
                                    :optimizations :advanced

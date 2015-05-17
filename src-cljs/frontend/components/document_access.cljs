@@ -37,7 +37,7 @@
             document (d/entity @db doc-id)
             access-requests (ds/touch-all '[:find ?t :in $ ?doc-id :where [?t :access-request/document ?doc-id]] @db doc-id)]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:h2.make "This document is " (if (:document/privacy document)
                                            (name (:document/privacy document))
@@ -54,14 +54,18 @@
 
                (list
                  [:p.make
-                  "Anything you prototype here will only be visible to you.
-                  You can try to request access or even "
-                  [:a {:href "/new"} "create your own"]
-                  " document."]
-                 [:a.menu-cta
-                  {:on-click #(cast! :permission-requested {:doc-id doc-id})
-                   :role "button"}
-                  "Request Access"]))
+                  "Anything you prototype here will only be visible to you. "
+                  (if (:team app)
+                    "Request access below."
+                    (list
+                     "You can try to request access or even"
+                     [:a {:href "/new"} "create your own"]
+                     " document."))]
+                 [:div.make
+                  [:div.menu-buttons
+                   [:a.menu-button {:on-click #(cast! :permission-requested {:doc-id doc-id})
+                                    :role "button"}
+                    "Request Access"]]]))
 
              (list
                [:p.make
@@ -105,8 +109,8 @@
             {pending-requests false denied-requests true} (group-by #(= :access-request.status/denied (:access-request/status %))
                                                                     access-requests)]
         (html
-         [:div.menu-view
-          [:div.menu-view-frame
+         [:section.menu-view
+          [:section.menu-view-frame
            [:article
             [:label
              [:input {:type "checkbox"

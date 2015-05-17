@@ -119,37 +119,60 @@
         [:span.access-name "roland@prcr.sr"]
         [:span.access-status "Was granted access today."]]]]]]))
 
-(defn make-button [{:keys [document/id]} owner {:keys [alt]}]
+(def artwork-voice
+  (html
+   [:div.art-frame
+    [:div.art-team.artwork
+     [:div.art-voice-list
+      [:div.art-voice-items
+       [:div.art-voice-item
+        [:div.art-voice-user.a (common/icon :user)]
+        [:div.art-voice-name.a "Raph"]
+        [:div.art-voice-talk.a (common/icon :sound-off)]]
+       [:div.art-voice-item.selected
+        [:div.art-voice-user.b (common/icon :user)]
+        [:div.art-voice-name.b "Leo"]
+        [:div.art-voice-talk.b (common/icon :sound-off)]
+        [:div.art-voice-make.b.focus (common/icon :sound-max)]]
+       [:div.art-voice-item
+        [:div.art-voice-user.c (common/icon :user)]
+        [:div.art-voice-name.c "Donnie"]
+        [:div.art-voice-talk.c (common/icon :sound-off)]]
+       [:div.art-voice-item
+        [:div.art-voice-user.d (common/icon :user)]
+        [:div.art-voice-name.d "Mikey"]
+        [:div.art-voice-talk.d (common/icon :sound-mute)]]]]]]))
+
+(defn make-button [_ owner {:keys [alt]}]
   (reify
     om/IDisplayName (display-name [_] "Landing Make Button")
     om/IInitState
     (init-state [_]
-      {:word-list ["demos"
+      {:word-list ["something"
+                   "UI/UX"
+                   "demos"
                    "stuff"
                    "lines"
                    "squares"
                    "circles"
                    "doodles"
-                   "mockups"
                    "designs"
                    "layouts"
-                   "details"
                    "diagrams"
                    "sketches"
                    "drawings"
                    "giraffes"
                    "projects"
-                   "concepts"
                    "products"
+                   "anything"
+                   "something"
                    "new ideas"
                    "documents"
-                   "precursors"
                    "prototypes"
                    "wireframes"
                    "user flows"
                    "flowcharts"
                    "interfaces"
-                   "inventions"
                    "some stuff"
                    "life easier"
                    "experiences"
@@ -160,6 +183,7 @@
                    "illustrations"
                    "walk-throughs"
                    "awesome ideas"
+                   "with Precursor"
                    "teammates happy"
                    "your team happy"]})
     om/IDidMount
@@ -174,17 +198,16 @@
             chosen-word (first word-list)
             [before-words after-words] (partition-all (- (count word-list) 3) (rest word-list))]
         (html
-         [:div.make-button
-          {:class (when alt "alt")
-           :role "button"
-           :on-click #(do
-                        (cast! :make-button-clicked))
-           :on-touch-end #(do
-                            (.preventDefault %)
-                            (cast! :make-button-clicked))
-           :on-mouse-enter #(om/set-state! owner :word-list (shuffle word-list))}
-          [:div.make-prepend
-           {:data-before "or "}
+         [:div.make-button {:class (when alt "alt")
+                            :role "button"
+                            :on-click #(do
+                                         (cast! :make-button-clicked))
+                            :on-touch-end #(do
+                                             (.preventDefault %)
+                                             (cast! :make-button-clicked))
+                            :on-mouse-enter #(do (om/set-state! owner :word-list (shuffle word-list))
+                                                 (cast! :navigate-to-landing-doc-hovered))}
+          [:div.make-prepend {:data-before "Or "}
            "Make "]
           [:div.make-something
            [:div.something-default (when widths
@@ -214,27 +237,13 @@
         (html
          [:div.the-why
           [:div.our-claim
-           [:div.our-philosphy-wrap
-            [:div.our-philosphy.content
-             [:h1.philosphy-headline
-              [:span.philosphy-needed "Precursor wants to simplify"]
-              [:span.philosphy-excess " your"]
-              [:span.philosphy-needed " prototyping"]
-              [:span.philosphy-excess " workflow"]
-              [:span.philosphy-needed "."]]
-             [:p.philosphy-subtext
-              [:span.philosphy-needed "No nonsense—"]
-              [:span.philosphy-needed "exactly what you need"]
-              [:span.philosphy-excess " when you need it"]
-              [:span.philosphy-needed "."]]
+           [:div.our-philosophy-wrap
+            [:div.our-philosophy.content
+             [:h1.content-copy "Prototyping and team collaboration should be simple. "]
+             [:p.content-copy "That's why we made Precursor."]
              [:div.calls-to-action
-              (om/build make-button (select-keys app [:document/id]))]]]]
-          [:div.our-proof {:class (when (:show-scroll-to-arrow app) "extend")}
-           ;; probably kill this when customers are ready
-           (when (:show-scroll-to-arrow app)
-             [:a {:role "button"
-                  :on-click #(cast! :scroll-to-arrow-clicked)}
-              (common/icon :arrow-down)])
+              (om/build make-button {})]]]]
+          [:div.our-proof
            ;; Hide this until we get testimonials/stats figured out
            ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
            ]])))))
@@ -275,44 +284,50 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.the-how
-          [:div.feature.content
-           {:class (when (contains? active-features "1") "art-visible") :ref "1"}
+          [:div.landing-learn-back {:class (when (and (:show-scroll-to-arrow app) (not (contains? active-features "1"))) " show ")}]
+
+          (if (get-in app state/dn-discount-path)
+            [:div.landing-learn-front.dn-override {:class (when-not (contains? active-features "1") " show ")}
+             [:a.dn-discount {:href "/pricing" :style {:width "auto"}}
+              (common/icon :dn-logo)
+              "Hi Designer News, here's 50% off for 3 mo!"]]
+            [:div.landing-learn-front {:class (when-not (contains? active-features "1") " show ")}
+             [:a.landing-learn-link {:role "button" :on-click #(cast! :scroll-to-arrow-clicked)}
+              "Learn more."]])
+
+          [:div.feature.content {:class (when (contains? active-features "1") "art-visible") :ref "1"}
            [:div.feature-story
-            [:h2.feature-headline
-             [:span "Make your ideas accessible anywhere, using any device."]]
-            [:p.feature-copy
-             [:span.content-copy
-              "Quickly find sketches on any tablet or phone and be ready when inspiration hits you.
-              Don't bother wasting time with a big app download—just pull up your favorite browser."]]]
-           [:div.feature-media artwork-mobile]]
+            [:h2.content-copy
+             "Collaborate with ease."]
+            [:p.content-copy
+             "Our team features are optimized to make collaborating in real-time effortless. "
+             "Communicate and create new ideas with your teammates in one secure place. "]
+            [:a.feature-link {:href "/features/team"
+                              :target "_top"}
+             "See team features."]]
+           [:div.feature-media artwork-voice]]
           [:div.feature-divider]
-          [:div.feature.content
-           {:class (when (contains? active-features "2") "art-visible") :ref "2"}
+          [:div.feature.content {:class (when (contains? active-features "2") "art-visible") :ref "2"}
            [:div.feature-story
-            [:h2.feature-headline
-             [:span "Make prototypes interactive & refine your user experience."]]
-            [:p.feature-copy
-             [:span.content-copy
-              "Easily link your wireframes together in minutes to create working demos of your idea.
-              You'll save time by pinpointing areas for improvement before you go into development."]]
-            [:a.feature-link {:href "/blog/interactive-layers" :target "_self" :role "button" :title "Read the tutorial."}
-             [:span.content-copy
-              "Read the tutorial."]]]
+            [:h2.content-copy
+             "Make real interactions."]
+            [:p.content-copy
+             "Easily link your wireframes together in minutes to create working demos of your idea. "
+             "You'll save time by pinpointing areas for improvement before you go into development. "]
+            [:a.feature-link {:href "/blog/interactive-layers"}
+             "Read our tutorial."]]
            [:div.feature-media.reverse artwork-interact]]
           [:div.feature-divider]
-          [:div.feature.content
-           {:class (when (contains? active-features "3") "art-visible") :ref "3"}
+          [:div.feature.content {:class (when (contains? active-features "3") "art-visible") :ref "3"}
            [:div.feature-story
-            [:h2.feature-headline
-             [:span "Make team collaboration more productive & engaging."]]
-            [:p.feature-copy
-             [:span.content-copy
-              "Our team features are optimized to make collaborating in real-time effortless.
-              Communicate and create new ideas with your teammates in one secure place."]]
-            [:a.feature-link {:href "/pricing" :role "button" :title "Start your trial"}
-             [:span.content-copy
-              "Try private docs."]]]
-           [:div.feature-media artwork-team]]])))))
+            [:h2.content-copy
+             "Prototype ideas anywhere."]
+            [:p.content-copy
+             "We designed our interface to get out of the way and let you concentrate on your ideas. "
+             "It's simple enough to show on your phone and perfect for collaborating on your tablet. "]
+            [:a.feature-link {:href "https://precursorapp.com/document/17592197661694"}
+             "Try on iPhone."]]
+           [:div.feature-media artwork-mobile]]])))))
 
 (defn the-what [app owner]
   (reify
@@ -324,23 +339,15 @@
          [:div.the-what
           [:div.our-proof]
           [:div.our-claim
-           [:div.our-philosphy-wrap
-            [:div.our-philosphy.content
-             [:h1.philosphy-headline
-              [:span.philosphy-needed "Precursor is pure prototyping."]]
-             [:p.philosphy-subtext
-              [:span.philosphy-needed "Real-time collaboration"]
-              [:span.philosphy-excess " that makes it easy "]
-              [:span.philosphy-excess " to focus on what's important"]
-              [:span.philosphy-needed "."]]
-             (if (utils/logged-in? owner)
-               [:div.calls-to-action
-                (om/build make-button (select-keys app [:document/id]))]
-
-               [:div.calls-to-action
-                (om/build common/google-login {:source "Landing What"})
-                (om/build make-button (select-keys app [:document/id])
-                          {:opts {:alt "alt"}})])]]]])))))
+           [:div.our-philosophy-wrap
+            [:div.our-philosophy.content
+             [:h1.content-copy "It's a blackboard designed to help teams brainstorm."]
+             [:p.content-copy "Precursor is no-nonsense prototyping."]
+             [:div.calls-to-action
+              (om/build make-button {} {:opts {:alt "alt"}})
+              [:a.pancake-button {:href "/trial"
+                                  :target "_top"}
+               "Start a free trial."]]]]]])))))
 
 (defn landing [app owner]
   (reify
@@ -350,8 +357,7 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.landing.page
-          (om/build drawing/landing-background {:doc-id (:document/id app)
-                                                :subscribers (get-in app [:subscribers :info])}
+          (om/build drawing/landing-background {:subscribers (get-in app [:subscribers :info])}
                     {:react-key "landing-background"})
           (om/build the-why app)
           (om/build the-how app)

@@ -3,6 +3,7 @@
             [cljs.core.async :as async :refer (<! >! put! chan)]
             [cljs-time.core :as time]
             [clojure.set :as set]
+            [clojure.walk :as walk]
             [datascript :as d]
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
@@ -56,6 +57,27 @@
 (defn subscribe-to-team [sente-state team-uuid]
   (send-msg sente-state [:team/subscribe {:team/uuid team-uuid}]))
 
+(defn subscribe-to-issues [sente-state comms issue-db]
+  (send-msg sente-state [:issue/subscribe {}]
+            10000
+            (fn [reply]
+              (if (sente/cb-success? reply)
+                (let [ents (:entities reply)
+                      uuids (atom #{})]
+                  (walk/postwalk (fn [x]
+                                   (when (map? x)
+                                     (when-let [u (:issue/author x)]
+                                       (swap! uuids conj u))
+                                     (when-let [u (:comment/author x)]
+                                       (swap! uuids conj u))
+                                     (when-let [u (:vote/cust x)]
+                                       (swap! uuids conj u)))
+                                   x)
+                                 ents)
+                  (put! (:controls comms) [:new-cust-uuids {:uuids @uuids}])
+                  (d/transact! issue-db ents {:server-update true}))
+                (put! (:errors comms) [:subscribe-to-issues-error])))))
+
 (defn fetch-subscribers [sente-state document-id]
   (send-msg sente-state [:frontend/fetch-subscribers {:document-id document-id}] 10000
             (fn [data]
@@ -78,6 +100,37 @@
   (let [datoms (:tx-data data)]
     (d/transact! (:team-db @app-state)
                  (map ds/datom->transaction datoms)
+                 {:server-update true})))
+
+;; Hack to deal with datascript's design decisions: https://github.com/tonsky/datascript/issues/76
+(defn sort-datoms [datoms]
+  (let [c (fn [d1 d2]
+            (compare (count (set/intersection #{:comment/parent :issue/votes :issue/comments} (set (keys d1))))
+                     (count (set/intersection #{:comment/parent :issue/votes :issue/comments} (set (keys d2))))))]
+    (sort c datoms)))
+
+(defmethod handle-message :issue/transaction [app-state message data]
+  (let [datoms (:tx-data data)]
+    (let [cust-uuids (reduce (fn [acc d]
+                               (if (contains? #{:issue/author :comment/author :vote/cust} (:a d))
+                                 (conj acc (:v d))
+                                 acc))
+                             #{} datoms)]
+      (when (seq cust-uuids)
+        (put! (get-in @app-state [:comms :controls]) [:new-cust-uuids {:uuids cust-uuids}])))
+    (d/transact! (:issue-db @app-state)
+                 (let [adds (->> datoms
+                              (filter :added)
+                              (group-by :e)
+                              (map (fn [[e datoms]]
+                                     (merge {:db/id e}
+                                            (reduce (fn [acc datom]
+                                                      (assoc acc (:a datom) (:v datom)))
+                                                    {} datoms))))
+                              sort-datoms)
+                       retracts (remove :added datoms)]
+                   (concat adds
+                           (map ds/datom->transaction retracts)))
                  {:server-update true})))
 
 (defmethod handle-message :frontend/subscriber-joined [app-state message data]
@@ -104,6 +157,11 @@
                  (:entities data)
                  {:server-update true})))
 
+(defmethod handle-message :issue/db-entities [app-state message data]
+  (d/transact! (:issue-db @app-state)
+               (:entities data)
+               {:server-update true}))
+
 (defmethod handle-message :frontend/custs [app-state message data]
   (swap! app-state update-in [:cust-data :uuid->cust] merge (:uuid->cust data)))
 
@@ -119,7 +177,7 @@
                               % subscribers))))
 
 (defmethod handle-message :frontend/error [app-state message data]
-  (put! (get-in @app-state [:comms :errors]) [:document-permission-error data])
+  (put! (get-in @app-state [:comms :errors]) [(:error-key data) data])
   (utils/inspect data))
 
 (defmethod handle-message :frontend/stats [app-state message data]

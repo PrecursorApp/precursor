@@ -4,10 +4,9 @@
   position: fixed;
   color: @gray_light;
   top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  transition: @run @bezier_deform;
-  will-change: transform;
   &:active {
     ~ .hud {
       user-select: none;
@@ -45,5 +44,62 @@
     .text-layer {
       pointer-events: none;
     }
+  }
+}
+.background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: @dye_inner;
+  will-change: transform;
+}
+.foreground {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  margin: auto;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: box-shadow @run_slower;
+  &:hover {
+    .shadow_canvas(hover);
+    transition: box-shadow @run_slow;
+  }
+  &:active {
+    .shadow_canvas(active);
+    transition: box-shadow @now;
+  }
+  &:hover,
+  &:active {
+    .border {
+      border-color: fadeout(@color_chat_border, 8);
+    }
+  }
+  .border {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    pointer-events: none;
+  }
+  .border-top {
+    border-top: 1px solid @color_chat_border;
+  }
+  .border-bottom {
+    border-bottom: 1px solid @color_chat_border;
+  }
+  .border-left {
+    border-left: 1px solid @color_chat_border;
+  }
+  .border-right {
+    border-right: 1px solid @color_chat_border;
   }
 }

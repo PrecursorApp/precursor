@@ -4,7 +4,7 @@
             [clojure.tools.logging :as log]
             [pc.rollbar :as rollbar]))
 
-(defn log-request [req resp ms]
+(defn log-request [context req resp ms]
   (when-not (or (re-find #"^/cljs" (:uri req))
                 (and (= 200 (:status resp))
                      (= "/health-check" (:uri req))))
@@ -13,16 +13,17 @@
       ;; log haproxy status if health check is down
       (when (= "/health-check" (:uri req))
         (log/info (:headers req)))
-      (log/infof "%s: %s %s %s for %s %s in %sms" (:status resp) (:request-method req) (:server-name req) (:uri req) (:remote-addr req) cust-str ms))))
+      (log/infof "%s %s: %s %s %s for %s %s in %sms" context
+                 (:status resp) (:request-method req) (:server-name req) (:uri req) (:remote-addr req) cust-str ms))))
 
-(defn wrap-logging [handler]
+(defn wrap-logging [handler {:keys [context]}]
   (fn [req]
     (statsd/with-timing :http-request
       (let [start (time/now)
             resp (handler req)
             stop (time/now)]
         (try
-          (log-request req resp (time/in-millis (time/interval start stop)))
+          (log-request context req resp (time/in-millis (time/interval start stop)))
           (catch Exception e
             (rollbar/report-exception e :request req :cust (get-in req [:auth :cust]))
             (log/error e)))

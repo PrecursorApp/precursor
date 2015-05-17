@@ -21,31 +21,41 @@
             [slingshot.slingshot :refer (try+ throw+)]))
 
 (defpage new [:post "/api/v1/document/new"] [req]
-  (if (:subdomain req)
-    (if (and (:team req)
-             (auth/logged-in? req)
-             (auth/has-team-permission? (pcd/default-db) (:team req) (:auth req) :admin))
-      (let [doc (doc-model/create-team-doc!
-                 (:team req)
+  (let [read-only? (some-> req :body slurp edn/read-string :read-only)]
+    (if (:subdomain req)
+      (if (and (:team req)
+               (auth/logged-in? req)
+               (auth/has-team-permission? (pcd/default-db) (:team req) (:auth req) :admin))
+        (let [doc (doc-model/create-team-doc!
+                   (:team req)
+                   (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                          (when-let [cust-uuid (get-in req [:cust :cust/uuid])]
+                            {:document/creator cust-uuid})
+                          (when read-only?
+                            {:document/privacy :document.privacy/read-only})))]
+          {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})})
+        {:status 400 :body (pr-str {:error :unauthorized-to-team
+                                    :redirect-url (str (url/map->URL {:host (profile/hostname)
+                                                                      :protocol (if (profile/force-ssl?)
+                                                                                  "https"
+                                                                                  (name (:scheme req)))
+                                                                      :port (if (profile/force-ssl?)
+                                                                              (profile/https-port)
+                                                                              (profile/http-port))
+                                                                      :path "/new"
+                                                                      :query (:query-string req)}))
+                                    :msg "You're unauthorized to make documents in this subdomain. Please request access."})})
+      (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+            doc (doc-model/create-public-doc!
                  (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                        (when-let [cust-uuid (get-in req [:cust :cust/uuid])]
-                          {:document/creator cust-uuid})))]
-        {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})})
-      {:status 400 :body (pr-str {:error :unauthorized-to-team
-                                  :redirect-url (str (url/map->URL {:host (profile/hostname)
-                                                                    :protocol (name (:scheme req))
-                                                                    :port (:server-port req)
-                                                                    :path "/new"
-                                                                    :query (:query-string req)}))
-                                  :msg "You're unauthorized to make documents in this subdomain. Please request access."})})
-    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-          doc (doc-model/create-public-doc!
-               (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                      (when cust-uuid {:document/creator cust-uuid})))]
-      {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})})))
+                        (when cust-uuid {:document/creator cust-uuid})
+                        (when read-only? {:document/privacy :document.privacy/read-only})))]
+        {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})}))))
 
 (defpage create-team [:post "/api/v1/create-team"] [req]
-  (let [subdomain (some-> req :body slurp edn/read-string :subdomain str/lower-case)
+  (let [params (some-> req :body slurp edn/read-string)
+        subdomain (some-> params :subdomain str/lower-case)
+        coupon-code (some-> params :coupon-code)
         cust (get-in req [:auth :cust])]
     (cond (empty? cust)
           {:status 400 :body (pr-str {:error :not-logged-in
@@ -65,7 +75,7 @@
 
           :else
           (try+
-           (let [team (team-http/setup-new-team subdomain cust)]
+           (let [team (team-http/setup-new-team subdomain cust coupon-code)]
              {:status 200 :body (pr-str {:team (team-model/read-api team)})})
            (catch [:error :subdomain-exists] e
              {:status 400 :body (pr-str {:error :subdomain-exists

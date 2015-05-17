@@ -19,11 +19,8 @@
                  db))
 
 (defn find-by-document [db document]
-  (map (partial d/entity db)
-       (d/q '{:find [[?t ...]]
-              :in [$ ?document-id]
-              :where [[?t :layer/document ?document-id]]}
-            db (:db/id document))))
+  (map (comp (partial d/entity db) :e)
+       (d/datoms db :vaet (:db/id document) :layer/document)))
 
 ;; TODO: can use pull API here
 (defn read-api [layer]

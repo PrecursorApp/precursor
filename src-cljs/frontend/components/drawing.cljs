@@ -1,13 +1,16 @@
 (ns frontend.components.drawing
   (:require [datascript :as d]
             [frontend.camera :as cameras]
-            [frontend.db :as ds]
+            [frontend.db :as fdb]
+            [frontend.db.trans :as trans]
             [frontend.state :as state]
+            [frontend.svg :as svg]
             [frontend.utils :as utils]
             [goog.dom]
             [goog.style]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]))
+            [om.dom :as dom :include-macros true])
+  (:import [goog.ui IdGenerator]))
 
 (defn add-tick [tick-state tick tick-fn]
   (update-in tick-state [:ticks tick] (fn [f] (fn [owner]
@@ -21,8 +24,8 @@
   (-> tick-state
     (add-tick tick (fn [owner]
                      ((om/get-shared owner :cast!)
-                      :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                           :fields (merge state/subscriber-bot {:mouse-position nil
+                      :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                           :fields (merge (:bot tick-state) {:mouse-position nil
                                                                                 :tool nil
                                                                                 :show-mouse? false})})))
     (annotate-keyframes tick)))
@@ -40,34 +43,39 @@
                                                    (/ (- end-y start-y)
                                                       (- end-tick start-tick))))]
                               ((om/get-shared owner :cast!)
-                               :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                    :fields (merge state/subscriber-bot {:mouse-position [ex ey]
+                               :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                    :fields (merge (:bot tick-state) {:mouse-position [ex ey]
                                                                                          :show-mouse? true
                                                                                          :tool tool})})))))
               tick-state
               (range 0 (inc (- end-tick start-tick))))
     (annotate-keyframes end-tick)))
 
+(defn props->base-layer [{:keys [start-tick end-tick start-x end-x
+                                 start-y end-y tool doc-id props source]
+                          :or {tool :rect}}]
+  (merge {:layer/start-x start-x
+          :layer/start-y start-y
+          :layer/end-x end-x
+          :layer/end-y end-y
+          :layer/type (keyword "layer.type" (if (= :circle tool)
+                                              "rect"
+                                              (name tool)))
+          :layer/name "placeholder"
+          :layer/stroke-width 1
+          :db/id (rand-int 10000)}
+         (when (= :circle tool)
+           {:layer/rx 1000
+            :layer/ry 1000})
+         (when source
+           {:layer/source source})
+         props))
+
 (defn draw-shape [tick-state {:keys [start-tick end-tick start-x end-x
                                      start-y end-y tool doc-id props source]
-                              :or {tool :rect}}]
-  (let [base-layer (merge {:layer/start-x start-x
-                           :layer/start-y start-y
-                           :layer/end-x end-x
-                           :layer/end-y end-y
-                           :layer/type (keyword "layer.type" (if (= :circle tool)
-                                                               "rect"
-                                                               (name tool)))
-                           :layer/name "placeholder"
-                           :layer/stroke-width 1
-                           :document/id doc-id
-                           :db/id (- (inc (rand-int 1000)))}
-                          (when (= :circle tool)
-                            {:layer/rx 1000
-                             :layer/ry 1000})
-                          (when source
-                            {:layer/source source})
-                          props)
+                              :or {tool :rect}
+                              :as properties}]
+  (let [base-layer (props->base-layer properties)
         ;; number of ticks to pause before saving layer
         pause-ticks 2]
     (-> (reduce (fn [tick-state relative-tick]
@@ -81,8 +89,8 @@
                                                      (/ (- end-y start-y)
                                                         (- end-tick start-tick pause-ticks))))]
                                 ((om/get-shared owner :cast!)
-                                 :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                      :fields (merge state/subscriber-bot {:mouse-position [ex ey]
+                                 :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                      :fields (merge (:bot tick-state) {:mouse-position [ex ey]
                                                                                            :show-mouse? true
                                                                                            :layers [(assoc base-layer
                                                                                                            :layer/current-x ex
@@ -93,11 +101,73 @@
       (add-tick end-tick
                 (fn [owner]
                   ((om/get-shared owner :cast!)
-                   :subscriber-updated {:client-id (:client-id state/subscriber-bot)
+                   :subscriber-updated {:client-id (:client-id (:bot tick-state))
                                         :fields {:mouse-position nil
                                                  :layers nil
                                                  :tool tool}})
-                  (d/transact! (om/get-shared owner :db) [base-layer] {:bot-layer true})))
+                  (let [conn (om/get-shared owner :db)]
+                    (d/transact! conn [(assoc base-layer :db/id (trans/get-next-transient-id conn))] {:bot-layer true}))))
+      (annotate-keyframes start-tick end-tick))))
+
+(defn move-points [points move-x move-y]
+  (map (fn [{:keys [rx ry]}]
+         {:rx (+ rx move-x)
+          :ry (+ ry move-y)})
+       points))
+
+(defn move-layer [layer x y]
+  (-> layer
+    (assoc :layer/start-x (+ x (:layer/start-x layer))
+           :layer/end-x (+ x (:layer/end-x layer))
+           :layer/current-x (+ x (:layer/end-x layer))
+           :layer/start-y (+ y (:layer/start-y layer))
+           :layer/end-y (+ y (:layer/end-y layer))
+           :layer/current-y (+ y (:layer/end-y layer)))
+    (cond-> (= :layer.type/path (:layer/type layer))
+      (assoc :layer/path (svg/points->path (move-points (:points layer) x y))))))
+
+(defn alt-drag [tick-state {:keys [start-tick end-tick start-x end-x
+                                   start-y end-y doc-id props source
+                                   layers]
+                            :as properties}]
+  (let [x-distance (- end-x start-x)
+        y-distance (- end-y start-y)
+        base-layers (map (fn [p] (props->base-layer (merge properties p)))
+                         layers)
+        ;; number of ticks to pause before saving layers
+        pause-ticks 2]
+    (-> (reduce (fn [tick-state relative-tick]
+                  (add-tick tick-state
+                            (+ start-tick relative-tick)
+                            (fn [owner]
+                              (let [move-x (* relative-tick
+                                              (/ x-distance
+                                                 (- end-tick start-tick pause-ticks)))
+                                    move-y (* relative-tick
+                                              (/ y-distance
+                                                 (- end-tick start-tick pause-ticks)))]
+                                ((om/get-shared owner :cast!)
+                                 :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                      :fields (merge (:bot tick-state) {:mouse-position [(+ start-x move-x)
+                                                                                                            (+ start-y move-y)]
+                                                                                           :show-mouse? true
+                                                                                           :layers (map (fn [l] (move-layer l move-x move-y))
+                                                                                                        base-layers)
+                                                                                           :tool :select})})))))
+                tick-state
+                (range 0 (inc (- end-tick start-tick pause-ticks))))
+      (add-tick end-tick
+                (fn [owner]
+                  ((om/get-shared owner :cast!)
+                   :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                        :fields {:mouse-position nil
+                                                 :layers nil
+                                                 :tool :select}})
+                  (let [conn (om/get-shared owner :db)]
+                    (d/transact! conn  (map (fn [l] (assoc (move-layer l x-distance y-distance)
+                                                           :db/id (trans/get-next-transient-id conn)))
+                                            base-layers)
+                                 {:bot-layer true}))))
       (annotate-keyframes start-tick end-tick))))
 
 (def text-height 14)
@@ -112,7 +182,6 @@
                            :layer/name "placeholder"
                            :layer/text text
                            :layer/stroke-width 1
-                           :layer/document doc-id
                            :db/id (inc (rand-int 1000))}
                           (when source
                             {:layer/source source})
@@ -127,8 +196,8 @@
                                                          (/ (- end-tick start-tick pause-ticks)
                                                             relative-tick)))]
                                 ((om/get-shared owner :cast!)
-                                 :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                      :fields (merge state/subscriber-bot {:mouse-position [start-x (- start-y (/ text-height 2))]
+                                 :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                      :fields (merge (:bot tick-state) {:mouse-position [start-x (- start-y (/ text-height 2))]
                                                                                            :show-mouse? true
                                                                                            :layers [(assoc base-layer
                                                                                                            :layer/text (apply str (take letter-count text))
@@ -144,8 +213,8 @@
       (add-tick end-tick
                 (fn [owner]
                   ((om/get-shared owner :cast!)
-                   :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                        :fields (merge state/subscriber-bot {:mouse-position nil
+                   :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                        :fields (merge (:bot tick-state) {:mouse-position nil
                                                                              :layers nil
                                                                              :tool :text})})
                   (d/transact! (om/get-shared owner :db) [base-layer] {:bot-layer true})))
@@ -190,11 +259,11 @@
     (utils/rAF (fn [timestamp]
                  (run-animation* owner timestamp timestamp tick-state 0 max-tick)))))
 
-(defn cleanup [owner]
-  ((om/get-shared owner :cast!) :subscriber-updated {:client-id (:client-id state/subscriber-bot)
-                                                     :fields (merge state/subscriber-bot {:mouse-position nil
-                                                                                          :layers nil
-                                                                                          :show-mouse? false})}))
+(defn cleanup [tick-state owner]
+  ((om/get-shared owner :cast!) :subscriber-updated {:client-id (:client-id (:bot tick-state))
+                                                     :fields (merge (:bot tick-state) {:mouse-position nil
+                                                                                       :layers nil
+                                                                                       :show-mouse? false})}))
 
 (defn signup-animation [document top-right]
   (let [text "Sign in with Google"
@@ -217,6 +286,7 @@
         text-start-x (+ rect-start-x (/ (- rect-width text-width) 2))
         text-start-y (+ rect-end-y text-height (/ (- rect-height text-height) 2))]
     (-> {:tick-ms 16
+         :bot state/subscriber-bot
          :ticks {}}
       (move-mouse {:tool :text
                    :start-tick 10
@@ -259,7 +329,7 @@
           (run-animation owner (signup-animation document (cameras/top-right camera viewport))))))
     om/IWillUnmount
     (will-unmount [_]
-      (cleanup owner))
+      (cleanup {:bot state/subscriber-bot} owner))
     om/IRender
     (render [_]
       ;; dummy span so that the component can be mounted
@@ -272,191 +342,271 @@
                                    :end-tick (+ start-tick (int (* 1.5 tick-count)))})
                                 props)))
 
+(defn add-alt-drag [tick-state tick-count props]
+  (alt-drag tick-state (merge (let [pause (+ 3 (inc (rand-int 5)))
+                                    start-tick (+ pause (apply max (conj (keys (:ticks tick-state)) -1)))]
+                                {:start-tick start-tick
+                                 :end-tick (+ start-tick (int (* 1.5 tick-count)))})
+                              props)))
+
+(defn add-text [tick-state tick-count props]
+  (draw-text tick-state (merge (let [pause (+ 3 (inc (rand-int 5)))
+                                     start-tick (+ pause (apply max (conj (keys (:ticks tick-state)) -1)))]
+                                 {:start-tick start-tick
+                                  :end-tick (+ start-tick (int (* 1.5 tick-count)))})
+                               props)))
+
 (defn add-mouse-transition [tick-state tick-count previous-shape next-shape]
-  (move-mouse tick-state (let [pause (+ 6 (inc (rand-int 4)))
+  (move-mouse tick-state (let [pause (+ 2 (inc (rand-int 4)))
                                start-tick (+ pause (apply max (conj (keys (:ticks tick-state)) -1)))]
                            {:start-tick start-tick
                             :end-tick (+ start-tick (int (* 1.5 tick-count)))
                             :start-x (:end-x previous-shape)
                             :start-y (:end-y previous-shape)
-                            :tool (:tool previous-shape)
+                            :tool (:tool next-shape)
                             :end-x (:start-x next-shape)
                             :end-y (:start-y next-shape)})))
 
-(defn browser [document layer-source viewport]
-  (let [start-x 100
-        start-y 100
-        width (int (* (- (:width viewport) 200)
-                      0.9))
-        height (int (* (- (:height viewport) 200)
-                       0.9))]
-    {:doc-id (:db/id document) :tool :rect
+(defn browser [layer-source viewport]
+  (let [width 800
+        height 600
+        start-y (/ (- (:height viewport) height)
+                   3)
+        start-x (/ (- (:width viewport) width)
+                   2)]
+    {:tool :rect
      :start-x start-x :end-x (+ start-x width)
      :start-y start-y :end-y (+ start-y height)
      :source layer-source}))
 
-(defn menu-bar [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :line
-     :start-x (:start-x browser) :end-x (:end-x browser)
-     :start-y (+ (:start-y browser) 30) :end-y (+ (:start-y browser) 30)
+(defn margins-box [layer-source viewport]
+  (let [browser (browser layer-source viewport)
+        width 600]
+    {:tool :rect
+     :start-x (- (:end-x browser) 100)
+     :end-x (- (:end-x browser) 100 600)
+     :start-y (:end-y browser)
+     :end-y (:start-y browser)
      :source layer-source}))
 
-(defn close-button [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :circle
-     :start-x (+ (:start-x browser) 10) :end-x (+ (:start-x browser) 20)
-     :start-y (+ (:start-y browser) 10) :end-y (+ (:start-y browser) 20)
+(defn header-line [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :line
+     :start-x (:start-x browser)
+     :end-x (:end-x browser)
+     :start-y (+ (:start-y browser) 50)
+     :end-y (+ (:start-y browser) 50)
      :source layer-source}))
 
-(defn minimize-button [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :circle
-     :start-x (+ (:start-x browser) 25) :end-x (+ (:start-x browser) 35)
-     :start-y (+ (:start-y browser) 10) :end-y (+ (:start-y browser) 20)
+(defn dn-text [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :text
+     :text "DN"
+     :start-x (+ (:start-x browser) 44)
+     :end-x (+ (:start-x browser) 44)
+     :start-y (+ (:start-y browser) 36)
+     :end-y (+ (:start-y browser) 36)
+     :props {:layer/font-size 32}
      :source layer-source}))
 
-(defn expand-button [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)]
-    {:doc-id (:db/id document) :tool :circle
-     :start-x (+ (:start-x browser) 40) :end-x (+ (:start-x browser) 50)
-     :start-y (+ (:start-y browser) 10) :end-y (+ (:start-y browser) 20)
+(defn stories-text [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :text
+     :text "Stories"
+     :start-x (+ (:start-x browser) 100 15)
+     :end-x (+ (:start-x browser) 100 15)
+     :start-y (+ (:start-y browser) 30)
+     :end-y (+ (:start-y browser) 30)
+     :props {:layer/font-size 16}
      :source layer-source}))
 
-(defn search-box [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        width (- (:end-x browser)
-                 (:start-x browser))
-        height (- (:end-y browser)
-                  (:start-y browser))
-        box-width 540
-        start-x (int (- (+ (:start-x browser) (/ width 2))
-                        (/ box-width 2)))
-        box-height 40
-        start-y (int (- (+ (:start-y browser) (/ height 2))
-                        (* 2 box-height)))]
-    {:doc-id (:db/id document) :tool :rect
-     :start-x start-x :end-x (+ start-x box-width)
-     :start-y start-y :end-y (+ start-y box-height)
+(defn jobs-text [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :text
+     :text "Jobs"
+     :start-x (+ (:start-x browser) 100 88)
+     :end-x (+ (:start-x browser) 100 88)
+     :start-y (+ (:start-y browser) 30)
+     :end-y (+ (:start-y browser) 30)
+     :props {:layer/font-size 16}
      :source layer-source}))
 
-(defn submit-button [document layer-source viewport]
-  (let [search-box (search-box document layer-source viewport)
-        width (- (:end-x search-box)
-                 (:start-x search-box))
-        height (- (:end-y search-box)
-                  (:start-y search-box))
-        start-x (int (+ (:start-x search-box)
-                        (/ width 4)))
-        start-y (int (+ (:start-y search-box)
-                        (* 1.5 height)))
-        ]
-    {:doc-id (:db/id document) :tool :rect
-     :start-x start-x :end-x (+ start-x (int (/ width 4)))
-     :start-y start-y :end-y (+ start-y (int (* height .80)))
+(defn story-one-a [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :rect
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 480)
+     :start-y (+ (:start-y browser) 160)
+     :end-y (+ (:start-y browser) 160 5)
      :source layer-source}))
 
-(defn lucky-button [document layer-source viewport]
-  (let [submit-button (submit-button document layer-source viewport)
-        start-x (:end-x submit-button)
-        width (- (:end-x submit-button)
-                 (:start-x submit-button))]
-    {:doc-id (:db/id document) :tool :rect
-     :start-x start-x :end-x (+ start-x width)
-     :start-y (:start-y submit-button) :end-y (:end-y submit-button)
+(defn story-one-b [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :rect
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 310)
+     :start-y (+ (:start-y browser) 190)
+     :end-y (+ (:start-y browser) 190 -5) ; go opposite
      :source layer-source}))
 
-(defn footer-1 [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        width (- (:end-x browser)
-                 (:start-x browser))
-        line-width 500
-        start-x (int (- (+ (:start-x browser) (/ width 2))
-                        (/ line-width 2)))
-        start-y (- (:end-y browser) 60)]
-    {:doc-id (:db/id document) :tool :line
-     :start-x start-x  :end-x (+ start-x line-width)
-     :start-y start-y :end-y start-y
+(defn story-two-a [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :line
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 500)
+     :start-y (+ (:start-y browser) 300)
+     :end-y (+ (:start-y browser) 300)
      :source layer-source}))
 
-(defn footer-2 [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        width (- (:end-x browser)
-                 (:start-x browser))
-        line-width 400
-        start-x (int (- (+ (:start-x browser) (/ width 2))
-                        (/ line-width 2)))
-        start-y (- (:end-y browser) 40)]
-    {:doc-id (:db/id document) :tool :line
-     :start-x start-x  :end-x (+ start-x line-width)
-     :start-y start-y :end-y start-y
+(defn story-two-b [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :rect
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 280)
+     :start-y (+ (:start-y browser) 340)
+     :end-y (+ (:start-y browser) 340 -5)
      :source layer-source}))
 
-(defn landing-animation [document layer-source viewport]
-  (let [browser (browser document layer-source viewport)
-        menu-bar (menu-bar document layer-source viewport)
-        close-button (close-button document layer-source viewport)
-        minimize-button (minimize-button document layer-source viewport)
-        expand-button (expand-button document layer-source viewport)
-        search-box (search-box document layer-source viewport)
-        submit-button (submit-button document layer-source viewport)
-        lucky-button (lucky-button document layer-source viewport)
-        footer-1 (footer-1 document layer-source viewport)
-        footer-2 (footer-2 document layer-source viewport)]
+(defn story-two-c [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :rect
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 255)
+     :start-y (+ (:start-y browser) 360)
+     :end-y (+ (:start-y browser) 360 5)
+     :source layer-source}))
+
+(defn story-two-d [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :line
+     :start-x (+ (:start-x browser) 100 50)
+     :end-x (+ (:start-x browser) 100 50 500)
+     :start-y (+ (:start-y browser) 400)
+     :end-y (+ (:start-y browser) 400)
+     :source layer-source}))
+
+(defn circle-one [layer-source viewport]
+  (let [browser (browser layer-source viewport)]
+    {:tool :circle
+     :start-x (+ (:start-x browser) 80)
+     :end-x (+ (:start-x browser) 80 40)
+     :start-y (+ (:start-y browser) 330)
+     :end-y (+ (:start-y browser) 330 40)
+     :source layer-source}))
+
+(defn landing-animation [layer-source viewport]
+  (let [browser (browser layer-source viewport)
+        margins-box (margins-box layer-source viewport)
+        header-line (header-line layer-source viewport)
+        dn-text (dn-text layer-source viewport)
+        stories-text (stories-text layer-source viewport)
+        jobs-text (jobs-text layer-source viewport)
+        story-one-a (story-one-a layer-source viewport)
+        story-one-b (story-one-b layer-source viewport)
+        story-two-a (story-two-a layer-source viewport)
+        story-two-b (story-two-b layer-source viewport)
+        story-two-c (story-two-c layer-source viewport)
+        story-two-d (story-two-d layer-source viewport)
+        circle-one (circle-one layer-source viewport)
+        story-one-layers [story-one-a story-one-b]
+        story-two-layers [story-two-a story-two-b story-two-c story-two-d]]
     (-> {:tick-ms 16
+         :bot state/subscriber-bot
          :ticks {}}
+      (add-tick 50 identity)
       ;; the mouse could be automatic
-      (add-mouse-transition 50
-                            {:end-x (:width viewport)
-                             :end-y 100
+      (add-mouse-transition 20
+                            {:end-x 0
+                             :end-y 0
                              :tool :rect}
                             browser)
-      (add-shape 100 browser)
-      (add-mouse-transition 50 browser menu-bar)
-      (add-shape 50 menu-bar)
-      (add-mouse-transition 25 menu-bar close-button)
-      (add-shape 10 close-button)
-      (add-mouse-transition 12 close-button minimize-button)
-      (add-shape 10 minimize-button)
-      (add-mouse-transition 8 minimize-button expand-button)
-      (add-shape 10 expand-button)
-      (add-mouse-transition 30 expand-button search-box)
-      (add-shape 30  search-box)
-      (add-mouse-transition 20 search-box submit-button)
-      (add-shape 30 submit-button)
-      (add-mouse-transition 12 submit-button lucky-button)
-      (add-shape 30 lucky-button)
-      (add-mouse-transition 20 lucky-button footer-1)
-      (add-shape 20 footer-1)
-      (add-mouse-transition 10 footer-1 footer-2)
-      (add-shape 18 footer-2))))
+      (add-shape 50 browser)
+      (add-mouse-transition 7 browser margins-box)
+      (add-shape 40 margins-box)
+      (add-mouse-transition 7 margins-box header-line)
+      (add-shape 25 header-line)
+      (add-mouse-transition 10 header-line dn-text)
+      (add-text 10 dn-text)
+      (add-mouse-transition 7 dn-text stories-text)
+      (add-text 10 stories-text)
+      (add-mouse-transition 5 stories-text jobs-text)
+      (add-text 10 jobs-text)
+      (add-mouse-transition 15 jobs-text story-one-a)
+      (add-shape 15 story-one-a)
+      (add-mouse-transition 5 story-one-a story-one-b)
+      (add-shape 15 story-one-b)
+      (add-mouse-transition 15 story-one-b story-two-a)
+      (add-shape 18 story-two-a)
+      (add-mouse-transition 5 story-two-a story-two-b)
+      (add-shape 10 story-two-b)
+      (add-mouse-transition 7 story-two-b story-two-c)
+      (add-shape 10 story-two-c)
+      (add-mouse-transition 5 story-two-c story-two-d)
+      (add-shape 18 story-two-d)
+
+      (add-mouse-transition 10 story-two-d {:tool :select
+                                           :start-x (+ 100 (:start-x story-one-b))
+                                           :start-y (:start-y story-one-b)})
+      (add-alt-drag 18
+                    {:layers story-one-layers
+                     :start-x (+ 100 (:start-x story-one-b))
+                     :end-x (+ 100 (:start-x story-one-b))
+                     :start-y (:start-y story-one-b)
+                     :end-y (+ (:start-y story-one-b) 275)})
+
+      (add-mouse-transition 7
+                            {:tool :select
+                             :end-x (+ 100 (:start-x story-one-b))
+                             :end-y (+ (:start-y story-one-b) 275)}
+                            {:tool :select
+                             :start-x (+ 100 (:start-x story-two-d))
+                             :start-y (:start-y story-two-d)})
+
+      (add-alt-drag 18
+                    {:layers story-two-layers
+                     :start-x (+ 100 (:start-x story-two-d))
+                     :end-x (+ 100 (:start-x story-two-d))
+                     :start-y (:start-y story-two-d)
+                     :end-y (+ (:start-y story-two-d) 200)})
+
+      (add-mouse-transition 8
+                            {:tool :select
+                             :end-x (+ 100 (:start-x story-two-d))
+                             :end-y (+ (:start-y story-two-d) 200)}
+                            circle-one)
+      (add-shape 10 circle-one)
+      (add-alt-drag 18
+                    {:layers [circle-one]
+                     :start-x (:end-x circle-one)
+                     :end-x (:end-x circle-one)
+                     :start-y (:end-y circle-one)
+                     :end-y (+ (:end-y circle-one) 200)}))))
 
 (defn add-landing-cleanup [tick-state]
   (let [max-tick (apply max (keys (:ticks tick-state)))]
     (-> tick-state
       (add-tick (inc max-tick) (fn [owner]
-                                 (cleanup owner)
+                                 (cleanup {:bot state/subscriber-bot} owner)
                                  ((om/get-shared owner :cast!) :landing-animation-completed)))
       (annotate-keyframes (inc max-tick)))))
 
-(defn landing-background [{:keys [doc-id subscribers]} owner]
+(defn landing-background [{:keys [subscribers]} owner]
   (reify
-    om/IInitState (init-state [_] {:layer-source (utils/uuid)})
     om/IDisplayName (display-name [_] "Landing Animation")
+    om/IInitState (init-state [_] {:layer-source (utils/uuid)})
     om/IDidMount
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(
       (let [viewport (utils/canvas-size)]
-        (when (and (< 640 (:width viewport)) ;; only if not on mobile
-                   (< 640 (:height viewport))
-                   (ds/empty-db? @(om/get-shared owner :db))
+        (when (and (< 800 (:width viewport)) ;; only if not on mobile
+                   (< 600 (:height viewport))
+                   (fdb/empty-db? @(om/get-shared owner :db))
                    (zero? (count (remove (comp :hide-in-list? second) subscribers))))
-          (run-animation owner (add-landing-cleanup (landing-animation {:db/id doc-id}
-                                                                       (om/get-state owner :layer-source)
+          (run-animation owner (add-landing-cleanup (landing-animation (om/get-state owner :layer-source)
                                                                        viewport))))))
     om/IWillUnmount
     (will-unmount [_]
-      (cleanup owner)
+      (cleanup {:bot state/subscriber-bot} owner)
       (let [conn (om/get-shared owner :db)
             source (om/get-state owner :layer-source)]
         (d/transact! conn (mapv (fn [e] [:db/add e :layer/deleted true])
@@ -466,6 +616,7 @@
                                                 (map :e (d/datoms @conn :avet :layer/source source)))
                                      {:bot-layer true})
                        1000)))
+
     om/IRender
     (render [_]
       ;; dummy span so that the component can be mounted

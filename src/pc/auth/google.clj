@@ -43,8 +43,7 @@
       (json/decode true)))
 
 (defn parse-id-token [id-token]
-  (-> (jwt/decode id-token)
-      :payload))
+  (:payload (jwt/decode id-token)))
 
 ;; https://developers.google.com/accounts/docs/OAuth2Login
 (defn user-info-from-code [code]

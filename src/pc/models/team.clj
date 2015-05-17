@@ -1,6 +1,7 @@
 (ns pc.models.team
   (:require [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.datomic.web-peer :as web-peer]
             [pc.utils :as utils]))
 
 ;; We'll pretend we have a type here
@@ -8,6 +9,9 @@
                                       :db/id Long
                                       ;; probably a uuid type
                                       :team/uuid String}))
+
+(defn all [db]
+  (map (partial d/entity db) (d/q '[:find [?t ...] :where [?t :team/subdomain]] db)))
 
 (defn find-by-subdomain [db subdomain]
   (some->> subdomain
@@ -22,6 +26,19 @@
     first
     :e
     (d/entity db)))
+
+(defn find-by-plan [db plan]
+  (->> (d/datoms db :vaet (:db/id plan) :team/plan)
+    first
+    :e
+    (d/entity db)))
+
+(defn find-by-invoice [db invoice]
+  (->> (d/datoms db :vaet (:db/id invoice) :plan/invoices)
+    first
+    :e
+    (d/entity db)
+    (find-by-plan db)))
 
 (defn create-for-subdomain! [subdomain cust annotations]
   @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)}
@@ -41,5 +58,6 @@
 
 (defn read-api [team]
   (-> team
-    (select-keys [:team/subdomain :team/uuid :team/intro-doc])
-    (utils/update-when-in [:team/intro-doc] :db/id)))
+    (select-keys [:team/subdomain :team/uuid :team/intro-doc :team/plan])
+    (utils/update-when-in [:team/intro-doc] :db/id)
+    (utils/update-when-in [:team/plan] (fn [p] (web-peer/client-id p)))))

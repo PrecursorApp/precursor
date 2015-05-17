@@ -106,6 +106,12 @@
 (def medium-consistent-date
   (partial format-date medium-consistent-date-format))
 
+(def month-day-format
+  (goog.i18n.DateTimeFormat. "MMM dd"))
+
+(def month-day
+  (partial format-date month-day-format))
+
 (def calendar-date-format
   (goog.i18n.DateTimeFormat. "EEE, MMM dd, yyyy 'at' hh:mma"))
 
@@ -117,6 +123,16 @@
 
 (def year-month-day-date
   (partial format-date year-month-day-date-format))
+
+(defn print-formats []
+  (let [time (js/Date.)]
+    (print "\n\n")
+    (doseq [sym [#'full-date #'full-datetime #'full-time long-date
+                 #'long-datetime #'long-time #'medium-date #'medium-datetime
+                 #'medium-time #'short-date #'short-datetime #'short-time
+                 #'medium-consistent-date #'calendar-date #'year-month-day-date
+                 #'month-day]]
+      (println (g-string/format "%-25s" (str (:name (meta sym)))) (sym time)))))
 
 
 (defn date-in-ms [date]

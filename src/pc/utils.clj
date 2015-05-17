@@ -63,7 +63,9 @@
   with the same var."
   [schedule f]
   (assert (var? f))
-  (let [new-job (schejulure/schedule schedule (fn [] (future (f))))]
+  (let [new-job (schejulure/schedule schedule (fn []
+                                                (log/infof "running %s" f)
+                                                (future (f))))]
     (dosync
      (alter safe-scheduled-jobs
             (fn [jobs]
@@ -71,6 +73,10 @@
                     old-job (get jobs job-name)]
                 (when old-job (.cancel old-job false))
                 (assoc jobs job-name new-job)))))))
+
+(defn shutdown-safe-scheduled-jobs []
+  (doseq [[job-name job] @safe-scheduled-jobs]
+    (.cancel job false)))
 
 (defn safe-throw-hook
   "Safe slingshot throw-hook implementation that excludes :environment to
@@ -92,3 +98,6 @@
 
 (defmacro reporting-future [& body]
   `(future (with-report-exceptions ~@body)))
+
+(defn apply-map [f & args]
+  (apply f (apply concat (butlast args) (last args))))

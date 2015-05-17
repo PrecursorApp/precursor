@@ -40,7 +40,8 @@
                           :layer-ui-target-edited
                           :subscriber-updated
                           :handle-camera-query-params
-                          :media-stream-volume})
+                          :media-stream-volume
+                          :navigate-to-landing-doc-hovered})
 
 (defn track-control [event data state]
   (when-not (contains? controls-blacklist event)
@@ -50,4 +51,15 @@
                                  {:logged-in? (boolean (get-in state [:cust :cust/email]))}
                                  (when (:document/id state)
                                    {:doc-id (:document/id state)
-                                    :subscriber-count (count (get-in state [:subscribers :info]))})))))
+                                    :subscriber-count (count (get-in state [:subscribers :info]))})))
+    (mixpanel/set-people-props {(str event) true})))
+
+(defn track-nav [event data state]
+  (mixpanel/track (str "Navigated to " event) (merge
+                                               (:analytics-data data)
+                                               (dissoc (get-in state state/browser-settings-path) :document-settings)
+                                               {:logged-in? (boolean (get-in state [:cust :cust/email]))}
+                                               (when (:document/id state)
+                                                 {:doc-id (:document/id state)
+                                                  :subscriber-count (count (get-in state [:subscribers :info]))})))
+  (mixpanel/set-people-props {(str "Navigated to " event) true}))

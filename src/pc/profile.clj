@@ -103,3 +103,11 @@
   (if (prod?)
     "b1c19e04b7667e6a84dace987ff4bd475324f29c"
     "cf99bca9e5dca62b974c694cc2e3273f535da200"))
+
+(defn fetch-stripe-events? []
+  (not (prod?)))
+
+(defn slack-customer-ping-url []
+  (if (prod?)
+    "https://hooks.slack.com/services/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"
+    "https://hooks.slack.com/services/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"))

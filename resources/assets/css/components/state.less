@@ -2,125 +2,79 @@
 // IMPORTANT VISUAL CHANGES WHILE MENU IS ACTIVE
 //
 .state-menu {
+  &:not(.entry) {
+    .animate_menu_opened();
+  }
+  &.menu-left {
+    .inner { .inner_offset(left); }
+    .hud-menu { .hud_menu_morph(); }
+    .menu-body { .size_of(chat; width); }
+    .foreground { .animate_foreground_left(); }
+    .border { transform-origin: left top; }
+  }
+  &.menu-right {
+    .inner { .inner_offset(right); }
+    .hud-roster { .hud_menu_morph(); }
+    .menu-body { .size_of(chat; margin-left); }
+    .foreground { .animate_foreground_right(); }
+    .border { transform-origin: right top; }
+  }
   .inner {
-    .shadow_canvas();
-    cursor: pointer;
-    background: @dye_outer;
-    transition: @run_slower @bezier_deform;
-    &:hover {
-      .shadow_canvas(hover);
-      transition-duration: @run;
-    }
-    &:active {
-      .shadow_canvas(active);
-      transition-duration: @run_fast;
-    }
-  }
-  .canvas {
     pointer-events: none;
+    transition: transform @run;
+    will-change: transform;
   }
-  .canvas-background {
-    transform: scale3d(.6, 0, 1);
-    transition-duration: @run_slow;
+  .background {
+    opacity: 0;
+    transform: scale(0);
   }
-  .layer {
-    .layer-outline,
-    .handle-outline {
-      stroke: @gray_light;
-    }
-    .text-layer,
-    .edit-handle {
-      fill: @gray_light;
-    }
+  .chat,
+  .canvas {
+    transform: scale(.8);
   }
-  .chat-background {
-    transform: scale3d(0, 0, 1);
-    transition-duration: @run_slow;
+  .foreground {
+    width: 80%;
+    height: 80%;
   }
-  .chat-log {
-    color: @color_menu_faded;
-    opacity: .5;
-    transition: @run_fast @now @bezier_fadein;
-    .message-head, // TODO this can be cleaner
-    .stroke-user,
-    .message-time,
-    .chat-date,
+  .chat-messages {
     a {
-      color: @color_menu_faded;
-      stroke: @color_menu_faded !important;
-      transition+: color @now @run_fast;
-      transition+: stroke @now @run_fast;
+      color: @gray_light;
     }
   }
-  .chat-box {
-    box-shadow: 0 1px @color_menu_faint inset;
-    transition: box-shadow @now @run_faster @bezier_fadein;
-    &:after {
-      opacity: 0;
-      transition: @now;
-    }
+  .message-avatar {
+    .icon(stroke; @color_chat_border)
   }
-  .chat-placeholder,
-  .chat-teach-enter {
-    &:before {
-      opacity: 0;
-      transition: opacity @now @now @bezier_fadein;
-    }
-    &:after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: .125em;
-      height: 100%;
-      background: @color_menu_faint;
-      animation: in-fade @run_slower @run backwards;
-    }
-  }
-  .hud-item {
-    &:not(.menu-needed) {
-      opacity: 0;
-      visibility: hidden;
-      transition: @now;
-    }
+  .message-author {
+    color: @color_chat_border;
   }
   .hud-menu,
   .hud-roster {
     .icon(stroke; @black);
   }
-  .unseen-eids {
+  .hide-from-menu,
+  .hud-item:not(.menu-needed) {
     display: none;
   }
 }
-//
-// IMPORTANT VISUAL CHANGES WHILE MENU IS ON THE LEFT
-//
-.state-menu-left {
-  .canvas_off(right);
-  .hud-menu {
-    .hud_menu_morph();
+.state-inner {
+  &:not(.entry) {
+    &:not(.outer-to-inner) {
+      .animate_menu_closed();
+    }
   }
-  .menu-body {
-    .size_of(chat; width);
-  }
-}
-//
-// IMPORTANT VISUAL CHANGES WHILE MENU IS ON THE RIGHT
-//
-.state-menu-right {
-  .canvas_off(left);
-  .hud-roster {
-    .hud_menu_morph();
-  }
-  .menu-body {
-    .size_of(chat; padding-left);
+  &.outer-to-inner {
+    &.chat-opened {
+      .canvas-frame {
+        transition: transform @run;
+      }
+    }
   }
 }
 //
 // IMPORTANT VISUAL CHANGES WHILE OUTER IS ACTIVE
 //
 .state-outer {
-  .canvas-background {
+  .background {
     &:after {
       animation: in-fade @run @run_fast @bezier_fadein backwards;
       .gradient(to bottom; lighten(@dye_inner, 0) 25%; darken(@dye_inner, 3) 75%);
@@ -133,7 +87,7 @@
     }
   }
   .canvas-frame {
-    transform: scale3d(.8, .8, 1);
+    transform: scale(.8);
     width: 125%;
     height: 125%;
     transition+: all @run_slower @bezier_deform;
@@ -162,7 +116,7 @@
     }
   }
   .chat {
-    opacity: 0; // `display:none` breaks grid in ff so use opacity
+    opacity: 0; // display:none makes chat flicker
     transition: opacity @now @now;
   }
   .hud {
@@ -172,5 +126,46 @@
 .state-pan {
   .hud {
     pointer-events: none;
+  }
+}
+.chat-opened {
+  &:not(.state-outer) {
+    .animate_chat_opened();
+  }
+  &:not(.state-outer) {
+    .canvas-frame {
+      .mask_canvas();
+    }
+  }
+  .width-canvas {
+    .size_of(canvas; width);
+  }
+  .width-chat {
+    .size_of(chat; width);
+  }
+  .hud-viewers {
+    &:after {
+      .mq_640({
+        top: -@menu_padding;
+        left: 0;
+        animation: in-fade-bottom @run;
+      });
+    }
+  }
+  .viewers-list {
+    .mq_640({
+      display: none;
+    });
+  }
+}
+.chat-closed {
+  &:not(.entry) {
+    .animate_chat_closed();
+  }
+  .width-canvas {
+    width: 100%;
+  }
+  .width-chat {
+    width: 0;
   }
 }

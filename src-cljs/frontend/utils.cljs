@@ -1,6 +1,7 @@
 (ns frontend.utils
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [clojure.string :as string]
+            [datascript :as d]
             [frontend.async :refer [put!]]
             [om.core :as om :include-macros true]
             [ajax.core :as ajax]
@@ -43,7 +44,9 @@
    :y (when-let [y (js/parseFloat (.getParameterValue parsed-uri "y"))]
         (when-not (js/isNaN y) y))
    :z (when-let [z (js/parseFloat (.getParameterValue parsed-uri "z"))]
-        (when-not (js/isNaN z) z))})
+        (when-not (js/isNaN z) z))
+   :utm-campaign (.getParameterValue parsed-uri "utm_campaign")
+   :utm-source (.getParameterValue parsed-uri "utm_source")})
 
 (defn logging-enabled? []
   (aget js/window "Precursor" "logging-enabled"))
@@ -230,7 +233,10 @@
     (om/set-state! owner korks value)))
 
 (defn logged-in? [owner]
-  (om/get-shared owner :logged-in?))
+  (boolean (seq (om/get-shared owner :cust))))
+
+(defn admin? [owner]
+  (boolean (om/get-shared owner :admin?)))
 
 (defn cast-fn [controls-ch]
   (fn [message data & [transient?]]
@@ -253,3 +259,26 @@
     (set-canvas-font font-size font-family)
     (.measureText text)
     (.-width)))
+
+(defn to-hex-string [n l]
+  (let [s (.toString n 16)
+        c (count s)]
+    (cond
+      (> c l) (subs s 0 l)
+      (< c l) (str (apply str (repeat (- l c) "0")) s)
+      :else   s)))
+
+(defn squuid []
+  (if js/window.crypto
+    (let [[b1 b2 b3 b4 b5 b6] (array-seq (js/window.crypto.getRandomValues (js/Uint16Array. 6)) 0)]
+      (UUID.
+       (str
+        (-> (js/Date.) (.getTime) (/ 1000) (Math/round) (to-hex-string 8))
+        "-" (-> b1 (to-hex-string 4))
+        "-" (-> b2 (bit-and 0x0FFF) (bit-or 0x4000) (to-hex-string 4))
+        "-" (-> b3 (bit-and 0x3FFF) (bit-or 0x8000) (to-hex-string 4))
+        "-" (-> b4 (to-hex-string 4))
+        (-> b5 (to-hex-string 4))
+        (-> b6 (to-hex-string 4)))))
+    ;; Generates a squuid with Math.random
+    (d/squuid)))

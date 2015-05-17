@@ -51,7 +51,7 @@
                                  :force-ssl? (profile/force-ssl?)})
     (wrap-wrap-reload)
     (errors-handler/wrap-errors)
-    (logging-handler/wrap-logging)))
+    (logging-handler/wrap-logging {:context "admin"})))
 
 (defn start []
   (def server (web/server (web/run

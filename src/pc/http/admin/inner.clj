@@ -6,6 +6,7 @@
             [defpage.core :as defpage :refer (defpage)]
             [hiccup.core :as hiccup]
             [pc.admin.db :as db-admin]
+            [pc.billing.dev :as billing-dev]
             [pc.datomic :as pcd]
             [pc.http.admin.auth :as auth]
             [pc.http.sente :as sente]
@@ -14,9 +15,14 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.flag :as flag-model]
+            [pc.models.issue :as issue-model]
+            [pc.models.team :as team-model]
+            [pc.profile :as profile]
+            [pc.stripe.dev :as stripe-dev]
             [pc.views.admin :as admin-content]
             [pc.views.content :as content]
             [ring.middleware.anti-forgery]
+            [ring.util.response :refer (redirect)]
             [slingshot.slingshot :refer (try+ throw+)])
   (:import java.util.UUID))
 
@@ -31,7 +37,12 @@
                                 [:div [:a {:href "/clients"} "Clients"]]
                                 [:div [:a {:href "/occupied"} "Occupied"]]
                                 [:div [:a {:href "/interesting"} "Interesting"]]
-                                [:div [:a {:href "/upload"} "Upload to Google CDN"]]])))
+                                [:div [:a {:href "/tagged"} "Tagged"]]
+                                [:div [:a {:href "/upload"} "Upload to Google CDN"]]
+                                (when (profile/fetch-stripe-events?)
+                                  [:div [:a {:href "/stripe-events"} "View Stripe events"]])
+                                (when-not (profile/prod?)
+                                  [:div [:a {:href "/modify-billing"} "Modify billing"]])])))
 
 (defpage early-access "/early-access" [req]
   (hiccup/html (content/layout {}
@@ -61,18 +72,46 @@
   {:status 200 :body (hiccup/html (content/layout {} (admin-content/clients @sente/client-stats @sente/document-subs)))})
 
 (defpage interesting "/interesting" [req]
-  (hiccup/html (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids {:layer-threshold 10})))))
+  (let [db (pcd/default-db)]
+    (hiccup/html (content/layout {} (admin-content/interesting (map (partial d/entity db) (db-admin/interesting-doc-ids {:layer-threshold 10})))))))
+
+(defpage tagged "/tagged" [req]
+  (let [db (pcd/default-db)]
+    (hiccup/html
+     (content/layout {} (admin-content/interesting
+                         (map (comp (partial d/entity db) :e)
+                              (d/datoms db :avet :document/tags "admin/interesting")))))))
 
 (defpage interesting-count [:get "/interesting/:layer-count" {:layer-count #"[0-9]+"}] [layer-count]
-  (hiccup/html (content/layout {} (admin-content/interesting (db-admin/interesting-doc-ids (Integer/parseInt layer-count))))))
+  (let [db (pcd/default-db)]
+    (hiccup/html (content/layout {} (admin-content/interesting (map (partial d/entity db) (db-admin/interesting-doc-ids (Integer/parseInt layer-count))))))))
+
+(defpage team-info "/team/:subdomain" [req]
+  (let [team (->> req :params :subdomain (team-model/find-by-subdomain (pcd/default-db)))]
+    (if (seq team)
+      (hiccup/html
+       (content/layout {}
+                       (admin-content/team-info team)))
+      {:status 404
+       :body "Couldn't find that team"})))
+
+(defpage issue-info "/issues/:issue-uuid" [req]
+  (let [issue (->> req :params :issue-uuid (UUID/fromString) (issue-model/find-by-frontend-id (pcd/default-db)))]
+    (if (seq issue)
+      (hiccup/html
+       (content/layout {}
+                       (admin-content/issue-info issue)))
+      {:status 404
+       :body "Couldn't find that issue"})))
 
 (defpage user-activity "/user/:email" [req]
-  (let [cust (->> req :params :email (cust-model/find-by-email (pcd/default-db)))]
+  (let [db (pcd/default-db)
+        cust (->> req :params :email (cust-model/find-by-email db))]
     (if (seq cust)
       (hiccup/html
        (content/layout {}
                        (admin-content/user-info cust)
-                       (admin-content/interesting (take 100 (doc-model/find-touched-by-cust (pcd/default-db) cust)))))
+                       (admin-content/interesting (map (partial d/entity db) (take 100 (doc-model/find-all-touched-by-cust db cust))))))
       {:status 404
        :body "Couldn't find user with that email"})))
 
@@ -116,7 +155,8 @@
 (defpage upload "/upload" [req]
   (hiccup/html (content/layout {} (admin-content/upload-files))))
 
-
+(defpage upload "/stripe-events" [req]
+  (hiccup/html (content/layout {} (admin-content/stripe-events))))
 
 (defpage refresh-client [:post "/refresh-client-stats"] [req]
   (if-let [client-id (get-in req [:params "client-id"])]
@@ -163,6 +203,38 @@
                                        [:a {:href "/teams"}
                                         "Go back to the teams page"]
                                        "."])})))
+
+(defpage retry-stripe-event [:post "/retry-stripe-event/:evt-id"] [req]
+  (stripe-dev/retry-event (get-in req [:params :evt-id]))
+  {:status 200
+   :body (str "retried " (get-in req [:params :evt-id]))})
+
+(defpage modify-billing "/modify-billing" [req]
+  (hiccup/html (content/layout {} (admin-content/modify-billing))))
+
+(defpage add-team-cust [:post "/add-team-cust"] [req]
+  (def myreq req)
+  (let [db (pcd/default-db)
+        email (-> req :params (get "email"))
+        subdomain (-> req :params (get "team-subdomain"))
+        team (team-model/find-by-subdomain db subdomain)]
+    (billing-dev/add-billing-cust-to-team team email)
+    {:status 200
+     :body (str "added " email " to " subdomain " team")}))
+
+(defpage remove-team-cust [:post "/remove-team-cust"] [req]
+  (let [db (pcd/default-db)
+        email (-> req :params (get "email"))
+        subdomain (-> req :params (get "team-subdomain"))
+        team (team-model/find-by-subdomain db subdomain)]
+    (billing-dev/remove-billing-cust-from-team team email)
+    {:status 200
+     :body (str "removed " email " from " subdomain " team")}))
+
+(defpage mark-interesting [:post "/document/:doc-id/mark-interesting"] [req]
+  (let [doc (->> req :params :doc-id (Long/parseLong) (doc-model/find-by-id (pcd/default-db)))]
+    (doc-model/add-tag doc "admin/interesting")
+    (redirect (str "/document/" (:db/id doc)))))
 
 (defn wrap-require-login [handler]
   (fn [req]

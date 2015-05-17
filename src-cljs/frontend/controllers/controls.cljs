@@ -16,6 +16,7 @@
             [frontend.db]
             [frontend.favicon :as favicon]
             [frontend.keyboard :as keyboard]
+            [frontend.landing-doc :as landing-doc]
             [frontend.layers :as layers]
             [frontend.models.chat :as chat-model]
             [frontend.models.layer :as layer-model]
@@ -26,8 +27,10 @@
             [frontend.sente :as sente]
             [frontend.settings :as settings]
             [frontend.state :as state]
+            [frontend.stripe :as stripe]
             [frontend.subscribers :as subs]
             [frontend.svg :as svg]
+            [frontend.urls :as urls]
             [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
@@ -73,15 +76,16 @@
               (map #(dissoc % :points) (get-in state [:drawing :layers])))
     :relation (when (get-in state [:drawing :relation :layer])
                 (get-in state [:drawing :relation]))
-    :recording (get-in state (state/self-recording-path state))}
+    :recording (get-in state (state/self-recording-path state))
+    :chat-body (get-in state [:chat :body])}
    (when (and x y)
-     {:mouse-position [(:x (:mouse state)) (:y (:mouse state))]})))
+     {:mouse-position [(:rx (:mouse state)) (:ry (:mouse state))]})))
 
 ;; TODO: this shouldn't assume it's sending a mouse position
 (defn maybe-notify-subscribers! [previous-state current-state x y]
   (when (get-in current-state [:subscribers :mice (:client-id current-state) :show-mouse?])
-    (let [previous-info (extract-sub-info current-state x y)
-          current-info (extract-sub-info previous-state x y)]
+    (let [previous-info (extract-sub-info previous-state x y)
+          current-info (extract-sub-info current-state x y)]
       (when-not (= previous-info current-info)
         (sente/send-msg (:sente current-state)
                         [:frontend/mouse-position current-info])))))
@@ -126,10 +130,10 @@
   [browser-state message _ state]
   (cancel-drawing state))
 
-(defmulti handle-keyboard-shortcut (fn [state shortcut-name] shortcut-name))
+(defmulti handle-keyboard-shortcut (fn [state shortcut-name key-set] shortcut-name))
 
 (defmethod handle-keyboard-shortcut :default
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (if (contains? state/tools shortcut-name)
     (assoc-in state state/current-tool-path shortcut-name)
     state))
@@ -157,28 +161,10 @@
       (swap! (:undo-state state) assoc :last-undo transaction-to-undo))
     state))
 
-(defn handle-add-menu [state menu]
-  (-> state
-      (assoc-in [:layer-properties-menu :opened?] false)
-      (assoc-in [:radial :open?] false)
-      (overlay/add-overlay menu)))
-
-(defn handle-replace-menu [state menu]
-  (-> state
-      (assoc-in [:layer-properties-menu :opened?] false)
-      (assoc-in [:radial :open?] false)
-      (overlay/replace-overlay menu)))
-
 ;; TODO: have some way to handle pre-and-post
 (defmethod handle-keyboard-shortcut :undo
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (handle-undo state))
-
-(defmethod handle-keyboard-shortcut :shortcuts-menu
-  [state shortcut-name]
-  (if (= :shortcuts (overlay/current-overlay state))
-    (overlay/clear-overlays state)
-    (handle-replace-menu state :shortcuts)))
 
 (defn close-radial [state]
   (assoc-in state [:radial :open?] false))
@@ -187,7 +173,7 @@
   (assoc-in state [:keyboard] {}))
 
 (defmethod handle-keyboard-shortcut :escape-interaction
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (-> state
     overlay/clear-overlays
     close-radial
@@ -195,17 +181,17 @@
     clear-shortcuts))
 
 (defmethod handle-keyboard-shortcut :reset-canvas-position
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (-> state
     (update-in [:camera] cameras/reset)))
 
 (defmethod handle-keyboard-shortcut :return-from-origin
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (-> state
     (update-in [:camera] cameras/previous)))
 
 (defmethod handle-keyboard-shortcut :arrow-tool
-  [state shortcut-name]
+  [state shortcut-name key-set]
   state)
 
 (defmethod control-event :key-state-changed
@@ -215,7 +201,8 @@
     (-> new-state
       (cond-> (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
         (handle-keyboard-shortcut (first (filter #(-> shortcuts % (contains? key-set))
-                                                 (keys shortcuts))))
+                                                 (keys shortcuts)))
+                                  key-set)
         (and (= #{"shift"} key-set) (settings/drawing-in-progress? state))
         (assoc-in [:drawing :layers 0 :force-even?] depressed?)
 
@@ -227,14 +214,80 @@
              (not (keyboard/arrow-shortcut-active? new-state)))
         cancel-drawing))))
 
-(defmulti handle-keyboard-shortcut-after (fn [state shortcut-name] shortcut-name))
+(defmulti handle-keyboard-shortcut-after (fn [state shortcut-name key-set] shortcut-name))
 
 (defmethod handle-keyboard-shortcut-after :default
-  [state shortcut-name]
+  [state shortcut-name key-set]
   nil)
 
+(defn nudge-points [points move-x move-y]
+  (map (fn [{:keys [rx ry]}]
+         {:rx (+ rx move-x)
+          :ry (+ ry move-y)})
+       points))
+
+(defn parse-points-from-path [path]
+  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
+    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
+
+(defn nudge-layer [layer {:keys [x y]}]
+  (-> layer
+    (select-keys [:db/id
+                  :layer/start-x :layer/end-x
+                  :layer/start-y :layer/end-y
+                  :layer/type :layer/path])
+    (update-in [:layer/start-x] + x)
+    (update-in [:layer/end-x] + x)
+    (update-in [:layer/start-y] + y)
+    (update-in [:layer/end-y] + y)
+    (cond-> (= :layer.type/path (:layer/type layer))
+      (assoc :layer/path (svg/points->path (nudge-points (parse-points-from-path (:layer/path layer)) x y))))))
+
+(defn nudge-shapes [state key-set direction]
+  (let [db (:db state)
+        layers (map (partial d/entity @db) (get-in state [:selected-eids :selected-eids]))
+        increment (cameras/grid-size->snap-increment (cameras/grid-width (:camera state)))
+        shift? (contains? key-set "shift")
+        x (* (if shift? 10 1)
+             (case direction
+               :left (- increment)
+               :right increment
+               0))
+        y (* (if shift? 10 1)
+             (case direction
+               :up (- increment)
+               :down increment
+               0))]
+    (when (seq layers)
+      (d/transact! db (mapv #(nudge-layer % {:x x :y y}) layers)
+                   {:can-undo? true}))))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-left
+  [state shortcut-name key-set]
+  (nudge-shapes state key-set :left))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-right
+  [state shortcut-name key-set]
+  (nudge-shapes state key-set :right))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-up
+  [state shortcut-name key-set]
+  (nudge-shapes state key-set :up))
+
+(defmethod handle-keyboard-shortcut-after :nudge-shapes-down
+  [state shortcut-name key-set]
+  (nudge-shapes state key-set :down))
+
+(defmethod handle-keyboard-shortcut-after :shortcuts-menu
+  [state shortcut-name key-set]
+  (when-let [doc-id (:document/id state)]
+    (if (keyword-identical? :shortcuts (overlay/current-overlay state))
+      (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc-id)
+                                                      :replace-token? true}])
+      (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc-id "shortcuts")}]))))
+
 (defmethod handle-keyboard-shortcut-after :record
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (rtc/setup-stream (get-in state [:comms :controls])))
 
 (defn next-font-size [current-size direction]
@@ -259,19 +312,22 @@
     (#(d/transact! (:db state) % {:can-undo? true}))))
 
 (defmethod handle-keyboard-shortcut-after :shrink-text
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (set-text-font-sizes state :shrink))
 
 (defmethod handle-keyboard-shortcut-after :grow-text
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (set-text-font-sizes state :grow))
 
 (defmethod handle-keyboard-shortcut-after :escape-interaction
-  [state shortcut-name]
+  [state shortcut-name key-set]
   (when (and (:replay-interrupt-chan state)
              (put! (:replay-interrupt-chan state) :interrupt))
     (frontend.db/reset-db! (:db state) nil)
-    (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state))))
+    (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state)))
+  (when-let [doc-id (:document/id state)]
+    (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc-id)
+                                                    :replace-token? true}])))
 
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
@@ -283,7 +339,8 @@
   (let [shortcuts (get-in current-state state/keyboard-shortcuts-path)]
     (when (and depressed? (contains? (apply set/union (vals shortcuts)) key-set))
       (handle-keyboard-shortcut-after current-state (first (filter #(-> shortcuts % (contains? key-set))
-                                                                   (keys shortcuts))))))
+                                                                   (keys shortcuts)))
+                                      key-set)))
   (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defn update-mouse [state x y]
@@ -293,10 +350,6 @@
     (do
       (utils/mlog "Called update-mouse without x and y coordinates")
       state)))
-
-(defn parse-points-from-path [path]
-  (let [points (map js/parseInt (str/split (subs path 1) #" "))]
-    (map (fn [[rx ry]] {:rx rx :ry ry}) (partition 2 points))))
 
 (defn handle-drawing-started [state x y]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)
@@ -802,7 +855,7 @@
   (-> state
     (assoc-in [:pan :position] {:x x :y y})))
 
-(defn mouse-depressed-intents [state button ctrl? shift?]
+(defn mouse-depressed-intents [state button ctrl? shift? outside-canvas?]
   (let [tool (get-in state state/current-tool-path)
         drawing-text? (and (keyword-identical? :text tool)
                            (get-in state [:drawing :in-progress?]))]
@@ -811,6 +864,7 @@
      ;; You also want the right-click menu to open
      (when drawing-text? [:finish-text-layer])
      (cond
+       outside-canvas? nil
        (keyboard/pan-shortcut-active? state) [:pan]
        (= button 2) [:open-radial]
        (and (= button 0) ctrl? (not shift?)) [:open-radial]
@@ -827,10 +881,10 @@
 (declare handle-text-layer-finished-after)
 
 (defmethod control-event :mouse-depressed
-  [browser-state message [x y {:keys [button type ctrl? shift?]}] state]
+  [browser-state message [x y {:keys [button type ctrl? shift? outside-canvas?]}] state]
   (if (empty? (:frontend-id-state state))
     state
-    (let [intents (mouse-depressed-intents state button ctrl? shift?)
+    (let [intents (mouse-depressed-intents state button ctrl? shift? outside-canvas?)
           new-state (-> state
                       (update-mouse x y)
                       (assoc-in [:mouse-down] true)
@@ -846,10 +900,10 @@
               new-state intents))))
 
 (defmethod post-control-event! :mouse-depressed
-  [browser-state message [x y {:keys [button ctrl? shift?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button ctrl? shift? outside-canvas?]}] previous-state current-state]
   (when-not (empty? (:frontend-id-state previous-state))
     ;; use previous state so that we're consistent with the control-event
-    (let [intents (mouse-depressed-intents previous-state button ctrl? shift?)]
+    (let [intents (mouse-depressed-intents previous-state button ctrl? shift? outside-canvas?)]
       (doseq [intent intents]
         (case intent
           :finish-text-layer (handle-text-layer-finished-after previous-state current-state)
@@ -1203,6 +1257,14 @@
      (when unread-chats?
        (favicon/set-unread!)))))
 
+(defmethod control-event :visibility-changed
+  [browser-state message {:keys [hidden?]} state]
+  (if hidden?
+    ;; reset key state when losing visibility, prevents
+    ;; shortcuts from getting stuck
+    (dissoc state :keyboard)
+    state))
+
 (defmethod post-control-event! :visibility-changed
   [browser-state message {:keys [hidden?]} previous-state current-state]
   (when (and (not hidden?)
@@ -1230,11 +1292,22 @@
   [state cmd chat]
   (update-in state [:db] frontend.db/reset-db!))
 
-(defmethod control-event :chat-submitted
+(defmethod control-event :chat-body-changed
   [browser-state message {:keys [chat-body]} state]
-  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)]
+  (-> state
+    (assoc-in [:chat :body] chat-body)))
+
+(defmethod post-control-event! :chat-body-changed
+  [browser-state message {:keys [chat-body]} previous-state current-state]
+  (maybe-notify-subscribers! previous-state current-state nil nil))
+
+(defmethod control-event :chat-submitted
+  [browser-state message _ state]
+  (let [{:keys [entity-id state]} (frontend.db/get-entity-id state)
+        chat-body (get-in state [:chat :body])]
     (-> state
       (assoc-in state/chat-submit-learned-path true)
+      (dissoc-in [:chat :body])
       (handle-cmd-chat (chat-cmd chat-body) chat-body)
       (assoc-in [:chat :entity-id] entity-id))))
 
@@ -1275,10 +1348,11 @@
   ::stop-save)
 
 (defmethod post-control-event! :chat-submitted
-  [browser-state message {:keys [chat-body]} previous-state current-state]
+  [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
         client-id (:client-id previous-state)
         color (get-in previous-state [:subscribers :info client-id :color])
+        chat-body (get-in previous-state [:chat :body])
         stop-save? (= ::stop-save (when-let [cmd (chat-cmd chat-body)]
                                     (post-handle-cmd-chat current-state cmd chat-body)))]
     (when-not stop-save?
@@ -1290,7 +1364,8 @@
                                                :chat/document (:document/id previous-state)
                                                :client/timestamp (datetime/server-date)
                                                ;; server will overwrite this
-                                               :server/timestamp (datetime/server-date)})]))))
+                                               :server/timestamp (datetime/server-date)})]))
+    (maybe-notify-subscribers! previous-state current-state nil nil)))
 
 (defmethod control-event :chat-toggled
   [browser-state message _ state]
@@ -1301,8 +1376,7 @@
     (-> state
         (assoc-in state/chat-opened-path chat-open?)
         (assoc-in state/chat-button-learned-path true)
-        (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time)
-        (assoc-in [:drawing :in-progress?] false))))
+        (assoc-in (state/last-read-chat-time-path (:document/id state)) last-chat-time))))
 
 (defmethod post-control-event! :chat-toggled
   [browser-state message _ previous-state current-state]
@@ -1310,35 +1384,6 @@
     (do (analytics/track "Chat opened")
         (favicon/set-normal!))
     (analytics/track "Chat closed")))
-
-(defmethod control-event :overlay-info-toggled
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :info)
-      (assoc-in state/info-button-learned-path true)))
-
-(defmethod control-event :overlay-username-toggled
-  [browser-state message _ state]
-  (-> state
-      (handle-replace-menu :username)))
-
-(defmethod post-control-event! :overlay-info-toggled
-  [browser-state message _ previous-state current-state]
-  (when (and (not (get-in previous-state state/info-button-learned-path))
-             (get-in current-state state/info-button-learned-path))
-    (analytics/track "What's this learned")))
-
-(defmethod control-event :overlay-closed
-  [target message _ state]
-  (overlay/clear-overlays state))
-
-(defmethod control-event :overlay-menu-closed
-  [target message _ state]
-  (overlay/pop-overlay state))
-
-(defmethod control-event :roster-closed
-  [target message _ state]
-  (overlay/pop-overlay state))
 
 (defmethod post-control-event! :application-shutdown
   [browser-state message _ previous-state current-state]
@@ -1348,30 +1393,6 @@
   [browser-state message _ state]
   (-> state
       (update-in state/chat-mobile-opened-path not)))
-
-(defmethod control-event :chat-link-clicked
-  [browser-state message _ state]
-   (-> state
-     (overlay/clear-overlays)
-     (assoc-in state/chat-opened-path true)
-     (assoc-in state/chat-mobile-opened-path true)
-     (assoc-in [:chat :body] "@prcrsr ")))
-
-(defmethod post-control-event! :chat-link-clicked
-  [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-input")))
-
-(defmethod control-event :invite-link-clicked
-  [browser-state message _ state]
-   (-> state
-     (overlay/clear-overlays)
-     (assoc-in state/chat-opened-path true)
-     (assoc-in state/chat-mobile-opened-path true)
-     (assoc-in [:chat :body] "/invite ")))
-
-(defmethod post-control-event! :invite-link-clicked
-  [browser-state message _ previous-state current-state]
-  (.focus (goog.dom/getElement "chat-input")))
 
 (defmethod control-event :chat-user-clicked
   [browser-state message {:keys [id-str]} state]
@@ -1452,11 +1473,25 @@
   [browser-state message _ state]
   (handle-layer-properties-submitted state))
 
-(defn handle-layer-properties-submitted-after [current-state]
-  (let [db (:db current-state)]
-    (d/transact! db [(utils/remove-map-nils
-                      (select-keys (get-in current-state [:layer-properties-menu :layer])
-                                   [:db/id :layer/ui-id :layer/ui-target]))])))
+(def sentinel (js-obj))
+
+(defn handle-layer-properties-submitted-after
+  "Saves ui-id and ui-target. Retracts old values if new values are nil. Retraction is racy."
+  [current-state]
+  (let [db (:db current-state)
+        layer (get-in current-state [:layer-properties-menu :layer])
+        new-id (:layer/ui-id layer sentinel)
+        new-target (:layer/ui-target layer sentinel)]
+    (d/transact! db (concat (when (not (identical? new-id sentinel))
+                              (if (nil? new-id)
+                                (when-let [old-id (:layer/ui-id (d/entity @db (:db/id layer)))]
+                                  [[:db/retract (:db/id layer) :layer/ui-id old-id]])
+                                [[:db/add (:db/id layer) :layer/ui-id new-id]]))
+                            (when (not (identical? new-target sentinel))
+                              (if (nil? new-target)
+                                (when-let [old-target (:layer/ui-target (d/entity @db (:db/id layer)))]
+                                  [[:db/retract (:db/id layer) :layer/ui-target old-target]])
+                                [[:db/add (:db/id layer) :layer/ui-target new-target]]))))))
 
 (defmethod post-control-event! :layer-properties-submitted
   [browser-state message _ previous-state current-state]
@@ -1527,82 +1562,6 @@
                      layer-group)
                    {:can-undo? true}))))
 
-(defmethod control-event :your-docs-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :doc-viewer)
-      (assoc-in state/your-docs-learned-path true)))
-
-(defmethod post-control-event! :your-docs-opened
-  [browser-state message _ previous-state current-state]
-  (when (:cust current-state)
-    (sente/send-msg
-     (:sente current-state)
-     [:frontend/fetch-touched]
-     10000
-     (fn [{:keys [docs]}]
-       (when docs
-         (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
-
-(defmethod control-event :team-docs-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :team-doc-viewer)))
-
-(defmethod post-control-event! :team-docs-opened
-  [browser-state message _ previous-state current-state]
-  (sente/send-msg
-   (:sente current-state)
-   [:team/fetch-touched {:team/uuid (get-in current-state [:team :team/uuid])}]
-   10000
-   (fn [{:keys [docs]}]
-     (when docs
-       (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}])))))
-
-(defmethod control-event :main-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-replace-menu :start)
-      (assoc-in state/main-menu-learned-path true)))
-
-(defmethod control-event :roster-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-replace-menu :roster)))
-
-(defmethod control-event :sharing-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :sharing)
-      (assoc-in state/sharing-menu-learned-path true)))
-
-(defmethod control-event :shortcuts-menu-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :shortcuts)
-      (assoc-in state/shortcuts-menu-learned-path true)))
-
-
-(defmethod control-event :document-permissions-opened
-  [browser-state message _ state]
-  (-> state
-      (handle-add-menu :document-permissions)))
-
-(defmethod control-event :manage-permissions-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :manage-permissions)))
-
-(defmethod control-event :team-settings-opened
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :team-settings)))
-
-(defmethod control-event :connection-info-opened
-  [browser-state message _ state]
-  (-> state
-    (overlay/add-overlay :connection-info)))
-
 (defmethod control-event :invite-to-changed
   [browser-state message {:keys [value]} state]
   (-> state
@@ -1652,8 +1611,6 @@
 (defmethod post-control-event! :document-privacy-changed
   [browser-state message {:keys [doc-id setting]} previous-state current-state]
   ;; privacy is on the write blacklist until we have a better way to do attribute-level permissions
-  (d/transact! (:db current-state)
-               [{:db/id doc-id :document/privacy setting}])
   (sente/send-msg (:sente current-state) [:frontend/change-privacy {:document/id doc-id
                                                                     :setting setting}]))
 
@@ -1662,6 +1619,12 @@
   [browser-state message {:keys [doc-id]} previous-state current-state]
   (sente/send-msg (:sente current-state) [:frontend/send-permission-request {:document/id doc-id
                                                                              :invite-loc :overlay}]))
+
+(defmethod post-control-event! :team-permission-requested
+  [browser-state message {:keys [doc-id]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:team/send-permission-request {:team/uuid (:team/uuid (:team current-state))
+                                                  :invite-loc :overlay}]))
 
 (defmethod post-control-event! :access-request-granted
   [browser-state message {:keys [request-id doc-id team-uuid]} previous-state current-state]
@@ -1685,13 +1648,40 @@
                                            :request-id request-id
                                            :invite-loc :overlay}]))
 
+(defn navigate-to-lazy-doc [current-state replace-token?]
+  (go
+    (landing-doc/maybe-fetch-doc-id current-state)
+    (let [doc-id (<! (landing-doc/get-doc-id current-state))]
+      (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" doc-id)
+                                                              :replace-token? replace-token?}]))))
+
 (defmethod post-control-event! :make-button-clicked
   [browser-state message _ previous-state current-state]
-  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
+  (navigate-to-lazy-doc current-state false))
 
 (defmethod post-control-event! :launch-app-clicked
   [browser-state message _ previous-state current-state]
-  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" (:document/id current-state))}]))
+  (navigate-to-lazy-doc current-state false))
+
+(defmethod post-control-event! :overlay-escape-clicked
+  [browser-state message _ previous-state current-state]
+  (navigate-to-lazy-doc current-state false))
+
+(defmethod post-control-event! :navigate-to-landing-doc-hovered
+  [browser-state message _ previous-state current-state]
+  (landing-doc/maybe-fetch-doc-id current-state))
+
+(defmethod post-control-event! :issue-layer-clicked
+  [browser-state message {:keys [frontend/issue-id]} previous-state current-state]
+  (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/issues/" issue-id)}]))
+
+(defmethod control-event :overlay-menu-closed
+  [browser-state message _ state]
+  (overlay/clear-overlays state))
+
+(defmethod post-control-event! :overlay-menu-closed
+  [browser-state message _ previous-state current-state]
+  (navigate-to-lazy-doc current-state true))
 
 (defmethod control-event :subscriber-updated
   [browser-state message {:keys [client-id fields]} state]
@@ -1723,11 +1713,6 @@
                                 #js [(.-scrollLeft body) (.-scrollTop body)]
                                 #js [(.-scrollLeft body) vh]
                                 375))))
-
-(defmethod control-event :privacy-stats-clicked
-  [browser-state message _ state]
-  (-> state
-    (handle-add-menu :sharing)))
 
 (defmethod post-control-event! :mouse-stats-clicked
   [browser-state message _ previous-state current-state]
@@ -1830,15 +1815,60 @@
   (utils/update-when-in state [:subscribers :info producer] assoc :stream-url stream-url))
 
 (defmethod control-event :retry-unsynced-datoms
-  [browser-state message {:keys [stream-url producer]} state]
-  (assoc state :unsynced-datoms nil))
+  [browser-state message {:keys [sente-event]} state]
+  (assoc-in state [:unsynced-datoms sente-event] nil))
 
 (defmethod post-control-event! :retry-unsynced-datoms
-  [browser-state message {:keys [stream-url producer]} previous-state current-state]
-  (doseq [{:keys [datom-group annotations]} (:unsynced-datoms previous-state)]
+  [browser-state message {:keys [sente-event]} previous-state current-state]
+  (doseq [{:keys [datom-group annotations]} (get-in previous-state [:unsynced-datoms sente-event])]
     (frontend.db/send-datoms-to-server (:sente current-state) :frontend/transaction datom-group annotations (:comms current-state)))
   (d/transact! (:db current-state)
                (mapcat #(map (fn [d] [:db/add (:e d) :unsaved false])
                              (utils/inspect (:datom-group %)))
-                       (:unsynced-datoms previous-state))
-               {:bot-layer true}))
+                       (get-in previous-state [:unsynced-datoms sente-event]))
+               {:server-update true}))
+
+(defmethod post-control-event! :start-plan-clicked
+  [browser-state message _ previous-state current-state]
+  (stripe/open-checkout (get-in current-state [:cust :cust/email])
+                        #(go
+                           (let [result (<! (sente/ch-send-msg (:sente current-state)
+                                                               [:team/create-plan
+                                                                {:token-id (aget % "id")
+                                                                 :team/uuid (get-in current-state [:team :team/uuid])}]
+                                                               30000
+                                                               (async/promise-chan)))]
+                             result))
+                        #(utils/mlog "closed stripe checkout")
+                        {:panelLabel "Add card"}))
+
+(defmethod post-control-event! :change-card-clicked
+  [browser-state message _ previous-state current-state]
+  (stripe/open-checkout (get-in current-state [:cust :cust/email])
+                        #(go
+                           (let [result (<! (sente/ch-send-msg (:sente current-state)
+                                                               [:team/update-card
+                                                                {:token-id (aget % "id")
+                                                                 :team/uuid (get-in current-state [:team :team/uuid])}]
+                                                               30000
+                                                               (async/promise-chan)))]
+                             result))
+                        #(utils/mlog "closed stripe checkout")
+                        {:panelLabel "Change card"}))
+
+(defmethod post-control-event! :billing-email-changed
+  [browser-state message {:keys [plan-id email]} previous-state current-state]
+  (d/transact! (:team-db current-state)
+               [[:db/add plan-id :plan/billing-email email]]))
+
+(defmethod post-control-event! :marked-issue-completed
+  [browser-state message {:keys [issue-uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state) [:issue/set-status {:frontend/issue-id issue-uuid
+                                                             :issue/status :issue.status/completed}]))
+
+(defmethod post-control-event! :new-cust-uuids
+  [browser-state message {:keys [uuids]} previous-state current-state]
+  (let [current-uuids (set (keys (get-in current-state [:cust-data :uuid->cust])))
+        new-uuids (set/difference uuids current-uuids)]
+    (when (seq new-uuids)
+      (sente/send-msg (:sente current-state) [:frontend/fetch-custs {:uuids new-uuids}]))))

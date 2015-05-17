@@ -2,11 +2,74 @@
   .flexy(column);
   width: 100%;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow: hidden;
+  .menu-body {
+    .menu-view {
+      .make {
+        .animation_cascade(25);
+      }
+    }
+  }
   .content {
-    max-width: @tile_menu_max;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: @tile_blog;
+    margin-right: auto;
     .vein {
       border-bottom: 1px solid @gray_lightest;
+    }
+  }
+  .divider {
+    color: @gray_lightest;
+    margin: .5rem 0;
+    &:first-of-type {
+      margin: 0 0 1rem;
+    }
+  }
+  p {
+    a {
+      display: inline-block;
+      position: relative;
+      // still unsure between solid and dotted
+      // border-bottom: 1px dotted @gray_light;
+      box-shadow: 0 1px @gray_lighter;
+      white-space: nowrap;
+      cursor: pointer;
+      &:not(:hover) {
+        &:after {
+          width: 0;
+          left: 50%;
+          transition: @run ease-out;
+        }
+      }
+      &:active {
+        &:after {
+          left: -5%;
+          width: 110%;
+        }
+      }
+      &:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        box-shadow: 0 1px @color_select;
+      }
+    }
+  }
+  input,
+  textarea {
+    outline: none;
+    &[disabled] {
+      color: @gray_light;
+      box-shadow: none;
+      border: 1px dashed @gray_lighter;
+      resize: none;
+      overflow: hidden;
+      user-select: none;
+      pointer-events: none;
     }
   }
 }
@@ -35,6 +98,9 @@
   overflow: hidden;
   cursor: default;
   animation: in-fade-bottom-soft @run_slow @bezier_deform;
+  .mq_640({
+    animation-name: in-fade-top-soft;
+  });
   &:not(:last-of-type) {
     display: none;
   }
@@ -44,43 +110,45 @@
   box-sizing: content-box;
   flex: 1;
   position: relative;
-  padding: 10vh 0 0;
-  .make {
-    .animation_cascade(25);
-  }
+  padding-top: 10vh;
+  overflow: hidden;
+  .mq_640({
+    margin-top: @tile;
+    padding-top: @menu_padding;
+  });
 }
 .menu-view {
-  .flexy(flex-start, flex-start, column);
+  .flexy(stretch, flex-start, column);
   flex: 0 0 100%;
   position: relative;
   top: 0;
   left: 0;
   width: 100%;
-  transition: @run_slow @bezier_deform;
-  &:not(:first-child) {
-    margin-left: -100%;
-  }
+  transition: transform @run_slow linear;
+  will-change: transform;
   &:not(:last-of-type) {
-    transform: translate3d(-100%, 0, 0);
-    opacity: 0;
-    visibility: hidden;
+    opacity: 0; // TODO find better way than this hack -dk
+    position: absolute;
+    transform: translate(-100%);
+    transition-duration: @run_fast;
   }
-  &:last-child {
-    &:only-child {
+  &:only-of-type {
+    &:last-of-type {
       .make {
-        animation-name: in-fade-left;
-        animation-duration: @run_slow;
-        animation-fill-mode: both;
+        animation: in-fade-left-soft @run_slow backwards;
       }
     }
   }
-  &:not(:only-child) {
-    &:not(:first-child) {
+  &:not(:only-of-type) {
+    &:not(:first-of-type) {
       .make {
-        animation-name: in-fade-right;
-        animation-duration: @run_slow;
-        animation-fill-mode: both;
+        animation: in-fade-right-hard @run_slow backwards;
       }
+    }
+  }
+  &.credit-card {
+    .disabled-input {
+      margin-bottom: @menu_padding;
     }
   }
   article {
@@ -101,21 +169,15 @@
     }
   }
 }
-.veins {
-  flex: 1;
-  position: relative;
-  width: 100%;
-  max-width: @tile_menu_max;
-  margin: 0 auto;
-}
 .vein {
+  .menu.content();
   .flexy(center);
   .icon(stroke; @gray);
   .icon(fill; @gray);
-  width: 100%;
   height: @tile;
   color: @gray;
   overflow: hidden;
+  cursor: pointer;
   &:hover {
     .icon(stroke; @black);
     .icon(fill; @black);
@@ -125,9 +187,6 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    right: 0;
-    max-width: @tile_menu_max;
-    margin: 0 auto;
   }
   &.external {
     .icon-arrow-right {
@@ -148,6 +207,11 @@
   }
   i {
     padding: @menu_padding;
+  }
+  .peak {
+    color: @gray_light;
+    font-size: @font_size_small;
+    margin-left: auto;
   }
 }
 .menu-invite-form {
@@ -276,9 +340,19 @@
         }
       }
     }
+    .vein {
+      height: 0;
+      opacity: 0;
+    }
   }
   &.vein {
     height: auto;
+  }
+  .vein {
+    transition: height @run;
+    small {
+      padding-left: .5em;
+    }
   }
 }
 .privacy-radio {
@@ -369,6 +443,12 @@
   height: @size_menu_avatar;
   border-radius: @size_menu_avatar;
   transition: @run @bezier_fadein;
+  div {
+    &.access-avatar-img {
+      box-shadow: none;
+      border: 1px dashed @gray_light;
+    }
+  }
 }
 .access-avatar-img {
   width: @size_menu_avatar;
@@ -451,12 +531,23 @@
   animation: in-fade-top @run_slow;
   display: inline-block;
 }
-.menu-cta {
+.menu-buttons {
+  .flexy(wrap);
+  .menu-button,
+  .google-login {
+    width: @tile_xl;
+    .mq_640({
+      width: 100%;
+    });
+  }
+}
+.menu-button {
   .flexy(center, center);
   height: @tile;
-  margin-bottom: @tile;
+  padding: 0 @menu_padding;
   transition: @run_fast @bezier_fadein;
-  border: 1px solid @font_color;
+  border: 1px solid @gray_lighter;
+  background: fade(@font_color, 0);
   &:hover {
     color: @white;
     background: @font_color;
@@ -478,4 +569,63 @@
 }
 .connection-result {
   margin: 0 1em;
+}
+.invoices-table {
+  width: 100%;
+  [class^="invoice-"] {
+    line-height: 1.5;
+    padding: 1.25rem .5rem;
+    white-space: nowrap;
+    &:first-child {
+      padding-left: @menu_padding;
+    }
+    &:last-child {
+      padding-right: @menu_padding;
+    }
+  }
+}
+.invoices-head {
+  th {
+    text-transform: capitalize;
+    font-weight: normal;
+    padding: 1rem;
+  }
+}
+.invoices-body {
+  .invoice {
+    border-bottom: 1px dashed @gray_lighter;
+  }
+}
+.invoice-date,
+.invoice-id {
+  width: 30%;
+  text-align: left;
+}
+.invoice-total,
+.invoice-status {
+  text-align: center;
+  width: 10%;
+}
+.invoice-total {
+  text-align: right;
+}
+.menu-empty {
+  text-align: center;
+  .iconpile {
+    font-size: @tile;
+    margin-bottom: .5rem;
+  }
+}
+.store-credit {
+  .flexy(center; center);
+  color: @gray;
+  height: @tile;
+  margin-top: auto;
+}
+.secret-card-number {
+  letter-spacing: .25rem;
+  font-weight: bold;
+}
+.menu-new-team {
+  border: 1px dashed @gray_lighter;
 }

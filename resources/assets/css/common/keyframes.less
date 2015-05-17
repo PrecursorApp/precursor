@@ -10,12 +10,20 @@
   0%   { opacity: 0; transform: translate3d(-@tile, 0, 0);}
   100% { opacity: 1; transform: none;}
 }
+@keyframes in-fade-left-hard {
+  0%   { opacity: 0; transform: translate3d((2 * -@tile), 0, 0);}
+  100% { opacity: 1; transform: none;}
+}
 @keyframes in-fade-right {
   0%   { opacity: 0; transform: translate3d(100%, 0, 0);}
   100% { opacity: 1; transform: none;}
 }
 @keyframes in-fade-right-soft {
   0%   { opacity: 0; transform: translate3d(@tile, 0, 0);}
+  100% { opacity: 1; transform: none;}
+}
+@keyframes in-fade-right-hard {
+  0%   { opacity: 0; transform: translate3d((2 * @tile), 0, 0);}
   100% { opacity: 1; transform: none;}
 }
 @keyframes in-fade-top {
@@ -71,7 +79,7 @@
   50%  {opacity: 1;}
   100% {opacity: 0;}
 }
-@keyframes our-philosphy {
+@keyframes our-philosophy {
   0%   { opacity: 0; transform: scale3d(1.25, 1.25, 1);}
   100% { opacity: 1; transform: none;}
 }
@@ -130,8 +138,16 @@
   0%   { transform: scale3d(0,0,1);}
   100% { transform: none;}
 }
+@keyframes in-zoom-soft {
+  0%   { opacity: 0; transform: scale3d(.5,.5,1);}
+  100% { opacity: 1; transform: none;}
+}
 @keyframes in-shrink {
   0%   { opacity: 0; transform: scale3d(1.1,1.1,1);}
+  100% { opacity: 1; transform: none;}
+}
+@keyframes in-shrink-hard {
+  0%   { opacity: 0; transform: scale3d(1.5,1.5,1);}
   100% { opacity: 1; transform: none;}
 }
 @keyframes requesting-access {
@@ -167,10 +183,64 @@
     opacity: 0;
   }
 }
+@keyframes text-deleted {
+  0%   {
+    transform: none;
+    fill: @color_bot;
+    stroke-dasharray: 5,5;
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(50%, 100%, 0) scale3d(0,0,1);
+    fill: @color_bot;
+    stroke-dasharray: 5,5;
+    opacity: 0;
+  }
+}
 @keyframes admin-slide-down {
   0%   { transform: translate(0, -100%);}
   100% { transform: translate(0, 0);}
 }
 @keyframes rejected-pulse {
   50% { opacity: 1;}
+}
+@keyframes in-issue-description {
+  0%   { transform: translate(-.75rem, -.75rem);}
+  100% { transform: none;}
+}
+@keyframes out-issue-description {
+  0%   { transform: translate(.75rem, .75rem);}
+  100% { transform: none;}
+}
+@keyframes opened-menu-background {
+  0%  { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; }
+}
+@keyframes closed-menu-background {
+  0%  { opacity: 0; transform: scale(.5); }
+  80% { opacity: 1; }
+}
+@keyframes opened-menu-canvas {
+  0% { transform: scale(1); }
+}
+@keyframes closed-menu-canvas {
+  0% { transform: scale(.8); }
+}
+@keyframes opened-menu-chat {
+  0% { width: 100%; height: 100%; }
+}
+@keyframes closed-menu-chat {
+  0% { height: 80%; }
+}
+@keyframes opened-menu-foreground {
+  0% { opacity: 0; }
+}
+@keyframes opened-menu-inner {
+  0% { transform: translate(0); }
+}
+@keyframes opened-chat {
+  0% { transform: translate((@tile / 2));}
+}
+@keyframes closed-chat {
+  0% { transform: none; opacity: 1; }
 }

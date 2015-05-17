@@ -13,22 +13,6 @@ body {
   min-height: 100vh;
   background: @dye_outer;
   animation: in-fade @run_slower;
-  &.chat-opened {
-    .width-canvas {
-      .size_of(canvas; width);
-    }
-    .width-chat {
-      .size_of(chat; width);
-    }
-  }
-  &.chat-closed {
-    .width-of-canvas {
-      width: 100%;
-    }
-    .width-of-chat {
-      width: 0;
-    }
-  }
 }
 button {
   background: fade(@white, 0);
@@ -48,13 +32,10 @@ img {
   max-width: 100%;
 }
 a {
-  .icon(stroke; @black);
-  .icon(fill; @black);
-  color: @black;
+  color: inherit;
   background: transparent;
   text-decoration: none;
-  &:hover,
-  &:focus {
+  &:hover {
     .icon(stroke; @color_select);
     .icon(fill; @color_select);
     color: @color_select;
@@ -73,24 +54,12 @@ i {
 h1, h2, h3, h4, h5, h6 {
   margin: 0 0 1rem;
 }
-h1, h2 {
-  line-height: 1.125;
-  font-weight: 300;
-}
-h3, h4 {
-  line-height: 1.25;
-  font-weight: 400;
-}
-h5, h6 {
-  line-height: 1.5;
-  font-weight: 400;
-}
-h1 { font-size: 4.0em; }
-h2 { font-size: 3.0em; }
-h3 { font-size: 2.0em; }
-h4 { font-size: 1.5em; }
-h5 { font-size: 1.0em; }
-h6 { font-size: .75em; }
+h1 { .h1(); }
+h2 { .h2(); }
+h3 { .h3(); }
+h4 { .h4(); }
+h5 { .h5(); }
+h6 { .h6(); }
 button,
 input,
 textarea {
@@ -118,17 +87,20 @@ code {
 .divider,
 .divider-small {
   .flexy(center, center);
+  width: 100%;
   &:before,
   &:after {
     flex: 1;
     content: "";
     border-bottom: 1px solid; // calling w/o color forces inheritance
   }
-  &:before {
-    margin-right: .25rem;
-  }
-  &:after {
-    margin-left: .25rem;
+  &:not(:empty) {
+    &:before {
+      margin-right: .25rem;
+    }
+    &:after {
+      margin-left: .25rem;
+    }
   }
 }
 .divider-small {

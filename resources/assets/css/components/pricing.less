@@ -1,5 +1,6 @@
 .pricing {
   .content {
+    user-select: none;
     padding-top: 10%;
   }
 }
@@ -8,7 +9,7 @@
 }
 .price-block {
   width: 25%;
-  padding: @tile 0;
+  padding: (@tile / 2) 0;
   .mq_960({
     width: 32%;
   });
@@ -32,6 +33,7 @@
 }
 .price-heading {
   margin: 0;
+  padding: .3125rem 0;
 }
 .price-body {
   padding: @tile 0;
@@ -42,18 +44,6 @@
 }
 .price-copy {
   margin: 0;
-}
-.price-button {
-  .flexy(center; center);
-  line-height: 1;
-  height: @tile;
-  width: 100%;
-  padding: @menu_padding 0;
-  border: 1px solid @gray_light;
-  &:hover {
-    color: inherit;
-    background: @gray_light;
-  }
 }
 .price-blocks-foot {
   text-align: center;

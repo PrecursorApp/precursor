@@ -4,7 +4,13 @@
             [defpage.core :as defpage :refer (defpage)]
             [pc.rollbar :as rollbar]))
 
-(defpage status-callback [:post "/hooks/twilio"] [req]
+;; Note: routes in this namespace have /hooks prepended to them by default
+;;       We'll handle this with convention for now, but probably want to
+;;       modify clout to use :uri instead of :path-info
+;;       https://github.com/weavejester/clout/blob/master/src/clout/core.clj#L35
+
+;; /hooks/twilio
+(defpage status-callback [:post "/twilio"] [req]
   (let [params (:params req)]
     (if (:ErrorCode params)
       (do
@@ -14,6 +20,7 @@
                                                                            :AccountSid :NumMedia :MediaUrl
                                                                            :MessageStatus :MessageSid])))
       (log/infof "message to %s succeeded with %s"
-                 (:To params) (:MessageStatus params)))))
+                 (:To params) (:MessageStatus params)))
+    {:status 200}))
 
-(def app (defpage/collect-routes))
+(def hooks-app (defpage/collect-routes))

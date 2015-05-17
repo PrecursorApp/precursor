@@ -45,7 +45,7 @@
     .google-text {
       display: none;
     }
-    .icon-google {
+    .icon-google-logo {
       padding: @menu_padding / 3;
     }
   }
@@ -57,11 +57,208 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .icon-google {
+  .icon-google-logo {
     padding: @menu_padding;
     border-right: 1px solid @color_google_dark;
   }
   .fill-google {
     fill: @white; // 3rd-party brand color, don't override
+  }
+}
+.product-hunt-card {
+  .flexy(center);
+  font-family: Helvetica, @font_sans;
+  position: relative;
+  margin: 2em 0;
+  padding: 10px;
+  border: 1px solid @gray_lightest;
+  border-radius: 3px;
+  transition: 0.1s;
+  &:hover {
+    background: #fcf5e2;
+    border-color: #fcf5e2;
+  }
+  img {
+    border-radius: @tile;
+    min-width: 30px;
+  }
+}
+.ph-big-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.ph-upvote {
+  .flexy(column);
+  background: #edeceb;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 0 rgba(83,69,64,0.3),0 1px 1px 0 rgba(0,0,0,0.2);
+  height: 44px;
+  margin: 0 11px 0 0;
+  position: relative;
+  text-align: center;
+  width: 34px;
+  min-width: 34px;
+  a {
+    .flexy(flex-end; center);
+    color: #534540;
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: bold;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding-bottom: 5px;
+    &:before {
+      content: "";
+      position: absolute;
+      top: 0px;
+      left: 10px;
+      border-bottom: 9px solid #534540;
+      border-left: 7px solid fade(@white, 0);
+      border-right: 7px solid fade(@white, 0);
+      border-top: 9px solid fade(@white, 0);
+    }
+    &:hover {
+      &:before {
+        border-bottom-color: @color_ph;
+      }
+    }
+  }
+}
+.ph-info {
+  position: relative;
+  margin-right: auto;
+  pointer-events: none;
+}
+.ph-title {
+  pointer-events: none;
+  a {
+    color: #534540;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 22px;
+    pointer-events: auto;
+    &:hover {
+      color: #534540;
+      text-decoration: underline;
+    }
+  }
+}
+.ph-tagline {
+  color: #999999;
+  font-size: 17px;
+  margin: 2px 0 0 0px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 410px;
+}
+.ph-people {
+  .flexy(center);
+  margin: 0 23px 0 0;
+  &:hover {
+    .ph-maker,
+    .ph-hunter {
+      margin-left: 0;
+      &:before {
+        opacity: 1;
+      }
+    }
+  }
+}
+.ph-makers {
+  .flexy();
+  position: relative;
+}
+.ph-maker {
+  margin-left: -20px;
+  transition: 0.3s;
+  &:nth-child(1) {
+    z-index: 3;
+  }
+  &:nth-child(2) {
+    z-index: 2;
+  }
+}
+.ph-maker,
+.ph-hunter {
+  position: relative;
+  &:before {
+    .flexy(center; center);
+    content: "M";
+    color: #fff;
+    font-size: 10px;
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 15px;
+    height: 15px;
+    border-radius: @tile;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    background: #00b27f;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+}
+.ph-hunter {
+  margin-left: -20px;
+  z-index: 1;
+  &:before {
+    content: "H";
+    background: @color_ph;
+  }
+}
+.ph-comments-icon {
+  position: relative;
+  pointer-events: none;
+  min-width: 27px;
+  .iconpile {
+    width: 1rem;
+    margin: 0 11px 0 0;
+  }
+  .fill-ph-comments {
+    fill: #bbbbbb;
+  }
+}
+.ph-comments-count {
+  position: relative;
+  pointer-events: none;
+  min-width: 9px;
+  a {
+    color: #bbbbbb;
+    font-size: 16px;
+    line-height: 19px;
+  }
+}
+.dn-discount {
+  .flexy();
+  .icon(fill; @gray_dark);
+  white-space: nowrap;
+  &:hover {
+    .icon(fill; @white);
+  }
+  &:not(:hover) {
+    .icon(fill; @color_dn);
+    color: @color_dn !important;
+  }
+  .iconpile {
+    margin-right: .5rem;
+  }
+}
+.dn-pricing-button {
+  &:before {
+    margin-top: 0rem  !important;
+    border-bottom-color: @color_dn !important;
+  }
+  &:after {
+    margin-top: 1.0rem !important;
+    padding: 1.5rem !important;
+    background: @color_dn !important;
   }
 }

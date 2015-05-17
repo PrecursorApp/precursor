@@ -43,10 +43,15 @@
 @color_google_light: lighten(  saturate(@color_google,  5),  2);
 @color_google_dark:   darken(desaturate(@color_google, 34), 13);
 
+@color_ph: #da552f;
+@color_dn: #2C71D9;
+
 @color_bot: @blue;
 
 @color_menu_faded: @gray_light;
 @color_menu_faint: @gray_lightest;
+
+@color_chat_border: fade(lighten(@gray, 8), 33); // dark on darker & lightest on white
 
 @dye_inner: @gray_darker;
 @dye_outer: @white;
@@ -82,6 +87,8 @@
 
 @tile_radial: @tile_menu_min;
 @tile_content: @tile_xxl;
+
+@tile_blog: (@tile * 10);
 
 @tooltip_color: @gray_dark;
 @menu_padding: 1.5rem; // TODO fix naming convention here
@@ -128,7 +135,8 @@ select,     82.66px,  49.71px;
 ~"cyan",   @cyan,
 ~"blue",   @blue,
 ~"purple", @purple,
-~"pink",   @pink;
+~"pink",   @pink,
+~"ph-orange", @color_ph;
 
 @size_menu_avatar: .75 * @tile;
 
@@ -147,8 +155,9 @@ select,     82.66px,  49.71px;
 @chat_0960: @size_chat + @chat_step_0960;
 @chat_0640: @size_chat + @chat_step_0640;
 
-@canvas_pull_1920: 5% + @chat_step_1920;
-@canvas_pull_1600: 5% + @chat_step_1600;
-@canvas_pull_1280: 5% + @chat_step_1280;
-@canvas_pull_0960: 5% + @chat_step_0960;
-@canvas_pull_0640: 5% + @chat_step_0640;
+@canvas_pull_1920: @canvas_pull_init + @chat_step_1920;
+@canvas_pull_1600: @canvas_pull_init + @chat_step_1600;
+@canvas_pull_1280: @canvas_pull_init + @chat_step_1280;
+@canvas_pull_0960: @canvas_pull_init + @chat_step_0960;
+@canvas_pull_0640: @canvas_pull_init + @chat_step_0640;
+@canvas_pull_init: @size_chat;

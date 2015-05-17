@@ -8,7 +8,8 @@
             [pc.views.common :as common :refer (cdn-path)]
             [pc.views.scripts :as scripts]
             [pc.views.email-landing :as email-landing]
-            [pc.profile :refer (prod-assets?)])
+            [pc.profile :refer (prod-assets?)]
+            [pc.stripe :as stripe])
   (:import java.util.UUID))
 
 (defn embed-json-in-head
@@ -106,12 +107,14 @@
 
     (embed-json-in-head "window.Precursor"
                         (json/encode (-> view-data
-                                       (utils/update-when-in [:initial-entities] serialize-entities)
-                                       (utils/update-when-in [:cust] #(-> % escape-entity pr-str))
-                                       (utils/update-when-in [:team] #(-> % escape-entity pr-str))
+                                       (utils/update-when-in [:initial-entities] pr-str)
+                                       (utils/update-when-in [:initial-issue-entities] pr-str)
+                                       (utils/update-when-in [:cust] pr-str)
+                                       (utils/update-when-in [:team] pr-str)
                                        (assoc :cdn-base-url (common/cdn-base-url)
                                               :manifest-version (pc.assets/asset-manifest-version)
-                                              :page-start (java.util.Date.)))))
+                                              :page-start (java.util.Date.)
+                                              :stripe-publishable-key (stripe/publishable-key)))))
     (when (prod-assets?)
       scripts/google-analytics)
     (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))

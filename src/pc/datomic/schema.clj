@@ -193,6 +193,12 @@
               :db/index true
               :db/doc "invalid document/id that was migrated")
 
+   (attribute :document/tags
+              :db.type/string
+              :db/cardinality :db.cardinality/many
+              :db/index true
+              :db/doc "Tag for a doc")
+
    (attribute :chat/body
               :db.type/string
               :metadata/unescaped true)
@@ -507,12 +513,18 @@
               :db.type/ref
               :db/doc "Annotates transaction with team it belongs to")
 
+   (attribute :transaction/issue-tx?
+              :db.type/boolean
+              :db/doc "Annotates that transaction was related to issues")
+
    (attribute :migration
               :db.type/ref
               :db/doc "Annotates transaction with migration")
    (enum :migration/add-frontend-ids)
    (enum :migration/choose-colors-for-custs)
    (enum :migration/longs->refs)
+   (enum :migration/add-team-plans)
+   (enum :migration/ensure-team-creators)
 
    ;; TODO: this may be a bad idea, revisit if it doesn't work well in practice
    (attribute :needs-email
@@ -530,6 +542,7 @@
    (enum :email/access-request-created)
    (enum :email/early-access-granted)
    (enum :email/permission-granted)
+   (enum :email/invoice-created)
    (enum :email/fake)
 
    (attribute :flags
@@ -568,15 +581,18 @@
 
    (attribute :early-access-request/company-name
               :db.type/string
-              :db/doc "Early access request form field.")
+              :db/doc "Early access request form field."
+              :metadata/unescaped true)
 
    (attribute :early-access-request/employee-count
               :db.type/string
-              :db/doc "Early access request form field.")
+              :db/doc "Early access request form field."
+              :metadata/unescaped true)
 
    (attribute :early-access-request/use-case
               :db.type/string
-              :db/doc "Early access request form field.")
+              :db/doc "Early access request form field."
+              :metadata/unescaped true)
 
    (function :pc.datomic.web-peer/retract-entity
              '{:lang :clojure
@@ -586,10 +602,24 @@
                        (remove #(= (nth % 2) frontend-id-e) txes))}
              :db/doc "Like db.fn/retractEntity, but preserves frontend ids")
 
+   (function :pc.datomic/replace-many
+             '{:lang :clojure
+               ;; check syntax here
+               :requires [[clojure.data]]
+               :params [db eid attr-ident new-values]
+               :code (let [old-values (set (map :v (d/datoms db :eavt eid attr-ident)))
+                           [only-old only-new _] (clojure.data/diff old-values new-values)]
+                       (concat (for [old-val only-old]
+                                 [:db/retract eid attr-ident old-val])
+                               (for [new-val only-new]
+                                 [:db/add eid attr-ident new-val])))}
+             :db/doc "Replaces all of the cardinality-many values with new value")
+
    (attribute :team/subdomain
               :db.type/string
               :db/unique :db.unique/value
-              :db/doc "precursor subdomain for a team")
+              :db/doc "precursor subdomain for a team"
+              :metadata/unescaped true)
 
    (attribute :team/uuid
               :db.type/uuid
@@ -606,8 +636,227 @@
 
    (attribute :document/team
               :db.type/ref
-              :db/doc "Team this doc belongs to (if it belongs to a team)")])
+              :db/doc "Team this doc belongs to (if it belongs to a team)")
 
+   (attribute :team/plan
+              :db.type/ref
+              :db/doc "Plan for a given team")
+
+   (attribute :plan/start
+              :db.type/instant
+              :db/doc "Stripe start time for the plan")
+
+   (attribute :plan/next-period-start
+              :db.type/instant
+              :db/doc "Time of next Stripe plan period")
+
+   (attribute :plan/trial-end
+              :db.type/instant
+              :db/doc "Instant that plan's trial is over")
+
+   (attribute :plan/stripe-customer-id
+              :db.type/string
+              :db/unique :db.unique/value
+              :db/doc "Stripe's customer id for the plan")
+
+   (attribute :plan/stripe-subscription-id
+              :db.type/string
+              :db/unique :db.unique/value
+              :db/doc "Stripe's subscription id for the plan")
+
+   (attribute :plan/billing-email
+              :db.type/string
+              :db/doc "Email address that receives into about the plan"
+              :metadata/unescaped true)
+
+   (attribute :plan/paid?
+              :db.type/boolean
+              :db/doc "Whether plan is paid or not")
+
+   (attribute :plan/active-custs
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "List of active custs on the team")
+
+   (attribute :plan/stripe-event-ids
+              :db.type/string
+              :db/cardinality :db.cardinality/many
+              :db/doc "Stripe webhook ids that have been handled or are currently being handled")
+
+   (attribute :plan/account-balance
+              :db.type/long)
+
+   (attribute :credit-card/exp-year
+              :db.type/long)
+
+   (attribute :credit-card/exp-month
+              :db.type/long)
+
+   (attribute :credit-card/last4
+              :db.type/string
+              :db/doc "last 4 digits of card"
+              :metadata/unescaped true)
+
+   (attribute :credit-card/brand
+              :db.type/string
+              :db/doc "card brand, e.g. Visa"
+              :metadata/unescaped true)
+
+   (attribute :credit-card/fingerprint
+              :db.type/string
+              :db/doc "Unique fingerprint for the card"
+              :metadata/unescaped true)
+
+   (attribute :credit-card/stripe-id
+              :db.type/string
+              :db/doc "Stripe id for the card")
+
+   (attribute :plan/invoices
+              :db.type/ref
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :invoice/stripe-id
+              :db.type/string
+              :db/unique :db.unique/value)
+
+   (attribute :invoice/subtotal
+              :db.type/long
+              :db/doc "Invoice total before discounts in cents")
+
+   (attribute :invoice/total
+              :db.type/long
+              :db/doc "Invoice total after discounts in cents")
+
+   (attribute :invoice/date
+              :db.type/instant)
+
+   (attribute :invoice/period-start
+              :db.type/instant)
+
+   (attribute :invoice/period-end
+              :db.type/instant)
+
+   (attribute :invoice/paid?
+              :db.type/boolean)
+
+   (attribute :invoice/attempted?
+              :db.type/boolean)
+
+   (attribute :invoice/next-payment-attempt
+              :db.type/instant)
+
+   (attribute :invoice/description
+              :db.type/string)
+
+   (attribute :invoice/line-items
+              :db.type/ref
+              :db/isComponent true
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :line-item/stripe-id
+              :db.type/string
+              :db/unique :db.unique/identity)
+
+   (attribute :line-item/amount
+              :db.type/long)
+
+   (attribute :line-item/description
+              :db.type/string)
+
+   (attribute :line-item/date
+              :db.type/instant)
+
+   (attribute :discount/coupon
+              :db.type/ref)
+
+   (attribute :discount/start
+              :db.type/instant)
+
+   (attribute :discount/end
+              :db.type/instant)
+
+   (attribute :coupon/stripe-id
+              :db.type/string
+              :db/unique :db.unique/identity)
+
+   (attribute :coupon/percent-off
+              :db.type/long
+              :db/doc "Discount percent, from 0-100")
+
+   (attribute :coupon/duration-in-months
+              :db.type/long
+              :db/doc "Number of months that the discount is active")
+
+   (attribute :issue/title
+              :db.type/string
+              :db/fulltext true
+              :db/doc "Feature request title"
+              :metadata/unescaped true)
+
+   (attribute :issue/description
+              :db.type/string
+              :db/fulltext true
+              :db/doc "Feature request description"
+              :metadata/unescaped true)
+
+   (attribute :issue/author
+              :db.type/ref
+              :db/doc "User who requested the feature")
+
+   (attribute :issue/document
+              :db.type/ref
+              :db/doc "Optional document to attach to issue")
+
+   (attribute :issue/created-at
+              :db.type/instant)
+
+   (attribute :issue/status
+              :db.type/ref
+              :db/index true)
+
+   (enum :issue.status/completed)
+
+
+   (attribute :frontend/issue-id
+              :db.type/uuid
+              :db/unique :db.unique/identity)
+
+   (attribute :issue/votes
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Votes for the issue")
+
+   (attribute :issue/comments
+              :db.type/ref
+              :db/cardinality :db.cardinality/many
+              :db/doc "Comments on an issue")
+
+   (attribute :vote/cust
+              :db.type/ref
+              :db/doc "Cust who voted for the issue")
+
+   (attribute :vote/cust-issue
+              :db.type/uuid
+              :db/unique :db.unique/value
+              :db/doc "UUID constructed of cust-id and issue-id")
+
+   (attribute :comment/author
+              :db.type/ref
+              :db/doc "Cust who made the comment")
+
+   (attribute :comment/body
+              :db.type/string
+              :db/fulltext true
+              :db/doc "Comment body"
+              :metadata/unescaped true)
+
+   (attribute :comment/parent
+              :db.type/ref
+              :db/doc "Optional parent comment for the comment")
+
+   (attribute :comment/created-at
+              :db.type/instant)
+   ])
 
 (defonce schema-ents (atom nil))
 
@@ -644,6 +893,16 @@
               (conj acc (:db/ident ent))
               acc))
           [] @schema-ents))
+
+(defn prettify-tx-data [db tx-data]
+  (for [[e a v tx added] tx-data]
+    [e
+     (get-ident a)
+     (if (contains? (enums) a)
+       (get-ident v)
+       v)
+     tx
+     added]))
 
 (defn ensure-schema
   ([] (ensure-schema (pcd/conn)))

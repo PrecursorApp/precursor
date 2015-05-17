@@ -13,6 +13,7 @@
 
 (defn connection-info [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Connection Info")
     om/IDidMount
     (did-mount [_]
       (add-watch (get-in app [:sente :state])
@@ -33,7 +34,7 @@
             rtc-stats (rtc-stats/gather-stats rtc/conns rtc/stream)
             uuid->cust (get-in app [:cust-data :uuid->cust])]
         (html
-         [:div.menu-view
+         [:section.menu-view
           [:div.content
            [:h3.make "Server Connection"]
            [:p.make

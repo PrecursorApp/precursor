@@ -1,8 +1,9 @@
 (ns pc.rollbar
   (:require [clojure.string :as str]
-            [org.httpkit.client :as http]
+            [clj-http.client :as clj-http]
             [clj-stacktrace.core :refer [parse-exception]]
             [clj-stacktrace.repl :refer [method-str]]
+            [clojure.tools.logging :as log]
             [cheshire.core :as json]
             [pc.profile :as profile]))
 
@@ -32,14 +33,24 @@
   (json/encode {:access_token access-token
                 :data (apply merge data-maps)}))
 
+(defonce rollbar-agent (agent nil
+                              :error-mode :continue
+                              :error-handler (fn [a e]
+                                               (when (profile/prod?)
+                                                 (log/error "Error in rollbar agent" e)
+                                                 (.printStackTrace e)))))
+
+(defn send-payload* [_ payload]
+  (clj-http/post endpoint
+                 {:body payload
+                  :content-type :json
+                  :socket-timeout 30000 ; 30s
+                  :conn-timeout 30000   ; 30s
+                  :accept :json}))
+
 (defn send-payload
   [payload]
-  (http/post endpoint
-             {:body payload
-              :content-type :json
-              :socket-timeout 30000     ; 30s
-              :conn-timeout 30000       ; 30s
-              :accept :json}))
+  (send-off rollbar-agent send-payload* payload))
 
 (defn base-data
   [environment level]
