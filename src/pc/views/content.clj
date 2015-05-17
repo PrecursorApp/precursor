@@ -142,10 +142,11 @@
         [:script {:type "text/javascript"}
          "goog.require(\"frontend.core\");"
          "goog.require(\"frontend.dev\");"])))
-   [:script {:type "text/javascript"}
-    (format "rasterize = {}; rasterize.api_key = '%s';"
-            (pc.profile/rasterize-key))]
-   "<script async src=\"https://rasterize.io/rasterize.js\"></script>"))
+   ;; [:script {:type "text/javascript"}
+   ;;  (format "rasterize = {}; rasterize.api_key = '%s';"
+   ;;          (pc.profile/rasterize-key))]
+   ;; "<script async src=\"https://rasterize.io/rasterize.js\"></script>"
+   ))
 
 (defn app [view-data]
   (h/html (app* view-data)))
