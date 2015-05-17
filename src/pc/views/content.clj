@@ -101,8 +101,6 @@
     [:link {:rel "icon"             :href (cdn-path "/favicon.ico")}]
     [:link {:rel "apple-touch-icon" :href (cdn-path "/img/apple-touch-icon.png")}]
     [:link {:rel "stylesheet"       :href (pc.assets/asset-path "/css/app.css")}]
-    [:link {:rel "stylesheet"       :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
-
     [:style (common/head-style)]
 
     (embed-json-in-head "window.Precursor"
