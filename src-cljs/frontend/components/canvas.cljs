@@ -783,9 +783,6 @@
                                                    :y (second (cameras/screen-event-coords e))}))))
           (when-not text?
             (svg-element (assoc layer :className "arrow-outline"
-                                :onMouseEnter (fn [e]
-                                                (utils/inspect e)
-                                                (om/set-state! owner :hovered? true))
                                 :key (str (:db/id layer) "-outline")))))))))
 
 (defn arrows [app owner]
