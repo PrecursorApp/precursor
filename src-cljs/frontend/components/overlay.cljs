@@ -25,6 +25,7 @@
             [goog.dom.Range]
             [goog.dom.selection]
             [goog.labs.userAgent.browser :as ua]
+            [goog.userAgent]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -33,6 +34,7 @@
 (defn share-input [{:keys [url placeholder]
                     :or {placeholder "Copy the url to share"}} owner]
   (reify
+    om/IDisplayName (display-name [_] "Share input")
     om/IRender
     (render [_]
       (html
@@ -413,14 +415,11 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc-id (:document/id app)
             doc (doc-model/find-by-id @db doc-id)
-            cant-edit-reason (cond (:team app)
-                                   nil
-
-                                   (not (contains? (get-in app [:cust :flags]) :flags/private-docs))
-                                   :no-private-docs-flag
-
-                                   (not (auth/owner? @db doc (get-in app [:cust])))
-                                   :not-creator)]
+            team? (boolean (:team app))
+            private-docs-flag? (contains? (get-in app [:cust :flags]) :flags/private-docs)
+            can-edit-privacy? (if team?
+                                (auth/has-team-permission? app (:team/uuid (:team app)))
+                                (auth/owner? @db doc (get-in app [:cust])))]
         (html
          [:section.menu-view
           (case (:document/privacy doc)
@@ -430,71 +429,71 @@
             :document.privacy/read-only (om/build read-only-sharing app)
             (om/build unknown-sharing app))
 
-          (case cant-edit-reason
-            :no-private-docs-flag
-            [:a.vein.make.stick.external {:href "/pricing"}
-             [:span "Need private docs? Start a free trial."]
-             (common/icon :arrow-right)]
-
-
-            [:form.privacy-select.vein.make.stick
-             [:input.privacy-radio {:type "radio"
-                                    :hidden "true"
-                                    :id "privacy-public"
-                                    :name "privacy"
-                                    :checked (keyword-identical? :document.privacy/public (:document/privacy doc))
-                                    :disabled (boolean cant-edit-reason)
-                                    :onChange #(if cant-edit-reason
-                                                 (utils/stop-event %)
-                                                 (cast! :document-privacy-changed
-                                                        {:doc-id doc-id
-                                                         :setting :document.privacy/public}))}]
-             [:label.privacy-label {:class (when cant-edit-reason "disabled")
-                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
-                                    :for "privacy-public"
-                                    :role "button"}
-              (common/icon :public)
-              [:span "Public"]
-              (when (= :not-creator cant-edit-reason)
-                [:small "(privacy change requires owner)"])]
-             [:input.privacy-radio {:type "radio"
-                                    :hidden "true"
-                                    :id "privacy-read-only"
-                                    :name "privacy"
-                                    :checked (keyword-identical? :document.privacy/read-only (:document/privacy doc))
-                                    :disabled (boolean cant-edit-reason)
-                                    :onChange #(if cant-edit-reason
-                                                 (utils/stop-event %)
-                                                 (cast! :document-privacy-changed
-                                                        {:doc-id doc-id
-                                                         :setting :document.privacy/read-only}))}]
-             [:label.privacy-label {:class (when cant-edit-reason "disabled")
-                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
-                                    :for "privacy-read-only"
-                                    :role "button"}
-              (common/icon :read-only)
-              [:span "Read-only"]
-              (when (= :not-creator cant-edit-reason)
-                [:small "(privacy change requires owner)"])]
-             [:input.privacy-radio {:type "radio"
-                                    :hidden "true"
-                                    :id "privacy-private"
-                                    :name "privacy"
-                                    :checked (keyword-identical? :document.privacy/private (:document/privacy doc))
-                                    :disabled (boolean cant-edit-reason)
-                                    :onChange #(if cant-edit-reason
-                                                 (utils/stop-event %)
-                                                 (cast! :document-privacy-changed
-                                                        {:doc-id doc-id
-                                                         :setting :document.privacy/private}))}]
-             [:label.privacy-label {:class (when cant-edit-reason "disabled")
-                                    :title (when (= :not-creator cant-edit-reason) "You must be the owner of this doc to change its privacy.")
-                                    :for "privacy-private"
-                                    :role "button"}
+          [:form.privacy-select.vein.make.stick
+           [:input.privacy-radio {:type "radio"
+                                  :hidden "true"
+                                  :id "privacy-public"
+                                  :name "privacy"
+                                  :checked (keyword-identical? :document.privacy/public (:document/privacy doc))
+                                  :disabled (keyword-identical? :document.privacy/public (:document/privacy doc))
+                                  :onChange #(if can-edit-privacy?
+                                               (cast! :document-privacy-changed
+                                                      {:doc-id doc-id
+                                                       :setting :document.privacy/public})
+                                               (utils/stop-event %))}]
+           [:label.privacy-label {:class (when-not can-edit-privacy? "disabled")
+                                  :title (when-not can-edit-privacy? "You must be the owner of this doc to change its privacy.")
+                                  :for "privacy-public"
+                                  :role "button"}
+            (common/icon :public)
+            [:span "Public"]
+            (when-not can-edit-privacy?
+              [:small "(privacy change requires owner)"])]
+           [:input.privacy-radio {:type "radio"
+                                  :hidden "true"
+                                  :id "privacy-read-only"
+                                  :name "privacy"
+                                  :checked (keyword-identical? :document.privacy/read-only (:document/privacy doc))
+                                  :disabled (not can-edit-privacy?)
+                                  :onChange #(if can-edit-privacy?
+                                               (cast! :document-privacy-changed
+                                                      {:doc-id doc-id
+                                                       :setting :document.privacy/read-only})
+                                               (utils/stop-event %))}]
+           [:label.privacy-label {:class (when-not can-edit-privacy? "disabled")
+                                  :title (when-not can-edit-privacy? "You must be the owner of this doc to change its privacy.")
+                                  :for "privacy-read-only"
+                                  :role "button"}
+            (common/icon :read-only)
+            [:span "Read-only"]
+            (when-not can-edit-privacy?
+              [:small "(privacy change requires owner)"])]
+           (if (and can-edit-privacy? (not team?) (not private-docs-flag?))
+             [:a.vein.external {:href "/pricing"}
               (common/icon :private)
               [:span "Private"]
-              (when (= :not-creator cant-edit-reason)
-                [:small "(privacy change requires owner)"])]])])))))
+              [:small "(start a free trial)"]
+              (common/icon :arrow-right)]
+             (list
+              [:input.privacy-radio {:type "radio"
+                                     :hidden "true"
+                                     :id "privacy-private"
+                                     :name "privacy"
+                                     :checked (keyword-identical? :document.privacy/private (:document/privacy doc))
+                                     :disabled (not can-edit-privacy?)
+                                     :onChange #(if can-edit-privacy?
+                                                  (cast! :document-privacy-changed
+                                                         {:doc-id doc-id
+                                                          :setting :document.privacy/private})
+                                                  (utils/stop-event %))}]
+              [:label.privacy-label {:class (when-not can-edit-privacy? "disabled")
+                                     :title (when-not can-edit-privacy? "You must be the owner of this doc to change its privacy.")
+                                     :for "privacy-private"
+                                     :role "button"}
+               (common/icon :private)
+               [:span "Private"]
+               (when-not can-edit-privacy?
+                 [:small "(privacy change requires owner)"])]))]])))))
 
 (defn export [app owner]
   (reify
@@ -580,9 +579,9 @@
 (defn shortcuts [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Shortcuts")
-    om/IInitState (init-state [_] {:copy-paste-works? (ua/isChrome)})
-    om/IRender
-    (render [_]
+    om/IInitState (init-state [_] {:mac? goog.userAgent/MAC})
+    om/IRenderState
+    (render-state [_ {:keys [mac?]}]
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:section.menu-view
@@ -630,26 +629,28 @@
              ;;
              [:tr.make
               [:td {:col-span "2"}]]
-             (when (om/get-state owner [:copy-paste-works?])
-               (list
-                (html
-                 [:tr.make
-                  [:td
-                   [:div.shortcuts-keys
-                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                    [:div.shortcuts-key {:title "C Key"} "C"]]]
-                  [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]])
-                (html
-                 [:tr.make
-                  [:td
-                   [:div.shortcuts-keys
-                    [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
-                    [:div.shortcuts-key {:title "V Key"} "V"]]]
-                  [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]])))
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                (if mac?
+                  [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                  [:div.shortcuts-key {:title "Control Key"} "Ctrl"])
+                [:div.shortcuts-key {:title "C Key"} "C"]]]
+              [:td [:div.shortcuts-result {:title "Hold command, press \"C\"."} "Copy"]]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                (if mac?
+                  [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                  [:div.shortcuts-key {:title "Control Key"} "Ctrl"])
+                [:div.shortcuts-key {:title "V Key"} "V"]]]
+              [:td [:div.shortcuts-result {:title "Hold command, press \"V\"."} "Paste"]]]
+             [:tr.make
+              [:td
+               [:div.shortcuts-keys
+                (if mac?
+                  [:div.shortcuts-key {:title "Command Key"} (common/icon :command)]
+                  [:div.shortcuts-key {:title "Control Key"} "Ctrl"])
                 [:div.shortcuts-key {:title "Z Key"} "Z"]]]
               [:td [:div.shortcuts-result {:title "Hold command, press \"Z\"."} "Undo"]]]
              ;;
@@ -660,7 +661,9 @@
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                (if mac?
+                  [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                  [:div.shortcuts-key  {:title "Alt Key"} "Alt"])
                 [:div.shortcuts-misc {:title "Scroll Wheel"} (common/icon :scroll)]]]
               [:td [:div.shortcuts-result {:title "Hold option, scroll."} "Zoom"]]]
              [:tr.make
@@ -689,16 +692,17 @@
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                (if mac?
+                  [:div.shortcuts-key  {:title "Option Key"} (common/icon :option)]
+                  [:div.shortcuts-key  {:title "Alt Key"} "Alt"])
                 [:div.shortcuts-misc {:title "Left Click + Drag"} (common/icon :click)]]]
               [:td [:div.shortcuts-result {:title "Hold option, drag shape(s)."} "Duplicate"]]]
              [:tr.make
               [:td
                [:div.shortcuts-keys
-                [:div.shortcuts-key {:title "Control Key"} (common/icon :control)]
-                [:div.shortcuts-key {:title "Shift Key"} (common/icon :shift)]
+                [:div.shortcuts-key {:title "A key"} "A"]
                 [:div.shortcuts-misc {:title "Left Click + Drag"} (common/icon :click)]]]
-              [:td [:div.shortcuts-result {:title "Hold control & shift, drag shape."} "Connect"]]]
+              [:td [:div.shortcuts-result {:title "Hold A, click shape borders."} "Connect"]]]
              ]]]])))))
 
 (defn username [app owner]

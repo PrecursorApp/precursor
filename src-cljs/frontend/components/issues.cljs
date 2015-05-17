@@ -16,6 +16,7 @@
             [frontend.utils :as utils]
             [goog.dom]
             [goog.dom.forms :as gforms]
+            [goog.dom.Range]
             [goog.string :as gstring]
             [goog.string.format]
             [om.core :as om]
@@ -54,13 +55,13 @@
                                                     (d/transact! issue-db [{:db/id -1
                                                                             :issue/created-at (datetime/server-date)
                                                                             :issue/title (gstring/normalizeWhitespace (str/trim issue-title))
-                                                                            :issue/author (:cust/email cust)
+                                                                            :issue/author (:cust/uuid cust)
                                                                             :issue/document doc-id
                                                                             :frontend/issue-id fe-id}])
                                                     (d/transact! issue-db [{:frontend/issue-id fe-id
                                                                             :issue/votes {:db/id -1
                                                                                           :frontend/issue-id (utils/squuid)
-                                                                                          :vote/cust (:cust/email cust)}}])
+                                                                                          :vote/cust (:cust/uuid cust)}}])
                                                     (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str "/issues/" fe-id)}]))
                                                   (om/set-state! owner :issue-title "")
                                                   (om/set-state! owner :input-height 64))
@@ -113,7 +114,7 @@
                                                                         :issue/comments (merge {:db/id -1
                                                                                                 :comment/created-at (datetime/server-date)
                                                                                                 :comment/body (str/trim comment-body)
-                                                                                                :comment/author (:cust/email cust)
+                                                                                                :comment/author (:cust/uuid cust)
                                                                                                 :frontend/issue-id (utils/squuid)}
                                                                                                (when parent-id
                                                                                                  {:comment/parent parent-id}))}])
@@ -142,21 +143,84 @@
 
              (om/build common/google-login {:source "Comment form"}))]])))))
 
-(defn description-form [{:keys [issue issue-id]} owner]
+(defn cust-name-form [{:keys [cust-name]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Cust name form")
+    om/IInitState (init-state [_] {:editing? true :editing-name nil})
+    om/IDidUpdate
+    (did-update [_ _ prev-state]
+      (when (and (not (:editing? prev-state))
+                 (om/get-state owner :editing?)
+                 (om/get-node owner "name-input"))
+        (.focus (om/get-node owner "name-input"))
+        (.select (goog.dom.Range/createFromNodeContents (om/get-node owner "name-input")))))
+    om/IRenderState
+    (render-state [_ {:keys [editing? editing-name]}]
+      (let [cast! (om/get-shared owner :cast!)
+            reset-form (fn []
+                         (om/set-state! owner :editing? false)
+                         (om/set-state! owner :editing-name nil))
+            submit-form (fn []
+                          ;; be sure to pull it out of the state, since we're not
+                          ;; re-rendering on change
+                          (when (seq (om/get-state owner :editing-name))
+                            (cast! :self-updated {:name (om/get-state owner :editing-name)}))
+                          ;; This is a terrible hack, should find a way to wait for the cast!
+                          ;; to complete :(
+                          (js/setTimeout #(reset-form) 0))]
+        (html
+         [:span
+          [:span {:contentEditable editing?
+                  :onClick #(do (om/set-state! owner :editing? true)
+                                (om/set-state! owner :editing-name (or cust-name "")))
+                  :class (str "issue-name-input " (when-not (seq cust-name) "empty "))
+                  :type "text"
+                  :ref "name-input"
+                  :spell-check false
+                  :value (or editing-name cust-name "")
+                  :onBlur #(submit-form)
+                  ;;:onChange #(om/set-state! owner :editing-name (.. % -target -value))
+                  :onInput #(om/set-state-nr! owner :editing-name (goog.dom/getRawTextContent (.-target %)))
+                  :onKeyDown #(cond (= "Enter" (.-key %)) (do
+                                                            (utils/stop-event %)
+                                                            (submit-form))
+                                    (= "Escape" (.-key %)) (reset-form))}
+           (or editing-name (if (seq cust-name)
+                              cust-name
+                              "+ Add your name"))]
+          [:span " on"]])))))
+
+(defn author-byline
+  "Shows author's name or empty span
+  If current cust authored the post and has no name, shows a set name form"
+  [{:keys [author-uuid uuid->cust]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Author byline")
+    om/IRender
+    (render [_]
+      (let [cust-name (get-in uuid->cust [author-uuid :cust/name])]
+        (html
+         (if (= author-uuid (om/get-shared owner [:cust :cust/uuid]))
+           (om/build cust-name-form {:cust-name cust-name})
+           (if (seq cust-name)
+             [:span [:span (str cust-name)] [:span " on"]]
+             [:span])))))))
+
+(defn description-form [{:keys [issue issue-id uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Description form")
     om/IInitState (init-state [_] {:issue-description nil
                                    :editing? nil})
     om/IDidUpdate
-    (did-update [_ _ prev-props]
-      (when (and (not (:editing? prev-props))
+    (did-update [_ _ prev-state]
+      (when (and (not (:editing? prev-state))
                  (om/get-state owner :editing?)
                  (om/get-node owner "description-input"))
         (gforms/focusAndSelect (om/get-node owner "description-input"))))
     om/IRenderState
     (render-state [_ {:keys [issue-description]}]
       (let [{:keys [issue-db cust cast!]} (om/get-shared owner)
-            editable? (= (:cust/email cust) (:issue/author issue))
+            editable? (= (:cust/uuid cust) (:issue/author issue))
             editing? (and editable? (om/get-state owner :editing?))
             clear-form #(om/update-state! owner (fn [s] (assoc s :issue-description nil :editing? false)))
             submit #(do (utils/stop-event %)
@@ -183,16 +247,16 @@
              ;; [:span (common/icon :user) " "]
              (when (:issue/description issue)
                (list
-                 [:span (:issue/author issue)]
-                 [:span " on "]
-                 [:span (datetime/month-day (:issue/created-at issue))]))
+                (om/build author-byline {:author-uuid (:issue/author issue) :uuid->cust uuid->cust})
+                [:span " "]
+                [:span (datetime/month-day (:issue/created-at issue))]))
              (when editable?
                (list
-                 [:span.pre "  •  "]
-                 [:a.issue-description-edit {:role "button"
-                                             :key "Cancel"
-                                             :on-click submit}
-                  [:span "Save"]]))]]
+                [:span.pre "  •  "]
+                [:a.issue-description-edit {:role "button"
+                                            :key "Cancel"
+                                            :on-click submit}
+                 [:span "Save"]]))]]
 
            ;; Don't show sliding animation when the description replaces the form after an edit
            [:div.comment
@@ -211,16 +275,16 @@
              ;; [:span (common/icon :user) " "]
              (when (:issue/description issue)
                (list
-                 [:span (:issue/author issue)]
-                 [:span " on "]
-                 [:span (datetime/month-day (:issue/created-at issue))]))
+                (om/build author-byline {:author-uuid (:issue/author issue) :uuid->cust uuid->cust})
+                [:span " "]
+                [:span (datetime/month-day (:issue/created-at issue))]))
              (when editable?
                (list
-                 [:span.pre "  •  "]
-                 [:a.issue-description-edit {:role "button"
-                                             :key "Edit"
-                                             :on-click #(om/set-state! owner :editing? true)}
-                  [:span "Edit"]]))]]))))))
+                [:span.pre "  •  "]
+                [:a.issue-description-edit {:role "button"
+                                            :key "Edit"
+                                            :on-click #(om/set-state! owner :editing? true)}
+                 [:span "Edit"]]))]]))))))
 
 (defn vote-box [{:keys [issue]} owner]
   (reify
@@ -231,11 +295,11 @@
             can-vote? (utils/logged-in? owner)
             voted? (when can-vote?
                      (d/q '[:find ?e .
-                            :in $ ?issue-id ?email
+                            :in $ ?issue-id ?uuid
                             :where
                             [?issue-id :issue/votes ?e]
-                            [?e :vote/cust ?email]]
-                          @issue-db (:db/id issue) (:cust/email cust)))]
+                            [?e :vote/cust ?uuid]]
+                          @issue-db (:db/id issue) (:cust/uuid cust)))]
         (html
          [:div.issue-vote (merge {:role "button"
                                   :class (when can-vote? (if voted? " voted " " novote "))}
@@ -246,7 +310,7 @@
                                                             [{:db/id (:db/id issue)
                                                               :issue/votes {:db/id -1
                                                                             :frontend/issue-id (utils/squuid)
-                                                                            :vote/cust (:cust/email cust)}}])}))
+                                                                            :vote/cust (:cust/uuid cust)}}])}))
           [:div.issue-votes {:key (count (:issue/votes issue))}
            (count (:issue/votes issue))]
           [:div.issue-upvote
@@ -276,7 +340,7 @@
                                    " new comment was")
                    " added, " (count deleted) " removed, click to refresh."))]])))
 
-(defn single-comment [{:keys [comment-id issue-id]} owner {:keys [ancestors]
+(defn single-comment [{:keys [comment-id issue-id uuid->cust]} owner {:keys [ancestors]
                                                            :or {ancestors #{}}}]
   (reify
     om/IDisplayName (display-name [_] "Single comment")
@@ -288,7 +352,7 @@
     om/IDidMount
     (did-mount [_]
       (let [issue-db (om/get-shared owner :issue-db)
-            cust-email (:cust/email (om/get-shared owner :cust))]
+            cust-uuid (:cust/uuid (om/get-shared owner :cust))]
         (let [child-ids (issue-model/direct-descendant-ids @issue-db comment-id)]
           (om/set-state! owner :all-child-ids child-ids)
           (om/set-state! owner :rendered-child-ids child-ids))
@@ -309,7 +373,7 @@
                                                                           (fn [r]
                                                                             (set/union (set/intersection r child-ids)
                                                                                        (set (filter
-                                                                                             (fn [i] (= cust-email (:comment/author (d/entity (:db-after tx-report) i))))
+                                                                                             (fn [i] (= cust-uuid (:comment/author (d/entity (:db-after tx-report) i))))
                                                                                              (set/difference child-ids r))))))))))))))
     om/IWillUnmount
     (will-unmount [_]
@@ -330,8 +394,8 @@
           [:p.comment-foot
            ;; hide avatars for now
            ;; [:span (common/icon :user) " "]
-           [:span (:comment/author comment)]
-           [:span " on "]
+           (om/build author-byline {:author-uuid (:comment/author comment) :uuid->cust uuid->cust})
+           [:span " "]
            [:span (datetime/month-day (:comment/created-at comment))]
            (when (and (utils/logged-in? owner)
                       (> 4 (count ancestors)))
@@ -360,12 +424,13 @@
                       (pos? (count rendered-child-ids)))
              (for [id (reverse (sort-by (fn [i] (:comment/created-at (d/entity @issue-db i))) rendered-child-ids))]
                (om/build single-comment {:issue-id issue-id
-                                         :comment-id id}
+                                         :comment-id id
+                                         :uuid->cust uuid->cust}
                          {:key :comment-id
                           :opts {:ancestors (conj ancestors (:db/id comment))}})))]])))))
 
 
-(defn comments [{:keys [issue-id]} owner]
+(defn comments [{:keys [issue-id uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Comments")
     om/IInitState
@@ -376,7 +441,7 @@
     om/IDidMount
     (did-mount [_]
       (let [issue-db (om/get-shared owner :issue-db)
-            cust-email (:cust/email (om/get-shared owner :cust))]
+            cust-uuid (:cust/uuid (om/get-shared owner :cust))]
         (let [top-level-ids (issue-model/top-level-comment-ids @issue-db issue-id)]
           (om/set-state! owner :all-top-level-ids top-level-ids)
           (om/set-state! owner :rendered-top-level-ids top-level-ids))
@@ -396,7 +461,7 @@
                                                                            top-level-ids
                                                                            (set/union (set/intersection r top-level-ids)
                                                                                       (set (filter
-                                                                                            (fn [i] (= cust-email (:comment/author (d/entity (:db-after tx-report) i))))
+                                                                                            (fn [i] (= cust-uuid (:comment/author (d/entity (:db-after tx-report) i))))
                                                                                             (set/difference top-level-ids r)))))))))))))))
     om/IWillUnmount
     (will-unmount [_]
@@ -413,10 +478,11 @@
                                                                  (assoc s :rendered-top-level-ids (:all-top-level-ids s)))))
           (for [id (reverse (sort-by (fn [i] (:comment/created-at (d/entity @issue-db i))) rendered-top-level-ids))]
             (om/build single-comment {:comment-id id
-                                      :issue-id issue-id}
+                                      :issue-id issue-id
+                                      :uuid->cust uuid->cust}
                       {:key :comment-id}))])))))
 
-(defn issue-card [{:keys [issue-id]} owner]
+(defn issue-card [{:keys [issue-id uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Issue summary")
     om/IInitState
@@ -454,9 +520,9 @@
                  [:a.issue-edit-status {:on-click #(cast! :marked-issue-completed
                                                           {:issue-uuid (:frontend/issue-id issue)})}
                   "mark completed"])))]]
-          (om/build vote-box {:issue issue})])))))
+          (om/build vote-box {:issue issue :uuid->cust uuid->cust})])))))
 
-(defn issue* [{:keys [issue-id]} owner]
+(defn issue* [{:keys [issue-id uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Issue")
     om/IInitState
@@ -483,15 +549,15 @@
         (html
          [:section.menu-view.issue
           [:div.issue-summary.make {:key "summary"}
-           (om/build issue-card {:issue-id issue-id})
-           (om/build description-form {:issue issue :issue-id issue-id})]
+           (om/build issue-card {:issue-id issue-id :uuid->cust uuid->cust})
+           (om/build description-form {:issue issue :issue-id issue-id :uuid->cust uuid->cust})]
 
           [:div.issue-comments.make {:key "issue-comments"}
            [:div.content
             (om/build comment-form {:issue-id issue-id} {:react-key "comment-form"})]
-           (om/build comments {:issue-id issue-id} {:react-key "comments"})]])))))
+           (om/build comments {:issue-id issue-id :uuid->cust uuid->cust} {:react-key "comments"})]])))))
 
-(defn issue-list [_ owner]
+(defn issue-list [{:keys [uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Issue List")
     om/IInitState
@@ -502,7 +568,7 @@
     om/IDidMount
     (did-mount [_]
       (let [issue-db (om/get-shared owner :issue-db)
-            cust-email (:cust/email (om/get-shared owner :cust))]
+            cust-uuid (:cust/uuid (om/get-shared owner :cust))]
         (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
           (om/set-state! owner :all-issue-ids issue-ids)
           (om/set-state! owner :rendered-issue-ids issue-ids))
@@ -514,7 +580,7 @@
            (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
              (if (empty? (om/get-state owner :rendered-issue-ids))
                (om/update-state! owner #(assoc % :rendered-issue-ids issue-ids :all-issue-ids issue-ids))
-               (when cust-email
+               (when cust-uuid
                  (om/update-state!
                   owner #(-> %
                            (assoc :all-issue-ids issue-ids)
@@ -522,7 +588,7 @@
                                       (fn [r]
                                         (set/union r
                                                    (set (filter
-                                                         (fn [i] (= cust-email
+                                                         (fn [i] (= cust-uuid
                                                                     (:issue/author (d/entity (:db-after tx-report) i))))
                                                          (set/difference issue-ids r)))))))))))))))
     om/IWillUnmount
@@ -537,7 +603,7 @@
          [:section.menu-view.issues-list
           [:div.content.make
            (om/build issue-form {})]
-          [:div.issue-cards.make
+          [:div.issue-cards.make {:key "issue-cards"}
            (let [deleted (set/difference rendered-issue-ids all-issue-ids)
                  added (set/difference all-issue-ids rendered-issue-ids)]
              (when (or (seq deleted) (seq added))
@@ -563,12 +629,13 @@
                                             " new issue was")
                             " added, " (count deleted) " removed, click to refresh."))]]))
            (when-let [issues (seq (map #(d/entity @issue-db %) rendered-issue-ids))]
-             (om/build-all issue-card (map (fn [i] {:issue-id (:db/id i)})
+             (om/build-all issue-card (map (fn [i] {:issue-id (:db/id i)
+                                                    :uuid->cust uuid->cust})
                                            (sort (issue-model/issue-comparator cust render-time) issues))
                            {:key :issue-id
                             :opts {:issue-db issue-db}}))]])))))
 
-(defn issue [{:keys [issue-uuid]} owner]
+(defn issue [{:keys [issue-uuid uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Issue Wrapper")
     om/IInitState
@@ -589,7 +656,7 @@
     (render [_]
       (let [issue-id (:e (first (d/datoms @(om/get-shared owner :issue-db) :avet :frontend/issue-id issue-uuid)))]
         (if issue-id
-          (om/build issue* {:issue-id issue-id})
+          (om/build issue* {:issue-id issue-id :uuid->cust uuid->cust})
           (dom/div #js {:className "loading"} "Loading..."))))))
 
 (defn issues* [app owner {:keys [submenu]}]
@@ -606,14 +673,18 @@
     (render [_]
       (html
        (if submenu
-         (om/build issue {:issue-uuid (:active-issue-uuid app)} {:key :issue-uuid})
-         (om/build issue-list {} {:react-key "issue-list"}))))))
+         (om/build issue {:issue-uuid (:active-issue-uuid app)
+                          :uuid->cust (:uuid->cust app)}
+                   {:key :issue-uuid})
+         (om/build issue-list {:uuid->cust (:uuid->cust app)} {:react-key "issue-list"}))))))
 
 (defn issues [app owner {:keys [submenu]}]
   (reify
     om/IDisplayName (display-name [_] "Issues Overlay")
     om/IRender
     (render [_]
-      (om/build issues* (select-keys app [:active-issue-uuid
-                                          :unsynced-datoms])
+      (om/build issues* (-> app
+                          (select-keys [:active-issue-uuid
+                                        :unsynced-datoms])
+                          (assoc :uuid->cust (get-in app [:cust-data :uuid->cust])))
                 {:opts {:submenu submenu}}))))

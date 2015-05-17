@@ -1,13 +1,17 @@
 .chat {
   .flexy();
-  user-select: none;
   position: absolute;
   top: 0;
+  bottom: 0;
   left: 0;
+  right: 0;
   width: 100%;
   height: 100%;
+  margin: auto;
   pointer-events: none;
   overflow: hidden;
+  user-select: none;
+  will-change: transform;
 }
 .chat-offset {
   flex: 1;
@@ -20,35 +24,18 @@
   min-width: @tile;
   max-width: calc(~"100% -" @tile);
   height: 100%;
-  background: @dye_outer;
-  pointer-events: auto;
-  user-select: auto;
-  will-change: transform;
-  animation: in-fade-right @run_slow @bezier_fadein;
   top: 0;   //
   right: 0; // needed for closing animation
-  box-shadow+: 0    1px @color_menu_faint;
-  box-shadow+: 0   -1px @color_menu_faint;
-  box-shadow+: 1px  0   @color_menu_faint;
-  box-shadow+: 1px  0   @color_menu_faint inset;
+  margin: auto;
+  pointer-events: auto;
+  user-select: auto;
+  border-left: 1px solid @color_chat_border;
+  transform-origin: right;
   &.closed {
-    animation-name: none;
-    transform: translate3d(100%, 0, 0);
-    transition: transform @run_slow @bezier_fadein;
     position: absolute;
+    opacity: 0;
+    transform: translate(100%);
   }
-}
-.chat-background {
-  transform-origin: left;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: @dye_inner;
-  border-left: 1px solid @gray_dark;
-  will-change: transform;
-  transition: @run @bezier_deform;
 }
 .chat-log {
   .flexy(column; flex-end);
@@ -60,7 +47,6 @@
   padding: 1em 0;
   overflow-y: auto;
   user-select: none; // so you only select text and not entire chat menu
-  transition: @run_fast @run @bezier_fadein;
   span {
     user-select: auto; // so you only select text and not entire chat menu
     white-space: pre-wrap; // honors new line (shift + enter)
@@ -74,8 +60,7 @@
 }
 .chat-box {
   position: relative;
-  box-shadow: 0 1px @gray_dark inset;
-  transition: box-shadow @run_fast @run_fast @bezier_fadein;
+  border-top: 1px solid @color_chat_border;
 }
 .chat-input {
   .scrollbar_inner();
@@ -96,6 +81,14 @@
     ~ .chat-teach-enter {
       transform: translate3d(0, -2em, 0);
       background-size: 100% .25em;
+    }
+  }
+  ~ .chat-typing-notice {
+    font-size: @font_size_small;
+    transform: translate3d(0, -2em, 0);
+    background-size: 100% .25em;
+    &:before {
+      content: attr(data-typing-notice);
     }
   }
   &:focus {
@@ -125,7 +118,8 @@
   }
 }
 .chat-placeholder,
-.chat-teach-enter  {
+.chat-teach-enter,
+.chat-typing-notice  {
   position: absolute;
   top: 0;
   left: 0;
@@ -136,9 +130,20 @@
   &:before {
     transition: opacity @run_fast @run @bezier_fadein;
   }
+  &:after {
+    display: none;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: .125em;
+    height: 100%;
+    background: @color_menu_faint;
+    animation: in-fade @run_slower @run backwards;
+  }
 }
 .chat-placeholder {
-  color: @gray_dark;
+  color: fade(@white, (100 * @opacity_darker_dark));
   &:before {
     content: attr(data-before);
   }
@@ -156,15 +161,24 @@
     content: attr(data-step-1);
   }
 }
+.chat-typing-notice {
+  .gradient(to bottom, @dye_inner, @dye_inner);
+  color: @gray;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 0% .25em;
+  transition+: color @run @bezier_deform;
+  transition+: background @run_slow @bezier_deform;
+  transition+: transform @run @bezier_deform;
+}
 .chat-date {
   padding-top: (@tile / 4);
   &.divider-small {
-    user-select: auto;
+    color: @color_chat_border;
     line-height: 1;
-    opacity: .21;
+    user-select: auto;
     &:before,
     &:after {
-      opacity: .55;
       height: 1px;
     }
   }
@@ -183,6 +197,7 @@
 }
 .message-avatar {
   flex: 0 0 auto;
+  animation: in-fade @run_fast @run_fast backwards;
   .iconpile {
     height: .75em;
     width: .75em;
@@ -199,10 +214,11 @@
   white-space: nowrap;
 }
 .message-time {
-  user-select: auto;
   flex: 0 0 auto;
-  color: @gray_dark;
+  color: @color_chat_border;
   font-size: .75rem;
   text-transform: lowercase;
+  padding: .25em 0;
   white-space: nowrap;
+  user-select: auto;
 }

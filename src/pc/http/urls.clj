@@ -49,5 +49,12 @@
     (doc-svg (:db/id doc) :subdomain (:team/subdomain team) :query query)
     (doc-svg (:db/id doc) :query query)))
 
+(defn from-issue [issue & {:keys [query]}]
+  (make-url (str "/issues/" (:frontend/issue-id issue))))
+
 (defn twilio-status-callback []
   (make-url "/hooks/twilio"))
+
+(defn team-plan [team]
+  (let [team-doc (:team/intro-doc team)]
+    (make-url (str "/document/" (:db/id team-doc) "/plan") :subdomain (:team/subdomain team))))

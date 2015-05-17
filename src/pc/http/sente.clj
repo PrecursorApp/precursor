@@ -322,7 +322,8 @@
                   :layers
                   :relation
                   :recording
-                  :show-mouse?])
+                  :show-mouse?
+                  :chat-body])
     (merge (when (:mouse-position subscriber)
              (select-keys subscriber [:mouse-position])))))
 
@@ -424,6 +425,11 @@
 (defmethod ws-handler :cust/fetch-teams [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (?reply-fn {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
+
+(defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [uuids (->> ?data :uuids)]
+    (assert (>= 100 (count uuids)) "Can only fetch 100 uuids at once")
+    ((:send-fn @sente-state) client-id [:frontend/custs {:uuid->cust (cust/public-read-api-per-uuids (:db req) uuids)}])))
 
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
@@ -550,12 +556,14 @@
         layers (-> ?data :layers)
         relation (-> ?data :relation)
         recording (-> ?data :recording)
+        chat-body (-> ?data :chat-body)
         message [:frontend/mouse-move (subscriber-read-api {:client-id client-id
                                                             :tool tool
                                                             :layers layers
                                                             :relation relation
                                                             :recording recording
-                                                            :mouse-position mouse-position})]]
+                                                            :mouse-position mouse-position
+                                                            :chat-body chat-body})]]
     (swap! document-subs utils/update-when-in [document-id client-id] merge {:mouse-position mouse-position
                                                                              :tool tool
                                                                              :recording recording})
@@ -592,14 +600,19 @@
       (log/infof "updating self for %s" (:cust/uuid cust))
       (when (:cust/color-name ?data)
         (assert (contains? (schema/color-enums) (:cust/color-name ?data))))
-      (let [new-cust (cust/update! cust (select-keys ?data [:cust/name :cust/color-name]))]
-        (doseq [uid (reduce (fn [acc subs]
-                              (if (first (filter #(= (:cust/uuid (second %)) (:cust/uuid new-cust))
-                                                 subs))
-                                (concat acc (keys subs))
-                                acc))
-                            () (vals @document-subs))]
-          ((:send-fn @sente-state) uid [:frontend/custs {:uuid->cust {(:cust/uuid new-cust) (cust/public-read-api new-cust)}}]))))))
+      (let [new-cust (cust/update! cust (select-keys ?data [:cust/name :cust/color-name]))
+            collab-uuids (reduce (fn [acc subs]
+                                   (if (first (filter #(= (:cust/uuid (second %)) (:cust/uuid new-cust))
+                                                      subs))
+                                     (concat acc (keys subs))
+                                     acc))
+                                 () (vals @document-subs))
+            msg [:frontend/custs {:uuid->cust {(:cust/uuid new-cust) (cust/public-read-api new-cust)}}]]
+        (doseq [uid collab-uuids]
+          ((:send-fn @sente-state) uid msg))
+        (when (contains? @issues-http/issue-subs client-id)
+          (doseq [uid (set/difference @issues-http/issue-subs (set collab-uuids))]
+            ((:send-fn @sente-state) uid msg)))))))
 
 (defmethod ws-handler :frontend/send-invite [{:keys [client-id ?data ?reply-fn] :as req}]
   ;; This may turn out to be a bad idea, but error handling is done through creating chats
@@ -685,11 +698,12 @@
   (check-document-access (-> ?data :document/id) req :owner)
   (let [doc-id (-> ?data :document/id)
         cust (-> req :ring-req :auth :cust)
+        setting (-> ?data :setting)
         ;; XXX: only if they try to change it to private
         _ (assert (or (:document/team (doc-model/find-by-id (:db req) doc-id))
+                      (contains? #{:document.privacy/public :document.privacy/read-only} setting)
                       (contains? (:flags cust) :flags/private-docs)))
         ;; letting datomic's schema do validation for us, might be a bad idea?
-        setting (-> ?data :setting)
         annotations {:transaction/document doc-id
                      :cust/uuid (:cust/uuid cust)
                      :transaction/broadcast true}
@@ -1005,6 +1019,19 @@
   "Sends a request to the client for statistics, which is handled above in the :frontend/stats handler"
   [client-id]
   ((:send-fn @sente-state) client-id [:frontend/stats]))
+
+(defn cleanup-stale [doc-id]
+  (let [subs @document-subs
+        now (time/now)
+        doc-uids (keys (get subs doc-id))]
+    (doseq [uid doc-uids]
+      (fetch-stats uid))
+    (Thread/sleep 3000)
+    (doseq [[uid stats] (remove (fn [[_ s]]
+                                  (and (:last-update s)
+                                       (time/after? (:last-update s) now)))
+                                (select-keys @client-stats doc-uids))]
+      (close-ws uid))))
 
 (defn init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids

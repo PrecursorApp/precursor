@@ -412,7 +412,15 @@
     (for [[k v] (sort-by first (into {} cust))]
       [:tr
        [:td (h/h (str k))]
-       [:td (render-cust-prop k v)]])]))
+       [:td (render-cust-prop k v)]])
+    [:tr
+     [:td "Teams"]
+     [:td (interleave (->> cust
+                        (permission-model/find-team-permissions-for-cust (pcd/default-db))
+                        (map :permission/team)
+                        (sort-by :team/subdomain)
+                        (map team-link))
+                      (repeat " "))]]]))
 
 (defn doc-info [doc auth]
   (let [db (pcd/default-db)]
@@ -535,7 +543,14 @@
                  db (:team/uuid team))]]
       [:tr
        [:td "Doc count"]
-       [:td (count team-docs)]]]
+       [:td (count team-docs)]]
+      [:tr
+       [:td "Plan url"]
+       [:td (let [url (urls/team-plan team)]
+              [:a {:href url} url])]]
+      [:tr
+       [:td "Trial end"]
+       [:td (:plan/trial-end (:team/plan team))]]]
      (interesting team-docs))))
 
 (defn upload-files []
@@ -641,3 +656,38 @@
      [:div
       [:input {:type "submit" :value "Remove"}]]]]
    ])
+
+(defn issue-info [issue]
+  (list
+   [:style "body { padding: 2em; }td, th { padding: 5px; text-align: left }"]
+   [:table {:border 1}
+    [:tr
+     [:td "Title"]
+     [:td (h/h (:issue/title issue))]]
+    [:tr
+     [:td "Description"]
+     [:td (h/h (:issue/description issue))]]
+    [:tr
+     [:td "Created"]
+     [:td (:issue/created-at issue)]]
+    [:tr
+     [:td "Author"]
+     [:td (cust-link (:issue/author issue))]]
+    [:tr
+     [:td "Voters"]
+     [:td (interleave (map (comp cust-link :vote/cust) (:issue/votes issue))
+                      (repeat " "))]]]
+   [:h4 "Comments"]
+   (if (empty? (:issue/comments issue))
+     [:p "no comments :("]
+     (for [comment (reverse (sort-by :comment/created-at (:issue/comments issue)))]
+       [:table {:border 1}
+        [:tr
+         [:td "Author"]
+         [:td (cust-link (:comment/author comment))]]
+        [:tr
+         [:td "Created"]
+         [:td (h/h (:comment/created-at comment))]]
+        [:tr
+         [:td "Body"]
+         [:td (h/h (:comment/body comment))]]]))))

@@ -71,12 +71,8 @@
   ;; When we have more fine-grained permissions, we'll put more info
   ;; into the state
   (-> state
-      (assoc-in (state/document-access-path (:document/id state)) :none)))
-
-(defmethod post-error! :document/permission-error
-  [container message data previous-state current-state]
-  (when-let [doc-id (:document/id current-state)]
-    (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc-id "document-permissions")}])))
+    (assoc-in (state/document-access-path (:document/id state)) :none)
+    (overlay/handle-replace-menu :document-permissions)))
 
 (defmethod error :team/permission-error
   [container message data state]

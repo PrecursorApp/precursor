@@ -36,8 +36,12 @@
           {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})})
         {:status 400 :body (pr-str {:error :unauthorized-to-team
                                     :redirect-url (str (url/map->URL {:host (profile/hostname)
-                                                                      :protocol (name (:scheme req))
-                                                                      :port (:server-port req)
+                                                                      :protocol (if (profile/force-ssl?)
+                                                                                  "https"
+                                                                                  (name (:scheme req)))
+                                                                      :port (if (profile/force-ssl?)
+                                                                              (profile/https-port)
+                                                                              (profile/http-port))
                                                                       :path "/new"
                                                                       :query (:query-string req)}))
                                     :msg "You're unauthorized to make documents in this subdomain. Please request access."})})

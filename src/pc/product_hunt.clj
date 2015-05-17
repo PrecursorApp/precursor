@@ -36,8 +36,8 @@
           "votes" [{"user"
                     {"image_url" {"30px" "http://avatars-cdn.producthunt.com/7824/30?1430236722"}}}]}
    19567 {"name" "Precursor for Teams",
-          "votes_count" 86,
-          "comments_count" 7,
+          "votes_count" 127,
+          "comments_count" 8,
           "tagline" "We make prototyping and team collaboration simple and easy"
           "discussion_url" "http://www.producthunt.com/posts/precursor-for-teams"
           "makers" [{"image_url" {"30px" "http://avatars-cdn.producthunt.com/106624/30?1430244521"}}

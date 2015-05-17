@@ -22,7 +22,7 @@
   (-> vote
     (select-keys [:vote/cust
                   :frontend/issue-id])
-    (update-in [:vote/cust] :cust/email)))
+    (update-in [:vote/cust] :cust/uuid)))
 
 (defn comment-read-api [comment]
   (-> comment
@@ -32,7 +32,7 @@
                   :comment/parent
                   :frontend/issue-id])
     (utils/update-when-in [:comment/parent] (fn [p] {:frontend/issue-id (:frontend/issue-id p)}))
-    (utils/update-when-in [:comment/author] :cust/email)))
+    (utils/update-when-in [:comment/author] :cust/uuid)))
 
 (defn read-api [issue]
   (-> issue
@@ -46,7 +46,7 @@
                   :issue/status
                   :frontend/issue-id])
     (utils/update-when-in [:issue/document] :db/id)
-    (utils/update-when-in [:issue/author] :cust/email)
+    (utils/update-when-in [:issue/author] :cust/uuid)
     (utils/update-when-in [:issue/votes] #(set (map vote-read-api %)))
     (utils/update-when-in [:issue/comments] #(set (map comment-read-api %)))))
 
@@ -60,7 +60,7 @@
                   :issue/status
                   :frontend/issue-id])
     (utils/update-when-in [:issue/document] :db/id)
-    (utils/update-when-in [:issue/author] :cust/email)))
+    (utils/update-when-in [:issue/author] :cust/uuid)))
 
 (defn valid-issue? [?issue]
   (let [actual-keys (set (keys (d/touch ?issue)))

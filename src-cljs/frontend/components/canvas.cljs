@@ -5,9 +5,11 @@
             [datascript :as d]
             [frontend.auth :as auth]
             [frontend.camera :as cameras]
+            [frontend.clipboard :as clipboard]
             [frontend.colors :as colors]
             [frontend.components.common :as common]
             [frontend.components.context :as context]
+            [frontend.components.key-queue :as keyq]
             [frontend.components.mouse :as mouse]
             [frontend.cursors :as cursors]
             [frontend.db :as fdb]
@@ -21,6 +23,8 @@
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
+            [goog.dom.forms :as gforms]
+            [goog.labs.userAgent.browser :as ua-browser]
             [goog.string :as gstring]
             [goog.style]
             [om.core :as om :include-macros true]
@@ -35,7 +39,7 @@
 
 (defmethod svg-element :default
   [layer]
-  (print "No svg element for " layer))
+  (utils/mlog "No svg element for " layer))
 
 (defn maybe-add-selected [svg-layer layer]
   (if (:selected? layer)
@@ -152,6 +156,7 @@
 
 (defn layer-group [{:keys [layer-id tool selected? part-of-group? live?]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Layer Group")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
@@ -181,7 +186,6 @@
       (fdb/remove-attribute-listener (om/get-shared owner :db)
                                      :layer/ui-id
                                      (om/get-state owner :listener-key)))
-    om/IDisplayName (display-name [_] "Layer Group")
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -379,9 +383,9 @@
 
 (defn issue [{:keys [document-id]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Issue layer")
     om/IInitState (init-state [_] {:layer-source (utils/uuid)
                                    :listener-key (.getNextUniqueId (.getInstance IdGenerator))})
-    om/IDisplayName (display-name [_] "Issue layer")
     om/IDidMount
     (did-mount [_]
       (fdb/add-attribute-listener (om/get-shared owner :issue-db)
@@ -555,7 +559,7 @@
                                   :height "100%"
                                   :x (:layer/start-x layer)
                                   ;; TODO: defaults for each layer when we create them
-                                  :y (- (:layer/start-y layer) (:layer/font-size layer 22))}
+                                  :y (- (:layer/start-y layer) (:layer/font-size layer state/default-font-size))}
             (dom/form #js {:className "svg-text-form"
                            :onMouseDown #(.stopPropagation %)
                            :onWheel #(.stopPropagation %)
@@ -722,6 +726,7 @@
 
 (defn arrow-handle [layer owner]
   (reify
+    om/IDisplayName (display-name [_] "Arrow handle")
     om/IWillReceiveProps
     (will-receive-props [_ next-props]
       ;; prevent arrow-hint popping up right after we make a new relation
@@ -732,8 +737,8 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             [rx ry] (om/get-state owner :mouse-pos)
-            camera (cursors/observe-camera owner)
-            center (layers/center layer)]
+            center (layers/center layer)
+            text? (keyword-identical? :layer.type/text (:layer/type layer))]
         (dom/g #js {:className "arrow-handle-group"}
           (when (and rx ry)
             (dom/g nil
@@ -744,12 +749,25 @@
                              :y2 ry
                              :markerEnd "url(#arrow-point)"})))
           (svg-element (assoc layer
-                              :className "arrow-handle"
+                              :key (str (:db/id layer) "-handler")
+                              :className (str "arrow-handle "
+                                              (when text? "arrow-outline ")
+                                              (when (om/get-state owner :hovered?)
+                                                "hovered "))
+                              ;; hack to workaround missing hover effect when holding "a"
+                              ;; and click->drag from one handle to the other.
+                              :onMouseEnter (fn [e]
+                                              (om/set-state! owner :hovered? true))
+
+                              :onMouseLeave (fn [e]
+                                              (om/set-state! owner :hovered? false))
+
                               :onMouseMove (fn [e]
                                              (om/set-state! owner
                                                             :mouse-pos
                                                             (apply cameras/screen->point
-                                                                   camera
+                                                                   ;; bad idea in general, but without this panning is completely broken
+                                                                   (:camera @(om/get-shared owner :_app-state-do-not-use))
                                                                    (cameras/screen-event-coords e))))
                               :onMouseDown (fn [e]
                                              (utils/stop-event e)
@@ -763,10 +781,13 @@
                                                   {:dest layer
                                                    :x (first (cameras/screen-event-coords e))
                                                    :y (second (cameras/screen-event-coords e))}))))
-          (svg-element (assoc layer :className "arrow-outline")))))))
+          (when-not text?
+            (svg-element (assoc layer :className "arrow-outline"
+                                :key (str (:db/id layer) "-outline")))))))))
 
 (defn arrows [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Arrows")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
                                    :arrow-eids (find-arrow-eids @(om/get-shared owner :db))})
     om/IDidMount
@@ -796,13 +817,14 @@
                                                                          :layer/end-x (:layer/current-x layer)
                                                                          :layer/end-y (:layer/current-y layer))))
                                       {} (mapcat :layers (vals (cursors/observe-subscriber-layers owner))))
-            pointer-datoms (concat (seq (d/datoms db :aevt :layer/points-to))
-                                   (mapcat (fn [l]
-                                             (map (fn [p] {:e (:db/id l) :v (:db/id p)})
-                                                  (:layer/points-to l)))
-                                           (filter :layer/points-to
-                                                   (concat (:layers drawing)
-                                                           (vals subscriber-layers)))))
+            pointer-datoms (set (concat (map (fn [d] {:e (:e d) :v (:v d)})
+                                             (d/datoms db :aevt :layer/points-to))
+                                        (mapcat (fn [l]
+                                                  (map (fn [p] {:e (:db/id l) :v (:db/id p)})
+                                                       (:layer/points-to l)))
+                                                (filter :layer/points-to
+                                                        (concat (:layers drawing)
+                                                                (vals subscriber-layers))))))
 
             selected-eids (:selected-eids (cursors/observe-selected-eids owner))
 
@@ -951,6 +973,7 @@
                       :height "100%"
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
+                      :key "svg-canvas"
                       :className (str "canvas-frame "
                                       (cond (keyboard/arrow-shortcut-active? app) " arrow-tool "
                                             (keyboard/pan-shortcut-active? app) " pan-tool "
@@ -1042,8 +1065,15 @@
                                  (let [dx (- (aget event "deltaX"))
                                        dy (aget event "deltaY")]
                                    (om/transact! camera (fn [c]
-                                                          (if (aget event "altKey")
-                                                            (cameras/set-zoom c (cameras/screen-event-coords event) (partial + (* -0.002 dy)))
+                                                          (if (or (aget event "altKey")
+                                                                  ;; http://stackoverflow.com/questions/15416851/catching-mac-trackpad-zoom
+                                                                  ;; ctrl means pinch-to-zoom
+                                                                  (aget event "ctrlKey"))
+                                                            (cameras/set-zoom c (cameras/screen-event-coords event)
+                                                                              (partial + (* -0.002
+                                                                                            dy
+                                                                                            ;; pinch-to-zoom needs a boost to feel natural
+                                                                                            (if (.-ctrlKey event) 10 1))))
                                                             (cameras/move-camera c dx (- dy))))))
                                  (utils/stop-event event))}
                  (defs camera)
@@ -1076,20 +1106,64 @@
 
                    (om/build arrows app {:react-key "arrows"})))))))
 
+(defn needs-copy-paste-hack? []
+  (not (ua-browser/isChrome)))
+
+(defn copy-paste-hack
+  "Creates a special element that we can give focus to on copy and paste"
+  [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Copy/paste hack")
+    om/IRender
+    (render [_]
+      (let [eids (:selected-eids (cursors/observe-selected-eids owner))
+            {:keys [cast! db]} (om/get-shared owner)]
+        (dom/textarea #js {:id "_copy-hack"
+                           :style #js {:position "fixed"
+                                       :top "-100px"
+                                       :left "-100px"
+                                       :width "0px"
+                                       :height "0px"}
+                           :onKeyDown #(do (utils/swallow-errors
+                                            (let [key-set (keyq/event->key %)]
+                                              (when-not (contains? #{#{"ctrl" "v"}
+                                                                     #{"ctrl" "c"}
+                                                                     #{"meta" "v"}
+                                                                     #{"meta" "c"}} key-set)
+                                                (.focus (.. % -target -parentNode)))))
+                                           true)
+                           :onKeyUp #(do (utils/swallow-errors (.focus (.. % -target -parentNode)))
+                                         true)
+                           ;; need a value here, or Firefox and Safari won't run copy
+                           :value "some value"})))))
+
 (defn canvas [app owner]
   (reify
     om/IDisplayName (display-name [_] "Canvas")
     om/IRender
     (render [_]
       (html
-        [:div.canvas {:onContextMenu (fn [e]
-                                       (.preventDefault e)
-                                       (.stopPropagation e))}
-         [:div.canvas-background]
-         (om/build svg-canvas app)
-         (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
-         (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
-                                                     [:keyboard]
-                                                     [:mouse-down]])
-                   {:react-key "mouse"})
-         ]))))
+       [:div.canvas (merge
+                      {:onContextMenu (fn [e]
+                                        (.preventDefault e)
+                                        (.stopPropagation e))
+                       :tabIndex 1}
+                      (when (needs-copy-paste-hack?)
+                        ;; gives focus to our copy/paste element, so that we can copy
+                        {:onKeyDown #(do (utils/swallow-errors
+                                           (let [key-set (keyq/event->key %)
+                                                 hack-node (goog.dom/getElement "_copy-hack")]
+                                             (when (contains? #{#{"ctrl"} #{"meta"}} key-set)
+                                               (when-let [hack-node (goog.dom/getElement "_copy-hack")]
+                                                 (gforms/focusAndSelect hack-node)))))
+                                       true)}))
+        (when (needs-copy-paste-hack?)
+          (om/build copy-paste-hack app))
+        (om/build svg-canvas app)
+        (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
+        (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
+                                                    [:keyboard]
+                                                    [:keyboard-shortcuts]
+                                                    [:mouse-down]
+                                                    [:drawing :relation-in-progress?]])
+                  {:react-key "mouse"})]))))

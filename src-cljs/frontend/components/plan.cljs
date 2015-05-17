@@ -33,6 +33,7 @@
 
 (defn active-history [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan Active History")
     om/IInitState (init-state [_] {:history nil})
     om/IDidMount
     (did-mount [_]
@@ -74,6 +75,7 @@
 
 (defn active-custs [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan Active Custs")
     om/IRender
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)
@@ -117,6 +119,7 @@
 
 (defn invoice-component [{:keys [invoice-id team-uuid]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Invoice")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -153,6 +156,7 @@
 
 (defn invoices [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Invoices")
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -188,6 +192,7 @@
 
 (defn payment [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan payment")
     om/IRender
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
@@ -208,6 +213,7 @@
 
 (defn info [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan Info")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -239,6 +245,7 @@
 
 (defn discount [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan Discount")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
@@ -255,6 +262,7 @@
 
 (defn activity-summary [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan Activity Summary")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
@@ -279,6 +287,7 @@
 
 (defn paid-summary [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan Paid Summary")
     om/IRender
     (render [_]
       (html
@@ -306,6 +315,7 @@
 
 (defn trial-summary [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan Trial Summary")
     om/IRender
     (render [_]
       (html
@@ -331,6 +341,7 @@
 
 (defn start [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan Start")
     om/IDidMount
     (did-mount [_]
       (when-not (:plan/paid? plan)
@@ -381,6 +392,7 @@
 
 (defn plan-menu* [{:keys [plan-id team-uuid doc-id submenu] :as data} owner]
   (reify
+    om/IDisplayName (display-name [_] "Plan Menu*")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
@@ -407,6 +419,7 @@
 
 (defn plan-menu [app owner {:keys [submenu]}]
   (reify
+    om/IDisplayName (display-name [_] "Plan Menu")
     om/IInitState
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount

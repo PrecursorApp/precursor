@@ -98,6 +98,9 @@
   overflow: hidden;
   cursor: default;
   animation: in-fade-bottom-soft @run_slow @bezier_deform;
+  .mq_640({
+    animation-name: in-fade-top-soft;
+  });
   &:not(:last-of-type) {
     display: none;
   }
@@ -107,9 +110,10 @@
   box-sizing: content-box;
   flex: 1;
   position: relative;
-  margin-top: 10vh;
+  padding-top: 10vh;
   overflow: hidden;
   .mq_640({
+    margin-top: @tile;
     padding-top: @menu_padding;
   });
 }
@@ -123,6 +127,7 @@
   transition: transform @run_slow linear;
   will-change: transform;
   &:not(:last-of-type) {
+    opacity: 0; // TODO find better way than this hack -dk
     position: absolute;
     transform: translate(-100%);
     transition-duration: @run_fast;
@@ -130,14 +135,14 @@
   &:only-of-type {
     &:last-of-type {
       .make {
-        animation: in-fade-left-soft @run_slower backwards;
+        animation: in-fade-left-soft @run_slow backwards;
       }
     }
   }
   &:not(:only-of-type) {
     &:not(:first-of-type) {
       .make {
-        animation: in-fade-right-hard @run_slower backwards;
+        animation: in-fade-right-hard @run_slow backwards;
       }
     }
   }
@@ -335,9 +340,19 @@
         }
       }
     }
+    .vein {
+      height: 0;
+      opacity: 0;
+    }
   }
   &.vein {
     height: auto;
+  }
+  .vein {
+    transition: height @run;
+    small {
+      padding-left: .5em;
+    }
   }
 }
 .privacy-radio {

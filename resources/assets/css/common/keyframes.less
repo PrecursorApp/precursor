@@ -212,3 +212,35 @@
   0%   { transform: translate(.75rem, .75rem);}
   100% { transform: none;}
 }
+@keyframes opened-menu-background {
+  0%  { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; }
+}
+@keyframes closed-menu-background {
+  0%  { opacity: 0; transform: scale(.5); }
+  80% { opacity: 1; }
+}
+@keyframes opened-menu-canvas {
+  0% { transform: scale(1); }
+}
+@keyframes closed-menu-canvas {
+  0% { transform: scale(.8); }
+}
+@keyframes opened-menu-chat {
+  0% { width: 100%; height: 100%; }
+}
+@keyframes closed-menu-chat {
+  0% { height: 80%; }
+}
+@keyframes opened-menu-foreground {
+  0% { opacity: 0; }
+}
+@keyframes opened-menu-inner {
+  0% { transform: translate(0); }
+}
+@keyframes opened-chat {
+  0% { transform: translate((@tile / 2));}
+}
+@keyframes closed-chat {
+  0% { transform: none; opacity: 1; }
+}

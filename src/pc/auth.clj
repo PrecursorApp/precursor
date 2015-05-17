@@ -18,21 +18,26 @@
   (let [sub (:google-account/sub cust)
         {:keys [first-name last-name gender
                 avatar-url birthday occupation]} (utils/with-report-exceptions
-                                                   (google-auth/user-info-from-sub sub))
-        cust (-> cust
-               (cust/update! (utils/remove-map-nils {:cust/first-name first-name
-                                                     :cust/last-name last-name
-                                                     :cust/birthday birthday
-                                                     :cust/gender gender
-                                                     :cust/occupation occupation
-                                                     :google-account/avatar avatar-url}))
-               crm/update-with-dribbble-username)]
+                                                   (google-auth/user-info-from-sub sub))]
+    (cust/update! cust (utils/remove-map-nils (merge {:cust/first-name first-name
+                                                      :cust/last-name last-name
+                                                      :cust/birthday birthday
+                                                      :cust/gender gender
+                                                      :cust/occupation occupation
+                                                      :google-account/avatar avatar-url}
+                                                     ;; This is racy, but we're unlikely to encounter this race
+                                                     ;; and we don't want to take the time to do a db.fn/cas
+                                                     (when-not (:cust/name cust)
+                                                       {:cust/name first-name}))))))
+
+(defn perform-blocking-new-cust-updates [cust ring-req]
+  (let [cust (crm/update-with-dribbble-username cust)]
+    (utils/with-report-exceptions
+      (analytics/track-signup cust ring-req))
     (utils/with-report-exceptions
       (analytics/track-user-info cust))
-    (when (profile/prod?)
-      (utils/with-report-exceptions
-        (crm/ping-chat-with-new-user cust)))
-    cust))
+    (utils/with-report-exceptions
+      (crm/ping-chat-with-new-user cust))))
 
 (defn cust-from-google-oauth-code [code ring-req]
   {:post [(string? (:google-account/sub %))]} ;; should never break, but just in case...
@@ -50,9 +55,9 @@
                                   :cust/verified-email (:email_verified user-info)
                                   :cust/http-session-key (UUID/randomUUID)
                                   :google-account/sub (:sub user-info)
-                                  :cust/uuid (d/squuid)})]
-          (analytics/track-signup user ring-req)
-          (future (utils/with-report-exceptions (update-user-from-sub user)))
+                                  :cust/uuid (d/squuid)})
+              user (deref (future (update-user-from-sub user)) 500 user)]
+          (future (perform-blocking-new-cust-updates user ring-req))
           user)
         (catch Exception e
           (if (pcd/unique-conflict? e)
