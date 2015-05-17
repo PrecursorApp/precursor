@@ -1065,8 +1065,15 @@
                                  (let [dx (- (aget event "deltaX"))
                                        dy (aget event "deltaY")]
                                    (om/transact! camera (fn [c]
-                                                          (if (aget event "altKey")
-                                                            (cameras/set-zoom c (cameras/screen-event-coords event) (partial + (* -0.002 dy)))
+                                                          (if (or (aget event "altKey")
+                                                                  ;; http://stackoverflow.com/questions/15416851/catching-mac-trackpad-zoom
+                                                                  ;; ctrl means pinch-to-zoom
+                                                                  (aget event "ctrlKey"))
+                                                            (cameras/set-zoom c (cameras/screen-event-coords event)
+                                                                              (partial + (* -0.002
+                                                                                            dy
+                                                                                            ;; pinch-to-zoom needs a boost to feel natural
+                                                                                            (if (.-ctrlKey event) 10 1))))
                                                             (cameras/move-camera c dx (- dy))))))
                                  (utils/stop-event event))}
                  (defs camera)
