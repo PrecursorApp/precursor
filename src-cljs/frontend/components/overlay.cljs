@@ -524,7 +524,7 @@
 
           [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc-id)
                                                     :placeholder "or use this url"})]
-          [:div.content.make
+          [:div.content.make.export-title
            "Embed in a GitHub README or issue"]
 
           [:div.content.make (om/build share-input
