@@ -17,6 +17,7 @@
             [pc.models.doc :as doc-model]
             [pc.models.plan :as plan-model]
             [pc.models.permission :as permission-model]
+            [pc.models.team :as team-model]
             [pc.replay :as replay]
             [pc.stripe.dev :as stripe-dev]
             [ring.util.anti-forgery :as anti-forgery]))
@@ -512,7 +513,8 @@
 (defn team-info [team]
   (let [db (pcd/default-db)
         team-docs (map (comp (partial d/entity db) :e)
-                       (d/datoms db :vaet (:db/id team) :document/team))]
+                       (d/datoms db :vaet (:db/id team) :document/team))
+        team-txes (team-model/team-txes db team)]
     (def myteamdocs team-docs)
     (list
      [:style "td, th { padding: 5px; text-align: left }"]
@@ -544,6 +546,15 @@
       [:tr
        [:td "Doc count"]
        [:td (count team-docs)]]
+
+      [:tr
+       [:td "tx count"]
+       [:td (count team-txes)]]
+
+      [:tr
+       [:td "Last activity"]
+       [:td (:db/txInstant (last (sort-by :db/txInstant team-txes)))]]
+
       [:tr
        [:td "Plan url"]
        [:td (let [url (urls/team-plan team)]
