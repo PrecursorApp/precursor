@@ -22,20 +22,23 @@
      [:p "Precursor's infrastructure is made up of 2 main types of components: 1. ones that store data and 2. ones that process data. We'll represent components that store data with the classic spinning disks icon. I'm a pretty poor artist, but I searched Google for \"database icon\" and they're just a stack of circles. We'll spend 30 seconds and illustrate one ourselves. Then when we need it to represent a component, we can just copy/paste it into place."]]
 
     (common/demo (external-cdn-path "/blog/diagramming-with-precursor/db-placeholder.png")
-                 (external-cdn-path "/blog/diagramming-with-precursor/db.gif"))
+                 (external-cdn-path "/blog/diagramming-with-precursor/db.gif")
+                 :caption "Sketching a quick db icon. Hold Alt+drag to duplicate shapes.")
 
     [:article
      [:p "For components that process data, we'll illustrate a blade server. Again, I searched Google for server icon and the basic shape is just a rectangle in front and a couple of narrowing lines traveling backwards. I'll take another 30 seconds to illustrate one of these."]]
 
     (common/demo (external-cdn-path "/blog/diagramming-with-precursor/blade-placeholder.png")
-                 (external-cdn-path "/blog/diagramming-with-precursor/blade.gif"))
+                 (external-cdn-path "/blog/diagramming-with-precursor/blade.gif")
+                 :caption "Perspective is tricky. Hold Alt+scroll to zoom in for precision.")
 
     [:article
      [:p "If you’re thinking you can't sketch, banish that thought. Anyone can sketch well enough to get an idea across. You don't need to waste time searching for and importing the same icon that AWS uses. We're not making marketing materials, we're making diagrams that you use to communicate your ideas to others. Identify the basic shape of the icon, and sketch it as faithfully as you can in 30 seconds. If you're really that bad, you can make a legend to translate your scribbles into English."]
      [:p "Now that we have our main components, we can start putting them together. I like to start mapping the system from the perspective of a user visiting the site. That means that I'll need to illustrate a couple of laptops to represent the users."]]
 
     (common/demo (external-cdn-path "/blog/diagramming-with-precursor/clients-placeholder.png")
-                 (external-cdn-path "/blog/diagramming-with-precursor/clients.gif"))
+                 (external-cdn-path "/blog/diagramming-with-precursor/clients.gif")
+                 :caption "Sketching a few clients. Hit + or - to resize selected text.")
 
     [:article
      [:p "When the user makes the request, it goes through the load balancer to a web server. The web server delivers a web page with links to javascript and css. Those assets live on our CDN and the client fetches them directly from there. We'll use arrows to indicate the direction of data flow. To create an arrow, hold \"A\" then click on the borders of shapes to connect them."]]
