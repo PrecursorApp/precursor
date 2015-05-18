@@ -185,13 +185,13 @@
                :body (render/render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
 
           (auth/logged-in? req)
-          {:status 403
+          {:status 200
            :headers {"Content-Type" "image/svg+xml"
                      "Cache-Control" "no-cache; private"}
            :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))}
 
           :else
-          {:status 401
+          {:status 200
            :headers {"Content-Type" "image/svg+xml"
                      "Cache-Control" "no-cache; private"}
            :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))})))
@@ -230,7 +230,7 @@
                                                              :size-limit 800))}))
 
           (auth/logged-in? req)
-          {:status 403
+          {:status 200
            :headers {"Content-Type" "image/png"
                      "Cache-Control" "no-cache; private"}
            :body (convert/svg->png (render/render-layers private-layers
@@ -238,7 +238,7 @@
                                                          :size-limit 800))}
 
           :else
-          {:status 401
+          {:status 200
            :headers {"Content-Type" "image/png"
                      "Cache-Control" "no-cache; private"}
            :body (convert/svg->png (render/render-layers private-layers
@@ -273,14 +273,14 @@
                                      (render/svg-props layers))})
 
           (auth/logged-in? req)
-          {:status 403
+          {:status 200
            :headers {"Content-Type" "application/pdf"
                      "Cache-Control" "no-cache; private"}
            :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))
                                    (render/svg-props private-layers))}
 
           :else
-          {:status 401
+          {:status 200
            :headers {"Content-Type" "application/pdf"
                      "Cache-Control" "no-cache; private"}
            :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))
