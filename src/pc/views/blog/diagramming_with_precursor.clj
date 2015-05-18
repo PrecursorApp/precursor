@@ -48,7 +48,10 @@
       [:img {:src (external-cdn-path "/blog/diagramming-with-precursor/web-part.png")}]]]
 
     [:article
-     [:p "How did those assets get in the CDN? Somebody pushed some code to GitHub, CircleCI fetched the code, built the assets, ran some tests, then deployed the assets to s3. On the first request, the CDN fetched the assets from s3."]]
+     [:p "How did those assets get in the CDN? Somebody pushed some code to GitHub, "
+      [:a {:href "https://circleci.com"
+           :title "Continuous Integration and Deployment"}
+       "CircleCI"] " fetched the code, built the assets, ran some tests, then deployed the assets to s3. On the first request, the CDN fetched the assets from s3."]]
 
     [:figure
      [:a.img {:data-caption-black "Hold \"A\" and click the edges of shapes to create arrows."}
