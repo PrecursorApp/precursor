@@ -68,9 +68,8 @@
        "available as a read-only doc"]
       ". If you want to use it as a starting point, just select the parts you want, hit Cmd+c or Ctrl+c to copy, and Cmd+v or Ctrl+v to paste them into a new document."]]
 
-    [:h3 "Tools review"]
-
     [:article
+     [:h3 "Tools review"]
      [:p "Connect shapes with an arrow by holding \"A\" and clicking on the borders of shapes to connect them."]
      [:p "Copy and paste shapes by selecting them and hitting your system's copy/paste shortcut (Ctrl+c/Ctrl+v on Windows, Cmd+c/Cmd+v on mac)."]
      [:p "Hold \"Alt\" and scroll to zoom in. You can do more precise placement when zoomed."]
