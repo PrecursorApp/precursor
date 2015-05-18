@@ -66,11 +66,13 @@
 
     [:article
      [:p "Now we have a good overview of our infrastructure. When a new engineer joins the team, this is one of the first things we'll show them. It's even embedded in our GitHub README. You can see an example of that "
-      [:a {:href "https://github.com/PrecursorApp/image-refresh-demo"}
+      [:a {:href "https://github.com/PrecursorApp/image-refresh-demo"
+           :title "Embed a Precursor doc in your GitHub README or an issue."}
        "in our demo repo"]
       "."]
      [:p "The final diagram is "
-      [:a {:href "https://precursor.precursorapp.com/document/17592197950857"}
+      [:a {:href "https://precursor.precursorapp.com/document/17592197950857"
+           :title "See the finished doc."}
        "available as a read-only doc"]
       ". If you want to use it as a starting point, just select the parts you want, hit Cmd+c or Ctrl+c to copy, and Cmd+v or Ctrl+v to paste them into a new document."]]
 
