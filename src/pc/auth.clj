@@ -7,6 +7,7 @@
             [pc.analytics :as analytics]
             [pc.auth.google :as google-auth]
             [pc.crm :as crm]
+            [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust]
             [pc.models.permission :as permission-model]
             [pc.datomic :as pcd]
@@ -39,6 +40,14 @@
     (utils/with-report-exceptions
       (crm/ping-chat-with-new-user cust))))
 
+(defn convert-all-grants-for-cust [db cust]
+  (doseq [grant (access-grant-model/find-by-email db (:cust/email cust))]
+    (permission-model/convert-access-grant grant cust (merge {:transaction/broadcast true}
+                                                             (when (:access-grant/document-ref grant)
+                                                               {:transaction/document (:db/id (:access-grant/document-ref grant))})
+                                                             (when (:access-grant/team grant)
+                                                               {:transaction/team (:db/id (:access-grant/team grant))})))))
+
 (defn cust-from-google-oauth-code [code ring-req]
   {:post [(string? (:google-account/sub %))]} ;; should never break, but just in case...
   (let [user-info (google-auth/user-info-from-code code)
@@ -56,7 +65,10 @@
                                   :cust/http-session-key (UUID/randomUUID)
                                   :google-account/sub (:sub user-info)
                                   :cust/uuid (d/squuid)})
+              convert-access-grants-future (future (convert-all-grants-for-cust (pcd/default-db) user))
               user (deref (future (update-user-from-sub user)) 500 user)]
+          ;; need this to finish before they try to access a document
+          @convert-access-grants-future
           (future (perform-blocking-new-cust-updates user ring-req))
           user)
         (catch Exception e
