@@ -6,6 +6,7 @@
   {:title "Diagramming with Precursor"
    :blurb "Learn how to build flow diagrams as we sketch out Precursor's infrastructure."
    :author "Daniel"
+   :image (external-cdn-path "/blog/diagramming-with-precursor/full-infrastructure.png")
    :body
    (list
     [:article
