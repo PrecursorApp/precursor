@@ -155,7 +155,7 @@
 (defpage upload "/upload" [req]
   (hiccup/html (content/layout {} (admin-content/upload-files))))
 
-(defpage upload "/stripe-events" [req]
+(defpage stripe-events "/stripe-events" [req]
   (hiccup/html (content/layout {} (admin-content/stripe-events))))
 
 (defpage refresh-client [:post "/refresh-client-stats"] [req]
