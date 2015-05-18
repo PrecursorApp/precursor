@@ -25,6 +25,8 @@
             [goog.dom.Range]
             [goog.dom.selection]
             [goog.labs.userAgent.browser :as ua]
+            [goog.string :as gstring]
+            [goog.string.format]
             [goog.userAgent]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -519,8 +521,17 @@
           [:a.vein.make {:href (urls/absolute-doc-png doc-id :query {:dl true})
                          :target "_self"}
            (common/icon :file-png) "Download as PNG"]
+
           [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc-id)
-                                                    :placeholder "or use this url"})]])))))
+                                                    :placeholder "or use this url"})]
+          [:div.content.make
+           "Embed in a GitHub README or issue"]
+
+          [:div.content.make (om/build share-input
+                                       {:url (gstring/format "[![Precursor](%s)](%s)"
+                                                             (urls/absolute-doc-svg doc-id)
+                                                             (urls/absolute-doc-url doc-id))
+                                        :placeholder "copy as markdown"})]])))))
 
 (defn info [app owner]
   (reify
