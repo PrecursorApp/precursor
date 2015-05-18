@@ -41,6 +41,10 @@
    to anyone with the direct URL. Time should be in the format Fri, 30 Jan 2015 01:12:00 -0800
    Be careful for daylight savings time!"
   [
+   {:slug "diagramming-with-precursor"
+    :unique-id "diagramming-with-precursor"
+    ;;:pub-date (clj-time.format/parse "Wed, 29 Apr 2015 05:00:00 -0800")
+    :display-in-overview false}
    {:slug "we-made-precursor-for-teams"
     :unique-id "we-made-precursor-for-teams"
     :pub-date (clj-time.format/parse "Wed, 29 Apr 2015 05:00:00 -0800")
