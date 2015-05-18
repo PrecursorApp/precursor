@@ -1033,6 +1033,19 @@
                                 (select-keys @client-stats doc-uids))]
       (close-ws uid))))
 
+(defn cleanup-all-stale []
+  (let [subs @document-subs
+        now (time/now)
+        uids (mapcat keys (map second @pc.http.sente/document-subs))]
+    (doseq [uid uids]
+      (fetch-stats uid))
+    (Thread/sleep 10000)
+    (doseq [[uid stats] (remove (fn [[_ s]]
+                                  (and (:last-update s)
+                                       (time/after? (:last-update s) now)))
+                                (select-keys @client-stats uids))]
+      (close-ws uid))))
+
 (defn init []
   (let [{:keys [ch-recv send-fn ajax-post-fn connected-uids
                 ajax-get-or-ws-handshake-fn] :as fns} (sente/make-channel-socket!
