@@ -36,12 +36,23 @@
   [history-imp & [token]]
   (set! (.-_current_token history-imp) (or token (.getToken history-imp))))
 
+(defn same-token?
+  "Determines if the new token is the same as the last one from the app's perspective,
+  prevents us from running unnecessary handlers"
+  [token-before token-after]
+  (or (= (re-find #"^[^\?]+" token-before)
+         (re-find #"^[^\?]+" token-after))
+      ;; note that there's no leading slash
+      (and (zero? (.indexOf token-before "document"))
+           (zero? (.indexOf token-after "document"))
+           (= (take-last 2 (re-find #"^(document/)[A-Za-z0-9_-]*?-{0,1}(\d+(/.*$|$))" token-before))
+              (take-last 2 (re-find #"^(document/)[A-Za-z0-9_-]*?-{0,1}(\d+(/.*$|$))" token-after))))))
+
 (defn setup-dispatcher! [history-imp]
   (events/listen history-imp goog.history.EventType.NAVIGATE
                  #(let [token-before (current-token history-imp)
                         token-after (set-current-token! history-imp (.-token %))]
-                    (when-not (= (re-find #"^[^\?]+" token-before)
-                                 (re-find #"^[^\?]+" token-after))
+                    (when-not (same-token? token-before token-after)
                       (sec/dispatch! (str "/" token-after))))))
 
 (defn bootstrap-dispatcher!

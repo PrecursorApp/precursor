@@ -1,7 +1,8 @@
 (ns pc.models.doc
-  (:require [pc.datomic :as pcd]
-            [pc.models.chat-bot :as chat-bot-model]
-            [datomic.api :refer [db q] :as d])
+  (:require [clojure.string :as str]
+            [datomic.api :refer [db q] :as d]
+            [pc.datomic :as pcd]
+            [pc.models.chat-bot :as chat-bot-model])
   (:import java.util.UUID))
 
 (defn create! [doc-attrs]
@@ -118,6 +119,12 @@
 
 (defn remove-tag [doc tag]
   @(d/transact (pcd/conn) [[:db/retract (:db/id doc) :document/tags tag]]))
+
+(defn urlify-doc-name [doc-name]
+  (-> doc-name
+    (str/replace #"[^A-Za-z0-9-_]+" "-")
+    (str/replace #"^-" "")
+    (str/replace #"-$" "")))
 
 (defn read-api [doc]
   (-> doc
