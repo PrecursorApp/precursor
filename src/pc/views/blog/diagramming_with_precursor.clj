@@ -19,7 +19,7 @@
     [:article
      [:h3 "Let's build something"]
      [:p "For a case-study in sketching flow diagrams, we're going to map out Precursor's infrastructure."]
-     [:p "Precursor's infrastructure is made up of 2 main types of components: 1. ones that store data and 2. ones that process data. We'll represent components that store data with the classic spinning disks icon. I'm a pretty poor artist, but I searched Google for \"database icon\" and they're just a stack of circles. We'll spend 30 seconds and illustrate one ourselves. Then when we need it to represent a component, we can just copy/paste it into place."]]
+     [:p "Precursor's infrastructure is made up of 2 main types of components: 1. components that store data and 2. components that process data. We'll represent components that store data with the classic spinning disks icon. I'm a pretty poor artist, but I searched Google for \"database icon\" and they're just a stack of circles. We'll spend 30 seconds and illustrate one ourselves. Then when we need it to represent a component, we can just copy/paste it into place."]]
 
     (common/demo (external-cdn-path "/blog/diagramming-with-precursor/db-placeholder.png")
                  (external-cdn-path "/blog/diagramming-with-precursor/db.gif")
