@@ -1,5 +1,6 @@
 (ns pc.http.urls
   (:require [cemerick.url :as url]
+            [clojure.string :as str]
             [pc.profile :as profile]))
 
 (defn make-url [path & {:keys [query subdomain]}]
@@ -18,6 +19,12 @@
 
 (defn root [& {:keys [query subdomain]}]
   (make-url "/" :query query :subdomain subdomain))
+
+(defn urlify-doc-name [doc-name]
+  (-> doc-name
+    (str/replace #"[^A-Za-z0-9-_]+" "-")
+    (str/replace #"^-" "")
+    (str/replace #"-$" "")))
 
 (defn doc-url [doc-id & {:keys [query subdomain]}]
   (make-url (str "/document/" doc-id) :query query :subdomain subdomain))

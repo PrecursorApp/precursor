@@ -147,13 +147,13 @@
             doc (doc-model/find-by-id @db doc-id)]
         (html
          [:section.menu-view
-          [:a.vein.make {:href (urls/overlay-path doc-id "info")}
+          [:a.vein.make {:href (urls/overlay-path doc "info")}
            (common/icon :info)
            [:span "About"]]
           [:a.vein.make {:href "/new"}
            (common/icon :plus)
            [:span "New"]]
-          [:a.vein.make {:href (urls/overlay-path doc-id "doc-viewer")}
+          [:a.vein.make {:href (urls/overlay-path doc "doc-viewer")}
            (common/icon :docs)
            [:span "Documents"]]
           [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)}
@@ -162,17 +162,17 @@
           ;; TODO: should this use the permissions model? Would have to send some
           ;;       info about the document
           (if (auth/has-document-access? app (:document/id app))
-            [:a.vein.make {:href (urls/overlay-path doc-id "sharing")}
+            [:a.vein.make {:href (urls/overlay-path doc "sharing")}
              (common/icon :sharing)
              [:span "Sharing"]]
 
-            [:a.vein.make {:href (urls/overlay-path doc-id "document-permissions")}
+            [:a.vein.make {:href (urls/overlay-path doc "document-permissions")}
              (common/icon :users)
              [:span "Request Access"]])
-          [:a.vein.make {:href (urls/overlay-path doc-id "export")}
+          [:a.vein.make {:href (urls/overlay-path doc "export")}
            (common/icon :download)
            [:span "Export"]]
-          [:a.vein.make.mobile-hidden {:href (urls/overlay-path doc-id "shortcuts")}
+          [:a.vein.make.mobile-hidden {:href (urls/overlay-path doc "shortcuts")}
            (common/icon :command)
            [:span "Shortcuts"]]
           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
@@ -270,7 +270,7 @@
           [:p.make
            "Anyone with the url can see the doc and chat, but can't edit the canvas. "
            "Share the url to show off your work."]
-          (om/build share-input {:url (urls/absolute-doc-url doc-id)})
+          (om/build share-input {:url (urls/absolute-doc-url doc)})
 
           [:p.make
            "Add your teammate's email to grant them full access."]
@@ -363,8 +363,9 @@
     om/IDisplayName (display-name [_] "Public Sharing")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            invite-to (or (get-in app state/invite-to-path) "")]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            invite-to (or (get-in app state/invite-to-path) "")
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
           [:div.content
            [:h2.make
@@ -381,7 +382,7 @@
                [:p.make
                 "Anyone with the url can view and edit."]
 
-               (om/build share-input {:url (urls/absolute-doc-url (:document/id app))})
+               (om/build share-input {:url (urls/absolute-doc-url doc)})
 
                [:p.make
                 "Email or text a friend to invite them to collaborate:"]
@@ -415,19 +416,20 @@
     om/IDisplayName (display-name [_] "Unknown Sharing")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            invite-to (or (get-in app state/invite-to-path) "")])
-      (html
-       [:div.content
-        [:h2.make "Share this document"]
-        (if-not (:cust app)
-          (list
-           [:p.make
-            "Sign in with your Google account to send an invite or give someone your url."]
-           [:div.calls-to-action.make
-            (om/build common/google-login {:source "Public Sharing Menu"})])
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            invite-to (or (get-in app state/invite-to-path) "")
+            doc (doc-model/find-by-id @db (:document/id app))]
+        (html
+         [:div.content
+          [:h2.make "Share this document"]
+          (if-not (:cust app)
+            (list
+             [:p.make
+              "Sign in with your Google account to send an invite or give someone your url."]
+             [:div.calls-to-action.make
+              (om/build common/google-login {:source "Public Sharing Menu"})])
 
-          (om/build share-input {:url (urls/absolute-doc-url (:document/id app))}))]))))
+            (om/build share-input {:url (urls/absolute-doc-url doc)}))])))))
 
 (defn sharing [app owner]
   (reify
@@ -535,26 +537,26 @@
     om/IDisplayName (display-name [_] "Export Menu")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            doc-id (:document/id app)]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:section.menu-view
-          [:a.vein.make {:href (urls/absolute-doc-svg doc-id :query {:dl true})
+          [:a.vein.make {:href (urls/absolute-doc-svg doc :query {:dl true})
                          :target "_self"}
            (common/icon :file-svg) "Download as SVG"]
-          [:div.content.make (om/build share-input {:url (urls/absolute-doc-svg doc-id)
+          [:div.content.make (om/build share-input {:url (urls/absolute-doc-svg doc)
                                                     :placeholder "or use this url"})]
 
-          [:a.vein.make {:href (urls/absolute-doc-pdf doc-id :query {:dl true})
+          [:a.vein.make {:href (urls/absolute-doc-pdf doc :query {:dl true})
                          :target "_self"}
            (common/icon :file-pdf) "Download as PDF"]
-          [:div.content.make (om/build share-input {:url (urls/absolute-doc-pdf doc-id)
+          [:div.content.make (om/build share-input {:url (urls/absolute-doc-pdf doc)
                                                     :placeholder "or use this url"})]
 
-          [:a.vein.make {:href (urls/absolute-doc-png doc-id :query {:dl true})
+          [:a.vein.make {:href (urls/absolute-doc-png doc :query {:dl true})
                          :target "_self"}
            (common/icon :file-png) "Download as PNG"]
-          [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc-id)
+          [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc)
                                                     :placeholder "or use this url"})]])))))
 
 (defn info [app owner]
@@ -562,8 +564,8 @@
     om/IDisplayName (display-name [_] "Overlay Info")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            doc-id (:document/id app)]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:section.menu-view
           [:div.content
@@ -606,7 +608,7 @@
              :target "_self"
              :role "button"}
             [:span "Email"]]
-           [:a.vein.make {:href (urls/overlay-path doc-id "connection-info")
+           [:a.vein.make {:href (urls/overlay-path doc "connection-info")
                           :role "button"}
             [:span "Connection Info"]]]
           (common/mixpanel-badge)])))))

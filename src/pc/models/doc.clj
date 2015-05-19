@@ -120,12 +120,6 @@
 (defn remove-tag [doc tag]
   @(d/transact (pcd/conn) [[:db/retract (:db/id doc) :document/tags tag]]))
 
-(defn urlify-doc-name [doc-name]
-  (-> doc-name
-    (str/replace #"[^A-Za-z0-9-_]+" "-")
-    (str/replace #"^-" "")
-    (str/replace #"-$" "")))
-
 (defn read-api [doc]
   (-> doc
     (select-keys [:db/id

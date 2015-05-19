@@ -7,6 +7,7 @@
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
             [frontend.db :as fdb]
+            [frontend.models.doc :as doc-model]
             [frontend.models.plan :as plan-model]
             [frontend.models.team :as team-model]
             [frontend.sente :as sente]
@@ -48,7 +49,8 @@
                           (comment "do something about errors")))))
     om/IRenderState
     (render-state [_ {:keys [history]}]
-      (let [{:keys [cast! team-db]} (om/get-shared owner)]
+      (let [{:keys [cast! db team-db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db doc-id)]
         (html
          [:section.menu-view
           (if (nil? history)
@@ -69,7 +71,7 @@
                [:div.menu-empty.content {:key "empty"}
                 [:p.make (common/icon :activity)]
                 [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
-                [:a.make.feature-link {:href (urls/overlay-path doc-id "team-settings")
+                [:a.make.feature-link {:href (urls/overlay-path doc "team-settings")
                                        :role "button"}
                  "Add a teammate."]])])])))))
 
@@ -78,8 +80,9 @@
     om/IDisplayName (display-name [_] "Plan Active Custs")
     om/IRender
     (render [_]
-      (let [{:keys [cast! team-db]} (om/get-shared owner)
-            active (:plan/active-custs plan)]
+      (let [{:keys [cast! db team-db]} (om/get-shared owner)
+            active (:plan/active-custs plan)
+            doc (doc-model/find-by-id @db doc-id)]
         (html
          [:section.menu-view
           (if (seq active)
@@ -101,7 +104,7 @@
              [:div.menu-empty.content
               [:p.make (common/icon :activity)]
               [:p.make "We haven't seen any activity on your team yet. It's refreshed every 8 hours."]
-              [:a.make.feature-link {:href (urls/overlay-path doc-id "team-settings")
+              [:a.make.feature-link {:href (urls/overlay-path doc "team-settings")
                                      :role "button"}
                "Add a teammate."]]])])))))
 
@@ -160,6 +163,7 @@
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db doc-id)
             sorted-invoices (->> plan
                               :plan/invoices
                               ;; don't show $0 invoices
@@ -187,7 +191,7 @@
               [:p.make (common/icon :docs)]
               [:p.make "We'll list your first invoice here when it's ready."]
               [:a.make.feature-link {:role "button"
-                                     :href (urls/plan-submenu-path doc-id "activity")}
+                                     :href (urls/plan-submenu-path doc "activity")}
                "View team activity."]])])))))
 
 (defn payment [{:keys [plan team-uuid doc-id] :as data} owner]
@@ -265,22 +269,23 @@
     om/IDisplayName (display-name [_] "Plan Activity Summary")
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)]
+      (let [{:keys [db cast!]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db doc-id)]
         (html
          (case (count (:plan/active-custs plan))
            0 [:span
               [:a {:role "button"
-                   :href (urls/plan-submenu-path doc-id "active")}
+                   :href (urls/plan-submenu-path doc "active")}
                "No users"]
               " are active on your team, yet."]
            1 [:span
               [:a {:role "button"
-                   :href (urls/plan-submenu-path doc-id "active")}
+                   :href (urls/plan-submenu-path doc "active")}
                "One user"]
               " is active on your team."]
            [:span
             [:a {:role "button"
-                 :href (urls/plan-submenu-path doc-id "active")}
+                 :href (urls/plan-submenu-path doc "active")}
              (str (count (:plan/active-custs plan)) " users")]
 
             " are active on your team."]))))))
@@ -348,7 +353,8 @@
         (stripe/load-checkout)))
     om/IRender
     (render [_]
-      (let [{:keys [cast! db]} (om/get-shared owner)]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db doc-id)]
         (html
          [:section.menu-view
           [:div.divider.make]
@@ -361,20 +367,20 @@
              (common/icon :credit)
              [:span "Add payment"]]
             (list
-             [:a.vein.make {:href (urls/plan-submenu-path doc-id "info")}
+             [:a.vein.make {:href (urls/plan-submenu-path doc "info")}
               (common/icon :info)
               [:span "Information"]]
-             [:a.vein.make {:href (urls/plan-submenu-path doc-id "payment")}
+             [:a.vein.make {:href (urls/plan-submenu-path doc "payment")}
               (common/icon :credit)
               [:span "Payment"]]
-             [:a.vein.make {:href (urls/plan-submenu-path doc-id "invoices")}
+             [:a.vein.make {:href (urls/plan-submenu-path doc "invoices")}
               (common/icon :docs)
               [:span "Invoices"]]
-             [:a.vein.make {:href (urls/plan-submenu-path doc-id "activity")}
+             [:a.vein.make {:href (urls/plan-submenu-path doc "activity")}
               (common/icon :activity)
               [:span "Activity"]]
              (when (plan-model/active-discount? plan)
-               [:a.vein.make {:href (urls/plan-submenu-path doc-id "discount")}
+               [:a.vein.make {:href (urls/plan-submenu-path doc "discount")}
                 (common/icon :heart)
                 [:span "Discount"]])
              (when (neg? (:plan/account-balance plan))

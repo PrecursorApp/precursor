@@ -283,10 +283,11 @@
 (defmethod handle-keyboard-shortcut-after :shortcuts-menu
   [state shortcut-name key-set]
   (when-let [doc-id (:document/id state)]
-    (if (keyword-identical? :shortcuts (overlay/current-overlay state))
-      (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc-id)
-                                                      :replace-token? true}])
-      (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc-id "shortcuts")}]))))
+    (let [doc (doc-model/find-by-id @(:db state) doc-id)]
+      (if (keyword-identical? :shortcuts (overlay/current-overlay state))
+        (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc)
+                                                        :replace-token? true}])
+        (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc "shortcuts")}])))))
 
 (defmethod handle-keyboard-shortcut-after :record
   [state shortcut-name key-set]
@@ -328,8 +329,9 @@
     (frontend.db/reset-db! (:db state) nil)
     (sente/subscribe-to-document (:sente state) (:comms state) (:document/id state)))
   (when-let [doc-id (:document/id state)]
-    (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc-id)
-                                                    :replace-token? true}])))
+    (let [doc (doc-model/find-by-id @(:db state) doc-id)]
+      (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc)
+                                                      :replace-token? true}]))))
 
 (defmethod post-control-event! :key-state-changed
   [browser-state message [{:keys [key-set depressed?]}] previous-state current-state]
@@ -1653,8 +1655,9 @@
 (defn navigate-to-lazy-doc [current-state replace-token?]
   (go
     (landing-doc/maybe-fetch-doc-id current-state)
-    (let [doc-id (<! (landing-doc/get-doc-id current-state))]
-      (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/document/" doc-id)
+    (let [doc-id (<! (landing-doc/get-doc-id current-state))
+          doc (doc-model/find-by-id @(:db current-state) doc-id)]
+      (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/doc-path doc)
                                                               :replace-token? replace-token?}]))))
 
 (defmethod post-control-event! :make-button-clicked
@@ -1885,7 +1888,7 @@
   (let [path (.getPath (goog.Uri. js/window.location))]
     (when (and (= doc-id (:document/id current-state))
                (zero? (.indexOf path "/document/")))
-      (let [url-safe-name (doc-model/urlify-doc-name doc-name)
+      (let [url-safe-name (urls/urlify-doc-name doc-name)
             [_ before-name after-name] (re-find #"^(/document/)[A-Za-z0-9_-]*?-{0,1}(\d+(/.*$|$))" path)
             new-path (str before-name
                           (when (seq url-safe-name)

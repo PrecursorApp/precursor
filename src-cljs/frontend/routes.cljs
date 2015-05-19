@@ -53,7 +53,7 @@
   (defroute document #"/document/[A-Za-z0-9_-]*?-{0,1}(\d+)$" [doc-id args]
     (let [params (:query-params args)]
       (if-let [overlay (:overlay params)]
-        (put! nav-ch [:navigate! {:path (urls/overlay-path doc-id overlay
+        (put! nav-ch [:navigate! {:path (urls/overlay-path {:db/id doc-id} overlay
                                                            :query-params (dissoc params :overlay))
                                   :replace-token? true}])
         (put! nav-ch [:document {:document/id (long doc-id)

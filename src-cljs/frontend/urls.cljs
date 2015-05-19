@@ -1,5 +1,6 @@
 (ns frontend.urls
   (:require [cemerick.url :as url]
+            [clojure.string :as str]
             [frontend.config :as config]
             [frontend.utils :as utils]))
 
@@ -13,17 +14,29 @@
                             (when query
                               {:query query})))))
 
-(defn absolute-doc-url [doc-id & {:as args}]
-  (utils/apply-map absolute-url (str "/document/" doc-id) args))
+(defn urlify-doc-name [doc-name]
+  (-> doc-name
+    (str/replace #"[^A-Za-z0-9-_]+" "-")
+    (str/replace #"^-" "")
+    (str/replace #"-$" "")))
 
-(defn absolute-doc-svg [doc-id & {:as args}]
-  (utils/apply-map absolute-url (str "/document/" doc-id ".svg") args))
+(defn name-segment [doc]
+  (let [url-safe-name (urlify-doc-name (:document/name doc ""))]
+    (str (when (seq url-safe-name)
+           (str url-safe-name "-"))
+         (:db/id doc))))
 
-(defn absolute-doc-png [doc-id & {:as args}]
-  (utils/apply-map absolute-url (str "/document/" doc-id ".png") args))
+(defn absolute-doc-url [doc & {:as args}]
+  (utils/apply-map absolute-url (str "/document/" (name-segment doc)) args))
 
-(defn absolute-doc-pdf [doc-id & {:as args}]
-  (utils/apply-map absolute-url (str "/document/" doc-id ".pdf") args))
+(defn absolute-doc-svg [doc & {:as args}]
+  (utils/apply-map absolute-url (str "/document/" (name-segment doc) ".svg") args))
+
+(defn absolute-doc-png [doc & {:as args}]
+  (utils/apply-map absolute-url (str "/document/" (name-segment doc) ".png") args))
+
+(defn absolute-doc-pdf [doc & {:as args}]
+  (utils/apply-map absolute-url (str "/document/" (name-segment doc) ".pdf") args))
 
 (defn invoice-url [team-uuid invoice-id & {:as args}]
   (utils/apply-map absolute-url (str "/team/" team-uuid "/plan/invoice/" invoice-id) args))
@@ -31,14 +44,14 @@
 (defn issue-url [issue]
   (str "/issues/" (:frontend/issue-id issue)))
 
-(defn doc-path [doc-id & {:keys [query-params]}]
-  (str "/document/" doc-id (when (seq query-params)
+(defn doc-path [doc & {:keys [query-params]}]
+  (str "/document/" (name-segment doc) (when (seq query-params)
                              (str "?" (url/map->query query-params)))))
 
-(defn overlay-path [doc-id overlay & {:keys [query-params]}]
-  (str "/document/" doc-id "/" overlay (when (seq query-params)
+(defn overlay-path [doc overlay & {:keys [query-params]}]
+  (str "/document/" (name-segment doc) "/" overlay (when (seq query-params)
                                          (str "?" (url/map->query query-params)))))
 
-(defn plan-submenu-path [doc-id submenu & {:keys [query-params]}]
-  (str "/document/" doc-id "/plan/" submenu (when (seq query-params)
+(defn plan-submenu-path [doc submenu & {:keys [query-params]}]
+  (str "/document/" (name-segment doc) "/plan/" submenu (when (seq query-params)
                                               (str "?" (url/map->query query-params)))))
