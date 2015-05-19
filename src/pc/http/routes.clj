@@ -121,8 +121,11 @@
                       ;;   {:initial-entities (layer/find-by-document db doc)})
                       view-data)))
 
+(defn parse-doc-id [doc-id-param]
+  (Long/parseLong (re-find #"^[0-9]+" doc-id-param)))
+
 (defn handle-doc [req]
-  (let [document-id (some-> req :params :document-id Long/parseLong)
+  (let [document-id (some-> req :params :document-id parse-doc-id)
         db (pcd/default-db)
         doc (doc-model/find-by-team-and-id db (:team req) document-id)]
     (if doc
@@ -136,10 +139,10 @@
                                                                         (urls/from-doc doc)]])
                  "Document not found")}))))
 
-(defpage document [:get "/document/:document-id" {:document-id #"[0-9]+"}] [req]
+(defpage document [:get "/document/:document-id" {:document-id #"[0-9]+[A-Za-z0-9._-]*"}] [req]
   (handle-doc req))
 
-(defpage document-overlay [:get "/document/:document-id/:overlay" {:document-id #"[0-9]+" :overlay #"[\w-]+"}] [req]
+(defpage document-overlay [:get "/document/:document-id/:overlay" {:document-id #"[0-9]+[A-Za-z0-9._-]*" :overlay #"[\w-]+"}] [req]
   (handle-doc req))
 
 (def private-layers [{:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 389.5996, :entity/type :layer, :layer/start-y 120.0, :layer/text "Please log in or request access to view it.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 100.0} {:layer/opacity 1.0, :layer/stroke-width 1.0, :layer/end-x 373.5547, :entity/type :layer, :layer/start-y 90.0, :layer/text "Sorry, this document is private.", :layer/stroke-color "black", :layer/start-x 100.0, :layer/fill "none", :layer/type :layer.type/text, :layer/end-y 70.0}])
@@ -154,11 +157,11 @@
                        (clj-time.format/unparse (clj-time.format/formatters :rfc822)))}))
 
 (defpage doc-svg "/document/:document-id.svg" [req]
-  (let [document-id (-> req :params :document-id)
+  (let [document-id (-> req :params :document-id parse-doc-id)
         db (pcd/default-db)
-        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
+        doc (doc-model/find-by-team-and-id db (:team req) document-id)]
     (cond (nil? doc)
-          (if-let [doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
+          (if-let [doc (doc-model/find-by-team-and-invalid-id db (:team req) document-id)]
             (redirect (str "/document/" (:db/id doc) ".svg"))
 
             {:status 404
@@ -197,11 +200,11 @@
            :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))})))
 
 (defpage doc-png "/document/:document-id.png" [req]
-  (let [document-id (-> req :params :document-id)
+  (let [document-id (-> req :params :document-id parse-doc-id)
         db (pcd/default-db)
-        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
+        doc (doc-model/find-by-team-and-id db (:team req) document-id)]
     (cond (nil? doc)
-          (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
+          (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) document-id)]
             (redirect (str "/document/" (:db/id redirect-doc) ".png"))
 
             {:status 404
@@ -246,11 +249,11 @@
                                                          :size-limit 800))})))
 
 (defpage doc-pdf "/document/:document-id.pdf" [req]
-  (let [document-id (-> req :params :document-id)
+  (let [document-id (-> req :params :document-id parse-doc-id)
         db (pcd/default-db)
-        doc (doc-model/find-by-team-and-id db (:team req) (Long/parseLong document-id))]
+        doc (doc-model/find-by-team-and-id db (:team req) document-id)]
     (cond (nil? doc)
-          (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) (Long/parseLong document-id))]
+          (if-let [redirect-doc (doc-model/find-by-team-and-invalid-id db (:team req) document-id)]
             (redirect (str "/document/" (:db/id redirect-doc) ".pdf"))
 
             {:status 404
