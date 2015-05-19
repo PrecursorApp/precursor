@@ -43,8 +43,8 @@
   [
    {:slug "diagramming-with-precursor"
     :unique-id "diagramming-with-precursor"
-    ;;:pub-date (clj-time.format/parse "Wed, 29 Apr 2015 05:00:00 -0800")
-    :display-in-overview false}
+    :pub-date (clj-time.format/parse "Tue, 19 May 2015 10:59:00 -0800")
+    :display-in-overview true}
    {:slug "we-made-precursor-for-teams"
     :unique-id "we-made-precursor-for-teams"
     :pub-date (clj-time.format/parse "Wed, 29 Apr 2015 05:00:00 -0800")
