@@ -14,6 +14,7 @@
             [frontend.components.permissions :as permissions]
             [frontend.components.plan :as plan]
             [frontend.components.team :as team]
+            [frontend.db :as fdb]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.models.issue :as issue-model]
@@ -88,6 +89,40 @@
              :role "button"}
             (common/icon :login)
             [:span "Log in"]]))))))
+
+(defn doc-name [{:keys [doc-id doc-name]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Doc name")
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-attribute-listener (om/get-shared owner :db)
+                                  :document/name
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :db)
+                                     :document/name
+                                     (om/get-state owner :listener-key)))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (d/entity @db doc-id)
+            submit-fn #(cast! :doc-name-changed {:doc-id doc-id
+                                                 :doc-name (.. % -target -value)})]
+        (html
+         [:div.content
+          [:input {:type "text"
+                   :value (or doc-name (:document/name doc) "")
+                   :on-change #(cast! :doc-name-edited {:doc-id doc-id
+                                                        :doc-name (.. % -target -value)})
+                   :on-key-down #(when (= "Enter" (.-key %))
+                                   (utils/stop-event %)
+                                   (submit-fn %))
+                   :on-blur #(submit-fn %)
+                   :on-submit #(submit-fn %)}]])))))
 
 (defn start [app owner]
   (reify
@@ -783,6 +818,10 @@
                ;; TODO: better way to handle custom titles
                (cond (keyword-identical? :issues/single-issue overlay-key)
                      "Feature Request"
+
+                     (keyword-identical? :start overlay-key)
+                     (om/build doc-name {:doc-id (:document/id app)
+                                         :doc-name (:doc-name app)})
 
                      (namespaced? overlay-key)
                      (str (:title component) " " (str/capitalize (name overlay-key)))

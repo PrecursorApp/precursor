@@ -19,6 +19,7 @@
             [frontend.landing-doc :as landing-doc]
             [frontend.layers :as layers]
             [frontend.models.chat :as chat-model]
+            [frontend.models.doc :as doc-model]
             [frontend.models.layer :as layer-model]
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
@@ -40,7 +41,8 @@
             [goog.labs.userAgent.browser :as ua-browser]
             [goog.math :as math]
             [goog.string :as gstring]
-            goog.style)
+            [goog.style]
+            [goog.Uri])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import goog.fx.dom.Scroll))
 
@@ -1872,3 +1874,35 @@
         new-uuids (set/difference uuids current-uuids)]
     (when (seq new-uuids)
       (sente/send-msg (:sente current-state) [:frontend/fetch-custs {:uuids new-uuids}]))))
+
+(defmethod control-event :doc-name-edited
+  [browser-state message {:keys [doc-id doc-name]} state]
+  (if (= doc-id (:document/id state))
+    (assoc state :doc-name doc-name)
+    state))
+
+(defn replace-token-with-new-name [current-state doc-id doc-name]
+  (let [path (.getPath (goog.Uri. js/window.location))]
+    (when (and (= doc-id (:document/id current-state))
+               (zero? (.indexOf path "/document/")))
+      (let [url-safe-name (doc-model/urlify-doc-name doc-name)
+            [_ before-name after-name] (re-find #"^(/document/)[A-Za-z0-9_-]*?-{0,1}(\d+(/.*$|$))" path)
+            new-path (str before-name
+                          (when (seq url-safe-name)
+                            (str url-safe-name "-"))
+                          after-name)]
+        (put! (get-in current-state [:comms :nav]) [:navigate! {:replace-token? true
+                                                                :path new-path}])))))
+
+(defmethod post-control-event! :doc-name-edited
+  [browser-state message {:keys [doc-id doc-name]} previous-state current-state]
+  (replace-token-with-new-name current-state doc-id doc-name))
+
+(defmethod control-event :doc-name-changed
+  [browser-state message {:keys [doc-id doc-name]} state]
+  (assoc state :doc-name nil))
+
+(defmethod post-control-event! :doc-name-changed
+  [browser-state message {:keys [doc-id doc-name]} previous-state current-state]
+  (d/transact! (:db current-state) [[:db/add doc-id :document/name doc-name]])
+  (replace-token-with-new-name current-state doc-id doc-name))
