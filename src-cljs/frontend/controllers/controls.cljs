@@ -1903,7 +1903,10 @@
 
 (defmethod post-control-event! :doc-name-edited
   [browser-state message {:keys [doc-id doc-name]} previous-state current-state]
-  (replace-token-with-new-name current-state doc-id doc-name))
+  (if doc-name
+    (replace-token-with-new-name current-state doc-id doc-name)
+    ;; reset
+    (replace-token-with-new-name current-state doc-id (:document/name (d/entity @(:db current-state) (:document/id current-state))))))
 
 (defmethod control-event :doc-name-changed
   [browser-state message {:keys [doc-id doc-name]} state]

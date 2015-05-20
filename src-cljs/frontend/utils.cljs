@@ -147,7 +147,7 @@
 
 (defn set-page-title! [& [title]]
   (set! (.-title js/document) (strip-html
-                               (if title
+                               (if (seq title)
                                  (str title  " - Precursor")
                                  "Precursor - Simple collaborative prototyping"))))
 

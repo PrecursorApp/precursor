@@ -106,23 +106,50 @@
       (fdb/remove-attribute-listener (om/get-shared owner :db)
                                      :document/name
                                      (om/get-state owner :listener-key)))
+    om/IDidUpdate
+    (did-update [_ _ prev-state]
+      (when (and (not (:editing? prev-state))
+                 (om/get-state owner :editing?)
+                 (om/get-node owner "name-input"))
+        (.focus (om/get-node owner "name-input"))))
+    om/IShouldUpdate
+    (should-update [_ next-props next-state]
+      (if (:editing? next-state)
+        (or (not= (:doc-id next-props) (:doc-id (om/get-props owner)))
+            (nil? (:local-doc-name next-state)))
+        true))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (d/entity @db doc-id)
-            submit-fn #(cast! :doc-name-changed {:doc-id doc-id
-                                                 :doc-name (.. % -target -value)})]
+            clear-form #(do (om/set-state! owner :editing? false)
+                            (om/set-state! owner :local-doc-name nil))
+            submit-fn #(when (om/get-state owner :editing?)
+                         (cast! :doc-name-changed {:doc-id doc-id
+                                                   :doc-name (om/get-state owner :local-doc-name)})
+                         (clear-form))]
         (html
-         [:div.content
-          [:input {:type "text"
-                   :value (or doc-name (:document/name doc) "")
-                   :on-change #(cast! :doc-name-edited {:doc-id doc-id
-                                                        :doc-name (.. % -target -value)})
-                   :on-key-down #(when (= "Enter" (.-key %))
-                                   (utils/stop-event %)
-                                   (submit-fn %))
-                   :on-blur #(submit-fn %)
-                   :on-submit #(submit-fn %)}]])))))
+         [:div {:class "doc-name-input"
+                :ref "name-input"
+                :contentEditable (om/get-state owner :editing?)
+                :on-click #(om/set-state! owner :editing? true)
+                :onInput #(let [n (goog.dom/getRawTextContent (.-target %))]
+                            (om/set-state-nr! owner :local-doc-name n)
+                            (cast! :doc-name-edited {:doc-id doc-id
+                                                     :doc-name n}))
+                :on-key-down #(cond (= "Enter" (.-key %))
+                                    (do (utils/stop-event %)
+                                        (submit-fn))
+                                    (= "Escape" (.-key %))
+                                    (do (utils/stop-event %)
+                                        (clear-form)
+                                        (cast! :doc-name-edited {:doc-id doc-id
+                                                                 :doc-name nil})))
+                :on-blur #(submit-fn)
+                :on-submit #(submit-fn)}
+          (or doc-name (if (seq (:document/name doc))
+                         (:document/name doc)
+                         "Untitled"))])))))
 
 (defn start [app owner]
   (reify

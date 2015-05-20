@@ -104,6 +104,16 @@
   &:not(:last-of-type) {
     display: none;
   }
+  .doc-name-input {
+    border: none;
+    outline: none;
+    cursor: text;
+    min-width: 3em;
+    &:focus {
+      color: @gray_dark;
+      border-bottom: 1px solid @gray_light;
+    }
+  }
 }
 .menu-body {
   .flexy();
