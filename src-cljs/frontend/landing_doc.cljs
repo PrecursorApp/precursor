@@ -28,5 +28,5 @@
         (async/put! doc-ch doc)))))
 
 (defn get-doc [state]
-  (go (or (when (utils/inspect (:document/id state)) {:db/id (:document/id state)})
+  (go (or (when (:document/id state) {:db/id (:document/id state)})
           (async/<! doc-ch))))
