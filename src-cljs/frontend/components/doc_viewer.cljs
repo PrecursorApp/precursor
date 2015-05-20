@@ -65,10 +65,10 @@
                [:span.recent-doc-title
                 (str (:document/name doc "Untitled")
                      (when (= "Untitled" (:document/name doc))
-                       (str " " (:db/id doc))))
-                (when (:last-updated-instant doc)
-                  [:span.recent-doc-timestamp
-                   (str " " (datetime/medium-consistent-date (:last-updated-instant doc)))])]]))))]))))
+                       (str " " (:db/id doc))))]
+               (when (:last-updated-instant doc)
+                 [:span.recent-doc-timestamp
+                  (str " " (datetime/short-date (:last-updated-instant doc)))])]))))]))))
 
 (defn dummy-docs [current-doc-id doc-count]
   (repeat doc-count {:db/id current-doc-id
@@ -103,16 +103,25 @@
         (html
          [:section.menu-view
           {:class (when (nil? app-docs) "loading")}
-          [:div.content {:class (when searching? "searching")}
+          [:div.doc-search.content {:class (when searching? "searching")}
            (when (seq display-docs)
              (list
-              [:input {:type "text"
-                       :value (or (om/get-state owner :doc-filter) "")
-                       :onChange #(om/set-state! owner :doc-filter (.. % -target -value))}]
-              (when searching?
-                [:span (str (count filtered-docs) " of " (count all-docs))])
+               [:div.adaptive.make
+                [:input {:type "text"
+                         :value (or (om/get-state owner :doc-filter) "")
+                         :required "true"
+                         :onChange #(om/set-state! owner :doc-filter (.. % -target -value))}]
+                [:label {:data-placeholder "Searching for a doc?"
+                         :data-label (str (count filtered-docs) " of your " (count all-docs) " docs match")}]]
+               (when (and searching?
+                          (= 0 (count filtered-docs)))
+                 [:p.make
+                  [:span (str "We can't find a doc matching "
+                              "\""
+                              (or (om/get-state owner :doc-filter) "")
+                              "\".")]])
 
-              (om/build docs-list filtered-docs)))]])))))
+               (om/build docs-list filtered-docs)))]])))))
 
 ;; Four states
 ;; 1. Logged out

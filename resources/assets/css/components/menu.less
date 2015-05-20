@@ -268,7 +268,7 @@
   }
 }
 .recent-doc {
-  .flexy();
+  display: block; // keeps border from clipping
   position: relative;
   color: @gray_light;
   border: 1px solid @gray_lighter;
@@ -296,6 +296,13 @@
   position: absolute;
   bottom: 0;
   left: 0;
+  padding: .75em 1em;
+}
+.recent-doc-timestamp {
+  color: @gray_light;
+  position: absolute;
+  top: 0;
+  right: 0;
   padding: .75em 1em;
 }
 // TODO come back to cleanup loading styles here -dk (12/09/14)
@@ -660,5 +667,10 @@
       transform: rotate3d(0, 0, 1, 180deg);
       transition: transform @run_slower @run @bezier_deform;
     }
+  }
+}
+.doc-search {
+  .adaptive {
+    margin-bottom: @menu_padding;
   }
 }
