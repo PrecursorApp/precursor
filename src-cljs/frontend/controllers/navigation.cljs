@@ -214,8 +214,9 @@
   (go (let [comms (:comms current-state)
             result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
         (if (= :success (:status result))
-          (put! (:nav comms) [:navigate! {:path (urls/doc-path (:document result))
-                                          :replace-token? true}])
+          (do (d/transact! (:db current-state) [(:document result)])
+              (put! (:nav comms) [:navigate! {:path (urls/doc-path (:document result))
+                                              :replace-token? true}]))
           (if (and (= :unauthorized-to-team (get-in result [:response :error]))
                    (get-in result [:response :redirect-url]))
             (set! js/window.location (get-in result [:response :redirect-url]))
