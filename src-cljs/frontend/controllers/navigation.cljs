@@ -246,6 +246,9 @@
      10000
      (fn [{:keys [docs]}]
        (when docs
+         ;; seems like maybe this should be where I stop. Why are we storing docs in the state?
+         ;; Makes it easier to tell which ones are "touched" docs.
+         (d/transact! (:db current-state) docs)
          (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
 
 (defmethod overlay-extra-post! :team-doc-viewer [previous-state current-state overlay]
@@ -256,6 +259,8 @@
    10000
    (fn [{:keys [docs]}]
      (when docs
+       ;; TODO: if absolute-doc-url ever pulls subdomain out of the db, this could break it
+       (d/transact! (:db current-state) docs)
        (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}]))))))
 
 (defmethod navigated-to :overlay
