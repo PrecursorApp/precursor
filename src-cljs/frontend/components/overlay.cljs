@@ -111,7 +111,12 @@
       (when (and (not (:editing? prev-state))
                  (om/get-state owner :editing?)
                  (om/get-node owner "name-input"))
-        (.focus (om/get-node owner "name-input"))))
+        (.focus (om/get-node owner "name-input"))
+        (let [range (goog.dom.Range/createFromNodeContents (om/get-node owner "name-input"))]
+          (when (not= "Untitled" (:document/name (d/entity @(om/get-shared owner :db) doc-id)))
+            ;; Select the text if it doesn't have a title, otherwise put cursor at end of input.
+            (.collapse range false))
+          (.select range))))
     om/IShouldUpdate
     (should-update [_ next-props next-state]
       (if (:editing? next-state)
@@ -123,33 +128,41 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (d/entity @db doc-id)
             clear-form #(do (om/set-state! owner :editing? false)
-                            (om/set-state! owner :local-doc-name nil))
+                            (om/set-state! owner :local-doc-name nil)
+                            (.focus js/document.body))
             submit-fn #(when (om/get-state owner :editing?)
-                         (cast! :doc-name-changed {:doc-id doc-id
-                                                   :doc-name (om/get-state owner :local-doc-name)})
+                         (when (seq (om/get-state owner :local-doc-name))
+                           (cast! :doc-name-changed {:doc-id doc-id
+                                                     :doc-name (om/get-state owner :local-doc-name)}))
                          (clear-form))]
         (html
-         [:div {:class "doc-name-input"
-                :ref "name-input"
-                :contentEditable (om/get-state owner :editing?)
-                :on-click #(om/set-state! owner :editing? true)
-                :onInput #(let [n (goog.dom/getRawTextContent (.-target %))]
-                            (om/set-state-nr! owner :local-doc-name n)
-                            (cast! :doc-name-edited {:doc-id doc-id
-                                                     :doc-name n}))
-                :on-key-down #(cond (= "Enter" (.-key %))
-                                    (do (utils/stop-event %)
-                                        (submit-fn))
-                                    (= "Escape" (.-key %))
-                                    (do (utils/stop-event %)
-                                        (clear-form)
-                                        (cast! :doc-name-edited {:doc-id doc-id
-                                                                 :doc-name nil})))
-                :on-blur #(submit-fn)
-                :on-submit #(submit-fn)}
-          (or doc-name (if (seq (:document/name doc))
-                         (:document/name doc)
-                         "Untitled"))])))))
+         [:div.doc-name-title {:class (when (om/get-state owner :editing?) "editing")}
+          [:div {:class "doc-name-input"
+                 :ref "name-input"
+                 :contentEditable (om/get-state owner :editing?)
+                 :onInput #(let [n (goog.dom/getRawTextContent (.-target %))]
+                             (om/set-state-nr! owner :local-doc-name n)
+                             (cast! :doc-name-edited {:doc-id doc-id
+                                                      :doc-name n}))
+                 :on-key-down #(cond (= "Enter" (.-key %))
+                                     (do (utils/stop-event %)
+                                         (submit-fn))
+                                     (= "Escape" (.-key %))
+                                     (do (utils/stop-event %)
+                                         (clear-form)
+                                         (cast! :doc-name-edited {:doc-id doc-id
+                                                                  :doc-name nil})))
+                 :on-blur #(submit-fn)
+                 :on-submit #(submit-fn)}
+           (or doc-name (if (seq (:document/name doc))
+                          (:document/name doc)
+                          "Untitled"))]
+          (when-not false ;(om/get-state owner :editing?)
+            [:a.doc-name-edit {:role "button"
+                               :title "Change this doc's name"
+                               :on-click #(do (om/set-state! owner :editing? true)
+                                              (.stopPropagation %))}
+             (common/icon :pencil)])])))))
 
 (defn start [app owner]
   (reify

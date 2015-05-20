@@ -104,16 +104,6 @@
   &:not(:last-of-type) {
     display: none;
   }
-  .doc-name-input {
-    border: none;
-    outline: none;
-    cursor: text;
-    min-width: 3em;
-    &:focus {
-      color: @gray_dark;
-      border-bottom: 1px solid @gray_light;
-    }
-  }
 }
 .menu-body {
   .flexy();
@@ -638,4 +628,42 @@
 }
 .menu-new-team {
   border: 1px dashed @gray_lighter;
+}
+.doc-name-title {
+  .flexy(center);
+
+  .doc-name-input {
+    border: none;
+    outline: none;
+    cursor: text;
+    &:focus {
+      color: @gray_dark;
+      border-bottom: 1px solid @gray_light;
+    }
+  }
+  .doc-name-edit {
+    position: absolute;
+    height: @tile / 2;
+    width: @tile / 2;
+    .icon-pencil .iconpile {
+      height: 1rem;
+      width: 1rem;
+    }
+    &:hover {
+      .icon-pencil {
+        .iconpile {
+          transform: rotate3d(0, 0, 1, 180deg);
+          transition+: transform @run_slower @run @bezier_deform;
+        }
+      }
+
+    }
+  }
+  &.editing {
+    .icon-pencil {
+      .iconpile {
+        animation: pencil-erase @run_slower @bezier_deform forwards;
+      }
+    }
+  }
 }
