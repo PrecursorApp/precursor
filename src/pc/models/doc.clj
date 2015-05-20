@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [datomic.api :refer [db q] :as d]
             [pc.datomic :as pcd]
-            [pc.models.chat-bot :as chat-bot-model])
+            [pc.models.chat-bot :as chat-bot-model]
+            [pc.utils :as utils])
   (:import java.util.UUID))
 
 (defn create! [doc-attrs]

@@ -46,7 +46,8 @@
                                                 (when (seq issue-title)
                                                   (let [fe-id (utils/squuid)
                                                         doc-id (let [result (async/<! (ajax/managed-ajax :post "/api/v1/document/new"
-                                                                                                         :params {:read-only true}))]
+                                                                                                         :params {:read-only true
+                                                                                                                  :document/name issue-title}))]
                                                                  (if (= :success (:status result))
                                                                    (get-in result [:document :db/id])
                                                                    ;; something went wrong, notifying error channel

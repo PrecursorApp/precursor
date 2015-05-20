@@ -1654,9 +1654,11 @@
 
 (defn navigate-to-lazy-doc [current-state replace-token?]
   (go
-    (landing-doc/maybe-fetch-doc-id current-state)
-    (let [doc-id (<! (landing-doc/get-doc-id current-state))
-          doc (doc-model/find-by-id @(:db current-state) doc-id)]
+    (landing-doc/maybe-fetch-doc current-state)
+    (let [doc (<! (landing-doc/get-doc current-state))
+          ;; may not be the latest update of the doc, so we'll try to grab it out of the db
+          doc (or (d/entity @(:db current-state) (:db/id doc))
+                  doc)]
       (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/doc-path doc)
                                                               :replace-token? replace-token?}]))))
 
@@ -1674,7 +1676,7 @@
 
 (defmethod post-control-event! :navigate-to-landing-doc-hovered
   [browser-state message _ previous-state current-state]
-  (landing-doc/maybe-fetch-doc-id current-state))
+  (landing-doc/maybe-fetch-doc current-state))
 
 (defmethod post-control-event! :issue-layer-clicked
   [browser-state message {:keys [frontend/issue-id]} previous-state current-state]
@@ -1889,13 +1891,15 @@
     (when (and (= doc-id (:document/id current-state))
                (zero? (.indexOf path "/document/")))
       (let [url-safe-name (urls/urlify-doc-name doc-name)
+            ;; duplicated in nav/maybe-replace-doc-token
             [_ before-name after-name] (re-find #"^(/document/)[A-Za-z0-9_-]*?-{0,1}(\d+(/.*$|$))" path)
             new-path (str before-name
                           (when (seq url-safe-name)
                             (str url-safe-name "-"))
                           after-name)]
         (put! (get-in current-state [:comms :nav]) [:navigate! {:replace-token? true
-                                                                :path new-path}])))))
+                                                                :path new-path}])
+        (utils/set-page-title! doc-name)))))
 
 (defmethod post-control-event! :doc-name-edited
   [browser-state message {:keys [doc-id doc-name]} previous-state current-state]

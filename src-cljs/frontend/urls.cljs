@@ -15,13 +15,13 @@
                               {:query query})))))
 
 (defn urlify-doc-name [doc-name]
-  (-> doc-name
+  (-> (or doc-name "")
     (str/replace #"[^A-Za-z0-9-_]+" "-")
     (str/replace #"^-" "")
     (str/replace #"-$" "")))
 
 (defn name-segment [doc]
-  (let [url-safe-name (urlify-doc-name (:document/name doc ""))]
+  (let [url-safe-name (urlify-doc-name (:document/name doc))]
     (str (when (seq url-safe-name)
            (str url-safe-name "-"))
          (:db/id doc))))
@@ -46,7 +46,7 @@
 
 (defn doc-path [doc & {:keys [query-params]}]
   (str "/document/" (name-segment doc) (when (seq query-params)
-                             (str "?" (url/map->query query-params)))))
+                                         (str "?" (url/map->query query-params)))))
 
 (defn overlay-path [doc overlay & {:keys [query-params]}]
   (str "/document/" (name-segment doc) "/" overlay (when (seq query-params)

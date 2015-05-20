@@ -1,5 +1,6 @@
 (ns pc.views.content
   (:require [cheshire.core :as json]
+            [clojure.string :as str]
             [hiccup.core :as h]
             [pc.assets]
             [pc.datomic.schema :as schema]
@@ -44,11 +45,16 @@
           :property prop
           :content content}])
 
+(defn strip-html
+  "Strips all html characters from the string"
+  [s]
+  (str/replace s #"[&<>\"']" ""))
+
 (defn layout [view-data & content]
   [:html
    [:head
     [:title (if-let [meta-title (:meta-title view-data)]
-              (str meta-title " | Precursor")
+              (str (strip-html meta-title) " | Precursor")
               "Precursor&mdash;fast prototyping web app, makes collaboration easy.")]
     [:meta {:charset    "utf-8"}]
     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]

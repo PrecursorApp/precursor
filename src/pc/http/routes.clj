@@ -85,17 +85,13 @@
                               (when-let [cust-uuid (get-in req [:cust :cust/uuid])]
                                 {:document/creator cust-uuid})))]
               (redirect (str "/document/" (:db/id doc))))))
-    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-          ;; if we get to here,
-          doc (doc-model/create-public-doc!
-               (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                      (when cust-uuid {:document/creator cust-uuid})
-                      ;; needs default permissions set
-                      (when (:team req) {:document/team (:db/id (:team req))})))]
-      (if cust-uuid
-        (redirect (str "/document/" (:db/id doc)))
-        (content/app (merge (common-view-data req)
-                            {:initial-document-id (:db/id doc)}))))))
+    (if-let [cust-uuid (get-in req [:auth :cust :cust/uuid])]
+      (redirect (str "/document/" (:db/id (doc-model/create-public-doc!
+                                           (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                                                  (when cust-uuid {:document/creator cust-uuid})
+                                                  ;; needs default permissions set
+                                                  (when (:team req) {:document/team (:db/id (:team req))}))))))
+      (content/app (common-view-data req)))))
 
 (defpage request-team-permission [:post "/request-team-permission"] [req]
   (let [team (:team req)
@@ -115,10 +111,9 @@
   (content/app (merge (common-view-data req)
                       {:initial-document-id (:db/id doc)
                        :meta-image (urls/png-from-doc doc)
-                       :meta-url (urls/from-doc doc)}
-                      ;; TODO: Uncomment this once we have a way to send just the novelty to the client.
-                      ;; (when (auth/has-document-permission? db doc (-> req :auth) :admin)
-                      ;;   {:initial-entities (layer/find-by-document db doc)})
+                       :meta-url (urls/from-doc doc)
+                       :meta-title (:document/name doc)
+                       :initial-entities [(doc-model/read-api doc)]}
                       view-data)))
 
 (defn parse-doc-id [doc-id-param]
@@ -310,13 +305,8 @@
     ;; TODO: figure out what to do with outer pages on subdomains, need to
     ;;       solve the extraneous entity-id problem first
     (custom-domain/redirect-to-main req)
-    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-          ;;TODO: remove this once frontend is deployed
-          doc (doc-model/create-public-doc!
-               (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                      (when cust-uuid {:document/creator cust-uuid})))]
-      (content/app (merge (common-view-data req)
-                          {:initial-document-id (:db/id doc)})))))
+    (let [cust-uuid (get-in req [:auth :cust :cust/uuid])]
+      (content/app (common-view-data req)))))
 
 (defpage single-issue "/issues/:issue-uuid" [req]
   (if (:subdomain req)
