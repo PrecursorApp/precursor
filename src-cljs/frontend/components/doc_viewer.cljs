@@ -7,6 +7,7 @@
             [frontend.auth :as auth]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
+            [frontend.datetime :as datetime]
             [frontend.db :as fdb]
             [frontend.state :as state]
             [frontend.urls :as urls]
@@ -64,7 +65,10 @@
                [:span.recent-doc-title
                 (str (:document/name doc "Untitled")
                      (when (= "Untitled" (:document/name doc))
-                       (str " " (:db/id doc))))]]))))]))))
+                       (str " " (:db/id doc))))
+                (when (:last-updated-instant doc)
+                  [:span.recent-doc-timestamp
+                   (str " " (datetime/medium-consistent-date (:last-updated-instant doc)))])]]))))]))))
 
 (defn dummy-docs [current-doc-id doc-count]
   (repeat doc-count {:db/id current-doc-id
