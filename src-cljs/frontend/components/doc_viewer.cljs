@@ -81,23 +81,23 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             app-docs (get-in app docs-path)
-            display-docs (cond
-                           (nil? app-docs)
-                           (dummy-docs (:document/id app) 5) ;; loading state
+            all-docs (cond
+                       (nil? app-docs)
+                       (dummy-docs (:document/id app) 5) ;; loading state
 
-                           (empty? app-docs) (dummy-docs (:document/id app) 1) ;; empty state
+                       (empty? app-docs) (dummy-docs (:document/id app) 1) ;; empty state
 
-                           :else
-                           (->> app-docs
-                             (filter :last-updated-instant)
-                             (sort-by :last-updated-instant)
-                             (reverse)
-                             (take 100)))
+                       :else
+                       (->> app-docs
+                         (filter :last-updated-instant)
+                         (sort-by :last-updated-instant)
+                         (reverse)))
+            display-docs (take 100 all-docs)
             filtered-docs (if (seq (om/get-state owner :doc-filter))
-                            (let [filter-text (str/lower-case (om/get-state owner :doc-filter))]
-                              (filter #(not= -1 (.indexOf (str/lower-case (:document/name %))
-                                                          filter-text))
-                                      display-docs))
+                            (take 100 (let [filter-text (str/lower-case (om/get-state owner :doc-filter))]
+                                        (filter #(not= -1 (.indexOf (str/lower-case (:document/name %))
+                                                                    filter-text))
+                                                all-docs)))
                             display-docs)
             searching? (seq (om/get-state owner :doc-filter))]
         (html
@@ -110,7 +110,7 @@
                        :value (or (om/get-state owner :doc-filter) "")
                        :onChange #(om/set-state! owner :doc-filter (.. % -target -value))}]
               (when searching?
-                [:span (str (count filtered-docs) " of " (count display-docs))])
+                [:span (str (count filtered-docs) " of " (count all-docs))])
 
               (om/build docs-list filtered-docs)))]])))))
 
