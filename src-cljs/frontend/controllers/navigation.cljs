@@ -142,7 +142,8 @@
         ;;       find them by doc-id? Will still need a way to clean out old docs.
         (update-in [:db] (fn [db] (if (:initial-state state)
                                     db
-                                    (db/reset-db! db initial-entities))))))))
+                                    (db/reset-db! db (concat initial-entities
+                                                             (doc-model/all @db))))))))))
 
 (defn maybe-replace-doc-token [current-state]
   (let [path (.getPath (goog.Uri. js/window.location))
