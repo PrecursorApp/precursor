@@ -89,13 +89,27 @@
                              (filter :last-updated-instant)
                              (sort-by :last-updated-instant)
                              (reverse)
-                             (take 100)))]
+                             (take 100)))
+            filtered-docs (if (seq (om/get-state owner :doc-filter))
+                            (let [filter-text (str/lower-case (om/get-state owner :doc-filter))]
+                              (filter #(not= -1 (.indexOf (str/lower-case (:document/name %))
+                                                          filter-text))
+                                      display-docs))
+                            display-docs)
+            searching? (seq (om/get-state owner :doc-filter))]
         (html
          [:section.menu-view
           {:class (when (nil? app-docs) "loading")}
-          [:div.content
-           (if (seq display-docs)
-             (om/build docs-list display-docs))]])))))
+          [:div.content {:class (when searching? "searching")}
+           (when (seq display-docs)
+             (list
+              [:input {:type "text"
+                       :value (or (om/get-state owner :doc-filter) "")
+                       :onChange #(om/set-state! owner :doc-filter (.. % -target -value))}]
+              (when searching?
+                [:span (str (count filtered-docs) " of " (count display-docs))])
+
+              (om/build docs-list filtered-docs)))]])))))
 
 ;; Four states
 ;; 1. Logged out
