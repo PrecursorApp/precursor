@@ -53,19 +53,18 @@
 
            (for [doc bucket-docs]
              (html
-              [:div.recent-doc.make
-               [:a.recent-doc-thumb {:href (urls/doc-path doc)}
-                [:img {:src (urls/doc-svg-path doc)}]
+              [:a.recent-doc.make {:href (urls/doc-path doc)}
+               [:img {:src (urls/doc-svg-path doc)}]
 
-                [:i.loading-ellipses
-                 [:i "."]
-                 [:i "."]
-                 [:i "."]]]
-               [:div.recent-doc-title
-                [:a {:href (urls/doc-path doc)}
-                 (str (:document/name doc "Untitled")
-                      (when (= "Untitled" (:document/name doc))
-                        (str " " (:db/id doc))))]]]))))]))))
+               [:i.loading-ellipses
+                [:i "."]
+                [:i "."]
+                [:i "."]]
+
+               [:span.recent-doc-title
+                (str (:document/name doc "Untitled")
+                     (when (= "Untitled" (:document/name doc))
+                       (str " " (:db/id doc))))]]))))]))))
 
 (defn dummy-docs [current-doc-id doc-count]
   (repeat doc-count {:db/id current-doc-id

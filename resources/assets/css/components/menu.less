@@ -77,24 +77,15 @@
   .flexy(center, center);
   flex: 0 0 @tile;
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 0;  left: 0;
   width: 100%;
   height: @tile;
-  a {
-    .flexy(center, center);
-    width: @tile;
-    height: @tile;
-    transition: @run @bezier_fadein;
-    &:only-child {
-      margin-left: auto;
-    }
-  }
 }
 .menu-heading {
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin: 0 @tile;
+  margin: 0;
+  padding: 0 @tile;
   overflow: hidden;
   cursor: default;
   animation: in-fade-bottom-soft @run_slow @bezier_deform;
@@ -271,24 +262,18 @@
     margin-top: 5em;
   }
 }
-.recent-doc-title {
-  line-height: 1em;
-  margin: 1em 0;
-  a {
-    &:not(:hover) {
-      color: @gray;
-    }
-  }
-}
-.recent-doc-thumb {
-  display: block;
+.recent-doc {
+  .flexy();
   position: relative;
+  color: @gray_light;
   border: 1px solid @gray_lighter;
+  margin-bottom: @menu_padding;
   overflow: hidden;
-  transition: @run @bezier_fadein;
+  transition+: color @run_fast ease-in;
+  transition+: border-color @run_fast ease-in;
   &:hover {
-    border-color: @gray;
-    transition-duration: @run_fast;
+    border-color: @color_select;
+    transition-duration: @now;
   }
   img {
     .size_of(chat; height; vh);
@@ -301,6 +286,12 @@
     bottom: 0.5em;
     right: 1em;
   }
+}
+.recent-doc-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: .75em 1em;
 }
 // TODO come back to cleanup loading styles here -dk (12/09/14)
 .loading {
@@ -631,39 +622,28 @@
 }
 .doc-name-title {
   .flexy(center);
-
   .doc-name-input {
     border: none;
     outline: none;
     cursor: text;
-    &:focus {
-      color: @gray_dark;
-      border-bottom: 1px solid @gray_light;
-    }
-  }
-  .doc-name-edit {
-    position: absolute;
-    height: @tile / 2;
-    width: @tile / 2;
-    .icon-pencil .iconpile {
-      height: 1rem;
-      width: 1rem;
-    }
-    &:hover {
-      .icon-pencil {
-        .iconpile {
-          transform: rotate3d(0, 0, 1, 180deg);
-          transition+: transform @run_slower @run @bezier_deform;
-        }
-      }
-
-    }
   }
   &.editing {
-    .icon-pencil {
-      .iconpile {
-        animation: pencil-erase @run_slower @bezier_deform forwards;
-      }
+    border-bottom: 1px solid @color_select;
+    // border-bottom: 1px dotted @gray_light;
+    .iconpile {
+      animation: pencil-erase @run_slower @bezier_deform forwards;
+    }
+  }
+}
+.doc-name-edit {
+  .flexy(center; center);
+  .icon(stroke; @color_select);
+  font-size: 1rem;
+  margin-left: .5em;
+  &:hover {
+    .iconpile {
+      transform: rotate3d(0, 0, 1, 180deg);
+      transition: transform @run_slower @run @bezier_deform;
     }
   }
 }
