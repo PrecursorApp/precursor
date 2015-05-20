@@ -7,6 +7,7 @@
             [frontend.components.common :as common]
             [frontend.config :as config]
             [frontend.cursors :as cursors]
+            [frontend.db :as fdb]
             [frontend.models.chat :as chat-model]
             [frontend.models.doc :as doc-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
@@ -23,6 +24,7 @@
 (defn menu [app owner]
   (reify
     om/IDisplayName (display-name [_] "Hud Menu")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -55,6 +57,7 @@
 (defn roster [app owner]
   (reify
     om/IDisplayName (display-name [_] "Hud Menu")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [db cast!]} (om/get-shared owner)
@@ -107,6 +110,7 @@
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (d/listen! (om/get-shared owner :db)
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
@@ -211,6 +215,7 @@
     om/IDisplayName (display-name [_] "Hud Viewers")
     om/IInitState (init-state [_] {:editing-name? false
                                    :new-name ""})
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IDidUpdate
     (did-update [_ _ prev-state]
       (when (and (not (:editing-name? prev-state))

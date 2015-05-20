@@ -1914,6 +1914,7 @@
   (d/transact! (:db current-state) [[:db/add doc-id :document/name doc-name]])
   (replace-token-with-new-name current-state doc-id doc-name))
 
+;; TODO: This feels kind of brittle
 (defmethod post-control-event! :db-document-name-changed
   [browser-state message {:keys [tx-data]} previous-state current-state]
   (let [current-doc-id (:document/id current-state)]

@@ -130,6 +130,7 @@
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (d/listen! (om/get-shared owner :db)
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
@@ -239,6 +240,7 @@
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (d/listen! (om/get-shared owner :db)
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
@@ -361,6 +363,7 @@
 (defn public-sharing [app owner]
   (reify
     om/IDisplayName (display-name [_] "Public Sharing")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -414,6 +417,7 @@
 (defn unknown-sharing [app owner]
   (reify
     om/IDisplayName (display-name [_] "Unknown Sharing")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -535,6 +539,7 @@
 (defn export [app owner]
   (reify
     om/IDisplayName (display-name [_] "Export Menu")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -562,6 +567,7 @@
 (defn info [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Info")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -617,6 +623,7 @@
   (reify
     om/IDisplayName (display-name [_] "Overlay Shortcuts")
     om/IInitState (init-state [_] {:mac? goog.userAgent/MAC})
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRenderState
     (render-state [_ {:keys [mac?]}]
       (let [cast! (om/get-shared owner :cast!)]

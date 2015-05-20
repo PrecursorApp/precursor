@@ -492,6 +492,7 @@
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (fdb/add-entity-listener (om/get-shared owner :issue-db)
                                issue-id
                                (om/get-state owner :listener-key)

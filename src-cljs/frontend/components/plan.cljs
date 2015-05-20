@@ -38,6 +38,7 @@
     om/IInitState (init-state [_] {:history nil})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       ;; We're not using the controls here because the history state gets stale fast
       ;; May turn out to be a bad idea
       ;; Ideally, we'd have the history in our frontend db
@@ -78,6 +79,7 @@
 (defn active-custs [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IDisplayName (display-name [_] "Plan Active Custs")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [cast! db team-db]} (om/get-shared owner)
@@ -127,6 +129,7 @@
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (fdb/add-entity-listener (om/get-shared owner :team-db)
                                invoice-id
                                (om/get-state owner :listener-key)
@@ -160,6 +163,7 @@
 (defn invoices [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IDisplayName (display-name [_] "Invoices")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -267,6 +271,7 @@
 (defn activity-summary [{:keys [plan team-uuid doc-id] :as data} owner]
   (reify
     om/IDisplayName (display-name [_] "Plan Activity Summary")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [db cast!]} (om/get-shared owner)
@@ -349,6 +354,7 @@
     om/IDisplayName (display-name [_] "Plan Start")
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (when-not (:plan/paid? plan)
         (stripe/load-checkout)))
     om/IRender

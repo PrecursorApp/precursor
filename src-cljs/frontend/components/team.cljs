@@ -160,6 +160,7 @@
 (defn team-start [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Team Start")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)

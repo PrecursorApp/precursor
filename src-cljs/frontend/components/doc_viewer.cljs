@@ -7,6 +7,7 @@
             [frontend.auth :as auth]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
+            [frontend.db :as fdb]
             [frontend.state :as state]
             [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
@@ -37,6 +38,7 @@
 (defn docs-list [docs owner]
   (reify
     om/IDisplayName (display-name [_] "Doc Viewer Docs List")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (html
