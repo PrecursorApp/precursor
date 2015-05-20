@@ -20,8 +20,11 @@
 (defn root [& {:keys [query subdomain]}]
   (make-url "/" :query query :subdomain subdomain))
 
-(defn urlify-doc-name [doc-name]
-  (-> doc-name
+(defn urlify-doc-name
+  "Strips html characters and replaces everything else with dashes"
+  [doc-name]
+  (-> (or doc-name "")
+    (str/replace #"[&<>\"']" "")
     (str/replace #"[^A-Za-z0-9-_]+" "-")
     (str/replace #"^-" "")
     (str/replace #"-$" "")))
