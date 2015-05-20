@@ -1925,4 +1925,4 @@
                                                  (= :document/name (:a %))
                                                  (:added %))
                                            tx-data)))]
-      (replace-token-with-new-name current-state current-doc-id (urls/urlify-doc-name new-name)))))
+      (replace-token-with-new-name current-state current-doc-id new-name))))
