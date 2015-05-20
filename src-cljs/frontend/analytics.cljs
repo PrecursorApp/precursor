@@ -41,7 +41,8 @@
                           :subscriber-updated
                           :handle-camera-query-params
                           :media-stream-volume
-                          :navigate-to-landing-doc-hovered})
+                          :navigate-to-landing-doc-hovered
+                          :db-document-name-changed})
 
 (defn track-control [event data state]
   (when-not (contains? controls-blacklist event)

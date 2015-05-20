@@ -154,12 +154,13 @@
         new-url-name (-> doc
                        :document/name
                        urls/urlify-doc-name)]
+    (when (seq new-url-name)
+      (utils/set-page-title! (:document/name doc)))
     (when (and (seq new-url-name) (not= current-url-name new-url-name))
       (let [[_ before-name after-name] (re-find #"^(/document/)[A-Za-z0-9_-]*?-{0,1}(\d+(/.*$|$))" path)
             new-path (str before-name new-url-name "-" after-name)]
         (put! (get-in current-state [:comms :nav]) [:navigate! {:replace-token? true
-                                                                :path new-path}])
-        (utils/set-page-title! (:document/name doc))))))
+                                                                :path new-path}])))))
 
 (defn handle-post-doc-navigation [navigation-point args previous-state current-state]
   (let [sente-state (:sente current-state)
@@ -248,7 +249,7 @@
        (when docs
          ;; seems like maybe this should be where I stop. Why are we storing docs in the state?
          ;; Makes it easier to tell which ones are "touched" docs.
-         (d/transact! (:db current-state) docs)
+         (d/transact! (:db current-state) (map #(dissoc % :last-updated-instant) docs))
          (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
 
 (defmethod overlay-extra-post! :team-doc-viewer [previous-state current-state overlay]
@@ -260,7 +261,7 @@
    (fn [{:keys [docs]}]
      (when docs
        ;; TODO: if absolute-doc-url ever pulls subdomain out of the db, this could break it
-       (d/transact! (:db current-state) docs)
+       (d/transact! (:db current-state) (map #(dissoc % :last-updated-instant) docs))
        (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}]))))))
 
 (defmethod navigated-to :overlay

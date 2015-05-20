@@ -1913,3 +1913,12 @@
   [browser-state message {:keys [doc-id doc-name]} previous-state current-state]
   (d/transact! (:db current-state) [[:db/add doc-id :document/name doc-name]])
   (replace-token-with-new-name current-state doc-id doc-name))
+
+(defmethod post-control-event! :db-document-name-changed
+  [browser-state message {:keys [tx-data]} previous-state current-state]
+  (let [current-doc-id (:document/id current-state)]
+    (when-let [new-name (:v (first (filter #(and (= current-doc-id (:e %))
+                                                 (= :document/name (:a %))
+                                                 (:added %))
+                                           tx-data)))]
+      (replace-token-with-new-name current-state current-doc-id (urls/urlify-doc-name new-name)))))
