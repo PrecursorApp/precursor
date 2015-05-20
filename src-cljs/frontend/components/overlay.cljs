@@ -90,7 +90,7 @@
             (common/icon :login)
             [:span "Log in"]]))))))
 
-(defn doc-name [{:keys [doc-id doc-name]} owner]
+(defn doc-name [{:keys [doc-id doc-name max-document-scope]} owner]
   (reify
     om/IDisplayName (display-name [_] "Doc name")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
@@ -121,6 +121,7 @@
     (should-update [_ next-props next-state]
       (if (:editing? next-state)
         (or (not= (:doc-id next-props) (:doc-id (om/get-props owner)))
+            (not= (:max-document-scope next-props) (:max-document-scope (om/get-props owner)))
             (nil? (:local-doc-name next-state)))
         true))
     om/IRender
@@ -157,7 +158,7 @@
            (or doc-name (if (seq (:document/name doc))
                           (:document/name doc)
                           "Untitled"))]
-          (when-not false ;(om/get-state owner :editing?)
+          (when (auth/contains-scope? auth/scope-heirarchy max-document-scope :admin)
             [:a.doc-name-edit {:role "button"
                                :title "Change this doc's name"
                                :on-click #(do (om/set-state! owner :editing? true)
@@ -870,7 +871,8 @@
 
                      (keyword-identical? :start overlay-key)
                      (om/build doc-name {:doc-id (:document/id app)
-                                         :doc-name (:doc-name app)})
+                                         :doc-name (:doc-name app)
+                                         :max-document-scope (:max-document-scope app)})
 
                      (namespaced? overlay-key)
                      (str (:title component) " " (str/capitalize (name overlay-key)))
