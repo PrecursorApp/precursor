@@ -639,6 +639,16 @@
       animation: pencil-erase @run_slower @bezier_deform forwards;
     }
   }
+  &.edited {
+    .iconpile {
+      opacity: 0;
+    }
+    &:hover {
+      .iconpile {
+        opacity: 1;
+      }
+    }
+  }
 }
 .doc-name-edit {
   .flexy(center; center);

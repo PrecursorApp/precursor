@@ -128,6 +128,9 @@
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (d/entity @db doc-id)
+            display-name (if (seq (:document/name doc))
+                           (:document/name doc)
+                           "Untitled")
             clear-form #(do (om/set-state! owner :editing? false)
                             (om/set-state! owner :local-doc-name nil)
                             (.focus js/document.body))
@@ -137,7 +140,10 @@
                                                      :doc-name (om/get-state owner :local-doc-name)}))
                          (clear-form))]
         (html
-         [:div.doc-name-title {:class (when (om/get-state owner :editing?) "editing")}
+         [:div.doc-name-title {:class (str (when (om/get-state owner :editing?)
+                                             "editing ")
+                                           (when (not= "Untitled" display-name)
+                                             "edited "))}
           [:div {:class "doc-name-input"
                  :ref "name-input"
                  :contentEditable (om/get-state owner :editing?)
@@ -155,9 +161,7 @@
                                                                   :doc-name nil})))
                  :on-blur #(submit-fn)
                  :on-submit #(submit-fn)}
-           (or doc-name (if (seq (:document/name doc))
-                          (:document/name doc)
-                          "Untitled"))]
+           (or doc-name display-name)]
           (when (auth/contains-scope? auth/scope-heirarchy max-document-scope :admin)
             [:a.doc-name-edit {:role "button"
                                :title "Change this doc's name"
