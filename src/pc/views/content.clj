@@ -51,82 +51,83 @@
   (str/replace s #"[&<>\"']" ""))
 
 (defn layout [view-data & content]
-  [:html
-   [:head
-    [:title (if-let [meta-title (:meta-title view-data)]
-              (str (strip-html meta-title) " | Precursor")
-              "Precursor&mdash;fast prototyping web app, makes collaboration easy.")]
-    [:meta {:charset    "utf-8"}]
-    [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
+  (let [safe-title (when (seq (:meta-title view-data)) (strip-html (:meta-title view-data)))
+        safe-desc (when (seq (:meta-description view-data)) (strip-html (:meta-description view-data)))]
+    [:html
+     [:head
+      [:title (if (seq safe-title)
+                (str safe-title " | Precursor")
+                "Precursor&mdash;fast prototyping web app, makes collaboration easy.")]
+      [:meta {:charset    "utf-8"}]
+      [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
 
-    [:meta {:name "description" :content (or (when (seq (:meta-description view-data))
-                                               (strip-html (:meta-description view-data)))
-                                             "Your wireframe should be easy to share with any developer on your team. Design fast with iPhone and iPad collaboration. Precursor is productive prototyping.")}]
+      [:meta {:name "description" :content (or safe-desc
+                                               "Your wireframe should be easy to share with any developer on your team. Design fast with iPhone and iPad collaboration. Precursor is productive prototyping.")}]
 
-    [:meta {:name "viewport"                              :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
-    [:meta {:name "apple-touch-fullscreen"                :content "yes"}]
-    [:meta {:name "apple-mobile-web-app-capable"          :content "yes"}]
-    [:meta {:name "apple-mobile-web-app-status-bar-style" :content "black"}]
-    [:meta {:name "apple-mobile-web-app-title"            :content "Precursor"}]
-    [:meta {:name "format-detection"                      :content "telephone=no"}]
+      [:meta {:name "viewport"                              :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
+      [:meta {:name "apple-touch-fullscreen"                :content "yes"}]
+      [:meta {:name "apple-mobile-web-app-capable"          :content "yes"}]
+      [:meta {:name "apple-mobile-web-app-status-bar-style" :content "black"}]
+      [:meta {:name "apple-mobile-web-app-title"            :content "Precursor"}]
+      [:meta {:name "format-detection"                      :content "telephone=no"}]
 
-    ;; TODO make the rest of these startup images
-    [:link {:href (cdn-path "/img/750x1294.png") :rel "apple-touch-startup-image" :media "(device-width: 375px) and (device-height: 667px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 2)"}]
-    [:link {:href (cdn-path "/img/1242x2148.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 3)"}]
-    [:link {:href (cdn-path "/img/2208x1182.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
+      ;; TODO make the rest of these startup images
+      [:link {:href (cdn-path "/img/750x1294.png") :rel "apple-touch-startup-image" :media "(device-width: 375px) and (device-height: 667px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 2)"}]
+      [:link {:href (cdn-path "/img/1242x2148.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation:  portrait) and (-webkit-device-pixel-ratio: 3)"}]
+      [:link {:href (cdn-path "/img/2208x1182.png") :rel "apple-touch-startup-image" :media "(device-width: 414px) and (device-height: 736px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 3)"}]
 
-    (og-meta "twitter:card" "summary_large_image")
-    (if-let [image-url (:meta-image view-data)]
-      (og-meta "twitter:image:src" image-url)
-      (list (og-meta "twitter:image:src" (cdn-path "/img/precursor-logo.png"))
-            (og-meta "twitter:image:width" "1200")
-            (og-meta "twitter:image:height" "1200")))
-    (og-meta "twitter:site" "@PrecursorApp")
-    (og-meta "twitter:site:id" "2900854766")
-    (og-meta "twitter:title" (or (:meta-title view-data)
-                                 "Fast prototyping web app, makes collaboration easy."))
-    (og-meta "twitter:description" (or (:meta-description view-data)
-                                       "Precursor lets you prototype product design wireframes with a fast and simple web app."))
-    (og-meta "twitter:url" (or (:meta-url view-data)
-                               (urls/root)))
+      (og-meta "twitter:card" "summary_large_image")
+      (if-let [image-url (:meta-image view-data)]
+        (og-meta "twitter:image:src" image-url)
+        (list (og-meta "twitter:image:src" (cdn-path "/img/precursor-logo.png"))
+              (og-meta "twitter:image:width" "1200")
+              (og-meta "twitter:image:height" "1200")))
+      (og-meta "twitter:site" "@PrecursorApp")
+      (og-meta "twitter:site:id" "2900854766")
+      (og-meta "twitter:title" (or safe-title
+                                   "Fast prototyping web app, makes collaboration easy."))
+      (og-meta "twitter:description" (or safe-desc
+                                         "Precursor lets you prototype product design wireframes with a fast and simple web app."))
+      (og-meta "twitter:url" (or (:meta-url view-data)
+                                 (urls/root)))
 
-    (og-meta "og:card" "summary")
-    (if-let [image-url (:meta-image view-data)]
-      (og-meta "og:image" image-url)
-      (list (og-meta "og:image" (cdn-path "/img/precursor-logo.png"))
-            (og-meta "og:image:width" "1200")
-            (og-meta "og:image:height" "1200")))
-    (og-meta "og:site_name" "Precursor")
-    (og-meta "og:title" (or (:meta-title view-data)
-                            "Fast prototyping web app, makes collaboration easy."))
-    (og-meta "og:description" (or (:meta-description view-data)
-                                  "Precursor lets you prototype product design wireframes with a fast and simple web app."))
-    (og-meta "og:type" "website")
-    (og-meta  "og:url" (or (:meta-url view-data)
-                           (urls/root)))
+      (og-meta "og:card" "summary")
+      (if-let [image-url (:meta-image view-data)]
+        (og-meta "og:image" image-url)
+        (list (og-meta "og:image" (cdn-path "/img/precursor-logo.png"))
+              (og-meta "og:image:width" "1200")
+              (og-meta "og:image:height" "1200")))
+      (og-meta "og:site_name" "Precursor")
+      (og-meta "og:title" (or safe-title
+                              "Fast prototyping web app, makes collaboration easy."))
+      (og-meta "og:description" (or safe-desc
+                                    "Precursor lets you prototype product design wireframes with a fast and simple web app."))
+      (og-meta "og:type" "website")
+      (og-meta  "og:url" (or (:meta-url view-data)
+                             (urls/root)))
 
-    [:link {:rel "icon"             :href (cdn-path "/favicon.ico")}]
-    [:link {:rel "apple-touch-icon" :href (cdn-path "/img/apple-touch-icon.png")}]
-    [:link {:rel "stylesheet"       :href (pc.assets/asset-path "/css/app.css")}]
-    [:style (common/head-style)]
+      [:link {:rel "icon"             :href (cdn-path "/favicon.ico")}]
+      [:link {:rel "apple-touch-icon" :href (cdn-path "/img/apple-touch-icon.png")}]
+      [:link {:rel "stylesheet"       :href (pc.assets/asset-path "/css/app.css")}]
+      [:style (common/head-style)]
 
-    (embed-json-in-head "window.Precursor"
-                        (json/encode (-> view-data
-                                       (utils/update-when-in [:initial-entities] pr-str)
-                                       (utils/update-when-in [:initial-issue-entities] pr-str)
-                                       (utils/update-when-in [:cust] pr-str)
-                                       (utils/update-when-in [:team] pr-str)
-                                       (assoc :cdn-base-url (common/cdn-base-url)
-                                              :manifest-version (pc.assets/asset-manifest-version)
-                                              :page-start (java.util.Date.)
-                                              :stripe-publishable-key (stripe/publishable-key)))))
-    (when (prod-assets?)
-      scripts/google-analytics)
-    (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))
-    (scripts/mixpanel)]
-   [:body
-    [:div.alerts-container]
-    content]])
+      (embed-json-in-head "window.Precursor"
+                          (json/encode (-> view-data
+                                         (utils/update-when-in [:initial-entities] pr-str)
+                                         (utils/update-when-in [:initial-issue-entities] pr-str)
+                                         (utils/update-when-in [:cust] pr-str)
+                                         (utils/update-when-in [:team] pr-str)
+                                         (assoc :cdn-base-url (common/cdn-base-url)
+                                                :manifest-version (pc.assets/asset-manifest-version)
+                                                :page-start (java.util.Date.)
+                                                :stripe-publishable-key (stripe/publishable-key)))))
+      (when (prod-assets?)
+        scripts/google-analytics)
+      (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))
+      (scripts/mixpanel)]
+     [:body
+      [:div.alerts-container]
+      content]]))
 
 (defn app* [view-data]
   (layout
