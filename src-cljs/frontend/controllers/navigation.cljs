@@ -156,7 +156,9 @@
                        urls/urlify-doc-name)]
     (when (seq new-url-name)
       (utils/set-page-title! (:document/name doc)))
-    (when (and (seq new-url-name) (not= current-url-name new-url-name))
+    (when (and (seq new-url-name)
+               (not= current-url-name new-url-name)
+               (zero? (.indexOf path "/document")))
       (let [[_ before-name after-name] (re-find #"^(/document/)[A-Za-z0-9_-]*?-{0,1}(\d+(/.*$|$))" path)
             new-path (str before-name new-url-name "-" after-name)]
         (put! (get-in current-state [:comms :nav]) [:navigate! {:replace-token? true
