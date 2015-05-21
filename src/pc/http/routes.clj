@@ -318,7 +318,8 @@
         {:body "Sorry, we couldn't find that issue."
          :status 404}
         (let [doc (:issue/document issue)]
-          (doc-resp doc req :view-data {:initial-issue-entities [(issue-model/read-api issue)]}))))))
+          (doc-resp doc req :view-data {:initial-issue-entities [(issue-model/read-api issue)]
+                                        :meta-description (:issue/description issue)}))))))
 
 (defpage issue "/issues" [req]
   (outer-page req))

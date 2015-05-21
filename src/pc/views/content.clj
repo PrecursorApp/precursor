@@ -59,7 +59,7 @@
     [:meta {:charset    "utf-8"}]
     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
 
-    [:meta {:name "description" :content (or (:meta-description view-data)
+    [:meta {:name "description" :content (or (strip-html (:meta-description view-data))
                                              "Your wireframe should be easy to share with any developer on your team. Design fast with iPhone and iPad collaboration. Precursor is productive prototyping.")}]
 
     [:meta {:name "viewport"                              :content "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"}]
