@@ -14,6 +14,7 @@
             [frontend.components.permissions :as permissions]
             [frontend.components.plan :as plan]
             [frontend.components.team :as team]
+            [frontend.db :as fdb]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.models.issue :as issue-model]
@@ -89,12 +90,92 @@
             (common/icon :login)
             [:span "Log in"]]))))))
 
+(defn doc-name [{:keys [doc-id doc-name max-document-scope]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Doc name")
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-attribute-listener (om/get-shared owner :db)
+                                  :document/name
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :db)
+                                     :document/name
+                                     (om/get-state owner :listener-key)))
+    om/IDidUpdate
+    (did-update [_ _ prev-state]
+      (when (and (not (:editing? prev-state))
+                 (om/get-state owner :editing?)
+                 (om/get-node owner "name-input"))
+        (.focus (om/get-node owner "name-input"))
+        (let [range (goog.dom.Range/createFromNodeContents (om/get-node owner "name-input"))]
+          (when (not= "Untitled" (:document/name (d/entity @(om/get-shared owner :db) doc-id)))
+            ;; Select the text if it doesn't have a title, otherwise put cursor at end of input.
+            (.collapse range false))
+          (.select range))))
+    om/IShouldUpdate
+    (should-update [_ next-props next-state]
+      (if (:editing? next-state)
+        (or (not= (:doc-id next-props) (:doc-id (om/get-props owner)))
+            (not= (:max-document-scope next-props) (:max-document-scope (om/get-props owner)))
+            (nil? (:local-doc-name next-state)))
+        true))
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (d/entity @db doc-id)
+            display-name (if (seq (:document/name doc))
+                           (:document/name doc)
+                           "Untitled")
+            clear-form #(do (om/set-state! owner :editing? false)
+                            (om/set-state! owner :local-doc-name nil)
+                            (.focus js/document.body))
+            submit-fn #(when (om/get-state owner :editing?)
+                         (when (seq (om/get-state owner :local-doc-name))
+                           (cast! :doc-name-changed {:doc-id doc-id
+                                                     :doc-name (om/get-state owner :local-doc-name)}))
+                         (clear-form))]
+        (html
+         [:div.doc-name-title {:class (str (when (om/get-state owner :editing?)
+                                             "editing ")
+                                           (when (not= "Untitled" display-name)
+                                             "edited "))}
+          [:div {:class "doc-name-input"
+                 :ref "name-input"
+                 :contentEditable (om/get-state owner :editing?)
+                 :onInput #(let [n (goog.dom/getRawTextContent (.-target %))]
+                             (om/set-state-nr! owner :local-doc-name n)
+                             (cast! :doc-name-edited {:doc-id doc-id
+                                                      :doc-name n}))
+                 :on-key-down #(cond (= "Enter" (.-key %))
+                                     (do (utils/stop-event %)
+                                         (submit-fn))
+                                     (= "Escape" (.-key %))
+                                     (do (utils/stop-event %)
+                                         (clear-form)
+                                         (cast! :doc-name-edited {:doc-id doc-id
+                                                                  :doc-name nil})))
+                 :on-blur #(submit-fn)
+                 :on-submit #(submit-fn)}
+           (or doc-name display-name)]
+          (when (auth/contains-scope? auth/scope-heirarchy max-document-scope :admin)
+            [:a.doc-name-edit {:role "button"
+                               :title "Change this doc's name"
+                               :on-click #(do (om/set-state! owner :editing? true)
+                                              (.stopPropagation %))}
+             (common/icon :pencil)])])))))
+
 (defn start [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Start")
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (d/listen! (om/get-shared owner :db)
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
@@ -112,13 +193,13 @@
             doc (doc-model/find-by-id @db doc-id)]
         (html
          [:section.menu-view
-          [:a.vein.make {:href (urls/overlay-path doc-id "info")}
+          [:a.vein.make {:href (urls/overlay-path doc "info")}
            (common/icon :info)
            [:span "About"]]
           [:a.vein.make {:href "/new"}
            (common/icon :plus)
            [:span "New"]]
-          [:a.vein.make {:href (urls/overlay-path doc-id "doc-viewer")}
+          [:a.vein.make {:href (urls/overlay-path doc "doc-viewer")}
            (common/icon :docs)
            [:span "Documents"]]
           [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)}
@@ -127,17 +208,17 @@
           ;; TODO: should this use the permissions model? Would have to send some
           ;;       info about the document
           (if (auth/has-document-access? app (:document/id app))
-            [:a.vein.make {:href (urls/overlay-path doc-id "sharing")}
+            [:a.vein.make {:href (urls/overlay-path doc "sharing")}
              (common/icon :sharing)
              [:span "Sharing"]]
 
-            [:a.vein.make {:href (urls/overlay-path doc-id "document-permissions")}
+            [:a.vein.make {:href (urls/overlay-path doc "document-permissions")}
              (common/icon :users)
              [:span "Request Access"]])
-          [:a.vein.make {:href (urls/overlay-path doc-id "export")}
+          [:a.vein.make {:href (urls/overlay-path doc "export")}
            (common/icon :download)
            [:span "Export"]]
-          [:a.vein.make.mobile-hidden {:href (urls/overlay-path doc-id "shortcuts")}
+          [:a.vein.make.mobile-hidden {:href (urls/overlay-path doc "shortcuts")}
            (common/icon :command)
            [:span "Shortcuts"]]
           (om/build auth-link app {:opts {:source "start-overlay"}})])))))
@@ -204,6 +285,7 @@
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (d/listen! (om/get-shared owner :db)
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
@@ -235,7 +317,7 @@
           [:p.make
            "Anyone with the url can see the doc and chat, but can't edit the canvas. "
            "Share the url to show off your work."]
-          (om/build share-input {:url (urls/absolute-doc-url doc-id)})
+          (om/build share-input {:url (urls/absolute-doc-url doc)})
 
           [:p.make
            "Add your teammate's email to grant them full access."]
@@ -326,10 +408,12 @@
 (defn public-sharing [app owner]
   (reify
     om/IDisplayName (display-name [_] "Public Sharing")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            invite-to (or (get-in app state/invite-to-path) "")]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            invite-to (or (get-in app state/invite-to-path) "")
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
           [:div.content
            [:h2.make
@@ -346,7 +430,7 @@
                [:p.make
                 "Anyone with the url can view and edit."]
 
-               (om/build share-input {:url (urls/absolute-doc-url (:document/id app))})
+               (om/build share-input {:url (urls/absolute-doc-url doc)})
 
                [:p.make
                 "Email or text a friend to invite them to collaborate:"]
@@ -378,21 +462,23 @@
 (defn unknown-sharing [app owner]
   (reify
     om/IDisplayName (display-name [_] "Unknown Sharing")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            invite-to (or (get-in app state/invite-to-path) "")])
-      (html
-       [:div.content
-        [:h2.make "Share this document"]
-        (if-not (:cust app)
-          (list
-           [:p.make
-            "Sign in with your Google account to send an invite or give someone your url."]
-           [:div.calls-to-action.make
-            (om/build common/google-login {:source "Public Sharing Menu"})])
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            invite-to (or (get-in app state/invite-to-path) "")
+            doc (doc-model/find-by-id @db (:document/id app))]
+        (html
+         [:div.content
+          [:h2.make "Share this document"]
+          (if-not (:cust app)
+            (list
+             [:p.make
+              "Sign in with your Google account to send an invite or give someone your url."]
+             [:div.calls-to-action.make
+              (om/build common/google-login {:source "Public Sharing Menu"})])
 
-          (om/build share-input {:url (urls/absolute-doc-url (:document/id app))}))]))))
+            (om/build share-input {:url (urls/absolute-doc-url doc)}))])))))
 
 (defn sharing [app owner]
   (reify
@@ -498,37 +584,39 @@
 (defn export [app owner]
   (reify
     om/IDisplayName (display-name [_] "Export Menu")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            doc-id (:document/id app)]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:section.menu-view
-          [:a.vein.make {:href (urls/absolute-doc-svg doc-id :query {:dl true})
+          [:a.vein.make {:href (urls/absolute-doc-svg doc :query {:dl true})
                          :target "_self"}
            (common/icon :file-svg) "Download as SVG"]
-          [:div.content.make (om/build share-input {:url (urls/absolute-doc-svg doc-id)
+          [:div.content.make (om/build share-input {:url (urls/absolute-doc-svg doc)
                                                     :placeholder "or use this url"})]
 
-          [:a.vein.make {:href (urls/absolute-doc-pdf doc-id :query {:dl true})
+          [:a.vein.make {:href (urls/absolute-doc-pdf doc :query {:dl true})
                          :target "_self"}
            (common/icon :file-pdf) "Download as PDF"]
-          [:div.content.make (om/build share-input {:url (urls/absolute-doc-pdf doc-id)
+          [:div.content.make (om/build share-input {:url (urls/absolute-doc-pdf doc)
                                                     :placeholder "or use this url"})]
 
-          [:a.vein.make {:href (urls/absolute-doc-png doc-id :query {:dl true})
+          [:a.vein.make {:href (urls/absolute-doc-png doc :query {:dl true})
                          :target "_self"}
            (common/icon :file-png) "Download as PNG"]
-          [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc-id)
+          [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc)
                                                     :placeholder "or use this url"})]])))))
 
 (defn info [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Info")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
-            doc-id (:document/id app)]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:section.menu-view
           [:div.content
@@ -571,7 +659,7 @@
              :target "_self"
              :role "button"}
             [:span "Email"]]
-           [:a.vein.make {:href (urls/overlay-path doc-id "connection-info")
+           [:a.vein.make {:href (urls/overlay-path doc "connection-info")
                           :role "button"}
             [:span "Connection Info"]]]
           (common/mixpanel-badge)])))))
@@ -580,6 +668,7 @@
   (reify
     om/IDisplayName (display-name [_] "Overlay Shortcuts")
     om/IInitState (init-state [_] {:mac? goog.userAgent/MAC})
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRenderState
     (render-state [_ {:keys [mac?]}]
       (let [cast! (om/get-shared owner :cast!)]
@@ -783,6 +872,11 @@
                ;; TODO: better way to handle custom titles
                (cond (keyword-identical? :issues/single-issue overlay-key)
                      "Feature Request"
+
+                     (keyword-identical? :start overlay-key)
+                     (om/build doc-name {:doc-id (:document/id app)
+                                         :doc-name (:doc-name app)
+                                         :max-document-scope (:max-document-scope app)})
 
                      (namespaced? overlay-key)
                      (str (:title component) " " (str/capitalize (name overlay-key)))

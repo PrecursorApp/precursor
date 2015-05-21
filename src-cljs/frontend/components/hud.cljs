@@ -7,7 +7,9 @@
             [frontend.components.common :as common]
             [frontend.config :as config]
             [frontend.cursors :as cursors]
+            [frontend.db :as fdb]
             [frontend.models.chat :as chat-model]
+            [frontend.models.doc :as doc-model]
             [frontend.overlay :refer [current-overlay overlay-visible? overlay-count]]
             [frontend.state :as state]
             [frontend.urls :as urls]
@@ -22,12 +24,13 @@
 (defn menu [app owner]
   (reify
     om/IDisplayName (display-name [_] "Hud Menu")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
+      (let [{:keys [cast! db]} (om/get-shared owner)
             main-menu-learned? (get-in app state/main-menu-learned-path)
             menu-visibile? (frontend.overlay/menu-overlay-visible? app)
-            doc-id (:document/id app)]
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:a.hud-menu.hud-item.hud-toggle.menu-needed (merge {:role "button"
                                                               :class (when menu-visibile?
@@ -46,20 +49,21 @@
                                                                           (.preventDefault %))]
                                                                  {:on-click f
                                                                   :on-touch-end f})
-                                                               {:href (urls/overlay-path doc-id "start")})
-                                                             (when-not doc-id
+                                                               {:href (urls/overlay-path doc "start")})
+                                                             (when-not (seq doc)
                                                                {:on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
           (common/icon :menu)])))))
 
 (defn roster [app owner]
   (reify
     om/IDisplayName (display-name [_] "Hud Menu")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
+      (let [{:keys [db cast!]} (om/get-shared owner)
             main-menu-learned? (get-in app state/main-menu-learned-path)
             roster-visible? (frontend.overlay/roster-overlay-visible? app)
-            doc-id (:document/id app)]
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:a.hud-roster.hud-item.hud-toggle.menu-needed (merge {:role "button"
                                                                 :class (when roster-visible?
@@ -78,10 +82,10 @@
                                                                             (.preventDefault %))]
                                                                    {:on-click f
                                                                     :on-touch-end f})
-                                                                 {:href (urls/overlay-path doc-id (if (:team app)
+                                                                 {:href (urls/overlay-path doc (if (:team app)
                                                                                                     "roster"
                                                                                                     "your-teams"))})
-                                                               (when-not doc-id
+                                                               (when-not (seq doc)
                                                                  {:on-mouse-enter #(cast! :navigate-to-landing-doc-hovered)}))
           (if roster-visible?
             (common/icon :menu)
@@ -106,6 +110,7 @@
     om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (d/listen! (om/get-shared owner :db)
                  (om/get-state owner :listener-key)
                  (fn [tx-report]
@@ -116,10 +121,10 @@
       (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
-      (let [cast! (om/get-shared owner :cast!)
+      (let [{:keys [db cast!]} (om/get-shared owner)
             new-here? (empty? (:cust app))
             chat-opened? (get-in app state/chat-opened-path)
-            document (d/entity @(om/get-shared owner :db) (:document/id app))
+            document (doc-model/find-by-id @db (:document/id app))
             rejected-tx-count (get-in app (state/doc-tx-rejected-count-path (:document/id app)))]
         (html
          [:div.hud-tray.hud-item.width-canvas {:key (str "hud-tray-" chat-opened?)}
@@ -139,10 +144,10 @@
           [:div.doc-stats
            (om/build mouse-stats {}
                      {:react-key "mouse-stats"})
-           [:div.privacy-stats {:href (urls/overlay-path (:document/id app) "sharing")
+           [:div.privacy-stats {:href (urls/overlay-path document "sharing")
                                 :key rejected-tx-count
                                 :class (when (pos? rejected-tx-count)
-                                         (if (= 0 (mod rejected-tx-count 2))
+                                         (if (zero? (mod rejected-tx-count 2))
                                            "rejected-txes-a"
                                            "rejected-txes-b"))}
             (case (:document/privacy document)
@@ -210,6 +215,7 @@
     om/IDisplayName (display-name [_] "Hud Viewers")
     om/IInitState (init-state [_] {:editing-name? false
                                    :new-name ""})
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IDidUpdate
     (did-update [_ _ prev-state]
       (when (and (not (:editing-name? prev-state))
@@ -227,7 +233,8 @@
             show-viewers? (and (not (overlay-visible? app))
                                (get app :show-viewers? (< 1 viewers-count 6)))
             self-color (colors/find-color (get-in app [:cust-data :uuid->cust]) (get-in app [:cust :cust/uuid]) client-id)
-            self-name (get-in app [:cust-data :uuid->cust (get-in app [:cust :cust/uuid]) :cust/name])]
+            self-name (get-in app [:cust-data :uuid->cust (get-in app [:cust :cust/uuid]) :cust/name])
+            doc (doc-model/find-by-id @db (:document/id app))]
         (html
          [:div.viewers
           {:class (when (< 1 viewers-count) " viewers-multiple ")} ; TODO use this to clean up messy nth-childs in hud.less
@@ -279,7 +286,7 @@
                                             (if can-edit?
                                               {:on-click #(do (om/set-state! owner :editing-name? true)
                                                               (.stopPropagation %))}
-                                              {:href (urls/overlay-path (:document/id app) "username")}))
+                                              {:href (urls/overlay-path doc "username")}))
                     (common/icon :pencil)]
                    (when config/subdomain
                      [:a.viewer-toggle {:on-click #(cast! :recording-toggled)

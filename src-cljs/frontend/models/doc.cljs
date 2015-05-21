@@ -1,9 +1,12 @@
 (ns frontend.models.doc
-  (:require [datascript :as d]
+  (:require [clojure.string :as str]
+            [datascript :as d]
+            [frontend.datascript :as ds]
             [frontend.utils :as utils :include-macros true]))
 
 (defn find-by-id [db id]
-  (let [candidate (d/entity db id)]
-    ;; faster than using a datalog query
-    (when (:document/name candidate)
-      candidate)))
+  ;; may regret this later, but we may know about a doc-id before we store it in the db
+  (or (d/entity db id) {:db/id id}))
+
+(defn all [db]
+  (ds/touch-all '[:find ?e :where [?e :document/name]] db))
