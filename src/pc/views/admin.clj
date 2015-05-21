@@ -17,6 +17,7 @@
             [pc.models.doc :as doc-model]
             [pc.models.plan :as plan-model]
             [pc.models.permission :as permission-model]
+            [pc.models.team :as team-model]
             [pc.replay :as replay]
             [pc.stripe.dev :as stripe-dev]
             [ring.util.anti-forgery :as anti-forgery]))
@@ -412,7 +413,15 @@
     (for [[k v] (sort-by first (into {} cust))]
       [:tr
        [:td (h/h (str k))]
-       [:td (render-cust-prop k v)]])]))
+       [:td (render-cust-prop k v)]])
+    [:tr
+     [:td "Teams"]
+     [:td (interleave (->> cust
+                        (permission-model/find-team-permissions-for-cust (pcd/default-db))
+                        (map :permission/team)
+                        (sort-by :team/subdomain)
+                        (map team-link))
+                      (repeat " "))]]]))
 
 (defn doc-info [doc auth]
   (let [db (pcd/default-db)]
@@ -504,7 +513,8 @@
 (defn team-info [team]
   (let [db (pcd/default-db)
         team-docs (map (comp (partial d/entity db) :e)
-                       (d/datoms db :vaet (:db/id team) :document/team))]
+                       (d/datoms db :vaet (:db/id team) :document/team))
+        team-txes (team-model/team-txes db team)]
     (def myteamdocs team-docs)
     (list
      [:style "td, th { padding: 5px; text-align: left }"]
@@ -535,7 +545,23 @@
                  db (:team/uuid team))]]
       [:tr
        [:td "Doc count"]
-       [:td (count team-docs)]]]
+       [:td (count team-docs)]]
+
+      [:tr
+       [:td "tx count"]
+       [:td (count team-txes)]]
+
+      [:tr
+       [:td "Last activity"]
+       [:td (:db/txInstant (last (sort-by :db/txInstant team-txes)))]]
+
+      [:tr
+       [:td "Plan url"]
+       [:td (let [url (urls/team-plan team)]
+              [:a {:href url} url])]]
+      [:tr
+       [:td "Trial end"]
+       [:td (:plan/trial-end (:team/plan team))]]]
      (interesting team-docs))))
 
 (defn upload-files []
@@ -552,7 +578,7 @@
      [:form {:action (format "https://%s.storage.googleapis.com" bucket)
              :method "post"
              :enctype "multipart/form-data"
-             :onSubmit (format "this.submit(); event.preventDefault(); window.setTimeout(function () { window.location.assign('https://%s.storage.googleapis.com/' + document.getElementById('key').value)}, 10)"
+             :onSubmit (format "this.submit(); event.preventDefault(); window.setTimeout(function () { window.location.assign('https://%s.storage.googleapis.com/' + document.getElementById('key').value)}, 1000)"
                                bucket)
              }
       [:p "Choose path (careful not to override an existing path):"]
@@ -641,3 +667,38 @@
      [:div
       [:input {:type "submit" :value "Remove"}]]]]
    ])
+
+(defn issue-info [issue]
+  (list
+   [:style "body { padding: 2em; }td, th { padding: 5px; text-align: left }"]
+   [:table {:border 1}
+    [:tr
+     [:td "Title"]
+     [:td (h/h (:issue/title issue))]]
+    [:tr
+     [:td "Description"]
+     [:td (h/h (:issue/description issue))]]
+    [:tr
+     [:td "Created"]
+     [:td (:issue/created-at issue)]]
+    [:tr
+     [:td "Author"]
+     [:td (cust-link (:issue/author issue))]]
+    [:tr
+     [:td "Voters"]
+     [:td (interleave (map (comp cust-link :vote/cust) (:issue/votes issue))
+                      (repeat " "))]]]
+   [:h4 "Comments"]
+   (if (empty? (:issue/comments issue))
+     [:p "no comments :("]
+     (for [comment (reverse (sort-by :comment/created-at (:issue/comments issue)))]
+       [:table {:border 1}
+        [:tr
+         [:td "Author"]
+         [:td (cust-link (:comment/author comment))]]
+        [:tr
+         [:td "Created"]
+         [:td (h/h (:comment/created-at comment))]]
+        [:tr
+         [:td "Body"]
+         [:td (h/h (:comment/body comment))]]]))))

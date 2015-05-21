@@ -100,7 +100,7 @@
     :body
     json/decode))
 
-(defn create-customer [token-id plan trial-end & {:keys [coupon-code email metadata description]}]
+(defn create-customer [token-id plan trial-end & {:keys [coupon-code email metadata description quantity]}]
   (let [earliest-timestamp (date-util/timestamp-sec (time/plus (time/now) (time/hours 1)))
         trial-end-timestamp (date-util/timestamp-sec trial-end)]
     (api-call :post "customers" {:form-params (merge {:source token-id
@@ -114,7 +114,9 @@
                                                      (when metadata
                                                        {:metadata (json/encode metadata)})
                                                      (when description
-                                                       {:description description}))})))
+                                                       {:description description})
+                                                     (when quantity
+                                                       {:quantity quantity}))})))
 
 (defn update-card [customer-id token-id]
   (api-call :post (str "customers/" customer-id)

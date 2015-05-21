@@ -1,5 +1,6 @@
 (ns pc.views.content
   (:require [cheshire.core :as json]
+            [clojure.string :as str]
             [hiccup.core :as h]
             [pc.assets]
             [pc.datomic.schema :as schema]
@@ -44,11 +45,16 @@
           :property prop
           :content content}])
 
+(defn strip-html
+  "Strips all html characters from the string"
+  [s]
+  (str/replace s #"[&<>\"']" ""))
+
 (defn layout [view-data & content]
   [:html
    [:head
     [:title (if-let [meta-title (:meta-title view-data)]
-              (str meta-title " | Precursor")
+              (str (strip-html meta-title) " | Precursor")
               "Precursor&mdash;fast prototyping web app, makes collaboration easy.")]
     [:meta {:charset    "utf-8"}]
     [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
@@ -101,8 +107,6 @@
     [:link {:rel "icon"             :href (cdn-path "/favicon.ico")}]
     [:link {:rel "apple-touch-icon" :href (cdn-path "/img/apple-touch-icon.png")}]
     [:link {:rel "stylesheet"       :href (pc.assets/asset-path "/css/app.css")}]
-    [:link {:rel "stylesheet"       :href "https://fonts.googleapis.com/css?family=Roboto:500,900,100,300,700,400"}]
-
     [:style (common/head-style)]
 
     (embed-json-in-head "window.Precursor"
@@ -141,7 +145,12 @@
         [:script {:type "text/javascript" :src "/cljs/out/frontend-dev.js"}]
         [:script {:type "text/javascript"}
          "goog.require(\"frontend.core\");"
-         "goog.require(\"frontend.dev\");"])))))
+         "goog.require(\"frontend.dev\");"])))
+   ;; [:script {:type "text/javascript"}
+   ;;  (format "rasterize = {}; rasterize.api_key = '%s';"
+   ;;          (pc.profile/rasterize-key))]
+   ;; "<script async src=\"https://rasterize.io/rasterize.js\"></script>"
+   ))
 
 (defn app [view-data]
   (h/html (app* view-data)))

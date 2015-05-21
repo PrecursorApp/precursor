@@ -26,6 +26,9 @@
      (if (= (:cust/email cust) (:issue/creator issue))
        10
        0)
+     (if (keyword-identical? :issue.status/completed (:issue/status issue))
+       -20
+       0)
      (condp < (- (.getTime time) (.getTime (:issue/created-at issue)))
        (* 1000 60 60 24 10) 0        ; 10 days
        (* 1000 60 60 24 5) 1         ; 5 days

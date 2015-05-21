@@ -40,6 +40,10 @@
     (d/entity db)
     (find-by-plan db)))
 
+(defn team-txes [db team]
+  (map #(d/entity db (:tx %))
+       (d/datoms db :vaet (:db/id team) :transaction/team)))
+
 (defn create-for-subdomain! [subdomain cust annotations]
   @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)}
                                   annotations)

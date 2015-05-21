@@ -57,13 +57,13 @@
 
 (defn team-signup [app owner]
   (reify
+    om/IDisplayName (display-name [_] "Team Signup")
     om/IInitState (init-state [_] {:subdomain ""
                                    :error nil
                                    :submitting? false
                                    :submitted? false
                                    :team-created? false
                                    :team nil})
-    om/IDisplayName (display-name [_] "Team Signup")
     om/IRenderState
     (render-state [_ {:keys [subdomain submitting? error submitted? team-created? team]}]
       (let [{:keys [cast! handlers]} (om/get-shared owner)
@@ -357,7 +357,7 @@
                [:span.content-copy
                 "Sometimes speaking out loud is simply easier than typing messages back and forth. "
                 "Teammates on your domain will get unlimited access to voice chat in every document. "]]
-              [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569418?voice=true" :target "_blank"}
+              [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569418" :target "_blank"}
                [:span.content-copy "Try a voice chat."]]]
              [:div.feature-media.reverse
               [:div.art-frame

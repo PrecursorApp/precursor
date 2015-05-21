@@ -286,6 +286,7 @@
 
 (defn google-login [{:keys [size source]} owner]
   (reify
+    om/IDisplayName (display-name [_] "Google login")
     om/IRender
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]

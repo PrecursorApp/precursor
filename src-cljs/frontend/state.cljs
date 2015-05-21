@@ -57,12 +57,18 @@
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
                         :return-from-origin #{#{"2"}}
-                        :arrow-tool #{#{"ctrl" "shift"}}
+                        :arrow-tool #{#{"ctrl" "shift"}
+                                      #{"a"}}
                         :shrink-text #{#{"-"} #{"["}}
                         :grow-text #{#{"shift" "="}
                                      #{"="}
                                      #{"]"}}
-                        :record #{#{"shift" "ctrl" "alt" "r"}}}
+                        :record #{#{"shift" "ctrl" "alt" "r"}}
+                        ;; The handler is responsible for figuring out if shift is held
+                        :nudge-shapes-left #{#{"left"} #{"shift" "left"}}
+                        :nudge-shapes-right #{#{"right"} #{"shift" "right"}}
+                        :nudge-shapes-up #{#{"up"} #{"shift" "up"}}
+                        :nudge-shapes-down #{#{"down"} #{"shift" "down"}}}
    :drawing {:layers []}
    :current-user    nil
    :entity-ids      #{}

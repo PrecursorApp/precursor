@@ -398,39 +398,6 @@
      :end-y (+ (:start-y browser) 50)
      :source layer-source}))
 
-(defn dn-text [layer-source viewport]
-  (let [browser (browser layer-source viewport)]
-    {:tool :text
-     :text "DN"
-     :start-x (+ (:start-x browser) 44)
-     :end-x (+ (:start-x browser) 44)
-     :start-y (+ (:start-y browser) 36)
-     :end-y (+ (:start-y browser) 36)
-     :props {:layer/font-size 32}
-     :source layer-source}))
-
-(defn stories-text [layer-source viewport]
-  (let [browser (browser layer-source viewport)]
-    {:tool :text
-     :text "Stories"
-     :start-x (+ (:start-x browser) 100 15)
-     :end-x (+ (:start-x browser) 100 15)
-     :start-y (+ (:start-y browser) 30)
-     :end-y (+ (:start-y browser) 30)
-     :props {:layer/font-size 16}
-     :source layer-source}))
-
-(defn jobs-text [layer-source viewport]
-  (let [browser (browser layer-source viewport)]
-    {:tool :text
-     :text "Jobs"
-     :start-x (+ (:start-x browser) 100 88)
-     :end-x (+ (:start-x browser) 100 88)
-     :start-y (+ (:start-y browser) 30)
-     :end-y (+ (:start-y browser) 30)
-     :props {:layer/font-size 16}
-     :source layer-source}))
-
 (defn story-one-a [layer-source viewport]
   (let [browser (browser layer-source viewport)]
     {:tool :rect
@@ -498,9 +465,6 @@
   (let [browser (browser layer-source viewport)
         margins-box (margins-box layer-source viewport)
         header-line (header-line layer-source viewport)
-        dn-text (dn-text layer-source viewport)
-        stories-text (stories-text layer-source viewport)
-        jobs-text (jobs-text layer-source viewport)
         story-one-a (story-one-a layer-source viewport)
         story-one-b (story-one-b layer-source viewport)
         story-two-a (story-two-a layer-source viewport)
@@ -525,13 +489,7 @@
       (add-shape 40 margins-box)
       (add-mouse-transition 7 margins-box header-line)
       (add-shape 25 header-line)
-      (add-mouse-transition 10 header-line dn-text)
-      (add-text 10 dn-text)
-      (add-mouse-transition 7 dn-text stories-text)
-      (add-text 10 stories-text)
-      (add-mouse-transition 5 stories-text jobs-text)
-      (add-text 10 jobs-text)
-      (add-mouse-transition 15 jobs-text story-one-a)
+      (add-mouse-transition 10 header-line story-one-a)
       (add-shape 15 story-one-a)
       (add-mouse-transition 5 story-one-a story-one-b)
       (add-shape 15 story-one-b)
@@ -592,8 +550,8 @@
 
 (defn landing-background [{:keys [subscribers]} owner]
   (reify
-    om/IInitState (init-state [_] {:layer-source (utils/uuid)})
     om/IDisplayName (display-name [_] "Landing Animation")
+    om/IInitState (init-state [_] {:layer-source (utils/uuid)})
     om/IDidMount
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(

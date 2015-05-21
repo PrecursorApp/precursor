@@ -42,7 +42,7 @@
 (defn set-status [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [cust (some-> req :ring-req :auth :cust)]
     (when (contains? cust-model/admin-emails (:cust/email cust))
-      (let [issue-uuid (pc.utils/inspect (:frontend/issue-id ?data))
+      (let [issue-uuid (:frontend/issue-id ?data)
             status (:issue/status ?data)]
         (assert (= "issue.status" (namespace status)))
         @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)

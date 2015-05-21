@@ -38,7 +38,8 @@
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [cljs.core.UUID]
-           [goog.events.EventType]))
+           [goog.events.EventType]
+           [goog.ui IdGenerator]))
 
 (enable-console-print!)
 
@@ -49,15 +50,17 @@
    :ctrl? (.-ctrlKey event)
    :shift? (.-shiftKey event)})
 
-(defn handle-mouse-move [cast! event]
-  (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (event-props event))
+(defn handle-mouse-move [cast! event & {:keys [props]}]
+  (cast! :mouse-moved (conj (camera-helper/screen-event-coords event) (merge (event-props event) props))
          true))
 
-(defn handle-mouse-down [cast! event]
-  (cast! :mouse-depressed (conj (camera-helper/screen-event-coords event) (event-props event)) false))
+(defn handle-mouse-down [cast! event & {:keys [props]}]
+  (cast! :mouse-depressed (conj (camera-helper/screen-event-coords event) (merge (event-props event) props))
+         false))
 
-(defn handle-mouse-up [cast! event]
-  (cast! :mouse-released (conj (camera-helper/screen-event-coords event) (event-props event)) false))
+(defn handle-mouse-up [cast! event & {:keys [props]}]
+  (cast! :mouse-released (conj (camera-helper/screen-event-coords event) (merge (event-props event) props))
+         false))
 
 (defn disable-mouse-wheel [event]
   (.stopPropagation event))
@@ -70,7 +73,18 @@
                   (= "true" (.. event -target -contentEditable)))
       (when (contains? suppressed-key-combos key-set)
         (.preventDefault event))
-      (when-not (and (.-repeat event) (= "keydown" (.-type event)))
+      (when-not (and (and (.-repeat event)
+                          ;; allow repeat for arrows
+                          (not (contains? #{#{"left"}
+                                            #{"right"}
+                                            #{"up"}
+                                            #{"down"}
+                                            #{"shift" "left"}
+                                            #{"shift" "right"}
+                                            #{"shift" "up"}
+                                            #{"shift" "down"}}
+                                          key-set)))
+                     (= "keydown" (.-type event)))
         (cast! :key-state-changed [{:key-set key-set
                                     :code (.-which event)
                                     :depressed? (= direction :down)}])))))
@@ -231,9 +245,13 @@
                                                                            :handle-mouse-up    handle-canvas-mouse-up
                                                                            :handle-mouse-move  handle-mouse-move
                                                                            :handle-key-down    handle-key-down
-                                                                           :handle-key-up      handle-key-up})]
+                                                                           :handle-key-up      handle-key-up})
+        doc-watcher-id           (.getNextUniqueId (.getInstance IdGenerator))]
 
     (db/setup-issue-listener! (:issue-db @state) "issue-db" comms (:sente @state))
+
+    ;; This will allow us to update the url and title when the doc name changes
+    (db/add-attribute-listener (:db @state) :document/name doc-watcher-id #(cast! :db-document-name-changed {:tx-data (map ds/datom-read-api (:tx-data %))}))
 
     ;; allow figwheel in dev-cljs access to this function
     (reset! frontend.careful/om-setup-debug om-setup)
@@ -245,7 +263,8 @@
 
     (js/document.addEventListener "keydown" handle-key-down false)
     (js/document.addEventListener "keyup" handle-key-up false)
-    (js/window.addEventListener "mouseup"   handle-canvas-mouse-up false)
+    (js/window.addEventListener "mouseup" #(handle-mouse-up   cast! % :props {:outside-canvas? true}) false)
+    (js/window.addEventListener "mousedown" #(handle-mouse-down cast! % :props {:outside-canvas? true}) false)
     (js/window.addEventListener "beforeunload" handle-close!)
     (.addEventListener js/document "mousewheel" disable-mouse-wheel false)
     (js/window.addEventListener "copy" #(clipboard/handle-copy! @state %))

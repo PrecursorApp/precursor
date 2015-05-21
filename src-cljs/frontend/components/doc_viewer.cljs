@@ -7,7 +7,10 @@
             [frontend.auth :as auth]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
+            [frontend.datetime :as datetime]
+            [frontend.db :as fdb]
             [frontend.state :as state]
+            [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.date :refer (date->bucket)]
             [goog.date]
@@ -36,6 +39,7 @@
 (defn docs-list [docs owner]
   (reify
     om/IDisplayName (display-name [_] "Doc Viewer Docs List")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (html
@@ -50,17 +54,21 @@
 
            (for [doc bucket-docs]
              (html
-              [:div.recent-doc.make
-               [:a.recent-doc-thumb {:href (str "/document/" (:db/id doc))}
-                [:img {:src (str "/document/" (:db/id doc) ".svg")}]
+              [:a.recent-doc.make {:href (urls/doc-path doc)}
+               [:img {:src (urls/doc-svg-path doc)}]
 
-                [:i.loading-ellipses
-                 [:i "."]
-                 [:i "."]
-                 [:i "."]]]
-               [:div.recent-doc-title
-                [:a {:href (str "/document/" (:db/id doc))}
-                 (str (:db/id doc))]]]))))]))))
+               [:i.loading-ellipses
+                [:i "."]
+                [:i "."]
+                [:i "."]]
+
+               [:span.recent-doc-title
+                (str (:document/name doc "Untitled")
+                     (when (= "Untitled" (:document/name doc))
+                       (str " " (:db/id doc))))]
+               (when (:last-updated-instant doc)
+                 [:span.recent-doc-timestamp
+                  (str " " (datetime/short-date (:last-updated-instant doc)))])]))))]))))
 
 (defn dummy-docs [current-doc-id doc-count]
   (repeat doc-count {:db/id current-doc-id
@@ -73,24 +81,47 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)
             app-docs (get-in app docs-path)
-            display-docs (cond
-                           (nil? app-docs)
-                           (dummy-docs (:document/id app) 5) ;; loading state
+            all-docs (cond
+                       (nil? app-docs)
+                       (dummy-docs (:document/id app) 5) ;; loading state
 
-                           (empty? app-docs) (dummy-docs (:document/id app) 1) ;; empty state
+                       (empty? app-docs) (dummy-docs (:document/id app) 1) ;; empty state
 
-                           :else
-                           (->> app-docs
-                             (filter :last-updated-instant)
-                             (sort-by :last-updated-instant)
-                             (reverse)
-                             (take 100)))]
+                       :else
+                       (->> app-docs
+                         (filter :last-updated-instant)
+                         (sort-by :last-updated-instant)
+                         (reverse)))
+            display-docs (take 100 all-docs)
+            filtered-docs (if (seq (om/get-state owner :doc-filter))
+                            (take 100 (let [filter-text (str/lower-case (om/get-state owner :doc-filter))]
+                                        (filter #(not= -1 (.indexOf (str/lower-case (:document/name %))
+                                                                    filter-text))
+                                                all-docs)))
+                            display-docs)
+            searching? (seq (om/get-state owner :doc-filter))]
         (html
          [:section.menu-view
           {:class (when (nil? app-docs) "loading")}
-          [:div.content
-           (if (seq display-docs)
-             (om/build docs-list display-docs))]])))))
+          [:div.doc-search.content {:class (when searching? "searching")}
+           (when (seq display-docs)
+             (list
+               [:div.adaptive.make
+                [:input {:type "text"
+                         :value (or (om/get-state owner :doc-filter) "")
+                         :required "true"
+                         :onChange #(om/set-state! owner :doc-filter (.. % -target -value))}]
+                [:label {:data-placeholder "Searching for a doc?"
+                         :data-label (str (count filtered-docs) " of your " (count all-docs) " docs match")}]]
+               (when (and searching?
+                          (zero? (count filtered-docs)))
+                 [:p.make
+                  [:span (str "We can't find a doc matching "
+                              "\""
+                              (or (om/get-state owner :doc-filter) "")
+                              "\".")]])
+
+               (om/build docs-list filtered-docs)))]])))))
 
 ;; Four states
 ;; 1. Logged out

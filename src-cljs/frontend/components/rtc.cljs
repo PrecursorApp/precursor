@@ -5,6 +5,7 @@
 
 (defn rtc [app owner]
   (reify
+    om/IDisplayName (display-name [_] "RTC")
     om/IRender
     (render [_]
       (apply dom/div nil

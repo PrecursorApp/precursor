@@ -141,7 +141,7 @@
 
 (defn team-permission-grant-html [team]
   (let [subdomain (:team/subdomain team)
-        intro-doc (:db/id (:team/intro-doc team))]
+        intro-doc (:team/intro-doc team)]
     (hiccup/html
      [:html
       [:body

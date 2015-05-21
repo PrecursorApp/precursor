@@ -175,13 +175,17 @@
                                        "yaks/om/src"]
                         :figwheel {:websocket-host "localhost"
                                    :on-jsload "frontend.dev/jsload"}
-                        :compiler {:output-to "resources/public/cljs/out/frontend-dev.js"
+                        :compiler {;; Datascript https://github.com/tonsky/datascript/issues/57
+                                   :warnings {:single-segment-namespace false}
+                                   :output-to "resources/public/cljs/out/frontend-dev.js"
                                    :output-dir "resources/public/cljs/out"
                                    :optimizations :none
                                    :source-map "resources/public/cljs/out/sourcemap-frontend.map"}}
                        {:id "production"
                         :source-paths ["src-cljs" "yaks/om/src"]
                         :compiler {:pretty-print false
+                                   ;; Datascript https://github.com/tonsky/datascript/issues/57
+                                   :warnings {:single-segment-namespace false}
                                    :output-to "resources/public/cljs/production/frontend.js"
                                    :output-dir "resources/public/cljs/production"
                                    :optimizations :advanced

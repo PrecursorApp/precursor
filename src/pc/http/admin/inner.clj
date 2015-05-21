@@ -15,6 +15,7 @@
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.flag :as flag-model]
+            [pc.models.issue :as issue-model]
             [pc.models.team :as team-model]
             [pc.profile :as profile]
             [pc.stripe.dev :as stripe-dev]
@@ -94,6 +95,15 @@
       {:status 404
        :body "Couldn't find that team"})))
 
+(defpage issue-info "/issues/:issue-uuid" [req]
+  (let [issue (->> req :params :issue-uuid (UUID/fromString) (issue-model/find-by-frontend-id (pcd/default-db)))]
+    (if (seq issue)
+      (hiccup/html
+       (content/layout {}
+                       (admin-content/issue-info issue)))
+      {:status 404
+       :body "Couldn't find that issue"})))
+
 (defpage user-activity "/user/:email" [req]
   (let [db (pcd/default-db)
         cust (->> req :params :email (cust-model/find-by-email db))]
@@ -145,7 +155,7 @@
 (defpage upload "/upload" [req]
   (hiccup/html (content/layout {} (admin-content/upload-files))))
 
-(defpage upload "/stripe-events" [req]
+(defpage stripe-events "/stripe-events" [req]
   (hiccup/html (content/layout {} (admin-content/stripe-events))))
 
 (defpage refresh-client [:post "/refresh-client-stats"] [req]

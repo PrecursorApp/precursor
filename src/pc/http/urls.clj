@@ -1,5 +1,6 @@
 (ns pc.http.urls
   (:require [cemerick.url :as url]
+            [clojure.string :as str]
             [pc.profile :as profile]))
 
 (defn make-url [path & {:keys [query subdomain]}]
@@ -18,6 +19,15 @@
 
 (defn root [& {:keys [query subdomain]}]
   (make-url "/" :query query :subdomain subdomain))
+
+(defn urlify-doc-name
+  "Strips html characters and replaces everything else with dashes"
+  [doc-name]
+  (-> (or doc-name "")
+    (str/replace #"[&<>\"']" "")
+    (str/replace #"[^A-Za-z0-9-_]+" "-")
+    (str/replace #"^-" "")
+    (str/replace #"-$" "")))
 
 (defn doc-url [doc-id & {:keys [query subdomain]}]
   (make-url (str "/document/" doc-id) :query query :subdomain subdomain))
@@ -54,3 +64,7 @@
 
 (defn twilio-status-callback []
   (make-url "/hooks/twilio"))
+
+(defn team-plan [team]
+  (let [team-doc (:team/intro-doc team)]
+    (make-url (str "/document/" (:db/id team-doc) "/plan") :subdomain (:team/subdomain team))))

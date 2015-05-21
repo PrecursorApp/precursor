@@ -139,30 +139,30 @@
                                                  (om/set-state! owner :chat-height (max 64 (.-scrollHeight node)))))}]
           (if chat-submit-learned?
             (list
-             (when (seq chatting)
-               [:div.chat-typing-notice {:data-typing-notice (let [uuid->cust (get-in app [:cust-data :uuid->cust])
-                                                                   cust-names (reduce (fn [acc chatter]
-                                                                                        (conj acc
-                                                                                              (gstring/truncate
-                                                                                               (or (get-in uuid->cust [(:cust/uuid chatter) :cust/name])
-                                                                                                   (apply str (take 6 (:client-id chatter))))
-                                                                                               10)))
-                                                                                      #{} chatting)
-                                                                   name-string (str/join ", " (sort cust-names))]
-                                                               (str (if (> (count name-string) 30)
-                                                                      ;; show number of people chatting if it starts to get too long
-                                                                      (str (count cust-names) " people")
-                                                                      name-string)
-                                                                    (if (= 1 (count cust-names))
-                                                                      " is "
-                                                                      " are ")
-                                                                    "typing..."))}])
+              (when (seq chatting)
+                [:div.chat-typing-notice {:data-typing-notice (let [uuid->cust (get-in app [:cust-data :uuid->cust])
+                                                                    cust-names (reduce (fn [acc chatter]
+                                                                                         (conj acc
+                                                                                               (gstring/truncate
+                                                                                                 (or (get-in uuid->cust [(:cust/uuid chatter) :cust/name])
+                                                                                                     (apply str (take 6 (:client-id chatter))))
+                                                                                                 10)))
+                                                                                       #{} chatting)
+                                                                    name-string (str/join ", " (sort cust-names))]
+                                                                (str (if (> (count name-string) 30)
+                                                                       ;; show number of people chatting if it starts to get too long
+                                                                       (str (count cust-names) " people")
+                                                                       name-string)
+                                                                     (if (= 1 (count cust-names))
+                                                                       " is "
+                                                                       " are ")
+                                                                     "typing..."))}])
 
-             [:div.chat-placeholder {:data-before "Chat."}])
-            [:div.chat-teach-enter {:data-step-1 "Click here."
-                                    :data-step-2 "Type something."
-                                    :data-step-3 "Send with enter."
-                                    :data-remind "Don't forget to hit enter."}])])))))
+              [:label.chat-placeholder.hide-from-menu {:data-before "Chat."}])
+            [:label.chat-teach-enter.hide-from-menu {:data-step-1 "Click here."
+                                                   :data-step-2 "Type something."
+                                                   :data-step-3 "Send with enter."
+                                                   :data-remind "Don't forget to hit enter."}])])))))
 
 (defn log [{:keys [sente-id client-id] :as app} owner]
   (reify
@@ -269,10 +269,13 @@
             document-id (get-in app [:document/id])]
         (html
          [:div.chat
-          [:div#canvas-size.chat-offset.holo]
+          [:div#canvas-size.chat-offset.holo
+           [:svg {:width "100%" :height "100%"}
+            [:defs
+             [:mask#canvas-mask
+              [:rect {:width "100%" :height "100%" :fill "#fff"}]]]]]
           [:div.chat-window {:class (when (or (not chat-opened?)
                                               (:show-landing? app)) ["closed"])}
-           [:div.chat-background]
            (om/build log (utils/select-in app [[:document/id]
                                                [:sente-id]
                                                [:client-id]

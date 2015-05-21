@@ -7,6 +7,7 @@
             [pc.analytics :as analytics]
             [pc.auth.google :as google-auth]
             [pc.crm :as crm]
+            [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust]
             [pc.models.permission :as permission-model]
             [pc.datomic :as pcd]
@@ -18,21 +19,34 @@
   (let [sub (:google-account/sub cust)
         {:keys [first-name last-name gender
                 avatar-url birthday occupation]} (utils/with-report-exceptions
-                                                   (google-auth/user-info-from-sub sub))
-        cust (-> cust
-               (cust/update! (utils/remove-map-nils {:cust/first-name first-name
-                                                     :cust/last-name last-name
-                                                     :cust/birthday birthday
-                                                     :cust/gender gender
-                                                     :cust/occupation occupation
-                                                     :google-account/avatar avatar-url}))
-               crm/update-with-dribbble-username)]
+                                                   (google-auth/user-info-from-sub sub))]
+    (cust/update! cust (utils/remove-map-nils (merge {:cust/first-name first-name
+                                                      :cust/last-name last-name
+                                                      :cust/birthday birthday
+                                                      :cust/gender gender
+                                                      :cust/occupation occupation
+                                                      :google-account/avatar avatar-url}
+                                                     ;; This is racy, but we're unlikely to encounter this race
+                                                     ;; and we don't want to take the time to do a db.fn/cas
+                                                     (when-not (:cust/name cust)
+                                                       {:cust/name first-name}))))))
+
+(defn perform-blocking-new-cust-updates [cust ring-req]
+  (let [cust (crm/update-with-dribbble-username cust)]
+    (utils/with-report-exceptions
+      (analytics/track-signup cust ring-req))
     (utils/with-report-exceptions
       (analytics/track-user-info cust))
-    (when (profile/prod?)
-      (utils/with-report-exceptions
-        (crm/ping-chat-with-new-user cust)))
-    cust))
+    (utils/with-report-exceptions
+      (crm/ping-chat-with-new-user cust))))
+
+(defn convert-all-grants-for-cust [db cust]
+  (doseq [grant (access-grant-model/find-by-email db (:cust/email cust))]
+    (permission-model/convert-access-grant grant cust (merge {:transaction/broadcast true}
+                                                             (when (:access-grant/document-ref grant)
+                                                               {:transaction/document (:db/id (:access-grant/document-ref grant))})
+                                                             (when (:access-grant/team grant)
+                                                               {:transaction/team (:db/id (:access-grant/team grant))})))))
 
 (defn cust-from-google-oauth-code [code ring-req]
   {:post [(string? (:google-account/sub %))]} ;; should never break, but just in case...
@@ -50,9 +64,12 @@
                                   :cust/verified-email (:email_verified user-info)
                                   :cust/http-session-key (UUID/randomUUID)
                                   :google-account/sub (:sub user-info)
-                                  :cust/uuid (d/squuid)})]
-          (analytics/track-signup user ring-req)
-          (future (utils/with-report-exceptions (update-user-from-sub user)))
+                                  :cust/uuid (d/squuid)})
+              convert-access-grants-future (future (convert-all-grants-for-cust (pcd/default-db) user))
+              user (deref (future (update-user-from-sub user)) 500 user)]
+          ;; need this to finish before they try to access a document
+          @convert-access-grants-future
+          (future (perform-blocking-new-cust-updates user ring-req))
           user)
         (catch Exception e
           (if (pcd/unique-conflict? e)

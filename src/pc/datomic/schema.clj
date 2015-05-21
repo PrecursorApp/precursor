@@ -461,11 +461,13 @@
 
    (attribute :access-grant/email
               :db.type/string
+              :db/index true
               :db/doc "email that was granted access"
               :metadata/unescaped true)
 
    (attribute :access-grant/token
               :db.type/string
+              :db/unique :db.unique/value
               :db/doc "correlates email that was granted access with the account that claims the grant")
 
    (attribute :access-grant/expiry
