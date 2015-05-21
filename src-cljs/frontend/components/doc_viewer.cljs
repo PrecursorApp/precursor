@@ -114,7 +114,7 @@
                 [:label {:data-placeholder "Searching for a doc?"
                          :data-label (str (count filtered-docs) " of your " (count all-docs) " docs match")}]]
                (when (and searching?
-                          (= 0 (count filtered-docs)))
+                          (zero? (count filtered-docs)))
                  [:p.make
                   [:span (str "We can't find a doc matching "
                               "\""

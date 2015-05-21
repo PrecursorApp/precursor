@@ -147,7 +147,7 @@
            [:div.privacy-stats {:href (urls/overlay-path document "sharing")
                                 :key rejected-tx-count
                                 :class (when (pos? rejected-tx-count)
-                                         (if (= 0 (mod rejected-tx-count 2))
+                                         (if (zero? (mod rejected-tx-count 2))
                                            "rejected-txes-a"
                                            "rejected-txes-b"))}
             (case (:document/privacy document)
