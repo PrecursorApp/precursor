@@ -146,10 +146,9 @@
   (string/replace str #"[&<>\"']" ""))
 
 (defn set-page-title! [& [title]]
-  (set! (.-title js/document) (strip-html
-                               (if (seq title)
-                                 (str title  " - Precursor")
-                                 "Precursor - Simple collaborative prototyping"))))
+  (set! (.-title js/document) (if (seq title)
+                                (strip-html (str title  " | Precursor"))
+                                "Precursor—Simple collaborative prototyping")))
 
 (defn valid-email? [str]
   (.isValidAddrSpec EmailAddress str))
