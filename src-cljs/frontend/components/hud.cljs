@@ -220,25 +220,19 @@
             last-unread-chat (d/entity @db (first (map first (reverse (sort-by second (chat-model/chat-timestamps-since @db last-read-time))))))
             show-popup? (and (not chat-opened?) last-unread-chat)]
         (html
-         [:div {:on-click #(cast! :chat-toggled)
-                :on-touch-end #(do
-                                 (.preventDefault %)
-                                 (cast! :chat-toggled))
-                :role "button"
-                :style (merge {:position "fixed"
-                               :bottom 0
-                               :right 64
-                               :background "#333"
-                               :border "1px solid #555"
-                               :padding "1em"
-                               :color "#ccc"
-                               :width 300
-                               :cursor "pointer"}
-                              (when-not show-popup?
-                                {:display "none"}))}
           (when show-popup?
-            [:div.unread-chat {:key (:db/id last-unread-chat)}
-             (:chat/body last-unread-chat)])])))))
+            [:div.chat-previews.hud-item
+             [:div.chat-preview {:key (:db/id last-unread-chat)
+                                 :on-click #(cast! :chat-toggled)
+                                 :on-touch-end #(do
+                                                  (.preventDefault %)
+                                                  (cast! :chat-toggled))}
+              [:div.chat-message
+               [:div.message-head
+                [:div.message-avatar (common/icon :user {:path-props {:className "red"}})]
+                [:div.message-author "author"]
+                [:div.message-time "now"]]
+               [:div.message-body (:chat/body last-unread-chat)]]]]))))))
 
 (defn volume-icon [level color-class]
   (common/icon (common/volume-icon-kw level)

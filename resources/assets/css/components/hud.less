@@ -479,3 +479,31 @@
 .rejected-txes-b {
   animation: rejected-pulse @run;
 }
+.chat-previews {
+  .flexy(column);
+  color: @gray_light;
+  bottom: 0;
+  right: 0;
+  margin-right: @tile;
+  margin-bottom: @menu_padding;
+  max-width: @tile_xl;
+  &:not(:hover) {
+    opacity: @opacity_darker_gray;
+  }
+}
+.chat-preview {
+  cursor: pointer;
+  animation: in-fade-right @run_slow ease-out;
+  .chat-message {
+    padding: 0;
+  }
+  .message-head {
+    margin-bottom: .25em;
+  }
+  .message-body {
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
