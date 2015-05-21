@@ -40,7 +40,8 @@
                                                                :coupon/stripe-id)
                                                 :description (format "Team plan for %s, created by %s"
                                                                      (:team/subdomain team)
-                                                                     (:cust/email cust)))]
+                                                                     (:cust/email cust))
+                                                :quantity (count (:plan/active-custs plan)))]
     (utils/straight-jacket
      (analytics/track-create-plan team)) ; non-blocking
     stripe-customer))
