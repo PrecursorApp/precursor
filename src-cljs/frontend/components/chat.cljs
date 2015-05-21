@@ -53,11 +53,11 @@
             color-class (name (colors/find-color uuid->cust (:cust/uuid chat) (:session/uuid chat)))]
         (html [:div.chat-message {:key (str "chat-message" (:db/id chat))}
                (when show-sender?
-                 [:div.message-head
+                 [:div.message-head {:key "head"}
                   [:div.message-avatar (common/icon :user {:path-props {:className color-class}})]
                   [:div.message-author cust-name]
                   [:div.message-time short-time]])
-               [:div.message-body
+               [:div.message-body {:key "body"}
                 chat-body]])))))
 
 (def day-of-week

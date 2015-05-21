@@ -5,6 +5,7 @@
             [frontend.auth :as auth]
             [frontend.colors :as colors]
             [frontend.components.common :as common]
+            [frontend.components.chat :as chat-component]
             [frontend.config :as config]
             [frontend.cursors :as cursors]
             [frontend.db :as fdb]
@@ -228,22 +229,21 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             chat-opened? (get-in app state/chat-opened-path)
             last-read-time (get-in app (state/last-read-chat-time-path (:document/id app)))
-            last-unread-chat (d/entity @db (first (map first (reverse (sort-by second (chat-model/chat-timestamps-since @db last-read-time))))))
-            show-popup? (and (not chat-opened?) last-unread-chat)]
+            last-unread-chats (map #(d/entity @db (first %))
+                                   (sort-by second (chat-model/chat-timestamps-since @db last-read-time)))
+            show-popup? (and (not chat-opened?) (seq last-unread-chats))]
         (html
-          (when show-popup?
-            [:div.chat-previews.hud-item
-             [:div.chat-preview {:key (:db/id last-unread-chat)
-                                 :on-click #(cast! :chat-toggled)
-                                 :on-touch-end #(do
-                                                  (.preventDefault %)
-                                                  (cast! :chat-toggled))}
-              [:div.chat-message
-               [:div.message-head
-                [:div.message-avatar (common/icon :user {:path-props {:className "red"}})]
-                [:div.message-author "author"]
-                [:div.message-time "now"]]
-               [:div.message-body (:chat/body last-unread-chat)]]]]))))))
+         (when show-popup?
+           [:div.chat-previews.hud-item
+            [:div.chat-preview {:on-click #(cast! :chat-toggled)
+                                :on-touch-end #(do
+                                                 (.preventDefault %)
+                                                 (cast! :chat-toggled))}
+             (for [chat (take-last 2 last-unread-chats)]
+               (om/build chat-component/chat-item {:chat chat
+                                                   :uuid->cust (get-in app [:cust-data :uuid->cust])
+                                                   :show-sender? true}
+                         {:react-key (:db/id chat)}))]]))))))
 
 (defn volume-icon [level color-class]
   (common/icon (common/volume-icon-kw level)
@@ -414,7 +414,8 @@
         (om/build chat-popups (utils/select-in app [state/chat-opened-path
                                                     state/chat-button-learned-path
                                                     state/browser-settings-path
-                                                    [:document/id]])
+                                                    [:document/id]
+                                                    [:cust-data]])
                   {:react-key "chat-popups"})
 
         (om/build tray (utils/select-in app [state/chat-opened-path
