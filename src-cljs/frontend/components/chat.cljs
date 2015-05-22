@@ -10,8 +10,11 @@
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
+            [frontend.db :as fdb]
             [frontend.models.chat :as chat-model]
+            [frontend.models.doc :as doc-model]
             [frontend.state :as state]
+            [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
             [goog.date]
             [goog.dom]
@@ -174,6 +177,7 @@
        :touch-enabled? false})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (om/set-state! owner :touch-enabled? (.hasOwnProperty js/window "ontouchstart"))
       (d/listen! (om/get-shared owner :db)
                  (om/get-state owner :listener-key)
@@ -206,6 +210,7 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
             chat-bot (:document/chat-bot (d/entity @db (ffirst (d/q '[:find ?t :where [?t :document/name]] @db))))
+            doc (doc-model/find-by-id @db (:document/id app))
             dummy-chat {:chat/body [:span
                                     "Welcome, try the "
                                     [:a {:href "https://precursorapp.com/document/17592197661008" :target "_blank"}
@@ -213,10 +218,13 @@
                                     " doc, see other users "
                                     [:a {:href "/blog/ideas-are-made-with-precursor" :target "_blank"}
                                      "make"]
-                                    " things, or ask us "
+                                    " things, "
+                                    [:a {:href (urls/overlay-path doc "sharing")}
+                                     "invite a friend"]
+                                    " or ping "
                                     [:a {:on-click #(cast! :chat-user-clicked {:id-str (:chat-bot/name chat-bot)}) :role "button"}
-                                     "anything"]
-                                    "!"]
+                                     (str "@" (:chat-bot/name chat-bot))]
+                                    " for help!"]
                         :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html
