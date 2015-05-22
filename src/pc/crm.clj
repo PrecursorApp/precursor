@@ -55,13 +55,14 @@
           cust-count-yesterday (cust-model/cust-count (d/as-of db midnight-pt))
           dribbble-profile (some-> cust :cust/guessed-dribbble-username get-dribbble-profile)
           cust-name (str/trim (str (:cust/first-name cust) " " (:cust/last-name cust)))
-          message (str (format "New user (#%s, #%s today): <https://plus.google.com/%s|%s> <%s|%s>"
+          message (str (format "New user (#%s, #%s today): <https://plus.google.com/%s|%s> <%s|%s>\nOccupation: %s"
                                cust-count
                                (- cust-count cust-count-yesterday)
                                (:google-account/sub cust)
                                cust-name
                                (admin-urls/cust-info-from-cust cust)
-                               (:cust/email cust))
+                               (:cust/email cust)
+                               (or (:cust/occupation cust) "Unknown"))
                        (when dribbble-profile
                          (format "\nDribbble: <%s|%s> %s followers "
                                  (get dribbble-profile "html_url")
