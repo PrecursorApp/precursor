@@ -10,7 +10,10 @@
    :body
    (list
     [:article
-     [:p "Precursor works great for building flow diagrams. It has the sketching tools you need to clearly express your ideas, but keeps things simple so that you don't get distracted from your goal."]]
+     [:p [:a {:href "https://precursorapp.com"
+              :title "Precursor is a sketching tool for teams with real-time collaboration."}
+          "Precursor"]
+      " works great for building flow diagrams. It has the sketching tools you need to clearly express your ideas, but keeps things simple so that you don't get distracted from your goal."]]
     [:article
      [:h3 "Why flow diagrams?"]
      [:p "Flow diagrams can help you design and understand complex systems. They provide a high-level overview of a system that helps you anchor your thinking and visualize relationships between the system's components."]
