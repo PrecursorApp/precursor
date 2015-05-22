@@ -994,7 +994,10 @@
          (log/error e)
 
          (.printStackTrace (:throwable &throw-context))
-         (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust)))))))
+         (rollbar/report-exception e
+                                   :request (:ring-req req)
+                                   :cust (some-> req :ring-req :auth :cust)
+                                   :extra-data (select-keys req [:?data :event])))))))
 
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))
