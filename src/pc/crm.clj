@@ -1,9 +1,13 @@
 (ns pc.crm
   (:require [clj-http.client :as http]
+            [clj-time.core :as time]
+            [clj-time.coerce]
             [cheshire.core :as json]
             [clojure.string :as str]
+            [datomic.api :as d]
             [pc.auth.google :refer [google-api-key]]
             [pc.datomic :as pcd]
+            [pc.http.admin.urls :as admin-urls]
             [pc.models.cust :as cust-model]
             [pc.profile :as profile]
             [pc.utils :as utils]))
@@ -45,14 +49,18 @@
 (defn ping-chat-with-new-user [cust]
   (utils/with-report-exceptions
     (let [db (pcd/default-db)
-          ;; Note: counting this way is racy!
-          cust-count (cust-model/cust-count db)
+          create-instant (cust-model/created-at db cust)
+          cust-count (cust-model/cust-count (d/as-of db create-instant))
+          midnight-pt (clj-time.coerce/to-date (time/today-at-midnight (time/time-zone-for-id "America/Los_Angeles")))
+          cust-count-yesterday (cust-model/cust-count (d/as-of db midnight-pt))
           dribbble-profile (some-> cust :cust/guessed-dribbble-username get-dribbble-profile)
           cust-name (str/trim (str (:cust/first-name cust) " " (:cust/last-name cust)))
-          message (str (format "New user (#%s): <https://plus.google.com/%s|%s> %s"
+          message (str (format "New user (#%s, #%s today): <https://plus.google.com/%s|%s> <%s|%s>"
                                cust-count
+                               (- cust-count cust-count-yesterday)
                                (:google-account/sub cust)
                                cust-name
+                               (admin-urls/cust-info-from-cust cust)
                                (:cust/email cust))
                        (when dribbble-profile
                          (format "\nDribbble: <%s|%s> %s followers "
