@@ -146,7 +146,8 @@
                                                              (doc-model/all @db))))))))))
 
 (defn maybe-replace-doc-token [current-state]
-  (let [path (.getPath (goog.Uri. js/window.location))
+  (let [url (goog.Uri. js/window.location)
+        path (.getPath url)
         ;; duplicated in controls/replace-token-with-new-name
         current-url-name (second (re-find #"^/document/([A-Za-z0-9_-]*?)-{0,1}\d+(/.*$|$)" path))
         doc (doc-model/find-by-id @(:db current-state)
@@ -162,7 +163,9 @@
       (let [[_ before-name after-name] (re-find #"^(/document/)[A-Za-z0-9_-]*?-{0,1}(\d+(/.*$|$))" path)
             new-path (str before-name new-url-name "-" after-name)]
         (put! (get-in current-state [:comms :nav]) [:navigate! {:replace-token? true
-                                                                :path new-path}])))))
+                                                                :path (str new-path
+                                                                           (when (seq (.getQuery url))
+                                                                             (str "?" (.getQuery url))))}])))))
 
 (defn handle-post-doc-navigation [navigation-point args previous-state current-state]
   (let [sente-state (:sente current-state)
