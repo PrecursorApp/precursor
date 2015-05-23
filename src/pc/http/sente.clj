@@ -810,7 +810,6 @@
     (check-team-access team-uuid req :admin)
     (let [team (team-model/find-by-uuid (:db req) team-uuid)
           cust (-> req :ring-req :auth :cust)
-          tempid (d/tempid :db.part/user)
           channel-name (:slack-hook/channel-name ?data)
           webhook-url (:slack-hook/webhook-url ?data)]
       (cond (empty? channel-name)
@@ -823,22 +822,25 @@
                         :error-msg "Webhook url is not valid"
                         :error-key :invalid-webhook-url})
             :else
-            (let [permission (permission-model/create-team-image-permission! team)
-                  {:keys [tempids db-after]}
-                  @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
-                                            :transaction/team (:db/id team)
-                                            :cust/uuid (:cust/uuid cust)
-                                            :transaction/broadcast true}
-                                           {:db/id (:db/id team)
-                                            :team/slack-hooks {:slack-hook/channel-name channel-name
-                                                               :slack-hook/webhook-url webhook-url
-                                                               :slack-hook/send-count 0
-                                                               :slack-hook/permission (:db/id permission)
-                                                               :db/id tempid}}
-                                           (web-peer/server-frontend-id tempid (:db/id team))])
-                  slack-hook-ent (d/entity db-after (d/resolve-tempid db-after tempids tempid))]
+            (let [slack-hook-ent (integrations-http/create-slack-hook team cust channel-name webhook-url)]
+
               (?reply-fn {:status :success
                           :entities [(team-model/slack-hook-read-api slack-hook-ent)]}))))))
+
+(defmethod ws-handler :team/delete-slack-integration [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          cust (-> req :ring-req :auth :cust)
+          hook-id (:slack-hook-id ?data)
+          slack-hook (team-model/find-slack-hook-by-frontend-id (:db req) (UUID. (:db/id team) hook-id))]
+      (cond (not slack-hook)
+            (?reply-fn {:status :error
+                        :error-msg "Can't find hook"
+                        :error-key :invalid-slack-hook})
+            :else
+            (do (integrations-http/delete-slack-hook team cust slack-hook)
+                (?reply-fn {:status :success}))))))
 
 (defmethod ws-handler :team/post-doc-to-slack [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]

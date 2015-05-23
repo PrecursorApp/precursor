@@ -84,9 +84,9 @@
           (when error
             [:p.make error])])))))
 
-(defn post-to-slack-button [{:keys [slack-hook team-uuid doc-id]} owner]
+(defn delete-slack-hook [{:keys [slack-hook team-uuid doc-id]} owner]
   (reify
-    om/IDisplayName (display-name [_] "Slack button")
+    om/IDisplayName (display-name [_] "Delete slack hook")
     om/IInitState (init-state [_] {:submitting? nil})
     om/IRenderState
     (render-state [_ {:keys [submitting? submitted? error]}]
@@ -97,7 +97,7 @@
                         :on-click (fn [e]
                                     (om/set-state! owner :submitting? true)
                                     (go (let [resp (async/<! (sente/ch-send-msg (om/get-shared owner :sente)
-                                                                                [:team/post-doc-to-slack
+                                                                                [:team/delete-slack-integration
                                                                                  {:slack-hook-id (:db/id slack-hook)
                                                                                   :doc-id doc-id
                                                                                   :team/uuid team-uuid}]
@@ -111,18 +111,57 @@
                                               (om/update-state! owner #(assoc % :submitting? false :error nil))
                                               (if (= :success (:status resp))
                                                 (do
-                                                  (om/set-state! owner :submitted? true)
-                                                  (js/setTimeout #(when (om/mounted? owner) (om/set-state! owner :submitted? nil))
-                                                                 1000))
+                                                  (om/set-state! owner :submitted? true))
                                                 (om/set-state! owner :error (:error-msg resp))))))))}
-        (cond submitting? "Sending..."
-              submitted? "Sent!"
+        (cond submitting? "Deleting..."
+              submitted? "Deleted"
               error error
               :else
-              (str "Post this doc to "
-                   (when-not (= \# (first (:slack-hook/channel-name slack-hook)))
-                     "#")
-                   (:slack-hook/channel-name slack-hook)))]))))
+              (str "Delete this hook"))]))))
+
+(defn post-to-slack-button [{:keys [slack-hook team-uuid doc-id]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Slack button")
+    om/IInitState (init-state [_] {:submitting? nil})
+    om/IRenderState
+    (render-state [_ {:keys [submitting? submitted? error]}]
+      (html
+       [:div.menu-buttons
+        [:a.menu-button {:class (when (or submitting? submitted?) "disabled")
+                         :role "button"
+                         :key (:db/id slack-hook)
+                         :on-click (fn [e]
+                                     (om/set-state! owner :submitting? true)
+                                     (go (let [resp (async/<! (sente/ch-send-msg (om/get-shared owner :sente)
+                                                                                 [:team/post-doc-to-slack
+                                                                                  {:slack-hook-id (:db/id slack-hook)
+                                                                                   :doc-id doc-id
+                                                                                   :team/uuid team-uuid}]
+                                                                                 30000
+                                                                                 (async/promise-chan)))]
+                                           (if-not (taoensso.sente/cb-success? resp)
+                                             (om/update-state! owner (fn [s] (assoc s
+                                                                                    :submitting? false
+                                                                                    :error "The request timed out, please try again.")))
+                                             (do
+                                               (om/update-state! owner #(assoc % :submitting? false :error nil))
+                                               (if (= :success (:status resp))
+                                                 (do
+                                                   (om/set-state! owner :submitted? true)
+                                                   (js/setTimeout #(when (om/mounted? owner) (om/set-state! owner :submitted? nil))
+                                                                  1000))
+                                                 (om/set-state! owner :error (:error-msg resp))))))))}
+         (cond submitting? "Sending..."
+               submitted? "Sent!"
+               error error
+               :else
+               (str "Post this doc to "
+                    (when-not (= \# (first (:slack-hook/channel-name slack-hook)))
+                      "#")
+                    (:slack-hook/channel-name slack-hook)))]
+        (om/build delete-slack-hook {:slack-hook slack-hook
+                                     :doc-id doc-id
+                                     :team-uuid team-uuid})]))))
 
 (defn slack-hooks [app owner]
   (reify
