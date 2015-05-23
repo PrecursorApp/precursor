@@ -16,7 +16,7 @@
                                                       :title title
                                                       :title_link (urls/from-doc doc)
                                                       :image_url (urls/svg-from-doc doc
-                                                                                    :query {:access-grant-token (-> slack-hook
-                                                                                                                  :slack-hook/permission
-                                                                                                                  :permission/token)})}
+                                                                                    :query {:auth-token (-> slack-hook
+                                                                                                          :slack-hook/permission
+                                                                                                          :permission/token)})}
                                                      (when message {:text message}))]})))
