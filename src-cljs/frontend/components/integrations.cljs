@@ -44,6 +44,7 @@
           [:p "Add a new Slack channel."]
           [:p "Go to the "
            [:a {:href "https://slack.com/services/new"
+                :target "_blank"
                 :role "button"}
             "Slack integrations page"]
            ", scroll to the bottom and add a new Incoming WebHook. Choose a channel, then copy the Webhook URL and fill out the form."]
