@@ -130,13 +130,13 @@
     om/IDidMount
     (did-mount [_]
       (fdb/add-attribute-listener (om/get-shared owner :team-db)
-                                  :slack/channel-name
+                                  :slack-hook/channel-name
                                   (om/get-shared owner :listener-key)
                                   #(om/refresh! owner)))
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-attribute-listener (om/get-shared owner :team-db)
-                                     :slack/channel-name
+                                     :slack-hook/channel-name
                                      (om/get-shared owner :listener-key)))
     om/IRender
     (render [_]
