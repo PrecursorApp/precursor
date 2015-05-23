@@ -10,7 +10,9 @@
                 (str "Precursor document " (:db/id doc))
                 (:document/name doc))]
     (slack/queue-slack-webhook slack-hook
-                               {:attachments [(merge {:fallback title
+                               {:username "Precursor"
+                                :icon_url "https://dtwdl3ecuoduc.cloudfront.net/img/precursor-logo.png"
+                                :attachments [(merge {:fallback title
                                                       :title title
                                                       :title_link (urls/from-doc doc)
                                                       :image_url (urls/svg-from-doc doc
