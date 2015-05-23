@@ -59,7 +59,9 @@
                         :return-from-origin #{#{"2"}}
                         :arrow-tool #{#{"ctrl" "shift"}
                                       #{"a"}}
-                        :shrink-text #{#{"-"} #{"["}}
+                        :shrink-text #{#{"shift" "-"}
+                                       #{"-"}
+                                       #{"["}}
                         :grow-text #{#{"shift" "="}
                                      #{"="}
                                      #{"]"}}

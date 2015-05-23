@@ -5,6 +5,7 @@
             [frontend.overlay :as overlay]
             [frontend.camera :as cameras]
             [frontend.models.chat :as chat-model]
+            [frontend.models.doc :as doc-model]
             [frontend.rtc :as rtc]
             [frontend.rtc.stats :as rtc-stats]
             [frontend.sente :as sente]
@@ -124,7 +125,8 @@
   [container message {:keys [rejects datom-group sente-event]} previous-state current-state]
   (when (and (read-only-rejected? previous-state rejects datom-group)
              (nil? (get-in previous-state (state/notified-read-only-path (:document/id previous-state)))))
-    (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path (:document/id previous-state) "sharing")}])))
+    (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path (doc-model/find-by-id @(:db previous-state) (:document/id previous-state))
+                                                                                     "sharing")}])))
 
 (defmethod error :datascript/sync-tx-error
   [container message {:keys [reason sente-event datom-group annotations] :as data} state]

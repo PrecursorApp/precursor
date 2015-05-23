@@ -21,7 +21,9 @@
             [slingshot.slingshot :refer (try+ throw+)]))
 
 (defpage new [:post "/api/v1/document/new"] [req]
-  (let [read-only? (some-> req :body slurp edn/read-string :read-only)]
+  (let [params (some-> req :body slurp edn/read-string)
+        read-only? (:read-only params)
+        doc-name (:document/name params)]
     (if (:subdomain req)
       (if (and (:team req)
                (auth/logged-in? req)
@@ -32,8 +34,10 @@
                           (when-let [cust-uuid (get-in req [:cust :cust/uuid])]
                             {:document/creator cust-uuid})
                           (when read-only?
-                            {:document/privacy :document.privacy/read-only})))]
-          {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})})
+                            {:document/privacy :document.privacy/read-only})
+                          (when doc-name
+                            {:document/name doc-name})))]
+          {:status 200 :body (pr-str {:document (doc-model/read-api doc)})})
         {:status 400 :body (pr-str {:error :unauthorized-to-team
                                     :redirect-url (str (url/map->URL {:host (profile/hostname)
                                                                       :protocol (if (profile/force-ssl?)
@@ -49,8 +53,9 @@
             doc (doc-model/create-public-doc!
                  (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
                         (when cust-uuid {:document/creator cust-uuid})
-                        (when read-only? {:document/privacy :document.privacy/read-only})))]
-        {:status 200 :body (pr-str {:document {:db/id (:db/id doc)}})}))))
+                        (when read-only? {:document/privacy :document.privacy/read-only})
+                        (when doc-name {:document/name doc-name})))]
+        {:status 200 :body (pr-str {:document (doc-model/read-api doc)})}))))
 
 (defpage create-team [:post "/api/v1/create-team"] [req]
   (let [params (some-> req :body slurp edn/read-string)

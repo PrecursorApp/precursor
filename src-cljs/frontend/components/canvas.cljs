@@ -414,7 +414,7 @@
           (when-let [issue (issue-model/find-by-doc-id @issue-db document-id)]
             (dom/g #js {:className "layer"}
               (svg-element {:layer/type :layer.type/text
-                            :layer/text (str "Feature request -- " (gstring/truncate (:issue/title issue) 40))
+                            :layer/text (gstring/truncate (:issue/title issue) 40)
                             :layer/start-x 100
                             :layer/end-x 100
                             :layer/start-y 100
@@ -423,17 +423,18 @@
                             :key "issue-title"
                             :className "text-layer issue-layer"
                             :onClick #(cast! :issue-layer-clicked {:frontend/issue-id (:frontend/issue-id issue)})})
-              (when (= (:cust/email cust) (:issue/author issue))
-                (svg-element {:layer/type :layer.type/text
-                              :layer/text "Draw anything here to help illustrate your idea."
-                              :layer/start-x 100
-                              :layer/end-x 100
-                              :layer/start-y (+ 100 font-size)
-                              :layer/end-y (+ 100 font-size)
-                              :layer/font-size 16
-                              :key "doc-instructions"
-                              :className "text-layer issue-layer"
-                              :onClick #(cast! :issue-layer-clicked {:frontend/issue-id (:frontend/issue-id issue)})})))))))))
+              (svg-element {:layer/type :layer.type/text
+                            :layer/text (if (= (:cust/email cust) (:issue/author issue))
+                                          "Draw anything here to help illustrate your idea."
+                                          "(click to view issue)")
+                            :layer/start-x 100
+                            :layer/end-x 100
+                            :layer/start-y (+ 100 16)
+                            :layer/end-y (+ 100 16)
+                            :layer/font-size 12
+                            :key "doc-instructions"
+                            :className "text-layer issue-layer"
+                            :onClick #(cast! :issue-layer-clicked {:frontend/issue-id (:frontend/issue-id issue)})}))))))))
 
 (defn subscriber-cursor-icon [tool]
   (case (name tool)

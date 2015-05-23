@@ -1,5 +1,6 @@
 (ns pc.admin.analytics
-  (:require [cheshire.core :as json]
+  (:require [cemerick.url :as url]
+            [cheshire.core :as json]
             [clj-http.client :as http]
             [clj-time.core :as time]
             [clojure.string :as str]
@@ -83,3 +84,18 @@
                                      db)]
     (doseq [cust-uuid creator-uuids]
       (mixpanel/engage cust-uuid {:$set {:send_team_trial_email true}}))))
+
+(defn pprint-referrers [referrer-string]
+  (clojure.pprint/print-table (->> (fetch-people (format "\"%s\" in properties[\"$initial_referrer\"]" referrer-string) :all-pages? true)
+                                (map #(-> %
+                                        (get-in ["$properties" "$initial_referrer"])
+                                        url/url
+                                        (assoc :query nil
+                                               :protocol "http")
+                                        str
+                                        str/lower-case))
+                                frequencies
+                                (sort-by second)
+                                reverse
+                                (map (fn [[url c]]
+                                       {:url (str url) :count c})))))

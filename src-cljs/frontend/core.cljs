@@ -39,7 +39,8 @@
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [cljs.core.UUID]
-           [goog.events.EventType]))
+           [goog.events.EventType]
+           [goog.ui IdGenerator]))
 
 (enable-console-print!)
 
@@ -245,9 +246,13 @@
                                                                            :handle-mouse-up    handle-canvas-mouse-up
                                                                            :handle-mouse-move  handle-mouse-move
                                                                            :handle-key-down    handle-key-down
-                                                                           :handle-key-up      handle-key-up})]
+                                                                           :handle-key-up      handle-key-up})
+        doc-watcher-id           (.getNextUniqueId (.getInstance IdGenerator))]
 
     (db/setup-issue-listener! (:issue-db @state) "issue-db" comms (:sente @state))
+
+    ;; This will allow us to update the url and title when the doc name changes
+    (db/add-attribute-listener (:db @state) :document/name doc-watcher-id #(cast! :db-document-name-changed {:tx-data (map ds/datom-read-api (:tx-data %))}))
 
     ;; allow figwheel in dev-cljs access to this function
     (reset! frontend.careful/om-setup-debug om-setup)

@@ -46,9 +46,12 @@
                                                 (when (seq issue-title)
                                                   (let [fe-id (utils/squuid)
                                                         doc-id (let [result (async/<! (ajax/managed-ajax :post "/api/v1/document/new"
-                                                                                                         :params {:read-only true}))]
+                                                                                                         :params {:read-only true
+                                                                                                                  :document/name issue-title}))]
                                                                  (if (= :success (:status result))
-                                                                   (get-in result [:document :db/id])
+                                                                   (do
+                                                                     (d/transact! (om/get-shared owner :db) [(:document result)])
+                                                                     (get-in result [:document :db/id]))
                                                                    ;; something went wrong, notifying error channel
                                                                    (do (async/put! (om/get-shared owner [:comms :errors]) [:api-error result])
                                                                        (throw "Couldn't create doc."))))]
@@ -489,6 +492,7 @@
     (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
       (fdb/add-entity-listener (om/get-shared owner :issue-db)
                                issue-id
                                (om/get-state owner :listener-key)

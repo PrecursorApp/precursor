@@ -357,7 +357,7 @@
                [:span.content-copy
                 "Sometimes speaking out loud is simply easier than typing messages back and forth. "
                 "Teammates on your domain will get unlimited access to voice chat in every document. "]]
-              [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569418?voice=true" :target "_blank"}
+              [:a.feature-link {:href "https://precursor.precursorapp.com/document/17592197569418" :target "_blank"}
                [:span.content-copy "Try a voice chat."]]]
              [:div.feature-media.reverse
               [:div.art-frame
