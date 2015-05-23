@@ -10,6 +10,7 @@
             [frontend.components.connection :as connection]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.integrations :as integrations]
             [frontend.components.issues :as issues]
             [frontend.components.permissions :as permissions]
             [frontend.components.plan :as plan]
@@ -841,6 +842,9 @@
                          :component team/request-access}
    :plan {:title "Billing"
           :component plan/plan-menu}
+
+   :slack {:title "Post to Slack"
+           :component integrations/slack}
 
    :issues {:title "Feature Requests"
             :component issues/issues}})

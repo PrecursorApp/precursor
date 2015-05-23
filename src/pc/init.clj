@@ -17,6 +17,7 @@
             pc.nts
             pc.repl
             pc.server
+            pc.slack
             pc.statsd
             pc.stripe
             pc.stripe.dev
@@ -37,6 +38,7 @@
    #'pc.email/init
    #'pc.cache/init
    #'pc.stripe/init
+   #'pc.slack/init
    #'pc.server/init
    #'pc.less/init
    #'pc.http.webhooks/init
