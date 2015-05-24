@@ -40,49 +40,41 @@
                                       (d/transact! (om/get-shared owner :team-db) (:entities resp)))
                                     (om/set-state! owner :error (:error-msg resp))))))))]
         (html
-         [:div.content
-          [:p "Add a new Slack channel."]
-          [:p "Go to the "
-           [:a {:href "https://slack.com/services/new"
-                :target "_blank"
-                :role "button"}
-            "Slack integrations page"]
-           ", scroll to the bottom and add a new Incoming WebHook. Choose a channel, then copy the Webhook URL and fill out the form."]
-          [:form.menu-invite-form.make {:on-submit submit-fn}
-           [:input {:type "text"
-                    :required "true"
-                    :data-adaptive ""
-                    :tabIndex 1
-                    :value (or channel-name "")
-                    :on-change #(om/set-state! owner :channel-name (.. % -target -value))
-                    :on-key-down #(when (= "Enter" (.-key %))
-                                    (.focus (om/get-node owner "webhook-input")))}]
-           [:label {:data-placeholder "Channel"
-                    :data-placeholder-nil "What channel are we posting to?"}]
-           [:input {:ref "webhook-input"
-                    :type "text"
-                    :required "true"
-                    :data-adaptive ""
-                    :tabIndex 1
-                    :value (or webhook-url "")
-                    :on-change #(om/set-state! owner :webhook-url (.. % -target -value))
-                    :on-key-down #(when (= "Enter" (.-key %))
-                                    (.focus (om/get-node owner "submit-button"))
-                                    (submit-fn))}]
-           [:label {:data-placeholder "Webhook url"
-                    :data-placeholder-nil "What's the webhook url"}]
-           [:div.content.make
-            [:div.menu-buttons
-             [:a.menu-button {:role "button"
-                              :ref "submit-button"
-                              :tabIndex 1
-                              :on-click #(do (submit-fn)
-                                             (utils/stop-event %))}
-              (if submitting?
-                "Saving..."
-                "Save webhook.")]]]]
+         [:div.content.make
+          [:form {:on-submit submit-fn}
+           [:div.adaptive.make
+            [:input {:type "text"
+                     :required "true"
+                     :tabIndex 1
+                     :value (or channel-name "")
+                     :on-change #(om/set-state! owner :channel-name (.. % -target -value))
+                     :on-key-down #(when (= "Enter" (.-key %))
+                                     (.focus (om/get-node owner "webhook-input")))}]
+            [:label {:data-label "Channel"
+                     :data-placeholder "What's the channel name?"}]]
+           [:div.adaptive.make
+            [:input {:ref "webhook-input"
+                     :type "text"
+                     :required "true"
+                     :tabIndex 1
+                     :value (or webhook-url "")
+                     :on-change #(om/set-state! owner :webhook-url (.. % -target -value))
+                     :on-key-down #(when (= "Enter" (.-key %))
+                                     (.focus (om/get-node owner "submit-button"))
+                                     (submit-fn))}]
+            [:label {:data-label "Webhook"
+                     :data-placeholder "What's the webhook url?"}]]
+           [:div.menu-buttons.make
+            [:input.menu-button {:type "submit"
+                                 :ref "submit-button"
+                                 :tabIndex 1
+                                 :value (if submitting?
+                                          "Saving..."
+                                          "Save webhook.")
+                                 :on-click #(do (submit-fn)
+                                              (utils/stop-event %))}]]]
           (when error
-            [:p.make error])])))))
+            [:div.slack-form-error error])])))))
 
 (defn delete-slack-hook [{:keys [slack-hook team-uuid doc-id]} owner]
   (reify
@@ -91,33 +83,34 @@
     om/IRenderState
     (render-state [_ {:keys [submitting? submitted? error]}]
       (html
-       [:a.menu-button {:class (when (or submitting? submitted?) "disabled")
-                        :role "button"
-                        :key (:db/id slack-hook)
-                        :on-click (fn [e]
-                                    (om/set-state! owner :submitting? true)
-                                    (go (let [resp (async/<! (sente/ch-send-msg (om/get-shared owner :sente)
-                                                                                [:team/delete-slack-integration
-                                                                                 {:slack-hook-id (:db/id slack-hook)
-                                                                                  :doc-id doc-id
-                                                                                  :team/uuid team-uuid}]
-                                                                                30000
-                                                                                (async/promise-chan)))]
-                                          (if-not (taoensso.sente/cb-success? resp)
-                                            (om/update-state! owner (fn [s] (assoc s
-                                                                                   :submitting? false
-                                                                                   :error "The request timed out, please try again.")))
-                                            (do
-                                              (om/update-state! owner #(assoc % :submitting? false :error nil))
-                                              (if (= :success (:status resp))
-                                                (do
-                                                  (om/set-state! owner :submitted? true))
-                                                (om/set-state! owner :error (:error-msg resp))))))))}
+       [:a.fork {:class (when (or submitting? submitted?) "disabled")
+                 :title "Remove channel from list."
+                 :role "button"
+                 :key (:db/id slack-hook)
+                 :on-click (fn [e]
+                             (om/set-state! owner :submitting? true)
+                             (go (let [resp (async/<! (sente/ch-send-msg (om/get-shared owner :sente)
+                                                                         [:team/delete-slack-integration
+                                                                          {:slack-hook-id (:db/id slack-hook)
+                                                                           :doc-id doc-id
+                                                                           :team/uuid team-uuid}]
+                                                                         30000
+                                                                         (async/promise-chan)))]
+                                   (if-not (taoensso.sente/cb-success? resp)
+                                     (om/update-state! owner (fn [s] (assoc s
+                                                                       :submitting? false
+                                                                       :error "The request timed out, please try again.")))
+                                     (do
+                                       (om/update-state! owner #(assoc % :submitting? false :error nil))
+                                       (if (= :success (:status resp))
+                                         (do
+                                           (om/set-state! owner :submitted? true))
+                                         (om/set-state! owner :error (:error-msg resp))))))))}
         (cond submitting? "Deleting..."
               submitted? "Deleted"
               error error
               :else
-              (str "Delete this hook"))]))))
+              (common/icon :times))]))))
 
 (defn post-to-slack-button [{:keys [slack-hook team-uuid doc-id]} owner]
   (reify
@@ -126,39 +119,42 @@
     om/IRenderState
     (render-state [_ {:keys [submitting? submitted? error]}]
       (html
-       [:div.menu-buttons
-        [:a.menu-button {:class (when (or submitting? submitted?) "disabled")
-                         :role "button"
-                         :key (:db/id slack-hook)
-                         :on-click (fn [e]
-                                     (om/set-state! owner :submitting? true)
-                                     (go (let [resp (async/<! (sente/ch-send-msg (om/get-shared owner :sente)
-                                                                                 [:team/post-doc-to-slack
-                                                                                  {:slack-hook-id (:db/id slack-hook)
-                                                                                   :doc-id doc-id
-                                                                                   :team/uuid team-uuid}]
-                                                                                 30000
-                                                                                 (async/promise-chan)))]
-                                           (if-not (taoensso.sente/cb-success? resp)
-                                             (om/update-state! owner (fn [s] (assoc s
-                                                                                    :submitting? false
-                                                                                    :error "The request timed out, please try again.")))
-                                             (do
-                                               (om/update-state! owner #(assoc % :submitting? false :error nil))
-                                               (if (= :success (:status resp))
-                                                 (do
-                                                   (om/set-state! owner :submitted? true)
-                                                   (js/setTimeout #(when (om/mounted? owner) (om/set-state! owner :submitted? nil))
-                                                                  1000))
-                                                 (om/set-state! owner :error (:error-msg resp))))))))}
-         (cond submitting? "Sending..."
-               submitted? "Sent!"
-               error error
-               :else
-               (str "Post this doc to "
-                    (when-not (= \# (first (:slack-hook/channel-name slack-hook)))
-                      "#")
-                    (:slack-hook/channel-name slack-hook)))]
+       [:div.vein-fork.make
+        [:a.vein {:class (when (or submitting? submitted?) "disabled")
+                  :title (str "Send preview of this doc to "
+                              (when-not (= \# (first (:slack-hook/channel-name slack-hook))) "#")
+                              (:slack-hook/channel-name slack-hook)
+                              " in Slack.")
+                  :role "button"
+                  :key (:db/id slack-hook)
+                  :on-click (fn [e]
+                              (om/set-state! owner :submitting? true)
+                              (go (let [resp (async/<! (sente/ch-send-msg (om/get-shared owner :sente)
+                                                                          [:team/post-doc-to-slack
+                                                                           {:slack-hook-id (:db/id slack-hook)
+                                                                            :doc-id doc-id
+                                                                            :team/uuid team-uuid}]
+                                                                          30000
+                                                                          (async/promise-chan)))]
+                                    (if-not (taoensso.sente/cb-success? resp)
+                                      (om/update-state! owner (fn [s] (assoc s
+                                                                        :submitting? false
+                                                                        :error "The request timed out, please try again.")))
+                                      (do
+                                        (om/update-state! owner #(assoc % :submitting? false :error nil))
+                                        (if (= :success (:status resp))
+                                          (do
+                                            (om/set-state! owner :submitted? true)
+                                            (js/setTimeout #(when (om/mounted? owner) (om/set-state! owner :submitted? nil))
+                                                           1000))
+                                          (om/set-state! owner :error (:error-msg resp))))))))}
+         (common/icon :slack)
+         [:span
+          (cond submitting? "Sending..."
+                submitted? "Sent!"
+                error error
+                :else
+                (:slack-hook/channel-name slack-hook))]]
         (om/build delete-slack-hook {:slack-hook slack-hook
                                      :doc-id doc-id
                                      :team-uuid team-uuid})]))))
@@ -182,16 +178,41 @@
     (render [_]
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
-         [:div.content
-          [:div.menu-buttons
-           (for [slack-hook (->> (d/datoms @team-db :aevt :slack-hook/channel-name)
-                              (map :e)
-                              (map #(d/entity @team-db %))
-                              (sort-by :db/id))]
-             (om/build post-to-slack-button {:doc-id (:document/id app)
-                                             :team-uuid (get-in app [:team :team/uuid])
-                                             :slack-hook slack-hook}
-                       {:react-key (:db/id slack-hook)}))]])))))
+         [:div.slack-channels
+          [:div.vein-fork.make
+          [:a.vein {:role "button"
+                    :on-click (if (om/get-state owner :show-form?)
+                                #(do
+                                   (om/set-state! owner :show-form? false)
+                                   (om/set-state! owner :show-info? false))
+                                #(om/set-state! owner :show-form? true))}
+           (common/icon :plus)
+           [:span "Add a Channel"]]
+          (when (om/get-state owner :show-form?)
+          [:a.fork.make {:role "button"
+                    :on-click (if (om/get-state owner :show-info?)
+                                #(om/set-state! owner :show-info? false)
+                                #(om/set-state! owner :show-info? true))}
+           (common/icon :info)])]
+          (when (om/get-state owner :show-info?)
+            [:div.content.make
+            [:p "Visit "
+             [:a {:href "https://slack.com/services/new"
+                  :target "_blank"
+                  :role "button"}
+              "Slack's integrations page"]
+             ", then scroll to the bottom and add a new incoming webhook. "
+             "Choose a channel, copy its webhook url, and then use it to fill out the following form: "]])
+          (when (om/get-state owner :show-form?)
+          (om/build slack-form app))
+          (for [slack-hook (->> (d/datoms @team-db :aevt :slack-hook/channel-name)
+                                (map :e)
+                                (map #(d/entity @team-db %))
+                                (sort-by :db/id))]
+            (om/build post-to-slack-button {:doc-id (:document/id app)
+                                            :team-uuid (get-in app [:team :team/uuid])
+                                            :slack-hook slack-hook}
+                      {:react-key (:db/id slack-hook)}))])))))
 
 
 (defn slack [app owner]
@@ -201,6 +222,12 @@
     om/IRender
     (render [_]
       (html
-       [:section.menu-view
-        (om/build slack-form app)
+       [:section.menu-view.post-to-slack
+        [:div.slack-comment.content.make
+         [:div.adaptive
+          [:textarea {:required "true"}]
+          [:label {:data-placeholder "Add optional comment to Slack post?"
+                   :data-focus "Add optional comment to Slack post"
+                   :data-typing "Your comment looks great!"
+                   :data-label "Your comment"}]]]
         (om/build slack-hooks app)]))))

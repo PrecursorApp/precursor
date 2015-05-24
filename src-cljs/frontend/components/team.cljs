@@ -182,7 +182,7 @@
                [:span "Billing"]]
               [:a.vein.make {:href (urls/overlay-path doc "slack")
                              :role "button"}
-               (common/icon :sharing)
+               (common/icon :slack)
                [:span "Post to Slack"]])
              [:a.vein.make {:href (urls/overlay-path doc "request-team-access")
                             :role "button"}
