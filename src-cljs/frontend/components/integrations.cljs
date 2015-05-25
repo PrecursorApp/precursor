@@ -115,9 +115,10 @@
 (defn post-to-slack-button [{:keys [slack-hook team-uuid doc-id]} owner]
   (reify
     om/IDisplayName (display-name [_] "Slack button")
-    om/IInitState (init-state [_] {:submitting? nil})
+    om/IInitState (init-state [_] {:submitting? nil
+                                   :comment-height 64})
     om/IRenderState
-    (render-state [_ {:keys [submitting? submitted? error]}]
+    (render-state [_ {:keys [submitting? submitted? error comment-height message]}]
       (html
        [:div.slack-channel
         [:a.vein.make {:role "button"
@@ -140,7 +141,13 @@
 
             [:div.content.make
              [:div.adaptive
-              [:textarea {:required "true"}]
+              [:textarea {:style {:height comment-height}
+                          :required "true"
+                          :value (or message "")
+                          :on-change #(do (om/set-state! owner :message (.. % -target -value))
+                                          (let [node (.-target %)]
+                                            (when (not= (.-scrollHeight node) (.-clientHeight node))
+                                              (om/set-state! owner :comment-height (max 64 (.-scrollHeight node))))))}]
               [:label {:data-placeholder "Add a comment (optional)"
                        :data-label "Comment"}]]
              [:div.menu-buttons
@@ -153,7 +160,8 @@
                                                                                             [:team/post-doc-to-slack
                                                                                              {:slack-hook-id (:db/id slack-hook)
                                                                                               :doc-id doc-id
-                                                                                              :team/uuid team-uuid}]
+                                                                                              :team/uuid team-uuid
+                                                                                              :message message}]
                                                                                             30000
                                                                                             (async/promise-chan)))]
                                                       (if-not (taoensso.sente/cb-success? resp)
@@ -164,7 +172,12 @@
                                                           (om/update-state! owner #(assoc % :submitting? false :error nil))
                                                           (if (= :success (:status resp))
                                                             (do
-                                                              (om/update-state! owner #(assoc % :error nil :submitted? true :submitting? false))
+                                                              (om/update-state! owner #(assoc %
+                                                                                              :error nil
+                                                                                              :submitted? true
+                                                                                              :submitting? false
+                                                                                              :message nil
+                                                                                              :comment-height 64))
                                                               (js/setTimeout #(when (om/mounted? owner) (om/set-state! owner :submitted? nil))
                                                                              1000))
                                                             (om/set-state! owner :error (:error-msg resp))))))))}
