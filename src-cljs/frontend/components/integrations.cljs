@@ -196,32 +196,29 @@
                                      (om/get-shared owner :listener-key)))
     om/IRender
     (render [_]
-      (let [{:keys [cast! team-db]} (om/get-shared owner)]
+      (let [{:keys [cast! team-db]} (om/get-shared owner)
+            hooks (->> (d/datoms @team-db :aevt :slack-hook/channel-name)
+                    (map :e)
+                    (map #(d/entity @team-db %))
+                    (sort-by :db/id))]
         (html
          [:div.slack-channels
           [:a.vein.make {:role "button"
-                         :on-click (if (om/get-state owner :show-form?)
-                                     #(do
-                                        (om/set-state! owner :show-form? false)
-                                        (om/set-state! owner :show-info? false))
-                                     #(om/set-state! owner :show-form? true))}
+                         :on-click #(om/update-state! owner (fn [s] (update-in s [:show-form?] not)))}
            (common/icon :plus)
            [:span "Add a Channel"]]
-          (when (om/get-state owner :show-form?)
+          (when (get (om/get-state owner) :show-form? (empty? hooks))
             (list
-              [:div.content.make
-               [:p "Visit "
-                [:a {:href "https://slack.com/services/new"
-                     :target "_blank"
-                     :role "button"}
-                 "Slack's integrations page"]
-                ", then scroll to the bottom and add a new incoming webhook. "
-                "Choose a channel, copy its webhook url, and then use it to fill out the following form: "]]
-              (om/build slack-form app)))
-          (for [slack-hook (->> (d/datoms @team-db :aevt :slack-hook/channel-name)
-                                (map :e)
-                                (map #(d/entity @team-db %))
-                                (sort-by :db/id))]
+             [:div.content.make
+              [:p "Go to "
+               [:a {:href "https://slack.com/services/new"
+                    :target "_blank"
+                    :role "button"}
+                "Slack's integrations page"]
+               ", then scroll to the end and add a new incoming webhook. "
+               "Choose a channel, create the hook, then copy the webhook url."]]
+             (om/build slack-form app)))
+          (for [slack-hook hooks]
             (om/build post-to-slack-button {:doc-id (:document/id app)
                                             :team-uuid (get-in app [:team :team/uuid])
                                             :slack-hook slack-hook}
