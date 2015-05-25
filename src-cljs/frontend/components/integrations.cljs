@@ -231,7 +231,7 @@
                     :target "_blank"
                     :role "button"}
                 "Slack's integrations page"]
-               ", then scroll to the end and add a new incoming webhook. "
+               ", scroll to the end and add a new incoming webhook. "
                "Choose a channel, create the hook, then copy the webhook url."]]
              (om/build slack-form app)))
           (for [slack-hook hooks]
