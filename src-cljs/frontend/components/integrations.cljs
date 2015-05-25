@@ -126,7 +126,10 @@
                                    #(om/set-state! owner :show-options? false)
                                    #(om/set-state! owner :show-options? true))}
          (common/icon :slack)
-         (:slack-hook/channel-name slack-hook)]
+         (let [ch (:slack-hook/channel-name slack-hook)]
+           (if (= \# (first ch))
+             (subs ch 1)
+             ch))]
         (when (om/get-state owner :show-options?)
           (if (om/get-state owner :you-sure?)
 
