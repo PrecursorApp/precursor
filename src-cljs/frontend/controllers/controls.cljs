@@ -41,6 +41,7 @@
             [goog.labs.userAgent.browser :as ua-browser]
             [goog.math :as math]
             [goog.string :as gstring]
+            [goog.string.linkify]
             [goog.style]
             [goog.Uri])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
@@ -1432,7 +1433,7 @@
                                                                        (when color {:cust/color-name color}))]))
 
 
-(defmethod control-event :canvas-aligned-to-layer-center
+(defmethod control-event :layer-target-clicked
   [browser-state message {:keys [ui-id canvas-size]} state]
   ;; TODO: how to handle no layer for ui-id
   (if-let [layer (layer-model/find-by-ui-id @(:db state) ui-id)]
@@ -1457,6 +1458,19 @@
         (assoc-in [:drawing :in-progress?] false)
         (assoc-in [:drawing :moving?] false)))
     state))
+
+(defmethod post-control-event! :layer-target-clicked
+  [browser-state message {:keys [ui-id canvas-size]} previous-state current-state]
+  ;; TODO: how to handle no layer for ui-id
+  (when (and (not (layer-model/find-by-ui-id @(:db previous-state) ui-id))
+             (= ui-id (goog.string.linkify/findFirstUrl ui-id)))
+    (let [current-url (url/url js/document.location)
+          new-url (url/url ui-id)]
+      (if (= (:host current-url) (:host new-url))
+        (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str (:path new-url)
+                                                                           (when (seq (:query new-url))
+                                                                             (str "?" (url/map->query (:query new-url)))))}])
+        (set! js/document.location ui-id)))))
 
 (defmethod control-event :layer-properties-opened
   [browser-state message {:keys [layer x y]} state]

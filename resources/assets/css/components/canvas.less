@@ -271,10 +271,13 @@
 .text-size-helper {
   fill: transparent;
 }
+.layer-ids-targets {
+  overflow: visible;
+}
 .layer-properties {
   .flexy(column);
-  width: @tile_menu_min;
-  padding-top: 5px; // keeps adaptive placeholder from getting cut off
+  width: 1.5 * @tile_xl;
+  background: @dye_inner;
   .layer-property-id {
     background: @dye_inner;
     &:not(:focus) {
@@ -283,7 +286,6 @@
     }
   }
   .layer-property-target {
-    background: @dye_inner;
     &:focus {
       border-top-color: transparent !important;
       box-shadow: 0 -1px @color_select;
@@ -298,58 +300,65 @@
     }
     &.expanded {
       border-bottom-color: transparent;
+      &:not(:focus) {
+      text-decoration: underline;
+        &:not(:valid) {
+          + label {
+            &:before {
+              border-bottom: 1px solid @gray_dark;
+            }
+          }
+        }
+      }
     }
+  }
+}
+.layer-property-target {
+  // TODO clean up this specificity hack
+  &&& {
+    background: @dye_inner;
+    padding-right: @tile;
   }
 }
 .layer-property {
   .flexy(column);
 }
 .layer-property-button {
-  font-size: 1.5em; // for ellipsis icon hack
-  line-height: 0; // for ellipsis icon hack
+  .icon(fill; @white);
   top: 0;
   right: 0;
-  width: 3rem;
-  height: 3rem;
-  margin: -3rem 0 0 auto;
-  padding-bottom: 1rem; // for ellipsis icon hack
+  width: @tile;
+  height: @tile;
+  margin: -@tile 0 0 auto;
   &:hover {
-    color: @color_select;
+    .icon(fill; @color_select);
   }
 }
 .property-dropdown-targets {
   .flexy(column);
   .scrollbar_inner();
-  max-height: (@tile * 5);
+  max-height: ~"calc(" (@tile * 4) ~"+ 1px)";
   background: @gray_darker;
   border: 1px solid @gray_dark;
   border-top: none;
   overflow-y: auto;
-  transition: max-height @run_slow @bezier_deform;
+  transition: max-height @run ease-in-out;
   &:not(.expanded) {
-    display: none;
-    // transition keeps making the dropdown clip out of place :(
-    // max-height: 0;
-    // margin-top: -1px;
+    max-height: 0;
+    margin-top: -1px;
   }
   .property-dropdown-target {
-    flex: 0 0 3em;
     color: @gray_light;
-    line-height: 1em;
-    padding: 1em;
+    line-height: 1;
+    height: @tile;
+    min-height: @tile;
+    padding: @menu_padding;
     border: 1px solid transparent;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition+: color @run_fast @bezier_fadein;
-    transition+: border @run_fast @bezier_fadein;
-    transition+: text-indent @run @bezier_deform;
     &:hover {
-      text-indent: 3px;
       border-color: @color_select;
-      transition-duration+: @now;
-      transition-duration+: @now;
-      transition-duration+: @run;
     }
   }
 }

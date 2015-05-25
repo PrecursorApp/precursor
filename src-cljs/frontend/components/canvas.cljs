@@ -26,6 +26,7 @@
             [goog.dom.forms :as gforms]
             [goog.labs.userAgent.browser :as ua-browser]
             [goog.string :as gstring]
+            [goog.string.linkify]
             [goog.style]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -190,8 +191,12 @@
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
             layer (ds/touch+ (d/entity @db layer-id))
+            external-target? (and (:layer/ui-target layer)
+                                  (= (:layer/ui-target layer)
+                                     (goog.string.linkify/findFirstUrl (:layer/ui-target layer))))
             invalid? (and (:layer/ui-target layer)
-                          (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-target layer)))))
+                          (and (not (pos? (layer-model/count-by-ui-id @db (:layer/ui-target layer))))
+                               (not external-target?)))
             show-handles? (and (not part-of-group?)
                                selected?
                                (contains? #{:layer.type/rect :layer.type/line} (:layer/type layer))
@@ -214,57 +219,57 @@
                              :strokeWidth 1})))
 
           (svg-element (assoc
-                         layer
-                         :selected? selected?
-                         :className (str "selectable-layer layer-handle "
-                                         (when (and (= :layer.type/text (:layer/type layer))
-                                                    (= :text tool)) "editable ")
-                                         (when (:layer/signup-button layer)
-                                           " signup-layer"))
-                         :key (str "selectable-" (:db/id layer))
-                         :onMouseDown
-                         #(do
-                            (.stopPropagation %)
-                            (let [group? part-of-group?]
+                        layer
+                        :selected? selected?
+                        :className (str "selectable-layer layer-handle "
+                                        (when (and (= :layer.type/text (:layer/type layer))
+                                                   (= :text tool)) "editable ")
+                                        (when (:layer/signup-button layer)
+                                          " signup-layer"))
+                        :key (str "selectable-" (:db/id layer))
+                        :onMouseDown
+                        #(do
+                           (.stopPropagation %)
+                           (let [group? part-of-group?]
 
-                              (cond
-                                (and (= :text tool)
-                                     (= :layer.type/text (:layer/type layer)))
-                                (cast! :text-layer-re-edited layer)
+                             (cond
+                               (and (= :text tool)
+                                    (= :layer.type/text (:layer/type layer)))
+                               (cast! :text-layer-re-edited layer)
 
-                                (not= :select tool) nil
+                               (not= :select tool) nil
 
-                                (or (= (.-button %) 2)
-                                    (and (= (.-button %) 0) (.-ctrlKey %)))
-                                (cast! :layer-properties-opened {:layer layer
-                                                                 :x (first (cameras/screen-event-coords %))
-                                                                 :y (second (cameras/screen-event-coords %))})
-
-
-                                (and (.-altKey %) group?)
-                                (cast! :group-duplicated
-                                       {:x (first (cameras/screen-event-coords %))
-                                        :y (second (cameras/screen-event-coords %))})
-
-                                (and (.-altKey %) (not group?))
-                                (cast! :layer-duplicated
-                                       {:layer layer
-                                        :x (first (cameras/screen-event-coords %))
-                                        :y (second (cameras/screen-event-coords %))})
-
-                                (and (.-shiftKey %) selected?)
-                                (cast! :layer-deselected {:layer layer})
+                               (or (= (.-button %) 2)
+                                   (and (= (.-button %) 0) (.-ctrlKey %)))
+                               (cast! :layer-properties-opened {:layer layer
+                                                                :x (first (cameras/screen-event-coords %))
+                                                                :y (second (cameras/screen-event-coords %))})
 
 
-                                group?
-                                (cast! :group-selected {:x (first (cameras/screen-event-coords %))
-                                                        :y (second (cameras/screen-event-coords %))})
+                               (and (.-altKey %) group?)
+                               (cast! :group-duplicated
+                                      {:x (first (cameras/screen-event-coords %))
+                                       :y (second (cameras/screen-event-coords %))})
 
-                                :else
-                                (cast! :layer-selected {:layer layer
-                                                        :x (first (cameras/screen-event-coords %))
-                                                        :y (second (cameras/screen-event-coords %))
-                                                        :append? (.-shiftKey %)}))))))
+                               (and (.-altKey %) (not group?))
+                               (cast! :layer-duplicated
+                                      {:layer layer
+                                       :x (first (cameras/screen-event-coords %))
+                                       :y (second (cameras/screen-event-coords %))})
+
+                               (and (.-shiftKey %) selected?)
+                               (cast! :layer-deselected {:layer layer})
+
+
+                               group?
+                               (cast! :group-selected {:x (first (cameras/screen-event-coords %))
+                                                       :y (second (cameras/screen-event-coords %))})
+
+                               :else
+                               (cast! :layer-selected {:layer layer
+                                                       :x (first (cameras/screen-event-coords %))
+                                                       :y (second (cameras/screen-event-coords %))
+                                                       :append? (.-shiftKey %)}))))))
           (when-not (= :layer.type/text (:layer/type layer))
             (svg-element (assoc layer
                                 :selected? selected?
@@ -304,13 +309,13 @@
 
                                                   :else
                                                   (when-not (:layer/signup-button layer)
-                                                    (cast! :canvas-aligned-to-layer-center
+                                                    (cast! :layer-target-clicked
                                                            {:ui-id (:layer/ui-target layer)
                                                             :canvas-size (utils/canvas-size)}))))
                                 :onTouchStart (fn [event]
                                                 (when (= (.-length (.-touches event)) 1)
                                                   (utils/stop-event event)
-                                                  (cast! :canvas-aligned-to-layer-center
+                                                  (cast! :layer-target-clicked
                                                          {:ui-id (:layer/ui-target layer)
                                                           :canvas-size (utils/canvas-size)})))
 
@@ -318,7 +323,9 @@
                                                 (when part-of-group?
                                                   "selected-group ")
                                                 (when invalid?
-                                                  "invalid")
+                                                  "invalid ")
+                                                (when external-target?
+                                                  "external ")
                                                 (when (:layer/signup-button layer)
                                                   " signup-layer"))
                                 :key (str "action-" (:db/id layer))))))))))
@@ -621,7 +628,8 @@
                          (map first)
                          (remove nil?)
                          sort)]
-        (dom/foreignObject #js {:width "100%"
+        (dom/foreignObject #js {:className "layer-ids-targets"
+                                :width "100%"
                                 :height "100%"
                                 :x x
                                 ;; TODO: defaults for each layer when we create them
@@ -645,9 +653,9 @@
                                     :value (or (:layer/ui-id layer) "")
                                     ;; TODO: defaults for each layer when we create them
                                     :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})})
-                    (dom/label #js {:data-placeholder "name"
-                                    :data-placeholder-nil "define a name"
-                                    :data-placeholder-busy "defining name"})
+                    (dom/label #js {:data-placeholder "This shape"
+                                    :data-placeholder-nil "Name shape."
+                                    :data-placeholder-busy "Name it to link other shapes here"})
                     (when-not (= :layer.type/line (:layer/type layer))
                       (dom/input #js {:type "text"
                                       :ref "target-input"
@@ -660,15 +668,17 @@
                                       :onClick #(.focus (om/get-node owner "target-input"))
                                       :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})}))
                     (when-not (= :layer.type/line (:layer/type layer))
-                      (dom/label #js {:data-placeholder "is targeting"
-                                      :data-placeholder-nil "define a target"
-                                      :data-placeholder-busy "defining target"}))
+                      (dom/label #js {:data-placeholder "links to"
+                                      :data-placeholder-nil "Link shape."
+                                      :data-placeholder-busy "Link it to a url or another shape"}))
                     (when-not (= :layer.type/line (:layer/type layer))
                       (when (seq targets)
                         (dom/button #js {:className "layer-property-button"
                                          :onClick #(do (om/update-state! owner :input-expanded not)
                                                        (utils/stop-event %))}
-                                    "...")))
+                                    (if (om/get-state owner :input-expanded)
+                                      (common/icon :dot-menu)
+                                      (common/icon :ellipsis)))))
                     (apply dom/div #js {:className (if (om/get-state owner :input-expanded)
                                                      "property-dropdown-targets expanded"
                                                      "property-dropdown-targets")}
@@ -1103,9 +1113,9 @@
                                                  :uuid->cust (get-in app [:cust-data :uuid->cust])}
                              {:react-key "subscribers-layers"})
 
-                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})
+                   (om/build arrows app {:react-key "arrows"})
 
-                   (om/build arrows app {:react-key "arrows"})))))))
+                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})))))))
 
 (defn needs-copy-paste-hack? []
   (not (ua-browser/isChrome)))
