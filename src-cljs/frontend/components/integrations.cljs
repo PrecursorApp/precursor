@@ -125,12 +125,7 @@
                                    #(om/set-state! owner :show-options? false)
                                    #(om/set-state! owner :show-options? true))}
          (common/icon :slack)
-         [:span
-          (cond submitting? "Sending..."
-                submitted? "Sent!"
-                error error
-                :else
-                (:slack-hook/channel-name slack-hook))]]
+         (:slack-hook/channel-name slack-hook)]
         (when (om/get-state owner :show-options?)
           (if (om/get-state owner :you-sure?)
 
@@ -150,6 +145,7 @@
                        :data-label "Comment"}]]
              [:div.menu-buttons
               [:button.menu-button {:class (when (or submitting? submitted?) "disabled")
+                                    :disabled (or submitting? submitted?)
                                     :key (:db/id slack-hook)
                                     :on-click (fn [e]
                                                 (om/set-state! owner :submitting? true)
@@ -162,19 +158,26 @@
                                                                                             (async/promise-chan)))]
                                                       (if-not (taoensso.sente/cb-success? resp)
                                                         (om/update-state! owner (fn [s] (assoc s
-                                                                                          :submitting? false
-                                                                                          :error "The request timed out, please try again.")))
+                                                                                               :submitting? false
+                                                                                               :error "Request timed out, please try again.")))
                                                         (do
                                                           (om/update-state! owner #(assoc % :submitting? false :error nil))
                                                           (if (= :success (:status resp))
                                                             (do
-                                                              (om/set-state! owner :submitted? true)
+                                                              (om/update-state! owner #(assoc % :error nil :submitted? true :submitting? false))
                                                               (js/setTimeout #(when (om/mounted? owner) (om/set-state! owner :submitted? nil))
                                                                              1000))
                                                             (om/set-state! owner :error (:error-msg resp))))))))}
-               "Post to Slack."]
+
+               (cond submitting? "Sending..."
+                     submitted? "Sent!"
+                     :else "Post this doc.")]
               [:button.slack-channel-remove {:on-click #(om/set-state! owner :you-sure? true)}
-               (common/icon :times)]]]))]))))
+               (common/icon :times)]]
+
+             (when error
+               [:div.content.make.error
+                error])]))]))))
 
 (defn slack-hooks [app owner]
   (reify
