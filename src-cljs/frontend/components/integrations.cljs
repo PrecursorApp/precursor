@@ -83,7 +83,7 @@
     om/IRenderState
     (render-state [_ {:keys [submitting? submitted? error]}]
       (html
-       [:a.fork {:class (when (or submitting? submitted?) "disabled")
+       [:button.menu-button {:class (when (or submitting? submitted?) "disabled")
                  :title "Remove channel from list."
                  :role "button"
                  :key (:db/id slack-hook)
@@ -110,7 +110,7 @@
               submitted? "Deleted"
               error error
               :else
-              (common/icon :times))]))))
+              "Yes")]))))
 
 (defn post-to-slack-button [{:keys [slack-hook team-uuid doc-id]} owner]
   (reify
@@ -119,35 +119,11 @@
     om/IRenderState
     (render-state [_ {:keys [submitting? submitted? error]}]
       (html
-       [:div.vein-fork.make
-        [:a.vein {:class (when (or submitting? submitted?) "disabled")
-                  :title (str "Send preview of this doc to "
-                              (when-not (= \# (first (:slack-hook/channel-name slack-hook))) "#")
-                              (:slack-hook/channel-name slack-hook)
-                              " in Slack.")
-                  :role "button"
-                  :key (:db/id slack-hook)
-                  :on-click (fn [e]
-                              (om/set-state! owner :submitting? true)
-                              (go (let [resp (async/<! (sente/ch-send-msg (om/get-shared owner :sente)
-                                                                          [:team/post-doc-to-slack
-                                                                           {:slack-hook-id (:db/id slack-hook)
-                                                                            :doc-id doc-id
-                                                                            :team/uuid team-uuid}]
-                                                                          30000
-                                                                          (async/promise-chan)))]
-                                    (if-not (taoensso.sente/cb-success? resp)
-                                      (om/update-state! owner (fn [s] (assoc s
-                                                                        :submitting? false
-                                                                        :error "The request timed out, please try again.")))
-                                      (do
-                                        (om/update-state! owner #(assoc % :submitting? false :error nil))
-                                        (if (= :success (:status resp))
-                                          (do
-                                            (om/set-state! owner :submitted? true)
-                                            (js/setTimeout #(when (om/mounted? owner) (om/set-state! owner :submitted? nil))
-                                                           1000))
-                                          (om/set-state! owner :error (:error-msg resp))))))))}
+       [:div.slack-channel
+        [:a.vein.make {:role "button"
+                       :on-click (if (om/get-state owner :show-options?)
+                                   #(om/set-state! owner :show-options? false)
+                                   #(om/set-state! owner :show-options? true))}
          (common/icon :slack)
          [:span
           (cond submitting? "Sending..."
@@ -155,9 +131,50 @@
                 error error
                 :else
                 (:slack-hook/channel-name slack-hook))]]
-        (om/build delete-slack-hook {:slack-hook slack-hook
-                                     :doc-id doc-id
-                                     :team-uuid team-uuid})]))))
+        (when (om/get-state owner :show-options?)
+          (if (om/get-state owner :you-sure?)
+
+            [:div.content
+             [:h4.make "Sure you want to remove this channel?"]
+             [:div.menu-buttons.make
+              (om/build delete-slack-hook {:slack-hook slack-hook
+                                           :doc-id doc-id
+                                           :team-uuid team-uuid})
+              [:button.menu-button {:on-click #(om/set-state! owner :you-sure? false)}
+               "No"]]]
+
+            [:div.content.make
+             [:div.adaptive
+              [:textarea {:required "true"}]
+              [:label {:data-placeholder "Add a comment (optional)"
+                       :data-label "Comment"}]]
+             [:div.menu-buttons
+              [:button.menu-button {:class (when (or submitting? submitted?) "disabled")
+                                    :key (:db/id slack-hook)
+                                    :on-click (fn [e]
+                                                (om/set-state! owner :submitting? true)
+                                                (go (let [resp (async/<! (sente/ch-send-msg (om/get-shared owner :sente)
+                                                                                            [:team/post-doc-to-slack
+                                                                                             {:slack-hook-id (:db/id slack-hook)
+                                                                                              :doc-id doc-id
+                                                                                              :team/uuid team-uuid}]
+                                                                                            30000
+                                                                                            (async/promise-chan)))]
+                                                      (if-not (taoensso.sente/cb-success? resp)
+                                                        (om/update-state! owner (fn [s] (assoc s
+                                                                                          :submitting? false
+                                                                                          :error "The request timed out, please try again.")))
+                                                        (do
+                                                          (om/update-state! owner #(assoc % :submitting? false :error nil))
+                                                          (if (= :success (:status resp))
+                                                            (do
+                                                              (om/set-state! owner :submitted? true)
+                                                              (js/setTimeout #(when (om/mounted? owner) (om/set-state! owner :submitted? nil))
+                                                                             1000))
+                                                            (om/set-state! owner :error (:error-msg resp))))))))}
+               "Post to Slack."]
+              [:button.slack-channel-remove {:on-click #(om/set-state! owner :you-sure? true)}
+               (common/icon :times)]]]))]))))
 
 (defn slack-hooks [app owner]
   (reify
@@ -179,32 +196,25 @@
       (let [{:keys [cast! team-db]} (om/get-shared owner)]
         (html
          [:div.slack-channels
-          [:div.vein-fork.make
-          [:a.vein {:role "button"
-                    :on-click (if (om/get-state owner :show-form?)
-                                #(do
-                                   (om/set-state! owner :show-form? false)
-                                   (om/set-state! owner :show-info? false))
-                                #(om/set-state! owner :show-form? true))}
+          [:a.vein.make {:role "button"
+                         :on-click (if (om/get-state owner :show-form?)
+                                     #(do
+                                        (om/set-state! owner :show-form? false)
+                                        (om/set-state! owner :show-info? false))
+                                     #(om/set-state! owner :show-form? true))}
            (common/icon :plus)
            [:span "Add a Channel"]]
           (when (om/get-state owner :show-form?)
-          [:a.fork.make {:role "button"
-                    :on-click (if (om/get-state owner :show-info?)
-                                #(om/set-state! owner :show-info? false)
-                                #(om/set-state! owner :show-info? true))}
-           (common/icon :info)])]
-          (when (om/get-state owner :show-info?)
-            [:div.content.make
-            [:p "Visit "
-             [:a {:href "https://slack.com/services/new"
-                  :target "_blank"
-                  :role "button"}
-              "Slack's integrations page"]
-             ", then scroll to the bottom and add a new incoming webhook. "
-             "Choose a channel, copy its webhook url, and then use it to fill out the following form: "]])
-          (when (om/get-state owner :show-form?)
-          (om/build slack-form app))
+            (list
+              [:div.content.make
+               [:p "Visit "
+                [:a {:href "https://slack.com/services/new"
+                     :target "_blank"
+                     :role "button"}
+                 "Slack's integrations page"]
+                ", then scroll to the bottom and add a new incoming webhook. "
+                "Choose a channel, copy its webhook url, and then use it to fill out the following form: "]]
+              (om/build slack-form app)))
           (for [slack-hook (->> (d/datoms @team-db :aevt :slack-hook/channel-name)
                                 (map :e)
                                 (map #(d/entity @team-db %))
@@ -223,11 +233,4 @@
     (render [_]
       (html
        [:section.menu-view.post-to-slack
-        [:div.slack-comment.content.make
-         [:div.adaptive
-          [:textarea {:required "true"}]
-          [:label {:data-placeholder "Add optional comment to Slack post?"
-                   :data-focus "Add optional comment to Slack post"
-                   :data-typing "Your comment looks great!"
-                   :data-label "Your comment"}]]]
         (om/build slack-hooks app)]))))
