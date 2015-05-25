@@ -108,13 +108,16 @@
         (redirect "/"))))
 
 (defn doc-resp [doc req & {:keys [view-data]}]
-  (content/app (merge (common-view-data req)
-                      {:initial-document-id (:db/id doc)
-                       :meta-image (urls/png-from-doc doc)
-                       :meta-url (urls/from-doc doc)
-                       :meta-title (:document/name doc)
-                       :initial-entities [(doc-model/read-api doc)]}
-                      view-data)))
+  (let [read-access? (auth/has-document-permission? (pcd/default-db) doc (-> req :auth) :read)]
+    (content/app (merge (common-view-data req)
+                        {:initial-document-id (:db/id doc)
+                         :meta-image (urls/png-from-doc doc)
+                         :meta-url (urls/from-doc doc)
+                         :meta-title (when read-access? (:document/name doc))
+                         :initial-entities (if read-access?
+                                             [(doc-model/read-api doc)]
+                                             [{:db/id (:db/id doc)}])}
+                        view-data))))
 
 (defn parse-doc-id [doc-id-param]
   (Long/parseLong (re-find #"[0-9]+$" doc-id-param)))
