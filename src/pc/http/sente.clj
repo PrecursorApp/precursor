@@ -21,6 +21,7 @@
             [pc.http.issues :as issues-http]
             [pc.http.plan :as plan-http]
             [pc.http.sente.sliding-send :as sliding-send]
+            [pc.http.integrations :as integrations-http]
             [pc.http.urls :as urls]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.access-request :as access-request-model]
@@ -35,6 +36,7 @@
             [pc.nts :as nts]
             [pc.replay :as replay]
             [pc.rollbar :as rollbar]
+            [pc.slack :as slack]
             [pc.sms :as sms]
             [pc.stripe :as stripe]
             [pc.utils :as utils]
@@ -300,7 +302,12 @@
     (send-fn client-id [:team/db-entities
                         {:team/uuid team-uuid
                          :entities [(plan-model/read-api (:team/plan team))]
-                         :entity-type :plan}])))
+                         :entity-type :plan}])
+
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map team-model/slack-hook-read-api (:team/slack-hooks team))
+                         :entity-type :slack-hooks}])))
 
 (defmethod ws-handler :issue/subscribe [req]
   (log/infof "subscribing to issues for %s" (:client-id req))
@@ -798,6 +805,65 @@
         (access-request-model/deny-request request annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
+(defmethod ws-handler :team/create-slack-integration [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          cust (-> req :ring-req :auth :cust)
+          channel-name (:slack-hook/channel-name ?data)
+          webhook-url (:slack-hook/webhook-url ?data)]
+      (cond (empty? channel-name)
+            (?reply-fn {:status :error
+                        :error-msg "Channel name is required"
+                        :error-key :invalid-channel-name})
+            (or (not (string? webhook-url))
+                (not (utils/valid-url? webhook-url)))
+            (?reply-fn {:status :error
+                        :error-msg "Webhook url is not valid"
+                        :error-key :invalid-webhook-url})
+            :else
+            (let [slack-hook-ent (integrations-http/create-slack-hook team cust channel-name webhook-url)]
+
+              (?reply-fn {:status :success
+                          :entities [(team-model/slack-hook-read-api slack-hook-ent)]}))))))
+
+(defmethod ws-handler :team/delete-slack-integration [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          cust (-> req :ring-req :auth :cust)
+          hook-id (:slack-hook-id ?data)
+          slack-hook (team-model/find-slack-hook-by-frontend-id (:db req) (UUID. (:db/id team) hook-id))]
+      (cond (not slack-hook)
+            (?reply-fn {:status :error
+                        :error-msg "Can't find hook"
+                        :error-key :invalid-slack-hook})
+            :else
+            (do (integrations-http/delete-slack-hook team cust slack-hook)
+                (?reply-fn {:status :success}))))))
+
+(defmethod ws-handler :team/post-doc-to-slack [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          hook-id (:slack-hook-id ?data)
+          slack-hook (team-model/find-slack-hook-by-frontend-id (:db req) (UUID. (:db/id team) hook-id))
+          doc (doc-model/find-by-id (:db req) (:doc-id ?data))]
+      (cond (not= (:db/id team) (:db/id (:document/team doc)))
+            (?reply-fn {:status :error
+                        :error-msg "Invalid document"
+                        :error-key :invalid-document})
+
+            (not slack-hook)
+            (?reply-fn {:status :error
+                        :error-msg "Can't find hook"
+                        :error-key :invalid-slack-hook})
+
+            :else (do
+                    (log/infof "Sending slack hook for %s on %s team" (:db/id doc) (:team/subdomain team))
+                    (integrations-http/send-slack-webhook slack-hook doc :message (:message ?data))
+                      (?reply-fn {:status :success}))))))
+
 (defmethod ws-handler :document/transaction-ids [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))]
@@ -994,7 +1060,10 @@
          (log/error e)
 
          (.printStackTrace (:throwable &throw-context))
-         (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust)))))))
+         (rollbar/report-exception (:throwable &throw-context)
+                                   :request (:ring-req req)
+                                   :cust (some-> req :ring-req :auth :cust)
+                                   :extra-data (select-keys req [:?data :event])))))))
 
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))

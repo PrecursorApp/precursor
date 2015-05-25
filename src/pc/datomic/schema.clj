@@ -858,7 +858,25 @@
 
    (attribute :comment/created-at
               :db.type/instant)
-   ])
+
+   (attribute :slack-hook/webhook-url
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :slack-hook/channel-name
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :slack-hook/send-count
+              :db.type/long)
+
+   (attribute :slack-hook/permission
+              :db.type/ref)
+
+   (attribute :team/slack-hooks
+              :db.type/ref
+              :db/isComponent true
+              :db/cardinality :db.cardinality/many)])
 
 (defonce schema-ents (atom nil))
 

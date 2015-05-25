@@ -3,7 +3,8 @@
             [clojure.tools.logging :as log]
             [pc.rollbar :as rollbar]
             [schejulure.core :as schejulure]
-            [slingshot.slingshot :refer (try+)]))
+            [slingshot.slingshot :refer (try+)])
+  (:import [java.net URL MalformedURLException]))
 
 (defmacro inspect
   "prints the expression '<name> is <value>', and returns the value"
@@ -101,3 +102,9 @@
 
 (defn apply-map [f & args]
   (apply f (apply concat (butlast args) (last args))))
+
+(defn valid-url? [url]
+  (try
+    (URL. url)
+    (catch MalformedURLException e
+      false)))

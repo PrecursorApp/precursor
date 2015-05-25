@@ -21,7 +21,7 @@
                            (if (= :success (:status result))
                              (do
                                ;; need it in the db so we can get the name
-                               (d/transact! (:db state) [(:document result)])
+                               (d/transact! (:db state) [(:document result)] {:server-update true})
                                (:document result))
                              ;; something went wrong, notifying error channel
                              (async/put! (get-in state [:comms :errors]) [:api-error result]))))]

@@ -65,3 +65,13 @@
     (select-keys [:team/subdomain :team/uuid :team/intro-doc :team/plan])
     (utils/update-when-in [:team/intro-doc] :db/id)
     (utils/update-when-in [:team/plan] (fn [p] (web-peer/client-id p)))))
+
+(defn slack-hook-read-api [slack-ent]
+  (-> slack-ent
+    (select-keys [:slack-hook/channel-name :slack-hook/send-count])
+    (assoc :db/id (web-peer/client-id slack-ent))))
+
+(defn find-slack-hook-by-frontend-id [db frontend-id]
+  (let [candidate (d/entity db (:e (first (d/datoms db :avet :frontend/id frontend-id))))]
+    (when (:slack-hook/channel-name candidate)
+      candidate)))

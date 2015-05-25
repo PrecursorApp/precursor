@@ -205,6 +205,23 @@
     margin-left: auto;
   }
 }
+.vein-fork {
+  .flexy(center);
+  &:hover {
+    .vein {
+      .icon(stroke; @gray_darker);
+      .icon(fill; @gray_darker);
+      color: @gray_darker;
+    }
+  }
+  .vein {
+    flex: 1;
+  }
+}
+.fork {
+  min-width: @tile;
+  padding: @menu_padding;
+}
 .menu-invite-form {
   .flexy(column);
   margin: @menu_padding 0;
@@ -536,11 +553,18 @@
 }
 .menu-buttons {
   .flexy(wrap);
+  .menu-button {
+    max-width: 50%;
+    + .menu-button {
+      border-left: none;
+    }
+  }
   .menu-button,
   .google-login {
     width: @tile_xl;
     .mq_640({
       width: 100%;
+      max-width: 100%;
     });
   }
 }
@@ -673,4 +697,27 @@
   .adaptive {
     margin-bottom: @menu_padding;
   }
+}
+.post-to-slack {
+  .divider {
+    margin: @menu_padding 0;
+  }
+}
+.slack-add {
+  h4 {
+    margin: 0;
+  }
+}
+.slack-channel {
+  h4 {
+    padding: 1rem 0;
+  }
+}
+.slack-form-error {
+  color: @red;
+  margin: 1rem 0;
+  animation: in-fade-bottom @run ease-out;
+}
+.slack-channel-remove {
+  margin-left: auto;
 }
