@@ -217,7 +217,7 @@
   (go (let [comms (:comms current-state)
             result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
         (if (= :success (:status result))
-          (do (d/transact! (:db current-state) [(:document result)])
+          (do (d/transact! (:db current-state) [(:document result)] {:server-update true})
               (put! (:nav comms) [:navigate! {:path (urls/doc-path (:document result))
                                               :replace-token? true}]))
           (if (and (= :unauthorized-to-team (get-in result [:response :error]))
@@ -263,7 +263,7 @@
    (fn [{:keys [docs]}]
      (when docs
        ;; TODO: if absolute-doc-url ever pulls subdomain out of the db, this could break it
-       (d/transact! (:db current-state) (map #(dissoc % :last-updated-instant) docs))
+       (d/transact! (:db current-state) (map #(dissoc % :last-updated-instant) docs) {:server-update true})
        (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}]))))))
 
 (defmethod navigated-to :overlay

@@ -50,7 +50,8 @@
                                                                                                                   :document/name issue-title}))]
                                                                  (if (= :success (:status result))
                                                                    (do
-                                                                     (d/transact! (om/get-shared owner :db) [(:document result)])
+                                                                     (d/transact! (om/get-shared owner :db) [(:document result)]
+                                                                                  {:server-update true})
                                                                      (get-in result [:document :db/id]))
                                                                    ;; something went wrong, notifying error channel
                                                                    (do (async/put! (om/get-shared owner [:comms :errors]) [:api-error result])

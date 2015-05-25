@@ -37,7 +37,7 @@
                                   (if (= :success (:status resp))
                                     (do
                                       (om/update-state! owner #(assoc % :channel-name nil :webhook-url nil))
-                                      (d/transact! (om/get-shared owner :team-db) (:entities resp)))
+                                      (d/transact! (om/get-shared owner :team-db) (:entities resp) {:server-update true}))
                                     (om/set-state! owner :error (:error-msg resp))))))))]
         (html
          [:div.content.make
