@@ -628,7 +628,8 @@
                          (map first)
                          (remove nil?)
                          sort)]
-        (dom/foreignObject #js {:width "100%"
+        (dom/foreignObject #js {:className "layer-ids-targets"
+                                :width "100%"
                                 :height "100%"
                                 :x x
                                 ;; TODO: defaults for each layer when we create them
@@ -652,9 +653,9 @@
                                     :value (or (:layer/ui-id layer) "")
                                     ;; TODO: defaults for each layer when we create them
                                     :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})})
-                    (dom/label #js {:data-placeholder "name"
-                                    :data-placeholder-nil "define a name"
-                                    :data-placeholder-busy "defining name"})
+                    (dom/label #js {:data-placeholder "This shape"
+                                    :data-placeholder-nil "Name shape."
+                                    :data-placeholder-busy "Name it to link other shapes here"})
                     (when-not (= :layer.type/line (:layer/type layer))
                       (dom/input #js {:type "text"
                                       :ref "target-input"
@@ -667,15 +668,17 @@
                                       :onClick #(.focus (om/get-node owner "target-input"))
                                       :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})}))
                     (when-not (= :layer.type/line (:layer/type layer))
-                      (dom/label #js {:data-placeholder "is targeting"
-                                      :data-placeholder-nil "define a target"
-                                      :data-placeholder-busy "defining target"}))
+                      (dom/label #js {:data-placeholder "links to"
+                                      :data-placeholder-nil "Link shape."
+                                      :data-placeholder-busy "Link it to a url or another shape"}))
                     (when-not (= :layer.type/line (:layer/type layer))
                       (when (seq targets)
                         (dom/button #js {:className "layer-property-button"
                                          :onClick #(do (om/update-state! owner :input-expanded not)
                                                        (utils/stop-event %))}
-                                    "...")))
+                                    (if (om/get-state owner :input-expanded)
+                                      (common/icon :dot-menu)
+                                      (common/icon :ellipsis)))))
                     (apply dom/div #js {:className (if (om/get-state owner :input-expanded)
                                                      "property-dropdown-targets expanded"
                                                      "property-dropdown-targets")}

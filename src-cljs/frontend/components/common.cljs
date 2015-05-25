@@ -97,6 +97,8 @@
    :fill-scroll-south "M65,72.5l-15,15l-15-15H65z"
    :fill-click-cursor "M35,66.9V25l29.6,29.6h-12l6.9,16.6L50.3,75l-6.9-16.6L35,66.9z"
    :fill-dot "M57.5,50c0,4.1-3.4,7.5-7.5,7.5s-7.5-3.4-7.5-7.5s3.4-7.5,7.5-7.5S57.5,45.9,57.5,50z"
+   :fill-ellipsis "M59,50c0,5-4,9-9,9s-9-4-9-9s4-9,9-9S59,45,59,50z M14,41c-5,0-9,4-9,9s4,9,9,9s9-4,9-9S19,41,14,41z M86,41 c-5,0-9,4-9,9s4,9,9,9s9-4,9-9S91,41,86,41z"
+   :fill-ellipsis-vertical "M50,41c5,0,9,4,9,9s-4,9-9,9s-9-4-9-9S45,41,50,41z M41,86c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S41,81,41,86z M41,14c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S41,9,41,14z"
    :fill-north "M30,20L50,0l20,20H30z"
    :fill-south "M70,80l-20,20L30,80H70z"
    :fill-east "M80,30l20,20L80,70V30z"
@@ -242,6 +244,8 @@
    :file-png    {:paths [:fill-png]}
    :file-pdf    {:paths [:fill-pdf]}
    :file-svg    {:paths [:fill-code]}
+   :ellipsis    {:paths [:fill-ellipsis]}
+   :dot-menu    {:paths [:fill-ellipsis-vertical]}
    :scroll      {:paths [:fill-scroll-north
                          :fill-dot
                          :fill-scroll-south]}
