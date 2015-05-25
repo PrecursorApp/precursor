@@ -21,7 +21,8 @@
       (when-let [{:keys [slack-hook slack-data]} (async/<! slack-ch)]
         (utils/with-report-exceptions
           (log/infof "sending slack webhook for hook id %s to %s" (:db/id slack-hook) (:slack-hook/channel-name slack-hook))
-          (send-slack-webhook slack-hook slack-data))))))
+          (send-slack-webhook slack-hook slack-data))
+        (recur)))))
 
 (defn init []
   (start-slack-consumers 2))
