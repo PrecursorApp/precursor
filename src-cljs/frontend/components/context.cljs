@@ -32,37 +32,77 @@
             :hint "Select Tool (V)"
             :icon :stroke-cursor}})
 
-(defn radial-menu [app owner]
+(defn properties-menu [app owner]
   (reify
     om/IDisplayName (display-name [_] "Radial Menu")
     om/IRender
     (render [_]
-      (let [{:keys [cast! handlers]} (om/get-shared owner)]
+      (let [{:keys [cast! handlers]} (om/get-shared owner)
+            expanded? (om/get-state owner :input-expanded)]
         (html
-         [:a.radial-menu {:style {:top  (- (get-in app [:radial :y]) 128)
-                                  :left (- (get-in app [:radial :x]) 128)}}
-          [:svg.radial-buttons {:width "256" :height "256"}
-           (for [[tool template] tools-templates]
-             (html
-              [:g.radial-button {:class (str "tool-" (:type template))}
-               [:title (:hint template)]
-               [:path.radial-pie {:d (:path template)
-                                  :key tool
-                                  :on-mouse-up #(do (cast! :tool-selected [tool]))
-                                  :on-touch-end #(do (cast! :tool-selected [tool]))}]
-               [:path.radial-icon {:class (str "shape-" (:type template))
-                                   :d (get common/icon-paths (:icon template))}]]))
-           [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
+         [:div.layer-properties
+          [:div.adaptive
+           [:input.layer-property-id {:type "text"
+                                      :required "true"}]
+           [:label {:data-placeholder "Name shape."
+                    :data-focus "Name it to link other shapes here"
+                    :data-label "This shape"}]]
+
+          [:div.adaptive
+           [:input.layer-property-target {:type "text"
+                                          :required "true"
+                                          :class (when expanded? " expanded ")}]
+           [:label {:data-placeholder "Link shape."
+                    :data-focus "Link it to a url or another shape"
+                    :data-label "links to"}]]
+
+          [:button.layer-property-button {:on-click #(do (om/update-state! owner :input-expanded not)
+                                                       (utils/stop-event %))}
+           (if expanded?
+             (common/icon :dot-menu)
+             (common/icon :ellipsis))]
+
+          [:div.property-dropdown-targets {:class (when expanded? " expanded ")}
+           [:a.property-dropdown-target {:role "button"
+                                         :on-click #(om/set-state! owner :input-expanded false)}
+            "test"]]])))))
+
+; (defn radial-menu [app owner]
+;   (reify
+;     om/IDisplayName (display-name [_] "Radial Menu")
+;     om/IRender
+;     (render [_]
+;       (let [{:keys [cast! handlers]} (om/get-shared owner)]
+;         (html
+;          [:a.radial-menu {:style {:top  (- (get-in app [:radial :y]) 128)
+;                                   :left (- (get-in app [:radial :x]) 128)}}
+;           [:svg.radial-buttons {:width "256" :height "256"}
+;            (for [[tool template] tools-templates]
+;              (html
+;               [:g.radial-button {:class (str "tool-" (:type template))}
+;                [:title (:hint template)]
+;                [:path.radial-pie {:d (:path template)
+;                                   :key tool
+;                                   :on-mouse-up #(do (cast! :tool-selected [tool]))
+;                                   :on-touch-end #(do (cast! :tool-selected [tool]))}]
+;                [:path.radial-icon {:class (str "shape-" (:type template))
+;                                    :d (get common/icon-paths (:icon template))}]]))
+;            [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
 
 (defn context [app owner]
   (reify
     om/IDisplayName (display-name [_] "Mouse on Canvas")
     om/IRender
     (render [_]
-      (dom/div #js {:className " context "}
+      (let [y (- (get-in app [:radial :y]) (/ 2 384))
+            x (- (get-in app [:radial :x]) (/ 2 384))]
+        (dom/div #js {:className " context "
+                      :style #js {:transform (str "translate(" x "px, " y "px)")}}
 
-        ;; TODO get properties menu in here?
-        (when (get-in app [:radial :open?])
-          (om/build radial-menu (utils/select-in app [[:radial]])))
+                 ;; TODO get properties menu in here?
+                 ;; (when (get-in app [:radial :open?])
+                 ;;   (om/build radial-menu (utils/select-in app [[:radial]])))
 
-        ))))
+                 (om/build properties-menu app)
+
+                 )))))
