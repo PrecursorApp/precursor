@@ -1110,9 +1110,9 @@
                                                  :uuid->cust (get-in app [:cust-data :uuid->cust])}
                              {:react-key "subscribers-layers"})
 
-                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})
+                   (om/build arrows app {:react-key "arrows"})
 
-                   (om/build arrows app {:react-key "arrows"})))))))
+                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})))))))
 
 (defn needs-copy-paste-hack? []
   (not (ua-browser/isChrome)))
