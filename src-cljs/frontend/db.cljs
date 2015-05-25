@@ -42,7 +42,7 @@
 
 (defn make-initial-db [initial-entities]
   (let [conn (d/create-conn schema)]
-    (d/transact! conn initial-entities)
+    (d/transact! conn initial-entities {:server-update true})
     (trans/reset-id conn)
     conn))
 

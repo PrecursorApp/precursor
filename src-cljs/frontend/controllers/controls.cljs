@@ -1670,6 +1670,10 @@
   [browser-state message _ previous-state current-state]
   (navigate-to-lazy-doc current-state false))
 
+(defmethod control-event :overlay-escape-clicked
+  [browser-state message _ state]
+  (overlay/clear-overlays state))
+
 (defmethod post-control-event! :overlay-escape-clicked
   [browser-state message _ previous-state current-state]
   (navigate-to-lazy-doc current-state false))
