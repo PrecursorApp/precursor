@@ -189,7 +189,7 @@
                (common/icon :times)]]
 
              (when error
-               [:div.content.make.error
+               [:div.slack-form-error
                 error])]))]))))
 
 (defn slack-hooks [app owner]
