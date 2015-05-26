@@ -10,6 +10,7 @@
             [frontend.components.connection :as connection]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.clip-viewer :as clip-viewer]
             [frontend.components.integrations :as integrations]
             [frontend.components.issues :as issues]
             [frontend.components.permissions :as permissions]
@@ -203,6 +204,9 @@
           [:a.vein.make {:href (urls/overlay-path doc "doc-viewer")}
            (common/icon :docs)
            [:span "Documents"]]
+          [:a.vein.make {:href (urls/overlay-path doc "clips")}
+           (common/icon :docs)
+           [:span "Clips"]]
           [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)}
            (common/icon :requests)
            [:span "Feature Requests"]]
@@ -826,6 +830,8 @@
    :username {:component username}
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
+   :clips {:title "Clips"
+           :component clip-viewer/clip-viewer}
    :document-permissions {:title "Request Access"
                           :component document-access/permission-denied-overlay}
    :connection-info {:title "Connection Info"

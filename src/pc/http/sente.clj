@@ -27,6 +27,7 @@
             [pc.models.access-grant :as access-grant-model]
             [pc.models.access-request :as access-request-model]
             [pc.models.chat :as chat]
+            [pc.models.clip :as clip-model]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
             [pc.models.issue :as issue-model]
@@ -448,6 +449,16 @@
                                 :cust/clips {:db/id (d/tempid :db.part/user)
                                              :clip/s3-bucket bucket
                                              :clip/s3-key key}}]))))
+
+(defmethod ws-handler :cust/fetch-clips [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (let [clips (pc.utils/inspect (vec (clip-model/find-by-cust (:db req) cust)))]
+      (log/infof "sending %s clips to %s" (count clips) (:cust/email cust))
+      (?reply-fn {:clips (map (fn [c] (-> c
+                                        (select-keys [:db/id])
+                                        (assoc :clip/s3-url (pc.utils/inspect (clipboard/create-presigned-clip-url c)))))
+                              clips)}))))
+
 (defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [uuids (->> ?data :uuids)]
     (assert (>= 100 (count uuids)) "Can only fetch 100 uuids at once")
