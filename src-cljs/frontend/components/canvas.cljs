@@ -632,7 +632,7 @@
             [rx ry] (cameras/point->screen camera x y)]
         (dom/div #js {:className "layer-properties-container"
                       :style #js {:transform (str "translate(" rx "px, " ry "px)"
-                                                  " scale(" (:zf camera) ")")}}
+                                                  " scale(" (min 1 (max 0.7 (:zf camera))) ")")}}
           (dom/div #js {:className "layer-properties"
                         :onMouseDown #(.stopPropagation %)
                         :onMouseUp #(.stopPropagation %)
