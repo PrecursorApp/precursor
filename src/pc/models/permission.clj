@@ -49,6 +49,13 @@
                    :permission/granter-ref (:db/id granter)
                    :permission/doc-cust (UUID. (:db/id doc) (:db/id cust))}])))
 
+(defn revoke-permission [permission annotations]
+  (let [txid (d/tempid :db.part/tx)
+        temp-id (d/tempid :db.part/user)]
+    @(d/transact (pcd/conn)
+                 [(assoc annotations :db/id txid)
+                  (web-peer/retract-entity (:db/id permission))])))
+
 (defn grant-team-permit [team granter cust permit annotations]
   (let [txid (d/tempid :db.part/tx)
         temp-id (d/tempid :db.part/user)]
