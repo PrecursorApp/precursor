@@ -4,7 +4,6 @@
             [datascript :as d]
             [frontend.async :refer [put!]]
             [om.core :as om :include-macros true]
-            [ajax.core :as ajax]
             [cljs-time.core :as time]
             [goog.async.AnimationDelay]
             [goog.crypt :as crypt]

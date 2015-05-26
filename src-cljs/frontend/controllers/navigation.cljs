@@ -1,5 +1,7 @@
 (ns frontend.controllers.navigation
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [cljs-http.client :as http]
+            [cljs.reader :as reader]
             [clojure.string :as str]
             [datascript :as d]
             [frontend.analytics :as analytics]
@@ -14,7 +16,6 @@
             [frontend.sente :as sente]
             [frontend.subscribers :as subs]
             [frontend.urls :as urls]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
@@ -218,14 +219,16 @@
 (defmethod post-navigated-to! :new
   [history-imp navigation-point _ previous-state current-state]
   (go (let [comms (:comms current-state)
-            result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
-        (if (= :success (:status result))
-          (do (d/transact! (:db current-state) [(:document result)] {:server-update true})
-              (put! (:nav comms) [:navigate! {:path (urls/doc-path (:document result))
-                                              :replace-token? true}]))
-          (if (and (= :unauthorized-to-team (get-in result [:response :error]))
-                   (get-in result [:response :redirect-url]))
-            (set! js/window.location (get-in result [:response :redirect-url]))
+            result (<! (http/post "/api/v1/document/new" {:edn-params {}
+                                                          :headers {"X-CSRF-Token" (utils/csrf-token)}}))]
+        (if (:success result)
+          (let [document (-> result :body reader/read-string :document)]
+            (d/transact! (:db current-state) [document] {:server-update true})
+            (put! (:nav comms) [:navigate! {:path (urls/doc-path document)
+                                            :replace-token? true}]))
+          (if (and (= :unauthorized-to-team (some-> result :body reader/read-string :error))
+                   (some-> result :body reader/read-string :redirect-url))
+            (set! js/window.location (some-> result :body reader/read-string :redirect-url))
             (put! (:errors comms) [:api-error result]))))))
 
 (defmulti overlay-extra (fn [state overlay] overlay))

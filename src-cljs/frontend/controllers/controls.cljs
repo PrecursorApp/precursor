@@ -32,7 +32,6 @@
             [frontend.subscribers :as subs]
             [frontend.svg :as svg]
             [frontend.urls :as urls]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
             [frontend.utils.state :as state-utils]

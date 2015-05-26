@@ -3,7 +3,6 @@
             [frontend.async :refer [put!]]
             [frontend.routes :as routes]
             [frontend.state :as state]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils :as utils]
             [goog.string :as gstring])

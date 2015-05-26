@@ -2,6 +2,8 @@
   (:require [cemerick.url :as url]
             [clojure.set :as set]
             [clojure.string :as str]
+            [cljs.reader :as reader]
+            [cljs-http.client :as http]
             [datascript :as d]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
@@ -15,7 +17,6 @@
             [frontend.models.doc :as doc-model]
             [frontend.state :as state]
             [frontend.utils :as utils :include-macros true]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
             [goog.labs.userAgent.browser :as ua]
@@ -34,17 +35,18 @@
     ;; this case, but we're short on time
     ;; important to get the state out of owner since we're not re-rendering on update
     (let [{:keys [subdomain]} (om/get-state owner)
-          res (<! (ajax/managed-ajax :post "/api/v1/create-team" :params (merge {:subdomain subdomain}
-                                                                                (when (get-in app state/dn-discount-path)
-                                                                                  {:coupon-code "designer-news"}))))]
-      (if (= :success (:status res))
+          res (<! (http/post "/api/v1/create-team" {:edn-params (merge {:subdomain subdomain}
+                                                                       (when (get-in app state/dn-discount-path)
+                                                                         {:coupon-code "designer-news"}))
+                                                    :headers {"X-CSRF-Token" (utils/csrf-token)}}))]
+      (if (:success res)
         (om/update-state! owner (fn [s]
                                   (assoc s
                                          :submitting? false
                                          :submitted? true
                                          :error nil
                                          :team-created? true
-                                         :team (:team res))))
+                                         :team (-> res :body reader/read-string :team))))
         (do
           ;; handle already taken subdomains
           (om/update-state!
@@ -52,7 +54,7 @@
            (fn [s]
              (assoc s
                     :submitting? false
-                    :error [:p (:msg (:response res))])))
+                    :error [:p (some-> res :body reader/read-string :msg)])))
           (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))
 
 (defn team-signup [app owner]
@@ -145,93 +147,6 @@
                [:p "New documents made on this team domain will be private by default. "
                    "Enjoy your two weeks of unlimited access. "
                    "We're excited to have you! "]])]]])))))
-
-(defn submit-solo-trial-form [owner]
-  (go
-    (om/update-state! owner (fn [s]
-                              (assoc s :submitting? true :error nil)))
-    ;; we wouldn't typically use ajax in a component--it's not advisable in
-    ;; this case, but we're short on time
-    ;; important to get the state out of owner since we're not re-rendering on update
-    (let [res (<! (ajax/managed-ajax :post "/api/v1/create-solo-trial"))]
-      (if (= :success (:status res))
-        (om/update-state! owner (fn [s]
-                                  (assoc s
-                                         :submitting? false
-                                         :submitted? true
-                                         :error nil
-                                         :trial-created? true)))
-        (do
-          (om/update-state!
-           owner
-           (fn [s]
-             (assoc s
-                    :submitting? false
-                    :error [:p (or (:msg (:response res))
-                                   "There was an error, please try again.")])))
-          (put! (om/get-shared owner [:comms :errors]) [:api-error res]))))))
-
-(defn solo-signup [app owner]
-  (reify
-    om/IDisplayName (display-name [_] "Solo signup")
-    om/IRenderState
-    (render-state [_ {:keys [trial-created? submitting? submitted? error]}]
-      (let [{:keys [cast!]} (om/get-shared owner)
-            disabled? (or submitting? (not (utils/logged-in? owner)))]
-        (html
-         [:div.page-trial.page-form
-          [:div.content
-           [:div.outer-form-info
-            [:h2.outer-form-heading
-             "We're excited to show you the paid features we're building."]
-
-            (if (utils/logged-in? owner)
-              [:p.outer-form-copy "Once you activate your trial, you'll be able to create private docs and control who has access to them."]
-              [:p.outer-form-copy "To activate your trial, please sign in first."])
-
-            (when-not (utils/logged-in? owner)
-              [:div.outer-form-sign
-               (om/build common/google-login {:source "Solo Signup Form"})])]
-
-           [:div.outer-form
-            {:class (str (when disabled? "disabled ")
-                         (when submitting? "submitting ")
-                         (when submitted? "submitted "))}
-
-            [:button.bubble-button
-             {:tab-index "5"
-              :ref "submit-button"
-              :disabled (or disabled? submitted?)
-              :on-click #(submit-solo-trial-form owner)}
-             (cond submitting?
-                   (html
-                    [:span "Setting up your trial"
-                     [:i.loading-ellipses
-                      [:i "."]
-                      [:i "."]
-                      [:i "."]]])
-
-                   submitted? "Thanks, your trial is ready!"
-
-                   :else "Start your trial")]
-
-            (when error
-              [:div.error error])
-
-            (when trial-created?
-              [:div.outer-form-granted
-               [:p "When you create a document, you can toggle its privacy setting from the sharing menu on the left."]
-
-               [:p "You'll have two weeks of free, unlimited access, and then we'll follow up with you to see how things are going."]])]]])))))
-
-(defn signup [app owner]
-  (reify
-    om/IDisplayName (display-name [_] "Signup")
-    om/IRender
-    (render [_]
-      (if (= "solo" (get-in app [:navigation-data :trial-type]))
-        (om/build solo-signup app)
-        (om/build team-signup app)))))
 
 (defn pricing [app owner]
   (reify
@@ -459,7 +374,7 @@
 (def outer-components
   {:landing landing/landing
    :pricing pricing
-   :trial signup
+   :trial team-signup
    :team-features team-features})
 
 (defn outer [app owner]
