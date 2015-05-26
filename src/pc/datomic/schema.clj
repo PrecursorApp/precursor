@@ -876,7 +876,18 @@
    (attribute :team/slack-hooks
               :db.type/ref
               :db/isComponent true
-              :db/cardinality :db.cardinality/many)])
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :cust/clips
+              :db.type/ref
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :clip/s3-key
+              :db.type/string
+              :metadata/unescaped true)
+   (attribute :clip/s3-bucket
+              :db.type/string
+              :metadata/unescaped true)])
 
 (defonce schema-ents (atom nil))
 

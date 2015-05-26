@@ -17,6 +17,7 @@
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
+            [pc.http.clipboard :as clipboard]
             [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
             [pc.http.issues :as issues-http]
             [pc.http.plan :as plan-http]
@@ -433,6 +434,20 @@
   (when-let [cust (-> req :ring-req :auth :cust)]
     (?reply-fn {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
 
+(defmethod ws-handler :cust/fetch-clipboard-s3-url [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (log/infof "sending presigned url for %s" (:cust/email cust))
+    (?reply-fn (clipboard/create-presigned-clipboard-url cust))))
+
+(defmethod ws-handler :cust/store-clipboard [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (let [bucket (pc.profile/clipboard-bucket)
+          key (:key ?data)]
+      (log/infof "storing clipboard data for %s" (:cust/email cust))
+      @(d/transact (pcd/conn) [{:db/id (:db/id cust)
+                                :cust/clips {:db/id (d/tempid :db.part/user)
+                                             :clip/s3-bucket bucket
+                                             :clip/s3-key key}}]))))
 (defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [uuids (->> ?data :uuids)]
     (assert (>= 100 (count uuids)) "Can only fetch 100 uuids at once")

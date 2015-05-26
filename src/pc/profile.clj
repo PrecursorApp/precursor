@@ -111,3 +111,18 @@
   (if (prod?)
     "https://hooks.slack.com/services/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"
     "https://hooks.slack.com/services/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"))
+
+(defn clipboard-bucket []
+  (if (prod?)
+    "prcrsr-clipboard"
+    "prcrsr-clipboard-dev"))
+
+(defn clipboard-s3-access-key []
+  (if (prod?)
+    (System/getenv "CLIPBOARD_S3_ACCESS_KEY")
+    "AKIAJ525QCK3UDUUWYJA"))
+
+(defn clipboard-s3-secret-key []
+  (if (prod?)
+    (System/getenv "CLIPBOARD_S3_SECRET_KEY")
+    "sxjbOsIBVrVE+ABf1vFyBAgFu8CC/RUqr/pAKDME"))
