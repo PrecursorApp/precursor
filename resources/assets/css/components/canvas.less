@@ -274,50 +274,59 @@
 .layer-ids-targets {
   overflow: visible;
 }
+.layer-properties-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
 .layer-properties {
   .flexy(column);
-  width: 1.5 * @tile_xl;
+  box-shadow+:  1px  0   @gray_dark inset;
+  box-shadow+: -1px  0   @gray_dark inset;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: @tile_properties;
   background: @dye_inner;
-  .layer-property-id {
-    background: @dye_inner;
-    &:not(:focus) {
-      box-shadow: 0 -1px @gray_dark inset;
-      border-bottom-width: 0;
+  .adaptive {
+    margin: 0;
+    &:nth-of-type(2) {
+      margin-top: -1px;
     }
   }
-  .layer-property-target {
-    &:focus {
-      border-top-color: transparent !important;
-      box-shadow: 0 -1px @color_select;
-      ~ .property-dropdown-targets {
-        &:not(.expanded) {
-          border-bottom-color: @color_select;
-        }
-      }
-    }
+  textarea,
+  input[type="text"] {
+    background: @dye_inner;
     &:not(:focus) {
-      border-top-color: transparent;
+      .inline(@gray_dark);
     }
-    &.expanded {
-      border-bottom-color: transparent;
-      &:not(:focus) {
-      text-decoration: underline;
-        &:not(:valid) {
-          + label {
-            &:before {
-              border-bottom: 1px solid @gray_dark;
-            }
-          }
-        }
-      }
+  }
+  label {
+    &:before {
+      color: @gray_dark;
+      background-image: linear-gradient(to bottom, @dye_inner, @dye_inner);
+    }
+  }
+}
+.layer-property-id {
+  // TODO clean up this specificity hack
+  &&& {
+    &:focus {
+      .inline(@color_select);
+      box-shadow+: 0 -2px @color_select inset;
     }
   }
 }
 .layer-property-target {
   // TODO clean up this specificity hack
   &&& {
-    background: @dye_inner;
     padding-right: @tile;
+    &.expanded {
+      &:not(:focus) {
+        box-shadow+: 0 -1px @dye_inner inset;
+        .inline(@gray_dark);
+      }
+    }
   }
 }
 .layer-property {
@@ -325,6 +334,7 @@
 }
 .layer-property-button {
   .icon(fill; @white);
+  position: relative;
   top: 0;
   right: 0;
   width: @tile;
@@ -342,10 +352,9 @@
   border: 1px solid @gray_dark;
   border-top: none;
   overflow-y: auto;
-  transition: max-height @run ease-in-out;
+  animation: in-fade-bottom-soft @run ease-out;
   &:not(.expanded) {
-    max-height: 0;
-    margin-top: -1px;
+    display: none;
   }
   .property-dropdown-target {
     color: @gray_light;
