@@ -114,6 +114,10 @@
    (/ (- y (:y camera) (:offset-y camera))
       (:zf camera))])
 
+(defn point->screen [camera x y]
+  [(+ (* (:zf camera) x) (:x camera) (:offset-x camera))
+   (+ (* (:zf camera) y) (:y camera) (:offset-y camera))])
+
 (defn ->svg-transform [camera]
   (str "translate(" (:x camera) " " (:y camera) ") "
        "scale(" (:zf camera) ")"))

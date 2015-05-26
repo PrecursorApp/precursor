@@ -625,72 +625,71 @@
             targets (->> (d/q '{:find [?id]
                                 :where [[_ :layer/ui-id ?id]]}
                               @db)
-                         (map first)
-                         (remove nil?)
-                         sort)]
-        (dom/foreignObject #js {:className "layer-ids-targets"
-                                :width "100%"
-                                :height "100%"
-                                :x x
-                                ;; TODO: defaults for each layer when we create them
-                                :y y}
-          (dom/form #js {:className "layer-properties"
-                         :onMouseDown #(.stopPropagation %)
-                         :onMouseUp #(.stopPropagation %)
-                         :onWheel #(.stopPropagation %)
-                         :onSubmit (fn [e]
-                                     (cast! :layer-properties-submitted)
-                                     (utils/stop-event e))
-                         :onKeyDown #(when (= "Enter" (.-key %))
-                                       (cast! :layer-properties-submitted)
-                                       (utils/stop-event %))}
-                    (dom/input #js {:type "text"
-                                    :ref "id-input"
-                                    :className "layer-property-id"
-                                    :onClick #(.focus (om/get-node owner "id-input"))
-                                    :required "true"
-                                    :data-adaptive ""
-                                    :value (or (:layer/ui-id layer) "")
-                                    ;; TODO: defaults for each layer when we create them
-                                    :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})})
-                    (dom/label #js {:data-placeholder "This shape"
-                                    :data-placeholder-nil "Name shape."
-                                    :data-placeholder-busy "Name it to link other shapes here"})
-                    (when-not (= :layer.type/line (:layer/type layer))
-                      (dom/input #js {:type "text"
-                                      :ref "target-input"
-                                      :className (if (om/get-state owner :input-expanded)
-                                                   "layer-property-target expanded"
-                                                   "layer-property-target")
-                                      :required "true"
-                                      :data-adaptive ""
-                                      :value (or (:layer/ui-target layer) "")
-                                      :onClick #(.focus (om/get-node owner "target-input"))
-                                      :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})}))
-                    (when-not (= :layer.type/line (:layer/type layer))
-                      (dom/label #js {:data-placeholder "links to"
-                                      :data-placeholder-nil "Link shape."
-                                      :data-placeholder-busy "Link it to a url or another shape"}))
-                    (when-not (= :layer.type/line (:layer/type layer))
-                      (when (seq targets)
-                        (dom/button #js {:className "layer-property-button"
-                                         :onClick #(do (om/update-state! owner :input-expanded not)
-                                                       (utils/stop-event %))}
-                                    (if (om/get-state owner :input-expanded)
-                                      (common/icon :dot-menu)
-                                      (common/icon :ellipsis)))))
-                    (apply dom/div #js {:className (if (om/get-state owner :input-expanded)
-                                                     "property-dropdown-targets expanded"
-                                                     "property-dropdown-targets")}
-                           (for [target targets]
-                             (dom/a #js {:className "property-dropdown-target"
-                                         :role "button"
-                                         :onClick #(do (cast! :layer-ui-target-edited {:value target})
-                                                       (om/set-state! owner :input-expanded false)
-                                                       (.focus (om/get-node owner "target-input")))}
-                                    target)))))))))
+                      (map first)
+                      (remove nil?)
+                      sort)
+            camera (cursors/observe-camera owner)
+            [rx ry] (cameras/point->screen camera x y)]
+        (dom/div #js {:className "layer-properties-container"
+                      :style #js {:transform (str "translate(" rx "px, " ry "px)"
+                                                  " scale(" (:zf camera) ")")}}
+          (dom/div #js {:className "layer-properties"
+                        :onMouseDown #(.stopPropagation %)
+                        :onMouseUp #(.stopPropagation %)
+                        :onWheel #(.stopPropagation %)}
+            (dom/div #js {:className "adaptive"}
+              (dom/input #js {:type "text"
+                              :ref "id-input"
+                              :className "layer-property-id"
+                              :onClick #(.focus (om/get-node owner "id-input"))
+                              :required "true"
+                              :value (or (:layer/ui-id layer) "")
+                              ;; TODO: defaults for each layer when we create them
+                              :onChange #(cast! :layer-ui-id-edited {:value (.. % -target -value)})
+                              :onKeyDown #(when (= "Enter" (.-key %))
+                                            (cast! :layer-properties-submitted)
+                                            (utils/stop-event %))})
+              (dom/label #js {:data-label "This shape"
+                              :data-placeholder "Name shape."
+                              :data-focus "Name it to link other shapes here"}))
+            (when-not (= :layer.type/line (:layer/type layer))
+              (dom/div #js {:className "adaptive"}
+                (dom/input #js {:type "text"
+                                :ref "target-input"
+                                :className (if (om/get-state owner :input-expanded)
+                                             "layer-property-target expanded"
+                                             "layer-property-target")
+                                :required "true"
+                                :value (or (:layer/ui-target layer) "")
+                                :onClick #(.focus (om/get-node owner "target-input"))
+                                :onChange #(cast! :layer-ui-target-edited {:value (.. % -target -value)})
+                                :onKeyDown #(when (= "Enter" (.-key %))
+                                              (cast! :layer-properties-submitted)
+                                              (utils/stop-event %))})
+                (dom/label #js {:data-label "links to"
+                                :data-placeholder "Link shape."
+                                :data-focus "Link it to a url or another shape"})))
+            (when-not (= :layer.type/line (:layer/type layer))
+              (when (seq targets)
+                (dom/button #js {:className "layer-property-button"
+                                 :onClick #(do (om/update-state! owner :input-expanded not)
+                                               (utils/stop-event %))}
+                            (if (om/get-state owner :input-expanded)
+                              (common/icon :dot-menu)
+                              (common/icon :ellipsis)))))
+            (when-not (= :layer.type/line (:layer/type layer))
+              (apply dom/div #js {:className (if (om/get-state owner :input-expanded)
+                                               "property-dropdown-targets expanded"
+                                               "property-dropdown-targets")}
+                     (for [target targets]
+                       (dom/a #js {:className "property-dropdown-target"
+                                   :role "button"
+                                   :onClick #(do (cast! :layer-ui-target-edited {:value target})
+                                                 (om/set-state! owner :input-expanded false)
+                                                 (.focus (om/get-node owner "target-input")))}
+                              target))))))))))
 
-(defn in-progress [{:keys [layer-properties-menu mouse-down]} owner]
+(defn in-progress [{:keys [mouse-down]} owner]
   (reify
     om/IDisplayName (display-name [_] "In Progress Layers")
     om/IRender
@@ -701,11 +700,6 @@
                      (= :layer.type/text (get-in drawing [:layers 0 :layer/type])))
             (om/build text-input (assoc (get-in drawing [:layers 0])
                                         :moving? mouse-down)))
-
-          (when (:opened? layer-properties-menu)
-            (om/build layer-properties {:layer (:layer layer-properties-menu)
-                                        :x (:x layer-properties-menu)
-                                        :y (:y layer-properties-menu)}))
 
           (when-let [sels (cond
                             (:moving? drawing) (:layers drawing)
@@ -1115,7 +1109,7 @@
 
                    (om/build arrows app {:react-key "arrows"})
 
-                   (om/build in-progress (select-keys app [:layer-properties-menu :mouse-down]) {:react-key "in-progress"})))))))
+                   (om/build in-progress (select-keys app [:mouse-down]) {:react-key "in-progress"})))))))
 
 (defn needs-copy-paste-hack? []
   (not (ua-browser/isChrome)))
@@ -1155,22 +1149,25 @@
     (render [_]
       (html
        [:div.canvas (merge
-                      {:onContextMenu (fn [e]
-                                        (.preventDefault e)
-                                        (.stopPropagation e))
-                       :tabIndex 1}
-                      (when (needs-copy-paste-hack?)
-                        ;; gives focus to our copy/paste element, so that we can copy
-                        {:onKeyDown #(do (utils/swallow-errors
-                                           (let [key-set (keyq/event->key %)
-                                                 hack-node (goog.dom/getElement "_copy-hack")]
-                                             (when (contains? #{#{"ctrl"} #{"meta"}} key-set)
-                                               (when-let [hack-node (goog.dom/getElement "_copy-hack")]
-                                                 (gforms/focusAndSelect hack-node)))))
-                                       true)}))
+                     {:onContextMenu (fn [e]
+                                       (.preventDefault e)
+                                       (.stopPropagation e))
+                      :tabIndex 1}
+                     (when (needs-copy-paste-hack?)
+                       ;; gives focus to our copy/paste element, so that we can copy
+                       {:onKeyDown #(do (utils/swallow-errors
+                                         (let [key-set (keyq/event->key %)
+                                               hack-node (goog.dom/getElement "_copy-hack")]
+                                           (when (contains? #{#{"ctrl"} #{"meta"}} key-set)
+                                             (when-let [hack-node (goog.dom/getElement "_copy-hack")]
+                                               (gforms/focusAndSelect hack-node)))))
+                                        true)}))
         (when (needs-copy-paste-hack?)
           (om/build copy-paste-hack app))
         (om/build svg-canvas app)
+        (when (:opened? (:layer-properties-menu app))
+          (om/build layer-properties (:layer-properties-menu app)
+                    {:react-key "layer-props"}))
         (om/build context/context (utils/select-in app [[:radial]]) {:react-key "context"})
         (om/build mouse/mouse (utils/select-in app [state/right-click-learned-path
                                                     [:keyboard]
