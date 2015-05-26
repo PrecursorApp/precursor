@@ -1152,7 +1152,8 @@
                      {:onContextMenu (fn [e]
                                        (.preventDefault e)
                                        (.stopPropagation e))
-                      :tabIndex 1}
+                      :tabIndex 1
+                      :key "canvas"}
                      (when (needs-copy-paste-hack?)
                        ;; gives focus to our copy/paste element, so that we can copy
                        {:onKeyDown #(do (utils/swallow-errors
@@ -1163,8 +1164,8 @@
                                                (gforms/focusAndSelect hack-node)))))
                                         true)}))
         (when (needs-copy-paste-hack?)
-          (om/build copy-paste-hack app))
-        (om/build svg-canvas app)
+          (om/build copy-paste-hack app {:react-key "copy-paste-hack"}))
+        (om/build svg-canvas app {:react-key "svg-canvas"})
         (when (:opened? (:layer-properties-menu app))
           (om/build layer-properties (:layer-properties-menu app)
                     {:react-key "layer-props"}))
