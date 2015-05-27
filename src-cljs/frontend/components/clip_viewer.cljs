@@ -51,7 +51,8 @@
                             :align-items "center"
                             :flex-flow "row wrap"}}
               [:a.make {:style {:flex "1 100%"}
-                        :href (:clip/s3-url clip)}
+                        :role "button"
+                        :on-click #(cast! :clip-pasted clip)}
                [:img {:src (:clip/s3-url clip)}]
 
                [:i.loading-ellipses

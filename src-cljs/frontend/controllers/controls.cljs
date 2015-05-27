@@ -1,6 +1,7 @@
 (ns frontend.controllers.controls
   (:require [cemerick.url :as url]
             [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [cljs-http.client :as http]
             [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -10,6 +11,7 @@
             [frontend.async :refer [put!]]
             [frontend.camera :as cameras]
             [frontend.careful]
+            [frontend.clipboard :as clipboard]
             [frontend.components.forms :refer [release-button!]]
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
@@ -1961,7 +1963,7 @@
 (defmethod control-event :important-clip-marked
   [browser-state message {:keys [clip/uuid]} state]
   ;; This is a not ideal, b/c we're not recovering from errors.
-  ;; But it doesn't really matter that much if the clip sticks around.
+  ;; This time it matters :/
   (update-in state [:cust :cust/clips] (fn [clips] (map (fn [c]
                                                           (if (= uuid (:clip/uuid c))
                                                             (utils/inspect (assoc c :clip/important? true))
@@ -1979,7 +1981,7 @@
 (defmethod control-event :unimportant-clip-marked
   [browser-state message {:keys [clip/uuid]} state]
   ;; This is a not ideal, b/c we're not recovering from errors.
-  ;; But it doesn't really matter that much if the clip sticks around.
+  ;; This time it matters :/
   (update-in state [:cust :cust/clips] (fn [clips] (map (fn [c]
                                                           (if (= uuid (:clip/uuid c))
                                                             (dissoc c :clip/important?)
@@ -1988,8 +1990,17 @@
 
 (defmethod post-control-event! :unimportant-clip-marked
   [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
   (sente/send-msg (:sente current-state)
                   [:cust/untag-clip {:clip/uuid uuid}]
                   10000
                   (fn [reply]
                     (utils/inspect reply))))
+
+(defmethod post-control-event! :clip-pasted
+  [browser-state message {:keys [clip/uuid clip/s3-url]} previous-state current-state]
+  (go
+    (let [res (async/<! (http/get s3-url))]
+      (if (:success res)
+        (put! (get-in current-state [:comms :controls]) [:layers-pasted (assoc (clipboard/parse-pasted (:body res))
+                                                                               :canvas-size (utils/canvas-size))])))))
