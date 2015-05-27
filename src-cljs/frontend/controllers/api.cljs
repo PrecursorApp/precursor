@@ -72,6 +72,10 @@
   [target message status {:keys [docs]} state]
   (assoc-in state [:cust :touched-docs] docs))
 
+(defmethod api-event [:cust-clips :success]
+  [target message status {:keys [clips]} state]
+  (assoc-in state [:cust :cust/clips] clips))
+
 (defmethod api-event [:team-docs :success]
   [target message status {:keys [docs]} state]
   (assoc-in state [:team :recent-docs] docs))

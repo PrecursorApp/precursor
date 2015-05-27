@@ -272,6 +272,18 @@
        (d/transact! (:db current-state) (map #(dissoc % :last-updated-instant) docs) {:server-update true})
        (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}]))))))
 
+(defmethod overlay-extra-post! :clips [previous-state current-state overlay]
+  (when (:cust current-state)
+    (sente/send-msg
+     (:sente current-state)
+     [:cust/fetch-clips]
+     30000
+     (fn [{:keys [clips]}]
+       (when (seq clips)
+         ;; seems like maybe this should be where I stop. Why are we storing docs in the state?
+         ;; Makes it easier to tell which ones are "touched" docs.
+         (put! (get-in current-state [:comms :api]) [:cust-clips :success {:clips clips}]))))))
+
 (defmethod navigated-to :overlay
   [history-imp navigation-point args state]
   ;; this may be the landing page, in which case we need to load the doc

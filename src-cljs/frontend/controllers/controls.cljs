@@ -1943,3 +1943,53 @@
                                                  (:added %))
                                            tx-data)))]
       (replace-token-with-new-name current-state current-doc-id new-name))))
+
+(defmethod control-event :delete-clip-clicked
+  [browser-state message {:keys [clip/uuid]} state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  ;; But it doesn't really matter that much if the clip sticks around.
+  (update-in state [:cust :cust/clips] (fn [clips] (remove #(= uuid (:clip/uuid %)) clips))))
+
+(defmethod post-control-event! :delete-clip-clicked
+  [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:cust/delete-clip {:clip/uuid uuid}]
+                  10000
+                  (fn [reply]
+                    (utils/inspect reply))))
+
+(defmethod control-event :important-clip-marked
+  [browser-state message {:keys [clip/uuid]} state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  ;; But it doesn't really matter that much if the clip sticks around.
+  (update-in state [:cust :cust/clips] (fn [clips] (map (fn [c]
+                                                          (if (= uuid (:clip/uuid c))
+                                                            (utils/inspect (assoc c :clip/important? true))
+                                                            (utils/inspect c)))
+                                                        clips))))
+
+(defmethod post-control-event! :important-clip-marked
+  [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:cust/tag-clip {:clip/uuid uuid}]
+                  10000
+                  (fn [reply]
+                    (utils/inspect reply))))
+
+(defmethod control-event :unimportant-clip-marked
+  [browser-state message {:keys [clip/uuid]} state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  ;; But it doesn't really matter that much if the clip sticks around.
+  (update-in state [:cust :cust/clips] (fn [clips] (map (fn [c]
+                                                          (if (= uuid (:clip/uuid c))
+                                                            (dissoc c :clip/important?)
+                                                            c))
+                                                        clips))))
+
+(defmethod post-control-event! :unimportant-clip-marked
+  [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:cust/untag-clip {:clip/uuid uuid}]
+                  10000
+                  (fn [reply]
+                    (utils/inspect reply))))
