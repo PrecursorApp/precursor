@@ -75,7 +75,7 @@
    :layer/end-y        y
    :layer/fill         "white"
    :layer/stroke-width 1
-   :layer/stroke-color "black"
+   :layer/stroke-color "#888"
    :layer/name         "placeholder"
    :layer/opacity      1
    :entity/type        :layer})
@@ -94,7 +94,7 @@
                            (:layer/end-y layer)) (:layer/start-y layer))
      :fill          "none"
      :key           (:layer/id layer)
-     :stroke        (if invert-colors? "#ccc" "black")
+     :stroke        (if invert-colors? "#ccc" "#888")
      :stroke-width   2
      :rx            (:layer/rx layer)
      :ry            (:layer/ry layer)     }))
@@ -102,7 +102,7 @@
 (defn layer->svg-text [layer {:keys [invert-colors?]}]
   {:x (:layer/start-x layer)
    :y (:layer/start-y layer)
-   :fill (if invert-colors? "#ccc" "black")
+   :fill (if invert-colors? "#ccc" "#888")
    :stroke-width 0
    :font-family (:layer/font-family layer "Helvetica")
    :font-size   (:layer/font-size layer 20)})
@@ -112,12 +112,12 @@
    :y1          (:layer/start-y layer)
    :x2          (:layer/end-x layer)
    :y2          (:layer/end-y layer)
-   :stroke (if invert-colors? "#ccc" "black")
+   :stroke (if invert-colors? "#ccc" "#888")
    :stroke-width 2})
 
 (defn layer->svg-path [layer {:keys [invert-colors?]}]
   {:d (:layer/path layer)
-   :stroke (if invert-colors? "#ccc" "black")
+   :stroke (if invert-colors? "#ccc" "#888")
    :fill "none"
    :stroke-width 2})
 
@@ -164,7 +164,8 @@
         offset-left (- 1 min-x)]
     (hiccups/html
      [:svg (merge
-            {:width width
+            {:viewBox (str "0 0 " width " " height)
+             :width width
              :height height
              :xmlns "http://www.w3.org/2000/svg"
              :xmlns:xlink "http://www.w3.org/1999/xlink"

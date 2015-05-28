@@ -43,11 +43,11 @@
     om/IRender
     (render [_]
       (html
-       [:div
+       [:div.content
         (for [clip (reverse (sort-by :db/id clips))]
           (html
            [:a.recent-doc.make {:href (:clip/s3-url clip)}
-            [:img {:src (:clip/s3-url clip)}]
+            [:object {:data (:clip/s3-url clip) :type "image/svg+xml"}]
 
             [:i.loading-ellipses
              [:i "."]

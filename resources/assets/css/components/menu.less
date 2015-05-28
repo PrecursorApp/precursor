@@ -285,23 +285,21 @@
   }
 }
 .recent-doc {
-  display: block; // keeps border from clipping
+  .flexy(center; center);
+  .size_of(chat; height; vh);
   position: relative;
   color: @gray_light;
+  width: 100%;
+  max-height: 80vh;
   border: 1px solid @gray_lighter;
   margin-bottom: @menu_padding;
-  overflow: hidden;
-  transition+: color @run_fast ease-in;
-  transition+: border-color @run_fast ease-in;
   &:hover {
     border-color: @color_select;
-    transition-duration: @now;
   }
-  img {
-    .size_of(chat; height; vh);
-    width: 100%;
-    max-height: 80vh;
-    opacity: .5;
+  object {
+    max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
+    max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
+    pointer-events: none;
   }
   .loading-ellipses {
     position: absolute;

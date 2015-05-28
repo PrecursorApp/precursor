@@ -55,7 +55,7 @@
            (for [doc bucket-docs]
              (html
               [:a.recent-doc.make {:href (urls/doc-path doc)}
-               [:img {:src (urls/doc-svg-path doc)}]
+               [:object {:data (urls/doc-svg-path doc) :type "image/svg+xml"}]
 
                [:i.loading-ellipses
                 [:i "."]
