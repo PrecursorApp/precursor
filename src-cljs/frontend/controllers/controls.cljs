@@ -164,10 +164,24 @@
       (swap! (:undo-state state) assoc :last-undo transaction-to-undo))
     state))
 
-;; TODO: have some way to handle pre-and-post
+(defn handle-redo [state]
+  (let [{:keys [transactions last-undo]} @(:undo-state state)]
+    (when last-undo
+      (let [next-undo-index (inc (vec-index transactions last-undo))
+            transaction-to-redo (when-not (> next-undo-index (count transactions))
+                                  (nth transactions next-undo-index))]
+        (d/transact! (:db state) (mapv ds/datom->transaction (:tx-data last-undo)) :can-undo? false)
+        (swap! (:undo-state state) assoc :last-undo transaction-to-redo)))
+    state))
+
 (defmethod handle-keyboard-shortcut :undo
   [state shortcut-name key-set]
   (handle-undo state))
+
+(defmethod handle-keyboard-shortcut :redo
+  [state shortcut-name key-set]
+  (utils/inspect shortcut-name)
+  (handle-redo state))
 
 (defn close-radial [state]
   (assoc-in state [:radial :open?] false))

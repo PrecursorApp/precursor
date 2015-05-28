@@ -53,6 +53,7 @@
                         :pen #{#{"n"}}
                         :text #{#{"t"}}
                         :undo #{#{"meta" "z"} #{"ctrl" "z"}}
+                        :redo #{#{"meta" "y"} #{"ctrl" "y"}}
                         :shortcuts-menu #{#{"shift" "/"}}
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}

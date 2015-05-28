@@ -3,6 +3,10 @@
             [datascript :as d]
             [frontend.utils :as utils :include-macros true]))
 
+(defn all [db]
+  (map #(d/entity db (:e %))
+       (d/datoms db :aevt :layer/name)))
+
 (defn find-count [db]
   (count (d/datoms db :aevt :layer/name)))
 

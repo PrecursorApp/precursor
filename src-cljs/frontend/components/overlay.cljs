@@ -15,6 +15,7 @@
             [frontend.components.permissions :as permissions]
             [frontend.components.plan :as plan]
             [frontend.components.team :as team]
+            [frontend.components.undo-viewer :as undo-viewer]
             [frontend.db :as fdb]
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
@@ -203,6 +204,9 @@
           [:a.vein.make {:href (urls/overlay-path doc "doc-viewer")}
            (common/icon :docs)
            [:span "Documents"]]
+          [:a.vein.make {:href (urls/overlay-path doc "undo-viewer")}
+           (common/icon :docs)
+           [:span "Undo"]]
           [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)}
            (common/icon :requests)
            [:span "Feature Requests"]]
@@ -836,6 +840,8 @@
                    :component team/team-settings}
    :team-doc-viewer {:title "Team Documents"
                      :component doc-viewer/team-doc-viewer}
+   :undo-viewer {:title "Undo viewer"
+                 :component undo-viewer/undos-viewer}
    :your-teams {:title "Your Teams"
                 :component team/your-teams}
    :request-team-access {:title "Request Access"

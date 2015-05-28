@@ -86,9 +86,10 @@
   (let [{:keys [a e v tx added]} datom]
     [(if added :db/retract :db/add) e a v]))
 
-(defn reverse-transaction [transaction conn]
+(defn reverse-transaction [transaction conn & {:keys [can-undo?]
+                                               :or {can-undo? true}}]
   (let [datoms (:tx-data transaction)]
     (d/transact! conn
                  (mapv datom->reverse-transaction datoms)
                  {:undo true
-                  :can-undo? true})))
+                  :can-undo? can-undo?})))
