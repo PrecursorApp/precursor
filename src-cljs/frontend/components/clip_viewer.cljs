@@ -42,33 +42,37 @@
     om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
-      (html
-       [:div.content
-        (for [clip (reverse (sort-by :db/id clips))]
-          (html
-           [:a.recent-doc.make {:href (:clip/s3-url clip)}
-            [:object {:data (:clip/s3-url clip) :type "image/svg+xml"}]
-
-            [:i.loading-ellipses
-             [:i "."]
-             [:i "."]
-             [:i "."]]]))]))))
+      (let [cast! (om/get-shared owner :cast!)]
+        (html
+         [:div.content
+          (for [clip (reverse (sort-by #(some-> % :clip/uuid d/squuid-time-millis) clips))]
+            (html
+              [:div.clip
+               [:a.recent-doc.make {:href (:clip/s3-url clip)}
+                [:object {:data (:clip/s3-url clip) :type "image/svg+xml"}]
+                [:i.loading-ellipses
+                 [:i "."]
+                 [:i "."]
+                 [:i "."]]]
+               (if (:clip/important? clip)
+                 [:a {:role "button"
+                      :on-click #(cast! :unimportant-clip-marked {:clip/uuid (:clip/uuid clip)})}
+                  "Mark Unimportant"]
+                 [:a {:role "button"
+                      :on-click #(cast! :important-clip-marked {:clip/uuid (:clip/uuid clip)})}
+                  "Mark important"])
+               [:span " "]
+               [:a.make {:role "button"
+                         :on-click #(cast! :delete-clip-clicked {:clip/uuid (:clip/uuid clip)})}
+                (str "Delete " (:clip/uuid clip))]]))])))))
 
 (defn clip-viewer* [app owner]
   (reify
     om/IDisplayName (display-name [_] "Clip Viewer*")
-    om/IDidMount
-    (did-mount [_]
-      (sente/send-msg (om/get-shared owner :sente)
-                      [:cust/fetch-clips]
-                      10000
-                      (fn [reply]
-                        (utils/inspect reply)
-                        (when (om/mounted? owner)
-                          (om/set-state! owner :clips (:clips reply))))))
-    om/IRenderState
-    (render-state [_ {:keys [clips]}]
-      (let [cast! (om/get-shared owner :cast!)]
+    om/IRender
+    (render [_]
+      (let [cast! (om/get-shared owner :cast!)
+            clips (get-in app [:cust :cust/clips])]
         (html
          [:section.menu-view {:class (when (nil? clips) "loading")}
           (om/build clips-list clips)])))))

@@ -448,16 +448,41 @@
       @(d/transact (pcd/conn) [{:db/id (:db/id cust)
                                 :cust/clips {:db/id (d/tempid :db.part/user)
                                              :clip/s3-bucket bucket
-                                             :clip/s3-key key}}]))))
+                                             :clip/s3-key key
+                                             :clip/uuid (d/squuid)}}]))))
 
 (defmethod ws-handler :cust/fetch-clips [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
-    (let [clips (pc.utils/inspect (vec (clip-model/find-by-cust (:db req) cust)))]
+    (let [clips (vec (clip-model/find-by-cust (:db req) cust))]
       (log/infof "sending %s clips to %s" (count clips) (:cust/email cust))
       (?reply-fn {:clips (map (fn [c] (-> c
-                                        (select-keys [:db/id])
-                                        (assoc :clip/s3-url (pc.utils/inspect (clipboard/create-presigned-clip-url c)))))
+                                        (select-keys [:clip/uuid :clip/important?])
+                                        (assoc :clip/s3-url (clipboard/create-presigned-clip-url c))))
                               clips)}))))
+
+(defmethod ws-handler :cust/delete-clip [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
+      (log/infof "deleting clip %s for %s" (:db/id clip) (:cust/email cust))
+      @(d/transact (pcd/conn) [[:db.fn/retractEntity (:db/id clip)]])
+      (?reply-fn {:deleted? true
+                  :clip/uuid (:clip/uuid clip)}))))
+
+(defmethod ws-handler :cust/tag-clip [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
+      (log/infof "marking clip %s important for %s" (:db/id clip) (:cust/email cust))
+      @(d/transact (pcd/conn) [[:db/add (:db/id clip) :clip/important? true]])
+      (?reply-fn {:tagged? true
+                  :clip/uuid (:clip/uuid clip)}))))
+
+(defmethod ws-handler :cust/untag-clip [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
+      (log/infof "marking clip %s unimportant for %s" (:db/id clip) (:cust/email cust))
+      @(d/transact (pcd/conn) [[:db/retract (:db/id clip) :clip/important? true]])
+      (?reply-fn {:untagged? true
+                  :clip/uuid (:clip/uuid clip)}))))
 
 (defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [uuids (->> ?data :uuids)]
