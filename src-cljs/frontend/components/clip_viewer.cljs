@@ -47,24 +47,23 @@
          [:div.content
           (for [clip (reverse (sort-by #(some-> % :clip/uuid d/squuid-time-millis) clips))]
             (html
-              [:div.clip
-               [:a.recent-doc.make {:href (:clip/s3-url clip)}
-                [:object {:data (:clip/s3-url clip) :type "image/svg+xml"}]
-                [:i.loading-ellipses
-                 [:i "."]
-                 [:i "."]
-                 [:i "."]]]
+             [:div.clip
+              [:a.recent-doc.make {:href (:clip/s3-url clip)}
+               [:object {:data (:clip/s3-url clip) :type "image/svg+xml"}]
+               [:i.loading-ellipses
+                [:i "."]
+                [:i "."]
+                [:i "."]]
                (if (:clip/important? clip)
-                 [:a {:role "button"
-                      :on-click #(cast! :unimportant-clip-marked {:clip/uuid (:clip/uuid clip)})}
-                  "Mark Unimportant"]
-                 [:a {:role "button"
-                      :on-click #(cast! :important-clip-marked {:clip/uuid (:clip/uuid clip)})}
-                  "Mark important"])
-               [:span " "]
-               [:a.make {:role "button"
-                         :on-click #(cast! :delete-clip-clicked {:clip/uuid (:clip/uuid clip)})}
-                (str "Delete " (:clip/uuid clip))]]))])))))
+                 [:a.clip-tag {:role "button"
+                               :on-click #(cast! :unimportant-clip-marked {:clip/uuid (:clip/uuid clip)})}
+                  (common/icon :starred)]
+                 [:a.clip-tag {:role "button"
+                               :on-click #(cast! :important-clip-marked {:clip/uuid (:clip/uuid clip)})}
+                  (common/icon :star)])
+               [:a.clip-delete {:role "button"
+                                :on-click #(cast! :delete-clip-clicked {:clip/uuid (:clip/uuid clip)})}
+                (common/icon :times)]]]))])))))
 
 (defn clip-viewer* [app owner]
   (reify

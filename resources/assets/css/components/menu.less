@@ -719,3 +719,20 @@
 .slack-channel-remove {
   margin-left: auto;
 }
+.clip {
+  position: relative;
+}
+.clip-tag,
+.clip-delete {
+  .flexy(center; center);
+  position: absolute;
+  top: 0;
+  width: @tile;
+  height: @tile;
+}
+.clip-tag {
+  left: 0;
+}
+.clip-delete {
+  right: 0;
+}
