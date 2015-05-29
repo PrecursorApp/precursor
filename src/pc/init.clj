@@ -7,6 +7,7 @@
             pc.datomic.migrations
             pc.datomic.schema
             pc.email
+            pc.gauges
             pc.http.admin
             pc.http.webhooks
             pc.less
@@ -45,7 +46,8 @@
    #'pc.datomic.admin-db/init
    #'pc.http.admin/init
    #'pc.billing/init
-   #'pc.stripe.dev/init])
+   #'pc.stripe.dev/init
+   #'pc.gauges/init])
 
 (defn pretty-now []
   (.toLocaleString (java.util.Date.)))
