@@ -286,3 +286,9 @@
         (-> b6 (to-hex-string 4)))))
     ;; Generates a squuid with Math.random
     (d/squuid)))
+
+(defn absolute-css-hash
+  "Uses an absolute url to workaround an annoying bug in Firefox where
+  the url(#hash) will break if the base url changes."
+  [hash]
+  (str "url(" js/document.location.pathname "#" hash ")"))

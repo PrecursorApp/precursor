@@ -752,7 +752,7 @@
                              :x2 rx
                              :y1 (second center)
                              :y2 ry
-                             :markerEnd "url(#arrow-point)"})))
+                             :markerEnd (utils/absolute-css-hash "arrow-point")})))
           (svg-element (assoc layer
                               :key (str (:db/id layer) "-handler")
                               :className (str "arrow-handle "
@@ -936,7 +936,7 @@
                       :patternTransform (str "translate(" (:x camera) "," (:y camera) ")")}
                  (dom/rect #js {:width  (str (* 10 (cameras/grid-width camera)))
                                 :height (str (* 10 (cameras/grid-height camera)))
-                                :fill   "url(#small-grid)"})
+                                :fill   (utils/absolute-css-hash "small-grid")})
                  (dom/path #js {:d           (str "M " (str (* 10 (cameras/grid-width camera))) " 0 L 0 0 0 " (str (* 10 (cameras/grid-width camera))))
                                 :className   "grid-lines-large"}))))
 
@@ -1088,7 +1088,7 @@
                                   :className "grid-lines-pattern"
                                   :width     "100%"
                                   :height    "100%"
-                                  :fill      "url(#grid)"}))
+                                  :fill      (utils/absolute-css-hash "grid")}))
 
                  (dom/g
                    #js {:transform (cameras/->svg-transform camera)}
