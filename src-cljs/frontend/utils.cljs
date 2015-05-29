@@ -14,7 +14,8 @@
             [goog.events :as ge]
             [goog.net.EventType :as gevt]
             [sablono.core :as html :include-macros true]
-            [frontend.utils.seq :as seq-util])
+            [frontend.utils.seq :as seq-util]
+            [goog.labs.userAgent.browser :as ua-browser])
   (:require-macros [frontend.utils :refer (inspect timing defrender go+)]
                    [cljs.core.async.macros :refer (go)])
   (:import [goog.format EmailAddress]))
@@ -291,4 +292,6 @@
   "Uses an absolute url to workaround an annoying bug in Firefox where
   the url(#hash) will break if the base url changes."
   [hash]
-  (str "url(" js/document.location.pathname "#" hash ")"))
+  (if (ua-browser/isFirefox)
+    (str "url(" js/document.location.pathname "#" hash ")")
+    (str "url(#" hash ")")))
