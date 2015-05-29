@@ -47,8 +47,9 @@
          [:div.content
           (for [clip (reverse (sort-by #(some-> % :clip/uuid d/squuid-time-millis) clips))]
             (html
-             [:div.clip
-              [:a.recent-doc.make {:on-click #(cast! :clip-pasted clip)}
+             [:div.clip.make
+              [:a.recent-doc {:role "button"
+                              :on-click #(cast! :clip-pasted clip)}
                [:object {:data (:clip/s3-url clip) :type "image/svg+xml"}]
                [:i.loading-ellipses
                 [:i "."]

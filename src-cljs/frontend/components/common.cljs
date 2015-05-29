@@ -276,7 +276,8 @@
            (for [path (:paths template)]
              (dom/path (clj->js (merge {:className (str (name path) " " (:className path-props))
                                         :d (get icon-paths path)
-                                        :key (name path)}
+                                        :key (name path)
+                                        :vectorEffect "non-scaling-stroke"}
                                        (dissoc path-props :className))))))))
 
 (defn icon [icon-name & [{:keys [path-props svg-props]}]]

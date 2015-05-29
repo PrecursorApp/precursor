@@ -75,7 +75,7 @@
    :layer/end-y        y
    :layer/fill         "white"
    :layer/stroke-width 1
-   :layer/stroke-color "#888"
+   :layer/stroke-color "black"
    :layer/name         "placeholder"
    :layer/opacity      1
    :entity/type        :layer})
@@ -94,15 +94,16 @@
                            (:layer/end-y layer)) (:layer/start-y layer))
      :fill          "none"
      :key           (:layer/id layer)
-     :stroke        (if invert-colors? "#ccc" "#888")
+     :stroke        (if invert-colors? "#ccc" "black")
      :stroke-width   2
+     :vector-effect  "non-scaling-stroke"
      :rx            (:layer/rx layer)
      :ry            (:layer/ry layer)     }))
 
 (defn layer->svg-text [layer {:keys [invert-colors?]}]
   {:x (:layer/start-x layer)
    :y (:layer/start-y layer)
-   :fill (if invert-colors? "#ccc" "#888")
+   :fill (if invert-colors? "#ccc" "black")
    :stroke-width 0
    :font-family (:layer/font-family layer "Helvetica")
    :font-size   (:layer/font-size layer 20)})
@@ -112,14 +113,16 @@
    :y1          (:layer/start-y layer)
    :x2          (:layer/end-x layer)
    :y2          (:layer/end-y layer)
-   :stroke (if invert-colors? "#ccc" "#888")
-   :stroke-width 2})
+   :stroke (if invert-colors? "#ccc" "black")
+   :stroke-width 2
+   :vector-effect "non-scaling-stroke"})
 
 (defn layer->svg-path [layer {:keys [invert-colors?]}]
   {:d (:layer/path layer)
-   :stroke (if invert-colors? "#ccc" "#888")
+   :stroke (if invert-colors? "#ccc" "black")
    :fill "none"
-   :stroke-width 2})
+   :stroke-width 2
+   :vector-effect "non-scaling-stroke"})
 
 
 (defmulti svg-element (fn [layer opts] (:layer/type layer)))

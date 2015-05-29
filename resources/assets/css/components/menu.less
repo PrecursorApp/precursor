@@ -300,6 +300,7 @@
     max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
     max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
     pointer-events: none;
+    opacity: @opacity_white_light;
   }
   .loading-ellipses {
     position: absolute;
@@ -725,6 +726,8 @@
 .clip-tag,
 .clip-delete {
   .flexy(center; center);
+  .icon(stroke; @gray_light);
+  .icon(fill; @gray_light);
   position: absolute;
   top: 0;
   width: @tile;
