@@ -50,7 +50,7 @@
              [:div.clip.make
               [:a.recent-doc {:role "button"
                               :on-click #(cast! :clip-pasted clip)}
-               [:object {:data (:clip/s3-url clip) :type "image/svg+xml"}]
+               [:img {:src (:clip/s3-url clip)}]
                [:i.loading-ellipses
                 [:i "."]
                 [:i "."]
