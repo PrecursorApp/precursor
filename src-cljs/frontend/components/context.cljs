@@ -51,8 +51,7 @@
                                   :on-mouse-up #(do (cast! :tool-selected [tool]))
                                   :on-touch-end #(do (cast! :tool-selected [tool]))}]
                [:path.radial-icon {:class (str "shape-" (:type template))
-                                   :d (get common/icon-paths (:icon template))
-                                   :vectorEffect "non-scaling-stroke"}]]))
+                                   :d (get common/icon-paths (:icon template))}]]))
            [:circle.radial-point {:cx "128" :cy "128" :r "4"}]]])))))
 
 (defn context [app owner]
