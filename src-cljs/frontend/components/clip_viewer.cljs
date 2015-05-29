@@ -45,7 +45,7 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.content
-          (for [clip (reverse (sort-by #(some-> % :clip/uuid d/squuid-time-millis) clips))]
+          (for [clip clips]
             (html
              [:div.clip.make
               [:a.recent-doc {:role "button"

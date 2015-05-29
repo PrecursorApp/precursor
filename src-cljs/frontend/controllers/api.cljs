@@ -1,5 +1,6 @@
 (ns frontend.controllers.api
   (:require [cljs.core.async :refer [close!]]
+            [datascript :as d]
             [frontend.async :refer [put!]]
             [frontend.routes :as routes]
             [frontend.state :as state]
@@ -72,9 +73,21 @@
   [target message status {:keys [docs]} state]
   (assoc-in state [:cust :touched-docs] docs))
 
+(defn clip-compare [clip-1 clip-2]
+  (if (:clip/important? clip-1)
+    (if (:clip/important? clip-2)
+      (compare (d/squuid-time-millis (:clip/uuid clip-2))
+               (d/squuid-time-millis (:clip/uuid clip-1)))
+      -1)
+    (if (:clip/important? clip-2)
+      1
+      (compare (d/squuid-time-millis (:clip/uuid clip-2))
+               (d/squuid-time-millis (:clip/uuid clip-1))))))
+
 (defmethod api-event [:cust-clips :success]
   [target message status {:keys [clips]} state]
-  (assoc-in state [:cust :cust/clips] clips))
+  (let [sorted-clips (sort clip-compare clips)]
+    (assoc-in state [:cust :cust/clips] sorted-clips)))
 
 (defmethod api-event [:team-docs :success]
   [target message status {:keys [docs]} state]
