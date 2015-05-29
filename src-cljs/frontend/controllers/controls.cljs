@@ -2000,7 +2000,8 @@
 (defmethod post-control-event! :clip-pasted
   [browser-state message {:keys [clip/uuid clip/s3-url]} previous-state current-state]
   (go
-    (let [res (async/<! (http/get s3-url))]
+    ;; add xhr=true b/c it will use response from image request, which doesn't have cors headers
+    (let [res (async/<! (http/get (str s3-url "&xhr=true")))]
       (if (:success res)
         (put! (get-in current-state [:comms :controls]) [:layers-pasted (assoc (clipboard/parse-pasted (:body res))
                                                                                :canvas-size (utils/canvas-size))])))))
