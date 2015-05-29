@@ -197,7 +197,10 @@
                             (sente/send-msg sente-state [:cust/store-clipboard {:key (:key reply)}])))))))
 
 (defn handle-copy! [app-state e]
-  (when (let [target (.-target e)]
+  (when (let [target js/document.activeElement
+              ;;(.-target e)
+              ;; Have to use activeElement, b/c target won't settle on canvas :/
+              ]
           ;; don't apply if input or textarea is focused, unless the copy-hack
           ;; element is selected (see components.canvas)
           (or (= "_copy-hack" (.-id target))
