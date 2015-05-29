@@ -28,6 +28,7 @@
                                      (profile/clipboard-s3-secret-key)
                                      region]
       (str (s3/generate-presigned-url :bucket-name bucket
-                                      :key (pc.utils/inspect (:clip/s3-key clip))
+                                      :key (:clip/s3-key clip)
                                       :expiration (time/plus (time/now) (time/weeks 1))
-                                      :method HttpMethod/GET)))))
+                                      :method HttpMethod/GET
+                                      :response-headers {:cache-control "public, max-age=3155692"})))))
