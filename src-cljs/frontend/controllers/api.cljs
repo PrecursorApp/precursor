@@ -76,13 +76,13 @@
 (defn clip-compare [clip-1 clip-2]
   (if (:clip/important? clip-1)
     (if (:clip/important? clip-2)
-      (compare (d/squuid-time-millis (:clip/uuid clip-2))
-               (d/squuid-time-millis (:clip/uuid clip-1)))
+      (compare (some-> clip-2 :clip/uuid d/squuid-time-millis)
+               (some-> clip-1 :clip/uuid d/squuid-time-millis))
       -1)
     (if (:clip/important? clip-2)
       1
-      (compare (d/squuid-time-millis (:clip/uuid clip-2))
-               (d/squuid-time-millis (:clip/uuid clip-1))))))
+      (compare (some-> clip-2 :clip/uuid d/squuid-time-millis)
+               (some-> clip-1 :clip/uuid d/squuid-time-millis)))))
 
 (defmethod api-event [:cust-clips :success]
   [target message status {:keys [clips]} state]
