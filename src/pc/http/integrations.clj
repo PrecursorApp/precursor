@@ -45,7 +45,7 @@
                                 :attachments [(merge {:fallback title
                                                       :title title
                                                       :title_link (urls/from-doc doc)
-                                                      :image_url (urls/svg-from-doc doc
+                                                      :image_url (urls/png-from-doc doc
                                                                                     :query {:auth-token (-> slack-hook
                                                                                                           :slack-hook/permission
                                                                                                           :permission/token)})}
