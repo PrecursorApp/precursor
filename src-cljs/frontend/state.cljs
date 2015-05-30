@@ -7,6 +7,7 @@
   {:current-tool :pen
    :chat-opened false
    :chat-mobile-opened true
+   :viewers-opened true
    :right-click-learned false
    :menu-button-learned false
    :info-button-learned false
@@ -134,6 +135,8 @@
 (def chat-opened-path (conj browser-settings-path :chat-opened))
 
 (def chat-mobile-opened-path (conj browser-settings-path :chat-mobile-toggled))
+
+(def viewers-opened-path (conj browser-settings-path :viewers-opened))
 
 (def right-click-learned-path (conj browser-settings-path :right-click-learned))
 

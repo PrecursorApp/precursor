@@ -115,6 +115,7 @@
                 [:div.border.border-right]])]
 
             (om/build hud/hud (select-in app [state/chat-opened-path
+                                              state/viewers-opened-path
                                               state/overlays-path
                                               state/main-menu-learned-path
                                               state/chat-button-learned-path

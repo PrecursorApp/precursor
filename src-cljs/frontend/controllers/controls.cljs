@@ -1716,12 +1716,12 @@
 (defmethod control-event :viewers-opened
   [browser-state message _ state]
   (-> state
-    (assoc :show-viewers? true)))
+    (assoc-in state/viewers-opened-path true)))
 
 (defmethod control-event :viewers-closed
   [browser-state message _ state]
   (-> state
-    (assoc :show-viewers? false)))
+    (assoc-in state/viewers-opened-path false)))
 
 (defmethod control-event :landing-animation-completed
   [browser-state message _ state]
