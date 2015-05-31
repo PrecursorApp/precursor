@@ -453,7 +453,7 @@
 
 (defmethod ws-handler :cust/fetch-clips [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
-    (let [clips (vec (clip-model/find-by-cust (:db req) cust))]
+    (let [clips (clip-model/find-by-cust (:db req) cust)]
       (log/infof "sending %s clips to %s" (count clips) (:cust/email cust))
       (?reply-fn {:clips (map (fn [c] (-> c
                                         (select-keys [:clip/uuid :clip/important?])
