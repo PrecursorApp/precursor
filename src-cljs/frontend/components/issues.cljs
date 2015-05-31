@@ -1,7 +1,9 @@
 (ns frontend.components.issues
   (:require [cljs.core.async :as async :refer [put!]]
+            [cljs-http.client :as http]
             [cljs-time.core :as time]
             [cljs-time.format :as time-format]
+            [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
             [datascript :as d]
@@ -12,7 +14,6 @@
             [frontend.models.issue :as issue-model]
             [frontend.sente :as sente]
             [frontend.urls :as urls]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils]
             [goog.dom]
             [goog.dom.forms :as gforms]
@@ -45,14 +46,15 @@
                                                 (om/set-state! owner :submitting? true)
                                                 (when (seq issue-title)
                                                   (let [fe-id (utils/squuid)
-                                                        doc-id (let [result (async/<! (ajax/managed-ajax :post "/api/v1/document/new"
-                                                                                                         :params {:read-only true
-                                                                                                                  :document/name issue-title}))]
-                                                                 (if (= :success (:status result))
-                                                                   (do
-                                                                     (d/transact! (om/get-shared owner :db) [(:document result)]
+                                                        doc-id (let [result (async/<! (http/post "/api/v1/document/new"
+                                                                                                 {:edn-params {:read-only true
+                                                                                                               :document/name issue-title}
+                                                                                                  :headers {"X-CSRF-Token" (utils/csrf-token)}}))]
+                                                                 (if (:success result)
+                                                                   (let [doc (:document (reader/read-string (:body result)))]
+                                                                     (d/transact! (om/get-shared owner :db) [doc]
                                                                                   {:server-update true})
-                                                                     (get-in result [:document :db/id]))
+                                                                     (:db/id doc))
                                                                    ;; something went wrong, notifying error channel
                                                                    (do (async/put! (om/get-shared owner [:comms :errors]) [:api-error result])
                                                                        (throw "Couldn't create doc."))))]

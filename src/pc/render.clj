@@ -85,7 +85,8 @@
                                                (not= :layer.type/group (:layer/type %))) layers))
         {:keys [width height offset-top offset-left padding scale-factor]} (utils/apply-map svg-props layers args)]
     (html [:svg (merge
-                 {:width width
+                 {:viewBox (str "0 0 " width " " height)
+                  :width width
                   :height height
                   :xmlns "http://www.w3.org/2000/svg"
                   :xmlns:xlink "http://www.w3.org/1999/xlink"
@@ -107,7 +108,7 @@
                      :markerWidth 5
                      :markerHeight 5
                      :orient "auto"
-                     :fill (if invert-colors? "#ccc" "black")}
+                     :fill (if invert-colors? "#ccc" "#888")}
             [:path {:d "M 0 0 L 10 5 L 0 10 z"}]]
            [:g {:transform (format "translate(%s, %s) scale(%s)"
                                    offset-left

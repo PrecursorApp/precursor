@@ -2,9 +2,11 @@
   (:require [clojure.string :as str]
             [cljs.reader :as reader]
             [cljs.core.async :as async :refer [>! <! alts! put! chan sliding-buffer close!]]
+            [cljs-http.client :as http]
             [datascript :as d]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
+            [frontend.sente :as sente]
             [frontend.models.layer :as layer-model]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
@@ -12,8 +14,10 @@
             [goog.dom.xml :as xml]
             [goog.string :as gstring]
             [goog.style]
-            [hiccups.runtime :as hiccupsrt])
-  (:require-macros [hiccups.core :as hiccups]))
+            [hiccups.runtime :as hiccupsrt]
+            [taoensso.sente])
+  (:require-macros [hiccups.core :as hiccups]
+                   [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
 
 ;; TODO: all of this rendering code is shared with the backend. Obviously, this
 ;;       isn't the best place for it, but no great ideas for how to move it.
@@ -92,6 +96,7 @@
      :key           (:layer/id layer)
      :stroke        (if invert-colors? "#ccc" "black")
      :stroke-width   2
+     :vector-effect  "non-scaling-stroke"
      :rx            (:layer/rx layer)
      :ry            (:layer/ry layer)     }))
 
@@ -109,13 +114,15 @@
    :x2          (:layer/end-x layer)
    :y2          (:layer/end-y layer)
    :stroke (if invert-colors? "#ccc" "black")
-   :stroke-width 2})
+   :stroke-width 2
+   :vector-effect "non-scaling-stroke"})
 
 (defn layer->svg-path [layer {:keys [invert-colors?]}]
   {:d (:layer/path layer)
    :stroke (if invert-colors? "#ccc" "black")
    :fill "none"
-   :stroke-width 2})
+   :stroke-width 2
+   :vector-effect "non-scaling-stroke"})
 
 
 (defmulti svg-element (fn [layer opts] (:layer/type layer)))
@@ -160,7 +167,8 @@
         offset-left (- 1 min-x)]
     (hiccups/html
      [:svg (merge
-            {:width width
+            {:viewBox (str "0 0 " width " " height)
+             :width width
              :height height
              :xmlns "http://www.w3.org/2000/svg"
              :xmlns:xlink "http://www.w3.org/1999/xlink"
@@ -178,8 +186,21 @@
       [:g {:transform (gstring/format "translate(%s, %s)" offset-left offset-top)}
        (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))
 
+(defn upload-clipboard-to-s3 [sente-state rendered-layers]
+  (sente/send-msg sente-state [:cust/fetch-clipboard-s3-url]
+                  5000
+                  (fn [reply]
+                    (when (taoensso.sente/cb-success? reply)
+                      (go (let [res (async/<! (http/put (:url reply)
+                                                        {:body rendered-layers
+                                                         :headers {"Content-Type" "image/svg+xml"}}))]
+                            (sente/send-msg sente-state [:cust/store-clipboard {:key (:key reply)}])))))))
+
 (defn handle-copy! [app-state e]
-  (when (let [target (.-target e)]
+  (when (let [target js/document.activeElement
+              ;;(.-target e)
+              ;; Have to use activeElement, b/c target won't settle on canvas :/
+              ]
           ;; don't apply if input or textarea is focused, unless the copy-hack
           ;; element is selected (see components.canvas)
           (or (= "_copy-hack" (.-id target))
@@ -191,8 +212,9 @@
                             (map #(dissoc (ds/touch+ (d/entity @(:db app-state) %))
                                           :unsaved)
                                  (get-in app-state [:selected-eids :selected-eids]))))]
-      (.setData (.-clipboardData e) "text"
-                (render-layers {:layers layers})))))
+      (let [rendered-layers (render-layers {:layers layers})]
+        (.setData (.-clipboardData e) "text" rendered-layers)
+        (upload-clipboard-to-s3 (:sente app-state) rendered-layers)))))
 
 (defn parse-pasted [pasted-data]
   (some->> pasted-data

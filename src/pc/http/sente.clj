@@ -17,6 +17,7 @@
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
+            [pc.http.clipboard :as clipboard]
             [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
             [pc.http.issues :as issues-http]
             [pc.http.plan :as plan-http]
@@ -26,6 +27,7 @@
             [pc.models.access-grant :as access-grant-model]
             [pc.models.access-request :as access-request-model]
             [pc.models.chat :as chat]
+            [pc.models.clip :as clip-model]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
             [pc.models.issue :as issue-model]
@@ -432,6 +434,55 @@
 (defmethod ws-handler :cust/fetch-teams [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (?reply-fn {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
+
+(defmethod ws-handler :cust/fetch-clipboard-s3-url [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (log/infof "sending presigned url for %s" (:cust/email cust))
+    (?reply-fn (clipboard/create-presigned-clipboard-url cust))))
+
+(defmethod ws-handler :cust/store-clipboard [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (let [bucket (pc.profile/clipboard-bucket)
+          key (:key ?data)]
+      (log/infof "storing clipboard data for %s" (:cust/email cust))
+      @(d/transact (pcd/conn) [{:db/id (:db/id cust)
+                                :cust/clips {:db/id (d/tempid :db.part/user)
+                                             :clip/s3-bucket bucket
+                                             :clip/s3-key key
+                                             :clip/uuid (d/squuid)}}]))))
+
+(defmethod ws-handler :cust/fetch-clips [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (let [clips (clip-model/find-by-cust (:db req) cust)]
+      (log/infof "sending %s clips to %s" (count clips) (:cust/email cust))
+      (?reply-fn {:clips (map (fn [c] (-> c
+                                        (select-keys [:clip/uuid :clip/important?])
+                                        (assoc :clip/s3-url (clipboard/create-presigned-clip-url c))))
+                              clips)}))))
+
+(defmethod ws-handler :cust/delete-clip [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
+      (log/infof "deleting clip %s for %s" (:db/id clip) (:cust/email cust))
+      @(d/transact (pcd/conn) [[:db.fn/retractEntity (:db/id clip)]])
+      (?reply-fn {:deleted? true
+                  :clip/uuid (:clip/uuid clip)}))))
+
+(defmethod ws-handler :cust/tag-clip [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
+      (log/infof "marking clip %s important for %s" (:db/id clip) (:cust/email cust))
+      @(d/transact (pcd/conn) [[:db/add (:db/id clip) :clip/important? true]])
+      (?reply-fn {:tagged? true
+                  :clip/uuid (:clip/uuid clip)}))))
+
+(defmethod ws-handler :cust/untag-clip [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
+      (log/infof "marking clip %s unimportant for %s" (:db/id clip) (:cust/email cust))
+      @(d/transact (pcd/conn) [[:db/retract (:db/id clip) :clip/important? true]])
+      (?reply-fn {:untagged? true
+                  :clip/uuid (:clip/uuid clip)}))))
 
 (defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [uuids (->> ?data :uuids)]

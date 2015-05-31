@@ -19,6 +19,7 @@
    :stroke-minus "M27.5,50h45"
    :stroke-cursor "M23.3,80.4V5 l53.3,53.3c0,0-21.5,0-21.5,0s12.4,29.8,12.4,29.8L50.9,95c0,0-12.4-29.8-12.4-29.8S23.3,80.4,23.3,80.4z"
    :stroke-border-circle "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z"
+   :stroke-border-square "M95,95H5V5h90V95z"
    :stroke-rectangle "M87.5,87.5h-75v-75h75V87.5z M20,5H5v15h15V5z M95,5H80v15h15V5z M20,80H5v15h15V80z M95,80H80v15h15V80z"
    :stroke-line "M95,20H80V5h15V20z M20,80H5v15h15V80z M87.5,12.5l-75,75"
    :stroke-text "M65.9,92.4H34.1H50 V7.6 M95,21.4c0,0-7.9-13.8-7.9-13.8c0,0-74.1,0-74.1,0L5,21.4"
@@ -32,6 +33,7 @@
    :stroke-ibeam "M50,10v80 M41.3,95h-10 M68.7,95h-10 M45,50h10 M50,90 l-8.7,5 M50,90l8.7,5 M58.7,5h10 M31.3,5h10 M58.7,5L50,10 M41.3,5l8.7,5"
    :stroke-blog "M85,32.5H35 M35,50h50 M35,67.5h50 M25,85h60 c5.5,0,10-4.5,10-10V15H25v60c0,5.5-4.5,10-10,10S5,80.5,5,75V35h15"
    :stroke-clock "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z M71.2,71.2C71.2,71.2,50,50,50,50V20"
+   :stroke-star "M50,7.2l13.9,28.2L95,39.9L72.5,61.8l5.3,31L50,78.2 L22.2,92.8l5.3-31L5,39.9l31.1-4.5L50,7.2z"
    :stroke-delete "M35,80L5,50c0,0,30-30,30-30s60,0,60,0v60 C95,80,35,80,35,80z M45,35l30,30 M75,35L45,65"
    :stroke-shift "M5,52L50,7l45,45H70.5V93H29.5V52H5z"
    :stroke-option "M95,15H65 M95,85H75L35,15H5"
@@ -82,8 +84,8 @@
    :stroke-credit "M95,80H5V20h90V80z M5,35h90 M15,65h50"
    :stroke-heart "M88.4,50c8.8-8.8,8.8-23,0-31.8s-23-8.8-31.8,0 C52.2,22.6,50,28.3,50,34.1c0-5.8-2.2-11.5-6.6-15.9c-8.8-8.8-23-8.8-31.8,0c-8.8,8.8-8.8,23,0,31.8c0,0,38.4,38.4,38.4,38.4 S88.4,50,88.4,50z"
    :stroke-file "M80,95H20V5h60V95z"
-   :stroke-vertical "M50,100V0"
-   :stroke-horizontal "M0,50h100"
+   :stroke-vertical "M50,90V0"
+   :stroke-horizontal "M0,50h90"
    :stroke-requests "M95,65v30H65 c-16.6,0-30-13.4-30-30c0-16.6,13.4-30,30-30C81.6,35,95,48.4,95,65z M63.3,25C59.2,13.4,48.1,5,35,5C18.4,5,5,18.4,5,35v30h20 M65,80V50 M50,65h30"
    :stroke-chat-team "M35,35c16.6,0,30,13.4,30,30 c0,16.6-13.4,30-30,30H5V65C5,48.4,18.4,35,35,35z M75,65h20V35C95,18.4,81.6,5,65,5c-13.1,0-24.2,8.4-28.3,20"
 
@@ -99,6 +101,7 @@
    :fill-dot "M57.5,50c0,4.1-3.4,7.5-7.5,7.5s-7.5-3.4-7.5-7.5s3.4-7.5,7.5-7.5S57.5,45.9,57.5,50z"
    :fill-ellipsis "M59,50c0,5-4,9-9,9s-9-4-9-9s4-9,9-9S59,45,59,50z M14,41c-5,0-9,4-9,9s4,9,9,9s9-4,9-9S19,41,14,41z M86,41 c-5,0-9,4-9,9s4,9,9,9s9-4,9-9S91,41,86,41z"
    :fill-ellipsis-vertical "M50,41c5,0,9,4,9,9s-4,9-9,9s-9-4-9-9S45,41,50,41z M41,86c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S41,81,41,86z M41,14c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S41,9,41,14z"
+   :fill-star "M50,2.4l15.5,31.3l34.5,5L75,63.1l5.9,34.4L50,81.3L19.1,97.6L25,63.1L0,38.8l34.6-5L50,2.4z"
    :fill-north "M30,20L50,0l20,20H30z"
    :fill-south "M70,80l-20,20L30,80H70z"
    :fill-east "M80,30l20,20L80,70V30z"
@@ -180,8 +183,12 @@
    :public      {:paths [:stroke-public]}
    :team        {:paths [:stroke-team]}
    :requests    {:paths [:stroke-requests]}
+   :star        {:paths [:stroke-star]}
    :minus       {:paths [:stroke-horizontal]}
    :plus        {:paths [:stroke-horizontal
+                         :stroke-vertical]}
+   :clips       {:paths [:stroke-border-square
+                         :stroke-horizontal
                          :stroke-vertical]}
    :read-only   {:paths [:stroke-read-only
                          :fill-read-only]}
@@ -246,6 +253,7 @@
    :file-svg    {:paths [:fill-code]}
    :ellipsis    {:paths [:fill-ellipsis]}
    :dot-menu    {:paths [:fill-ellipsis-vertical]}
+   :starred     {:paths [:fill-star]}
    :scroll      {:paths [:fill-scroll-north
                          :fill-dot
                          :fill-scroll-south]}
@@ -272,7 +280,8 @@
            (for [path (:paths template)]
              (dom/path (clj->js (merge {:className (str (name path) " " (:className path-props))
                                         :d (get icon-paths path)
-                                        :key (name path)}
+                                        :key (name path)
+                                        :vectorEffect "non-scaling-stroke"}
                                        (dissoc path-props :className))))))))
 
 (defn icon [icon-name & [{:keys [path-props svg-props]}]]

@@ -1,6 +1,7 @@
 (ns frontend.controllers.controls
   (:require [cemerick.url :as url]
             [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [cljs-http.client :as http]
             [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -10,6 +11,7 @@
             [frontend.async :refer [put!]]
             [frontend.camera :as cameras]
             [frontend.careful]
+            [frontend.clipboard :as clipboard]
             [frontend.components.forms :refer [release-button!]]
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
@@ -32,7 +34,6 @@
             [frontend.subscribers :as subs]
             [frontend.svg :as svg]
             [frontend.urls :as urls]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
             [frontend.utils.state :as state-utils]
@@ -1715,12 +1716,12 @@
 (defmethod control-event :viewers-opened
   [browser-state message _ state]
   (-> state
-    (assoc :show-viewers? true)))
+    (assoc-in state/viewers-opened-path true)))
 
 (defmethod control-event :viewers-closed
   [browser-state message _ state]
   (-> state
-    (assoc :show-viewers? false)))
+    (assoc-in state/viewers-opened-path false)))
 
 (defmethod control-event :landing-animation-completed
   [browser-state message _ state]
@@ -1944,3 +1945,63 @@
                                                  (:added %))
                                            tx-data)))]
       (replace-token-with-new-name current-state current-doc-id new-name))))
+
+(defmethod control-event :delete-clip-clicked
+  [browser-state message {:keys [clip/uuid]} state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  ;; But it doesn't really matter that much if the clip sticks around.
+  (update-in state [:cust :cust/clips] (fn [clips] (remove #(= uuid (:clip/uuid %)) clips))))
+
+(defmethod post-control-event! :delete-clip-clicked
+  [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:cust/delete-clip {:clip/uuid uuid}]
+                  10000
+                  (fn [reply]
+                    reply)))
+
+(defmethod control-event :important-clip-marked
+  [browser-state message {:keys [clip/uuid]} state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  ;; This time it matters :/
+  (update-in state [:cust :cust/clips] (fn [clips] (map (fn [c]
+                                                          (if (= uuid (:clip/uuid c))
+                                                            (assoc c :clip/important? true)
+                                                            c))
+                                                        clips))))
+
+(defmethod post-control-event! :important-clip-marked
+  [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:cust/tag-clip {:clip/uuid uuid}]
+                  10000
+                  (fn [reply]
+                    reply)))
+
+(defmethod control-event :unimportant-clip-marked
+  [browser-state message {:keys [clip/uuid]} state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  ;; This time it matters :/
+  (update-in state [:cust :cust/clips] (fn [clips] (map (fn [c]
+                                                          (if (= uuid (:clip/uuid c))
+                                                            (dissoc c :clip/important?)
+                                                            c))
+                                                        clips))))
+
+(defmethod post-control-event! :unimportant-clip-marked
+  [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  (sente/send-msg (:sente current-state)
+                  [:cust/untag-clip {:clip/uuid uuid}]
+                  10000
+                  (fn [reply]
+                    reply)))
+
+(defmethod post-control-event! :clip-pasted
+  [browser-state message {:keys [clip/uuid clip/s3-url]} previous-state current-state]
+  (go
+    ;; add xhr=true b/c it will use response from image request, which doesn't have cors headers
+    (let [res (async/<! (http/get (str s3-url "&xhr=true")))]
+      (if (:success res)
+        (put! (get-in current-state [:comms :controls]) [:layers-pasted (assoc (clipboard/parse-pasted (:body res))
+                                                                               :canvas-size (utils/canvas-size))])))))

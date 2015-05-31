@@ -26,7 +26,6 @@
             [frontend.sente :as sente]
             [frontend.state :as state]
             [frontend.team :as team]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
             [goog.dom]
             [goog.dom.DomHelper]

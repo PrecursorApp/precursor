@@ -4,7 +4,6 @@
             [datascript :as d]
             [frontend.async :refer [put!]]
             [om.core :as om :include-macros true]
-            [ajax.core :as ajax]
             [cljs-time.core :as time]
             [goog.async.AnimationDelay]
             [goog.crypt :as crypt]
@@ -15,7 +14,8 @@
             [goog.events :as ge]
             [goog.net.EventType :as gevt]
             [sablono.core :as html :include-macros true]
-            [frontend.utils.seq :as seq-util])
+            [frontend.utils.seq :as seq-util]
+            [goog.labs.userAgent.browser :as ua-browser])
   (:require-macros [frontend.utils :refer (inspect timing defrender go+)]
                    [cljs.core.async.macros :refer (go)])
   (:import [goog.format EmailAddress]))
@@ -287,3 +287,11 @@
         (-> b6 (to-hex-string 4)))))
     ;; Generates a squuid with Math.random
     (d/squuid)))
+
+(defn absolute-css-hash
+  "Uses an absolute url to workaround an annoying bug in Firefox where
+  the url(#hash) will break if the base url changes."
+  [hash]
+  (if (ua-browser/isFirefox)
+    (str "url(" js/document.location.pathname "#" hash ")")
+    (str "url(#" hash ")")))

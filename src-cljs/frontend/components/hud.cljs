@@ -179,8 +179,6 @@
             chat-opened? (get-in app state/chat-opened-path)
             chat-button-learned? (get-in app state/chat-button-learned-path)
             viewers-count (count (remove (comp :hide-in-list? last) (get-in app [:subscribers :info])))
-            show-viewers? (and (not (overlay-visible? app))
-                               (get app :show-viewers? (< 1 viewers-count 6)))
             last-read-time (get-in app (state/last-read-chat-time-path (:document/id app)))
             dummy-chat? (seq (d/datoms @db :aevt :document/chat-bot))
             unread-chat-count (chat-model/compute-unread-chat-count @db last-read-time)
@@ -192,7 +190,7 @@
           [:a.hud-chat.hud-item.hud-toggle {:on-click #(cast! :chat-toggled)
                                             :on-touch-end #(do
                                                              (.preventDefault %)
-                                                             (if show-viewers?
+                                                             (if (get-in app state/viewers-opened-path)
                                                                (do
                                                                  (cast! :chat-toggled)
                                                                  (cast! :viewers-closed))
@@ -231,13 +229,12 @@
             viewers-count (count (remove (comp :hide-in-list? last) (get-in app [:subscribers :info])))
             can-edit? (not (empty? (:cust app)))
             show-viewers? (and (not (overlay-visible? app))
-                               (get app :show-viewers? (< 1 viewers-count 6)))
+                               (get-in app state/viewers-opened-path))
             self-color (colors/find-color (get-in app [:cust-data :uuid->cust]) (get-in app [:cust :cust/uuid]) client-id)
             self-name (get-in app [:cust-data :uuid->cust (get-in app [:cust :cust/uuid]) :cust/name])
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-         [:div.viewers
-          {:class (when (< 1 viewers-count) " viewers-multiple ")} ; TODO use this to clean up messy nth-childs in hud.less
+         [:div.viewers {:key "viewers"}
           (when show-viewers?
             [:div.viewers-list
              [:div.viewers-list-frame
@@ -317,7 +314,15 @@
                      :on-click #(cast! :chat-user-clicked {:id-str id-str})
                      :role "button"
                      :title "Ping this viewer in chat."}
-                    (common/icon :at)]]]])]])
+                    (common/icon :at)]]]])
+
+              [:a.viewer.viewer-add {:href (urls/overlay-path doc "sharing")
+                                     :class (when (< 3 viewers-count) "sink")
+                                     :title "Invite."}
+               [:i.viewer-avatar.viewer-tag
+                (common/icon :user)]
+               [:span.viewer-name.viewer-tag
+                (common/icon :plus)]]]])
 
           [:a.hud-viewers.hud-item.hud-toggle {:on-click (if show-viewers?
                                                            #(cast! :viewers-closed)
@@ -332,7 +337,7 @@
                                                                       (cast! :viewers-opened))
                                                                     (cast! :viewers-opened))))
                                                :class (when show-viewers? "close")
-                                               :data-count (when (< 1 viewers-count) viewers-count)
+                                               :data-count viewers-count
                                                :role "button"}
            (common/icon :times)
            (common/icon :user)]])))))
@@ -345,6 +350,7 @@
       (html
        [:div.hud
         (om/build viewers (utils/select-in app [state/chat-opened-path
+                                                state/viewers-opened-path
                                                 state/overlays-path
                                                 [:subscribers :info]
                                                 [:cust-data]
@@ -366,6 +372,7 @@
                                                  [:team]])
                     {:react-key "roster"}))
         (om/build chat (utils/select-in app [state/chat-opened-path
+                                             state/viewers-opened-path
                                              state/chat-button-learned-path
                                              state/browser-settings-path
                                              [:document/id]

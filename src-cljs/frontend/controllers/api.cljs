@@ -1,9 +1,9 @@
 (ns frontend.controllers.api
   (:require [cljs.core.async :refer [close!]]
+            [datascript :as d]
             [frontend.async :refer [put!]]
             [frontend.routes :as routes]
             [frontend.state :as state]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils :as utils]
             [goog.string :as gstring])
@@ -72,6 +72,22 @@
 (defmethod api-event [:touched-docs :success]
   [target message status {:keys [docs]} state]
   (assoc-in state [:cust :touched-docs] docs))
+
+(defn clip-compare [clip-1 clip-2]
+  (if (:clip/important? clip-1)
+    (if (:clip/important? clip-2)
+      (compare (some-> clip-2 :clip/uuid d/squuid-time-millis)
+               (some-> clip-1 :clip/uuid d/squuid-time-millis))
+      -1)
+    (if (:clip/important? clip-2)
+      1
+      (compare (some-> clip-2 :clip/uuid d/squuid-time-millis)
+               (some-> clip-1 :clip/uuid d/squuid-time-millis)))))
+
+(defmethod api-event [:cust-clips :success]
+  [target message status {:keys [clips]} state]
+  (let [sorted-clips (sort clip-compare clips)]
+    (assoc-in state [:cust :cust/clips] sorted-clips)))
 
 (defmethod api-event [:team-docs :success]
   [target message status {:keys [docs]} state]

@@ -18,7 +18,6 @@
             [frontend.state :as state]
             [frontend.routes :as routes]
             [frontend.utils :as utils :include-macros true]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
             [goog.labs.userAgent.browser :as ua]
