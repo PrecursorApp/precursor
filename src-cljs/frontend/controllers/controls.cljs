@@ -1958,7 +1958,7 @@
                   [:cust/delete-clip {:clip/uuid uuid}]
                   10000
                   (fn [reply]
-                    (utils/inspect reply))))
+                    reply)))
 
 (defmethod control-event :important-clip-marked
   [browser-state message {:keys [clip/uuid]} state]
@@ -1966,8 +1966,8 @@
   ;; This time it matters :/
   (update-in state [:cust :cust/clips] (fn [clips] (map (fn [c]
                                                           (if (= uuid (:clip/uuid c))
-                                                            (utils/inspect (assoc c :clip/important? true))
-                                                            (utils/inspect c)))
+                                                            (assoc c :clip/important? true)
+                                                            c))
                                                         clips))))
 
 (defmethod post-control-event! :important-clip-marked
@@ -1976,7 +1976,7 @@
                   [:cust/tag-clip {:clip/uuid uuid}]
                   10000
                   (fn [reply]
-                    (utils/inspect reply))))
+                    reply)))
 
 (defmethod control-event :unimportant-clip-marked
   [browser-state message {:keys [clip/uuid]} state]
@@ -1995,7 +1995,7 @@
                   [:cust/untag-clip {:clip/uuid uuid}]
                   10000
                   (fn [reply]
-                    (utils/inspect reply))))
+                    reply)))
 
 (defmethod post-control-event! :clip-pasted
   [browser-state message {:keys [clip/uuid clip/s3-url]} previous-state current-state]

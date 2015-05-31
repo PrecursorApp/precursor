@@ -46,10 +46,10 @@
                                                 (om/set-state! owner :submitting? true)
                                                 (when (seq issue-title)
                                                   (let [fe-id (utils/squuid)
-                                                        doc-id (let [result (utils/inspect (async/<! (http/post "/api/v1/document/new"
-                                                                                                                {:edn-params {:read-only true
-                                                                                                                              :document/name issue-title}
-                                                                                                                 :headers {"X-CSRF-Token" (utils/csrf-token)}})))]
+                                                        doc-id (let [result (async/<! (http/post "/api/v1/document/new"
+                                                                                                 {:edn-params {:read-only true
+                                                                                                               :document/name issue-title}
+                                                                                                  :headers {"X-CSRF-Token" (utils/csrf-token)}}))]
                                                                  (if (:success result)
                                                                    (let [doc (:document (reader/read-string (:body result)))]
                                                                      (d/transact! (om/get-shared owner :db) [doc]
