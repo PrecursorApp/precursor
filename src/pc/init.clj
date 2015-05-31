@@ -30,8 +30,8 @@
    #'pc.nrepl/init
    #'pc.statsd/init
    #'pc.datomic/init
-   #'pc.datomic.migrations/init
    #'pc.datomic.schema/init
+   #'pc.datomic.migrations/init
    #'pc.models.chat-bot/init
    #'pc.models.plan/init
    #'pc.nts/init
