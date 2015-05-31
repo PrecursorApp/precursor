@@ -68,11 +68,12 @@
                                    :on-click #(do (cast! :important-clip-marked {:clip/uuid (:clip/uuid clip)})
                                                 (utils/stop-event %))}
                    (common/icon :star)]])
-               [:div.clip-option
-                [:a.clip-button {:role "button"
-                                 :on-click #(do (cast! :delete-clip-clicked {:clip/uuid (:clip/uuid clip)})
-                                              (utils/stop-event %))}
-                 (common/icon :times)]]]))]])))))
+               (when-not (:clip/important? clip)
+                 [:div.clip-option
+                  [:a.clip-button {:role "button"
+                                   :on-click #(do (cast! :delete-clip-clicked {:clip/uuid (:clip/uuid clip)})
+                                                  (utils/stop-event %))}
+                   (common/icon :times)]])]))]])))))
 
 (defn clip-viewer* [app owner]
   (reify
