@@ -739,10 +739,10 @@
     border-top: 1px solid @gray_lighter;
   }
   &:not(:hover) {
-    .clip-button {
+    .clip-option {
       &:not(.stuck) {
         opacity: 0;
-        .iconpile {
+        .clip-button {
           display: none;
         }
       }
@@ -759,10 +759,10 @@
   border-bottom: 1px solid @gray_lighter;
   border-left: 1px solid @gray_lighter;
   border-right: 1px solid @gray_lighter;
-  transition: box-shadow @run_slower;
+  transition: box-shadow @run_slow;
   &:hover {
     .shadow_canvas(hover);
-    transition: box-shadow @run_slow;
+    transition: box-shadow @run;
   }
   &:active {
     .shadow_canvas(active);
@@ -774,32 +774,34 @@
   max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
   opacity: @opacity_white_light;
 }
-.clip-button {
+.clip-option {
   .flexy(center; center);
   .icon(stroke; @gray);
   .icon(fill; @color_select);
+  .holo();
   position: absolute;
   width: @tile;
   height: @tile;
   margin: 1px;
   transition: opacity @run_slower @bezier_fadein;
-  .iconpile {
-    animation: in-zoom @run ease-out backwards;
-  }
   &:nth-child(2) {
     bottom: 0;
     left: 0;
     background-image: radial-gradient(ellipse at 0 100%, @dye_outer 25%, fade(@dye_outer, 0) 75%);
-    .iconpile {
-      animation-delay: @run_slow;
+    .clip-button {
+      animation-delay: ((2 * @run_slower) + (1 * @run_faster));
     }
   }
   &:nth-child(3) {
     top: 0;
     right: 0;
     background-image: radial-gradient(ellipse at 100% 0, @dye_outer 25%, fade(@dye_outer, 0) 75%);
-    .iconpile {
-      animation-delay: 2 * @run_slower;
+    .clip-button {
+      animation-delay: ((2 * @run_slower) + (4 * @run_faster));
     }
   }
+}
+.clip-button {
+  animation: in-zoom @run_fast ease-out backwards;
+  pointer-events: auto;
 }

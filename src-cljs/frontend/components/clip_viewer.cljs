@@ -48,24 +48,27 @@
           (for [clip clips]
             (html
              [:div.clip.make
-               [:a.clip-preview {:role "button"
-                               :on-click #(cast! :clip-pasted clip)}
-                [:img.clip-thumbnail {:src (:clip/s3-url clip)}]]
-               (if (:clip/important? clip)
+              [:a.clip-preview {:role "button"
+                                :on-click #(cast! :clip-pasted clip)}
+               [:img.clip-thumbnail {:src (:clip/s3-url clip)}]]
+              (if (:clip/important? clip)
 
-                 [:a.clip-button.stuck {:role "button"
-                                        :on-click #(do (cast! :unimportant-clip-marked {:clip/uuid (:clip/uuid clip)})
-                                                     (utils/stop-event %))}
-                  (common/icon :starred)]
+                [:div.clip-option.stuck
+                 [:a.clip-button {:role "button"
+                                  :on-click #(do (cast! :unimportant-clip-marked {:clip/uuid (:clip/uuid clip)})
+                                               (utils/stop-event %))}
+                  (common/icon :starred)]]
 
+                [:div.clip-option
                  [:a.clip-button {:role "button"
                                   :on-click #(do (cast! :important-clip-marked {:clip/uuid (:clip/uuid clip)})
                                                (utils/stop-event %))}
-                  (common/icon :star)])
+                  (common/icon :star)]])
+              [:div.clip-option
                [:a.clip-button {:role "button"
                                 :on-click #(do (cast! :delete-clip-clicked {:clip/uuid (:clip/uuid clip)})
-                                               (utils/stop-event %))}
-                (common/icon :times)]]))])))))
+                                             (utils/stop-event %))}
+                (common/icon :times)]]]))])))))
 
 (defn clip-viewer* [app owner]
   (reify
