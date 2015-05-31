@@ -15,6 +15,7 @@
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.date :refer (date->bucket)]
             [goog.date]
+            [goog.userAgent]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)])
@@ -32,13 +33,14 @@
            [:h2.make
             "Keep track of everything you copy and paste."]
            [:p.make
-            "If you sign in with Google we keep track of everything you copy."]
+            "If you sign in with Google, we'll keep track of all the shapes you copy from the canvas. Use this unique feature to create a custom library of your favorite components."]
            [:div.calls-to-action.make
             (om/build common/google-login {:source "Clip viewer signup"})]]])))))
 
 (defn clips-list [clips owner]
   (reify
     om/IDisplayName (display-name [_] "Clip Viewer clips List")
+    om/IInitState (init-state [_] {:mac? goog.userAgent/MAC})
     om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
@@ -46,8 +48,10 @@
         (html
          [:div.content
           [:h2.make "Paste clips into your doc. "]
-          [:p.make "Add new clips to the list by copying selected shapes on the canvas with Cmd+C. "
-                   "Star clips to pin them to the top. "]
+          [:p.make "Add new clips to the list by copying selected shapes on the canvas with " (if (om/get-state owner :mac?)
+                                                                                                "Cmd+C."
+                                                                                                "Ctrl+C.")
+                   " Star clips to pin them to the top. "]
           [:div.clips
            (for [clip clips]
              (html
