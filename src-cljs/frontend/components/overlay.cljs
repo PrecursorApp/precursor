@@ -830,7 +830,7 @@
    :username {:component username}
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
-   :clips {:title "Clips"
+   :clips {:title "Clipboard History"
            :component clip-viewer/clip-viewer}
    :document-permissions {:title "Request Access"
                           :component document-access/permission-denied-overlay}
