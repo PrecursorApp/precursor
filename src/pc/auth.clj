@@ -8,6 +8,7 @@
             [pc.auth.google :as google-auth]
             [pc.crm :as crm]
             [pc.models.access-grant :as access-grant-model]
+            [pc.models.clip :as clip-model]
             [pc.models.cust :as cust]
             [pc.models.permission :as permission-model]
             [pc.datomic :as pcd]
@@ -64,7 +65,8 @@
                                   :cust/verified-email (:email_verified user-info)
                                   :cust/http-session-key (UUID/randomUUID)
                                   :google-account/sub (:sub user-info)
-                                  :cust/uuid (d/squuid)})
+                                  :cust/uuid (d/squuid)
+                                  :cust/clips (clip-model/generate-default-clips)})
               convert-access-grants-future (future (convert-all-grants-for-cust (pcd/default-db) user))
               user (deref (future (update-user-from-sub user)) 500 user)]
           ;; need this to finish before they try to access a document

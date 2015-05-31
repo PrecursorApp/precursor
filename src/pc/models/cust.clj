@@ -23,9 +23,8 @@
 (def admin-emails #{"daniel@precursorapp.com" "danny@precursorapp.com"})
 
 (defn all [db]
-  (d/q '{:find [[?e ...]]
-         :where [[?e :google-account/sub]]}
-       db))
+  (map #(d/entity db (:e %))
+       (d/datoms db :aevt :google-account/sub)))
 
 (defn find-by-id [db id]
   (let [candidate (d/entity db id)]
