@@ -205,7 +205,7 @@
            (common/icon :docs)
            [:span "Documents"]]
           [:a.vein.make {:href (urls/overlay-path doc "clips")}
-           (common/icon :docs)
+           (common/icon :clips)
            [:span "Clips"]]
           [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)}
            (common/icon :requests)

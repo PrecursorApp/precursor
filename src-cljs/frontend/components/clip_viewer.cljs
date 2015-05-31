@@ -44,30 +44,28 @@
     (render [_]
       (let [cast! (om/get-shared owner :cast!)]
         (html
-         [:div.content
+         [:div.clips.content
           (for [clip clips]
             (html
              [:div.clip.make
-              [:a.recent-doc {:role "button"
-                              :on-click #(cast! :clip-pasted clip)}
-               [:img {:src (:clip/s3-url clip)}]
-               [:i.loading-ellipses
-                [:i "."]
-                [:i "."]
-                [:i "."]]
+               [:a.clip-preview {:role "button"
+                               :on-click #(cast! :clip-pasted clip)}
+                [:img.clip-thumbnail {:src (:clip/s3-url clip)}]]
                (if (:clip/important? clip)
-                 [:a.clip-tag {:role "button"
-                               :on-click #(do (cast! :unimportant-clip-marked {:clip/uuid (:clip/uuid clip)})
-                                              (utils/stop-event %))}
+
+                 [:a.clip-button.stuck {:role "button"
+                                        :on-click #(do (cast! :unimportant-clip-marked {:clip/uuid (:clip/uuid clip)})
+                                                     (utils/stop-event %))}
                   (common/icon :starred)]
-                 [:a.clip-tag {:role "button"
-                               :on-click #(do (cast! :important-clip-marked {:clip/uuid (:clip/uuid clip)})
-                                              (utils/stop-event %))}
+
+                 [:a.clip-button {:role "button"
+                                  :on-click #(do (cast! :important-clip-marked {:clip/uuid (:clip/uuid clip)})
+                                               (utils/stop-event %))}
                   (common/icon :star)])
-               [:a.clip-delete {:role "button"
+               [:a.clip-button {:role "button"
                                 :on-click #(do (cast! :delete-clip-clicked {:clip/uuid (:clip/uuid clip)})
                                                (utils/stop-event %))}
-                (common/icon :times)]]]))])))))
+                (common/icon :times)]]))])))))
 
 (defn clip-viewer* [app owner]
   (reify

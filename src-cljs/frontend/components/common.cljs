@@ -19,6 +19,7 @@
    :stroke-minus "M27.5,50h45"
    :stroke-cursor "M23.3,80.4V5 l53.3,53.3c0,0-21.5,0-21.5,0s12.4,29.8,12.4,29.8L50.9,95c0,0-12.4-29.8-12.4-29.8S23.3,80.4,23.3,80.4z"
    :stroke-border-circle "M95,50c0,24.9-20.1,45-45,45S5,74.9,5,50S25.1,5,50,5 S95,25.1,95,50z"
+   :stroke-border-square "M95,95H5V5h90V95z"
    :stroke-rectangle "M87.5,87.5h-75v-75h75V87.5z M20,5H5v15h15V5z M95,5H80v15h15V5z M20,80H5v15h15V80z M95,80H80v15h15V80z"
    :stroke-line "M95,20H80V5h15V20z M20,80H5v15h15V80z M87.5,12.5l-75,75"
    :stroke-text "M65.9,92.4H34.1H50 V7.6 M95,21.4c0,0-7.9-13.8-7.9-13.8c0,0-74.1,0-74.1,0L5,21.4"
@@ -83,8 +84,8 @@
    :stroke-credit "M95,80H5V20h90V80z M5,35h90 M15,65h50"
    :stroke-heart "M88.4,50c8.8-8.8,8.8-23,0-31.8s-23-8.8-31.8,0 C52.2,22.6,50,28.3,50,34.1c0-5.8-2.2-11.5-6.6-15.9c-8.8-8.8-23-8.8-31.8,0c-8.8,8.8-8.8,23,0,31.8c0,0,38.4,38.4,38.4,38.4 S88.4,50,88.4,50z"
    :stroke-file "M80,95H20V5h60V95z"
-   :stroke-vertical "M50,100V0"
-   :stroke-horizontal "M0,50h100"
+   :stroke-vertical "M50,90V0"
+   :stroke-horizontal "M0,50h90"
    :stroke-requests "M95,65v30H65 c-16.6,0-30-13.4-30-30c0-16.6,13.4-30,30-30C81.6,35,95,48.4,95,65z M63.3,25C59.2,13.4,48.1,5,35,5C18.4,5,5,18.4,5,35v30h20 M65,80V50 M50,65h30"
    :stroke-chat-team "M35,35c16.6,0,30,13.4,30,30 c0,16.6-13.4,30-30,30H5V65C5,48.4,18.4,35,35,35z M75,65h20V35C95,18.4,81.6,5,65,5c-13.1,0-24.2,8.4-28.3,20"
 
@@ -185,6 +186,9 @@
    :star        {:paths [:stroke-star]}
    :minus       {:paths [:stroke-horizontal]}
    :plus        {:paths [:stroke-horizontal
+                         :stroke-vertical]}
+   :clips       {:paths [:stroke-border-square
+                         :stroke-horizontal
                          :stroke-vertical]}
    :read-only   {:paths [:stroke-read-only
                          :fill-read-only]}
