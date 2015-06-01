@@ -227,7 +227,7 @@
           ;; don't apply if input or textarea is focused, unless the copy-hack
           ;; element is selected (see components.canvas)
           (or (= "_copy-hack" (.-id target))
-              (not (contains? #{"input" "textarea"} (str/lower-case (.-tagName target))))))
+              (not (contains? #{"input" "textarea"} (str/lower-case (.-tagName js/document.activeElement))))))
     (when-let [layer-data (some->> (.getData (.-clipboardData e) "text")
                             (parse-pasted))]
       (let [canvas-size (utils/canvas-size)]
