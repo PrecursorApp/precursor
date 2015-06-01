@@ -290,7 +290,8 @@
                      :to "dev@precursorapp.com"
                      :subject (str "Connection stats for " (:client-id data))
                      :html (hiccup/html
-                            [:pre (with-out-str (clojure.pprint/pprint data))])}))
+                            [:pre (with-out-str (clojure.pprint/pprint data))])
+                     :text "No text version"}))
 
 (defn init []
   (pc.utils/safe-schedule {:minute (range 0 60 5)} #'send-missed-entity-emails-cron))
