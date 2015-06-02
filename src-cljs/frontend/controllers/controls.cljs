@@ -170,6 +170,11 @@
   [state shortcut-name key-set]
   (handle-undo state))
 
+(defmethod handle-keyboard-shortcut :select-all
+  [state shortcut-name key-set]
+  (let [layer-ids (map :e (d/datoms @(:db state) :aevt :layer/name))]
+    (assoc-in state [:selected-eids :selected-eids] (set layer-ids))))
+
 (defn close-radial [state]
   (assoc-in state [:radial :open?] false))
 

@@ -54,6 +54,7 @@
                         :pen #{#{"n"}}
                         :text #{#{"t"}}
                         :undo #{#{"meta" "z"} #{"ctrl" "z"}}
+                        :select-all #{#{"meta" "a"} #{"ctrl" "a"}}
                         :shortcuts-menu #{#{"shift" "/"}}
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
