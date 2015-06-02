@@ -615,6 +615,10 @@
                    ;; TODO: better way to check if state changed
                    (when (some #(= (:a %) :layer/ui-id) (:tx-data tx-report))
                      (om/refresh! owner)))))
+    om/IDidUpdate
+    (did-update [_ prev-props _]
+      (when (not= (:db/id (:layer prev-props)) (:db/id layer))
+        (.focus (om/get-node owner "id-input"))))
     om/IWillUnmount
     (will-unmount [_]
       (d/unlisten! (om/get-shared owner :db) (om/get-state owner :listener-key)))

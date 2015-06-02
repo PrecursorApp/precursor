@@ -1489,6 +1489,11 @@
         (assoc-in [:layer-properties-menu :y] ry)
         (assoc-in [:radial :open?] false))))
 
+(defmethod post-control-event! :layer-properties-opened
+  [browser-state message {:keys [layer x y]} previous-state current-state]
+  (when (get-in previous-state [:layer-properties-menu :opened?])
+    (handle-layer-properties-submitted-after previous-state)))
+
 (defn handle-layer-properties-submitted [state]
   (-> state
     (assoc-in [:layer-properties-menu :opened?] false)))
