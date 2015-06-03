@@ -1,8 +1,10 @@
 (ns pc.render
   (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [pc.layers :as layers]
             [pc.svg :as svg]
             [pc.util.base64 :as base64]
+            [pc.util.font-map :as font-map]
             [pc.utils :as utils]
             [hiccup.core :refer (h html)])
   (:import [org.apache.commons.io IOUtils]))
@@ -13,9 +15,32 @@
   [layer opts]
   [:rect (svg/layer->svg-rect layer opts)])
 
+(defn fontify [text]
+  (let [matches (map last (re-seq #":(fa-[^:]+):" text))
+        ;; may need to add [""], split can return empty array
+        parts (or (seq (str/split text #":fa-[^:]+:")) [""])]
+    (loop [parts parts
+           matches matches
+           acc []]
+      (let [res (concat acc
+                        [[:tspan (h (first parts))]]
+                        (when (first matches)
+                          (if-let [unicode (font-map/class->unicode (first matches))]
+                            [[:tspan {:font-family "FontAwesome"} unicode]]
+                            [[:tspan (h (str ":" (first matches) ":"))]])))]
+        (if (next parts)
+          (recur (next parts) (next matches) res)
+          res)))))
+
 (defmethod svg-element :layer.type/text
   [layer opts]
-  [:text (svg/layer->svg-text layer opts) (h (:layer/text layer))])
+  (let [text-props (svg/layer->svg-text layer opts)]
+    [:text text-props
+     (seq (reduce (fn [tspans text]
+                    (conj tspans [:tspan {:dy (if (seq tspans) "1em" "0")
+                                          :x (:x text-props)}
+                                  (fontify text)]))
+                  [] (str/split (:layer/text layer) #"\n")))]))
 
 (defmethod svg-element :layer.type/line
   [layer opts]
@@ -29,11 +54,16 @@
   (or (not thing) (.isNaN thing)))
 
 (defn fonts* []
-  {:roboto-regular (-> "public/webfonts/Roboto/RobotoRegular.ttf"
+  {:roboto-regular (-> "public/webfonts/roboto-v15-latin-regular.ttf"
                      (io/resource)
                      (io/input-stream)
                      (IOUtils/toByteArray)
-                     (base64/encode))})
+                     (base64/encode))
+   :fontawesome (-> "public/webfonts/fontawesome-webfont.ttf"
+                  (io/resource)
+                  (io/input-stream)
+                  (IOUtils/toByteArray)
+                  (base64/encode))})
 
 (def fonts (memoize fonts*))
 
@@ -96,7 +126,10 @@
            [:defs
             [:style {:type "text/css"}
              (format "@font-face { font-family: 'Roboto'; src: url('data:application/x-font-ttf;base64, %s') format('truetype');"
-                     (:roboto-regular (fonts)))]]
+                     (:roboto-regular (fonts)))]
+            [:style {:type "text/css"}
+             (format "@font-face { font-family: 'FontAwesome'; src: url('data:application/x-font-ttf;base64, %s') format('truetype');"
+                     (:fontawesome (fonts)))]]
            ;; hack to make pngs work
            (when invert-colors?
              [:rect {:width "100%" :height "100%" :fill "#333"}])

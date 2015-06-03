@@ -169,7 +169,7 @@
           (auth/has-document-permission? db doc (-> req :auth) :read)
           (if (= :head (:request-method req))
             {:status 200
-             :headers (merge {"Content-Type" "image/svg+xml"}
+             :headers (merge {"Content-Type" "image/svg+xml; charset=UTF-8"}
                              (image-cache-headers db doc))
              :pc/doc doc
              :body ""}
@@ -177,7 +177,7 @@
                   layer-db (if as-of (d/as-of db as-of) db)
                   layers (layer-model/find-by-document layer-db doc)]
               {:status 200
-               :headers (merge {"Content-Type" "image/svg+xml"}
+               :headers (merge {"Content-Type" "image/svg+xml; charset=UTF-8"}
                                (when (-> req :params :dl)
                                  {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.svg\""
                                                                 (:db/id doc))})
@@ -187,13 +187,13 @@
 
           (auth/logged-in? req)
           {:status 200
-           :headers {"Content-Type" "image/svg+xml"
+           :headers {"Content-Type" "image/svg+xml; charset=UTF-8"
                      "Cache-Control" "no-cache; private"}
            :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))}
 
           :else
           {:status 200
-           :headers {"Content-Type" "image/svg+xml"
+           :headers {"Content-Type" "image/svg+xml; charset=UTF-8"
                      "Cache-Control" "no-cache; private"}
            :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))})))
 

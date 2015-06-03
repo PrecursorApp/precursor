@@ -22,6 +22,7 @@
             [frontend.state :as state]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
+            [frontend.utils.font-map :as font-map]
             [goog.dom]
             [goog.dom.forms :as gforms]
             [goog.labs.userAgent.browser :as ua-browser]
@@ -70,6 +71,24 @@
     (clj->js)
     (dom/rect)))
 
+(defn fontify [text]
+  (let [matches (map last (re-seq #":(fa-[^:]+):" text))
+        ;; may need to add [""], split can return empty array
+        parts (or (seq (str/split text #":fa-[^:]+:")) [""])]
+    (loop [parts parts
+           matches matches
+           acc []]
+      (let [res (concat acc
+                        [(dom/tspan nil (first parts))]
+                        (when (first matches)
+                          (if-let [unicode (font-map/class->unicode (first matches))]
+                            [(dom/tspan #js {:fontFamily "FontAwesome"}
+                               unicode)]
+                            [(dom/tspan nil (str ":" (first matches) ":"))])))]
+        (if (next parts)
+          (recur (next parts) (next matches) res)
+          res)))))
+
 (defmethod svg-element :layer.type/text
   [layer]
   (let [text-props (svg/layer->svg-text layer)]
@@ -77,10 +96,9 @@
       (maybe-add-classes layer)
       (clj->js)
       (#(apply dom/text % (reduce (fn [tspans text]
-                                    (conj tspans (dom/tspan
-                                                  #js {:dy (if (seq tspans) "1em" "0")
-                                                       :x (:x text-props)}
-                                                  text)))
+                                    (conj tspans (apply dom/tspan #js {:dy (if (seq tspans) "1em" "0")
+                                                                       :x (:x text-props)}
+                                                        (fontify text))))
                                   [] (str/split (:layer/text layer) #"\n")))))))
 
 ;; debug method for showing text with bounding box
