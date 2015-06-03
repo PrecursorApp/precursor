@@ -51,6 +51,33 @@
             (recur (into results (get new-res "results"))
                    (inc page))))))))
 
+(defn fetch-segment [event from-date to-date & {:keys [session_id page] :as extra-args}]
+  (let [args (merge {:event event
+                     :type "unique"
+                     :from_date (mixpanel/->mixpanel-date from-date)
+                     :to_date (mixpanel/->mixpanel-date to-date)
+                     :api_key (mixpanel/api-key)
+                     :expire (date-util/timestamp-ms
+                              (time/plus (time/now)
+                                         (time/hours 1)))}
+                    extra-args)]
+    (-> (http/get "https://mixpanel.com/api/2.0/segmentation/"
+                  {:throw-exceptions false
+                   :query-params (assoc args
+                                        :sig (sign-mixpanel args (mixpanel/api-secret)))})
+      :body
+      json/decode)))
+
+(defn fetch-daily-active-users [event from-date to-date]
+  (reduce-kv (fn [m k v]
+               (assoc m (clj-time.format/parse k) v))
+             {} (get-in (fetch-segment event from-date to-date) ["data" "values" event])))
+
+(defn fetch-monthly-active-users [event from-date to-date]
+  (reduce-kv (fn [m k v]
+               (assoc m (clj-time.format/parse k) v))
+             {} (get-in (fetch-segment event from-date to-date :unit "month") ["data" "values" event])))
+
 (defn mark-early-access []
   (let [db (pcd/default-db)
         early-access-cust-uuids (d/q '{:find [[?uuid ...]]
