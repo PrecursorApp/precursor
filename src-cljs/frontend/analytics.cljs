@@ -51,6 +51,7 @@
                           :handle-camera-query-params
                           :media-stream-volume
                           :navigate-to-landing-doc-hovered
+                          :make-button-hovered
                           :db-document-name-changed})
 
 (defn track-control [event data state]

@@ -1707,6 +1707,10 @@
   [browser-state message _ previous-state current-state]
   (landing-doc/maybe-fetch-doc current-state))
 
+(defmethod post-control-event! :make-button-hovered
+  [browser-state message _ previous-state current-state]
+  (landing-doc/maybe-fetch-doc current-state :params {:intro-layers? true}))
+
 (defmethod post-control-event! :issue-layer-clicked
   [browser-state message {:keys [frontend/issue-id]} previous-state current-state]
   (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str "/issues/" issue-id)}]))

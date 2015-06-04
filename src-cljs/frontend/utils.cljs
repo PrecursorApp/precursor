@@ -243,6 +243,9 @@
 (defn admin? [owner]
   (boolean (om/get-shared owner :admin?)))
 
+(defn ab-choice [owner test-name]
+  (om/get-shared owner [:ab-choices test-name]))
+
 (defn cast-fn [controls-ch]
   (fn [message data & [transient?]]
     (put! controls-ch [message data transient?])))
