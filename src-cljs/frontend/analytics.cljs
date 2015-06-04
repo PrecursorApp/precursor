@@ -13,6 +13,15 @@
    (mixpanel/set-people-props {:$email (:cust/email cust)
                                :$last_login (js/Date.)})))
 
+(defn init-ab-tests [choices]
+  (utils/swallow-errors
+   (mixpanel/register-once choices)))
+
+(defn init [state]
+  (init-ab-tests (:ab-choices state))
+  (when-let [cust (:cust state)]
+    (init-user cust)))
+
 (defn track-path [path]
   (mixpanel/track-pageview path))
 
