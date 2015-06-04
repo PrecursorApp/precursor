@@ -14,11 +14,12 @@
 (defn lock-doc-fetcher []
   (compare-and-set! doc-fetched? false true))
 
-(defn maybe-fetch-doc [state]
+(defn maybe-fetch-doc [state & {:keys [params]
+                                :or {params {}}}]
   (when (lock-doc-fetcher)
     (go
       (when-let [doc (or (when (:document/id state) {:db/id (:document/id state)})
-                         (let [result (<! (http/post "/api/v1/document/new" {:edn-params {}
+                         (let [result (<! (http/post "/api/v1/document/new" {:edn-params params
                                                                              :headers {"X-CSRF-Token" (utils/csrf-token)}}))]
                            (if (:success result)
                              (let [document (-> result :body reader/read-string :document)]

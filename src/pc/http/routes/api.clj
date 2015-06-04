@@ -10,6 +10,7 @@
             [pc.crm :as crm]
             [pc.datomic :as pcd]
             [pc.early-access]
+            [pc.http.doc :as doc-http]
             [pc.http.team :as team-http]
             [pc.http.handlers.custom-domain :as custom-domain]
             [pc.models.chat-bot :as chat-bot-model]
@@ -24,7 +25,17 @@
   (let [params (some-> req :body slurp edn/read-string)
         read-only? (:read-only params)
         doc-name (:document/name params)]
-    (if (:subdomain req)
+    (if-not (:subdomain req)
+      (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
+            intro-layers? (:intro-layers? params)
+            doc (doc-model/create-public-doc!
+                 (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
+                        (when cust-uuid {:document/creator cust-uuid})
+                        (when read-only? {:document/privacy :document.privacy/read-only})
+                        (when doc-name {:document/name doc-name})))]
+        (when intro-layers?
+          (doc-http/add-intro-layers doc))
+        {:status 200 :body (pr-str {:document (doc-model/read-api doc)})})
       (if (and (:team req)
                (auth/logged-in? req)
                (auth/has-team-permission? (pcd/default-db) (:team req) (:auth req) :admin))
@@ -48,14 +59,7 @@
                                                                               (profile/http-port))
                                                                       :path "/new"
                                                                       :query (:query-string req)}))
-                                    :msg "You're unauthorized to make documents in this subdomain. Please request access."})})
-      (let [cust-uuid (get-in req [:auth :cust :cust/uuid])
-            doc (doc-model/create-public-doc!
-                 (merge {:document/chat-bot (rand-nth chat-bot-model/chat-bots)}
-                        (when cust-uuid {:document/creator cust-uuid})
-                        (when read-only? {:document/privacy :document.privacy/read-only})
-                        (when doc-name {:document/name doc-name})))]
-        {:status 200 :body (pr-str {:document (doc-model/read-api doc)})}))))
+                                    :msg "You're unauthorized to make documents in this subdomain. Please request access."})}))))
 
 (defpage create-team [:post "/api/v1/create-team"] [req]
   (let [params (some-> req :body slurp edn/read-string)

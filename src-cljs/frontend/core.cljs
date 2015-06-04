@@ -3,6 +3,7 @@
             [cljs.reader :as reader]
             [clojure.string :as string]
             [datascript :as d]
+            [frontend.ab :as ab]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.browser-settings :as browser-settings]
@@ -27,6 +28,7 @@
             [frontend.state :as state]
             [frontend.team :as team]
             [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
+            [frontend.utils.seq :as seq-util]
             [goog.dom]
             [goog.dom.DomHelper]
             [goog.events]
@@ -117,7 +119,8 @@
                                  (reader/read-string))
         tab-id (utils/uuid)
         sente-id (aget js/window "Precursor" "sente-id")
-        issue-db (db/make-initial-db initial-issue-entities)]
+        issue-db (db/make-initial-db initial-issue-entities)
+        ab-choices (ab/setup! state/ab-tests)]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
                      :admin? admin?
@@ -136,6 +139,7 @@
                      :team team
                      :subdomain config/subdomain
                      :show-landing? (:show-landing? utils/initial-query-map)
+                     :ab-choices ab-choices
                      :comms {:controls      controls-ch
                              :api           api-ch
                              :errors        errors-ch
@@ -209,6 +213,7 @@
              :cust                  (:cust @state)
              :sente                 (:sente @state)
              :admin?                (:admin? @state)
+             :ab-choices            (:ab-choices @state)
              }
     :instrument (fn [f cursor m]
                   (om/build* f cursor (assoc m :descriptor instrumentation/instrumentation-methods)))}))
@@ -310,8 +315,7 @@
     (sente/init state)
     (browser-settings/setup! state)
     (main state history-imp)
-    (when-let [cust (:cust @state)]
-      (analytics/init-user cust))
+    (analytics/init @state)
     (sec/dispatch! (str "/" (.getToken history-imp)))))
 
 (defn ^:export inspect-state []
@@ -319,5 +323,24 @@
 
 (defn ^:export test-rollbar []
   (utils/swallow-errors (throw (js/Error. "This is an exception"))))
+
+(defn ^:export print-ab-choices []
+  (doseq [[k v] (:ab-choices @frontend.core.debug-state)]
+    (println k v)))
+
+(defn ^:export next-choice [test-name]
+  (let [test-kw (keyword test-name)
+        options (get state/ab-tests test-kw)
+        current-choice (get-in @frontend.core.debug-state [:ab-choices test-kw])
+        current-index (seq-util/find-index #(= current-choice %)
+                                           options)
+        next-index (mod (inc current-index) (count options))
+        next-choice (nth options next-index)]
+    (println "Before:")
+    (print-ab-choices)
+    (swap! frontend.core.debug-state assoc-in [:ab-choices test-kw] next-choice)
+    (@frontend.careful/om-setup-debug)
+    (println "After:")
+    (print-ab-choices)))
 
 (defonce startup (setup!))
