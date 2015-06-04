@@ -317,6 +317,7 @@
      [:th "layer count"]
      [:th "logged-in?"]
      [:th "run-time (h:m:s)"]
+     [:th "canvas-size"]
      [:th "subscriber-count"]
      [:th "visibility"]]
     (for [[client-id stats] (reverse (sort-by (comp :last-update second) client-stats))
@@ -342,6 +343,8 @@
        [:td (h/h (get-in stats [:stats :layer-count]))]
        [:td (h/h (get-in stats [:stats :logged-in?]))]
        [:td (h/h (some-> (get-in stats [:stats :run-time-millis]) format-runtime))]
+       [:td (h/h (when-let [canvas-size (get-in stats [:stats :canvas-size])]
+                   (str (:width canvas-size) "x" (:height canvas-size))))]
        [:td (count (get document-subs doc-id))]
        [:td (let [visibility (h/h (get-in stats [:stats :visibility]))]
               (list visibility
