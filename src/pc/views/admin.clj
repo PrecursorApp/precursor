@@ -395,6 +395,10 @@
   [attr value]
   "")
 
+(defmethod render-cust-prop :cust/clips
+  [attr value]
+  (str (count value) ", " (count (filter :clip/important? value)) " important"))
+
 (defmethod render-cust-prop :google-account/avatar
   [attr value]
   [:img {:src value :width 100 :height 100}])
