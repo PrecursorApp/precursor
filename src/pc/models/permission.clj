@@ -196,7 +196,7 @@
 (defn create-document-image-permission!
   "Creates a token-based permission that can be used to access the svg and png images
    of the document. Used by emails to provide thumbnails."
-  [doc]
+  [doc purpose]
   (let [temp-id (d/tempid :db.part/user)
         token (crypto.random/url-part 32)
         expiry (-> (time/now) (time/plus (time/weeks 2)) (clj-time.coerce/to-date))
@@ -205,7 +205,7 @@
                                                   :permission/permits #{:permission.permits/read}
                                                   :permission/token token
                                                   :permission/document-ref (:db/id doc)
-                                                  :permission/expiry expiry}])]
+                                                  :permission/purpose purpose}])]
     (->> (d/resolve-tempid db-after
                            tempids
                            temp-id)

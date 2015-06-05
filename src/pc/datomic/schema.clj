@@ -396,6 +396,10 @@
               :db/unique :db.unique/identity
               :db/doc "Used to add a composite uniqueness constraint on team and cust.")
 
+   (attribute :permission/purpose
+              :db.type/string
+              :db/doc "For API tokens, tells us the purpose of the permission")
+
    (attribute :access-request/document
               :db.type/long
               :db/index true
