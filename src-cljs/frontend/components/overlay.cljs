@@ -1,5 +1,6 @@
 (ns ^:figwheel-always frontend.components.overlay
   (:require [cemerick.url :as url]
+            [cljs.core.async :as async :refer (<!)]
             [clojure.set :as set]
             [clojure.string :as str]
             [datascript :as d]
@@ -20,6 +21,8 @@
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.models.issue :as issue-model]
+            [frontend.models.permission :as permission-model]
+            [frontend.sente :as sente]
             [frontend.state :as state]
             [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
@@ -32,8 +35,10 @@
             [goog.string.format]
             [goog.userAgent]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true])
-  (:require-macros [sablono.core :refer (html)])
+            [om.dom :as dom :include-macros true]
+            [taoensso.sente])
+  (:require-macros [sablono.core :refer (html)]
+                   [cljs.core.async.macros :refer (go)])
   (:import [goog.ui IdGenerator]))
 
 ;; focus-id lets us trigger a focus from outside of the component
@@ -598,10 +603,53 @@
                (when-not can-edit-privacy?
                  [:small "(privacy change requires owner)"])]))]])))))
 
+(defn image-token-generator [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Image token generator")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
+        (html
+         [:div.content.make
+          [:button.menu-button {:role "button"
+                                :disabled (om/get-state owner :sending?)
+                                :onClick #(go (om/set-state! owner :sending? true)
+                                              (let [res (<! (sente/ch-send-msg (om/get-shared owner :sente)
+                                                                               [:frontend/create-image-permission
+                                                                                {:document/id (:db/id doc)
+                                                                                 :reason :permission.reason/github-markdown}]
+                                                                               30000
+                                                                               (async/promise-chan)))]
+                                                (om/set-state! owner :sending? false)
+                                                (if (taoensso.sente/cb-success? res)
+                                                  (if (= :success (:status res))
+                                                    (do (d/transact! db [(:permission res)] {:server-update true})
+                                                        (om/set-state! owner :error nil))
+                                                    (om/set-state! owner :error (:error-msg res)))
+                                                  (om/set-state! owner :error "The request timed out"))))}
+           (if (om/get-state owner :sending?)
+             "Creating..."
+             "Create read-only image token")]
+          (when (om/get-state owner :error)
+            [:div.image-token-form-error (om/get-state owner :error)])])))))
+
 (defn export [app owner]
   (reify
     om/IDisplayName (display-name [_] "Export Menu")
-    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
+      (fdb/add-attribute-listener (om/get-shared owner :db)
+                                  :permission/token
+                                  (om/get-state owner :listener-key)
+                                  #(om/refresh! owner)))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :db)
+                                     :permission/token
+                                     (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -630,14 +678,18 @@
            (common/icon :github)
            "Embed in a README or issue"]
 
-          [:div.content.make (om/build share-input
-                                       {:url (gstring/format "[![Precursor](%s)](%s)"
-                                                             (urls/absolute-doc-svg doc)
-                                                             (urls/absolute-doc-url doc))
-                                        ;; id that we can use to know if we should focus input
-                                        ;; Should be set to a unique value
-                                        :focus-id (om/get-state owner :focus-id)
-                                        :placeholder "copy as markdown"})]])))))
+          (let [read-token (:permission/token (first (permission-model/github-permissions @db doc)))]
+            (if (and (= :document.privacy/private (:document/privacy doc))
+                     (not read-token))
+              (om/build image-token-generator app)
+              [:div.content.make (om/build share-input
+                                           {:url (gstring/format "[![Precursor](%s)](%s)"
+                                                                 (urls/absolute-doc-svg doc :query {:token read-token})
+                                                                 (urls/absolute-doc-url doc))
+                                            ;; id that we can use to know if we should focus input
+                                            ;; Should be set to a unique value
+                                            :focus-id (om/get-state owner :focus-id)
+                                            :placeholder "copy as markdown"})]))])))))
 
 (defn info [app owner]
   (reify
