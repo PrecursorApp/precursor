@@ -56,20 +56,17 @@
             "Any docs you create in the " (:team/subdomain team)
             " subdomain will be private to your team by default."
             " Add your teammate's email to add them to your team."]
-           [:form.menu-invite-form.make
-            {:on-submit submit-form
-             :on-key-down #(when (= "Enter" (.-key %))
-                             (submit-form %))}
-            [:input
-             {:type "text"
-              :required "true"
-              :data-adaptive ""
-              :value (or permission-grant-email "")
-              :on-change #(om/set-state! owner :permission-grant-email (.. % -target -value))}]
-            [:label
-             {:data-placeholder "Teammate's email"
-              :data-placeholder-nil "What's your teammate's email?"
-              :data-placeholder-forgot "Don't forget to submit!"}]]
+           [:form.menu-invite-form.make {:on-submit submit-form
+                                         :on-key-down #(when (= "Enter" (.-key %))
+                                                         (submit-form %))}
+            [:input {:type "text"
+                     :required "true"
+                     :data-adaptive ""
+                     :value (or permission-grant-email "")
+                     :on-change #(om/set-state! owner :permission-grant-email (.. % -target -value))}]
+            [:label {:data-placeholder "Teammate's email"
+                     :data-placeholder-nil "What's your teammate's email?"
+                     :data-placeholder-forgot "Don't forget to submit!"}]]
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
              (permissions/render-access-entity access-entity cast!))]])))))
 
@@ -151,14 +148,16 @@
              [:p.content.make "You don't have any teams, yet"]
              (for [team (sort-by :team/subdomain teams)]
                [:a.vein.make {:key (:team/subdomain team)
-                              :href (urls/absolute-doc-url (:team/intro-doc team)
-                                                           :subdomain(:team/subdomain team))}
+                              ;; TODO: figure out how to get refs to work for intro-doc
+                              :href (urls/absolute-doc-url {:db/id (:team/intro-doc team)}
+                                                           :subdomain (:team/subdomain team))}
                 (common/icon :team)
                 (:team/subdomain team)])))]))))
 
 (defn team-start [app owner]
   (reify
     om/IDisplayName (display-name [_] "Overlay Team Start")
+    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -169,23 +168,27 @@
           [:div.veins
            (if (auth/has-team-permission? app (:team/uuid (:team app)))
              (list
-              [:a.vein.make {:href (urls/overlay-path doc-id "team-settings")
+              [:a.vein.make {:href (urls/overlay-path doc "team-settings")
                              :role "button"}
                (common/icon :users)
                [:span "Add Teammates"]]
-              [:a.vein.make {:href (urls/overlay-path doc-id "team-doc-viewer")
+              [:a.vein.make {:href (urls/overlay-path doc "team-doc-viewer")
                              :role "button"}
                (common/icon :docs-team)
                [:span "Team Documents"]]
-              [:a.vein.make {:href (urls/overlay-path doc-id "plan")
+              [:a.vein.make {:href (urls/overlay-path doc "plan")
                              :role "button"}
                (common/icon :credit)
-               [:span "Billing"]])
-             [:a.vein.make {:href (urls/overlay-path doc-id "request-team-access")
+               [:span "Billing"]]
+              [:a.vein.make {:href (urls/overlay-path doc "slack")
+                             :role "button"}
+               (common/icon :slack)
+               [:span "Post to Slack"]])
+             [:a.vein.make {:href (urls/overlay-path doc "request-team-access")
                             :role "button"}
               (common/icon :sharing)
               [:span "Request Access"]])
-           [:a.vein.make {:href (urls/overlay-path doc-id "your-teams")
+           [:a.vein.make {:href (urls/overlay-path doc "your-teams")
                           :role "button"}
             (common/icon :team)
             [:span "Your Teams"]]]])))))

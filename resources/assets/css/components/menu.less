@@ -77,24 +77,15 @@
   .flexy(center, center);
   flex: 0 0 @tile;
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 0;  left: 0;
   width: 100%;
   height: @tile;
-  a {
-    .flexy(center, center);
-    width: @tile;
-    height: @tile;
-    transition: @run @bezier_fadein;
-    &:only-child {
-      margin-left: auto;
-    }
-  }
 }
 .menu-heading {
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin: 0 @tile;
+  margin: 0;
+  padding: 0 @tile;
   overflow: hidden;
   cursor: default;
   animation: in-fade-bottom-soft @run_slow @bezier_deform;
@@ -218,6 +209,23 @@
   .flexy(center);
   height: @tile;
 }
+.vein-fork {
+  .flexy(center);
+  &:hover {
+    .vein {
+      .icon(stroke; @gray_darker);
+      .icon(fill; @gray_darker);
+      color: @gray_darker;
+    }
+  }
+  .vein {
+    flex: 1;
+  }
+}
+.fork {
+  min-width: @tile;
+  padding: @menu_padding;
+}
 .menu-invite-form {
   .flexy(column);
   margin: @menu_padding 0;
@@ -275,36 +283,47 @@
     margin-top: 5em;
   }
 }
-.recent-doc-title {
-  line-height: 1em;
-  margin: 1em 0;
-  a {
-    &:not(:hover) {
-      color: @gray;
-    }
+.searching {
+  .recent-time-group {
+    display: none;
   }
 }
-.recent-doc-thumb {
-  display: block;
+.recent-doc {
+  .flexy(center; center);
+  .size_of(chat; height; vh);
   position: relative;
+  color: @gray_light;
+  width: 100%;
+  max-height: 80vh;
   border: 1px solid @gray_lighter;
-  overflow: hidden;
-  transition: @run @bezier_fadein;
+  margin-bottom: @menu_padding;
   &:hover {
-    border-color: @gray;
-    transition-duration: @run_fast;
+    border-color: @color_select;
   }
   img {
-    .size_of(chat; height; vh);
-    width: 100%;
-    max-height: 80vh;
-    opacity: .5;
+    max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
+    max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
+    pointer-events: none;
+    opacity: @opacity_white_gray;
   }
   .loading-ellipses {
     position: absolute;
     bottom: 0.5em;
     right: 1em;
   }
+}
+.recent-doc-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: .75em 1em;
+}
+.recent-doc-timestamp {
+  color: @gray_light;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: .75em 1em;
 }
 // TODO come back to cleanup loading styles here -dk (12/09/14)
 .loading {
@@ -537,11 +556,18 @@
 }
 .menu-buttons {
   .flexy(wrap);
+  .menu-button {
+    max-width: 50%;
+    + .menu-button {
+      border-left: none;
+    }
+  }
   .menu-button,
   .google-login {
     width: @tile_xl;
     .mq_640({
       width: 100%;
+      max-width: 100%;
     });
   }
 }
@@ -632,4 +658,154 @@
 }
 .menu-new-team {
   border: 1px dashed @gray_lighter;
+}
+.doc-name-title {
+  .flexy(center);
+  .doc-name-input {
+    border: none;
+    outline: none;
+    cursor: text;
+  }
+  &.editing {
+    border-bottom: 1px solid @color_select;
+    // border-bottom: 1px dotted @gray_light;
+    .iconpile {
+      animation: pencil-erase @run_slower @bezier_deform forwards;
+    }
+  }
+  &.edited {
+    .iconpile {
+      opacity: 0;
+    }
+    &:hover {
+      .iconpile {
+        opacity: 1;
+      }
+    }
+  }
+}
+.doc-name-edit {
+  .flexy(center; center);
+  .icon(stroke; @color_select);
+  font-size: 1rem;
+  margin-left: .5em;
+  &:hover {
+    .iconpile {
+      transform: rotate3d(0, 0, 1, 180deg);
+      transition: transform @run_slower @run @bezier_deform;
+    }
+  }
+}
+.doc-search {
+  .adaptive {
+    margin-bottom: @menu_padding;
+  }
+}
+.post-to-slack {
+  .divider {
+    margin: @menu_padding 0;
+  }
+}
+.slack-add {
+  h4 {
+    margin: 0;
+  }
+}
+.slack-channel {
+  h4 {
+    padding: 1rem 0;
+  }
+}
+.slack-form-error {
+  color: @red;
+  margin: 1rem 0;
+  animation: in-fade-bottom @run ease-out;
+}
+.slack-channel-remove {
+  margin-left: auto;
+}
+.clips {
+  .flexy(wrap);
+}
+.clip {
+  .flexy(center; center);
+  position: relative;
+  width: 50%;
+  height: 0;
+  padding-top: 50%;
+  &:nth-of-type(even) {
+    .clip-preview {
+      border-left: none;
+    }
+  }
+  &:nth-of-type(1),
+  &:nth-of-type(2) {
+    border-top: 1px solid @gray_lighter;
+  }
+  &:not(:hover) {
+    .clip-option {
+      &:not(.stuck) {
+        opacity: 0;
+        .clip-button {
+          display: none;
+        }
+      }
+    }
+  }
+}
+.clip-preview {
+  .flexy(center; center);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-bottom: 1px solid @gray_lighter;
+  border-left: 1px solid @gray_lighter;
+  border-right: 1px solid @gray_lighter;
+  transition: box-shadow @run_slow;
+  &:hover {
+    .shadow_canvas(hover);
+    transition: box-shadow @run;
+  }
+  &:active {
+    .shadow_canvas(active);
+    transition: box-shadow @now;
+  }
+}
+.clip-thumbnail {
+  max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
+  max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
+  opacity: @opacity_white_light;
+}
+.clip-option {
+  .flexy(center; center);
+  .icon(stroke; @gray);
+  .icon(fill; @color_select);
+  .holo();
+  position: absolute;
+  width: @tile;
+  height: @tile;
+  margin: 1px;
+  transition: opacity @run_slower @bezier_fadein;
+  &:nth-child(2) {
+    bottom: 0;
+    left: 0;
+    background-image: radial-gradient(ellipse at 0 100%, @dye_outer 25%, fade(@dye_outer, 0) 75%);
+    .clip-button {
+      animation-delay: ((2 * @run_slower) + (1 * @run_faster));
+    }
+  }
+  &:nth-child(3) {
+    top: 0;
+    right: 0;
+    background-image: radial-gradient(ellipse at 100% 0, @dye_outer 25%, fade(@dye_outer, 0) 75%);
+    .clip-button {
+      animation-delay: ((2 * @run_slower) + (4 * @run_faster));
+    }
+  }
+}
+.clip-button {
+  animation: in-zoom @run_fast ease-out backwards;
+  pointer-events: auto;
 }

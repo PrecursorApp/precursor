@@ -1,36 +1,32 @@
 (ns frontend.controllers.navigation
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [cljs-http.client :as http]
+            [cljs.reader :as reader]
             [clojure.string :as str]
             [datascript :as d]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.camera :as cameras]
             [frontend.db :as db]
+            [frontend.models.doc :as doc-model]
             [frontend.models.issue :as issue-model]
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
             [frontend.state :as state]
             [frontend.sente :as sente]
             [frontend.subscribers :as subs]
-            [frontend.utils.ajax :as ajax]
+            [frontend.urls :as urls]
             [frontend.utils.state :as state-utils]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]
             [goog.string :as gstring]
-            [goog.style])
+            [goog.style]
+            [goog.Uri])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
 
 ;; TODO we could really use some middleware here, so that we don't forget to
 ;;      assoc things in state on every handler
 ;;      We could also use a declarative way to specify each page.
-
-;; --- Helper Methods ---
-
-(defn set-page-title! [& [title]]
-  (set! (.-title js/document) (utils/strip-html
-                               (if title
-                                 (str title  " - Precursor")
-                                 "Precursor - Simple collaborative prototyping"))))
 
 ;; --- Navigation Multimethod Declarations ---
 
@@ -147,7 +143,30 @@
         ;;       find them by doc-id? Will still need a way to clean out old docs.
         (update-in [:db] (fn [db] (if (:initial-state state)
                                     db
-                                    (db/reset-db! db initial-entities))))))))
+                                    (db/reset-db! db (concat initial-entities
+                                                             (doc-model/all @db))))))))))
+
+(defn maybe-replace-doc-token [current-state]
+  (let [url (goog.Uri. js/window.location)
+        path (.getPath url)
+        ;; duplicated in controls/replace-token-with-new-name
+        current-url-name (second (re-find #"^/document/([A-Za-z0-9_-]*?)-{0,1}\d+(/.*$|$)" path))
+        doc (doc-model/find-by-id @(:db current-state)
+                                  (:document/id current-state))
+        new-url-name (-> doc
+                       :document/name
+                       urls/urlify-doc-name)]
+    (when (seq new-url-name)
+      (utils/set-page-title! (:document/name doc)))
+    (when (and (seq new-url-name)
+               (not= current-url-name new-url-name)
+               (zero? (.indexOf path "/document")))
+      (let [[_ before-name after-name] (re-find #"^(/document/)[A-Za-z0-9_-]*?-{0,1}(\d+(/.*$|$))" path)
+            new-path (str before-name new-url-name "-" after-name)]
+        (put! (get-in current-state [:comms :nav]) [:navigate! {:replace-token? true
+                                                                :path (str new-path
+                                                                           (when (seq (.getQuery url))
+                                                                             (str "?" (.getQuery url))))}])))))
 
 (defn handle-post-doc-navigation [navigation-point args previous-state current-state]
   (let [sente-state (:sente current-state)
@@ -177,7 +196,10 @@
                           sente-state)
       (sente/update-server-offset sente-state)
       (put! (get-in current-state [:comms :controls]) [:handle-camera-query-params (select-keys (:query-params args)
-                                                                                                [:cx :cy :x :y :z])]))))
+                                                                                                [:cx :cy :x :y :z])])
+      (put! (get-in current-state [:comms :controls]) [:handle-camera-query-params (select-keys (:query-params args)
+                                                                                                [:cx :cy :x :y :z])])
+      (maybe-replace-doc-token current-state))))
 
 (defmethod navigated-to :document
   [history-imp navigation-point args state]
@@ -197,13 +219,16 @@
 (defmethod post-navigated-to! :new
   [history-imp navigation-point _ previous-state current-state]
   (go (let [comms (:comms current-state)
-            result (<! (ajax/managed-ajax :post "/api/v1/document/new"))]
-        (if (= :success (:status result))
-          (put! (:nav comms) [:navigate! {:path (str "/document/" (get-in result [:document :db/id]))
-                                          :replace-token? true}])
-          (if (and (= :unauthorized-to-team (get-in result [:response :error]))
-                   (get-in result [:response :redirect-url]))
-            (set! js/window.location (get-in result [:response :redirect-url]))
+            result (<! (http/post "/api/v1/document/new" {:edn-params {}
+                                                          :headers {"X-CSRF-Token" (utils/csrf-token)}}))]
+        (if (:success result)
+          (let [document (-> result :body reader/read-string :document)]
+            (d/transact! (:db current-state) [document] {:server-update true})
+            (put! (:nav comms) [:navigate! {:path (urls/doc-path document)
+                                            :replace-token? true}]))
+          (if (and (= :unauthorized-to-team (some-> result :body reader/read-string :error))
+                   (some-> result :body reader/read-string :redirect-url))
+            (set! js/window.location (some-> result :body reader/read-string :redirect-url))
             (put! (:errors comms) [:api-error result]))))))
 
 (defmulti overlay-extra (fn [state overlay] overlay))
@@ -230,6 +255,9 @@
      10000
      (fn [{:keys [docs]}]
        (when docs
+         ;; seems like maybe this should be where I stop. Why are we storing docs in the state?
+         ;; Makes it easier to tell which ones are "touched" docs.
+         (d/transact! (:db current-state) (map #(dissoc % :last-updated-instant) docs))
          (put! (get-in current-state [:comms :api]) [:touched-docs :success {:docs docs}]))))))
 
 (defmethod overlay-extra-post! :team-doc-viewer [previous-state current-state overlay]
@@ -240,7 +268,21 @@
    10000
    (fn [{:keys [docs]}]
      (when docs
+       ;; TODO: if absolute-doc-url ever pulls subdomain out of the db, this could break it
+       (d/transact! (:db current-state) (map #(dissoc % :last-updated-instant) docs) {:server-update true})
        (put! (get-in current-state [:comms :api]) [:team-docs :success {:docs docs}]))))))
+
+(defmethod overlay-extra-post! :clips [previous-state current-state overlay]
+  (when (:cust current-state)
+    (sente/send-msg
+     (:sente current-state)
+     [:cust/fetch-clips]
+     30000
+     (fn [{:keys [clips]}]
+       (when (seq clips)
+         ;; seems like maybe this should be where I stop. Why are we storing docs in the state?
+         ;; Makes it easier to tell which ones are "touched" docs.
+         (put! (get-in current-state [:comms :api]) [:cust-clips :success {:clips clips}]))))))
 
 (defmethod navigated-to :overlay
   [history-imp navigation-point args state]

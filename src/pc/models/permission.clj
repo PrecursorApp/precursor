@@ -49,6 +49,13 @@
                    :permission/granter-ref (:db/id granter)
                    :permission/doc-cust (UUID. (:db/id doc) (:db/id cust))}])))
 
+(defn revoke-permission [permission annotations]
+  (let [txid (d/tempid :db.part/tx)
+        temp-id (d/tempid :db.part/user)]
+    @(d/transact (pcd/conn)
+                 [(assoc annotations :db/id txid)
+                  (web-peer/retract-entity (:db/id permission))])))
+
 (defn grant-team-permit [team granter cust permit annotations]
   (let [txid (d/tempid :db.part/tx)
         temp-id (d/tempid :db.part/user)]
@@ -198,6 +205,22 @@
                                                   :permission/token token
                                                   :permission/document-ref (:db/id doc)
                                                   :permission/expiry expiry}])]
+    (->> (d/resolve-tempid db-after
+                           tempids
+                           temp-id)
+      (d/entity db-after))))
+
+(defn create-team-image-permission!
+  "Creates a token-based permission that can be used to access the svg and png images
+   of documents in the team. Used by integrations that post images."
+  [team]
+  (let [temp-id (d/tempid :db.part/user)
+        token (crypto.random/url-part 32)
+        {:keys [tempids db-after]} @(d/transact (pcd/conn)
+                                                [{:db/id temp-id
+                                                  :permission/permits #{:permission.permits/read}
+                                                  :permission/token token
+                                                  :permission/team (:db/id team)}])]
     (->> (d/resolve-tempid db-after
                            tempids
                            temp-id)

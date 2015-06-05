@@ -50,20 +50,21 @@
     (put! nav-ch [:single-issue {:query-params query-params
                                  :issue-uuid issue-uuid}]))
 
-  (defroute document #"/document/(\d+)" [doc-id args]
+  (defroute document #"/document/[A-Za-z0-9_-]*?-{0,1}(\d+)$" [doc-id args]
     (let [params (:query-params args)]
       (if-let [overlay (:overlay params)]
-        (put! nav-ch [:navigate! {:path (urls/overlay-path doc-id overlay
+        (put! nav-ch [:navigate! {:path (urls/overlay-path {:db/id doc-id} overlay
                                                            :query-params (dissoc params :overlay))
                                   :replace-token? true}])
         (put! nav-ch [:document {:document/id (long doc-id)
                                  :query-params params}]))))
-  (defroute plan-submenu #"/document/(\d+)/plan/([\w-]+)" [doc-id submenu args]
+
+  (defroute plan-submenu #"/document/[A-Za-z0-9_-]*?-{0,1}(\d+)/plan/([\w-]+)$" [doc-id submenu args]
     (put! nav-ch [:plan-submenu {:document/id (long doc-id)
                                  :submenu submenu
                                  :query-params (:query-params args)}]))
 
-  (defroute overlay #"/document/(\d+)/([\w-]+)" [doc-id overlay args]
+  (defroute overlay #"/document/[A-Za-z0-9_-]*?-{0,1}(\d+)/([\w-]+)$" [doc-id overlay args]
     (put! nav-ch [:overlay {:document/id (long doc-id)
                             :overlay overlay
                             :query-params (:query-params args)}])))

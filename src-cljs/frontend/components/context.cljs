@@ -60,9 +60,5 @@
     om/IRender
     (render [_]
       (dom/div #js {:className " context "}
-
-        ;; TODO get properties menu in here?
         (when (get-in app [:radial :open?])
-          (om/build radial-menu (utils/select-in app [[:radial]])))
-
-        ))))
+          (om/build radial-menu (utils/select-in app [[:radial]])))))))

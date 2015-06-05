@@ -42,6 +42,13 @@
     ffirst
     (d/entity db)))
 
+(defn find-by-email [db email]
+  (->> (d/q '{:find [[?t ...]]
+              :in [$ ?email]
+              :where [[?t :access-grant/email ?email]]}
+            db email)
+    (map #(d/entity db %))))
+
 (defn grant-access [doc email granter annotations]
   (let [txid (d/tempid :db.part/tx)
         token (crypto.random/url-part 32)

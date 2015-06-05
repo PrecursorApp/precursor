@@ -102,7 +102,9 @@
                      :invoice/attempted?
                      :invoice/next-payment-attempt
                      :invoice/description
-                     })))
+
+                     :slack-hook/channel-name
+                     :slack-hook/send-count})))
 
 (defn translate-datom-dispatch-fn [db d] (:a d))
 

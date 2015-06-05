@@ -61,24 +61,26 @@
                                         (conj acc u)
                                         acc))
                                     #{}))]
-      (let [t @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
-                                        :transaction/team (:db/id team)
-                                        :transaction/broadcast true}
-                                       (pcd/replace-many (:db/id plan)
-                                                         :plan/active-custs
-                                                         (set (map :db/id active-custs)))])
-            before-custs (:plan/active-custs (d/entity (:db-before t) (:db/id plan)))
-            after-custs (:plan/active-custs (d/entity (:db-after t) (:db/id plan)))
-            ;; 1 is the minimum, so that's what we want to compare for billing purposes
-            paid-before-count (max 1 (count before-custs))
-            paid-after-count (max 1 (count after-custs))]
-        (when (and (not= paid-before-count paid-after-count)
-                   (:plan/paid? plan))
-          ;; We'll send an email after Stripe sends out their webhook
-          (stripe/update-quantity (:plan/stripe-customer-id plan) (:plan/stripe-subscription-id plan) paid-after-count)
-          (stripe/create-invoice (:plan/stripe-customer-id plan)
-                                 :description (str "Number of active users changed from "
-                                                   paid-before-count " to " paid-after-count)))))))
+      (when (not= (set (map :db/id active-custs))
+                  (set (map :db/id (:plan/active-custs plan))))
+        (let [t @(d/transact (pcd/conn) [{:db/id (d/tempid :db.part/tx)
+                                          :transaction/team (:db/id team)
+                                          :transaction/broadcast true}
+                                         (pcd/replace-many (:db/id plan)
+                                                           :plan/active-custs
+                                                           (set (map :db/id active-custs)))])
+              before-custs (:plan/active-custs (d/entity (:db-before t) (:db/id plan)))
+              after-custs (:plan/active-custs (d/entity (:db-after t) (:db/id plan)))
+              ;; 1 is the minimum, so that's what we want to compare for billing purposes
+              paid-before-count (max 1 (count before-custs))
+              paid-after-count (max 1 (count after-custs))]
+          (when (and (not= paid-before-count paid-after-count)
+                     (:plan/paid? plan))
+            ;; We'll send an email after Stripe sends out their webhook
+            (stripe/update-quantity (:plan/stripe-customer-id plan) (:plan/stripe-subscription-id plan) paid-after-count)
+            (stripe/create-invoice (:plan/stripe-customer-id plan)
+                                   :description (str "Number of active users changed from "
+                                                     paid-before-count " to " paid-after-count))))))))
 
 (defn set-active-users-cron []
   (let [now (time/now)

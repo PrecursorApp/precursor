@@ -7,6 +7,8 @@
             [pc.analytics :as analytics]
             [pc.auth.google :as google-auth]
             [pc.crm :as crm]
+            [pc.models.access-grant :as access-grant-model]
+            [pc.models.clip :as clip-model]
             [pc.models.cust :as cust]
             [pc.models.permission :as permission-model]
             [pc.datomic :as pcd]
@@ -39,6 +41,14 @@
     (utils/with-report-exceptions
       (crm/ping-chat-with-new-user cust))))
 
+(defn convert-all-grants-for-cust [db cust]
+  (doseq [grant (access-grant-model/find-by-email db (:cust/email cust))]
+    (permission-model/convert-access-grant grant cust (merge {:transaction/broadcast true}
+                                                             (when (:access-grant/document-ref grant)
+                                                               {:transaction/document (:db/id (:access-grant/document-ref grant))})
+                                                             (when (:access-grant/team grant)
+                                                               {:transaction/team (:db/id (:access-grant/team grant))})))))
+
 (defn cust-from-google-oauth-code [code ring-req]
   {:post [(string? (:google-account/sub %))]} ;; should never break, but just in case...
   (let [user-info (google-auth/user-info-from-code code)
@@ -55,8 +65,12 @@
                                   :cust/verified-email (:email_verified user-info)
                                   :cust/http-session-key (UUID/randomUUID)
                                   :google-account/sub (:sub user-info)
-                                  :cust/uuid (d/squuid)})
+                                  :cust/uuid (d/squuid)
+                                  :cust/clips (clip-model/generate-default-clips)})
+              convert-access-grants-future (future (convert-all-grants-for-cust (pcd/default-db) user))
               user (deref (future (update-user-from-sub user)) 500 user)]
+          ;; need this to finish before they try to access a document
+          @convert-access-grants-future
           (future (perform-blocking-new-cust-updates user ring-req))
           user)
         (catch Exception e
@@ -97,18 +111,37 @@
           :read
           :else nil)))
 
-(defn team-permission [db team cust]
+(defn team-cust-permission [db team cust]
   (when (and team cust)
     ;; TODO: fix the permissions
-    (when (contains? (permission-model/team-permits db team cust) :permission.permits/admin)
-      :owner)))
+    (let [permits (permission-model/team-permits db team cust)]
+      (cond (contains? permits :permission.permits/admin)
+            :owner
+
+            (contains? permits :permission.permits/read)
+            :read
+
+            :else nil))))
+
+(defn team-permission-permission [db team permission]
+  (when (and team permission)
+    ;; TODO: fix the permissions
+    (let [permits (:permission/permits permission)]
+      (cond (contains? permits :permission.permits/admin)
+            :owner
+
+            (contains? permits :permission.permits/read)
+            :read
+
+            :else nil))))
 
 ;; TODO: unify these so that there is only 1 permission type
 ;;       Could still have multiple permissions for a doc, but want
 ;;       to have 1 type. Owner would automatically get the owner permission
 ;; TODO: this should return a :permission/permits type of thing
 (defn document-permission [db doc auth]
-  (or (team-permission db (:document/team doc) (:cust auth))
+  (or (team-cust-permission db (:document/team doc) (:cust auth))
+      (team-permission-permission db (:document/team doc) (:permission auth))
       (cust-permission db doc (:cust auth))
       ;; TODO: stop using access grant tokens as permissions
       ;;       Can remove once all of the tokens expire
@@ -137,7 +170,7 @@
         (recur (next scopes))))))
 
 (defn has-team-permission? [db team auth scope]
-  (contains-scope? scope-heirarchy (team-permission db team (:cust auth)) scope))
+  (contains-scope? scope-heirarchy (team-cust-permission db team (:cust auth)) scope))
 
 (defn logged-in? [ring-req]
   (seq (get-in ring-req [:auth :cust])))

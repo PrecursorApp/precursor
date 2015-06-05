@@ -6,7 +6,9 @@
             [frontend.sente :as sente]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer (dissoc-in)]
-            [taoensso.sente]))
+            [om.core :as om]
+            [taoensso.sente])
+  (:import [goog.ui IdGenerator]))
 
 (def doc-schema {:layer/child {:db/cardinality :db.cardinality/many}
                  :layer/points-to {:db/cardinality :db.cardinality/many
@@ -40,7 +42,7 @@
 
 (defn make-initial-db [initial-entities]
   (let [conn (d/create-conn schema)]
-    (d/transact! conn initial-entities)
+    (d/transact! conn initial-entities {:server-update true})
     (trans/reset-id conn)
     conn))
 
@@ -186,3 +188,31 @@
 
 (defn remove-attribute-listener [conn attribute key]
   (swap! listeners dissoc-in [conn :attribute-listeners attribute key]))
+
+(defn add-unmounting-entity-listener [owner conn eid callback]
+  (om/update-state-nr! owner (fn [s]
+                               (update-in s [::listener-key] #(or % (.getNextUniqueId (.getInstance IdGenerator))))))
+  (let [key (om/get-state owner ::listener-key)]
+    (add-entity-listener conn eid key (fn [tx-report]
+                                        (if (om/mounted? owner)
+                                          (callback tx-report)
+                                          (remove-entity-listener conn eid key))))))
+
+(defn add-unmounting-attribute-listener [owner conn attribute callback]
+  (om/update-state-nr! owner (fn [s]
+                               (update-in s [::listener-key] #(or % (.getNextUniqueId (.getInstance IdGenerator))))))
+  (let [key (om/get-state owner ::listener-key)]
+    (add-attribute-listener conn attribute key (fn [tx-report]
+                                                 (if (om/mounted? owner)
+                                                   (callback tx-report)
+                                                   (remove-attribute-listener conn attribute key))))))
+
+(defn watch-doc-name-changes [owner]
+  (add-unmounting-attribute-listener owner
+                                     (om/get-shared owner :db)
+                                     :document/name
+                                     (fn [tx-report]
+                                       ;; this is too often, but it's also way easier than trying to
+                                       ;; figure out which doc-id is current.
+                                       ;; If it's too slow, we can use _app-state-do-not-use
+                                       (om/refresh! owner))))

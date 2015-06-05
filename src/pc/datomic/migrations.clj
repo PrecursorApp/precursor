@@ -1,10 +1,15 @@
 (ns pc.datomic.migrations
-  (:require [pc.datomic :as pcd]
+  (:require [amazonica.core]
+            [amazonica.aws.s3 :as s3]
+            [pc.datomic :as pcd]
+            [pc.profile :as profile]
+            [clojure.java.io :as io]
             [clojure.string]
             [clojure.tools.logging :as log]
             [clj-time.core :as time]
             [clj-time.coerce]
             [datomic.api :refer [db q] :as d]
+            [pc.models.clip :as clip-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.permission :as permission-model]
@@ -146,6 +151,52 @@
                                           :permission/cust-ref
                                           :db/id)}]))))
 
+(defn add-access-grant-indexes [conn]
+  @(d/transact conn [{:db/id (d/tempid :db.part/tx)
+                      :transaction/source :transaction.source/migration}
+                     {:db/id :access-grant/token
+                      :db/index true
+                      :db.alter/_attribute :db.part/db}
+                     {:db/id :access-grant/email
+                      :db/index true
+                      :db.alter/_attribute :db.part/db}])
+  @(d/transact conn [{:db/id (d/tempid :db.part/tx)
+                      :transaction/source :transaction.source/migration}
+                     {:db/id :access-grant/token
+                      :db/unique :db.unique/value
+                      :db.alter/_attribute :db.part/db}]))
+
+(defn add-titles-to-issue-docs [conn]
+  (let [db (d/db conn)
+        issues-and-docs (filter #(= "Untitled" (:document/name (:doc %)))
+                                (map (fn [d]
+                                       {:doc (d/entity db (:v d))
+                                        :issue (d/entity db (:e d))})
+                                     (d/datoms db :aevt :issue/document)))]
+    @(d/transact conn (map (fn [{:keys [doc issue]}]
+                             [:db/add (:db/id doc) :document/name (:issue/title issue)])
+                           issues-and-docs))))
+
+(defn ensure-default-clip-in-s3 []
+  (amazonica.core/with-credential [(profile/clipboard-s3-access-key)
+                                   (profile/clipboard-s3-secret-key)
+                                   "us-west-2"]
+    (s3/put-object :bucket-name (profile/clipboard-bucket)
+                   :key "iphone"
+                   :input-stream (io/input-stream (io/resource "clips/iphone.svg"))
+                   :metadata {:content-type "image/svg+xml"})))
+
+(defn add-default-clips [conn]
+  (ensure-default-clip-in-s3)
+  (let [db (d/db conn)]
+    (doseq [cust-group (partition-all 200 (cust-model/all db))]
+      @(d/transact-async conn (conj (map (fn [cust]
+                                           {:db/id (:db/id cust)
+                                            :cust/clips (clip-model/generate-default-clips)})
+                                         cust-group)
+                                    {:db/id (d/tempid :db.part/tx)
+                                     :transaction/source :transaction.source/migration})))))
+
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
@@ -161,7 +212,10 @@
    8 #'longs->refs
    9 #'add-prcrsr-bot-color
    10 #'add-team-plans
-   11 #'ensure-team-creators))
+   11 #'ensure-team-creators
+   12 #'add-access-grant-indexes
+   13 #'add-titles-to-issue-docs
+   14 #'add-default-clips))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"

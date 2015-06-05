@@ -461,11 +461,13 @@
 
    (attribute :access-grant/email
               :db.type/string
+              :db/index true
               :db/doc "email that was granted access"
               :metadata/unescaped true)
 
    (attribute :access-grant/token
               :db.type/string
+              :db/unique :db.unique/value
               :db/doc "correlates email that was granted access with the account that claims the grant")
 
    (attribute :access-grant/expiry
@@ -856,7 +858,45 @@
 
    (attribute :comment/created-at
               :db.type/instant)
-   ])
+
+   (attribute :slack-hook/webhook-url
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :slack-hook/channel-name
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :slack-hook/send-count
+              :db.type/long)
+
+   (attribute :slack-hook/permission
+              :db.type/ref)
+
+   (attribute :team/slack-hooks
+              :db.type/ref
+              :db/isComponent true
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :cust/clips
+              :db.type/ref
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :clip/s3-key
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :clip/s3-bucket
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :clip/uuid
+              :db.type/uuid
+              :db/unique :db.unique/value)
+
+   (attribute :clip/important?
+              :db.type/boolean
+              :db/index true)])
 
 (defonce schema-ents (atom nil))
 

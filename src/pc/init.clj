@@ -7,6 +7,7 @@
             pc.datomic.migrations
             pc.datomic.schema
             pc.email
+            pc.gauges
             pc.http.admin
             pc.http.webhooks
             pc.less
@@ -17,6 +18,7 @@
             pc.nts
             pc.repl
             pc.server
+            pc.slack
             pc.statsd
             pc.stripe
             pc.stripe.dev
@@ -37,13 +39,15 @@
    #'pc.email/init
    #'pc.cache/init
    #'pc.stripe/init
+   #'pc.slack/init
    #'pc.server/init
    #'pc.less/init
    #'pc.http.webhooks/init
    #'pc.datomic.admin-db/init
    #'pc.http.admin/init
    #'pc.billing/init
-   #'pc.stripe.dev/init])
+   #'pc.stripe.dev/init
+   #'pc.gauges/init])
 
 (defn pretty-now []
   (.toLocaleString (java.util.Date.)))

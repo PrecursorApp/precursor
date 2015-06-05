@@ -140,12 +140,12 @@
 
 (defn report-exception
   "Reports an exception at the 'error' level"
-  [exception & {:keys [request cust]}]
+  [exception & {:keys [request cust extra-data]}]
   (let [data-map (base-data (profile/env) "error")
         trace-map {:body {:trace (build-trace
                                   (parse-exception exception))}}
         request-map (if request (request-data request cust) {})
-        data-maps [data-map trace-map request-map]]
+        data-maps [data-map trace-map request-map extra-data]]
     (send-payload (build-payload (token) data-maps))))
 
 (defn report-error

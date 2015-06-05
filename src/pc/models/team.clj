@@ -40,6 +40,10 @@
     (d/entity db)
     (find-by-plan db)))
 
+(defn team-txes [db team]
+  (map #(d/entity db (:tx %))
+       (d/datoms db :vaet (:db/id team) :transaction/team)))
+
 (defn create-for-subdomain! [subdomain cust annotations]
   @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)}
                                   annotations)
@@ -61,3 +65,13 @@
     (select-keys [:team/subdomain :team/uuid :team/intro-doc :team/plan])
     (utils/update-when-in [:team/intro-doc] :db/id)
     (utils/update-when-in [:team/plan] (fn [p] (web-peer/client-id p)))))
+
+(defn slack-hook-read-api [slack-ent]
+  (-> slack-ent
+    (select-keys [:slack-hook/channel-name :slack-hook/send-count])
+    (assoc :db/id (web-peer/client-id slack-ent))))
+
+(defn find-slack-hook-by-frontend-id [db frontend-id]
+  (let [candidate (d/entity db (:e (first (d/datoms db :avet :frontend/id frontend-id))))]
+    (when (:slack-hook/channel-name candidate)
+      candidate)))
