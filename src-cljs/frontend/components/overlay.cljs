@@ -36,25 +36,35 @@
   (:require-macros [sablono.core :refer (html)])
   (:import [goog.ui IdGenerator]))
 
-(defn share-input [{:keys [url placeholder]
+;; focus-id lets us trigger a focus from outside of the component
+(defn share-input [{:keys [url placeholder focus-id]
                     :or {placeholder "Copy the url to share"}} owner]
-  (reify
-    om/IDisplayName (display-name [_] "Share input")
-    om/IRender
-    (render [_]
-      (html
-       [:form.menu-invite-form.make
-        [:input {:type "text"
-                 :required "true"
-                 :data-adaptive ""
-                 :onMouseDown (fn [e]
-                                (set! (.-value (.-target e)) url) ; send cursor to end of input
-                                (.focus (.-target e))
-                                (goog.dom.selection/setStart (.-target e) 0)
-                                (goog.dom.selection/setEnd (.-target e) 10000)
-                                (utils/stop-event e))
-                 :value url}]
-        [:label {:data-placeholder placeholder}]]))))
+  (let [focus-and-select (fn [elem]
+                           (set! (.-value elem) url) ; send cursor to end of input
+                           (.focus elem)
+                           (goog.dom.selection/setStart elem 0)
+                           (goog.dom.selection/setEnd elem 10000))]
+    (reify
+      om/IDisplayName (display-name [_] "Share input")
+      om/IDidMount (did-mount [_]
+                     (when focus-id
+                       (focus-and-select (om/get-node owner "url-input"))))
+      om/IDidUpdate (did-update [_ prev-props _]
+                      (when (not= (:focus-id prev-props) focus-id)
+                        (focus-and-select (om/get-node owner "url-input"))))
+      om/IRender
+      (render [_]
+        (html
+         [:form.menu-invite-form.make
+          [:input {:type "text"
+                   :ref "url-input"
+                   :required "true"
+                   :data-adaptive ""
+                   :onMouseDown (fn [e]
+                                  (focus-and-select (.-target e))
+                                  (utils/stop-event e))
+                   :value url}]
+          [:label {:data-placeholder placeholder}]])))))
 
 (defn auth-link [app owner {:keys [source] :as opts}]
   (reify
@@ -616,13 +626,17 @@
           [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc)
                                                     :placeholder "or use this url"})]
 
-          [:div.content.make.export-title
-           "Embed in a GitHub README or issue"]
+          [:div.vein.make {:onClick #(om/set-state! owner :focus-id (utils/uuid))}
+           (common/icon :github)
+           "Embed in a README or issue"]
 
           [:div.content.make (om/build share-input
                                        {:url (gstring/format "[![Precursor](%s)](%s)"
                                                              (urls/absolute-doc-svg doc)
                                                              (urls/absolute-doc-url doc))
+                                        ;; id that we can use to know if we should focus input
+                                        ;; Should be set to a unique value
+                                        :focus-id (om/get-state owner :focus-id)
                                         :placeholder "copy as markdown"})]])))))
 
 (defn info [app owner]
