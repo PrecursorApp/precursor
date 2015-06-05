@@ -75,7 +75,6 @@
   (let [doc (:access-grant/document-ref access-grant)
         granter (:access-grant/granter-ref access-grant)
         token (:access-grant/token access-grant)
-        image-permission (permission-model/create-document-image-permission! doc)
         s3-image-url (-> (doc-http/save-png-to-s3 db doc)
                        :key
                        (doc-http/generate-s3-doc-png-url))]

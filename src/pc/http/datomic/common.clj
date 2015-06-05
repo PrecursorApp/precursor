@@ -61,6 +61,8 @@
                      :permission/permits
                      :permission/grant-date
                      :permission/team
+                     :permission/reason
+                     :permission/token
 
                      :access-grant/document
                      :access-grant/email

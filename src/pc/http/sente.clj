@@ -284,7 +284,8 @@
     (send-fn client-id [:team/db-entities
                         {:team/uuid team-uuid
                          :entities (map (partial permission-model/read-api (:db req))
-                                        (filter :permission/cust-ref
+                                        (filter #(or (:permission/cust-ref %)
+                                                     (:permission/reason %))
                                                 (permission-model/find-by-team (:db req)
                                                                                team)))
                          :entity-type :permission}])

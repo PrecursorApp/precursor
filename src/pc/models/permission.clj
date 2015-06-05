@@ -151,7 +151,9 @@
         cust-email (:cust/email (:permission/cust-ref permission))]
     (-> permission
       (select-keys [:permission/permits
-                    :permission/grant-date])
+                    :permission/grant-date
+                    :permission/reason
+                    :permission/token])
       (assoc :db/id (web-peer/client-id permission))
       (cond-> doc-id (assoc :permission/document doc-id)
               team-uuid (assoc :permission/team team-uuid)
@@ -196,7 +198,7 @@
 (defn create-document-image-permission!
   "Creates a token-based permission that can be used to access the svg and png images
    of the document. Used by emails to provide thumbnails."
-  [doc purpose]
+  [doc reason annotations]
   (let [temp-id (d/tempid :db.part/user)
         token (crypto.random/url-part 32)
         expiry (-> (time/now) (time/plus (time/weeks 2)) (clj-time.coerce/to-date))
@@ -205,7 +207,10 @@
                                                   :permission/permits #{:permission.permits/read}
                                                   :permission/token token
                                                   :permission/document-ref (:db/id doc)
-                                                  :permission/purpose purpose}])]
+                                                  :permission/reason reason}
+                                                 (web-peer/server-frontend-id temp-id (:db/id doc))
+                                                 (merge {:db/id (d/tempid :db.part/tx)}
+                                                        annotations)])]
     (->> (d/resolve-tempid db-after
                            tempids
                            temp-id)
