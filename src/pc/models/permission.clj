@@ -6,7 +6,8 @@
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
             [pc.utils :as utils])
-  (:import java.util.UUID))
+  (:import java.util.UUID
+           java.util.Date))
 
 (defn permits [db doc cust]
   (set (map (partial d/ident db)
@@ -225,3 +226,13 @@
                            tempids
                            temp-id)
       (d/entity db-after))))
+
+(defn clear-expired [db]
+  (let [ids (d/q '{:find [[?e ...]]
+                   :in [$ ?now]
+                   :where [[?e :permission/expiry ?expiry]
+                           [(< ?expiry ?now)]]}
+                 db (java.util.Date.))]
+    (when (seq ids)
+      (doseq [id-group (partition-all 200 ids)]
+        @(d/transact (pcd/conn) (map (fn [e] [:db.fn/retractEntity e]) id-group))))))
