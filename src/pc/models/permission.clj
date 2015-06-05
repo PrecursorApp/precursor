@@ -35,6 +35,14 @@
                            [?t :permission/cust-ref ?cust-id]]}
                  db (:db/id team) (:db/id cust)))))
 
+(defn find-by-document-and-reason [db doc reason]
+  (map (partial d/entity db)
+       (d/q '{:find [[?t ...]]
+              :in [$ ?doc-id ?reason]
+              :where [[?t :permission/document-ref ?doc-id]
+                      [?t :permission/reason ?reason]]}
+            db (:db/id doc) reason)))
+
 (defn grant-permit [doc granter cust permit annotations]
   (let [txid (d/tempid :db.part/tx)
         temp-id (d/tempid :db.part/user)]
@@ -107,7 +115,6 @@
                   (merge
                    {:db/id temp-id
                     :permission/permits :permission.permits/admin
-
                     :permission/cust-ref (:db/id cust)
                     :permission/grant-date (or (:access-grant/grant-date access-grant)
                                                (java.util.Date.))}

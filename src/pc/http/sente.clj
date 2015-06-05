@@ -772,6 +772,25 @@
     (d/transact (pcd/conn) [(assoc annotations :db/id txid)
                             [:db/add doc-id :document/privacy setting]])))
 
+(defmethod ws-handler :frontend/create-image-permission [{:keys [client-id ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document/id) req :admin)
+  (let [doc-id (-> ?data :document/id)]
+    (if-let [cust (-> req :ring-req :auth :cust)]
+      (let [reason (:reason ?data)
+            annotations {:cust/uuid (:cust/uuid cust)
+                         :transaction/document doc-id
+                         :transaction/broadcast true}
+            _ (log/infof "Creating image permission for %s" doc-id)
+            permission (or (first (permission-model/find-by-document-and-reason (:db req) {:db/id doc-id} reason))
+                           (permission-model/create-document-image-permission! {:db/id doc-id}
+                                                                               reason
+                                                                               annotations))]
+        (?reply-fn {:status :success
+                    :permission (permission-model/read-api (:db req) permission)}))
+      (?reply-fn {:status :error
+                  :error-msg "Please log in"
+                  :error-key :not-logged-in}))))
+
 (defmethod ws-handler :frontend/send-permission-grant [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
   (let [doc-id (-> ?data :document/id)]
