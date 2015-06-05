@@ -126,3 +126,18 @@
   (if (prod?)
     (System/getenv "CLIPBOARD_S3_SECRET_KEY")
     "sxjbOsIBVrVE+ABf1vFyBAgFu8CC/RUqr/pAKDME"))
+
+(defn doc-image-bucket []
+  (if (prod?)
+    "prcrsr-doc-images"
+    "prcrsr-doc-images-dev"))
+
+(defn doc-image-s3-access-key []
+  (if (prod?)
+    (System/getenv "DOC_IMAGE_S3_ACCESS_KEY")
+    "AKIAIOWJWDCNUGYTFJAA"))
+
+(defn doc-image-s3-secret-key []
+  (if (prod?)
+    (System/getenv "DOC_IMAGE_S3_SECRET_KEY")
+    "AKr8NucqQKmnGt35kcq/+sZ2q8BEjpi0IwqNrw9H"))

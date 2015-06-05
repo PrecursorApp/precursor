@@ -17,6 +17,7 @@
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
+            [pc.http.doc :as doc-http]
             [pc.http.clipboard :as clipboard]
             [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
             [pc.http.issues :as issues-http]
@@ -703,7 +704,7 @@
       (let [email (-> ?data :email)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
         (try
-          (email/send-chat-invite {:cust cust :to-email email :doc doc})
+          (email/send-chat-invite {:cust cust :to-email email :doc doc :db (:db req)})
           (notify-invite (str "Invite sent to " email))
           (catch Exception e
             (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
@@ -734,10 +735,9 @@
         (try
           (sms/async-send-sms stripped-phone-number
                               (format "Make something with me on Precursor. %s" (urls/from-doc doc))
-                              :image-url (when (and (contains? #{:document.privacy/public :document.privacy/read-only}
-                                                               (:document/privacy doc))
-                                                    (seq (layer-model/find-by-document (:db req) doc)))
-                                           (urls/png-from-doc doc))
+                              :image-url (-> (doc-http/save-png-to-s3 (:db req) doc)
+                                           :key
+                                           (doc-http/generate-s3-doc-png-url))
                               :callback (fn [resp]
                                           (if (http/unexceptional-status? (:status resp))
                                             (notify-invite (str "Sent text to " phone-number))
