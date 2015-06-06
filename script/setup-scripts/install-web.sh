@@ -13,13 +13,13 @@ if [ -z "$number" ]; then
     exit 1
 fi
 
-if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-    echo "Need to export AWS_ACCESS_KEY_ID"
+if [ -z "$ACCESS_KEY" ]; then
+    echo "Need to export ACCESS_KEY"
     exit 1
 fi
 
-if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-    echo "Need to export AWS_SECRET_ACCESS_KEY"
+if [ -z "$SECRET_KEY" ]; then
+    echo "Need to export SECRET_KEY"
     exit 1
 fi
 
@@ -112,12 +112,14 @@ mkdir -p "${prcrsr_dir}/log"
 cd $prcrsr_dir
 touch pc.log
 
-jar_key=$(s3-dl.sh prcrsr-deploys manifest)
-s3-dl.sh prcrsr-deploys $jar_key > pc-standalone.jar
+download_s3="AWS_ACCESS_KEY_ID=${ACCESS_KEY} AWS_SECRET_ACCESS_KEY=${SECRET_KEY} s3-dl.sh"
+
+jar_key=$($download_s3 prcrsr-deploys manifest)
+$download_s3 prcrsr-deploys $jar_key > pc-standalone.jar
 
 pkg install --yes gnupg
 
-s3-dl.sh prcrsr-secrets web/production.sh.gpg > production.sh.gpg
+$download_s3 prcrsr-secrets web/production.sh.gpg > production.sh.gpg
 echo "${GPG_PASSPHRASE}" | gpg --batch --no-tty --decrypt --passphrase-fd 0 production.sh.gpg > production.sh
 
 chown -R precursor:precursor $prcrsr_dir
@@ -127,5 +129,7 @@ java_opts="-Xmx7g -Xms7g -Djava.net.preferIPv4Stack=true -XX:MaxPermSize=256m -X
 run_cmd="java -server -cp pc-standalone.jar ${java_opts} clojure.main --main pc.init"
 
 . production.sh
+
+export MEMCACHED_SERVER="10.99.0.104:11211"
 
 daemon -u precursor -p precursor.pid $run_cmd >> daemon.log 2>&1
