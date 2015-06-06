@@ -114,6 +114,10 @@ pkg install --yes curl
 alias safe-curl="curl --retry 5 --fail"
 
 # datomic
+datomic_version=datomic-pro-0.9.5130
+datomic_bucket_url="https://s3-us-west-2.amazonaws.com/prcrsr-datomic"
+datomic_download_url="${datomic_bucket_url}/datomic-releases/${datomic_version}.zip"
+
 safe-curl $datomic_download_url > "${datomic_version}.zip"
 unzip ${datomic_version}.zip
 rm ${datomic_version}.zip
