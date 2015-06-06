@@ -112,14 +112,16 @@ mkdir -p "${prcrsr_dir}/log"
 cd $prcrsr_dir
 touch pc.log
 
-download_s3="AWS_ACCESS_KEY_ID=${ACCESS_KEY} AWS_SECRET_ACCESS_KEY=${SECRET_KEY} s3-dl.sh"
+download_s3 () {
+  AWS_ACCESS_KEY_ID="${ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${SECRET_KEY}" s3-dl.sh $1 $2
+}
 
-jar_key=$($download_s3 prcrsr-deploys manifest)
-$download_s3 prcrsr-deploys $jar_key > pc-standalone.jar
+jar_key=$(download_s3 prcrsr-deploys manifest)
+download_s3 prcrsr-deploys $jar_key > pc-standalone.jar
 
 pkg install --yes gnupg
 
-$download_s3 prcrsr-secrets web/production.sh.gpg > production.sh.gpg
+download_s3 prcrsr-secrets web/production.sh.gpg > production.sh.gpg
 echo "${GPG_PASSPHRASE}" | gpg --batch --no-tty --decrypt --passphrase-fd 0 production.sh.gpg > production.sh
 
 chown -R precursor:precursor $prcrsr_dir
