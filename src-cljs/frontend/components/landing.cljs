@@ -72,15 +72,14 @@
       [:div.property-dropdown-targets
        [:div.art-interact-target
         [:div.art-interact-placeholder "with"]
-        [:div.art-interact-ibeam "|"]
-        [:div.art-interact-more "..."]]
+        [:div.art-interact-ibeam]
+        [:div.art-interact-more
+         (common/icon :ellipsis)]]
        [:div.property-dropdown-target.selected
         [:div.art-interact-item "home page"]]
        [:div.property-dropdown-target "blog page"]
        [:div.property-dropdown-target "about page"]
-       [:div.property-dropdown-target "contact page"]
-       [:div.property-dropdown-target "jobs page"]
-       [:div.property-dropdown-target "team page"]]]]]))
+       [:div.property-dropdown-target "contact page"]]]]]))
 
 (def artwork-team
   (html
