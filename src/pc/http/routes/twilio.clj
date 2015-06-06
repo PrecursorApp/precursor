@@ -21,6 +21,7 @@
                                                                            :MessageStatus :MessageSid])))
       (log/infof "message to %s succeeded with %s"
                  (:To params) (:MessageStatus params)))
-    {:status 200}))
+    {:status 200
+     :body ""}))
 
 (def hooks-app (defpage/collect-routes))
