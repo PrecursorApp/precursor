@@ -168,23 +168,11 @@
       border: none;
       text-indent: 0;
       animation: in-fade-bottom @art_b8 @bezier_fadein backwards;
-      &:last-child {
-        max-height: 2rem;
-        padding-bottom: 0;
-        overflow: hidden;
-        &:before {
-          .gradient(to bottom, fade(@dye_outer, 0) 66%, @dye_outer 100%);
-          background-size: 99% 100%;
-          background-repeat: no-repeat;
-          background-position: 1px -1px;
-          content: "";
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-        }
-      }
+      .mq_640({
+        height: 3rem;
+        min-height: 3rem;
+        padding: 1rem;
+      });
       &.selected {
         &:before {
           transform-origin: left top;
@@ -218,10 +206,10 @@
   background: @dye_outer;
 }
 .art-interact-name {
+  position: relative;
   color: @art_interact_color;
   line-height: 1em;
-  position: relative;
-  padding: 1em;
+  padding: 1.5em;
   background: @dye_outer;
   border: 1px solid @art_interact_color;
   box-shadow+:  0  -2px @white;
@@ -230,16 +218,22 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  .mq_640({
+    padding: 1em;
+  });
   &:before {
     animation: in-fade-bottom @art_b6 @bezier_fadein backwards;
   }
 }
 .art-interact-target {
   .flexy();
-  flex: 0 0 3em;
+  min-height: @tile;
   position: relative;
   border-left: 1px solid @art_interact_color;
   border-right: 1px solid @art_interact_color;
+  .mq_640({
+    min-height: @tile - 1;
+  });
   &:before {
     animation: in-fade-bottom @art_b7 @bezier_fadein backwards;
   }
@@ -250,24 +244,32 @@
   text-overflow: ellipsis;
 }
 .art-interact-ibeam {
-  color: @art_interact_color;
-  padding: 1rem;
-  margin-right: auto;
-  cursor: default;
-  font-size: 2em;
-  line-height: 1rem;
-  font-weight: 200;
-  padding-left: .75rem;
-  animation: in-fade-bottom @art_b8 @bezier_fadein backwards;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 1px * @stroke_width;
+  height: @tile / 2;
+  background: @art_interact_color;
+  .mq_640({
+    top: .75rem;
+    left: .75rem;
+    height: 1.5rem;
+  });
 }
 .art-interact-more {
-  font-size: 1.5em;
-  color: @art_interact_color;
+  .flexy(center; center);
+  .icon(fill; @art_interact_color);
+  position: absolute;
+  top: 0;
+  right: 0;
   text-align: center;
   width: @tile * .75;
-  height: @tile * .75;
+  height: @tile;
   cursor: default;
   animation: in-fade-bottom @art_b8 @bezier_fadein backwards;
+  .mq_640({
+    height: @tile * .75;
+  });
 }
 .art-interact-button {
   .flexy(center; center);
@@ -357,13 +359,11 @@
 }
 .art-voice-items {
   .icon(stroke; @gray_light);
-  .icon(stroke; 2.5);
   color: @gray_light;
   font-size: 3em;
   font-weight: 200;
   max-width: 100%;
   .mq_640({
-    .icon(stroke; @stroke_width_icon);
     font-size: 8vw;
     font-weight: 300;
   });
@@ -374,7 +374,11 @@
   &.selected {
     .focus {
       .icon(stroke; @color_select);
+      .icon(stroke; 4);
       margin-left: -1em;
+      .mq_640({
+        .icon(stroke; @stroke_width_icon);
+      });
       .iconpile {
         background: @dye_outer;
       }
