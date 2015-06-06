@@ -238,8 +238,8 @@
           [:div.our-claim
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
-             [:h1.content-copy "Prototyping and team collaboration should be simple. "]
-             [:p.content-copy "That's why we made Precursor."]
+             [:h1 "Prototyping and team collaboration should be simple. "]
+             [:p "That's why we made Precursor."]
              [:div.calls-to-action
               (om/build make-button {})]]]]
           [:div.our-proof
@@ -340,8 +340,8 @@
           [:div.our-claim
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
-             [:h1.content-copy "It's a blackboard designed to help teams brainstorm."]
-             [:p.content-copy "Precursor is no-nonsense prototyping."]
+             [:h1 "It's a blackboard designed to help teams brainstorm."]
+             [:p "Precursor is no-nonsense prototyping."]
              [:div.calls-to-action
               (om/build make-button {} {:opts {:alt "alt"}})
               [:a.pancake-button {:href "/trial"
