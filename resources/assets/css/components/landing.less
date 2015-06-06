@@ -211,10 +211,11 @@
   white-space: pre;
 }
 .our-claim {
-  flex: 1;
   .flexy(column);
+  flex: 1;
   position: relative;
-  color: fade(@white, 75.75); // TODO use opacity variables here
+  color: fade(@white, @opacity_darker_light);
+  padding: @menu_padding 0;
 }
 .our-philosophy-wrap {
   flex: 1;
