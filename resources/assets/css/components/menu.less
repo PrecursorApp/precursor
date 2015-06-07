@@ -205,6 +205,10 @@
     margin-left: auto;
   }
 }
+.export-title {
+  .flexy(center);
+  height: @tile;
+}
 .vein-fork {
   .flexy(center);
   &:hover {
@@ -468,6 +472,10 @@
       border: 1px dashed @gray_light;
     }
   }
+  .iconpile {
+    width: @size_menu_avatar;
+    height: @size_menu_avatar;
+  }
 }
 .access-avatar-img {
   width: @size_menu_avatar;
@@ -696,6 +704,11 @@
   .adaptive {
     margin-bottom: @menu_padding;
   }
+}
+.image-token-form-error {
+  color: @red;
+  margin: 1rem 0;
+  animation: in-fade-bottom @run ease-out;
 }
 .post-to-slack {
   .divider {

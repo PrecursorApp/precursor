@@ -1,5 +1,7 @@
 (ns pc.http.doc
-  (:require [clj-time.core :as time]
+  (:require [amazonica.core]
+            [amazonica.aws.s3 :as s3]
+            [clj-time.core :as time]
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
@@ -10,10 +12,14 @@
             [pc.models.chat-bot :as chat-bot-model]
             [pc.models.doc :as doc-model]
             [pc.models.layer :as layer-model]
+            [pc.render :as render]
+            [pc.convert :as convert]
+            [pc.profile :as profile]
             [pc.util.md5 :as md5]
             [pc.utils :as utils])
   (:import java.io.PushbackReader
-           java.util.UUID))
+           java.util.UUID
+           [com.amazonaws HttpMethod]))
 
 (defn read-doc [doc]
   (edn/read (PushbackReader. (io/reader (io/resource (format "docs/%s.edn" doc))))))
@@ -90,3 +96,28 @@
                  [?t :transaction/document ?doc-id]
                  [?t :db/txInstant ?i]]
                db (:db/id doc))))
+
+(defn png-s3-key [db doc]
+  (str (:db/id doc) "/" (d/basis-t db) ".png"))
+
+(defn save-png-to-s3 [db doc]
+  (amazonica.core/with-credential [(profile/doc-image-s3-access-key)
+                                   (profile/doc-image-s3-secret-key)
+                                   "us-west-2"]
+    (let [s3-key (png-s3-key db doc)
+          result (s3/put-object :bucket-name (profile/doc-image-bucket)
+                                :key (png-s3-key db doc)
+                                :input-stream (-> (layer-model/find-by-document db doc)
+                                                (render/render-layers :size-limit 800)
+                                                (convert/svg->png))
+                                :metadata {:content-type "image/png"})]
+      (assoc result :key s3-key))))
+
+(defn generate-s3-doc-png-url [s3-key]
+  (amazonica.core/with-credential [(profile/doc-image-s3-access-key)
+                                   (profile/doc-image-s3-secret-key)
+                                   "us-west-2"]
+    (str (s3/generate-presigned-url :bucket-name (profile/doc-image-bucket)
+                                    :key s3-key
+                                    :expiration (time/plus (time/now) (time/weeks 2))
+                                    :method HttpMethod/GET))))

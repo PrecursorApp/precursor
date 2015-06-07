@@ -197,6 +197,9 @@
                                     {:db/id (d/tempid :db.part/tx)
                                      :transaction/source :transaction.source/migration})))))
 
+(defn clear-expired-permissions [conn]
+  (permission-model/clear-expired (d/db conn)))
+
 (def migrations
   "Array-map of migrations, the migration version is the key in the map.
    Use an array-map to make it easier to resolve merge conflicts."
@@ -215,7 +218,8 @@
    11 #'ensure-team-creators
    12 #'add-access-grant-indexes
    13 #'add-titles-to-issue-docs
-   14 #'add-default-clips))
+   14 #'add-default-clips
+   15 #'clear-expired-permissions))
 
 (defn necessary-migrations
   "Returns tuples of migrations that need to be run, e.g. [[0 #'migration-one]]"

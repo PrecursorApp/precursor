@@ -6,7 +6,8 @@
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
             [pc.utils :as utils])
-  (:import java.util.UUID))
+  (:import java.util.UUID
+           java.util.Date))
 
 (defn permits [db doc cust]
   (set (map (partial d/ident db)
@@ -33,6 +34,14 @@
                    :where [[?t :permission/team ?team-id]
                            [?t :permission/cust-ref ?cust-id]]}
                  db (:db/id team) (:db/id cust)))))
+
+(defn find-by-document-and-reason [db doc reason]
+  (map (partial d/entity db)
+       (d/q '{:find [[?t ...]]
+              :in [$ ?doc-id ?reason]
+              :where [[?t :permission/document-ref ?doc-id]
+                      [?t :permission/reason ?reason]]}
+            db (:db/id doc) reason)))
 
 (defn grant-permit [doc granter cust permit annotations]
   (let [txid (d/tempid :db.part/tx)
@@ -106,7 +115,6 @@
                   (merge
                    {:db/id temp-id
                     :permission/permits :permission.permits/admin
-
                     :permission/cust-ref (:db/id cust)
                     :permission/grant-date (or (:access-grant/grant-date access-grant)
                                                (java.util.Date.))}
@@ -150,7 +158,9 @@
         cust-email (:cust/email (:permission/cust-ref permission))]
     (-> permission
       (select-keys [:permission/permits
-                    :permission/grant-date])
+                    :permission/grant-date
+                    :permission/reason
+                    :permission/token])
       (assoc :db/id (web-peer/client-id permission))
       (cond-> doc-id (assoc :permission/document doc-id)
               team-uuid (assoc :permission/team team-uuid)
@@ -195,7 +205,7 @@
 (defn create-document-image-permission!
   "Creates a token-based permission that can be used to access the svg and png images
    of the document. Used by emails to provide thumbnails."
-  [doc]
+  [doc reason annotations]
   (let [temp-id (d/tempid :db.part/user)
         token (crypto.random/url-part 32)
         expiry (-> (time/now) (time/plus (time/weeks 2)) (clj-time.coerce/to-date))
@@ -204,7 +214,10 @@
                                                   :permission/permits #{:permission.permits/read}
                                                   :permission/token token
                                                   :permission/document-ref (:db/id doc)
-                                                  :permission/expiry expiry}])]
+                                                  :permission/reason reason}
+                                                 (web-peer/server-frontend-id temp-id (:db/id doc))
+                                                 (merge {:db/id (d/tempid :db.part/tx)}
+                                                        annotations)])]
     (->> (d/resolve-tempid db-after
                            tempids
                            temp-id)
@@ -225,3 +238,13 @@
                            tempids
                            temp-id)
       (d/entity db-after))))
+
+(defn clear-expired [db]
+  (let [ids (d/q '{:find [[?e ...]]
+                   :in [$ ?now]
+                   :where [[?e :permission/expiry ?expiry]
+                           [(< ?expiry ?now)]]}
+                 db (java.util.Date.))]
+    (when (seq ids)
+      (doseq [id-group (partition-all 200 ids)]
+        @(d/transact (pcd/conn) (map (fn [e] [:db.fn/retractEntity e]) id-group))))))

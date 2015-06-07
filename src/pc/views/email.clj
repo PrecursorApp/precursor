@@ -40,7 +40,7 @@
                    (:cust/email requester)
                    (when-not (str/blank? full-name) ")")))))
 
-(defn chat-invite-html [doc]
+(defn chat-invite-html [doc img-s3-url]
   (hiccup/html
    [:html
     [:body
@@ -56,7 +56,7 @@
        [:img {:width 325
               :style "border: 1px solid #888888;"
               :alt "Images disabled? Just come and take a look."
-              :src (urls/png-from-doc doc :query {:rand (rand)})}]]]
+              :src img-s3-url}]]]
      [:p {:style "font-size: 12px"}
       (format "Tell us if this message was sent in error %s." (email-address "info"))
       ;; Add some hidden text so that Google doesn't try to trim these.
@@ -65,9 +65,8 @@
        (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
        "."]]]]))
 
-(defn document-access-grant-html [doc access-grant image-permission]
-  (let [doc-link (urls/from-doc doc :query {:access-grant-token (:access-grant/token access-grant)})
-        image-link (urls/png-from-doc doc :query {:rand (rand) :auth-token (:permission/token image-permission)})]
+(defn document-access-grant-html [doc access-grant img-s3-url]
+  (let [doc-link (urls/from-doc doc :query {:access-grant-token (:access-grant/token access-grant)})]
     (hiccup/html
      [:html
       [:body
@@ -83,7 +82,7 @@
          [:img {:width 325
                 :style "border: 1px solid #888888;"
                 :alt "Images disabled? Just come and take a look."
-                :src image-link}]]]
+                :src img-s3-url}]]]
        [:p {:style "font-size: 12px"}
         (format "Tell us if this message was sent in error %s." (email-address "info"))
         ;; Add some hidden text so that Google doesn't try to trim these.
@@ -112,9 +111,9 @@
          (clj-time.format/unparse (clj-time.format/formatters :rfc822) (time/now))
          "."]]]])))
 
-(defn document-permission-grant-html [doc image-permission]
-  (let [doc-link (urls/from-doc doc)
-        image-link (urls/png-from-doc doc :query {:rand (rand) :auth-token (:permission/token image-permission)})]
+;; XXX: img-s3-url
+(defn document-permission-grant-html [doc img-s3-url]
+  (let [doc-link (urls/from-doc doc)]
     (hiccup/html
      [:html
       [:body
@@ -130,7 +129,7 @@
          [:img {:width 325
                 :style "border: 1px solid #888888;"
                 :alt "Images disabled? Just come and take a look."
-                :src image-link}]]]
+                :src img-s3-url}]]]
        [:p {:style "font-size: 12px"}
         (format "Tell us if this message was sent in error %s." (email-address "info"))
         ;; Add some hidden text so that Google doesn't try to trim these.

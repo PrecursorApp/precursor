@@ -396,6 +396,12 @@
               :db/unique :db.unique/identity
               :db/doc "Used to add a composite uniqueness constraint on team and cust.")
 
+   (attribute :permission/reason
+              :db.type/ref
+              :db/doc "For API tokens, tells us the purpose of the permission")
+
+   (enum :permission.reason/github-markdown)
+
    (attribute :access-request/document
               :db.type/long
               :db/index true

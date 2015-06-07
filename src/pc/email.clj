@@ -10,6 +10,7 @@
             [hiccup.core :as hiccup]
             [pc.datomic :as pcd]
             [pc.datomic.web-peer :as web-peer]
+            [pc.http.doc :as doc-http]
             [pc.http.urls :as urls]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust-model]
@@ -60,26 +61,30 @@
 
 
 
-(defn send-chat-invite [{:keys [cust to-email doc]}]
+(defn send-chat-invite [{:keys [cust to-email doc db]}]
   (ses/send-message {:from (view/email-address "Precursor" "joinme")
                      :to to-email
                      :subject (str (view/format-inviter cust)
                                    " invited you to a document on Precursor")
                      :text (str "Hey there,\nMake something with me on Precursor. " (urls/from-doc doc))
-                     :html (view/chat-invite-html doc)}))
+                     :html (view/chat-invite-html doc (-> (doc-http/save-png-to-s3 db doc)
+                                                        :key
+                                                        (doc-http/generate-s3-doc-png-url)))}))
 
 (defn send-document-access-grant-email [db access-grant]
   (let [doc (:access-grant/document-ref access-grant)
         granter (:access-grant/granter-ref access-grant)
         token (:access-grant/token access-grant)
-        image-permission (permission-model/create-document-image-permission! doc)]
+        s3-image-url (-> (doc-http/save-png-to-s3 db doc)
+                       :key
+                       (doc-http/generate-s3-doc-png-url))]
     (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:access-grant/email access-grant)
                        :subject (str (view/format-inviter granter)
                                      " invited you to a document on Precursor")
                        :text (str "Hey there,\nMake something with me on Precursor. " (urls/from-doc doc)
                                   "?access-grant-token=" token)
-                       :html (view/document-access-grant-html doc access-grant image-permission)})))
+                       :html (view/document-access-grant-html doc access-grant s3-image-url)})))
 
 (defn send-team-access-grant-email [db access-grant]
   (let [team (:access-grant/team access-grant)
@@ -112,13 +117,15 @@
   (let [doc (:permission/document-ref permission)
         granter (:permission/granter-ref permission)
         grantee (:permission/cust-ref permission)
-        image-permission (permission-model/create-document-image-permission! doc)]
+        s3-image-url (-> (doc-http/save-png-to-s3 db doc)
+                       :key
+                       (doc-http/generate-s3-doc-png-url))]
     (ses/send-message {:from (view/email-address "Precursor" "joinme")
                        :to (:cust/email grantee)
                        :subject (str (view/format-inviter granter)
                                      " invited you to a document on Precursor")
                        :text (str "Hey there,\nMake something with me on Precursor. " (urls/from-doc doc))
-                       :html (view/document-permission-grant-html doc image-permission)})))
+                       :html (view/document-permission-grant-html doc s3-image-url)})))
 
 (defn send-team-permission-grant-email [db permission]
   (let [team (:permission/team permission)

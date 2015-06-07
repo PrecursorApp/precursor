@@ -17,6 +17,7 @@
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
+            [pc.http.doc :as doc-http]
             [pc.http.clipboard :as clipboard]
             [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
             [pc.http.issues :as issues-http]
@@ -283,7 +284,8 @@
     (send-fn client-id [:team/db-entities
                         {:team/uuid team-uuid
                          :entities (map (partial permission-model/read-api (:db req))
-                                        (filter :permission/cust-ref
+                                        (filter #(or (:permission/cust-ref %)
+                                                     (:permission/reason %))
                                                 (permission-model/find-by-team (:db req)
                                                                                team)))
                          :entity-type :permission}])
@@ -703,7 +705,7 @@
       (let [email (-> ?data :email)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
         (try
-          (email/send-chat-invite {:cust cust :to-email email :doc doc})
+          (email/send-chat-invite {:cust cust :to-email email :doc doc :db (:db req)})
           (notify-invite (str "Invite sent to " email))
           (catch Exception e
             (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
@@ -734,10 +736,9 @@
         (try
           (sms/async-send-sms stripped-phone-number
                               (format "Make something with me on Precursor. %s" (urls/from-doc doc))
-                              :image-url (when (and (contains? #{:document.privacy/public :document.privacy/read-only}
-                                                               (:document/privacy doc))
-                                                    (seq (layer-model/find-by-document (:db req) doc)))
-                                           (urls/png-from-doc doc))
+                              :image-url (-> (doc-http/save-png-to-s3 (:db req) doc)
+                                           :key
+                                           (doc-http/generate-s3-doc-png-url))
                               :callback (fn [resp]
                                           (if (http/unexceptional-status? (:status resp))
                                             (notify-invite (str "Sent text to " phone-number))
@@ -770,6 +771,25 @@
         txid (d/tempid :db.part/tx)]
     (d/transact (pcd/conn) [(assoc annotations :db/id txid)
                             [:db/add doc-id :document/privacy setting]])))
+
+(defmethod ws-handler :frontend/create-image-permission [{:keys [client-id ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document/id) req :admin)
+  (let [doc-id (-> ?data :document/id)]
+    (if-let [cust (-> req :ring-req :auth :cust)]
+      (let [reason (:reason ?data)
+            annotations {:cust/uuid (:cust/uuid cust)
+                         :transaction/document doc-id
+                         :transaction/broadcast true}
+            _ (log/infof "Creating image permission for %s" doc-id)
+            permission (or (first (permission-model/find-by-document-and-reason (:db req) {:db/id doc-id} reason))
+                           (permission-model/create-document-image-permission! {:db/id doc-id}
+                                                                               reason
+                                                                               annotations))]
+        (?reply-fn {:status :success
+                    :permission (permission-model/read-api (:db req) permission)}))
+      (?reply-fn {:status :error
+                  :error-msg "Please log in"
+                  :error-key :not-logged-in}))))
 
 (defmethod ws-handler :frontend/send-permission-grant [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
@@ -1153,6 +1173,19 @@
                                   (and (:last-update s)
                                        (time/after? (:last-update s) now)))
                                 (select-keys @client-stats doc-uids))]
+      (close-ws uid))))
+
+(defn cleanup-all-stale []
+  (let [subs @document-subs
+        now (time/now)
+        uids (mapcat keys (map second @pc.http.sente/document-subs))]
+    (doseq [uid uids]
+      (fetch-stats uid))
+    (Thread/sleep 10000)
+    (doseq [[uid stats] (remove (fn [[_ s]]
+                                  (and (:last-update s)
+                                       (time/after? (:last-update s) now)))
+                                (select-keys @client-stats uids))]
       (close-ws uid))))
 
 (defn init []
