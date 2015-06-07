@@ -297,6 +297,4 @@
   [hash]
   (if (ua-browser/isFirefox)
     (str "url(" js/document.location.pathname "#" hash ")")
-    (if (= hash "canvas-mask")
-      nil
-      (str "url(#" hash ")"))))
+    (str "url(#" hash ")")))
