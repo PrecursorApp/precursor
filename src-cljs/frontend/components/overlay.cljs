@@ -627,10 +627,11 @@
                                                     (do (d/transact! db [(:permission res)] {:server-update true})
                                                         (om/set-state! owner :error nil))
                                                     (om/set-state! owner :error (:error-msg res)))
-                                                  (om/set-state! owner :error "The request timed out"))))}
+                                                  (om/set-state! owner :error "The request timed out"))))
+                                :title "This will create a read-only API token that will allow GitHub to fetch the image. After you create the token, we'll generate the markdown you can use on GitHub."}
            (if (om/get-state owner :sending?)
              "Creating..."
-             "Create read-only image token")]
+             "Create read-only permission")]
           (when (om/get-state owner :error)
             [:div.image-token-form-error (om/get-state owner :error)])])))))
 
