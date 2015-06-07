@@ -1001,7 +1001,7 @@
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
                       :key "svg-canvas"
-                      :style (when (ua-browser/isFirefox) #js {:mask (utils/absolute-css-hash "canvas-mask")})
+                      :mask (when (ua-browser/isFirefox) (utils/absolute-css-hash "canvas-mask"))
                       :className (str "canvas-frame "
                                       (cond (keyboard/arrow-shortcut-active? app) " arrow-tool "
                                             (keyboard/pan-shortcut-active? app) " pan-tool "
