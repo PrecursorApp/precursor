@@ -2,7 +2,7 @@
 10.99.0.102 datomic
 10.99.0.103 nginx
 10.99.0.104 stasd
-10.99.0.105 backups
-10.99.0.106 memcached
+10.99.0.104 backups
+10.99.0.104 memcached
 
 10.99.0.110-119 web

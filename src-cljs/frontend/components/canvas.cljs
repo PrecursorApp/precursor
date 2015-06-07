@@ -1001,6 +1001,9 @@
                       :id "svg-canvas"
                       :xmlns "http://www.w3.org/2000/svg"
                       :key "svg-canvas"
+                      :mask (when (and (ua-browser/isFirefox)
+                                       (get-in app state/chat-opened-path))
+                              (utils/absolute-css-hash "canvas-mask"))
                       :className (str "canvas-frame "
                                       (cond (keyboard/arrow-shortcut-active? app) " arrow-tool "
                                             (keyboard/pan-shortcut-active? app) " pan-tool "

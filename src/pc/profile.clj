@@ -83,7 +83,8 @@
 (defn use-email-whitelist?
   "Used to guard against sending emails to customers from dev-mode"
   []
-  (not (prod?)))
+  (or (System/getenv "USE_EMAIL_WHITELIST")
+      (not (prod?))))
 
 (defn bcc-audit-log?
   "Determines whether to bcc audit-log@ on every email"

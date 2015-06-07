@@ -9,7 +9,7 @@
   (or
    (pc.profile/admin-datomic-uri)
    (if (pc.profile/prod?)
-     "datomic:sql://prcrsr-admin?jdbc:postgresql://10.99.0.101:5432/datomic?user=datomic&password=datomic"
+     "datomic:ddb://us-west-2/prcrsr-datomic/prcrsr-admin"
      "datomic:free://localhost:4334/prcrsr-admin")))
 
 (defn admin-conn [& {:keys [uri]}]

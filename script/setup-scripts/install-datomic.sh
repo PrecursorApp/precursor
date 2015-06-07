@@ -4,43 +4,46 @@ set -e
 set -x
 
 private_ip="10.99.0.102"
-postgres_ip="10.99.0.101"
-license_key="ZXYl00diL4p/sE2ny5AMYrNfOmB0518vtelRBwHIFMeKEHPzf7F/Jbc1ZhMbBavWH81v8NFlcP9o0KbO9wS36xdOB4Fu7a/4b/oL+fhMJcoHFTfA534+MJm2Ua96GPwJ2vPPmqVDOVLcypaaCjC9fONl4kiBQuUPJxYAAOFwVM2GOXq5A/3d8ZrP3meeo+HAqfmUFVsPI/TFLDkUZ5o3LY0QFz0iSKyTHAo9E0vuXQo0rrRQoUQ0r7l7UUPv6l+9qYtFgM+HGNaFoDxWIBX7VTouH9juwzN6IDyuXX/ihxyKxTAKuC2dUMKwkVHg40k71eppR5KoUupc1LDPgfOMPw=="
+# Using dynamodb on ec2
+# postgres_ip="10.99.0.101"
+license_key="KXNTf7x4F/SqToo6epEBbq9M/DQnxj6CCyF4v8Xw4VEQ5z0fZeZWAniOD+6dqOjlzaBcX1qiYfkHdYZDE9WSs358PNk6kv70qzk5Ei/JWEs50sRAAQWiHyAvZb4thMKUoK2ptLfdbs91pSj2c5meSEzymmpLE6L+W6K9R+hw2wNJy1oV56oPm6q+2emcFxtpPd9rjwMHnFUsu61mJ3+ROuMDCeoFd+XPLRvuZFTfWaGI2Swgg3CxgUC/S3v5QCsDOA9yjqXcM7wyRoakcbhToBHtKG9c6zkJO/zOr0KRxO1fRFlIyG6JXTv6LidJktOGnksKkmIO8d8i/FndVLywig=="
 
 datomic_version=datomic-pro-0.9.5130
 datomic_bucket_url="https://s3-us-west-2.amazonaws.com/prcrsr-datomic"
 datomic_download_url="${datomic_bucket_url}/datomic-releases/${datomic_version}.zip"
 
-# set up private network
-echo "ifconfig_vtnet1=\"inet $private_ip netmask 255.255.0.0\"" >> /etc/rc.conf
-# hack to get the exit code we need :/
-service netif start vtnet1 | grep $private_ip
+# No firewall on ec2
+# # set up private network
+# echo "ifconfig_vtnet1=\"inet $private_ip netmask 255.255.0.0\"" >> /etc/rc.conf
+# # hack to get the exit code we need :/
+# service netif start vtnet1 | grep $private_ip
 
-# Set up firewall
-echo 'firewall_enable="YES"' >> /etc/rc.conf
-echo 'firewall_quiet="YES"' >> /etc/rc.conf
-echo 'firewall_type="workstation"' >> /etc/rc.conf
-echo 'firewall_myservices="22"' >> /etc/rc.conf
-echo 'firewall_allowservices="any"' >> /etc/rc.conf
-echo 'firewall_logdeny="YES"' >> /etc/rc.conf
+# # Set up firewall
+# echo 'firewall_enable="YES"' >> /etc/rc.conf
+# echo 'firewall_quiet="YES"' >> /etc/rc.conf
+# echo 'firewall_type="workstation"' >> /etc/rc.conf
+# echo 'firewall_myservices="22"' >> /etc/rc.conf
+# echo 'firewall_allowservices="any"' >> /etc/rc.conf
+# echo 'firewall_logdeny="YES"' >> /etc/rc.conf
 
-echo "ipfw -q add 00001 allow all from any to any via vtnet1" >> /etc/rc.firewall
+# echo "ipfw -q add 00001 allow all from any to any via vtnet1" >> /etc/rc.firewall
 
-service ipfw start
+# service ipfw start
 
-echo 'net.inet.ip.fw.verbose_limit=5' >> /etc/sysctl.conf
-sysctl net.inet.ip.fw.verbose_limit=5
+# echo 'net.inet.ip.fw.verbose_limit=5' >> /etc/sysctl.conf
+# sysctl net.inet.ip.fw.verbose_limit=5
 
 # time server
 echo 'ntpd_enable="YES"' >> /etc/rc.conf
 echo 'ntpd_sync_on_start="YES"' >> /etc/rc.conf
 service ntpd start
 
-# swap
-dd if=/dev/zero of=/usr/swap0 bs=1m count=2048
-chmod 600 /usr/swap0
-echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
-swapon -aqL
+# swap is already handled
+# # swap
+# dd if=/dev/zero of=/usr/swap0 bs=1m count=2048
+# chmod 600 /usr/swap0
+# echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
+# swapon -aqL
 
 # freebsd-update
 freebsd-update fetch
@@ -75,8 +78,21 @@ unzip ${datomic_version}.zip
 rm ${datomic_version}.zip
 mv ${datomic_version} /usr/local/datomic
 cd /usr/local/datomic
-sed s/license-key=// config/samples/sql-transactor-template.properties > config/transactor.properties
-sed -i "" "s/localhost:5432/$postgres_ip:5432/" config/transactor.properties
+# sql storage
+# sed s/license-key=// config/samples/sql-transactor-template.properties > config/transactor.properties
+# sed -i "" "s/localhost:5432/$postgres_ip:5432/" config/transactor.properties
+
+# ddb storage
+sed s/license-key=// config/samples/ddb-transactor-template.properties > config/transactor.properties
+sed -i "" "s/aws-dynamodb-table=your-system-name/aws-dynamodb-table=prcrsr-datomic/" config/transactor.properties
+sed -i "" "s/aws-dynamodb-region=us-east-1/aws-dynamodb-region=us-west-2/" config/transactor.properties
+sed -i "" "s/aws-transactor-role=/aws-transactor-role=prcrsr-datomic/" config/transactor.properties
+sed -i "" "s/aws-peer-role=/aws-peer-role=prcrsr-datomic-peer/" config/transactor.properties
+sed -i "" "s/# aws-s3-log-bucket-id=/aws-s3-log-bucket-id=prcrsr-datomic-logs/" config/transactor.properties
+sed -i "" "s/# aws-cloudwatch-region=/aws-cloudwatch-region=us-west-2/" config/transactor.properties
+sed -i "" "s/# aws-cloudwatch-dimension-value=your-system-name/aws-cloudwatch-dimension-value=prcrsr-datomic/" config/transactor.properties
+
+# everything
 sed -i "" "s/memory-index-max=256m/memory-index-max=512m/" config/transactor.properties
 sed -i "" "s/object-cache-max=128m/object-cache-max=1g/" config/transactor.properties
 sed -i "" "s/host=localhost/host=$private_ip/" config/transactor.properties
