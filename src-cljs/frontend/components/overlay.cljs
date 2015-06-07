@@ -685,7 +685,7 @@
               (om/build image-token-generator app)
               [:div.content.make (om/build share-input
                                            {:url (gstring/format "[![Precursor](%s)](%s)"
-                                                                 (urls/absolute-doc-svg doc :query {:token read-token})
+                                                                 (urls/absolute-doc-svg doc :query {:auth-token read-token})
                                                                  (urls/absolute-doc-url doc))
                                             ;; id that we can use to know if we should focus input
                                             ;; Should be set to a unique value
