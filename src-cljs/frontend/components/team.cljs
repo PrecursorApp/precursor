@@ -56,20 +56,17 @@
             "Any docs you create in the " (:team/subdomain team)
             " subdomain will be private to your team by default."
             " Add your teammate's email to add them to your team."]
-           [:form.menu-invite-form.make
-            {:on-submit submit-form
-             :on-key-down #(when (= "Enter" (.-key %))
-                             (submit-form %))}
-            [:input
-             {:type "text"
-              :required "true"
-              :data-adaptive ""
-              :value (or permission-grant-email "")
-              :on-change #(om/set-state! owner :permission-grant-email (.. % -target -value))}]
-            [:label
-             {:data-placeholder "Teammate's email"
-              :data-placeholder-nil "What's your teammate's email?"
-              :data-placeholder-forgot "Don't forget to submit!"}]]
+           [:form.menu-invite-form.make {:on-submit submit-form
+                                         :on-key-down #(when (= "Enter" (.-key %))
+                                                         (submit-form %))}
+            [:input {:type "text"
+                     :required "true"
+                     :data-adaptive ""
+                     :value (or permission-grant-email "")
+                     :on-change #(om/set-state! owner :permission-grant-email (.. % -target -value))}]
+            [:label {:data-placeholder "Teammate's email"
+                     :data-placeholder-nil "What's your teammate's email?"
+                     :data-placeholder-forgot "Don't forget to submit!"}]]
            (for [access-entity (sort-by (comp - :db/id) (concat permissions access-grants access-requests))]
              (permissions/render-access-entity access-entity cast!))]])))))
 
@@ -182,7 +179,11 @@
               [:a.vein.make {:href (urls/overlay-path doc "plan")
                              :role "button"}
                (common/icon :credit)
-               [:span "Billing"]])
+               [:span "Billing"]]
+              [:a.vein.make {:href (urls/overlay-path doc "slack")
+                             :role "button"}
+               (common/icon :slack)
+               [:span "Post to Slack"]])
              [:a.vein.make {:href (urls/overlay-path doc "request-team-access")
                             :role "button"}
               (common/icon :sharing)

@@ -13,13 +13,13 @@ if [ -z "$number" ]; then
     exit 1
 fi
 
-if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-    echo "Need to export AWS_ACCESS_KEY_ID"
+if [ -z "$ACCESS_KEY" ]; then
+    echo "Need to export ACCESS_KEY"
     exit 1
 fi
 
-if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-    echo "Need to export AWS_SECRET_ACCESS_KEY"
+if [ -z "$SECRET_KEY" ]; then
+    echo "Need to export SECRET_KEY"
     exit 1
 fi
 
@@ -35,35 +35,38 @@ echo "127.0.0.1 ${host}" >> /etc/hosts
 hostname $host
 
 private_ip="10.99.0.11${number}"
-echo "ifconfig_vtnet1=\"inet $private_ip netmask 255.255.0.0\"" >> /etc/rc.conf
-# hack to get the exit code we need :/
-service netif start vtnet1 | grep $private_ip
 
-# Set up firewall
-echo 'firewall_enable="YES"' >> /etc/rc.conf
-echo 'firewall_quiet="YES"' >> /etc/rc.conf
-echo 'firewall_type="workstation"' >> /etc/rc.conf
-echo 'firewall_myservices="22"' >> /etc/rc.conf
-echo 'firewall_allowservices="any"' >> /etc/rc.conf
-echo 'firewall_logdeny="YES"' >> /etc/rc.conf
+# no firewall on ec2
+# echo "ifconfig_vtnet1=\"inet $private_ip netmask 255.255.0.0\"" >> /etc/rc.conf
+# # hack to get the exit code we need :/
+# service netif start vtnet1 | grep $private_ip
 
-echo "ipfw -q add 00001 allow all from any to any via vtnet1" >> /etc/rc.firewall
+# # Set up firewall
+# echo 'firewall_enable="YES"' >> /etc/rc.conf
+# echo 'firewall_quiet="YES"' >> /etc/rc.conf
+# echo 'firewall_type="workstation"' >> /etc/rc.conf
+# echo 'firewall_myservices="22"' >> /etc/rc.conf
+# echo 'firewall_allowservices="any"' >> /etc/rc.conf
+# echo 'firewall_logdeny="YES"' >> /etc/rc.conf
 
-service ipfw start
+# echo "ipfw -q add 00001 allow all from any to any via vtnet1" >> /etc/rc.firewall
 
-echo 'net.inet.ip.fw.verbose_limit=5' >> /etc/sysctl.conf
-sysctl net.inet.ip.fw.verbose_limit=5
+# service ipfw start
+
+# echo 'net.inet.ip.fw.verbose_limit=5' >> /etc/sysctl.conf
+# sysctl net.inet.ip.fw.verbose_limit=5
 
 # time server
 echo 'ntpd_enable="YES"' >> /etc/rc.conf
 echo 'ntpd_sync_on_start="YES"' >> /etc/rc.conf
 service ntpd start
 
-# swap
-dd if=/dev/zero of=/usr/swap0 bs=1m count=8192
-chmod 600 /usr/swap0
-echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
-swapon -aqL
+# swap's handled for us
+# # swap
+# dd if=/dev/zero of=/usr/swap0 bs=1m count=8192
+# chmod 600 /usr/swap0
+# echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
+# swapon -aqL
 
 # freebsd-update
 freebsd-update fetch
@@ -98,11 +101,6 @@ echo 'precursor:::::::::' >> precursor-user-config
 adduser -f precursor-user-config
 rm precursor-user-config
 
-mkdir -p /usr/home/precursor/.ssh
-cp /root/.ssh/authorized_keys /usr/home/precursor/.ssh/authorized_keys
-
-chown -R precursor:precursor /usr/home/precursor/.ssh
-
 # web deps
 curl --retry 5 --fail https://raw.githubusercontent.com/PrecursorApp/s3-dl/master/s3-dl.sh > /usr/local/sbin/s3-dl.sh
 chmod +x /usr/local/sbin/s3-dl.sh
@@ -114,20 +112,26 @@ mkdir -p "${prcrsr_dir}/log"
 cd $prcrsr_dir
 touch pc.log
 
-jar_key=$(s3-dl.sh prcrsr-deploys manifest)
-s3-dl.sh prcrsr-deploys $jar_key > pc-standalone.jar
+download_s3 () {
+  AWS_ACCESS_KEY_ID="${ACCESS_KEY}" AWS_SECRET_ACCESS_KEY="${SECRET_KEY}" s3-dl.sh $1 $2
+}
+
+jar_key=$(download_s3 prcrsr-deploys manifest)
+download_s3 prcrsr-deploys $jar_key > pc-standalone.jar
 
 pkg install --yes gnupg
 
-s3-dl.sh prcrsr-secrets web/production.sh.gpg > production.sh.gpg
+download_s3 prcrsr-secrets web/production.sh.gpg > production.sh.gpg
 echo "${GPG_PASSPHRASE}" | gpg --batch --no-tty --decrypt --passphrase-fd 0 production.sh.gpg > production.sh
 
 chown -R precursor:precursor $prcrsr_dir
 
 ## TODO: move this into a script and upload a tarball, similar to datomic
-java_opts="-Xmx4g -Xms4g -Djava.net.preferIPv4Stack=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -Dfile.encoding=UTF-8"
+java_opts="-Xmx7g -Xms7g -Djava.net.preferIPv4Stack=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -Dfile.encoding=UTF-8"
 run_cmd="java -server -cp pc-standalone.jar ${java_opts} clojure.main --main pc.init"
 
 . production.sh
 
-daemon -u precursor -p precursor.pid $run_cmd > daemon.log 2>&1
+export MEMCACHED_SERVER="10.99.0.104:11211"
+
+daemon -u precursor -p precursor.pid $run_cmd >> daemon.log 2>&1

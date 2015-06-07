@@ -1,5 +1,6 @@
 (ns ^:figwheel-always frontend.components.overlay
   (:require [cemerick.url :as url]
+            [cljs.core.async :as async :refer (<!)]
             [clojure.set :as set]
             [clojure.string :as str]
             [datascript :as d]
@@ -10,6 +11,8 @@
             [frontend.components.connection :as connection]
             [frontend.components.doc-viewer :as doc-viewer]
             [frontend.components.document-access :as document-access]
+            [frontend.components.clip-viewer :as clip-viewer]
+            [frontend.components.integrations :as integrations]
             [frontend.components.issues :as issues]
             [frontend.components.permissions :as permissions]
             [frontend.components.plan :as plan]
@@ -18,6 +21,8 @@
             [frontend.datascript :as ds]
             [frontend.models.doc :as doc-model]
             [frontend.models.issue :as issue-model]
+            [frontend.models.permission :as permission-model]
+            [frontend.sente :as sente]
             [frontend.state :as state]
             [frontend.urls :as urls]
             [frontend.utils :as utils :include-macros true]
@@ -26,31 +31,45 @@
             [goog.dom.Range]
             [goog.dom.selection]
             [goog.labs.userAgent.browser :as ua]
+            [goog.string :as gstring]
+            [goog.string.format]
             [goog.userAgent]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true])
-  (:require-macros [sablono.core :refer (html)])
+            [om.dom :as dom :include-macros true]
+            [taoensso.sente])
+  (:require-macros [sablono.core :refer (html)]
+                   [cljs.core.async.macros :refer (go)])
   (:import [goog.ui IdGenerator]))
 
-(defn share-input [{:keys [url placeholder]
+;; focus-id lets us trigger a focus from outside of the component
+(defn share-input [{:keys [url placeholder focus-id]
                     :or {placeholder "Copy the url to share"}} owner]
-  (reify
-    om/IDisplayName (display-name [_] "Share input")
-    om/IRender
-    (render [_]
-      (html
-       [:form.menu-invite-form.make
-        [:input {:type "text"
-                 :required "true"
-                 :data-adaptive ""
-                 :onMouseDown (fn [e]
-                                (set! (.-value (.-target e)) url) ; send cursor to end of input
-                                (.focus (.-target e))
-                                (goog.dom.selection/setStart (.-target e) 0)
-                                (goog.dom.selection/setEnd (.-target e) 10000)
-                                (utils/stop-event e))
-                 :value url}]
-        [:label {:data-placeholder placeholder}]]))))
+  (let [focus-and-select (fn [elem]
+                           (set! (.-value elem) url) ; send cursor to end of input
+                           (.focus elem)
+                           (goog.dom.selection/setStart elem 0)
+                           (goog.dom.selection/setEnd elem 10000))]
+    (reify
+      om/IDisplayName (display-name [_] "Share input")
+      om/IDidMount (did-mount [_]
+                     (when focus-id
+                       (focus-and-select (om/get-node owner "url-input"))))
+      om/IDidUpdate (did-update [_ prev-props _]
+                      (when (not= (:focus-id prev-props) focus-id)
+                        (focus-and-select (om/get-node owner "url-input"))))
+      om/IRender
+      (render [_]
+        (html
+         [:form.menu-invite-form.make
+          [:input {:type "text"
+                   :ref "url-input"
+                   :required "true"
+                   :data-adaptive ""
+                   :onMouseDown (fn [e]
+                                  (focus-and-select (.-target e))
+                                  (utils/stop-event e))
+                   :value url}]
+          [:label {:data-placeholder placeholder}]])))))
 
 (defn auth-link [app owner {:keys [source] :as opts}]
   (reify
@@ -202,6 +221,9 @@
           [:a.vein.make {:href (urls/overlay-path doc "doc-viewer")}
            (common/icon :docs)
            [:span "Documents"]]
+          [:a.vein.make {:href (urls/overlay-path doc "clips")}
+           (common/icon :clips)
+           [:span "Clipboard History"]]
           [:a.vein.make {:href (urls/absolute-url "/issues" :subdomain nil)}
            (common/icon :requests)
            [:span "Feature Requests"]]
@@ -581,10 +603,54 @@
                (when-not can-edit-privacy?
                  [:small "(privacy change requires owner)"])]))]])))))
 
+(defn image-token-generator [app owner]
+  (reify
+    om/IDisplayName (display-name [_] "Image token generator")
+    om/IRender
+    (render [_]
+      (let [{:keys [cast! db]} (om/get-shared owner)
+            doc (doc-model/find-by-id @db (:document/id app))]
+        (html
+         [:div.content.make
+          [:button.menu-button {:role "button"
+                                :disabled (om/get-state owner :sending?)
+                                :onClick #(go (om/set-state! owner :sending? true)
+                                              (let [res (<! (sente/ch-send-msg (om/get-shared owner :sente)
+                                                                               [:frontend/create-image-permission
+                                                                                {:document/id (:db/id doc)
+                                                                                 :reason :permission.reason/github-markdown}]
+                                                                               30000
+                                                                               (async/promise-chan)))]
+                                                (om/set-state! owner :sending? false)
+                                                (if (taoensso.sente/cb-success? res)
+                                                  (if (= :success (:status res))
+                                                    (do (d/transact! db [(:permission res)] {:server-update true})
+                                                        (om/set-state! owner :error nil))
+                                                    (om/set-state! owner :error (:error-msg res)))
+                                                  (om/set-state! owner :error "The request timed out"))))
+                                :title "This will create a read-only API token that will allow GitHub to fetch the image. After you create the token, we'll generate the markdown you can use on GitHub."}
+           (if (om/get-state owner :sending?)
+             "Creating..."
+             "Create read-only permission")]
+          (when (om/get-state owner :error)
+            [:div.image-token-form-error (om/get-state owner :error)])])))))
+
 (defn export [app owner]
   (reify
     om/IDisplayName (display-name [_] "Export Menu")
-    om/IDidMount (did-mount [_] (fdb/watch-doc-name-changes owner))
+    om/IInitState (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/watch-doc-name-changes owner)
+      (fdb/add-attribute-listener (om/get-shared owner :db)
+                                  :permission/token
+                                  (om/get-state owner :listener-key)
+                                  #(om/refresh! owner)))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :db)
+                                     :permission/token
+                                     (om/get-state owner :listener-key)))
     om/IRender
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
@@ -607,7 +673,24 @@
                          :target "_self"}
            (common/icon :file-png) "Download as PNG"]
           [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc)
-                                                    :placeholder "or use this url"})]])))))
+                                                    :placeholder "or use this url"})]
+
+          [:div.vein.make {:onClick #(om/set-state! owner :focus-id (utils/uuid))}
+           (common/icon :github)
+           "Embed in a README or issue"]
+
+          (let [read-token (:permission/token (first (permission-model/github-permissions @db doc)))]
+            (if (and (= :document.privacy/private (:document/privacy doc))
+                     (not read-token))
+              (om/build image-token-generator app)
+              [:div.content.make (om/build share-input
+                                           {:url (gstring/format "[![Precursor](%s)](%s)"
+                                                                 (urls/absolute-doc-svg doc :query {:auth-token read-token})
+                                                                 (urls/absolute-doc-url doc))
+                                            ;; id that we can use to know if we should focus input
+                                            ;; Should be set to a unique value
+                                            :focus-id (om/get-state owner :focus-id)
+                                            :placeholder "copy as markdown"})]))])))))
 
 (defn info [app owner]
   (reify
@@ -825,6 +908,8 @@
    :username {:component username}
    :doc-viewer {:title "Recent Documents"
                 :component doc-viewer/doc-viewer}
+   :clips {:title "Clipboard History"
+           :component clip-viewer/clip-viewer}
    :document-permissions {:title "Request Access"
                           :component document-access/permission-denied-overlay}
    :connection-info {:title "Connection Info"
@@ -841,6 +926,9 @@
                          :component team/request-access}
    :plan {:title "Billing"
           :component plan/plan-menu}
+
+   :slack {:title "Post to Slack"
+           :component integrations/slack}
 
    :issues {:title "Feature Requests"
             :component issues/issues}})

@@ -92,7 +92,7 @@ input {
           height: 1rem;
           color: @gray_dark;
           line-height: 1rem;
-          margin: 1rem;
+          margin: @menu_padding;
           padding: 0 3px;
           transition: @run_slow @bezier_deform;
           background-image: linear-gradient(to bottom, @dye_inner, @dye_inner);
@@ -113,13 +113,16 @@ input {
   textarea {
     min-height: @tile;
     max-height: 5 * @tile;
+    padding: 1.25rem;
+  }
+  input[type="text"] {
+    padding: 1.25rem 0 1.25rem 1.25rem;
   }
   textarea,
   input[type="text"] {
     .inline(@gray_lighter);
     order: 2;
     height: @tile;
-    padding: 1.25rem;
     outline: none;
     border: none;
     resize: vertical;
@@ -148,6 +151,11 @@ input {
       + label {
         &:before {
           color: @color_select;
+        }
+        &[data-focus] {
+          &:before {
+            content: attr(data-focus);
+          }
         }
       }
     }

@@ -396,6 +396,12 @@
               :db/unique :db.unique/identity
               :db/doc "Used to add a composite uniqueness constraint on team and cust.")
 
+   (attribute :permission/reason
+              :db.type/ref
+              :db/doc "For API tokens, tells us the purpose of the permission")
+
+   (enum :permission.reason/github-markdown)
+
    (attribute :access-request/document
               :db.type/long
               :db/index true
@@ -858,7 +864,45 @@
 
    (attribute :comment/created-at
               :db.type/instant)
-   ])
+
+   (attribute :slack-hook/webhook-url
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :slack-hook/channel-name
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :slack-hook/send-count
+              :db.type/long)
+
+   (attribute :slack-hook/permission
+              :db.type/ref)
+
+   (attribute :team/slack-hooks
+              :db.type/ref
+              :db/isComponent true
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :cust/clips
+              :db.type/ref
+              :db/cardinality :db.cardinality/many)
+
+   (attribute :clip/s3-key
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :clip/s3-bucket
+              :db.type/string
+              :metadata/unescaped true)
+
+   (attribute :clip/uuid
+              :db.type/uuid
+              :db/unique :db.unique/value)
+
+   (attribute :clip/important?
+              :db.type/boolean
+              :db/index true)])
 
 (defonce schema-ents (atom nil))
 

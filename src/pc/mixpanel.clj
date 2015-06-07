@@ -52,6 +52,9 @@
 (defn ->mixpanel-date [datetime]
   (clj-time.format/unparse (clj-time.format/formatter "yyyy-MM-dd") datetime))
 
+(defn ->full-mixpanel-date [datetime]
+  (clj-time.format/unparse (clj-time.format/formatters :hour-minute-second) datetime))
+
 (defn api-call* [_ uri data]
   (let [resp (http/post (str endpoint uri) {:query-params {:data (encode data)
                                                            :verbose 1}})

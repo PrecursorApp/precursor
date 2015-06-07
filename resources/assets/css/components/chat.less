@@ -10,7 +10,6 @@
   margin: auto;
   pointer-events: none;
   overflow: hidden;
-  user-select: none;
   will-change: transform;
 }
 .chat-offset {
@@ -28,9 +27,11 @@
   right: 0; // needed for closing animation
   margin: auto;
   pointer-events: auto;
-  user-select: auto;
   border-left: 1px solid @color_chat_border;
   transform-origin: right;
+  &:not(:hover) {
+    user-select: none;
+  }
   &.closed {
     position: absolute;
     opacity: 0;
@@ -46,9 +47,7 @@
   position: relative;
   padding: 1em 0;
   overflow-y: auto;
-  user-select: none; // so you only select text and not entire chat menu
   span {
-    user-select: auto; // so you only select text and not entire chat menu
     white-space: pre-wrap; // honors new line (shift + enter)
     word-break: break-word;
     &:empty {
@@ -120,13 +119,12 @@
 .chat-placeholder,
 .chat-teach-enter,
 .chat-typing-notice  {
+  .holo();
   position: absolute;
   top: 0;
   left: 0;
   margin: 1.25em .75em;
   padding: 0 .25em;
-  pointer-events: none;
-  user-select: none;
   &:before {
     transition: opacity @run_fast @run @bezier_fadein;
   }
@@ -176,7 +174,6 @@
   &.divider-small {
     color: @color_chat_border;
     line-height: 1;
-    user-select: auto;
     &:before,
     &:after {
       height: 1px;
@@ -201,13 +198,9 @@
   .iconpile {
     height: .75em;
     width: .75em;
-    [class|="stroke"] {
-      stroke-width: 12;
-    }
   }
 }
 .message-author {
-  user-select: auto;
   margin: 0 .5em;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -220,5 +213,4 @@
   text-transform: lowercase;
   padding: .25em 0;
   white-space: nowrap;
-  user-select: auto;
 }

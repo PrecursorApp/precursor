@@ -19,6 +19,7 @@
       :key           (:layer/id layer)
       :stroke        (if invert-colors? "#ccc" "black")
       :stroke-width   2
+      ;; :vector-effect  "non-scaling-stroke"
       :rx            (:layer/rx layer)
       :ry            (:layer/ry layer)}
      layer-props)))
@@ -39,12 +40,16 @@
     :x2          (:layer/end-x layer)
     :y2          (:layer/end-y layer)
     :stroke (if invert-colors? "#ccc" "black")
-    :stroke-width 2}
+    :stroke-width 2
+    ;; :vector-effect  "non-scaling-stroke"
+    }
    layer-props))
 
 (defn layer->svg-path [layer {:keys [invert-colors? layer-props]}]
   (merge {:d (h/h (:layer/path layer))
           :stroke (if invert-colors? "#ccc" "black")
           :fill "none"
-          :stroke-width 2}
+          :stroke-width 2
+          ;; :vector-effect  "non-scaling-stroke"
+          }
          layer-props))

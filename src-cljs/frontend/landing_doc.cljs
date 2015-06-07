@@ -2,9 +2,10 @@
   "Handles fetching the initial doc for outer pages or
    pages that don't come with a doc built-in."
   (:require [cljs.core.async :as async]
+            [cljs.reader :as reader]
+            [cljs-http.client :as http]
             [datascript :as d]
-            [frontend.utils :as utils]
-            [frontend.utils.ajax :as ajax])
+            [frontend.utils :as utils])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
 
 (defonce doc-fetched? (atom false))
@@ -13,17 +14,17 @@
 (defn lock-doc-fetcher []
   (compare-and-set! doc-fetched? false true))
 
-(defn maybe-fetch-doc [state]
+(defn maybe-fetch-doc [state & {:keys [params]
+                                :or {params {}}}]
   (when (lock-doc-fetcher)
     (go
       (when-let [doc (or (when (:document/id state) {:db/id (:document/id state)})
-                         (let [result (async/<! (ajax/managed-ajax :post "/api/v1/document/new"))]
-                           (if (= :success (:status result))
-                             (do
-                               ;; need it in the db so we can get the name
-                               (d/transact! (:db state) [(:document result)])
-                               (:document result))
-                             ;; something went wrong, notifying error channel
+                         (let [result (<! (http/post "/api/v1/document/new" {:edn-params params
+                                                                             :headers {"X-CSRF-Token" (utils/csrf-token)}}))]
+                           (if (:success result)
+                             (let [document (-> result :body reader/read-string :document)]
+                               (d/transact! (:db state) [document] {:server-update true})
+                               document)
                              (async/put! (get-in state [:comms :errors]) [:api-error result]))))]
         (async/put! doc-ch doc)))))
 

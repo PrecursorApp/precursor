@@ -11,7 +11,6 @@
             [frontend.sente :as sente]
             [frontend.state :as state]
             [frontend.urls :as urls]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils.state :as state-utils]
             [frontend.utils :as utils :include-macros true]
             [goog.dom]

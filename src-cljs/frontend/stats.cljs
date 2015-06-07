@@ -31,4 +31,5 @@
      :camera (select-keys (:camera app-state) [:x :y :zf])
      :mouse (:mouse app-state)
      :logged-in? (boolean (seq (:cust app-state)))
-     :performance (performance)}))
+     :performance (performance)
+     :canvas-size (utils/canvas-size)}))

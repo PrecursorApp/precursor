@@ -108,13 +108,16 @@
         (redirect "/"))))
 
 (defn doc-resp [doc req & {:keys [view-data]}]
-  (content/app (merge (common-view-data req)
-                      {:initial-document-id (:db/id doc)
-                       :meta-image (urls/png-from-doc doc)
-                       :meta-url (urls/from-doc doc)
-                       :meta-title (:document/name doc)
-                       :initial-entities [(doc-model/read-api doc)]}
-                      view-data)))
+  (let [read-access? (auth/has-document-permission? (pcd/default-db) doc (-> req :auth) :read)]
+    (content/app (merge (common-view-data req)
+                        {:initial-document-id (:db/id doc)
+                         :meta-image (urls/png-from-doc doc)
+                         :meta-url (urls/from-doc doc)
+                         :meta-title (when read-access? (:document/name doc))
+                         :initial-entities (if read-access?
+                                             [(doc-model/read-api doc)]
+                                             [{:db/id (:db/id doc)}])}
+                        view-data))))
 
 (defn parse-doc-id [doc-id-param]
   (Long/parseLong (re-find #"[0-9]+$" doc-id-param)))
@@ -166,7 +169,7 @@
           (auth/has-document-permission? db doc (-> req :auth) :read)
           (if (= :head (:request-method req))
             {:status 200
-             :headers (merge {"Content-Type" "image/svg+xml"}
+             :headers (merge {"Content-Type" "image/svg+xml; charset=UTF-8"}
                              (image-cache-headers db doc))
              :pc/doc doc
              :body ""}
@@ -174,7 +177,7 @@
                   layer-db (if as-of (d/as-of db as-of) db)
                   layers (layer-model/find-by-document layer-db doc)]
               {:status 200
-               :headers (merge {"Content-Type" "image/svg+xml"}
+               :headers (merge {"Content-Type" "image/svg+xml; charset=UTF-8"}
                                (when (-> req :params :dl)
                                  {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.svg\""
                                                                 (:db/id doc))})
@@ -184,13 +187,13 @@
 
           (auth/logged-in? req)
           {:status 200
-           :headers {"Content-Type" "image/svg+xml"
+           :headers {"Content-Type" "image/svg+xml; charset=UTF-8"
                      "Cache-Control" "no-cache; private"}
            :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))}
 
           :else
           {:status 200
-           :headers {"Content-Type" "image/svg+xml"
+           :headers {"Content-Type" "image/svg+xml; charset=UTF-8"
                      "Cache-Control" "no-cache; private"}
            :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))})))
 

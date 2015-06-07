@@ -1,5 +1,10 @@
 (ns frontend.state)
 
+;; Note: if you want to change the test options after the test has
+;;       started, you also need to change the test name
+(def ab-tests
+  {:show-intro-doc [true false]})
+
 ;; If you want a browser setting to be persisted to the backend,
 ;; be sure to add it to the schema (pc.datomic.schema/shema) and
 ;; add the translation to frontend.browser-settings/db-setting->app-state-setting
@@ -7,6 +12,7 @@
   {:current-tool :pen
    :chat-opened false
    :chat-mobile-opened true
+   :viewers-opened true
    :right-click-learned false
    :menu-button-learned false
    :info-button-learned false
@@ -53,6 +59,7 @@
                         :pen #{#{"n"}}
                         :text #{#{"t"}}
                         :undo #{#{"meta" "z"} #{"ctrl" "z"}}
+                        :select-all #{#{"meta" "a"} #{"ctrl" "a"}}
                         :shortcuts-menu #{#{"shift" "/"}}
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
@@ -134,6 +141,8 @@
 (def chat-opened-path (conj browser-settings-path :chat-opened))
 
 (def chat-mobile-opened-path (conj browser-settings-path :chat-mobile-toggled))
+
+(def viewers-opened-path (conj browser-settings-path :viewers-opened))
 
 (def right-click-learned-path (conj browser-settings-path :right-click-learned))
 

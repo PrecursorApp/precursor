@@ -18,7 +18,6 @@
             [frontend.state :as state]
             [frontend.routes :as routes]
             [frontend.utils :as utils :include-macros true]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils.date :refer (date->bucket)]
             [goog.dom]
             [goog.labs.userAgent.browser :as ua]
@@ -73,15 +72,14 @@
       [:div.property-dropdown-targets
        [:div.art-interact-target
         [:div.art-interact-placeholder "with"]
-        [:div.art-interact-ibeam "|"]
-        [:div.art-interact-more "..."]]
+        [:div.art-interact-ibeam]
+        [:div.art-interact-more
+         (common/icon :ellipsis)]]
        [:div.property-dropdown-target.selected
         [:div.art-interact-item "home page"]]
        [:div.property-dropdown-target "blog page"]
        [:div.property-dropdown-target "about page"]
-       [:div.property-dropdown-target "contact page"]
-       [:div.property-dropdown-target "jobs page"]
-       [:div.property-dropdown-target "team page"]]]]]))
+       [:div.property-dropdown-target "contact page"]]]]]))
 
 (def artwork-team
   (html
@@ -206,7 +204,7 @@
                                              (.preventDefault %)
                                              (cast! :make-button-clicked))
                             :on-mouse-enter #(do (om/set-state! owner :word-list (shuffle word-list))
-                                                 (cast! :navigate-to-landing-doc-hovered))}
+                                                 (cast! :make-button-hovered))}
           [:div.make-prepend {:data-before "Or "}
            "Make "]
           [:div.make-something
@@ -239,8 +237,8 @@
           [:div.our-claim
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
-             [:h1.content-copy "Prototyping and team collaboration should be simple. "]
-             [:p.content-copy "That's why we made Precursor."]
+             [:h1 "Prototyping and team collaboration should be simple. "]
+             [:p "That's why we made Precursor."]
              [:div.calls-to-action
               (om/build make-button {})]]]]
           [:div.our-proof
@@ -341,8 +339,8 @@
           [:div.our-claim
            [:div.our-philosophy-wrap
             [:div.our-philosophy.content
-             [:h1.content-copy "It's a blackboard designed to help teams brainstorm."]
-             [:p.content-copy "Precursor is no-nonsense prototyping."]
+             [:h1 "It's a blackboard designed to help teams brainstorm."]
+             [:p "Precursor is no-nonsense prototyping."]
              [:div.calls-to-action
               (om/build make-button {} {:opts {:alt "alt"}})
               [:a.pancake-button {:href "/trial"

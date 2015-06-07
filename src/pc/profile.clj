@@ -83,7 +83,8 @@
 (defn use-email-whitelist?
   "Used to guard against sending emails to customers from dev-mode"
   []
-  (not (prod?)))
+  (or (System/getenv "USE_EMAIL_WHITELIST")
+      (not (prod?))))
 
 (defn bcc-audit-log?
   "Determines whether to bcc audit-log@ on every email"
@@ -111,3 +112,33 @@
   (if (prod?)
     "https://hooks.slack.com/services/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"
     "https://hooks.slack.com/services/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"))
+
+(defn clipboard-bucket []
+  (if (prod?)
+    "prcrsr-clipboard"
+    "prcrsr-clipboard-dev"))
+
+(defn clipboard-s3-access-key []
+  (if (prod?)
+    (System/getenv "CLIPBOARD_S3_ACCESS_KEY")
+    "AKIAJ525QCK3UDUUWYJA"))
+
+(defn clipboard-s3-secret-key []
+  (if (prod?)
+    (System/getenv "CLIPBOARD_S3_SECRET_KEY")
+    "sxjbOsIBVrVE+ABf1vFyBAgFu8CC/RUqr/pAKDME"))
+
+(defn doc-image-bucket []
+  (if (prod?)
+    "prcrsr-doc-images"
+    "prcrsr-doc-images-dev"))
+
+(defn doc-image-s3-access-key []
+  (if (prod?)
+    (System/getenv "DOC_IMAGES_S3_ACCESS_KEY")
+    "AKIAIOWJWDCNUGYTFJAA"))
+
+(defn doc-image-s3-secret-key []
+  (if (prod?)
+    (System/getenv "DOC_IMAGES_S3_SECRET_KEY")
+    "AKr8NucqQKmnGt35kcq/+sZ2q8BEjpi0IwqNrw9H"))

@@ -1,6 +1,7 @@
 (ns frontend.components.permissions
   (:require [frontend.components.common :as common]
             [frontend.utils :as utils]
+            [frontend.urls :as urls]
             [frontend.utils.date :refer (date->bucket)])
   (:require-macros [sablono.core :refer (html)]))
 
@@ -11,7 +12,11 @@
 (defn access-entity-type [access-entity]
   (cond (or (contains? access-entity :permission/document)
             (contains? access-entity :permission/team))
-        :permission
+        (cond (:permission/cust access-entity)
+              :cust-permission
+              (= :permission.reason/github-markdown (:permission/reason access-entity))
+              :github-readme-permission
+              :else nil)
 
         (or (contains? access-entity :access-grant/document)
             (contains? access-entity :access-grant/team))
@@ -27,7 +32,28 @@
 (defmulti render-access-entity (fn [entity cast!]
                                  (access-entity-type entity)))
 
-(defmethod render-access-entity :permission
+(defmethod render-access-entity :default
+  [entity cast!]
+  (utils/mlog "Unknown access entity" entity))
+
+(defmethod render-access-entity :github-readme-permission
+  [entity cast!]
+  (html
+   [:div.access-card.make {:key (:db/id entity)}
+    [:div.access-avatar
+     (common/icon :github)]
+    [:div.access-details
+     [:a {:role "button"
+          :href (urls/overlay-path {:db/id (:permission/document entity)}
+                                   "export")
+          :onClick #(cast! :github-readme-permission-clicked)}
+      [:span
+       {:title "This permission allows read-only access, so that you can embed the doc in a GitHub issue or README."}
+       "GitHub image token"]]
+     [:span.access-status
+      (str "Was created " (format-access-date (:permission/grant-date entity)))]]]))
+
+(defmethod render-access-entity :cust-permission
   [entity cast!]
   (html
    [:div.access-card.make {:key (:db/id entity)}

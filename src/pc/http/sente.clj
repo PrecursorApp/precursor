@@ -17,14 +17,18 @@
             [pc.email :as email]
             [pc.http.datomic2 :as datomic2]
             [pc.http.datomic.common :as datomic-common]
+            [pc.http.doc :as doc-http]
+            [pc.http.clipboard :as clipboard]
             [pc.http.immutant-adapter :refer (sente-web-server-adapter)]
             [pc.http.issues :as issues-http]
             [pc.http.plan :as plan-http]
             [pc.http.sente.sliding-send :as sliding-send]
+            [pc.http.integrations :as integrations-http]
             [pc.http.urls :as urls]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.access-request :as access-request-model]
             [pc.models.chat :as chat]
+            [pc.models.clip :as clip-model]
             [pc.models.cust :as cust]
             [pc.models.doc :as doc-model]
             [pc.models.issue :as issue-model]
@@ -35,6 +39,7 @@
             [pc.nts :as nts]
             [pc.replay :as replay]
             [pc.rollbar :as rollbar]
+            [pc.slack :as slack]
             [pc.sms :as sms]
             [pc.stripe :as stripe]
             [pc.utils :as utils]
@@ -279,7 +284,8 @@
     (send-fn client-id [:team/db-entities
                         {:team/uuid team-uuid
                          :entities (map (partial permission-model/read-api (:db req))
-                                        (filter :permission/cust-ref
+                                        (filter #(or (:permission/cust-ref %)
+                                                     (:permission/reason %))
                                                 (permission-model/find-by-team (:db req)
                                                                                team)))
                          :entity-type :permission}])
@@ -300,7 +306,12 @@
     (send-fn client-id [:team/db-entities
                         {:team/uuid team-uuid
                          :entities [(plan-model/read-api (:team/plan team))]
-                         :entity-type :plan}])))
+                         :entity-type :plan}])
+
+    (send-fn client-id [:team/db-entities
+                        {:team/uuid team-uuid
+                         :entities (map team-model/slack-hook-read-api (:team/slack-hooks team))
+                         :entity-type :slack-hooks}])))
 
 (defmethod ws-handler :issue/subscribe [req]
   (log/infof "subscribing to issues for %s" (:client-id req))
@@ -425,6 +436,55 @@
 (defmethod ws-handler :cust/fetch-teams [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (?reply-fn {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
+
+(defmethod ws-handler :cust/fetch-clipboard-s3-url [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (log/infof "sending presigned url for %s" (:cust/email cust))
+    (?reply-fn (clipboard/create-presigned-clipboard-url cust))))
+
+(defmethod ws-handler :cust/store-clipboard [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (let [bucket (pc.profile/clipboard-bucket)
+          key (:key ?data)]
+      (log/infof "storing clipboard data for %s" (:cust/email cust))
+      @(d/transact (pcd/conn) [{:db/id (:db/id cust)
+                                :cust/clips {:db/id (d/tempid :db.part/user)
+                                             :clip/s3-bucket bucket
+                                             :clip/s3-key key
+                                             :clip/uuid (d/squuid)}}]))))
+
+(defmethod ws-handler :cust/fetch-clips [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (let [clips (clip-model/find-by-cust (:db req) cust)]
+      (log/infof "sending %s clips to %s" (count clips) (:cust/email cust))
+      (?reply-fn {:clips (map (fn [c] (-> c
+                                        (select-keys [:clip/uuid :clip/important?])
+                                        (assoc :clip/s3-url (clipboard/create-presigned-clip-url c))))
+                              clips)}))))
+
+(defmethod ws-handler :cust/delete-clip [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
+      (log/infof "deleting clip %s for %s" (:db/id clip) (:cust/email cust))
+      @(d/transact (pcd/conn) [[:db.fn/retractEntity (:db/id clip)]])
+      (?reply-fn {:deleted? true
+                  :clip/uuid (:clip/uuid clip)}))))
+
+(defmethod ws-handler :cust/tag-clip [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
+      (log/infof "marking clip %s important for %s" (:db/id clip) (:cust/email cust))
+      @(d/transact (pcd/conn) [[:db/add (:db/id clip) :clip/important? true]])
+      (?reply-fn {:tagged? true
+                  :clip/uuid (:clip/uuid clip)}))))
+
+(defmethod ws-handler :cust/untag-clip [{:keys [client-id ?data ?reply-fn] :as req}]
+  (when-let [cust (-> req :ring-req :auth :cust)]
+    (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
+      (log/infof "marking clip %s unimportant for %s" (:db/id clip) (:cust/email cust))
+      @(d/transact (pcd/conn) [[:db/retract (:db/id clip) :clip/important? true]])
+      (?reply-fn {:untagged? true
+                  :clip/uuid (:clip/uuid clip)}))))
 
 (defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [uuids (->> ?data :uuids)]
@@ -645,7 +705,7 @@
       (let [email (-> ?data :email)]
         (log/infof "%s sending an email to %s on doc %s" (:cust/email cust) email doc-id)
         (try
-          (email/send-chat-invite {:cust cust :to-email email :doc doc})
+          (email/send-chat-invite {:cust cust :to-email email :doc doc :db (:db req)})
           (notify-invite (str "Invite sent to " email))
           (catch Exception e
             (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
@@ -676,10 +736,9 @@
         (try
           (sms/async-send-sms stripped-phone-number
                               (format "Make something with me on Precursor. %s" (urls/from-doc doc))
-                              :image-url (when (and (contains? #{:document.privacy/public :document.privacy/read-only}
-                                                               (:document/privacy doc))
-                                                    (seq (layer-model/find-by-document (:db req) doc)))
-                                           (urls/png-from-doc doc))
+                              :image-url (-> (doc-http/save-png-to-s3 (:db req) doc)
+                                           :key
+                                           (doc-http/generate-s3-doc-png-url))
                               :callback (fn [resp]
                                           (if (http/unexceptional-status? (:status resp))
                                             (notify-invite (str "Sent text to " phone-number))
@@ -712,6 +771,25 @@
         txid (d/tempid :db.part/tx)]
     (d/transact (pcd/conn) [(assoc annotations :db/id txid)
                             [:db/add doc-id :document/privacy setting]])))
+
+(defmethod ws-handler :frontend/create-image-permission [{:keys [client-id ?data ?reply-fn] :as req}]
+  (check-document-access (-> ?data :document/id) req :admin)
+  (let [doc-id (-> ?data :document/id)]
+    (if-let [cust (-> req :ring-req :auth :cust)]
+      (let [reason (:reason ?data)
+            annotations {:cust/uuid (:cust/uuid cust)
+                         :transaction/document doc-id
+                         :transaction/broadcast true}
+            _ (log/infof "Creating image permission for %s" doc-id)
+            permission (or (first (permission-model/find-by-document-and-reason (:db req) {:db/id doc-id} reason))
+                           (permission-model/create-document-image-permission! {:db/id doc-id}
+                                                                               reason
+                                                                               annotations))]
+        (?reply-fn {:status :success
+                    :permission (permission-model/read-api (:db req) permission)}))
+      (?reply-fn {:status :error
+                  :error-msg "Please log in"
+                  :error-key :not-logged-in}))))
 
 (defmethod ws-handler :frontend/send-permission-grant [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
@@ -797,6 +875,65 @@
         (assert (and doc-id (= doc-id (:db/id (:access-request/document-ref request)))))
         (access-request-model/deny-request request annotations))
       (comment (notify-invite "Please sign up to send an invite.")))))
+
+(defmethod ws-handler :team/create-slack-integration [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          cust (-> req :ring-req :auth :cust)
+          channel-name (:slack-hook/channel-name ?data)
+          webhook-url (:slack-hook/webhook-url ?data)]
+      (cond (empty? channel-name)
+            (?reply-fn {:status :error
+                        :error-msg "Channel name is required"
+                        :error-key :invalid-channel-name})
+            (or (not (string? webhook-url))
+                (not (utils/valid-url? webhook-url)))
+            (?reply-fn {:status :error
+                        :error-msg "Webhook url is not valid"
+                        :error-key :invalid-webhook-url})
+            :else
+            (let [slack-hook-ent (integrations-http/create-slack-hook team cust channel-name webhook-url)]
+
+              (?reply-fn {:status :success
+                          :entities [(team-model/slack-hook-read-api slack-hook-ent)]}))))))
+
+(defmethod ws-handler :team/delete-slack-integration [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          cust (-> req :ring-req :auth :cust)
+          hook-id (:slack-hook-id ?data)
+          slack-hook (team-model/find-slack-hook-by-frontend-id (:db req) (UUID. (:db/id team) hook-id))]
+      (cond (not slack-hook)
+            (?reply-fn {:status :error
+                        :error-msg "Can't find hook"
+                        :error-key :invalid-slack-hook})
+            :else
+            (do (integrations-http/delete-slack-hook team cust slack-hook)
+                (?reply-fn {:status :success}))))))
+
+(defmethod ws-handler :team/post-doc-to-slack [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [team-uuid (-> ?data :team/uuid)]
+    (check-team-access team-uuid req :admin)
+    (let [team (team-model/find-by-uuid (:db req) team-uuid)
+          hook-id (:slack-hook-id ?data)
+          slack-hook (team-model/find-slack-hook-by-frontend-id (:db req) (UUID. (:db/id team) hook-id))
+          doc (doc-model/find-by-id (:db req) (:doc-id ?data))]
+      (cond (not= (:db/id team) (:db/id (:document/team doc)))
+            (?reply-fn {:status :error
+                        :error-msg "Invalid document"
+                        :error-key :invalid-document})
+
+            (not slack-hook)
+            (?reply-fn {:status :error
+                        :error-msg "Can't find hook"
+                        :error-key :invalid-slack-hook})
+
+            :else (do
+                    (log/infof "Sending slack hook for %s on %s team" (:db/id doc) (:team/subdomain team))
+                    (integrations-http/send-slack-webhook slack-hook doc :message (:message ?data))
+                      (?reply-fn {:status :success}))))))
 
 (defmethod ws-handler :document/transaction-ids [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
@@ -994,7 +1131,10 @@
          (log/error e)
 
          (.printStackTrace (:throwable &throw-context))
-         (rollbar/report-exception e :request (:ring-req req) :cust (some-> req :ring-req :auth :cust)))))))
+         (rollbar/report-exception (:throwable &throw-context)
+                                   :request (:ring-req req)
+                                   :cust (some-> req :ring-req :auth :cust)
+                                   :extra-data (select-keys req [:?data :event])))))))
 
 (defn setup-ws-handlers [sente-state]
   (let [tap (async/chan (async/sliding-buffer 100))
@@ -1033,6 +1173,19 @@
                                   (and (:last-update s)
                                        (time/after? (:last-update s) now)))
                                 (select-keys @client-stats doc-uids))]
+      (close-ws uid))))
+
+(defn cleanup-all-stale []
+  (let [subs @document-subs
+        now (time/now)
+        uids (mapcat keys (map second @pc.http.sente/document-subs))]
+    (doseq [uid uids]
+      (fetch-stats uid))
+    (Thread/sleep 10000)
+    (doseq [[uid stats] (remove (fn [[_ s]]
+                                  (and (:last-update s)
+                                       (time/after? (:last-update s) now)))
+                                (select-keys @client-stats uids))]
       (close-ws uid))))
 
 (defn init []

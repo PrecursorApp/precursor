@@ -205,6 +205,27 @@
     margin-left: auto;
   }
 }
+.export-title {
+  .flexy(center);
+  height: @tile;
+}
+.vein-fork {
+  .flexy(center);
+  &:hover {
+    .vein {
+      .icon(stroke; @gray_darker);
+      .icon(fill; @gray_darker);
+      color: @gray_darker;
+    }
+  }
+  .vein {
+    flex: 1;
+  }
+}
+.fork {
+  min-width: @tile;
+  padding: @menu_padding;
+}
 .menu-invite-form {
   .flexy(column);
   margin: @menu_padding 0;
@@ -268,23 +289,22 @@
   }
 }
 .recent-doc {
-  display: block; // keeps border from clipping
+  .flexy(center; center);
+  .size_of(chat; height; vh);
   position: relative;
   color: @gray_light;
+  width: 100%;
+  max-height: 80vh;
   border: 1px solid @gray_lighter;
   margin-bottom: @menu_padding;
-  overflow: hidden;
-  transition+: color @run_fast ease-in;
-  transition+: border-color @run_fast ease-in;
   &:hover {
     border-color: @color_select;
-    transition-duration: @now;
   }
   img {
-    .size_of(chat; height; vh);
-    width: 100%;
-    max-height: 80vh;
-    opacity: .5;
+    max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
+    max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
+    pointer-events: none;
+    opacity: @opacity_white_gray;
   }
   .loading-ellipses {
     position: absolute;
@@ -452,6 +472,10 @@
       border: 1px dashed @gray_light;
     }
   }
+  .iconpile {
+    width: @size_menu_avatar;
+    height: @size_menu_avatar;
+  }
 }
 .access-avatar-img {
   width: @size_menu_avatar;
@@ -536,11 +560,18 @@
 }
 .menu-buttons {
   .flexy(wrap);
+  .menu-button {
+    max-width: 50%;
+    + .menu-button {
+      border-left: none;
+    }
+  }
   .menu-button,
   .google-login {
     width: @tile_xl;
     .mq_640({
       width: 100%;
+      max-width: 100%;
     });
   }
 }
@@ -673,4 +704,117 @@
   .adaptive {
     margin-bottom: @menu_padding;
   }
+}
+.image-token-form-error {
+  color: @red;
+  margin: 1rem 0;
+  animation: in-fade-bottom @run ease-out;
+}
+.post-to-slack {
+  .divider {
+    margin: @menu_padding 0;
+  }
+}
+.slack-add {
+  h4 {
+    margin: 0;
+  }
+}
+.slack-channel {
+  h4 {
+    padding: 1rem 0;
+  }
+}
+.slack-form-error {
+  color: @red;
+  margin: 1rem 0;
+  animation: in-fade-bottom @run ease-out;
+}
+.slack-channel-remove {
+  margin-left: auto;
+}
+.clips {
+  .flexy(wrap);
+}
+.clip {
+  .flexy(center; center);
+  position: relative;
+  width: 50%;
+  height: 0;
+  padding-top: 50%;
+  &:nth-of-type(even) {
+    .clip-preview {
+      border-left: none;
+    }
+  }
+  &:nth-of-type(1),
+  &:nth-of-type(2) {
+    border-top: 1px solid @gray_lighter;
+  }
+  &:not(:hover) {
+    .clip-option {
+      &:not(.stuck) {
+        opacity: 0;
+        .clip-button {
+          display: none;
+        }
+      }
+    }
+  }
+}
+.clip-preview {
+  .flexy(center; center);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-bottom: 1px solid @gray_lighter;
+  border-left: 1px solid @gray_lighter;
+  border-right: 1px solid @gray_lighter;
+  transition: box-shadow @run_slow;
+  &:hover {
+    .shadow_canvas(hover);
+    transition: box-shadow @run;
+  }
+  &:active {
+    .shadow_canvas(active);
+    transition: box-shadow @now;
+  }
+}
+.clip-thumbnail {
+  max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
+  max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
+  opacity: @opacity_white_light;
+}
+.clip-option {
+  .flexy(center; center);
+  .icon(stroke; @gray);
+  .icon(fill; @color_select);
+  .holo();
+  position: absolute;
+  width: @tile;
+  height: @tile;
+  margin: 1px;
+  transition: opacity @run_slower @bezier_fadein;
+  &:nth-child(2) {
+    bottom: 0;
+    left: 0;
+    background-image: radial-gradient(ellipse at 0 100%, @dye_outer 25%, fade(@dye_outer, 0) 75%);
+    .clip-button {
+      animation-delay: ((2 * @run_slower) + (1 * @run_faster));
+    }
+  }
+  &:nth-child(3) {
+    top: 0;
+    right: 0;
+    background-image: radial-gradient(ellipse at 100% 0, @dye_outer 25%, fade(@dye_outer, 0) 75%);
+    .clip-button {
+      animation-delay: ((2 * @run_slower) + (4 * @run_faster));
+    }
+  }
+}
+.clip-button {
+  animation: in-zoom @run_fast ease-out backwards;
+  pointer-events: auto;
 }

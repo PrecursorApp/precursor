@@ -1,6 +1,7 @@
 (ns frontend.controllers.controls
   (:require [cemerick.url :as url]
             [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [cljs-http.client :as http]
             [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -10,6 +11,7 @@
             [frontend.async :refer [put!]]
             [frontend.camera :as cameras]
             [frontend.careful]
+            [frontend.clipboard :as clipboard]
             [frontend.components.forms :refer [release-button!]]
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
@@ -32,7 +34,6 @@
             [frontend.subscribers :as subs]
             [frontend.svg :as svg]
             [frontend.urls :as urls]
-            [frontend.utils.ajax :as ajax]
             [frontend.utils :as utils :include-macros true]
             [frontend.utils.seq :refer [dissoc-in]]
             [frontend.utils.state :as state-utils]
@@ -41,6 +42,7 @@
             [goog.labs.userAgent.browser :as ua-browser]
             [goog.math :as math]
             [goog.string :as gstring]
+            [goog.string.linkify]
             [goog.style]
             [goog.Uri])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
@@ -167,6 +169,11 @@
 (defmethod handle-keyboard-shortcut :undo
   [state shortcut-name key-set]
   (handle-undo state))
+
+(defmethod handle-keyboard-shortcut :select-all
+  [state shortcut-name key-set]
+  (let [layer-ids (map :e (d/datoms @(:db state) :aevt :layer/name))]
+    (assoc-in state [:selected-eids :selected-eids] (set layer-ids))))
 
 (defn close-radial [state]
   (assoc-in state [:radial :open?] false))
@@ -1432,7 +1439,7 @@
                                                                        (when color {:cust/color-name color}))]))
 
 
-(defmethod control-event :canvas-aligned-to-layer-center
+(defmethod control-event :layer-target-clicked
   [browser-state message {:keys [ui-id canvas-size]} state]
   ;; TODO: how to handle no layer for ui-id
   (if-let [layer (layer-model/find-by-ui-id @(:db state) ui-id)]
@@ -1458,6 +1465,19 @@
         (assoc-in [:drawing :moving?] false)))
     state))
 
+(defmethod post-control-event! :layer-target-clicked
+  [browser-state message {:keys [ui-id canvas-size]} previous-state current-state]
+  ;; TODO: how to handle no layer for ui-id
+  (when (and (not (layer-model/find-by-ui-id @(:db previous-state) ui-id))
+             (= ui-id (goog.string.linkify/findFirstUrl ui-id)))
+    (let [current-url (url/url js/document.location)
+          new-url (url/url ui-id)]
+      (if (= (:host current-url) (:host new-url))
+        (put! (get-in current-state [:comms :nav]) [:navigate! {:path (str (:path new-url)
+                                                                           (when (seq (:query new-url))
+                                                                             (str "?" (url/map->query (:query new-url)))))}])
+        (set! js/document.location ui-id)))))
+
 (defmethod control-event :layer-properties-opened
   [browser-state message {:keys [layer x y]} state]
   (let [[rx ry] (cameras/screen->point (:camera state) x y)]
@@ -1468,6 +1488,11 @@
         (assoc-in [:layer-properties-menu :x] rx)
         (assoc-in [:layer-properties-menu :y] ry)
         (assoc-in [:radial :open?] false))))
+
+(defmethod post-control-event! :layer-properties-opened
+  [browser-state message {:keys [layer x y]} previous-state current-state]
+  (when (get-in previous-state [:layer-properties-menu :opened?])
+    (handle-layer-properties-submitted-after previous-state)))
 
 (defn handle-layer-properties-submitted [state]
   (-> state
@@ -1670,6 +1695,10 @@
   [browser-state message _ previous-state current-state]
   (navigate-to-lazy-doc current-state false))
 
+(defmethod control-event :overlay-escape-clicked
+  [browser-state message _ state]
+  (overlay/clear-overlays state))
+
 (defmethod post-control-event! :overlay-escape-clicked
   [browser-state message _ previous-state current-state]
   (navigate-to-lazy-doc current-state false))
@@ -1677,6 +1706,10 @@
 (defmethod post-control-event! :navigate-to-landing-doc-hovered
   [browser-state message _ previous-state current-state]
   (landing-doc/maybe-fetch-doc current-state))
+
+(defmethod post-control-event! :make-button-hovered
+  [browser-state message _ previous-state current-state]
+  (landing-doc/maybe-fetch-doc current-state :params {:intro-layers? true}))
 
 (defmethod post-control-event! :issue-layer-clicked
   [browser-state message {:keys [frontend/issue-id]} previous-state current-state]
@@ -1697,12 +1730,12 @@
 (defmethod control-event :viewers-opened
   [browser-state message _ state]
   (-> state
-    (assoc :show-viewers? true)))
+    (assoc-in state/viewers-opened-path true)))
 
 (defmethod control-event :viewers-closed
   [browser-state message _ state]
   (-> state
-    (assoc :show-viewers? false)))
+    (assoc-in state/viewers-opened-path false)))
 
 (defmethod control-event :landing-animation-completed
   [browser-state message _ state]
@@ -1926,3 +1959,63 @@
                                                  (:added %))
                                            tx-data)))]
       (replace-token-with-new-name current-state current-doc-id new-name))))
+
+(defmethod control-event :delete-clip-clicked
+  [browser-state message {:keys [clip/uuid]} state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  ;; But it doesn't really matter that much if the clip sticks around.
+  (update-in state [:cust :cust/clips] (fn [clips] (remove #(= uuid (:clip/uuid %)) clips))))
+
+(defmethod post-control-event! :delete-clip-clicked
+  [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:cust/delete-clip {:clip/uuid uuid}]
+                  10000
+                  (fn [reply]
+                    reply)))
+
+(defmethod control-event :important-clip-marked
+  [browser-state message {:keys [clip/uuid]} state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  ;; This time it matters :/
+  (update-in state [:cust :cust/clips] (fn [clips] (map (fn [c]
+                                                          (if (= uuid (:clip/uuid c))
+                                                            (assoc c :clip/important? true)
+                                                            c))
+                                                        clips))))
+
+(defmethod post-control-event! :important-clip-marked
+  [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  (sente/send-msg (:sente current-state)
+                  [:cust/tag-clip {:clip/uuid uuid}]
+                  10000
+                  (fn [reply]
+                    reply)))
+
+(defmethod control-event :unimportant-clip-marked
+  [browser-state message {:keys [clip/uuid]} state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  ;; This time it matters :/
+  (update-in state [:cust :cust/clips] (fn [clips] (map (fn [c]
+                                                          (if (= uuid (:clip/uuid c))
+                                                            (dissoc c :clip/important?)
+                                                            c))
+                                                        clips))))
+
+(defmethod post-control-event! :unimportant-clip-marked
+  [browser-state message {:keys [clip/uuid]} previous-state current-state]
+  ;; This is a not ideal, b/c we're not recovering from errors.
+  (sente/send-msg (:sente current-state)
+                  [:cust/untag-clip {:clip/uuid uuid}]
+                  10000
+                  (fn [reply]
+                    reply)))
+
+(defmethod post-control-event! :clip-pasted
+  [browser-state message {:keys [clip/uuid clip/s3-url]} previous-state current-state]
+  (go
+    ;; add xhr=true b/c it will use response from image request, which doesn't have cors headers
+    (let [res (async/<! (http/get (str s3-url "&xhr=true")))]
+      (if (:success res)
+        (put! (get-in current-state [:comms :controls]) [:layers-pasted (assoc (clipboard/parse-pasted (:body res))
+                                                                               :canvas-size (utils/canvas-size))])))))
