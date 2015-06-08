@@ -123,7 +123,14 @@
         issue-db (db/make-initial-db initial-issue-entities)
         ab-choices (ab/setup! state/ab-tests)
         use-talaria? (:use-talaria? utils/initial-query-map)
-        tal (when use-talaria? (tal/init (str "ws://localhost:8080/talaria?tab-id=" tab-id)))]
+        tal (when use-talaria? (tal/init (str (if (= "https" (.getScheme utils/parsed-uri))
+                                                "wss"
+                                                "ws")
+                                              "://"
+                                              (.getDomain utils/parsed-uri)
+                                              ":"
+                                              (.getPort utils/parsed-uri)
+                                              "/talaria?tab-id=" tab-id)))]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
                      :admin? admin?
