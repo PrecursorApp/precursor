@@ -27,7 +27,8 @@
                                                :verified_email (:cust/verified-email cust)
                                                ;; want ":_" to push it to top of list
                                                ":_admin_url" (admin-urls/cust-info-from-cust cust)
-                                               :occupation (:cust/occupation cust)}})
+                                               :occupation (:cust/occupation cust)
+                                               :precursor_contact (first (shuffle cust-model/admin-emails))}})
     (mailchimp/maybe-list-subscribe cust)))
 
 (defn track-create-team [team]
