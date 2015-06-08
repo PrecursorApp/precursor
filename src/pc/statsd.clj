@@ -46,6 +46,7 @@
 
 (defn init []
   (s/setup (profile/statsd-host) 8125)
-  (pc.utils/straight-jacket
-    (notify-deployment))
-  (pc.utils/safe-schedule {:minute (range 0 60)} #'send-deadman-ping-cron))
+  (when (pc.profile/send-librato-events?)
+    (pc.utils/straight-jacket
+     (notify-deployment))
+    (pc.utils/safe-schedule {:minute (range 0 60)} #'send-deadman-ping-cron)))
