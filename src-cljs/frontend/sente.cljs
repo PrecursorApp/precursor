@@ -258,7 +258,8 @@
 (defn init [app-state]
   (if (:use-talaria? @app-state)
     (let [tal-state (:tal @app-state)]
-      (tal/start-recv-queue tal-state (partial handle-tal-msg app-state)))
+      (tal/start-recv-queue tal-state (partial handle-tal-msg app-state))
+      (subs/add-recording-watcher app-state (fn [d] (send-msg tal-state [:rtc/signal (merge d {:document/id (:document/id @app-state)})]))))
     (let [{:keys [chsk ch-recv send-fn state] :as sente-state}
           (sente/make-channel-socket! "/chsk" {:type :auto
                                                :chsk-url-fn (fn [& args]
