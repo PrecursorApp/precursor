@@ -145,7 +145,6 @@
                      :ab-choices ab-choices
                      :tal tal
                      :use-talaria? use-talaria?
-                     :sente (when use-talaria? tal)
                      :comms {:controls      controls-ch
                              :api           api-ch
                              :errors        errors-ch
@@ -154,6 +153,8 @@
                              :api-mult      (async/mult api-ch)
                              :errors-mult   (async/mult errors-ch)
                              :nav-mult      (async/mult navigation-ch)})
+            (merge (when use-talaria?
+                     {:sente tal}))
             (browser-settings/restore-browser-settings cust)))))
 
 (defn controls-handler
@@ -217,8 +218,9 @@
              ;; Can't log in without a page refresh, have to re-evaluate this if
              ;; that ever changes.
              :cust                  (:cust @state)
-             :sente                 (:tal @state); (:sente @state)
-             :tal                   (:tal @state)
+             :sente                 (if (:use-talaria? @state)
+                                      (:tal @state)
+                                      (:sente @state))
              :admin?                (:admin? @state)
              :ab-choices            (:ab-choices @state)
              }
