@@ -268,8 +268,7 @@
                                                                            :handle-key-up      handle-key-up})
         doc-watcher-id           (.getNextUniqueId (.getInstance IdGenerator))]
 
-    (db/setup-issue-listener! (:issue-db @state) "issue-db" comms (:tal @state) ;(:sente @state)
-                              )
+    (db/setup-issue-listener! (:issue-db @state) "issue-db" comms (:sente @state))
 
     ;; This will allow us to update the url and title when the doc name changes
     (db/add-attribute-listener (:db @state) :document/name doc-watcher-id #(cast! :db-document-name-changed {:tx-data (map ds/datom-read-api (:tx-data %))}))
