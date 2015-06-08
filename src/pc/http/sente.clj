@@ -23,6 +23,7 @@
             [pc.http.issues :as issues-http]
             [pc.http.plan :as plan-http]
             [pc.http.sente.sliding-send :as sliding-send]
+            [pc.http.sente.common :as common :refer (send-msg send-reply)]
             [pc.http.integrations :as integrations-http]
             [pc.http.urls :as urls]
             [pc.http.talaria :as tal]
@@ -48,26 +49,7 @@
             [taoensso.sente :as sente])
   (:import java.util.UUID))
 
-(defn client-id->tal-uuid [client-id]
-  (some->> client-id
-    (re-find #"\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$")
-    (UUID/fromString)))
-
-(defn send-msg [req client-id msg]
-  (when-let [sente-state (:sente-state req)]
-    ((:send-fn @sente-state) client-id msg))
-  (when-let [tal-state (:tal-state req)]
-    (tal/send! tal-state (client-id->tal-uuid client-id) (if (vector? msg)
-                                                           {:op (first msg)
-                                                            :data (second msg)}))))
-
-(defn send-reply [req data]
-  (when-let [reply-fn (:?reply-fn req)]
-    (reply-fn data))
-  (when-let [tal-state (:tal-state req)]
-    (tal/send! tal-state (:ch-id req) {:op :tal/reply
-                                       :data data
-                                       :tal/cb-uuid (:tal/cb-uuid req)})))
+(def client-stats common/client-stats)
 
 ;; TODO: find a way to restart sente
 (defonce sente-state (atom {}))
@@ -100,8 +82,6 @@
 (defonce document-subs (atom {}))
 (defonce team-subs (atom {}))
 
-(defonce client-stats (atom {}))
-
 (defn track-document-subs []
   (add-watch document-subs :statsd (fn [_ _ old-state new-state]
                                      (when (not= (count old-state)
@@ -120,30 +100,36 @@
                                              (count new-state))
                                    (statsd/gauge "team-subs" (count new-state))))))
 
-(defn notify-document-transaction [db {:keys [read-only-data admin-data]}]
-  (let [doc (:transaction/document read-only-data)
+(defn notify-document-transaction [db {:keys [read-only-data admin-data annotations]}]
+  (let [doc (:transaction/document annotations)
         doc-id (:db/id doc)]
-    (doseq [[uid {:keys [auth]}] (dissoc (get @document-subs doc-id) (:session/client-id read-only-data))
+    (doseq [[uid {:keys [auth]}] (dissoc (get @document-subs doc-id) (:session/client-id annotations))
             :let [max-scope (auth/max-document-scope db doc auth)]]
       (log/infof "notifying %s about new transactions for %s" uid doc-id)
-      (send-msg {:sente-state sente-state} uid [:datomic/transaction (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
-                                                                           admin-data
-                                                                           (auth/contains-scope? auth/scope-heirarchy max-scope :read)
-                                                                           read-only-data)]))
+      (send-msg {:sente-state sente-state
+                 :tal/state tal/talaria-state}
+                uid
+                [:datomic/transaction (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
+                                            admin-data
+                                            (auth/contains-scope? auth/scope-heirarchy max-scope :read)
+                                            read-only-data)]))
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
-      (log/infof "notifying %s about new server timestamp for %s" (:session/uuid admin-data) doc-id)
+      (log/infof "notifying %s about new server timestamp for %s" (:session/uuid annotations) doc-id)
       ;; they made the tx, so we can send them the admin data
-      (send-msg {:sente-state sente-state} (str (:session/client-id admin-data)) [:datomic/transaction (assoc admin-data :tx-data server-timestamps)]))))
+      (send-msg {:sente-state sente-state
+                 :tal/state tal/talaria-state}
+                (str (:session/client-id annotations))
+                [:datomic/transaction {:tx-data server-timestamps}]))))
 
 ;; Note: this assumes that everyone subscribe to the team is an admin
-(defn notify-team-transaction [db {:keys [read-only-data admin-data]}]
-  (let [team-uuid (:team/uuid (:transaction/team admin-data))]
-    (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id admin-data))]
+(defn notify-team-transaction [db {:keys [read-only-data admin-data annotations]}]
+  (let [team-uuid (:team/uuid (:transaction/team annotations))]
+    (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id annotations))]
       (log/infof "notifying %s about new team transactions for %s" uid team-uuid)
       (send-msg {:sente-state sente-state} uid [:team/transaction admin-data]))
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
       (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid admin-data) team-uuid)
-      (send-msg {:sente-state sente-state} (str (:session/client-id admin-data)) [:team/transaction (assoc admin-data :tx-data server-timestamps)]))))
+      (send-msg {:sente-state sente-state} (str (:session/client-id annotations)) [:team/transaction {:tx-data server-timestamps}]))))
 
 (defn notify-issue-transaction [db data]
   (doseq [uid @issues-http/issue-subs]
@@ -278,6 +264,12 @@
 
 (defmethod ws-handler :chsk/uidport-close [{:keys [client-id] :as req}]
   (close-connection client-id))
+
+(defmethod ws-handler :tal/channel-close [{:keys [client-id] :as req}]
+  (close-connection client-id))
+
+(defmethod ws-handler :tal/channel-open [{:keys [client-id] :as req}]
+  (swap! client-stats assoc-in [client-id :tal/ch-id] (:tal/ch-id req)))
 
 (defmethod ws-handler :frontend/close-connection [{:keys [client-id] :as req}]
   (close-connection client-id))
@@ -650,7 +642,7 @@
                                                                              :tool tool
                                                                              :recording recording})
     (doseq [[uid _] (dissoc (get @document-subs document-id) client-id)]
-      (sliding-send/sliding-send sente-state uid message))))
+      (sliding-send/sliding-send req uid message))))
 
 (defmethod ws-handler :rtc/signal [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
@@ -1104,7 +1096,7 @@
       (log/errorf msg))))
 
 (defmethod ws-handler :server/timestamp [{:keys [client-id ?data ?reply-fn] :as req}]
-  (send-reply req (utils/inspect [:server/timestamp {:date (java.util.Date.)}])))
+  (send-reply req [:server/timestamp {:date (java.util.Date.)}]))
 
 (defn conj-limit
   "Expects a vector, keeps the newest n items. May return a shorter vector than was passed in."
@@ -1168,7 +1160,8 @@
 
 (defn convert-to-sente-format [msg]
   (assoc msg
-         :client-id (user-id-fn (:ring-req msg))
+         :client-id (user-id-fn (:tal/ring-req msg))
+         :ring-req (:tal/ring-req msg)
          :event [(:op msg) (:data msg)]
          :?data (:data msg)))
 

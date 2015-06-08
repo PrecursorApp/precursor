@@ -122,7 +122,7 @@
         sente-id (aget js/window "Precursor" "sente-id")
         issue-db (db/make-initial-db initial-issue-entities)
         ab-choices (ab/setup! state/ab-tests)
-        tal (tal/init "ws://localhost:8080/talaria")]
+        tal (tal/init (str "ws://localhost:8080/talaria?tab-id=" tab-id))]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
                      :admin? admin?

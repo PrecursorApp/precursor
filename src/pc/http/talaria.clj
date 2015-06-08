@@ -30,7 +30,7 @@
   (get-in @tal-state [:connections ch-id :channel]))
 
 (defn ch-id [ch]
-  (:tal/channel-id (immutant/originating-request ch)))
+  (:tal/ch-id (immutant/originating-request ch)))
 
 (defn add-channel
   "Adds channel to state, given an id. Will throw if a channel
@@ -118,7 +118,16 @@
 
 (defn handle-ws-open [tal-state]
   (fn [ch]
-    (add-channel tal-state (ch-id ch) ch)))
+    (let [id (ch-id ch)
+          msg-ch (:msg-ch @tal-state)]
+      (add-channel tal-state id ch)
+      (async/put! msg-ch {:op :tal/channel-open
+                          :tal/ch ch
+                          :tal/ch-id id
+                          ;; for final release, this should be obtained by
+                          ;; passing msg into a fn
+                          :tal/ring-req (immutant/originating-request ch)
+                          :tal/state tal-state}))))
 
 (defn handle-ws-error [tal-state]
   (fn [ch throwable]
@@ -128,9 +137,18 @@
 
 (defn handle-ws-close [tal-state]
   (fn [ch {:keys [code reason] :as args}]
-    (let [id (ch-id ch)]
+    (let [id (ch-id ch)
+          msg-ch (:msg-ch @tal-state)]
       (log/infof "channel with id %s closed %s" id args)
-      (remove-channel tal-state id))))
+      (remove-channel tal-state id)
+      (async/put! msg-ch {:op :tal/channel-close
+                          :data args
+                          :tal/ch ch
+                          :tal/ch-id id
+                          ;; for final release, this should be obtained by
+                          ;; passing msg into a fn
+                          :tal/ring-req (immutant/originating-request ch)
+                          :tal/state tal-state}))))
 
 (defn decode-msg [msg]
   (-> msg
@@ -152,12 +170,12 @@
           decoded-msg (decode-msg msg)]
       (record-msg tal-state id msg)
       (async/put! msg-ch (assoc decoded-msg
-                                :ch ch
-                                :ch-id id
+                                :tal/ch ch
+                                :tal/ch-id id
                                 ;; for final release, this should be obtained by
                                 ;; passing msg into a fn
-                                :ring-req (immutant/originating-request ch)
-                                :tal-state tal-state)))))
+                                :tal/ring-req (immutant/originating-request ch)
+                                :tal/state tal-state)))))
 
 (defn send! [tal-state ch-id msg & {:keys [on-success on-error]}]
   (when-let [ch (get-ch tal-state ch-id)]

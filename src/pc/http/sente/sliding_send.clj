@@ -1,5 +1,6 @@
 (ns pc.http.sente.sliding-send
   (:require [clojure.core.async :as async]
+            [pc.http.sente.common :as common]
             [pc.util.seq :refer (dissoc-in)]
             [slingshot.slingshot :refer (try+ throw+)]))
 
@@ -56,7 +57,7 @@
 (defn sliding-send
   "Sends the latest message of type msg-type, waiting for the last sent
    message to complete before sending the next one."
-  [sente-state uid [msg-type msg-body]]
+  [req uid [msg-type msg-body]]
   (swap! sends update-in [:attempted-sends] inc)
   (swap! sliding-send-state assoc-in [:messages msg-type uid] [msg-type msg-body])
   (when-let [latest-message (pop-and-lock sliding-send-state msg-type uid)]
@@ -68,11 +69,10 @@
           (loop [message (async/<! send-ch)]
             (when (seq message)
               (swap! sends update-in [:actual-sends] inc)
-              ((:send-fn @sente-state) uid message
-               {:on-complete (fn []
-                               (if-let [latest-message (pop-or-unlock sliding-send-state msg-type uid)]
-                                 (async/put! send-ch latest-message)
-                                 (async/close! send-ch)))})
+              (common/send-msg req uid message {:on-complete (fn []
+                                                               (if-let [latest-message (pop-or-unlock sliding-send-state msg-type uid)]
+                                                                 (async/put! send-ch latest-message)
+                                                                 (async/close! send-ch)))})
               (recur (async/<! send-ch))))
           (catch Object t
             (release-send sliding-send-state msg-type uid)
