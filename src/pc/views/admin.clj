@@ -567,6 +567,10 @@
        [:td (let [url (urls/team-plan team)]
               [:a {:href url} url])]]
       [:tr
+       [:td "Add users url"]
+       [:td (let [url (urls/team-add-users team)]
+              [:a {:href url} url])]]
+      [:tr
        [:td "Trial end"]
        [:td (:plan/trial-end (:team/plan team))]]]
      (interesting team-docs))))
