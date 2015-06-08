@@ -1,5 +1,6 @@
 (ns pc.http.talaria
-  (:require [clojure.core.async :as async]
+  (:require [clj-time.core :as time]
+            [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
             [cognitect.transit :as transit]
@@ -29,7 +30,7 @@
   (get-in @tal-state [:connections ch-id :channel]))
 
 (defn ch-id [ch]
-  (:talaria/channel-id (immutant/originating-request ch)))
+  (:tal/channel-id (immutant/originating-request ch)))
 
 (defn add-channel
   "Adds channel to state, given an id. Will throw if a channel
@@ -147,9 +148,16 @@
 (defn handle-ws-msg [tal-state]
   (fn [ch msg]
     (let [id (ch-id ch)
-          msg-ch (:msg-ch @tal-state)]
+          msg-ch (:msg-ch @tal-state)
+          decoded-msg (decode-msg msg)]
       (record-msg tal-state id msg)
-      (async/put! msg-ch (decode-msg msg)))))
+      (async/put! msg-ch (assoc decoded-msg
+                                :ch ch
+                                :ch-id id
+                                ;; for final release, this should be obtained by
+                                ;; passing msg into a fn
+                                :ring-req (immutant/originating-request ch)
+                                :tal-state tal-state)))))
 
 (defn send! [tal-state ch-id msg & {:keys [on-success on-error]}]
   (when-let [ch (get-ch tal-state ch-id)]

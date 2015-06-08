@@ -8,7 +8,7 @@
 
 (defpage "/talaria" [req]
   (let [channel-id (UUID/randomUUID)]
-    (immutant/as-channel (assoc req :talaria/channel-id channel-id)
+    (immutant/as-channel (assoc req :tal/channel-id channel-id)
                          {:on-open (tal/handle-ws-open tal/talaria-state)
                           :on-error (tal/handle-ws-error tal/talaria-state)
                           :on-close (tal/handle-ws-close tal/talaria-state)
