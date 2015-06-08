@@ -1140,10 +1140,11 @@
   (let [tap (async/chan (async/sliding-buffer 100))
         mult (async/mult (:ch-recv sente-state))]
     (async/tap mult tap)
-    (async/go-loop []
-                   (when-let [req (async/<! tap)]
-                     (utils/straight-jacket (handle-req req))
-                     (recur)))))
+    (dotimes [x 10]
+      (async/go-loop []
+        (when-let [req (async/<! tap)]
+          (utils/straight-jacket (handle-req req))
+          (recur))))))
 
 (defn close-ws
   "Closes the websocket, client should reconnect."
