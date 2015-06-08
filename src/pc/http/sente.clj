@@ -1185,16 +1185,12 @@
                             :db (pcd/default-db)
                             :receive-instant (java.util.Date.))))
        (catch :status t
-         ;; XXX: fix this
-         (let [send-fn (:send-fn @sente-state)]
-           (log/error t)
-           ;; TODO: should this use the send-fn? We can do that too, I guess, inside of the defmethod.
-           ;; TODO: rip out sente and write a sensible library
-           (send-fn (:client-id req) [:frontend/error {:status-code (:status t)
-                                                       :error-msg (:error-msg t)
-                                                       :error-key (:error-key t)
-                                                       :event (:event req)
-                                                       :event-data (:?data req)}])))
+         (log/error t)
+         (send-msg req (:client-id req) [:frontend/error {:status-code (:status t)
+                                                          :error-msg (:error-msg t)
+                                                          :error-key (:error-key t)
+                                                          :event (:event req)
+                                                          :event-data (:?data req)}]))
        (catch Object e
          (log/error e)
 
