@@ -256,12 +256,13 @@
   (handle-message app-state (:op msg) (:data msg)))
 
 (defn init [app-state]
-  #_(let [{:keys [chsk ch-recv send-fn state] :as sente-state}
+  (if (:use-talaria? @app-state)
+    (let [tal-state (:tal @app-state)]
+      (tal/start-recv-queue tal-state (partial handle-tal-msg app-state)))
+    (let [{:keys [chsk ch-recv send-fn state] :as sente-state}
           (sente/make-channel-socket! "/chsk" {:type :auto
                                                :chsk-url-fn (fn [& args]
                                                               (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state)))})]
       (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
       (subs/add-recording-watcher app-state (fn [d] (send-msg (:sente @app-state) [:rtc/signal (merge d {:document/id (:document/id @app-state)})])))
-      (do-something app-state (:sente @app-state)))
-  (let [tal-state (:tal @app-state)]
-    (tal/start-recv-queue tal-state (partial handle-tal-msg app-state))))
+      (do-something app-state (:sente @app-state)))))

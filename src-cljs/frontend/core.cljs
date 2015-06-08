@@ -122,7 +122,8 @@
         sente-id (aget js/window "Precursor" "sente-id")
         issue-db (db/make-initial-db initial-issue-entities)
         ab-choices (ab/setup! state/ab-tests)
-        tal (tal/init (str "ws://localhost:8080/talaria?tab-id=" tab-id))]
+        use-talaria? (:use-talaria? utils/initial-query-map)
+        tal (when use-talaria? (tal/init (str "ws://localhost:8080/talaria?tab-id=" tab-id)))]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
                      :admin? admin?
@@ -143,7 +144,8 @@
                      :show-landing? (:show-landing? utils/initial-query-map)
                      :ab-choices ab-choices
                      :tal tal
-                     :sente tal
+                     :use-talaria? use-talaria?
+                     :sente (when use-talaria? tal)
                      :comms {:controls      controls-ch
                              :api           api-ch
                              :errors        errors-ch
