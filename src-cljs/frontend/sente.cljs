@@ -13,12 +13,13 @@
             [frontend.state :as state]
             [frontend.stats :as stats]
             [frontend.subscribers :as subs]
+            [frontend.talaria :as tal]
             [frontend.utils :as utils :include-macros true]
             [goog.labs.dom.PageVisibilityMonitor]
             [taoensso.sente :as sente])
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)]))
 
-(defn send-msg [sente-state message & [timeout-ms callback-fn :as rest]]
+(defn send-msg-sente [sente-state message & [timeout-ms callback-fn :as rest]]
   (if (-> sente-state :state deref :open?)
     (apply (:send-fn sente-state) message rest)
     (let [watch-id (utils/uuid)]
@@ -28,6 +29,12 @@
                    (when (:open? new)
                      (apply (:send-fn sente-state) message rest)
                      (remove-watch ref watch-id)))))))
+
+(defn send-msg [ws-state message & [timeout-ms callback-fn :as rest]]
+  (if (:send-fn ws-state)
+    (send-msg-sente ws-state message timeout-ms callback-fn)
+    (tal/queue-msg ws-state {:op (first message)
+                             :data (second message)} timeout-ms callback-fn)))
 
 (defn ch-send-msg
   "Like send-msg, but takes a channel to put the reply onto."
@@ -245,11 +252,16 @@
           nil)
         (recur)))))
 
+(defn handle-tal-msg [app-state msg]
+  (handle-message app-state (:op msg) (:data msg)))
+
 (defn init [app-state]
-  (let [{:keys [chsk ch-recv send-fn state] :as sente-state}
-        (sente/make-channel-socket! "/chsk" {:type :auto
-                                             :chsk-url-fn (fn [& args]
-                                                            (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state)))})]
-    (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
-    (subs/add-recording-watcher app-state (fn [d] (send-msg (:sente @app-state) [:rtc/signal (merge d {:document/id (:document/id @app-state)})])))
-    (do-something app-state (:sente @app-state))))
+  #_(let [{:keys [chsk ch-recv send-fn state] :as sente-state}
+          (sente/make-channel-socket! "/chsk" {:type :auto
+                                               :chsk-url-fn (fn [& args]
+                                                              (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state)))})]
+      (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
+      (subs/add-recording-watcher app-state (fn [d] (send-msg (:sente @app-state) [:rtc/signal (merge d {:document/id (:document/id @app-state)})])))
+      (do-something app-state (:sente @app-state)))
+  (let [tal-state (:tal @app-state)]
+    (tal/start-recv-queue tal-state (partial handle-tal-msg app-state))))

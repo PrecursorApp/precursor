@@ -26,7 +26,7 @@
             [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.state :as state]
-            [frontend.talaria :as talaria]
+            [frontend.talaria :as tal]
             [frontend.team :as team]
             [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
             [frontend.utils.seq :as seq-util]
@@ -121,7 +121,8 @@
         tab-id (utils/uuid)
         sente-id (aget js/window "Precursor" "sente-id")
         issue-db (db/make-initial-db initial-issue-entities)
-        ab-choices (ab/setup! state/ab-tests)]
+        ab-choices (ab/setup! state/ab-tests)
+        tal (tal/init "ws://localhost:8080/talaria")]
     (atom (-> (assoc initial-state
                      ;; id for the browser, used to filter transactions
                      :admin? admin?
@@ -141,6 +142,8 @@
                      :subdomain config/subdomain
                      :show-landing? (:show-landing? utils/initial-query-map)
                      :ab-choices ab-choices
+                     :tal tal
+                     :sente tal
                      :comms {:controls      controls-ch
                              :api           api-ch
                              :errors        errors-ch
@@ -212,7 +215,8 @@
              ;; Can't log in without a page refresh, have to re-evaluate this if
              ;; that ever changes.
              :cust                  (:cust @state)
-             :sente                 (:sente @state)
+             :sente                 (:tal @state); (:sente @state)
+             :tal                   (:tal @state)
              :admin?                (:admin? @state)
              :ab-choices            (:ab-choices @state)
              }
@@ -253,7 +257,8 @@
                                                                            :handle-key-up      handle-key-up})
         doc-watcher-id           (.getNextUniqueId (.getInstance IdGenerator))]
 
-    (db/setup-issue-listener! (:issue-db @state) "issue-db" comms (:sente @state))
+    (db/setup-issue-listener! (:issue-db @state) "issue-db" comms (:tal @state) ;(:sente @state)
+                              )
 
     ;; This will allow us to update the url and title when the doc name changes
     (db/add-attribute-listener (:db @state) :document/name doc-watcher-id #(cast! :db-document-name-changed {:tx-data (map ds/datom-read-api (:tx-data %))}))
