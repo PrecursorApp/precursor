@@ -107,6 +107,7 @@
             :let [max-scope (auth/max-document-scope db doc auth)]]
       (log/infof "notifying %s about new transactions for %s" uid doc-id)
       (send-msg {:sente-state sente-state
+                 ;; TODO: probably want to get tal-state from somewhere else
                  :tal/state tal/talaria-state}
                 uid
                 [:datomic/transaction (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
@@ -126,15 +127,24 @@
   (let [team-uuid (:team/uuid (:transaction/team annotations))]
     (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id annotations))]
       (log/infof "notifying %s about new team transactions for %s" uid team-uuid)
-      (send-msg {:sente-state sente-state} uid [:team/transaction admin-data]))
+      (send-msg {:sente-state sente-state
+                 :tal/state tal/talaria-state}
+                uid
+                [:team/transaction admin-data]))
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
       (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid admin-data) team-uuid)
-      (send-msg {:sente-state sente-state} (str (:session/client-id annotations)) [:team/transaction {:tx-data server-timestamps}]))))
+      (send-msg {:sente-state sente-state
+                 :tal/state tal/talaria-state}
+                (str (:session/client-id annotations))
+                [:team/transaction {:tx-data server-timestamps}]))))
 
 (defn notify-issue-transaction [db data]
   (doseq [uid @issues-http/issue-subs]
     (log/infof "notifying %s about new issue transactions" uid)
-    (send-msg {:sente-state sente-state} uid [:issue/transaction data])))
+    (send-msg {:sente-state sente-state
+               :tal/state tal/talaria-state}
+              uid
+              [:issue/transaction data])))
 
 (defn has-document-access? [doc-id req scope]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
