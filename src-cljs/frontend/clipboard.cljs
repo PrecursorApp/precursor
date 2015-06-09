@@ -175,7 +175,7 @@
   [:path (layer->svg-path layer opts)])
 
 ;; TODO: take path width/height into account
-(defn render-layers [{:keys [layers] :as layer-data} & {:keys [invert-colors?]}]
+(defn render-layers [{:keys [layers] :as layer-data} & {:keys [invert-colors? defs]}]
   (let [layers (filter #(not= :layer.type/group (:layer/type %)) layers)
         start-xs (remove #(js/isNaN %) (map :layer/start-x layers))
         start-ys (remove #(js/isNaN %) (map :layer/start-y layers))
@@ -204,6 +204,8 @@
       ;; hack to make pngs work
       (when invert-colors?
         [:rect {:width "100%" :height "100%" :fill "#333"}])
+      (when defs
+        [:defs defs])
       [:metadata (pr-str (assoc layer-data
                            :width width
                            :height height
@@ -212,15 +214,41 @@
       [:g {:transform (gstring/format "translate(%s, %s)" offset-left offset-top)}
        (map #(svg-element % {:invert-colors? invert-colors?}) layers)]])))
 
-(defn upload-clipboard-to-s3 [sente-state rendered-layers]
-  (sente/send-msg sente-state [:cust/fetch-clipboard-s3-url]
-                  5000
-                  (fn [reply]
-                    (when (taoensso.sente/cb-success? reply)
-                      (go (let [res (async/<! (http/put (:url reply)
-                                                        {:body rendered-layers
-                                                         :headers {"Content-Type" "image/svg+xml"}}))]
-                            (sente/send-msg sente-state [:cust/store-clipboard {:key (:key reply)}])))))))
+(defn inline-font [font-name font-str]
+  [:style {:type "text/css"}
+   (gstring/format "@font-face { font-family: '%s'; src: url('data:application/x-font-ttf;base64, %s') format('truetype');}"
+                   font-name font-str)])
+
+(defn used-fonts
+  "Determines fonts used in the collection of layers. Could be more efficient"
+  [layers]
+  (let [text (reduce (fn [acc layer]
+                       (str acc (:layer/text layer)))
+                     "" layers)]
+    (concat (when (seq text) ["Roboto"])
+            (when (re-find #":fa-[^:]+:" text) ["FontAwesome"]))))
+
+(defn upload-clipboard-to-s3 [sente-state layers]
+  (let [s3-url-ch (sente/ch-send-msg sente-state [:cust/fetch-clipboard-s3-url] 5000 (async/promise-chan))]
+    (go
+      (let [font-names (used-fonts layers)]
+        (doseq [font-name font-names]
+          (fonts/fetch-font font-name))
+        (let [defs (loop [font-names font-names ;; loop's the only way to get <! to work
+                          acc '()]
+                     (if (seq font-names)
+                       (let [{:keys [font-name font-str]} (async/<! (fonts/font-ch (first font-names)))]
+                         (recur (rest font-names)
+                                (conj acc
+                                      (inline-font font-name font-str))))
+                       acc))
+              rendered-layers (render-layers {:layers layers} :defs defs)
+              s3-url-reply (async/<! s3-url-ch)]
+          (when (taoensso.sente/cb-success? s3-url-reply)
+            (let [res (async/<! (http/put (:url s3-url-reply)
+                                          {:body rendered-layers
+                                           :headers {"Content-Type" "image/svg+xml"}}))]
+              (sente/send-msg sente-state [:cust/store-clipboard {:key (:key s3-url-reply)}]))))))))
 
 (defn handle-copy! [app-state e]
   (when (let [target js/document.activeElement
@@ -240,7 +268,7 @@
                                  (get-in app-state [:selected-eids :selected-eids]))))]
       (let [rendered-layers (render-layers {:layers layers})]
         (.setData (.-clipboardData e) "text" rendered-layers)
-        (upload-clipboard-to-s3 (:sente app-state) rendered-layers)))))
+        (upload-clipboard-to-s3 (:sente app-state) layers)))))
 
 (defn parse-pasted [pasted-data]
   (some->> pasted-data
