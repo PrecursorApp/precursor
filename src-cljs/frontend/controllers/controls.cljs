@@ -296,9 +296,21 @@
                                                         :replace-token? true}])
         (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc "shortcuts")}])))))
 
+(defn handle-recording-toggled [current-state]
+  (if rtc/supports-rtc?
+    (if-let [recording (get-in current-state (state/self-recording-path current-state))]
+      (rtc/end-stream (:stream-id recording))
+      (rtc/setup-stream (get-in current-state [:comms :controls])))
+    (chat-model/create-bot-chat (:db current-state)
+                                current-state
+                                (str "Unable to get capture audio,"
+                                     " your browser doesn't seem to support webRTC."
+                                     " Please try Chrome, Firefox or Opera. Ping @prcrsr for help.")
+                                {:error/id :error/webrtc-unsupported})))
+
 (defmethod handle-keyboard-shortcut-after :record
   [state shortcut-name key-set]
-  (rtc/setup-stream (get-in state [:comms :controls])))
+  (handle-recording-toggled state))
 
 (defn next-font-size [current-size direction]
   (let [grow? (keyword-identical? :grow direction)
@@ -1793,9 +1805,7 @@
 
 (defmethod post-control-event! :recording-toggled
   [browser-state message _ previous-state current-state]
-  (if-let [recording (get-in current-state (state/self-recording-path current-state))]
-    (rtc/end-stream (:stream-id recording))
-    (rtc/setup-stream (get-in current-state [:comms :controls]))))
+  (handle-recording-toggled current-state))
 
 (defmethod control-event :media-stream-started
   [browser-state message {:keys [stream-id]} state]
