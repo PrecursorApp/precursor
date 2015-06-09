@@ -80,7 +80,7 @@
                  [ankha "0.1.4"]
                  [org.clojure/clojurescript "0.0-3211"]
                  [precursor/core.async "0.1.361.0-d8047c-alpha"]
-                 [cljs-http "0.1.30" :exclusions [noencore]]
+                 [cljs-http "0.1.35" :exclusions [noencore]]
 
                  ;; Use yaks/om for the pattern tag (it's in React,
                  ;; but not Om yet)
