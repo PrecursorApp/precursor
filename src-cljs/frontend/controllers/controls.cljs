@@ -1920,8 +1920,8 @@
   [browser-state message {:keys [uuids]} previous-state current-state]
   (let [current-uuids (set (keys (get-in current-state [:cust-data :uuid->cust])))
         new-uuids (set/difference uuids current-uuids)]
-    (when (seq new-uuids)
-      (sente/send-msg (:sente current-state) [:frontend/fetch-custs {:uuids new-uuids}]))))
+    (doseq [uuid-group  (partition-all 100 new-uuids)]
+      (sente/send-msg (:sente current-state) [:frontend/fetch-custs {:uuids uuid-group}]))))
 
 (defmethod control-event :doc-name-edited
   [browser-state message {:keys [doc-id doc-name]} state]
