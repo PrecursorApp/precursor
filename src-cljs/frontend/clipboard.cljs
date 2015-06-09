@@ -6,13 +6,16 @@
             [datascript :as d]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
+            [frontend.fonts :as fonts]
             [frontend.sente :as sente]
             [frontend.models.layer :as layer-model]
             [frontend.svg :as svg]
             [frontend.utils :as utils :include-macros true]
+            [frontend.utils.font-map :as font-map]
             [goog.dom]
             [goog.dom.xml :as xml]
             [goog.string :as gstring]
+            [goog.string.format]
             [goog.style]
             [hiccups.runtime :as hiccupsrt]
             [taoensso.sente])
@@ -105,7 +108,7 @@
    :y (:layer/start-y layer)
    :fill (if invert-colors? "#ccc" "black")
    :stroke-width 0
-   :font-family (:layer/font-family layer "Helvetica")
+   :font-family (:layer/font-family layer "Roboto")
    :font-size   (:layer/font-size layer 20)})
 
 (defn layer->svg-line [layer {:keys [invert-colors?]}]
@@ -136,9 +139,32 @@
   [layer opts]
   [:rect (layer->svg-rect layer opts)])
 
+(defn fontify [text]
+  (let [matches (map last (re-seq #":(fa-[^:]+):" text))
+        ;; may need to add [""], split can return empty array
+        parts (or (seq (str/split text #":fa-[^:]+:")) [""])]
+    (loop [parts parts
+           matches matches
+           acc []]
+      (let [res (concat acc
+                        [[:tspan (goog.string/htmlEscape (first parts))]]
+                        (when (first matches)
+                          (if-let [unicode (font-map/class->unicode (first matches))]
+                            [[:tspan {:font-family "FontAwesome"} unicode]]
+                            [[:tspan (goog.string/htmlEscape (str ":" (first matches) ":"))]])))]
+        (if (next parts)
+          (recur (next parts) (next matches) res)
+          res)))))
+
 (defmethod svg-element :layer.type/text
   [layer opts]
-  [:text (layer->svg-text layer opts) (goog.string/htmlEscape (:layer/text layer))])
+  (let [text-props (layer->svg-text layer opts)]
+    [:text text-props
+     (seq (reduce (fn [tspans text]
+                    (conj tspans [:tspan {:dy (if (seq tspans) "1em" "0")
+                                          :x (:x text-props)}
+                                  (fontify text)]))
+                  [] (str/split (:layer/text layer) #"\n")))]))
 
 (defmethod svg-element :layer.type/line
   [layer opts]
