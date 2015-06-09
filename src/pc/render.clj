@@ -125,10 +125,10 @@
                    {:style "background: #333"}))
            [:defs
             [:style {:type "text/css"}
-             (format "@font-face { font-family: 'Roboto'; src: url('data:application/x-font-ttf;base64, %s') format('truetype');"
+             (format "@font-face { font-family: 'Roboto'; src: url('data:application/x-font-ttf;base64, %s') format('truetype');}"
                      (:roboto-regular (fonts)))]
             [:style {:type "text/css"}
-             (format "@font-face { font-family: 'FontAwesome'; src: url('data:application/x-font-ttf;base64, %s') format('truetype');"
+             (format "@font-face { font-family: 'FontAwesome'; src: url('data:application/x-font-ttf;base64, %s') format('truetype');}"
                      (:fontawesome (fonts)))]]
            ;; hack to make pngs work
            (when invert-colors?
