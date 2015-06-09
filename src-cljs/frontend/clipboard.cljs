@@ -262,7 +262,8 @@
                    (not (contains? #{"input" "textarea"} (str/lower-case (.-tagName target)))))))
     (.preventDefault e)
     (when-let [layers (seq (remove
-                            #(= :layer.type/group (:layer/type %))
+                            #(or (= :layer.type/group (:layer/type %))
+                                 (not (:layer/type %)))
                             (map #(dissoc (ds/touch+ (d/entity @(:db app-state) %))
                                           :unsaved)
                                  (get-in app-state [:selected-eids :selected-eids]))))]
