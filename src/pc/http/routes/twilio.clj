@@ -22,6 +22,7 @@
       (log/infof "message to %s succeeded with %s"
                  (:To params) (:MessageStatus params)))
     {:status 200
+     :headers {"Content-Type" "text/plain"}
      :body ""}))
 
 (def hooks-app (defpage/collect-routes))
