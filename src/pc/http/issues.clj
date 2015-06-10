@@ -71,4 +71,4 @@
 (defn fetch [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [frontend-id (:frontend/issue-id ?data)]
     (log/infof "fetching issue %s for %s" frontend-id client-id)
-    (?reply-fn {:issue (issue-model/read-api (issue-model/find-by-frontend-id (:db req) frontend-id))})))
+    ((:send-fn (:sente-state req)) client-id [:issue/db-entities {:entities [(issue-model/read-api (issue-model/find-by-frontend-id (:db req) frontend-id))]}])))

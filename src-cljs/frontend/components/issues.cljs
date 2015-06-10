@@ -663,6 +663,7 @@
       (go-loop []
         (when-let [res (utils/inspect (async/<! (om/get-state owner :results-ch)))]
           (when (= (:q res) (om/get-state owner :issue-search))
+            (om/set-state! owner :searching? false)
             (om/set-state! owner :results (sorted-results (:results res))))
           (recur))))
     om/IWillUnmount
@@ -673,7 +674,16 @@
       (async/close! (om/get-state owner :results-ch)))
     om/IRender
     (render [_]
-      (let [issue-db @(om/get-shared owner :issue-db)]
+      (let [issue-db @(om/get-shared owner :issue-db)
+            results (om/get-state owner :results)
+            sorted-results (remove nil?
+                                   (map (fn [[frontend-id score]]
+                                          (if-let [issue (issue-model/find-by-frontend-id issue-db frontend-id)]
+                                            {:issue-id (:db/id issue)
+                                             :uuid->cust uuid->cust}
+                                            (do (sente/send-msg (om/get-shared owner :sente) [:issue/fetch-issue {:frontend/issue-id frontend-id}])
+                                                nil)))
+                                        results))]
         (html
          [:section.menu-view
           [:div.content.make
@@ -683,31 +693,21 @@
                                 :required "true"
                                 :onChange #(let [q (.. % -target -value)]
                                              (om/set-state! owner :issue-search q)
+
                                              (if (<= 3 (count q))
-                                               (sente/ch-send-msg (om/get-shared owner :sente)
-                                                                  [:issue/search {:q q}]
-                                                                  2000
-                                                                  (om/get-state owner :results-ch))
+                                               (do (om/set-state! owner :searching? true)
+                                                   (sente/ch-send-msg (om/get-shared owner :sente)
+                                                                      [:issue/search {:q q}]
+                                                                      2000
+                                                                      (om/get-state owner :results-ch)))
                                                (async/put! (om/get-state owner :results-ch) {:q q :results []})))})]
              [:label (merge {:data-label "Search"}
-                            {:data-typing "Your search"})]]]
-           (om/build-all issue-card (remove nil? (map (fn [[frontend-id score]]
-                                                        (if-let [issue (issue-model/find-by-frontend-id issue-db frontend-id)]
-                                                          {:issue-id (:db/id issue)
-                                                           :uuid->cust uuid->cust}
-                                                          (do
-                                                            (sente/send-msg (om/get-shared owner :sente)
-                                                                            [:issue/fetch-issue {:frontend/issue-id frontend-id}]
-                                                                            2000
-                                                                            (fn [reply]
-                                                                              (when (taoensso.sente/cb-success? reply)
-                                                                                (d/transact! (om/get-shared owner :issue-db)
-                                                                                             [(:issue reply)]
-                                                                                             {:server-update true}))))
-                                                            nil)))
-                                                      (om/get-state owner :results)))
-                         {:key :issue-id
-                          :opts {:issue-db issue-db}})]])))))
+                            {:data-typing (if (or (om/get-state owner :searching?)
+                                                  (not= (count sorted-results)
+                                                        (count results)))
+                                            "Searching.."
+                                            (str (count sorted-results) " results"))})]]]
+           (om/build-all issue-card sorted-results {:key :issue-id :opts {:issue-db issue-db}})]])))))
 
 (defn issue [{:keys [issue-uuid uuid->cust]} owner]
   (reify
