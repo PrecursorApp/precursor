@@ -878,7 +878,7 @@
   (-> state
     (assoc-in [:pan :position] {:x x :y y})))
 
-(defn mouse-depressed-intents [state button ctrl? shift? outside-canvas?]
+(defn mouse-depressed-intents [state button ctrl? shift? meta? outside-canvas?]
   (let [tool (get-in state state/current-tool-path)
         drawing-text? (and (keyword-identical? :text tool)
                            (get-in state [:drawing :in-progress?]))]
@@ -891,6 +891,7 @@
        (keyboard/pan-shortcut-active? state) [:pan]
        (= button 2) [:open-radial]
        (and (= button 0) ctrl? (not shift?)) [:open-radial]
+       (and (= button 0) meta? (not shift?)) [:open-radial]
        (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
        (contains? #{:pen :rect :circle :line :select} tool) [:start-drawing]
        (and (keyword-identical? tool :text) (not drawing-text?)) [:start-drawing]
@@ -904,10 +905,10 @@
 (declare handle-text-layer-finished-after)
 
 (defmethod control-event :mouse-depressed
-  [browser-state message [x y {:keys [button type ctrl? shift? outside-canvas?]}] state]
+  [browser-state message [x y {:keys [button type ctrl? shift? meta? outside-canvas?]}] state]
   (if (empty? (:frontend-id-state state))
     state
-    (let [intents (mouse-depressed-intents state button ctrl? shift? outside-canvas?)
+    (let [intents (mouse-depressed-intents state button ctrl? shift? meta? outside-canvas?)
           new-state (-> state
                       (update-mouse x y)
                       (assoc-in [:mouse-down] true)
@@ -923,10 +924,10 @@
               new-state intents))))
 
 (defmethod post-control-event! :mouse-depressed
-  [browser-state message [x y {:keys [button ctrl? shift? outside-canvas?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button ctrl? shift? meta? outside-canvas?]}] previous-state current-state]
   (when-not (empty? (:frontend-id-state previous-state))
     ;; use previous state so that we're consistent with the control-event
-    (let [intents (mouse-depressed-intents previous-state button ctrl? shift? outside-canvas?)]
+    (let [intents (mouse-depressed-intents previous-state button ctrl? shift? meta? outside-canvas?)]
       (doseq [intent intents]
         (case intent
           :finish-text-layer (handle-text-layer-finished-after previous-state current-state)
@@ -1020,7 +1021,7 @@
         (drop-layers)))))
 
 (defmethod post-control-event! :mouse-released
-  [browser-state message [x y {:keys [button type ctrl?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button type ctrl? meta?]}] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
@@ -1035,6 +1036,7 @@
      (and (not= type "touchend")
           (not= button 2)
           (not (and (= button 0) ctrl?))
+          (not (and (= button 0) meta?))
           (get-in current-state [:radial :open?]))
      (cast! [:radial-closed])
 
