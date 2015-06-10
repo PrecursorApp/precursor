@@ -1075,7 +1075,7 @@
 
 (defmethod ws-handler :team/extend-trial [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
-    (utils/inspect (check-team-access team-uuid req :admin))
+    (check-team-access team-uuid req :admin)
     (let [team (team-model/find-by-uuid (:db req) team-uuid)
           plan (:team/plan team)
           cust (get-in req [:ring-req :auth :cust])
