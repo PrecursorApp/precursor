@@ -62,19 +62,7 @@
             10000
             (fn [reply]
               (if (sente/cb-success? reply)
-                (let [ents (:entities reply)
-                      uuids (atom #{})]
-                  (walk/postwalk (fn [x]
-                                   (when (map? x)
-                                     (when-let [u (:issue/author x)]
-                                       (swap! uuids conj u))
-                                     (when-let [u (:comment/author x)]
-                                       (swap! uuids conj u))
-                                     (when-let [u (:vote/cust x)]
-                                       (swap! uuids conj u)))
-                                   x)
-                                 ents)
-                  (put! (:controls comms) [:new-cust-uuids {:uuids @uuids}])
+                (let [ents (:entities reply)]
                   (d/transact! issue-db ents {:server-update true}))
                 (put! (:errors comms) [:subscribe-to-issues-error])))))
 
@@ -111,13 +99,6 @@
 
 (defmethod handle-message :issue/transaction [app-state message data]
   (let [datoms (:tx-data data)]
-    (let [cust-uuids (reduce (fn [acc d]
-                               (if (contains? #{:issue/author :comment/author :vote/cust} (:a d))
-                                 (conj acc (:v d))
-                                 acc))
-                             #{} datoms)]
-      (when (seq cust-uuids)
-        (put! (get-in @app-state [:comms :controls]) [:new-cust-uuids {:uuids cust-uuids}])))
     (d/transact! (:issue-db @app-state)
                  (let [adds (->> datoms
                               (filter :added)

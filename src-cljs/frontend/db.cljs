@@ -115,7 +115,6 @@
    key
    (fn [tx-report]
      (handle-callbacks db tx-report)
-
      (when-not (or (-> tx-report :tx-meta :server-update)
                    (-> tx-report :tx-meta :bot-layer)
                    (-> tx-report :tx-meta :frontend-only))
@@ -129,7 +128,13 @@
                                              [:frontend/issue-id (get-issue-id e tx-report)]))
                                 (update-ref-attr tx-report)))))]
          (doseq [datom-group (partition-all 1000 datoms)]
-           (send-datoms-to-server sente-state :issue/transaction datom-group {} comms)))))))
+           (send-datoms-to-server sente-state :issue/transaction datom-group {} comms))))
+     (let [cust-uuids (reduce (fn [acc d]
+                                (if (contains? #{:issue/author :comment/author :vote/cust} (:a d))
+                                  (conj acc (:v d))
+                                  acc))
+                              #{} (:tx-data tx-report))]
+       (put! (:controls comms) [:new-cust-uuids {:uuids cust-uuids}])))))
 
 (defn empty-db? [db]
   (empty? (d/datoms db :eavt)))
