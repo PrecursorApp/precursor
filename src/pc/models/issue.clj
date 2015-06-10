@@ -76,7 +76,7 @@
        db q))
 
 (defn find-issue-by-comment [db comment]
-  (d/entity db (:e (first (d/datoms :vaet :issues/comments (:db/id comment) :issue/comments)))))
+  (d/entity db (:e (first (d/datoms db :vaet :issue/comments (:db/id comment) :issue/comments)))))
 
 (defn issue-search-read-api [db [e score]]
   [(:frontend/issue-id (d/entity db e)) score])

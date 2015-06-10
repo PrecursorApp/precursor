@@ -12,8 +12,13 @@
 
 (defn subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
   (swap! issue-subs conj client-id)
-  (let [issues (map issue-model/read-api (issue-model/all-issues (:db req)))]
-    (?reply-fn {:entities issues
+  (let [uncompleted-issues (map issue-model/read-api (issue-model/uncompleted-issues (:db req)))]
+    (?reply-fn {:entities uncompleted-issues
+                :entity-type :issue})))
+
+(defn fetch-completed [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [completed-issues (map issue-model/read-api (issue-model/completed-issues (:db req)))]
+    (?reply-fn {:entities completed-issues
                 :entity-type :issue})))
 
 (defn unsubscribe [client-id]
@@ -59,14 +64,19 @@
             (for [q-piece (str/split q #"\s+")]
               (str q-piece "*"))))
 
+(defn safe-q [q]
+  (str/trim (str/replace q #"[^A-Za-z ]+" "")))
+
 (defn search [{:keys [client-id ?data ?reply-fn] :as req}]
-  (let [q (:q ?data)]
-    (when (seq q)
-      (let [relaxed-q (relax-q q)
+  (let [safed-q (safe-q (:q ?data))]
+    (if (seq safed-q)
+      (let [relaxed-q (relax-q safed-q)
             db (:db req)]
-        (?reply-fn (pc.utils/inspect {:results (concat (map (partial issue-model/issue-search-read-api db) (issue-model/search-issues db relaxed-q))
-                                                       (map (partial issue-model/comment-search-read-api db) (issue-model/search-comments db relaxed-q)))
-                                      :q q}))))))
+        (?reply-fn {:results (concat (map (partial issue-model/issue-search-read-api db) (issue-model/search-issues db relaxed-q))
+                                     (map (partial issue-model/comment-search-read-api db) (issue-model/search-comments db relaxed-q)))
+                    :q (:q ?data)}))
+      (?reply-fn {:results []
+                  :q (:q ?data)}))))
 
 (defn fetch [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [frontend-id (:frontend/issue-id ?data)]
