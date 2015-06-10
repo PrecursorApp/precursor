@@ -25,9 +25,12 @@
 (defn add-coupon [plan coupon-ident]
   @(d/transact (pcd/conn) [[:db/add (:db/id plan) :discount/coupon coupon-ident]]))
 
-(defn extend-trial [plan days]
+(defn extend-trial [plan days & {:keys [annotations]}]
   @(d/transact (pcd/conn) [[:db/add (:db/id plan) :plan/trial-end (clj-time.coerce/to-date
-                                                                   (time/plus (time/now) (time/days days)))]]))
+                                                                   (time/plus (time/now) (time/days days)))]
+                           [:inc (:db/id plan) :plan/extension-count 1]
+                           (merge {:db/id (d/tempid :db.part/tx)}
+                                  annotations)]))
 
 (def coupons
   #{{:coupon/stripe-id "product-hunt"

@@ -369,9 +369,14 @@
             (om/build trial-summary data {:react-key "trial-summary"}))
           [:div.divider.make]
           (if-not (:plan/paid? plan)
-            [:a.vein.make {:on-click #(cast! :start-plan-clicked)}
-             (common/icon :credit)
-             [:span "Add payment"]]
+            (list
+             [:a.vein.make {:on-click #(cast! :start-plan-clicked)}
+              (common/icon :credit)
+              [:span "Add payment"]]
+             (when (plan-model/trial-over? plan)
+               [:a.vein.make {:on-click #(cast! :extend-trial-clicked)}
+                (common/icon :credit)
+                [:span "Extend trial"]]))
             (list
              [:a.vein.make {:href (urls/plan-submenu-path doc "info")}
               (common/icon :info)

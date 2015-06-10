@@ -1906,6 +1906,14 @@
                         #(utils/mlog "closed stripe checkout")
                         {:panelLabel "Change card"}))
 
+(defmethod post-control-event! :extend-trial-clicked
+  [browser-state message _ previous-state current-state]
+  (sente/send-msg (:sente current-state) [:team/extend-trial {:team/uuid (get-in current-state [:team :team/uuid])}]
+                  5000
+                  (fn [reply]
+                    (when (taoensso.sente/cb-success? reply)
+                      (d/transact! (:team-db current-state) [(utils/inspect (:plan reply))] {:server-update true})))))
+
 (defmethod post-control-event! :billing-email-changed
   [browser-state message {:keys [plan-id email]} previous-state current-state]
   (d/transact! (:team-db current-state)

@@ -7,6 +7,9 @@
   (when (:plan/trial-end plan)
     (time/after? (cljs-time.coerce/from-date (:plan/trial-end plan)) (time/now))))
 
+(defn trial-over? [plan]
+  (not (in-trial? plan)))
+
 (defn active-discount? [plan]
   (and (:discount/coupon plan)
        (or (not (:discount/end plan))
