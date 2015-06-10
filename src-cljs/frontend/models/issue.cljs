@@ -49,3 +49,14 @@
         (compare (:issue/created-at issue-b)
                  (:issue/created-at issue-a))
         score-res))))
+
+(defn completed-issue-ids [db]
+  (set (d/q '{:find [[?e ...]]
+              :where [[?e :issue/title] [?e :issue/status :issue.status/completed]]}
+            db)))
+
+(defn all-issue-ids [db]
+  (set (map :e (d/datoms db :aevt :issue/title))))
+
+(defn uncompleted-issue-ids [db]
+  (set/difference (all-issue-ids db) (completed-issue-ids db)))

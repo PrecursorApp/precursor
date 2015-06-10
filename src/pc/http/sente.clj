@@ -329,6 +329,10 @@
   (log/infof "searching issues for %s" (:client-id req))
   (issues-http/fetch (assoc req :sente-state @sente-state)))
 
+(defmethod ws-handler :issue/fetch-completed [req]
+  (log/infof "searching issues for %s" (:client-id req))
+  (issues-http/fetch-completed (assoc req :sente-state @sente-state)))
+
 (defn subscriber-read-api [subscriber]
   (-> subscriber
     (select-keys [:client-id

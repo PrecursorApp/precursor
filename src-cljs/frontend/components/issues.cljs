@@ -564,7 +564,7 @@
             (om/build comment-form {:issue-id issue-id} {:react-key "comment-form"})]
            (om/build comments {:issue-id issue-id :uuid->cust uuid->cust} {:react-key "comments"})]])))))
 
-(defn issue-list [{:keys [uuid->cust]} owner]
+(defn issue-list [{:keys [uuid->cust]} owner {:keys [issue-type]}]
   (reify
     om/IDisplayName (display-name [_] "Issue List")
     om/IInitState
@@ -576,7 +576,9 @@
     (did-mount [_]
       (let [issue-db (om/get-shared owner :issue-db)
             cust-uuid (:cust/uuid (om/get-shared owner :cust))]
-        (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
+        (let [issue-ids (if (= issue-type :completed)
+                          (issue-model/completed-issue-ids @issue-db)
+                          (issue-model/uncompleted-issue-ids @issue-db))]
           (om/set-state! owner :all-issue-ids issue-ids)
           (om/set-state! owner :rendered-issue-ids issue-ids))
         (fdb/add-attribute-listener
@@ -584,7 +586,9 @@
          :issue/title
          (om/get-state owner :listener-key)
          (fn [tx-report]
-           (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
+           (let [issue-ids (if (= issue-type :completed)
+                             (issue-model/completed-issue-ids @issue-db)
+                             (issue-model/uncompleted-issue-ids @issue-db))]
              (if (empty? (om/get-state owner :rendered-issue-ids))
                (om/update-state! owner #(assoc % :rendered-issue-ids issue-ids :all-issue-ids issue-ids))
                (when cust-uuid
@@ -609,6 +613,10 @@
         (html
          [:section.menu-view.issues-list
           [:div.content.make
+           [:a.vein.make {:href "/issues/search"
+                          :role "button"}
+            "Search"]]
+          [:div.content.make
            (om/build issue-form {})]
           [:div.issue-cards.make {:key "issue-cards"}
            (let [deleted (set/difference rendered-issue-ids all-issue-ids)
@@ -617,8 +625,8 @@
                [:a.issue-missing {:role "button"
                                   :on-click #(om/update-state! owner (fn [s]
                                                                        (assoc s
-                                                                         :rendered-issue-ids (:all-issue-ids s)
-                                                                         :render-time (datetime/server-date))))}
+                                                                              :rendered-issue-ids (:all-issue-ids s)
+                                                                              :render-time (datetime/server-date))))}
                 [:span
                  (cond (empty? deleted)
                        (str (count added) (if (< 1 (count added))
@@ -640,7 +648,15 @@
                                                     :uuid->cust uuid->cust})
                                            (sort (issue-model/issue-comparator cust render-time) issues))
                            {:key :issue-id
-                            :opts {:issue-db issue-db}}))]])))))
+                            :opts {:issue-db issue-db}}))]
+          [:div.content.make
+           (if (= issue-type :completed)
+             [:a.vein.make {:href "/issues"
+                            :role "button"}
+              "View Unfinished Requests"]
+             [:a.vein.make {:href "/issues/completed"
+                            :role "button"}
+              "View Finished Requests"])]])))))
 
 (defn sorted-results [results]
   (sort-by second (map (fn [[frontend-id scores]]
@@ -665,7 +681,9 @@
           (when (= (:q res) (om/get-state owner :issue-search))
             (om/set-state! owner :searching? false)
             (om/set-state! owner :results (sorted-results (:results res))))
-          (recur))))
+          (recur)))
+      (when-let [node (om/get-node owner "search-input")]
+        (.focus node)))
     om/IWillUnmount
     (will-unmount [_]
       (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
@@ -690,6 +708,7 @@
            [:form.issue-form {:on-submit #(utils/stop-event %)}
             [:div.adaptive
              [:textarea (merge {:value (om/get-state owner :issue-search)
+                                :ref "search-input"
                                 :required "true"
                                 :onChange #(let [q (.. % -target -value)]
                                              (om/set-state! owner :issue-search q)
@@ -747,11 +766,13 @@
     (render [_]
       (html
        (if submenu
-         (if (= :search submenu)
-           (om/build search {:uuid->cust (:uuid->cust app)})
-           (om/build issue {:issue-uuid (:active-issue-uuid app)
-                            :uuid->cust (:uuid->cust app)}
-                     {:key :issue-uuid}))
+         (condp keyword-identical? submenu
+           :search (om/build search {:uuid->cust (:uuid->cust app)})
+           :single-issue (om/build issue {:issue-uuid (:active-issue-uuid app)
+                                          :uuid->cust (:uuid->cust app)}
+                                   {:key :issue-uuid})
+           :completed (om/build issue-list {:uuid->cust (:uuid->cust app)} {:react-key "completed-issue-list"
+                                                                            :opts {:issue-type :completed}}))
          (om/build issue-list {:uuid->cust (:uuid->cust app)} {:react-key "issue-list"}))))))
 
 (defn issues [app owner {:keys [submenu]}]

@@ -7,6 +7,20 @@
 (defn all-issues [db]
   (map #(d/entity db (:e %)) (d/datoms db :aevt :issue/title)))
 
+(defn uncompleted-issues [db]
+  (map #(d/entity db %)
+       (d/q '{:find [[?t ...]]
+              :where [[?t :issue/title]
+                      (not [?t :issue/status :issue.status/completed])]}
+            db)))
+
+(defn completed-issues [db]
+  (map #(d/entity db %)
+       (d/q '{:find [[?t ...]]
+              :where [[?t :issue/title]
+                      [?t :issue/status :issue.status/completed]]}
+            db)))
+
 (defn all-votes [db]
   (map #(d/entity db (:e %)) (d/datoms db :aevt :vote/cust)))
 

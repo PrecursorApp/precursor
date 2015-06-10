@@ -16,11 +16,6 @@
     (?reply-fn {:entities uncompleted-issues
                 :entity-type :issue})))
 
-(defn fetch-completed [{:keys [client-id ?data ?reply-fn] :as req}]
-  (let [completed-issues (map issue-model/read-api (issue-model/completed-issues (:db req)))]
-    (?reply-fn {:entities completed-issues
-                :entity-type :issue})))
-
 (defn unsubscribe [client-id]
   (swap! issue-subs disj client-id))
 
@@ -82,3 +77,8 @@
   (let [frontend-id (:frontend/issue-id ?data)]
     (log/infof "fetching issue %s for %s" frontend-id client-id)
     ((:send-fn (:sente-state req)) client-id [:issue/db-entities {:entities [(issue-model/read-api (issue-model/find-by-frontend-id (:db req) frontend-id))]}])))
+
+(defn fetch-completed [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [completed-issues (map issue-model/read-api (issue-model/completed-issues (:db req)))]
+    ((:send-fn (:sente-state req)) client-id [:issue/db-entities {:entities completed-issues
+                                                                  :entity-type :issue}])))

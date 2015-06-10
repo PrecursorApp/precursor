@@ -49,6 +49,9 @@
   (defroute issue-search "/issues/search" {:keys [query-params]}
     (put! nav-ch [:issues-search {:query-params query-params}]))
 
+  (defroute issue-complete "/issues/completed" {:keys [query-params]}
+    (put! nav-ch [:issues-completed {:query-params query-params}]))
+
   (defroute issue "/issues/:issue-uuid" {:keys [query-params issue-uuid]}
     (put! nav-ch [:single-issue {:query-params query-params
                                  :issue-uuid issue-uuid}]))

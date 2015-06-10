@@ -316,6 +316,11 @@
     (custom-domain/redirect-to-main req)
     (outer-page req)))
 
+(defpage search-issues "/issues/completed" [req]
+  (if (:subdomain req)
+    (custom-domain/redirect-to-main req)
+    (outer-page req)))
+
 (defpage single-issue "/issues/:issue-uuid" [req]
   (if (:subdomain req)
     (custom-domain/redirect-to-main req)
