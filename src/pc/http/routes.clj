@@ -311,6 +311,11 @@
     (let [cust-uuid (get-in req [:auth :cust :cust/uuid])]
       (content/app (common-view-data req)))))
 
+(defpage search-issues "/issues/search" [req]
+  (if (:subdomain req)
+    (custom-domain/redirect-to-main req)
+    (outer-page req)))
+
 (defpage single-issue "/issues/:issue-uuid" [req]
   (if (:subdomain req)
     (custom-domain/redirect-to-main req)

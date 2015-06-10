@@ -1,10 +1,11 @@
 (ns pc.http.issues
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.http.datomic2 :as datomic2]
             [pc.models.cust :as cust-model]
-            [pc.models.issue :as issue-model]
-            [pc.http.datomic2 :as datomic2])
+            [pc.models.issue :as issue-model])
   (:import [java.util UUID]))
 
 (defonce issue-subs (atom #{}))
@@ -52,3 +53,22 @@
                                  {:frontend/issue-id issue-uuid
                                   :db/id (d/tempid :db.part/user)
                                   :issue/status status}])))))
+
+(defn relax-q [q]
+  (str/join " OR "
+            (for [q-piece (str/split q #"\s+")]
+              (str q-piece "*"))))
+
+(defn search [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [q (:q ?data)]
+    (when (seq q)
+      (let [relaxed-q (relax-q q)
+            db (:db req)]
+        (?reply-fn (pc.utils/inspect {:results (concat (map (partial issue-model/issue-search-read-api db) (issue-model/search-issues db relaxed-q))
+                                                       (map (partial issue-model/comment-search-read-api db) (issue-model/search-comments db relaxed-q)))
+                                      :q q}))))))
+
+(defn fetch [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [frontend-id (:frontend/issue-id ?data)]
+    (log/infof "fetching issue %s for %s" frontend-id client-id)
+    (?reply-fn {:issue (issue-model/read-api (issue-model/find-by-frontend-id (:db req) frontend-id))})))

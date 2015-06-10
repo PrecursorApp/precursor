@@ -322,6 +322,24 @@
                               (:issues-list-id previous-state))]
     (handle-post-doc-navigation navigation-point (assoc args :document/id issues-list-id) previous-state current-state)))
 
+(defmethod navigated-to :issues-search
+  [history-imp navigation-point args state]
+  (let [issues-list-id (when (= (:navigation-point state)
+                                :single-issue)
+                         (:issues-list-id state))]
+    (-> (navigated-default navigation-point args state)
+      (#(if issues-list-id
+          (handle-doc-navigation navigation-point (assoc args :document/id issues-list-id) %)
+          %))
+      (overlay/handle-add-menu :issues/search))))
+
+(defmethod post-navigated-to! :issues-search
+  [history-imp navigation-point args previous-state current-state]
+  (when-let [issues-list-id (when (= (:navigation-point previous-state)
+                                     :single-issue)
+                              (:issues-list-id previous-state))]
+    (handle-post-doc-navigation navigation-point (assoc args :document/id issues-list-id) previous-state current-state)))
+
 (defmethod navigated-to :single-issue
   [history-imp navigation-point args state]
   (let [issue-uuid (UUID. (:issue-uuid args))

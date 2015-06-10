@@ -23,7 +23,7 @@
             [om.core :as om]
             [om.dom :as dom])
   (:require-macros [sablono.core :refer (html)]
-                   [cljs.core.async.macros :as am :refer [go]])
+                   [cljs.core.async.macros :as am :refer [go go-loop]])
   (:import [goog.ui IdGenerator]))
 
 (defn issue-form [_ owner]
@@ -642,6 +642,73 @@
                            {:key :issue-id
                             :opts {:issue-db issue-db}}))]])))))
 
+(defn sorted-results [results]
+  (sort-by second (map (fn [[frontend-id scores]]
+                         [frontend-id (reduce + (map second scores))])
+                       (group-by first results))))
+
+(defn search [{:keys [uuid->cust]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Issue Search")
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                     :results-ch (async/chan (async/sliding-buffer 10))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :frontend/issue-id
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner)))
+      (go-loop []
+        (when-let [res (utils/inspect (async/<! (om/get-state owner :results-ch)))]
+          (when (= (:q res) (om/get-state owner :issue-search))
+            (om/set-state! owner :results (sorted-results (:results res))))
+          (recur))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :frontend/issue-id
+                                     (om/get-state owner :listener-key))
+      (async/close! (om/get-state owner :results-ch)))
+    om/IRender
+    (render [_]
+      (let [issue-db @(om/get-shared owner :issue-db)]
+        (html
+         [:section.menu-view
+          [:div.content.make
+           [:form.issue-form {:on-submit #(utils/stop-event %)}
+            [:div.adaptive
+             [:textarea (merge {:value (om/get-state owner :issue-search)
+                                :required "true"
+                                :onChange #(let [q (.. % -target -value)]
+                                             (om/set-state! owner :issue-search q)
+                                             (if (<= 3 (count q))
+                                               (sente/ch-send-msg (om/get-shared owner :sente)
+                                                                  [:issue/search {:q q}]
+                                                                  2000
+                                                                  (om/get-state owner :results-ch))
+                                               (async/put! (om/get-state owner :results-ch) {:q q :results []})))})]
+             [:label (merge {:data-label "Search"}
+                            {:data-typing "Your search"})]]]
+           (om/build-all issue-card (remove nil? (map (fn [[frontend-id score]]
+                                                        (if-let [issue (issue-model/find-by-frontend-id issue-db frontend-id)]
+                                                          {:issue-id (:db/id issue)
+                                                           :uuid->cust uuid->cust}
+                                                          (do
+                                                            (sente/send-msg (om/get-shared owner :sente)
+                                                                            [:issue/fetch-issue {:frontend/issue-id frontend-id}]
+                                                                            2000
+                                                                            (fn [reply]
+                                                                              (when (taoensso.sente/cb-success? reply)
+                                                                                (d/transact! (om/get-shared owner :issue-db)
+                                                                                             [(:issue reply)]
+                                                                                             {:server-update true}))))
+                                                            nil)))
+                                                      (om/get-state owner :results)))
+                         {:key :issue-id
+                          :opts {:issue-db issue-db}})]])))))
+
 (defn issue [{:keys [issue-uuid uuid->cust]} owner]
   (reify
     om/IDisplayName (display-name [_] "Issue Wrapper")
@@ -680,9 +747,11 @@
     (render [_]
       (html
        (if submenu
-         (om/build issue {:issue-uuid (:active-issue-uuid app)
-                          :uuid->cust (:uuid->cust app)}
-                   {:key :issue-uuid})
+         (if (= :search submenu)
+           (om/build search {:uuid->cust (:uuid->cust app)})
+           (om/build issue {:issue-uuid (:active-issue-uuid app)
+                            :uuid->cust (:uuid->cust app)}
+                     {:key :issue-uuid}))
          (om/build issue-list {:uuid->cust (:uuid->cust app)} {:react-key "issue-list"}))))))
 
 (defn issues [app owner {:keys [submenu]}]
