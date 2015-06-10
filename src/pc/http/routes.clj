@@ -430,11 +430,19 @@
 
 (defpage login "/login" [req]
   (analytics/track-signup-clicked req)
-  (redirect (google-auth/oauth-uri csrf/*anti-forgery-token*
-                                   :redirect-path (get-in req [:params :redirect-path] "/")
-                                   :redirect-query (get-in req [:params :redirect-query])
-                                   :redirect-subdomain (get-in req [:params :redirect-subdomain])
-                                   :redirect-csrf-token (get-in req [:params :redirect-csrf-token]))))
+  (if (:subdomain req)
+    (redirect (urls/make-url "/login"
+                             :query {:redirect-path (get-in req [:params :redirect-path] "/")
+                                     :redirect-query (get-in req [:params :redirect-query])
+                                     :redirect-subdomain (:subdomain req)
+                                     :redirect-csrf-token csrf/*anti-forgery-token*
+                                     :login-hint (get-in req [:params :login-hint])}))
+    (redirect (google-auth/oauth-uri csrf/*anti-forgery-token*
+                                     :redirect-path (get-in req [:params :redirect-path] "/")
+                                     :redirect-query (get-in req [:params :redirect-query])
+                                     :redirect-subdomain (get-in req [:params :redirect-subdomain])
+                                     :redirect-csrf-token (get-in req [:params :redirect-csrf-token])
+                                     :login-hint (get-in req [:params :login-hint])))))
 
 (defpage logout [:post "/logout"] [{{redirect-to :redirect-to} :params :as req}]
   (when-let [cust (-> req :auth :cust)]

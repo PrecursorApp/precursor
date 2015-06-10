@@ -7,7 +7,7 @@
 
 (def google-client-id (aget js/window "Precursor" "google-client-id"))
 
-(defn auth-url [& {:keys [redirect-path scopes redirect-query source]
+(defn auth-url [& {:keys [redirect-path scopes redirect-query source subdomain login-hint]
                    :or {scopes ["openid" "email"]}}]
   (let [url (url/url (.. js/window -location -href))
         redirect-query (or redirect-query
@@ -15,7 +15,9 @@
                              (url/map->query (:query url))))]
     (str (url/map->URL {:protocol config/scheme
                         :port config/port
-                        :host config/hostname
+                        :host (if subdomain
+                                (str subdomain "." config/hostname)
+                                config/hostname)
                         :path "/login"
                         :query (cond-> {:redirect-path (or redirect-path (:path url))}
                                  redirect-query
@@ -26,7 +28,14 @@
 
                                  config/subdomain
                                  (merge {:redirect-subdomain config/subdomain
-                                         :redirect-csrf-token (utils/csrf-token)}))}))))
+                                         :redirect-csrf-token (utils/csrf-token)})
+
+                                 subdomain
+                                 (merge {:redirect-subdomain subdomain
+                                         :redirect-csrf-token (utils/csrf-token)})
+
+                                 login-hint
+                                 (assoc :login-hint login-hint))}))))
 
 ;; TODO: we should have more info about users and docs in the frontend db
 (defn has-document-access? [state doc-id]
