@@ -16,3 +16,6 @@
 
 (defn cust-info-from-cust [cust]
   (make-url (str "/user/" (:cust/email cust))))
+
+(defn team-info-from-team [team]
+  (make-url (str "/team/" (:team/subdomain team))))

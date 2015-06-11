@@ -23,6 +23,8 @@
             [frontend.models.chat :as chat-model]
             [frontend.models.doc :as doc-model]
             [frontend.models.layer :as layer-model]
+            [frontend.models.plan :as plan-model]
+            [frontend.models.team :as team-model]
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
             [frontend.routes :as routes]
@@ -1908,6 +1910,14 @@
                         #(utils/mlog "closed stripe checkout")
                         {:panelLabel "Change card"}))
 
+(defmethod post-control-event! :extend-trial-clicked
+  [browser-state message _ previous-state current-state]
+  (sente/send-msg (:sente current-state) [:team/extend-trial {:team/uuid (get-in current-state [:team :team/uuid])}]
+                  5000
+                  (fn [reply]
+                    (when (taoensso.sente/cb-success? reply)
+                      (d/transact! (:team-db current-state) [(utils/inspect (:plan reply))] {:server-update true})))))
+
 (defmethod post-control-event! :billing-email-changed
   [browser-state message {:keys [plan-id email]} previous-state current-state]
   (d/transact! (:team-db current-state)
@@ -2031,3 +2041,14 @@
       (if (:success res)
         (put! (get-in current-state [:comms :controls]) [:layers-pasted (assoc (clipboard/parse-pasted (:body res))
                                                                                :canvas-size (utils/canvas-size))])))))
+
+(defmethod post-control-event! :plan-entities-stored
+  [browser-state message {:keys [team/uuid]} previous-state current-state]
+  (when (= uuid (get-in current-state [:team :team/uuid]))
+    (let [plan (:team/plan (team-model/find-by-uuid @(:team-db current-state) (get-in current-state [:team :team/uuid])))]
+      (when (and (not (:plan/paid? plan))
+                 (plan-model/trial-over? plan))
+        (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path (doc-model/find-by-id @(:db current-state)
+                                                                                                               (:document/id current-state))
+                                                                                         "plan")
+                                                                :replace-token? true}])))))
