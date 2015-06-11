@@ -375,7 +375,7 @@
               [:span "Add payment"]]
              (when (plan-model/trial-over? plan)
                [:a.vein.make {:on-click #(cast! :extend-trial-clicked)}
-                (common/icon :credit)
+                (common/icon :plus)
                 [:span "Extend trial"]]))
             (list
              [:a.vein.make {:href (urls/plan-submenu-path doc "info")}
