@@ -103,22 +103,21 @@
 
 ;; debug method for showing text with bounding box
 #_(defmethod svg-element :layer.type/text
-    [layer]
-    (let [text-props (svg/layer->svg-text layer)]
-      (dom/g nil
-        (svg-element (assoc layer
-                            :layer/type :layer.type/rect
-                            :key (str (:db/id layer) "-text-bbox")
-                            :style #js {:stroke "yellow"}))
-        (-> text-props
-          (maybe-add-classes layer)
-          (clj->js)
-          (#(apply dom/text % (reduce (fn [tspans text]
-                                        (conj tspans (dom/tspan
-                                                      #js {:dy (if (seq tspans) "1em" "0")
-                                                           :x (:x text-props)}
-                                                      text)))
-                                      [] (str/split (:layer/text layer) #"\n"))))))))
+  [layer]
+  (let [text-props (svg/layer->svg-text layer)]
+    (dom/g nil
+      (svg-element (assoc layer
+                          :layer/type :layer.type/rect
+                          :key (str (:db/id layer) "-text-bbox")
+                          :style #js {:stroke "yellow"}))
+      (-> text-props
+        (maybe-add-classes layer)
+        (clj->js)
+        (#(apply dom/text % (reduce (fn [tspans text]
+                                      (conj tspans (apply dom/tspan #js {:dy (if (seq tspans) "1em" "0")
+                                                                         :x (:x text-props)}
+                                                          (fontify text))))
+                                    [] (str/split (:layer/text layer) #"\n"))))))))
 
 (defmethod svg-element :layer.type/line
   [layer]

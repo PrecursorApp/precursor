@@ -587,6 +587,13 @@
                        [[:db/add entity-id :frontend/id (java.util.UUID. namespace-part client-part)]])}
              :db/doc "Assigns frontend-id, meant to be used with the partition reserved for the backend")
 
+   (function :inc
+             '{:lang :clojure
+               :params [db e a amount]
+               :code [[:db/add e a
+                       (-> (d/entity db e) a ((fnil + 0) amount))]]}
+             :db/doc "Data function that increments value of attribute a by amount.")
+
    (attribute :early-access-request/company-name
               :db.type/string
               :db/doc "Early access request form field."
@@ -692,6 +699,9 @@
               :db/doc "Stripe webhook ids that have been handled or are currently being handled")
 
    (attribute :plan/account-balance
+              :db.type/long)
+
+   (attribute :plan/extension-count
               :db.type/long)
 
    (attribute :credit-card/exp-year

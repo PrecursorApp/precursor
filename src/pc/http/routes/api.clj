@@ -63,7 +63,7 @@
 
 (defpage create-team [:post "/api/v1/create-team"] [req]
   (let [params (some-> req :body slurp edn/read-string)
-        subdomain (some-> params :subdomain str/lower-case)
+        subdomain (some-> params :subdomain str/lower-case str/trim)
         coupon-code (some-> params :coupon-code)
         cust (get-in req [:auth :cust])]
     (cond (empty? cust)

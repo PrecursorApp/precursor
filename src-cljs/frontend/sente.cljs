@@ -162,7 +162,9 @@
   (when (= (:team/uuid data) (get-in @app-state [:team :team/uuid]))
     (d/transact! (:team-db @app-state)
                  (:entities data)
-                 {:server-update true})))
+                 {:server-update true})
+    (when (= :plan (:entity-type data))
+      (put! (get-in @app-state [:comms :controls]) [:plan-entities-stored {:team/uuid (:team/uuid data)}]))))
 
 (defmethod handle-message :issue/db-entities [app-state message data]
   (d/transact! (:issue-db @app-state)

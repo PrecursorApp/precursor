@@ -129,11 +129,10 @@
 
                     submitted? [:a.trial-success
                                 {:target "_self"
-                                 :href (str (url/map->URL {:host (str (:team/subdomain team) "." config/hostname)
-                                                           :protocol config/scheme
-                                                           :port config/port
-                                                           :path (str "/document/" (:team/intro-doc team))
-                                                           :query {:overlay "roster"}}))}
+                                 :href (auth/auth-url :redirect-path (str "/document/" (:team/intro-doc team) "/roster")
+                                                      :source "create-team-trial"
+                                                      :subdomain (:team/subdomain team)
+                                                      :login-hint (om/get-shared owner [:cust :cust/email]))}
                                 (str (str (:team/subdomain team) "." config/hostname)
                                      " is ready, let's go!")]
 

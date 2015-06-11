@@ -4,9 +4,11 @@
             [clj-http.client :as http]
             [clj-time.core :as time]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [datomic.api :as d]
             [pc.datomic :as pcd]
             [pc.mixpanel :as mixpanel]
+            [pc.models.cust :as cust-model]
             [pc.util.date :as date-util]
             [pc.util.md5 :as md5]))
 
@@ -78,40 +80,6 @@
                (assoc m (clj-time.format/parse k) v))
              {} (get-in (fetch-segment event from-date to-date :unit "month") ["data" "values" event])))
 
-(defn mark-early-access []
-  (let [db (pcd/default-db)
-        early-access-cust-uuids (d/q '{:find [[?uuid ...]]
-                                       :where [[?e :flags :flags/requested-early-access]
-                                               [?e :cust/uuid ?uuid]]}
-                                     db)]
-    (doseq [cust-uuid early-access-cust-uuids]
-      (mixpanel/engage cust-uuid {:$set {:requested_early_access true}}))))
-
-(defn mark-private-docs []
-  (let [db (pcd/default-db)
-        early-access-cust-uuids (d/q '{:find [[?uuid ...]]
-                                       :where [[?e :flags :flags/private-docs]
-                                               [?e :cust/uuid ?uuid]]}
-                                     db)]
-    (doseq [cust-uuid early-access-cust-uuids]
-      (mixpanel/engage cust-uuid {:$set {:has_private_docs true}}))))
-
-(defn mark-duplicates []
-  (let [people (fetch-people "boolean(properties[\"$email\"])" :all-pages? true)]
-    (doseq [person people
-            :let [distinct-id (get person "$distinct_id")]
-            :when (re-find #"u'" distinct-id)]
-      (mixpanel/engage distinct-id {:$set {:duplicate_user true}}))))
-
-(defn mark-team-trials []
-  (let [db (pcd/default-db)
-        creator-uuids (d/q '{:find [[?uuid ...]]
-                                       :where [[?e :team/creator ?t]
-                                               [?t :cust/uuid ?uuid]]}
-                                     db)]
-    (doseq [cust-uuid creator-uuids]
-      (mixpanel/engage cust-uuid {:$set {:send_team_trial_email true}}))))
-
 (defn pprint-referrers [referrer-string]
   (clojure.pprint/print-table (->> (fetch-people (format "\"%s\" in properties[\"$initial_referrer\"]" referrer-string) :all-pages? true)
                                 (map #(-> %
@@ -126,3 +94,49 @@
                                 reverse
                                 (map (fn [[url c]]
                                        {:url (str url) :count c})))))
+
+(defn mark-contacts []
+  (let [db (pcd/default-db)
+        cust-uuids (map :cust/uuid (cust-model/all db))]
+    (doseq [cust-group (partition-all 100 cust-uuids)]
+      (Thread/sleep 100)
+      (doseq [cust-uuid cust-group
+              :let [contact (first (shuffle cust-model/admin-emails))]]
+        (log/infof "setting contact to %s for %s" contact cust-uuid)
+        (mixpanel/engage cust-uuid {:$ip 0
+                                    :$ignore_time true
+                                    :$set {:precursor-contact contact}})))))
+
+#_(defn mark-early-access []
+  (let [db (pcd/default-db)
+        early-access-cust-uuids (d/q '{:find [[?uuid ...]]
+                                       :where [[?e :flags :flags/requested-early-access]
+                                               [?e :cust/uuid ?uuid]]}
+                                     db)]
+    (doseq [cust-uuid early-access-cust-uuids]
+      (mixpanel/engage cust-uuid {:$set {:requested_early_access true}}))))
+
+#_(defn mark-private-docs []
+  (let [db (pcd/default-db)
+        early-access-cust-uuids (d/q '{:find [[?uuid ...]]
+                                       :where [[?e :flags :flags/private-docs]
+                                               [?e :cust/uuid ?uuid]]}
+                                     db)]
+    (doseq [cust-uuid early-access-cust-uuids]
+      (mixpanel/engage cust-uuid {:$set {:has_private_docs true}}))))
+
+#_(defn mark-duplicates []
+  (let [people (fetch-people "boolean(properties[\"$email\"])" :all-pages? true)]
+    (doseq [person people
+            :let [distinct-id (get person "$distinct_id")]
+            :when (re-find #"u'" distinct-id)]
+      (mixpanel/engage distinct-id {:$set {:duplicate_user true}}))))
+
+#_(defn mark-team-trials []
+  (let [db (pcd/default-db)
+        creator-uuids (d/q '{:find [[?uuid ...]]
+                                       :where [[?e :team/creator ?t]
+                                               [?t :cust/uuid ?uuid]]}
+                                     db)]
+    (doseq [cust-uuid creator-uuids]
+      (mixpanel/engage cust-uuid {:$set {:send_team_trial_email true}}))))

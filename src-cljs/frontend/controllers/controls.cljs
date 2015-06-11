@@ -23,6 +23,8 @@
             [frontend.models.chat :as chat-model]
             [frontend.models.doc :as doc-model]
             [frontend.models.layer :as layer-model]
+            [frontend.models.plan :as plan-model]
+            [frontend.models.team :as team-model]
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
             [frontend.routes :as routes]
@@ -296,9 +298,21 @@
                                                         :replace-token? true}])
         (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc "shortcuts")}])))))
 
+(defn handle-recording-toggled [current-state]
+  (if rtc/supports-rtc?
+    (if-let [recording (get-in current-state (state/self-recording-path current-state))]
+      (rtc/end-stream (:stream-id recording))
+      (rtc/setup-stream (get-in current-state [:comms :controls])))
+    (chat-model/create-bot-chat (:db current-state)
+                                current-state
+                                (str "Unable to get capture audio,"
+                                     " your browser doesn't seem to support webRTC."
+                                     " Please try Chrome, Firefox or Opera. Ping @prcrsr for help.")
+                                {:error/id :error/webrtc-unsupported})))
+
 (defmethod handle-keyboard-shortcut-after :record
   [state shortcut-name key-set]
-  (rtc/setup-stream (get-in state [:comms :controls])))
+  (handle-recording-toggled state))
 
 (defn next-font-size [current-size direction]
   (let [grow? (keyword-identical? :grow direction)
@@ -866,7 +880,7 @@
   (-> state
     (assoc-in [:pan :position] {:x x :y y})))
 
-(defn mouse-depressed-intents [state button ctrl? shift? outside-canvas?]
+(defn mouse-depressed-intents [state button ctrl? shift? meta? outside-canvas?]
   (let [tool (get-in state state/current-tool-path)
         drawing-text? (and (keyword-identical? :text tool)
                            (get-in state [:drawing :in-progress?]))]
@@ -879,6 +893,7 @@
        (keyboard/pan-shortcut-active? state) [:pan]
        (= button 2) [:open-radial]
        (and (= button 0) ctrl? (not shift?)) [:open-radial]
+       (and (= button 0) meta? (not shift?)) [:open-radial]
        (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
        (contains? #{:pen :rect :circle :line :select} tool) [:start-drawing]
        (and (keyword-identical? tool :text) (not drawing-text?)) [:start-drawing]
@@ -892,10 +907,10 @@
 (declare handle-text-layer-finished-after)
 
 (defmethod control-event :mouse-depressed
-  [browser-state message [x y {:keys [button type ctrl? shift? outside-canvas?]}] state]
+  [browser-state message [x y {:keys [button type ctrl? shift? meta? outside-canvas?]}] state]
   (if (empty? (:frontend-id-state state))
     state
-    (let [intents (mouse-depressed-intents state button ctrl? shift? outside-canvas?)
+    (let [intents (mouse-depressed-intents state button ctrl? shift? meta? outside-canvas?)
           new-state (-> state
                       (update-mouse x y)
                       (assoc-in [:mouse-down] true)
@@ -911,10 +926,10 @@
               new-state intents))))
 
 (defmethod post-control-event! :mouse-depressed
-  [browser-state message [x y {:keys [button ctrl? shift? outside-canvas?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button ctrl? shift? meta? outside-canvas?]}] previous-state current-state]
   (when-not (empty? (:frontend-id-state previous-state))
     ;; use previous state so that we're consistent with the control-event
-    (let [intents (mouse-depressed-intents previous-state button ctrl? shift? outside-canvas?)]
+    (let [intents (mouse-depressed-intents previous-state button ctrl? shift? meta? outside-canvas?)]
       (doseq [intent intents]
         (case intent
           :finish-text-layer (handle-text-layer-finished-after previous-state current-state)
@@ -1008,7 +1023,7 @@
         (drop-layers)))))
 
 (defmethod post-control-event! :mouse-released
-  [browser-state message [x y {:keys [button type ctrl?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button type ctrl? meta?]}] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
@@ -1023,6 +1038,7 @@
      (and (not= type "touchend")
           (not= button 2)
           (not (and (= button 0) ctrl?))
+          (not (and (= button 0) meta?))
           (get-in current-state [:radial :open?]))
      (cast! [:radial-closed])
 
@@ -1793,9 +1809,7 @@
 
 (defmethod post-control-event! :recording-toggled
   [browser-state message _ previous-state current-state]
-  (if-let [recording (get-in current-state (state/self-recording-path current-state))]
-    (rtc/end-stream (:stream-id recording))
-    (rtc/setup-stream (get-in current-state [:comms :controls]))))
+  (handle-recording-toggled current-state))
 
 (defmethod control-event :media-stream-started
   [browser-state message {:keys [stream-id]} state]
@@ -1896,6 +1910,14 @@
                         #(utils/mlog "closed stripe checkout")
                         {:panelLabel "Change card"}))
 
+(defmethod post-control-event! :extend-trial-clicked
+  [browser-state message _ previous-state current-state]
+  (sente/send-msg (:sente current-state) [:team/extend-trial {:team/uuid (get-in current-state [:team :team/uuid])}]
+                  5000
+                  (fn [reply]
+                    (when (taoensso.sente/cb-success? reply)
+                      (d/transact! (:team-db current-state) [(utils/inspect (:plan reply))] {:server-update true})))))
+
 (defmethod post-control-event! :billing-email-changed
   [browser-state message {:keys [plan-id email]} previous-state current-state]
   (d/transact! (:team-db current-state)
@@ -1910,8 +1932,8 @@
   [browser-state message {:keys [uuids]} previous-state current-state]
   (let [current-uuids (set (keys (get-in current-state [:cust-data :uuid->cust])))
         new-uuids (set/difference uuids current-uuids)]
-    (when (seq new-uuids)
-      (sente/send-msg (:sente current-state) [:frontend/fetch-custs {:uuids new-uuids}]))))
+    (doseq [uuid-group  (partition-all 100 new-uuids)]
+      (sente/send-msg (:sente current-state) [:frontend/fetch-custs {:uuids uuid-group}]))))
 
 (defmethod control-event :doc-name-edited
   [browser-state message {:keys [doc-id doc-name]} state]
@@ -2019,3 +2041,14 @@
       (if (:success res)
         (put! (get-in current-state [:comms :controls]) [:layers-pasted (assoc (clipboard/parse-pasted (:body res))
                                                                                :canvas-size (utils/canvas-size))])))))
+
+(defmethod post-control-event! :plan-entities-stored
+  [browser-state message {:keys [team/uuid]} previous-state current-state]
+  (when (= uuid (get-in current-state [:team :team/uuid]))
+    (let [plan (:team/plan (team-model/find-by-uuid @(:team-db current-state) (get-in current-state [:team :team/uuid])))]
+      (when (and (not (:plan/paid? plan))
+                 (plan-model/trial-over? plan))
+        (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path (doc-model/find-by-id @(:db current-state)
+                                                                                                               (:document/id current-state))
+                                                                                         "plan")
+                                                                :replace-token? true}])))))

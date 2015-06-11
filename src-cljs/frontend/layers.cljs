@@ -1,7 +1,8 @@
 (ns frontend.layers
-  (:require [clojure.string]
+  (:require [clojure.string :as str]
             [frontend.state :as state]
-            [frontend.utils :as utils]))
+            [frontend.utils :as utils]
+            [frontend.utils.font-map :as font-map]))
 
 (defn layers [state]
   (:shapes state))
@@ -241,11 +242,30 @@
                                           t1
                                           cross-point)))))
 
+
+(defn remove-font-awesome-marks [text]
+  (str/replace text #":(fa-[^:]+):"
+               (fn [m class-name]
+                 (if (font-map/class->unicode class-name)
+                   ""
+                   m))))
+
+(defn font-awesome-width [layer]
+  (let [text (:layer/text layer "")]
+    (reduce (fn [acc [_ class-name]]
+              (if-let [ch (font-map/class->unicode class-name)]
+                (+ acc (utils/measure-text-width ch
+                                                 (:layer/font-size layer state/default-font-size)
+                                                 "FontAwesome"))
+                acc))
+            0 (re-seq #":(fa-[^:]+):" text))))
+
 (defn calc-text-end-x [layer]
   (+ (:layer/start-x layer)
-     (utils/measure-text-width (:layer/text layer "")
+     (utils/measure-text-width (remove-font-awesome-marks (:layer/text layer ""))
                                (:layer/font-size layer state/default-font-size)
-                               (:layer/font-family layer state/default-font-family))))
+                               (:layer/font-family layer state/default-font-family))
+     (font-awesome-width layer)))
 
 (defn calc-text-end-y [layer]
   (- (:layer/start-y layer)

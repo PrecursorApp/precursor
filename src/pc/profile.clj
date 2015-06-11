@@ -142,3 +142,6 @@
   (if (prod?)
     (System/getenv "DOC_IMAGES_S3_SECRET_KEY")
     "AKr8NucqQKmnGt35kcq/+sZ2q8BEjpi0IwqNrw9H"))
+
+(defn send-librato-events? []
+  (prod?))

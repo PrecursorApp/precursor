@@ -1,8 +1,10 @@
 (ns pc.statsd
-  (:require [clj-http.client :as http]
+  (:require [cheshire.core :as json]
+            [clj-http.client :as http]
             [clj-statsd :as s]
             [pc.profile :as profile]
-            [pc.utils]))
+            [pc.utils]
+            [pc.version]))
 
 (def librato-api-name "daniel+start-trial@prcrsr.com")
 (def librato-api-token "d6f799f643c673a6eb2f555b78362324f6a39a0780fe03a5fff9c58a9d6c145f")
@@ -17,6 +19,13 @@
                                     (when source
                                       {:source source}))}}}))
 
+(defn post-annotation [annotation-stream & {:keys [title source description links start_time end_time]
+                                            :as args}]
+  (http/post (str "https://metrics-api.librato.com/v1/annotations/" annotation-stream)
+             {:content-type :json
+              :basic-auth [librato-api-name librato-api-token]
+              :body (json/encode args)}))
+
 (defn post-gauge [name value & {:keys [source]}]
   (post-metric "gauges" name value :source source))
 
@@ -27,6 +36,17 @@
 (defn send-deadman-ping-cron []
   (post-gauge "deadman" 1))
 
+(defn notify-deployment []
+  (let [version (pc.version/version)]
+    (post-annotation "deploys"
+                     :title (str version " deploy")
+                     :links [{:rel "github"
+                              :label "GitHub commit"
+                              :href (str "https://github.com/dwwoelfel/precursor/commit/" version)}])))
+
 (defn init []
   (s/setup (profile/statsd-host) 8125)
-  (pc.utils/safe-schedule {:minute (range 0 60)} #'send-deadman-ping-cron))
+  (when (pc.profile/send-librato-events?)
+    (pc.utils/straight-jacket
+     (notify-deployment))
+    (pc.utils/safe-schedule {:minute (range 0 60)} #'send-deadman-ping-cron)))
