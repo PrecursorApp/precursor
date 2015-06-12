@@ -19,6 +19,10 @@
             [taoensso.sente :as sente])
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)]))
 
+(defn cb-success? [reply]
+  (and (sente/cb-success? reply)
+       (not (:tal/error reply))))
+
 (defn send-msg-sente [sente-state message & [timeout-ms callback-fn :as rest]]
   (if (-> sente-state :state deref :open?)
     (apply (:send-fn sente-state) message rest)
@@ -46,7 +50,7 @@
 (defn update-server-offset [sente-state]
   (let [start (goog/now)]
     (send-msg sente-state [:server/timestamp] 1000 (fn [reply]
-                                                     (when (sente/cb-success? reply)
+                                                     (when (cb-success? reply)
                                                        (let [latency (- (goog/now) start)]
                                                          (datetime/update-server-offset (:date (second reply)) latency)))))))
 
@@ -56,7 +60,7 @@
                                               :requested-remainder requested-remainder}]
             5000
             (fn [reply]
-              (if (sente/cb-success? reply)
+              (if (cb-success? reply)
                 (put! (:api comms) [(first reply) :success (assoc (second reply)
                                                                   :context {:document-id document-id})])
                 (put! (:errors comms) [:subscribe-to-document-error {:document-id document-id}])))))
@@ -68,7 +72,7 @@
   (send-msg sente-state [:issue/subscribe {}]
             10000
             (fn [reply]
-              (if (sente/cb-success? reply)
+              (if (cb-success? reply)
                 (let [ents (:entities reply)
                       uuids (atom #{})]
                   (walk/postwalk (fn [x]

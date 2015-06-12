@@ -35,8 +35,7 @@
             [goog.string.format]
             [goog.userAgent]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
-            [taoensso.sente])
+            [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)]
                    [cljs.core.async.macros :refer (go)])
   (:import [goog.ui IdGenerator]))
@@ -622,7 +621,7 @@
                                                                                30000
                                                                                (async/promise-chan)))]
                                                 (om/set-state! owner :sending? false)
-                                                (if (taoensso.sente/cb-success? res)
+                                                (if (sente/cb-success? res)
                                                   (if (= :success (:status res))
                                                     (do (d/transact! db [(:permission res)] {:server-update true})
                                                         (om/set-state! owner :error nil))

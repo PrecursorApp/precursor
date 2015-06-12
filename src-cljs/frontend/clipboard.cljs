@@ -17,8 +17,7 @@
             [goog.string :as gstring]
             [goog.string.format]
             [goog.style]
-            [hiccups.runtime :as hiccupsrt]
-            [taoensso.sente])
+            [hiccups.runtime :as hiccupsrt])
   (:require-macros [hiccups.core :as hiccups]
                    [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
 
@@ -244,7 +243,7 @@
                        acc))
               rendered-layers (render-layers {:layers layers} :defs defs)
               s3-url-reply (async/<! s3-url-ch)]
-          (when (taoensso.sente/cb-success? s3-url-reply)
+          (when (sente/cb-success? s3-url-reply)
             (let [res (async/<! (http/put (:url s3-url-reply)
                                           {:body rendered-layers
                                            :headers {"Content-Type" "image/svg+xml"}}))]

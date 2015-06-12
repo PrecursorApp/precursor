@@ -127,7 +127,7 @@
       (sente/send-msg (om/get-shared owner :sente) [:cust/fetch-teams]
                       20000
                       (fn [res]
-                        (if (taoensso.sente/cb-success? res)
+                        (if (sente/cb-success? res)
                           (om/set-state! owner :teams (:teams res))
                           (comment "do something about errors")))))
     om/IRenderState
