@@ -249,7 +249,10 @@
                           acc))
                       #{} @document-subs)]
     (log/infof "notifying %s about %s leaving" uid client-id)
-    (send-msg {:sente-state sente-state} uid [:frontend/subscriber-left {:client-id client-id}]))
+    (send-msg {:sente-state sente-state
+               :tal/state tal/talaria-state}
+              uid
+              [:frontend/subscriber-left {:client-id client-id}]))
   (clean-team-subs client-id)
   (clean-document-subs client-id)
   (issues-http/unsubscribe client-id)
