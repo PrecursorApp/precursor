@@ -104,7 +104,7 @@
   (chan))
 
 (defn app-state []
-  (let [initial-state (state/initial-state)
+  (let [initial-state (atom (state/initial-state))
         document-id (or (aget js/window "Precursor" "initial-document-id")
                         ;; TODO: remove after be is fully deployed
                         (when-let [id (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri)))]
@@ -130,39 +130,49 @@
                                               (.getDomain utils/parsed-uri)
                                               ":"
                                               (.getPort utils/parsed-uri)
-                                              "/talaria?tab-id=" tab-id)))]
-    (atom (-> (assoc initial-state
-                     ;; id for the browser, used to filter transactions
-                     :admin? admin?
-                     :tab-id tab-id
-                     :sente-id sente-id
-                     :client-id (str sente-id "-" tab-id)
-                     :db (db/make-initial-db initial-entities)
-                     ;; team entities go into the team namespace, so we need a separate database
-                     ;; to prevent conflicts
-                     :team-db (db/make-initial-db nil)
-                     :issue-db issue-db
-                     :document/id document-id
-                     ;; Communicate to nav channel that we shouldn't reset db
-                     :initial-state true
-                     :cust cust
-                     :team team
-                     :subdomain config/subdomain
-                     :show-landing? (:show-landing? utils/initial-query-map)
-                     :ab-choices ab-choices
-                     :tal tal
-                     :use-talaria? use-talaria?
-                     :comms {:controls      controls-ch
-                             :api           api-ch
-                             :errors        errors-ch
-                             :nav           navigation-ch
-                             :controls-mult (async/mult controls-ch)
-                             :api-mult      (async/mult api-ch)
-                             :errors-mult   (async/mult errors-ch)
-                             :nav-mult      (async/mult navigation-ch)})
-            (merge (when use-talaria?
-                     {:sente tal}))
-            (browser-settings/restore-browser-settings cust)))))
+                                              "/talaria?tab-id=" tab-id
+                                              "&csrf-token=" (utils/csrf-token))
+                                         :on-reconnect (fn [tal-state]
+                                                         (let [s @initial-state]
+                                                           (when (:document/id s)
+                                                             (sente/subscribe-to-document tal-state
+                                                                                          (:comms s)
+                                                                                          (:document/id s)
+                                                                                          :requested-color (get-in s [:subscribers :info (:client-id s) :color])
+                                                                                          :requested-remainder (get-in s [:subscribers :info (:client-id s) :frontend-id-seed :remainder])))))))]
+    (swap! initial-state #(-> (assoc %
+                                     ;; id for the browser, used to filter transactions
+                                     :admin? admin?
+                                     :tab-id tab-id
+                                     :sente-id sente-id
+                                     :client-id (str sente-id "-" tab-id)
+                                     :db (db/make-initial-db initial-entities)
+                                     ;; team entities go into the team namespace, so we need a separate database
+                                     ;; to prevent conflicts
+                                     :team-db (db/make-initial-db nil)
+                                     :issue-db issue-db
+                                     :document/id document-id
+                                     ;; Communicate to nav channel that we shouldn't reset db
+                                     :initial-state true
+                                     :cust cust
+                                     :team team
+                                     :subdomain config/subdomain
+                                     :show-landing? (:show-landing? utils/initial-query-map)
+                                     :ab-choices ab-choices
+                                     :tal tal
+                                     :use-talaria? use-talaria?
+                                     :comms {:controls      controls-ch
+                                             :api           api-ch
+                                             :errors        errors-ch
+                                             :nav           navigation-ch
+                                             :controls-mult (async/mult controls-ch)
+                                             :api-mult      (async/mult api-ch)
+                                             :errors-mult   (async/mult errors-ch)
+                                             :nav-mult      (async/mult navigation-ch)})
+                            (merge (when use-talaria?
+                                     {:sente tal}))
+                            (browser-settings/restore-browser-settings cust)))
+    initial-state))
 
 (defn controls-handler
   [[msg data :as value] state browser-state]

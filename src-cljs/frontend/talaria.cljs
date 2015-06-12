@@ -65,13 +65,28 @@
 (defn shutdown-send-queue [tal-state]
   (remove-watch (:send-queue @tal-state) ::send-watcher))
 
-;; XXX: handle special messages from the server (ping, close)
+(defn close-connection [tal-state]
+  (.close (:ws @tal-state)))
+
+;; TODO: write own websocket handling code
+(defn reconnect [tal-state]
+  (close-connection tal-state))
+
 (defn consume-recv-queue [tal-state handler]
   (let [recv-queue (:recv-queue @tal-state)]
     (loop [msg (pop-atom recv-queue)]
       (when msg
-        (if (keyword-identical? :tal/reply (:op msg))
+        (cond
+          (keyword-identical? :tal/reply (:op msg))
           (run-callback tal-state (:tal/cb-uuid msg) (:data msg))
+
+          (keyword-identical? :tal/close (:op msg))
+          (close-connection tal-state)
+
+          (keyword-identical? :tal/reconnect (:op msg))
+          (reconnect tal-state)
+
+          :else
           (handler msg))
         (recur (pop-atom recv-queue))))))
 
@@ -91,61 +106,71 @@
                                  (queue-msg tal-state {:op :tal/ping}))))
                            (/ ms 2))))
 
+(defn setup-ws [url tal-state & {:keys [on-open on-close on-error on-reconnect reconnecting?]
+                                 :as args}]
+  (let [w (js/WebSocket. url)]
+    (swap! tal-state assoc :ws w)
+    (aset w "onopen"
+          #(do
+             (utils/mlog "opened" %)
+             (let [timer-id (start-ping tal-state)]
+               (swap! tal-state (fn [s]
+                                  (-> s
+                                    (assoc :open? true
+                                           :keep-alive-timer timer-id)
+                                    (dissoc :closed? :close-code :close-reason)))))
+             (start-send-queue tal-state)
+             (when (and reconnecting? (fn? on-reconnect))
+               (on-reconnect tal-state))
+
+             (when (fn? on-open)
+               (on-open tal-state))))
+    (aset w "onclose"
+          #(do
+             (utils/mlog "closed" %)
+             (shutdown-send-queue tal-state)
+             (swap! tal-state assoc
+                    :ws nil
+                    :open? false
+                    :closed? true
+                    :close-code (.-code %)
+                    :close-reason (.-reason %))
+             (js/clearInterval (:keep-alive-timer @tal-state))
+             (when (fn? on-close)
+               (on-close tal-state {:code (.-code %)
+                                    :reason (.-reason %)}))
+             (js/setTimeout (fn []
+                              (when-not (:ws @tal-state)
+                                (utils/apply-map setup-ws url tal-state (assoc args :reconnecting? true))))
+                            1000)))
+    (aset w "onerror"
+          #(do (utils/mlog "error" %)
+               (swap! tal-state assoc :last-error-time (js/Date.))
+               (when (fn? on-error)
+                 (on-error tal-state))))
+    (aset w "onmessage"
+          #(do
+             ;;(utils/mlog "message" %)
+             (swap! tal-state assoc :last-recv-time (js/Date.))
+             (swap! (:recv-queue @tal-state) (fn [q] (apply conj q (decode-msg (.-data %)))))))))
+
 (defn init
   "Guaranteed to run keep-alive every keep-alive-ms interval, but may probably run
    about twice as often"
-  [url & {:keys [on-open on-close on-error keep-alive-ms]
+  [url & {:keys [on-open on-close on-error on-reconnect keep-alive-ms]
           :or {keep-alive-ms 60000}}]
 
-  (let [ ;; creates class that will handle auto-reconnecting on failure
-        w (goog.net.WebSocket.)
-        ch (async/chan (async/sliding-buffer 1024))
+  (let [ch (async/chan (async/sliding-buffer 1024))
         send-queue (atom [])
         recv-queue (atom [])
-        tal-state (atom {:ws w
-                         :keep-alive-ms keep-alive-ms
+        tal-state (atom {:keep-alive-ms keep-alive-ms
                          :open? false
                          :send-queue send-queue
                          :recv-queue recv-queue
                          :callbacks {}})]
-    (gevents/listen w goog.net.WebSocket.EventType.OPENED
-                    #(do
-                       (utils/mlog "opened" %)
-                       (let [timer-id (start-ping tal-state)]
-                         (swap! tal-state (fn [s]
-                                            (-> s
-                                              (assoc :open? true
-                                                     :keep-alive-timer timer-id)
-                                              (dissoc :closed? :close-code :close-reason)))))
-                       (start-send-queue tal-state)
-
-                       (when (fn? on-open)
-                         (on-open tal-state))))
-    (gevents/listen w goog.net.WebSocket.EventType.CLOSED
-                    #(do
-                       (utils/mlog "closed" %)
-                       (swap! tal-state assoc
-                              :open? false
-                              :closed? true
-                              :close-code (.-code %)
-                              :close-reason (.-reason %))
-                       (js/clearInterval (:keep-alive-timer @tal-state))
-                       (when (fn? on-close)
-                         (on-close tal-state {:code (.-code %)
-                                              :reason (.-reason %)}))))
-    (gevents/listen w goog.net.WebSocket.EventType.ERROR
-                    #(do (utils/mlog "error" %)
-                         (swap! tal-state assoc :last-error-time (js/Date.))
-                         (when (fn? on-error)
-                           (on-error tal-state))))
-    (gevents/listen w goog.net.WebSocket.EventType.MESSAGE
-                    #(do
-                       ;;(utils/mlog "message" %)
-                       (swap! tal-state assoc :last-recv-time (js/Date.))
-                       (swap! recv-queue (fn [q] (apply conj q (decode-msg (.-message %)))))))
-    (.open w url)
+    (setup-ws url tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect)
     tal-state))
 
 (defn shutdown [tal-state]
-  (.close (:ws @tal-state))
+  (close-connection tal-state)
   (shutdown-send-queue tal-state))
