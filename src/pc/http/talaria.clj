@@ -221,7 +221,9 @@
 (defn combine-callbacks [callbacks]
   (reduce (fn [acc cb]
             (if (fn? cb)
-              (juxt acc cb)
+              (if (fn? acc)
+                (juxt acc cb)
+                cb)
               acc))
           callbacks))
 
