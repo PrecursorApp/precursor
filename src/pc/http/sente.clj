@@ -1214,10 +1214,11 @@
 
 (defn setup-tal-handlers []
   (let [tap (tal/tap-msg-ch tal/talaria-state)]
-    (async/go-loop []
-      (when-let [msg (async/<! tap)]
-        (utils/straight-jacket (handle-tal-msg msg))
-        (recur)))))
+    (dotimes [x 10]
+      (async/go-loop []
+        (when-let [msg (async/<! tap)]
+          (utils/straight-jacket (handle-tal-msg msg))
+          (recur))))))
 
 (defn close-ws
   "Closes the websocket, client should reconnect."
@@ -1270,6 +1271,8 @@
                                                         :send-buf-ms-ws 5})]
     (reset! sente-state fns)
     (setup-ws-handlers fns)
+    (tal/init)
+    (setup-tal-handlers)
     (track-document-subs)
     (track-clients)
     (track-team-subs)

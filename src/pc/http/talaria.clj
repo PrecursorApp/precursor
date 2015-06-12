@@ -5,6 +5,7 @@
             [clojure.java.io :as io]
             [cognitect.transit :as transit]
             [immutant.web.async :as immutant]
+            [pc.delay :as delay]
             ;; have to extract the utils fns we use
             [pc.utils :as utils])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
@@ -12,13 +13,24 @@
 (defonce talaria-state (ref {:connections {}
                              :stats {}}))
 
-(defn init []
-  (dosync (ref-set talaria-state (let [ch (async/chan (async/sliding-buffer 1024))]
-                                   {:connections {}
+(defn init [& {:keys [ws-delay ajax-delay]
+               :or {ws-delay 30
+                    ajax-delay 100}}]
+  (let [ch (async/chan (async/sliding-buffer 1024))
+        async-pool (delay/make-pool!)]
+    (dosync (ref-set talaria-state {:connections {}
                                     :msg-ch ch
                                     :msg-mult (async/mult ch)
+                                    :async-pool async-pool
+                                    :ws-delay ws-delay
+                                    :ajax-delay ajax-delay
                                     :stats {}})))
   talaria-state)
+
+(defn shutdown [tal-state]
+  (let [s @tal-state]
+    (async/close! (:msg-ch s))
+    (delay/shutdown-pool! (:async-pool s))))
 
 (defn tap-msg-ch [talaria-state]
   (let [tap-ch (async/chan (async/sliding-buffer 1024))
@@ -26,8 +38,8 @@
     (async/tap mult-ch tap-ch)
     tap-ch))
 
-(defn get-ch [tal-state ch-id]
-  (get-in @tal-state [:connections ch-id :channel]))
+(defn get-channel-info [tal-state ch-id]
+  (get-in @tal-state [:connections ch-id]))
 
 (defn ch-id [ch]
   (:tal/ch-id (immutant/originating-request ch)))
@@ -44,7 +56,11 @@
                         (assert (empty? (get-in s [:connections id])))
                         (-> s
                           (assoc-in [:connections id] {:channel ch
-                                                       :type :ws})
+                                                       :type :ws
+                                                       ;; store delay here so that we can optimize based on
+                                                       ;; latency
+                                                       :send-delay (:ws-delay s)
+                                                       :send-queue (atom [])})
                           (update-in [:stats :connection-count] (fnil inc 0)))))))
 
 (defn record-error
@@ -178,7 +194,8 @@
                                 :tal/state tal-state)))))
 
 (defn send! [tal-state ch-id msg & {:keys [on-success on-error]}]
-  (when-let [ch (get-ch tal-state ch-id)]
+  (when-let [ch (:channel (get-channel-info tal-state ch-id))]
+    (assert (vector? msg))
     (let [res (immutant/send! ch
                               (encode-msg msg)
                               {:close? false
@@ -194,6 +211,39 @@
       (when res
         (record-send tal-state ch-id msg))
       res)))
+
+(defn pop-all [queue-atom]
+  (loop [val @queue-atom]
+    (if (compare-and-set! queue-atom val [])
+      val
+      (recur @queue-atom))))
+
+(defn combine-callbacks [callbacks]
+  (reduce (fn [acc cb]
+            (if (fn? cb)
+              (juxt acc cb)
+              acc))
+          callbacks))
+
+(defn send-queued! [tal-state ch-id]
+  (when-let [ch-info (get-channel-info tal-state ch-id)]
+    (let [messages (pop-all (:send-queue ch-info))]
+      (when (seq messages)
+        (send! tal-state ch-id (mapv :msg messages)
+               :on-success (combine-callbacks (map :on-success messages))
+               :on-error (combine-callbacks (map :on-error messages)))))))
+
+(defn schedule-send [tal-state ch-id delay-ms]
+  (delay/delay-fn (:async-pool @tal-state)
+                  delay-ms
+                  #(send-queued! tal-state ch-id)))
+
+(defn queue-msg! [tal-state ch-id msg & {:keys [on-success on-error]}]
+  (when-let [channel-info (get-channel-info tal-state ch-id)]
+    (swap! (:send-queue channel-info) conj {:msg msg
+                                            :on-success on-success
+                                            :on-error on-error})
+    (schedule-send tal-state ch-id (:send-delay channel-info))))
 
 
 ;; debug methods

@@ -127,41 +127,10 @@
                     #(do
                        ;;(utils/mlog "message" %)
                        (swap! tal-state assoc :last-message-time (js/Date.))
-                       (swap! recv-queue conj (decode-msg (.-message %)))))
+                       (swap! recv-queue (fn [q] (apply conj q (decode-msg (.-message %)))))))
     (.open w url)
     tal-state))
 
 (defn shutdown [tal-state]
   (.close (:ws @tal-state))
   (shutdown-send-queue tal-state))
-
-;; (defonce testing (init "ws://localhost:8080/talaria"))
-
-;; (defn test-with-atom-queues [count]
-;;   (queue-msg testing [:start-timer {}])
-;;   (dotimes [x count]
-;;     (queue-msg testing [:frontend/test {:a 1 :b x}]))
-;;   (queue-msg testing [:stop-timer {:type :atom}]))
-
-;; (defn test-straight-sends [count]
-;;   (let [ws (:ws @testing)]
-;;     (.send ws (encode-msg {:op :start-timer :data {}}))
-;;     (dotimes [x count]
-;;       (.send ws (encode-msg {:op :frontend/test :data {:a 1 :b x}})))
-;;     (.send ws (encode-msg {:op :stop-timer :data {:type :nothing}}))))
-
-;; (defn test-core-async [count]
-;;   (let [messages (concat [{:op :start-timer :data {}}]
-;;                          (for [x (range count)]
-;;                            {:op :frontend/test :data {:a 1 :b x}})
-;;                          [{:op :stop-timer :data {:type :core-async}}])
-;;         ch (async/chan (async/sliding-buffer (+ 1024 count)))
-;;         ws (:ws @testing)]
-;;     (go-loop []
-;;       (when-let [msg (async/<! ch)]
-;;         (.send ws (encode-msg msg))
-;;         (if (= :stop-timer (:op msg))
-;;           (async/close! ch)
-;;           (recur))))
-;;     (doseq [msg messages]
-;;       (async/put! ch msg))))
