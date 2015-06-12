@@ -52,6 +52,7 @@
     (loop [msg (pop-atom send-queue)]
       (when msg
         (send-msg ws msg)
+        (swap! tal-state assoc :last-send-time (js/Date.))
         (recur (pop-atom send-queue))))))
 
 (defn start-send-queue [tal-state]
@@ -64,8 +65,6 @@
 (defn shutdown-send-queue [tal-state]
   (remove-watch (:send-queue @tal-state) ::send-watcher))
 
-
-;; XXX: handle callbacks and timeouts
 ;; XXX: handle special messages from the server (ping, close)
 (defn consume-recv-queue [tal-state handler]
   (let [recv-queue (:recv-queue @tal-state)]
@@ -83,16 +82,28 @@
                                              (consume-recv-queue tal-state handler))))
     (consume-recv-queue tal-state handler)))
 
-(defonce debug-ws (atom nil))
+(defn start-ping [tal-state]
+  (let [ms (:keep-alive-ms @tal-state)]
+    (js/window.setInterval (fn []
+                             (let [last-send (:last-send-time @tal-state)]
+                               (when (or (not last-send)
+                                         (<= (/ ms 2) (- (.getTime (js/Date.)) (.getTime last-send))))
+                                 (queue-msg tal-state {:op :tal/ping}))))
+                           (/ ms 2))))
 
-(defn init [url & {:keys [on-open on-close on-error]}]
+(defn init
+  "Guaranteed to run keep-alive every keep-alive-ms interval, but may probably run
+   about twice as often"
+  [url & {:keys [on-open on-close on-error keep-alive-ms]
+          :or {keep-alive-ms 60000}}]
+
   (let [ ;; creates class that will handle auto-reconnecting on failure
         w (goog.net.WebSocket.)
-        _ (reset! debug-ws w)
         ch (async/chan (async/sliding-buffer 1024))
         send-queue (atom [])
         recv-queue (atom [])
         tal-state (atom {:ws w
+                         :keep-alive-ms keep-alive-ms
                          :open? false
                          :send-queue send-queue
                          :recv-queue recv-queue
@@ -100,11 +111,14 @@
     (gevents/listen w goog.net.WebSocket.EventType.OPENED
                     #(do
                        (utils/mlog "opened" %)
-                       (swap! tal-state (fn [s]
-                                          (-> s
-                                            (assoc :open? true)
-                                            (dissoc :closed? :close-code :close-reason))))
+                       (let [timer-id (start-ping tal-state)]
+                         (swap! tal-state (fn [s]
+                                            (-> s
+                                              (assoc :open? true
+                                                     :keep-alive-timer timer-id)
+                                              (dissoc :closed? :close-code :close-reason)))))
                        (start-send-queue tal-state)
+
                        (when (fn? on-open)
                          (on-open tal-state))))
     (gevents/listen w goog.net.WebSocket.EventType.CLOSED
@@ -115,6 +129,7 @@
                               :closed? true
                               :close-code (.-code %)
                               :close-reason (.-reason %))
+                       (js/clearInterval (:keep-alive-timer @tal-state))
                        (when (fn? on-close)
                          (on-close tal-state {:code (.-code %)
                                               :reason (.-reason %)}))))
@@ -126,7 +141,7 @@
     (gevents/listen w goog.net.WebSocket.EventType.MESSAGE
                     #(do
                        ;;(utils/mlog "message" %)
-                       (swap! tal-state assoc :last-message-time (js/Date.))
+                       (swap! tal-state assoc :last-recv-time (js/Date.))
                        (swap! recv-queue (fn [q] (apply conj q (decode-msg (.-message %)))))))
     (.open w url)
     tal-state))
