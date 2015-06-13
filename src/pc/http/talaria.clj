@@ -7,7 +7,8 @@
             [immutant.web.async :as immutant]
             [pc.delay :as delay]
             ;; have to extract the utils fns we use
-            [pc.utils :as utils])
+            [pc.utils :as utils]
+            [pc.util.seq :refer (dissoc-in)])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
 (defonce talaria-state (ref {:connections {}
@@ -44,6 +45,10 @@
 (defn ch-id [ch]
   (:tal/ch-id (immutant/originating-request ch)))
 
+(defn ajax-channel? [channel]
+  (instance? org.projectodd.wunderboss.web.async.UndertowHttpChannel
+             channel))
+
 (defn add-channel
   "Adds channel to state, given an id. Will throw if a channel
    already exists for the given id. Updates global stats."
@@ -53,15 +58,36 @@
                         ;; XXX: should this also close the channel?
                         ;;      Need to make sure that we don't have un-used channels lying around.
                         ;;      Maybe this should result in all channels for that id being closed?
-                        (assert (empty? (get-in s [:connections id])))
+                        (when-let [existing-ch (get-in s [:connections id :channel])]
+                          (log/infof "Already a channel for %s, closing existing channel" id)
+                          (immutant/close existing-ch))
                         (-> s
                           (assoc-in [:connections id] {:channel ch
-                                                       :type :ws
                                                        ;; store delay here so that we can optimize based on
                                                        ;; latency
-                                                       :send-delay (:ws-delay s)
+                                                       :send-delay (if (or (nil? ch)
+                                                                           (ajax-channel? ch))
+                                                                     (:ajax-delay s)
+                                                                     (:ws-delay s))
                                                        :send-queue (atom [])})
                           (update-in [:stats :connection-count] (fnil inc 0)))))))
+
+(defn add-ajax-channel
+  "Adds channel to state, given an id. Will throw if a channel
+   already exists for the given id. Updates global stats."
+  [tal-state id ch]
+  (dosync
+   (commute tal-state (fn [s]
+                        ;; XXX: should this also close the channel?
+                        ;;      Need to make sure that we don't have un-used channels lying around.
+                        ;;      Maybe this should result in all channels for that id being closed?
+                        (when-let [existing-ch (get-in s [:connections id :channel])]
+                          (log/infof "Already a channel for %s, closing existing channel" id)
+                          (immutant/close existing-ch))
+                        (assert (get-in s [:connections id]))
+                        (-> s
+                          (assoc-in [:connections id :channel] ch)
+                          (update-in [:connections id :ajax-channel-count] (fnil inc 0)))))))
 
 (defn record-error
   "Records error for a given channel and updates global stats"
@@ -83,6 +109,15 @@
                         (-> s
                           (update-in [:connections] dissoc id)
                           (update-in [:stats :connection-count] (fnil dec 0)))))))
+
+(defn remove-ajax-channel
+  "Removes channel and updates global stats"
+  [tal-state id ch]
+  (dosync
+   (commute tal-state (fn [s]
+                        (if (= (get-in s [:connections id :channel]) ch)
+                          (dissoc-in s [:connections id :channel])
+                          s)))))
 
 (defn record-msg
   "Updates global stats for messages"
@@ -166,10 +201,14 @@
                           :tal/ring-req (immutant/originating-request ch)
                           :tal/state tal-state}))))
 
+(defn streamify [msg]
+  (if (string? msg)
+    (io/input-stream (.getBytes msg "UTF-8"))
+    msg))
+
 (defn decode-msg [msg]
   (-> msg
-    (.getBytes "UTF-8")
-    (io/input-stream)
+    (streamify)
     (transit/reader :json)
     (transit/read)))
 
@@ -183,22 +222,61 @@
   (fn [ch msg]
     (let [id (ch-id ch)
           msg-ch (:msg-ch @tal-state)
-          decoded-msg (decode-msg msg)]
+          messages (decode-msg msg)]
       (record-msg tal-state id msg)
-      (async/put! msg-ch (assoc decoded-msg
-                                :tal/ch ch
-                                :tal/ch-id id
-                                ;; for final release, this should be obtained by
-                                ;; passing msg into a fn
-                                :tal/ring-req (immutant/originating-request ch)
-                                :tal/state tal-state)))))
+      (doseq [msg messages]
+        (async/put! msg-ch (assoc msg
+                                  :tal/ch ch
+                                  :tal/ch-id id
+                                  ;; for final release, this should be obtained by
+                                  ;; passing msg into a fn
+                                  :tal/ring-req (immutant/originating-request ch)
+                                  :tal/state tal-state))))))
+
+(defn handle-ajax-msg [tal-state ch-id msg ring-req]
+  (when-let [channel-info (get-channel-info tal-state ch-id)]
+    (let [msg-ch (:msg-ch @tal-state)
+          messages (decode-msg msg)]
+      (record-msg tal-state ch-id msg)
+      (doseq [msg messages]
+        (async/put! msg-ch (assoc msg
+                                  :tal/ch (:channel channel-info)
+                                  :tal/ch-id ch-id
+                                  :tal/ring-req ring-req
+                                  :tal/state tal-state))))))
+
+(defn handle-ajax-open [tal-state ch-id ring-req]
+  (let [msg-ch (:msg-ch @tal-state)]
+    (add-channel tal-state ch-id nil)
+    (async/put! msg-ch {:op :tal/channel-open
+                        :tal/ch nil
+                        :tal/ch-id ch-id
+                        ;; for final release, this should be obtained by
+                        ;; passing msg into a fn
+                        :tal/ring-req ring-req
+                        :tal/state tal-state})))
+
+(declare send-queued!)
+
+(defn handle-ajax-channel [tal-state ch-id]
+  (fn [ch]
+    (let [msg-ch (:msg-ch @tal-state)]
+      (add-ajax-channel tal-state ch-id ch)
+      (send-queued! talaria-state ch-id))))
+
+(defn handle-ajax-close [tal-state]
+  (fn [ch {:keys [code reason] :as args}]
+    (let [id (ch-id ch)
+          msg-ch (:msg-ch @tal-state)]
+      (log/infof "channel with id %s closed %s" id args)
+      (remove-ajax-channel tal-state id ch))))
 
 (defn send! [tal-state ch-id msg & {:keys [on-success on-error]}]
   (when-let [ch (:channel (get-channel-info tal-state ch-id))]
     (assert (vector? msg))
     (let [res (immutant/send! ch
                               (encode-msg msg)
-                              {:close? false
+                              {:close? (ajax-channel? ch)
                                :on-success (fn []
                                              (record-send-success tal-state ch-id msg)
                                              (when (fn? on-success)
@@ -228,12 +306,13 @@
           callbacks))
 
 (defn send-queued! [tal-state ch-id]
-  (when-let [ch-info (get-channel-info tal-state ch-id)]
-    (let [messages (pop-all (:send-queue ch-info))]
-      (when (seq messages)
-        (send! tal-state ch-id (mapv :msg messages)
-               :on-success (combine-callbacks (map :on-success messages))
-               :on-error (combine-callbacks (map :on-error messages)))))))
+  (let [ch-info (get-channel-info tal-state ch-id)]
+    (when (:channel ch-info)
+      (let [messages (pop-all (:send-queue ch-info))]
+        (when (seq messages)
+          (send! tal-state ch-id (mapv :msg messages)
+                 :on-success (combine-callbacks (map :on-success messages))
+                 :on-error (combine-callbacks (map :on-error messages))))))))
 
 (defn schedule-send [tal-state ch-id delay-ms]
   (delay/delay-fn (:async-pool @tal-state)

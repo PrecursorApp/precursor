@@ -49,7 +49,7 @@
             [taoensso.sente :as sente])
   (:import java.util.UUID))
 
-(def client-stats common/client-stats)
+(defonce client-stats (atom {}))
 
 ;; TODO: find a way to restart sente
 (defonce sente-state (atom {}))
@@ -280,9 +280,6 @@
 
 (defmethod ws-handler :tal/channel-close [{:keys [client-id] :as req}]
   (close-connection client-id))
-
-(defmethod ws-handler :tal/channel-open [{:keys [client-id] :as req}]
-  (swap! client-stats assoc-in [client-id :tal/ch-id] (:tal/ch-id req)))
 
 (defmethod ws-handler :frontend/close-connection [{:keys [client-id] :as req}]
   (close-connection client-id))

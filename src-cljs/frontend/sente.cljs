@@ -63,7 +63,8 @@
               (if (cb-success? reply)
                 (put! (:api comms) [(first reply) :success (assoc (second reply)
                                                                   :context {:document-id document-id})])
-                (put! (:errors comms) [:subscribe-to-document-error {:document-id document-id}])))))
+                (put! (:errors comms) [:subscribe-to-document-error {:document-id document-id
+                                                                     :reply reply}])))))
 
 (defn subscribe-to-team [sente-state team-uuid]
   (send-msg sente-state [:team/subscribe {:team/uuid team-uuid}]))

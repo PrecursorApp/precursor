@@ -123,15 +123,11 @@
         issue-db (db/make-initial-db initial-issue-entities)
         ab-choices (ab/setup! state/ab-tests)
         use-talaria? (:use-talaria? utils/initial-query-map)
-        tal (when use-talaria? (tal/init (str (if (= "https" (.getScheme utils/parsed-uri))
-                                                "wss"
-                                                "ws")
-                                              "://"
-                                              (.getDomain utils/parsed-uri)
-                                              ":"
-                                              (.getPort utils/parsed-uri)
-                                              "/talaria?tab-id=" tab-id
-                                              "&csrf-token=" (utils/csrf-token))
+        tal (when use-talaria? (tal/init {:secure? (= "https" (.getScheme utils/parsed-uri))
+                                          :host (.getDomain utils/parsed-uri)
+                                          :port (.getPort utils/parsed-uri)
+                                          :params {:tab-id tab-id}
+                                          :csrf-token (utils/csrf-token)}
                                          :on-reconnect (fn [tal-state]
                                                          (let [s @initial-state]
                                                            (when (:document/id s)

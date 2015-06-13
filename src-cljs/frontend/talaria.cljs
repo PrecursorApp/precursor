@@ -1,11 +1,30 @@
 (ns frontend.talaria
   (:require [cljs.core.async :as async]
+            [cljs-http.client :as http] ;; remove for release
             [frontend.utils :as utils]
             [goog.events :as gevents]
             [goog.net.WebSocket :as ws]
-            [cognitect.transit :as transit])
+            [cognitect.transit :as transit]
+            [goog.Uri :as uri]
+            [goog.Uri.QueryData])
   (:import [goog.net.WebSocket.EventType])
-  (:require-macros [cljs.core.async.macros :refer (go-loop)]))
+  (:require-macros [cljs.core.async.macros :refer (go go-loop)]))
+
+(defrecord AjaxSocket [recv-url send-url csrf-token on-open on-close on-error on-message on-reconnect]
+  Object
+  (send [ch msg]
+    (http/post send-url {:body msg
+                         :headers {"X-CSRF-Token" csrf-token
+                                   "Content-Type" "text/plain"}}))
+  (open [ch]
+    (go
+      (async/<! (http/get recv-url {:query-params {:open? true}}))
+      (go-loop []
+        (let [resp (async/<! (http/get recv-url {:headers {"Content-Type" "text/plain"}}))]
+          (utils/inspect (on-message (clj->js {:data (:body resp)})))
+          (recur)))
+      (when (fn? on-open)
+        (on-open)))))
 
 (defn decode-msg [msg]
   (let [r (transit/reader :json)]
@@ -43,24 +62,34 @@
       (first val)
       (recur @a))))
 
-(defn send-msg [ws msg]
-  (.send ws (encode-msg msg)))
+(defn pop-all [queue-atom]
+  (loop [val @queue-atom]
+    (if (compare-and-set! queue-atom val (empty val))
+      val
+      (recur @queue-atom))))
 
-(defn consume-send-queue [tal-state]
-  (let [send-queue (:send-queue @tal-state)
-        ws (:ws @tal-state)]
-    (loop [msg (pop-atom send-queue)]
-      (when msg
-        (send-msg ws msg)
-        (swap! tal-state assoc :last-send-time (js/Date.))
-        (recur (pop-atom send-queue))))))
+(defn send-msg [tal-state msg]
+  (utils/inspect (count msg))
+  (.send (:ws @tal-state) (encode-msg msg))
+  (swap! tal-state assoc :last-send-time (js/Date.)))
 
-(defn start-send-queue [tal-state]
+(defn consume-send-queue [tal-state timer-atom]
   (let [send-queue (:send-queue @tal-state)]
+    (doseq [timer-id (pop-all timer-atom)]
+      (js/clearTimeout timer-id))
+    (let [messages (pop-all send-queue)]
+      (when (seq messages)
+        (send-msg tal-state messages)))))
+
+(defn start-send-queue [tal-state delay-ms]
+  (let [send-queue (:send-queue @tal-state)
+        timer-atom (atom #{})]
     (add-watch send-queue ::send-watcher (fn [_ _ old new]
                                            (when (> (count new) (count old))
-                                             (consume-send-queue tal-state))))
-    (consume-send-queue tal-state)))
+                                             (let [timer-id (js/setTimeout #(consume-send-queue tal-state timer-atom)
+                                                                           delay-ms)]
+                                               (swap! timer-atom conj timer-id)))))
+    (consume-send-queue tal-state timer-atom)))
 
 (defn shutdown-send-queue [tal-state]
   (remove-watch (:send-queue @tal-state) ::send-watcher))
@@ -106,9 +135,74 @@
                                  (queue-msg tal-state {:op :tal/ping}))))
                            (/ ms 2))))
 
-(defn setup-ws [url tal-state & {:keys [on-open on-close on-error on-reconnect reconnecting?]
-                                 :as args}]
-  (let [w (js/WebSocket. url)]
+(defn make-url [{:keys [port path host secure? ws? params csrf-token]}]
+  (let [scheme (if ws?
+                 (if secure? "wss" "ws")
+                 (if secure? "https" "http"))]
+    (str (doto (goog.Uri.)
+           (.setScheme scheme)
+           (.setDomain host)
+           (.setPort port)
+           (.setPath path)
+           (.setQueryData  (-> params
+                             (assoc :csrf-token csrf-token)
+                             clj->js
+                             (goog.Uri.QueryData/createFromMap)))))))
+
+(defn setup-ajax [url-parts tal-state & {:keys [on-open on-close on-error on-reconnect reconnecting?]
+                                         :as args}]
+  (let [url (make-url (assoc url-parts :path "/talaria" :ws? false))
+        w (AjaxSocket. (make-url (assoc url-parts :path "/talaria/ajax-poll"))
+                       (make-url (assoc url-parts :path "/talaria/ajax-send"))
+                       (:csrf-token url-parts)
+                       #(do
+                          (utils/mlog "opened" %)
+                          (let [timer-id (start-ping tal-state)]
+                            (swap! tal-state (fn [s]
+                                               (-> s
+                                                 (assoc :open? true
+                                                        :keep-alive-timer timer-id)
+                                                 (dissoc :closed? :close-code :close-reason)))))
+                          (start-send-queue tal-state 30)
+                          (when (and reconnecting? (fn? on-reconnect))
+                            (on-reconnect tal-state))
+
+                          (when (fn? on-open)
+                            (on-open tal-state)))
+                       #(do
+                          (utils/mlog "closed" %)
+                          (shutdown-send-queue tal-state)
+                          (swap! tal-state assoc
+                                 :ws nil
+                                 :open? false
+                                 :closed? true
+                                 :close-code (.-code %)
+                                 :close-reason (.-reason %))
+                          (js/clearInterval (:keep-alive-timer @tal-state))
+                          (when (fn? on-close)
+                            (on-close tal-state {:code (.-code %)
+                                                 :reason (.-reason %)}))
+                          (js/setTimeout (fn []
+                                           (when-not (:ws @tal-state)
+                                             (utils/apply-map setup-ajax url-parts tal-state (assoc args :reconnecting? true))))
+                                         1000))
+                       #(do (utils/mlog "error" %)
+                            (swap! tal-state assoc :last-error-time (js/Date.))
+                            (when (fn? on-error)
+                              (on-error tal-state)))
+                       #(do
+                          ;;(utils/mlog "message" %)
+                          (swap! tal-state assoc :last-recv-time (js/Date.))
+                          (swap! (:recv-queue @tal-state) (fn [q] (apply conj q (decode-msg (.-data %))))))
+                       on-reconnect)]
+    (swap! tal-state assoc :ws w)
+    (start-send-queue tal-state 100)
+    (.open w)))
+
+(defn setup-ws [url-parts tal-state & {:keys [on-open on-close on-error on-reconnect reconnecting?]
+                                       :as args}]
+  (let [url (make-url (assoc url-parts :path "/talaria" :ws? true))
+        w (js/WebSocket. url)]
     (swap! tal-state assoc :ws w)
     (aset w "onopen"
           #(do
@@ -119,7 +213,7 @@
                                     (assoc :open? true
                                            :keep-alive-timer timer-id)
                                     (dissoc :closed? :close-code :close-reason)))))
-             (start-send-queue tal-state)
+             (start-send-queue tal-state 30)
              (when (and reconnecting? (fn? on-reconnect))
                (on-reconnect tal-state))
 
@@ -157,18 +251,18 @@
 (defn init
   "Guaranteed to run keep-alive every keep-alive-ms interval, but may probably run
    about twice as often"
-  [url & {:keys [on-open on-close on-error on-reconnect keep-alive-ms]
-          :or {keep-alive-ms 60000}}]
+  [url-parts & {:keys [on-open on-close on-error on-reconnect keep-alive-ms]
+                :or {keep-alive-ms 60000}}]
 
-  (let [ch (async/chan (async/sliding-buffer 1024))
-        send-queue (atom [])
+  (let [send-queue (atom [])
         recv-queue (atom [])
         tal-state (atom {:keep-alive-ms keep-alive-ms
                          :open? false
                          :send-queue send-queue
                          :recv-queue recv-queue
                          :callbacks {}})]
-    (setup-ws url tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect)
+    (setup-ws url-parts tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect)
+    ;;(setup-ajax url-parts tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect)
     tal-state))
 
 (defn shutdown [tal-state]
