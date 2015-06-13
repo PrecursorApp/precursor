@@ -213,8 +213,6 @@
    :chat-team   {:paths [:stroke-chat-team]}
    :feedback    {:paths [:stroke-feedback]}
 
-   :sound-mute  {:paths [:stroke-sound
-                         :stroke-slash-backward]}
    :sound-off   {:paths [:stroke-sound]}
    :sound-min   {:paths [:stroke-sound
                          :stroke-wave1]}
@@ -225,6 +223,11 @@
                          :stroke-wave1
                          :stroke-wave2
                          :stroke-wave3]}
+   :sound-mute  {:paths [:stroke-sound
+                         :stroke-wave1
+                         :stroke-wave2
+                         :stroke-wave3
+                         :stroke-slash-backward]}
 
    :click       {:paths [:fill-click-cursor
                          :stroke-click-1
