@@ -256,7 +256,13 @@
                                          (cast! :self-updated {:name (om/get-state owner :new-name)}))
                                        (om/set-state! owner :editing-name? false)
                                        (om/set-state! owner :new-name ""))]
+                    (merge
+                    (if can-edit?
+                      {:on-click #(do (om/set-state! owner :editing-name? true)
+                                      (.stopPropagation %))}
+                      {:href (urls/overlay-path doc "username")})
                     {:ref "name-edit"
+                     :title "Edit your display name."
                      :content-editable (if editing-name? true false)
                      :spell-check false
                      :on-key-down #(do
@@ -270,28 +276,21 @@
                                        (utils/stop-event %)))
                      :on-blur #(do (submit-fn)
                                    (utils/stop-event %))
-                     :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))})
+                     :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))}))
                   (or self-name "You")]
-                 [:div.viewer-controls
-                  (when (:recording sub)
-                    [:div.viewer-symbols.holo
-                     [:div.viewer-symbol
-                      (volume-icon (get-in sub [:recording :media-stream-volume] 0) (name self-color))]])
-                  [:div.viewer-toggles
-                   [:a.viewer-toggle (merge {:role "button"
-                                             :title "Change your display name."}
-                                            (if can-edit?
-                                              {:on-click #(do (om/set-state! owner :editing-name? true)
-                                                              (.stopPropagation %))}
-                                              {:href (urls/overlay-path doc "username")}))
-                    (common/icon :pencil)]
-                   (when config/subdomain
+                 [:div.viewer-controls {:class (when (:recording sub) " recording ")}
+                   (if (:recording sub)
                      [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
                                         :role "button"
-                                        :title (if (:recording sub)
-                                                 "Turn off your mic"
-                                                 "Share your audio with everyone in the doc")}
-                      (common/icon (if (:recording sub) :mic-off :mic))])]]])
+                                        :title "Disable your voice chat."
+                                        :key "self-recording"}
+                      (volume-icon (get-in sub [:recording :media-stream-volume] 0) (name self-color))]
+
+                     [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
+                                        :role "button"
+                                        :title "Enable your voice chat."
+                                        :key "self-not-recording"}
+                      (common/icon :sound-mute)])]])
               (for [[id {:keys [show-mouse? color cust-name hide-in-list? stream-url] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
                     :when (not hide-in-list?)
                     :let [id-str (get-in app [:cust-data :uuid->cust (:cust/uuid sub) :cust/name] (apply str (take 6 id)))
@@ -304,25 +303,26 @@
                  [:div.viewer-name.viewer-tag
                   id-str]
                  [:div.viewer-controls
-                  (when (:recording sub)
-                    [:div.viewer-symbols.holo
-                     [:div.viewer-symbol
-                      (volume-icon (get-in sub [:recording :media-stream-volume] 0) color-class)]])
-                  [:div.viewer-toggles
-                   [:a.viewer-toggle
-                    {:key id
-                     :on-click #(cast! :chat-user-clicked {:id-str id-str})
-                     :role "button"
-                     :title "Ping this viewer in chat."}
-                    (common/icon :at)]]]])
+                  (if (:recording sub)
+                    [:a.viewer-toggle {;:on-click #(cast! :recording-toggled)
+                                       :role "button"
+                                       :title "Mute this collaborator."
+                                       :key (str id-str "-recording")}
+                     (volume-icon (get-in sub [:recording :media-stream-volume] 0) color-class)]
+
+                    [:a.viewer-toggle {;:on-click #(cast! :recording-toggled)
+                                       :role "button"
+                                       :title "Enable your voice chat."
+                                       :key (str id-str "-not-recording")}
+                     (common/icon :sound-mute)])]])
 
               [:a.viewer.viewer-add {:href (urls/overlay-path doc "sharing")
                                      :class (when (< 3 viewers-count) "sink")
                                      :title "Invite."}
                [:i.viewer-avatar.viewer-tag
-                (common/icon :user)]
+                (common/icon :plus)]
                [:span.viewer-name.viewer-tag
-                (common/icon :plus)]]]])
+                "Invite"]]]])
 
           [:a.hud-viewers.hud-item.hud-toggle {:on-click (if show-viewers?
                                                            #(cast! :viewers-closed)
@@ -339,8 +339,7 @@
                                                :class (when show-viewers? "close")
                                                :data-count viewers-count
                                                :role "button"}
-           (common/icon :times)
-           (common/icon :user)]])))))
+           (when-not show-viewers? (common/icon :user))]])))))
 
 (defn hud [app owner]
   (reify
