@@ -57,16 +57,7 @@
   [tal-state id ch ping-job]
   (dosync
    (commute tal-state (fn [s]
-                        ;; XXX: should this also close the channel?
-                        ;;      Need to make sure that we don't have un-used channels lying around.
-                        ;;      Maybe this should result in all channels for that id being closed?
-                        (when-let [existing-ch (get-in s [:connections id :channel])]
-                          (log/infof "Already a channel for %s, closing existing channel" id)
-                          (when (immutant/open? existing-ch)
-                            (try
-                              (immutant/close existing-ch)
-                              (catch java.lang.IllegalStateException e
-                                nil))))
+                        (assert (not (get-in s [:connections id :channel])))
                         (-> s
                           (assoc-in [:connections id] {:channel ch
                                                        ;; store delay here so that we can optimize based on
@@ -86,20 +77,12 @@
   [tal-state id ch]
   (dosync
    (commute tal-state (fn [s]
-                        ;; XXX: should this also close the channel?
-                        ;;      Need to make sure that we don't have un-used channels lying around.
-                        ;;      Maybe this should result in all channels for that id being closed?
-                        (when-let [existing-ch (get-in s [:connections id :channel])]
-                          (log/infof "Already a channel for %s, closing existing channel" id)
-                          (when (immutant/open? existing-ch)
-                            (try
-                              (immutant/close existing-ch)
-                              (catch java.lang.IllegalStateException e
-                                nil))))
-                        (assert (get-in s [:connections id]))
-                        (-> s
-                          (assoc-in [:connections id :channel] ch)
-                          (update-in [:connections id :ajax-channel-count] (fnil inc 0)))))))
+                        (let [previous-ch (get-in s [:connections id :channel])]
+                          (assert (get-in s [:connections id]))
+                          (-> s
+                            (assoc-in [:connections id :channel] ch)
+                            (assoc-in [:connections id :previous-channel] previous-ch)
+                            (update-in [:connections id :ajax-channel-count] (fnil inc 0))))))))
 
 (defn record-error
   "Records error for a given channel and updates global stats"
@@ -286,6 +269,7 @@
                   5000
                   ;; remove the channel if it doesn't reconnect
                   #(when (= channel-count (get-in @tal-state [:connections ch-id :ajax-channel-count]))
+                     (log/infof "channel with id %s closed" ch-id)
                      (cancel-ping-job tal-state ch-id)
                      (remove-by-id tal-state ch-id {} ring-req))))
 
@@ -308,15 +292,20 @@
 
 (defn handle-ajax-channel [tal-state ch-id]
   (fn [ch]
-    (let [msg-ch (:msg-ch @tal-state)]
-      (add-ajax-channel tal-state ch-id ch)
+    (let [msg-ch (:msg-ch @tal-state)
+          new-state (add-ajax-channel tal-state ch-id ch)]
+      (try
+        (some-> new-state
+          (get-in [:connections ch-id :previous-channel])
+          (immutant/close))
+        (catch java.lang.IllegalStateException e
+          nil))
       (send-queued! talaria-state ch-id))))
 
 (defn handle-ajax-close [tal-state]
   (fn [ch {:keys [code reason] :as args}]
     (let [id (ch-id ch)
           msg-ch (:msg-ch @tal-state)]
-      (log/infof "channel with id %s closed %s" id args)
       (let [new-state (remove-ajax-channel tal-state id ch)]
         (when-not (get-in new-state [:connections id :channel])
           (schedule-ajax-cleanup tal-state
