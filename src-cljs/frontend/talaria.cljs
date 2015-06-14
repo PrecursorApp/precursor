@@ -128,18 +128,16 @@
 
 (defn consume-recv-queue [tal-state handler]
   (let [recv-queue (:recv-queue @tal-state)]
-    (loop [msg (pop-atom recv-queue)]
-      (when msg
-        (cond
-          (keyword-identical? :tal/reply (:op msg))
-          (run-callback tal-state (:tal/cb-uuid msg) (:data msg))
+    (doseq [msg (pop-all recv-queue)]
+      (cond
+        (keyword-identical? :tal/reply (:op msg))
+        (run-callback tal-state (:tal/cb-uuid msg) (:data msg))
 
-          (keyword-identical? :tal/close (:op msg))
-          (close-connection tal-state)
+        (keyword-identical? :tal/close (:op msg))
+        (close-connection tal-state)
 
-          :else
-          (handler msg))
-        (recur (pop-atom recv-queue))))))
+        :else
+        (handler msg)))))
 
 (defn start-recv-queue [tal-state handler]
   (let [recv-queue (:recv-queue @tal-state)]
