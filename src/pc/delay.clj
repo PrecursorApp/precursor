@@ -12,7 +12,7 @@
   (.schedule thread-pool f delay-ms TimeUnit/MILLISECONDS))
 
 (defn repeat-fn [thread-pool delay-ms f]
-  (.scheduleAtFixedRate thread-pool f delay-ms delay-ms TimeUnit/MILLISECONDS ))
+  (.scheduleAtFixedRate thread-pool f delay-ms delay-ms TimeUnit/MILLISECONDS))
 
 (defn shutdown-pool! [pool]
   (.shutdown pool))
