@@ -69,6 +69,7 @@
                                                                            (ajax-channel? ch))
                                                                      (:ajax-delay s)
                                                                      (:ws-delay s))
+                                                       :delay-jobs (atom #{})
                                                        :send-queue (atom [])})
                           (update-in [:stats :connection-count] (fnil inc 0)))))))
 
@@ -186,20 +187,22 @@
       (log/errorf throwable "error for channel with id %s" id)
       (record-error tal-state id throwable))))
 
+(defn remove-by-id [tal-state id data ring-req]
+  (let [msg-ch (:msg-ch @tal-state)]
+    (remove-channel tal-state id)
+    (async/put! msg-ch {:op :tal/channel-close
+                        :data data
+                        :tal/ch-id id
+                        ;; for final release, this should be obtained by
+                        ;; passing msg into a fn
+                        :tal/ring-req ring-req
+                        :tal/state tal-state})))
+
 (defn handle-ws-close [tal-state]
   (fn [ch {:keys [code reason] :as args}]
-    (let [id (ch-id ch)
-          msg-ch (:msg-ch @tal-state)]
+    (let [id (ch-id ch)]
       (log/infof "channel with id %s closed %s" id args)
-      (remove-channel tal-state id)
-      (async/put! msg-ch {:op :tal/channel-close
-                          :data args
-                          :tal/ch ch
-                          :tal/ch-id id
-                          ;; for final release, this should be obtained by
-                          ;; passing msg into a fn
-                          :tal/ring-req (immutant/originating-request ch)
-                          :tal/state tal-state}))))
+      (remove-by-id talaria-state id args (immutant/originating-request ch)))))
 
 (defn streamify [msg]
   (if (string? msg)
@@ -245,9 +248,19 @@
                                   :tal/ring-req ring-req
                                   :tal/state tal-state))))))
 
+(defn schedule-ajax-cleanup [tal-state ch-id ring-req channel-count]
+  (delay/delay-fn (:async-pool @tal-state)
+                  5000
+                  ;; remove the channel if it doesn't reconnect
+                  #(when (= channel-count (get-in @tal-state [:connections ch-id :ajax-channel-count]))
+                     (remove-by-id tal-state ch-id {} ring-req))))
+
 (defn handle-ajax-open [tal-state ch-id ring-req]
   (let [msg-ch (:msg-ch @tal-state)]
-    (add-channel tal-state ch-id nil)
+    (let [ch-count (get-in (add-channel tal-state ch-id nil)
+                           [:connections ch-id :ajax-channel-count])]
+      (schedule-ajax-cleanup tal-state ch-id ring-req ch-count))
+
     (async/put! msg-ch {:op :tal/channel-open
                         :tal/ch nil
                         :tal/ch-id ch-id
@@ -269,7 +282,9 @@
     (let [id (ch-id ch)
           msg-ch (:msg-ch @tal-state)]
       (log/infof "channel with id %s closed %s" id args)
-      (remove-ajax-channel tal-state id ch))))
+      (let [ch-count (get-in (remove-ajax-channel tal-state id ch)
+                             [:connections id :ajax-channel-count])]
+        (schedule-ajax-cleanup tal-state id (immutant/originating-request ch) ch-count)))))
 
 (defn send! [tal-state ch-id msg & {:keys [on-success on-error]}]
   (when-let [ch (:channel (get-channel-info tal-state ch-id))]
@@ -292,7 +307,7 @@
 
 (defn pop-all [queue-atom]
   (loop [val @queue-atom]
-    (if (compare-and-set! queue-atom val [])
+    (if (compare-and-set! queue-atom val (empty val))
       val
       (recur @queue-atom))))
 
@@ -308,16 +323,22 @@
 (defn send-queued! [tal-state ch-id]
   (let [ch-info (get-channel-info tal-state ch-id)]
     (when (:channel ch-info)
-      (let [messages (pop-all (:send-queue ch-info))]
+      (let [jobs (pop-all (:delay-jobs ch-info))
+            messages (pop-all (:send-queue ch-info))]
+        (doseq [job jobs]
+          (.cancel job false))
         (when (seq messages)
           (send! tal-state ch-id (mapv :msg messages)
                  :on-success (combine-callbacks (map :on-success messages))
                  :on-error (combine-callbacks (map :on-error messages))))))))
 
 (defn schedule-send [tal-state ch-id delay-ms]
-  (delay/delay-fn (:async-pool @tal-state)
-                  delay-ms
-                  #(send-queued! tal-state ch-id)))
+  (let [job (delay/delay-fn (:async-pool @tal-state)
+                            delay-ms
+                            #(send-queued! tal-state ch-id))
+        delay-jobs (get-in @tal-state [:connections ch-id :delay-jobs])]
+    (when delay-jobs
+      (swap! delay-jobs conj job))))
 
 (defn queue-msg! [tal-state ch-id msg & {:keys [on-success on-error]}]
   (when-let [channel-info (get-channel-info tal-state ch-id)]

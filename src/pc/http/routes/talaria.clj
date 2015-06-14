@@ -31,8 +31,8 @@
           {:status 200 :body "connected"})
       (immutant/as-channel (assoc req :tal/ch-id channel-id)
                            {:on-open (tal/handle-ajax-channel tal/talaria-state channel-id)
-                            :on-error (tal/handle-ws-error tal/talaria-state)
-                            :on-close (tal/handle-ajax-close tal/talaria-state)}))))
+                            :on-close (tal/handle-ajax-close tal/talaria-state)
+                            :on-error (tal/handle-ws-error tal/talaria-state)}))))
 
 (defpage [:post "/talaria/ajax-send"] [req]
   (let [channel-id (str (get-in req [:session :sente-id])
