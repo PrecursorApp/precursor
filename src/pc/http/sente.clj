@@ -1182,7 +1182,7 @@
 
 (defn convert-to-sente-format [msg]
   (assoc msg
-         :client-id (user-id-fn (:tal/ring-req msg))
+         :client-id (:tal/ch-id msg)
          :ring-req (:tal/ring-req msg)
          :event [(:op msg) (:data msg)]
          :?data (:data msg)))
