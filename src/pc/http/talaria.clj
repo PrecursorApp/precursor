@@ -180,21 +180,23 @@
 (defn cancel-ping-job [tal-state ch-id]
   (some-> (get-channel-info tal-state ch-id) :ping-job (.cancel false)))
 
-(defn handle-ws-open [tal-state]
+(defn handle-message [tal-state props]
+  (async/put! (:msg-ch @tal-state) (assoc props :tal/state tal-state)))
+
+(defn ws-open-handler [tal-state]
   (fn [ch]
     (let [id (ch-id ch)
           msg-ch (:msg-ch @tal-state)
           ping-job (setup-ping-job tal-state id)]
       (add-channel tal-state id ch ping-job)
-      (async/put! msg-ch {:op :tal/channel-open
-                          :tal/ch ch
-                          :tal/ch-id id
-                          ;; for final release, this should be obtained by
-                          ;; passing msg into a fn
-                          :tal/ring-req (immutant/originating-request ch)
-                          :tal/state tal-state}))))
+      (handle-message tal-state {:op :tal/channel-open
+                                 :tal/ch ch
+                                 :tal/ch-id id
+                                 ;; for final release, this should be obtained by
+                                 ;; passing msg into a fn
+                                 :tal/ring-req (immutant/originating-request ch)}))))
 
-(defn handle-ws-error [tal-state]
+(defn ws-error-handler [tal-state]
   (fn [ch throwable]
     (let [id (ch-id ch)]
       (log/errorf throwable "error for channel with id %s" id)
@@ -203,15 +205,15 @@
 (defn remove-by-id [tal-state id data ring-req]
   (let [msg-ch (:msg-ch @tal-state)]
     (remove-channel tal-state id)
-    (async/put! msg-ch {:op :tal/channel-close
-                        :data data
-                        :tal/ch-id id
-                        ;; for final release, this should be obtained by
-                        ;; passing msg into a fn
-                        :tal/ring-req ring-req
-                        :tal/state tal-state})))
+    (handle-message tal-state
+                    {:op :tal/channel-close
+                     :data data
+                     :tal/ch-id id
+                     ;; for final release, this should be obtained by
+                     ;; passing msg into a fn
+                     :tal/ring-req ring-req})))
 
-(defn handle-ws-close [tal-state]
+(defn ws-close-handler [tal-state]
   (fn [ch {:keys [code reason] :as args}]
     (let [id (ch-id ch)]
       (log/infof "channel with id %s closed %s" id args)
@@ -235,20 +237,19 @@
     (transit/write w msg)
     (.toString out)))
 
-(defn handle-ws-msg [tal-state]
+(defn ws-msg-handler [tal-state]
   (fn [ch msg]
     (let [id (ch-id ch)
           msg-ch (:msg-ch @tal-state)
           messages (decode-msg msg)]
       (record-msg tal-state id msg)
       (doseq [msg messages]
-        (async/put! msg-ch (assoc msg
-                                  :tal/ch ch
-                                  :tal/ch-id id
-                                  ;; for final release, this should be obtained by
-                                  ;; passing msg into a fn
-                                  :tal/ring-req (immutant/originating-request ch)
-                                  :tal/state tal-state))))))
+        (handle-message tal-state (assoc msg
+                                         :tal/ch ch
+                                         :tal/ch-id id
+                                         ;; for final release, this should be obtained by
+                                         ;; passing msg into a fn
+                                         :tal/ring-req (immutant/originating-request ch)))))))
 
 (defn handle-ajax-msg [tal-state ch-id msg ring-req]
   (if-let [channel-info (get-channel-info tal-state ch-id)]
@@ -256,11 +257,10 @@
           messages (decode-msg msg)]
       (record-msg tal-state ch-id msg)
       (doseq [msg messages]
-        (async/put! msg-ch (assoc msg
-                                  :tal/ch (:channel channel-info)
-                                  :tal/ch-id ch-id
-                                  :tal/ring-req ring-req
-                                  :tal/state tal-state)))
+        (handle-message tal-state (assoc msg
+                                         :tal/ch (:channel channel-info)
+                                         :tal/ch-id ch-id
+                                         :tal/ring-req ring-req)))
       :sent)
     :channel-closed))
 
@@ -279,18 +279,16 @@
           ch-count (get-in (add-channel tal-state ch-id nil ping-job)
                            [:connections ch-id :ajax-channel-count])]
       (schedule-ajax-cleanup tal-state ch-id ring-req ch-count))
-
-    (async/put! msg-ch {:op :tal/channel-open
-                        :tal/ch nil
-                        :tal/ch-id ch-id
-                        ;; for final release, this should be obtained by
-                        ;; passing msg into a fn
-                        :tal/ring-req ring-req
-                        :tal/state tal-state})))
+    (handle-message tal-state {:op :tal/channel-open
+                               :tal/ch nil
+                               :tal/ch-id ch-id
+                               ;; for final release, this should be obtained by
+                               ;; passing msg into a fn
+                               :tal/ring-req ring-req})))
 
 (declare send-queued!)
 
-(defn handle-ajax-channel [tal-state ch-id]
+(defn ajax-channel-handler [tal-state ch-id]
   (fn [ch]
     (let [msg-ch (:msg-ch @tal-state)
           new-state (add-ajax-channel tal-state ch-id ch)]
@@ -302,7 +300,7 @@
           nil))
       (send-queued! talaria-state ch-id))))
 
-(defn handle-ajax-close [tal-state]
+(defn ajax-close-handler [tal-state]
   (fn [ch {:keys [code reason] :as args}]
     (let [id (ch-id ch)
           msg-ch (:msg-ch @tal-state)]

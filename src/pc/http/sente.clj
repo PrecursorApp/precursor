@@ -1139,6 +1139,10 @@
   ;; don't log
   nil)
 
+(defmethod ws-handler :tal/ping [req]
+  ;; don't log
+  nil)
+
 (defn handle-req [req]
   (utils/with-report-exceptions
     (let [client-id (user-id-fn (:ring-req req))
