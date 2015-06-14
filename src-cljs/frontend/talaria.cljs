@@ -41,11 +41,13 @@
                                                     :headers {"Content-Type" "text/plain"}}))))
         (set! (.-open ch) true)
         (go-loop []
-          (let [resp (async/<! (http/get recv-url {:headers {"Content-Type" "text/plain"}}))]
+          (let [resp (async/<! (http/get recv-url {:headers {"Content-Type" "text/plain"}
+                                                   :timeout (* 1000 30)}))]
             (cond
               (keyword-identical? :timeout (:error-code resp)) nil
 
-              (str/blank? (:body resp))
+              (or (str/blank? (:body resp))
+                  (not (:success resp)))
               (.close ch)
 
               (= "replace-existing" (:body resp)) nil

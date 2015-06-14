@@ -60,7 +60,11 @@
                         ;;      Maybe this should result in all channels for that id being closed?
                         (when-let [existing-ch (get-in s [:connections id :channel])]
                           (log/infof "Already a channel for %s, closing existing channel" id)
-                          (immutant/close existing-ch))
+                          (when (immutant/open? existing-ch)
+                            (try
+                              (immutant/close existing-ch)
+                              (catch java.lang.IllegalStateException e
+                                nil))))
                         (-> s
                           (assoc-in [:connections id] {:channel ch
                                                        ;; store delay here so that we can optimize based on
@@ -84,7 +88,11 @@
                         ;;      Maybe this should result in all channels for that id being closed?
                         (when-let [existing-ch (get-in s [:connections id :channel])]
                           (log/infof "Already a channel for %s, closing existing channel" id)
-                          (immutant/send! existing-ch "replace-existing" {:close? true}))
+                          (when (immutant/open? existing-ch)
+                            (try
+                              (immutant/close existing-ch)
+                              (catch java.lang.IllegalStateException e
+                                nil))))
                         (assert (get-in s [:connections id]))
                         (-> s
                           (assoc-in [:connections id :channel] ch)
@@ -284,9 +292,12 @@
     (let [id (ch-id ch)
           msg-ch (:msg-ch @tal-state)]
       (log/infof "channel with id %s closed %s" id args)
-      (let [ch-count (get-in (remove-ajax-channel tal-state id ch)
-                             [:connections id :ajax-channel-count])]
-        (schedule-ajax-cleanup tal-state id (immutant/originating-request ch) ch-count)))))
+      (let [new-state (remove-ajax-channel tal-state id ch)]
+        (when-not (get-in new-state [:connections id :channel])
+          (schedule-ajax-cleanup tal-state
+                                 id
+                                 (immutant/originating-request ch)
+                                 (get-in new-state [:connections id :ajax-channel-count])))))))
 
 (defn send! [tal-state ch-id msg & {:keys [on-success on-error]}]
   (when-let [ch (:channel (get-channel-info tal-state ch-id))]
