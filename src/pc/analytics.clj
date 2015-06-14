@@ -53,4 +53,4 @@
 (defn track-signup-clicked [ring-req]
   (mixpanel/track "Signup Clicked"
                   (mixpanel/distinct-id-from-cookie ring-req)
-                  :source (get-in ring-req [:params :source])))
+                  :source (get-in ring-req [:params "source"])))

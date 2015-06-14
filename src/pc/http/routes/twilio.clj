@@ -15,12 +15,12 @@
     (if (:ErrorCode params)
       (do
         (log/errorf "message to %s failed: status %s, error-code %s, body: %s"
-                    (:To params) (:MessageStatus params) (:ErrorCode params) (:Body params))
-        (rollbar/report-error "twilio message failed" (select-keys params [:ErrorCode :Body :From :To
-                                                                           :AccountSid :NumMedia :MediaUrl
-                                                                           :MessageStatus :MessageSid])))
+                    (get params "To") (get params "MessageStatus") (get params "ErrorCode") (get params "Body"))
+        (rollbar/report-error "twilio message failed" (select-keys params ["ErrorCode" "Body" "From" "To"
+                                                                           "AccountSid" "NumMedia" "MediaUrl"
+                                                                           "MessageStatus" "MessageSid"])))
       (log/infof "message to %s succeeded with %s"
-                 (:To params) (:MessageStatus params)))
+                 (get params "To") (get params "MessageStatus")))
     {:status 200
      :headers {"Content-Type" "text/plain"}
      :body ""}))

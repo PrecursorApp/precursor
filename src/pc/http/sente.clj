@@ -66,14 +66,14 @@
       (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg)))
 
-  (when (empty? (get-in req [:params :tab-id]))
+  (when (empty? (get-in req [:params "tab-id"]))
     (let [msg (format "tab-id is nil for %s on %s" (:remote-addr req) (:uri req))]
       (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg)))
 
   (str (get-in req [:session :sente-id])
        "-"
-       (get-in req [:params :tab-id])))
+       (get-in req [:params "tab-id"])))
 
 ;; hash-map of document-id to connected users
 ;; Used to keep track of which transactions to send to which user

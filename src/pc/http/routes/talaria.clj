@@ -9,12 +9,12 @@
   (:import [java.util UUID]))
 
 (defpage "/talaria" [req]
-  (if (crypto/eq? (pc.utils/inspect (get-in req [:params :csrf-token]))
+  (if (crypto/eq? (get-in req [:params "csrf-token"])
                   csrf/*anti-forgery-token*)
     (if (:websocket? req)
       (let [channel-id (str (get-in req [:session :sente-id])
                             "-"
-                            (get-in req [:params :tab-id]))]
+                            (get-in req [:params "tab-id"]))]
         (immutant/as-channel (assoc req :tal/ch-id channel-id)
                              {:on-open (tal/handle-ws-open tal/talaria-state)
                               :on-error (tal/handle-ws-error tal/talaria-state)
@@ -27,8 +27,8 @@
 (defpage "/talaria/ajax-poll" [req]
   (let [channel-id (str (get-in req [:session :sente-id])
                         "-"
-                        (get-in req [:params :tab-id]))]
-    (if (get-in req [:params :open?])
+                        (get-in req [:params "tab-id"]))]
+    (if (get-in req [:params "open?"])
       (do (tal/handle-ajax-open tal/talaria-state channel-id req)
           {:status 200 :body "connected"})
       (immutant/as-channel (assoc req :tal/ch-id channel-id)
@@ -39,7 +39,7 @@
 (defpage [:post "/talaria/ajax-send"] [req]
   (let [channel-id (str (get-in req [:session :sente-id])
                         "-"
-                        (get-in req [:params :tab-id]))
+                        (get-in req [:params "tab-id"]))
         res (tal/handle-ajax-msg tal/talaria-state channel-id (:body req) req)]
     (case res
       :sent {:status 200 :body ""}
