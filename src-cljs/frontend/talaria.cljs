@@ -255,16 +255,19 @@
                     :ws nil
                     :open? false
                     :closed? true
-                    :close-code (.-code %)
-                    :close-reason (.-reason %))
+                    :close-code code
+                    :close-reason reason)
              (js/clearInterval (:keep-alive-timer @tal-state))
              (when (fn? on-close)
-               (on-close tal-state {:code (.-code %)
-                                    :reason (.-reason %)}))
-             (js/setTimeout (fn []
-                              (when-not (:ws @tal-state)
-                                (utils/apply-map setup-ws url tal-state (assoc args :reconnecting? true))))
-                            1000)))
+               (on-close tal-state {:code code
+                                    :reason reason}))
+             (if (= 1006 code)
+               ;; ws failed, lets try ajax
+               (utils/apply-map setup-ajax url-parts tal-state args)
+               (js/setTimeout (fn []
+                                (when-not (:open? @tal-state)
+                                  (utils/apply-map setup-ws url-parts tal-state (assoc args :reconnecting? true))))
+                              1000))))
     (aset w "onerror"
           #(do (utils/mlog "error" %)
                (swap! tal-state assoc :last-error-time (js/Date.))

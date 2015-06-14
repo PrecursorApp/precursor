@@ -11,14 +11,16 @@
 (defpage "/talaria" [req]
   (if (crypto/eq? (pc.utils/inspect (get-in req [:params :csrf-token]))
                   csrf/*anti-forgery-token*)
-    (let [channel-id (str (get-in req [:session :sente-id])
-                          "-"
-                          (get-in req [:params :tab-id]))]
-      (immutant/as-channel (assoc req :tal/ch-id channel-id)
-                           {:on-open (tal/handle-ws-open tal/talaria-state)
-                            :on-error (tal/handle-ws-error tal/talaria-state)
-                            :on-close (tal/handle-ws-close tal/talaria-state)
-                            :on-message (tal/handle-ws-msg tal/talaria-state)}))
+    (if (:websocket? req)
+      (let [channel-id (str (get-in req [:session :sente-id])
+                            "-"
+                            (get-in req [:params :tab-id]))]
+        (immutant/as-channel (assoc req :tal/ch-id channel-id)
+                             {:on-open (tal/handle-ws-open tal/talaria-state)
+                              :on-error (tal/handle-ws-error tal/talaria-state)
+                              :on-close (tal/handle-ws-close tal/talaria-state)
+                              :on-message (tal/handle-ws-msg tal/talaria-state)}))
+      {:status 400 :body "WebSocket headers not present"})
     {:status 400
      :body "Invalid CSRF token"}))
 
