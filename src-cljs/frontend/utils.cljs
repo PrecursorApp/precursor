@@ -47,7 +47,8 @@
         (when-not (js/isNaN z) z))
    :utm-campaign (.getParameterValue parsed-uri "utm_campaign")
    :utm-source (.getParameterValue parsed-uri "utm_source")
-   :use-talaria? (parse-uri-bool (.getParameterValue parsed-uri "tal"))})
+   :use-talaria? (parse-uri-bool (.getParameterValue parsed-uri "tal"))
+   :use-talaria-ajax? (parse-uri-bool (.getParameterValue parsed-uri "ajax"))})
 
 (defn logging-enabled? []
   (aget js/window "Precursor" "logging-enabled"))

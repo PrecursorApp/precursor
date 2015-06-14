@@ -128,6 +128,7 @@
                                           :port (.getPort utils/parsed-uri)
                                           :params {:tab-id tab-id}
                                           :csrf-token (utils/csrf-token)}
+                                         :test-ajax (:use-talaria-ajax? utils/initial-query-map)
                                          :on-reconnect (fn [tal-state]
                                                          (let [s @initial-state]
                                                            (when (:document/id s)

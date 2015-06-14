@@ -274,7 +274,7 @@
 (defn init
   "Guaranteed to run keep-alive every keep-alive-ms interval, but may probably run
    about twice as often"
-  [url-parts & {:keys [on-open on-close on-error on-reconnect keep-alive-ms]
+  [url-parts & {:keys [on-open on-close on-error on-reconnect keep-alive-ms test-ajax]
                 :or {keep-alive-ms 60000}}]
 
   (let [send-queue (atom [])
@@ -284,7 +284,8 @@
                          :send-queue send-queue
                          :recv-queue recv-queue
                          :callbacks {}})]
-    (if js/Websocket
+    (if (and js/window.WebSocket
+             (not test-ajax))
       (setup-ws url-parts tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect)
       (setup-ajax url-parts tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect))
 
