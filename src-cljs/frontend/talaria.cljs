@@ -98,7 +98,6 @@
       (recur @queue-atom))))
 
 (defn send-msg [tal-state ws msg]
-  (count msg)
   (.send ws (encode-msg msg))
   (swap! tal-state assoc :last-send-time (js/Date.)))
 
@@ -127,10 +126,6 @@
 (defn close-connection [tal-state]
   (.close (:ws @tal-state)))
 
-;; TODO: write own websocket handling code
-(defn reconnect [tal-state]
-  (close-connection tal-state))
-
 (defn consume-recv-queue [tal-state handler]
   (let [recv-queue (:recv-queue @tal-state)]
     (loop [msg (pop-atom recv-queue)]
@@ -141,9 +136,6 @@
 
           (keyword-identical? :tal/close (:op msg))
           (close-connection tal-state)
-
-          (keyword-identical? :tal/reconnect (:op msg))
-          (reconnect tal-state)
 
           :else
           (handler msg))
