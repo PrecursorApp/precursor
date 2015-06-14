@@ -286,8 +286,10 @@
                          :send-queue send-queue
                          :recv-queue recv-queue
                          :callbacks {}})]
-    (setup-ws url-parts tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect)
-    ;;(setup-ajax url-parts tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect)
+    (if js/Websocket
+      (setup-ws url-parts tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect)
+      (setup-ajax url-parts tal-state :on-open on-open :on-error on-error :on-reconnect on-reconnect))
+
     tal-state))
 
 (defn shutdown [tal-state]
