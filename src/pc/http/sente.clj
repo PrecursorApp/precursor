@@ -1217,12 +1217,12 @@
                                    :extra-data (select-keys req [:?data :event])))))))
 
 (defn setup-tal-handlers []
-  (let [tap (tal/tap-msg-ch tal/talaria-state)]
-    (dotimes [x 10]
-      (async/go-loop []
-        (when-let [msg (async/<! tap)]
-          (utils/straight-jacket (handle-tal-msg msg))
-          (recur))))))
+  (let [recv-queue (tal/recv-queue tal/talaria-state)]
+    (mapv (fn [i]
+            (future (while true
+                      (let [msg (.take recv-queue)]
+                        (utils/straight-jacket (handle-tal-msg msg))))))
+          (range (.availableProcessors (Runtime/getRuntime))))))
 
 (defn close-ws
   "Closes the websocket, client should reconnect."

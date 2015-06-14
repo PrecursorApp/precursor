@@ -1,6 +1,5 @@
 (ns pc.http.talaria
   (:require [clj-time.core :as time]
-            [clojure.core.async :as async]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
             [cognitect.transit :as transit]
@@ -9,7 +8,8 @@
             ;; have to extract the utils fns we use
             [pc.utils :as utils]
             [pc.util.seq :refer (dissoc-in)])
-  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
+           [java.util.concurrent LinkedBlockingQueue]))
 
 (defonce talaria-state (ref {:connections {}
                              :stats {}}))
@@ -18,11 +18,10 @@
                :or {ws-delay 30
                     ajax-delay 100
                     ping-ms (* 1000 60)}}]
-  (let [ch (async/chan (async/sliding-buffer 1024))
+  (let [recv-queue (LinkedBlockingQueue.)
         async-pool (delay/make-pool!)]
     (dosync (ref-set talaria-state {:connections {}
-                                    :msg-ch ch
-                                    :msg-mult (async/mult ch)
+                                    :recv-queue recv-queue
                                     :async-pool async-pool
                                     :ws-delay ws-delay
                                     :ajax-delay ajax-delay
@@ -32,14 +31,10 @@
 
 (defn shutdown [tal-state]
   (let [s @tal-state]
-    (async/close! (:msg-ch s))
     (delay/shutdown-pool! (:async-pool s))))
 
-(defn tap-msg-ch [talaria-state]
-  (let [tap-ch (async/chan (async/sliding-buffer 1024))
-        mult-ch (:msg-mult @talaria-state)]
-    (async/tap mult-ch tap-ch)
-    tap-ch))
+(defn recv-queue [tal-state]
+  (:recv-queue @tal-state))
 
 (defn get-channel-info [tal-state ch-id]
   (get-in @tal-state [:connections ch-id]))
@@ -181,7 +176,7 @@
   (some-> (get-channel-info tal-state ch-id) :ping-job (.cancel false)))
 
 (defn handle-message [tal-state props]
-  (async/put! (:msg-ch @tal-state) (assoc props :tal/state tal-state)))
+  (.put (:recv-queue @tal-state) (assoc props :tal/state tal-state)))
 
 (defn ws-open-handler [tal-state]
   (fn [ch]
@@ -298,7 +293,7 @@
           (immutant/close))
         (catch java.lang.IllegalStateException e
           nil))
-      (send-queued! talaria-state ch-id))))
+      (send-queued! tal-state ch-id))))
 
 (defn ajax-close-handler [tal-state]
   (fn [ch {:keys [code reason] :as args}]
@@ -375,8 +370,8 @@
 
 ;; debug methods
 (defn send-all [tal-state msg]
-  (doseq [[id _] (:connections @talaria-state)]
+  (doseq [[id _] (:connections @tal-state)]
     (send! tal-state id msg)))
 
-(defn all-channels [talaria-state]
-  (map (comp :channel second) (:connections @talaria-state)))
+(defn all-channels [tal-state]
+  (map (comp :channel second) (:connections @tal-state)))
