@@ -237,7 +237,7 @@
                                   :tal/state tal-state))))))
 
 (defn handle-ajax-msg [tal-state ch-id msg ring-req]
-  (when-let [channel-info (get-channel-info tal-state ch-id)]
+  (if-let [channel-info (get-channel-info tal-state ch-id)]
     (let [msg-ch (:msg-ch @tal-state)
           messages (decode-msg msg)]
       (record-msg tal-state ch-id msg)
@@ -246,7 +246,9 @@
                                   :tal/ch (:channel channel-info)
                                   :tal/ch-id ch-id
                                   :tal/ring-req ring-req
-                                  :tal/state tal-state))))))
+                                  :tal/state tal-state)))
+      :sent)
+    :channel-closed))
 
 (defn schedule-ajax-cleanup [tal-state ch-id ring-req channel-count]
   (delay/delay-fn (:async-pool @tal-state)

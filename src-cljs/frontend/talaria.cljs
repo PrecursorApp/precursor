@@ -1,30 +1,16 @@
 (ns frontend.talaria
   (:require [cljs.core.async :as async]
-            [cljs-http.client :as http] ;; remove for release
-            [frontend.utils :as utils]
+            [cljs-http.client :as http]
+            [clojure.string :as str]
+            [cognitect.transit :as transit]
+            [goog.Uri.QueryData]
+            [goog.Uri :as uri]
             [goog.events :as gevents]
             [goog.net.WebSocket :as ws]
-            [cognitect.transit :as transit]
-            [goog.Uri :as uri]
-            [goog.Uri.QueryData])
+            ;; remove for release
+            [frontend.utils :as utils])
   (:import [goog.net.WebSocket.EventType])
   (:require-macros [cljs.core.async.macros :refer (go go-loop)]))
-
-(defrecord AjaxSocket [recv-url send-url csrf-token on-open on-close on-error on-message on-reconnect]
-  Object
-  (send [ch msg]
-    (http/post send-url {:body msg
-                         :headers {"X-CSRF-Token" csrf-token
-                                   "Content-Type" "text/plain"}}))
-  (open [ch]
-    (go
-      (async/<! (http/get recv-url {:query-params {:open? true}}))
-      (go-loop []
-        (let [resp (async/<! (http/get recv-url {:headers {"Content-Type" "text/plain"}}))]
-          (utils/inspect (on-message (clj->js {:data (:body resp)})))
-          (recur)))
-      (when (fn? on-open)
-        (on-open)))))
 
 (defn decode-msg [msg]
   (let [r (transit/reader :json)]
@@ -33,6 +19,41 @@
 (defn encode-msg [msg]
   (let [r (transit/writer :json)]
     (transit/write r msg)))
+
+(defrecord AjaxSocket [recv-url send-url csrf-token on-open on-close on-error on-message on-reconnect]
+  Object
+  (send [ch msg]
+    (if (.-open ch)
+      (go
+        (let [res (async/<! (http/post send-url {:body msg
+                                                 :headers {"X-CSRF-Token" csrf-token
+                                                           "Content-Type" "text/plain"}}))]
+          (when-not (= 200 (:status res))
+            (when (fn? on-error)
+              (on-error res))
+            (when (= "channel-closed" (:body res))
+              (.close ch)))))
+      (throw "Channel is closed")))
+  (open [ch]
+    (go
+      (when (= "connected"
+               (:body (async/<! (http/get recv-url {:query-params {:open? true}
+                                                    :headers {"Content-Type" "text/plain"}}))))
+        (set! (.-open ch) true)
+        (go-loop []
+          (let [resp (async/<! (http/get recv-url {:headers {"Content-Type" "text/plain"}}))]
+            (if (str/blank? (:body resp))
+              (.close ch)
+              (on-message (clj->js {:data (:body resp)})))
+            (when-not (.-closed ch)
+              (recur))))
+        (when (fn? on-open)
+          (on-open)))))
+  (close [ch data]
+    (when-not (.-closed ch)
+      (set! (.-closed ch) true)
+      (when (fn? on-close)
+        (on-close data)))))
 
 (defn pop-callback [tal-state cb-uuid]
   (loop [val @tal-state]
@@ -68,18 +89,19 @@
       val
       (recur @queue-atom))))
 
-(defn send-msg [tal-state msg]
-  (utils/inspect (count msg))
-  (.send (:ws @tal-state) (encode-msg msg))
+(defn send-msg [tal-state ws msg]
+  (count msg)
+  (.send ws (encode-msg msg))
   (swap! tal-state assoc :last-send-time (js/Date.)))
 
 (defn consume-send-queue [tal-state timer-atom]
   (let [send-queue (:send-queue @tal-state)]
-    (doseq [timer-id (pop-all timer-atom)]
-      (js/clearTimeout timer-id))
-    (let [messages (pop-all send-queue)]
-      (when (seq messages)
-        (send-msg tal-state messages)))))
+    (when-let [ws (:ws @tal-state)]
+      (doseq [timer-id (pop-all timer-atom)]
+        (js/clearTimeout timer-id))
+      (let [messages (pop-all send-queue)]
+        (when (seq messages)
+          (send-msg tal-state ws messages))))))
 
 (defn start-send-queue [tal-state delay-ms]
   (let [send-queue (:send-queue @tal-state)
@@ -176,12 +198,11 @@
                                  :ws nil
                                  :open? false
                                  :closed? true
-                                 :close-code (.-code %)
-                                 :close-reason (.-reason %))
+                                 :close-code (:status %)
+                                 :close-reason (:body %))
                           (js/clearInterval (:keep-alive-timer @tal-state))
                           (when (fn? on-close)
-                            (on-close tal-state {:code (.-code %)
-                                                 :reason (.-reason %)}))
+                            (on-close tal-state %))
                           (js/setTimeout (fn []
                                            (when-not (:ws @tal-state)
                                              (utils/apply-map setup-ajax url-parts tal-state (assoc args :reconnecting? true))))

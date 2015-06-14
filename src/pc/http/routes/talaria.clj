@@ -37,8 +37,10 @@
 (defpage [:post "/talaria/ajax-send"] [req]
   (let [channel-id (str (get-in req [:session :sente-id])
                         "-"
-                        (get-in req [:params :tab-id]))]
-    (tal/handle-ajax-msg tal/talaria-state channel-id (:body req) req)
-    {:status 200 :body ""}))
+                        (get-in req [:params :tab-id]))
+        res (tal/handle-ajax-msg tal/talaria-state channel-id (:body req) req)]
+    (case res
+      :sent {:status 200 :body ""}
+      :channel-closed {:status 400 :body "channel-closed"})))
 
 (def app (defpage/collect-routes))
