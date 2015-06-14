@@ -84,7 +84,7 @@
                         ;;      Maybe this should result in all channels for that id being closed?
                         (when-let [existing-ch (get-in s [:connections id :channel])]
                           (log/infof "Already a channel for %s, closing existing channel" id)
-                          (immutant/close existing-ch))
+                          (immutant/send! existing-ch "replace-existing" {:close? true}))
                         (assert (get-in s [:connections id]))
                         (-> s
                           (assoc-in [:connections id :channel] ch)

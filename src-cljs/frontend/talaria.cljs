@@ -42,9 +42,15 @@
         (set! (.-open ch) true)
         (go-loop []
           (let [resp (async/<! (http/get recv-url {:headers {"Content-Type" "text/plain"}}))]
-            (if (str/blank? (:body resp))
+            (cond
+              (keyword-identical? :timeout (:error-code resp)) nil
+
+              (str/blank? (:body resp))
               (.close ch)
-              (on-message (clj->js {:data (:body resp)})))
+
+              (= "replace-existing" (:body resp)) nil
+
+              :else (on-message (clj->js {:data (:body resp)})))
             (when-not (.-closed ch)
               (recur))))
         (when (fn? on-open)
@@ -241,7 +247,8 @@
              (when (fn? on-open)
                (on-open tal-state))))
     (aset w "onclose"
-          #(do
+          #(let [code (.-code %)
+                 reason (.-reason %)]
              (utils/mlog "closed" %)
              (shutdown-send-queue tal-state)
              (swap! tal-state assoc
