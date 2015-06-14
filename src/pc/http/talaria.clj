@@ -14,9 +14,10 @@
 (defonce talaria-state (ref {:connections {}
                              :stats {}}))
 
-(defn init [& {:keys [ws-delay ajax-delay]
+(defn init [& {:keys [ws-delay ajax-delay ping-ms]
                :or {ws-delay 30
-                    ajax-delay 100}}]
+                    ajax-delay 100
+                    ping-ms (* 1000 60)}}]
   (let [ch (async/chan (async/sliding-buffer 1024))
         async-pool (delay/make-pool!)]
     (dosync (ref-set talaria-state {:connections {}
@@ -25,6 +26,7 @@
                                     :async-pool async-pool
                                     :ws-delay ws-delay
                                     :ajax-delay ajax-delay
+                                    :ping-ms ping-ms
                                     :stats {}})))
   talaria-state)
 
@@ -52,7 +54,7 @@
 (defn add-channel
   "Adds channel to state, given an id. Will throw if a channel
    already exists for the given id. Updates global stats."
-  [tal-state id ch]
+  [tal-state id ch ping-job]
   (dosync
    (commute tal-state (fn [s]
                         ;; XXX: should this also close the channel?
@@ -74,7 +76,8 @@
                                                                      (:ajax-delay s)
                                                                      (:ws-delay s))
                                                        :delay-jobs (atom #{})
-                                                       :send-queue (atom [])})
+                                                       :send-queue (atom [])
+                                                       :ping-job ping-job})
                           (update-in [:stats :connection-count] (fnil inc 0)))))))
 
 (defn add-ajax-channel
@@ -135,7 +138,8 @@
    (commute tal-state (fn [s]
                         (-> s
                           (utils/update-when-in [:connections id] (fn [info] (-> info
-                                                                               (update-in [:receive-count] (fnil inc 0)))))
+                                                                               (update-in [:receive-count] (fnil inc 0))
+                                                                               (assoc :last-recv-time (java.util.Date.)))))
                           (update-in [:stats :receive-count] (fnil inc 0)))))))
 
 (defn record-send
@@ -146,7 +150,8 @@
                         (-> s
                           (utils/update-when-in [:connections id] (fn [info] (-> info
                                                                                (update-in [:send-count] (fnil inc 0))
-                                                                               (update-in [:in-flight] (fnil inc 0)))))
+                                                                               (update-in [:in-flight] (fnil inc 0))
+                                                                               (assoc :last-send-time (java.util.Date.)))))
                           (update-in [:stats :send-count] (fnil inc 0))
                           (update-in [:stats :in-flight] (fnil inc 0)))))))
 
@@ -176,11 +181,28 @@
                           (update-in [:stats :send-error-count] (fnil inc 0))
                           (update-in [:stats :in-flight] (fnil dec 0)))))))
 
+(declare queue-msg!)
+
+(defn setup-ping-job [tal-state ch-id]
+  (delay/repeat-fn (:async-pool @tal-state)
+                   (long (/ (:ping-ms @tal-state) 2))
+                   #(when-let [ch-info (get-channel-info tal-state ch-id)]
+                      (when (and (empty? @(:send-queue ch-info))
+                                 (or (nil? (:last-send-time ch-info))
+                                     (< (/ (:ping-ms @tal-state) 2)
+                                        (- (.getTime (java.util.Date.))
+                                           (.getTime (:last-send-time ch-info))))))
+                        (queue-msg! tal-state ch-id {:op :tal/ping})))))
+
+(defn cancel-ping-job [tal-state ch-id]
+  (some-> (get-channel-info tal-state ch-id) :ping-job (.cancel false)))
+
 (defn handle-ws-open [tal-state]
   (fn [ch]
     (let [id (ch-id ch)
-          msg-ch (:msg-ch @tal-state)]
-      (add-channel tal-state id ch)
+          msg-ch (:msg-ch @tal-state)
+          ping-job (setup-ping-job tal-state id)]
+      (add-channel tal-state id ch ping-job)
       (async/put! msg-ch {:op :tal/channel-open
                           :tal/ch ch
                           :tal/ch-id id
@@ -210,7 +232,8 @@
   (fn [ch {:keys [code reason] :as args}]
     (let [id (ch-id ch)]
       (log/infof "channel with id %s closed %s" id args)
-      (remove-by-id talaria-state id args (immutant/originating-request ch)))))
+      (cancel-ping-job tal-state id)
+      (remove-by-id tal-state id args (immutant/originating-request ch)))))
 
 (defn streamify [msg]
   (if (string? msg)
@@ -263,11 +286,13 @@
                   5000
                   ;; remove the channel if it doesn't reconnect
                   #(when (= channel-count (get-in @tal-state [:connections ch-id :ajax-channel-count]))
+                     (cancel-ping-job tal-state ch-id)
                      (remove-by-id tal-state ch-id {} ring-req))))
 
 (defn handle-ajax-open [tal-state ch-id ring-req]
   (let [msg-ch (:msg-ch @tal-state)]
-    (let [ch-count (get-in (add-channel tal-state ch-id nil)
+    (let [ping-job (setup-ping-job tal-state ch-id)
+          ch-count (get-in (add-channel tal-state ch-id nil ping-job)
                            [:connections ch-id :ajax-channel-count])]
       (schedule-ajax-cleanup tal-state ch-id ring-req ch-count))
 

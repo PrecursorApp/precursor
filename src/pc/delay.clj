@@ -11,5 +11,8 @@
 (defn delay-fn [thread-pool delay-ms f]
   (.schedule thread-pool f delay-ms TimeUnit/MILLISECONDS))
 
+(defn repeat-fn [thread-pool delay-ms f]
+  (.scheduleAtFixedRate thread-pool f delay-ms delay-ms TimeUnit/MILLISECONDS ))
+
 (defn shutdown-pool! [pool]
   (.shutdown pool))
