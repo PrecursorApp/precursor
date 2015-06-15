@@ -44,7 +44,7 @@
 
 (defn pop-or-unlock [send-state-atom msg-type uid]
   (loop [val @send-state-atom]
-    (let [message (get-in val [:message msg-type uid])
+    (let [message (get-in val [:messages msg-type uid])
           new-val (if message
                     (dissoc-in val [:messages msg-type uid])
                     (update-in val [:sending msg-type] disj uid))]
