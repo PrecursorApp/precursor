@@ -246,7 +246,8 @@
                (swap! tal-state (fn [s]
                                   (-> s
                                     (assoc :open? true
-                                           :keep-alive-timer timer-id)
+                                           :keep-alive-timer timer-id
+                                           :supports-websockets? true)
                                     (dissoc :closed? :close-code :close-reason)))))
              (start-send-queue tal-state 30)
              (when (and reconnecting? (fn? on-reconnect))
@@ -269,7 +270,8 @@
              (when (fn? on-close)
                (on-close tal-state {:code code
                                     :reason reason}))
-             (if (= 1006 code)
+             (if (and (= 1006 code)
+                      (not (:supports-websockets? @tal-state)))
                ;; ws failed, lets try ajax
                (utils/apply-map setup-ajax url-parts tal-state args)
                (js/setTimeout (fn []
