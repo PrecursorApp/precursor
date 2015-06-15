@@ -1216,12 +1216,50 @@
                                    :cust (some-> req :ring-req :auth :cust)
                                    :extra-data (select-keys req [:?data :event])))))))
 
+(defn pop-message [lock-atom]
+  (let [val @lock-atom]
+    (when-let [message (first (:ready-messages val))]
+      (when (compare-and-set! lock-atom val (update-in val [:ready-messages] subvec 1))
+        message))))
+
+(defn lock-channel [lock-atom ch-id]
+  (let [val @lock-atom]
+    (and (not (contains? (:ch-ids val) ch-id))
+         (compare-and-set! lock-atom val (update-in val [:ch-ids] conj ch-id)))))
+
+(defn unlock-channel [lock-atom ch-id]
+  (swap! lock-atom
+         (fn [s]
+           (-> s
+             (update-in [:ch-ids] disj ch-id)
+             (update-in [:locked-messages] dissoc ch-id)
+             (update-in [:ready-messages]
+                        (fn [msgs]
+                          (if-let [queued (seq (get-in s [:locked-messages ch-id]))]
+                            (apply conj msgs queued)
+                            msgs)))))))
+
+(defn add-message-to-secondary-queue [lock-atom ch-id msg]
+  (swap! lock-atom
+         (fn [s]
+           (if (contains? (:ch-ids s) ch-id)
+             (update-in s [:locked-messages ch-id] (fnil conj []) msg)
+             (update-in s [:ready-messages] conj msg)))))
+
+(defonce lock-atom (atom {:ch-ids #{}
+                          :ready-messages []
+                          :locked-messages {}}))
+
 (defn setup-tal-handlers []
   (let [recv-queue (tal/recv-queue tal/talaria-state)]
     (mapv (fn [i]
             (future (while true
-                      (let [msg (.take recv-queue)]
-                        (utils/straight-jacket (handle-tal-msg msg))))))
+                      (let [msg (or (pop-message lock-atom) (.take recv-queue))]
+                        (if (lock-channel lock-atom (:tal/ch-id msg))
+                          (do
+                            (utils/straight-jacket (handle-tal-msg msg))
+                            (unlock-channel lock-atom (:tal/ch-id msg)))
+                          (add-message-to-secondary-queue lock-atom (:tal/ch-id msg) msg))))))
           (range (.availableProcessors (Runtime/getRuntime))))))
 
 (defn close-ws
