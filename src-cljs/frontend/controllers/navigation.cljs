@@ -144,7 +144,11 @@
         (update-in [:db] (fn [db] (if (:initial-state state)
                                     db
                                     (db/reset-db! db (concat initial-entities
-                                                             (doc-model/all @db))))))))))
+                                                             (map #(utils/update-when-in
+                                                                    %
+                                                                    [:document/chat-bot]
+                                                                    :db/id)
+                                                                  (doc-model/all @db)))))))))))
 
 (defn maybe-replace-doc-token [current-state]
   (let [url (goog.Uri. js/window.location)
