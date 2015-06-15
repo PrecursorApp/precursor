@@ -23,8 +23,10 @@
             [pc.http.issues :as issues-http]
             [pc.http.plan :as plan-http]
             [pc.http.sente.sliding-send :as sliding-send]
+            [pc.http.sente.common :as common :refer (send-msg send-reply)]
             [pc.http.integrations :as integrations-http]
             [pc.http.urls :as urls]
+            [pc.http.talaria :as tal]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.access-request :as access-request-model]
             [pc.models.chat :as chat]
@@ -47,6 +49,8 @@
             [taoensso.sente :as sente])
   (:import java.util.UUID))
 
+(defonce client-stats (atom {}))
+
 ;; TODO: find a way to restart sente
 (defonce sente-state (atom {}))
 
@@ -62,14 +66,14 @@
       (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg)))
 
-  (when (empty? (get-in req [:params :tab-id]))
+  (when (empty? (get-in req [:params "tab-id"]))
     (let [msg (format "tab-id is nil for %s on %s" (:remote-addr req) (:uri req))]
       (rollbar/report-exception (Exception. msg) :request (:ring-req req) :cust (some-> req :ring-req :auth :cust))
       (log/errorf msg)))
 
   (str (get-in req [:session :sente-id])
        "-"
-       (get-in req [:params :tab-id])))
+       (get-in req [:params "tab-id"])))
 
 ;; hash-map of document-id to connected users
 ;; Used to keep track of which transactions to send to which user
@@ -77,8 +81,6 @@
 ;; e.g {:12345 {:uuid-1 {show-mouse?: true} :uuid-1 {:show-mouse? false}}}
 (defonce document-subs (atom {}))
 (defonce team-subs (atom {}))
-
-(defonce client-stats (atom {}))
 
 (defn track-document-subs []
   (add-watch document-subs :statsd (fn [_ _ old-state new-state]
@@ -98,35 +100,51 @@
                                              (count new-state))
                                    (statsd/gauge "team-subs" (count new-state))))))
 
-(defn notify-document-transaction [db {:keys [read-only-data admin-data]}]
-  (let [doc (:transaction/document read-only-data)
+(defn notify-document-transaction [db {:keys [read-only-data admin-data annotations]}]
+  (let [doc (:transaction/document annotations)
         doc-id (:db/id doc)]
-    (doseq [[uid {:keys [auth]}] (dissoc (get @document-subs doc-id) (:session/client-id read-only-data))
+    (doseq [[uid {:keys [auth]}] (dissoc (get @document-subs doc-id) (:session/client-id annotations))
             :let [max-scope (auth/max-document-scope db doc auth)]]
       (log/infof "notifying %s about new transactions for %s" uid doc-id)
-      ((:send-fn @sente-state) uid [:datomic/transaction (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
-                                                               admin-data
-                                                               (auth/contains-scope? auth/scope-heirarchy max-scope :read)
-                                                               read-only-data)]))
+      (send-msg {:sente-state sente-state
+                 ;; TODO: probably want to get tal-state from somewhere else
+                 :tal/state tal/talaria-state}
+                uid
+                [:datomic/transaction (cond (auth/contains-scope? auth/scope-heirarchy max-scope :admin)
+                                            admin-data
+                                            (auth/contains-scope? auth/scope-heirarchy max-scope :read)
+                                            read-only-data)]))
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
-      (log/infof "notifying %s about new server timestamp for %s" (:session/uuid admin-data) doc-id)
+      (log/infof "notifying %s about new server timestamp for %s" (:session/uuid annotations) doc-id)
       ;; they made the tx, so we can send them the admin data
-      ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:datomic/transaction (assoc admin-data :tx-data server-timestamps)]))))
+      (send-msg {:sente-state sente-state
+                 :tal/state tal/talaria-state}
+                (str (:session/client-id annotations))
+                [:datomic/transaction {:tx-data server-timestamps}]))))
 
 ;; Note: this assumes that everyone subscribe to the team is an admin
-(defn notify-team-transaction [db {:keys [read-only-data admin-data]}]
-  (let [team-uuid (:team/uuid (:transaction/team admin-data))]
-    (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id admin-data))]
+(defn notify-team-transaction [db {:keys [read-only-data admin-data annotations]}]
+  (let [team-uuid (:team/uuid (:transaction/team annotations))]
+    (doseq [[uid _] (dissoc (get @team-subs team-uuid) (:session/client-id annotations))]
       (log/infof "notifying %s about new team transactions for %s" uid team-uuid)
-      ((:send-fn @sente-state) uid [:team/transaction admin-data]))
+      (send-msg {:sente-state sente-state
+                 :tal/state tal/talaria-state}
+                uid
+                [:team/transaction admin-data]))
     (when-let [server-timestamps (seq (filter #(= :server/timestamp (:a %)) (:tx-data admin-data)))]
       (log/infof "notifying %s about new team server timestamp for %s" (:session/uuid admin-data) team-uuid)
-      ((:send-fn @sente-state) (str (:session/client-id admin-data)) [:team/transaction (assoc admin-data :tx-data server-timestamps)]))))
+      (send-msg {:sente-state sente-state
+                 :tal/state tal/talaria-state}
+                (str (:session/client-id annotations))
+                [:team/transaction {:tx-data server-timestamps}]))))
 
 (defn notify-issue-transaction [db data]
   (doseq [uid @issues-http/issue-subs]
     (log/infof "notifying %s about new issue transactions" uid)
-    ((:send-fn @sente-state) uid [:issue/transaction data])))
+    (send-msg {:sente-state sente-state
+               :tal/state tal/talaria-state}
+              uid
+              [:issue/transaction data])))
 
 (defn has-document-access? [doc-id req scope]
   (let [doc (doc-model/find-by-id (:db req) doc-id)]
@@ -231,7 +249,10 @@
                           acc))
                       #{} @document-subs)]
     (log/infof "notifying %s about %s leaving" uid client-id)
-    ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))
+    (send-msg {:sente-state sente-state
+               :tal/state tal/talaria-state}
+              uid
+              [:frontend/subscriber-left {:client-id client-id}]))
   (clean-team-subs client-id)
   (clean-document-subs client-id)
   (issues-http/unsubscribe client-id)
@@ -257,6 +278,9 @@
 (defmethod ws-handler :chsk/uidport-close [{:keys [client-id] :as req}]
   (close-connection client-id))
 
+(defmethod ws-handler :tal/channel-close [{:keys [client-id] :as req}]
+  (close-connection client-id))
+
 (defmethod ws-handler :frontend/close-connection [{:keys [client-id] :as req}]
   (close-connection client-id))
 
@@ -266,12 +290,12 @@
     (log/infof "unsubscribing %s from %s" client-id document-id)
     (close-connection client-id)
     (doseq [[uid _] (get @document-subs document-id)]
-      ((:send-fn @sente-state) uid [:frontend/subscriber-left {:client-id client-id}]))))
+      (send-msg req uid [:frontend/subscriber-left {:client-id client-id}]))))
 
 (defmethod ws-handler :team/subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)
         team (team-model/find-by-uuid (:db req) team-uuid)
-        send-fn (:send-fn @sente-state)]
+        send-fn (partial send-msg req)]
     (check-team-access team-uuid req :admin)
 
     (subscribe-to-team team-uuid client-id (get-in req [:ring-req :auth :cust]))
@@ -344,10 +368,10 @@
   (try+
    (check-document-access (-> ?data :document-id) req :read)
    (catch :status t
-     (?reply-fn [:subscribe/error])
+     (send-reply req [:subscribe/error])
      (throw+)))
   (let [document-id (-> ?data :document-id)
-        send-fn (:send-fn @sente-state)
+        send-fn (partial send-msg req)
         _ (log/infof "subscribing %s to %s" client-id document-id)
         subs (subscribe-to-doc (:db req)
                                document-id
@@ -357,8 +381,8 @@
                                :requested-remainder (:requested-remainder ?data))
         doc (doc-model/find-by-id (:db req) document-id)]
 
-    (?reply-fn [:frontend/frontend-id-state {:frontend-id-state (get-in subs [document-id client-id :frontend-id-seed])
-                                             :max-document-scope (auth/max-document-scope (:db req) doc (get-in req [:ring-req :auth]))}])
+    (send-reply req [:frontend/frontend-id-state {:frontend-id-state (get-in subs [document-id client-id :frontend-id-seed])
+                                                  :max-document-scope (auth/max-document-scope (:db req) doc (get-in req [:ring-req :auth]))}])
 
     (doseq [[uid _] (get @document-subs document-id)]
       (send-fn uid [:frontend/subscriber-joined (subscriber-read-api (merge {:client-id client-id}
@@ -435,12 +459,12 @@
 
 (defmethod ws-handler :cust/fetch-teams [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
-    (?reply-fn {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
+    (send-reply req {:teams (set (map (comp team-model/read-api :permission/team) (permission-model/find-team-permissions-for-cust (:db req) cust)))})))
 
 (defmethod ws-handler :cust/fetch-clipboard-s3-url [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (log/infof "sending presigned url for %s" (:cust/email cust))
-    (?reply-fn (clipboard/create-presigned-clipboard-url cust))))
+    (send-reply req (clipboard/create-presigned-clipboard-url cust))))
 
 (defmethod ws-handler :cust/store-clipboard [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
@@ -457,43 +481,43 @@
   (when-let [cust (-> req :ring-req :auth :cust)]
     (let [clips (clip-model/find-by-cust (:db req) cust)]
       (log/infof "sending %s clips to %s" (count clips) (:cust/email cust))
-      (?reply-fn {:clips (map (fn [c] (-> c
-                                        (select-keys [:clip/uuid :clip/important?])
-                                        (assoc :clip/s3-url (clipboard/create-presigned-clip-url c))))
-                              clips)}))))
+      (send-reply req {:clips (map (fn [c] (-> c
+                                             (select-keys [:clip/uuid :clip/important?])
+                                             (assoc :clip/s3-url (clipboard/create-presigned-clip-url c))))
+                                   clips)}))))
 
 (defmethod ws-handler :cust/delete-clip [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
       (log/infof "deleting clip %s for %s" (:db/id clip) (:cust/email cust))
       @(d/transact (pcd/conn) [[:db.fn/retractEntity (:db/id clip)]])
-      (?reply-fn {:deleted? true
-                  :clip/uuid (:clip/uuid clip)}))))
+      (send-reply req {:deleted? true
+                       :clip/uuid (:clip/uuid clip)}))))
 
 (defmethod ws-handler :cust/tag-clip [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
       (log/infof "marking clip %s important for %s" (:db/id clip) (:cust/email cust))
       @(d/transact (pcd/conn) [[:db/add (:db/id clip) :clip/important? true]])
-      (?reply-fn {:tagged? true
-                  :clip/uuid (:clip/uuid clip)}))))
+      (send-reply req {:tagged? true
+                       :clip/uuid (:clip/uuid clip)}))))
 
 (defmethod ws-handler :cust/untag-clip [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
     (when-let [clip (clip-model/find-by-cust-and-uuid (:db req) cust (:clip/uuid ?data))]
       (log/infof "marking clip %s unimportant for %s" (:db/id clip) (:cust/email cust))
       @(d/transact (pcd/conn) [[:db/retract (:db/id clip) :clip/important? true]])
-      (?reply-fn {:untagged? true
-                  :clip/uuid (:clip/uuid clip)}))))
+      (send-reply req {:untagged? true
+                       :clip/uuid (:clip/uuid clip)}))))
 
 (defmethod ws-handler :frontend/fetch-custs [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [uuids (->> ?data :uuids)]
     (assert (>= 100 (count uuids)) "Can only fetch 100 uuids at once")
-    ((:send-fn @sente-state) client-id [:frontend/custs {:uuid->cust (cust/public-read-api-per-uuids (:db req) uuids)}])))
+    (send-msg req client-id [:frontend/custs {:uuid->cust (cust/public-read-api-per-uuids (:db req) uuids)}])))
 
 (defmethod ws-handler :frontend/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (when-let [cust (-> req :ring-req :auth :cust)]
-    (let [;; TODO: at some point we may want to limit, but it's just a
+    (let [ ;; TODO: at some point we may want to limit, but it's just a
           ;; list of longs, so meh
           ;; limit (get ?data :limit 100)
           ;; offset (get ?data :offset 0)
@@ -501,10 +525,10 @@
                     (doc-model/find-touched-by-cust-in-team (:db req) cust team)
                     (doc-model/find-touched-by-cust (:db req) cust))]
       (log/infof "fetched %s touched for %s" (count doc-ids) client-id)
-      (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
-                                           :document/name (:document/name (d/entity (:db req) doc-id))
-                                           :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
-                             doc-ids)}))))
+      (send-reply req {:docs (map (fn [doc-id] {:db/id doc-id
+                                                :document/name (:document/name (d/entity (:db req) doc-id))
+                                                :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
+                                  doc-ids)}))))
 
 (defmethod ws-handler :team/fetch-touched [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)
@@ -516,10 +540,10 @@
           ;; offset (get ?data :offset 0)
           doc-ids (team-model/find-doc-ids (:db req) team)]
       (log/infof "fetched %s touched in %s for %s" (count doc-ids) (:team/subdomain team) client-id)
-      (?reply-fn {:docs (map (fn [doc-id] {:db/id doc-id
-                                           :document/name (:document/name (d/entity (:db req) doc-id))
-                                           :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
-                             doc-ids)}))))
+      (send-reply req {:docs (map (fn [doc-id] {:db/id doc-id
+                                                :document/name (:document/name (d/entity (:db req) doc-id))
+                                                :last-updated-instant (doc-model/last-updated-time (:db req) doc-id)})
+                                  doc-ids)}))))
 
 (defmethod ws-handler :team/plan-active-history [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)
@@ -529,8 +553,8 @@
                     (map (fn [info]
                            (update-in info [:cust] :cust/email))))]
       (log/infof "fetched %s entries in active history for %s" (count history) (:team/subdomain team))
-      (?reply-fn {:history history
-                  :team/uuid team-uuid}))))
+      (send-reply req {:history history
+                       :team/uuid team-uuid}))))
 
 (defn determine-type [datom datoms]
   (let [e (:e datom)
@@ -577,8 +601,7 @@
                          :frontend-id-seed (get-in @document-subs [document-id client-id :frontend-id-seed])
                          :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
                          :timestamp (:receive-instant req)})
-    (when ?reply-fn
-      (?reply-fn {:rejected-datoms rejects}))))
+    (send-reply req {:rejected-datoms rejects})))
 
 (defmethod ws-handler :team/transaction [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
@@ -601,8 +624,7 @@
                            :cust-uuid cust-uuid
                            :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
                            :timestamp (:receive-instant req)})
-      (when ?reply-fn
-        (?reply-fn {:rejected-datoms rejects})))))
+      (send-reply req {:rejected-datoms rejects}))))
 
 (defmethod ws-handler :issue/transaction [{:keys [client-id ?data ?reply-fn] :as req}]
   (issues-http/handle-transaction req))
@@ -630,7 +652,7 @@
                                                                              :tool tool
                                                                              :recording recording})
     (doseq [[uid _] (dissoc (get @document-subs document-id) client-id)]
-      (sliding-send/sliding-send sente-state uid message))))
+      (sliding-send/sliding-send req uid message))))
 
 (defmethod ws-handler :rtc/signal [{:keys [client-id ?data] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
@@ -644,7 +666,7 @@
     (if (get-in @document-subs [document-id target])
       (do
         (log/infof "sending signal from %s to %s" client-id target)
-        ((:send-fn @sente-state) target [:rtc/signal (assoc data
+        (send-msg req target [:rtc/signal (assoc data
                                                             :ice-servers (nts/get-ice-servers))]))
       (log/warnf (format "%s is the target, but isn't subscribed to %s" target document-id)))))
 
@@ -671,10 +693,10 @@
                                  () (vals @document-subs))
             msg [:frontend/custs {:uuid->cust {(:cust/uuid new-cust) (cust/public-read-api new-cust)}}]]
         (doseq [uid collab-uuids]
-          ((:send-fn @sente-state) uid msg))
+          (send-msg req uid msg))
         (when (contains? @issues-http/issue-subs client-id)
           (doseq [uid (set/difference @issues-http/issue-subs (set collab-uuids))]
-            ((:send-fn @sente-state) uid msg)))))))
+            (send-msg req uid msg)))))))
 
 (defmethod ws-handler :frontend/send-invite [{:keys [client-id ?data ?reply-fn] :as req}]
   ;; This may turn out to be a bad idea, but error handling is done through creating chats
@@ -686,7 +708,7 @@
         cust (-> req :ring-req :auth :cust)
         notify-invite (fn [body]
                         (if (= :overlay invite-loc)
-                          ((:send-fn @sente-state) client-id
+                          (send-msg req client-id
                            [:frontend/invite-response {:document/id doc-id
                                                        :response body}])
                           @(d/transact (pcd/conn) [(merge {:db/id (d/tempid :db.part/tx)
@@ -726,9 +748,9 @@
         cust (-> req :ring-req :auth :cust)
         notify-invite (fn [body]
                         (if (= :overlay invite-loc)
-                          ((:send-fn @sente-state) client-id
-                           [:frontend/invite-response {:document/id doc-id
-                                                       :response body}])))]
+                          (send-msg req client-id
+                                    [:frontend/invite-response {:document/id doc-id
+                                                                :response body}])))]
     (if-let [cust (-> req :ring-req :auth :cust)]
       (let [phone-number (-> ?data :phone-number)
             stripped-phone-number (str/replace phone-number #"[^0-9]" "")]
@@ -785,11 +807,11 @@
                            (permission-model/create-document-image-permission! {:db/id doc-id}
                                                                                reason
                                                                                annotations))]
-        (?reply-fn {:status :success
-                    :permission (permission-model/read-api (:db req) permission)}))
-      (?reply-fn {:status :error
-                  :error-msg "Please log in"
-                  :error-key :not-logged-in}))))
+        (send-reply req {:status :success
+                         :permission (permission-model/read-api (:db req) permission)}))
+      (send-reply req {:status :error
+                       :error-msg "Please log in"
+                       :error-key :not-logged-in}))))
 
 (defmethod ws-handler :frontend/send-permission-grant [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :admin)
@@ -884,19 +906,19 @@
           channel-name (:slack-hook/channel-name ?data)
           webhook-url (:slack-hook/webhook-url ?data)]
       (cond (empty? channel-name)
-            (?reply-fn {:status :error
-                        :error-msg "Channel name is required"
-                        :error-key :invalid-channel-name})
+            (send-reply req {:status :error
+                             :error-msg "Channel name is required"
+                             :error-key :invalid-channel-name})
             (or (not (string? webhook-url))
                 (not (utils/valid-url? webhook-url)))
-            (?reply-fn {:status :error
-                        :error-msg "Webhook url is not valid"
-                        :error-key :invalid-webhook-url})
+            (send-reply req {:status :error
+                             :error-msg "Webhook url is not valid"
+                             :error-key :invalid-webhook-url})
             :else
             (let [slack-hook-ent (integrations-http/create-slack-hook team cust channel-name webhook-url)]
 
-              (?reply-fn {:status :success
-                          :entities [(team-model/slack-hook-read-api slack-hook-ent)]}))))))
+              (send-reply req {:status :success
+                               :entities [(team-model/slack-hook-read-api slack-hook-ent)]}))))))
 
 (defmethod ws-handler :team/delete-slack-integration [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
@@ -906,12 +928,12 @@
           hook-id (:slack-hook-id ?data)
           slack-hook (team-model/find-slack-hook-by-frontend-id (:db req) (UUID. (:db/id team) hook-id))]
       (cond (not slack-hook)
-            (?reply-fn {:status :error
-                        :error-msg "Can't find hook"
-                        :error-key :invalid-slack-hook})
+            (send-reply req {:status :error
+                             :error-msg "Can't find hook"
+                             :error-key :invalid-slack-hook})
             :else
             (do (integrations-http/delete-slack-hook team cust slack-hook)
-                (?reply-fn {:status :success}))))))
+                (send-reply req {:status :success}))))))
 
 (defmethod ws-handler :team/post-doc-to-slack [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
@@ -921,26 +943,26 @@
           slack-hook (team-model/find-slack-hook-by-frontend-id (:db req) (UUID. (:db/id team) hook-id))
           doc (doc-model/find-by-id (:db req) (:doc-id ?data))]
       (cond (not= (:db/id team) (:db/id (:document/team doc)))
-            (?reply-fn {:status :error
-                        :error-msg "Invalid document"
-                        :error-key :invalid-document})
+            (send-reply req {:status :error
+                             :error-msg "Invalid document"
+                             :error-key :invalid-document})
 
             (not slack-hook)
-            (?reply-fn {:status :error
-                        :error-msg "Can't find hook"
-                        :error-key :invalid-slack-hook})
+            (send-reply req {:status :error
+                             :error-msg "Can't find hook"
+                             :error-key :invalid-slack-hook})
 
             :else (do
                     (log/infof "Sending slack hook for %s on %s team" (:db/id doc) (:team/subdomain team))
                     (integrations-http/send-slack-webhook slack-hook doc :message (:message ?data))
-                      (?reply-fn {:status :success}))))))
+                    (send-reply req {:status :success}))))))
 
 (defmethod ws-handler :document/transaction-ids [{:keys [client-id ?data ?reply-fn] :as req}]
   (check-document-access (-> ?data :document/id) req :read)
   (let [doc (->> ?data :document/id (doc-model/find-by-id (:db req)))]
     (let [tx-ids (replay/get-document-tx-ids (:db req) doc)]
       (log/infof "sending %s tx-ids for %s to %s" (count tx-ids) (:document/id ?data) client-id)
-      (?reply-fn {:tx-ids tx-ids}))))
+      (send-reply req {:tx-ids tx-ids}))))
 
 (def ^:dynamic *db* nil)
 (defonce circuit-breaker (atom nil))
@@ -977,12 +999,12 @@
         (let [transaction (get-frontend-tx-data-from-cache tx-id)]
           (if transaction
             (do (log/infof "sending %s txes from %s for %s to %s" (count (:tx-data transaction)) tx-id (:document/id ?data) client-id)
-                (?reply-fn {:document/transaction transaction}))
+                (send-reply req {:document/transaction transaction}))
             (do (log/infof "sending :chsk/timeout b/c circuit breaker was pulled")
-                (?reply-fn :chsk/timeout))))
+                (send-reply req :chsk/timeout))))
         (let [transaction (get-frontend-tx-data (:db req) tx-id)]
           (log/infof "sending %s txes from %s for %s to %s" (count (:tx-data transaction)) tx-id (:document/id ?data) client-id)
-          (?reply-fn {:document/transaction transaction})))
+          (send-reply req {:document/transaction transaction})))
       (throw+ {:status 403
                :error-msg "The document for the transaction doesn't match the requested document."
                :error-key :invalid-transaction-id}))))
@@ -1014,11 +1036,11 @@
                            :transaction/broadcast true}]
           (let [{:keys [db-after]} (access-request-model/create-request doc cust annotations)]
             ;; have to send it manually to the requestor b/c user won't be subscribed
-            ((:send-fn @sente-state) client-id [:frontend/db-entities
-                                                {:document/id doc-id
-                                                 :entities (map (partial access-request-model/requester-read-api db-after)
-                                                                (access-request-model/find-by-doc-and-cust db-after doc cust))
-                                                 :entity-type :access-request}]))))
+            (send-msg req client-id [:frontend/db-entities
+                                             {:document/id doc-id
+                                              :entities (map (partial access-request-model/requester-read-api db-after)
+                                                             (access-request-model/find-by-doc-and-cust db-after doc cust))
+                                              :entity-type :access-request}]))))
       (comment (notify-invite "Please sign up to send an invite.")))))
 
 (defmethod ws-handler :team/send-permission-request [{:keys [client-id ?data ?reply-fn] :as req}]
@@ -1031,11 +1053,11 @@
                            :transaction/broadcast true}]
           (let [{:keys [db-after]} (access-request-model/create-team-request team cust annotations)]
             ;; have to send it manually to the requestor b/c user won't be subscribed
-            ((:send-fn @sente-state) client-id [:team/db-entities
-                                                {:team/uuid (:team/uuid team)
-                                                 :entities (map (partial access-request-model/requester-read-api db-after)
-                                                                (access-request-model/find-by-team-and-cust db-after team cust))
-                                                 :entity-type :access-request}])))
+            (send-msg req client-id [:team/db-entities
+                                             {:team/uuid (:team/uuid team)
+                                              :entities (map (partial access-request-model/requester-read-api db-after)
+                                                             (access-request-model/find-by-team-and-cust db-after team cust))
+                                              :entity-type :access-request}])))
         (comment (notify-invite "Please sign up to send an invite."))))))
 
 (defmethod ws-handler :team/create-plan [{:keys [client-id ?data ?reply-fn] :as req}]
@@ -1054,7 +1076,7 @@
                                                 (assoc :db/id (:db/id plan)
                                                        :plan/paid? true
                                                        :plan/billing-email (:cust/email cust)))]))]
-      (?reply-fn {:plan-created? true}))))
+      (send-reply req {:plan-created? true}))))
 
 (defmethod ws-handler :team/update-card [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
@@ -1071,7 +1093,7 @@
                                       (-> (plan-http/stripe-customer->plan-fields stripe-customer)
                                         (assoc :db/id (:db/id plan)
                                                :plan/paid? true))])]
-      (?reply-fn {:card-updated? true}))))
+      (send-reply req {:card-updated? true}))))
 
 (defmethod ws-handler :team/extend-trial [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [team-uuid (-> ?data :team/uuid)]
@@ -1095,7 +1117,7 @@
       (log/errorf msg))))
 
 (defmethod ws-handler :server/timestamp [{:keys [client-id ?data ?reply-fn] :as req}]
-  (?reply-fn [:server/timestamp {:date (java.util.Date.)}]))
+  (send-reply req [:server/timestamp {:date (java.util.Date.)}]))
 
 (defn conj-limit
   "Expects a vector, keeps the newest n items. May return a shorter vector than was passed in."
@@ -1117,6 +1139,10 @@
   ;; don't log
   nil)
 
+(defmethod ws-handler :tal/ping [req]
+  ;; don't log
+  nil)
+
 (defn handle-req [req]
   (utils/with-report-exceptions
     (let [client-id (user-id-fn (:ring-req req))
@@ -1124,12 +1150,13 @@
       (try+
        (statsd/with-timing (str "ws." (namespace event) "." (name event))
          (ws-handler (assoc req
+                            :sente-state sente-state
                             :db (pcd/default-db)
                             :receive-instant (java.util.Date.)
                             ;; TODO: Have to kill sente
                             :client-id client-id)))
        (catch :status t
-         (let [send-fn (:send-fn @sente-state)]
+         (let [send-fn (partial send-msg req)]
            (log/error t)
            ;; TODO: should this use the send-fn? We can do that too, I guess, inside of the defmethod.
            ;; TODO: rip out sente and write a sensible library
@@ -1157,22 +1184,112 @@
           (utils/straight-jacket (handle-req req))
           (recur))))))
 
+(defn convert-to-sente-format [msg]
+  (assoc msg
+         :client-id (:tal/ch-id msg)
+         :ring-req (:tal/ring-req msg)
+         :event [(:op msg) (:data msg)]
+         :?data (:data msg)))
+
+(defn handle-tal-msg [msg]
+  (utils/with-report-exceptions
+    (let [req (convert-to-sente-format msg)
+          event (ws-handler-dispatch-fn req)]
+      (try+
+       (statsd/with-timing (str "ws." (namespace event) "." (name event))
+         (ws-handler (assoc req
+                            :db (pcd/default-db)
+                            :receive-instant (java.util.Date.))))
+       (catch :status t
+         (log/error t)
+         (send-msg req (:client-id req) [:frontend/error {:status-code (:status t)
+                                                          :error-msg (:error-msg t)
+                                                          :error-key (:error-key t)
+                                                          :event (:event req)
+                                                          :event-data (:?data req)}]))
+       (catch Object e
+         (log/error e)
+
+         (.printStackTrace (:throwable &throw-context))
+         (rollbar/report-exception (:throwable &throw-context)
+                                   :request (:ring-req req)
+                                   :cust (some-> req :ring-req :auth :cust)
+                                   :extra-data (select-keys req [:?data :event])))))))
+
+(defn pop-message [lock-atom]
+  (let [val @lock-atom]
+    (when-let [message (first (:ready-messages val))]
+      (when (compare-and-set! lock-atom val (update-in val [:ready-messages] subvec 1))
+        message))))
+
+(defn lock-channel [lock-atom ch-id]
+  (let [val @lock-atom]
+    (and (not (contains? (:ch-ids val) ch-id))
+         (compare-and-set! lock-atom val (update-in val [:ch-ids] conj ch-id)))))
+
+(defn unlock-channel [lock-atom ch-id]
+  (swap! lock-atom
+         (fn [s]
+           (-> s
+             (update-in [:ch-ids] disj ch-id)
+             (update-in [:locked-messages] dissoc ch-id)
+             (update-in [:ready-messages]
+                        (fn [msgs]
+                          (if-let [queued (seq (get-in s [:locked-messages ch-id]))]
+                            (apply conj msgs queued)
+                            msgs)))))))
+
+(defn add-message-to-secondary-queue [lock-atom ch-id msg]
+  (swap! lock-atom
+         (fn [s]
+           (if (contains? (:ch-ids s) ch-id)
+             (update-in s [:locked-messages ch-id] (fnil conj []) msg)
+             (update-in s [:ready-messages] conj msg)))))
+
+(defonce lock-atom (atom {:ch-ids #{}
+                          :ready-messages []
+                          :locked-messages {}}))
+
+(defn setup-tal-handlers []
+  (let [recv-queue (tal/recv-queue tal/talaria-state)]
+    (mapv (fn [i]
+            (future (while true
+                      (let [msg (or (pop-message lock-atom) (.take recv-queue))]
+                        (if (lock-channel lock-atom (:tal/ch-id msg))
+                          (do
+                            (utils/straight-jacket (handle-tal-msg msg))
+                            (unlock-channel lock-atom (:tal/ch-id msg)))
+                          (add-message-to-secondary-queue lock-atom (:tal/ch-id msg) msg))))))
+          (range (.availableProcessors (Runtime/getRuntime))))))
+
 (defn close-ws
   "Closes the websocket, client should reconnect."
   [client-id]
-  ((:send-fn @sente-state) client-id [:chsk/close]))
+
+  (send-msg {:sente-state sente-state}
+            client-id
+            [:chsk/close])
+  (send-msg {:tal/state tal/talaria-state}
+            client-id
+            [:tal/close]))
 
 (defn refresh-browser
   "Refreshes the browser if the tab is hidden or if :force is set to true.
    Otherwise, creates a bot chat asking the user to refresh the page."
   [client-id & {:keys [force]
                 :or {force false}}]
-  ((:send-fn @sente-state) client-id [:frontend/refresh {:force-refresh force}]))
+  (send-msg {:sente-state sente-state
+             :tal/state tal/talaria-state}
+            client-id
+            [:frontend/refresh {:force-refresh force}]))
 
 (defn fetch-stats
   "Sends a request to the client for statistics, which is handled above in the :frontend/stats handler"
   [client-id]
-  ((:send-fn @sente-state) client-id [:frontend/stats]))
+  (send-msg {:sente-state sente-state
+             :tal/state tal/talaria-state}
+            client-id
+            [:frontend/stats]))
 
 (defn cleanup-stale [doc-id]
   (let [subs @document-subs
@@ -1208,6 +1325,8 @@
                                                         :send-buf-ms-ws 5})]
     (reset! sente-state fns)
     (setup-ws-handlers fns)
+    (tal/init)
+    (setup-tal-handlers)
     (track-document-subs)
     (track-clients)
     (track-team-subs)
@@ -1219,4 +1338,7 @@
                               (apply conj acc (keys clients)))
                             #{} @document-subs)]
     (close-ws client-id)
-    (Thread/sleep sleep-ms)))
+    (Thread/sleep sleep-ms))
+  (doseq [client-id (tal/all-ch-ids tal/talaria-state)]
+    (close-ws client-id)
+    (Thread/sleep (/ sleep-ms 10))))

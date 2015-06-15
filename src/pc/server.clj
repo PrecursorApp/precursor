@@ -15,14 +15,15 @@
             [pc.http.routes.api :as api]
             [pc.http.routes :as routes]
             [pc.http.routes.blog :as blog]
+            [pc.http.routes.talaria :as talaria-routes]
             [pc.http.sente :as sente]
             [pc.models.access-grant :as access-grant-model]
             [pc.models.cust :as cust-model]
             [pc.models.permission :as permission-model]
             [pc.profile :as profile]
             [pc.rollbar :as rollbar]
+            [pc.utils :as utils]
             [ring.middleware.anti-forgery :refer (wrap-anti-forgery)]
-            [ring.middleware.keyword-params :refer (wrap-keyword-params)]
             [ring.middleware.params :refer (wrap-params)]
             [ring.middleware.reload :refer (wrap-reload)]
             [ring.middleware.session.cookie :refer (cookie-store)]
@@ -33,8 +34,10 @@
   (fn [req]
     (let [db (pcd/default-db)
           cust (some->> req :session :http-session-key (cust-model/find-by-http-session-key db))
-          access-grant (some->> req :params :access-grant-token (access-grant-model/find-by-token db))
-          permission (some->> req :params :auth-token (permission-model/find-by-token db))]
+          access-grant (some->> (get-in req [:params "access-grant-token"])
+                         (access-grant-model/find-by-token db))
+          permission (some->> (get-in req [:params "auth-token"])
+                       (permission-model/find-by-token db))]
       (when (and cust access-grant)
         (permission-model/convert-access-grant access-grant cust (merge {:cust/uuid (:cust/uuid cust)
                                                                          :transaction/broadcast true}
@@ -65,7 +68,15 @@
   (fn [req]
     (let [sente-id (or (get-in req [:session :sente-id])
                        (str (UUID/randomUUID)))]
-      (if-let [response (handler (assoc-in req [:session :sente-id] sente-id))]
+      (if-let [response (-> req
+                          (assoc-in [:session :sente-id] sente-id)
+                          ;; satisfy sente's keyword-params requirement
+                          (utils/update-when-in [:params]
+                                                (fn [p]
+                                                  (if-let [client-id (get p "client-id")]
+                                                    (assoc p :client-id client-id)
+                                                    p)))
+                          handler)]
         (assoc-sente-id req response sente-id)))))
 
 (defn catch-all [req]
@@ -76,6 +87,7 @@
   (-> (compojure.core/routes #'routes/app
                              #'api/app
                              #'blog/app
+                             #'talaria-routes/app
                              (compojure.route/resources "/" {:root "public"
                                                              :mime-types {:svg "image/svg"}})
                              #'catch-all)
@@ -83,7 +95,6 @@
     (auth-middleware)
     (wrap-anti-forgery)
     (wrap-sente-id)
-    (wrap-keyword-params)
     (wrap-params)
     (wrap-session {:store (cookie-store {:key (profile/http-session-key)})
                    :cookie-attrs {:http-only true

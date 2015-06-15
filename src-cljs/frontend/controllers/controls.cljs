@@ -1915,7 +1915,7 @@
   (sente/send-msg (:sente current-state) [:team/extend-trial {:team/uuid (get-in current-state [:team :team/uuid])}]
                   5000
                   (fn [reply]
-                    (when (taoensso.sente/cb-success? reply)
+                    (when (sente/cb-success? reply)
                       (d/transact! (:team-db current-state) [(utils/inspect (:plan reply))] {:server-update true})))))
 
 (defmethod post-control-event! :billing-email-changed

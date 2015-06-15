@@ -7,8 +7,7 @@
             [frontend.urls :as urls]
             [frontend.utils :as utils]
             [om.dom :as dom]
-            [om.core :as om]
-            [taoensso.sente])
+            [om.core :as om])
   (:require-macros [sablono.core :refer (html)]
                    [cljs.core.async.macros :as am :refer [go]])
   (:import [goog.ui IdGenerator]))
@@ -28,7 +27,7 @@
                                                                       :team/uuid (get-in app [:team :team/uuid])}]
                                                                     30000
                                                                     (async/promise-chan)))]
-                              (if-not (taoensso.sente/cb-success? resp)
+                              (if-not (sente/cb-success? resp)
                                 (om/update-state! owner (fn [s] (assoc s
                                                                        :submitting? false
                                                                        :error "The request timed out, please refresh and try again.")))
@@ -96,7 +95,7 @@
                                                                            :team/uuid team-uuid}]
                                                                          30000
                                                                          (async/promise-chan)))]
-                                   (if-not (taoensso.sente/cb-success? resp)
+                                   (if-not (sente/cb-success? resp)
                                      (om/update-state! owner (fn [s] (assoc s
                                                                        :submitting? false
                                                                        :error "The request timed out, please try again.")))
@@ -167,7 +166,7 @@
                                                                                               :message message}]
                                                                                             30000
                                                                                             (async/promise-chan)))]
-                                                      (if-not (taoensso.sente/cb-success? resp)
+                                                      (if-not (sente/cb-success? resp)
                                                         (om/update-state! owner (fn [s] (assoc s
                                                                                                :submitting? false
                                                                                                :error "Request timed out, please try again.")))

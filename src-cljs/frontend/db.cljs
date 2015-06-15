@@ -56,7 +56,7 @@
                                                   annotations)]
                   5000
                   (fn [reply]
-                    (if (taoensso.sente/cb-success? reply)
+                    (if (sente/cb-success? reply)
                       (when-let [rejects (seq (:rejected-datoms reply))]
                         (put! (:errors comms) [:datascript/rejected-datoms {:rejects rejects
                                                                             :sente-event sente-event

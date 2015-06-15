@@ -45,7 +45,7 @@
       (sente/send-msg (om/get-shared owner :sente) [:team/plan-active-history {:team/uuid team-uuid}]
                       20000
                       (fn [res]
-                        (if (taoensso.sente/cb-success? res)
+                        (if (sente/cb-success? res)
                           (om/set-state! owner :history (:history res))
                           (comment "do something about errors")))))
     om/IRenderState

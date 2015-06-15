@@ -55,8 +55,7 @@
   (let [db (pcd/default-db)
         now (time/now)
         ;; day we got our first user!
-        earliest (time/from-time-zone (time/date-time 2014 11 9)
-                                      (time/time-zone-for-id "America/Los_Angeles"))
+        earliest (time/minus (time/now) (time/days 120))
         times (take-while #(time/before? % (time/plus now (time/days 1)))
                           (iterate #(clj-time.core/plus % (clj-time.core/days 1))
                                    earliest))
