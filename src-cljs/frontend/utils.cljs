@@ -75,17 +75,6 @@
                      (subs (pr-str %) 0 1000))
                   args)))
 
-(defn uuid
-  "returns a type 4 random UUID: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-  []
-  (let [r (repeatedly 30 (fn [] (.toString (rand-int 16) 16)))]
-    (apply str (concat (take 8 r) ["-"]
-                       (take 4 (drop 8 r)) ["-4"]
-                       (take 3 (drop 12 r)) ["-"]
-                       [(.toString  (bit-or 0x8 (bit-and 0x3 (rand-int 15))) 16)]
-                       (take 3 (drop 15 r)) ["-"]
-                       (take 12 (drop 18 r))))))
-
 (defn md5 [content]
   (let [container (goog.crypt.Md5.)]
     (.update container content)
@@ -281,7 +270,7 @@
 (defn squuid []
   (if js/window.crypto
     (let [[b1 b2 b3 b4 b5 b6] (array-seq (js/window.crypto.getRandomValues (js/Uint16Array. 6)) 0)]
-      (UUID.
+      (uuid
        (str
         (-> (js/Date.) (.getTime) (/ 1000) (Math/round) (to-hex-string 8))
         "-" (-> b1 (to-hex-string 4))

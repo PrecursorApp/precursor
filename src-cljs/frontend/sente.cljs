@@ -26,7 +26,7 @@
 (defn send-msg-sente [sente-state message & [timeout-ms callback-fn :as rest]]
   (if (-> sente-state :state deref :open?)
     (apply (:send-fn sente-state) message rest)
-    (let [watch-id (utils/uuid)]
+    (let [watch-id (utils/squuid)]
       ;; TODO: handle this in the handle-message fn below
       (add-watch (:state sente-state) watch-id
                  (fn [key ref old new]

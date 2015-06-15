@@ -674,7 +674,7 @@
           [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc)
                                                     :placeholder "or use this url"})]
 
-          [:div.vein.make {:onClick #(om/set-state! owner :focus-id (utils/uuid))}
+          [:div.vein.make {:onClick #(om/set-state! owner :focus-id (utils/squuid))}
            (common/icon :github)
            "Embed in a README or issue"]
 

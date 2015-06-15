@@ -75,7 +75,7 @@
 
 (defn queue-msg [tal-state msg & [timeout-ms callback]]
   (let [queue (:send-queue @tal-state)
-        cb-uuid (when callback (utils/uuid))]
+        cb-uuid (when callback (utils/squuid))]
     (when callback
       (swap! tal-state assoc-in [:callbacks cb-uuid] callback)
       (js/setTimeout #(run-callback tal-state cb-uuid {:tal/error :tal/timeout

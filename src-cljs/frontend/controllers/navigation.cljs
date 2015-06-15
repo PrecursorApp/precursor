@@ -127,7 +127,7 @@
                :loaded-doc doc-id
                :undo-state (atom {:transactions []
                                   :last-undo nil})
-               :db-listener-key (utils/uuid)
+               :db-listener-key (utils/squuid)
                :show-landing? false
                :outer-to-inner? (:show-landing? state)
                :menu-to-inner? (and (= :overlay previous-point)
@@ -328,7 +328,7 @@
 
 (defmethod navigated-to :single-issue
   [history-imp navigation-point args state]
-  (let [issue-uuid (UUID. (:issue-uuid args))
+  (let [issue-uuid (uuid (:issue-uuid args))
         issue (issue-model/find-by-frontend-id @(:issue-db state) issue-uuid)
         issues-list-id (when (= (:navigation-point state)
                                 :issues-list)

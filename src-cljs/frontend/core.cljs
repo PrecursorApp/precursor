@@ -39,8 +39,7 @@
             [om.core :as om :include-macros true]
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
-  (:import [cljs.core.UUID]
-           [goog.events.EventType]
+  (:import [goog.events.EventType]
            [goog.ui IdGenerator]))
 
 (enable-console-print!)
@@ -118,7 +117,7 @@
                            (reader/read-string))
         initial-issue-entities (some-> (aget js/window "Precursor" "initial-issue-entities")
                                  (reader/read-string))
-        tab-id (utils/uuid)
+        tab-id (utils/squuid)
         sente-id (aget js/window "Precursor" "sente-id")
         issue-db (db/make-initial-db initial-issue-entities)
         ab-choices (ab/setup! state/ab-tests)

@@ -3,7 +3,7 @@
   :url "https://precursorapp.com"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.7.0-RC1"]
                  [inflections "0.9.13"]
 
                  [defpage "0.1.3" :exclusions [ring
@@ -74,11 +74,10 @@
 
                  [me.raynes/fs "1.4.6" :exclusions [org.apache.commons/commons-compress]]
 
-                 ;; Fix for d/entity throwing on nil https://github.com/tonsky/datascript/pull/75
-                 [datascript "0.11.1"]
+                 [datascript "0.11.4"]
 
                  [ankha "0.1.4"]
-                 [org.clojure/clojurescript "0.0-3211"]
+                 [org.clojure/clojurescript "0.0-3308"]
                  [precursor/core.async "0.1.361.0-d8047c-alpha"]
 
                  [cljs-http "0.1.35" :exclusions [noencore]]
