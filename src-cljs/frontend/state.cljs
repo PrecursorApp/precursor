@@ -3,7 +3,8 @@
 ;; Note: if you want to change the test options after the test has
 ;;       started, you also need to change the test name
 (def ab-tests
-  {:show-intro-doc [true false]})
+  {:show-intro-doc [true false]
+   :use-talaria? [true false false false]})
 
 ;; If you want a browser setting to be persisted to the backend,
 ;; be sure to add it to the schema (pc.datomic.schema/shema) and
