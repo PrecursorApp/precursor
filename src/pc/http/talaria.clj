@@ -16,7 +16,7 @@
 
 (defn init [& {:keys [ws-delay ajax-delay ping-ms]
                :or {ws-delay 30
-                    ajax-delay 100
+                    ajax-delay 150
                     ping-ms (* 1000 60)}}]
   (let [recv-queue (LinkedBlockingQueue.)
         async-pool (delay/make-pool!)]
