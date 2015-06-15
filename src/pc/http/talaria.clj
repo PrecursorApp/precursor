@@ -367,6 +367,13 @@
                                             :on-error on-error})
     (schedule-send tal-state ch-id (:send-delay channel-info))))
 
+(defn closed-channels []
+  (remove immutant/open? (all-channels talaria-state)))
+
+(defn clear-closed []
+  (let [close-fn (ws-close-handler talaria-state)]
+    (doseq [ch (remove ajax-channel? (closed-channels))]
+      (close-fn ch {}))))
 
 ;; debug methods
 (defn send-all [tal-state msg]
