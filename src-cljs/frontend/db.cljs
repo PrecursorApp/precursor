@@ -45,9 +45,9 @@
 
 (defn generate-chat-bots [conn]
   [{:chat-bot/name "prcrsr"
-    :db/id (utils/inspect (trans/get-next-transient-id conn))}
+    :db/id (trans/get-next-transient-id conn)}
    {:chat-bot/name "daniel"
-    :db/id (utils/inspect (trans/get-next-transient-id conn))}
+    :db/id (trans/get-next-transient-id conn)}
    {:chat-bot/name "danny"
     :db/id (trans/get-next-transient-id conn)}])
 

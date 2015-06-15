@@ -1919,7 +1919,7 @@
                   5000
                   (fn [reply]
                     (when (sente/cb-success? reply)
-                      (d/transact! (:team-db current-state) [(utils/inspect (:plan reply))] {:server-update true})))))
+                      (d/transact! (:team-db current-state) [(:plan reply)] {:server-update true})))))
 
 (defmethod post-control-event! :billing-email-changed
   [browser-state message {:keys [plan-id email]} previous-state current-state]
