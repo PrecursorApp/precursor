@@ -101,6 +101,21 @@
   (.send ws (encode-msg msg))
   (swap! tal-state assoc :last-send-time (js/Date.)))
 
+(defn filter-repeats [messages filter-ops]
+  (->> (reduce (fn [acc msg]
+                 (if (contains? filter-ops (:op msg))
+                   (if (contains? (:seen-filtered-ops acc) (:op msg))
+                     acc
+                     (assoc acc
+                            :results (conj (:results acc) msg)
+                            :seen-filtered-ops (conj (:seen-filtered-ops acc) (:op msg))))
+                   (assoc acc :results (conj (:results acc) msg))))
+               {:results '() ; list for inserting at beginning
+                :seen-filtered-ops #{}}
+               (rseq messages))
+    :results
+    vec))
+
 (defn consume-send-queue [tal-state timer-atom]
   (let [send-queue (:send-queue @tal-state)]
     (when-let [ws (:ws @tal-state)]
@@ -108,7 +123,8 @@
         (js/clearTimeout timer-id))
       (let [messages (pop-all send-queue)]
         (when (seq messages)
-          (send-msg tal-state ws messages))))))
+          (send-msg tal-state ws (filter-repeats messages #{:frontend/mouse-position
+                                                            :tal/ping})))))))
 
 (defn start-send-queue [tal-state delay-ms]
   (let [send-queue (:send-queue @tal-state)
@@ -215,7 +231,7 @@
                           (swap! (:recv-queue @tal-state) (fn [q] (apply conj q (decode-msg (.-data %))))))
                        on-reconnect)]
     (swap! tal-state assoc :ws w)
-    (start-send-queue tal-state 100)
+    (start-send-queue tal-state 150)
     (.open w)))
 
 (defn setup-ws [url-parts tal-state & {:keys [on-open on-close on-error on-reconnect reconnecting?]
