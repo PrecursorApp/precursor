@@ -3,6 +3,7 @@
             [frontend.camera :as cameras]
             [frontend.db :as fdb]
             [frontend.db.trans :as trans]
+            [frontend.models.layer :as layer-model]
             [frontend.state :as state]
             [frontend.svg :as svg]
             [frontend.utils :as utils]
@@ -558,7 +559,7 @@
       (let [viewport (utils/canvas-size)]
         (when (and (< 800 (:width viewport)) ;; only if not on mobile
                    (< 600 (:height viewport))
-                   (fdb/empty-db? @(om/get-shared owner :db))
+                   (zero? (layer-model/find-count @(om/get-shared owner :db)))
                    (zero? (count (remove (comp :hide-in-list? second) subscribers))))
           (run-animation owner (add-landing-cleanup (landing-animation (om/get-state owner :layer-source)
                                                                        viewport))))))
