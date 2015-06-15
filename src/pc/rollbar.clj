@@ -80,7 +80,7 @@
   (merge {:request {:url (url-for request)
                     :method (str/upper-case (name request-method))
                     :query_string (or query-string "")
-                    :user_ip remote-addr}}
+                    :user_ip (get-in request [:headers "x-real-ip"] (:remote-addr request))}}
          (when (seq cust)
            {:person {:id (str (:cust/uuid cust))
                      :email (:cust/email cust)}})))
