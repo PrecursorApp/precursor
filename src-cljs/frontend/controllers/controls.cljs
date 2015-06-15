@@ -79,7 +79,10 @@
     :document/id (:document/id state)
     :layers (when (or (get-in state [:drawing :in-progress?])
                       (get-in state [:drawing :moving?]))
-              (map #(dissoc % :points) (get-in state [:drawing :layers])))
+              (map #(-> %
+                      (dissoc :points)
+                      (utils/update-when-in [:layer/points-to] select-keys [:db/id]))
+                   (get-in state [:drawing :layers])))
     :relation (when (get-in state [:drawing :relation :layer])
                 (get-in state [:drawing :relation]))
     :recording (get-in state (state/self-recording-path state))
