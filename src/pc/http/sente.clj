@@ -1227,19 +1227,31 @@
 (defn close-ws
   "Closes the websocket, client should reconnect."
   [client-id]
-  ((:send-fn @sente-state) client-id [:chsk/close]))
+
+  (send-msg {:sente-state sente-state}
+            client-id
+            [:chsk/close])
+  (send-msg {:tal/state tal/talaria-state}
+            client-id
+            [:tal/close]))
 
 (defn refresh-browser
   "Refreshes the browser if the tab is hidden or if :force is set to true.
    Otherwise, creates a bot chat asking the user to refresh the page."
   [client-id & {:keys [force]
                 :or {force false}}]
-  ((:send-fn @sente-state) client-id [:frontend/refresh {:force-refresh force}]))
+  (send-msg {:sente-state sente-state
+             :tal/state tal/talaria-state}
+            client-id
+            [:frontend/refresh {:force-refresh force}]))
 
 (defn fetch-stats
   "Sends a request to the client for statistics, which is handled above in the :frontend/stats handler"
   [client-id]
-  ((:send-fn @sente-state) client-id [:frontend/stats]))
+  (send-msg {:sente-state sente-state
+             :tal/state tal/talaria-state}
+            client-id
+            [:frontend/stats]))
 
 (defn cleanup-stale [doc-id]
   (let [subs @document-subs
@@ -1288,4 +1300,7 @@
                               (apply conj acc (keys clients)))
                             #{} @document-subs)]
     (close-ws client-id)
-    (Thread/sleep sleep-ms)))
+    (Thread/sleep sleep-ms))
+  (doseq [client-id (tal/all-ch-ids tal/talaria-state)]
+    (close-ws client-id)
+    (Thread/sleep (/ sleep-ms 10))))

@@ -375,3 +375,6 @@
 
 (defn all-channels [tal-state]
   (map (comp :channel second) (:connections @tal-state)))
+
+(defn all-ch-ids [tal-state]
+  (keys (:connections @tal-state)))
