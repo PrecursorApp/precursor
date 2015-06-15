@@ -307,8 +307,8 @@
                                  (get-in new-state [:connections id :ajax-channel-count])))))))
 
 (defn send! [tal-state ch-id msg & {:keys [on-success on-error]}]
-  (when-let [ch (:channel (get-channel-info tal-state ch-id))]
-    (assert (vector? msg))
+  (assert (vector? msg))
+  (if-let [ch (:channel (get-channel-info tal-state ch-id))]
     (let [res (immutant/send! ch
                               (encode-msg msg)
                               {:close? (ajax-channel? ch)
@@ -321,9 +321,14 @@
                                            (record-send-error tal-state ch-id msg throwable)
                                            (when (fn? on-error)
                                              (on-error throwable)))})]
-      (when res
-        (record-send tal-state ch-id msg))
-      res)))
+      (if res
+        (record-send tal-state ch-id msg)
+        (when (fn? on-error)
+          (on-error (Exception. "channel is closed"))))
+      res)
+    (when (fn? on-error)
+      (on-error (Exception. "channel is closed"))
+      nil)))
 
 (defn pop-all [queue-atom]
   (loop [val @queue-atom]
