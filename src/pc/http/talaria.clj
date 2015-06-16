@@ -14,6 +14,8 @@
 (defonce talaria-state (ref {:connections {}
                              :stats {}}))
 
+(declare clear-closed)
+
 (defn init [& {:keys [ws-delay ajax-delay ping-ms]
                :or {ws-delay 30
                     ajax-delay 150
@@ -26,7 +28,8 @@
                                     :ws-delay ws-delay
                                     :ajax-delay ajax-delay
                                     :ping-ms ping-ms
-                                    :stats {}})))
+                                    :stats {}}))
+    (delay/repeat-fn async-pool (* 1000 60 5) clear-closed))
   talaria-state)
 
 (defn shutdown [tal-state]
@@ -390,3 +393,4 @@
   (let [close-fn (ws-close-handler talaria-state)]
     (doseq [ch (remove ajax-channel? (closed-channels))]
       (close-fn ch {}))))
+
