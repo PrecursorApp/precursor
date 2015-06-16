@@ -898,6 +898,7 @@
        (and (= button 0) ctrl? (not shift?)) [:open-radial]
        (and (= button 0) meta? (not shift?)) [:open-radial]
        (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
+       (get-in state [:drawing :moving?]) [:drop-layers]
        (contains? #{:pen :rect :circle :line :select} tool) [:start-drawing]
        (and (keyword-identical? tool :text) (not drawing-text?)) [:start-drawing]
        :else nil))))
@@ -908,6 +909,7 @@
 (declare handle-layer-properties-submitted-after)
 (declare handle-text-layer-finished)
 (declare handle-text-layer-finished-after)
+(declare handle-drawing-finalized-after)
 
 (defmethod control-event :mouse-depressed
   [browser-state message [x y {:keys [button type ctrl? shift? meta? outside-canvas?]}] state]
@@ -921,6 +923,7 @@
       (reduce (fn [s intent]
                 (case intent
                   :finish-text-layer (handle-text-layer-finished s)
+                  :drop-layers (drop-layers s)
                   :open-radial (handle-radial-opened s)
                   :start-drawing (handle-drawing-started s x y)
                   :submit-layer-properties (handle-layer-properties-submitted s)
@@ -936,7 +939,8 @@
       (doseq [intent intents]
         (case intent
           :finish-text-layer (handle-text-layer-finished-after previous-state current-state)
-          :open-radial (handle-radial-opened-after current-state previous-state)
+          :drop-layers (handle-drawing-finalized-after previous-state current-state x y)
+          :open-radial (handle-radial-opened-after previous-state current-state)
           :start-drawing nil
           :submit-layer-properties (handle-layer-properties-submitted-after current-state)
           nil)))))
@@ -1025,6 +1029,24 @@
         (get-in state [:drawing :moving?])
         (drop-layers)))))
 
+(defn handle-drawing-finalized-after [previous-state current-state x y]
+  (let [db           (:db current-state)
+        original-layers (get-in previous-state [:drawing :original-layers])
+        layers (mapv #(-> %
+                        (dissoc :points)
+                        (utils/update-when-in [:layer/points-to] (fn [p] (set (map :db/id p))))
+                        (utils/remove-map-nils))
+                     (get-in current-state [:drawing :finished-layers]))]
+    (do (when (and (some layer-model/detectable? layers)
+                   (or (not (get-in previous-state [:drawing :moving?]))
+                       (some true? (map detectable-movement? original-layers layers))))
+          (doseq [layer-group (partition-all 100 layers)]
+            (d/transact! db (if (= :read (:max-document-scope current-state))
+                              (map #(assoc % :unsaved true) layer-group)
+                              layer-group)
+                         {:can-undo? true})))
+        (maybe-notify-subscribers! previous-state current-state x y))))
+
 (defmethod post-control-event! :mouse-released
   [browser-state message [x y {:keys [button type ctrl? meta?]}] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
@@ -1059,15 +1081,7 @@
           (every? #(= :layer.type/text (:layer/type %)) layers))
      nil
 
-     was-drawing? (do (when (and (some layer-model/detectable? layers)
-                                 (or (not (get-in previous-state [:drawing :moving?]))
-                                     (some true? (map detectable-movement? original-layers layers))))
-                        (doseq [layer-group (partition-all 100 layers)]
-                          (d/transact! db (if (= :read (:max-document-scope current-state))
-                                            (map #(assoc % :unsaved true) layer-group)
-                                            layer-group)
-                                       {:can-undo? true})))
-                      (maybe-notify-subscribers! previous-state current-state x y))
+     was-drawing? (handle-drawing-finalized-after previous-state current-state x y)
 
      :else nil)))
 
@@ -1574,7 +1588,12 @@
                  (/ (:width canvas-size) 2))
         new-y (+ (* (- center-y) zoom)
                  (/ (:height canvas-size) 2))
+
+        new-x (get-in state [:mouse :x])
+        new-y (get-in state [:mouse :y])
         [move-x move-y] (cameras/screen->point camera new-x new-y)
+        move-x (+ (- center-x) (get-in state [:mouse :rx]))
+        move-y (+ (- center-y) (get-in state [:mouse :ry]))
         [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
         new-layers (mapv (fn [l]
                            (-> l
@@ -1586,22 +1605,37 @@
                                                                         (set (filter :db/id (map #(update-in % [:db/id] eid-map) dests)))))
                              (#(move-layer % %
                                            {:snap-x snap-move-x :snap-y snap-move-y
-                                            :move-x move-x :move-y move-y :snap-paths? true}))
-                             (dissoc :layer/current-x :layer/current-y :points)))
+                                            :move-x move-x :move-y move-y :snap-paths? true}))))
                          layers)]
+    #_(-> state
+        (assoc-in [:clipboard :layers] new-layers)
+        (assoc-in [:selected-eids :selected-eids] (set entity-ids))
+        (assoc-in [:selected-arrows :selected-arrows] (set (reduce (fn [acc layer]
+                                                                     (if-let [pointer (:layer/points-to layer)]
+                                                                       (conj acc {:origin-id (:db/id layer)
+                                                                                  :dest-id (:db/id pointer)})
+                                                                       acc))
+                                                                   #{} new-layers))))
     (-> state
+      (assoc-in [:mouse-down] true)
+      (assoc-in [:drawing :starting-mouse-position] (utils/inspect [(get-in state [:mouse :rx])
+                                                                    (get-in state [:mouse :ry])]))
       (assoc-in [:clipboard :layers] new-layers)
+      (assoc-in [:drawing :moving?] true)
+      (assoc-in [:drawing :layers] new-layers)
+      (assoc-in [:drawing :original-layers] new-layers)
+      (assoc-in [:editing-eids :editing-eids] (set entity-ids))
       (assoc-in [:selected-eids :selected-eids] (set entity-ids))
       (assoc-in [:selected-arrows :selected-arrows] (set (reduce (fn [acc layer]
                                                                    (if-let [pointer (:layer/points-to layer)]
                                                                      (conj acc {:origin-id (:db/id layer)
                                                                                 :dest-id (:db/id pointer)})
                                                                      acc))
-                                                                   #{} new-layers))))))
+                                                                 #{} new-layers))))))
 
 (defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]
-  (let [db (:db current-state)
+  #_(let [db (:db current-state)
         layers (mapv utils/remove-map-nils (get-in current-state [:clipboard :layers]))]
     (doseq [layer-group (partition-all 100 layers)]
       (d/transact! db
