@@ -727,7 +727,9 @@
                             (= :layer.type/text (get-in drawing [:layers 0 :layer/type])) nil
                             (:in-progress? drawing) (:layers drawing)
                             :else nil)]
-            (apply dom/g #js {:className "layers"}
+            (apply dom/g #js {:className (str "layers "
+                                              (when (:clip? drawing)
+                                                "clip "))}
                    (map (fn [sel]
                           (let [sel (if (:force-even? sel)
                                       (layers/force-even sel)

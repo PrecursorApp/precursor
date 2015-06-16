@@ -876,6 +876,7 @@
       (assoc-in [:drawing :finished-layers] (mapv #(dissoc % :layer/current-x :layer/current-y) layers))
       (assoc-in [:drawing :layers] [])
       (assoc-in [:drawing :moving?] false)
+      (assoc-in [:drawing :clip?] false)
       (assoc-in [:mouse-down] false)
       (assoc-in [:editing-eids :editing-eids] #{}))))
 
@@ -1618,6 +1619,7 @@
                                                                    #{} new-layers))))
     (-> state
       (assoc-in [:mouse-down] true)
+      (assoc-in [:drawing :clip?] true)
       (assoc-in [:drawing :starting-mouse-position] (utils/inspect [(get-in state [:mouse :rx])
                                                                     (get-in state [:mouse :ry])]))
       (assoc-in [:clipboard :layers] new-layers)
