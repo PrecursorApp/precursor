@@ -186,7 +186,11 @@
     (let [id (ch-id ch)
           msg-ch (:msg-ch @tal-state)
           ping-job (setup-ping-job tal-state id)]
-      (add-channel tal-state id ch ping-job)
+      (try
+       (add-channel tal-state id ch ping-job)
+       (catch java.lang.AssertionError e
+         (.cancel ping-job false)
+         (throw e)))
       (handle-message tal-state {:op :tal/channel-open
                                  :tal/ch ch
                                  :tal/ch-id id
@@ -274,7 +278,11 @@
 (defn handle-ajax-open [tal-state ch-id ring-req]
   (let [msg-ch (:msg-ch @tal-state)]
     (let [ping-job (setup-ping-job tal-state ch-id)
-          ch-count (get-in (add-channel tal-state ch-id nil ping-job)
+          new-state (try (add-channel tal-state ch-id nil ping-job)
+                         (catch java.lang.AssertionError e
+                           (.cancel ping-job false)
+                           (throw e)))
+          ch-count (get-in new-state
                            [:connections ch-id :ajax-channel-count])]
       (schedule-ajax-cleanup tal-state ch-id ring-req ch-count))
     (handle-message tal-state {:op :tal/channel-open
