@@ -158,7 +158,7 @@
     stroke: @color_select;
     stroke-width: 2;
     &.selection {
-      stroke: @white;
+      stroke: @gray_lighter;
       stroke-width: 1;
     }
   }
@@ -400,6 +400,9 @@
 #selected-arrow-point {
   fill: @color_select;
 }
-.clip {
-  opacity: 0.5;
+.clips {
+  .shape-layer {
+    stroke: @gray_light;
+    stroke-dasharray: 2, 3;
+  }
 }

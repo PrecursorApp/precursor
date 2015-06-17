@@ -729,7 +729,7 @@
                             :else nil)]
             (apply dom/g #js {:className (str "layers "
                                               (when (:clip? drawing)
-                                                "clip "))}
+                                                "clips "))}
                    (map (fn [sel]
                           (let [sel (if (:force-even? sel)
                                       (layers/force-even sel)
@@ -743,7 +743,7 @@
                                            (when (= :layer.type/group (:layer/type sel))
                                              {:layer/type :layer.type/rect
                                               :className "layer-in-progress selection"
-                                              :strokeDasharray "2,3"}))]
+                                              :strokeDasharray "1, 2"}))]
                             (svg-element (assoc sel :key (str (:db/id sel) "-in-progress")))))
                         sels))))))))
 
