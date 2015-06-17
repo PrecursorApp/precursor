@@ -1104,7 +1104,7 @@
           tx (plan-model/extend-trial plan 7 :annotations {:transaction/team (:db/id team)
                                                            :transaction/broadcast true
                                                            :cust/uuid (:cust/uuid cust)})]
-      (?reply-fn {:plan (plan-model/read-api (d/entity (:db-after tx) (:db/id plan)))}))))
+      (send-reply req {:plan (plan-model/read-api (d/entity (:db-after tx) (:db/id plan)))}))))
 
 (defmethod ws-handler :frontend/save-browser-settings [{:keys [client-id ?data ?reply-fn] :as req}]
   (if-let [cust (-> req :ring-req :auth :cust)]
