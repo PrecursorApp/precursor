@@ -1577,7 +1577,7 @@
       (assoc-in [:layer-properties-menu :layer :layer/ui-target] (empty-str->nil value))))
 
 (defmethod control-event :layers-pasted
-  [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
+  [browser-state message {:keys [layers height width min-x min-y canvas-size center?] :as layer-data} state]
   (let [{:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))
         eid-map (zipmap (map :db/id layers) entity-ids)
         doc-id (:document/id state)
@@ -1585,16 +1585,17 @@
         zoom (:zf camera)
         center-x (+ min-x (/ width 2))
         center-y (+ min-y (/ height 2))
-        new-x (+ (* (- center-x) zoom)
-                 (/ (:width canvas-size) 2))
-        new-y (+ (* (- center-y) zoom)
-                 (/ (:height canvas-size) 2))
-
-        new-x (get-in state [:mouse :x])
-        new-y (get-in state [:mouse :y])
+        new-x (if center?
+                (+ (* (- center-x) zoom)
+                   (/ (:width canvas-size) 2))
+                (+ (* (- center-x) zoom)
+                   (get-in state [:mouse :x])))
+        new-y (if center?
+                (+ (* (- center-y) zoom)
+                   (/ (:height canvas-size) 2))
+                (+ (* (- center-y) zoom)
+                   (get-in state [:mouse :y])))
         [move-x move-y] (cameras/screen->point camera new-x new-y)
-        move-x (+ (- center-x) (get-in state [:mouse :rx]))
-        move-y (+ (- center-y) (get-in state [:mouse :ry]))
         [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
         new-layers (mapv (fn [l]
                            (-> l
@@ -1608,7 +1609,8 @@
                                            {:snap-x snap-move-x :snap-y snap-move-y
                                             :move-x move-x :move-y move-y :snap-paths? true}))))
                          layers)]
-    #_(-> state
+    (if center?
+      (-> state
         (assoc-in [:clipboard :layers] new-layers)
         (assoc-in [:selected-eids :selected-eids] (set entity-ids))
         (assoc-in [:selected-arrows :selected-arrows] (set (reduce (fn [acc layer]
@@ -1617,27 +1619,27 @@
                                                                                   :dest-id (:db/id pointer)})
                                                                        acc))
                                                                    #{} new-layers))))
-    (-> state
-      (assoc-in [:mouse-down] true)
-      (assoc-in [:drawing :clip?] true)
-      (assoc-in [:drawing :starting-mouse-position] (utils/inspect [(get-in state [:mouse :rx])
-                                                                    (get-in state [:mouse :ry])]))
-      (assoc-in [:clipboard :layers] new-layers)
-      (assoc-in [:drawing :moving?] true)
-      (assoc-in [:drawing :layers] new-layers)
-      (assoc-in [:drawing :original-layers] new-layers)
-      (assoc-in [:editing-eids :editing-eids] (set entity-ids))
-      (assoc-in [:selected-eids :selected-eids] (set entity-ids))
-      (assoc-in [:selected-arrows :selected-arrows] (set (reduce (fn [acc layer]
-                                                                   (if-let [pointer (:layer/points-to layer)]
-                                                                     (conj acc {:origin-id (:db/id layer)
-                                                                                :dest-id (:db/id pointer)})
-                                                                     acc))
-                                                                 #{} new-layers))))))
+      (-> state
+        (dissoc-in [:clipboard :layers])
+        (assoc-in [:mouse-down] true)
+        (update :drawing merge {:clip? true
+                                :starting-mouse-position [(get-in state [:mouse :rx])
+                                                          (get-in state [:mouse :ry])]
+                                :moving? true
+                                :layers new-layers
+                                :original-layers new-layers})
+        (assoc-in [:editing-eids :editing-eids] (set entity-ids))
+        (assoc-in [:selected-eids :selected-eids] (set entity-ids))
+        (assoc-in [:selected-arrows :selected-arrows] (set (reduce (fn [acc layer]
+                                                                     (if-let [pointer (:layer/points-to layer)]
+                                                                       (conj acc {:origin-id (:db/id layer)
+                                                                                  :dest-id (:db/id pointer)})
+                                                                       acc))
+                                                                   #{} new-layers)))))))
 
 (defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]
-  #_(let [db (:db current-state)
+  (let [db (:db current-state)
         layers (mapv utils/remove-map-nils (get-in current-state [:clipboard :layers]))]
     (doseq [layer-group (partition-all 100 layers)]
       (d/transact! db
@@ -2079,7 +2081,8 @@
     (let [res (async/<! (http/get (str s3-url "&xhr=true")))]
       (if (:success res)
         (put! (get-in current-state [:comms :controls]) [:layers-pasted (assoc (clipboard/parse-pasted (:body res))
-                                                                               :canvas-size (utils/canvas-size))])))))
+                                                                               :canvas-size (utils/canvas-size)
+                                                                               :center? true)])))))
 
 (defmethod post-control-event! :plan-entities-stored
   [browser-state message {:keys [team/uuid]} previous-state current-state]
