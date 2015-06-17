@@ -7,8 +7,10 @@
             [clojure.tools.logging :as log]
             [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.http.urls :as urls]
             [pc.mixpanel :as mixpanel]
             [pc.models.cust :as cust-model]
+            [pc.models.team :as team-model]
             [pc.util.date :as date-util]
             [pc.util.md5 :as md5]))
 
@@ -95,7 +97,24 @@
                                 (map (fn [[url c]]
                                        {:url (str url) :count c})))))
 
-(defn mark-contacts []
+(defn set-team-urls []
+  (let [db (pcd/default-db)
+        teams (team-model/all db)]
+    (doseq [team teams]
+      (Thread/sleep 100)
+      (if-not (:team/creator team)
+        (do (println "no creator for" (:team/subdomain team))
+            (log/infof "no creator for %s" (:team/subdomain team)))
+        (do
+          (log/infof "setting team props for %s by %s" (:team/subdomain team) (:cust/email (:team/creator team)))
+          (mixpanel/engage (:cust/uuid (:team/creator team))
+                           {:$ip 0
+                            :$ignore_time true
+                            :$set {:team_plan_url (urls/team-plan team)
+                                   :team_add_users_url (urls/team-add-users team)
+                                   :team_intro_doc (urls/from-doc (:team/intro-doc team))}}))))))
+
+#_(defn mark-contacts []
   (let [db (pcd/default-db)
         cust-uuids (map :cust/uuid (cust-model/all db))]
     (doseq [cust-group (partition-all 100 cust-uuids)]
