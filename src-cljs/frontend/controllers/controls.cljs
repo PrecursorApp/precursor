@@ -1623,13 +1623,14 @@
   [browser-state message _ previous-state current-state]
   (let [to (get-in previous-state state/invite-to-path)
         doc-id (:document/id previous-state)]
-    (if (pos? (.indexOf to "@"))
-      (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
-                                                                     :email to
-                                                                     :invite-loc :overlay}])
-      (sente/send-msg (:sente current-state) [:frontend/sms-invite {:document/id doc-id
-                                                                    :phone-number to
-                                                                    :invite-loc :overlay}]))))
+    (when (seq to)
+      (if (pos? (.indexOf to "@"))
+        (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
+                                                                       :email to
+                                                                       :invite-loc :overlay}])
+        (sente/send-msg (:sente current-state) [:frontend/sms-invite {:document/id doc-id
+                                                                      :phone-number to
+                                                                      :invite-loc :overlay}])))))
 
 (defmethod control-event :permission-grant-email-changed
   [browser-state message {:keys [value]} state]
