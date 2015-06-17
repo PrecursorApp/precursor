@@ -88,6 +88,7 @@
                  ;;[om "0.6.4"]
 
                  [precursor/react "0.12.2-7-5-new-tags"]
+                 [precursor/om-i "0.1.7"]
 
                  [sablono "0.3.4" :exclusions [cljsjs/react]]
                  [secretary "1.2.3"]

@@ -21,7 +21,6 @@
             [frontend.datetime :as datetime]
             [frontend.db :as db]
             [frontend.history :as history]
-            [frontend.instrumentation :as instrumentation]
             [frontend.localstorage :as localstorage]
             [frontend.routes :as routes]
             [frontend.sente :as sente]
@@ -37,6 +36,7 @@
             [goog.labs.dom.PageVisibilityMonitor]
             [goog.net.Cookies]
             [om.core :as om :include-macros true]
+            [om-i.core :as omi]
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.events.EventType]
@@ -218,7 +218,7 @@
        (errors-con/post-error! container (first value) (second value) previous-state @state)))))
 
 (defn install-om [state container comms cast! handlers]
-  (instrumentation/setup-component-stats!)
+  (omi/setup-component-stats!)
   (om/root
    app/app
    state
@@ -240,7 +240,7 @@
              :ab-choices            (:ab-choices @state)
              }
     :instrument (fn [f cursor m]
-                  (om/build* f cursor (assoc m :descriptor instrumentation/instrumentation-methods)))}))
+                  (om/build* f cursor (assoc m :descriptor omi/instrumentation-methods)))}))
 
 (defn find-app-container []
   (goog.dom/getElement "om-app"))
