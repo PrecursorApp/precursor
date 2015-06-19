@@ -312,7 +312,7 @@
 
                     [:a.viewer-toggle {;:on-click #(cast! :recording-toggled)
                                        :role "button"
-                                       :title "Enable your voice chat."
+                                       :title "Request voice chat."
                                        :key (str id-str "-not-recording")}
                      (common/icon :sound-mute)])]])
 
