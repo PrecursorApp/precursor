@@ -62,7 +62,7 @@
                         :undo #{#{"meta" "z"} #{"ctrl" "z"}}
                         :select-all #{#{"meta" "a"} #{"ctrl" "a"}}
                         :shortcuts-menu #{#{"shift" "/"}}
-                        :clips-menu #{#{"c"}}
+                        :clips-menu #{#{"x"}}
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
                         :return-from-origin #{#{"2"}}
