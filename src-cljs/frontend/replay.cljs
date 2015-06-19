@@ -46,7 +46,7 @@
                                                 replay-ch)
                            (<!))
                     tx (:document/transaction resp)]
-                (if-not (taoensso.sente/cb-success? resp)
+                (if-not (sente/cb-success? resp)
                   (do (js/Rollbar.error (str "error fetching " (first tx-ids)))
                       ::error)
                   (if @interrupted

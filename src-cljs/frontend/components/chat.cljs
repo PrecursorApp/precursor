@@ -209,8 +209,8 @@
     (render [_]
       (let [{:keys [cast! db]} (om/get-shared owner)
             chats (ds/touch-all '[:find ?t :where [?t :chat/body]] @db)
-            chat-bot (:document/chat-bot (d/entity @db (ffirst (d/q '[:find ?t :where [?t :document/name]] @db))))
             doc (doc-model/find-by-id @db (:document/id app))
+            chat-bot (:document/chat-bot doc)
             dummy-chat {:chat/body [:span
                                     "Welcome, try the "
                                     [:a {:href "https://precursorapp.com/document/17592197661008" :target "_blank"}

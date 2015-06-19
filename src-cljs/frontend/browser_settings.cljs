@@ -32,6 +32,8 @@
    to the one that is stored on the cust"
   (set/map-invert db-setting->app-state-setting))
 
+(def app-state-setting-keys (keys app-state-setting->db-setting))
+
 (defn merged-settings
   "Merges settings from defaults, localstorage, and cust, in that order"
   [app-state-settings local-settings db-settings]
@@ -57,7 +59,7 @@
                        (not= v (get cust db-key)))
                 (assoc acc db-key v)
                 acc)))
-          {} settings))
+          {} (select-keys settings app-state-setting-keys)))
 
 (defn new-fields
   "Generic diff algorithm, returns a new map with just the new fields"

@@ -3,6 +3,7 @@
             [frontend.camera :as cameras]
             [frontend.db :as fdb]
             [frontend.db.trans :as trans]
+            [frontend.models.layer :as layer-model]
             [frontend.state :as state]
             [frontend.svg :as svg]
             [frontend.utils :as utils]
@@ -551,14 +552,14 @@
 (defn landing-background [{:keys [subscribers]} owner]
   (reify
     om/IDisplayName (display-name [_] "Landing Animation")
-    om/IInitState (init-state [_] {:layer-source (utils/uuid)})
+    om/IInitState (init-state [_] {:layer-source (utils/squuid)})
     om/IDidMount
     (did-mount [_]
       ;; TODO: would be nice to get this a different way :(
       (let [viewport (utils/canvas-size)]
         (when (and (< 800 (:width viewport)) ;; only if not on mobile
                    (< 600 (:height viewport))
-                   (fdb/empty-db? @(om/get-shared owner :db))
+                   (zero? (layer-model/find-count @(om/get-shared owner :db)))
                    (zero? (count (remove (comp :hide-in-list? second) subscribers))))
           (run-animation owner (add-landing-cleanup (landing-animation (om/get-state owner :layer-source)
                                                                        viewport))))))

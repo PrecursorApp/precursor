@@ -4,6 +4,7 @@
             [pc.datomic :as pcd]
             [pc.models.cust :as cust-model]
             [pc.models.issue :as issue-model]
+            [pc.http.sente.common :as sente-common]
             [pc.http.datomic2 :as datomic2])
   (:import [java.util UUID]))
 
@@ -12,8 +13,8 @@
 (defn subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
   (swap! issue-subs conj client-id)
   (let [issues (map issue-model/read-api (issue-model/all-issues (:db req)))]
-    (?reply-fn {:entities issues
-                :entity-type :issue})))
+    (sente-common/send-reply req {:entities issues
+                                  :entity-type :issue})))
 
 (defn unsubscribe [client-id]
   (swap! issue-subs disj client-id))
@@ -35,8 +36,7 @@
                                  :cust cust
                                  :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
                                  :timestamp (:receive-instant req)})
-      (when ?reply-fn
-        (?reply-fn {:rejected-datoms rejects})))
+      (sente-common/send-reply req {:rejected-datoms rejects}))
     (comment "Handle logged out users")))
 
 (defn set-status [{:keys [client-id ?data ?reply-fn] :as req}]

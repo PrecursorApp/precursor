@@ -41,6 +41,10 @@
    to anyone with the direct URL. Time should be in the format Fri, 30 Jan 2015 01:12:00 -0800
    Be careful for daylight savings time!"
   [
+   {:slug "slack-integration"
+    :unique-id "slack-integration"
+    :pub-date (clj-time.format/parse "Thurs, 18 June 2015 10:59:00 -0800")
+    :display-in-overview false}
    {:slug "diagramming-with-precursor"
     :unique-id "diagramming-with-precursor"
     :pub-date (clj-time.format/parse "Tue, 19 May 2015 10:59:00 -0800")

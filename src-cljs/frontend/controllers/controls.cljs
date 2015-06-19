@@ -79,7 +79,10 @@
     :document/id (:document/id state)
     :layers (when (or (get-in state [:drawing :in-progress?])
                       (get-in state [:drawing :moving?]))
-              (map #(dissoc % :points) (get-in state [:drawing :layers])))
+              (map #(-> %
+                      (dissoc :points)
+                      (utils/update-when-in [:layer/points-to] select-keys [:db/id]))
+                   (get-in state [:drawing :layers])))
     :relation (when (get-in state [:drawing :relation :layer])
                 (get-in state [:drawing :relation]))
     :recording (get-in state (state/self-recording-path state))
@@ -1629,13 +1632,14 @@
   [browser-state message _ previous-state current-state]
   (let [to (get-in previous-state state/invite-to-path)
         doc-id (:document/id previous-state)]
-    (if (pos? (.indexOf to "@"))
-      (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
-                                                                     :email to
-                                                                     :invite-loc :overlay}])
-      (sente/send-msg (:sente current-state) [:frontend/sms-invite {:document/id doc-id
-                                                                    :phone-number to
-                                                                    :invite-loc :overlay}]))))
+    (when (seq to)
+      (if (pos? (.indexOf to "@"))
+        (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
+                                                                       :email to
+                                                                       :invite-loc :overlay}])
+        (sente/send-msg (:sente current-state) [:frontend/sms-invite {:document/id doc-id
+                                                                      :phone-number to
+                                                                      :invite-loc :overlay}])))))
 
 (defmethod control-event :permission-grant-email-changed
   [browser-state message {:keys [value]} state]
@@ -1924,8 +1928,8 @@
   (sente/send-msg (:sente current-state) [:team/extend-trial {:team/uuid (get-in current-state [:team :team/uuid])}]
                   5000
                   (fn [reply]
-                    (when (taoensso.sente/cb-success? reply)
-                      (d/transact! (:team-db current-state) [(utils/inspect (:plan reply))] {:server-update true})))))
+                    (when (sente/cb-success? reply)
+                      (d/transact! (:team-db current-state) [(:plan reply)] {:server-update true})))))
 
 (defmethod post-control-event! :billing-email-changed
   [browser-state message {:keys [plan-id email]} previous-state current-state]

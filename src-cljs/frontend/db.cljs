@@ -13,7 +13,10 @@
 (def doc-schema {:layer/child {:db/cardinality :db.cardinality/many}
                  :layer/points-to {:db/cardinality :db.cardinality/many
                                    :db/type :db.type/ref}
-                 :error/id {:db/unique :db.unique/identity}})
+                 :error/id {:db/unique :db.unique/identity}
+                 :permission/permits {:db/cardinality :db.cardinality/many}
+                 :document/chat-bot {:db/type :db.type/ref}
+                 :chat-bot/name {:db/unique :db.unique/identity}})
 
 (def team-schema {:team/plan {:db/type :db.type/ref}
                   :plan/active-custs {:db/cardinality :db.cardinality/many}
@@ -40,10 +43,21 @@
 (defn ^:export inspect-listeners []
   (clj->js @listeners))
 
+(defn generate-chat-bots [conn]
+  [{:chat-bot/name "prcrsr"
+    :db/id (trans/get-next-transient-id conn)}
+   {:chat-bot/name "daniel"
+    :db/id (trans/get-next-transient-id conn)}
+   {:chat-bot/name "danny"
+    :db/id (trans/get-next-transient-id conn)}])
+
 (defn make-initial-db [initial-entities]
   (let [conn (d/create-conn schema)]
-    (d/transact! conn initial-entities {:server-update true})
     (trans/reset-id conn)
+    (d/transact! conn (concat (generate-chat-bots conn)
+                              initial-entities)
+                 {:server-update true})
+
     conn))
 
 (defn reset-db! [db-atom initial-entities]
@@ -56,7 +70,7 @@
                                                   annotations)]
                   5000
                   (fn [reply]
-                    (if (taoensso.sente/cb-success? reply)
+                    (if (sente/cb-success? reply)
                       (when-let [rejects (seq (:rejected-datoms reply))]
                         (put! (:errors comms) [:datascript/rejected-datoms {:rejects rejects
                                                                             :sente-event sente-event

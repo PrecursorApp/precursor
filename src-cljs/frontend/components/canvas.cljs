@@ -408,7 +408,7 @@
 (defn issue [{:keys [document-id]} owner]
   (reify
     om/IDisplayName (display-name [_] "Issue layer")
-    om/IInitState (init-state [_] {:layer-source (utils/uuid)
+    om/IInitState (init-state [_] {:layer-source (utils/squuid)
                                    :listener-key (.getNextUniqueId (.getInstance IdGenerator))})
     om/IDidMount
     (did-mount [_]

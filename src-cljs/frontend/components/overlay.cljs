@@ -35,8 +35,7 @@
             [goog.string.format]
             [goog.userAgent]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
-            [taoensso.sente])
+            [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)]
                    [cljs.core.async.macros :refer (go)])
   (:import [goog.ui IdGenerator]))
@@ -622,7 +621,7 @@
                                                                                30000
                                                                                (async/promise-chan)))]
                                                 (om/set-state! owner :sending? false)
-                                                (if (taoensso.sente/cb-success? res)
+                                                (if (sente/cb-success? res)
                                                   (if (= :success (:status res))
                                                     (do (d/transact! db [(:permission res)] {:server-update true})
                                                         (om/set-state! owner :error nil))
@@ -675,7 +674,7 @@
           [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc)
                                                     :placeholder "or use this url"})]
 
-          [:div.vein.make {:onClick #(om/set-state! owner :focus-id (utils/uuid))}
+          [:div.vein.make {:onClick #(om/set-state! owner :focus-id (utils/squuid))}
            (common/icon :github)
            "Embed in a README or issue"]
 

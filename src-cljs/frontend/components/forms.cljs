@@ -25,7 +25,7 @@
 
 (defn register-channel! [owner]
   (let [channel (chan)
-        uuid (utils/uuid)]
+        uuid (utils/squuid)]
     (swap! registered-channels assoc uuid channel)
     (om/update-state! owner [:registered-channel-uuids] #(conj % uuid))
     {:channel channel :uuid uuid}))
@@ -188,7 +188,7 @@
         api-mult (om/get-shared owner [:comms :api-mult])]
     (fn [& args]
       (append-cycle owner :loading)
-      (let [uuid (utils/uuid)]
+      (let [uuid (utils/squuid)]
         (binding [frontend.async/*uuid* uuid]
           (tap-api api-mult api-tap uuid
                    {:api-count api-count
