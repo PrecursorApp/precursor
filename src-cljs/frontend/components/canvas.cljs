@@ -710,6 +710,133 @@
                                                  (.focus (om/get-node owner "target-input")))}
                               target))))))))))
 
+(defn pasted [{:keys [clips]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Pasted Layers")
+    om/IRender
+    (render [_]
+      (let [drawing (cursors/observe-drawing owner)]
+        (apply dom/g #js {:className "layers clips"
+                          :transform (str "translate("
+
+                                          (- (first (:current-mouse-position drawing))
+                                             (:clip-scroll drawing 0))
+                                          ","
+                                          (second (:current-mouse-position drawing))
+                                          ")")}
+               #_(dom/line #js {:x1 (:clip-scroll drawing 0)
+                                :x2 (:clip-scroll drawing 0)
+                                :y1 -10000
+                                :y2 10000
+                                :stroke "green"
+                                :strokeWidth 5
+                                })
+               (concat #_[(apply dom/g  #js {:transform (str "translate("
+                                                             (- (+ (/ (:width drawing) 2)
+                                                                   (:min-x drawing)))
+                                                             ","
+                                                             (- (+ (/ (:height drawing) 2)
+                                                                   (:min-y drawing)))
+                                                             ")")}
+                                 (map (fn [layer]
+                                        (let [layer (if (:force-even? layer)
+                                                      (layers/force-even layer)
+                                                      layer)
+                                              layer (merge layer
+                                                           {:layer/current-x (:layer/end-x layer)
+                                                            :layer/current-y (:layer/end-y layer)
+                                                            :className "layer-in-progress"})]
+                                          (svg-element (assoc layer :key (str (:db/id layer) "-clip")))))
+                                      (:layers drawing)))]
+                       (let [offset (atom 0)]
+                         (for [{:keys [layer-data]} clips
+                               :let [current-offset @offset
+                                     center (+ current-offset (/ (:width layer-data) 2))
+                                     scroll (get drawing :clip-scroll 0)
+                                     ;;scale (max 0.2 (min 1 (+ 1 (* 0.01 (- (Math/abs (- scroll center)))))))
+                                     min-scale (min (/ 100 (max (:width layer-data)
+                                                                (:height layer-data)))
+                                                    0.5)
+
+                                     ;; scale (max min-scale
+                                     ;;            (min 1
+                                     ;;                 (+ 1 (* (- (Math/abs (- scroll current-offset
+                                     ;;                                         (/ (:width layer-data) 2))))
+                                     ;;                         (/ 1 (:width layer-data))))))
+                                     scale (max min-scale
+                                                (min 1
+                                                     (+ 1 (* (- (Math/abs
+                                                                 (- scroll
+                                                                    current-offset
+                                                                    (/ (:width layer-data) 2))))
+                                                             (/ 1 (:width layer-data))))))
+
+                                     center (+ current-offset (/ (* scale (:width layer-data))
+                                                                 2))
+                                     next-offset (swap! offset + (* scale (+ (:width layer-data))) 40)]]
+                           (dom/g #js {:className (if (< (+ (/ (:width layer-data)
+                                                               4)
+                                                            current-offset)
+                                                         scroll
+                                                         (- next-offset
+                                                            (/ (:width layer-data)
+                                                               4)
+                                                            ))
+                                                    "active"
+                                                    "inactive")}
+                             #_(dom/line #js {:x1 center
+                                              :x2 center
+                                              :y1 -10000
+                                              :y2 10000
+                                              :stroke "red"
+                                              :strokeWidth 5
+                                              })
+                             #_(dom/line #js {:x1 current-offset
+                                              :x2 current-offset
+                                              :y1 -10000
+                                              :y2 10000
+                                              :stroke "blue"
+                                              :strokeWidth 5
+                                              })
+                             (apply dom/g #js {:transform (str "translate("
+                                                               (- current-offset
+                                                                  (* scale (:min-x layer-data)))
+                                                               ","
+                                                               (* scale (- (+ (/ (:height layer-data) 2)
+                                                                              (:min-y layer-data))))
+                                                               ") "
+                                                               "scale(" scale ")")}
+
+
+                                    #_(dom/rect #js {:x (:min-x layer-data)
+                                                     :y (:min-y layer-data)
+                                                     :width (:width layer-data)
+                                                     :height (:height layer-data)
+                                                     :stroke "orange"
+                                                     :strokeWidth 5
+                                                     :fill "none"})
+                                    #_(dom/text #js {:x (+ (:min-x layer-data)
+                                                           (/ (:width layer-data)
+                                                              2))
+                                                     :y (- (+ (:min-y layer-data)
+                                                              (:height layer-data))
+                                                           16)
+                                                     :fontSize 40
+                                                     :stroke "blue"
+                                                     :fill "blue"}
+                                                (- scroll center) ; (int (* 100 scale))
+                                                )
+                                    (map (fn [layer]
+                                           (let [layer (if (:force-even? layer)
+                                                         (layers/force-even layer)
+                                                         layer)
+                                                 layer (merge layer
+                                                              {:layer/current-x (:layer/end-x layer)
+                                                               :layer/current-y (:layer/end-y layer)
+                                                               :className "layer-in-progress"})]
+                                             (svg-element (assoc layer :key (str (:db/id layer) "-clip")))))
+                                         (:layers layer-data))))))))))))
+
 (defn in-progress [{:keys [mouse-down]} owner]
   (reify
     om/IDisplayName (display-name [_] "In Progress Layers")
@@ -727,9 +854,7 @@
                             (= :layer.type/text (get-in drawing [:layers 0 :layer/type])) nil
                             (:in-progress? drawing) (:layers drawing)
                             :else nil)]
-            (apply dom/g #js {:className (str "layers "
-                                              (when (:clip? drawing)
-                                                "clips "))}
+            (apply dom/g #js {:className "layers"}
                    (map (fn [sel]
                           (let [sel (if (:force-even? sel)
                                       (layers/force-even sel)
@@ -994,6 +1119,7 @@
             camera (cursors/observe-camera owner)
             in-progress? (settings/drawing-in-progress? app)
             relation-in-progress? (get-in app [:drawing :relation-in-progress?])
+            clip? (get-in app [:drawing :clip?])
             tool (get-in app state/current-tool-path)
             mouse-down? (get-in app [:mouse-down])
             right-click-learned? (get-in app state/right-click-learned-path)]
@@ -1095,17 +1221,19 @@
                       :onWheel (fn [event]
                                  (let [dx (- (aget event "deltaX"))
                                        dy (aget event "deltaY")]
-                                   (om/transact! camera (fn [c]
-                                                          (if (or (aget event "altKey")
-                                                                  ;; http://stackoverflow.com/questions/15416851/catching-mac-trackpad-zoom
-                                                                  ;; ctrl means pinch-to-zoom
-                                                                  (aget event "ctrlKey"))
-                                                            (cameras/set-zoom c (cameras/screen-event-coords event)
-                                                                              (partial + (* -0.002
-                                                                                            dy
-                                                                                            ;; pinch-to-zoom needs a boost to feel natural
-                                                                                            (if (.-ctrlKey event) 10 1))))
-                                                            (cameras/move-camera c dx (- dy))))))
+                                   (if clip?
+                                     (cast! :clip-scrolled {:dx dx :dy dy})
+                                     (om/transact! camera (fn [c]
+                                                            (if (or (aget event "altKey")
+                                                                    ;; http://stackoverflow.com/questions/15416851/catching-mac-trackpad-zoom
+                                                                    ;; ctrl means pinch-to-zoom
+                                                                    (aget event "ctrlKey"))
+                                                              (cameras/set-zoom c (cameras/screen-event-coords event)
+                                                                                (partial + (* -0.002
+                                                                                              dy
+                                                                                              ;; pinch-to-zoom needs a boost to feel natural
+                                                                                              (if (.-ctrlKey event) 10 1))))
+                                                              (cameras/move-camera c dx (- dy)))))))
                                  (utils/stop-event event))}
                  (defs camera)
 
@@ -1134,8 +1262,15 @@
                              {:react-key "subscribers-layers"})
 
                    (om/build arrows app {:react-key "arrows"})
+                   (cond
+                     (or (get-in app [:drawing :in-progress?])
+                         (get-in app [:drawing :moving?]))
+                     (om/build in-progress (select-keys app [:mouse-down]) {:react-key "in-progress"})
 
-                   (om/build in-progress (select-keys app [:mouse-down]) {:react-key "in-progress"})))))))
+                     (get-in app [:drawing :clip?])
+                     (om/build pasted
+                               {:clips (get-in app [:cust :cust/clips])}
+                               {:react-key "pasted"}))))))))
 
 (defn needs-copy-paste-hack? []
   (not (ua-browser/isChrome)))

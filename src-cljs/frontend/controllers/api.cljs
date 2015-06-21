@@ -89,6 +89,15 @@
   (let [sorted-clips (sort clip-compare clips)]
     (assoc-in state [:cust :cust/clips] sorted-clips)))
 
+(defmethod api-event [:clip-layers :success]
+  [target message status {:keys [layer-data clip/uuid]} state]
+  (update-in state [:cust :cust/clips] (fn [clips]
+                                         (map (fn [clip]
+                                                (if (= uuid (:clip/uuid clip))
+                                                  (assoc clip :layer-data layer-data)
+                                                  clip))
+                                              clips))))
+
 (defmethod api-event [:team-docs :success]
   [target message status {:keys [docs]} state]
   (assoc-in state [:team :recent-docs] docs))

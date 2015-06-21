@@ -774,6 +774,7 @@
                      (get-in state [:drawing :original-layers]))]
     (-> state
       (assoc-in [:drawing :layers] layers)
+      (assoc-in [:drawing :current-mouse-position] (cameras/screen->point (:camera state) x y))
       (assoc-in [:editing-eids :editing-eids] (set (map :db/id layers))))))
 
 (defn pan-canvas [state x y]
@@ -788,23 +789,26 @@
   [browser-state message [x y {:keys [shift?]}] state]
   (-> state
 
-      (update-mouse x y)
-      (cond-> (get-in state [:drawing :in-progress?])
-        (draw-in-progress-drawing x y {:force-even? shift?
-                                       :delta {:x (- x (get-in state [:mouse :x]))
-                                               :y (- y (get-in state [:mouse :y]))}})
+    (update-mouse x y)
+    (cond-> (get-in state [:drawing :in-progress?])
+      (draw-in-progress-drawing x y {:force-even? shift?
+                                     :delta {:x (- x (get-in state [:mouse :x]))
+                                             :y (- y (get-in state [:mouse :y]))}})
 
-        (get-in state [:drawing :relation-in-progress?])
-        (draw-in-progress-relation x y)
+      (get-in state [:drawing :relation-in-progress?])
+      (draw-in-progress-relation x y)
 
-        (get-in state [:drawing :moving?])
-        (move-drawings x y)
+      (get-in state [:drawing :moving?])
+      (move-drawings x y)
 
-        (keyboard/pan-shortcut-active? state)
-        ((fn [s]
-            (if (:mouse-down s)
-              (pan-canvas s x y)
-              (assoc-in s [:pan :position] {:x x :y y})))))))
+      (get-in state [:drawing :clip?])
+      (assoc-in [:drawing :current-mouse-position] (cameras/screen->point (:camera state) x y))
+
+      (keyboard/pan-shortcut-active? state)
+      ((fn [s]
+         (if (:mouse-down s)
+           (pan-canvas s x y)
+           (assoc-in s [:pan :position] {:x x :y y})))))))
 
 (defmethod post-control-event! :text-layer-edited
   [browser-state message _ previous-state current-state]
@@ -899,7 +903,7 @@
        (and (= button 0) ctrl? (not shift?)) [:open-radial]
        (and (= button 0) meta? (not shift?)) [:open-radial]
        (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
-       (get-in state [:drawing :moving?]) [:drop-layers]
+       (get-in state [:drawing :clip?]) [:drop-clip]
        (contains? #{:pen :rect :circle :line :select} tool) [:start-drawing]
        (and (keyword-identical? tool :text) (not drawing-text?)) [:start-drawing]
        :else nil))))
@@ -924,7 +928,7 @@
       (reduce (fn [s intent]
                 (case intent
                   :finish-text-layer (handle-text-layer-finished s)
-                  :drop-layers (drop-layers s)
+                  :drop-clip (assoc-in s [:drawing :clip?] false)
                   :open-radial (handle-radial-opened s)
                   :start-drawing (handle-drawing-started s x y)
                   :submit-layer-properties (handle-layer-properties-submitted s)
@@ -940,7 +944,7 @@
       (doseq [intent intents]
         (case intent
           :finish-text-layer (handle-text-layer-finished-after previous-state current-state)
-          :drop-layers (handle-drawing-finalized-after previous-state current-state x y)
+          :drop-clip nil ;; XXX
           :open-radial (handle-radial-opened-after previous-state current-state)
           :start-drawing nil
           :submit-layer-properties (handle-layer-properties-submitted-after current-state)
@@ -1576,7 +1580,7 @@
   (-> state
       (assoc-in [:layer-properties-menu :layer :layer/ui-target] (empty-str->nil value))))
 
-(defmethod control-event :layers-pasted
+#_(defmethod control-event :layers-pasted
   [browser-state message {:keys [layers height width min-x min-y canvas-size center?] :as layer-data} state]
   (let [{:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))
         eid-map (zipmap (map :db/id layers) entity-ids)
@@ -1607,7 +1611,10 @@
                                                                         (set (filter :db/id (map #(update-in % [:db/id] eid-map) dests)))))
                              (#(move-layer % %
                                            {:snap-x snap-move-x :snap-y snap-move-y
-                                            :move-x move-x :move-y move-y :snap-paths? true}))))
+                                            :move-x move-x :move-y move-y :snap-paths? true}))
+                             (#(if center?
+                                 (dissoc % :points :layer/current-x :layer/current-y)
+                                 %))))
                          layers)]
     (if center?
       (-> state
@@ -1625,7 +1632,6 @@
         (update :drawing merge {:clip? true
                                 :starting-mouse-position [(get-in state [:mouse :rx])
                                                           (get-in state [:mouse :ry])]
-                                :moving? true
                                 :layers new-layers
                                 :original-layers new-layers})
         (assoc-in [:editing-eids :editing-eids] (set entity-ids))
@@ -1637,7 +1643,58 @@
                                                                        acc))
                                                                    #{} new-layers)))))))
 
-(defmethod post-control-event! :layers-pasted
+(defmethod control-event :layers-pasted
+  [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
+  (let [{:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))
+        eid-map (zipmap (map :db/id layers) entity-ids)
+        doc-id (:document/id state)
+        camera (:camera state)
+        zoom (:zf camera)
+        center-x (+ min-x (/ width 2))
+        center-y (+ min-y (/ height 2))
+        new-x (+ (* (- center-x) zoom)
+                 (get-in state [:mouse :x]))
+        new-y (+ (* (- center-y) zoom)
+                 (get-in state [:mouse :y]))
+        [move-x move-y] (cameras/screen->point camera new-x new-y)
+        [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
+        new-layers (mapv (fn [l]
+                           (-> l
+                             (assoc :db/id (get eid-map (:db/id l))
+                                    :layer/document doc-id)
+                             (utils/update-when-in [:layer/points-to] (fn [dests]
+                                                                        (set (filter :db/id (map #(update-in % [:db/id] eid-map) dests)))))
+                             #_(#(move-layer % %
+                                           {:snap-x snap-move-x :snap-y snap-move-y
+                                            :move-x move-x :move-y move-y :snap-paths? true}))
+                             #_(#(if center?
+                                 (dissoc % :points :layer/current-x :layer/current-y)
+                                 %))))
+                         layers)]
+    (-> state
+      (dissoc-in [:clipboard :layers])
+      (assoc-in [:mouse-down] true)
+      (update :drawing merge {:clip? true
+                              :starting-mouse-position [(get-in state [:mouse :rx])
+                                                        (get-in state [:mouse :ry])]
+                              :current-mouse-position [(get-in state [:mouse :rx])
+                                                        (get-in state [:mouse :ry])]
+                              :layers new-layers
+                              :width width
+                              :height height
+                              :min-x min-x
+                              :min-y min-y
+                              :original-layers new-layers})
+      (assoc-in [:editing-eids :editing-eids] (set entity-ids))
+      (assoc-in [:selected-eids :selected-eids] (set entity-ids))
+      (assoc-in [:selected-arrows :selected-arrows] (set (reduce (fn [acc layer]
+                                                                   (if-let [pointer (:layer/points-to layer)]
+                                                                     (conj acc {:origin-id (:db/id layer)
+                                                                                :dest-id (:db/id pointer)})
+                                                                     acc))
+                                                                 #{} new-layers))))))
+
+#_(defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]
   (let [db (:db current-state)
         layers (mapv utils/remove-map-nils (get-in current-state [:clipboard :layers]))]
@@ -2079,7 +2136,7 @@
   (go
     ;; add xhr=true b/c it will use response from image request, which doesn't have cors headers
     (let [res (async/<! (http/get (str s3-url "&xhr=true")))]
-      (if (:success res)
+      (when (:success res)
         (put! (get-in current-state [:comms :controls]) [:layers-pasted (assoc (clipboard/parse-pasted (:body res))
                                                                                :canvas-size (utils/canvas-size)
                                                                                :center? true)])))))
@@ -2094,3 +2151,20 @@
                                                                                                                (:document/id current-state))
                                                                                          "plan")
                                                                 :replace-token? true}])))))
+
+(defmethod control-event :clip-scrolled
+  [browser-state message {:keys [dx dy]} state]
+  (let [layers (get-in state [:drawing :layers])
+        xs (concat (map :layer/current-x layers)
+                   (map :layer/start-x layers))
+        max-x (apply max xs)
+        min-x (apply min xs)]
+    (-> state
+      (update-in [:drawing :clip-scroll] (fn [scroll]
+                                           (max 0
+                                                (min (- (+ (/ (- max-x min-x)
+                                                              2)
+                                                           (* 110 (count (get-in state [:cust :cust/clips]))))
+                                                        60)
+                                                     ((fnil + 0) scroll (+ dx (- dy)))))
+                                           ((fnil + 0) scroll (+ dx (- dy))))))))
