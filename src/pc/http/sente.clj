@@ -482,8 +482,7 @@
     (let [clips (clip-model/find-by-cust (:db req) cust)]
       (log/infof "sending %s clips to %s" (count clips) (:cust/email cust))
       (send-reply req {:clips (map (fn [c] (-> c
-                                             (select-keys [:clip/uuid :clip/important?])
-                                             (assoc :clip/s3-url (clipboard/create-presigned-clip-url c))))
+                                             (clip-model/read-api)))
                                    clips)}))))
 
 (defmethod ws-handler :cust/delete-clip [{:keys [client-id ?data ?reply-fn] :as req}]

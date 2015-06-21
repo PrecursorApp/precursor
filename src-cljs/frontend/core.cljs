@@ -1,5 +1,6 @@
 (ns frontend.core
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [cljs-http.client :as http]
             [cljs.reader :as reader]
             [clojure.string :as string]
             [datascript :as d]
@@ -312,6 +313,15 @@
     (async/tap (:nav-mult comms) nav-tap)
     (async/tap (:api-mult comms) api-tap)
     (async/tap (:errors-mult comms) errors-tap)
+
+    (doseq [clip (get-in @state [:cust :cust/clips])]
+      (go
+        (let [res (async/<! (http/get (str (:clip/s3-url clip) "&xhr=true")))]
+          (when (:success res)
+            (put! (:api comms) [:clip-layers
+                                :success
+                                {:clip/uuid (:clip/uuid clip)
+                                 :layer-data (clipboard/parse-pasted (:body res))}])))))
 
     (utils/go+
      (while true
