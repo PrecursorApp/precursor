@@ -6,6 +6,7 @@
   {:title "Don't let your tools distract you. "
    :blurb "Knowing where to draw the line is difficult. It's important to remember that prototyping tools are useful because they're simple. "
    :author "Danny"
+   :image (external-cdn-path "/blog/dont-let-your-tools-distract-you/clips-copy.gif")
    :body
    (list
     [:article
