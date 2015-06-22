@@ -588,7 +588,7 @@
      [:form {:action (format "https://%s.storage.googleapis.com" bucket)
              :method "post"
              :enctype "multipart/form-data"
-             :onSubmit (format "this.submit(); event.preventDefault(); window.setTimeout(function () { window.location.assign('https://%s.storage.googleapis.com/' + document.getElementById('key').value)}, 1000)"
+             :onSubmit (format "this.submit(); event.preventDefault(); window.setTimeout(function () { window.location.assign('https://%s.storage.googleapis.com/' + document.getElementById('key').value)}, 3000)"
                                bucket)
              }
       [:p "Choose path (careful not to override an existing path):"]
