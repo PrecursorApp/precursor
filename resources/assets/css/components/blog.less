@@ -170,7 +170,7 @@
     }
     [data-caption] {
       &:after {
-        color: @blue;
+        color: @color_select;
       }
     }
     [data-caption-white] {
@@ -193,6 +193,14 @@
     left: 0;
     width: 100%;
     height: 100%;
+  }
+  &.invert {
+    &:after {
+      color: @color_select;
+    }
+    a {
+      .outline();
+    }
   }
 }
 .blogpost-footnote {

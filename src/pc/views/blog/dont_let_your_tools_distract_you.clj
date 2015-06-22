@@ -1,5 +1,6 @@
 (ns pc.views.blog.dont-let-your-tools-distract-you
-  (:require [pc.views.common :refer (cdn-path)]))
+  (:require [pc.views.blog.common :as common]
+            [pc.views.common :refer (cdn-path external-cdn-path)]))
 
 (defn dont-let-your-tools-distract-you []
   {:title "Don't let your tools distract you. "
@@ -75,26 +76,29 @@
      [:p "Use the select tool (V) to select shapes, then use Cmd/Ctrl+C to copy them. "
          "This also adds them to your Clipboard History in the menu. "]]
 
-    [:figure
-     [:a.img {:data-caption-black "I pile icons on top of each other, and then I toggle their visibility to compare. "}
-      [:img {:src (cdn-path "/blog/clojurescript-is-a-design-tool/illustrator-onoff.gif")}]]]
+    (common/demo (external-cdn-path "/blog/dont-let-your-tools-distract-you/clips-copy.png")
+                 (external-cdn-path "/blog/dont-let-your-tools-distract-you/clips-copy.gif")
+                 :caption "Default shortcuts for copy/paste work on Mac and PC."
+                 :invert true)
 
     [:article
      [:h4 "2) Paste shapes. "]
      [:p "Now open your Clipboard History (C) and click the thumbnail of the shape you just copied to paste it into your doc. "]]
 
-    [:figure
-     [:a.img {:data-caption-black "I pile icons on top of each other, and then I toggle their visibility to compare. "}
-      [:img {:src (cdn-path "/blog/clojurescript-is-a-design-tool/illustrator-onoff.gif")}]]]
+    (common/demo (external-cdn-path "/blog/dont-let-your-tools-distract-you/clips-paste.png")
+                 (external-cdn-path "/blog/dont-let-your-tools-distract-you/clips-paste.gif")
+                 :caption "You can paste from the menu or with the normal shortcut."
+                 :invert true)
 
     [:article
      [:h4 "3) Favorite shapes. "]
      [:p "Click the star icon for the shapes you want to remember. "
          "Your favorite shapes will pin to the top of this list. "]]
 
-    [:figure
-     [:a.img {:data-caption-black "I pile icons on top of each other, and then I toggle their visibility to compare. "}
-      [:img {:src (cdn-path "/blog/clojurescript-is-a-design-tool/illustrator-onoff.gif")}]]]
+    (common/demo (external-cdn-path "/blog/dont-let-your-tools-distract-you/clips-fav.png")
+                 (external-cdn-path "/blog/dont-let-your-tools-distract-you/clips-fav.gif")
+                 :caption "You can also delete a clip by clicking the X icon in the thumbnail."
+                 :invert true)
 
     [:article.blogpost-author
      [:p
