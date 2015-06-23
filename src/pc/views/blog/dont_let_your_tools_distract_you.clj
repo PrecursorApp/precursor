@@ -103,6 +103,12 @@
                  :caption "You can also delete a clip by clicking the X icon in the thumbnail."
                  :invert true)
 
+    [:article
+     [:h3 "Improving paste is next. "]
+     [:p "Today we have the list of copied clips and the ability to paste them from the menu. "
+         "Next, are the abilities to bind favorites to number keys and align pasted shapes before commiting them to the canvas. "
+         "When we finish, we'll provide a more in-depth tutorial for the entire process. "]]
+
     [:article.blogpost-author
      [:p
       "Written by "
