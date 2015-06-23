@@ -10,7 +10,9 @@
    :body
    (list
     [:article
-     [:p "One of the most requested features we receive for Precursor is for stencils. "
+     [:p "One of the most requested features we receive for "
+         [:a {:href "https://precursorapp.com/home"} "Precursor"]
+         " is stencils. "
          "Stencils are pretty common in wireframing, and most prototyping apps offer more stencils than you know what to do with. "
          "But we’re not going to do that, and here’s why. "]
      [:p "Stencils don't deliver on the promise of more productivity. "]
