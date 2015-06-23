@@ -13,14 +13,14 @@
          :data-loading-tweet "Loading tweet..."
          :data-failed-tweet " failed. View on Twitter."}]]])
 
-(defn demo [placeholder gif & {:keys [caption]}]
+(defn demo [placeholder gif & {:keys [caption invert]}]
   [:figure.play-gif {:alt "demo"
+                     :class (when invert "invert")
                      :onmouseover (format "this.getElementsByTagName('img')[0].src = '%s'" gif)
                      :ontouchstart (format "this.getElementsByTagName('img')[0].src = '%s'" gif)
                      :onmouseout (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)
                      :ontouchend (format "this.getElementsByTagName('img')[0].src = '%s'" placeholder)}
-   [:a (when caption
-         {:data-caption caption})
+   [:a (when caption {:data-caption caption})
     [:img {:src placeholder}]]])
 
 (defn demo-with-blank-canvas [gif caption]
