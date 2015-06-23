@@ -42,7 +42,7 @@
 
     [:article
      [:h3 "We’re adding history to your clipboard. "]
-     [:p "Soon we’ll combine this history of your copied shapes shapes with a new copy and paste interaction to help users sketch fast, while remaining focused on the ideas in front of them. "]
+     [:p "Soon we’ll combine the history of your copied shapes shapes with a new copy and paste interaction to help users sketch fast, while remaining focused on the ideas in front of them. "]
      [:p "Right now we have things setup to operate mostly from a list in the menu, but the next step is to create something that enables users to work faster and avoid unnecessary distractions at the same time. "]
      [:p "We're going to give users the ability to quickly bind shapes to number keys and reproduce them at anytime using a shortcut. "]]
 
@@ -66,7 +66,7 @@
      [:p "As competition between prototyping tools continues to evolve, I think we're going to see more tools offer more solutions, using more UI. "
          "The irony in all of this extra effort is that it takes users further from the original goal of prototyping, which is to lower cognitive load. "]
      [:p "At Precursor, every feature we consider is subjected to scrutiny against this original goal. "
-         "I believe this new approach to stenciling is great example of our dedication to simplicity. "
+         "I believe this new approach to stenciling is a great example of our dedication to simplicity. "
          "It will help users be more productive and solve problems that really matter. "]]
 
     [:article
