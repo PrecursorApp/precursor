@@ -43,7 +43,7 @@
   [
    {:slug "dont-let-your-tools-distract-you"
     :unique-id "dont-let-your-tools-distract-you"
-    ; :pub-date (clj-time.format/parse "Thurs, 18 June 2015 10:59:00 -0800")
+    :pub-date (clj-time.format/parse "Tue, 23 June 2015 06:00:00 -0800")
     :display-in-overview false}
    {:slug "slack-integration"
     :unique-id "slack-integration"
