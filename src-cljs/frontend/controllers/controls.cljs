@@ -944,12 +944,15 @@
         zoom (:zf camera)
         center-x (+ min-x (/ width 2))
         center-y (+ min-y (/ height 2))
+        [mouse-x mouse-y] (cameras/snap-to-grid camera
+                                                (get-in state [:mouse :x])
+                                                (get-in state [:mouse :y]))
         new-x  (+ (* (- center-x) zoom)
                   (get-in state [:mouse :x]))
         new-y (+ (* (- center-y) zoom)
                  (get-in state [:mouse :y]))
         [move-x move-y] (cameras/screen->point camera new-x new-y)
-        [snap-move-x snap-move-y] [move-x move-y]
+        [snap-move-x snap-move-y] (cameras/snap-to-grid camera move-x move-y)
         new-layers (mapv (fn [l]
                            (-> l
                              (assoc :layer/ancestor (:db/id l)

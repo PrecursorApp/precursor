@@ -716,34 +716,35 @@
     om/IRender
     (render [_]
       (let [drawing (cursors/observe-drawing owner)
+            camera (cursors/observe-camera owner)
             normalized-layer-datas (map layers/normalize-pasted-layer-data (cons drawing
                                                                                  (map :layer-data (filter :clip/important? clips))))
             scrolled-layer-index (:scrolled-layer drawing)
-            clip-scroll (layers/clip-scroll normalized-layer-datas scrolled-layer-index)]
+            clip-scroll (layers/clip-scroll normalized-layer-datas scrolled-layer-index)
+            [mouse-x mouse-y] (apply cameras/snap-to-grid camera (:current-mouse-position drawing))]
         (apply dom/g #js {:className "layers clips"
-                          :transform (str "translate("
-                                          (first (:current-mouse-position drawing))
-                                          ","
-                                          (second (:current-mouse-position drawing))
-                                          ")")}
+                          :transform (str "translate(" mouse-x "," mouse-y ")")}
                (map-indexed (fn [i layer-data]
                               (let [active? (= i scrolled-layer-index)
                                     scale (if active?
                                             1
-                                            (layers/pasted-inactive-scale layer-data))]
+                                            (layers/pasted-inactive-scale layer-data))
+                                    translate-x (- (layers/clip-offset normalized-layer-datas scrolled-layer-index i)
+                                                   (* scale (:min-x layer-data)))
+                                    translate-y (* scale (- (+ (/ (:height layer-data) 2)
+                                                               (:min-y layer-data))))
+                                    [translate-x translate-y] (cameras/snap-to-grid camera translate-x translate-y)
+                                    ]
                                 (apply dom/g #js {:className (if active?
                                                                "active"
                                                                "inactive")
                                                   :transform (str "translate("
-                                                                  (- (layers/clip-offset normalized-layer-datas scrolled-layer-index i)
-                                                                     (* scale (:min-x layer-data)))
+                                                                  translate-x
                                                                   ","
-                                                                  (* scale (- (+ (/ (:height layer-data) 2)
-                                                                                 (:min-y layer-data))))
+                                                                  translate-y
                                                                   ") "
-                                                                  "scale(" scale ")")}
-
-
+                                                                  "scale(" scale ")")
+                                                  :key i}
                                        (map (fn [layer]
                                               (let [layer (if (:force-even? layer)
                                                             (layers/force-even layer)
