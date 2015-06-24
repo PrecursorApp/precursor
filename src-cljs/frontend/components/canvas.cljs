@@ -1141,14 +1141,15 @@
                                      (.stopPropagation event))
                       :onWheel (fn [event]
                                  (let [dx (- (aget event "deltaX"))
-                                       dy (aget event "deltaY")]
-                                   (if clip?
+                                       dy (aget event "deltaY")
+                                       zoom? (or (aget event "altKey")
+                                                 ;; http://stackoverflow.com/questions/15416851/catching-mac-trackpad-zoom
+                                                 ;; ctrl means pinch-to-zoom
+                                                 (aget event "ctrlKey"))]
+                                   (if (and clip? (not zoom?))
                                      (cast! :clip-scrolled {:dx dx :dy dy})
                                      (om/transact! camera (fn [c]
-                                                            (if (or (aget event "altKey")
-                                                                    ;; http://stackoverflow.com/questions/15416851/catching-mac-trackpad-zoom
-                                                                    ;; ctrl means pinch-to-zoom
-                                                                    (aget event "ctrlKey"))
+                                                            (if zoom?
                                                               (cameras/set-zoom c (cameras/screen-event-coords event)
                                                                                 (partial + (* -0.002
                                                                                               dy
