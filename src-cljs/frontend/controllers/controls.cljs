@@ -1750,6 +1750,19 @@
                      layer-group)
                    {:can-undo? true}))))
 
+(defmethod post-control-event! :layers-pasted
+  [browser-state message _ previous-state current-state]
+  (doseq [clip (filter #(and (:clip/important? %)
+                             (empty? (:layer-data %)))
+                       (get-in current-state [:cust :cust/clips]))]
+    (go
+      (let [res (async/<! (http/get (str (:clip/s3-url clip) "&xhr=true")))]
+        (when (:success res)
+          (put! (get-in current-state [:comms :api]) [:clip-layers
+                                                      :success
+                                                      {:clip/uuid (:clip/uuid clip)
+                                                       :layer-data (clipboard/parse-pasted (:body res))}]))))))
+
 (defmethod control-event :invite-to-changed
   [browser-state message {:keys [value]} state]
   (-> state
