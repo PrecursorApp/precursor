@@ -86,7 +86,21 @@
 
 (defmethod api-event [:cust-clips :success]
   [target message status {:keys [clips]} state]
-  (let [sorted-clips (sort clip-compare clips)]
+  (let [existing-clips (get-in state [:cust :cust/clips])
+        all-clips (-> (reduce (fn [acc clip]
+                                (if-let [existing (get-in acc [:existing-uuid->clip (:clip/uuid clip)])]
+                                  (-> acc
+                                    (update-in [:existing-uuid->clip] dissoc (:clip/uuid clip))
+                                    (update-in [:clips] conj (merge existing clip)))
+                                  (update-in acc [:clips] conj clip)))
+                              {:existing-uuid->clip (reduce (fn [acc clip]
+                                                              (assoc acc (:clip/uuid clip) clip))
+                                                            {} existing-clips)
+                               :clips []}
+                              clips)
+                    (#(concat (:clips %)
+                              (vals (:existing-uuid->clip %)))))
+        sorted-clips (sort clip-compare all-clips)]
     (assoc-in state [:cust :cust/clips] sorted-clips)))
 
 (defmethod api-event [:clip-layers :success]
