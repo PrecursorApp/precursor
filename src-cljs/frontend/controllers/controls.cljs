@@ -257,24 +257,62 @@
     (cond-> (= :layer.type/path (:layer/type layer))
       (assoc :layer/path (svg/points->path (nudge-points (parse-points-from-path (:layer/path layer)) x y))))))
 
+(defn scroll-clips [state up?]
+  (let [layer-data-count (+ (if (seq (get-in state [:drawing :layers]))
+                              1
+                              0)
+                            (count (filter :clip/important? (get-in state [:cust :cust/clips]))))
+        scrolled-layer (if up?
+                         (if (= layer-data-count (inc (get-in state [:drawing :scrolled-layer])))
+                           (get-in state [:drawing :scrolled-layer])
+                           (inc (get-in state [:drawing :scrolled-layer])))
+                         (if (= 0 (get-in state [:drawing :scrolled-layer]))
+                           0
+                           (dec (get-in state [:drawing :scrolled-layer]))))]
+    (-> state
+      (assoc-in [:drawing :scroll-offset] 0)
+      (assoc-in [:drawing :scrolled-layer] scrolled-layer))))
+
+(defn maybe-scroll-clips [state up?]
+  (if (get-in state [:drawing :clip?])
+    (scroll-clips state up?)
+    state))
+
+(defmethod handle-keyboard-shortcut :nudge-shapes-left
+  [state shortcut-name key-set]
+  (maybe-scroll-clips state false))
+
+(defmethod handle-keyboard-shortcut :nudge-shapes-right
+  [state shortcut-name key-set]
+  (maybe-scroll-clips state true))
+
+(defmethod handle-keyboard-shortcut :nudge-shapes-up
+  [state shortcut-name key-set]
+  (maybe-scroll-clips state false))
+
+(defmethod handle-keyboard-shortcut :nudge-shapes-down
+  [state shortcut-name key-set]
+  (maybe-scroll-clips state true))
+
 (defn nudge-shapes [state key-set direction]
-  (let [db (:db state)
-        layers (map (partial d/entity @db) (get-in state [:selected-eids :selected-eids]))
-        increment (cameras/grid-size->snap-increment (cameras/grid-width (:camera state)))
-        shift? (contains? key-set "shift")
-        x (* (if shift? 10 1)
-             (case direction
-               :left (- increment)
-               :right increment
-               0))
-        y (* (if shift? 10 1)
-             (case direction
-               :up (- increment)
-               :down increment
-               0))]
-    (when (seq layers)
-      (d/transact! db (mapv #(nudge-layer % {:x x :y y}) layers)
-                   {:can-undo? true}))))
+  (when-not (get-in state [:drawing :clip?])
+    (let [db (:db state)
+          layers (map (partial d/entity @db) (get-in state [:selected-eids :selected-eids]))
+          increment (cameras/grid-size->snap-increment (cameras/grid-width (:camera state)))
+          shift? (contains? key-set "shift")
+          x (* (if shift? 10 1)
+               (case direction
+                 :left (- increment)
+                 :right increment
+                 0))
+          y (* (if shift? 10 1)
+               (case direction
+                 :up (- increment)
+                 :down increment
+                 0))]
+      (when (seq layers)
+        (d/transact! db (mapv #(nudge-layer % {:x x :y y}) layers)
+                     {:can-undo? true})))))
 
 (defmethod handle-keyboard-shortcut-after :nudge-shapes-left
   [state shortcut-name key-set]
@@ -370,6 +408,26 @@
                                                                    (keys shortcuts)))
                                       key-set)))
   (maybe-notify-subscribers! previous-state current-state nil nil))
+
+(defmethod control-event :clip-scrolled
+  [browser-state message {:keys [dx dy]} state]
+  (let [layer-data-count (+ (if (seq (get-in state [:drawing :layers]))
+                              1
+                              0)
+                            (count (filter :clip/important? (get-in state [:cust :cust/clips]))))
+        up? (pos? (+ dx (- dy)))
+        scrolled-layer (if up?
+                         (if (= layer-data-count (inc (get-in state [:drawing :scrolled-layer])))
+                           (get-in state [:drawing :scrolled-layer])
+                           (inc (get-in state [:drawing :scrolled-layer])))
+                         (if (= 0 (get-in state [:drawing :scrolled-layer]))
+                           0
+                           (dec (get-in state [:drawing :scrolled-layer]))))
+        scroll-offset (+ (get-in state [:drawing :scroll-offset])
+                         (+ dx (- dy)))]
+    (if (> 15 (Math/abs scroll-offset))
+      (update-in state [:drawing :scroll-offset] (fnil + 0) dx (- dy))
+      (scroll-clips state up?))))
 
 (defn update-mouse [state x y]
   (if (and x y)
@@ -2209,25 +2267,3 @@
                                                                                                                (:document/id current-state))
                                                                                          "plan")
                                                                 :replace-token? true}])))))
-
-(defmethod control-event :clip-scrolled
-  [browser-state message {:keys [dx dy]} state]
-  (let [layer-data-count (+ (if (seq (get-in state [:drawing :layers]))
-                              1
-                              0)
-                            (count (filter :clip/important? (get-in state [:cust :cust/clips]))))
-        up? (pos? (+ dx (- dy)))
-        scrolled-layer (if up?
-                         (if (= layer-data-count (inc (get-in state [:drawing :scrolled-layer])))
-                           (get-in state [:drawing :scrolled-layer])
-                           (inc (get-in state [:drawing :scrolled-layer])))
-                         (if (= 0 (get-in state [:drawing :scrolled-layer]))
-                           0
-                           (dec (get-in state [:drawing :scrolled-layer]))))
-        scroll-offset (+ (get-in state [:drawing :scroll-offset])
-                         (+ dx (- dy)))]
-    (if (> 15 (Math/abs scroll-offset))
-      (update-in state [:drawing :scroll-offset] (fnil + 0) dx (- dy))
-      (-> state
-        (assoc-in [:drawing :scroll-offset] 0)
-        (assoc-in [:drawing :scrolled-layer] scrolled-layer)))))
