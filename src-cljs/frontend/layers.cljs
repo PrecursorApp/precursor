@@ -282,10 +282,8 @@
     layer-data
     (let [width-delta (- pasted-unscaled-width (:width layer-data))]
       (-> layer-data
-        (update :min-x (fn [min-x]
-                         (- min-x
-                            (/ width-delta
-                               2))))
+        (update :min-x - (/ width-delta 2))
+        (update :min-y + 16) ; don't let cursor overlap shapes
         (assoc :width pasted-unscaled-width)))))
 
 (defn pasted-inactive-scale [normalized-layer-data]

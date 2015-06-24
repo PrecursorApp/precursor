@@ -722,14 +722,9 @@
             clip-scroll (layers/clip-scroll normalized-layer-datas scrolled-layer-index)]
         (apply dom/g #js {:className "layers clips"
                           :transform (str "translate("
-
-                                          (- (first (:current-mouse-position drawing))
-                                             0 ;;clip-scroll
-                                             )
+                                          (first (:current-mouse-position drawing))
                                           ","
-                                          (- (second (:current-mouse-position drawing))
-                                             ;; don't let cursor overlap shapes
-                                             16)
+                                          (second (:current-mouse-position drawing))
                                           ")")}
                (map-indexed (fn [i layer-data]
                               (let [active? (= i scrolled-layer-index)

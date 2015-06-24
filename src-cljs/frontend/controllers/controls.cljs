@@ -972,10 +972,7 @@
         [start-x start-y] (get-in previous-state [:drawing :current-mouse-position])
         [end-x end-y] (get-in previous-state [:drawing :starting-mouse-position])
         layer-index (get-in previous-state [:drawing :scrolled-layer])
-        layer-data (update (layers/normalize-pasted-layer-data (nth layer-datas layer-index))
-                           :min-y
-                           + 16)
-
+        layer-data (layers/normalize-pasted-layer-data (nth layer-datas layer-index))
         layers (something-something layer-data previous-state)]
     (doseq [layer-group (partition-all 100 layers)]
       (d/transact! db
