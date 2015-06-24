@@ -1663,22 +1663,19 @@
                              (assoc :db/id (get eid-map (:db/id l))
                                     :layer/document doc-id)
                              (utils/update-when-in [:layer/points-to] (fn [dests]
-                                                                        (set (filter :db/id (map #(update-in % [:db/id] eid-map) dests)))))
-                             #_(#(move-layer % %
-                                           {:snap-x snap-move-x :snap-y snap-move-y
-                                            :move-x move-x :move-y move-y :snap-paths? true}))
-                             #_(#(if center?
-                                 (dissoc % :points :layer/current-x :layer/current-y)
-                                 %))))
+                                                                        (set (filter :db/id (map #(update-in % [:db/id] eid-map) dests)))))))
                          layers)]
     (-> state
       (dissoc-in [:clipboard :layers])
       (assoc-in [:mouse-down] true)
+      ;; has to account for no clips
+      (assoc-in [:drawing :clip-scroll] (/ width 2))
+      (assoc-in [:drawing :scrolled-layer] 0)
       (update :drawing merge {:clip? true
                               :starting-mouse-position [(get-in state [:mouse :rx])
                                                         (get-in state [:mouse :ry])]
                               :current-mouse-position [(get-in state [:mouse :rx])
-                                                        (get-in state [:mouse :ry])]
+                                                       (get-in state [:mouse :ry])]
                               :layers new-layers
                               :width width
                               :height height
@@ -2154,17 +2151,22 @@
 
 (defmethod control-event :clip-scrolled
   [browser-state message {:keys [dx dy]} state]
-  (let [layers (get-in state [:drawing :layers])
-        xs (concat (map :layer/current-x layers)
-                   (map :layer/start-x layers))
-        max-x (apply max xs)
-        min-x (apply min xs)]
-    (-> state
-      (update-in [:drawing :clip-scroll] (fn [scroll]
-                                           (max 0
-                                                (min (- (+ (/ (- max-x min-x)
-                                                              2)
-                                                           (* 110 (count (get-in state [:cust :cust/clips]))))
-                                                        60)
-                                                     ((fnil + 0) scroll (+ dx (- dy)))))
-                                           ((fnil + 0) scroll (+ dx (- dy))))))))
+  (let [layer-data-count (+ (if (seq (get-in state [:drawing :layers]))
+                              1
+                              0)
+                            (count (filter :clip/important? (get-in state [:cust :cust/clips]))))
+        up? (pos? (+ dx (- dy)))
+        scrolled-layer (if up?
+                         (if (= layer-data-count (inc (get-in state [:drawing :scrolled-layer])))
+                           (get-in state [:drawing :scrolled-layer])
+                           (inc (get-in state [:drawing :scrolled-layer])))
+                         (if (= 0 (get-in state [:drawing :scrolled-layer]))
+                           0
+                           (dec (get-in state [:drawing :scrolled-layer]))))
+        scroll-offset (+ (get-in state [:drawing :scroll-offset])
+                         (+ dx (- dy)))]
+    (if (> 15 (Math/abs scroll-offset))
+      (update-in state [:drawing :scroll-offset] (fnil + 0) dx (- dy))
+      (-> state
+        (assoc-in [:drawing :scroll-offset] 0)
+        (assoc-in [:drawing :scrolled-layer] scrolled-layer)))))

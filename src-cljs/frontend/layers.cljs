@@ -270,3 +270,46 @@
 (defn calc-text-end-y [layer]
   (- (:layer/start-y layer)
      (:layer/font-size layer state/default-font-size)))
+
+(def pasted-unscaled-width 150)
+(def pasted-scaled-width 100)
+(def pasted-padding 40)
+
+(defn normalize-pasted-layer-data
+  "Makes sure that the layer-data is larger than the required minimum by expanding the width."
+  [layer-data]
+  (if (< pasted-unscaled-width (:width layer-data))
+    layer-data
+    (let [width-delta (- pasted-unscaled-width (:width layer-data))]
+      (-> layer-data
+        (update :min-x (fn [min-x]
+                         (- min-x
+                            (/ width-delta
+                               2))))
+        (assoc :width pasted-unscaled-width)))))
+
+(defn pasted-inactive-scale [normalized-layer-data]
+  (/ pasted-scaled-width
+     (:width normalized-layer-data)))
+
+;; remember that it's scrolling to the center
+(defn clip-scroll [normalized-layer-datas scrolled-layer-index]
+  (- (/ (:width (nth normalized-layer-datas scrolled-layer-index))
+        2)))
+
+(defn clip-offset [normalized-layer-datas scrolled-layer-index layer-index]
+  (cond (= scrolled-layer-index layer-index)
+        (clip-scroll normalized-layer-datas layer-index)
+
+        (> scrolled-layer-index layer-index)
+        (- (clip-scroll normalized-layer-datas scrolled-layer-index)
+           (* (- scrolled-layer-index layer-index)
+              (+ pasted-scaled-width pasted-padding)))
+
+        :else
+        (+ (clip-scroll normalized-layer-datas scrolled-layer-index)
+           (:width (nth normalized-layer-datas scrolled-layer-index))
+           (* (- layer-index scrolled-layer-index)
+              pasted-padding)
+           (* (dec (- layer-index scrolled-layer-index))
+              pasted-scaled-width ))))

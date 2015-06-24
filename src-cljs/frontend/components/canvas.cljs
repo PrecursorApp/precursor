@@ -715,127 +715,52 @@
     om/IDisplayName (display-name [_] "Pasted Layers")
     om/IRender
     (render [_]
-      (let [drawing (cursors/observe-drawing owner)]
+      (let [drawing (cursors/observe-drawing owner)
+            normalized-layer-datas (map layers/normalize-pasted-layer-data (cons drawing
+                                                                                 (map :layer-data (filter :clip/important? clips))))
+            scrolled-layer-index (:scrolled-layer drawing)
+            clip-scroll (layers/clip-scroll normalized-layer-datas scrolled-layer-index)]
         (apply dom/g #js {:className "layers clips"
                           :transform (str "translate("
 
                                           (- (first (:current-mouse-position drawing))
-                                             (:clip-scroll drawing 0))
+                                             0 ;;clip-scroll
+                                             )
                                           ","
-                                          (second (:current-mouse-position drawing))
+                                          (- (second (:current-mouse-position drawing))
+                                             ;; don't let cursor overlap shapes
+                                             16)
                                           ")")}
-               #_(dom/line #js {:x1 (:clip-scroll drawing 0)
-                                :x2 (:clip-scroll drawing 0)
-                                :y1 -10000
-                                :y2 10000
-                                :stroke "green"
-                                :strokeWidth 5
-                                })
-               (concat #_[(apply dom/g  #js {:transform (str "translate("
-                                                             (- (+ (/ (:width drawing) 2)
-                                                                   (:min-x drawing)))
-                                                             ","
-                                                             (- (+ (/ (:height drawing) 2)
-                                                                   (:min-y drawing)))
-                                                             ")")}
-                                 (map (fn [layer]
-                                        (let [layer (if (:force-even? layer)
-                                                      (layers/force-even layer)
-                                                      layer)
-                                              layer (merge layer
-                                                           {:layer/current-x (:layer/end-x layer)
-                                                            :layer/current-y (:layer/end-y layer)
-                                                            :className "layer-in-progress"})]
-                                          (svg-element (assoc layer :key (str (:db/id layer) "-clip")))))
-                                      (:layers drawing)))]
-                       (let [offset (atom 0)]
-                         (for [{:keys [layer-data]} clips
-                               :let [current-offset @offset
-                                     center (+ current-offset (/ (:width layer-data) 2))
-                                     scroll (get drawing :clip-scroll 0)
-                                     ;;scale (max 0.2 (min 1 (+ 1 (* 0.01 (- (Math/abs (- scroll center)))))))
-                                     min-scale (min (/ 100 (max (:width layer-data)
-                                                                (:height layer-data)))
-                                                    0.5)
-
-                                     ;; scale (max min-scale
-                                     ;;            (min 1
-                                     ;;                 (+ 1 (* (- (Math/abs (- scroll current-offset
-                                     ;;                                         (/ (:width layer-data) 2))))
-                                     ;;                         (/ 1 (:width layer-data))))))
-                                     scale (max min-scale
-                                                (min 1
-                                                     (+ 1 (* (- (Math/abs
-                                                                 (- scroll
-                                                                    current-offset
-                                                                    (/ (:width layer-data) 2))))
-                                                             (/ 1 (:width layer-data))))))
-
-                                     center (+ current-offset (/ (* scale (:width layer-data))
-                                                                 2))
-                                     next-offset (swap! offset + (* scale (+ (:width layer-data))) 40)]]
-                           (dom/g #js {:className (if (< (+ (/ (:width layer-data)
-                                                               4)
-                                                            current-offset)
-                                                         scroll
-                                                         (- next-offset
-                                                            (/ (:width layer-data)
-                                                               4)
-                                                            ))
-                                                    "active"
-                                                    "inactive")}
-                             #_(dom/line #js {:x1 center
-                                              :x2 center
-                                              :y1 -10000
-                                              :y2 10000
-                                              :stroke "red"
-                                              :strokeWidth 5
-                                              })
-                             #_(dom/line #js {:x1 current-offset
-                                              :x2 current-offset
-                                              :y1 -10000
-                                              :y2 10000
-                                              :stroke "blue"
-                                              :strokeWidth 5
-                                              })
-                             (apply dom/g #js {:transform (str "translate("
-                                                               (- current-offset
-                                                                  (* scale (:min-x layer-data)))
-                                                               ","
-                                                               (* scale (- (+ (/ (:height layer-data) 2)
-                                                                              (:min-y layer-data))))
-                                                               ") "
-                                                               "scale(" scale ")")}
+               (map-indexed (fn [i layer-data]
+                              (let [active? (= i scrolled-layer-index)
+                                    scale (if active?
+                                            1
+                                            (layers/pasted-inactive-scale layer-data))]
+                                (apply dom/g #js {:className (if active?
+                                                               "active"
+                                                               "inactive")
+                                                  :transform (str "translate("
+                                                                  (- (layers/clip-offset normalized-layer-datas scrolled-layer-index i)
+                                                                     (* scale (:min-x layer-data)))
+                                                                  ","
+                                                                  (* scale (- (+ (/ (:height layer-data) 2)
+                                                                                 (:min-y layer-data))))
+                                                                  ") "
+                                                                  "scale(" scale ")")}
 
 
-                                    #_(dom/rect #js {:x (:min-x layer-data)
-                                                     :y (:min-y layer-data)
-                                                     :width (:width layer-data)
-                                                     :height (:height layer-data)
-                                                     :stroke "orange"
-                                                     :strokeWidth 5
-                                                     :fill "none"})
-                                    #_(dom/text #js {:x (+ (:min-x layer-data)
-                                                           (/ (:width layer-data)
-                                                              2))
-                                                     :y (- (+ (:min-y layer-data)
-                                                              (:height layer-data))
-                                                           16)
-                                                     :fontSize 40
-                                                     :stroke "blue"
-                                                     :fill "blue"}
-                                                (- scroll center) ; (int (* 100 scale))
-                                                )
-                                    (map (fn [layer]
-                                           (let [layer (if (:force-even? layer)
-                                                         (layers/force-even layer)
-                                                         layer)
-                                                 layer (merge layer
-                                                              {:layer/current-x (:layer/end-x layer)
-                                                               :layer/current-y (:layer/end-y layer)
-                                                               :className "layer-in-progress"})]
-                                             (svg-element (assoc layer :key (str (:db/id layer) "-clip")))))
-                                         (:layers layer-data))))))))))))
+                                       (map (fn [layer]
+                                              (let [layer (if (:force-even? layer)
+                                                            (layers/force-even layer)
+                                                            layer)
+                                                    layer (merge layer
+                                                                 {:layer/current-x (:layer/end-x layer)
+                                                                  :layer/current-y (:layer/end-y layer)
+                                                                  :className "layer-in-progress"})]
+                                                (svg-element (assoc layer :key (str (:db/id layer) "-clip")
+                                                                    :vectorEffect "non-scaling-stroke"))))
+                                            (:layers layer-data)))))
+                            normalized-layer-datas))))))
 
 (defn in-progress [{:keys [mouse-down]} owner]
   (reify

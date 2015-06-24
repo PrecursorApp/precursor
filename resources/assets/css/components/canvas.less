@@ -410,9 +410,16 @@
     fill: @white;
   }
   .active {
-    fill: @blue;
+    transition: all 400ms ease-in-out;
+    fill: @color_select;
     .shape-layer {
-      stroke: @blue;
+      stroke: @color_select;
     }
+    .text-layer {
+      fill: @color_select;
+    }
+  }
+  .inactive {
+    transition: all 400ms ease-in-out;
   }
 }
