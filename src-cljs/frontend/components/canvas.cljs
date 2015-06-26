@@ -789,7 +789,7 @@
                                            (when (= :layer.type/group (:layer/type sel))
                                              {:layer/type :layer.type/rect
                                               :className "layer-in-progress selection"
-                                              :strokeDasharray "1, 2"}))]
+                                              :strokeDasharray "2,3"}))]
                             (svg-element (assoc sel :key (str (:db/id sel) "-in-progress")))))
                         sels))))))))
 
