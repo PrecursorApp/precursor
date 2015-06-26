@@ -1065,7 +1065,9 @@
                                         " relation-in-progress ")
 
                                       (when-not right-click-learned?
-                                        "radial-not-learned"))
+                                        "radial-not-learned ")
+
+                                      (when clip? "clip-in-progress "))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
                                         (cond
