@@ -85,6 +85,7 @@
                                                      state/right-click-learned-path
                                                      [:drawing :in-progress?]
                                                      [:drawing :relation-in-progress?]
+                                                     [:drawing :moving?]
                                                      [:drawing :clip?]
                                                      [:mouse-down]
                                                      [:layer-properties-menu]
