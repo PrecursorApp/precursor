@@ -1028,7 +1028,8 @@
 
 (defn handle-drop-clip-after [previous-state current-state]
   (let [db (:db current-state)
-        layer-datas (cons (:drawing previous-state)
+        layer-datas (concat (when (get-in previous-state [:drawing :layers])
+                              [(:drawing previous-state)])
                           (map :layer-data (filter :clip/important? (get-in previous-state [:cust :cust/clips]))))
         start-x (get-in previous-state [:drawing :current-mouse-position :rx])
         start-y (get-in previous-state [:drawing :current-mouse-position :ry])
@@ -1752,49 +1753,61 @@
 
 (defmethod control-event :layers-pasted
   [browser-state message {:keys [layers height width min-x min-y canvas-size] :as layer-data} state]
-  (let [{:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))
-        eid-map (zipmap (map :db/id layers) entity-ids)
-        doc-id (:document/id state)
-        camera (:camera state)
-        zoom (:zf camera)
-        center-x (+ min-x (/ width 2))
-        center-y (+ min-y (/ height 2))
-        new-x (+ (* (- center-x) zoom)
-                 (get-in state [:mouse :x]))
-        new-y (+ (* (- center-y) zoom)
-                 (get-in state [:mouse :y]))
-        [move-x move-y] (cameras/screen->point camera new-x new-y)
-        [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
-        new-layers (mapv (fn [l]
-                           (-> l
-                             (assoc :db/id (get eid-map (:db/id l))
-                                    :layer/document doc-id)
-                             (utils/update-when-in [:layer/points-to] (fn [dests]
-                                                                        (set (filter :db/id (map #(update-in % [:db/id] eid-map) dests)))))))
-                         layers)]
+  (if layer-data
+    (let [{:keys [entity-ids state]} (frontend.db/get-entity-ids state (count layers))
+          eid-map (zipmap (map :db/id layers) entity-ids)
+          doc-id (:document/id state)
+          camera (:camera state)
+          zoom (:zf camera)
+          center-x (+ min-x (/ width 2))
+          center-y (+ min-y (/ height 2))
+          new-x (+ (* (- center-x) zoom)
+                   (get-in state [:mouse :x]))
+          new-y (+ (* (- center-y) zoom)
+                   (get-in state [:mouse :y]))
+          [move-x move-y] (cameras/screen->point camera new-x new-y)
+          [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
+          new-layers (mapv (fn [l]
+                             (-> l
+                               (assoc :db/id (get eid-map (:db/id l))
+                                      :layer/document doc-id)
+                               (utils/update-when-in [:layer/points-to] (fn [dests]
+                                                                          (set (filter :db/id (map #(update-in % [:db/id] eid-map) dests)))))))
+                           layers)]
+      (-> state
+        (dissoc-in [:clipboard :layers])
+        (assoc-in [:mouse-down] true)
+        ;; has to account for no clips
+        (assoc-in [:drawing :clip-scroll] (/ width 2))
+        (assoc-in [:drawing :scrolled-layer] 0)
+        (update :drawing merge {:clip? true
+                                :starting-mouse-position (:mouse state)
+                                :current-mouse-position (:mouse state)
+                                :layers new-layers
+                                :width width
+                                :height height
+                                :min-x min-x
+                                :min-y min-y
+                                :original-layers new-layers})
+        (assoc-in [:editing-eids :editing-eids] (set entity-ids))
+        (assoc-in [:selected-eids :selected-eids] (set entity-ids))
+        (assoc-in [:selected-arrows :selected-arrows] (set (reduce (fn [acc layer]
+                                                                     (if-let [pointer (:layer/points-to layer)]
+                                                                       (conj acc {:origin-id (:db/id layer)
+                                                                                  :dest-id (:db/id pointer)})
+                                                                       acc))
+                                                                   #{} new-layers)))))
     (-> state
       (dissoc-in [:clipboard :layers])
       (assoc-in [:mouse-down] true)
-      ;; has to account for no clips
-      (assoc-in [:drawing :clip-scroll] (/ width 2))
       (assoc-in [:drawing :scrolled-layer] 0)
       (update :drawing merge {:clip? true
                               :starting-mouse-position (:mouse state)
                               :current-mouse-position (:mouse state)
-                              :layers new-layers
-                              :width width
-                              :height height
-                              :min-x min-x
-                              :min-y min-y
-                              :original-layers new-layers})
-      (assoc-in [:editing-eids :editing-eids] (set entity-ids))
-      (assoc-in [:selected-eids :selected-eids] (set entity-ids))
-      (assoc-in [:selected-arrows :selected-arrows] (set (reduce (fn [acc layer]
-                                                                   (if-let [pointer (:layer/points-to layer)]
-                                                                     (conj acc {:origin-id (:db/id layer)
-                                                                                :dest-id (:db/id pointer)})
-                                                                     acc))
-                                                                 #{} new-layers))))))
+                              :layers nil})
+      (assoc-in [:editing-eids :editing-eids] #{})
+      (assoc-in [:selected-eids :selected-eids] #{})
+      (assoc-in [:selected-arrows :selected-arrows] #{}))))
 
 #_(defmethod post-control-event! :layers-pasted
   [browser-state message _ previous-state current-state]

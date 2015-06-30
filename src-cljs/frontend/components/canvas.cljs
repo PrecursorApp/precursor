@@ -719,7 +719,8 @@
     (render [_]
       (let [drawing (cursors/observe-drawing owner)
             camera (cursors/observe-camera owner)
-            normalized-layer-datas (map layers/normalize-pasted-layer-data (cons drawing
+            normalized-layer-datas (map layers/normalize-pasted-layer-data (concat (when (:layers drawing)
+                                                                                     [drawing])
                                                                                  (map :layer-data (filter :clip/important? clips))))
             scrolled-layer-index (:scrolled-layer drawing)
             clip-scroll (layers/clip-scroll normalized-layer-datas scrolled-layer-index)
