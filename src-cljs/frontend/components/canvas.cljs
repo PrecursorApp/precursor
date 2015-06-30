@@ -477,6 +477,7 @@
     (common/svg-icon icon
                      {:svg-props {:height 16 :width 16
                                   :className "mouse-tool"
+                                  ;; TODO: should subscriber mouse position be a map?
                                   :x (- (first (:mouse-position subscriber)) (- 16))
                                   :y (- (last (:mouse-position subscriber)) 8)
                                   :key (:client-id subscriber)}
@@ -501,6 +502,7 @@
             (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
                              {:svg-props {:height 16 :width 16
                                           :className "mouse-tool"
+                                          ;; TODO: should subscriber mouse position be a map?
                                           :x (- (first (:mouse-position subscriber)) 8)
                                           :y (- (last (:mouse-position subscriber)) 8)
                                           :key (:client-id subscriber)}
@@ -721,7 +723,9 @@
                                                                                  (map :layer-data (filter :clip/important? clips))))
             scrolled-layer-index (:scrolled-layer drawing)
             clip-scroll (layers/clip-scroll normalized-layer-datas scrolled-layer-index)
-            [mouse-x mouse-y] (apply cameras/snap-to-grid camera (:current-mouse-position drawing))]
+            [mouse-x mouse-y] (cameras/snap-to-grid camera
+                                                    (:rx (:current-mouse-position drawing))
+                                                    (:ry (:current-mouse-position drawing)))]
         (apply dom/g #js {:className "layers clips"
                           :transform (str "translate(" mouse-x "," mouse-y ")")}
                (map-indexed (fn [i layer-data]
@@ -731,8 +735,9 @@
                                             (layers/pasted-inactive-scale layer-data))
                                     translate-x (- (layers/clip-offset normalized-layer-datas scrolled-layer-index i)
                                                    (* scale (:min-x layer-data)))
-                                    translate-y (* scale (- (+ (/ (:height layer-data) 2)
-                                                               (:min-y layer-data))))
+                                    translate-y (* scale
+                                                   (- (+ (/ (:height layer-data) 2)
+                                                         (:min-y layer-data))))
                                     [translate-x translate-y] (cameras/snap-to-grid camera translate-x translate-y)
                                     ]
                                 (apply dom/g #js {:className (if active?

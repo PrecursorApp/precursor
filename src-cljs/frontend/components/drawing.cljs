@@ -27,8 +27,8 @@
                      ((om/get-shared owner :cast!)
                       :subscriber-updated {:client-id (:client-id (:bot tick-state))
                                            :fields (merge (:bot tick-state) {:mouse-position nil
-                                                                                :tool nil
-                                                                                :show-mouse? false})})))
+                                                                             :tool nil
+                                                                             :show-mouse? false})})))
     (annotate-keyframes tick)))
 
 (defn move-mouse [tick-state {:keys [start-tick end-tick start-x end-x start-y end-y tool]
@@ -46,8 +46,8 @@
                               ((om/get-shared owner :cast!)
                                :subscriber-updated {:client-id (:client-id (:bot tick-state))
                                                     :fields (merge (:bot tick-state) {:mouse-position [ex ey]
-                                                                                         :show-mouse? true
-                                                                                         :tool tool})})))))
+                                                                                      :show-mouse? true
+                                                                                      :tool tool})})))))
               tick-state
               (range 0 (inc (- end-tick start-tick))))
     (annotate-keyframes end-tick)))
@@ -92,11 +92,11 @@
                                 ((om/get-shared owner :cast!)
                                  :subscriber-updated {:client-id (:client-id (:bot tick-state))
                                                       :fields (merge (:bot tick-state) {:mouse-position [ex ey]
-                                                                                           :show-mouse? true
-                                                                                           :layers [(assoc base-layer
-                                                                                                           :layer/current-x ex
-                                                                                                           :layer/current-y ey)]
-                                                                                           :tool tool})})))))
+                                                                                        :show-mouse? true
+                                                                                        :layers [(assoc base-layer
+                                                                                                        :layer/current-x ex
+                                                                                                        :layer/current-y ey)]
+                                                                                        :tool tool})})))))
                 tick-state
                 (range 0 (inc (- end-tick start-tick pause-ticks))))
       (add-tick end-tick
@@ -150,11 +150,11 @@
                                 ((om/get-shared owner :cast!)
                                  :subscriber-updated {:client-id (:client-id (:bot tick-state))
                                                       :fields (merge (:bot tick-state) {:mouse-position [(+ start-x move-x)
-                                                                                                            (+ start-y move-y)]
-                                                                                           :show-mouse? true
-                                                                                           :layers (map (fn [l] (move-layer l move-x move-y))
-                                                                                                        base-layers)
-                                                                                           :tool :select})})))))
+                                                                                                         (+ start-y move-y)]
+                                                                                        :show-mouse? true
+                                                                                        :layers (map (fn [l] (move-layer l move-x move-y))
+                                                                                                     base-layers)
+                                                                                        :tool :select})})))))
                 tick-state
                 (range 0 (inc (- end-tick start-tick pause-ticks))))
       (add-tick end-tick
@@ -199,12 +199,12 @@
                                 ((om/get-shared owner :cast!)
                                  :subscriber-updated {:client-id (:client-id (:bot tick-state))
                                                       :fields (merge (:bot tick-state) {:mouse-position [start-x (- start-y (/ text-height 2))]
-                                                                                           :show-mouse? true
-                                                                                           :layers [(assoc base-layer
-                                                                                                           :layer/text (apply str (take letter-count text))
-                                                                                                           :layer/current-x end-x
-                                                                                                           :layer/current-y end-y)]
-                                                                                           :tool :text})})))))
+                                                                                        :show-mouse? true
+                                                                                        :layers [(assoc base-layer
+                                                                                                        :layer/text (apply str (take letter-count text))
+                                                                                                        :layer/current-x end-x
+                                                                                                        :layer/current-y end-y)]
+                                                                                        :tool :text})})))))
                 tick-state
                 (map int
                      (range 0
@@ -216,8 +216,8 @@
                   ((om/get-shared owner :cast!)
                    :subscriber-updated {:client-id (:client-id (:bot tick-state))
                                         :fields (merge (:bot tick-state) {:mouse-position nil
-                                                                             :layers nil
-                                                                             :tool :text})})
+                                                                          :layers nil
+                                                                          :tool :text})})
                   (d/transact! (om/get-shared owner :db) [base-layer] {:bot-layer true})))
       (annotate-keyframes start-tick end-tick))))
 

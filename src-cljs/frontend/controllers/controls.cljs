@@ -527,7 +527,7 @@
                                            :layer/ui-target (when (:layer/ui-target layer)
                                                               (:layer/ui-target layer)))])
       (assoc-in [:drawing :moving?] true)
-      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
+      (assoc-in [:drawing :starting-mouse-position] (:mouse state)))))
 
 (defmethod control-event :group-duplicated
   [browser-state message {:keys [x y]} state]
@@ -562,7 +562,7 @@
                                                                                ps))))))
                                          layers (range)))
       (assoc-in [:drawing :moving?] true)
-      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
+      (assoc-in [:drawing :starting-mouse-position] (:mouse state)))))
 
 (defmethod control-event :text-layer-edited
   [browser-state message {:keys [value]} state]
@@ -820,7 +820,8 @@
       (update-in [:drawing :relation] merge {:rx rx :ry ry}))))
 
 (defn move-drawings [state x y]
-  (let [[start-x start-y] (get-in state [:drawing :starting-mouse-position])
+  (let [start-x (get-in state [:drawing :starting-mouse-position :rx])
+        start-y (get-in state [:drawing :starting-mouse-position :ry])
         [rx ry] (cameras/screen->point (:camera state) x y)
         [move-x move-y] [(- rx start-x) (- ry start-y)]
         [snap-move-x snap-move-y] (cameras/snap-to-grid (:camera state) move-x move-y)
@@ -832,7 +833,7 @@
                      (get-in state [:drawing :original-layers]))]
     (-> state
       (assoc-in [:drawing :layers] layers)
-      (assoc-in [:drawing :current-mouse-position] (cameras/screen->point (:camera state) x y))
+      (assoc-in [:drawing :current-mouse-position] {:x x :y y :rx rx :ry ry})
       (assoc-in [:editing-eids :editing-eids] (set (map :db/id layers))))))
 
 (defn pan-canvas [state x y]
@@ -860,7 +861,7 @@
       (move-drawings x y)
 
       (get-in state [:drawing :clip?])
-      (assoc-in [:drawing :current-mouse-position] (cameras/screen->point (:camera state) x y))
+      (#(assoc-in % [:drawing :current-mouse-position] (:mouse %)))
 
       (keyboard/pan-shortcut-active? state)
       ((fn [s]
@@ -1003,13 +1004,12 @@
         center-x (+ min-x (/ width 2))
         center-y (+ min-y (/ height 2))
         [mouse-x mouse-y] (cameras/snap-to-grid camera
-                                                (get-in state [:mouse :x])
-                                                (get-in state [:mouse :y]))
-        new-x  (+ (* (- center-x) zoom)
-                  (get-in state [:mouse :x]))
-        new-y (+ (* (- center-y) zoom)
-                 (get-in state [:mouse :y]))
-        [move-x move-y] (cameras/screen->point camera new-x new-y)
+                                                (get-in state [:drawing :current-mouse-position :rx])
+                                                (get-in state [:drawing :current-mouse-position :ry]))
+        move-x  (+ (* (- center-x) zoom)
+                   (get-in state [:drawing :current-mouse-position :rx]))
+        move-y (+ (* (- center-y) zoom)
+                  (get-in state [:drawing :current-mouse-position :ry]))
         [snap-move-x snap-move-y] (cameras/snap-to-grid camera move-x move-y)
         new-layers (mapv (fn [l]
                            (-> l
@@ -1030,8 +1030,10 @@
   (let [db (:db current-state)
         layer-datas (cons (:drawing previous-state)
                           (map :layer-data (filter :clip/important? (get-in previous-state [:cust :cust/clips]))))
-        [start-x start-y] (get-in previous-state [:drawing :current-mouse-position])
-        [end-x end-y] (get-in previous-state [:drawing :starting-mouse-position])
+        start-x (get-in previous-state [:drawing :current-mouse-position :rx])
+        start-y (get-in previous-state [:drawing :current-mouse-position :ry])
+        end-x (get-in previous-state [:drawing :starting-mouse-position :rx])
+        end-y (get-in previous-state [:drawing :starting-mouse-position :ry])
         layer-index (get-in previous-state [:drawing :scrolled-layer])
         layer-data (layers/normalize-pasted-layer-data (nth layer-datas layer-index))
         layers (something-something layer-data previous-state)]
@@ -1264,7 +1266,7 @@
                                                (conjv (if append? layers [])
                                                       layer)))
       (assoc-in [:drawing :moving?] true)
-      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
+      (assoc-in [:drawing :starting-mouse-position] {:x x :y y :rx rx :ry ry}))))
 
 (defmethod control-event :arrow-selected
   [browser-state message {:keys [origin dest append?]} state]
@@ -1319,7 +1321,7 @@
                                          layers))
       (assoc-in [:drawing :original-layers] layers)
       (assoc-in [:drawing :moving?] true)
-      (assoc-in [:drawing :starting-mouse-position] [rx ry]))))
+      (assoc-in [:drawing :starting-mouse-position] {:x x :y y :rx rx :ry ry}))))
 
 (defn handle-radial-opened [state]
   (-> state
@@ -1736,8 +1738,7 @@
         (dissoc-in [:clipboard :layers])
         (assoc-in [:mouse-down] true)
         (update :drawing merge {:clip? true
-                                :starting-mouse-position [(get-in state [:mouse :rx])
-                                                          (get-in state [:mouse :ry])]
+                                :starting-mouse-position (:mouse state)
                                 :layers new-layers
                                 :original-layers new-layers})
         (assoc-in [:editing-eids :editing-eids] (set entity-ids))
@@ -1778,10 +1779,8 @@
       (assoc-in [:drawing :clip-scroll] (/ width 2))
       (assoc-in [:drawing :scrolled-layer] 0)
       (update :drawing merge {:clip? true
-                              :starting-mouse-position [(get-in state [:mouse :rx])
-                                                        (get-in state [:mouse :ry])]
-                              :current-mouse-position [(get-in state [:mouse :rx])
-                                                       (get-in state [:mouse :ry])]
+                              :starting-mouse-position (:mouse state)
+                              :current-mouse-position (:mouse state)
                               :layers new-layers
                               :width width
                               :height height
