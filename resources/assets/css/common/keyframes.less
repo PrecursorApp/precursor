@@ -247,3 +247,15 @@
 @keyframes in-tween-transform {
   0% { transform: none; }
 }
+@keyframes in-slide-bottom {
+  0%   {transform: translate3d(0, 100%, 0);}
+  100% {transform: none;}
+}
+@keyframes in-slide-bottom-soft {
+  0%   {transform: translate3d(0, @tile, 0);}
+  100% {transform: none;}
+}
+@keyframes in-slide-bottom-hard {
+  0%   {transform: translate3d(0, (@tile * 2), 0);}
+  100% {transform: none;}
+}

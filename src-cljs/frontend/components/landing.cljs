@@ -40,6 +40,7 @@
 (defn customer-quote [customer]
   (html
    [:div.trusted
+    [:div.trusted-background]
     [:div.trusted-logo.trusted-item
      (common/icon customer)]
     [:div.trusted-quote.trusted-item.content

@@ -1,6 +1,6 @@
 .landing {
   user-select: none;
-  .animate_landing_features();
+  .animate_landing();
   &:active {
     .make-button {
       &:not(:active) {
@@ -444,11 +444,22 @@
   }
 }
 .trusted {
+  position: relative;
   padding: @tile 0;
+}
+.trusted-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-bottom: 1px solid @gray_lightest;
+  box-shadow: 0 -8px 13px fade(@black, 21);
   background: linear-gradient(fade(@black, 2), fade(@black, 2)), @white;
 }
 .trusted-item {
   .flexy(center; center);
+  position: relative;
   span {
     user-select: auto;
   }
