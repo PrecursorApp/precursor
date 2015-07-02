@@ -282,17 +282,19 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.the-how
-          [:div.landing-learn-back {:class (when (and (:show-scroll-to-arrow app) (not (contains? active-features "1"))) " show ")}]
-
-          (if (get-in app state/dn-discount-path)
-            [:div.landing-learn-front.dn-override {:class (when-not (contains? active-features "1") " show ")}
-             [:a.dn-discount {:href "/pricing" :style {:width "auto"}}
-              (common/icon :dn-logo)
-              "Hi Designer News, here's 50% off for 3 mo!"]]
-            [:div.landing-learn-front {:class (when-not (contains? active-features "1") " show ")}
-             [:a.landing-learn-link {:role "button" :on-click #(cast! :scroll-to-arrow-clicked)}
-              "Learn more."]])
-
+          ;;
+          ;; May not need this learn more banner with customer quote there now
+          ;;
+          ;; [:div.landing-learn-back {:class (when (and (:show-scroll-to-arrow app) (not (contains? active-features "1"))) " show ")}]
+          ;;
+          ;; (if (get-in app state/dn-discount-path)
+          ;;   [:div.landing-learn-front.dn-override {:class (when-not (contains? active-features "1") " show ")}
+          ;;    [:a.dn-discount {:href "/pricing" :style {:width "auto"}}
+          ;;     (common/icon :dn-logo)
+          ;;     "Hi Designer News, here's 50% off for 3 mo!"]]
+          ;;   [:div.landing-learn-front {:class (when-not (contains? active-features "1") " show ")}
+          ;;    [:a.landing-learn-link {:role "button" :on-click #(cast! :scroll-to-arrow-clicked)}
+          ;;     "Learn more."]])
           [:div.feature.content {:class (when (contains? active-features "1") "art-visible") :ref "1"}
            [:div.feature-story
             [:h2.content-copy
