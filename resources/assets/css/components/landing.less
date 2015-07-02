@@ -440,3 +440,50 @@
     });
   }
 }
+.trusted {
+  padding: @tile 0;
+  background: linear-gradient(fade(@black, 2), fade(@black, 2)), @white;
+}
+.trusted-item {
+  .flexy(center; center);
+  span {
+    user-select: auto;
+  }
+}
+.trusted-logo {
+  font-size: 4em;
+}
+.trusted-quote {
+  .h3();
+  color: @gray;
+  font-weight: 300;
+  p {
+    margin: @menu_padding 0;
+  }
+  span {
+    quotes: "\201C""\201D""\2018""\2019";
+    &:before {
+      content: open-quote;
+      color: @gray_lighter;
+      font-size: 4em;
+      line-height: 0;
+      position: relative;
+      top: .5em;
+      right: .1em;
+      width: 0;
+      height: 0;
+    }
+  }
+}
+.trusted-cite {
+  .flexy();
+  font-size: @font_size_small;
+}
+.trusted-avatar {
+  padding-right: 1em;
+  img {
+    width: @menu_padding * 2;
+    height: @menu_padding * 2;
+    border-radius: @menu_padding * 2;
+  }
+}
