@@ -29,6 +29,31 @@
                    [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.ui IdGenerator]))
 
+(def customers
+  {:cognician {:name "Cognician"
+               :logo ""
+               :quote "You've breathed life into collaboration by making it effortless."
+               :cite "Robert Stuttaford"
+               :role "CTO"
+               :avatar (utils/gravatar-url "robert@cognician.com")}})
+
+(defn customer-quote [customer]
+  (html
+   [:div.trusted
+    [:div.trusted-logo.trusted-item
+     (common/icon customer)]
+    [:div.trusted-quote.trusted-item.content
+     [:p
+      [:span (get-in customers [customer :quote])]]]
+    [:div.trusted-cite.trusted-item
+     [:div.trusted-avatar
+      [:img {:src (get-in customers [customer :avatar])}]]
+     [:div.trusted-info
+      [:div.trusted-name
+       [:span (get-in customers [customer :cite])]]
+      [:div.trusted-title
+       [:span (str (get-in customers [customer :role]) " at " (get-in customers [customer :name]))]]]]]))
+
 (def artwork-mobile
   (html
    [:div.art-frame
@@ -360,5 +385,6 @@
           (om/build drawing/landing-background {:subscribers (get-in app [:subscribers :info])}
                     {:react-key "landing-background"})
           (om/build the-why app)
+          (customer-quote :cognician)
           (om/build the-how app)
           (om/build the-what app)])))))
