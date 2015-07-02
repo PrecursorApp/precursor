@@ -265,11 +265,7 @@
              [:h1 "Prototyping and team collaboration should be simple. "]
              [:p "That's why we made Precursor."]
              [:div.calls-to-action
-              (om/build make-button {})]]]]
-          [:div.our-proof
-           ;; Hide this until we get testimonials/stats figured out
-           ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
-           ]])))))
+              (om/build make-button {})]]]]])))))
 
 (defn past-center? [owner ref]
   (let [node (om/get-node owner ref)
