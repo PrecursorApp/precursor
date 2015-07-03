@@ -301,6 +301,15 @@
                                                         :replace-token? true}])
         (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc "shortcuts")}])))))
 
+(defmethod handle-keyboard-shortcut-after :clips-menu
+  [state shortcut-name key-set]
+  (when-let [doc-id (:document/id state)]
+    (let [doc (doc-model/find-by-id @(:db state) doc-id)]
+      (if (keyword-identical? :clips (overlay/current-overlay state))
+        (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc)
+                                                        :replace-token? true}])
+        (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc "clips")}])))))
+
 (defn handle-recording-toggled [current-state]
   (if rtc/supports-rtc?
     (if-let [recording (get-in current-state (state/self-recording-path current-state))]
