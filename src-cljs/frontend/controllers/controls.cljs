@@ -1406,6 +1406,16 @@
                                                :server/timestamp (datetime/server-date)})]))
     (maybe-notify-subscribers! previous-state current-state nil nil)))
 
+(defmethod control-event :welcome-info-clicked
+  [browser-state message _ state]
+  (-> state
+      (assoc-in state/welcome-info-learned-path true)))
+
+(defmethod control-event :start-about-clicked
+  [browser-state message _ state]
+  (-> state
+      (assoc-in state/welcome-info-learned-path true)))
+
 (defmethod control-event :chat-toggled
   [browser-state message _ state]
   (let [chat-open? (not (get-in state state/chat-opened-path))

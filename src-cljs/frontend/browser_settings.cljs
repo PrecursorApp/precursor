@@ -17,6 +17,7 @@
    :browser-setting/right-click-learned :right-click-learned
    :browser-setting/menu-button-learned :menu-button-learned
    :browser-setting/info-button-learned :info-button-learned
+   :browser-setting/welcome-info-learned :welcome-info-learned
    :browser-setting/newdoc-button-learned :newdoc-button-learned
    :browser-setting/login-button-learned :login-button-learned
    :browser-setting/your-docs-learned :your-docs-learned
