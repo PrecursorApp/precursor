@@ -702,48 +702,38 @@
         (html
          [:section.menu-view
           [:div.content
-           [:h2.make
-            "What is Precursor?"]
-           [:p.make
-            "Precursor is a no-nonsense prototyping tool.
-             Use it for wireframing, sketching, and brainstorming.
-             Invite your team to collaborate instantly."
-            ]
+           [:h2.make "What is Precursor? "]
+           [:p.make "Precursor is a no-nonsense prototyping tool. "
+                    "Use it for wireframing, sketching, and brainstorming. "
+                    "Invite your team to collaborate instantly. "]
            (when-not (:cust app)
              (list
-              [:p.make
-               "Everyone's ideas made with Precursor save automatically.
-                 And if you sign in with Google we'll even keep track of which ones are yours."]
-              [:div.calls-to-action.make
-               (om/build common/google-login {:source "Username Menu"})]))
-           [:a.vein.make
-            {:href "/home"
-             :role "button"}
-            [:span "Home"]]
-           [:a.vein.make
-            {:href "/pricing"
-             :role "button"}
-            [:span "Pricing"]]
-           [:a.vein.make
-            {:href "/blog"
-             :target "_self"
-             :role "button"}
-            [:span "Blog"]]
-           [:a.vein.make
-            {:href "https://twitter.com/PrecursorApp"
-             :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-             :target "_blank"
-             :title "@PrecursorApp"
-             :role "button"}
-            [:span "Twitter"]]
-           [:a.vein.make
-            {:href "mailto:hi@precursorapp.com?Subject=I%20have%20feedback"
-             :target "_self"
-             :role "button"}
-            [:span "Email"]]
-           [:a.vein.make {:href (urls/overlay-path doc "connection-info")
-                          :role "button"}
-            [:span "Connection Info"]]]
+               [:p.make
+                "Everyone's ideas made with Precursor save automatically. "
+                "And if you sign in with Google we'll even keep track of which ones are yours. "]
+               [:div.calls-to-action.make
+                (om/build common/google-login {:source "Username Menu"})]))]
+          [:a.vein.make {:href "/home"}
+           (common/icon :home)
+           [:span "Home"]]
+          [:a.vein.make {:href "/pricing"}
+           (common/icon :private)
+           [:span "Private Docs"]]
+          [:a.vein.make {:href "/blog" :target "_self"}
+           (common/icon :blog)
+           [:span "Blog"]]
+          [:a.vein.make {:href "https://twitter.com/PrecursorApp"
+                         :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+                         :target "_blank"
+                         :title "@PrecursorApp"}
+           (common/icon :twitter)
+           [:span "Twitter"]]
+          [:a.vein.make {:href "mailto:hi@precursorapp.com?Subject=I%20have%20feedback" :target "_self"}
+           (common/icon :email)
+           [:span "Feedback"]]
+          [:a.vein.make {:href (urls/overlay-path doc "connection-info")}
+           (common/icon :ellipsis)
+           [:span "Connection Info"]]
           (common/mixpanel-badge)])))))
 
 (defn shortcuts [app owner]

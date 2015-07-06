@@ -79,6 +79,7 @@
    :stroke-slash-backward "M5,5l90,90"
    :stroke-at "M70,50c0,11-9,20-20,20s-20-9-20-20s9-20,20-20 S70,39,70,50z M70,25v50 M90.3,70c3-6,4.7-12.8,4.7-20C95,25.1,74.9,5,50,5S5,25.1,5,50c0,24.9,20.1,45,45,45c7.2,0,14-1.7,20-4.7"
    :stroke-sharing "M50,5h45c0,0,0,45,0,45 M50,50L95,5 M27.5,5H5v90 c0,0,90,0,90,0V72.5"
+   :stroke-email "M95,35v60H5V35L50,5L95,35z M95,35L5,95 M5,35l90,60"
    :stroke-phone "M70,95 H30c-5.5,0-10-4.5-10-10V15c0-5.5,4.5-10,10-10h40c5.5,0,10,4.5,10,10v70C80,90.5,75.5,95,70,95z M50.8,70.1 c-3.4-0.5-6.2,2.4-5.7,5.7c0.3,2.1,2,3.8,4.1,4.1c3.4,0.5,6.2-2.4,5.7-5.7C54.6,72.1,52.9,70.4,50.8,70.1z M65,20H35v35h30V20z"
    :stroke-activity "M92.1,34.1c0,0-31.8,31.8-31.8,31.8L39.1,44.7L17.9,65.9 M5,5v90h90"
    :stroke-credit "M95,80H5V20h90V80z M5,35h90 M15,65h50"
@@ -176,6 +177,7 @@
    :arrow-right {:paths [:stroke-arrow-right]}
    :at          {:paths [:stroke-at]}
    :sharing     {:paths [:stroke-sharing]}
+   :email       {:paths [:stroke-email]}
    :phone       {:paths [:stroke-phone]}
    :activity    {:paths [:stroke-activity]}
    :credit      {:paths [:stroke-credit]}
