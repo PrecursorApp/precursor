@@ -79,7 +79,7 @@
             login-button-learned? (get-in app state/login-button-learned-path)]
         (html
          (if (:cust app)
-           [:form.vein.make.stick
+           [:form.make.vein-bottom
             {:method "post"
              :action "/logout"
              :ref "logout-form"
@@ -102,7 +102,7 @@
              (common/icon :logout)
              [:span "Log out"]]]
 
-           [:a.vein.make.stick
+           [:a.vein.make.vein-bottom
             {:href (auth/auth-url :source source)
              :role "button"}
             (common/icon :login)
@@ -536,7 +536,7 @@
             :document.privacy/read-only (om/build read-only-sharing app)
             (om/build unknown-sharing app))
 
-          [:form.privacy-select.vein.make.stick
+          [:form.privacy-select.vein.make.vein-bottom
            [:input.privacy-radio {:type "radio"
                                   :hidden "true"
                                   :id "privacy-public"
