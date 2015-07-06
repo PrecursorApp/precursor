@@ -781,6 +781,9 @@
               [:td [:div.shortcuts-key {:title "T Key"} "T"]]
               [:td [:div.shortcuts-result {:title "Switch to Text Tool."} "Text"]]]
              [:tr.make
+              [:td [:div.shortcuts-key {:title "X Key"} "X"]]
+              [:td [:div.shortcuts-result {:title "Open clipboard history menu."} "Clips"]]]
+             [:tr.make
               [:td [:div.shortcuts-key {:title "1 Key"} "1"]]
               [:td [:div.shortcuts-result {:title "Initial view when entering doc."} "Origin"]]]
              [:tr.make
