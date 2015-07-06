@@ -41,6 +41,10 @@
   padding: @padding_hint;
   background: @color_select;
   white-space: nowrap;
+  // hide hints for mobile until good touch hints are done
+  .mq_640({
+    display: none;
+  });
   &:before {
     content: "";
     position: absolute;
