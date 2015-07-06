@@ -97,12 +97,10 @@
     om/IRender
     (render [_]
       (let [mouse (cursors/observe-mouse owner)]
-        (dom/div #js {:className "mouse-stats"
-                      :onMouseDown #((om/get-shared owner :cast!)
-                                     :mouse-stats-clicked)
-                      :data-text (str "{:x " (:rx mouse 0)
-                                      ", :y " (:ry mouse 0)
-                                      "}")})))))
+        (dom/a #js {:className "mouse-stats"
+                    :onMouseDown #((om/get-shared owner :cast!) :mouse-stats-clicked)
+                    :role "button"}
+               (str "{:x " (Math/round (:rx mouse 0)) " :y " (Math/round (:ry mouse 0)) "}"))))))
 
 (defn tray [app owner]
   (reify
@@ -122,39 +120,30 @@
     om/IRender
     (render [_]
       (let [{:keys [db cast!]} (om/get-shared owner)
-            new-here? (empty? (:cust app))
+            welcome-info-learned? (get-in app state/welcome-info-learned-path)
             chat-opened? (get-in app state/chat-opened-path)
             document (doc-model/find-by-id @db (:document/id app))
             rejected-tx-count (get-in app (state/doc-tx-rejected-count-path (:document/id app)))]
         (html
          [:div.hud-tray.hud-item.width-canvas {:key (str "hud-tray-" chat-opened?)}
-          (when new-here?
-            (html
-             [:div.new-here
-              [:a.new-here-button {:on-click #(om/set-state! owner :new-here true)
-                                   :data-text "New here?"
-                                   :role "button"}]
-              ;; TODO just make this thing call outer/nav-foot
-              [:div.new-here-items {:on-mouse-leave #(om/set-state! owner :new-here false)
-                                    :class (when (om/get-state owner :new-here) "opened")}
-               [:a.new-here-item {:href "/home"         :role "button" :title "Home"} "Home"]
-               [:a.new-here-item {:href "/pricing"      :role "button" :title "Pricing"} "Pricing"]
-               [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
-               [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
-          [:div.doc-stats
-           (om/build mouse-stats {}
-                     {:react-key "mouse-stats"})
-           [:div.privacy-stats {:href (urls/overlay-path document "sharing")
+          (if-not welcome-info-learned?
+            [:a.info-button {:href (urls/overlay-path document "info")
+                             :on-click #(cast! :welcome-info-clicked)}
+             "What is Precursor?"]
+
+            [:div.doc-stats
+             (om/build mouse-stats {} {:react-key "mouse-stats"})
+             [:a.privacy-stats {:href (urls/overlay-path document "sharing")
                                 :key rejected-tx-count
                                 :class (when (pos? rejected-tx-count)
                                          (if (zero? (mod rejected-tx-count 2))
                                            "rejected-txes-a"
                                            "rejected-txes-b"))}
-            (case (:document/privacy document)
-              :document.privacy/public (common/icon :public)
-              :document.privacy/read-only (common/icon :read-only)
-              :document.privacy/private (common/icon :private)
-              nil)]]])))))
+              (case (:document/privacy document)
+                :document.privacy/public (common/icon :public)
+                :document.privacy/read-only (common/icon :read-only)
+                :document.privacy/private (common/icon :private)
+                nil)]])])))))
 
 (defn chat [app owner]
   (reify
@@ -392,6 +381,7 @@
 
         (om/build tray (utils/select-in app [state/chat-opened-path
                                              state/info-button-learned-path
+                                             state/welcome-info-learned-path
                                              [:document/id]
                                              [:cust]
                                              [:max-document-scope]

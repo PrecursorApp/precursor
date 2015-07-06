@@ -119,6 +119,7 @@
                                               state/overlays-path
                                               state/main-menu-learned-path
                                               state/chat-button-learned-path
+                                              state/welcome-info-learned-path
                                               state/browser-settings-path
                                               [:document/id]
                                               [:subscribers :info]

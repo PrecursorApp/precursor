@@ -211,7 +211,8 @@
             doc (doc-model/find-by-id @db doc-id)]
         (html
          [:section.menu-view
-          [:a.vein.make {:href (urls/overlay-path doc "info")}
+          [:a.vein.make {:href (urls/overlay-path doc "info")
+                         :on-click #(cast! :start-about-clicked)}
            (common/icon :info)
            [:span "About"]]
           [:a.vein.make {:href "/new"}
