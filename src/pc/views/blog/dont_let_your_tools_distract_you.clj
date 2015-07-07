@@ -86,7 +86,7 @@
 
     [:article
      [:h4 "2) Paste shapes. "]
-     [:p "Now open your Clipboard History (C) and click the thumbnail of the shape you just copied to paste it into your doc. "]]
+     [:p "Now open your Clipboard History (X) and click the thumbnail of the shape you just copied to paste it into your doc. "]]
 
     (common/demo (external-cdn-path "/blog/dont-let-your-tools-distract-you/clips-paste.png")
                  (external-cdn-path "/blog/dont-let-your-tools-distract-you/clips-paste.gif")

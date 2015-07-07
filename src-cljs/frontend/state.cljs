@@ -17,6 +17,7 @@
    :right-click-learned false
    :menu-button-learned false
    :info-button-learned false
+   :welcome-info-learned false
    :newdoc-button-learned false
    :main-menu-learned false
    :chat-button-learned false
@@ -151,6 +152,8 @@
 (def menu-button-learned-path (conj browser-settings-path :menu-button-learned))
 
 (def info-button-learned-path (conj browser-settings-path :info-button-learned))
+
+(def welcome-info-learned-path (conj browser-settings-path :welcome-info-learned))
 
 (def newdoc-button-learned-path (conj browser-settings-path :newdoc-button-learned))
 
