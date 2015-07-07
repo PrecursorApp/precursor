@@ -714,6 +714,7 @@
                 "And if you sign in with Google we'll even keep track of which ones are yours. "]
                [:div.calls-to-action.make
                 (om/build common/google-login {:source "Username Menu"})]))]
+          [:div.divider.make]
           [:a.vein.make {:href "/home"}
            (common/icon :home)
            [:span "Home"]]
