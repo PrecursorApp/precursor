@@ -52,7 +52,10 @@
 
             (for [doc bucket-docs]
               (html
-                [:a.recent-doc.make {:href (str (urls/doc-path doc) "/doc-viewer")}
+                [:a.recent-doc.make {:href (str (urls/doc-path doc) "/doc-viewer")
+                                     :on-touch-end #(do
+                                                      (.preventDefault %)
+                                                      (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str (urls/doc-path doc))}]))}
                  [:img {:src (urls/doc-svg-path doc)}]
 
                  (common/icon :loading)
