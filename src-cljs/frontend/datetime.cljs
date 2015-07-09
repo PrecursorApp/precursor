@@ -112,6 +112,12 @@
 (def month-day
   (partial format-date month-day-format))
 
+(def month-day-short-format
+  (goog.i18n.DateTimeFormat. "MM/dd"))
+
+(def month-day-short
+  (partial format-date month-day-short-format))
+
 (def calendar-date-format
   (goog.i18n.DateTimeFormat. "EEE, MMM dd, yyyy 'at' hh:mma"))
 
