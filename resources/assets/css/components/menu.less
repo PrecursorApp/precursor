@@ -272,6 +272,11 @@
   cursor: default;
 }
 .menu-docs {
+  &.loading {
+    .recent-doc-thumb {
+      display: none;
+    }
+  }
   &:not(.loading) {
     .icon-loading {
       display: none;
@@ -307,12 +312,12 @@
   &:hover {
     border-color: @color_select;
   }
-  img {
-    max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
-    max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
-    pointer-events: none;
-    opacity: @opacity_white_gray;
-  }
+}
+.recent-doc-thumb {
+  max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
+  max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
+  pointer-events: none;
+  opacity: @opacity_white_gray;
 }
 .recent-doc-info {
   .flexy();

@@ -56,7 +56,7 @@
                                      :on-touch-end #(do
                                                       (.preventDefault %)
                                                       (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str (urls/doc-path doc))}]))}
-                 [:img {:src (urls/doc-svg-path doc)}]
+                 [:img.recent-doc-thumb {:src (urls/doc-svg-path doc)}]
 
                  (common/icon :loading)
 
