@@ -52,7 +52,7 @@
 
             (for [doc bucket-docs]
               (html
-                [:a.recent-doc.make {:href (urls/doc-path doc)}
+                [:a.recent-doc.make {:href (str (urls/doc-path doc) "/doc-viewer")}
                  [:img {:src (urls/doc-svg-path doc)}]
 
                  (common/icon :loading)
