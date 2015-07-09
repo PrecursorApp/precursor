@@ -188,6 +188,7 @@
    :team        {:paths [:stroke-team]}
    :requests    {:paths [:stroke-requests]}
    :star        {:paths [:stroke-star]}
+   :loading     {:paths [:stroke-border-circle]}
    :minus       {:paths [:stroke-horizontal]}
    :plus        {:paths [:stroke-horizontal
                          :stroke-vertical]}
