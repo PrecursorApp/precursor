@@ -701,7 +701,7 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-         [:section.menu-view
+         [:section.menu-view.menu-about
           [:div.content
            [:h2.make "What is Precursor? "]
            [:p.make "Precursor is a no-nonsense prototyping tool. "
