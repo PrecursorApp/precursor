@@ -58,7 +58,7 @@
   (send-msg sente-state [:frontend/subscribe {:document-id document-id
                                               :requested-color requested-color
                                               :requested-remainder requested-remainder}]
-            5000
+            (* 30 1000)
             (fn [reply]
               (if (cb-success? reply)
                 (put! (:api comms) [(first reply) :success (assoc (second reply)
