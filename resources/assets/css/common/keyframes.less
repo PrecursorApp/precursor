@@ -259,3 +259,11 @@
   0%   {transform: translate3d(0, (@tile * 2), 0);}
   100% {transform: none;}
 }
+@keyframes loading-rotate {
+ 100% { transform: rotate(360deg);}
+}
+@keyframes loading-dash {
+ 0%   { stroke-dasharray:  1, 67; stroke-dashoffset:    0;}
+ 50%  { stroke-dasharray: 67, 67; stroke-dashoffset:  -21;}
+ 100% { stroke-dasharray: 67, 67; stroke-dashoffset:  -67;}
+}

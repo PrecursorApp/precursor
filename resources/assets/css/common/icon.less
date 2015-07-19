@@ -11,3 +11,14 @@
     stroke: none;
   }
 }
+.icon-loading {
+  .iconpile {
+    font-size: @menu_padding;
+    animation: loading-rotate (4 * @run_slower) linear infinite;
+  }
+  .stroke-border-circle {
+    stroke: @gray_lighter;
+    stroke-linecap: round;
+    animation: loading-dash (3 * @run_slower) linear infinite;
+  }
+}
