@@ -257,11 +257,11 @@
   .mq_960({ @{property}: abs(@value - @chat_0960);});
   .mq_640({ @{property}: abs(@value - @chat_0640);});
 }
-.shadow_canvas(@state: default) {
+.shadow_canvas(@state) {
   @shadow: fade(@black, (100 * @opacity_white_light));
-  .default(@state) when (@state = default) {
+  .button(@state) when (@state = button) {
     box-shadow+: 0 8px 21px 0 @shadow;
-  }.default(@state);
+  }.button(@state);
   .hover(@state) when (@state = hover) {
     box-shadow+: 0 21px 34px 0 @shadow;
   }.hover(@state);
