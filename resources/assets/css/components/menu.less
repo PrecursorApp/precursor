@@ -15,9 +15,6 @@
     width: 100%;
     max-width: @tile_blog;
     margin-right: auto;
-    .vein {
-      border-bottom: 1px solid @gray_lightest;
-    }
   }
   .divider {
     color: @gray_lightest;
@@ -174,11 +171,6 @@
     .icon(fill; @black);
     color: @black;
   }
-  &.stick {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-  }
   &.external {
     .icon-arrow-right {
       transition: @run @bezier_deform;
@@ -205,6 +197,9 @@
     margin-left: auto;
   }
 }
+.vein-bottom {
+  margin-top: auto;
+}
 .export-title {
   .flexy(center);
   height: @tile;
@@ -226,11 +221,17 @@
   min-width: @tile;
   padding: @menu_padding;
 }
+.menu-about {
+  .calls-to-action {
+    margin-bottom: 1rem;
+  }
+}
 .menu-invite-form {
   .flexy(column);
   margin: @menu_padding 0;
 }
 .shortcuts-items {
+  width: 100%;
   td {
     padding: .5em 0;
   }
@@ -267,7 +268,6 @@
   }
 }
 .shortcuts-misc {
-  .icon(stroke; 4);
   i {
     font-size: 1.9em;
   }
@@ -276,15 +276,35 @@
   margin: 0 1em;
   cursor: default;
 }
-.recent-time-group {
+.menu-docs {
+  &.loading {
+    .recent-doc-thumb,
+    .recent-doc-info {
+      display: none;
+    }
+  }
+  &:not(.loading) {
+    .icon-loading {
+      display: none;
+    }
+  }
+}
+.recent-docs {
+  margin-top: .5rem;
+}
+.recent-docs-heading {
   text-transform: capitalize;
-  margin-bottom: 2em;
-  &:not(:first-child) {
-    margin-top: 5em;
+  &.divider-small {
+    color: @gray_light;
+    line-height: 0;
+    &:before,
+    &:after {
+      border-bottom-color: @gray_lighter;
+    }
   }
 }
 .searching {
-  .recent-time-group {
+  .recent-docs-heading {
     display: none;
   }
 }
@@ -292,58 +312,35 @@
   .flexy(center; center);
   .size_of(chat; height; vh);
   position: relative;
-  color: @gray_light;
-  width: 100%;
   max-height: 80vh;
+  margin: @menu_padding;
   border: 1px solid @gray_lighter;
-  margin-bottom: @menu_padding;
   &:hover {
     border-color: @color_select;
   }
-  img {
-    max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
-    max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
-    pointer-events: none;
-    opacity: @opacity_white_gray;
-  }
-  .loading-ellipses {
-    position: absolute;
-    bottom: 0.5em;
-    right: 1em;
-  }
 }
-.recent-doc-title {
+.recent-doc-thumb {
+  max-width: ~"calc(100% -" (2 * @menu_padding) ~")";
+  max-height: ~"calc(100% -" (2 * @menu_padding) ~")";
+  pointer-events: none;
+  opacity: @opacity_white_gray;
+}
+.recent-doc-info {
+  .flexy();
   position: absolute;
   bottom: 0;
   left: 0;
-  padding: .75em 1em;
+  width: 100%;
+  padding: 1em;
+}
+.recent-doc-title {
+  .elip();
+  flex: 1;
+  margin-right: auto;
 }
 .recent-doc-timestamp {
-  color: @gray_light;
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: .75em 1em;
+  margin-left: 1em;
 }
-// TODO come back to cleanup loading styles here -dk (12/09/14)
-.loading {
-  .loading-ellipses {
-    display: block;
-  }
-  .recent-doc-title {
-    visibility: hidden;
-  }
-  img {
-    opacity: 0;
-    width: 100vw;
-  }
-}
-.loading-ellipses {
-  display: none;
-}
-.loading-ellipses i     {animation: dot (1.5 * @run_slower) (1.00 * @run_slower) infinite both;}
-.loading-ellipses i+i   {animation: dot (1.5 * @run_slower) (1.25 * @run_slower) infinite both;}
-.loading-ellipses i+i+i {animation: dot (1.5 * @run_slower) (1.50 * @run_slower) infinite both;}
 .privacy-select {
   align-items: stretch;
   flex-direction: column;
@@ -698,11 +695,6 @@
       transform: rotate3d(0, 0, 1, 180deg);
       transition: transform @run_slower @run @bezier_deform;
     }
-  }
-}
-.doc-search {
-  .adaptive {
-    margin-bottom: @menu_padding;
   }
 }
 .image-token-form-error {

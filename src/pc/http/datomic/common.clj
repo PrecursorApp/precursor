@@ -207,10 +207,9 @@
                                  (map (partial datom-read-api (:db-after transaction)))
                                  (filter (partial whitelisted? :admin))
                                  seq)]
-        {:admin-data (merge {:tx-data public-datoms}
-                            annotations)
-         :read-only-data (merge {:tx-data (filter (partial whitelisted? :read) public-datoms)}
-                                annotations)}))))
+        {:admin-data {:tx-data public-datoms}
+         :read-only-data {:tx-data (filter (partial whitelisted? :read) public-datoms)}
+         :annotations annotations}))))
 
 (defn frontend-team-transaction
   "Returns map of document transactions filtered for admin and filtered for read-only access"
@@ -224,10 +223,9 @@
                                  (map (partial datom-read-api (:db-after transaction)))
                                  (filter (partial whitelisted? :admin))
                                  seq)]
-        {:admin-data (merge {:tx-data public-datoms}
-                            annotations)
-         :read-only-data (merge {:tx-data (filter (partial whitelisted? :read) public-datoms)}
-                                annotations)}))))
+        {:admin-data {:tx-data public-datoms}
+         :read-only-data {:tx-data (filter (partial whitelisted? :read) public-datoms)}
+         :annotations annotations}))))
 
 (def issue-whitelist #{:vote/cust
                        :comment/body

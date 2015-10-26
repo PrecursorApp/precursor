@@ -12,6 +12,7 @@
   font-size: 1.5em;
   width: @tile;
   height: @tile;
+  outline: none;
   &:not(:hover) {
     .iconpile {
       opacity: @opacity_darker_gray;
@@ -20,6 +21,10 @@
 }
 .hud-menu,
 .hud-roster {
+  top: 0;
+  i {
+    transition: @run @bezier_deform;
+  }
   path {
     transform: translate3d(0, 0, 0);
     transition+: all @run_slow @now @bezier_deform;
@@ -28,15 +33,11 @@
 }
 .hud-menu {
   .hud_toggle_animation(left);
-  top: 0;
   left: 0;
-  transition: @run @bezier_deform;
 }
 .hud-roster {
   .hud_toggle_animation(top);
-  top: 0;
   right: 0;
-  transition: @run @bezier_deform;
 }
 .hud-chat {
   .hud_toggle_animation(right);
@@ -127,39 +128,28 @@
   bottom: 0;
   left: 0;
   &:after {
-    user-select: none;
+    .holo();
     .flexy(center; center);
     content: attr(data-count);
-    font-family: @font_mono;
-    font-size: .75rem;
+    font-size: 1rem;
     color: fade(@white, 50);
     position: absolute;
     top: 0;
-    left: 2.5rem;
+    left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
-    transition: left @run_fast @bezier_deform;
-  }
-  .icon-times {
-    animation: viewers-close @run_fast;
-  }
-  .icon-user {
-    animation: viewers-users @run_fast;
+    transition: transform @run_fast @bezier_deform;
   }
   &.close {
     font-size: 1rem;
-    &:after {
-      left: @menu_padding;
-    }
-    .icon-user {
-      display: none;
-    }
   }
   &:not(.close) {
-    .icon-times {
-      display: none;
+    &:after {
+      transform: translateX(@menu_padding);
     }
+  }
+  .icon-user {
+    animation: in-zoom @run_fast ease-out;
   }
 }
 .viewers-list {
@@ -182,8 +172,10 @@
   &:hover {
     .viewer-self {
       &:not(:hover) {
-        .viewer-tag {
-          opacity: .5;
+        &:not(.busy) {
+          .viewer-tag {
+            opacity: .5;
+          }
         }
       }
     }
@@ -231,14 +223,8 @@
     }
   }
   &.busy {
-    .viewer-toggle {
+    ~ .viewer {
       pointer-events: none;
-      opacity: 1;
-      .icon-pencil {
-        .iconpile {
-          animation: pencil-erase @run_slower @bezier_deform forwards;
-        }
-      }
     }
   }
   &:not(.busy) {
@@ -257,29 +243,26 @@
           opacity: .5;
         }
       }
-      .viewer-toggles {
-        width: 0;
-        .iconpile {
-          display: none;
-        }
-      }
-      .icon-pencil {
-        box-shadow: 0 1px fade(@white, 0);
-        transition: box-shadow @now @now @bezier_fadein;
-      }
     }
   }
-  &.busy,
-  &:hover {
-    .viewer-symbols {
-      transform: translate3d(0, -50%, 0);
-      opacity: 0;
-      transition-delay: @run_fast;
+  &:not(:hover) {
+    .viewer-controls {
+      &:not(.recording) {
+        .viewer-toggle {
+          opacity: .2;
+        }
+      }
     }
   }
 }
 .viewer-self {
   order: 4;
+  .viewer-avatar {
+    cursor: pointer;
+  }
+  .viewer-name {
+    cursor: text;
+  }
 }
 .viewer-avatar {
   .flexy(center; center);
@@ -299,152 +282,54 @@
   background: none;
   white-space: nowrap;
   overflow: hidden;
+  &:hover {
+    color: inherit;
+  }
+}
+.viewer-add {
+  &:hover {
+    color: inherit;
+  }
 }
 .viewer-controls {
+  .flexy();
   position: relative;
   flex: 1;
-}
-.viewer-toggles {
-  .flexy();
-  .icon-pencil {
-    box-shadow: 0 1px @white;
-    transition: box-shadow @run_slow @run @bezier_fadein;
-  }
-  .iconpile {
-    animation: in-fade-bottom @run_fast @bezier_deform backwards;
-  }
 }
 .viewer-toggle {
   .flexy(center; center);
   width: @tile_viewers_height;
   min-width: @tile_viewers_height;
   height: @tile_viewers_height;
-  &:hover {
-    .icon-pencil {
-      .iconpile {
-        transform: rotate3d(0, 0, 1, 180deg);
-        transition+: transform @run_slower @run @bezier_deform;
-      }
-    }
-  }
-  &:not(:hover) {
-    opacity: .5;
-  }
-  &:nth-child(1) { .iconpile { animation-delay: @run + (@run_faster * 1)}}
-  &:nth-child(2) { .iconpile { animation-delay: @run + (@run_faster * 3)}}
-  &:nth-child(3) { .iconpile { animation-delay: @run + (@run_faster * 5)}}
-}
-.viewer-symbols {
-  .viewer-toggles();
-  position: absolute;
-  top: 0;
-  left: 0;
-  transition: @run_fast @now @bezier_deform;
-}
-.viewer-symbol {
-  .viewer-toggle();
+  animation: in-fade-bottom @run ease-out backwards;
 }
 .hud-tray {
-  .flexy();
+  .flexy(center; center);
   user-select: none;
   bottom: 0;
   left: 0;
-  width: 100%;
-  max-width: 100%;
-  height: @tile;
+  height: @menu_padding * 2;
   pointer-events: none;
   .mq_640({
     display: none;
   });
-  .mouse-stats,
-  .new-here-button {
-    &:before {
-      content: attr(data-text);
-    }
-  }
-}
-.new-here {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: @tile;
-  &:hover {
-    ~ .mouse-stats {
-      opacity: 0;
-      transition-duration: @run;
-    }
-  }
-}
-.new-here-items,
-.new-here-button {
-  pointer-events: auto;
-}
-.new-here-items {
-  .flexy(center; center);
-  transition: transform @run @run_slower @bezier_deform;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100vw;
-  height: 100%;
-  background: @dye_outer;
-  &.opened,
-  &:hover {
-    transform: translate3d(0, -100%, 0);
-    transition-delay: @now;
-  }
-}
-.new-here-button {
-  .flexy(center; center);
-  color: @white;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 2 * @tile;
-  height: 100%;
-  margin: auto;
-  &:before,
-  &:after {
-    animation: in-fade-bottom @run_slow @bezier_deform;
-  }
-  &:hover {
+  .info-button {
     color: @white;
+    animation: in-fade-bottom @run_slow @run @bezier_deform backwards;
+    pointer-events: auto;
   }
-  &:not(:hover) {
-    opacity: @opacity_darker_light;
-  }
-}
-.new-here-item {
-  padding: 0 @menu_padding;
 }
 .doc-stats {
-  .flexy(center; center);
-  color: @white;
+  .flexy();
   font-family: @font_mono;
-  font-size: .625rem;
-  text-align: center;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1.125rem;
+  font-size: @font_size_small;
   animation: in-fade-bottom @run_slow @run @bezier_deform backwards;
-  .mouse-stats {
-    opacity: @opacity_darker_dark;
-    pointer-events: auto;
-    cursor: pointer;
-  }
-  .privacy-stats {
-    .icon(stroke; @white);
-    .icon(fill; @white);
-    margin-left: 1em;
-    opacity: @opacity_darker_dark;
-    pointer-events: auto;
-    cursor: pointer;
-    &:hover {
-      opacity: 1;
+  pointer-events: auto;
+  a {
+    color: @white;
+    padding: 0 .5em;
+    &:not(:hover) {
+      opacity: @opacity_darker_dark;
     }
   }
 }

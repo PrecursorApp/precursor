@@ -203,22 +203,24 @@
 }
 .bubble-button {
   .flexy(center; center);
-  .inline(@gray_lighter);
+  border: 1px solid @color_chat_border;
   color: @gray_darker;
   line-height: 1;
   height: @tile;
   width: 100%;
   padding: @menu_padding 0;
-  transition: @run @bezier_deform;
+  transition: box-shadow @run @bezier_deform;
   &:hover {
-    .shadow_canvas(default);
+    .shadow_canvas(button);
     color: @black;
+    border-color: fadeout(@color_chat_border, 21);
     background-image: linear-gradient(to bottom, fade(@black, 0), fade(@black, 2));
     transition-duration: @run_fast;
   }
   &:active {
     .shadow_canvas(active);
     color: @black;
+    border-color: fadeout(@color_chat_border, 21);
     background-image: none;
     transition-duration: @now;
   }

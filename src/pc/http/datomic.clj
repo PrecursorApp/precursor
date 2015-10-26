@@ -10,11 +10,13 @@
             [pc.datomic.web-peer :as web-peer]
             [pc.early-access]
             [pc.email :as email]
+            [pc.http.admin.urls :as admin-urls]
             [pc.http.datomic.common :as datomic-common]
             [pc.http.sente :as sente]
             [pc.http.urls :as urls]
             [pc.models.chat :as chat-model]
             [pc.models.cust :as cust-model]
+            [pc.models.team :as team-model]
             [pc.profile :as profile]
             [pc.rollbar :as rollbar]
             [pc.utils :as utils]
@@ -44,6 +46,16 @@
                                  (:transaction/source @annotations))))
         (log/infof "Queueing email for %s" (:e datom))
         (email/send-entity-email (:db-after transaction) (schema/get-ident (:v datom)) (:e datom))))))
+
+(defn cust-admin-link [cust]
+  (format "<%s|%s>"
+          (admin-urls/cust-info-from-cust cust)
+          (:cust/email cust)))
+
+(defn team-admin-link [team]
+  (format "<%s|%s>"
+          (admin-urls/team-info-from-team team)
+          (:team/subdomain team)))
 
 (defn handle-precursor-pings [transaction]
   (let [db (:db-after transaction)
@@ -84,19 +96,26 @@
             username (:cust/email cust "ping-bot")
             icon_url (str (:google-account/avatar cust))]
 
-        (let [message (format "created the %s subdomain" (:team/subdomain team))]
+        (let [message (format "%s created the %s subdomain"
+                              (cust-admin-link cust)
+                              (team-admin-link team))]
           (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))))))
 
-(defn admin-notify-solo-trials [transaction]
+(defn admin-notify-trial-extensions [transaction]
   (let [db (:db-after transaction)
         datoms (:tx-data transaction)
-        private-docs-eid (d/entid db :flags/private-docs)]
-    (when-let [flag-datom (first (filter #(= private-docs-eid (:v %)) datoms))]
+        extension-count-eid (d/entid db :plan/extension-count)
+        annotations (datomic-common/get-annotations transaction)]
+    (when-let [extension-datom (first (filter #(= extension-count-eid (:a %)) datoms))]
       (let [slack-url (profile/slack-customer-ping-url)
-            cust (d/entity db (:e flag-datom))
+            cust (cust-model/find-by-uuid db (:cust/uuid annotations))
             username (:cust/email cust "ping-bot")
-            icon_url (str (:google-account/avatar cust))]
-        (let [message "started a solo trial"]
+            icon_url (str (:google-account/avatar cust))
+            team (team-model/find-by-plan db {:db/id (:e extension-datom)})]
+        (let [message (format "%s extended the trial for %s for the %s time"
+                              (cust-admin-link cust)
+                              (team-admin-link team)
+                              (:v extension-datom))]
           (http/post slack-url {:form-params {"payload" (json/encode {:text message :username username :icon_url icon_url})}}))))))
 
 (defn admin-notify-issues [transaction]
@@ -142,7 +161,7 @@
   (utils/with-report-exceptions
     (admin-notify-subdomains transaction))
   (utils/with-report-exceptions
-    (admin-notify-solo-trials transaction))
+    (admin-notify-trial-extensions transaction))
   (utils/with-report-exceptions
     (admin-notify-issues transaction)))
 

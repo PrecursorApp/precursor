@@ -35,8 +35,7 @@
             [goog.string.format]
             [goog.userAgent]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
-            [taoensso.sente])
+            [om.dom :as dom :include-macros true])
   (:require-macros [sablono.core :refer (html)]
                    [cljs.core.async.macros :refer (go)])
   (:import [goog.ui IdGenerator]))
@@ -80,7 +79,7 @@
             login-button-learned? (get-in app state/login-button-learned-path)]
         (html
          (if (:cust app)
-           [:form.vein.make.stick
+           [:form.make.vein-bottom
             {:method "post"
              :action "/logout"
              :ref "logout-form"
@@ -103,7 +102,7 @@
              (common/icon :logout)
              [:span "Log out"]]]
 
-           [:a.vein.make.stick
+           [:a.vein.make.vein-bottom
             {:href (auth/auth-url :source source)
              :role "button"}
             (common/icon :login)
@@ -212,7 +211,8 @@
             doc (doc-model/find-by-id @db doc-id)]
         (html
          [:section.menu-view
-          [:a.vein.make {:href (urls/overlay-path doc "info")}
+          [:a.vein.make {:href (urls/overlay-path doc "info")
+                         :on-click #(cast! :start-about-clicked)}
            (common/icon :info)
            [:span "About"]]
           [:a.vein.make {:href "/new"}
@@ -537,7 +537,7 @@
             :document.privacy/read-only (om/build read-only-sharing app)
             (om/build unknown-sharing app))
 
-          [:form.privacy-select.vein.make.stick
+          [:form.privacy-select.vein.make.vein-bottom
            [:input.privacy-radio {:type "radio"
                                   :hidden "true"
                                   :id "privacy-public"
@@ -622,7 +622,7 @@
                                                                                30000
                                                                                (async/promise-chan)))]
                                                 (om/set-state! owner :sending? false)
-                                                (if (taoensso.sente/cb-success? res)
+                                                (if (sente/cb-success? res)
                                                   (if (= :success (:status res))
                                                     (do (d/transact! db [(:permission res)] {:server-update true})
                                                         (om/set-state! owner :error nil))
@@ -675,7 +675,7 @@
           [:div.content.make (om/build share-input {:url (urls/absolute-doc-png doc)
                                                     :placeholder "or use this url"})]
 
-          [:div.vein.make {:onClick #(om/set-state! owner :focus-id (utils/uuid))}
+          [:div.vein.make {:onClick #(om/set-state! owner :focus-id (utils/squuid))}
            (common/icon :github)
            "Embed in a README or issue"]
 
@@ -701,50 +701,41 @@
       (let [{:keys [cast! db]} (om/get-shared owner)
             doc (doc-model/find-by-id @db (:document/id app))]
         (html
-         [:section.menu-view
+         [:section.menu-view.menu-about
           [:div.content
-           [:h2.make
-            "What is Precursor?"]
-           [:p.make
-            "Precursor is a no-nonsense prototyping tool.
-             Use it for wireframing, sketching, and brainstorming.
-             Invite your team to collaborate instantly."
-            ]
+           [:h2.make "What is Precursor? "]
+           [:p.make "Precursor is a no-nonsense prototyping tool. "
+                    "Use it for wireframing, sketching, and brainstorming. "
+                    "Invite your team to collaborate instantly. "]
            (when-not (:cust app)
              (list
-              [:p.make
-               "Everyone's ideas made with Precursor save automatically.
-                 And if you sign in with Google we'll even keep track of which ones are yours."]
-              [:div.calls-to-action.make
-               (om/build common/google-login {:source "Username Menu"})]))
-           [:a.vein.make
-            {:href "/home"
-             :role "button"}
-            [:span "Home"]]
-           [:a.vein.make
-            {:href "/pricing"
-             :role "button"}
-            [:span "Pricing"]]
-           [:a.vein.make
-            {:href "/blog"
-             :target "_self"
-             :role "button"}
-            [:span "Blog"]]
-           [:a.vein.make
-            {:href "https://twitter.com/PrecursorApp"
-             :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
-             :target "_blank"
-             :title "@PrecursorApp"
-             :role "button"}
-            [:span "Twitter"]]
-           [:a.vein.make
-            {:href "mailto:hi@precursorapp.com?Subject=I%20have%20feedback"
-             :target "_self"
-             :role "button"}
-            [:span "Email"]]
-           [:a.vein.make {:href (urls/overlay-path doc "connection-info")
-                          :role "button"}
-            [:span "Connection Info"]]]
+               [:p.make
+                "Everyone's ideas made with Precursor save automatically. "
+                "And if you sign in with Google we'll even keep track of which ones are yours. "]
+               [:div.calls-to-action.make
+                (om/build common/google-login {:source "Username Menu"})]))]
+          [:div.divider.make]
+          [:a.vein.make {:href "/home"}
+           (common/icon :home)
+           [:span "Home"]]
+          [:a.vein.make {:href "/pricing"}
+           (common/icon :private)
+           [:span "Private Docs"]]
+          [:a.vein.make {:href "/blog" :target "_self"}
+           (common/icon :blog)
+           [:span "Blog"]]
+          [:a.vein.make {:href "https://twitter.com/PrecursorApp"
+                         :on-click #(analytics/track "Twitter link clicked" {:location "info overlay"})
+                         :target "_blank"
+                         :title "@PrecursorApp"}
+           (common/icon :twitter)
+           [:span "Twitter"]]
+          [:a.vein.make {:href "mailto:hi@precursorapp.com?Subject=I%20have%20feedback" :target "_self"}
+           (common/icon :email)
+           [:span "Feedback"]]
+          [:a.vein.make {:href (urls/overlay-path doc "connection-info")}
+           (common/icon :ellipsis)
+           [:span "Connection Info"]]
           (common/mixpanel-badge)])))))
 
 (defn shortcuts [app owner]
@@ -781,6 +772,9 @@
              [:tr.make
               [:td [:div.shortcuts-key {:title "T Key"} "T"]]
               [:td [:div.shortcuts-result {:title "Switch to Text Tool."} "Text"]]]
+             [:tr.make
+              [:td [:div.shortcuts-key {:title "X Key"} "X"]]
+              [:td [:div.shortcuts-result {:title "Open clipboard history menu."} "Clips"]]]
              [:tr.make
               [:td [:div.shortcuts-key {:title "1 Key"} "1"]]
               [:td [:div.shortcuts-result {:title "Initial view when entering doc."} "Origin"]]]

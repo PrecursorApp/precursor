@@ -75,7 +75,7 @@
       (log/infof "No google plus info for %s" sub)
       {})))
 
-(defn oauth-uri [csrf-token & {:keys [scopes redirect-path redirect-query redirect-subdomain redirect-csrf-token]
+(defn oauth-uri [csrf-token & {:keys [scopes redirect-path redirect-query redirect-subdomain redirect-csrf-token login-hint]
                                :or {scopes ["openid" "email"]
                                     redirect-path "/"}}]
   (let [state (url/url-encode (json/encode (merge {:csrf-token csrf-token
@@ -89,9 +89,11 @@
     (str (url/map->URL {:protocol "https"
                         :host "accounts.google.com"
                         :path "/o/oauth2/auth"
-                        :query {:client_id (google-client-id)
-                                :response_type "code"
-                                :access_type "online"
-                                :scope (str/join " " scopes)
-                                :redirect_uri (redirect-uri)
-                                :state state}}))))
+                        :query (merge {:client_id (google-client-id)
+                                       :response_type "code"
+                                       :access_type "online"
+                                       :scope (str/join " " scopes)
+                                       :redirect_uri (redirect-uri)
+                                       :state state}
+                                      (when login-hint
+                                        {:login_hint login-hint}))}))))

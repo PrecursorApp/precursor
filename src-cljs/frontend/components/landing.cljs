@@ -29,6 +29,32 @@
                    [cljs.core.async.macros :as am :refer [go go-loop alt!]])
   (:import [goog.ui IdGenerator]))
 
+(def customers
+  {:cognician {:name "Cognician"
+               :logo ""
+               :quote "You've breathed life into collaboration by making it effortless."
+               :cite "Robert Stuttaford"
+               :role "CTO"
+               :avatar (utils/gravatar-url "robert@cognician.com")}})
+
+(defn customer-quote [customer]
+  (html
+   [:div.trusted
+    [:div.trusted-background]
+    [:div.trusted-logo.trusted-item
+     (common/icon customer)]
+    [:div.trusted-quote.trusted-item.content
+     [:p
+      [:span (get-in customers [customer :quote])]]]
+    [:div.trusted-cite.trusted-item
+     [:div.trusted-avatar
+      [:img {:src (get-in customers [customer :avatar])}]]
+     [:div.trusted-info
+      [:div.trusted-name
+       [:span (get-in customers [customer :cite])]]
+      [:div.trusted-title
+       [:span (str (get-in customers [customer :role]) " at " (get-in customers [customer :name]))]]]]]))
+
 (def artwork-mobile
   (html
    [:div.art-frame
@@ -240,11 +266,7 @@
              [:h1 "Prototyping and team collaboration should be simple. "]
              [:p "That's why we made Precursor."]
              [:div.calls-to-action
-              (om/build make-button {})]]]]
-          [:div.our-proof
-           ;; Hide this until we get testimonials/stats figured out
-           ;; [:div.content "23,142 people have made 112,861 sketches in 27,100 documents."]
-           ]])))))
+              (om/build make-button {})]]]]])))))
 
 (defn past-center? [owner ref]
   (let [node (om/get-node owner ref)
@@ -282,17 +304,19 @@
       (let [cast! (om/get-shared owner :cast!)]
         (html
          [:div.the-how
-          [:div.landing-learn-back {:class (when (and (:show-scroll-to-arrow app) (not (contains? active-features "1"))) " show ")}]
-
-          (if (get-in app state/dn-discount-path)
-            [:div.landing-learn-front.dn-override {:class (when-not (contains? active-features "1") " show ")}
-             [:a.dn-discount {:href "/pricing" :style {:width "auto"}}
-              (common/icon :dn-logo)
-              "Hi Designer News, here's 50% off for 3 mo!"]]
-            [:div.landing-learn-front {:class (when-not (contains? active-features "1") " show ")}
-             [:a.landing-learn-link {:role "button" :on-click #(cast! :scroll-to-arrow-clicked)}
-              "Learn more."]])
-
+          ;;
+          ;; May not need this learn more banner with customer quote there now
+          ;;
+          ;; [:div.landing-learn-back {:class (when (and (:show-scroll-to-arrow app) (not (contains? active-features "1"))) " show ")}]
+          ;;
+          ;; (if (get-in app state/dn-discount-path)
+          ;;   [:div.landing-learn-front.dn-override {:class (when-not (contains? active-features "1") " show ")}
+          ;;    [:a.dn-discount {:href "/pricing" :style {:width "auto"}}
+          ;;     (common/icon :dn-logo)
+          ;;     "Hi Designer News, here's 50% off for 3 mo!"]]
+          ;;   [:div.landing-learn-front {:class (when-not (contains? active-features "1") " show ")}
+          ;;    [:a.landing-learn-link {:role "button" :on-click #(cast! :scroll-to-arrow-clicked)}
+          ;;     "Learn more."]])
           [:div.feature.content {:class (when (contains? active-features "1") "art-visible") :ref "1"}
            [:div.feature-story
             [:h2.content-copy
@@ -358,5 +382,6 @@
           (om/build drawing/landing-background {:subscribers (get-in app [:subscribers :info])}
                     {:react-key "landing-background"})
           (om/build the-why app)
+          (customer-quote :cognician)
           (om/build the-how app)
           (om/build the-what app)])))))

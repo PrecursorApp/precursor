@@ -72,17 +72,17 @@
        [:h1 "Create your team!"]
        [:h4 (str (h/h (:subdomain req)) "." (profile/hostname))]
        [:div.calls-to-action
-        [:a {:href (str (url/map->URL
-                         {:host (profile/hostname)
-                          :protocol (if (profile/force-ssl?)
-                                      "https"
-                                      (name (:scheme req)))
-                          :port (if (profile/force-ssl?)
-                                  443
-                                  (:server-port req))
-                          :path "/trial"
-                          :query {:subdomain (h/h (:subdomain req))}}))}
-         "Start a trial to create this team"]]]]
+        [:a.bubble-button {:href (str (url/map->URL
+                                        {:host (profile/hostname)
+                                         :protocol (if (profile/force-ssl?)
+                                                     "https"
+                                                     (name (:scheme req)))
+                                         :port (if (profile/force-ssl?)
+                                                 443
+                                                 (:server-port req))
+                                         :path "/trial"
+                                         :query {:subdomain (h/h (:subdomain req))}}))}
+         "Start a trial to create this team."]]]]
      nav-foot])))
 
 (defn request-access [req]

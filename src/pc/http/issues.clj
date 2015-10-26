@@ -5,7 +5,9 @@
             [pc.datomic :as pcd]
             [pc.http.datomic2 :as datomic2]
             [pc.models.cust :as cust-model]
-            [pc.models.issue :as issue-model])
+            [pc.models.issue :as issue-model]
+            [pc.http.sente.common :as sente-common]
+            [pc.http.datomic2 :as datomic2])
   (:import [java.util UUID]))
 
 (defonce issue-subs (atom #{}))
@@ -13,8 +15,8 @@
 (defn subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
   (swap! issue-subs conj client-id)
   (let [uncompleted-issues (map issue-model/read-api (issue-model/uncompleted-issues (:db req)))]
-    (?reply-fn {:entities uncompleted-issues
-                :entity-type :issue})))
+    (sente-common/send-reply req {:entities uncompleted-issues
+                                  :entity-type :issue})))
 
 (defn unsubscribe [client-id]
   (swap! issue-subs disj client-id))
@@ -36,8 +38,7 @@
                                  :cust cust
                                  :session-uuid (UUID/fromString (get-in req [:ring-req :session :sente-id]))
                                  :timestamp (:receive-instant req)})
-      (when ?reply-fn
-        (?reply-fn {:rejected-datoms rejects})))
+      (sente-common/send-reply req {:rejected-datoms rejects}))
     (comment "Handle logged out users")))
 
 (defn set-status [{:keys [client-id ?data ?reply-fn] :as req}]
@@ -67,18 +68,20 @@
     (if (seq safed-q)
       (let [relaxed-q (relax-q safed-q)
             db (:db req)]
-        (?reply-fn {:results (concat (map (partial issue-model/issue-search-read-api db) (issue-model/search-issues db relaxed-q))
-                                     (map (partial issue-model/comment-search-read-api db) (issue-model/search-comments db relaxed-q)))
-                    :q (:q ?data)}))
-      (?reply-fn {:results []
-                  :q (:q ?data)}))))
+        (sente-common/send-reply req
+                                 {:results (concat (map (partial issue-model/issue-search-read-api db) (issue-model/search-issues db relaxed-q))
+                                                   (map (partial issue-model/comment-search-read-api db) (issue-model/search-comments db relaxed-q)))
+                                  :q (:q ?data)}))
+      (sente-common/send-reply req
+                               {:results []
+                                :q (:q ?data)}))))
 
 (defn fetch [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [frontend-id (:frontend/issue-id ?data)]
     (log/infof "fetching issue %s for %s" frontend-id client-id)
-    ((:send-fn (:sente-state req)) client-id [:issue/db-entities {:entities [(issue-model/read-api (issue-model/find-by-frontend-id (:db req) frontend-id))]}])))
+    (sente-common/send-msg req client-id [:issue/db-entities {:entities [(issue-model/read-api (issue-model/find-by-frontend-id (:db req) frontend-id))]}])))
 
 (defn fetch-completed [{:keys [client-id ?data ?reply-fn] :as req}]
   (let [completed-issues (map issue-model/read-api (issue-model/completed-issues (:db req)))]
-    ((:send-fn (:sente-state req)) client-id [:issue/db-entities {:entities completed-issues
-                                                                  :entity-type :issue}])))
+    (sente-common/send-msg req client-id [:issue/db-entities {:entities completed-issues
+                                                              :entity-type :issue}])))

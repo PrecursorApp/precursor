@@ -3,7 +3,8 @@
 ;; Note: if you want to change the test options after the test has
 ;;       started, you also need to change the test name
 (def ab-tests
-  {:show-intro-doc [true false]})
+  {:show-intro-doc [true false]
+   :use-talaria? [true false false false]})
 
 ;; If you want a browser setting to be persisted to the backend,
 ;; be sure to add it to the schema (pc.datomic.schema/shema) and
@@ -16,6 +17,7 @@
    :right-click-learned false
    :menu-button-learned false
    :info-button-learned false
+   :welcome-info-learned false
    :newdoc-button-learned false
    :main-menu-learned false
    :chat-button-learned false
@@ -61,6 +63,7 @@
                         :undo #{#{"meta" "z"} #{"ctrl" "z"}}
                         :select-all #{#{"meta" "a"} #{"ctrl" "a"}}
                         :shortcuts-menu #{#{"shift" "/"}}
+                        :clips-menu #{#{"x"}}
                         :escape-interaction #{#{"esc"}}
                         :reset-canvas-position #{#{"home"} #{"1"}}
                         :return-from-origin #{#{"2"}}
@@ -149,6 +152,8 @@
 (def menu-button-learned-path (conj browser-settings-path :menu-button-learned))
 
 (def info-button-learned-path (conj browser-settings-path :info-button-learned))
+
+(def welcome-info-learned-path (conj browser-settings-path :welcome-info-learned))
 
 (def newdoc-button-learned-path (conj browser-settings-path :newdoc-button-learned))
 

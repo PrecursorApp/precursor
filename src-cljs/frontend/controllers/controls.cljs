@@ -23,6 +23,8 @@
             [frontend.models.chat :as chat-model]
             [frontend.models.doc :as doc-model]
             [frontend.models.layer :as layer-model]
+            [frontend.models.plan :as plan-model]
+            [frontend.models.team :as team-model]
             [frontend.overlay :as overlay]
             [frontend.replay :as replay]
             [frontend.routes :as routes]
@@ -77,7 +79,10 @@
     :document/id (:document/id state)
     :layers (when (or (get-in state [:drawing :in-progress?])
                       (get-in state [:drawing :moving?]))
-              (map #(dissoc % :points) (get-in state [:drawing :layers])))
+              (map #(-> %
+                      (dissoc :points)
+                      (utils/update-when-in [:layer/points-to] select-keys [:db/id]))
+                   (get-in state [:drawing :layers])))
     :relation (when (get-in state [:drawing :relation :layer])
                 (get-in state [:drawing :relation]))
     :recording (get-in state (state/self-recording-path state))
@@ -295,6 +300,15 @@
         (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc)
                                                         :replace-token? true}])
         (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc "shortcuts")}])))))
+
+(defmethod handle-keyboard-shortcut-after :clips-menu
+  [state shortcut-name key-set]
+  (when-let [doc-id (:document/id state)]
+    (let [doc (doc-model/find-by-id @(:db state) doc-id)]
+      (if (keyword-identical? :clips (overlay/current-overlay state))
+        (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/doc-path doc)
+                                                        :replace-token? true}])
+        (put! (get-in state [:comms :nav]) [:navigate! {:path (urls/overlay-path doc "clips")}])))))
 
 (defn handle-recording-toggled [current-state]
   (if rtc/supports-rtc?
@@ -878,7 +892,7 @@
   (-> state
     (assoc-in [:pan :position] {:x x :y y})))
 
-(defn mouse-depressed-intents [state button ctrl? shift? outside-canvas?]
+(defn mouse-depressed-intents [state button ctrl? shift? meta? outside-canvas?]
   (let [tool (get-in state state/current-tool-path)
         drawing-text? (and (keyword-identical? :text tool)
                            (get-in state [:drawing :in-progress?]))]
@@ -891,6 +905,7 @@
        (keyboard/pan-shortcut-active? state) [:pan]
        (= button 2) [:open-radial]
        (and (= button 0) ctrl? (not shift?)) [:open-radial]
+       (and (= button 0) meta? (not shift?)) [:open-radial]
        (get-in state [:layer-properties-menu :opened?]) [:submit-layer-properties]
        (contains? #{:pen :rect :circle :line :select} tool) [:start-drawing]
        (and (keyword-identical? tool :text) (not drawing-text?)) [:start-drawing]
@@ -904,10 +919,10 @@
 (declare handle-text-layer-finished-after)
 
 (defmethod control-event :mouse-depressed
-  [browser-state message [x y {:keys [button type ctrl? shift? outside-canvas?]}] state]
+  [browser-state message [x y {:keys [button type ctrl? shift? meta? outside-canvas?]}] state]
   (if (empty? (:frontend-id-state state))
     state
-    (let [intents (mouse-depressed-intents state button ctrl? shift? outside-canvas?)
+    (let [intents (mouse-depressed-intents state button ctrl? shift? meta? outside-canvas?)
           new-state (-> state
                       (update-mouse x y)
                       (assoc-in [:mouse-down] true)
@@ -923,10 +938,10 @@
               new-state intents))))
 
 (defmethod post-control-event! :mouse-depressed
-  [browser-state message [x y {:keys [button ctrl? shift? outside-canvas?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button ctrl? shift? meta? outside-canvas?]}] previous-state current-state]
   (when-not (empty? (:frontend-id-state previous-state))
     ;; use previous state so that we're consistent with the control-event
-    (let [intents (mouse-depressed-intents previous-state button ctrl? shift? outside-canvas?)]
+    (let [intents (mouse-depressed-intents previous-state button ctrl? shift? meta? outside-canvas?)]
       (doseq [intent intents]
         (case intent
           :finish-text-layer (handle-text-layer-finished-after previous-state current-state)
@@ -1020,7 +1035,7 @@
         (drop-layers)))))
 
 (defmethod post-control-event! :mouse-released
-  [browser-state message [x y {:keys [button type ctrl?]}] previous-state current-state]
+  [browser-state message [x y {:keys [button type ctrl? meta?]}] previous-state current-state]
   (let [cast! #(put! (get-in current-state [:comms :controls]) %)
         db           (:db current-state)
         was-drawing? (or (get-in previous-state [:drawing :in-progress?])
@@ -1035,6 +1050,7 @@
      (and (not= type "touchend")
           (not= button 2)
           (not (and (= button 0) ctrl?))
+          (not (and (= button 0) meta?))
           (get-in current-state [:radial :open?]))
      (cast! [:radial-closed])
 
@@ -1390,6 +1406,16 @@
                                                :server/timestamp (datetime/server-date)})]))
     (maybe-notify-subscribers! previous-state current-state nil nil)))
 
+(defmethod control-event :welcome-info-clicked
+  [browser-state message _ state]
+  (-> state
+      (assoc-in state/welcome-info-learned-path true)))
+
+(defmethod control-event :start-about-clicked
+  [browser-state message _ state]
+  (-> state
+      (assoc-in state/welcome-info-learned-path true)))
+
 (defmethod control-event :chat-toggled
   [browser-state message _ state]
   (let [chat-open? (not (get-in state state/chat-opened-path))
@@ -1616,13 +1642,14 @@
   [browser-state message _ previous-state current-state]
   (let [to (get-in previous-state state/invite-to-path)
         doc-id (:document/id previous-state)]
-    (if (pos? (.indexOf to "@"))
-      (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
-                                                                     :email to
-                                                                     :invite-loc :overlay}])
-      (sente/send-msg (:sente current-state) [:frontend/sms-invite {:document/id doc-id
-                                                                    :phone-number to
-                                                                    :invite-loc :overlay}]))))
+    (when (seq to)
+      (if (pos? (.indexOf to "@"))
+        (sente/send-msg (:sente current-state) [:frontend/send-invite {:document/id doc-id
+                                                                       :email to
+                                                                       :invite-loc :overlay}])
+        (sente/send-msg (:sente current-state) [:frontend/sms-invite {:document/id doc-id
+                                                                      :phone-number to
+                                                                      :invite-loc :overlay}])))))
 
 (defmethod control-event :permission-grant-email-changed
   [browser-state message {:keys [value]} state]
@@ -1906,6 +1933,14 @@
                         #(utils/mlog "closed stripe checkout")
                         {:panelLabel "Change card"}))
 
+(defmethod post-control-event! :extend-trial-clicked
+  [browser-state message _ previous-state current-state]
+  (sente/send-msg (:sente current-state) [:team/extend-trial {:team/uuid (get-in current-state [:team :team/uuid])}]
+                  5000
+                  (fn [reply]
+                    (when (sente/cb-success? reply)
+                      (d/transact! (:team-db current-state) [(:plan reply)] {:server-update true})))))
+
 (defmethod post-control-event! :billing-email-changed
   [browser-state message {:keys [plan-id email]} previous-state current-state]
   (d/transact! (:team-db current-state)
@@ -2029,3 +2064,14 @@
       (if (:success res)
         (put! (get-in current-state [:comms :controls]) [:layers-pasted (assoc (clipboard/parse-pasted (:body res))
                                                                                :canvas-size (utils/canvas-size))])))))
+
+(defmethod post-control-event! :plan-entities-stored
+  [browser-state message {:keys [team/uuid]} previous-state current-state]
+  (when (= uuid (get-in current-state [:team :team/uuid]))
+    (let [plan (:team/plan (team-model/find-by-uuid @(:team-db current-state) (get-in current-state [:team :team/uuid])))]
+      (when (and (not (:plan/paid? plan))
+                 (plan-model/trial-over? plan))
+        (put! (get-in current-state [:comms :nav]) [:navigate! {:path (urls/overlay-path (doc-model/find-by-id @(:db current-state)
+                                                                                                               (:document/id current-state))
+                                                                                         "plan")
+                                                                :replace-token? true}])))))

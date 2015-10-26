@@ -173,29 +173,29 @@
                              (image-cache-headers db doc))
              :pc/doc doc
              :body ""}
-            (let [as-of (some-> req :params :as-of (Long/parseLong))
+            (let [as-of (some-> req :params (get "as-of") (Long/parseLong))
                   layer-db (if as-of (d/as-of db as-of) db)
                   layers (layer-model/find-by-document layer-db doc)]
               {:status 200
                :headers (merge {"Content-Type" "image/svg+xml; charset=UTF-8"}
-                               (when (-> req :params :dl)
+                               (when (-> req :params (get "dl"))
                                  {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.svg\""
                                                                 (:db/id doc))})
                                (image-cache-headers layer-db doc))
                :pc/doc doc
-               :body (render/render-layers layers :invert-colors? (-> req :params :printer-friendly (= "false")))}))
+               :body (render/render-layers layers :invert-colors? (-> req :params (get "printer-friendly") (= "false")))}))
 
           (auth/logged-in? req)
           {:status 200
            :headers {"Content-Type" "image/svg+xml; charset=UTF-8"
                      "Cache-Control" "no-cache; private"}
-           :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))}
+           :body (render/render-layers private-layers :invert-colors? (-> req :params (get "printer-friendly") (= "false")))}
 
           :else
           {:status 200
            :headers {"Content-Type" "image/svg+xml; charset=UTF-8"
                      "Cache-Control" "no-cache; private"}
-           :body (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))})))
+           :body (render/render-layers private-layers :invert-colors? (-> req :params (get "printer-friendly") (= "false")))})))
 
 (defpage doc-png "/document/:document-id.png" [req]
   (let [document-id (-> req :params :document-id parse-doc-id)
@@ -216,18 +216,18 @@
                              (image-cache-headers db doc))
              :pc/doc doc
              :body ""}
-            (let [as-of (some-> req :params :as-of (Long/parseLong))
+            (let [as-of (some-> req :params (get "as-of") (Long/parseLong))
                   layer-db (if as-of (d/as-of db as-of) db)
                   layers (layer-model/find-by-document layer-db doc)]
               {:status 200
                :headers (merge {"Content-Type" "image/png"}
-                               (when (-> req :params :dl)
+                               (when (-> req :params (get "dl"))
                                  {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.png\""
                                                                 (:db/id doc))})
                                (image-cache-headers layer-db doc))
                :pc/doc doc
                :body (convert/svg->png (render/render-layers layers
-                                                             :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                             :invert-colors? (-> req :params (get "printer-friendly") (= "false"))
                                                              :size-limit 800))}))
 
           (auth/logged-in? req)
@@ -235,7 +235,7 @@
            :headers {"Content-Type" "image/png"
                      "Cache-Control" "no-cache; private"}
            :body (convert/svg->png (render/render-layers private-layers
-                                                         :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                         :invert-colors? (-> req :params (get "printer-friendly") (= "false"))
                                                          :size-limit 800))}
 
           :else
@@ -243,7 +243,7 @@
            :headers {"Content-Type" "image/png"
                      "Cache-Control" "no-cache; private"}
            :body (convert/svg->png (render/render-layers private-layers
-                                                         :invert-colors? (-> req :params :printer-friendly (= "false"))
+                                                         :invert-colors? (-> req :params (get "printer-friendly") (= "false"))
                                                          :size-limit 800))})))
 
 (defpage doc-pdf "/document/:document-id.pdf" [req]
@@ -259,32 +259,32 @@
              :body "Document not found."})
 
           (auth/has-document-permission? db doc (-> req :auth) :read)
-          (let [as-of (some-> req :params :as-of (Long/parseLong))
+          (let [as-of (some-> req :params (get "as-of") (Long/parseLong))
                 layer-db (if as-of (d/as-of db as-of) db)
                 layers (layer-model/find-by-document layer-db doc)]
             {:status 200
              :headers (merge {"Content-Type" "application/pdf"}
-                             (when (-> req :params :dl)
+                             (when (-> req :params (get "dl"))
                                {"Content-Disposition" (format "attachment; filename=\"precursor-document-%s.pdf\""
                                                               (:db/id doc))})
                              (image-cache-headers layer-db doc))
              :pc/doc doc
              :body (convert/svg->pdf (render/render-layers layers
-                                                           :invert-colors? (-> req :params :printer-friendly (= "false")))
+                                                           :invert-colors? (-> req :params (get "printer-friendly") (= "false")))
                                      (render/svg-props layers))})
 
           (auth/logged-in? req)
           {:status 200
            :headers {"Content-Type" "application/pdf"
                      "Cache-Control" "no-cache; private"}
-           :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))
+           :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params (get "printer-friendly") (= "false")))
                                    (render/svg-props private-layers))}
 
           :else
           {:status 200
            :headers {"Content-Type" "application/pdf"
                      "Cache-Control" "no-cache; private"}
-           :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params :printer-friendly (= "false")))
+           :body (convert/svg->pdf (render/render-layers private-layers :invert-colors? (-> req :params (get "printer-friendly") (= "false")))
                                    (render/svg-props private-layers))})))
 
 (defn frontend-response
@@ -394,8 +394,10 @@
 (defpage sente-ajax-handshake [:post "/chsk"] [req]
   ((:ajax-post-fn @sente/sente-state) req))
 
-(defpage google-auth "/auth/google" [{{code :code state :state} :params :as req}]
-  (let [parsed-state (-> state url/url-decode json/decode)]
+(defpage google-auth "/auth/google" [req]
+  (let [code (get-in req [:params "code"])
+        state (get-in req [:params "state"])
+        parsed-state (-> state url/url-decode json/decode)]
     (if (not (crypto/eq? (get parsed-state "csrf-token")
                          csrf/*anti-forgery-token*))
       {:status 400
@@ -440,19 +442,28 @@
 
 (defpage login "/login" [req]
   (analytics/track-signup-clicked req)
-  (redirect (google-auth/oauth-uri csrf/*anti-forgery-token*
-                                   :redirect-path (get-in req [:params :redirect-path] "/")
-                                   :redirect-query (get-in req [:params :redirect-query])
-                                   :redirect-subdomain (get-in req [:params :redirect-subdomain])
-                                   :redirect-csrf-token (get-in req [:params :redirect-csrf-token]))))
+  (if (:subdomain req)
+    (redirect (urls/make-url "/login"
+                             :query {:redirect-path (get-in req [:params "redirect-path"] "/")
+                                     :redirect-query (get-in req [:params "redirect-query"])
+                                     :redirect-subdomain (:subdomain req)
+                                     :redirect-csrf-token csrf/*anti-forgery-token*
+                                     :login-hint (get-in req [:params "login-hint"])}))
+    (redirect (google-auth/oauth-uri csrf/*anti-forgery-token*
+                                     :redirect-path (get-in req [:params "redirect-path"] "/")
+                                     :redirect-query (get-in req [:params "redirect-query"])
+                                     :redirect-subdomain (get-in req [:params "redirect-subdomain"])
+                                     :redirect-csrf-token (get-in req [:params "redirect-csrf-token"])
+                                     :login-hint (get-in req [:params "login-hint"])))))
 
-(defpage logout [:post "/logout"] [{{redirect-to :redirect-to} :params :as req}]
-  (when-let [cust (-> req :auth :cust)]
-    (cust-model/retract-session-key! cust))
-  {:status 302
-   :body ""
-   :headers {"Location" (str redirect-to)}
-   :session nil})
+(defpage logout [:post "/logout"] [req]
+  (let [redirect-to (get-in req [:params "redirect-to"])]
+    (when-let [cust (-> req :auth :cust)]
+      (cust-model/retract-session-key! cust))
+    {:status 302
+     :body ""
+     :headers {"Location" (str redirect-to)}
+     :session nil}))
 
 (defpage email-template "/email/welcome/:template.gif" [req]
   (let [template (-> req :params :template)]

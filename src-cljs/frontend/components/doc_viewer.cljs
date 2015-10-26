@@ -43,32 +43,31 @@
     om/IRender
     (render [_]
       (html
-       [:div
+       [:div.recent-docs
         (for [[time-bucket bucket-docs]
               (reverse (sort-by #(:last-updated-instant (first (last %)))
                                 (group-by #(date->bucket (:last-updated-instant %)) docs)))]
           (list*
-           (html [:div.recent-time-group.make
-                  [:h2
-                   time-bucket]])
+            (html [:div.recent-docs-heading.divider-small.make time-bucket])
 
-           (for [doc bucket-docs]
-             (html
-              [:a.recent-doc.make {:href (urls/doc-path doc)}
-               [:img {:src (urls/doc-svg-path doc)}]
+            (for [doc bucket-docs]
+              (html
+                [:a.recent-doc.make {:href (str (urls/overlay-path doc "doc-viewer"))
+                                     :on-touch-end #(do
+                                                      (.preventDefault %)
+                                                      (put! (om/get-shared owner [:comms :nav]) [:navigate! {:path (str (urls/doc-path doc))}]))}
+                 [:img.recent-doc-thumb {:src (urls/doc-svg-path doc)}]
 
-               [:i.loading-ellipses
-                [:i "."]
-                [:i "."]
-                [:i "."]]
+                 (common/icon :loading)
 
-               [:span.recent-doc-title
-                (str (:document/name doc "Untitled")
-                     (when (= "Untitled" (:document/name doc))
-                       (str " " (:db/id doc))))]
-               (when (:last-updated-instant doc)
-                 [:span.recent-doc-timestamp
-                  (str " " (datetime/short-date (:last-updated-instant doc)))])]))))]))))
+                 [:span.recent-doc-info
+                  [:span.recent-doc-title {:title (str "/" (urls/urlify-doc-name (:document/name doc)) "-" (:db/id doc))}
+                   (str (:document/name doc "Untitled")
+                        (when (= "Untitled" (:document/name doc))
+                          (str " (" (:db/id doc) ")")))]
+                  (when (:last-updated-instant doc)
+                    [:span.recent-doc-timestamp {:title (str "Last edited " (datetime/calendar-date (:last-updated-instant doc)))}
+                     (str " " (datetime/month-day-short (:last-updated-instant doc)))])]]))))]))))
 
 (defn dummy-docs [current-doc-id doc-count]
   (repeat doc-count {:db/id current-doc-id
@@ -101,13 +100,14 @@
                             display-docs)
             searching? (seq (om/get-state owner :doc-filter))]
         (html
-         [:section.menu-view
-          {:class (when (nil? app-docs) "loading")}
-          [:div.doc-search.content {:class (when searching? "searching")}
+         [:section.menu-view.menu-docs {:class (str (when (nil? app-docs) " loading ")
+                                                    (when searching? " searching "))}
            (when (seq display-docs)
              (list
+             [:div.content
                [:div.adaptive.make
                 [:input {:type "text"
+                         :tab-index "1"
                          :value (or (om/get-state owner :doc-filter) "")
                          :required "true"
                          :onChange #(om/set-state! owner :doc-filter (.. % -target -value))}]
@@ -119,9 +119,9 @@
                   [:span (str "We can't find a doc matching "
                               "\""
                               (or (om/get-state owner :doc-filter) "")
-                              "\".")]])
+                              "\".")]])]
 
-               (om/build docs-list filtered-docs)))]])))))
+               (om/build docs-list filtered-docs)))])))))
 
 ;; Four states
 ;; 1. Logged out

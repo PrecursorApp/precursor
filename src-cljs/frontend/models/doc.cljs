@@ -10,3 +10,6 @@
 
 (defn all [db]
   (ds/touch-all '[:find ?e :where [?e :document/name]] db))
+
+(defn chat-bots [db]
+  (ds/touch-all '[:find ?e :where [?e :chat-bot/name]] db))

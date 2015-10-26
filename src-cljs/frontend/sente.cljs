@@ -13,21 +13,32 @@
             [frontend.state :as state]
             [frontend.stats :as stats]
             [frontend.subscribers :as subs]
+            [frontend.talaria :as tal]
             [frontend.utils :as utils :include-macros true]
             [goog.labs.dom.PageVisibilityMonitor]
             [taoensso.sente :as sente])
   (:require-macros [cljs.core.async.macros :as asyncm :refer (go go-loop)]))
 
-(defn send-msg [sente-state message & [timeout-ms callback-fn :as rest]]
+(defn cb-success? [reply]
+  (and (sente/cb-success? reply)
+       (not (:tal/error reply))))
+
+(defn send-msg-sente [sente-state message & [timeout-ms callback-fn :as rest]]
   (if (-> sente-state :state deref :open?)
     (apply (:send-fn sente-state) message rest)
-    (let [watch-id (utils/uuid)]
+    (let [watch-id (utils/squuid)]
       ;; TODO: handle this in the handle-message fn below
       (add-watch (:state sente-state) watch-id
                  (fn [key ref old new]
                    (when (:open? new)
                      (apply (:send-fn sente-state) message rest)
                      (remove-watch ref watch-id)))))))
+
+(defn send-msg [ws-state message & [timeout-ms callback-fn :as rest]]
+  (if (:send-fn ws-state)
+    (send-msg-sente ws-state message timeout-ms callback-fn)
+    (tal/queue-msg ws-state {:op (first message)
+                             :data (second message)} timeout-ms callback-fn)))
 
 (defn ch-send-msg
   "Like send-msg, but takes a channel to put the reply onto."
@@ -39,7 +50,7 @@
 (defn update-server-offset [sente-state]
   (let [start (goog/now)]
     (send-msg sente-state [:server/timestamp] 1000 (fn [reply]
-                                                     (when (sente/cb-success? reply)
+                                                     (when (cb-success? reply)
                                                        (let [latency (- (goog/now) start)]
                                                          (datetime/update-server-offset (:date (second reply)) latency)))))))
 
@@ -47,12 +58,13 @@
   (send-msg sente-state [:frontend/subscribe {:document-id document-id
                                               :requested-color requested-color
                                               :requested-remainder requested-remainder}]
-            5000
+            (* 30 1000)
             (fn [reply]
-              (if (sente/cb-success? reply)
+              (if (cb-success? reply)
                 (put! (:api comms) [(first reply) :success (assoc (second reply)
                                                                   :context {:document-id document-id})])
-                (put! (:errors comms) [:subscribe-to-document-error {:document-id document-id}])))))
+                (put! (:errors comms) [:subscribe-to-document-error {:document-id document-id
+                                                                     :reply reply}])))))
 
 (defn subscribe-to-team [sente-state team-uuid]
   (send-msg sente-state [:team/subscribe {:team/uuid team-uuid}]))
@@ -61,8 +73,20 @@
   (send-msg sente-state [:issue/subscribe {}]
             10000
             (fn [reply]
-              (if (sente/cb-success? reply)
-                (let [ents (:entities reply)]
+              (if (cb-success? reply)
+                (let [ents (:entities reply)
+                      uuids (atom #{})]
+                  (walk/postwalk (fn [x]
+                                   (when (map? x)
+                                     (when-let [u (:issue/author x)]
+                                       (swap! uuids conj u))
+                                     (when-let [u (:comment/author x)]
+                                       (swap! uuids conj u))
+                                     (when-let [u (:vote/cust x)]
+                                       (swap! uuids conj u)))
+                                   x)
+                                 ents)
+                  (put! (:controls comms) [:new-cust-uuids {:uuids @uuids}])
                   (d/transact! issue-db ents {:server-update true}))
                 (put! (:errors comms) [:subscribe-to-issues-error])))))
 
@@ -136,7 +160,9 @@
   (when (= (:team/uuid data) (get-in @app-state [:team :team/uuid]))
     (d/transact! (:team-db @app-state)
                  (:entities data)
-                 {:server-update true})))
+                 {:server-update true})
+    (when (= :plan (:entity-type data))
+      (put! (get-in @app-state [:comms :controls]) [:plan-entities-stored {:team/uuid (:team/uuid data)}]))))
 
 (defmethod handle-message :issue/db-entities [app-state message data]
   (d/transact! (:issue-db @app-state)
@@ -226,11 +252,18 @@
           nil)
         (recur)))))
 
+(defn handle-tal-msg [app-state msg]
+  (handle-message app-state (:op msg) (:data msg)))
+
 (defn init [app-state]
-  (let [{:keys [chsk ch-recv send-fn state] :as sente-state}
-        (sente/make-channel-socket! "/chsk" {:type :auto
-                                             :chsk-url-fn (fn [& args]
-                                                            (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state)))})]
-    (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
-    (subs/add-recording-watcher app-state (fn [d] (send-msg (:sente @app-state) [:rtc/signal (merge d {:document/id (:document/id @app-state)})])))
-    (do-something app-state (:sente @app-state))))
+  (if (:use-talaria? @app-state)
+    (let [tal-state (:tal @app-state)]
+      (tal/start-recv-queue tal-state (partial handle-tal-msg app-state))
+      (subs/add-recording-watcher app-state (fn [d] (send-msg tal-state [:rtc/signal (merge d {:document/id (:document/id @app-state)})]))))
+    (let [{:keys [chsk ch-recv send-fn state] :as sente-state}
+          (sente/make-channel-socket! "/chsk" {:type :auto
+                                               :chsk-url-fn (fn [& args]
+                                                              (str (apply sente/default-chsk-url-fn args) "?tab-id=" (:tab-id @app-state)))})]
+      (swap! app-state assoc :sente (assoc sente-state :ch-recv-mult (async/mult ch-recv)))
+      (subs/add-recording-watcher app-state (fn [d] (send-msg (:sente @app-state) [:rtc/signal (merge d {:document/id (:document/id @app-state)})])))
+      (do-something app-state (:sente @app-state)))))

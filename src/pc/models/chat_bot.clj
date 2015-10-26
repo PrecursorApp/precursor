@@ -3,6 +3,8 @@
             [clojure.set :as set]
             [datomic.api :refer [db q] :as d]))
 
+;; make sure to update frontend, when changing this list (sorry :()
+;; frontend.db/generate-chat-bots
 (def chat-bots [{:chat-bot/name "daniel"}
                 {:chat-bot/name "danny"}
                 {:chat-bot/name "prcrsr"}])

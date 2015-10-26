@@ -45,7 +45,7 @@
       (sente/send-msg (om/get-shared owner :sente) [:team/plan-active-history {:team/uuid team-uuid}]
                       20000
                       (fn [res]
-                        (if (taoensso.sente/cb-success? res)
+                        (if (sente/cb-success? res)
                           (om/set-state! owner :history (:history res))
                           (comment "do something about errors")))))
     om/IRenderState
@@ -369,9 +369,14 @@
             (om/build trial-summary data {:react-key "trial-summary"}))
           [:div.divider.make]
           (if-not (:plan/paid? plan)
-            [:a.vein.make {:on-click #(cast! :start-plan-clicked)}
-             (common/icon :credit)
-             [:span "Add payment"]]
+            (list
+             [:a.vein.make {:on-click #(cast! :start-plan-clicked)}
+              (common/icon :credit)
+              [:span "Add payment"]]
+             (when (plan-model/trial-over? plan)
+               [:a.vein.make {:on-click #(cast! :extend-trial-clicked)}
+                (common/icon :plus)
+                [:span "Extend trial"]]))
             (list
              [:a.vein.make {:href (urls/plan-submenu-path doc "info")}
               (common/icon :info)

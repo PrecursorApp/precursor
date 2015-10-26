@@ -21,11 +21,11 @@
             [frontend.datetime :as datetime]
             [frontend.db :as db]
             [frontend.history :as history]
-            [frontend.instrumentation :as instrumentation]
             [frontend.localstorage :as localstorage]
             [frontend.routes :as routes]
             [frontend.sente :as sente]
             [frontend.state :as state]
+            [frontend.talaria :as tal]
             [frontend.team :as team]
             [frontend.utils :as utils :refer [mlog merror third] :include-macros true]
             [frontend.utils.seq :as seq-util]
@@ -36,10 +36,10 @@
             [goog.labs.dom.PageVisibilityMonitor]
             [goog.net.Cookies]
             [om.core :as om :include-macros true]
+            [om-i.core :as omi]
             [secretary.core :as sec])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]])
-  (:import [cljs.core.UUID]
-           [goog.events.EventType]
+  (:import [goog.events.EventType]
            [goog.ui IdGenerator]))
 
 (enable-console-print!)
@@ -103,7 +103,7 @@
   (chan))
 
 (defn app-state []
-  (let [initial-state (state/initial-state)
+  (let [initial-state (atom (state/initial-state))
         document-id (or (aget js/window "Precursor" "initial-document-id")
                         ;; TODO: remove after be is fully deployed
                         (when-let [id (last (re-find #"document/(.+)$" (.getPath utils/parsed-uri)))]
@@ -117,38 +117,60 @@
                            (reader/read-string))
         initial-issue-entities (some-> (aget js/window "Precursor" "initial-issue-entities")
                                  (reader/read-string))
-        tab-id (utils/uuid)
+        tab-id (utils/squuid)
         sente-id (aget js/window "Precursor" "sente-id")
         issue-db (db/make-initial-db initial-issue-entities)
-        ab-choices (ab/setup! state/ab-tests)]
-    (atom (-> (assoc initial-state
-                     ;; id for the browser, used to filter transactions
-                     :admin? admin?
-                     :tab-id tab-id
-                     :sente-id sente-id
-                     :client-id (str sente-id "-" tab-id)
-                     :db (db/make-initial-db initial-entities)
-                     ;; team entities go into the team namespace, so we need a separate database
-                     ;; to prevent conflicts
-                     :team-db (db/make-initial-db nil)
-                     :issue-db issue-db
-                     :document/id document-id
-                     ;; Communicate to nav channel that we shouldn't reset db
-                     :initial-state true
-                     :cust cust
-                     :team team
-                     :subdomain config/subdomain
-                     :show-landing? (:show-landing? utils/initial-query-map)
-                     :ab-choices ab-choices
-                     :comms {:controls      controls-ch
-                             :api           api-ch
-                             :errors        errors-ch
-                             :nav           navigation-ch
-                             :controls-mult (async/mult controls-ch)
-                             :api-mult      (async/mult api-ch)
-                             :errors-mult   (async/mult errors-ch)
-                             :nav-mult      (async/mult navigation-ch)})
-            (browser-settings/restore-browser-settings cust)))))
+        ab-choices (ab/setup! state/ab-tests)
+        use-talaria? (or true
+                         (:use-talaria? utils/initial-query-map)
+                         (:use-talaria? ab-choices))
+        tal (when use-talaria? (tal/init {:secure? (= "https" (.getScheme utils/parsed-uri))
+                                          :host (.getDomain utils/parsed-uri)
+                                          :port (.getPort utils/parsed-uri)
+                                          :params {:tab-id tab-id}
+                                          :csrf-token (utils/csrf-token)}
+                                         :test-ajax (:use-talaria-ajax? utils/initial-query-map)
+                                         :on-reconnect (fn [tal-state]
+                                                         (let [s @initial-state]
+                                                           (when (:document/id s)
+                                                             (sente/subscribe-to-document tal-state
+                                                                                          (:comms s)
+                                                                                          (:document/id s)
+                                                                                          :requested-color (get-in s [:subscribers :info (:client-id s) :color])
+                                                                                          :requested-remainder (get-in s [:subscribers :info (:client-id s) :frontend-id-seed :remainder])))))))]
+    (swap! initial-state #(-> (assoc %
+                                     ;; id for the browser, used to filter transactions
+                                     :admin? admin?
+                                     :tab-id tab-id
+                                     :sente-id sente-id
+                                     :client-id (str sente-id "-" tab-id)
+                                     :db (db/make-initial-db initial-entities)
+                                     ;; team entities go into the team namespace, so we need a separate database
+                                     ;; to prevent conflicts
+                                     :team-db (db/make-initial-db nil)
+                                     :issue-db issue-db
+                                     :document/id document-id
+                                     ;; Communicate to nav channel that we shouldn't reset db
+                                     :initial-state true
+                                     :cust cust
+                                     :team team
+                                     :subdomain config/subdomain
+                                     :show-landing? (:show-landing? utils/initial-query-map)
+                                     :ab-choices ab-choices
+                                     :tal tal
+                                     :use-talaria? use-talaria?
+                                     :comms {:controls      controls-ch
+                                             :api           api-ch
+                                             :errors        errors-ch
+                                             :nav           navigation-ch
+                                             :controls-mult (async/mult controls-ch)
+                                             :api-mult      (async/mult api-ch)
+                                             :errors-mult   (async/mult errors-ch)
+                                             :nav-mult      (async/mult navigation-ch)})
+                            (merge (when use-talaria?
+                                     {:sente tal}))
+                            (browser-settings/restore-browser-settings cust)))
+    initial-state))
 
 (defn controls-handler
   [[msg data :as value] state browser-state]
@@ -196,7 +218,7 @@
        (errors-con/post-error! container (first value) (second value) previous-state @state)))))
 
 (defn install-om [state container comms cast! handlers]
-  (instrumentation/setup-component-stats!)
+  (omi/setup-component-stats!)
   (om/root
    app/app
    state
@@ -211,12 +233,14 @@
              ;; Can't log in without a page refresh, have to re-evaluate this if
              ;; that ever changes.
              :cust                  (:cust @state)
-             :sente                 (:sente @state)
+             :sente                 (if (:use-talaria? @state)
+                                      (:tal @state)
+                                      (:sente @state))
              :admin?                (:admin? @state)
              :ab-choices            (:ab-choices @state)
              }
     :instrument (fn [f cursor m]
-                  (om/build* f cursor (assoc m :descriptor instrumentation/instrumentation-methods)))}))
+                  (om/build* f cursor (assoc m :descriptor omi/instrumentation-methods)))}))
 
 (defn find-app-container []
   (goog.dom/getElement "om-app"))

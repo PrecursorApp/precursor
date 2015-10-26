@@ -17,6 +17,7 @@
    :browser-setting/right-click-learned :right-click-learned
    :browser-setting/menu-button-learned :menu-button-learned
    :browser-setting/info-button-learned :info-button-learned
+   :browser-setting/welcome-info-learned :welcome-info-learned
    :browser-setting/newdoc-button-learned :newdoc-button-learned
    :browser-setting/login-button-learned :login-button-learned
    :browser-setting/your-docs-learned :your-docs-learned
@@ -31,6 +32,8 @@
   "Translates browser settings key that is stored in app-state (at state/browser-settings-path)
    to the one that is stored on the cust"
   (set/map-invert db-setting->app-state-setting))
+
+(def app-state-setting-keys (keys app-state-setting->db-setting))
 
 (defn merged-settings
   "Merges settings from defaults, localstorage, and cust, in that order"
@@ -57,7 +60,7 @@
                        (not= v (get cust db-key)))
                 (assoc acc db-key v)
                 acc)))
-          {} settings))
+          {} (select-keys settings app-state-setting-keys)))
 
 (defn new-fields
   "Generic diff algorithm, returns a new map with just the new fields"

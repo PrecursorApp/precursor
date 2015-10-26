@@ -55,8 +55,7 @@
   (let [db (pcd/default-db)
         now (time/now)
         ;; day we got our first user!
-        earliest (time/from-time-zone (time/date-time 2014 11 9)
-                                      (time/time-zone-for-id "America/Los_Angeles"))
+        earliest (time/minus (time/now) (time/days 120))
         times (take-while #(time/before? % (time/plus now (time/days 1)))
                           (iterate #(clj-time.core/plus % (clj-time.core/days 1))
                                    earliest))
@@ -589,7 +588,7 @@
      [:form {:action (format "https://%s.storage.googleapis.com" bucket)
              :method "post"
              :enctype "multipart/form-data"
-             :onSubmit (format "this.submit(); event.preventDefault(); window.setTimeout(function () { window.location.assign('https://%s.storage.googleapis.com/' + document.getElementById('key').value)}, 1000)"
+             :onSubmit (format "this.submit(); event.preventDefault(); window.setTimeout(function () { window.location.assign('https://%s.storage.googleapis.com/' + document.getElementById('key').value)}, 3000)"
                                bucket)
              }
       [:p "Choose path (careful not to override an existing path):"]

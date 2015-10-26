@@ -97,12 +97,10 @@
     om/IRender
     (render [_]
       (let [mouse (cursors/observe-mouse owner)]
-        (dom/div #js {:className "mouse-stats"
-                      :onMouseDown #((om/get-shared owner :cast!)
-                                     :mouse-stats-clicked)
-                      :data-text (str "{:x " (:rx mouse 0)
-                                      ", :y " (:ry mouse 0)
-                                      "}")})))))
+        (dom/a #js {:className "mouse-stats"
+                    :onMouseDown #((om/get-shared owner :cast!) :mouse-stats-clicked)
+                    :role "button"}
+               (str "{:x " (Math/round (:rx mouse 0)) " :y " (Math/round (:ry mouse 0)) "}"))))))
 
 (defn tray [app owner]
   (reify
@@ -122,39 +120,30 @@
     om/IRender
     (render [_]
       (let [{:keys [db cast!]} (om/get-shared owner)
-            new-here? (empty? (:cust app))
+            welcome-info-learned? (get-in app state/welcome-info-learned-path)
             chat-opened? (get-in app state/chat-opened-path)
             document (doc-model/find-by-id @db (:document/id app))
             rejected-tx-count (get-in app (state/doc-tx-rejected-count-path (:document/id app)))]
         (html
          [:div.hud-tray.hud-item.width-canvas {:key (str "hud-tray-" chat-opened?)}
-          (when new-here?
-            (html
-             [:div.new-here
-              [:a.new-here-button {:on-click #(om/set-state! owner :new-here true)
-                                   :data-text "New here?"
-                                   :role "button"}]
-              ;; TODO just make this thing call outer/nav-foot
-              [:div.new-here-items {:on-mouse-leave #(om/set-state! owner :new-here false)
-                                    :class (when (om/get-state owner :new-here) "opened")}
-               [:a.new-here-item {:href "/home"         :role "button" :title "Home"} "Home"]
-               [:a.new-here-item {:href "/pricing"      :role "button" :title "Pricing"} "Pricing"]
-               [:a.new-here-item {:href "/blog"         :role "button" :title "Blog"} "Blog"]
-               [:a.new-here-item {:href (auth/auth-url :source "hud-tray") :role "button" :title "Sign in with Google"} "Sign in"]]]))
-          [:div.doc-stats
-           (om/build mouse-stats {}
-                     {:react-key "mouse-stats"})
-           [:div.privacy-stats {:href (urls/overlay-path document "sharing")
+          (if-not welcome-info-learned?
+            [:a.info-button {:href (urls/overlay-path document "info")
+                             :on-click #(cast! :welcome-info-clicked)}
+             "What is Precursor?"]
+
+            [:div.doc-stats
+             (om/build mouse-stats {} {:react-key "mouse-stats"})
+             [:a.privacy-stats {:href (urls/overlay-path document "sharing")
                                 :key rejected-tx-count
                                 :class (when (pos? rejected-tx-count)
                                          (if (zero? (mod rejected-tx-count 2))
                                            "rejected-txes-a"
                                            "rejected-txes-b"))}
-            (case (:document/privacy document)
-              :document.privacy/public (common/icon :public)
-              :document.privacy/read-only (common/icon :read-only)
-              :document.privacy/private (common/icon :private)
-              nil)]]])))))
+              (case (:document/privacy document)
+                :document.privacy/public (common/icon :public)
+                :document.privacy/read-only (common/icon :read-only)
+                :document.privacy/private (common/icon :private)
+                nil)]])])))))
 
 (defn chat [app owner]
   (reify
@@ -251,47 +240,48 @@
                             "Login to change your color.")
                    :key self-color}
                   (common/icon :user (when show-mouse? {:path-props {:className (name self-color)}}))]
-                 [:div.viewer-name.viewer-tag
+                 [:a.viewer-name.viewer-tag
                   (let [submit-fn #(do (when-not (str/blank? (om/get-state owner :new-name))
                                          (cast! :self-updated {:name (om/get-state owner :new-name)}))
-                                       (om/set-state! owner :editing-name? false)
-                                       (om/set-state! owner :new-name ""))]
-                    {:ref "name-edit"
-                     :content-editable (if editing-name? true false)
-                     :spell-check false
-                     :on-key-down #(do
-                                     (when (= "Enter" (.-key %))
-                                       (.preventDefault %)
-                                       (submit-fn)
-                                       (utils/stop-event %))
-                                     (when (= "Escape" (.-key %))
-                                       (om/set-state! owner :editing-name? false)
-                                       (om/set-state! owner :new-name "")
-                                       (utils/stop-event %)))
-                     :on-blur #(do (submit-fn)
+                                     (om/set-state! owner :editing-name? false)
+                                     (om/set-state! owner :new-name ""))]
+                    (merge
+                      (if can-edit?
+                        {:on-click #(do
+                                      (om/set-state! owner :editing-name? true)
+                                      (.stopPropagation %))}
+                        {:href (urls/overlay-path doc "username")
+                         :role "button"})
+                      {:ref "name-edit"
+                       :title "Edit your display name."
+                       :content-editable (if editing-name? true false)
+                       :spell-check false
+                       :on-key-down #(do
+                                       (when (= "Enter" (.-key %))
+                                         (.preventDefault %)
+                                         (submit-fn)
+                                         (utils/stop-event %))
+                                       (when (= "Escape" (.-key %))
+                                         (om/set-state! owner :editing-name? false)
+                                         (om/set-state! owner :new-name "")
+                                         (utils/stop-event %)))
+                       :on-blur #(do (submit-fn)
                                    (utils/stop-event %))
-                     :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))})
+                       :on-input #(om/set-state-nr! owner :new-name (goog.dom/getRawTextContent (.-target %)))}))
                   (or self-name "You")]
-                 [:div.viewer-controls
-                  (when (:recording sub)
-                    [:div.viewer-symbols.holo
-                     [:div.viewer-symbol
-                      (volume-icon (get-in sub [:recording :media-stream-volume] 0) (name self-color))]])
-                  [:div.viewer-toggles
-                   [:a.viewer-toggle (merge {:role "button"
-                                             :title "Change your display name."}
-                                            (if can-edit?
-                                              {:on-click #(do (om/set-state! owner :editing-name? true)
-                                                              (.stopPropagation %))}
-                                              {:href (urls/overlay-path doc "username")}))
-                    (common/icon :pencil)]
-                   (when config/subdomain
-                     [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
-                                        :role "button"
-                                        :title (if (:recording sub)
-                                                 "Turn off your mic"
-                                                 "Share your audio with everyone in the doc")}
-                      (common/icon (if (:recording sub) :mic-off :mic))])]]])
+                 [:div.viewer-controls {:class (when (:recording sub) " recording ")}
+                  (if (:recording sub)
+                    [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
+                                       :role "button"
+                                       :title "Disable your voice chat."
+                                       :key "self-recording"}
+                     (volume-icon (get-in sub [:recording :media-stream-volume] 0) (name self-color))]
+
+                    [:a.viewer-toggle {:on-click #(cast! :recording-toggled)
+                                       :role "button"
+                                       :title "Enable your voice chat."
+                                       :key "self-not-recording"}
+                     (common/icon :sound-mute)])]])
               (for [[id {:keys [show-mouse? color cust-name hide-in-list? stream-url] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
                     :when (not hide-in-list?)
                     :let [id-str (get-in app [:cust-data :uuid->cust (:cust/uuid sub) :cust/name] (apply str (take 6 id)))
@@ -301,28 +291,39 @@
                 [:div.viewer
                  [:div.viewer-avatar.viewer-tag
                   (common/icon :user (when show-mouse? {:path-props {:className color-class}}))]
-                 [:div.viewer-name.viewer-tag
+                 [:a.viewer-name.viewer-tag {:key id
+                                             :on-click #(cast! :chat-user-clicked {:id-str id-str})
+                                             :role "button"
+                                             :title "Ping this viewer in chat."}
                   id-str]
-                 [:div.viewer-controls
+                 [:div.viewer-controls {:class (when (:recording sub) "recording")}
+
+                  ;; Holding off on showing other users' sound icons until prompts are ready
+                  ;; (if (:recording sub)
+
                   (when (:recording sub)
-                    [:div.viewer-symbols.holo
-                     [:div.viewer-symbol
-                      (volume-icon (get-in sub [:recording :media-stream-volume] 0) color-class)]])
-                  [:div.viewer-toggles
-                   [:a.viewer-toggle
-                    {:key id
-                     :on-click #(cast! :chat-user-clicked {:id-str id-str})
-                     :role "button"
-                     :title "Ping this viewer in chat."}
-                    (common/icon :at)]]]])
+                    [:a.viewer-toggle {;:on-click #(cast! :recording-toggled)
+                                       :role "button"
+                                       :title "Mute this collaborator."
+                                       :key (str id-str "-recording")}
+                     (volume-icon (get-in sub [:recording :media-stream-volume] 0) color-class)]
+
+                    ;; Holding off on showing other users' sound icons until prompts are ready
+                    ;; [:a.viewer-toggle {;:on-click #(cast! :recording-toggled)
+                    ;;                    :role "button"
+                    ;;                    :title "Request voice chat."
+                    ;;                    :key (str id-str "-not-recording")}
+                    ;;  (common/icon :sound-mute)]
+
+                    )]])
 
               [:a.viewer.viewer-add {:href (urls/overlay-path doc "sharing")
                                      :class (when (< 3 viewers-count) "sink")
                                      :title "Invite."}
                [:i.viewer-avatar.viewer-tag
-                (common/icon :user)]
+                (common/icon :plus)]
                [:span.viewer-name.viewer-tag
-                (common/icon :plus)]]]])
+                "Invite"]]]])
 
           [:a.hud-viewers.hud-item.hud-toggle {:on-click (if show-viewers?
                                                            #(cast! :viewers-closed)
@@ -339,8 +340,7 @@
                                                :class (when show-viewers? "close")
                                                :data-count viewers-count
                                                :role "button"}
-           (common/icon :times)
-           (common/icon :user)]])))))
+           (when-not show-viewers? (common/icon :user))]])))))
 
 (defn hud [app owner]
   (reify
@@ -381,6 +381,7 @@
 
         (om/build tray (utils/select-in app [state/chat-opened-path
                                              state/info-button-learned-path
+                                             state/welcome-info-learned-path
                                              [:document/id]
                                              [:cust]
                                              [:max-document-scope]

@@ -9,6 +9,40 @@
             [hiccup.core :refer (h html)])
   (:import [org.apache.commons.io IOUtils]))
 
+(defmulti displayable? (fn [layer] (:layer/type layer)))
+
+(defmethod displayable? :default [layer] false)
+
+(defmethod displayable? :layer.type/rect
+  [layer]
+  (and (:layer/start-x layer)
+       (:layer/end-x layer)
+       (:layer/start-y layer)
+       (:layer/end-y layer)
+       (not (zero? (- (:layer/start-x layer)
+                      (:layer/end-x layer))))
+       (not (zero? (- (:layer/start-y layer)
+                      (:layer/end-y layer))))))
+
+(defmethod displayable? :layer.type/line
+  [layer]
+  (and (:layer/start-x layer)
+       (:layer/end-x layer)
+       (:layer/start-y layer)
+       (:layer/end-y layer)
+       (not= [(:layer/start-x layer) (:layer/start-y layer)]
+             [(:layer/end-x layer) (:layer/end-y layer)])))
+
+(defmethod displayable? :layer.type/path
+  [layer]
+  (and (:layer/path layer)
+       (pos? (count (:layer/path layer)))))
+
+(defmethod displayable? :layer.type/text
+  [layer]
+  (seq (:layer/text layer)))
+
+
 (defmulti svg-element (fn [layer opts] (:layer/type layer)))
 
 (defmethod svg-element :layer.type/rect
@@ -111,8 +145,7 @@
 ;; If they've drawn in negative directions, then we to shift the viewport in the
 ;; that direction with a transform.
 (defn render-layers [layers & {:keys [invert-colors? size-limit] :as args}]
-  (let [layers (map #(into {} %) (filter #(and (:layer/type %)
-                                               (not= :layer.type/group (:layer/type %))) layers))
+  (let [layers (map #(into {} %) (filter displayable? layers))
         {:keys [width height offset-top offset-left padding scale-factor]} (utils/apply-map svg-props layers args)]
     (html [:svg (merge
                  {:viewBox (str "0 0 " width " " height)

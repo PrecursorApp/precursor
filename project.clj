@@ -3,7 +3,7 @@
   :url "https://precursorapp.com"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.7.0-RC1"]
                  [inflections "0.9.13"]
 
                  [defpage "0.1.3" :exclusions [ring
@@ -16,7 +16,7 @@
                  [javax.servlet/servlet-api "2.5"]
                  [slingshot "0.12.2"]
                  [hiccup "1.0.5"]
-                 [clj-pdf "2.0.3"]
+                 [clj-pdf "2.1.6" :exclusions [xml-apis]]
 
                  [org.clojure/tools.logging "0.3.1"]
                  [log4j "1.2.17"]
@@ -48,13 +48,15 @@
                  ;; adds support for on-complete callback
                  [precursor/sente "1.4.1-a28061fff118ea3313f99ae6afb89f064c35c9b2"]
                  [clj-stacktrace "0.2.8"]
-                 [org.immutant/web "2.0.0" :exclusions [org.clojure/java.classpath
-                                                        org.jboss.logging/jboss-logging
-                                                        org.slf4j/slf4j-nop
-                                                        org.slf4j/slf4j-api
-                                                        org.slf4j/slf4j-simple
-                                                        org.slf4j/slf4j-log4j12
-                                                        ch.qos.logback/logback-classic]]
+
+                 [org.immutant/web "2.x.incremental.586"
+                  :exclusions [org.clojure/java.classpath
+                               org.jboss.logging/jboss-logging
+                               org.slf4j/slf4j-nop
+                               org.slf4j/slf4j-api
+                               org.slf4j/slf4j-simple
+                               org.slf4j/slf4j-log4j12
+                               ch.qos.logback/logback-classic]]
 
                  [org.clojure/tools.reader "0.9.2"]
                  [com.google.guava/guava "18.0"]
@@ -74,19 +76,21 @@
 
                  [me.raynes/fs "1.4.6" :exclusions [org.apache.commons/commons-compress]]
 
-                 ;; Fix for d/entity throwing on nil https://github.com/tonsky/datascript/pull/75
-                 [datascript "0.11.1"]
+                 [datascript "0.11.4"]
 
                  [ankha "0.1.4"]
-                 [org.clojure/clojurescript "0.0-3211"]
+                 [org.clojure/clojurescript "0.0-3308"]
                  [precursor/core.async "0.1.361.0-d8047c-alpha"]
+
                  [cljs-http "0.1.35" :exclusions [noencore]]
+                 [com.cognitect/transit-cljs "0.8.220"]
 
                  ;; Use yaks/om for the pattern tag (it's in React,
                  ;; but not Om yet)
                  ;;[om "0.6.4"]
 
                  [precursor/react "0.12.2-7-5-new-tags"]
+                 [precursor/om-i "0.1.7"]
 
                  [sablono "0.3.4" :exclusions [cljsjs/react]]
                  [secretary "1.2.3"]
@@ -125,7 +129,8 @@
                                                                 "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
                                                    :snapshots true}]
                            ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
-                           ["clojars" {:url "https://clojars.org/repo/"}]]
+                           ["clojars" {:url "https://clojars.org/repo/"}]
+                           ["Immutant incremental builds" {:url "http://downloads.immutant.org/incremental/"}]]
 
   :figwheel {:http-server-root "public"
              :server-port 3448
@@ -175,7 +180,7 @@
                                        "yaks/om/src"]
                         :figwheel {:websocket-host "localhost"
                                    :on-jsload "frontend.dev/jsload"}
-                        :compiler {;; Datascript https://github.com/tonsky/datascript/issues/57
+                        :compiler { ;; Datascript https://github.com/tonsky/datascript/issues/57
                                    :warnings {:single-segment-namespace false}
                                    :output-to "resources/public/cljs/out/frontend-dev.js"
                                    :output-dir "resources/public/cljs/out"

@@ -127,7 +127,7 @@
                :loaded-doc doc-id
                :undo-state (atom {:transactions []
                                   :last-undo nil})
-               :db-listener-key (utils/uuid)
+               :db-listener-key (utils/squuid)
                :show-landing? false
                :outer-to-inner? (:show-landing? state)
                :menu-to-inner? (and (= :overlay previous-point)
@@ -144,7 +144,11 @@
         (update-in [:db] (fn [db] (if (:initial-state state)
                                     db
                                     (db/reset-db! db (concat initial-entities
-                                                             (doc-model/all @db))))))))))
+                                                             (map #(utils/update-when-in
+                                                                    %
+                                                                    [:document/chat-bot]
+                                                                    :db/id)
+                                                                  (doc-model/all @db)))))))))))
 
 (defn maybe-replace-doc-token [current-state]
   (let [url (goog.Uri. js/window.location)
@@ -364,7 +368,7 @@
 
 (defmethod navigated-to :single-issue
   [history-imp navigation-point args state]
-  (let [issue-uuid (UUID. (:issue-uuid args))
+  (let [issue-uuid (uuid (:issue-uuid args))
         issue (issue-model/find-by-frontend-id @(:issue-db state) issue-uuid)
         issues-list-id (when (= (:navigation-point state)
                                 :issues-list)

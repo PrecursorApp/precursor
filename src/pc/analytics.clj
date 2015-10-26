@@ -2,6 +2,7 @@
   (:require [clj-time.coerce]
             [clj-time.format]
             [pc.http.admin.urls :as admin-urls]
+            [pc.http.urls :as urls]
             [pc.mailchimp :as mailchimp]
             [pc.mixpanel :as mixpanel]
             [pc.models.cust :as cust-model]
@@ -38,7 +39,10 @@
                                                  :team/plan
                                                  :plan/trial-end
                                                  clj-time.coerce/from-date
-                                                 (clj-time.format/unparse (clj-time.format/formatters :date-time-no-ms)))}})
+                                                 (clj-time.format/unparse (clj-time.format/formatters :date-time-no-ms)))
+                           :team_plan_url (urls/team-plan team)
+                           :team_add_users_url (urls/team-add-users team)
+                           :team_intro_doc (urls/from-doc (:team/intro-doc team))}})
   (mixpanel/track "Created team" (:cust/uuid (:team/creator team))
                   :subdomain (:team/subdomain team)))
 
@@ -53,4 +57,4 @@
 (defn track-signup-clicked [ring-req]
   (mixpanel/track "Signup Clicked"
                   (mixpanel/distinct-id-from-cookie ring-req)
-                  :source (get-in ring-req [:params :source])))
+                  :source (get-in ring-req [:params "source"])))
