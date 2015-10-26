@@ -678,7 +678,7 @@
                                   (fn [tx-report]
                                     (om/refresh! owner)))
       (go-loop []
-        (when-let [res (utils/inspect (async/<! (om/get-state owner :results-ch)))]
+        (when-let [res (async/<! (om/get-state owner :results-ch))]
           (when (= (:q res) (om/get-state owner :issue-search))
             (om/set-state! owner :searching? false)
             (om/set-state! owner :results (sorted-results (:results res))))
