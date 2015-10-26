@@ -311,11 +311,6 @@
     (let [cust-uuid (get-in req [:auth :cust :cust/uuid])]
       (content/app (common-view-data req)))))
 
-(defpage search-issues "/issues/search" [req]
-  (if (:subdomain req)
-    (custom-domain/redirect-to-main req)
-    (outer-page req)))
-
 (defpage search-issues "/issues/completed" [req]
   (if (:subdomain req)
     (custom-domain/redirect-to-main req)
@@ -333,6 +328,11 @@
         (let [doc (:issue/document issue)]
           (doc-resp doc req :view-data {:initial-issue-entities [(issue-model/read-api issue)]
                                         :meta-description (:issue/description issue)}))))))
+
+(defpage search-issues "/issues/search" [req]
+  (if (:subdomain req)
+    (custom-domain/redirect-to-main req)
+    (outer-page req)))
 
 (defpage issue "/issues" [req]
   (outer-page req))

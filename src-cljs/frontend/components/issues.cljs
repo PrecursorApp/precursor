@@ -649,14 +649,15 @@
                                            (sort (issue-model/issue-comparator cust render-time) issues))
                            {:key :issue-id
                             :opts {:issue-db issue-db}}))]
-          [:div.content.make
-           (if (= issue-type :completed)
-             [:a.vein.make {:href "/issues"
-                            :role "button"}
-              "View Unfinished Requests"]
-             [:a.vein.make {:href "/issues/completed"
-                            :role "button"}
-              "View Finished Requests"])]])))))
+          (when (seq all-issue-ids)
+            [:div.content.make
+             (if (= issue-type :completed)
+               [:a.vein.make {:href "/issues"
+                              :role "button"}
+                "View Unfinished Requests"]
+               [:a.vein.make {:href "/issues/completed"
+                              :role "button"}
+                "View Finished Requests"])])])))))
 
 (defn sorted-results [results]
   (sort-by second (map (fn [[frontend-id scores]]

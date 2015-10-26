@@ -67,10 +67,13 @@
   (let [safed-q (safe-q (:q ?data))]
     (if (seq safed-q)
       (let [relaxed-q (relax-q safed-q)
-            db (:db req)]
+            db (:db req)
+            results (concat (map (partial issue-model/issue-search-read-api db)
+                                 (issue-model/search-issues db relaxed-q))
+                            (map (partial issue-model/comment-search-read-api db)
+                                 (issue-model/search-comments db relaxed-q)))]
         (sente-common/send-reply req
-                                 {:results (concat (map (partial issue-model/issue-search-read-api db) (issue-model/search-issues db relaxed-q))
-                                                   (map (partial issue-model/comment-search-read-api db) (issue-model/search-comments db relaxed-q)))
+                                 {:results results
                                   :q (:q ?data)}))
       (sente-common/send-reply req
                                {:results []

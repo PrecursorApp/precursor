@@ -351,11 +351,11 @@
 
 (defmethod ws-handler :issue/fetch-issue [req]
   (log/infof "searching issues for %s" (:client-id req))
-  (issues-http/fetch (assoc req :sente-state @sente-state)))
+  (issues-http/fetch req))
 
 (defmethod ws-handler :issue/fetch-completed [req]
   (log/infof "searching issues for %s" (:client-id req))
-  (issues-http/fetch-completed (assoc req :sente-state @sente-state)))
+  (issues-http/fetch-completed req))
 
 (defn subscriber-read-api [subscriber]
   (-> subscriber
