@@ -12,13 +12,14 @@
   (:import [goog.net.WebSocket.EventType])
   (:require-macros [cljs.core.async.macros :refer (go go-loop)]))
 
+(def transit-reader (transit/reader :json {:handlers {"u" cljs.core/uuid}}))
+(def transit-writer (transit/writer :json))
+
 (defn decode-msg [msg]
-  (let [r (transit/reader :json)]
-    (transit/read r msg)))
+  (transit/read transit-reader msg))
 
 (defn encode-msg [msg]
-  (let [r (transit/writer :json)]
-    (transit/write r msg)))
+  (transit/write transit-writer msg))
 
 (defrecord AjaxSocket [recv-url send-url csrf-token on-open on-close on-error on-message on-reconnect]
   Object
