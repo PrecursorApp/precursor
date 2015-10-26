@@ -23,7 +23,7 @@
             [om.core :as om]
             [om.dom :as dom])
   (:require-macros [sablono.core :refer (html)]
-                   [cljs.core.async.macros :as am :refer [go]])
+                   [cljs.core.async.macros :as am :refer [go go-loop]])
   (:import [goog.ui IdGenerator]))
 
 (defn issue-form [_ owner]
@@ -564,7 +564,7 @@
             (om/build comment-form {:issue-id issue-id} {:react-key "comment-form"})]
            (om/build comments {:issue-id issue-id :uuid->cust uuid->cust} {:react-key "comments"})]])))))
 
-(defn issue-list [{:keys [uuid->cust]} owner]
+(defn issue-list [{:keys [uuid->cust]} owner {:keys [issue-type]}]
   (reify
     om/IDisplayName (display-name [_] "Issue List")
     om/IInitState
@@ -576,7 +576,9 @@
     (did-mount [_]
       (let [issue-db (om/get-shared owner :issue-db)
             cust-uuid (:cust/uuid (om/get-shared owner :cust))]
-        (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
+        (let [issue-ids (if (= issue-type :completed)
+                          (issue-model/completed-issue-ids @issue-db)
+                          (issue-model/uncompleted-issue-ids @issue-db))]
           (om/set-state! owner :all-issue-ids issue-ids)
           (om/set-state! owner :rendered-issue-ids issue-ids))
         (fdb/add-attribute-listener
@@ -584,7 +586,9 @@
          :issue/title
          (om/get-state owner :listener-key)
          (fn [tx-report]
-           (let [issue-ids (set (map :e (d/datoms @issue-db :aevt :issue/title)))]
+           (let [issue-ids (if (= issue-type :completed)
+                             (issue-model/completed-issue-ids @issue-db)
+                             (issue-model/uncompleted-issue-ids @issue-db))]
              (if (empty? (om/get-state owner :rendered-issue-ids))
                (om/update-state! owner #(assoc % :rendered-issue-ids issue-ids :all-issue-ids issue-ids))
                (when cust-uuid
@@ -609,6 +613,10 @@
         (html
          [:section.menu-view.issues-list
           [:div.content.make
+           [:a.vein.make {:href "/issues/search"
+                          :role "button"}
+            "Search"]]
+          [:div.content.make
            (om/build issue-form {})]
           [:div.issue-cards.make {:key "issue-cards"}
            (let [deleted (set/difference rendered-issue-ids all-issue-ids)
@@ -617,8 +625,8 @@
                [:a.issue-missing {:role "button"
                                   :on-click #(om/update-state! owner (fn [s]
                                                                        (assoc s
-                                                                         :rendered-issue-ids (:all-issue-ids s)
-                                                                         :render-time (datetime/server-date))))}
+                                                                              :rendered-issue-ids (:all-issue-ids s)
+                                                                              :render-time (datetime/server-date))))}
                 [:span
                  (cond (empty? deleted)
                        (str (count added) (if (< 1 (count added))
@@ -640,7 +648,86 @@
                                                     :uuid->cust uuid->cust})
                                            (sort (issue-model/issue-comparator cust render-time) issues))
                            {:key :issue-id
-                            :opts {:issue-db issue-db}}))]])))))
+                            :opts {:issue-db issue-db}}))]
+          (when (seq all-issue-ids)
+            [:div.content.make
+             (if (= issue-type :completed)
+               [:a.vein.make {:href "/issues"
+                              :role "button"}
+                "View Unfinished Requests"]
+               [:a.vein.make {:href "/issues/completed"
+                              :role "button"}
+                "View Finished Requests"])])])))))
+
+(defn sorted-results [results]
+  (sort-by second (map (fn [[frontend-id scores]]
+                         [frontend-id (reduce + (map second scores))])
+                       (group-by first results))))
+
+(defn search [{:keys [uuid->cust]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Issue Search")
+    om/IInitState
+    (init-state [_] {:listener-key (.getNextUniqueId (.getInstance IdGenerator))
+                     :results-ch (async/chan (async/sliding-buffer 10))})
+    om/IDidMount
+    (did-mount [_]
+      (fdb/add-attribute-listener (om/get-shared owner :issue-db)
+                                  :frontend/issue-id
+                                  (om/get-state owner :listener-key)
+                                  (fn [tx-report]
+                                    (om/refresh! owner)))
+      (go-loop []
+        (when-let [res (async/<! (om/get-state owner :results-ch))]
+          (when (= (:q res) (om/get-state owner :issue-search))
+            (om/set-state! owner :searching? false)
+            (om/set-state! owner :results (sorted-results (:results res))))
+          (recur)))
+      (when-let [node (om/get-node owner "search-input")]
+        (.focus node)))
+    om/IWillUnmount
+    (will-unmount [_]
+      (fdb/remove-attribute-listener (om/get-shared owner :issue-db)
+                                     :frontend/issue-id
+                                     (om/get-state owner :listener-key))
+      (async/close! (om/get-state owner :results-ch)))
+    om/IRender
+    (render [_]
+      (let [issue-db @(om/get-shared owner :issue-db)
+            results (om/get-state owner :results)
+            sorted-results (remove nil?
+                                   (map (fn [[frontend-id score]]
+                                          (if-let [issue (issue-model/find-by-frontend-id issue-db frontend-id)]
+                                            {:issue-id (:db/id issue)
+                                             :uuid->cust uuid->cust}
+                                            (do (sente/send-msg (om/get-shared owner :sente) [:issue/fetch-issue {:frontend/issue-id frontend-id}])
+                                                nil)))
+                                        results))]
+        (html
+         [:section.menu-view
+          [:div.content.make
+           [:form.issue-form {:on-submit #(utils/stop-event %)}
+            [:div.adaptive
+             [:textarea (merge {:value (om/get-state owner :issue-search)
+                                :ref "search-input"
+                                :required "true"
+                                :onChange #(let [q (.. % -target -value)]
+                                             (om/set-state! owner :issue-search q)
+
+                                             (if (<= 3 (count q))
+                                               (do (om/set-state! owner :searching? true)
+                                                   (sente/ch-send-msg (om/get-shared owner :sente)
+                                                                      [:issue/search {:q q}]
+                                                                      2000
+                                                                      (om/get-state owner :results-ch)))
+                                               (async/put! (om/get-state owner :results-ch) {:q q :results []})))})]
+             [:label (merge {:data-label "Search"}
+                            {:data-typing (if (or (om/get-state owner :searching?)
+                                                  (not= (count sorted-results)
+                                                        (count results)))
+                                            "Searching.."
+                                            (str (count sorted-results) " results"))})]]]
+           (om/build-all issue-card sorted-results {:key :issue-id :opts {:issue-db issue-db}})]])))))
 
 (defn issue [{:keys [issue-uuid uuid->cust]} owner]
   (reify
@@ -680,9 +767,13 @@
     (render [_]
       (html
        (if submenu
-         (om/build issue {:issue-uuid (:active-issue-uuid app)
-                          :uuid->cust (:uuid->cust app)}
-                   {:key :issue-uuid})
+         (condp keyword-identical? submenu
+           :search (om/build search {:uuid->cust (:uuid->cust app)})
+           :single-issue (om/build issue {:issue-uuid (:active-issue-uuid app)
+                                          :uuid->cust (:uuid->cust app)}
+                                   {:key :issue-uuid})
+           :completed (om/build issue-list {:uuid->cust (:uuid->cust app)} {:react-key "completed-issue-list"
+                                                                            :opts {:issue-type :completed}}))
          (om/build issue-list {:uuid->cust (:uuid->cust app)} {:react-key "issue-list"}))))))
 
 (defn issues [app owner {:keys [submenu]}]

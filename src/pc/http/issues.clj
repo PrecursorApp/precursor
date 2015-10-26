@@ -1,7 +1,9 @@
 (ns pc.http.issues
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [datomic.api :as d]
             [pc.datomic :as pcd]
+            [pc.http.datomic2 :as datomic2]
             [pc.models.cust :as cust-model]
             [pc.models.issue :as issue-model]
             [pc.http.sente.common :as sente-common]
@@ -12,8 +14,8 @@
 
 (defn subscribe [{:keys [client-id ?data ?reply-fn] :as req}]
   (swap! issue-subs conj client-id)
-  (let [issues (map issue-model/read-api (issue-model/all-issues (:db req)))]
-    (sente-common/send-reply req {:entities issues
+  (let [uncompleted-issues (map issue-model/read-api (issue-model/uncompleted-issues (:db req)))]
+    (sente-common/send-reply req {:entities uncompleted-issues
                                   :entity-type :issue})))
 
 (defn unsubscribe [client-id]
@@ -52,3 +54,37 @@
                                  {:frontend/issue-id issue-uuid
                                   :db/id (d/tempid :db.part/user)
                                   :issue/status status}])))))
+
+(defn relax-q [q]
+  (str/join " OR "
+            (for [q-piece (str/split q #"\s+")]
+              (str q-piece "*"))))
+
+(defn safe-q [q]
+  (str/trim (str/replace q #"[^A-Za-z ]+" "")))
+
+(defn search [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [safed-q (safe-q (:q ?data))]
+    (if (seq safed-q)
+      (let [relaxed-q (relax-q safed-q)
+            db (:db req)
+            results (concat (map (partial issue-model/issue-search-read-api db)
+                                 (issue-model/search-issues db relaxed-q))
+                            (map (partial issue-model/comment-search-read-api db)
+                                 (issue-model/search-comments db relaxed-q)))]
+        (sente-common/send-reply req
+                                 {:results results
+                                  :q (:q ?data)}))
+      (sente-common/send-reply req
+                               {:results []
+                                :q (:q ?data)}))))
+
+(defn fetch [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [frontend-id (:frontend/issue-id ?data)]
+    (log/infof "fetching issue %s for %s" frontend-id client-id)
+    (sente-common/send-msg req client-id [:issue/db-entities {:entities [(issue-model/read-api (issue-model/find-by-frontend-id (:db req) frontend-id))]}])))
+
+(defn fetch-completed [{:keys [client-id ?data ?reply-fn] :as req}]
+  (let [completed-issues (map issue-model/read-api (issue-model/completed-issues (:db req)))]
+    (sente-common/send-msg req client-id [:issue/db-entities {:entities completed-issues
+                                                              :entity-type :issue}])))

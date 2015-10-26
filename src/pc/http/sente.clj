@@ -345,6 +345,18 @@
   (log/infof "unsubscribing from issues for %s" (:client-id req))
   (issues-http/unsubscribe (:client-id req)))
 
+(defmethod ws-handler :issue/search [req]
+  (log/infof "searching issues for %s" (:client-id req))
+  (issues-http/search req))
+
+(defmethod ws-handler :issue/fetch-issue [req]
+  (log/infof "searching issues for %s" (:client-id req))
+  (issues-http/fetch req))
+
+(defmethod ws-handler :issue/fetch-completed [req]
+  (log/infof "searching issues for %s" (:client-id req))
+  (issues-http/fetch-completed req))
+
 (defn subscriber-read-api [subscriber]
   (-> subscriber
     (select-keys [:client-id

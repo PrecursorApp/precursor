@@ -7,6 +7,20 @@
 (defn all-issues [db]
   (map #(d/entity db (:e %)) (d/datoms db :aevt :issue/title)))
 
+(defn uncompleted-issues [db]
+  (map #(d/entity db %)
+       (d/q '{:find [[?t ...]]
+              :where [[?t :issue/title]
+                      (not [?t :issue/status :issue.status/completed])]}
+            db)))
+
+(defn completed-issues [db]
+  (map #(d/entity db %)
+       (d/q '{:find [[?t ...]]
+              :where [[?t :issue/title]
+                      [?t :issue/status :issue.status/completed]]}
+            db)))
+
 (defn all-votes [db]
   (map #(d/entity db (:e %)) (d/datoms db :aevt :vote/cust)))
 
@@ -61,6 +75,28 @@
                   :frontend/issue-id])
     (utils/update-when-in [:issue/document] :db/id)
     (utils/update-when-in [:issue/author] :cust/uuid)))
+
+(defn search-issues [db q]
+  (d/q '[:find ?e ?score
+         :in $ ?search
+         :where (or [(fulltext $ :issue/description ?search) [[?e _ _ ?score]]]
+                    [(fulltext $ :issue/title ?search) [[?e _ _ ?score]]])]
+       db q))
+
+(defn search-comments [db q]
+  (d/q '[:find ?e ?score
+         :in $ ?search
+         :where [(fulltext $ :comment/body ?search) [[?e _ _ ?score]]]]
+       db q))
+
+(defn find-issue-by-comment [db comment]
+  (d/entity db (:e (first (d/datoms db :vaet :issue/comments (:db/id comment) :issue/comments)))))
+
+(defn issue-search-read-api [db [e score]]
+  [(:frontend/issue-id (d/entity db e)) score])
+
+(defn comment-search-read-api [db [e score]]
+  [(:frontend/issue-id (find-issue-by-comment db {:db/id e})) score])
 
 (defn valid-issue? [?issue]
   (let [actual-keys (set (keys (d/touch ?issue)))

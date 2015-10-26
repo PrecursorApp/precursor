@@ -123,13 +123,6 @@
 
 (defmethod handle-message :issue/transaction [app-state message data]
   (let [datoms (:tx-data data)]
-    (let [cust-uuids (reduce (fn [acc d]
-                               (if (contains? #{:issue/author :comment/author :vote/cust} (:a d))
-                                 (conj acc (:v d))
-                                 acc))
-                             #{} datoms)]
-      (when (seq cust-uuids)
-        (put! (get-in @app-state [:comms :controls]) [:new-cust-uuids {:uuids cust-uuids}])))
     (d/transact! (:issue-db @app-state)
                  (let [adds (->> datoms
                               (filter :added)
