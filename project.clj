@@ -26,7 +26,7 @@
 
                  [clj-statsd "0.3.11"]
 
-                 [cider/cider-nrepl "0.8.2" :exclusions [org.clojure/tools.reader]]
+                 [cider/cider-nrepl "0.9.1" :exclusions [org.clojure/tools.reader]]
                  [clj-http "1.1.1" :exclusions [commons-codec
                                                 clj-tuple potemkin
                                                 org.jsoup/jsoup]]
@@ -49,9 +49,8 @@
                  [precursor/sente "1.4.1-a28061fff118ea3313f99ae6afb89f064c35c9b2"]
                  [clj-stacktrace "0.2.8"]
 
-                 [org.immutant/web "2.x.incremental.586"
-                  :exclusions [org.clojure/java.classpath
-                               org.jboss.logging/jboss-logging
+                 [org.immutant/web "2.1.0"
+                  :exclusions [org.jboss.logging/jboss-logging
                                org.slf4j/slf4j-nop
                                org.slf4j/slf4j-api
                                org.slf4j/slf4j-simple
@@ -129,8 +128,7 @@
                                                                 "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
                                                    :snapshots true}]
                            ["central" {:url "https://repo1.maven.org/maven2/" :snapshots false}]
-                           ["clojars" {:url "https://clojars.org/repo/"}]
-                           ["Immutant incremental builds" {:url "http://downloads.immutant.org/incremental/"}]]
+                           ["clojars" {:url "https://clojars.org/repo/"}]]
 
   :figwheel {:http-server-root "public"
              :server-port 3448

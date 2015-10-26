@@ -9,7 +9,8 @@
             [pc.utils :as utils]
             [pc.util.seq :refer (dissoc-in)])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]
-           [java.util.concurrent LinkedBlockingQueue]))
+           [java.util.concurrent LinkedBlockingQueue]
+           org.projectodd.wunderboss.web.async.HttpChannel))
 
 (defonce talaria-state (ref {:connections {}
                              :stats {}}))
@@ -43,7 +44,7 @@
   (:tal/ch-id (immutant/originating-request ch)))
 
 (defn ajax-channel? [channel]
-  (instance? org.projectodd.wunderboss.web.async.UndertowHttpChannel
+  (instance? org.projectodd.wunderboss.web.async.HttpChannel
              channel))
 
 (defn add-channel
