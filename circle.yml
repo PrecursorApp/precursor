@@ -12,7 +12,7 @@ deployment:
     branch: master
     commands:
       - lein run -m pc.assets/upload-manifest ${CIRCLE_SHA1}
-      # - curl -f https://precursorapp.com/admin/reload-assets
+      - curl -f https://precursorapp.com/admin/reload-assets
       - lein run -m pc.deploy/upload-slug ${CIRCLE_SHA1}
       - cp script/s3-dl.sh ~/bin # need this to be executable
       - AWS_ACCESS_KEY_ID=$DEPLOY_S3_ID AWS_SECRET_ACCESS_KEY=$DEPLOY_S3_SECRET ./script/download-latest-jar.sh > pc-standalone.jar
