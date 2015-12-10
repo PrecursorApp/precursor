@@ -20,6 +20,7 @@
             [pc.http.urls :as urls]
             [pc.models.access-request :as access-request-model]
             [pc.models.chat-bot :as chat-bot-model]
+            [pc.models.clip :as clip-model]
             [pc.models.cust :as cust-model]
             [pc.models.doc :as doc-model]
             [pc.models.invoice :as invoice-model]
@@ -44,7 +45,8 @@
     :sente-id (-> req :session :sente-id)
     :hostname (profile/hostname)}
    (when-let [cust (-> req :auth :cust)]
-     {:cust (cust-model/read-api cust)
+     {:cust (assoc (cust-model/read-api cust)
+                   :cust/clips (mapv clip-model/read-api (clip-model/find-important-by-cust (pcd/default-db) cust)))
       :admin? (contains? cust-model/admin-emails (:cust/email cust))})
    (when-let [team (-> req :team)]
      {:team (team-model/public-read-api team)})

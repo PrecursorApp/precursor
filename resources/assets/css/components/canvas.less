@@ -158,7 +158,7 @@
     stroke: @color_select;
     stroke-width: 2;
     &.selection {
-      stroke: @white;
+      stroke: @gray_lighter;
       stroke-width: 1;
     }
   }
@@ -399,4 +399,33 @@
 }
 #selected-arrow-point {
   fill: @color_select;
+}
+.clips {
+  opacity: @opacity_darker_gray;
+  .shape-layer {
+    stroke: @white;
+    stroke-dasharray: 2, 3;
+  }
+  .text-layer {
+    fill: @white;
+  }
+  .active {
+    transition: all 400ms ease-in-out;
+    fill: @color_select;
+    .shape-layer {
+      stroke: @color_select;
+    }
+    .text-layer {
+      fill: @color_select;
+    }
+  }
+  .inactive {
+    transition: all 400ms ease-in-out;
+  }
+}
+
+.clip-in-progress {
+  .layer-handle {
+    pointer-events: none;
+  }
 }

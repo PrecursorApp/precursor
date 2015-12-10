@@ -1,5 +1,6 @@
 (ns frontend.core
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
+            [cljs-http.client :as http]
             [cljs.reader :as reader]
             [clojure.string :as string]
             [datascript :as d]

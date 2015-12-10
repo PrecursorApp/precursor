@@ -52,10 +52,10 @@
                                                                                                 "Cmd+C."
                                                                                                 "Ctrl+C.")
                    " Star clips to pin them to the top. "]
-          [:div.clips
+          [:div.clips-list
            (for [clip clips]
              (html
-              [:div.clip.make
+              [:div.clip-item.make
                [:a.clip-preview {:role "button"
                                  :on-click #(cast! :clip-pasted clip)}
                 [:img.clip-thumbnail {:src (:clip/s3-url clip)}]]

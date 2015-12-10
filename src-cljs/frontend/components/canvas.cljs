@@ -477,6 +477,7 @@
     (common/svg-icon icon
                      {:svg-props {:height 16 :width 16
                                   :className "mouse-tool"
+                                  ;; TODO: should subscriber mouse position be a map?
                                   :x (- (first (:mouse-position subscriber)) (- 16))
                                   :y (- (last (:mouse-position subscriber)) 8)
                                   :key (:client-id subscriber)}
@@ -501,6 +502,7 @@
             (common/svg-icon (subscriber-cursor-icon (:tool subscriber))
                              {:svg-props {:height 16 :width 16
                                           :className "mouse-tool"
+                                          ;; TODO: should subscriber mouse position be a map?
                                           :x (- (first (:mouse-position subscriber)) 8)
                                           :y (- (last (:mouse-position subscriber)) 8)
                                           :key (:client-id subscriber)}
@@ -709,6 +711,58 @@
                                                  (om/set-state! owner :input-expanded false)
                                                  (.focus (om/get-node owner "target-input")))}
                               target))))))))))
+
+(defn pasted [{:keys [clips]} owner]
+  (reify
+    om/IDisplayName (display-name [_] "Pasted Layers")
+    om/IRender
+    (render [_]
+      (let [drawing (cursors/observe-drawing owner)
+            camera (cursors/observe-camera owner)
+            normalized-layer-datas (map layers/normalize-pasted-layer-data (concat (when (:layers drawing)
+                                                                                     [drawing])
+                                                                                 (map :layer-data (filter :clip/important? clips))))
+            scrolled-layer-index (:scrolled-layer drawing)
+            clip-scroll (layers/clip-scroll normalized-layer-datas scrolled-layer-index)
+            [mouse-x mouse-y] (cameras/snap-to-grid camera
+                                                    (:rx (:current-mouse-position drawing))
+                                                    (:ry (:current-mouse-position drawing)))]
+        (apply dom/g #js {:className "layers clips"
+                          :transform (str "translate(" mouse-x "," mouse-y ")")}
+               (map-indexed (fn [i layer-data]
+                              (let [active? (= i scrolled-layer-index)
+                                    scale (if active?
+                                            1
+                                            (layers/pasted-inactive-scale layer-data))
+                                    translate-x (- (layers/clip-offset normalized-layer-datas scrolled-layer-index i)
+                                                   (* scale (:min-x layer-data)))
+                                    translate-y (* scale
+                                                   (- (+ (/ (:height layer-data) 2)
+                                                         (:min-y layer-data))))
+                                    [translate-x translate-y] (cameras/snap-to-grid camera translate-x translate-y)
+                                    ]
+                                (apply dom/g #js {:className (if active?
+                                                               "active"
+                                                               "inactive")
+                                                  :transform (str "translate("
+                                                                  translate-x
+                                                                  ","
+                                                                  translate-y
+                                                                  ") "
+                                                                  "scale(" scale ")")
+                                                  :key i}
+                                       (map (fn [layer]
+                                              (let [layer (if (:force-even? layer)
+                                                            (layers/force-even layer)
+                                                            layer)
+                                                    layer (merge layer
+                                                                 {:layer/current-x (:layer/end-x layer)
+                                                                  :layer/current-y (:layer/end-y layer)
+                                                                  :className "layer-in-progress"})]
+                                                (svg-element (assoc layer :key (str (:db/id layer) "-clip")
+                                                                    :vectorEffect "non-scaling-stroke"))))
+                                            (:layers layer-data)))))
+                            normalized-layer-datas))))))
 
 (defn in-progress [{:keys [mouse-down]} owner]
   (reify
@@ -992,6 +1046,7 @@
             camera (cursors/observe-camera owner)
             in-progress? (settings/drawing-in-progress? app)
             relation-in-progress? (get-in app [:drawing :relation-in-progress?])
+            clip? (get-in app [:drawing :clip?])
             tool (get-in app state/current-tool-path)
             mouse-down? (get-in app [:mouse-down])
             right-click-learned? (get-in app state/right-click-learned-path)]
@@ -1016,7 +1071,9 @@
                                         " relation-in-progress ")
 
                                       (when-not right-click-learned?
-                                        "radial-not-learned"))
+                                        "radial-not-learned ")
+
+                                      (when clip? "clip-in-progress "))
                       :onTouchStart (fn [event]
                                       (let [touches (.-touches event)]
                                         (cond
@@ -1092,18 +1149,21 @@
                                      (.stopPropagation event))
                       :onWheel (fn [event]
                                  (let [dx (- (aget event "deltaX"))
-                                       dy (aget event "deltaY")]
-                                   (om/transact! camera (fn [c]
-                                                          (if (or (aget event "altKey")
-                                                                  ;; http://stackoverflow.com/questions/15416851/catching-mac-trackpad-zoom
-                                                                  ;; ctrl means pinch-to-zoom
-                                                                  (aget event "ctrlKey"))
-                                                            (cameras/set-zoom c (cameras/screen-event-coords event)
-                                                                              (partial + (* -0.002
-                                                                                            dy
-                                                                                            ;; pinch-to-zoom needs a boost to feel natural
-                                                                                            (if (.-ctrlKey event) 10 1))))
-                                                            (cameras/move-camera c dx (- dy))))))
+                                       dy (aget event "deltaY")
+                                       zoom? (or (aget event "altKey")
+                                                 ;; http://stackoverflow.com/questions/15416851/catching-mac-trackpad-zoom
+                                                 ;; ctrl means pinch-to-zoom
+                                                 (aget event "ctrlKey"))]
+                                   (if (and clip? (not zoom?))
+                                     (cast! :clip-scrolled {:dx dx :dy dy})
+                                     (om/transact! camera (fn [c]
+                                                            (if zoom?
+                                                              (cameras/set-zoom c (cameras/screen-event-coords event)
+                                                                                (partial + (* -0.002
+                                                                                              dy
+                                                                                              ;; pinch-to-zoom needs a boost to feel natural
+                                                                                              (if (.-ctrlKey event) 10 1))))
+                                                              (cameras/move-camera c dx (- dy)))))))
                                  (utils/stop-event event))}
                  (defs camera)
 
@@ -1132,8 +1192,15 @@
                              {:react-key "subscribers-layers"})
 
                    (om/build arrows app {:react-key "arrows"})
+                   (cond
+                     (or (get-in app [:drawing :in-progress?])
+                         (get-in app [:drawing :moving?]))
+                     (om/build in-progress (select-keys app [:mouse-down]) {:react-key "in-progress"})
 
-                   (om/build in-progress (select-keys app [:mouse-down]) {:react-key "in-progress"})))))))
+                     (get-in app [:drawing :clip?])
+                     (om/build pasted
+                               {:clips (get-in app [:cust :cust/clips])}
+                               {:react-key "pasted"}))))))))
 
 (defn needs-copy-paste-hack? []
   (not (ua-browser/isChrome)))

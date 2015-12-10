@@ -282,7 +282,5 @@
           ;; element is selected (see components.canvas)
           (or (= "_copy-hack" (.-id target))
               (not (contains? #{"input" "textarea"} (str/lower-case (.-tagName js/document.activeElement))))))
-    (when-let [layer-data (some->> (.getData (.-clipboardData e) "text")
-                            (parse-pasted))]
-      (let [canvas-size (utils/canvas-size)]
-        (put! (get-in app-state [:comms :controls]) [:layers-pasted (assoc layer-data :canvas-size canvas-size)])))))
+    (put! (get-in app-state [:comms :controls]) [:layers-pasted (some->> (.getData (.-clipboardData e) "text")
+                                                                  (parse-pasted))])))

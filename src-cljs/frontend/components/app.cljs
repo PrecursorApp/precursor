@@ -85,6 +85,8 @@
                                                      state/right-click-learned-path
                                                      [:drawing :in-progress?]
                                                      [:drawing :relation-in-progress?]
+                                                     [:drawing :moving?]
+                                                     [:drawing :clip?]
                                                      [:mouse-down]
                                                      [:layer-properties-menu]
                                                      [:radial]
@@ -92,7 +94,8 @@
                                                      [:cust-data]
                                                      [:document/id]
                                                      [:keyboard]
-                                                     [:keyboard-shortcuts]])
+                                                     [:keyboard-shortcuts]
+                                                     [:cust :cust/clips]])
                        {:react-key "canvas"})
 
              (om/build chat/chat (select-in app [state/chat-opened-path
