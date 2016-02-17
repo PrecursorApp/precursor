@@ -39,19 +39,13 @@
                                           :s3-key String
                                           :assets (IPersistentMap (t/Map String Asset))}))
 
-(def aws-access-key "AKIAJ6CLYJYRMXJGMMEQ")
-(def aws-secret-key "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")
-
-(def cdn-bucket "prcrsr-cdn")
 (def manifest-pointer-key "manifest-pointer")
-(def cdn-base-url "https://dtwdl3ecuoduc.cloudfront.net")
-(def cdn-distribution-id "E2IH3R3S5KPXM6")
 
 (defonce asset-manifest (atom {}))
 (defn asset-manifest-version [] (get @asset-manifest :code-version))
 
 (defn cdn-url [manifest-value]
-  (str cdn-base-url "/" (:s3-key manifest-value)))
+  (str (pc.profile/cdn-base-url) "/" (:s3-key manifest-value)))
 
 (defn manifest-asset-path [manifest path]
   (let [manifest-value (get-in manifest [:assets path])]
@@ -64,17 +58,22 @@
     (manifest-asset-path manifest path)
     path))
 
+;; XXX: test out with-cdn-credential
+(defmacro with-cdn-credential [& body]
+  `(amazonica.core/with-credential [(pc.profile/cdn-aws-access-key) (pc.profile/cdn-aws-secret-key)]
+     ~@body))
+
 ;; TODO: make the caller set credentials
 (defn fetch-specific-manifest [bucket key]
-  (amazonica.core/with-credential [aws-access-key aws-secret-key]
+  (with-cdn-credential
     (-> (s3/get-object :bucket-name bucket :key key)
       :object-content
       slurp
       edn/read-string)))
 
 (defn fetch-manifest []
-  (amazonica.core/with-credential [aws-access-key aws-secret-key]
-    (-> (s3/get-object :bucket-name cdn-bucket :key manifest-pointer-key)
+  (with-cdn-credential
+    (-> (s3/get-object :bucket-name (pc.profile/cdn-bucket) :key manifest-pointer-key)
       :object-content
       slurp
       edn/read-string
@@ -106,9 +105,9 @@
     (str (subs path 0 i) "-" md5 "." (subs path (inc i) (count path)))))
 
 (defn move-manifest-pointer [bucket key]
-  (amazonica.core/with-credential [aws-access-key aws-secret-key]
+  (with-cdn-credential
     (let [bytes (.getBytes (pr-str {:s3-bucket bucket :s3-key key}))]
-      (s3/put-object :bucket-name cdn-bucket
+      (s3/put-object :bucket-name (pc.profile/cdn-bucket)
                      :key manifest-pointer-key
                      :input-stream (java.io.ByteArrayInputStream. bytes)
                      :metadata {:content-length (count bytes)
@@ -128,7 +127,7 @@
   (let [source-map "resources/public/cljs/production/sourcemap-frontend.map"
         sources (-> source-map slurp json/decode (get "sources"))]
     (http/post "https://api.rollbar.com/api/1/sourcemap"
-               {:multipart (concat [{:name "access_token" :content rollbar/rollbar-prod-token}
+               {:multipart (concat [{:name "access_token" :content (pc.profile/rollbar-token)}
                                     {:name "version" :content sha1}
                                     {:name "minified_url" :content (manifest-asset-path manifest "/cljs/production/frontend.js")}
                                     {:name "source_map" :content (io/file source-map)}]
@@ -158,14 +157,14 @@
                   gzipped-bytes (gzip/gzip file)
                   tag (md5/byte-array->md5 gzipped-bytes)]]
       (let [existing (try+
-                      (s3/get-object-metadata :bucket-name cdn-bucket :key key)
+                      (s3/get-object-metadata :bucket-name (pc.profile/cdn-bucket) :key key)
                       (catch AmazonS3Exception e
                         (when-not (-> e amazonica.core/ex->map :status-code (= 403))
                           (throw+))))]
         (if (= tag (:etag existing))
           (log/infof "already uploaded %s to %s" (str file) key)
           (let [_ (log/infof "uploading %s to %s" (str file) key)
-                res (s3/put-object :bucket-name cdn-bucket
+                res (s3/put-object :bucket-name (pc.profile/cdn-bucket)
                                    :key key
                                    :input-stream (java.io.ByteArrayInputStream. gzipped-bytes)
                                    :metadata {:content-type (mime-type-of file)
@@ -180,7 +179,7 @@
     (when (seq @invalidations)
       (log/infof "invalidationg %s" @invalidations)
       (let [items (mapv #(str "/" %) @invalidations)
-            res (cloudfront/create-invalidation :distribution-id cdn-distribution-id
+            res (cloudfront/create-invalidation :distribution-id (pc.profile/cdn-distribution-id)
                                                 :invalidation-batch {:paths {:items items
                                                                              :quantity (count items)}
                                                                      :caller-reference (str (UUID/randomUUID))})]
@@ -189,7 +188,7 @@
 (defn upload-manifest [sha1]
   ;; TODO: this is dumb, we shouldn't write to the file
   (update-sourcemap-url assets-directory "/cljs/production/frontend.js")
-  (amazonica.core/with-credential [aws-access-key aws-secret-key]
+  (with-cdn-credential
     (upload-public)
     (let [manifest-key (make-manifest-key sha1)
           assets (reduce (fn [acc path]
@@ -199,7 +198,7 @@
                                  ;; TODO: figure out a better way to handle leading slashes
                                  key (assetify (subs path 1) md5)]
                              (log/infof "pushing %s to %s" file-path key)
-                             (s3/put-object :bucket-name cdn-bucket
+                             (s3/put-object :bucket-name (pc.profile/cdn-bucket)
                                             :key key
                                             :input-stream (java.io.ByteArrayInputStream. gzipped-bytes)
                                             :metadata {:content-type (mime-type-of file-path)
@@ -207,20 +206,20 @@
                                                        :content-md5 (md5/hex->base64 (md5/byte-array->md5 gzipped-bytes))
                                                        :content-encoding "gzip"
                                                        :cache-control "max-age=3155692"})
-                             (assoc acc path {:s3-key key :s3-bucket cdn-bucket})))
+                             (assoc acc path {:s3-key key :s3-bucket (pc.profile/cdn-bucket)})))
                          {} manifest-paths)
           manifest {:assets assets :code-version sha1}
           manifest-bytes (.getBytes (pr-str manifest)
                                     "UTF-8")]
       (log/infof "uploading manifest to %s: %s" manifest-key manifest)
-      (s3/put-object :bucket-name cdn-bucket
+      (s3/put-object :bucket-name (pc.profile/cdn-bucket)
                      :key manifest-key
                      :input-stream (java.io.ByteArrayInputStream. manifest-bytes)
                      :metadata {:content-length (count manifest-bytes)
                                 :content-type "application/edn"})
-      (validate-manifest! (fetch-specific-manifest cdn-bucket manifest-key))
+      (validate-manifest! (fetch-specific-manifest (pc.profile/cdn-bucket) manifest-key))
       (log/infof "moving manifest pointer to %s" manifest-key)
-      (move-manifest-pointer cdn-bucket manifest-key)
+      (move-manifest-pointer (pc.profile/cdn-bucket) manifest-key)
       (log/infof "uploading sourcemap to rollbar")
       (upload-sourcemap sha1 manifest))))
 
@@ -237,5 +236,5 @@
 
 (defn rollback-manifest [sha1]
   (let [manifest-key (make-manifest-key sha1)]
-    (validate-manifest! (fetch-specific-manifest cdn-bucket manifest-key))
-    (move-manifest-pointer cdn-bucket manifest-key)))
+    (validate-manifest! (fetch-specific-manifest (pc.profile/cdn-bucket) manifest-key))
+    (move-manifest-pointer (pc.profile/cdn-bucket) manifest-key)))

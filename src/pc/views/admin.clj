@@ -600,7 +600,7 @@
                 :value ""
                 :style "width: 500px"}]]
       [:input {:type "hidden" :name "bucket" :value bucket}]
-      [:input {:type "hidden" :name "GoogleAccessId" :value pc.gcs/access-id}]
+      [:input {:type "hidden" :name "GoogleAccessId" :value (pc.gcs/access-id)}]
       [:input {:type "hidden" :name "acl" :value acl}]
       [:input {:type "hidden" :name "policy" :value policy}]
       [:input {:type "hidden" :name "signature" :value (pc.gcs/sign policy)}]

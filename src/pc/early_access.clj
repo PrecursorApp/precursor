@@ -33,9 +33,7 @@
         datoms (:tx-data transaction)
         early-access-eid (d/entid db :flags/requested-early-access)]
     (when-let [datom (first (filter #(= early-access-eid (:v %)) datoms))]
-      (let [slack-url (if (profile/prod?)
-                        "https://hooks.slack.com/services/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"
-                        "https://hooks.slack.com/services/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")
+      (let [slack-url (profile/slack-customer-ping-url)
             cust (some->> datom :e (#(d/datoms db :eavt % :cust/uuid)) first :v (cust-model/find-by-uuid db))
             username (:cust/email cust "ping-bot")
             icon_url (str (:google-account/avatar cust))

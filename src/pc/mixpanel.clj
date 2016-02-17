@@ -21,20 +21,11 @@
 
 (def endpoint "http://api.mixpanel.com")
 
-(defn api-token []
-  (if (profile/prod-assets?)
-    "31395b0272995b2e3b9d065ae69f8c6d"
-    "7c5d0786b5c7543c1e837453fea0eb97"))
+(def api-token profile/mixpanel-api-token)
 
-(defn api-key []
-  (if (profile/prod-assets?)
-    "cde52301ffe66b6709c615c56e2c57cd"
-    "3b3e2e2fdaea93f13ac51c4b9e8a14f7"))
+(def api-key profile/mixpanel-api-key)
 
-(defn api-secret []
-  (if (profile/prod-assets?)
-    "b529765506c7b8a12cbefc4c57aceec3"
-    "bf5a36a9191db38c3beb6ccddc5d7340"))
+(def api-secret profile/mixpanel-api-secret)
 
 (defn distinct-id-from-cookie [ring-req]
   (some-> ring-req

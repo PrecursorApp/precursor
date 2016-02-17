@@ -4,6 +4,7 @@
             [clj-http.client :as http]
             [clj-time.core :as time]
             [clj-time.format]
+            [pc.profile :as profile]
             [pc.twilio :as twilio]
             [pc.rollbar :as rollbar]
             [pc.utils]
@@ -12,8 +13,8 @@
            [com.google.common.base Throwables]))
 
 (defn fetch-token []
-  (-> (http/post (str twilio/base-url "Tokens.json")
-                 {:basic-auth [twilio/sid twilio/auth-token]})
+  (-> (http/post (str (twilio/base-url) "Tokens.json")
+                 {:basic-auth [(profile/twilio-sid) (profile/twilio-auth-token)]})
     :body
     cheshire.core/decode
     (#(assoc % :expires (time/plus (clj-time.format/parse (get % "date_created"))

@@ -40,12 +40,12 @@
 (defn common-view-data [req]
   (merge
    {:CSRFToken csrf/*anti-forgery-token*
-    :google-client-id (google-auth/google-client-id)
+    :google-client-id (pc.profile/google-client-id)
     :sente-id (-> req :session :sente-id)
     :hostname (profile/hostname)}
    (when-let [cust (-> req :auth :cust)]
      {:cust (cust-model/read-api cust)
-      :admin? (contains? cust-model/admin-emails (:cust/email cust))})
+      :admin? (contains? (cust-model/admin-emails) (:cust/email cust))})
    (when-let [team (-> req :team)]
      {:team (team-model/public-read-api team)})
    (when-let [subdomain (-> req :subdomain)]

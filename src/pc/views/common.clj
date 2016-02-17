@@ -4,7 +4,7 @@
 
 (defn cdn-base-url []
   (if (prod-assets?)
-    pc.assets/cdn-base-url
+    (pc.profile/cdn-base-url)
     ""))
 
 (defn cdn-path [path]

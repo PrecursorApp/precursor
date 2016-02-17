@@ -103,7 +103,7 @@
 (defn save-png-to-s3 [db doc]
   (amazonica.core/with-credential [(profile/doc-image-s3-access-key)
                                    (profile/doc-image-s3-secret-key)
-                                   "us-west-2"]
+                                   (profile/s3-region)]
     (let [s3-key (png-s3-key db doc)
           result (s3/put-object :bucket-name (profile/doc-image-bucket)
                                 :key (png-s3-key db doc)
@@ -116,7 +116,7 @@
 (defn generate-s3-doc-png-url [s3-key]
   (amazonica.core/with-credential [(profile/doc-image-s3-access-key)
                                    (profile/doc-image-s3-secret-key)
-                                   "us-west-2"]
+                                   (profile/s3-region)]
     (str (s3/generate-presigned-url :bucket-name (profile/doc-image-bucket)
                                     :key s3-key
                                     :expiration (time/plus (time/now) (time/weeks 2))

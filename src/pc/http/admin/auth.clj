@@ -12,14 +12,6 @@
             [slingshot.slingshot :refer (try+ throw+)])
   (:import java.util.UUID))
 
-(def dev-google-client-secret "lmeZyXtnpsbRebwNifcDSIL3")
-(defn google-client-secret []
-  (or (System/getenv "ADMIN_GOOGLE_CLIENT_SECRET") dev-google-client-secret))
-
-(def dev-google-client-id "345098262227-gfao8a8ufsslfp2gjc4fh68vnmmfbmqr.apps.googleusercontent.com")
-(defn google-client-id []
-  (or (System/getenv "ADMIN_GOOGLE_CLIENT_ID") dev-google-client-id))
-
 (defn redirect-uri []
   (str (url/map->URL
         {:protocol (if (profile/force-ssl?) "https" "http")
@@ -33,7 +25,7 @@
   (url/map->URL {:protocol "https"
                  :host "accounts.google.com"
                  :path "/o/oauth2/auth"
-                 :query {:client_id (google-client-id)
+                 :query {:client_id (pc.profile/google-client-id)
                          :response_type "code"
                          :access_type "online"
                          :scope "email openid"
@@ -43,8 +35,8 @@
 (defn fetch-code-info [code]
   (-> (http/post "https://accounts.google.com/o/oauth2/token"
                  {:form-params {:code code
-                                :client_id (google-client-id)
-                                :client_secret (google-client-secret)
+                                :client_id (pc.profile/google-client-id)
+                                :client_secret (pc.profile/google-client-secret)
                                 :redirect_uri (redirect-uri)
                                 :grant_type "authorization_code"}})
       :body

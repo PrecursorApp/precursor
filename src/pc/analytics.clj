@@ -8,6 +8,8 @@
             [pc.models.cust :as cust-model]
             [pc.datomic :as pcd]))
 
+;; XXX: need to noop mixpanel if no key
+
 (defn track-signup [cust ring-req]
   (mixpanel/alias (mixpanel/distinct-id-from-cookie ring-req) (:cust/uuid cust))
   (mixpanel/track "$signup" (:cust/uuid cust)))
@@ -30,7 +32,7 @@
                                                ;; want ":_" to push it to top of list
                                                ":_admin_url" (admin-urls/cust-info-from-cust cust)
                                                :occupation (:cust/occupation cust)
-                                               :precursor-contact (first (shuffle cust-model/admin-emails))}})
+                                               :precursor-contact (first (shuffle (cust-model/admin-emails)))}})
     (mailchimp/maybe-list-subscribe cust)))
 
 (defn track-create-team [team]

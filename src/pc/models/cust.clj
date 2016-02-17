@@ -7,6 +7,7 @@
             [pc.datomic :as pcd]
             [pc.datomic.schema :as schema]
             [pc.models.flag :as flag-model]
+            [pc.profile]
             [pc.utils :as utils]))
 
 
@@ -20,7 +21,7 @@
                                      ;; probably a uuid type
                                      :cust/http-sesion-key String}))
 
-(def admin-emails #{"daniel@precursorapp.com" "danny@precursorapp.com"})
+(defn admin-emails [] (set (map :email (pc.profile/admins))))
 
 (defn all [db]
   (map #(d/entity db (:e %))
@@ -152,7 +153,5 @@
         ;; get the least-frequent color if they're all taken
         (ffirst (sort-by last (frequencies collab-colors))))))
 
-(def prcrsr-bot-email "prcrsr-bot@prcrsr.com")
-
 (defn prcrsr-bot [db]
-  (find-by-email db prcrsr-bot-email))
+  (find-by-email db (pc.profile/prcrsr-bot-email)))

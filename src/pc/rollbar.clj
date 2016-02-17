@@ -14,19 +14,9 @@
   "Rollbar API endpoint base URL"
   "https://api.rollbar.com/api/1/item/")
 
-(def rollbar-prod-token "cca6d7468e71428fb656f573e5012eaf")
-(def rollbar-dev-token "cac8b256153f4485938751ec3731c9e2")
-(defn token []
-  (if (profile/prod?)
-    rollbar-prod-token
-    rollbar-dev-token))
+(def token profile/rollbar-token)
 
-(def rollbar-prod-client-token "744b16251ecf48d285e4f5e9470bf32f")
-(def rollbar-dev-client-token "2eaa2b1406d945edaddad08619bbe1ac")
-(defn rollbar-client-token []
-  (if (profile/prod?)
-    rollbar-prod-client-token
-    rollbar-dev-client-token))
+(def rollbar-client-token profile/rollbar-client-token)
 
 (defn build-payload
   [access-token data-maps]

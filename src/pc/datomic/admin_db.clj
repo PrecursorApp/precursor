@@ -6,11 +6,7 @@
             [pc.profile]))
 
 (defn admin-uri []
-  (or
-   (pc.profile/admin-datomic-uri)
-   (if (pc.profile/prod?)
-     "datomic:ddb://us-west-2/prcrsr-datomic/prcrsr-admin"
-     "datomic:free://localhost:4334/prcrsr-admin")))
+  (pc.profile/admin-datomic-uri))
 
 (defn admin-conn [& {:keys [uri]}]
   (d/connect (or uri (admin-uri))))
@@ -32,13 +28,8 @@
                      :db/index true
                      :db/doc "Session key stored in the cookie that is used to find the user")])
 
-(def admins [{:admin/email "daniel@precursorapp.com"
-              :google-account/sub "114947378644788366578"}
-             {:admin/email "danny@precursorapp.com"
-              :google-account/sub "110827954799792358105"}])
-
 (defn ensure-admins []
-  (doseq [admin admins]
+  (doseq [admin (pc.profile/admins)]
     (when (empty? (d/datoms (admin-db) :avet :google-account/sub (:google-account/sub admin)))
       @(d/transact (admin-conn) [(merge admin {:db/id (d/tempid :db.part/user)})]))))
 

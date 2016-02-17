@@ -14,23 +14,6 @@
 ;;  clj-http: https://github.com/dakrone/clj-http
 ;;  Stripe API: https://stripe.com/docs/api/curl
 
-;; XXX: live keys from env vars
-(def dev-secret-key "sk_test_STWXh4dEaDLn3FFVJVnnZBQF")
-(defn secret-key []
-  (let [env-key (System/getenv "STRIPE_SECRET_KEY")]
-    (when (profile/prod?)
-      (assert env-key "Have to provide an STRIPE_SECRET_KEY in prod!"))
-    (or env-key
-        dev-secret-key)))
-
-(def dev-publishable-key "pk_test_EggMOrfTt155yQVE4IvpN9sy")
-(defn publishable-key []
-  (let [env-key (System/getenv "STRIPE_PUBLISHABLE_KEY")]
-    (when (profile/prod?)
-      (assert env-key "Have to provide an STRIPE_PUBLISHABLE_KEY in prod!"))
-    (or env-key
-        dev-publishable-key)))
-
 (def card-translation
   {"exp_year" :credit-card/exp-year
    "exp_month" :credit-card/exp-month
@@ -95,7 +78,7 @@
 (defn api-call [method endpoint & [params]]
   (-> (http/request (merge {:method method
                             :url (str base-url endpoint)
-                            :basic-auth [(secret-key) ""]}
+                            :basic-auth [(profile/stripe-secret-key) ""]}
                            params))
     :body
     json/decode))

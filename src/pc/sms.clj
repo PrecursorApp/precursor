@@ -17,10 +17,10 @@
                                             (rollbar/report-exception e))))
 
 (defn send-sms [phone-number body & {:keys [image-url]}]
-  (http/post (str twilio/base-url "Messages.json")
-             {:basic-auth [twilio/sid twilio/auth-token]
+  (http/post (str (twilio/base-url) "Messages.json")
+             {:basic-auth [(profile/twilio-sid) (profile/twilio-auth-token)]
               :throw-exceptions false
-              :form-params (merge {:From twilio/phone-number
+              :form-params (merge {:From (profile/twilio-phone-number)
                                    :To phone-number
                                    :Body body}
                                   (when (profile/register-twilio-callbacks?)
