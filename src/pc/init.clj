@@ -16,6 +16,7 @@
             pc.models.plan
             pc.nrepl
             pc.nts
+            pc.profile
             pc.repl
             pc.server
             pc.slack
@@ -26,7 +27,8 @@
   (:gen-class))
 
 (defn init-fns []
-  [#'pc.logging/init
+  [#'pc.profile/init
+   #'pc.logging/init
    #'pc.nrepl/init
    #'pc.statsd/init
    #'pc.datomic/init

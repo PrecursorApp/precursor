@@ -40,7 +40,8 @@
                           :key key))
 
 (defn upload-slug [sha1]
-  (amazonica.core/with-credential [(pc.profile/aws-access-key) (pc.profile/aws-secret-key)]
+  (amazonica.core/with-credential [(pc.profile/deploy-aws-access-key)
+                                   (pc.profile/deploy-aws-secret-key)]
     (let [key (deploy-slug-key sha1)]
       (log/infof "uploading %s" key)
       (s3/put-object :bucket-name (pc.profile/deploy-s3-bucket)
@@ -54,7 +55,8 @@
       (move-manifest (pc.profile/deploy-s3-bucket) key))))
 
 (defn rollback-manifest [sha1]
-  (amazonica.core/with-credential [(pc.profile/aws-access-key) (pc.profile/aws-secret-key)]
+  (amazonica.core/with-credential [(pc.profile/deploy-aws-access-key)
+                                   (pc.profile/deploy-aws-secret-key)]
     (let [key (deploy-slug-key sha1)]
       (validate-deploy-slug! (pc.profile/deploy-s3-bucket) key)
       (move-manifest (pc.profile/deploy-s3-bucket) key))))

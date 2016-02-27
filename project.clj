@@ -49,7 +49,7 @@
                  [precursor/sente "1.4.1-a28061fff118ea3313f99ae6afb89f064c35c9b2"]
                  [clj-stacktrace "0.2.8"]
 
-                 [org.immutant/web "2.1.0"
+                 [org.immutant/web "2.1.2"
                   :exclusions [org.jboss.logging/jboss-logging
                                org.slf4j/slf4j-nop
                                org.slf4j/slf4j-api
@@ -62,6 +62,8 @@
 
                  [schejulure "1.0.1"]
 
+                 [prismatic/schema "1.0.5"]
+
                  [org.clojars.pallix/batik "1.7.0"]
 
                  ;; needed to make lein pedantic happy
@@ -72,6 +74,7 @@
                  [com.novemberain/pantomime "2.6.0"]
 
                  [crypto-equality "1.0.0"]
+                 [mvxcvi/clj-pgp "0.8.3" :exclusions [riddley]]
 
                  [me.raynes/fs "1.4.6" :exclusions [org.apache.commons/commons-compress]]
 

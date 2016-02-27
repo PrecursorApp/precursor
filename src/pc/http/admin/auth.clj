@@ -25,7 +25,7 @@
   (url/map->URL {:protocol "https"
                  :host "accounts.google.com"
                  :path "/o/oauth2/auth"
-                 :query {:client_id (pc.profile/google-client-id)
+                 :query {:client_id (pc.profile/admin-google-client-id)
                          :response_type "code"
                          :access_type "online"
                          :scope "email openid"
@@ -35,8 +35,8 @@
 (defn fetch-code-info [code]
   (-> (http/post "https://accounts.google.com/o/oauth2/token"
                  {:form-params {:code code
-                                :client_id (pc.profile/google-client-id)
-                                :client_secret (pc.profile/google-client-secret)
+                                :client_id (pc.profile/admin-google-client-id)
+                                :client_secret (pc.profile/admin-google-client-secret)
                                 :redirect_uri (redirect-uri)
                                 :grant_type "authorization_code"}})
       :body
