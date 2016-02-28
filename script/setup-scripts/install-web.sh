@@ -119,19 +119,12 @@ download_s3 () {
 jar_key=$(download_s3 prcrsr-deploys manifest)
 download_s3 prcrsr-deploys $jar_key > pc-standalone.jar
 
-pkg install --yes gnupg
-
-download_s3 prcrsr-secrets web/production.sh.gpg > production.sh.gpg
-echo "${GPG_PASSPHRASE}" | gpg --batch --no-tty --decrypt --passphrase-fd 0 production.sh.gpg > production.sh
-
 chown -R precursor:precursor $prcrsr_dir
 
 ## TODO: move this into a script and upload a tarball, similar to datomic
 java_opts="-Xmx7g -Xms7g -Djava.net.preferIPv4Stack=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -Dfile.encoding=UTF-8"
 run_cmd="java -server -cp pc-standalone.jar ${java_opts} clojure.main --main pc.init"
 
-. production.sh
-
-export MEMCACHED_SERVER="10.99.0.104:11211"
+export PRODUCTION=true
 
 daemon -u precursor -p precursor.pid $run_cmd >> daemon.log 2>&1
