@@ -1,6 +1,7 @@
 (ns pc.profile
   "Keeps track of env-specific settings"
-  (:require [clojure.tools.reader.edn :as edn]
+  (:require [clj-pgp.message :as pgp]
+            [clojure.tools.reader.edn :as edn]
             [clojure.java.io :as io]
             [schema.core :as s]))
 
@@ -149,12 +150,12 @@
    :s3-region "us-west-2"})
 
 (defn profile-source
-  "Returns path to encrypted profile edn file"
+  "Returns path to encrypted profile edn file. Should match ProfileSchema."
   []
   (or (System/getenv "PROFILE_SOURCE")
       (if (prod?)
         "secrets/production-profile.edn.gpg"
-        "secrets/development-profile.edn")))
+        "secrets/development-profile.edn.gpg")))
 
 (defonce secrets-atom (atom {}))
 
@@ -162,21 +163,46 @@
   (get @secrets-atom k (when (not (prod?)) (get dev-defaults k))))
 
 (defn safe-validate
-  "Validate without logging values"
+  "Validate schema without logging values"
   [schema value]
   (try
     (s/validate schema value)
     (catch clojure.lang.ExceptionInfo e
       (throw (ex-info (.getMessage e) (dissoc (ex-data e) :value))))))
 
+(defn gpg-passphrase []
+  (System/getenv "GPG_PASSPHRASE"))
+
+(defn interactively-read-passphrase [msg]
+  (assert (not (prod?)) "Can't run interactive code in prod")
+  (print msg)
+  (flush)
+  (read-line))
+
+(defn read-secrets [passphrase resource]
+  (-> resource
+      slurp
+      (pgp/decrypt passphrase)
+      edn/read-string
+      (#(safe-validate ProfileSchema %))))
+
 (defn load-secrets []
-  (->> ;(io/resource (profile-source))
-   (str "resources/" (profile-source))
-   slurp
-   edn/read-string
-   (safe-validate ProfileSchema)
-   (reset! secrets-atom))
-  )
+  (assert (gpg-passphrase) "Must export GPG_PASSPHRASE")
+  (->> (io/resource (profile-source))
+       (read-secrets (gpg-passphrase))
+       (reset! secrets-atom)))
+
+(defn encrypt-secrets [passphrase secrets]
+  (pgp/encrypt (pr-str secrets)
+               passphrase
+               :format :utf8
+               :cipher :aes-256
+               :armor true))
+
+(defn write-secrets! [secrets file]
+  (safe-validate ProfileSchema secrets)
+  (let [passphrase (interactively-read-passphrase (format "Enter gpg passphrase for %s" file))]
+    (spit file (encrypt-secrets passphrase secrets))))
 
 ;; a bit hacky, but it lets us call `pc.profile/compile-less?`, which
 ;; helps prevent typos, is easier to refactor, and is more concise

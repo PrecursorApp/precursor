@@ -27,9 +27,9 @@
   (:gen-class))
 
 (defn init-fns []
-  [#'pc.profile/init
+  [#'pc.nrepl/init
+   #'pc.profile/init
    #'pc.logging/init
-   #'pc.nrepl/init
    #'pc.statsd/init
    #'pc.datomic/init
    #'pc.datomic.schema/init
