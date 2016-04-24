@@ -120,7 +120,7 @@
     (doseq [cust-group (partition-all 100 cust-uuids)]
       (Thread/sleep 100)
       (doseq [cust-uuid cust-group
-              :let [contact (first (shuffle cust-model/admin-emails))]]
+              :let [contact (first (shuffle (cust-model/admin-emails)))]]
         (log/infof "setting contact to %s for %s" contact cust-uuid)
         (mixpanel/engage cust-uuid {:$ip 0
                                     :$ignore_time true

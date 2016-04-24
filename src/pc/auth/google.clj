@@ -11,18 +11,6 @@
             [pc.util.jwt :as jwt]
             [slingshot.slingshot :refer (try+ throw+)]))
 
-(def dev-google-client-secret "r5t9LYCCJA3SaHnsDNg-dRsF")
-(defn google-client-secret []
-  (or (System/getenv "GOOGLE_CLIENT_SECRET") dev-google-client-secret))
-
-(def dev-google-client-id "572837751423-3ei6f9eg2ml3r7oadufjns94b5c91hle.apps.googleusercontent.com")
-(defn google-client-id []
-  (or (System/getenv "GOOGLE_CLIENT_ID") dev-google-client-id))
-
-(def dev-google-api-key "AIzaSyBWzHPN4uvs8eJl2aXmo75YgTPJUDZzbf0")
-(defn google-api-key []
-  (or (System/getenv "GOOGLE_API_KEY") dev-google-api-key))
-
 (defn redirect-uri []
   (str (url/map->URL
         {:protocol (if (profile/force-ssl?) "https" "http")
@@ -35,8 +23,8 @@
 (defn fetch-code-info [code]
   (-> (http/post "https://accounts.google.com/o/oauth2/token"
                  {:form-params {:code code
-                                :client_id (google-client-id)
-                                :client_secret (google-client-secret)
+                                :client_id (profile/google-client-id)
+                                :client_secret (profile/google-client-secret)
                                 :redirect_uri (redirect-uri)
                                 :grant_type "authorization_code"}})
       :body
@@ -57,7 +45,7 @@
 (defn user-info-from-sub [sub]
   (try+
     (let [resp (-> (http/get (format "https://www.googleapis.com/plus/v1/people/%s" sub)
-                             {:query-params {:key (google-api-key)}})
+                             {:query-params {:key (profile/google-api-key)}})
                  :body
                  json/decode)]
       {:first-name (get-in resp ["name" "givenName"])
@@ -89,7 +77,7 @@
     (str (url/map->URL {:protocol "https"
                         :host "accounts.google.com"
                         :path "/o/oauth2/auth"
-                        :query (merge {:client_id (google-client-id)
+                        :query (merge {:client_id (profile/google-client-id)
                                        :response_type "code"
                                        :access_type "online"
                                        :scope (str/join " " scopes)

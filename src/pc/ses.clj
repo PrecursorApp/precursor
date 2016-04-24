@@ -30,9 +30,9 @@
    and optional keys :content-type, :file-name, and :description"
   [{:keys [from to cc bcc subject text html attachments] :as props}]
   (when-let [to-addresses (seq (filter-addresses [to]))]
-    (postal/send-message {:user smtp-user
-                          :pass smtp-pass
-                          :host "email-smtp.us-west-2.amazonaws.com"
+    (postal/send-message {:user (profile/ses-smtp-user)
+                          :pass (profile/ses-smtp-pass)
+                          :host (profile/ses-smtp-host)
                           :port 587
                           :tls true}
                          {:from from
@@ -54,7 +54,9 @@
 ;; keeping for the future--about 4x as fast as postal, but no support for attachments
 ;; Just need to figure out how to construct a raw message
 (defn send-message-ses [{:keys [from to cc bcc subject text html] :as props}]
-  (amazonica.core/with-credential [access-key-id secret-access-key "us-west-2"]
+  (amazonica.core/with-credential [(profile/ses-access-key-id)
+                                   (profile/ses-secret-access-key)
+                                   (profile/s3-region)]
     (when-let [to-addresses (seq (filter-addresses [to]))]
       (ses/send-email :destination (merge {:to-addresses (vec to-addresses)
                                            :bcc-addresses (concat (when (profile/bcc-audit-log?)

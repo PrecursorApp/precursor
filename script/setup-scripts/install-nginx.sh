@@ -5,7 +5,7 @@
 set -e
 set -x
 
-private_ip="10.99.0.103"
+private_ip="10.99.0.123"
 
 # Don't need this for ec2
 # # set up private network

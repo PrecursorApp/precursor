@@ -59,7 +59,7 @@
   "Adds a precursor bot"
   [conn]
   @(d/transact conn [{:db/id (d/tempid :db.part/user)
-                      :cust/email "prcrsr-bot@prcrsr.com"
+                      :cust/email (profile/prcrsr-bot-email)
                       :cust/name "prcrsr"
                       :cust/uuid (d/squuid)}]))
 
@@ -121,7 +121,7 @@
   (let [prcrsr-bot-id (d/q '{:find [?t .]
                              :in [$ ?email]
                              :where [[?t :cust/email ?email]]}
-                           (d/db conn) "prcrsr-bot@prcrsr.com")]
+                           (d/db conn) (profile/prcrsr-bot-email))]
     @(d/transact conn [[:db/add prcrsr-bot-id :cust/color-name :color.name/green]])))
 
 (defn add-team-plans [conn]
@@ -180,7 +180,7 @@
 (defn ensure-default-clip-in-s3 []
   (amazonica.core/with-credential [(profile/clipboard-s3-access-key)
                                    (profile/clipboard-s3-secret-key)
-                                   "us-west-2"]
+                                   (profile/s3-region)]
     (s3/put-object :bucket-name (profile/clipboard-bucket)
                    :key "iphone"
                    :input-stream (io/input-stream (io/resource "clips/iphone.svg"))

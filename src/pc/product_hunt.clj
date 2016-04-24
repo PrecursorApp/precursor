@@ -4,18 +4,17 @@
             [clojure.core.memoize :as memo]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
-            [hiccup.core :as h]))
+            [hiccup.core :as h]
+            [pc.profile]))
 
 (def ph-comments
   [:i {:class "icon-ph-comments"}
    [:svg {:class "iconpile" :viewBox "0 0 100 100"}
     [:path {:class "fill-ph-comments" :d "M11.7,70C4.4,63.3,0,54.7,0,45.4C0,24.2,22.4,7.1,50,7.1 s50,17.1,50,38.3S77.6,83.6,50,83.6c-6.9,0-13.4-1.1-19.4-3C20.9,85.9,1.9,92.9,1.9,92.9S8.2,78.6,11.7,70z"}]]])
 
-(def api-token "72790c16bb982b444377523ed715075101240cb3370f642def65551b39bf1270")
-
 (defn get-post-info* [post-id]
   (-> (http/get (str "https://api.producthunt.com/v1/posts/" post-id)
-                {:headers {"Authorization" (str "Bearer " api-token)
+                {:headers {"Authorization" (str "Bearer " (pc.profile/product-hunt-api-token))
                            "Content-Type" "application/json"}
                  :throw-exceptions false
                  :socket-timeout 500

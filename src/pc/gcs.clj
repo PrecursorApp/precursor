@@ -4,12 +4,13 @@
             [clj-time.core :as time]
             [clj-time.format :as time-format]
             [clojure.java.io :as io]
+            [pc.profile]
             [pc.util.base64 :as base64]
             [hiccup.core :as h])
   (:import [java.security KeyFactory PrivateKey Signature KeyStore]
            [java.security.spec PKCS8EncodedKeySpec]))
 
-(def access-id "71654808078-dcirhrsho18qr9hkkgf9ditslc3kfron@developer.gserviceaccount.com")
+(defn access-id [] (pc.profile/gcs-access-id))
 
 (defn string-to-sign [{:keys [verb content-md5 content-type expiration extension-headers resource]}]
   {:pre [verb expiration resource]}

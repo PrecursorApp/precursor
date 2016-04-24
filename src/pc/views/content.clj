@@ -120,9 +120,9 @@
                                          (assoc :cdn-base-url (common/cdn-base-url)
                                                 :manifest-version (pc.assets/asset-manifest-version)
                                                 :page-start (java.util.Date.)
-                                                :stripe-publishable-key (stripe/publishable-key)))))
+                                                :stripe-publishable-key (pc.profile/stripe-publishable-key)))))
       (when (prod-assets?)
-        scripts/google-analytics)
+        (scripts/google-analytics))
       (scripts/rollbar (pc.profile/env) (pc.assets/asset-manifest-version))
       (scripts/mixpanel)]
      [:body

@@ -69,7 +69,7 @@
             icon_url (str (:google-account/avatar cust))]
 
         (cond
-          (contains? cust-model/admin-emails (:cust/email cust))
+          (contains? (cust-model/admin-emails) (:cust/email cust))
           (log/info "Not sending ping for admin")
 
           (re-find #"(?i)@prcrsr|@danny|@daniel" (:v chat-datom))

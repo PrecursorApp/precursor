@@ -78,8 +78,6 @@
             (cust/find-by-google-sub (pcd/default-db) (:sub user-info))
             (throw e)))))))
 
-;; Note: this is hardcoded to prcrsr.com for a good reason
-
 (defn cust-permission [db doc cust]
   (when cust
     (cond (and (:document/creator doc)

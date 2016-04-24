@@ -32,7 +32,6 @@
 
 (defn schema []
   [
-
    (attribute :layer/name
               :db.type/string
               :db/doc "Layer name"

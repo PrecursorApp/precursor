@@ -3,10 +3,15 @@
 set -e
 set -x
 
-private_ip="10.99.0.102"
+if [ -z "$LICENSE" ]; then
+    echo "Need to export Datomic license as LICENSE"
+    exit 1
+fi
+
+private_ip="10.99.0.122"
 # Using dynamodb on ec2
 # postgres_ip="10.99.0.101"
-license_key="KXNTf7x4F/SqToo6epEBbq9M/DQnxj6CCyF4v8Xw4VEQ5z0fZeZWAniOD+6dqOjlzaBcX1qiYfkHdYZDE9WSs358PNk6kv70qzk5Ei/JWEs50sRAAQWiHyAvZb4thMKUoK2ptLfdbs91pSj2c5meSEzymmpLE6L+W6K9R+hw2wNJy1oV56oPm6q+2emcFxtpPd9rjwMHnFUsu61mJ3+ROuMDCeoFd+XPLRvuZFTfWaGI2Swgg3CxgUC/S3v5QCsDOA9yjqXcM7wyRoakcbhToBHtKG9c6zkJO/zOr0KRxO1fRFlIyG6JXTv6LidJktOGnksKkmIO8d8i/FndVLywig=="
+license_key="${LICENSE}"
 
 datomic_version=datomic-pro-0.9.5130
 datomic_bucket_url="https://s3-us-west-2.amazonaws.com/prcrsr-datomic"

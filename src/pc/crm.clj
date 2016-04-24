@@ -5,18 +5,16 @@
             [cheshire.core :as json]
             [clojure.string :as str]
             [datomic.api :as d]
-            [pc.auth.google :refer [google-api-key]]
             [pc.datomic :as pcd]
             [pc.http.admin.urls :as admin-urls]
             [pc.models.cust :as cust-model]
             [pc.profile :as profile]
             [pc.utils :as utils]))
 
-(def dribbble-custom-search-id "013431191107512616255:bbjymp3bqby")
 (defn search-dribbble [query]
   (-> (http/get "https://www.googleapis.com/customsearch/v1"
-                {:query-params {:key (google-api-key)
-                                :cx dribbble-custom-search-id
+                {:query-params {:key (profile/google-api-key)
+                                :cx (profile/dribbble-custom-search-id)
                                 :q query}})
     :body
     json/decode
