@@ -186,6 +186,7 @@
         (log/infof "created invalidation %s" res)))))
 
 (defn upload-manifest [sha1]
+  (pc.profile/init) ;; called as a task, so secrets may be empty
   ;; TODO: this is dumb, we shouldn't write to the file
   (update-sourcemap-url assets-directory "/cljs/production/frontend.js")
   (with-cdn-credential

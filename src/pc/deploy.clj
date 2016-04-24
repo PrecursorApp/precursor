@@ -40,6 +40,7 @@
                           :key key))
 
 (defn upload-slug [sha1]
+  (pc.profile/init) ;; called as a task, so secrets may be empty
   (amazonica.core/with-credential [(pc.profile/deploy-aws-access-key)
                                    (pc.profile/deploy-aws-secret-key)]
     (let [key (deploy-slug-key sha1)]
