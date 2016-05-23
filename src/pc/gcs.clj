@@ -1,13 +1,15 @@
 (ns pc.gcs
   "Google Cloud Storage"
   (:require [cheshire.core :as json]
+            [clj-pgp.message :as pgp]
             [clj-time.core :as time]
             [clj-time.format :as time-format]
             [clojure.java.io :as io]
             [pc.profile]
             [pc.util.base64 :as base64]
             [hiccup.core :as h])
-  (:import [java.security KeyFactory PrivateKey Signature KeyStore]
+  (:import [java.io ByteArrayInputStream]
+           [java.security KeyFactory PrivateKey Signature KeyStore]
            [java.security.spec PKCS8EncodedKeySpec]))
 
 (defn access-id [] (pc.profile/gcs-access-id))
@@ -30,8 +32,10 @@
                               {:bucket bucket}]})))
 
 (defn get-key []
-  (let [ks (KeyStore/getInstance "PKCS12")]
-    (.load ks (io/input-stream (io/resource "google-key.p12")) (char-array "notasecret"))
+  (let [ks (KeyStore/getInstance "PKCS12")
+        key-stream (ByteArrayInputStream. (pgp/decrypt (slurp (io/resource "google-key.p12.gpg"))
+                                                       (pc.profile/gcs-passphrase)))]
+    (.load ks key-stream (char-array "notasecret"))
     (.getKey ks "privatekey" (char-array "notasecret"))))
 
 (defn sign [string-to-sign]

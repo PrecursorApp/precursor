@@ -1,9 +1,12 @@
 (ns pc.profile
   "Keeps track of env-specific settings"
   (:require [clj-pgp.message :as pgp]
+            [clojure.data]
             [clojure.tools.reader.edn :as edn]
             [clojure.java.io :as io]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [clojure.set :as set]
+            [clojure.tools.logging :as log]))
 
 (defn prod? []
   (= "true" (System/getenv "PRODUCTION")))
@@ -95,6 +98,7 @@
    :google-client-id s/Str
    :google-client-secret s/Str
    :gcs-access-id s/Str
+   (s/optional-key :gcs-passphrase) s/Str
 
    :admin-google-client-id s/Str
    :admin-google-client-secret s/Str
@@ -170,8 +174,10 @@
     (catch clojure.lang.ExceptionInfo e
       (throw (ex-info (.getMessage e) (dissoc (ex-data e) :value))))))
 
+(def ^:dynamic *passphrase* nil)
+
 (defn gpg-passphrase []
-  (System/getenv "GPG_PASSPHRASE"))
+  (or *passphrase* (System/getenv "GPG_PASSPHRASE")))
 
 (defn interactively-read-passphrase [msg]
   (assert (not (prod?)) "Can't run interactive code in prod")
@@ -186,9 +192,9 @@
       edn/read-string
       (#(safe-validate ProfileSchema %))))
 
-(defn load-secrets []
+(defn load-secrets [source]
   (assert (gpg-passphrase) "Must export GPG_PASSPHRASE")
-  (->> (io/resource (profile-source))
+  (->> (io/resource (or source (profile-source)))
        (read-secrets (gpg-passphrase))
        (reset! secrets-atom)))
 
@@ -201,16 +207,30 @@
 
 (defn write-secrets! [secrets file]
   (safe-validate ProfileSchema secrets)
-  (let [passphrase (interactively-read-passphrase (format "Enter gpg passphrase for %s" file))]
+  (let [passphrase (gpg-passphrase)]
     (spit file (encrypt-secrets passphrase secrets))))
+
+(defn update-secrets-file! [file update-fn & args]
+  (let [secrets (read-secrets (gpg-passphrase) file)
+        new-secrets (apply update-fn secrets args)
+        [only-old only-new _] (clojure.data/diff secrets new-secrets)
+        added (set/difference (set (keys only-new))
+                              (set (keys only-old)))
+        deleted (set/difference (set (keys only-old))
+                                (set (keys only-new)))
+        changed (set/intersection (set (keys only-old))
+                                  (set (keys only-new)))]
+    (log/infof "Added %s, deleted %s, changed %s" added deleted changed)
+    (write-secrets! new-secrets file)))
 
 ;; a bit hacky, but it lets us call `pc.profile/compile-less?`, which
 ;; helps prevent typos, is easier to refactor, and is more concise
 ;; Downside is that jump-to-definition doesn't work :/.
 ;; A `get-config` macro that checks for the value in the schema at compile-time
 ;; may have been a better choice.
-(doseq [k (keys ProfileSchema)]
+(doseq [k (keys ProfileSchema)
+        :let [k (if (keyword? k) k (:k k))]]
   (intern *ns* (symbol (name k)) (fn [] (get-secret k))))
 
 (defn init []
-  (load-secrets))
+  (load-secrets nil))
