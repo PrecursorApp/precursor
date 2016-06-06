@@ -61,12 +61,11 @@ echo 'ntpd_enable="YES"' >> /etc/rc.conf
 echo 'ntpd_sync_on_start="YES"' >> /etc/rc.conf
 service ntpd start
 
-# swap's handled for us
-# # swap
-# dd if=/dev/zero of=/usr/swap0 bs=1m count=8192
-# chmod 600 /usr/swap0
-# echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
-# swapon -aqL
+# swap
+dd if=/dev/zero of=/usr/swap0 bs=1m count=4096
+chmod 600 /usr/swap0
+echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
+swapon -aqL
 
 # freebsd-update
 freebsd-update fetch
@@ -122,7 +121,7 @@ download_s3 prcrsr-deploys $jar_key > pc-standalone.jar
 chown -R precursor:precursor $prcrsr_dir
 
 ## TODO: move this into a script and upload a tarball, similar to datomic
-java_opts="-Xmx7g -Xms7g -Djava.net.preferIPv4Stack=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -Dfile.encoding=UTF-8"
+java_opts="-Xmx4g -Xms4g -Djava.net.preferIPv4Stack=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -Dfile.encoding=UTF-8"
 run_cmd="java -server -cp pc-standalone.jar ${java_opts} clojure.main --main pc.init"
 
 export PRODUCTION=true

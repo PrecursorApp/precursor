@@ -8,7 +8,7 @@ if [ -z "$LICENSE" ]; then
     exit 1
 fi
 
-private_ip="10.99.0.122"
+private_ip="10.99.0.105"
 # Using dynamodb on ec2
 # postgres_ip="10.99.0.101"
 license_key="${LICENSE}"
@@ -43,12 +43,11 @@ echo 'ntpd_enable="YES"' >> /etc/rc.conf
 echo 'ntpd_sync_on_start="YES"' >> /etc/rc.conf
 service ntpd start
 
-# swap is already handled
-# # swap
-# dd if=/dev/zero of=/usr/swap0 bs=1m count=2048
-# chmod 600 /usr/swap0
-# echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
-# swapon -aqL
+# swap
+dd if=/dev/zero of=/usr/swap0 bs=1m count=4096
+chmod 600 /usr/swap0
+echo 'md99 none swap sw,file=/usr/swap0,late 0 0' >> /etc/fstab
+swapon -aqL
 
 # freebsd-update
 freebsd-update fetch
