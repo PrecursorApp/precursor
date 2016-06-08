@@ -17,7 +17,7 @@
                  [slingshot "0.12.2"]
                  [hiccup "1.0.5"]
                  ;; pdfs
-                 [clj-pdf "2.2.1"]
+                 [clj-pdf "2.1.6" :exclusions [xml-apis]]
 
                  [org.clojure/tools.logging "0.3.1"]
                  [log4j "1.2.17"]
