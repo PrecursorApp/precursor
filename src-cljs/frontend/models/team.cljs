@@ -1,5 +1,5 @@
 (ns frontend.models.team
-  (:require [datascript :as d]
+  (:require [datascript.core :as d]
             [frontend.datascript :as ds]))
 
 (defn find-by-subdomain [db subdomain]

@@ -3,7 +3,7 @@
             [cljs-time.format :as time-format]
             [clojure.set :as set]
             [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.colors :as colors]
             [frontend.cursors :as cursors]
             [frontend.async :refer [put!]]
@@ -212,7 +212,7 @@
             doc (doc-model/find-by-id @db (:document/id app))
             chat-bot (:document/chat-bot doc)
             dummy-chat {:chat/body [:span
-                                    "Welcome, try the "
+                                    "Welcome! Try the "
                                     [:a {:href "https://precursorapp.com/document/17592197661008" :target "_blank"}
                                      "how-to"]
                                     " doc, see other users "
@@ -220,11 +220,8 @@
                                      "make"]
                                     " things, "
                                     [:a {:href (urls/overlay-path doc "sharing")}
-                                     "invite a friend"]
-                                    " or ping "
-                                    [:a {:on-click #(cast! :chat-user-clicked {:id-str (:chat-bot/name chat-bot)}) :role "button"}
-                                     (str "@" (:chat-bot/name chat-bot))]
-                                    " for help!"]
+                                     "or invite a friend"]
+                                    ". Use the chat to talk to other people in the doc."]
                         :cust/uuid (:cust/uuid state/subscriber-bot)
                         :server/timestamp (js/Date.)}]
         (html

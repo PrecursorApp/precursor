@@ -1,7 +1,7 @@
 (ns frontend.components.plan
   (:require [cljs-time.format :as time-format]
             [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.components.common :as common]
             [frontend.components.inspector :as inspector]
             [frontend.datascript :as ds]

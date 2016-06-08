@@ -1,6 +1,6 @@
 (ns frontend.components.document-access
   (:require [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]

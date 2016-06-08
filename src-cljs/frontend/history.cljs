@@ -74,7 +74,7 @@
                    #(if (= (.getToken history-imp)
                            (.-_current_token history-imp))
                       (utils/mlog "Ignoring duplicate dispatch event to" (.getToken history-imp))
-                      (.onHistoryEvent_ history-imp)))))
+                      (.onHistoryEvent_ history-imp %)))))
 
 (defn path-matches?
   "True if the two tokens are the same except for the fragment"

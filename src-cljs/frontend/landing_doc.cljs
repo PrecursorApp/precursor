@@ -4,7 +4,7 @@
   (:require [cljs.core.async :as async]
             [cljs.reader :as reader]
             [cljs-http.client :as http]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.utils :as utils])
   (:require-macros [cljs.core.async.macros :as am :refer [go go-loop alt!]]))
 

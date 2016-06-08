@@ -1,5 +1,5 @@
 (ns frontend.components.drawing
-  (:require [datascript :as d]
+  (:require [datascript.core :as d]
             [frontend.camera :as cameras]
             [frontend.db :as fdb]
             [frontend.db.trans :as trans]

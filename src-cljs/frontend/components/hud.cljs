@@ -1,7 +1,7 @@
 (ns frontend.components.hud
   (:require [cljs.core.async :as async :refer [put!]]
             [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.auth :as auth]
             [frontend.colors :as colors]
             [frontend.components.common :as common]

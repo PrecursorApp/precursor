@@ -4,7 +4,7 @@
             [cljs-time.core :as time]
             [clojure.set :as set]
             [clojure.walk :as walk]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]
             [frontend.models.chat :as chat-model]

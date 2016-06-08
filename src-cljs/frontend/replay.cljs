@@ -1,7 +1,7 @@
 (ns frontend.replay
   (:require [cljs.core.async :as async :refer (<! >! put! chan)]
             [clojure.set :as set]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.datascript :as ds]
             [frontend.db :as fdb]
             [frontend.sente :as sente]

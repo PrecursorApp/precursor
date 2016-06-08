@@ -2,7 +2,7 @@
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close!]]
             [cljs.reader :as reader]
             [clojure.string :as string]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.ab :as ab]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]

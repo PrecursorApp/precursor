@@ -3,7 +3,7 @@
             [cljs-http.client :as http]
             [cljs.reader :as reader]
             [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.camera :as cameras]

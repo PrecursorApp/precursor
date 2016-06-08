@@ -5,7 +5,7 @@
             [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.analytics :as analytics]
             [frontend.analytics.mixpanel :as mixpanel]
             [frontend.async :refer [put!]]
@@ -84,7 +84,10 @@
                       (utils/update-when-in [:layer/points-to] select-keys [:db/id]))
                    (get-in state [:drawing :layers])))
     :relation (when (get-in state [:drawing :relation :layer])
-                (get-in state [:drawing :relation]))
+                (-> state
+                    (get-in [:drawing :relation])
+                    ;; TODO: want something more general for the refs problem
+                    (update :layer dissoc :layer/points-to)))
     :recording (get-in state (state/self-recording-path state))
     :chat-body (get-in state [:chat :body])}
    (when (and x y)
@@ -1881,7 +1884,9 @@
 (defmethod control-event :media-stream-volume
   [browser-state message {:keys [stream-id volume]} state]
   (let [smoothed-volume (* 10 (js/Math.floor (/ volume 10)))]
-    (assoc-in state (conj (state/self-recording-path state) :media-stream-volume) smoothed-volume)))
+    (if (get-in state (state/self-recording-path state))
+      (assoc-in state (conj (state/self-recording-path state) :media-stream-volume) smoothed-volume)
+      state)))
 
 (defmethod post-control-event! :media-stream-volume
   [browser-state message _ previous-state current-state]

@@ -1,6 +1,6 @@
 (ns frontend.db
   (:require [cljs.core.async :as async :refer [>! <! alts! chan sliding-buffer close! put!]]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.datascript :as ds]
             [frontend.db.trans :as trans]
             [frontend.sente :as sente]
@@ -15,8 +15,15 @@
                                    :db/type :db.type/ref}
                  :error/id {:db/unique :db.unique/identity}
                  :permission/permits {:db/cardinality :db.cardinality/many}
+                 :permission/reason {:db/index true}
                  :document/chat-bot {:db/type :db.type/ref}
-                 :chat-bot/name {:db/unique :db.unique/identity}})
+                 :chat-bot/name {:db/unique :db.unique/identity}
+                 :layer/source {:db/index true}
+                 :layer/type {:db/index true}
+                 :layer/start-x {:db/index true}
+                 :layer/end-x {:db/index true}
+                 :layer/start-y {:db/index true}
+                 :layer/end-y {:db/index true}})
 
 (def team-schema {:team/plan {:db/type :db.type/ref}
                   :plan/active-custs {:db/cardinality :db.cardinality/many}
@@ -28,7 +35,9 @@
                    :issue/comments {:db/type :db.type/ref
                                     :db/cardinality :db.cardinality/many}
                    :frontend/issue-id {:db/unique :db.unique/identity}
-                   :comment/parent {:db/type :db.type/ref}})
+                   :comment/parent {:db/type :db.type/ref
+                                    :db/index true}
+                   :issue/document {:db/index true}})
 
 (def schema (merge doc-schema team-schema issue-schema))
 

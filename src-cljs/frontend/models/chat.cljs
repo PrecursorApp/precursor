@@ -1,5 +1,5 @@
 (ns frontend.models.chat
-  (:require [datascript :as d]
+  (:require [datascript.core :as d]
             [frontend.db.trans :as trans]
             [frontend.datetime :as datetime]
             [frontend.state :as state]

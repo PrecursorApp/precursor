@@ -1,5 +1,5 @@
 (ns frontend.models.permission
-  (:require [datascript :as d]
+  (:require [datascript.core :as d]
             [frontend.utils :as utils]))
 
 (defn github-permissions [db doc]

@@ -2,7 +2,7 @@
   (:require [cljs.core.async :refer [put!]]
             [clojure.set :as set]
             [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.auth :as auth]
             [frontend.camera :as cameras]
             [frontend.clipboard :as clipboard]
