@@ -6,7 +6,7 @@
             [cljs.reader :as reader]
             [clojure.set :as set]
             [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.components.common :as common]
             [frontend.datascript :as ds]
             [frontend.datetime :as datetime]

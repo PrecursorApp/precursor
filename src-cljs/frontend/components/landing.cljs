@@ -3,7 +3,7 @@
             [clojure.set :as set]
             [clojure.string :as str]
             [cemerick.url :as url]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]

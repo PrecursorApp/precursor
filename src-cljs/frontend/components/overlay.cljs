@@ -3,7 +3,7 @@
             [cljs.core.async :as async :refer (<!)]
             [clojure.set :as set]
             [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]

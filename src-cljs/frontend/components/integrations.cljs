@@ -1,6 +1,6 @@
 (ns frontend.components.integrations
   (:require [cljs.core.async :as async]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.components.common :as common]
             [frontend.db :as fdb]
             [frontend.sente :as sente]

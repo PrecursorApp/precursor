@@ -1,5 +1,5 @@
 (ns frontend.db.trans
-  (:require [datascript :as d]))
+  (:require [datascript.core :as d]))
 
 ;; Need a better way to accomplish this--perhaps a separate transient db?
 ;; lets us use the first 5000 ids for things like bot chats and bot drawings

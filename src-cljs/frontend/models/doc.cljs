@@ -1,6 +1,6 @@
 (ns frontend.models.doc
   (:require [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.datascript :as ds]
             [frontend.utils :as utils :include-macros true]))
 

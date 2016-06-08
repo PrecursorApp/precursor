@@ -1,6 +1,6 @@
 (ns frontend.models.issue
   (:require [clojure.set :as set]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.utils :as utils :include-macros true]))
 
 (defn find-by-frontend-id [db frontend-id]

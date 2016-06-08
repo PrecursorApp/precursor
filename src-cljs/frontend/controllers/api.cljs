@@ -1,6 +1,6 @@
 (ns frontend.controllers.api
   (:require [cljs.core.async :refer [close!]]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.async :refer [put!]]
             [frontend.routes :as routes]
             [frontend.state :as state]

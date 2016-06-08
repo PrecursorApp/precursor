@@ -1,5 +1,5 @@
 (ns frontend.components.team
-  (:require [datascript :as d]
+  (:require [datascript.core :as d]
             [frontend.auth :as auth]
             [frontend.components.common :as common]
             [frontend.components.permissions :as permissions]

@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [cljs.reader :as reader]
             [cljs-http.client :as http]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.analytics :as analytics]
             [frontend.async :refer [put!]]
             [frontend.auth :as auth]

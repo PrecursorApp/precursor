@@ -1,6 +1,6 @@
 (ns frontend.models.layer
   (:require [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.utils :as utils :include-macros true]))
 
 (defn find-count [db]

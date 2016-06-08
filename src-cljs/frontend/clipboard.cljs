@@ -3,7 +3,7 @@
             [cljs.reader :as reader]
             [cljs.core.async :as async :refer [>! <! alts! put! chan sliding-buffer close!]]
             [cljs-http.client :as http]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.camera :as cameras]
             [frontend.datascript :as ds]
             [frontend.fonts :as fonts]

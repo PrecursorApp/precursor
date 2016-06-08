@@ -1,7 +1,7 @@
 (ns frontend.controllers.errors
   (:require [cljs.core.async :as async :refer [>! <! alts! put! chan sliding-buffer close!]]
             [clojure.string :as str]
-            [datascript :as d]
+            [datascript.core :as d]
             [frontend.overlay :as overlay]
             [frontend.camera :as cameras]
             [frontend.models.chat :as chat-model]

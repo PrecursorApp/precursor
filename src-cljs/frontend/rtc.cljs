@@ -192,13 +192,18 @@
                     (put! ch [:media-stream-started {:stream-id (.-id s)}]))
                   #(put! ch [:media-stream-failed {:error (.-name %)}])))
 
+(defn stop-stream [stream]
+  (if (.-stop stream)
+    (.stop stream)
+    (doall (map #(.stop %) (.getTracks stream)))))
+
 (defn end-stream [stream-id]
   (when-let [old @stream]
     (swap! stream #(if (and % (= (.-id %) stream-id))
                      nil
                      %))
     (when (= stream-id (.-id old))
-      (.stop old)
+      (stop-stream old)
       (cleanup-conns :stream-id (.-id old)))))
 
 (defn add-stream [conn stream]

@@ -49,7 +49,10 @@
     (let [db (pcd/default-db)
           create-instant (cust-model/created-at db cust)
           cust-count (cust-model/cust-count (d/as-of db create-instant))
-          midnight-pt (clj-time.coerce/to-date (time/today-at-midnight (time/time-zone-for-id "America/Los_Angeles")))
+          midnight-pt (clj-time.coerce/to-date
+                       (time/with-time-at-start-of-day
+                         (time/now)
+                         (time/time-zone-for-id "America/Los_Angeles")))
           cust-count-yesterday (cust-model/cust-count (d/as-of db midnight-pt))
           dribbble-profile (some-> cust :cust/guessed-dribbble-username get-dribbble-profile)
           cust-name (str/trim (str (:cust/first-name cust) " " (:cust/last-name cust)))
