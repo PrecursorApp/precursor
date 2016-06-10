@@ -32,11 +32,12 @@
                  ;; TODO: upgrade
                  [com.datomic/datomic-pro "0.9.5130" :exclusions [org.slf4j/slf4j-nop
                                                                   org.slf4j/slf4j-api
-                                                                  com.amazonaws/aws-java-sdk]]
+                                                                  com.amazonaws/aws-java-sdk
+                                                                  com.google.guava/guava]]
 
                  [clojurewerkz/spyglass "1.1.0"]
 
-                 [amazonica "0.3.58"]
+                 [amazonica "0.3.58" :exclusions [com.google.guava/guava]]
                  [com.draines/postal "1.11.3" :exclusions [commons-codec]]
 
                  [ring/ring "1.3.2" :exclusions [hiccup
@@ -80,7 +81,7 @@
                  [datascript "0.15.0"]
 
                  [ankha "0.1.5.1-479897"]
-                 [org.clojure/clojurescript "1.9.36" :exclusions [com.google.guava/guava]]
+                 [org.clojure/clojurescript "1.9.36"]
                  [org.clojure/core.async "0.2.374"]
 
                  [cljs-http "0.1.41" :exclusions [noencore]]
