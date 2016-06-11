@@ -13,6 +13,8 @@
             [om.dom :as dom :include-macros true])
   (:import [goog.ui IdGenerator]))
 
+(defonce signup-animation-source (utils/squuid))
+
 (defn add-tick [tick-state tick tick-fn]
   (update-in tick-state [:ticks tick] (fn [f] (fn [owner]
                                                 (when f (f owner))
@@ -300,7 +302,7 @@
                   :end-tick 130
                   :start-x text-start-x :end-x (+ text-start-x text-width)
                   :start-y text-start-y :end-y (- text-start-y text-height)
-                  :source "signup-animation"
+                  :source signup-animation-source
                   :props {:layer/signup-button true}})
       (move-mouse {:start-tick 140
                    :end-tick 145
@@ -312,7 +314,7 @@
                    :end-tick 200
                    :start-x rect-start-x :end-x rect-end-x
                    :start-y rect-start-y :end-y rect-end-y
-                   :source "signup-animation"
+                   :source signup-animation-source
                    :props {:layer/ui-target "/signup"
                            :layer/ui-id "/signup"
                            :layer/signup-button true}})
@@ -326,7 +328,7 @@
       ;; TODO: would be nice to get this a different way :(
       (let [viewport (utils/canvas-size)]
         (when (and (< 640 (:width viewport)) ;; only if not on mobile
-                   (empty? (d/datoms @(om/get-shared owner :db) :avet :layer/source "signup-animation")))
+                   (empty? (d/datoms @(om/get-shared owner :db) :avet :layer/source signup-animation-source)))
           (run-animation owner (signup-animation document (cameras/top-right camera viewport))))))
     om/IWillUnmount
     (will-unmount [_]
