@@ -58,7 +58,7 @@ echo '@daily root freebsd-update cron' >> /etc/crontab
 ASSUME_ALWAYS_YES=YES pkg bootstrap
 
 # java
-pkg install --yes java/openjdk7
+pkg install --yes java/openjdk8
 mount -t fdescfs fdesc /dev/fd
 mount -t procfs proc /proc
 

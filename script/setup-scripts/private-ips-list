@@ -5,5 +5,6 @@
 10.99.0.104 backups
 10.99.0.104 memcached
 10.99.0.105 datomic
+10.99.0.106 datomic
 
 10.99.0.110-119 web
