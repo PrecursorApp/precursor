@@ -6,7 +6,7 @@ set -e
 # pass the path where datomic was unzipped as the first argument
 install_path=$1
 
-version="0.9.5359"
+version="0.9.5372"
 jar_path="${install_path}/datomic-pro-${version}.jar"
 pom_path="${install_path}/pom.xml"
 
