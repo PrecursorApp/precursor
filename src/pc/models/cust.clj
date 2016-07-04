@@ -21,7 +21,7 @@
                                      ;; probably a uuid type
                                      :cust/http-sesion-key String}))
 
-(defn admin-emails [] (set (map :email (pc.profile/admins))))
+(defn admin-emails [] (set (map :admin/email (pc.profile/admins))))
 
 (defn all [db]
   (map #(d/entity db (:e %))
