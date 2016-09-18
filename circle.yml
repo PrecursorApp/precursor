@@ -1,6 +1,8 @@
 machine:
   java:
     version: openjdk8
+  node:
+    version: 6.6.0
 
 dependencies:
   post:
