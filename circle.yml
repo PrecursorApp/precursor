@@ -9,8 +9,8 @@ dependencies:
     - echo ${CIRCLE_SHA1} > resources/version
     - lein uberjar
     - git submodule update --init
-    - lein cljsbuild once production
     - lein run -m pc.tasks/compile-less
+    - lein cljsbuild once production
     - du -h resources/public/cljs/production/frontend.js resources/public/css/app.css
 
 deployment:
