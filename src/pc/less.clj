@@ -50,7 +50,8 @@
   (let [cmd (format "%s %s %s %s" lessc-path (lessc-options dest output-dir) src dest)
         res (shell/sh "bash" "-c" cmd)]
     (if (or (seq (:err res))
-            (not= 0 (:exit res)))
+            (not= 0 (:exit res))
+            (empty? (:out res)))
       (do
         (spit dest (format "body:before { white-space: pre; content: \"%s\" }" (-> res :err strip-ansi-escape-codes cssify-newlines)))
         (throw (Exception. (format "Couldn't compile less with %s returned exit code %s: %s %s" cmd (:exit res) (:out res) (:err res)))))
