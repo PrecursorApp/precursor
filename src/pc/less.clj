@@ -27,11 +27,11 @@
 ;; browser versions to autoprefix for (https://github.com/ai/browserslist)
 (def browser-versions "> 5%,last 2 versions")
 (defn lessc-options [output-file output-dir]
-  (str "-x"
-       " --source-map=" output-file ".map"
+  (str " --source-map=" output-file ".map"
        " --source-map-basepath=" output-dir
        " --source-map-url=" "/css/app.css.map"
        " --source-map-less-inline"
+       " --clean-css"
        (format " --autoprefix=\"%s\"" browser-versions)))
 
 (defn watch-opts-cdm []
@@ -47,9 +47,10 @@
 
 (defn compile! [& {:keys [src dest]
                    :or {src less-file dest output-file}}]
-  (let [cmd (format "%s %s %s" lessc-path (lessc-options dest output-dir) src dest)
+  (let [cmd (format "%s %s %s %s" lessc-path (lessc-options dest output-dir) src dest)
         res (shell/sh "bash" "-c" cmd)]
-    (if (not= 0 (:exit res))
+    (if (or (seq (:err res))
+            (not= 0 (:exit res)))
       (do
         (spit dest (format "body:before { white-space: pre; content: \"%s\" }" (-> res :err strip-ansi-escape-codes cssify-newlines)))
         (throw (Exception. (format "Couldn't compile less with %s returned exit code %s: %s %s" cmd (:exit res) (:out res) (:err res)))))
