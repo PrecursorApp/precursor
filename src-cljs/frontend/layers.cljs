@@ -245,7 +245,7 @@
 
 (defn remove-font-awesome-marks [text]
   (str/replace text #":(fa-[^:]+):"
-               (fn [m class-name]
+               (fn [[m class-name]]
                  (if (font-map/class->unicode class-name)
                    ""
                    m))))
