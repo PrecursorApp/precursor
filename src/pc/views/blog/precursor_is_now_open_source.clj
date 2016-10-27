@@ -29,4 +29,10 @@
          [:a {:href "https://github.com/precursorapp/precursor"} "GitHub"]
          "! "]]
 
+     [:article.blogpost-author
+      [:p
+       "Written by "
+       [:a {:href "https://twitter.com/dannykingme"} "Danny King"]
+       ". "]]
+
     )})
