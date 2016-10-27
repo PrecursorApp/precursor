@@ -216,6 +216,7 @@
                                (not external-target?)))
             show-handles? (and (not part-of-group?)
                                selected?
+                               (not (:unsaved layer))
                                (contains? #{:layer.type/rect :layer.type/line} (:layer/type layer))
                                (or (= :select tool)
                                    (and (= :circle tool) (layers/circle? layer))
