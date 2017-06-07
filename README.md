@@ -6,7 +6,7 @@ Check the [How to](https://precursorapp.com/document/How-to-17592197661008) doc 
 
 ## This is the code that runs Precursor
 
-The Precursor founders, [Danny](https://twitter.com/dannykingme) and [Daniel](https://twitter.com/danielwoelfel), have generously released made the Precursor code open to the public. Precursor is an excellent resource if you're interested in Clojure, ClojureScript, Datomic, advanced CSS, or just how to put together a modern web app.
+The Precursor founders, [Danny](https://twitter.com/dannykingme) and [Daniel](https://twitter.com/danielwoelfel), have generously made the Precursor code open to the public. Precursor is an excellent resource if you're interested in Clojure, ClojureScript, Datomic, advanced CSS, or just how to put together a modern web app.
 
 ## Setting up your own instance
 
