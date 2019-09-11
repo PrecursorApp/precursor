@@ -1,0 +1,44 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/clojure:openjdk-8-lein-node
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - dependency-cache-{{ checksum "project.clj" }}-1
+            - dependency-cache-{{ checksum "package-lock.json" }}-1
+      - run:
+          command: lein deps
+      - save_cache:
+          key: dependency-cache-{{ checksum "project.clj" }}-1
+          paths:
+            - ~/.m2
+      - run:
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}-1
+          paths:
+            - node_modules
+      - run:
+          command: echo ${CIRCLE_SHA1} > resources/version
+      - run:
+          command: lein uberjar
+      - run:
+          command: git submodule update --init
+      - run:
+          command: lein run -m pc.tasks/compile-less
+      - run:
+          command: lein cljsbuild once production
+      - run:
+          command: du -h resources/public/cljs/production/frontend.js resources/public/css/app.css
+      - run:
+          command: lein test
+
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
