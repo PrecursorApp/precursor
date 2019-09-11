@@ -42,6 +42,7 @@ jobs:
             - script
             - resources
             - target
+            - project.clj
 
   deploy:
     docker:
@@ -52,6 +53,8 @@ jobs:
       - restore_cache:
           keys:
             - dependency-cache-{{ checksum "project.clj" }}-1
+      - run:
+          command: ls
       - run:
           command: lein run -m pc.assets/upload-manifest ${CIRCLE_SHA1}
       - run:
