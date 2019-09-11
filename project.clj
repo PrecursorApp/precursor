@@ -35,7 +35,7 @@
                                                                   com.amazonaws/aws-java-sdk
                                                                   com.google.guava/guava]]
 
-                 [clojurewerkz/spyglass "1.1.0"]
+                 [clojurewerkz/spyglass "1.2.0"]
 
                  [amazonica "0.3.58" :exclusions [com.google.guava/guava]]
                  [com.draines/postal "1.11.3" :exclusions [commons-codec]]
