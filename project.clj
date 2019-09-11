@@ -157,7 +157,7 @@
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.10"
                                    :exclusions [org.clojure/clojure]]]}}
 
-  :pedantic? :abort
+  :pedantic? :warn
 
   :main ^:skip-aot pc.init
 
