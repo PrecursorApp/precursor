@@ -118,15 +118,13 @@
                                                              :env/prcrsr_jars_username
                                                              "AKIAIQXSSVZAOLOC5KZA"]
                                                   :passphrase [:gpg
-                                                               :env/prcrsr_jars_password
-                                                               "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]
+                                                               :env/prcrsr_jars_password]
                                                   :snapshots false}]
 
                            ["prcrsr-s3-snapshots" {:url "s3p://prcrsr-jars/snapshots"
                                                    :sign-releases false ;; TODO put a gpg key on CI
                                                    :username [:gpg
-                                                              :env/prcrsr_jars_username
-                                                              "AKIAIQXSSVZAOLOC5KZA"]
+                                                              :env/prcrsr_jars_username]
                                                    :passphrase [:gpg
                                                                 :env/prcrsr_jars_password
                                                                 "VgIfEWLuHOIMtSvOKm5q00t/XjGgsok8AvNIcNhq"]

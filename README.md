@@ -18,6 +18,19 @@ We're still working out requirements for this. There will likely be a contributo
 
 ## Development Requirements
 
+### Downloading jars
+
+Some jars are hosted in a private s3 repository. You'll need the AWS secret key to download them. Unfortunately, AWS does not like it when their keys are exposed, so it has to be obfuscated here.
+
+export
+
+```
+export PRCRSR_JARS_USERNAME=AKIAT7EJ2N4CR3WFDRFJ
+export PRCRSR_JARS_PASSWORD=$(echo "zhLtbtGUnn7THm21k6mSNCUNg4ZxYUoqnp8NUd2h" | tr "[A-Za-z]" "[N-ZA-Mn-za-m]")
+```
+
+(if you don't have `tr` on your machine, the password is encrypted with rot13.
+
 ### Frontend
 
 Fetch our fork of Om, which is installed as a submodule (in yaks/om):
