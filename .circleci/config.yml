@@ -58,9 +58,11 @@ jobs:
       - run:
           command: lein run -m pc.deploy/upload-slug ${CIRCLE_SHA1}
       - run:
-          command: cp script/s3-dl.sh ~/bin
-      - run:
-          command: PATH=$PATH:~/bin AWS_ACCESS_KEY_ID=$DEPLOY_S3_ID AWS_SECRET_ACCESS_KEY=$DEPLOY_S3_SECRET ./script/download-latest-jar.sh > pc-standalone.jar
+          command: |
+            mkdir ~/bin
+            cp script/s3-dl.sh ~/bin
+            PATH=$PATH:~/bin AWS_ACCESS_KEY_ID=$DEPLOY_S3_ID AWS_SECRET_ACCESS_KEY=$DEPLOY_S3_SECRET ./script/download-latest-jar.sh > pc-standalone.jar
+
       - run:
           command: java -cp pc-standalone.jar clojure.main --main pc.version | grep ${CIRCLE_SHA1}
 
