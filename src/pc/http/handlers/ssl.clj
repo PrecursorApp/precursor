@@ -14,6 +14,7 @@
                                     force-ssl? (profile/force-ssl?)}}]
   (fn [req]
     (if (or (not force-ssl?)
+            (= "/health-check" (:uri req))
             (ssl? req))
       (handler req)
       {:status 301

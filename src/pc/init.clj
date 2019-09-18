@@ -59,13 +59,17 @@
     (println (pretty-now) f)
     (f)))
 
-(defn -main []
-  (init)
-  (println (pretty-now) "done"))
-
 (defn shutdown []
   (pc.utils/shutdown-safe-scheduled-jobs)
   (pc.server/shutdown)
   (pc.datomic/shutdown)
   (pc.http.webhooks/shutdown)
   (pc.http.admin/shutdown))
+
+(defn -main []
+  (init)
+  (.addShutdownHook (Runtime/getRuntime)
+                    (Thread. (fn []
+                               (println (pretty-now) "shutting down")
+                               (shutdown))))
+  (println (pretty-now) "done"))
