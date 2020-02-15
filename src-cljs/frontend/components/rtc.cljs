@@ -13,4 +13,4 @@
                    :when stream]
                (dom/audio #js {:autoPlay true
                                :key (aget stream "id")
-                               :src stream}))))))
+                               :ref (fn [r] (when r (aset r "srcObject" stream)))}))))))
