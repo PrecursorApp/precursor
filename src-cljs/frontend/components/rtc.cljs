@@ -9,8 +9,8 @@
     om/IRender
     (render [_]
       (apply dom/div nil
-             (for [{:keys [stream-url]} (vals (get-in app [:subscribers :info]))
-                   :when stream-url]
+             (for [{:keys [stream]} (vals (get-in app [:subscribers :info]))
+                   :when stream]
                (dom/audio #js {:autoPlay true
-                               :key stream-url
-                               :src stream-url}))))))
+                               :key (aget stream "id")
+                               :src stream}))))))

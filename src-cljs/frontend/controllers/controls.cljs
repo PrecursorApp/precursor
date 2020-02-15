@@ -1893,8 +1893,8 @@
   (maybe-notify-subscribers! previous-state current-state nil nil))
 
 (defmethod control-event :remote-media-stream-ready
-  [browser-state message {:keys [stream-url producer]} state]
-  (utils/update-when-in state [:subscribers :info producer] assoc :stream-url stream-url))
+  [browser-state message {:keys [stream producer]} state]
+  (utils/update-when-in state [:subscribers :info producer] assoc :stream stream))
 
 (defmethod control-event :retry-unsynced-datoms
   [browser-state message {:keys [sente-event]} state]

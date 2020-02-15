@@ -282,7 +282,7 @@
                                        :title "Enable your voice chat."
                                        :key "self-not-recording"}
                      (common/icon :sound-mute)])]])
-              (for [[id {:keys [show-mouse? color cust-name hide-in-list? stream-url] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
+              (for [[id {:keys [show-mouse? color cust-name hide-in-list? stream] :as sub}] (dissoc (get-in app [:subscribers :info]) client-id)
                     :when (not hide-in-list?)
                     :let [id-str (get-in app [:cust-data :uuid->cust (:cust/uuid sub) :cust/name] (apply str (take 6 id)))
                           color-class (name (colors/find-color (get-in app [:cust-data :uuid->cust])
