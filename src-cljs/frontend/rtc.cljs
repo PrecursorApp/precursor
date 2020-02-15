@@ -271,8 +271,8 @@
                                                  :signal-data signal-data}])
               (do
                 (signal-fn {:sdp (js/JSON.stringify (.-localDescription conn))})
-                (put! (:controls comms) [:remote-media-stream-readyc {:stream (first (.getRemoteStreams conn))
-                                                                      :producer producer}])))
+                (put! (:controls comms) [:remote-media-stream-ready {:stream (first (.getRemoteStreams conn))
+                                                                     :producer producer}])))
             (catch js/Error e
               (put! (:errors comms) [:rtc-error {:error e :type
                                                  :offer-handle-sdp
