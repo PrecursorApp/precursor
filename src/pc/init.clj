@@ -36,7 +36,7 @@
    #'pc.datomic.migrations/init
    #'pc.models.chat-bot/init
    #'pc.models.plan/init
-   ;; #'pc.nts/init
+   #'pc.nts/init
    #'pc.assets/init
    #'pc.email/init
    #'pc.cache/init

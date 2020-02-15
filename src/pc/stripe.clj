@@ -140,7 +140,7 @@
                             :interval "month"
                             :name "Team subscription"}})
    (catch [:status 400] e
-     (if (some-> e :body json/decode (get-in ["error" "message"]) (= "Plan already exists."))
+     (if (some-> e :body json/decode (get-in ["error" "code"]) (= "resource_already_exists"))
        (log/infof "team plan already exists in Stripe")
        (throw+)))))
 
@@ -153,7 +153,7 @@
                             :duration "repeating"
                             :duration_in_months 6}})
    (catch [:status 400] e
-     (if (some-> e :body json/decode (get-in ["error" "message"]) (= "Coupon already exists."))
+     (if (some-> e :body json/decode (get-in ["error" "code"]) (= "resource_already_exists"))
        (log/infof "product-hunt coupon already exists in Stripe")
        (throw+)))))
 
@@ -166,7 +166,7 @@
                             :duration "repeating"
                             :duration_in_months 3}})
    (catch [:status 400] e
-     (if (some-> e :body json/decode (get-in ["error" "message"]) (= "Coupon already exists."))
+     (if (some-> e :body json/decode (get-in ["error" "code"]) (= "resource_already_exists"))
        (log/infof "designer-news coupon already exists in Stripe")
        (throw+)))))
 
