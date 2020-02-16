@@ -30,7 +30,8 @@
 ;;  3. Cleanup peer connections when users leave
 ;;  4. Do something useful with errors (currently reports them)
 
-(def config {:iceServers [{:url "stun:stun.l.google.com:19302"}]})
+(def config {:iceServers [{:url "stun:stun.l.google.com:19302"
+                           :urls "stun:stun.l.google.com:19302"}]})
 
 (def PeerConnection (or js/window.RTCPeerConnection
                         js/window.mozRTCPeerConnection
@@ -82,10 +83,8 @@
   (get @conns id))
 
 (defn update-stats [conn id]
-  (if-let [selector (some-> (or (first (.getLocalStreams conn))
-                                (first (.getRemoteStreams conn)))
-                      (.getAudioTracks)
-                      first)]
+  (if-let [selector (or (first (.getSenders conn))
+                        (first (.getReceivers conn)))]
     (stats/get-stats conn
                      selector
                      (fn [resp]

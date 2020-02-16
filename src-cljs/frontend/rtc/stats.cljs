@@ -46,13 +46,13 @@
   {:id (.-id stream)
    :label (.-label stream)
    :ended (.-ended stream)
-   :tracks (mapv track-stats (.getAudioTracks stream))})
+   :tracks [(track-stats stream)]})
 
 (defn connection-stats [conn-data]
   (let [conn (:conn conn-data)]
     (merge (select-keys conn-data [:consumer :producer :stream-id :stats])
-           {:local-streams (mapv stream-stats (.getLocalStreams conn))
-            :remote-streams (mapv stream-stats (.getRemoteStreams conn))
+           {:local-streams (mapv stream-stats (.getSenders conn))
+            :remote-streams (mapv stream-stats (.getReceivers conn))
             :connection-state (.-iceConnectionState conn)
             :gathering-state (.-iceGatheringState conn)
             :signaling-state (.-signalingState conn)

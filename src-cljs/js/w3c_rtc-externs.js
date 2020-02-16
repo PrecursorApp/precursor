@@ -948,12 +948,12 @@ RTCPeerConnection.prototype.iceConnectionState;
 /**
  * @return {!Array.<!MediaStream>}
  */
-RTCPeerConnection.prototype.getLocalStreams = function() {};
+RTCPeerConnection.prototype.getSenders = function() {};
 
 /**
  * @return {!Array.<!MediaStream>}
  */
-RTCPeerConnection.prototype.getRemoteStreams = function() {};
+RTCPeerConnection.prototype.getReceivers = function() {};
 
 /**
  * @param {string} streamId

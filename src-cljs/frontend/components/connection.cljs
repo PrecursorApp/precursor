@@ -30,7 +30,9 @@
       (remove-watch rtc/conns ::connection-info))
     om/IRender
     (render [_]
-      (let [sente-state @(get-in app [:sente :state])
+      (let [sente-state @(or (get-in app [:tal :state])
+                             (get-in app [:sente :state])
+                             (atom nil))
             rtc-stats (rtc-stats/gather-stats rtc/conns rtc/stream)
             uuid->cust (get-in app [:cust-data :uuid->cust])]
         (html
@@ -56,10 +58,10 @@
               [:tr.make
                [:td [:div "Last message"]]
                [:td [:div.connection-result (some->> sente-state
-                                             :last-message
-                                             :time
-                                             (goog.date.DateTime.)
-                                             (time-format/unparse (time-format/formatter "M/d/yyyy h:mm:ssa")))]]]]]]
+                                                     :last-message
+                                                     :time
+                                                     (goog.date.DateTime.)
+                                                     (time-format/unparse (time-format/formatter "M/d/yyyy h:mm:ssa")))]]]]]]
            [:h3.make "WebRTC Connection"]
            [:p.make
             "Debug information about the connection between your browser and your collaborator's browsers. This connection isn't always present."]
@@ -96,8 +98,8 @@
                     [:td [:div.connection-result (:signaling-state conn-stats)]]]]]
                  (when-let [track (some-> (or (some-> conn-stats :local-streams first)
                                               (some-> conn-stats :remote-streams first))
-                                    :tracks
-                                    first)]
+                                          :tracks
+                                          first)]
                    [:table.connection-items.make {:key "stream-stats"}
                     [:tbody
                      [:tr.make
@@ -111,7 +113,7 @@
                       [:td [:div.connection-result (:kind track)]]]
                      [:tr.make
                       [:td [:div "label"]]
-                      [:td [:div.connection-result {:title (:label track)} (gstring/truncate (:label track) 30)]]]]])
+                      [:td [:div.connection-result {:title (:label track)} (gstring/truncate (or (:label track) "") 30)]]]]])
                  (for [[stat stat-map] (reverse (:stats conn-stats))]
                    [:table.connection-items.make {:key stat}
                     [:tbody
