@@ -83,8 +83,9 @@
   (get @conns id))
 
 (defn update-stats [conn id]
-  (if-let [selector (or (first (.getSenders conn))
-                        (first (.getReceivers conn)))]
+  (if-let [selector (some-> (or (first (.getSenders conn))
+                                (first (.getReceivers conn)))
+                            (.-track))]
     (stats/get-stats conn
                      selector
                      (fn [resp]
@@ -137,33 +138,42 @@
 (def getUserMedia (or js/navigator.mozGetUserMedia
                       js/navigator.webkitGetUserMedia))
 
-(defonce audio-ctx (when js/window.AudioContext
-                     (js/window.AudioContext.)))
+(defonce audio-ctx-atom (atom nil))
+
+(defn audio-ctx []
+  (when js/window.AudioContext
+    (or @audio-ctx-atom
+        (let [ctx (js/window.AudioContext.)]
+          (reset! audio-ctx-atom ctx)
+          ctx))))
 
 (defn get-user-media [config success error]
-  (.call getUserMedia js/navigator (clj->js config) success error))
+  (-> (.getUserMedia js/navigator.mediaDevices (clj->js config))
+      (.then success)
+      (.catch error)))
 
 (defn watch-volume [stream ch]
-  (let [bin-count 16
-        analyser (.createAnalyser audio-ctx)
-        _ (set! (.-fftSize analyser) (* 2 bin-count))
-        _ (set! (.-smoothingTimeConstant analyser) 0.2)
-        source (.createMediaStreamSource audio-ctx stream)
-        data-array (js/Uint8Array. bin-count)]
+  (when (audio-ctx)
+    (let [bin-count 16
+          analyser (.createAnalyser (audio-ctx))
+          _ (set! (.-fftSize analyser) (* 2 bin-count))
+          _ (set! (.-smoothingTimeConstant analyser) 0.2)
+          source (.createMediaStreamSource (audio-ctx) stream)
+          data-array (js/Uint8Array. bin-count)]
 
-    (.connect source analyser)
+      (.connect source analyser)
 
-    (go-loop []
-      (async/<! (async/timeout 50))
-      (when-not (.-ended stream)
-        (.getByteFrequencyData analyser data-array)
-        (put! ch [:media-stream-volume {:stream-id (.-id stream)
-                                        :volume (/ (reduce (fn [acc i]
-                                                             (+ acc (* 100 (/ (aget data-array i)
-                                                                              256))))
-                                                           0 (range bin-count))
-                                                   bin-count)}])
-        (recur)))))
+      (go-loop []
+        (async/<! (async/timeout 50))
+        (when-not (.-ended stream)
+          (.getByteFrequencyData analyser data-array)
+          (put! ch [:media-stream-volume {:stream-id (.-id stream)
+                                          :volume (/ (reduce (fn [acc i]
+                                                               (+ acc (* 100 (/ (aget data-array i)
+                                                                                256))))
+                                                             0 (range bin-count))
+                                                     bin-count)}])
+          (recur))))))
 
 ;; http://www.w3.org/TR/mediacapture-streams/#h-event-summary
 (defn add-stream-watcher [stream ch]
@@ -189,7 +199,8 @@
                     (reset! stream s)
                     (add-stream-watcher s ch)
                     (put! ch [:media-stream-started {:stream-id (.-id s)}]))
-                  #(put! ch [:media-stream-failed {:error (.-name %)}])))
+                  (fn [e]
+                    (put! ch [:media-stream-failed {:error (.-name e)}]))))
 
 (defn stop-stream [stream]
   (if (.-stop stream)
@@ -206,8 +217,8 @@
       (cleanup-conns :stream-id (.-id old)))))
 
 (defn add-stream [conn stream]
-  ;; spec says this should be addMediaTrack
-  (.addStream conn stream))
+  (when-let [track (some-> stream (.getAudioTracks) first)]
+    (.addTrack conn track)))
 
 (defn conn-id [stream-id producer consumer]
   {:stream-id stream-id :consumer consumer :producer producer})
