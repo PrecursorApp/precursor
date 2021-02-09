@@ -30,7 +30,7 @@
   [#'pc.nrepl/init
    #'pc.profile/init
    #'pc.logging/init
-   #'pc.statsd/init
+   ;; #'pc.statsd/init
    #'pc.datomic/init
    #'pc.datomic.schema/init
    #'pc.datomic.migrations/init
