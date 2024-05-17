@@ -166,7 +166,6 @@
              "-server"
              "-Xss1m"
              "-Xmx1024m"
-             "-XX:+CMSClassUnloadingEnabled"
              "-Dfile.encoding=UTF-8"]
 
 
