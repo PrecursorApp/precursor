@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/clojure:openjdk-8-lein-2.9.1-node
+      - image: cimg/clojure:1.10.3-openjdk-17.0-node
     steps:
       - checkout
       - restore_cache:
@@ -46,7 +46,7 @@ jobs:
 
   deploy:
     docker:
-      - image: circleci/clojure:openjdk-8-lein-2.9.1-node
+      - image: cimg/clojure:1.10.3-openjdk-17.0-node
     steps:
       - attach_workspace:
           at: ./
