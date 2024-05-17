@@ -164,7 +164,6 @@
 
   :jvm-opts ["-Djava.net.preferIPv4Stack=true"
              "-server"
-             "-XX:+UseConcMarkSweepGC"
              "-Xss1m"
              "-Xmx1024m"
              "-XX:+CMSClassUnloadingEnabled"
