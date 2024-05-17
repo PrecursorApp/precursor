@@ -40,7 +40,9 @@
 
 (defn send-payload
   [payload]
-  (send-off rollbar-agent send-payload* payload))
+  ;;(send-off rollbar-agent send-payload* payload)
+  (log/info "Skipping send-payload for rollbar")
+  )
 
 (defn base-data
   [environment level]
