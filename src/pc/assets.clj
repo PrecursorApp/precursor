@@ -221,8 +221,9 @@
       (validate-manifest! (fetch-specific-manifest (pc.profile/cdn-bucket) manifest-key))
       (log/infof "moving manifest pointer to %s" manifest-key)
       (move-manifest-pointer (pc.profile/cdn-bucket) manifest-key)
-      (log/infof "uploading sourcemap to rollbar")
-      (upload-sourcemap sha1 manifest))))
+      ;;(log/infof "uploading sourcemap to rollbar")
+      ;;(upload-sourcemap sha1 manifest)
+      )))
 
 ;; single agent to prevent dos
 (defonce reload-agent (agent nil :error-handler (fn [a e]
