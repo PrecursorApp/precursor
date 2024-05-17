@@ -110,6 +110,9 @@
 
                  ;; dependencies of dependencies (make lein pedantic happy)
                  [commons-logging "1.2"]
+
+                 ;; backport to make upgrade from 1.8 -> 17 happy
+                 [javax.xml.bind/jaxb-api "2.3.1"]
                  ]
 
   :repositories ^:replace [["prcrsr-s3-releases" {:url "s3p://prcrsr-jars/releases"
