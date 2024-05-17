@@ -78,7 +78,7 @@
 
                  [me.raynes/fs "1.4.6" :exclusions [org.apache.commons/commons-compress]]
 
-                 [datascript "0.15.0"]
+                 [datascript "1.6.5"]
 
                  [ankha "0.1.5.1-479897"]
                  [org.clojure/clojurescript "1.9.36"]
