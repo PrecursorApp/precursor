@@ -1075,10 +1075,15 @@
                                  (or (not (get-in previous-state [:drawing :moving?]))
                                      (some true? (map detectable-movement? original-layers layers))))
                         (doseq [layer-group (partition-all 100 layers)]
-                          (d/transact! db (if (= :read (:max-document-scope current-state))
-                                            (map #(assoc % :unsaved true) layer-group)
+                          (utils/mlog "layer-group" layer-group)
+                          (d/transact! db (if (or (utils/inspect (:pessimistic? current-state))
+                                                  (= :read (:max-document-scope current-state)))
+                                            (utils/inspect (map #(assoc % :unsaved true) layer-group))
                                             layer-group)
-                                       {:can-undo? true})))
+                                       {:can-undo? true})
+                          (if (:pessimistic? current-state)
+                            (js/setTimeout #(d/transact! db (map (fn [g] (assoc g :unsaved false)) layer-group))
+                                           (+ 750 (rand-int 500))))))
                       (maybe-notify-subscribers! previous-state current-state x y))
 
      :else nil)))
@@ -1333,6 +1338,14 @@
 (defmethod handle-cmd-chat "replay"
   [state cmd chat]
   (update-in state [:db] frontend.db/reset-db!))
+
+(defmethod handle-cmd-chat "optimistic"
+  [state cmd chat]
+  (update-in state [:pessimistic?] not))
+
+(defmethod handle-cmd-chat "stop-sync"
+  [state cmd chat]
+  (update-in state [:stop-sync?] not))
 
 (defmethod control-event :chat-body-changed
   [browser-state message {:keys [chat-body]} state]
